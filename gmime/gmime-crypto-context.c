@@ -53,29 +53,24 @@ static const char *crypto_get_signature_protocol (GMimeCryptoContext *ctx);
 static const char *crypto_get_encryption_protocol (GMimeCryptoContext *ctx);
 static const char *crypto_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
-static int crypto_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key, GError **err);
-static gboolean crypto_get_retrieve_session_key (GMimeCryptoContext *ctx);
-
-static void crypto_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
-static gboolean crypto_get_always_trust (GMimeCryptoContext *ctx);
-
 static int crypto_sign (GMimeCryptoContext *ctx, gboolean detach,
 			const char *userid, GMimeDigestAlgo digest,
 			GMimeStream *istream, GMimeStream *ostream,
 			GError **err);
 	
-static GMimeSignatureList *crypto_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
-					  GMimeStream *istream, GMimeStream *sigstream,
-					  GError **err);
+static GMimeSignatureList *crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
+					  GMimeDigestAlgo digest, GMimeStream *istream,
+					  GMimeStream *sigstream, GError **err);
 	
 static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 			   const char *userid, GMimeDigestAlgo digest,
-			   GPtrArray *recipients, GMimeStream *istream,
-			   GMimeStream *ostream, GError **err);
+			   GMimeEncryptFlags flags, GPtrArray *recipients,
+			   GMimeStream *istream, GMimeStream *ostream,
+			   GError **err);
 
-static GMimeDecryptResult *crypto_decrypt (GMimeCryptoContext *ctx, const char *session_key,
-					   GMimeStream *istream, GMimeStream *ostream,
-					   GError **err);
+static GMimeDecryptResult *crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags,
+					   const char *session_key, GMimeStream *istream,
+					   GMimeStream *ostream, GError **err);
 
 static int crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			       GError **err);
@@ -136,10 +131,6 @@ g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass)
 	klass->get_signature_protocol = crypto_get_signature_protocol;
 	klass->get_encryption_protocol = crypto_get_encryption_protocol;
 	klass->get_key_exchange_protocol = crypto_get_key_exchange_protocol;
-	klass->get_retrieve_session_key = crypto_get_retrieve_session_key;
-	klass->set_retrieve_session_key = crypto_set_retrieve_session_key;
-	klass->get_always_trust = crypto_get_always_trust;
-	klass->set_always_trust = crypto_set_always_trust;
 }
 
 static void
@@ -399,8 +390,8 @@ g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach, const char
 
 
 static GMimeSignatureList *
-crypto_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *istream,
-	       GMimeStream *sigstream, GError **err)
+crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
+	       GMimeStream *istream, GMimeStream *sigstream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Verifying is not supported by this crypto context");
@@ -412,6 +403,7 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *ist
 /**
  * g_mime_crypto_context_verify:
  * @ctx: a #GMimeCryptoContext
+ * @flags: a #GMimeVerifyFlags
  * @digest: digest algorithm used, if known
  * @istream: input stream
  * @sigstream: optional detached-signature stream
@@ -426,19 +418,20 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *ist
  * the status of each signature or %NULL on error.
  **/
 GMimeSignatureList *
-g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *istream,
-			      GMimeStream *sigstream, GError **err)
+g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
+			      GMimeStream *istream, GMimeStream *sigstream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->verify (ctx, digest, istream, sigstream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->verify (ctx, flags, digest, istream, sigstream, err);
 }
 
 
 static int
 crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-		GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
+		GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
+		GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Encryption is not supported by this crypto context");
@@ -453,6 +446,7 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * @sign: sign as well as encrypt
  * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
  * @digest: digest algorithm to use when signing
+ * @flags: a #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipient key ids
  *   and/or email addresses
  * @istream: cleartext input stream
@@ -466,20 +460,20 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  **/
 int
 g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-			       GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
+			       GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
+			       GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, digest, recipients, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, digest, flags, recipients, istream, ostream, err);
 }
 
 
 static GMimeDecryptResult *
-crypto_decrypt (GMimeCryptoContext *ctx, const char *session_key,
-		GMimeStream *istream, GMimeStream *ostream,
-		GError **err)
+crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *session_key,
+		GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Decryption is not supported by this crypto context");
@@ -491,6 +485,7 @@ crypto_decrypt (GMimeCryptoContext *ctx, const char *session_key,
 /**
  * g_mime_crypto_context_decrypt:
  * @ctx: a #GMimeCryptoContext
+ * @flags: a #GMimeDecryptFlags
  * @session_key: session key to use or %NULL
  * @istream: input/ciphertext stream
  * @ostream: output/cleartext stream
@@ -520,15 +515,14 @@ crypto_decrypt (GMimeCryptoContext *ctx, const char *session_key,
  * on error.
  **/
 GMimeDecryptResult *
-g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, const char *session_key,
-			       GMimeStream *istream, GMimeStream *ostream,
-			       GError **err)
+g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *session_key,
+			       GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), NULL);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, session_key, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, flags, session_key, istream, ostream, err);
 }
 
 
@@ -597,117 +591,6 @@ g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->export_keys (ctx, keys, ostream, err);
-}
-
-
-static gboolean
-crypto_get_retrieve_session_key (GMimeCryptoContext *ctx)
-{
-	return FALSE;
-}
-
-/**
- * g_mime_crypto_context_get_retrieve_session_key:
- * @ctx: a #GMimeCryptoContext
- *
- * Gets whether or not the @ctx is configured to retrieve a session
- * key during decryption (see g_mime_decrypt_result_get_session_key()).
- *
- * Returns: %TRUE if the @ctx is configured to retrieve a session key
- * or %FALSE otherwise.
- **/
-gboolean
-g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx)
-{
-	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
-	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_retrieve_session_key (ctx);
-}
-
-static int
-crypto_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
-				 GError **err)
-{
-	if (!retrieve_session_key)
-		return 0;
-	
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Session key retrieval is not supported by this crypto context");
-	
-	return -1;
-}
-
-/**
- * g_mime_crypto_context_set_retrieve_session_key:
- * @ctx: a #GMimeCryptoContext
- * @retrieve_session_key: whether to retrieve session keys during decryption
- * @err: a #GError
- *
- * Configures whether @ctx should produce a session key during future
- * decryption operations (see
- * g_mime_decrypt_result_get_session_key()).
- *
- * Returns: %0 on success or %-1 on fail.
- **/
-int
-g_mime_crypto_context_set_retrieve_session_key (GMimeCryptoContext *ctx,
-						gboolean retrieve_session_key,
-						GError **err)
-{
-	if (!GMIME_IS_CRYPTO_CONTEXT (ctx)) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-			     "Not a GMimeCryptoContext, can't set retrieve_session_key");
-		return -1;
-	}
-	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->set_retrieve_session_key (ctx, retrieve_session_key, err);
-}
-
-
-static gboolean
-crypto_get_always_trust (GMimeCryptoContext *ctx)
-{
-	return FALSE;
-}
-
-
-/**
- * g_mime_crypto_context_get_always_trust:
- * @ctx: a #GMimeCryptoContext
- *
- * Gets whther or not keys should always be trusted when encrypting.
- *
- * Returns: %TRUE if keys should always be trusted when encrypting or
- * %FALSE otherwise.
- **/
-gboolean
-g_mime_crypto_context_get_always_trust (GMimeCryptoContext *ctx)
-{
-	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
-	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_always_trust (ctx);
-}
-
-
-static void
-crypto_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
-{
-}
-
-
-/**
- * g_mime_crypto_context_set_always_trust:
- * @ctx: a #GMimeCryptoContext
- * @always_trust: %TRUE if keys should always be trusted when encrypting
- *
- * Sets whether or not key should always be trusted when encrypting.
- **/
-void
-g_mime_crypto_context_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
-{
-	g_return_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx));
-	
-	GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->set_always_trust (ctx, always_trust);
 }
 
 

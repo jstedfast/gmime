@@ -85,16 +85,19 @@ GMimeSecureMimeType g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicati
 /*GMimeObject *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx);*/
 
 GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_encrypt (GMimePkcs7Context *ctx, GMimeObject *entity,
-								  GPtrArray *recipients, GError **err);
+								  GMimeEncryptFlags flags, GPtrArray *recipients,
+								  GError **err);
+
 GMimeObject *g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx,
-						    const char *session_key, GMimeDecryptResult **result,
-						    GError **err);
+						    GMimeDecryptFlags flags, const char *session_key,
+						    GMimeDecryptResult **result, GError **err);
 
 GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_sign (GMimePkcs7Context *ctx, GMimeObject *entity,
 							       const char *userid, GMimeDigestAlgo digest,
 							       GError **err);
+
 GMimeSignatureList *g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx,
-							  GMimeObject **entity, GError **err);
+							  GMimeVerifyFlags flags, GMimeObject **entity, GError **err);
 
 G_END_DECLS
 

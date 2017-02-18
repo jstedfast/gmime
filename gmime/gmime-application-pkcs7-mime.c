@@ -255,6 +255,7 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
  * g_mime_application_pkcs7_mime_encrypt:
  * @ctx: a #GMimePkcs7Context
  * @entity: a #GMimeObject to encrypt
+ * @flags: a #GMimeEncryptFlags
  * @recipients: the list of recipients to encrypt to
  * @err: a #GError
  *
@@ -263,7 +264,7 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
  * Returns: The encrypted @entity.
  **/
 GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_encrypt (GMimePkcs7Context *ctx, GMimeObject *entity, GPtrArray *recipients, GError **err)
+g_mime_application_pkcs7_mime_encrypt (GMimePkcs7Context *ctx, GMimeObject *entity, GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
@@ -292,7 +293,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimePkcs7Context *ctx, GMimeObject *enti
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_encrypt ((GMimeCryptoContext *) ctx, FALSE, NULL, GMIME_DIGEST_ALGO_DEFAULT, recipients, stream, ciphertext, err) == -1) {
+	if (g_mime_crypto_context_encrypt ((GMimeCryptoContext *) ctx, FALSE, NULL, GMIME_DIGEST_ALGO_DEFAULT, flags, recipients, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return NULL;
@@ -342,6 +343,7 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  * g_mime_application_pkcs7_mime_decrypt:
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
  * @ctx: a #GMimePkcs7Context
+ * @flags: a #GMimeDecryptFlags
  * @session_key: session key to use or %NULL
  * @result: the decryption result
  * @err: a #GError
@@ -364,8 +366,8 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  **/
 GMimeObject *
 g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx,
-				       const char *session_key, GMimeDecryptResult **result,
-				       GError **err)
+				       GMimeDecryptFlags flags, const char *session_key,
+				       GMimeDecryptResult **result, GError **err)
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimeDataWrapper *wrapper;
@@ -392,7 +394,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GM
 	g_object_unref (crlf_filter);
 	
 	/* decrypt the content stream */
-	if (!(res = g_mime_crypto_context_decrypt ((GMimeCryptoContext *) ctx, session_key, ciphertext, filtered_stream, err))) {
+	if (!(res = g_mime_crypto_context_decrypt ((GMimeCryptoContext *) ctx, flags, session_key, ciphertext, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
@@ -496,6 +498,7 @@ g_mime_application_pkcs7_mime_sign (GMimePkcs7Context *ctx, GMimeObject *entity,
  * g_mime_application_pkcs7_mime_verify:
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
  * @ctx: a #GMimePkcs7Context
+ * @flags: a #GMimeVerifyFlags
  * @entity: the extracted entity
  * @err: a #GError
  *
@@ -504,7 +507,7 @@ g_mime_application_pkcs7_mime_sign (GMimePkcs7Context *ctx, GMimeObject *entity,
  * Returns: the list of signers.
  **/
 GMimeSignatureList *
-g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx, GMimeObject **entity, GError **err)
+g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx, GMimeVerifyFlags flags, GMimeObject **entity, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
 	g_return_val_if_fail (GMIME_IS_PKCS7_CONTEXT (ctx), NULL);

@@ -144,6 +144,7 @@ g_mime_multipart_encrypted_new (void)
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
  * @digest: digest algorithm to use when signing
+ * @flags: a #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipients to encrypt to
  * @err: a #GError
  *
@@ -158,8 +159,8 @@ g_mime_multipart_encrypted_new (void)
  **/
 int
 g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
-				    GMimeCryptoContext *ctx, gboolean sign,
-				    const char *userid, GMimeDigestAlgo digest,
+				    GMimeCryptoContext *ctx, gboolean sign, const char *userid,
+				    GMimeDigestAlgo digest, GMimeEncryptFLags flags,
 				    GPtrArray *recipients, GError **err)
 {
 	GMimeParserOptions *options = g_mime_parser_options_get_default ();
@@ -196,7 +197,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_encrypt (ctx, sign, userid, digest, recipients, stream, ciphertext, err) == -1) {
+	if (g_mime_crypto_context_encrypt (ctx, sign, userid, digest, flags, recipients, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return -1;
@@ -272,6 +273,7 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
 /**
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
+ * @flags: a #GMimeDecryptFlags
  * @session_key: session key to use or %NULL
  * @result: a #GMimeDecryptionResult
  * @err: a #GError
@@ -294,8 +296,9 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  * @err to provide information as to why the failure occured.
  **/
 GMimeObject *
-g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, const char *session_key,
-				    GMimeDecryptResult **result, GError **err)
+g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFLags flags,
+				    const char *session_key, GMimeDecryptResult **result,
+				    GError **err)
 {
 	GMimeObject *decrypted, *version, *encrypted;
 	GMimeStream *stream, *ciphertext;
@@ -379,7 +382,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, const char *se
 	g_object_unref (crlf_filter);
 	
 	/* get the cleartext */
-	if (!(res = g_mime_crypto_context_decrypt (ctx, session_key, ciphertext, filtered_stream, err))) {
+	if (!(res = g_mime_crypto_context_decrypt (ctx, flags, session_key, ciphertext, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);

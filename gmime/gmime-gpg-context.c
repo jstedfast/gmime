@@ -69,8 +69,6 @@ struct _GMimeGpgContext {
 	GMimeCryptoContext parent_object;
 	
 #ifdef ENABLE_CRYPTO
-	gpgme_encrypt_flags_t encrypt_flags;
-	gboolean auto_key_retrieve;
 	gpgme_ctx_t ctx;
 #endif
 };
@@ -88,13 +86,6 @@ static void g_mime_gpg_context_finalize (GObject *object);
 static GMimeDigestAlgo gpg_digest_id (GMimeCryptoContext *ctx, const char *name);
 static const char *gpg_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest);
 
-static gboolean gpg_get_retrieve_session_key (GMimeCryptoContext *context);
-static int gpg_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
-					 GError **err);
-
-static gboolean gpg_get_always_trust (GMimeCryptoContext *context);
-static void gpg_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
-
 static int gpg_sign (GMimeCryptoContext *ctx, gboolean detach,
 		     const char *userid, GMimeDigestAlgo digest,
 		     GMimeStream *istream, GMimeStream *ostream,
@@ -104,20 +95,18 @@ static const char *gpg_get_signature_protocol (GMimeCryptoContext *ctx);
 static const char *gpg_get_encryption_protocol (GMimeCryptoContext *ctx);
 static const char *gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
-static GMimeSignatureList *gpg_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
-				       GMimeStream *istream, GMimeStream *sigstream,
-				       GError **err);
+static GMimeSignatureList *gpg_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
+				       GMimeDigestAlgo digest, GMimeStream *istream,
+				       GMimeStream *sigstream, GError **err);
 
-static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid,
-			GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
-			GMimeStream *ostream, GError **err);
+static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
+			GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
+			GError **err);
 
-static GMimeDecryptResult *gpg_decrypt (GMimeCryptoContext *ctx, const char *session_key,
-					GMimeStream *istream, GMimeStream *ostream,
-					GError **err);
+static GMimeDecryptResult *gpg_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *session_key,
+					GMimeStream *istream, GMimeStream *ostream, GError **err);
 
-static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
-			    GError **err);
+static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err);
 
 static int gpg_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			    GMimeStream *ostream, GError **err);
@@ -172,18 +161,12 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	crypto_class->get_signature_protocol = gpg_get_signature_protocol;
 	crypto_class->get_encryption_protocol = gpg_get_encryption_protocol;
 	crypto_class->get_key_exchange_protocol = gpg_get_key_exchange_protocol;
-	crypto_class->get_retrieve_session_key = gpg_get_retrieve_session_key;
-	crypto_class->set_retrieve_session_key = gpg_set_retrieve_session_key;
-	crypto_class->get_always_trust = gpg_get_always_trust;
-	crypto_class->set_always_trust = gpg_set_always_trust;
 }
 
 static void
 g_mime_gpg_context_init (GMimeGpgContext *gpg, GMimeGpgContextClass *klass)
 {
 #ifdef ENABLE_CRYPTO
-	gpg->auto_key_retrieve = FALSE;
-	gpg->encrypt_flags = 0;
 	gpg->ctx = NULL;
 #endif
 }
@@ -611,9 +594,8 @@ gpg_get_signatures (GMimeGpgContext *gpg, gboolean verify)
 #endif /* ENABLE_CRYPTO */
 
 static GMimeSignatureList *
-gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
-	    GMimeStream *istream, GMimeStream *sigstream,
-	    GError **err)
+gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
+	    GMimeStream *istream, GMimeStream *sigstream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
@@ -635,6 +617,8 @@ gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 	} else {
 		signature = NULL;
 	}
+	
+	// FIXME: enable auto-key-retrieve
 	
 	if ((error = gpgme_op_verify (gpg->ctx, signature, message, NULL)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify gpg signature"));
@@ -675,17 +659,21 @@ key_list_free (gpgme_key_t *keys)
 #endif /* ENABLE_CRYPTO */
 
 static int
-gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
-	     GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
-	     GMimeStream *ostream, GError **err)
+gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMimeDigestAlgo digest,
+	     GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
+	     GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
+	gpgme_encrypt_flags_t encrypt_flags = 0;
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	gpgme_key_t *rcpts;
 	gpgme_key_t key;
 	guint i;
+	
+	if (flags & GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST)
+		encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
 	
 	/* create an array of recipient keys for GpgMe */
 	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
@@ -720,11 +708,11 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 			return -1;
 		}
 		
-		error = gpgme_op_encrypt_sign (gpg->ctx, rcpts, gpg->encrypt_flags, input, output);
+		error = gpgme_op_encrypt_sign (gpg->ctx, rcpts, encrypt_flags, input, output);
 		
 		gpgme_signers_clear (gpg->ctx);
 	} else {
-		error = gpgme_op_encrypt (gpg->ctx, rcpts, gpg->encrypt_flags, input, output);
+		error = gpgme_op_encrypt (gpg->ctx, rcpts, encrypt_flags, input, output);
 	}
 	
 	gpgme_data_release (output);
@@ -781,9 +769,8 @@ gpg_get_decrypt_result (GMimeGpgContext *gpg)
 #endif /* ENABLE_CRYPTO */
 
 static GMimeDecryptResult *
-gpg_decrypt (GMimeCryptoContext *context, const char *session_key,
-	     GMimeStream *istream, GMimeStream *ostream,
-	     GError **err)
+gpg_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char *session_key,
+	     GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
@@ -803,18 +790,33 @@ gpg_decrypt (GMimeCryptoContext *context, const char *session_key,
 		return NULL;
 	}
 	
-	gpgme_set_ctx_flag (gpg->ctx, "override-session-key", session_key);
+	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
+		gpgme_set_ctx_flag (gpg->ctx, "export-session-key", "1");
+	
+	if (session_key)
+		gpgme_set_ctx_flag (gpg->ctx, "override-session-key", session_key);
 	
 	/* decrypt the input stream */
 	if ((error = gpgme_op_decrypt_verify (gpg->ctx, input, output)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed"));
-		gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
+		
+		if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
+			gpgme_set_ctx_flag (gpg->ctx, "export-session-key", "0");
+		
+		if (session_key)
+			gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
+		
 		gpgme_data_release (output);
 		gpgme_data_release (input);
 		return NULL;
 	}
 	
-	gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
+	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
+		gpgme_set_ctx_flag (gpg->ctx, "export-session-key", "0");
+	
+	if (session_key)
+		gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
+	
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
@@ -888,68 +890,6 @@ gpg_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *o
 #endif /* ENABLE_CRYPTO */
 }
 
-static gboolean
-gpg_get_retrieve_session_key (GMimeCryptoContext *context)
-{
-#ifdef ENABLE_CRYPTO
-	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
-	const char *value;
-	
-	value = gpgme_get_ctx_flag (ctx->ctx, "export-session-key");
-	
-	return value && *value && *value != '0';
-#else
-	return FALSE;
-#endif /* ENABLE_CRYPTO */
-}
-
-
-static int
-gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_session_key, GError **err)
-{
-#ifdef ENABLE_CRYPTO
-	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
-	gpgme_error_t error;
-	
-	if ((error = gpgme_set_ctx_flag (ctx->ctx, "export-session-key", retrieve_session_key ? "1" : "0")) != 0) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-			     _("Session key retrieval is not supported by this crypto context"));
-		return -1;
-	}
-	
-	return 0;
-#else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     _("Session key retrieval is not supported by this crypto context"));
-	return -1;
-#endif /* ENABLE_CRYPTO */
-}
-
-static gboolean
-gpg_get_always_trust (GMimeCryptoContext *context)
-{
-#ifdef ENABLE_CRYPTO
-	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	
-	return (gpg->encrypt_flags & GPGME_ENCRYPT_ALWAYS_TRUST) != 0;
-#else
-	return FALSE;
-#endif /* ENABLE_CRYPTO */
-}
-
-static void
-gpg_set_always_trust (GMimeCryptoContext *context, gboolean always_trust)
-{
-#ifdef ENABLE_CRYPTO
-	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	
-	if (always_trust)
-		gpg->encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
-	else
-		gpg->encrypt_flags &= ~GPGME_ENCRYPT_ALWAYS_TRUST;
-#endif /* ENABLE_CRYPTO */
-}
-
 
 /**
  * g_mime_gpg_context_new:
@@ -983,40 +923,4 @@ g_mime_gpg_context_new (void)
 #else
 	return NULL;
 #endif /* ENABLE_CRYPTO */
-}
-
-
-/**
- * g_mime_gpg_context_get_auto_key_retrieve:
- * @ctx: a #GMimeGpgContext
- *
- * Gets whether or not gpg should auto-retrieve keys from a keyserver
- * when verifying signatures.
- *
- * Returns: %TRUE if gpg should auto-retrieve keys from a keyserver or
- * %FALSE otherwise.
- **/
-gboolean
-g_mime_gpg_context_get_auto_key_retrieve (GMimeGpgContext *ctx)
-{
-	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), FALSE);
-	
-	return ctx->auto_key_retrieve;
-}
-
-
-/**
- * g_mime_gpg_context_set_auto_key_retrieve:
- * @ctx: a #GMimeGpgContext
- * @auto_key_retrieve: %TRUE if gpg should auto-retrieve keys from a keys server
- *
- * Sets whether or not gpg should auto-retrieve keys from a keyserver
- * when verifying signatures.
- **/
-void
-g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_key_retrieve)
-{
-	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
-	
-	ctx->auto_key_retrieve = auto_key_retrieve;
 }

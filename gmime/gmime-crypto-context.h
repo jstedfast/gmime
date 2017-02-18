@@ -77,6 +77,45 @@ typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) (void);
 
 
 /**
+ * GMimeDecryptFlags:
+ * @GMIME_DECRYPT_FLAGS_NONE: No flags specified.
+ * @GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY: Export the decryption session-key
+ *
+ * Decryption flags.
+ **/
+typedef enum {
+	GMIME_DECRYPT_FLAGS_NONE               = 0,
+	GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY = 1 << 0,
+} GMimeDecryptFlags;
+
+
+/**
+ * GMimeEncryptFlags:
+ * @GMIME_ENCRYPT_FLAGS_NONE: No flags specified.
+ * @GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST: Always trust the specified keys.
+ *
+ * Encryption flags.
+ **/
+typedef enum {
+	GMIME_ENCRYPT_FLAGS_NONE         = 0,
+	GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST = 1 << 0,
+} GMimeEncryptFlags;
+
+
+/**
+ * GMimeVerifyFlags:
+ * @GMIME_VERIFY_FLAGS_NONE: No flags specified.
+ * @GMIME_VERIFY_FLAGS_AUTO_KEY_RETRIEVE: Automatically retrieve keys from a keyserver.
+ *
+ * Signature verification flags.
+ **/
+typedef enum {
+	GMIME_VERIFY_FLAGS_NONE              = 0,
+	GMIME_VERIFY_FLAGS_AUTO_KEY_RETRIEVE = 1 << 0,
+} GMimeVerifyFlags;
+
+
+/**
  * GMimeCryptoContext:
  * @parent_object: parent #GObject
  * @request_passwd: a callback for requesting a password
@@ -104,30 +143,25 @@ struct _GMimeCryptoContextClass {
 						  GMimeStream *istream, GMimeStream *ostream,
 						  GError **err);
 	
-	GMimeSignatureList *     (* verify)      (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
-						  GMimeStream *istream, GMimeStream *sigstream,
-						  GError **err);
+	GMimeSignatureList *     (* verify)      (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
+						  GMimeDigestAlgo digest, GMimeStream *istream,
+						  GMimeStream *sigstream, GError **err);
 	
 	int                      (* encrypt)     (GMimeCryptoContext *ctx, gboolean sign,
 						  const char *userid, GMimeDigestAlgo digest,
-						  GPtrArray *recipients, GMimeStream *istream,
-						  GMimeStream *ostream, GError **err);
-	
-	GMimeDecryptResult *     (* decrypt)     (GMimeCryptoContext *ctx, const char *session_key,
+						  GMimeEncryptFlags flags, GPtrArray *recipients,
 						  GMimeStream *istream, GMimeStream *ostream,
 						  GError **err);
+	
+	GMimeDecryptResult *     (* decrypt)     (GMimeCryptoContext *ctx, GMimeDecryptFlags flags,
+						  const char *session_key, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
 	
 	int                      (* import_keys) (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GError **err);
 	
 	int                      (* export_keys) (GMimeCryptoContext *ctx, const char *keys[],
 						  GMimeStream *ostream, GError **err);
-	
-	gboolean                 (* get_retrieve_session_key) (GMimeCryptoContext *ctx);
-	
-	int                      (* set_retrieve_session_key) (GMimeCryptoContext *ctx,
-							       gboolean retrieve_session_key,
-							       GError **err);
 
 	gboolean                 (* get_always_trust) (GMimeCryptoContext *ctx);
 	void                     (* set_always_trust) (GMimeCryptoContext *ctx, gboolean always_trust);
@@ -156,32 +190,25 @@ int g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach,
 				GMimeStream *istream, GMimeStream *ostream,
 				GError **err);
 
-GMimeSignatureList *g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
-						  GMimeStream *istream, GMimeStream *sigstream,
-						  GError **err);
+GMimeSignatureList *g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
+						  GMimeDigestAlgo digest, GMimeStream *istream,
+						  GMimeStream *sigstream, GError **err);
 
 int g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 				   const char *userid, GMimeDigestAlgo digest,
-				   GPtrArray *recipients, GMimeStream *istream,
-				   GMimeStream *ostream, GError **err);
+				   GMimeEncryptFlags flags, GPtrArray *recipients,
+				   GMimeStream *istream, GMimeStream *ostream,
+				   GError **err);
 
-GMimeDecryptResult *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, const char *session_key,
-						   GMimeStream *istream, GMimeStream *ostream,
-						   GError **err);
+GMimeDecryptResult *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags,
+						   const char *session_key, GMimeStream *istream,
+						   GMimeStream *ostream, GError **err);
 
 /* key/certificate routines */
 int g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err);
 
 int g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 				       GMimeStream *ostream, GError **err);
-
-gboolean g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx);
-int g_mime_crypto_context_set_retrieve_session_key (GMimeCryptoContext *ctx,
-						    gboolean retrieve_session_key,
-						    GError **err);
-
-gboolean g_mime_crypto_context_get_always_trust (GMimeCryptoContext *ctx);
-void g_mime_crypto_context_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
 
 
 /**

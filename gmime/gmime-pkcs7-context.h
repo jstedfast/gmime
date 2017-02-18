@@ -40,9 +40,6 @@ GType g_mime_pkcs7_context_get_type (void);
 
 GMimeCryptoContext *g_mime_pkcs7_context_new (void);
 
-gboolean g_mime_pkcs7_context_get_always_trust (GMimePkcs7Context *ctx);
-void g_mime_pkcs7_context_set_always_trust (GMimePkcs7Context *ctx, gboolean always_trust);
-
 G_END_DECLS
 
 #endif /* __GMIME_PKCS7_CONTEXT_H__ */
