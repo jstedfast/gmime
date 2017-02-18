@@ -803,8 +803,6 @@ gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	
-	// TODO: make use of the session_key
-	
 	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream"));
 		return NULL;
@@ -816,14 +814,18 @@ gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
 		return NULL;
 	}
 	
+	gpgme_set_ctx_flag (gpg->ctx, "override-session-key", session_key);
+	
 	/* decrypt the input stream */
 	if ((error = gpgme_op_decrypt_verify (gpg->ctx, input, output)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed"));
+		gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
 		gpgme_data_release (output);
 		gpgme_data_release (input);
 		return NULL;
 	}
 	
+	gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
@@ -900,18 +902,23 @@ gpg_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *o
 static gboolean
 gpg_get_retrieve_session_key (GMimeCryptoContext *context)
 {
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	const char *value;
 	
 	value = gpgme_get_ctx_flag (ctx->ctx, "export-session-key");
 	
 	return value && *value && *value != '0';
+#else
+	return FALSE;
+#endif /* ENABLE_CRYPTO */
 }
 
 
 static int
 gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_session_key, GError **err)
 {
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	gpgme_error_t error;
 	
@@ -922,6 +929,11 @@ gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_ses
 	}
 	
 	return 0;
+#else
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+		     _("Session key retrieval is not supported by this crypto context"));
+	return -1;
+#endif /* ENABLE_CRYPTO */
 }
 
 static gboolean

@@ -84,13 +84,17 @@ static void g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7Context
 static void g_mime_pkcs7_context_finalize (GObject *object);
 
 static GMimeDigestAlgo pkcs7_digest_id (GMimeCryptoContext *ctx, const char *name);
-
 static const char *pkcs7_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest);
 
+static gboolean pkcs7_get_retrieve_session_key (GMimeCryptoContext *context);
+static int pkcs7_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
+					   GError **err);
+
+static gboolean pkcs7_get_always_trust (GMimeCryptoContext *context);
+static void pkcs7_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
+
 static const char *pkcs7_get_signature_protocol (GMimeCryptoContext *ctx);
-
 static const char *pkcs7_get_encryption_protocol (GMimeCryptoContext *ctx);
-
 static const char *pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 static int pkcs7_sign (GMimeCryptoContext *ctx, gboolean detach,
@@ -109,14 +113,15 @@ static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *us
 static GMimeDecryptResult *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					  GMimeStream *ostream, GError **err);
 
+static GMimeDecryptResult *pkcs7_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
+						  GMimeStream *istream, GMimeStream *ostream,
+						GError **err);
+
 static int pkcs7_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			      GError **err);
 
 static int pkcs7_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			      GMimeStream *ostream, GError **err);
-
-static gboolean pkcs7_get_always_trust (GMimeCryptoContext *context);
-static void pkcs7_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
 
 
 static GMimeCryptoContextClass *parent_class = NULL;
@@ -163,11 +168,14 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 	crypto_class->verify = pkcs7_verify;
 	crypto_class->encrypt = pkcs7_encrypt;
 	crypto_class->decrypt = pkcs7_decrypt;
+	crypto_class->decrypt_session = pkcs7_decrypt_session;
 	crypto_class->import_keys = pkcs7_import_keys;
 	crypto_class->export_keys = pkcs7_export_keys;
 	crypto_class->get_signature_protocol = pkcs7_get_signature_protocol;
 	crypto_class->get_encryption_protocol = pkcs7_get_encryption_protocol;
 	crypto_class->get_key_exchange_protocol = pkcs7_get_key_exchange_protocol;
+	crypto_class->get_retrieve_session_key = pkcs7_get_retrieve_session_key;
+	crypto_class->set_retrieve_session_key = pkcs7_set_retrieve_session_key;
 	crypto_class->get_always_trust = pkcs7_get_always_trust;
 	crypto_class->set_always_trust = pkcs7_set_always_trust;
 }
@@ -737,8 +745,13 @@ pkcs7_get_decrypt_result (GMimePkcs7Context *pkcs7)
 	result->recipients = g_mime_certificate_list_new ();
 	result->signatures = pkcs7_get_signatures (pkcs7, FALSE);
 	
+	// TODO: ciper, mdc
+	
 	if (!(res = gpgme_op_decrypt_result (pkcs7->ctx)) || !res->recipients)
 		return result;
+	
+	if (res->session_key)
+		result->session_key = g_strdup (res->session_key);
 	
 	recipient = res->recipients;
 	while (recipient != NULL) {
@@ -759,6 +772,14 @@ static GMimeDecryptResult *
 pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	       GMimeStream *ostream, GError **err)
 {
+	return pkcs7_decrypt_session (context, NULL, istream, ostream, err);
+}
+
+static GMimeDecryptResult *
+pkcs7_decrypt_session (GMimeCryptoContext *context, const char *session_key,
+		       GMimeStream *istream, GMimeStream *ostream,
+		       GError **err)
+{
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	GMimeDecryptResult *result;
@@ -777,14 +798,18 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 		return NULL;
 	}
 	
+	gpgme_set_ctx_flag (pkcs7->ctx, "override-session-key", session_key);
+	
 	/* decrypt the input stream */
 	if ((error = gpgme_op_decrypt_verify (pkcs7->ctx, input, output)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed"));
+		gpgme_set_ctx_flag (pkcs7->ctx, "override-session-key", NULL);
 		gpgme_data_release (output);
 		gpgme_data_release (input);
 		return NULL;
 	}
 	
+	gpgme_set_ctx_flag (pkcs7->ctx, "override-session-key", NULL);
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
@@ -860,6 +885,44 @@ pkcs7_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream 
 
 
 static gboolean
+pkcs7_get_retrieve_session_key (GMimeCryptoContext *context)
+{
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
+	const char *value;
+	
+	value = gpgme_get_ctx_flag (ctx->ctx, "export-session-key");
+	
+	return value && *value && *value != '0';
+#else
+	return FALSE;
+#endif /* ENABLE_CRYPTO */
+}
+
+
+static int
+pkcs7_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_session_key, GError **err)
+{
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
+	gpgme_error_t error;
+	
+	if ((error = gpgme_set_ctx_flag (ctx->ctx, "export-session-key", retrieve_session_key ? "1" : "0")) != 0) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("Session key retrieval is not supported by this crypto context"));
+		return -1;
+	}
+	
+	return 0;
+#else
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+		     _("Session key retrieval is not supported by this crypto context"));
+	return -1;
+#endif /* ENABLE_CRYPTO */
+}
+
+
+static gboolean
 pkcs7_get_always_trust (GMimeCryptoContext *context)
 {
 #ifdef ENABLE_CRYPTO
@@ -870,6 +933,7 @@ pkcs7_get_always_trust (GMimeCryptoContext *context)
 	return FALSE;
 #endif /* ENABLE_CRYPTO */
 }
+
 
 static void
 pkcs7_set_always_trust (GMimeCryptoContext *context, gboolean always_trust)
