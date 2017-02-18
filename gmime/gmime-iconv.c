@@ -80,9 +80,9 @@ static int shutdown = 0;
 #endif /* GMIME_ICONV_DEBUG */
 
 #ifdef G_THREADS_ENABLED
-G_LOCK_DEFINE_STATIC (lock);
-#define ICONV_CACHE_UNLOCK() G_UNLOCK (lock)
-#define ICONV_CACHE_LOCK()   G_LOCK (lock)
+static GMutex lock;
+#define ICONV_CACHE_UNLOCK() g_mutex_unlock (&lock);
+#define ICONV_CACHE_LOCK()   g_mutex_lock (&lock);
 #else
 #define ICONV_CACHE_UNLOCK()
 #define ICONV_CACHE_LOCK()
@@ -196,7 +196,7 @@ g_mime_iconv_shutdown (void)
 		 * internal mutex pointer to NULL, so re-initializing
 		 * GMime would not properly re-initialize the mutexes.
 		 **/
-		g_mutex_clear (&G_LOCK_NAME (lock));
+		g_mutex_clear (&lock);
 	}
 #endif
 	
@@ -226,7 +226,7 @@ g_mime_iconv_init (void)
 		return;
 	
 #ifdef G_THREADS_ENABLED
-	g_mutex_init (&G_LOCK_NAME (lock));
+	g_mutex_init (&lock);
 #endif
 	
 	g_mime_charset_map_init ();

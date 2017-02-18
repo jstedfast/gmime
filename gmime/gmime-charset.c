@@ -170,9 +170,9 @@ static char *locale_lang = NULL;
 static int initialized = 0;
 
 #ifdef G_THREADS_ENABLED
-G_LOCK_DEFINE_STATIC (lock);
-#define CHARSET_UNLOCK() G_UNLOCK (lock)
-#define CHARSET_LOCK() G_UNLOCK (lock)
+static GMutex lock;
+#define CHARSET_UNLOCK() g_mutex_unlock (&lock);
+#define CHARSET_LOCK() g_mutex_lock (&lock);
 #else
 #define CHARSET_UNLOCK()
 #define CHARSET_LOCK()
@@ -197,7 +197,7 @@ g_mime_charset_map_shutdown (void)
 		 * internal mutex pointer to NULL, so re-initializing
 		 * GMime would not properly re-initialize the mutexes.
 		 **/
-		g_mutex_clear (&G_LOCK_NAME (lock));
+		g_mutex_clear (&lock);
 	}
 #endif
 	
@@ -272,7 +272,7 @@ g_mime_charset_map_init (void)
 		return;
 	
 #ifdef G_THREADS_ENABLED
-	g_mutex_init (&G_LOCK_NAME (lock));
+	g_mutex_init (&lock);
 #endif
 	
 	iconv_charsets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);

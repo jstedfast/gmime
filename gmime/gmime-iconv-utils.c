@@ -48,9 +48,9 @@
 
 
 #ifdef G_THREADS_ENABLED
-G_LOCK_DEFINE_STATIC (iconv_utils);
-#define UNLOCK() G_UNLOCK (iconv_utils)
-#define LOCK()   G_LOCK (iconv_utils)
+static GMutex lock;
+#define UNLOCK() g_mutex_unlock (&lock)
+#define LOCK()   g_mutex_lock (&lock);
 #else
 #define UNLOCK()
 #define LOCK()
@@ -72,7 +72,7 @@ g_mime_iconv_utils_init (void)
 		return;
 	
 #ifdef G_THREADS_ENABLED
-	g_mutex_init (&G_LOCK_NAME (iconv_utils));
+	g_mutex_init (&lock);
 #endif
 	
 	utf8 = g_mime_charset_iconv_name ("UTF-8");
@@ -99,7 +99,7 @@ g_mime_iconv_utils_shutdown (void)
 		 * internal mutex pointer to NULL, so re-initializing
 		 * GMime would not properly re-initialize the mutexes.
 		 **/
-		g_mutex_clear (&G_LOCK_NAME (iconv_utils));
+		g_mutex_clear (&lock);
 	}
 #endif
 	
