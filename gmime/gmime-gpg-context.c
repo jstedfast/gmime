@@ -70,7 +70,6 @@ struct _GMimeGpgContext {
 	
 #ifdef ENABLE_CRYPTO
 	gpgme_encrypt_flags_t encrypt_flags;
-	gboolean retrieve_session_key;
 	gboolean auto_key_retrieve;
 	gpgme_ctx_t ctx;
 #endif
@@ -187,7 +186,6 @@ static void
 g_mime_gpg_context_init (GMimeGpgContext *gpg, GMimeGpgContextClass *klass)
 {
 #ifdef ENABLE_CRYPTO
-	gpg->retrieve_session_key = FALSE;
 	gpg->auto_key_retrieve = FALSE;
 	gpg->encrypt_flags = 0;
 	gpg->ctx = NULL;
@@ -768,8 +766,8 @@ gpg_get_decrypt_result (GMimeGpgContext *gpg)
 	if (!(res = gpgme_op_decrypt_result (gpg->ctx)) || !res->recipients)
 		return result;
 	
-	//if (res->session_key)
-	//	result->session_key = g_strdup (res->session_key);
+	if (res->session_key)
+		result->session_key = g_strdup (res->session_key);
 	
 	recipient = res->recipients;
 	while (recipient != NULL) {
@@ -903,9 +901,12 @@ static gboolean
 gpg_get_retrieve_session_key (GMimeCryptoContext *context)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	const char *value;
 	
-	//return ctx->retrieve_session_key;
-	return FALSE;
+	value = gpgme_get_ctx_flag (ctx->ctx, "export-session-key");
+	fprintf (stderr, "export-session-key = %s\n", value);
+	
+	return value && *value;
 }
 
 
@@ -913,8 +914,16 @@ static int
 gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_session_key, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	gpgme_error_t error;
 	
-	//ctx->retrieve_session_key = retrieve_session_key;
+	if ((error = gpgme_set_ctx_flag (ctx->ctx, "export-session-key", retrieve_session_key ? "true" : NULL)) != 0) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("Session key retrieval is not supported by this crypto context"));
+		fprintf (stderr, "setting export-session-key failed: %s\n", gpgme_strerror (error));
+		return -1;
+	}
+	
+	fprintf (stderr, "set export-session-key = %s\n", retrieve_session_key ? "true" : NULL);
 	
 	return 0;
 }

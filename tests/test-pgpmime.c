@@ -493,6 +493,7 @@ int main (int argc, char *argv[])
 			g_error_free (err);
 		return EXIT_FAILURE;
 	}
+	
 	if (!g_mime_crypto_context_get_retrieve_session_key (ctx)) {
 		fprintf (stderr, "We set retrieve_session_key on GMimeGpgContext, but it did not stay set.\n");
 		return EXIT_FAILURE;
