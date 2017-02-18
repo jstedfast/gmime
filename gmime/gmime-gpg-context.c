@@ -112,12 +112,9 @@ static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *user
 			GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
 			GMimeStream *ostream, GError **err);
 
-static GMimeDecryptResult *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-					GMimeStream *ostream, GError **err);
-
-static GMimeDecryptResult *gpg_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
-						GMimeStream *istream, GMimeStream *ostream,
-						GError **err);
+static GMimeDecryptResult *gpg_decrypt (GMimeCryptoContext *ctx, const char *session_key,
+					GMimeStream *istream, GMimeStream *ostream,
+					GError **err);
 
 static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			    GError **err);
@@ -170,7 +167,6 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	crypto_class->verify = gpg_verify;
 	crypto_class->encrypt = gpg_encrypt;
 	crypto_class->decrypt = gpg_decrypt;
-	crypto_class->decrypt_session = gpg_decrypt_session;
 	crypto_class->import_keys = gpg_import_keys;
 	crypto_class->export_keys = gpg_export_keys;
 	crypto_class->get_signature_protocol = gpg_get_signature_protocol;
@@ -785,16 +781,9 @@ gpg_get_decrypt_result (GMimeGpgContext *gpg)
 #endif /* ENABLE_CRYPTO */
 
 static GMimeDecryptResult *
-gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
-	     GMimeStream *ostream, GError **err)
-{
-	return gpg_decrypt_session (context, NULL, istream, ostream, err);
-}
-
-static GMimeDecryptResult *
-gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
-		     GMimeStream *istream, GMimeStream *ostream,
-		     GError **err)
+gpg_decrypt (GMimeCryptoContext *context, const char *session_key,
+	     GMimeStream *istream, GMimeStream *ostream,
+	     GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;

@@ -342,15 +342,30 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  * g_mime_application_pkcs7_mime_decrypt:
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
  * @ctx: a #GMimePkcs7Context
+ * @session_key: session key to use or %NULL
  * @result: the decryption result
  * @err: a #GError
  *
- * Decrypts the @pkcs7_mime part.
+ * Attempts to decrypt the encrypted application/pkcs7-mime part.
  *
- * Returns: the decrypted @pkcs7_mime part.
+ * When non-%NULL, @session_key should be a %NULL-terminated string,
+ * such as the one returned by g_mime_decrypt_result_get_session_key()
+ * from a previous decryption. If the @sesion_key is not valid, decryption
+ * will fail.
+ *
+ * If @result is non-%NULL, then on a successful decrypt operation, it will be
+ * updated to point to a newly-allocated #GMimeDecryptResult with signature
+ * status information as well as a list of recipients that the part was
+ * encrypted to.
+ *
+ * Returns: (transfer full): the decrypted MIME part on success or
+ * %NULL on fail. If the decryption fails, an exception will be set on
+ * @err to provide information as to why the failure occured.
  **/
 GMimeObject *
-g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx, GMimeDecryptResult **result, GError **err)
+g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx,
+				       const char *session_key, GMimeDecryptResult **result,
+				       GError **err)
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimeDataWrapper *wrapper;
@@ -377,7 +392,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GM
 	g_object_unref (crlf_filter);
 	
 	/* decrypt the content stream */
-	if (!(res = g_mime_crypto_context_decrypt ((GMimeCryptoContext *) ctx, ciphertext, filtered_stream, err))) {
+	if (!(res = g_mime_crypto_context_decrypt ((GMimeCryptoContext *) ctx, session_key, ciphertext, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);

@@ -113,11 +113,9 @@ struct _GMimeCryptoContextClass {
 						  GPtrArray *recipients, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
 	
-	GMimeDecryptResult *     (* decrypt)     (GMimeCryptoContext *ctx, GMimeStream *istream,
-						  GMimeStream *ostream, GError **err);
-	GMimeDecryptResult *     (* decrypt_session) (GMimeCryptoContext *ctx, const char *session_key,
-						      GMimeStream *istream, GMimeStream *ostream,
-						      GError **err);
+	GMimeDecryptResult *     (* decrypt)     (GMimeCryptoContext *ctx, const char *session_key,
+						  GMimeStream *istream, GMimeStream *ostream,
+						  GError **err);
 	
 	int                      (* import_keys) (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GError **err);
@@ -167,12 +165,9 @@ int g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 				   GPtrArray *recipients, GMimeStream *istream,
 				   GMimeStream *ostream, GError **err);
 
-GMimeDecryptResult *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-						   GMimeStream *ostream, GError **err);
-
-GMimeDecryptResult *g_mime_crypto_context_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
-							   GMimeStream *istream, GMimeStream *ostream,
-							   GError **err);
+GMimeDecryptResult *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, const char *session_key,
+						   GMimeStream *istream, GMimeStream *ostream,
+						   GError **err);
 
 /* key/certificate routines */
 int g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err);

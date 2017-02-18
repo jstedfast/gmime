@@ -377,7 +377,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	mpe = (GMimeMultipartEncrypted *) message->mime_part;
 	
 	/* okay, now to test our decrypt function... */
-	decrypted = g_mime_multipart_encrypted_decrypt_session (mpe, session_key, &result, &err);
+	decrypted = g_mime_multipart_encrypted_decrypt (mpe, session_key, &result, &err);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
 		g_error_free (err);

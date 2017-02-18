@@ -154,7 +154,7 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	
 	stream = g_mime_stream_mem_new ();
 	
-	if (!(result = g_mime_crypto_context_decrypt (ctx, ciphertext, stream, &err))) {
+	if (!(result = g_mime_crypto_context_decrypt (ctx, NULL, ciphertext, stream, &err))) {
 		g_object_unref (stream);
 		ex = exception_new ("%s", err->message);
 		g_error_free (err);

@@ -110,12 +110,9 @@ static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *us
 			  GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
 			  GMimeStream *ostream, GError **err);
 
-static GMimeDecryptResult *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-					  GMimeStream *ostream, GError **err);
-
-static GMimeDecryptResult *pkcs7_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
-						  GMimeStream *istream, GMimeStream *ostream,
-						GError **err);
+static GMimeDecryptResult *pkcs7_decrypt (GMimeCryptoContext *ctx, const char *session_key,
+					  GMimeStream *istream, GMimeStream *ostream,
+					  GError **err);
 
 static int pkcs7_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			      GError **err);
@@ -168,7 +165,6 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 	crypto_class->verify = pkcs7_verify;
 	crypto_class->encrypt = pkcs7_encrypt;
 	crypto_class->decrypt = pkcs7_decrypt;
-	crypto_class->decrypt_session = pkcs7_decrypt_session;
 	crypto_class->import_keys = pkcs7_import_keys;
 	crypto_class->export_keys = pkcs7_export_keys;
 	crypto_class->get_signature_protocol = pkcs7_get_signature_protocol;
@@ -769,16 +765,9 @@ pkcs7_get_decrypt_result (GMimePkcs7Context *pkcs7)
 #endif /* ENABLE_CRYPTO */
 
 static GMimeDecryptResult *
-pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
-	       GMimeStream *ostream, GError **err)
-{
-	return pkcs7_decrypt_session (context, NULL, istream, ostream, err);
-}
-
-static GMimeDecryptResult *
-pkcs7_decrypt_session (GMimeCryptoContext *context, const char *session_key,
-		       GMimeStream *istream, GMimeStream *ostream,
-		       GError **err)
+pkcs7_decrypt (GMimeCryptoContext *context, const char *session_key,
+	       GMimeStream *istream, GMimeStream *ostream,
+	       GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
