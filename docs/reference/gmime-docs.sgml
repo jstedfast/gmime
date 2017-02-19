@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY gmime-Init SYSTEM "xml/gmime.xml">
+<!ENTITY GMimeApplicationPkcs7Mime SYSTEM "xml/gmime-application-pkcs7-mime.xml">
 <!ENTITY GMimeParam SYSTEM "xml/gmime-param.xml">
 <!ENTITY GMimeHeader SYSTEM "xml/gmime-header.xml">
 <!ENTITY GMimeContentType SYSTEM "xml/gmime-content-type.xml">
@@ -74,7 +75,7 @@
 
 <book id="index">
   <bookinfo>
-    <title>GMime 2.6 Reference Manual</title>
+    <title>GMime 3.0 Reference Manual</title>
     <authorgroup>
       <author>
         <firstname>Jeffrey</firstname>
@@ -87,7 +88,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2000-2011</year>
+      <year>2000-2017</year>
       <holder>Jeffrey Stedfast</holder>
     </copyright>
 
@@ -239,6 +240,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeMultipart;
       &GMimeMultipartEncrypted;
       &GMimeMultipartSigned;
+      &GMimeApplicationPkcs7Mime;
       &GMimeMessagePart;
       &GMimeMessagePartial;
       &GMimePartIter;

@@ -2,6 +2,7 @@ GObject
   GMimeObject
     GMimeMessage
     GMimePart
+      GMimeApplicationPkcs7Mime
       GMimeMessagePartial
     GMimeMultipart
       GMimeMultipartEncrypted

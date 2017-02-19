@@ -83,7 +83,7 @@ Porting from GMime 2.6 to GMime 3.0
   passing GMIME_VERIFY_FLAGS_AUTO_KEY_RETRIEVE to the g_mime_crypto_context_verify()
   method.
 
-- Removed g_mime_gpg_context_[get,set]_retrieve_session_key(). This is now handled by
+- Removed g_mime_crypto_context_[get,set]_retrieve_session_key(). This is now handled by
   passing GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY to the g_mime_crypto_context_decrypt()
   method.
 

@@ -6,8 +6,6 @@ GMIME_MINOR_VERSION
 GMIME_BINARY_AGE
 GMIME_INTERFACE_AGE
 GMIME_CHECK_VERSION
-GMIME_ENABLE_RFC2047_WORKAROUNDS
-GMIME_ENABLE_USE_ONLY_USER_CHARSETS
 g_mime_init
 g_mime_shutdown
 gmime_major_version
@@ -568,7 +566,7 @@ GMimeDataWrapperClass
 <FILE>gmime-param</FILE>
 GMimeParam
 g_mime_param_new
-g_mime_param_new_from_string
+g_mime_param_parse
 g_mime_param_destroy
 g_mime_param_next
 g_mime_param_get_name
@@ -580,24 +578,9 @@ g_mime_param_write_to_string
 
 <SECTION>
 <FILE>gmime-header</FILE>
-GMimeHeaderIter
 GMimeHeaderList
 GMimeHeaderWriter
 GMimeHeaderForeachFunc
-g_mime_header_iter_new
-g_mime_header_iter_free
-g_mime_header_iter_copy
-g_mime_header_iter_copy_to
-g_mime_header_iter_equal
-g_mime_header_iter_first
-g_mime_header_iter_last
-g_mime_header_iter_next
-g_mime_header_iter_prev
-g_mime_header_iter_is_valid
-g_mime_header_iter_get_name
-g_mime_header_iter_get_value
-g_mime_header_iter_set_value
-g_mime_header_iter_remove
 g_mime_header_list_new
 g_mime_header_list_destroy
 g_mime_header_list_clear
@@ -607,20 +590,17 @@ g_mime_header_list_append
 g_mime_header_list_remove
 g_mime_header_list_set
 g_mime_header_list_get
-g_mime_header_list_get_iter
 g_mime_header_list_foreach
 g_mime_header_list_register_writer
 g_mime_header_list_write_to_stream
 g_mime_header_list_to_string
-g_mime_header_list_get_stream
-g_mime_header_list_set_stream
 </SECTION>
 
 <SECTION>
 <FILE>gmime-content-type</FILE>
 GMimeContentType
 g_mime_content_type_new
-g_mime_content_type_new_from_string
+g_mime_content_type_parse
 g_mime_content_type_to_string
 g_mime_content_type_is_type
 g_mime_content_type_get_media_type
@@ -651,8 +631,8 @@ GMIME_DISPOSITION_ATTACHMENT
 GMIME_DISPOSITION_INLINE
 GMimeContentDisposition
 g_mime_content_disposition_new
+g_mime_content_disposition_parse
 g_mime_content_disposition_is_attachment
-g_mime_content_disposition_new_from_string
 g_mime_content_disposition_set_disposition
 g_mime_content_disposition_get_disposition
 g_mime_content_disposition_get_params
@@ -814,7 +794,6 @@ GMimeMultipartEncrypted
 g_mime_multipart_encrypted_new
 g_mime_multipart_encrypted_encrypt
 g_mime_multipart_encrypted_decrypt
-g_mime_multipart_encrypted_decrypt_session
 
 <SUBSECTION Private>
 g_mime_multipart_encrypted_get_type
@@ -851,15 +830,17 @@ GMimeMultipartSignedClass
 
 <SECTION>
 <FILE>gmime-message</FILE>
-GMimeRecipientType
+GMimeAddressType
 GMimeMessage
 g_mime_message_new
 g_mime_message_set_sender
 g_mime_message_get_sender
+g_mime_message_set_from
+g_mime_message_get_from
 g_mime_message_set_reply_to
 g_mime_message_get_reply_to
-g_mime_message_add_recipient
-g_mime_message_get_recipients
+g_mime_message_add_mailbox
+g_mime_message_get_addresses
 g_mime_message_get_all_recipients
 g_mime_message_set_subject
 g_mime_message_get_subject
@@ -1056,6 +1037,7 @@ InternetAddressMailboxClass
 <FILE>internet-address-list</FILE>
 InternetAddressList
 internet_address_list_new
+internet_address_list_parse
 internet_address_list_length
 internet_address_list_clear
 internet_address_list_add
@@ -1069,7 +1051,6 @@ internet_address_list_set_address
 internet_address_list_prepend
 internet_address_list_append
 internet_address_list_to_string
-internet_address_list_parse_string
 internet_address_list_writer
 
 <SUBSECTION Private>
@@ -1138,8 +1119,6 @@ g_mime_charset_step
 g_mime_charset_best_name
 g_mime_charset_best
 g_mime_charset_can_encode
-g_mime_set_user_charsets
-g_mime_user_charsets
 </SECTION>
 
 <SECTION>
@@ -1282,15 +1261,12 @@ g_mime_crypto_context_set_request_password
 g_mime_crypto_context_get_signature_protocol
 g_mime_crypto_context_get_encryption_protocol
 g_mime_crypto_context_get_key_exchange_protocol
-g_mime_crypto_context_get_retrieve_session_key
-g_mime_crypto_context_set_retrieve_session_key
 g_mime_crypto_context_digest_id
 g_mime_crypto_context_digest_name
 g_mime_crypto_context_sign
 g_mime_crypto_context_verify
 g_mime_crypto_context_encrypt
 g_mime_crypto_context_decrypt
-g_mime_crypto_context_decrypt_session
 g_mime_crypto_context_import_keys
 g_mime_crypto_context_export_keys
 <SUBSECTION>
@@ -1332,12 +1308,6 @@ GMimeDecryptResultClass
 <FILE>gmime-gpg-context</FILE>
 GMimeGpgContext
 g_mime_gpg_context_new
-g_mime_gpg_context_get_always_trust
-g_mime_gpg_context_set_always_trust
-g_mime_gpg_context_get_auto_key_retrieve
-g_mime_gpg_context_set_auto_key_retrieve
-g_mime_gpg_context_get_use_agent
-g_mime_gpg_context_set_use_agent
 
 <SUBSECTION Private>
 g_mime_gpg_context_get_type
@@ -1356,8 +1326,6 @@ GMimeGpgContextClass
 <FILE>gmime-pkcs7-context</FILE>
 GMimePkcs7Context
 g_mime_pkcs7_context_new
-g_mime_pkcs7_context_get_always_trust
-g_mime_pkcs7_context_set_always_trust
 
 <SUBSECTION Private>
 g_mime_pkcs7_context_get_type
