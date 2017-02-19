@@ -342,7 +342,6 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
 /**
  * g_mime_application_pkcs7_mime_decrypt:
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
- * @ctx: a #GMimePkcs7Context
  * @flags: a #GMimeDecryptFlags
  * @session_key: session key to use or %NULL
  * @result: the decryption result
@@ -365,22 +364,29 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  * @err to provide information as to why the failure occured.
  **/
 GMimeObject *
-g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx,
+g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 				       GMimeDecryptFlags flags, const char *session_key,
 				       GMimeDecryptResult **result, GError **err)
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;
+	GMimeCryptoContext *ctx;
 	GMimeDecryptResult *res;
 	GMimeObject *decrypted;
 	GMimeParser *parser;
 	
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
-	g_return_val_if_fail (GMIME_IS_PKCS7_CONTEXT (ctx), NULL);
 	
 	if (result)
 		*result = NULL;
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+			     _("Cannot decrypt application/pkcs7-mime part: no crypto context registered for this type."));
+		
+		return NULL;
+	}
 	
 	/* get the ciphertext stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
@@ -394,10 +400,11 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GM
 	g_object_unref (crlf_filter);
 	
 	/* decrypt the content stream */
-	if (!(res = g_mime_crypto_context_decrypt ((GMimeCryptoContext *) ctx, flags, session_key, ciphertext, filtered_stream, err))) {
+	if (!(res = g_mime_crypto_context_decrypt (ctx, flags, session_key, ciphertext, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
+		g_object_unref (ctx);
 		
 		return NULL;
 	}
@@ -405,6 +412,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GM
 	g_mime_stream_flush (filtered_stream);
 	g_object_unref (filtered_stream);
 	g_object_unref (ciphertext);
+	g_object_unref (ctx);
 	
 	g_mime_stream_reset (stream);
 	parser = g_mime_parser_new ();
@@ -497,7 +505,6 @@ g_mime_application_pkcs7_mime_sign (GMimePkcs7Context *ctx, GMimeObject *entity,
 /**
  * g_mime_application_pkcs7_mime_verify:
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
- * @ctx: a #GMimePkcs7Context
  * @flags: a #GMimeVerifyFlags
  * @entity: the extracted entity
  * @err: a #GError
@@ -507,11 +514,69 @@ g_mime_application_pkcs7_mime_sign (GMimePkcs7Context *ctx, GMimeObject *entity,
  * Returns: the list of signers.
  **/
 GMimeSignatureList *
-g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx, GMimeVerifyFlags flags, GMimeObject **entity, GError **err)
+g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags, GMimeObject **entity, GError **err)
 {
+	GMimeStream *filtered_stream, *ciphertext, *stream;
+	GMimeSignatureList *signatures;
+	GMimeDataWrapper *wrapper;
+	GMimeFilter *crlf_filter;
+	GMimeCryptoContext *ctx;
+	GMimeParser *parser;
+	
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
-	g_return_val_if_fail (GMIME_IS_PKCS7_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (entity != NULL, NULL);
 	
-	return NULL;
+	*entity = NULL;
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+			     _("Cannot decrypt application/pkcs7-mime part: no crypto context registered for this type."));
+		
+		return NULL;
+	}
+	
+	/* get the ciphertext stream */
+	wrapper = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
+	ciphertext = g_mime_data_wrapper_get_decoded_stream (wrapper);
+	g_mime_stream_reset (ciphertext);
+	
+	stream = g_mime_stream_mem_new ();
+	filtered_stream = g_mime_stream_filter_new (stream);
+	crlf_filter = g_mime_filter_crlf_new (FALSE, FALSE);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
+	g_object_unref (crlf_filter);
+	
+	/* decrypt the content stream */
+	if (!(signatures = g_mime_crypto_context_verify (ctx, flags, GMIME_DIGEST_ALGO_DEFAULT, ciphertext, NULL, filtered_stream, err))) {
+		g_object_unref (filtered_stream);
+		g_object_unref (ciphertext);
+		g_object_unref (stream);
+		g_object_unref (ctx);
+		
+		return NULL;
+	}
+	
+	g_mime_stream_flush (filtered_stream);
+	g_object_unref (filtered_stream);
+	g_object_unref (ciphertext);
+	g_object_unref (ctx);
+	
+	g_mime_stream_reset (stream);
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	g_object_unref (stream);
+	
+	*entity = g_mime_parser_construct_part (parser);
+	g_object_unref (parser);
+	
+	if (*entity == NULL) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot verify application/pkcs7-mime part: failed to parse extracted content."));
+		
+		g_object_unref (signatures);
+		
+		return NULL;
+	}
+	
+	return signatures;
 }

@@ -326,7 +326,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFl
 	
 	if (!(ctx = g_mime_crypto_context_new (protocol))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot verify multipart/encrypted part: unregistered encryption protocol '%s'."),
+			     _("Cannot decrypt multipart/encrypted part: unregistered encryption protocol '%s'."),
 			     protocol);
 		
 		return NULL;

@@ -82,13 +82,13 @@ GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_new (GMimeSecureMimeTyp
 GMimeSecureMimeType g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_mime);
 
 /*GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_compress (GMimePkcs7Context *ctx, GMimeObject *entity, GError **err);*/
-/*GMimeObject *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx);*/
+/*GMimeObject *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime);*/
 
 GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_encrypt (GMimePkcs7Context *ctx, GMimeObject *entity,
 								  GMimeEncryptFlags flags, GPtrArray *recipients,
 								  GError **err);
 
-GMimeObject *g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx,
+GMimeObject *g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 						    GMimeDecryptFlags flags, const char *session_key,
 						    GMimeDecryptResult **result, GError **err);
 
@@ -96,8 +96,8 @@ GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_sign (GMimePkcs7Context
 							       const char *userid, GMimeDigestAlgo digest,
 							       GError **err);
 
-GMimeSignatureList *g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx,
-							  GMimeVerifyFlags flags, GMimeObject **entity, GError **err);
+GMimeSignatureList *g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags,
+							  GMimeObject **entity, GError **err);
 
 G_END_DECLS
 

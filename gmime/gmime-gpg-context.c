@@ -99,7 +99,8 @@ static const char *gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 static GMimeSignatureList *gpg_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
 				       GMimeDigestAlgo digest, GMimeStream *istream,
-				       GMimeStream *sigstream, GError **err);
+				       GMimeStream *sigstream, GMimeStream *ostream,
+				       GError **err);
 
 static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
 			GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
@@ -597,11 +598,11 @@ gpg_get_signatures (GMimeGpgContext *gpg, gboolean verify)
 
 static GMimeSignatureList *
 gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
-	    GMimeStream *istream, GMimeStream *sigstream, GError **err)
+	    GMimeStream *istream, GMimeStream *sigstream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	gpgme_data_t message, signature;
+	gpgme_data_t message, signature, plaintext;
 	gpgme_error_t error;
 	
 	if ((error = gpgme_data_new_from_cbs (&message, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
@@ -620,15 +621,33 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeDigestAlgo
 		signature = NULL;
 	}
 	
+	/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
+	if (ostream != NULL) {
+		if ((error = gpgme_data_new_from_cbs (&plaintext, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream"));
+			if (signature)
+				gpgme_data_release (signature);
+			gpgme_data_release (message);
+			return NULL;
+		}
+	} else {
+		plaintext = NULL;
+	}
+	
 	// FIXME: enable auto-key-retrieve
 	
-	if ((error = gpgme_op_verify (gpg->ctx, signature, message, NULL)) != GPG_ERR_NO_ERROR) {
+	if ((error = gpgme_op_verify (gpg->ctx, signature, message, plaintext)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify gpg signature"));
+		if (plaintext)
+			gpgme_data_release (plaintext);
 		if (signature)
 			gpgme_data_release (signature);
 		gpgme_data_release (message);
 		return NULL;
 	}
+	
+	if (plaintext)
+		gpgme_data_release (plaintext);
 	
 	if (signature)
 		gpgme_data_release (signature);
