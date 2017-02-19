@@ -617,7 +617,7 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeDigestAl
 	
 	/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
 	if (ostream != NULL) {
-		if ((error = gpgme_data_new_from_cbs (&plaintext, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		if ((error = gpgme_data_new_from_cbs (&plaintext, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream"));
 			if (signature)
 				gpgme_data_release (signature);
