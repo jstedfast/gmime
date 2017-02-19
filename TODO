@@ -3,22 +3,16 @@ the GMime library. This list of tasks in no way indicates priority,
 that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
-GMime 2.8 / 3.0 Planning:
-=========================
+GMime 3.0 Planning:
+===================
 
 - Drop GMime-Sharp support? Not sure it's worth maintaining now that
   I've written MimeKit which will always be a far nicer .NET API
   than I could make GMime-Sharp.
 
-- Modify GMimeStream APIs to take GCancellable and GError arguments.
-
-- Modify g_mime_parser_construct_message() and
-  g_mime_parser_construct_part() methods take GCancellable and GError
-  arguments?
-
 - How about a g_mime_part_get_best_charset()? This one could be
   awkward since it depends on the content being text and also encoded
-  in UTF-8... [ CONSIDERING ]
+  in UTF-8... Maybe this calls for a GMimeTextPart? [ CONSIDERING ]
 
 - Combine GMimeGpgContext and GMimePkcs7Context by using GpgMe for
   both. This could allow g_mime_multipart_encrypted_decrypt() and
@@ -27,6 +21,16 @@ GMime 2.8 / 3.0 Planning:
   out themselves. We'd actually be able to get rid of the need for
   a GMimeCryptoContext parameter altogether if we could rely on
   the backend using a gpg-agent for password requests.
+
+
+Future Planning:
+================
+
+- Modify GMimeStream APIs to take GCancellable and GError arguments.
+
+- Modify GMimeParser APIs to take GCancellable and GError arguments.
+
+- Modify write_to_stream() methods to take GCancellable and GError arguments.
 
 
 All questions and comments should be directed toward the author,
