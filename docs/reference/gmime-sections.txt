@@ -426,6 +426,7 @@ GMIME_FILTER_HTML_CONVERT_NL
 GMIME_FILTER_HTML_CONVERT_SPACES
 GMIME_FILTER_HTML_CONVERT_URLS
 GMIME_FILTER_HTML_MARK_CITATION
+GMIME_FILTER_HTML_BLOCKQUOTE_CITATION
 GMIME_FILTER_HTML_CONVERT_ADDRESSES
 GMIME_FILTER_HTML_ESCAPE_8BIT
 GMIME_FILTER_HTML_CITE
@@ -578,19 +579,26 @@ g_mime_param_write_to_string
 
 <SECTION>
 <FILE>gmime-header</FILE>
+GMimeHeader
 GMimeHeaderList
 GMimeHeaderWriter
-GMimeHeaderForeachFunc
+g_mime_header_get_name
+g_mime_header_get_offset
+g_mime_header_get_value
+g_mime_header_set_value
+g_mime_header_write_to_stream
 g_mime_header_list_new
 g_mime_header_list_destroy
+g_mime_header_list_get_count
 g_mime_header_list_clear
 g_mime_header_list_contains
+g_mime_header_list_get_header
 g_mime_header_list_prepend
 g_mime_header_list_append
 g_mime_header_list_remove
+g_mime_header_list_remove_at
 g_mime_header_list_set
 g_mime_header_list_get
-g_mime_header_list_foreach
 g_mime_header_list_register_writer
 g_mime_header_list_write_to_stream
 g_mime_header_list_to_string
@@ -829,16 +837,38 @@ GMimeMultipartSignedClass
 </SECTION>
 
 <SECTION>
+<FILE>gmime-application-pkcs7-mime</FILE>
+GMimeApplicationPkcs7Mime
+g_mime_application_pkcs7_mime_new
+g_mime_application_pkcs7_mime_encrypt
+g_mime_application_pkcs7_mime_decrypt
+g_mime_application_pkcs7_mime_sign
+g_mime_application_pkcs7_mime_verify
+
+<SUBSECTION Private>
+g_mime_application_pkcs7_mime_get_type
+
+<SUBSECTION Standard>
+GMIME_APPLICATION_PKCS7_MIME
+GMIME_IS_APPLICATION_PKCS7_MIME
+GMIME_TYPE_APPLICATION_PKCS7_MIME
+GMIME_APPLICATION_PKCS7_MIME_CLASS
+GMIME_IS_APPLICATION_PKCS7_MIME_CLASS
+GMIME_APPLICATION_PKCS7_MIME_GET_CLASS
+GMimeApplicationPkcs7MimeClass
+</SECTION>
+
+<SECTION>
 <FILE>gmime-message</FILE>
 GMimeAddressType
 GMimeMessage
 g_mime_message_new
-g_mime_message_set_sender
 g_mime_message_get_sender
-g_mime_message_set_from
 g_mime_message_get_from
-g_mime_message_set_reply_to
 g_mime_message_get_reply_to
+g_mime_message_get_to
+g_mime_message_get_cc
+g_mime_message_get_bcc
 g_mime_message_add_mailbox
 g_mime_message_get_addresses
 g_mime_message_get_all_recipients
@@ -924,8 +954,8 @@ g_mime_references_get_next
 g_mime_references_decode
 g_mime_references_append
 g_mime_references_clear
+g_mime_references_copy
 g_mime_references_free
-g_mime_utils_header_fold
 g_mime_utils_header_printf
 g_mime_utils_quote_string
 g_mime_utils_unquote_string
@@ -979,6 +1009,8 @@ GMIME_UUDECODE_STATE_MASK
 InternetAddress
 internet_address_get_name
 internet_address_set_name
+internet_address_get_charset
+internet_address_set_charset
 internet_address_to_string
 
 <SUBSECTION Private>
@@ -1082,7 +1114,9 @@ g_mime_parser_set_header_regex
 g_mime_parser_tell
 g_mime_parser_eos
 g_mime_parser_construct_part
+g_mime_parser_construct_part_with_options
 g_mime_parser_construct_message
+g_mime_parser_construct_message_with_options
 g_mime_parser_get_from
 g_mime_parser_get_from_offset
 g_mime_parser_get_headers_begin
@@ -1206,15 +1240,12 @@ GMimeCertificateListClass
 <SECTION>
 <FILE>gmime-signature</FILE>
 GMimeSignatureStatus
-GMimeSignatureError
 GMimeSignature
 g_mime_signature_new
 g_mime_signature_get_certificate
 g_mime_signature_set_certificate
 g_mime_signature_get_status
 g_mime_signature_set_status
-g_mime_signature_get_errors
-g_mime_signature_set_errors
 g_mime_signature_get_created
 g_mime_signature_set_created
 g_mime_signature_get_expires
@@ -1255,8 +1286,14 @@ GMimeSignatureListClass
 
 <SECTION>
 <FILE>gmime-crypto-context</FILE>
+GMimeCryptoContextNewFunc
 GMimePasswordRequestFunc
+GMimeDecryptFlags
+GMimeEncryptFlags
+GMimeVerifyFlags
 GMimeCryptoContext
+g_mime_crypto_context_register
+g_mime_crypto_context_new
 g_mime_crypto_context_set_request_password
 g_mime_crypto_context_get_signature_protocol
 g_mime_crypto_context_get_encryption_protocol

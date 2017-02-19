@@ -800,8 +800,6 @@ _g_mime_object_prepend_header (GMimeObject *object, const char *header, const ch
  * @object: a #GMimeObject
  * @header: header name
  * @value: header value
- * @raw_value: raw header value
- * @offset: header offset
  *
  * Prepends a raw, unprocessed header to the MIME object.
  *
