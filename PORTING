@@ -76,6 +76,30 @@ Porting from GMime 2.6 to GMime 3.0
 
 - Removed g_mime_gpg_context_[get,set]_use_agent(). This should no longer be needed.
 
+- Removed g_mime_gpg_context_[get,set]_always_trust(). This is now handled by passing
+  GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST to the g_mime_crypto_context_encrypt() method.
+
+- Removed g_mime_gpg_context_[get,set]_auto_key_retrieve(). This is now handled by
+  passing GMIME_VERIFY_FLAGS_AUTO_KEY_RETRIEVE to the g_mime_crypto_context_verify()
+  method.
+
+- Removed g_mime_gpg_context_[get,set]_retrieve_session_key(). This is now handled by
+  passing GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY to the g_mime_crypto_context_decrypt()
+  method.
+
+- GMimeCryptoContext's encrypt, decrypt, and verify methods now all take a flags argument
+  that can enable additional features (see above examples).
+
+- g_mime_crypto_context_decrypt_session() has been merged with
+  g_mime_crypto_context_decrypt() and so the decryot method now takes a session_key
+  argument that is allowed to be NULL.
+
+- g_mime_multipart_signed_verify() and g_mime_multipart_encrypted_decrypt() no longer
+  take GMimeCryptoContext arguments. Instead, they instantiate their own contexts
+  based on the protocol specified in the Content-Type header. These methods now also
+  take a flags argument and in the case of the decrypt() method, it now also takes a
+  session_key argument.
+
 - GMimeSignatureStatus and GMimeSignatureErrors have been merged into a
   single bitfield (GMimeSignatureStatus) which mirrors gpgme_sigsum_t.
 
