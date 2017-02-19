@@ -90,6 +90,10 @@ Porting from GMime 2.6 to GMime 3.0
 - GMimeCryptoContext's encrypt, decrypt, and verify methods now all take a flags argument
   that can enable additional features (see above examples).
 
+- g_mime_crypto_context_sign() now takes a boolean 'detach' argument that specifies whether
+  or not to generate a detached signature. To get the old behavior, pass TRUE as the
+  detach argument.
+
 - g_mime_crypto_context_decrypt_session() has been merged with
   g_mime_crypto_context_decrypt() and so the decryot method now takes a session_key
   argument that is allowed to be NULL.
