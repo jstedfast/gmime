@@ -68,13 +68,13 @@ get_sig_status (GMimeSignatureList *signatures)
 }
 
 static void
-test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_sign (GMimeCryptoContext *ctx, gboolean detached, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GError *err = NULL;
 	Exception *ex;
 	int rv;
 	
-	rv = g_mime_crypto_context_sign (ctx, TRUE, "alice@example.net",
+	rv = g_mime_crypto_context_sign (ctx, detached, "alice@example.net",
 					 GMIME_DIGEST_ALGO_SHA256,
 					 cleartext, ciphertext, &err);
 	
@@ -91,7 +91,7 @@ test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 }
 
 static void
-test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_verify_detached (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GMimeSignatureList *signatures;
 	GMimeSignatureStatus status;
@@ -106,7 +106,7 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 		g_error_free (err);
 		throw (ex);
 	}
-
+	
 	status = get_sig_status (signatures);
 	
 	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0) {
@@ -115,6 +115,51 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 	}
 	
 	g_object_unref (signatures);
+}
+
+static void
+test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+{
+	GMimeSignatureList *signatures;
+	GMimeSignatureStatus status;
+	Exception *ex = NULL;
+	GMimeStream *stream;
+	GError *err = NULL;
+	GByteArray *buf[2];
+	
+	stream = g_mime_stream_mem_new ();
+	
+	signatures = g_mime_crypto_context_verify (ctx, 0, GMIME_DIGEST_ALGO_DEFAULT,
+						   ciphertext, NULL, stream, &err);
+	
+	if (signatures == NULL) {
+		ex = exception_new ("%s", err->message);
+		g_object_unref (stream);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	status = get_sig_status (signatures);
+	
+	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0) {
+		g_object_unref (signatures);
+		g_object_unref (stream);
+		
+		throw (exception_new ("signature BAD"));
+	}
+	
+	g_object_unref (signatures);
+	
+	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
+	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
+	
+	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+		ex = exception_new ("extracted data does not match original cleartext");
+	
+	g_object_unref (stream);
+	
+	if (ex != NULL)
+		throw (ex);
 }
 
 static void
@@ -355,7 +400,7 @@ int main (int argc, char **argv)
 	what = "GMimePkcs7Context::sign";
 	testsuite_check (what);
 	try {
-		test_sign (ctx, istream, ostream);
+		test_sign (ctx, FALSE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimePkcs7Context::verify";
@@ -363,6 +408,26 @@ int main (int argc, char **argv)
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_verify (ctx, istream, ostream);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
+	
+	g_object_unref (ostream);
+	g_mime_stream_reset (istream);
+	ostream = g_mime_stream_mem_new ();
+	
+	what = "GMimePkcs7Context::sign (detached)";
+	testsuite_check (what);
+	try {
+		test_sign (ctx, TRUE, istream, ostream);
+		testsuite_check_passed ();
+		
+		what = "GMimePkcs7Context::verify (detached)";
+		testsuite_check (what);
+		g_mime_stream_reset (istream);
+		g_mime_stream_reset (ostream);
+		test_verify_deatched (ctx, istream, ostream);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
