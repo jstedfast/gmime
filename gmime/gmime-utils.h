@@ -23,6 +23,7 @@
 #define __GMIME_UTILS_H__
 
 #include <glib.h>
+#include <glib-object.h>
 #include <time.h>
 #include <stdarg.h>
 
@@ -30,6 +31,8 @@
 #include <gmime/gmime-encodings.h>
 
 G_BEGIN_DECLS
+
+#define GMIME_TYPE_REFERENCES (gmime_references_get_type ())
 
 typedef struct _GMimeReferences GMimeReferences;
 
@@ -56,6 +59,7 @@ char *g_mime_utils_generate_message_id (const char *fqdn);
 char *g_mime_utils_decode_message_id (const char *message_id);
 
 /* decode a References or In-Reply-To header */
+GType g_mime_references_get_type (void) G_GNUC_CONST;
 GMimeReferences *g_mime_references_decode (const char *text);
 GMimeReferences *g_mime_references_copy (GMimeReferences *references);
 void g_mime_references_append (GMimeReferences **refs, const char *msgid);

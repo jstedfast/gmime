@@ -1006,6 +1006,9 @@ g_mime_utils_decode_message_id (const char *message_id)
 }
 
 
+G_DEFINE_BOXED_TYPE (GMimeReferences, g_mime_references, g_mime_references_copy, g_mime_references_free);
+
+
 /**
  * g_mime_references_decode:
  * @text: string containing a list of msg-ids

@@ -128,11 +128,7 @@ g_mime_init (void)
 	
 	gmime_gpgme_error_quark = g_quark_from_static_string ("gmime-gpgme");
 	gmime_error_quark = g_quark_from_static_string ("gmime");
-	
-	g_boxed_type_register_static ("GMimeReferences",
-				      (GBoxedCopyFunc) g_mime_references_copy,
-				      (GBoxedFreeFunc) g_mime_references_free);
-	
+
 	/* register our GObject types with the GType system */
 	g_mime_crypto_context_get_type ();
 	g_mime_decrypt_result_get_type ();
