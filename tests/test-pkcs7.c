@@ -74,7 +74,7 @@ test_sign (GMimeCryptoContext *ctx, gboolean detached, GMimeStream *cleartext, G
 	Exception *ex;
 	int rv;
 	
-	rv = g_mime_crypto_context_sign (ctx, detached, "alice@example.net",
+	rv = g_mime_crypto_context_sign (ctx, detached, "mimekit@example.com",
 					 GMIME_DIGEST_ALGO_SHA256,
 					 cleartext, ciphertext, &err);
 	
@@ -170,9 +170,9 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	Exception *ex;
 	
 	recipients = g_ptr_array_new ();
-	g_ptr_array_add (recipients, "alice@example.net");
+	g_ptr_array_add (recipients, "mimekit@example.com");
 	
-	g_mime_crypto_context_encrypt (ctx, sign, "alice@example.net",
+	g_mime_crypto_context_encrypt (ctx, sign, "mimekit@example.com",
 				       GMIME_DIGEST_ALGO_SHA256,
 				       GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST,
 				       recipients, cleartext, ciphertext,
@@ -260,7 +260,7 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 	g_mime_stream_reset (istream);
 	g_object_unref (ostream);
 	
-	keys[0] = "alice@example.net";
+	keys[0] = "mimekit@example.com";
 	keys[1] = NULL;
 	
 	ostream = g_mime_stream_mem_new ();
@@ -277,24 +277,18 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 	
 	inbuf = (const char *) GMIME_STREAM_MEM (istream)->buffer->data;
 	inlen = GMIME_STREAM_MEM (istream)->buffer->len;
-	if ((inptr = strstr (inbuf, "\n\n"))) {
-		/* skip past the headers which may have different version numbers */
-		inptr += 2;
-		inlen -= (inptr - inbuf);
-		inbuf = inptr;
-	}
 	
 	outbuf = (const char *) GMIME_STREAM_MEM (ostream)->buffer->data;
 	outlen = GMIME_STREAM_MEM (ostream)->buffer->len;
-	if (outbuf && (inptr = strstr (outbuf, "\n\n"))) {
-		/* skip past the headers which may have different version numbers */
-		inptr += 2;
-		outlen -= (inptr - outbuf);
-		outbuf = inptr;
-	}
 	
-	if (outlen != inlen || memcmp (outbuf, inbuf, inlen) != 0)
+	if (outlen != inlen || memcmp (outbuf, inbuf, inlen) != 0) {
+		FILE *fp = fopen ("exported.crt", "w");
+		fwrite (outbuf, 1, outlen, fp);
+		fflush (fp);
+		fclose (fp);
+		
 		ex = exception_new ("exported key does not match original key");
+	}
 	
 	g_object_unref (istream);
 	g_object_unref (ostream);
@@ -364,12 +358,7 @@ int main (int argc, char **argv)
 	
 	testsuite_check ("GMimePkcs7Context::import");
 	try {
-		key = g_build_filename (datadir, "alice.pem", NULL);
-		//printf ("importing key: %s\n", key);
-		import_key (ctx, key);
-		g_free (key);
-		
-		key = g_build_filename (datadir, "alice.p12", NULL);
+		key = g_build_filename (datadir, "smime.p12", NULL);
 		//printf ("importing key: %s\n", key);
 		import_key (ctx, key);
 		g_free (key);
@@ -380,7 +369,7 @@ int main (int argc, char **argv)
 		return EXIT_FAILURE;
 	} finally;
 	
-	key = g_build_filename (datadir, "alice.pem", NULL);
+	key = g_build_filename (datadir, "smime.crt", NULL);
 	testsuite_check ("GMimePkcs7Context::export");
 	try {
 		test_export (ctx, key);
@@ -427,7 +416,7 @@ int main (int argc, char **argv)
 		testsuite_check (what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
-		test_verify_deatched (ctx, istream, ostream);
+		test_verify_detached (ctx, istream, ostream);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
@@ -448,26 +437,6 @@ int main (int argc, char **argv)
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_decrypt (ctx, FALSE, istream, ostream);
-		testsuite_check_passed ();
-	} catch (ex) {
-		testsuite_check_failed ("%s failed: %s", what, ex->message);
-	} finally;
-	
-	g_object_unref (ostream);
-	g_mime_stream_reset (istream);
-	ostream = g_mime_stream_mem_new ();
-	
-	what = "GMimePkcs7Context::encrypt+sign";
-	testsuite_check (what);
-	try {
-		test_encrypt (ctx, TRUE, istream, ostream);
-		testsuite_check_passed ();
-		
-		what = "GMimePkcs7Context::decrypt+verify";
-		testsuite_check (what);
-		g_mime_stream_reset (istream);
-		g_mime_stream_reset (ostream);
-		test_decrypt (ctx, TRUE, istream, ostream);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
