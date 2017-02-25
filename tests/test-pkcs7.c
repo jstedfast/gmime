@@ -174,7 +174,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	
 	g_mime_crypto_context_encrypt (ctx, sign, "mimekit@example.com",
 				       GMIME_DIGEST_ALGO_SHA256,
-				       GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST,
+				       GMIME_ENCRYPT_FLAGS_NONE,
 				       recipients, cleartext, ciphertext,
 				       &err);
 	
@@ -358,6 +358,11 @@ int main (int argc, char **argv)
 	
 	testsuite_check ("GMimePkcs7Context::import");
 	try {
+		key = g_build_filename (datadir, "certificate-authority.crt", NULL);
+		//printf ("importing key: %s\n", key);
+		import_key (ctx, key);
+		g_free (key);
+		
 		key = g_build_filename (datadir, "smime.p12", NULL);
 		//printf ("importing key: %s\n", key);
 		import_key (ctx, key);
