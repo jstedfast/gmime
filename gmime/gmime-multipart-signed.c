@@ -373,7 +373,7 @@ check_protocol_supported (const char *protocol, const char *supported)
 GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)
 {
-	const char *supported, *protocol, *micalg;
+	const char *supported, *protocol;
 	GMimeObject *content, *signature;
 	GMimeStream *stream, *sigstream;
 	GMimeSignatureList *signatures;
@@ -398,8 +398,6 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 		
 		return NULL;
 	}
-	
-	micalg = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mps), "micalg");
 	
 	if (!(ctx = g_mime_crypto_context_new (protocol))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
@@ -469,8 +467,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	g_mime_stream_reset (sigstream);
 	
 	/* verify the signature */
-	digest = g_mime_crypto_context_digest_id (ctx, micalg);
-	signatures = g_mime_crypto_context_verify (ctx, flags, digest, stream, sigstream, NULL, err);
+	signatures = g_mime_crypto_context_verify (ctx, flags, stream, sigstream, NULL, err);
 	
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));

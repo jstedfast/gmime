@@ -98,9 +98,8 @@ static const char *gpg_get_encryption_protocol (GMimeCryptoContext *ctx);
 static const char *gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 static GMimeSignatureList *gpg_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
-				       GMimeDigestAlgo digest, GMimeStream *istream,
-				       GMimeStream *sigstream, GMimeStream *ostream,
-				       GError **err);
+				       GMimeStream *istream, GMimeStream *sigstream,
+				       GMimeStream *ostream, GError **err);
 
 static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
 			GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
@@ -597,8 +596,8 @@ gpg_get_signatures (GMimeGpgContext *gpg, gboolean verify)
 #endif /* ENABLE_CRYPTO */
 
 static GMimeSignatureList *
-gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
-	    GMimeStream *istream, GMimeStream *sigstream, GMimeStream *ostream, GError **err)
+gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
+	    GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;

@@ -98,6 +98,8 @@ Porting from GMime 2.6 to GMime 3.0
   g_mime_crypto_context_decrypt() and so the decryot method now takes a session_key
   argument that is allowed to be NULL.
 
+- g_mime_crypto_context_verify() no longer takes a 'digest' argument.
+
 - g_mime_multipart_signed_verify() and g_mime_multipart_encrypted_decrypt() no longer
   take GMimeCryptoContext arguments. Instead, they instantiate their own contexts
   based on the protocol specified in the Content-Type header. These methods now also

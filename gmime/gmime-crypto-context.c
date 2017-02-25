@@ -59,9 +59,8 @@ static int crypto_sign (GMimeCryptoContext *ctx, gboolean detach,
 			GError **err);
 	
 static GMimeSignatureList *crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
-					  GMimeDigestAlgo digest, GMimeStream *istream,
-					  GMimeStream *sigstream, GMimeStream *ostream,
-					  GError **err);
+					  GMimeStream *istream, GMimeStream *sigstream,
+					  GMimeStream *ostream, GError **err);
 	
 static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 			   const char *userid, GMimeDigestAlgo digest,
@@ -391,8 +390,8 @@ g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach, const char
 
 
 static GMimeSignatureList *
-crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
-	       GMimeStream *istream, GMimeStream *sigstream, GMimeStream *ostream, GError **err)
+crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
+	       GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Verifying is not supported by this crypto context");
@@ -405,7 +404,6 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeDigestAlgo 
  * g_mime_crypto_context_verify:
  * @ctx: a #GMimeCryptoContext
  * @flags: a #GMimeVerifyFlags
- * @digest: digest algorithm used, if known
  * @istream: input stream
  * @sigstream: optional detached-signature stream
  * @ostream: optional output stream for use with encapsulated signature input streams
@@ -421,13 +419,13 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeDigestAlgo 
  * the status of each signature or %NULL on error.
  **/
 GMimeSignatureList *
-g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
-			      GMimeStream *istream, GMimeStream *sigstream, GMimeStream *ostream, GError **err)
+g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *istream,
+			      GMimeStream *sigstream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->verify (ctx, flags, digest, istream, sigstream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->verify (ctx, flags, istream, sigstream, ostream, err);
 }
 
 

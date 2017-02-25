@@ -563,7 +563,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	g_object_unref (crlf_filter);
 	
 	/* decrypt the content stream */
-	if (!(signatures = g_mime_crypto_context_verify (ctx, flags, GMIME_DIGEST_ALGO_DEFAULT, ciphertext, NULL, filtered_stream, err))) {
+	if (!(signatures = g_mime_crypto_context_verify (ctx, flags, ciphertext, NULL, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);

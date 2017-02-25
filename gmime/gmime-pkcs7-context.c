@@ -97,9 +97,8 @@ static int pkcs7_sign (GMimeCryptoContext *ctx, gboolean detach,
 		       GError **err);
 	
 static GMimeSignatureList *pkcs7_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
-					 GMimeDigestAlgo digest, GMimeStream *istream,
-					 GMimeStream *sigstream, GMimeStream *ostream,
-					 GError **err);
+					 GMimeStream *istream, GMimeStream *sigstream,
+					 GMimeStream *ostream, GError **err);
 
 static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
 			  GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream,
@@ -591,8 +590,8 @@ pkcs7_get_signatures (GMimePkcs7Context *pkcs7, gboolean verify)
 #endif /* ENABLE_CRYPTO */
 
 static GMimeSignatureList *
-pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeDigestAlgo digest,
-	      GMimeStream *istream, GMimeStream *sigstream, GMimeStream *ostream, GError **err)
+pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
+	      GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;

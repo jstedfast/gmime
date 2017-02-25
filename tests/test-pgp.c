@@ -97,8 +97,7 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 	GError *err = NULL;
 	Exception *ex;
 	
-	signatures = g_mime_crypto_context_verify (ctx, 0, GMIME_DIGEST_ALGO_DEFAULT,
-						   cleartext, ciphertext, NULL, &err);
+	signatures = g_mime_crypto_context_verify (ctx, 0, cleartext, ciphertext, NULL, &err);
 	
 	if (signatures == NULL) {
 		ex = exception_new ("%s", err->message);
