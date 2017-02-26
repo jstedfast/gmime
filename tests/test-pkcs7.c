@@ -162,7 +162,7 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 }
 
 static void
-test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_encrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GPtrArray *recipients;
 	GError *err = NULL;
@@ -171,8 +171,8 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "mimekit@example.com");
 	
-	g_mime_crypto_context_encrypt (ctx, sign, "mimekit@example.com",
-				       GMIME_DIGEST_ALGO_SHA256,
+	g_mime_crypto_context_encrypt (ctx, FALSE, NULL,
+				       GMIME_DIGEST_ALGO_DEFAULT,
 				       GMIME_ENCRYPT_FLAGS_NONE,
 				       recipients, cleartext, ciphertext,
 				       &err);
@@ -433,7 +433,7 @@ int main (int argc, char **argv)
 	what = "GMimePkcs7Context::encrypt";
 	testsuite_check (what);
 	try {
-		test_encrypt (ctx, FALSE, istream, ostream);
+		test_encrypt (ctx, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimePkcs7Context::decrypt";
