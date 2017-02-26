@@ -45,6 +45,7 @@ libgmime_3_0_la_SOURCES = 		\
 	gmime-filter-windows.c		\
 	gmime-filter-yenc.c		\
 	gmime-gpg-context.c		\
+	gmime-gpgme-utils.c		\
 	gmime-header.c			\
 	gmime-iconv.c			\
 	gmime-iconv-utils.c		\
@@ -138,6 +139,7 @@ noinst_HEADERS = 			\
 	gmime-charset-map-private.h	\
 	gmime-table-private.h		\
 	gmime-parse-utils.h		\
+	gmime-gpgme-utils.h		\
 	gmime-internal.h		\
 	gmime-common.h			\
 	gmime-events.h

@@ -31,16 +31,12 @@
 #ifdef ENABLE_CRYPTO
 #include "gmime-filter-charset.h"
 #include "gmime-stream-filter.h"
-#include "gmime-stream-pipe.h"
+#include "gmime-gpgme-utils.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-fs.h"
 #include "gmime-charset.h"
 #endif /* ENABLE_CRYPTO */
 #include "gmime-error.h"
-
-#ifdef ENABLE_CRYPTO
-#include <gpgme.h>
-#endif
 
 #ifdef ENABLE_DEBUG
 #define d(x) x
@@ -192,7 +188,7 @@ gpg_digest_id (GMimeCryptoContext *ctx, const char *name)
 	if (name == NULL)
 		return GMIME_DIGEST_ALGO_DEFAULT;
 	
-	if (!g_ascii_strcasecmp (name, "pgp-"))
+	if (!g_ascii_strncasecmp (name, "pgp-", 4))
 		name += 4;
 	
 	if (!g_ascii_strcasecmp (name, "md2"))
@@ -271,33 +267,6 @@ gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 }
 
 #ifdef ENABLE_CRYPTO
-static gpgme_error_t
-gpg_passphrase_cb (void *hook, const char *uid_hint, const char *passphrase_info, int prev_was_bad, int fd)
-{
-	GMimeCryptoContext *context = (GMimeCryptoContext *) hook;
-	GMimeStream *stream;
-	gpgme_error_t error;
-	GError *err = NULL;
-	gboolean rv;
-	
-	if (context->request_passwd) {
-		stream = g_mime_stream_pipe_new (fd);
-		rv = context->request_passwd (context, uid_hint, passphrase_info, prev_was_bad, stream, &err);
-		g_object_unref (stream);
-	} else {
-		return GPG_ERR_GENERAL;
-	}
-	
-	if (!rv) {
-		error = GPG_ERR_CANCELED;
-		g_error_free (err);
-	} else {
-		error = GPG_ERR_NO_ERROR;
-	}
-	
-	return error;
-}
-
 static ssize_t
 gpg_stream_read (void *stream, void *buffer, size_t size)
 {
@@ -338,113 +307,6 @@ static struct gpgme_data_cbs gpg_stream_funcs = {
 	gpg_stream_free
 };
 
-
-
-#define KEY_IS_OK(k)   (!((k)->expired || (k)->revoked ||	\
-                          (k)->disabled || (k)->invalid))
-
-static gpgme_key_t
-gpg_get_key_by_name (GMimeGpgContext *gpg, const char *name, gboolean secret, GError **err)
-{
-	time_t now = time (NULL);
-	gpgme_key_t key = NULL;
-	gpgme_subkey_t subkey;
-	gboolean bad = FALSE;
-	gpgme_error_t error;
-	int errval = 0;
-	
-	if ((error = gpgme_op_keylist_start (gpg->ctx, name, secret)) != GPG_ERR_NO_ERROR) {
-		if (secret)
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list secret keys for \"%s\": %s"), name, gpgme_strerror (error));
-		else
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\": %s"), name, gpgme_strerror (error));
-		return NULL;
-	}
-	
-	while ((error = gpgme_op_keylist_next (gpg->ctx, &key)) == GPG_ERR_NO_ERROR) {
-		/* check if this key and the relevant subkey are usable */
-		if (KEY_IS_OK (key)) {
-			subkey = key->subkeys;
-			
-			while (subkey && ((secret && !subkey->can_sign) ||
-					  (!secret && !subkey->can_encrypt)))
-				subkey = subkey->next;
-			
-			if (subkey && KEY_IS_OK (subkey) && 
-			    (subkey->expires == 0 || subkey->expires > now))
-				break;
-			
-			if (subkey->expired)
-				errval = GPG_ERR_KEY_EXPIRED;
-			else
-				errval = GPG_ERR_BAD_KEY;
-		} else {
-			if (key->expired)
-				errval = GPG_ERR_KEY_EXPIRED;
-			else
-				errval = GPG_ERR_BAD_KEY;
-		}
-		
-		gpgme_key_unref (key);
-		bad = TRUE;
-		key = NULL;
-	}
-	
-	gpgme_op_keylist_end (gpg->ctx);
-	
-	if (error != GPG_ERR_NO_ERROR && error != GPG_ERR_EOF) {
-		if (secret)
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list secret keys for \"%s\": %s"), name, gpgme_strerror (error));
-		else
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\": %s"), name, gpgme_strerror (error));
-		
-		return NULL;
-	}
-	
-	if (!key) {
-		if (strchr (name, '@')) {
-			if (bad)
-				g_set_error (err, GMIME_GPGME_ERROR, errval,
-					     _("A key for %s is present, but it is expired, disabled, revoked or invalid"),
-					     name);
-			else
-				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
-					     _("Could not find a key for %s"), name);
-		} else {
-			if (bad)
-				g_set_error (err, GMIME_GPGME_ERROR, errval,
-					     _("A key with id %s is present, but it is expired, disabled, revoked or invalid"),
-					     name);
-			else
-				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
-					     _("Could not find a key with id %s"), name);
-		}
-		
-		return NULL;
-	}
-	
-	return key;
-}
-
-static gboolean
-gpg_add_signer (GMimeGpgContext *gpg, const char *signer, GError **err)
-{
-	gpgme_key_t key = NULL;
-	gpgme_error_t error;
-	
-	if (!(key = gpg_get_key_by_name (gpg, signer, TRUE, err)))
-		return FALSE;
-	
-	error = gpgme_signers_add (gpg->ctx, key);
-	gpgme_key_unref (key);
-	
-	if (error != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Failed to add signer \"%s\": %s"), signer, gpgme_strerror (error));
-		return FALSE;
-	}
-	
-	return TRUE;
-}
 #endif /* ENABLE_CRYPTO */
 
 static int
@@ -458,7 +320,7 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMim
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	
-	if (!gpg_add_signer (gpg, userid, err))
+	if (!g_mime_gpgme_add_signer (gpg->ctx, userid, err))
 		return -1;
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
@@ -499,107 +361,6 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMim
 	return -1;
 #endif /* ENABLE_CRYPTO */
 }
-
-#ifdef ENABLE_CRYPTO
-static GMimeCertificateTrust
-gpg_trust (gpgme_validity_t trust)
-{
-	switch (trust) {
-	case GPGME_VALIDITY_UNKNOWN:
-	default:
-		return GMIME_CERTIFICATE_TRUST_NONE;
-	case GPGME_VALIDITY_UNDEFINED:
-		return GMIME_CERTIFICATE_TRUST_UNDEFINED;
-	case GPGME_VALIDITY_NEVER:
-		return GMIME_CERTIFICATE_TRUST_NEVER;
-	case GPGME_VALIDITY_MARGINAL:
-		return GMIME_CERTIFICATE_TRUST_MARGINAL;
-	case GPGME_VALIDITY_FULL:
-		return GMIME_CERTIFICATE_TRUST_FULLY;
-	case GPGME_VALIDITY_ULTIMATE:
-		return GMIME_CERTIFICATE_TRUST_ULTIMATE;
-	}
-}
-
-static GMimeSignatureList *
-gpg_get_signatures (GMimeGpgContext *gpg, gboolean verify)
-{
-	GMimeSignatureList *signatures;
-	GMimeSignature *signature;
-	gpgme_verify_result_t result;
-	gpgme_signature_t sig;
-	gpgme_subkey_t subkey;
-	gpgme_user_id_t uid;
-	gpgme_key_t key;
-	
-	/* get the signature verification results from GpgMe */
-	if (!(result = gpgme_op_verify_result (gpg->ctx)) || !result->signatures)
-		return verify ? g_mime_signature_list_new () : NULL;
-	
-	/* create a new signature list to return */
-	signatures = g_mime_signature_list_new ();
-	
-	sig = result->signatures;
-	
-	while (sig != NULL) {
-		signature = g_mime_signature_new ();
-		g_mime_signature_list_add (signatures, signature);
-		g_mime_signature_set_status (signature, (GMimeSignatureStatus) sig->summary);
-		g_mime_signature_set_expires (signature, sig->exp_timestamp);
-		g_mime_signature_set_created (signature, sig->timestamp);
-		
-		g_mime_certificate_set_pubkey_algo (signature->cert, (GMimePubKeyAlgo) sig->pubkey_algo);
-		g_mime_certificate_set_digest_algo (signature->cert, (GMimeDigestAlgo) sig->hash_algo);
-		g_mime_certificate_set_fingerprint (signature->cert, sig->fpr);
-		
-		if (gpgme_get_key (gpg->ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
-			/* get more signer info from their signing key */
-			g_mime_certificate_set_trust (signature->cert, gpg_trust (key->owner_trust));
-			g_mime_certificate_set_issuer_serial (signature->cert, key->issuer_serial);
-			g_mime_certificate_set_issuer_name (signature->cert, key->issuer_name);
-			
-			/* get the keyid, name, and email address */
-			uid = key->uids;
-			while (uid) {
-				if (uid->name && *uid->name)
-					g_mime_certificate_set_name (signature->cert, uid->name);
-				
-				if (uid->email && *uid->email)
-					g_mime_certificate_set_email (signature->cert, uid->email);
-				
-				if (uid->uid && *uid->uid)
-					g_mime_certificate_set_key_id (signature->cert, uid->uid);
-				
-				if (signature->cert->name && signature->cert->email && signature->cert->keyid)
-					break;
-				
-				uid = uid->next;
-			}
-			
-			/* get the subkey used for signing */
-			subkey = key->subkeys;
-			while (subkey && !subkey->can_sign)
-				subkey = subkey->next;
-			
-			if (subkey) {
-				g_mime_certificate_set_created (signature->cert, subkey->timestamp);
-				g_mime_certificate_set_expires (signature->cert, subkey->expires);
-			}
-			
-			gpgme_key_unref (key);
-		} else {
-			/* If we don't have the signer's public key, then we can't tell what
-			 * the status is, so set it to ERROR if it hasn't already been
-			 * designated as BAD. */
-			g_mime_certificate_set_trust (signature->cert, GMIME_CERTIFICATE_TRUST_UNDEFINED);
-		}
-		
-		sig = sig->next;
-	}
-	
-	return signatures;
-}
-#endif /* ENABLE_CRYPTO */
 
 static GMimeSignatureList *
 gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
@@ -661,28 +422,13 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 		gpgme_data_release (message);
 	
 	/* get/return the gpg signatures */
-	return gpg_get_signatures (gpg, TRUE);
+	return g_mime_gpgme_get_signatures (gpg->ctx, TRUE);
 #else
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
 }
-
-#ifdef ENABLE_CRYPTO
-static void
-key_list_free (gpgme_key_t *keys)
-{
-	gpgme_key_t *key = keys;
-	
-	while (*key != NULL) {
-		gpgme_key_unref (*key);
-		key++;
-	}
-	
-	g_free (keys);
-}
-#endif /* ENABLE_CRYPTO */
 
 static int
 gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMimeDigestAlgo digest,
@@ -704,8 +450,8 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMi
 	/* create an array of recipient keys for GpgMe */
 	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
 	for (i = 0; i < recipients->len; i++) {
-		if (!(key = gpg_get_key_by_name (gpg, recipients->pdata[i], FALSE, err))) {
-			key_list_free (rcpts);
+		if (!(key = g_mime_gpgme_get_key_by_name (gpg->ctx, recipients->pdata[i], FALSE, err))) {
+			g_mime_gpgme_keylist_free (rcpts);
 			return -1;
 		}
 		
@@ -714,23 +460,23 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMi
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		key_list_free (rcpts);
+		g_mime_gpgme_keylist_free (rcpts);
 		return -1;
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+		g_mime_gpgme_keylist_free (rcpts);
 		gpgme_data_release (input);
-		key_list_free (rcpts);
 		return -1;
 	}
 	
 	/* encrypt the input stream */
 	if (sign) {
-		if (!gpg_add_signer (gpg, userid, err)) {
+		if (!g_mime_gpgme_add_signer (gpg->ctx, userid, err)) {
+			g_mime_gpgme_keylist_free (rcpts);
 			gpgme_data_release (output);
 			gpgme_data_release (input);
-			key_list_free (rcpts);
 			return -1;
 		}
 		
@@ -741,9 +487,9 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMi
 		error = gpgme_op_encrypt (gpg->ctx, rcpts, encrypt_flags, input, output);
 	}
 	
+	g_mime_gpgme_keylist_free (rcpts);
 	gpgme_data_release (output);
 	gpgme_data_release (input);
-	key_list_free (rcpts);
 	
 	if (error != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Encryption failed: %s"), gpgme_strerror (error));
@@ -757,42 +503,6 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMi
 	return -1;
 #endif /* ENABLE_CRYPTO */
 }
-
-#ifdef ENABLE_CRYPTO
-static GMimeDecryptResult *
-gpg_get_decrypt_result (GMimeGpgContext *gpg)
-{
-	GMimeDecryptResult *result;
-	gpgme_decrypt_result_t res;
-	gpgme_recipient_t recipient;
-	GMimeCertificate *cert;
-	
-	result = g_mime_decrypt_result_new ();
-	result->recipients = g_mime_certificate_list_new ();
-	result->signatures = gpg_get_signatures (gpg, FALSE);
-	
-	// TODO: ciper, mdc
-	
-	if (!(res = gpgme_op_decrypt_result (gpg->ctx)) || !res->recipients)
-		return result;
-	
-	if (res->session_key)
-		result->session_key = g_strdup (res->session_key);
-	
-	recipient = res->recipients;
-	while (recipient != NULL) {
-		cert = g_mime_certificate_new ();
-		g_mime_certificate_list_add (result->recipients, cert);
-		
-		g_mime_certificate_set_pubkey_algo (cert, (GMimePubKeyAlgo) recipient->pubkey_algo);
-		g_mime_certificate_set_key_id (cert, recipient->keyid);
-		
-		recipient = recipient->next;
-	}
-	
-	return result;
-}
-#endif /* ENABLE_CRYPTO */
 
 static GMimeDecryptResult *
 gpg_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char *session_key,
@@ -846,7 +556,7 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char *s
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
-	return gpg_get_decrypt_result (gpg);
+	return g_mime_gpgme_get_decrypt_result (gpg->ctx);
 #else
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
@@ -940,7 +650,7 @@ g_mime_gpg_context_new (void)
 		return NULL;
 	
 	gpg = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
-	gpgme_set_passphrase_cb (ctx, gpg_passphrase_cb, gpg);
+	gpgme_set_passphrase_cb (ctx, g_mime_gpgme_passphrase_callback, gpg);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_OpenPGP);
 	gpgme_set_armor (ctx, TRUE);
 	gpg->ctx = ctx;

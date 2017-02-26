@@ -31,16 +31,12 @@
 #ifdef ENABLE_CRYPTO
 #include "gmime-filter-charset.h"
 #include "gmime-stream-filter.h"
-#include "gmime-stream-pipe.h"
+#include "gmime-gpgme-utils.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-fs.h"
 #include "gmime-charset.h"
 #endif /* ENABLE_CRYPTO */
 #include "gmime-error.h"
-
-#ifdef ENABLE_CRYPTO
-#include <gpgme.h>
-#endif
 
 #ifdef ENABLE_DEBUG
 #define d(x) x
@@ -267,33 +263,6 @@ pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 }
 
 #ifdef ENABLE_CRYPTO
-static gpgme_error_t
-pkcs7_passphrase_cb (void *hook, const char *uid_hint, const char *passphrase_info, int prev_was_bad, int fd)
-{
-	GMimeCryptoContext *context = (GMimeCryptoContext *) hook;
-	GMimeStream *stream;
-	gpgme_error_t error;
-	GError *err = NULL;
-	gboolean rv;
-	
-	if (context->request_passwd) {
-		stream = g_mime_stream_pipe_new (fd);
-		rv = context->request_passwd (context, uid_hint, passphrase_info, prev_was_bad, stream, &err);
-		g_object_unref (stream);
-	} else {
-		return GPG_ERR_GENERAL;
-	}
-	
-	if (!rv) {
-		error = GPG_ERR_CANCELED;
-		g_error_free (err);
-	} else {
-		error = GPG_ERR_NO_ERROR;
-	}
-	
-	return error;
-}
-
 static ssize_t
 pkcs7_stream_read (void *stream, void *buffer, size_t size)
 {
@@ -422,25 +391,6 @@ pkcs7_get_key_by_name (GMimePkcs7Context *pkcs7, const char *name, gboolean secr
 	return key;
 }
 
-static gboolean
-pkcs7_add_signer (GMimePkcs7Context *pkcs7, const char *signer, GError **err)
-{
-	gpgme_key_t key = NULL;
-	gpgme_error_t error;
-	
-	if (!(key = pkcs7_get_key_by_name (pkcs7, signer, TRUE, err)))
-		return FALSE;
-	
-	error = gpgme_signers_add (pkcs7->ctx, key);
-	gpgme_key_unref (key);
-	
-	if (error != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Failed to add signer \"%s\": %s"), signer, gpgme_strerror (error));
-		return FALSE;
-	}
-	
-	return TRUE;
-}
 #endif /* ENABLE_CRYPTO */
 
 static int
@@ -454,7 +404,7 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	
-	if (!pkcs7_add_signer (pkcs7, userid, err))
+	if (!g_mime_gpgme_add_signer (pkcs7->ctx, userid, err))
 		return -1;
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
@@ -489,107 +439,6 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 	return -1;
 #endif /* ENABLE_CRYPTO */
 }
-
-#ifdef ENABLE_CRYPTO
-static GMimeCertificateTrust
-pkcs7_trust (gpgme_validity_t trust)
-{
-	switch (trust) {
-	case GPGME_VALIDITY_UNKNOWN:
-	default:
-		return GMIME_CERTIFICATE_TRUST_NONE;
-	case GPGME_VALIDITY_UNDEFINED:
-		return GMIME_CERTIFICATE_TRUST_UNDEFINED;
-	case GPGME_VALIDITY_NEVER:
-		return GMIME_CERTIFICATE_TRUST_NEVER;
-	case GPGME_VALIDITY_MARGINAL:
-		return GMIME_CERTIFICATE_TRUST_MARGINAL;
-	case GPGME_VALIDITY_FULL:
-		return GMIME_CERTIFICATE_TRUST_FULLY;
-	case GPGME_VALIDITY_ULTIMATE:
-		return GMIME_CERTIFICATE_TRUST_ULTIMATE;
-	}
-}
-
-static GMimeSignatureList *
-pkcs7_get_signatures (GMimePkcs7Context *pkcs7, gboolean verify)
-{
-	GMimeSignatureList *signatures;
-	GMimeSignature *signature;
-	gpgme_verify_result_t result;
-	gpgme_signature_t sig;
-	gpgme_subkey_t subkey;
-	gpgme_user_id_t uid;
-	gpgme_key_t key;
-	
-	/* get the signature verification results from GpgMe */
-	if (!(result = gpgme_op_verify_result (pkcs7->ctx)) || !result->signatures)
-		return verify ? g_mime_signature_list_new () : NULL;
-	
-	/* create a new signature list to return */
-	signatures = g_mime_signature_list_new ();
-	
-	sig = result->signatures;
-	
-	while (sig != NULL) {
-		signature = g_mime_signature_new ();
-		g_mime_signature_list_add (signatures, signature);
-		g_mime_signature_set_status (signature, (GMimeSignatureStatus) sig->summary);
-		g_mime_signature_set_expires (signature, sig->exp_timestamp);
-		g_mime_signature_set_created (signature, sig->timestamp);
-		
-		g_mime_certificate_set_pubkey_algo (signature->cert, (GMimePubKeyAlgo) sig->pubkey_algo);
-		g_mime_certificate_set_digest_algo (signature->cert, (GMimeDigestAlgo) sig->hash_algo);
-		g_mime_certificate_set_fingerprint (signature->cert, sig->fpr);
-		
-		if (gpgme_get_key (pkcs7->ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
-			/* get more signer info from their signing key */
-			g_mime_certificate_set_trust (signature->cert, pkcs7_trust (key->owner_trust));
-			g_mime_certificate_set_issuer_serial (signature->cert, key->issuer_serial);
-			g_mime_certificate_set_issuer_name (signature->cert, key->issuer_name);
-			
-			/* get the keyid, name, and email address */
-			uid = key->uids;
-			while (uid) {
-				if (uid->name && *uid->name)
-					g_mime_certificate_set_name (signature->cert, uid->name);
-				
-				if (uid->email && *uid->email)
-					g_mime_certificate_set_email (signature->cert, uid->email);
-				
-				if (uid->uid && *uid->uid)
-					g_mime_certificate_set_key_id (signature->cert, uid->uid);
-				
-				if (signature->cert->name && signature->cert->email && signature->cert->keyid)
-					break;
-				
-				uid = uid->next;
-			}
-			
-			/* get the subkey used for signing */
-			subkey = key->subkeys;
-			while (subkey && !subkey->can_sign)
-				subkey = subkey->next;
-			
-			if (subkey) {
-				g_mime_certificate_set_created (signature->cert, subkey->timestamp);
-				g_mime_certificate_set_expires (signature->cert, subkey->expires);
-			}
-			
-			gpgme_key_unref (key);
-		} else {
-			/* If we don't have the signer's public key, then we can't tell what
-			 * the status is, so set it to ERROR if it hasn't already been
-			 * designated as BAD. */
-			g_mime_certificate_set_trust (signature->cert, GMIME_CERTIFICATE_TRUST_UNDEFINED);
-		}
-		
-		sig = sig->next;
-	}
-	
-	return signatures;
-}
-#endif /* ENABLE_CRYPTO */
 
 static GMimeSignatureList *
 pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
@@ -651,7 +500,7 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 		gpgme_data_release (message);
 	
 	/* get/return the pkcs7 signatures */
-	return pkcs7_get_signatures (pkcs7, TRUE);
+	return g_mime_gpgme_get_signatures (pkcs7->ctx, TRUE);
 #else
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
@@ -701,7 +550,7 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
 	for (i = 0; i < recipients->len; i++) {
 		if (!(key = pkcs7_get_key_by_name (pkcs7, recipients->pdata[i], FALSE, err))) {
-			key_list_free (rcpts);
+			g_mime_gpgme_keylist_free (rcpts);
 			return -1;
 		}
 		
@@ -710,22 +559,22 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		key_list_free (rcpts);
+		g_mime_gpgme_keylist_free (rcpts);
 		return -1;
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+		g_mime_gpgme_keylist_free (rcpts);
 		gpgme_data_release (input);
-		key_list_free (rcpts);
 		return -1;
 	}
 	
 	/* encrypt the input stream */
 	error = gpgme_op_encrypt (pkcs7->ctx, rcpts, encrypt_flags, input, output);
+	g_mime_gpgme_keylist_free (rcpts);
 	gpgme_data_release (output);
 	gpgme_data_release (input);
-	key_list_free (rcpts);
 	
 	if (error != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Encryption failed: %s"), gpgme_strerror (error));
@@ -739,42 +588,6 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 	return -1;
 #endif /* ENABLE_CRYPTO */
 }
-
-#ifdef ENABLE_CRYPTO
-static GMimeDecryptResult *
-pkcs7_get_decrypt_result (GMimePkcs7Context *pkcs7)
-{
-	GMimeDecryptResult *result;
-	gpgme_decrypt_result_t res;
-	gpgme_recipient_t recipient;
-	GMimeCertificate *cert;
-	
-	result = g_mime_decrypt_result_new ();
-	result->recipients = g_mime_certificate_list_new ();
-	result->signatures = pkcs7_get_signatures (pkcs7, FALSE);
-	
-	// TODO: ciper, mdc
-	
-	if (!(res = gpgme_op_decrypt_result (pkcs7->ctx)) || !res->recipients)
-		return result;
-	
-	if (res->session_key)
-		result->session_key = g_strdup (res->session_key);
-	
-	recipient = res->recipients;
-	while (recipient != NULL) {
-		cert = g_mime_certificate_new ();
-		g_mime_certificate_list_add (result->recipients, cert);
-		
-		g_mime_certificate_set_pubkey_algo (cert, (GMimePubKeyAlgo) recipient->pubkey_algo);
-		g_mime_certificate_set_key_id (cert, recipient->keyid);
-		
-		recipient = recipient->next;
-	}
-	
-	return result;
-}
-#endif /* ENABLE_CRYPTO */
 
 static GMimeDecryptResult *
 pkcs7_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char *session_key,
@@ -828,7 +641,7 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char 
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
-	return pkcs7_get_decrypt_result (pkcs7);
+	return g_mime_gpgme_get_decrypt_result (pkcs7->ctx);
 #else
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
@@ -921,7 +734,7 @@ g_mime_pkcs7_context_new (void)
 		return NULL;
 	
 	pkcs7 = g_object_newv (GMIME_TYPE_PKCS7_CONTEXT, 0, NULL);
-	gpgme_set_passphrase_cb (ctx, pkcs7_passphrase_cb, pkcs7);
+	gpgme_set_passphrase_cb (ctx, g_mime_gpgme_passphrase_callback, pkcs7);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
 	gpgme_set_textmode (ctx, FALSE);
 	gpgme_set_armor (ctx, FALSE);
