@@ -430,14 +430,18 @@ static gboolean
 gpg_add_signer (GMimeGpgContext *gpg, const char *signer, GError **err)
 {
 	gpgme_key_t key = NULL;
+	gpgme_error_t error;
 	
 	if (!(key = gpg_get_key_by_name (gpg, signer, TRUE, err)))
 		return FALSE;
 	
-	/* set the key (the previous operation guaranteed that it exists, no need
-	 * 2 check return values...) */
-	gpgme_signers_add (gpg->ctx, key);
+	error = gpgme_signers_add (gpg->ctx, key);
 	gpgme_key_unref (key);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Failed to add signer \"%s\": %s"), signer, gpgme_strerror (error));
+		return FALSE;
+	}
 	
 	return TRUE;
 }
@@ -448,7 +452,7 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMim
 	  GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
-	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_NORMAL;
+	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_CLEAR;
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	gpgme_sign_result_t result;
 	gpgme_data_t input, output;
@@ -469,6 +473,8 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMim
 		gpgme_data_release (input);
 		return -1;
 	}
+	
+	gpgme_set_textmode (gpg->ctx, !detach);
 	
 	/* sign the input stream */
 	if ((error = gpgme_op_sign (gpg->ctx, input, output, mode)) != GPG_ERR_NO_ERROR) {

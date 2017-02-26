@@ -426,14 +426,18 @@ static gboolean
 pkcs7_add_signer (GMimePkcs7Context *pkcs7, const char *signer, GError **err)
 {
 	gpgme_key_t key = NULL;
+	gpgme_error_t error;
 	
 	if (!(key = pkcs7_get_key_by_name (pkcs7, signer, TRUE, err)))
 		return FALSE;
 	
-	/* set the key (the previous operation guaranteed that it exists, no need
-	 * 2 check return values...) */
-	gpgme_signers_add (pkcs7->ctx, key);
+	error = gpgme_signers_add (pkcs7->ctx, key);
 	gpgme_key_unref (key);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Failed to add signer \"%s\": %s"), signer, gpgme_strerror (error));
+		return FALSE;
+	}
 	
 	return TRUE;
 }
@@ -452,8 +456,6 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 	
 	if (!pkcs7_add_signer (pkcs7, userid, err))
 		return -1;
-	
-	gpgme_set_armor (pkcs7->ctx, FALSE);
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
@@ -921,6 +923,8 @@ g_mime_pkcs7_context_new (void)
 	pkcs7 = g_object_newv (GMIME_TYPE_PKCS7_CONTEXT, 0, NULL);
 	gpgme_set_passphrase_cb (ctx, pkcs7_passphrase_cb, pkcs7);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
+	gpgme_set_textmode (ctx, FALSE);
+	gpgme_set_armor (ctx, FALSE);
 	pkcs7->ctx = ctx;
 	
 	return (GMimeCryptoContext *) pkcs7;
