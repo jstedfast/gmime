@@ -128,8 +128,7 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 	
 	stream = g_mime_stream_mem_new ();
 	
-	signatures = g_mime_crypto_context_verify (ctx, 0, GMIME_DIGEST_ALGO_DEFAULT,
-						   ciphertext, NULL, stream, &err);
+	signatures = g_mime_crypto_context_verify (ctx, 0, ciphertext, NULL, stream, &err);
 	
 	if (signatures == NULL) {
 		ex = exception_new ("%s", err->message);
