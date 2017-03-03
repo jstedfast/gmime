@@ -1,6 +1,7 @@
 message offsets: 0, 177076
 header offsets: 8, 516
 From - 
+From: nsb
 To: abel, bianchi, braun, cameron, carmen, jfp, jxr, kraut, lamb, lowery, lynn, mlittman, nancyg, sau, shoshi, slr, stornett@flash, tkl
 Subject: Star Trek Party!
 Date: Thu, 19 Sep 1991 12:41:43 -0400
@@ -37,7 +38,7 @@ message offsets: 313493, 319812
 header offsets: 313501, 314146
 From - 
 From: Nathaniel Borenstein <nsb>
-To: Ned Freed <ned@innosoft.com>, Yutaka Sato 佐藤豊  <ysato@etl.go.jp>
+To: Ned Freed <ned@innosoft.com>, Yutaka Sato 佐藤豊 <ysato@etl.go.jp>
 Subject: MIME & int'l mail
 Date: Fri, 12 Jun 1992 13:29:05 -0400
 Content-Type: multipart/alternative
@@ -630,6 +631,7 @@ Content-Type: multipart/alternative
 message offsets: 5299089, 5388899
 header offsets: 5299097, 5299488
 From - 
+From: nsb
 To: dnd
 Subject: Re: Happy New Year
 Date: Tue, 29 Sep 1992 10:19:23 -0400
@@ -838,6 +840,7 @@ Content-Type: multipart/mixed
 message offsets: 5668008, 5669108
 header offsets: 5668016, 5668538
 From - 
+From: devetzis
 To: nsb
 Subject: greek mail
 Date: Tue, 16 Jun 1992 20:33:31 -0400
@@ -1242,7 +1245,7 @@ message offsets: 8515538, 8518092
 header offsets: 8515546, 8516707
 From - 
 From: "Jeffrey A. Stuart" <ncoast!tdi3!tdi4!jstuart@USENET.INS.CWRU.EDU>
-To: IN%, Multiple recipients of list OS2-L <OS2-L@HEARN.nic.SURFnet.nl>
+To: Multiple recipients of list OS2-L <OS2-L@HEARN.nic.SURFnet.nl>
 Subject: Re: New Virus Alert! No
 Date: Tue, 25 Apr 1995 18:28:11 -0400
 Content-Type: application/pgp
@@ -1379,6 +1382,7 @@ Content-Type: MESSAGE/RFC822
 message offsets: 8825126, 8916964
 header offsets: 8825134, 8825578
 From - 
+From: nsb
 To: "David A. Braun" <braun>, John Lamb <lamb>, Michael Littman <mlittman>
 Subject: Singing today?
 Date: Thu, 12 Dec 1991 11:38:21 -0500
