@@ -117,6 +117,8 @@ while (!g_mime_parser_eos (parser)) {
     offset = g_mime_parser_get_from_offset (parser);
     marker = g_mime_parser_get_from (parser);
 }
+
+g_object_unref (parser);
 ```
 
 ### Getting the Body of a Message
