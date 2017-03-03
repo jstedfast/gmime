@@ -17,4 +17,4 @@ script:
   - ./autogen.sh
   - ./configure --disable-mono --enable-coverage && make && make check
 after_success:
-  - coveralls --exclude tests --gcov-options '\-lp'
+  - coveralls --exclude examples --exclude gmime/charset-map.c --exclude gmime/gen-table.c --exclude tests --gcov-options '\-lp'
