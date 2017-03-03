@@ -190,8 +190,7 @@ the next step is learning how to traverse the MIME tree using GMime.
 
 ### Traversing a MimeMessage
 
-The `MimeMessage.Body` is the top-level MIME entity of the message. Generally, it will either be a
-`TextPart` or a `Multipart`.
+The top-level MIME entity of the message will generally either be a `GMimePart` or a `GMimeMultipart`.
 
 As an example, if you wanted to rip out all of the attachments of a message, your code might look
 something like this:
