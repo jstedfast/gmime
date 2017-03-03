@@ -67,7 +67,7 @@ done
 
 if test -z "${AUTOMAKE}"; then
 	echo
-	echo "You must have automake >= 1.9.x installed to compile $PROJECT."
+	echo "You must have automake >= 1.14.x installed to compile $PROJECT."
 	echo "Install the appropriate package for your distribution,"
 	echo "or get the source tarball at http://ftp.gnu.org/gnu/automake/"
 	DIE=1
