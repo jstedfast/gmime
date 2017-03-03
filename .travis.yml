@@ -4,8 +4,17 @@ compiler:
 sudo: required
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y automake gtk-doc-tools gnome-doc-utils libgpgme11 libgpgme11-dev gpgsm
-script:
+  - sudo apt-get install -y automake gtk-doc-tools gnome-doc-utils libgpgme11 libgpgme11-dev gpgsm lcov
+install:
+  - pip install --user cpp-coveralls
+  - gem install coveralls-lcov
+  - lcov --version
   - /usr/bin/gpgme-config --version
+before_script:
+  - cd ${TRAVIS_BUILD_DIR}
+  - lcov --directory . --zerocounters
+script:
   - ./autogen.sh
-  - ./configure --disable-mono && make && make check
+  - ./configure --disable-mono --enable-coverage && make && make check
+after_success:
+  - coveralls --exclude tests --gcov-options '\-lp'
