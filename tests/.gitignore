@@ -4,7 +4,6 @@ Makefile
 .libs/
 *.lo
 *.o
-data
 test-best
 test-cat
 test-headers

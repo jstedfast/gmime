@@ -27,93 +27,234 @@
 
 #include <gmime/gmime.h>
 
+#include "testsuite.h"
 
-void
-print_depth (int depth)
-{
-	int i;
-	
-	for (i = 0; i < depth; i++)
-		fprintf (stdout, "   ");
-}
+extern int verbose;
 
-void
-print_mime_struct (GMimeObject *part, int depth)
+#define d(x)
+#define v(x) if (verbose > 3) x
+
+static gboolean
+streams_match (GMimeStream *expected, GMimeStream *actual)
 {
-	const GMimeContentType *type;
-	GMimeMultipart *multipart;
-	GMimeObject *subpart;
-	int i, n;
+	char buf[4096], dbuf[4096], errstr[1024], *bufptr, *bufend, *dbufptr;
+	gint64 len, totalsize, totalread = 0;
+	size_t nread, size;
+	gint64 offset = 0;
+	ssize_t n;
 	
-	print_depth (depth);
-	type = g_mime_object_get_content_type (part);
-	fprintf (stdout, "Content-Type: %s/%s\n", type->type, type->subtype);
-		
-	if (GMIME_IS_MULTIPART (part)) {
-		multipart = (GMimeMultipart *) part;
-		
-		n = g_mime_multipart_get_count (multipart);
-		for (i = 0; i < n; i++) {
-			subpart = g_mime_multipart_get_part (multipart, i);
-			print_mime_struct (subpart, depth + 1);
-			g_object_unref (subpart);
-		}
+	v(fprintf (stdout, "Checking if streams match... "));
+	
+	if (expected->bound_end != -1) {
+		totalsize = expected->bound_end - expected->position;
+	} else if ((len = g_mime_stream_length (expected)) == -1) {
+		sprintf (errstr, "Error: Unable to get length of expected stream\n");
+		goto fail;
+	} else if (len < (expected->position - expected->bound_start)) {
+		sprintf (errstr, "Error: Overflow on expected stream?\n");
+		goto fail;
+	} else {
+		totalsize = len - (expected->position - expected->bound_start);
 	}
+	
+	while (totalread < totalsize) {
+		if ((n = g_mime_stream_read (expected, buf, sizeof (buf))) <= 0)
+			break;
+		
+		size = n;
+		nread = 0;
+		totalread += n;
+		
+		d(fprintf (stderr, "read %zu bytes from expected stream\n", size));
+		
+		do {
+			if ((n = g_mime_stream_read (actual, dbuf + nread, size - nread)) <= 0) {
+				fprintf (stderr, "actual stream's read(%p, dbuf + %zu, %zu) returned %zd, EOF\n", actual, nread, size - nread, n);
+				break;
+			}
+			d(fprintf (stderr, "read %zd bytes from actual stream\n", n));
+			nread += n;
+		} while (nread < size);
+		
+		if (nread < size) {
+			sprintf (errstr, "Error: actual stream appears to be truncated, short %zu+ bytes\n",
+				 size - nread);
+			goto fail;
+		}
+		
+		bufend = buf + size;
+		dbufptr = dbuf;
+		bufptr = buf;
+		
+		while (bufptr < bufend) {
+			if (*bufptr != *dbufptr)
+				break;
+			
+			dbufptr++;
+			bufptr++;
+		}
+		
+		if (bufptr < bufend) {
+			sprintf (errstr, "Error: content does not match at offset %" G_GINT64_FORMAT "\n",
+				 offset + (bufptr - buf));
+			/*fprintf (stderr, "-->'%.*s'<--\nvs\n-->'%.*s'<--\n",
+			  bufend - bufptr, bufptr, bufend - bufptr, dbufptr);*/
+			goto fail;
+		} else {
+			d(fprintf (stderr, "%zu bytes identical\n", size));
+		}
+		
+		offset += size;
+	}
+	
+	if (totalread < totalsize) {
+		strcpy (errstr, "Error: expected more data from input stream\n");
+		goto fail;
+	}
+	
+	if ((n = g_mime_stream_read (actual, buf, sizeof (buf))) > 0) {
+		strcpy (errstr, "Error: actual stream appears to contain extra content\n");
+		goto fail;
+	}
+	
+	v(fputs ("passed\n", stdout));
+	
+	return TRUE;
+	
+ fail:
+	
+	v(fputs ("failed\n", stdout));
+	v(fputs (errstr, stderr));
+	
+	return FALSE;
 }
-
 
 int main (int argc, char **argv)
 {
+	const char *datadir = "data/partial";
+	GMimeStream *stream, *combined, *expected;
+	GString *input, *output;
 	GMimeMessage *message;
 	GMimeParser *parser;
-	GMimeStream *stream;
 	GPtrArray *partials;
+	int inlen, outlen;
+	GDir *data, *dir;
+	const char *dent;
+	struct stat st;
+	char *path;
 	int fd, i;
-	
-	if (argc < 2)
-		return 0;
 	
 	g_mime_init ();
 	
-	parser = g_mime_parser_new ();
+	testsuite_init (argc, argv);
 	
-	partials = g_ptr_array_new ();
-	for (i = 1; i < argc; i++) {
-		if ((fd = open (argv[i], O_RDONLY, 0)) == -1)
-			return -1;
+	testsuite_start ("message/partial");
+	
+	output = g_string_new (datadir);
+	g_string_append_c (output, G_DIR_SEPARATOR);
+	g_string_append (output, "output");
+	
+	input = g_string_new (datadir);
+	g_string_append_c (input, G_DIR_SEPARATOR);
+	g_string_append (input, "input");
+	
+	if (!(data = g_dir_open (input->str, 0, NULL)))
+		goto exit;
+	
+	g_string_append_c (output, G_DIR_SEPARATOR);
+	g_string_append_c (input, G_DIR_SEPARATOR);
+	outlen = output->len;
+	inlen = input->len;
+	
+	while ((dent = g_dir_read_name (data))) {
+		g_string_append (output, dent);
+		g_string_append (input, dent);
 		
-		stream = g_mime_stream_fs_new (fd);
-		g_mime_parser_init_with_stream (parser, stream);
-		g_object_unref (stream);
+		parser = g_mime_parser_new ();
+		partials = g_ptr_array_new ();
+		dir = NULL;
 		
-		if (!(message = g_mime_parser_construct_message (parser)))
-			return -2;
+		testsuite_check ("%s", dent);
+		try {
+			if (!(dir = g_dir_open (input->str, 0, NULL)))
+				throw (exception_new ("Failed to open `%s'", input->str));
+			
+			while ((dent = g_dir_read_name (dir))) {
+				path = g_build_filename (input->str, dent, NULL);
+				
+				if ((fd = open (path, O_RDONLY, 0)) == -1)
+					throw (exception_new ("Failed to open `%s'", path));
+				
+				stream = g_mime_stream_fs_new (fd);
+				g_mime_parser_init_with_stream (parser, stream);
+				g_object_unref (stream);
+				
+				if (!(message = g_mime_parser_construct_message (parser)))
+					throw (exception_new ("Failed to parse `%s'", path));
+				
+				if (!GMIME_IS_MESSAGE_PARTIAL (message->mime_part)) {
+					g_object_unref (message);
+					throw (exception_new ("`%s' is not a message/partial", path));
+				}
+				
+				g_ptr_array_add (partials, message->mime_part);
+				g_object_ref (message->mime_part);
+				g_object_unref (message);
+				g_free (path);
+				path = NULL;
+			}
+			
+			if (!(message = g_mime_message_partial_reconstruct_message ((GMimeMessagePartial **) partials->pdata, partials->len)))
+				throw (exception_new ("Failed to recombine message/partial `%s'", input->str));
+			
+			combined = g_mime_stream_mem_new ();
+			g_mime_object_write_to_stream (GMIME_OBJECT (message), combined);
+			g_mime_stream_reset (combined);
+			g_object_unref (message);
+			
+			if ((fd = open (output->str, O_RDONLY, 0)) == -1) {
+				fd = open (output->str, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+				expected = g_mime_stream_fs_new (fd);
+				g_mime_stream_write_to_stream (combined, expected);
+				g_object_unref (expected);
+				
+				g_object_unref (combined);
+				throw (exception_new ("Failed to open `%s'", output->str));
+			}
+			
+			expected = g_mime_stream_fs_new (fd);
+			
+			if (!streams_match (expected, combined)) {
+				g_object_unref (combined);
+				g_object_unref (expected);
+				
+				throw (exception_new ("messages do not match for `%s'", input->str));
+			}
+			
+			g_object_unref (combined);
+			g_object_unref (expected);
+			g_dir_close (dir);
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("%s: %s", input->str, ex->message);
+			
+			if (dir != NULL)
+				g_dir_close (dir);
+			
+			g_free (path);
+		} finally;
 		
-		if (!GMIME_IS_MESSAGE_PARTIAL (message->mime_part))
-			return -3;
-		
-		g_ptr_array_add (partials, message->mime_part);
-		g_object_ref (message->mime_part);
-		g_object_unref (message);
+		g_string_truncate (output, outlen);
+		g_string_truncate (input, inlen);
+		g_ptr_array_free (partials, TRUE);
+		g_object_unref (parser);
 	}
 	
-	g_object_unref (parser);
-	
-	message = g_mime_message_partial_reconstruct_message ((GMimeMessagePartial **) partials->pdata,
-							      partials->len);
-	g_ptr_array_free (partials, TRUE);
-	if (!message)
-		return -4;
-	
-	stream = g_mime_stream_fs_new (STDERR_FILENO);
-	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
-	
-	print_mime_struct (message->mime_part, 0);
-	
-	g_object_unref (message);
-	g_object_unref (stream);
+ exit:
+	testsuite_end ();
 	
 	g_mime_shutdown ();
 	
-	return 0;
+	return testsuite_exit ();
 }

@@ -14,6 +14,7 @@ AUTOMATED_TESTS =	\
 	test-streams	\
 	test-cat	\
 	test-headers	\
+	test-partial	\
 	test-mbox	\
 	test-mime
 
@@ -28,8 +29,7 @@ endif
 MANUAL_TESTS =		\
 	test-best	\
 	test-parser 	\
-	test-html 	\
-	test-partial
+	test-html
 
 noinst_PROGRAMS = $(AUTOMATED_TESTS) $(MANUAL_TESTS)
 
@@ -81,7 +81,7 @@ test_iconv_LDFLAGS =
 test_iconv_DEPENDENCIES = $(DEPS)
 test_iconv_LDADD = $(LDADDS)
 
-test_partial_SOURCES = test-partial.c
+test_partial_SOURCES = test-partial.c testsuite.c testsuite.h
 test_partial_LDFLAGS = 
 test_partial_DEPENDENCIES = $(DEPS)
 test_partial_LDADD = $(LDADDS)
