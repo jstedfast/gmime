@@ -57,7 +57,7 @@ fi
 	DIE=1
 }
 
-for automake_version in 1.14 1.15 1.16; do
+for automake_version in 1.9 1.10 1.11 1.12 1.13 1.14 1.15 1.16; do
     if automake-${automake_version} --version < /dev/null > /dev/null 2>&1 ; then
         AUTOMAKE=automake-${automake_version}
         ACLOCAL=aclocal-${automake_version}
@@ -67,7 +67,7 @@ done
 
 if test -z "${AUTOMAKE}"; then
 	echo
-	echo "You must have automake >= 1.14.x installed to compile $PROJECT."
+	echo "You must have automake >= 1.9.x installed to compile $PROJECT."
 	echo "Install the appropriate package for your distribution,"
 	echo "or get the source tarball at http://ftp.gnu.org/gnu/automake/"
 	DIE=1
