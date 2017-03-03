@@ -6,6 +6,6 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y automake gtk-doc-tools gnome-doc-utils libgpgme11 libgpgme11-dev gpgsm
 script:
-  - autoconf --version
+  - /usr/bin/gpgme-config --version
   - ./autogen.sh
   - ./configure --disable-mono && make && make check
