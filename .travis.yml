@@ -1,0 +1,6 @@
+language: c
+compiler:
+  - gcc
+script:
+  - ./autogen.sh
+  - ./configure --disable-mono && make && make check

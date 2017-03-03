@@ -1,5 +1,7 @@
 # GMime
 
+[![Build Status](https://travis-ci.org/jstedfast/gmime.svg)](https://travis-ci.org/jstedfast/gmime)[![Coverity Scan Build Status](https://scan.coverity.com/projects/11948/badge.svg)](https://scan.coverity.com/projects/jstedfast-gmime)
+
 ## What is GMime?
 
 GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose
