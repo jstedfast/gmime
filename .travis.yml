@@ -4,7 +4,7 @@ compiler:
 sudo: required
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y automake gnome-doc-utils libgpgme11 libgpgme11-dev gpgsm
+  - sudo apt-get install -y automake1.15 gtk-doc-tools gnome-doc-utils libgpgme11 libgpgme11-dev gpgsm
 script:
   - ./autogen.sh
   - ./configure --disable-mono && make && make check
