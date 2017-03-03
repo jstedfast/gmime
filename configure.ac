@@ -653,6 +653,73 @@ dnl Check for GObject introspection and Vala binding generator
 GOBJECT_INTROSPECTION_CHECK([1.30.0])
 VAPIGEN_CHECK
 
+dnl ************************************
+dnl *** Enable lcov coverage reports ***
+dnl ************************************
+
+AC_ARG_ENABLE(coverage,
+  AS_HELP_STRING([--enable-coverage],
+		 [enable coverage testing with gcov]),
+  [use_gcov=$enableval], [use_gcov=no])
+
+AS_IF([ test "x$use_gcov" = "xyes"], [
+  dnl we need gcc:
+  if test "$GCC" != "yes"; then
+    AC_MSG_ERROR([GCC is required for --enable-coverage])
+  fi
+
+  dnl Check if ccache is being used
+  AC_CHECK_PROG(SHTOOL, shtool, shtool)
+  case `$SHTOOL path $CC` in
+    *ccache*[)] gcc_ccache=yes;;
+    *[)] gcc_ccache=no;;
+  esac
+
+  if test "$gcc_ccache" = "yes" && (test -z "$CCACHE_DISABLE" || test "$CCACHE_DISABLE" != "1"); then
+    AC_MSG_ERROR([ccache must be disabled when --enable-coverage option is used. You can disable ccache by setting environment variable CCACHE_DISABLE=1.])
+  fi
+
+  ltp_version_list="1.6 1.7 1.8 1.9 1.10"
+  AC_CHECK_PROG(LTP, lcov, lcov)
+  AC_CHECK_PROG(LTP_GENHTML, genhtml, genhtml)
+
+  AS_IF([ test "$LTP" ], [
+    AC_CACHE_CHECK([for ltp version], glib_cv_ltp_version, [
+      glib_cv_ltp_version=invalid
+      ltp_version=`$LTP -v 2>/dev/null | $SED -e 's/^.* //'`
+      for ltp_check_version in $ltp_version_list; do
+        if test "$ltp_version" = "$ltp_check_version"; then
+          glib_cv_ltp_version="$ltp_check_version (ok)"
+        fi
+      done
+    ])
+  ], [
+    ltp_msg="To enable code coverage reporting you must have one of the following LTP versions installed: $ltp_version_list"
+    AC_MSG_ERROR([$ltp_msg])
+  ])
+
+  case $glib_cv_ltp_version in
+    ""|invalid[)]
+      ltp_msg="You must have one of the following versions of LTP: $ltp_version_list (found: $ltp_version)."
+      AC_MSG_ERROR([$ltp_msg])
+      LTP="exit 0;"
+      ;;
+  esac
+
+  if test -z "$LTP_GENHTML"; then
+    AC_MSG_ERROR([Could not find genhtml from the LTP package])
+  fi
+
+  dnl Remove all optimization flags from CFLAGS
+  changequote({,})
+  CFLAGS=`echo "$CFLAGS" | $SED -e 's/-O[0-9]*//g'`
+  changequote([,])
+
+  dnl Add the special gcc flags
+  CFLAGS="$CFLAGS -O0 -fprofile-arcs -ftest-coverage"
+  LDFLAGS="$LDFLAGS -lgcov"
+])
+
 dnl Extra libs
 EXTRA_LIBS="$ZLIB_LIBS"
 if test "x$LIBSOCKET" != "x"; then
