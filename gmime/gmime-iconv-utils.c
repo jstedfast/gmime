@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2014 Jeffrey Stedfast
+ *  Copyright (C) 2000-2017 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -155,7 +155,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n)
 		converted = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
 		if (converted != (size_t) -1 || errno == EINVAL) {
 			/*
-			 * EINVAL  An  incomplete  multibyte sequence has been encoun­
+			 * EINVAL  An  incomplete  multibyte sequence has been encoun-
 			 *         tered in the input.
 			 *
 			 * We'll just have to ignore it...

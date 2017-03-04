@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2014 Jeffrey Stedfast
+ *  Copyright (C) 2000-2017 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -243,7 +243,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				inleft--;
 			} else if (errno == EINVAL) {
 				/*
-				 * EINVAL  An  incomplete  multibyte sequence has been encoun­
+				 * EINVAL  An  incomplete  multibyte sequence has been encoun-
 				 *         tered in the input.
 				 *
 				 * We assume that this can only happen if we've run out of
