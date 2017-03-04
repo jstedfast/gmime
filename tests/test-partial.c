@@ -142,7 +142,7 @@ int main (int argc, char **argv)
 	const char *dent;
 	struct stat st;
 	char *path;
-	int fd, i;
+	int i;
 	
 	g_mime_init ();
 	
@@ -182,10 +182,9 @@ int main (int argc, char **argv)
 			while ((dent = g_dir_read_name (dir))) {
 				path = g_build_filename (input->str, dent, NULL);
 				
-				if ((fd = open (path, O_RDONLY, 0)) == -1)
+				if (!(stream = g_mime_stream_fs_open (path, O_RDONLY, 0)))
 					throw (exception_new ("Failed to open `%s'", path));
 				
-				stream = g_mime_stream_fs_new (fd);
 				g_mime_parser_init_with_stream (parser, stream);
 				g_object_unref (stream);
 				
@@ -212,17 +211,14 @@ int main (int argc, char **argv)
 			g_mime_stream_reset (combined);
 			g_object_unref (message);
 			
-			if ((fd = open (output->str, O_RDONLY, 0)) == -1) {
-				fd = open (output->str, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-				expected = g_mime_stream_fs_new (fd);
+			if (!(expected = g_mime_stream_fs_open (output->str, O_RDONLY, 0))) {
+				expected = g_mime_stream_fs_open (output->str, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 				g_mime_stream_write_to_stream (combined, expected);
 				g_object_unref (expected);
-				
 				g_object_unref (combined);
+				
 				throw (exception_new ("Failed to open `%s'", output->str));
 			}
-			
-			expected = g_mime_stream_fs_new (fd);
 			
 			if (!streams_match (expected, combined)) {
 				g_object_unref (combined);
@@ -252,6 +248,10 @@ int main (int argc, char **argv)
 	}
 	
  exit:
+	g_string_free (output, TRUE);
+	g_string_free (input, TRUE);
+	g_dir_close (data);
+	
 	testsuite_end ();
 	
 	g_mime_shutdown ();

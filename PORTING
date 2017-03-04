@@ -109,6 +109,12 @@ Porting from GMime 2.6 to GMime 3.0
 - GMimeSignatureStatus and GMimeSignatureErrors have been merged into a
   single bitfield (GMimeSignatureStatus) which mirrors gpgme_sigsum_t.
 
+- g_mime_stream_file_new_for_path() has been renamed to
+  g_mime_stream_file_open().
+
+- g_mime_stream_fs_new_for_path() has been renamed to
+  g_mime_stream_fs_open().
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

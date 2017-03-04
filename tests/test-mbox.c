@@ -316,19 +316,15 @@ int main (int argc, char **argv)
 			
 			testsuite_check ("%s", dent);
 			try {
-				if ((fd = open (input, O_RDONLY, 0)) == -1) {
+				if (!(istream = g_mime_stream_fs_open (input, O_RDONLY, 0))) {
 					throw (exception_new ("could not open `%s': %s",
 							      input, g_strerror (errno)));
 				}
 				
-				istream = g_mime_stream_fs_new (fd);
-				
-				if ((fd = open (output, O_RDONLY, 0)) == -1) {
+				if (!(ostream = g_mime_stream_fs_open (output, O_RDONLY, 0))) {
 					throw (exception_new ("could not open `%s': %s",
 							      output, g_strerror (errno)));
 				}
-				
-				ostream = g_mime_stream_fs_new (fd);
 				
 #ifdef ENABLE_MBOX_MATCH
 				tmp = g_strdup_printf ("./tmp/%s.XXXXXX", dent);
@@ -395,10 +391,9 @@ int main (int argc, char **argv)
 		g_dir_close (dir);
 	} else if (S_ISREG (st.st_mode)) {
 		/* manually run test on a single file */
-		if ((fd = open (path, O_RDONLY, 0)) == -1)
+		if (!(istream = g_mime_stream_fs_open (path, O_RDONLY, 0)))
 			goto exit;
 		
-		istream = g_mime_stream_fs_new (fd);
 		parser = g_mime_parser_new_with_stream (istream);
 		g_mime_parser_set_scan_from (parser, TRUE);
 		

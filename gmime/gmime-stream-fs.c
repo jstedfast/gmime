@@ -465,7 +465,7 @@ g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
 
 
 /**
- * g_mime_stream_fs_new_for_path:
+ * g_mime_stream_fs_open:
  * @path: the path to a file
  * @flags: as in open(2)
  * @mode: as in open(2)
@@ -474,11 +474,9 @@ g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
  *
  * Returns: a stream using for reading and/or writing to the specified
  * file path or %NULL on error.
- *
- * Since: 2.6.18
  **/
 GMimeStream *
-g_mime_stream_fs_new_for_path (const char *path, int flags, int mode)
+g_mime_stream_fs_open (const char *path, int flags, int mode)
 {
 	int fd;
 	
