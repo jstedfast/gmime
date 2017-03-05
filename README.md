@@ -78,7 +78,7 @@ GMimeMessage *message;
 GMimeStream *stream;
 GMimeParser *parser;
 
-stream = g_mime_stream_file_new (fopen ("message.eml", "r"));
+stream = g_mime_stream_file_open ("message.eml", "r");
 parser = g_mime_parser_new_with_stream (stream);
 
 /* Note: we can unref the stream now since the GMimeParser has a reference to it... */
