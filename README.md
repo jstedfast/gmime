@@ -208,10 +208,10 @@ while (g_mime_part_iter_next (iter)) {
     if (GMIME_IS_MULTIPART (parent) && GMIME_IS_PART (current)) {
         GMimePart *part = (GMimePart *) current;
 
-	if (g_mime_part_is_attachment (part)) {
+        if (g_mime_part_is_attachment (part)) {
             /* keep track of each attachment's parent multipart */
             g_ptr_array_append (multiparts, parent);
-	    g_ptr_array_append (attachments, part);
+            g_ptr_array_append (attachments, part);
         }
     }
 }
