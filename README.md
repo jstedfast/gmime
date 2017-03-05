@@ -99,7 +99,7 @@ GMimeParser *parser;
 gint64 offset;
 char *marker;
 
-stream = g_mime_stream_file_new (fopen ("Inbox.mbox", "r"));
+stream = g_mime_stream_file_open ("Inbox.mbox", "r");
 parser = g_mime_parser_new_with_stream (stream);
 
 /* tell the parser to scan mbox-style "From " markers */
