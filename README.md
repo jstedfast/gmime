@@ -227,7 +227,7 @@ for (int i = 0; i < attachments->len; i++) {
 
 ### Creating a Simple Message
 
-Creating MIME messages using MimeKit is really trivial.
+Creating MIME messages using GMime is really trivial.
 
 ```csharp
 GMimeMessage *message = g_mime_message_new (TRUE);
@@ -275,22 +275,15 @@ This is the README file for GMime. Additional documentation related to
 development using GMime has been included within the source release
 of GMime.
 
-  docs/reference/       Contains SGML and HTML versions of the GMime
-                        reference manual
-
-  docs/tutorial/        Contains SGML and HTML versions of the GMime
-                        tutorial
-
-  AUTHORS               List of primary authors (source code developers)
-
-  COPYING               The GNU Lesser General Public License, version 2
-
-  INSTALL               In-depth installation instructions
-
-  TODO                  Description of planned GMime development
-
-  PORTING               Guide for developers porting their application
-                        from an older version of GMime
+|               |Description                                                  |
+|---------------|-------------------------------------------------------------|
+|docs/reference/|Contains SGML and HTML versions of the GMime reference manual|
+|docs/tutorial/ |Contains SGML and HTML versions of the GMime tutorial|
+|AUTHORS        |List of primary authors (source code developers)|
+|COPYING        |The GNU Lesser General Public License, version 2|
+|INSTALL        |In-depth installation instructions|
+|TODO           |Description of planned GMime development|
+|PORTING        |Guide for developers porting their application from an older version of GMime|
 
 
 You can find online developer documentation at
