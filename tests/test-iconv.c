@@ -110,37 +110,37 @@ struct {
 	const char *text;
 	const char *charset;
 } tests[] = {
-	{ "ÆtraflÄ±", "utf-8" },                /* az */
-	{ "Äîáàâè Óñëóãà", "windows-cp1251" },      /* bg */
-	{ "Cònjuge", "iso-8859-1" },                /* ca */
-	{ "Avanceret søgning", "iso-8859-1" },      /* da */
-	{ "Löschen", "iso-8859-1" },                /* de */
-	{ "some text", "iso-8859-1" },              /* en */
-	{ "päivää", "iso-8859-15" },                /* fi */
-	{ "Modifié", "iso-8859-1" },                /* fr */
-	{ "Tidéal", "iso-8859-1" },                 /* ga */
-	{ "Fábrica", "iso-8859-1" },                /* gl */
-	{ "Szem-Bélyhívó-A ", "iso-8859-2" },            /* hu */
-	{ "Non c'é corrispondenza", "iso-8859-1" }, /* it */
-	{ "$(B>e5i8!:w(B", "euc-jp" },                   /* ja */
-	{ "$(C0m1^(B $(C0K;v(B", "euc-kr" },                  /* ko */
-	{ "Iðsami paieðka", "iso-8859-13" },        /* lt */
-	{ "Paplaðinâtâ Meklçðana", "iso-8859-13" }, /* lv */
-	{ "Kopiëren", "iso-8859-15" },              /* nl */
-	{ "Øydelagd Søk", "iso-8859-1" },           /* nn */
-	{ "Avansert søk", "iso-8859-1" },           /* no */
-	{ "-B¬ród³a-A ksi-B±¿ki-A adresowej", "iso-8859-2" }, /* pl */
-	{ "C-Bãutare-A avansat-Bã-A ", "iso-8859-2" },      /* ro */
-	{ "-LÀÐáèØàÕÝÝëÙ-A -LßÞØáÚ-A ", "koi8-r" },         /* ru */
-	{ "PokroÄilÃ© hÄ¾adanie", "utf-8" },    /* sk */
-	{ "Ga Å¾elite", "utf-8" },                  /* sl */
-	{ "den ändå?", "iso-8859-1" },              /* sv */
-	{ "Geli-Mþmiþ-A Arama", "iso-8859-9" },         /* tr */
-	{ "õÄÏÓËÏÎÁÌÅÎÉÊ ÐÏÛÕË", "koi8-u" },        /* uk */
+	{ "\xc6\x8ftrafl\xc4\xb1", "utf-8" },                                                      /* az */
+	{ "\xc4\xee\xe1\xe0\xe2\xe8 \xd3\xf1\xeb\xf3\xe3\xe0", "windows-cp1251" },                 /* bg */
+	{ "C\xf2njuge", "iso-8859-1" },                                                            /* ca */
+	{ "Avanceret s\xf8gning", "iso-8859-1" },                                                  /* da */
+	{ "L\xf6schen", "iso-8859-1" },                                                            /* de */
+	{ "some text", "iso-8859-1" },                                                             /* en */
+	{ "p\xe4iv\xe4\xe4", "iso-8859-15" },                                                      /* fi */
+	{ "Modifi\xe9", "iso-8859-1" },                                                            /* fr */
+	{ "Tid\xe9""al", "iso-8859-1" },                                                           /* ga */
+	{ "F\xe1""brica", "iso-8859-1" },                                                          /* gl */
+	{ "Szem\x1b-B\xe9lyh\xedv\xf3\x1b-A ", "iso-8859-2" },                                     /* hu */
+	{ "Non c'\xe9 corrispondenza", "iso-8859-1" },                                             /* it */
+	{ "\x1b$(B>e5i8!:w\x1b(B", "euc-jp" },                                                     /* ja */
+	{ "\x1b$(C0m1^\x1b(B \x1b$(C0K;v\x1b(B", "euc-kr" },                                       /* ko */
+	{ "I\xf0sami paie\xf0ka", "iso-8859-13" },                                                 /* lt */
+	{ "Papla\xf0in\xe2t\xe2 Mekl\xe7\xf0""ana", "iso-8859-13" },                               /* lv */
+	{ "Kopi\xebren", "iso-8859-15" },                                                          /* nl */
+	{ "\xd8ydelagd S\xf8k", "iso-8859-1" },                                                    /* nn */
+	{ "Avansert s\xf8k", "iso-8859-1" },                                                       /* no */
+	{ "\x1b-B\xacr\xf3""d\xb3""a\x1b-A ksi\x1b-B\xb1\xbfki\x1b-A adresowej", "iso-8859-2" },   /* pl */
+	{ "C\x1b-B\xe3utare\x1b-A avansat\x1b-B\xe3\x1b-A ", "iso-8859-2" },                       /* ro */
+	{ "\x1b-L\xc0\xd0\xe1\xe8\xd8\xe0\xd5\xdd\xdd\xeb\xd9\x1b-A \x1b-L\xdf\xde\xd8\xe1\xda\x1b-A ", "koi8-r" }, /* ru */
+	{ "Pokro\xc4\x8dil\xc3\xa9 h\xc4\xbe""adanie", "utf-8" },                                  /* sk */
+	{ "Ga \xc5\xbe""elite", "utf-8" },                                                         /* sl */
+	{ "den \xe4nd\xe5?", "iso-8859-1" },                                                       /* sv */
+	{ "Geli\x1b-M\xfemi\xfe\x1b-A Arama", "iso-8859-9" },                                      /* tr */
+	{ "\xf5\xc4\xcf\xd3\xcb\xcf\xce\xc1\xcc\xc5\xce\xc9\xca \xd0\xcf\xdb\xd5\xcb", "koi8-u" }, /* uk */
 	
 #if 0
 	/* this is expected to fail */
-	{ "é’ÉšŽå°‹æ(I>(B", "utf-8" },         /* zh_TW */
+	{ "\xe9\x92\xc9\x9a\x8e\xe5\xb0\x8b\xe6\x1b(I>\x1b(B", "utf-8" },                          /* zh_TW */
 #endif
 };
 
