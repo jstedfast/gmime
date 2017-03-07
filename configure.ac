@@ -566,89 +566,6 @@ AS_IF([test "x$enable_crypto" = "xyes"], [
 ])
 AM_CONDITIONAL(ENABLE_CRYPTO, test "x$enable_crypto" != "xno")
 
-dnl ****************************
-dnl *** Enable Mono bindings ***
-dnl ****************************
-AC_ARG_ENABLE([mono], 
-	      AC_HELP_STRING([--enable-mono],
-	      [enable Mono bindings [[default=auto]]]),,
-	      [enable_mono="auto"])
-if test "x$enable_mono" != "xno"; then
-	AC_PATH_PROG(CSC, mcs, no)
-	# if we found mcs, make sure it's mono and not something else named
-	# mcs, such as Tru64's /usr/bin/mcs, for manipulating object file
-	# comment sections of eCOFF object files.
-	if test "x$CSC" != "xno"; then
-		AC_MSG_CHECKING([whether $CSC is GNU Mono])
-		$CSC --version > /dev/null 2>&1
-		if test $? -ne 0; then
-			CSC=no
-			AC_MSG_RESULT([no])
-		else
-			AC_MSG_RESULT([yes])
-		fi
-	fi
-else
-	CSC="no"
-fi
-
-if test "x$CSC" = "xno"; then
-	dnl error out if the user has explicitly requested mono bindings
-	if test "x$enable_mono" = "xyes"; then
-		AC_MSG_ERROR([Could not find mcs])
-	fi
-	
-	enable_mono="no"
-	AM_CONDITIONAL(ENABLE_MONO, false)
-else
-	enable_mono="yes"
-	AM_CONDITIONAL(ENABLE_MONO, true)
-fi
-
-if test "x$enable_mono" = "xyes"; then
-	AC_PATH_PROG(GACUTIL, gacutil, no)
-	if test "x$GACUTIL" = "xno"; then
-		AC_MSG_ERROR([Your mono installation doesn't expose gacutil])
-	fi
-	
-	AC_SUBST(CSC)
-	AC_SUBST(GACUTIL)
-	
-	PKG_CHECK_MODULES(GLIB_SHARP, glib-sharp-2.0 >= 2.4.0)
-	AC_SUBST(GLIB_SHARP_LIBS)
-	
-	PKG_CHECK_MODULES(GAPI_TOOLS, gapi-2.0)
-	AC_PATH_PROG(GAPI_CODEGEN, gapi2-codegen, no)
-	if test "x$GAPI_CODEGEN" = "xno"; then
-        	AC_MSG_ERROR([You need to install gtk-sharp2-gapi])
-	fi
-	
-	AC_PATH_PROG(GAPI_FIXUP, gapi2-fixup, no)
-	if test "x$GAPI_FIXUP" = "xno"; then
-        	AC_MSG_ERROR([You need to install gtk-sharp2-gapi])
-	fi
-	
-	AC_PATH_PROG(GAPI_PARSER, gapi2-parser, no)
-	if test "x$GAPI_PARSER" = "xno"; then
-        	AC_MSG_ERROR([You need to install gtk-sharp2-gapi])
-	fi
-	
-	dnl The version should be along the lines of
-	dnl "<major>.<minor>.0.<interface count>", where major and minor are
-	dnl the current major and minor gmime versions, and interface count is
-	dnl incremented any time the mono API changes, which should really
-	dnl only happen within development series.
-	MONO_INTERFACE_VERSION=0
-	API_VERSION="$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.0.$MONO_INTERFACE_VERSION"
-	AC_SUBST(API_VERSION)
-fi
-
-AC_ARG_WITH([gacdir], AC_HELP_STRING([--with-gacdir], [Specify the Global Assembly Cache root directory]),
-            [[with_gacdir=$withval]],
-            [[with_gacdir=\${prefix}/lib]])
-gacdir=$with_gacdir
-AC_SUBST(gacdir)
-
 dnl Check for GObject introspection and Vala binding generator
 GOBJECT_INTROSPECTION_CHECK([1.30.0])
 VAPIGEN_CHECK
@@ -660,9 +577,9 @@ dnl ************************************
 AC_ARG_ENABLE(coverage,
   AS_HELP_STRING([--enable-coverage],
 		 [enable coverage testing with gcov]),
-  [use_gcov=$enableval], [use_gcov=no])
+  [enable_coverage=$enableval], [enable_coverage=no])
 
-AS_IF([ test "x$use_gcov" = "xyes"], [
+AS_IF([ test "x$enable_coverage" = "xyes"], [
   dnl we need gcc:
   if test "$GCC" != "yes"; then
     AC_MSG_ERROR([GCC is required for --enable-coverage])
@@ -768,10 +685,6 @@ examples/Makefile
 util/Makefile
 gmime/Makefile
 gmime/gmime-version.h
-mono/Makefile
-mono/AssemblyInfo.cs
-mono/gmime-sharp.dll.config
-mono/gmime-sharp.pc
 tests/Makefile
 tools/Makefile
 gmime.spec
@@ -787,6 +700,7 @@ Configuration:
   Compiler:             ${CC}
 
   Profiling enabled:    ${enable_profiling}
+  Coverage enabled:     ${enable_coverage}
 
   Large file support:   ${enable_largefile}
   Console warnings:     ${enable_warnings}
@@ -794,6 +708,5 @@ Configuration:
   S/MIME support:       ${enable_crypto}
   Strict parser:        ${enable_strict_parser}
 
-  Mono bindings:        ${enable_mono}
   Vala bindings:        ${enable_vala}
 "

@@ -1,9 +1,0 @@
-Makefile.in
-Makefile
-generated-stamp
-generated/
-AssemblyInfo.cs
-gmime-api.xml
-gmime-sharp*.pc
-gmime-sharp.dll.config
-gmime-sharp.dll

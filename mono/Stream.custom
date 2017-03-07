@@ -1,4 +1,0 @@
-public long Seek (long offset)
-{
-	return this.Seek (offset, GMime.SeekWhence.Set);
-}
