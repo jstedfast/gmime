@@ -6,10 +6,6 @@ tasks are presented in.
 GMime 3.0 Planning:
 ===================
 
-- Drop GMime-Sharp support? Not sure it's worth maintaining now that
-  I've written MimeKit which will always be a far nicer .NET API
-  than I could make GMime-Sharp.
-
 - How about a g_mime_part_get_best_charset()? This one could be
   awkward since it depends on the content being text and also encoded
   in UTF-8... Maybe this calls for a GMimeTextPart? [ CONSIDERING ]
