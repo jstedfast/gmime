@@ -306,10 +306,7 @@ The current list of known bindings are:
 |-----------|----------------------------------------|
 |Go         |https://github.com/sendgrid/go-gmime    |
 |Perl       |http://search.cpan.org/dist/MIME-Fast   |
-|.NET (Mono)|Included in this distribution (Obsolete)|
-
-Note: It is recommended that [MimeKit](https://github.com/jstedfast/MimeKit) be used in place of GMime-Sharp in
-.NET 4.0 (or later) environments.
+|C#         |https://github.com/jstedfast/MimeKit    |
 
 
 # Reporting Bugs
