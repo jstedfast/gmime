@@ -34,8 +34,6 @@
 
 #include "testsuite.h"
 
-#define GPG_PATH "gpg"
-
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
@@ -287,16 +285,22 @@ int main (int argc, char **argv)
 	GMimeStream *istream, *ostream;
 	GMimeCryptoContext *ctx;
 	const char *what;
+	char *gpg, *key;
 	struct stat st;
-	char *key;
 	int i;
 	
 	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	
-	if (testsuite_setup_gpghome (GPG_PATH) != 0)
+	if (!(gpg = g_find_program_in_path ("gpg2")))
+		if (!(gpg = g_find_program_in_path ("gpg")))
+			return EXIT_FAILURE;
+	
+	if (testsuite_setup_gpghome (gpg) != 0)
 		return EXIT_FAILURE;
+	
+	g_free (gpg);
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {

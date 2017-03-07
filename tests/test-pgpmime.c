@@ -35,8 +35,6 @@
 
 #include "testsuite.h"
 
-#define GPG_PATH "gpg"
-
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
@@ -459,15 +457,19 @@ int main (int argc, char *argv[])
 	char *session_key = NULL;
 	GMimeCryptoContext *ctx;
 	GError *err = NULL;
+	char *gpg, *key;
 	struct stat st;
-	char *key;
 	int i;
 	
 	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	
-	if (testsuite_setup_gpghome (GPG_PATH) != 0)
+	if (!(gpg = g_find_program_in_path ("gpg2")))
+		if (!(gpg = g_find_program_in_path ("gpg")))
+			return EXIT_FAILURE;
+	
+	if (testsuite_setup_gpghome (gpg) != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
@@ -513,7 +515,7 @@ int main (int argc, char *argv[])
 	try {
 		create_encrypted_message (ctx, FALSE, &cleartext, &stream);
 		session_key = test_multipart_encrypted (ctx, FALSE, cleartext, stream, NULL);
-		if (testsuite_can_safely_override_session_key (GPG_PATH))
+		if (testsuite_can_safely_override_session_key (gpg))
 			g_free (test_multipart_encrypted (ctx, FALSE, cleartext, stream, session_key));
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -534,7 +536,7 @@ int main (int argc, char *argv[])
 	try {
 		create_encrypted_message (ctx, TRUE, &cleartext, &stream);
 		session_key = test_multipart_encrypted (ctx, TRUE, cleartext, stream, NULL);
-		if (testsuite_can_safely_override_session_key (GPG_PATH))
+		if (testsuite_can_safely_override_session_key (gpg))
 			g_free (test_multipart_encrypted (ctx, TRUE, cleartext, stream, session_key));
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -552,6 +554,7 @@ int main (int argc, char *argv[])
 	}
 	
 	g_object_unref (ctx);
+	g_free (gpg);
 	
 	testsuite_end ();
 	

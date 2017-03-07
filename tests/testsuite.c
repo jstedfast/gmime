@@ -363,7 +363,7 @@ g_throw (Exception *ex)
 static int
 get_gpg_version (const char *path)
 {
-	const char vheader[] = "gpg (GnuPG) ";
+	const char vheader[] = " (GnuPG) ";
 	int v, n = 0, version = 0;
 	const char *inptr;
 	char buffer[128];
@@ -381,8 +381,8 @@ get_gpg_version (const char *path)
 	
 	inptr = fgets (buffer, 128, gpg);
 	pclose (gpg);
-	
-	if (strncmp (inptr, vheader, sizeof (vheader) - 1) != 0)
+
+	if (!(inptr = strstr (inptr, vheader)))
 		return -1;
 	
 	inptr += sizeof (vheader) - 1;
@@ -412,7 +412,7 @@ get_gpg_version (const char *path)
 	return version;
 }
 
-int
+gboolean
 testsuite_can_safely_override_session_key (const char *gpg)
 {
 	return get_gpg_version (gpg) >= v2_1_16;
@@ -423,6 +423,7 @@ testsuite_setup_gpghome (const char *gpg)
 {
 	const char directive[] = "pinentry-mode loopback\n";
 	char *command;
+	FILE *fp;
 	
 	/* reset .gnupg config directory */
 	if (system ("/bin/rm -rf ./tmp") != 0)
@@ -446,9 +447,7 @@ testsuite_setup_gpghome (const char *gpg)
 	g_free (command);
 	
 	if (get_gpg_version (gpg) >= ((2 << 24) | (1 << 16))) {
-		FILE *fp;
-		
-		if ((fp = fopen ("./tmp/.gnupg/gpg.conf", "w")) == NULL)
+		if (!(fp = fopen ("./tmp/.gnupg/gpg.conf", "a")))
 			return EXIT_FAILURE;
 		
 		if (fwrite (directive, sizeof (directive) - 1, 1, fp) != 1) {
