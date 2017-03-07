@@ -15,6 +15,6 @@ before_script:
   - lcov --directory . --zerocounters
 script:
   - ./autogen.sh
-  - ./configure --disable-mono --enable-coverage && make && make check
+  - ./configure --enable-coverage && make && make check
 after_success:
   - coveralls --exclude examples --exclude gmime/charset-map.c --exclude gmime/gen-table.c --exclude tests --gcov-options '\-lp'

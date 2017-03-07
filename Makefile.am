@@ -2,13 +2,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = m4 build util gmime
-
-if ENABLE_MONO
-SUBDIRS += mono
-endif
-
-SUBDIRS += tests docs
+SUBDIRS = m4 build util gmime tests docs
 
 if !PLATFORM_WIN32
 SUBDIRS += examples
