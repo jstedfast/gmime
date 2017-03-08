@@ -618,7 +618,7 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char 
 		gpgme_set_ctx_flag (pkcs7->ctx, "override-session-key", session_key);
 	
 	/* decrypt the input stream */
-	if ((error = gpgme_op_decrypt_verify (pkcs7->ctx, input, output)) != GPG_ERR_NO_ERROR) {
+	if ((error = gpgme_op_decrypt (pkcs7->ctx, input, output)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed: %s"), gpgme_strerror (error));
 		
 		if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
