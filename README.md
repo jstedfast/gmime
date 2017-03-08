@@ -256,7 +256,7 @@ g_mime_text_part_set_text (body, "Hey Alice,\n\n"
     "Will you be my +1?\n\n"
     "-- Joey\n");
 
-g_mime_message_set_mime_part (message, body);
+g_mime_message_set_mime_part (message, (GMimeObject *) body);
 g_object_unref (body);
 ```
 
