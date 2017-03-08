@@ -347,6 +347,7 @@ int main (int argc, char **argv)
 				test_parser (parser, mstream, pstream);
 				
 #ifdef ENABLE_MBOX_MATCH
+				g_mime_stream_flush (mstream);
 				g_mime_stream_reset (istream);
 				g_mime_stream_reset (mstream);
 				if (!streams_match (istream, mstream))

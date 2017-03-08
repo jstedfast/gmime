@@ -214,6 +214,7 @@ int main (int argc, char **argv)
 			if (!(expected = g_mime_stream_file_open (output->str, "r"))) {
 				expected = g_mime_stream_file_open (output->str, "w");
 				g_mime_stream_write_to_stream (combined, expected);
+				g_mime_stream_flush (expected);
 				g_object_unref (expected);
 				g_object_unref (combined);
 				

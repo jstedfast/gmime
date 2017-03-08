@@ -129,7 +129,7 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	char sbuf[100], rbuf[100];
 	ssize_t slen;
 	FILE *fp;
-
+	
 	/* '0x1a' character is treated as EOF (Ctrl+Z) on Windows if file is opened in text mode,
 	 *  thus it's opened in binary mode.
 	 */
@@ -238,8 +238,6 @@ test_stream_mem (const char *filename)
 	testsuite_end ();
 }
 #endif
-
-
 
 
 static gboolean
