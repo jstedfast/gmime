@@ -409,11 +409,13 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+		gpgme_signers_clear (pkcs7->ctx);
 		return -1;
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+		gpgme_signers_clear (pkcs7->ctx);
 		gpgme_data_release (input);
 		return -1;
 	}
@@ -421,11 +423,13 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 	/* sign the input stream */
 	if ((error = gpgme_op_sign (pkcs7->ctx, input, output, mode)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Signing failed: %s"), gpgme_strerror (error));
+		gpgme_signers_clear (pkcs7->ctx);
 		gpgme_data_release (output);
 		gpgme_data_release (input);
 		return -1;
 	}
 	
+	gpgme_signers_clear (pkcs7->ctx);
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
