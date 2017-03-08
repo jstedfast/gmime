@@ -23,6 +23,8 @@
 #endif
 
 #include <glib.h>
+#include <glib/gstdio.h>
+
 #include <stdlib.h>
 #ifdef ENABLE_THREADS
 #include <pthread.h>
@@ -421,7 +423,6 @@ testsuite_can_safely_override_session_key (const char *gpg)
 int
 testsuite_setup_gpghome (const char *gpg)
 {
-	const char directive[] = "pinentry-mode loopback\n";
 	char *command;
 	FILE *fp;
 	
@@ -450,7 +451,7 @@ testsuite_setup_gpghome (const char *gpg)
 		if (!(fp = fopen ("./tmp/.gnupg/gpg.conf", "a")))
 			return EXIT_FAILURE;
 		
-		if (fwrite (directive, sizeof (directive) - 1, 1, fp) != 1) {
+		if (fprintf (fp, "pinentry-mode loopback\n") == -1) {
 			fclose (fp);
 			return EXIT_FAILURE;
 		}
@@ -458,6 +459,17 @@ testsuite_setup_gpghome (const char *gpg)
 		if (fclose (fp))
 			return EXIT_FAILURE;
 	}
+	
+	if (!(fp = fopen ("./tmp/.gnupg/gpgsm.conf", "a")))
+		return EXIT_FAILURE;
+	
+	if (fprintf (fp, "disable-crl-checks\n") == -1) {
+		fclose (fp);
+		return EXIT_FAILURE;
+	}
+	
+	if (fclose (fp))
+		return EXIT_FAILURE;
 	
 	return EXIT_SUCCESS;
 }
