@@ -16,6 +16,7 @@ doltcompile
 doltlibtool
 gmime.spec
 gmime*.pc
+gtk-doc.make
 iconv-detect.h
 install-sh
 libtool
