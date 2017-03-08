@@ -249,21 +249,12 @@ g_object_unref (mailbox);
 
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
-body = g_mime_part_new_with_type ("text", "plain");
-
-stream = g_mime_stream_mem_new ();
-g_mime_stream_printf (stream, "Hey Alice,\n\n");
-g_mime_stream_printf (stream, "What are you up to this weekend? Monica is throwing one of her parties on\n");
-g_mime_stream_printf (stream, "Saturday and I was hoping you could make it.\n\n);
-g_mime_stream_printf (stream, "Will you be my +1?\n\n");
-g_mime_stream_printf (stream, "-- Joey\n");
-g_mime_stream_reset (stream);
-
-content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
-g_object_unref (stream);
-
-g_mime_part_set_content_object (body, content);
-g_object_unref (content);
+body = g_mime_text_part_new_with_subtype ("plain");
+g_mime_text_part_set_text (body, "Hey Alice,\n\n"
+    "What are you up to this weekend? Monica is throwing one of her parties on\n"
+    "Saturday and I was hoping you could make it.\n\n"
+    "Will you be my +1?\n\n"
+    "-- Joey\n");
 
 g_mime_message_set_mime_part (message, body);
 g_object_unref (body);
