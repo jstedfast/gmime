@@ -34,6 +34,7 @@
 #include <gmime/gmime-data-wrapper.h>
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-part.h>
+#include <gmime/gmime-text-part.h>
 #include <gmime/gmime-part-iter.h>
 #include <gmime/gmime-application-pkcs7-mime.h>
 #include <gmime/gmime-multipart.h>

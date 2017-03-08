@@ -259,8 +259,7 @@ int main (int argc, char **argv)
 #endif
 	
 #ifdef STREAM_BUFFER
-	istream = g_mime_stream_buffer_new (stream,
-					    GMIME_STREAM_BUFFER_BLOCK_READ);
+	istream = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_BLOCK_READ);
 	g_object_unref (stream);
 	stream = istream;
 #endif

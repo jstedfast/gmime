@@ -418,11 +418,11 @@ g_mime_stream_filter_new (GMimeStream *stream)
 	filter->source = stream;
 	g_object_ref (stream);
 	
-	g_mime_stream_construct (GMIME_STREAM (filter),
+	g_mime_stream_construct ((GMimeStream *) filter,
 				 stream->bound_start,
 				 stream->bound_end);
 	
-	return GMIME_STREAM (filter);
+	return (GMimeStream *) filter;
 }
 
 

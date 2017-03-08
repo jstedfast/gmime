@@ -75,6 +75,7 @@ libgmime_3_0_la_SOURCES = 		\
 	gmime-stream-mmap.c		\
 	gmime-stream-null.c		\
 	gmime-stream-pipe.c		\
+	gmime-text-part.c		\
 	gmime-utils.c			\
 	internet-address.c
 
@@ -131,6 +132,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-mmap.h		\
 	gmime-stream-null.h		\
 	gmime-stream-pipe.h		\
+	gmime-text-part.h		\
 	gmime-utils.h			\
 	gmime-version.h			\
 	internet-address.h

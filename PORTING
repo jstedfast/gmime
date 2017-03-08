@@ -115,6 +115,11 @@ Porting from GMime 2.6 to GMime 3.0
 - g_mime_stream_fs_new_for_path() has been renamed to
   g_mime_stream_fs_open().
 
+- g_mime_part_new() now returns a GMimePart with a Content-Type of
+  "application/octet-stream" instead of "text/plain" since there is
+  now a GMimeTextPart who's g_mime_text_part_new() returns a
+  GMimeTextPart with a Content-Type of "text/plain".
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

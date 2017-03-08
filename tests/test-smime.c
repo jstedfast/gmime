@@ -157,35 +157,17 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 {
 	GMimeSignatureList *signatures;
 	GMimeMultipartSigned *mps;
-	GMimeDataWrapper *content;
 	InternetAddressList *list;
 	InternetAddress *mailbox;
 	GMimeMessage *message;
 	GMimeStream *stream;
 	GMimeParser *parser;
+	GMimeTextPart *part;
 	GError *err = NULL;
-	GMimePart *part;
 	Exception *ex;
 	
-	part = g_mime_part_new_with_type ("text", "plain");
-	
-	stream = g_mime_stream_mem_new ();
-	g_mime_stream_write_string (stream, MULTIPART_SIGNED_CONTENT);
-#if 0
-	"This is a test of the emergency broadcast system with an sha1 detach-sign.\n\n"
-		"From now on, there will be text to try and break     \t  \n"
-		"various things. For example, the F in \"From\" in the previous line...\n"
-		"...and the first dot of this line have been pre-encoded in the QP encoding "
-		"in order to test that GMime properly treats MIME part content as opaque.\n"
-		"If this still verifies okay, then we have ourselves a winner I guess...\n";
-#endif
-	
-	g_mime_stream_reset (stream);
-	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_object_unref (stream);
-	
-	g_mime_part_set_content_object (part, content);
-	g_object_unref (content);
+	part = g_mime_text_part_new_with_subtype ("plain");
+	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
 	
 	/* create the multipart/signed container part */
 	mps = g_mime_multipart_signed_new ();
@@ -267,7 +249,6 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
 	GMimeDecryptResult *result;
-	GMimeDataWrapper *content;
 	InternetAddressList *list;
 	InternetAddress *mailbox;
 	GMimeObject *decrypted;
@@ -275,21 +256,12 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	GMimeMessage *message;
 	Exception *ex = NULL;
 	GMimeParser *parser;
+	GMimeTextPart *part;
 	GByteArray *buf[2];
 	GError *err = NULL;
-	GMimePart *part;
 	
-	cleartext = g_mime_stream_mem_new ();
-	g_mime_stream_write_string (cleartext, MULTIPART_ENCRYPTED_CONTENT);
-	g_mime_stream_reset (cleartext);
-	
-	content = g_mime_data_wrapper_new ();
-	g_mime_data_wrapper_set_stream (content, cleartext);
-	g_object_unref (cleartext);
-	
-	part = g_mime_part_new_with_type ("text", "plain");
-	g_mime_part_set_content_object (part, content);
-	g_object_unref (content);
+	part = g_mime_text_part_new ();
+	g_mime_text_part_set_text (part, MULTIPART_ENCRYPTED_CONTENT);
 	
 	/* hold onto this for comparison later */
 	cleartext = g_mime_stream_mem_new ();

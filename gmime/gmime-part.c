@@ -437,10 +437,10 @@ mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
  * g_mime_part_new:
  *
  * Creates a new MIME Part object with a default content-type of
- * text/plain.
+ * application/octet-stream.
  *
  * Returns: an empty MIME Part object with a default content-type of
- * text/plain.
+ * application/octet-stream.
  **/
 GMimePart *
 g_mime_part_new (void)
@@ -450,7 +450,7 @@ g_mime_part_new (void)
 	
 	mime_part = g_object_newv (GMIME_TYPE_PART, 0, NULL);
 	
-	content_type = g_mime_content_type_new ("text", "plain");
+	content_type = g_mime_content_type_new ("application", "octet-stream");
 	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), content_type);
 	g_object_unref (content_type);
 	

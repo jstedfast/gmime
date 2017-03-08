@@ -202,35 +202,24 @@ write_message_to_screen (GMimeMessage *message)
 	g_object_unref (stream);
 }
 
-#define PART_CONTENT "Hello, this is the new text/plain part's content text."
+#define TEXT_CONTENT "Hello, this is the new text/plain part's content text."
 
 static void
 add_a_mime_part (GMimeMessage *message)
 {
 	GMimeMultipart *multipart;
 	GMimeDataWrapper *content;
-	GMimePart *mime_part;
+	GMimeTextPart *mime_part;
 	GMimeStream *stream;
 	
 	/* create the new part that we are going to add... */
-	mime_part = g_mime_part_new_with_type ("text", "plain");
+	mime_part = g_mime_text_part_new_with_subtype ("plain");
 	
-	/* create the parts' content stream */
-	stream = g_mime_stream_mem_new_with_buffer (PART_CONTENT, strlen (PART_CONTENT));
-	
-	/* create the content object - since the stream is not base64
-	   or QP encoded or anything, we can use
-	   GMIME_CONTENT_ENCODING_DEFAULT as the encoding type (_DEFAULT
-	   is the same as saying "nothing specified") */
-	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_object_unref (stream);
-	
-	/* set the content object on the new mime part */
-	g_mime_part_set_content_object (mime_part, content);
-	g_object_unref (content);
+	/* set the text content of the mime part */
+	g_mime_text_part_set_text (mime_part, TEXT_CONTENT);
 	
 	/* if we want, we can tell GMime that the content should be base64 encoded when written to disk... */
-	g_mime_part_set_content_encoding (mime_part, GMIME_CONTENT_ENCODING_BASE64);
+	g_mime_part_set_content_encoding ((GMimePart *) mime_part, GMIME_CONTENT_ENCODING_BASE64);
 	
 	/* the "polite" way to modify a mime structure that we didn't
 	   create is to create a new toplevel multipart/mixed part and
