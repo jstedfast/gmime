@@ -62,7 +62,7 @@ get_sig_status (GMimeSignatureList *signatures)
 	
 	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
 		sig = g_mime_signature_list_get_signature (signatures, i);
-		status |= sig->status;
+		status |= g_mime_signature_get_status (sig);
 	}
 	
 	return status;

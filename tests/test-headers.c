@@ -165,8 +165,10 @@ test_remove_at (void)
 static void
 test_header_sync (void)
 {
+	GMimeContentDisposition *disposition;
 	InternetAddressList *list;
 	InternetAddress *addr, *ia;
+	GMimeContentType *type;
 	GMimeMessage *message;
 	GMimeObject *object;
 	const char *value;
@@ -186,28 +188,29 @@ test_header_sync (void)
 			throw (exception_new ("initial content-type header had unexpected value"));
 		
 		/* now change the content-type's media type... */
-		g_mime_content_type_set_media_type (object->content_type, "text");
+		type = g_mime_object_get_content_type (object);
+		g_mime_content_type_set_media_type (type, "text");
 		if (!(value = g_mime_object_get_header (object, "Content-Type")))
 			throw (exception_new ("content-type header was unexpectedly null after changing type"));
 		if (strcmp ("text/octet-stream", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after changing type"));
 		
 		/* now change the content-type's media subtype... */
-		g_mime_content_type_set_media_subtype (object->content_type, "plain");
+		g_mime_content_type_set_media_subtype (type, "plain");
 		if (!(value = g_mime_object_get_header (object, "Content-Type")))
 			throw (exception_new ("content-type header was unexpectedly null after changing subtype"));
 		if (strcmp ("text/plain", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after changing subtype"));
 		
 		/* now change the content-type's parameters by setting a param */
-		g_mime_content_type_set_parameter (object->content_type, "format", "flowed");
+		g_mime_content_type_set_parameter (type, "format", "flowed");
 		if (!(value = g_mime_object_get_header (object, "Content-Type")))
 			throw (exception_new ("content-type header was unexpectedly null after setting a param"));
 		if (strcmp ("text/plain; format=flowed", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after setting a param"));
 		
 		/* now change the content-type's parameters by setting a param list */
-		g_mime_content_type_set_params (object->content_type, NULL);
+		g_mime_content_type_set_params (type, NULL);
 		if (!(value = g_mime_object_get_header (object, "Content-Type")))
 			throw (exception_new ("content-type header was unexpectedly null after setting params"));
 		if (strcmp ("text/plain", value) != 0)
@@ -231,21 +234,22 @@ test_header_sync (void)
 			throw (exception_new ("initial content-disposition header had unexpected value"));
 		
 		/* now change the content-disposition's disposition */
-		g_mime_content_disposition_set_disposition (object->disposition, "inline");
+		disposition = g_mime_object_get_content_disposition (object);
+		g_mime_content_disposition_set_disposition (disposition, "inline");
 		if (!(value = g_mime_object_get_header (object, "Content-Disposition")))
 			throw (exception_new ("content-disposition header was unexpectedly null after changing type"));
 		if (strcmp ("inline", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after changing type"));
 		
 		/* now change the content-disposition's parameters by setting a param */
-		g_mime_content_disposition_set_parameter (object->disposition, "filename", "hello.txt");
+		g_mime_content_disposition_set_parameter (disposition, "filename", "hello.txt");
 		if (!(value = g_mime_object_get_header (object, "Content-Disposition")))
 			throw (exception_new ("content-disposition header was unexpectedly null after setting a param"));
 		if (strcmp ("inline; filename=hello.txt", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after setting a param"));
 		
 		/* now change the content-disposition's parameters by setting a param list */
-		g_mime_content_disposition_set_params (object->disposition, NULL);
+		g_mime_content_disposition_set_params (disposition, NULL);
 		if (!(value = g_mime_object_get_header (object, "Content-Disposition")))
 			throw (exception_new ("content-disposition header was unexpectedly null after setting params"));
 		if (strcmp ("inline", value) != 0)

@@ -58,17 +58,21 @@ print_depth (GMimeStream *stream, int depth)
 static void
 print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 {
-	const GMimeContentType *type;
 	GMimeMultipart *multipart;
 	GMimeMessagePart *mpart;
+	GMimeContentType *type;
 	GMimeObject *subpart;
+	GMimeObject *body;
+	GMimeMessage *msg;
 	int i, n;
 	
 	print_depth (stream, depth);
 	
 	type = g_mime_object_get_content_type (part);
 	
-	g_mime_stream_printf (stream, "Content-Type: %s/%s\n", type->type, type->subtype);
+	g_mime_stream_printf (stream, "Content-Type: %s/%s\n",
+			      g_mime_content_type_get_media_type (type),
+			      g_mime_content_type_get_media_subtype (type));
 	
 	if (GMIME_IS_MULTIPART (part)) {
 		multipart = (GMimeMultipart *) part;
@@ -80,9 +84,13 @@ print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 		}
 	} else if (GMIME_IS_MESSAGE_PART (part)) {
 		mpart = (GMimeMessagePart *) part;
+		msg = g_mime_message_part_get_message (mpart);
 		
-		if (mpart->message)
-			print_mime_struct (stream, mpart->message->mime_part, depth + 1);
+		if (msg != NULL) {
+			body = g_mime_message_get_mime_part (msg);
+			
+			print_mime_struct (stream, body, depth + 1);
+		}
 	}
 }
 
@@ -94,6 +102,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 	GMimeMessage *message;
 	char *marker, *buf;
 	const char *subject;
+	GMimeObject *body;
 	int tz_offset;
 	int nmsg = 0;
 	time_t date;
@@ -139,7 +148,8 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		g_mime_stream_printf (summary, "Date: %s\n", buf);
 		g_free (buf);
 		
-		print_mime_struct (summary, message->mime_part, 0);
+		body = g_mime_message_get_mime_part (message);
+		print_mime_struct (summary, body, 0);
 		g_mime_stream_write (summary, "\n", 1);
 		
 		if (mbox) {

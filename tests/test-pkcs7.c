@@ -62,7 +62,7 @@ get_sig_status (GMimeSignatureList *signatures)
 	
 	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
 		sig = g_mime_signature_list_get_signature (signatures, i);
-		status |= sig->status;
+		status |= g_mime_signature_get_status (sig);
 	}
 	
 	return status;
@@ -191,9 +191,9 @@ test_encrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 }
 
 static void
-test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_decrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
-	GMimeSignatureStatus status;
+	GMimeCertificateList *recipients;
 	GMimeDecryptResult *result;
 	Exception *ex = NULL;
 	GMimeStream *stream;
@@ -209,14 +209,11 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 		throw (ex);
 	}
 	
-	if (sign) {
-		status = get_sig_status (result->signatures);
+	if (!(recipients = g_mime_decrypt_result_get_recipients (result))) {
+		g_object_unref (result);
+		g_object_unref (stream);
 		
-		if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
-			ex = exception_new ("expected GOOD signature");
-	} else {
-		if (result->signatures)
-			ex = exception_new ("unexpected signature");
+		throw (exception_new ("Failed to get recipients"));
 	}
 	
 	g_object_unref (result);
@@ -436,7 +433,7 @@ int main (int argc, char **argv)
 		testsuite_check (what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
-		test_decrypt (ctx, FALSE, istream, ostream);
+		test_decrypt (ctx, istream, ostream);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);

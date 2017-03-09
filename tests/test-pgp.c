@@ -58,7 +58,7 @@ get_sig_status (GMimeSignatureList *signatures)
 	
 	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
 		sig = g_mime_signature_list_get_signature (signatures, i);
-		status |= sig->status;
+		status |= g_mime_signature_get_status (sig);
 	}
 	
 	return status;
@@ -142,6 +142,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 static void
 test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeSignatureList *signatures;
 	GMimeSignatureStatus status;
 	GMimeDecryptResult *result;
 	Exception *ex = NULL;
@@ -158,13 +159,19 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 		throw (ex);
 	}
 	
+	signatures = g_mime_decrypt_result_get_signatures (result);
+	
 	if (sign) {
-		status = get_sig_status (result->signatures);
-		
-		if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
-			ex = exception_new ("expected GOOD signature");
+		if (signatures != NULL) {
+			status = get_sig_status (signatures);
+			
+			if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
+				ex = exception_new ("expected GOOD signature");
+		} else {
+			ex = exception_new ("Failed to get signatures");
+		}
 	} else {
-		if (result->signatures != NULL)
+		if (signatures != NULL)
 			ex = exception_new ("unexpected signature");
 	}
 	
@@ -180,8 +187,8 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 		throw (ex);
 	}
 	
-	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
-	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
+	buf[0] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) cleartext);
+	buf[1] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("decrypted data does not match original cleartext");

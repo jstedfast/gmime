@@ -533,6 +533,7 @@ static void
 test_rfc2184 (GMimeParserOptions *options)
 {
 	GMimeParam param, *params;
+	const char *value;
 	GString *str;
 	size_t n;
 	guint i;
@@ -560,7 +561,8 @@ test_rfc2184 (GMimeParserOptions *options)
 			if (params->next != NULL)
 				throw (exception_new ("parsed more than a single param?"));
 			
-			if (strcmp (rfc2184[i].input, params->value) != 0)
+			value = g_mime_param_get_value (params);
+			if (strcmp (rfc2184[i].input, value) != 0)
 				throw (exception_new ("parsed param value does not match"));
 			
 			testsuite_check_passed ();
@@ -634,12 +636,12 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	testsuite_start ("addr-spec parser (strict)");
-	options->rfc2047 = GMIME_RFC_COMPLIANCE_STRICT;
+	g_mime_parser_options_set_rfc2047_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT);
 	test_addrspec (options, FALSE);
 	testsuite_end ();
 	
 	testsuite_start ("addr-spec parser (loose)");
-	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
+	g_mime_parser_options_set_rfc2047_compliance_mode (options, GMIME_RFC_COMPLIANCE_LOOSE);
 	test_addrspec (options, TRUE);
 	testsuite_end ();
 	
@@ -648,12 +650,12 @@ int main (int argc, char **argv)
 	testsuite_end ();
 	
 	testsuite_start ("rfc2047 encoding/decoding (strict)");
-	options->rfc2047 = GMIME_RFC_COMPLIANCE_STRICT;
+	g_mime_parser_options_set_rfc2047_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT);
 	test_rfc2047 (options, FALSE);
 	testsuite_end ();
 	
 	testsuite_start ("rfc2047 encoding/decoding (loose)");
-	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
+	g_mime_parser_options_set_rfc2047_compliance_mode (options, GMIME_RFC_COMPLIANCE_LOOSE);
 	test_rfc2047 (options, TRUE);
 	testsuite_end ();
 	

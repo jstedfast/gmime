@@ -423,14 +423,18 @@ testsuite_can_safely_override_session_key (const char *gpg)
 int
 testsuite_setup_gpghome (const char *gpg)
 {
-	char *command;
+	const char *files[] = { "./tmp/.gnupg/gpg.conf", "./tmp/.gnupg/gpgsm.conf", "./tmp/.gnupg/gpg-agent.conf", "./tmp/.gnupg/dirmngr.conf", NULL };
+	const char debug[] = "log-file socket://%s/tmp/.gnupg/S.log\ndebug 1024\nverbose\n";
+	char *command, *cwd;
 	FILE *fp;
+	int i;
 	
 	/* reset .gnupg config directory */
-	if (system ("/bin/rm -rf ./tmp") != 0)
-		return EXIT_FAILURE;
-	if (system ("/bin/mkdir ./tmp") != 0)
-		return EXIT_FAILURE;
+	//if (system ("/bin/rm -rf ./tmp") != 0)
+	//	return EXIT_FAILURE;
+	
+	//if (g_mkdir ("./tmp", 0755) != 0)
+	//	return EXIT_FAILURE;
 	
 	g_setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
 	
@@ -438,6 +442,8 @@ testsuite_setup_gpghome (const char *gpg)
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
 	g_unsetenv ("DISPLAY");
 	g_unsetenv ("GPG_TTY");
+	
+	return 0;
 	
         command = g_strdup_printf ("%s --list-keys > /dev/null 2>&1", gpg);
 	if (system (command) != 0) {
@@ -471,14 +477,34 @@ testsuite_setup_gpghome (const char *gpg)
 	if (fclose (fp))
 		return EXIT_FAILURE;
 	
+	cwd = g_get_current_dir ();
+	
+	for (i = 0; files[i]; i++) {
+		if (!(fp = fopen (files[i], "a")))
+			return EXIT_FAILURE;
+		
+		if (fprintf (fp, debug, cwd) == -1) {
+			g_free (cwd);
+			fclose (fp);
+			return EXIT_FAILURE;
+		}
+		
+		if (fclose (fp)) {
+			g_free (cwd);
+			return EXIT_FAILURE;
+		}
+	}
+	
+	g_free (cwd);
+	
 	return EXIT_SUCCESS;
 }
 
 int
 testsuite_destroy_gpghome (void)
 {
-	if (system ("/bin/rm -rf ./tmp") != 0)
-		return EXIT_FAILURE;
+	//if (system ("/bin/rm -rf ./tmp") != 0)
+	//	return EXIT_FAILURE;
 	return EXIT_SUCCESS;
 }
 
