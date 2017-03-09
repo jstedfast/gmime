@@ -233,8 +233,6 @@ Creating MIME messages using GMime is really trivial.
 GMimeMessage *message = g_mime_message_new (TRUE);
 InternetAddressMailbox *mailbox;
 InternetAddressList *list;
-GMimeDataWrapper *content;
-GMimeStream *stream;
 GMimePart *body;
 
 list = g_mime_message_get_from (message);
