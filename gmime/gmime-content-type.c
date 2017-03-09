@@ -123,8 +123,8 @@ g_mime_content_type_finalize (GObject *object)
 
 /**
  * g_mime_content_type_new:
- * @type: MIME type (or %NULL for "text")
- * @subtype: MIME subtype (or %NULL for "plain")
+ * @type: the MIME type or %NULL for the default value
+ * @subtype: the MIME subtype or %NULL for the default value
  *
  * Creates a Content-Type object with type @type and subtype @subtype.
  *
