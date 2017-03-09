@@ -697,7 +697,6 @@ Configuration:
   Console warnings:     ${enable_warnings}
   PGP/MIME support:     ${enable_crypto}
   S/MIME support:       ${enable_crypto}
-  Strict parser:        ${enable_strict_parser}
 
   Vala bindings:        ${enable_vala}
 "
