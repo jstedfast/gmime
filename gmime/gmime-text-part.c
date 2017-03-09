@@ -97,8 +97,6 @@ g_mime_text_part_init (GMimeTextPart *mime_part, GMimeTextPartClass *klass)
 static void
 g_mime_text_part_finalize (GObject *object)
 {
-	GMimeTextPart *mime_part = (GMimeTextPart *) object;
-	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 

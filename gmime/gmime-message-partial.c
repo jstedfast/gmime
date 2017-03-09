@@ -51,8 +51,6 @@ static void g_mime_message_partial_finalize (GObject *object);
 static void message_partial_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 static void message_partial_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 static void message_partial_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static const char *message_partial_get_header (GMimeObject *object, const char *header);
-static gboolean message_partial_remove_header (GMimeObject *object, const char *header);
 static void message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 
 
@@ -96,9 +94,7 @@ g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 	
 	object_class->prepend_header = message_partial_prepend_header;
 	object_class->append_header = message_partial_append_header;
-	object_class->remove_header = message_partial_remove_header;
 	object_class->set_header = message_partial_set_header;
-	object_class->get_header = message_partial_get_header;
 	object_class->set_content_type = message_partial_set_content_type;
 }
 
@@ -148,18 +144,6 @@ message_partial_set_header (GMimeObject *object, const char *header, const char 
 		return;
 	
 	GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
-}
-
-static const char *
-message_partial_get_header (GMimeObject *object, const char *header)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
-}
-
-static gboolean
-message_partial_remove_header (GMimeObject *object, const char *header)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
 static void
