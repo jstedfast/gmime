@@ -164,7 +164,7 @@ decode_quoted_string (const char **in)
 }
 
 static char *
-decode_token (const char **in)
+decode_token (GMimeParserOptions *options, const char **in)
 {
 	const char *inptr = *in;
 	const char *start;
@@ -172,20 +172,20 @@ decode_token (const char **in)
 	skip_cfws (&inptr);
 	
 	start = inptr;
-#ifdef STRICT_PARSER
-	while (is_ttoken (*inptr))
-		inptr++;
-#else
-	/* Broken mail clients like to make our lives difficult. Scan
-	 * for a ';' instead of trusting that the client followed the
-	 * specification. */
-	while (*inptr && *inptr != ';')
-		inptr++;
-	
-	/* Scan backwards over any trailing lwsp */
-	while (inptr > start && is_lwsp (inptr[-1]))
-		inptr--;
-#endif
+	if (options->parameters != GMIME_RFC_COMPLIANCE_LOOSE) {
+		while (is_ttoken (*inptr))
+			inptr++;
+	} else {
+		/* Broken mail clients like to make our lives difficult. Scan
+		 * for a ';' instead of trusting that the client followed the
+		 * specification. */
+		while (*inptr && *inptr != ';')
+			inptr++;
+		
+		/* Scan backwards over any trailing lwsp */
+		while (inptr > start && is_lwsp (inptr[-1]))
+			inptr--;
+	}
 	
 	if (inptr > start) {
 		*in = inptr;
@@ -196,7 +196,7 @@ decode_token (const char **in)
 }
 
 static char *
-decode_value (const char **in)
+decode_value (GMimeParserOptions *options, const char **in)
 {
 	const char *inptr = *in;
 	
@@ -206,14 +206,13 @@ decode_value (const char **in)
 	if (*inptr == '"') {
 		return decode_quoted_string (in);
 	} else if (is_ttoken (*inptr)) {
-		return decode_token (in);
+		return decode_token (options, in);
 	}
 	
-#ifndef STRICT_PARSER
-	return decode_token (in);
-#else
+	if (options->parameters == GMIME_RFC_COMPLIANCE_LOOSE)
+		return decode_token (options, in);
+	
 	return NULL;
-#endif
 }
 
 /* This function is basically the same as decode_token()
@@ -295,7 +294,7 @@ decode_param (GMimeParserOptions *options, const char **in, char **paramp, char 
 	
 	if (*inptr == '=') {
 		inptr++;
-		value = decode_value (&inptr);
+		value = decode_value (options, &inptr);
 		
 		if (!is_rfc2184 && value) {
 			if (strstr (value, "=?") != NULL) {
