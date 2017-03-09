@@ -14,7 +14,6 @@ before_script:
   - cd ${TRAVIS_BUILD_DIR}
   - lcov --directory . --zerocounters
 script:
-  - ./autogen.sh
-  - ./configure --enable-coverage && make && make check
+  - ./autogen.sh --enable-coverage && make && make check
 after_success:
   - coveralls --exclude examples --exclude gmime/charset-map.c --exclude gmime/gen-table.c --exclude tests --gcov-options '\-lp'
