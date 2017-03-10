@@ -486,23 +486,17 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 		return NULL;
 	}
 	
-	if ((error = gpgme_op_verify (pkcs7->ctx, sig, signed_text, plain)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify pkcs7 signature: %s"), gpgme_strerror (error));
-		if (signed_text)
-			gpgme_data_release (signed_text);
-		if (plain)
-			gpgme_data_release (plain);
-		gpgme_data_release (sig);
-		return NULL;
-	}
-	
+	error = gpgme_op_verify (pkcs7->ctx, sig, signed_text, plain);
 	if (signed_text)
 		gpgme_data_release (signed_text);
-	
 	if (plain)
 		gpgme_data_release (plain);
-	
 	gpgme_data_release (sig);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify pkcs7 signature: %s"), gpgme_strerror (error));
+		return NULL;
+	}
 	
 	/* get/return the pkcs7 signatures */
 	return g_mime_gpgme_get_signatures (pkcs7->ctx, TRUE);

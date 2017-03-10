@@ -368,56 +368,53 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	gpgme_data_t message, signature, plaintext;
+	gpgme_data_t sig, signed_text, plain;
 	gpgme_error_t error;
 	
-	if ((error = gpgme_data_new_from_cbs (&message, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		return NULL;
-	}
-	
-	/* if @sigstream is non-NULL, then it is a detached signature */
 	if (sigstream != NULL) {
-		if ((error = gpgme_data_new_from_cbs (&signature, &gpg_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
+		/* if @sigstream is non-NULL, then it is a detached signature */
+		if ((error = gpgme_data_new_from_cbs (&signed_text, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+			return NULL;
+		}
+		
+		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open signature stream: %s"), gpgme_strerror (error));
-			gpgme_data_release (message);
+			gpgme_data_release (signed_text);
 			return NULL;
 		}
-	} else {
-		signature = NULL;
-	}
-	
-	/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
-	if (ostream != NULL) {
-		if ((error = gpgme_data_new_from_cbs (&plaintext, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		
+		plain = NULL;
+	} else if (ostream != NULL) {
+		/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
+		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+			return NULL;
+		}
+		
+		if ((error = gpgme_data_new_from_cbs (&plain, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-			if (signature)
-				gpgme_data_release (signature);
-			gpgme_data_release (message);
+			gpgme_data_release (sig);
 			return NULL;
 		}
+		
+		signed_text = NULL;
 	} else {
-		plaintext = NULL;
-	}
-	
-	if ((error = gpgme_op_verify (gpg->ctx, signature, message, plaintext)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify gpg signature: %s"), gpgme_strerror (error));
-		if (plaintext)
-			gpgme_data_release (plaintext);
-		if (signature)
-			gpgme_data_release (signature);
-		gpgme_data_release (message);
+		g_set_error_literal (err, GMIME_GPGME_ERROR, error, _("Missing signature stream or output stream"));
 		return NULL;
 	}
 	
-	if (plaintext)
-		gpgme_data_release (plaintext);
+	error = gpgme_op_verify (gpg->ctx, signature, message, plaintext);
+	if (signed_text)
+		gpgme_data_release (signed_text);
+	if (plain)
+		gpgme_data_release (plain);
+	gpgme_data_release (sig);
 	
-	if (signature)
-		gpgme_data_release (signature);
-	
-	if (message)
-		gpgme_data_release (message);
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify gpg signature: %s"), gpgme_strerror (error));
+		return NULL;
+	}
 	
 	/* get/return the gpg signatures */
 	return g_mime_gpgme_get_signatures (gpg->ctx, TRUE);
