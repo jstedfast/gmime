@@ -505,11 +505,15 @@ int main (int argc, char *argv[])
 		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
 	} finally;
 	
-	if (cleartext)
+	if (cleartext) {
 		g_object_unref (cleartext);
+		cleartext = NULL;
+	}
 	
-	if (stream)
+	if (stream) {
 		g_object_unref (stream);
+		stream = NULL;
+	}
 	
 	g_free (session_key);
 	
@@ -526,11 +530,15 @@ int main (int argc, char *argv[])
 		testsuite_check_failed ("multipart/encrypted+sign failed: %s", ex->message);
 	} finally;
 	
-	if (cleartext)
+	if (cleartext) {
 		g_object_unref (cleartext);
+		cleartext = NULL;
+	}
 	
-	if (stream)
+	if (stream) {
 		g_object_unref (stream);
+		stream = NULL;
+	}
 	
 	g_free (session_key);
 	
