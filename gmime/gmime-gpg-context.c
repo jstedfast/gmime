@@ -356,7 +356,7 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMim
 	
 	return (GMimeDigestAlgo) result->signatures->hash_algo;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -422,7 +422,7 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 	/* get/return the gpg signatures */
 	return g_mime_gpgme_get_signatures (gpg->ctx, TRUE);
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -496,7 +496,7 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMi
 	
 	return 0;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -556,7 +556,7 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char *s
 	
 	return g_mime_gpgme_get_decrypt_result (gpg->ctx);
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -587,7 +587,7 @@ gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err
 	
 	return 0;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -618,7 +618,7 @@ gpg_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *o
 	
 	return 0;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */

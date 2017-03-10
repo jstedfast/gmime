@@ -438,7 +438,7 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 	
 	return (GMimeDigestAlgo) result->signatures->hash_algo;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -482,6 +482,7 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 		
 		signed_text = NULL;
 	} else {
+		g_set_error_literal (err, GMIME_GPGME_ERROR, error, _("Missing signature stream or output stream"));
 		return NULL;
 	}
 	
@@ -506,7 +507,7 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 	/* get/return the pkcs7 signatures */
 	return g_mime_gpgme_get_signatures (pkcs7->ctx, TRUE);
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -542,8 +543,8 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 	guint i;
 	
 	if (sign) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-			     _("Cannot sign and encrypt a stream at the same time using pkcs7"));
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("Cannot sign and encrypt a stream at the same time using pkcs7"));
 		return -1;
 	}
 	
@@ -587,7 +588,7 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 	
 	return 0;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -647,7 +648,7 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char 
 	
 	return g_mime_gpgme_get_decrypt_result (pkcs7->ctx);
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -677,7 +678,7 @@ pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **e
 	
 	return 0;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -708,7 +709,7 @@ pkcs7_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream 
 	
 	return 0;
 #else
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
