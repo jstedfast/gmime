@@ -243,33 +243,6 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 }
 
 
-static GMimeStream *
-g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
-{
-	GMimeStream *decoded_stream;
-	GMimeFilter *decoder;
-	
-	g_mime_stream_reset (wrapper->stream);
-	
-	switch (wrapper->encoding) {
-	case GMIME_CONTENT_ENCODING_BASE64:
-	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
-	case GMIME_CONTENT_ENCODING_UUENCODE:
-		decoder = g_mime_filter_basic_new (wrapper->encoding, FALSE);
-		decoded_stream = g_mime_stream_filter_new (wrapper->stream);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (decoded_stream), decoder);
-		g_object_unref (decoder);
-		break;
-	default:
-		decoded_stream = wrapper->stream;
-		g_object_ref (wrapper->stream);
-		break;
-	}
-	
-	return decoded_stream;
-}
-
-
 /**
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
@@ -305,7 +278,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFl
 	const char *protocol, *supported;
 	GMimeStream *filtered_stream;
 	GMimeContentType *mime_type;
-	GMimeDataWrapper *wrapper;
+	GMimeDataWrapper *content;
 	GMimeFilter *crlf_filter;
 	GMimeDecryptResult *res;
 	GMimeCryptoContext *ctx;
@@ -371,8 +344,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFl
 	}
 	
 	/* get the ciphertext stream */
-	wrapper = g_mime_part_get_content_object (GMIME_PART (encrypted));
-	ciphertext = g_mime_data_wrapper_get_decoded_stream (wrapper);
+	content = g_mime_part_get_content_object (GMIME_PART (encrypted));
+	ciphertext = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
 	
 	stream = g_mime_stream_mem_new ();

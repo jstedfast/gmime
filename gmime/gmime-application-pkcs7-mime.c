@@ -229,7 +229,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeContentType *content_type;
-	GMimeDataWrapper *wrapper;
+	GMimeDataWrapper *content;
 	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
 	
@@ -273,38 +273,12 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 	
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA);
-	wrapper = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_mime_part_set_content_object (GMIME_PART (pkcs7_mime), wrapper);
+	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
+	g_mime_part_set_content_object (GMIME_PART (pkcs7_mime), content);
 	g_object_unref (ciphertext);
-	g_object_unref (wrapper);
+	g_object_unref (content);
 	
 	return pkcs7_mime;
-}
-
-static GMimeStream *
-g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
-{
-	GMimeStream *decoded_stream;
-	GMimeFilter *decoder;
-	
-	g_mime_stream_reset (wrapper->stream);
-	
-	switch (wrapper->encoding) {
-	case GMIME_CONTENT_ENCODING_BASE64:
-	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
-	case GMIME_CONTENT_ENCODING_UUENCODE:
-		decoder = g_mime_filter_basic_new (wrapper->encoding, FALSE);
-		decoded_stream = g_mime_stream_filter_new (wrapper->stream);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (decoded_stream), decoder);
-		g_object_unref (decoder);
-		break;
-	default:
-		decoded_stream = wrapper->stream;
-		g_object_ref (wrapper->stream);
-		break;
-	}
-	
-	return decoded_stream;
 }
 
 
@@ -338,7 +312,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 				       GMimeDecryptResult **result, GError **err)
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
-	GMimeDataWrapper *wrapper;
+	GMimeDataWrapper *content;
 	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
 	GMimeDecryptResult *res;
@@ -358,8 +332,9 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	}
 	
 	/* get the ciphertext stream */
-	wrapper = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
-	ciphertext = g_mime_data_wrapper_get_decoded_stream (wrapper);
+	content = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
+	ciphertext = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
 	
 	stream = g_mime_stream_mem_new ();
@@ -426,7 +401,7 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GMi
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeContentType *content_type;
-	GMimeDataWrapper *wrapper;
+	GMimeDataWrapper *content;
 	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
 	
@@ -470,10 +445,10 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GMi
 	
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
-	wrapper = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_mime_part_set_content_object (GMIME_PART (pkcs7_mime), wrapper);
+	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
+	g_mime_part_set_content_object (GMIME_PART (pkcs7_mime), content);
 	g_object_unref (ciphertext);
-	g_object_unref (wrapper);
+	g_object_unref (content);
 	
 	return pkcs7_mime;
 }
@@ -495,7 +470,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimeSignatureList *signatures;
-	GMimeDataWrapper *wrapper;
+	GMimeDataWrapper *content;
 	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
 	GMimeParser *parser;
@@ -513,8 +488,9 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	}
 	
 	/* get the ciphertext stream */
-	wrapper = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
-	ciphertext = g_mime_data_wrapper_get_decoded_stream (wrapper);
+	content = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
+	ciphertext = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
 	
 	stream = g_mime_stream_mem_new ();
