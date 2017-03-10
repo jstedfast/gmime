@@ -27,9 +27,13 @@ endif
 MANUAL_TESTS =		\
 	test-best	\
 	test-parser 	\
-	test-html	\
+	test-html
+
+if ENABLE_CRYPTO
+MANUAL_TESTS += 	\
 	test-pkcs7	\
 	test-smime
+endif
 
 noinst_PROGRAMS = $(AUTOMATED_TESTS) $(MANUAL_TESTS)
 
