@@ -21,15 +21,15 @@ AUTOMATED_TESTS =	\
 if ENABLE_CRYPTO
 AUTOMATED_TESTS +=	\
 	test-pgp	\
-	test-pgpmime	\
-	test-pkcs7	\
-	test-smime
+	test-pgpmime
 endif
 
 MANUAL_TESTS =		\
 	test-best	\
 	test-parser 	\
-	test-html
+	test-html	\
+	test-pkcs7	\
+	test-smime
 
 noinst_PROGRAMS = $(AUTOMATED_TESTS) $(MANUAL_TESTS)
 
