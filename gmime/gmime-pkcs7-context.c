@@ -436,7 +436,7 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 	/* return the digest algorithm used for signing */
 	result = gpgme_op_sign_result (pkcs7->ctx);
 	
-	return pkcs7_digest_id (context, gpgme_hash_algo_name (result->signatures->hash_algo));
+	return (GMimeDigestAlgo) result->signatures->hash_algo;
 #else
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
