@@ -354,15 +354,17 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 		throw (ex);
 	}
 	
+#if GPGME_VERSION_NUMBER >= 0x010800
 	if (!result->session_key) {
 		ex = exception_new ("No session key returned!");
 		throw (ex);
 	}
 	ret = g_strdup (result->session_key);
+#endif
 	
 	if (result->signatures)
 		v(print_verify_results (result->signatures));
-
+	
 	if (sign) {
 		status = get_sig_status (result->signatures);
 		
@@ -377,7 +379,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	
 	if (ex != NULL) {
 		g_free (ret);
-		ret = 0;
+		ret = NULL;
 		throw (ex);
 	}
 	
@@ -394,9 +396,10 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	
 	if (ex != NULL) {
 		g_free (ret);
-		ret = 0;
+		ret = NULL;
 		throw (ex);
 	}
+	
 	return ret;
 }
 
@@ -493,11 +496,15 @@ int main (int argc, char *argv[])
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
 	} finally;
+	
 	if (cleartext)
 		g_object_unref (cleartext);
+	
 	if (stream)
 		g_object_unref (stream);
+	
 	cleartext = stream = NULL;
+	
 	if (session_key) {
 		memset (session_key, 0, strlen (session_key));
 		g_free (session_key);

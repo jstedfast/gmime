@@ -34,16 +34,22 @@ G_GNUC_INTERNAL gpgme_error_t g_mime_gpgme_passphrase_callback (void *hook, cons
 								const char *passphrase_info,
 								int prev_was_bad, int fd);
 
-G_GNUC_INTERNAL gpgme_key_t g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name,
-							  gboolean secret, GError **err);
+G_GNUC_INTERNAL int g_mime_gpgme_sign (gpgme_ctx_t ctx, gpgme_sig_mode_t mode, const char *userid, GMimeDigestAlgo digest,
+				       GMimeStream *istream, GMimeStream *ostream, GError **err);
 
-G_GNUC_INTERNAL gboolean g_mime_gpgme_add_signer (gpgme_ctx_t ctx, const char *signer, GError **err);
+G_GNUC_INTERNAL GMimeSignatureList *g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeVerifyFlags flags, GMimeStream *istream,
+							 GMimeStream *sigstream, GMimeStream *ostream, GError **err);
 
-G_GNUC_INTERNAL GMimeSignatureList *g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify);
+G_GNUC_INTERNAL int g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
+					  GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
+					  GError **err);
 
-G_GNUC_INTERNAL void g_mime_gpgme_keylist_free (gpgme_key_t *keys);
+G_GNUC_INTERNAL GMimeDecryptResult *g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *session_key,
+							  GMimeStream *istream, GMimeStream *ostream, GError **err);
 
-G_GNUC_INTERNAL GMimeDecryptResult *g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx);
+G_GNUC_INTERNAL int g_mime_gpgme_import (gpgme_ctx_t ctx, GMimeStream *istream, GError **err);
+
+G_GNUC_INTERNAL int g_mime_gpgme_export (gpgme_ctx_t ctx, const char *keys[], GMimeStream *ostream, GError **err);
 
 G_END_DECLS
 

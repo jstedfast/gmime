@@ -262,137 +262,6 @@ pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 	return "application/pkcs7-keys";
 }
 
-#ifdef ENABLE_CRYPTO
-static ssize_t
-pkcs7_stream_read (void *stream, void *buffer, size_t size)
-{
-	return g_mime_stream_read ((GMimeStream *) stream, (char *) buffer, size);
-}
-
-static ssize_t
-pkcs7_stream_write (void *stream, const void *buffer, size_t size)
-{
-	return g_mime_stream_write ((GMimeStream *) stream, (const char *) buffer, size);
-}
-
-static off_t
-pkcs7_stream_seek (void *stream, off_t offset, int whence)
-{
-	switch (whence) {
-	case SEEK_SET:
-		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_SET);
-	case SEEK_CUR:
-		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_CUR);
-	case SEEK_END:
-		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_END);
-	default:
-		return -1;
-	}
-}
-
-static void
-pkcs7_stream_free (void *stream)
-{
-	/* no-op */
-}
-
-static struct gpgme_data_cbs pkcs7_stream_funcs = {
-	pkcs7_stream_read,
-	pkcs7_stream_write,
-	pkcs7_stream_seek,
-	pkcs7_stream_free
-};
-
-
-
-#define KEY_IS_OK(k)   (!((k)->expired || (k)->revoked ||	\
-                          (k)->disabled || (k)->invalid))
-
-static gpgme_key_t
-pkcs7_get_key_by_name (GMimePkcs7Context *pkcs7, const char *name, gboolean secret, GError **err)
-{
-	time_t now = time (NULL);
-	gpgme_key_t key = NULL;
-	gpgme_subkey_t subkey;
-	gboolean bad = FALSE;
-	gpgme_error_t error;
-	int errval = 0;
-	
-	if ((error = gpgme_op_keylist_start (pkcs7->ctx, name, secret)) != GPG_ERR_NO_ERROR) {
-		if (secret)
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list secret keys for \"%s\": %s"), name, gpgme_strerror (error));
-		else
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\": %s"), name, gpgme_strerror (error));
-		return NULL;
-	}
-	
-	while ((error = gpgme_op_keylist_next (pkcs7->ctx, &key)) == GPG_ERR_NO_ERROR) {
-		/* check if this key and the relevant subkey are usable */
-		if (KEY_IS_OK (key)) {
-			subkey = key->subkeys;
-			
-			while (subkey && ((secret && !subkey->can_sign) ||
-					  (!secret && !subkey->can_encrypt)))
-				subkey = subkey->next;
-			
-			if (subkey && KEY_IS_OK (subkey) && 
-			    (subkey->expires == 0 || subkey->expires > now))
-				break;
-			
-			if (subkey->expired)
-				errval = GPG_ERR_KEY_EXPIRED;
-			else
-				errval = GPG_ERR_BAD_KEY;
-		} else {
-			if (key->expired)
-				errval = GPG_ERR_KEY_EXPIRED;
-			else
-				errval = GPG_ERR_BAD_KEY;
-		}
-		
-		gpgme_key_unref (key);
-		bad = TRUE;
-		key = NULL;
-	}
-	
-	gpgme_op_keylist_end (pkcs7->ctx);
-	
-	if (error != GPG_ERR_NO_ERROR && error != GPG_ERR_EOF) {
-		if (secret)
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list secret keys for \"%s\": %s"), name, gpgme_strerror (error));
-		else
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\": %s"), name, gpgme_strerror (error));
-		
-		return NULL;
-	}
-	
-	if (!key) {
-		if (strchr (name, '@')) {
-			if (bad)
-				g_set_error (err, GMIME_GPGME_ERROR, errval,
-					     _("A key for %s is present, but it is expired, disabled, revoked or invalid"),
-					     name);
-			else
-				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
-					     _("Could not find a key for %s"), name);
-		} else {
-			if (bad)
-				g_set_error (err, GMIME_GPGME_ERROR, errval,
-					     _("A key with id %s is present, but it is expired, disabled, revoked or invalid"),
-					     name);
-			else
-				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
-					     _("Could not find a key with id %s"), name);
-		}
-		
-		return NULL;
-	}
-	
-	return key;
-}
-
-#endif /* ENABLE_CRYPTO */
-
 static int
 pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMimeDigestAlgo digest,
 	    GMimeStream *istream, GMimeStream *ostream, GError **err)
@@ -400,43 +269,8 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GM
 #ifdef ENABLE_CRYPTO
 	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_NORMAL;
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
-	gpgme_sign_result_t result;
-	gpgme_data_t input, output;
-	gpgme_error_t error;
 	
-	if (!g_mime_gpgme_add_signer (pkcs7->ctx, userid, err))
-		return -1;
-	
-	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		gpgme_signers_clear (pkcs7->ctx);
-		return -1;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		gpgme_signers_clear (pkcs7->ctx);
-		gpgme_data_release (input);
-		return -1;
-	}
-	
-	/* sign the input stream */
-	if ((error = gpgme_op_sign (pkcs7->ctx, input, output, mode)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Signing failed: %s"), gpgme_strerror (error));
-		gpgme_signers_clear (pkcs7->ctx);
-		gpgme_data_release (output);
-		gpgme_data_release (input);
-		return -1;
-	}
-	
-	gpgme_signers_clear (pkcs7->ctx);
-	gpgme_data_release (output);
-	gpgme_data_release (input);
-	
-	/* return the digest algorithm used for signing */
-	result = gpgme_op_sign_result (pkcs7->ctx);
-	
-	return (GMimeDigestAlgo) result->signatures->hash_algo;
+	return g_mime_gpgme_sign (pkcs7->ctx, mode, userid, digest, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
@@ -450,77 +284,14 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
-	gpgme_data_t sig, signed_text, plain;
-	gpgme_error_t error;
 	
-	if (sigstream != NULL) {
-		/* if @sigstream is non-NULL, then it is a detached signature */
-		if ((error = gpgme_data_new_from_cbs (&signed_text, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-			return NULL;
-		}
-		
-		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open signature stream: %s"), gpgme_strerror (error));
-			gpgme_data_release (signed_text);
-			return NULL;
-		}
-		
-		plain = NULL;
-	} else if (ostream != NULL) {
-		/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
-		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-			return NULL;
-		}
-		
-		if ((error = gpgme_data_new_from_cbs (&plain, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-			gpgme_data_release (sig);
-			return NULL;
-		}
-		
-		signed_text = NULL;
-	} else {
-		g_set_error_literal (err, GMIME_GPGME_ERROR, error, _("Missing signature stream or output stream"));
-		return NULL;
-	}
-	
-	error = gpgme_op_verify (pkcs7->ctx, sig, signed_text, plain);
-	if (signed_text)
-		gpgme_data_release (signed_text);
-	if (plain)
-		gpgme_data_release (plain);
-	gpgme_data_release (sig);
-	
-	if (error != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify pkcs7 signature: %s"), gpgme_strerror (error));
-		return NULL;
-	}
-	
-	/* get/return the pkcs7 signatures */
-	return g_mime_gpgme_get_signatures (pkcs7->ctx, TRUE);
+	return g_mime_gpgme_verify (pkcs7->ctx, flags, istream, sigstream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
 }
-
-#ifdef ENABLE_CRYPTO
-static void
-key_list_free (gpgme_key_t *keys)
-{
-	gpgme_key_t *key = keys;
-	
-	while (*key != NULL) {
-		gpgme_key_unref (*key);
-		key++;
-	}
-	
-	g_free (keys);
-}
-#endif /* ENABLE_CRYPTO */
 
 static int
 pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMimeDigestAlgo digest,
@@ -529,12 +300,6 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
-	gpgme_encrypt_flags_t encrypt_flags = 0;
-	gpgme_data_t input, output;
-	gpgme_error_t error;
-	gpgme_key_t *rcpts;
-	gpgme_key_t key;
-	guint i;
 	
 	if (sign) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
@@ -542,45 +307,7 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 		return -1;
 	}
 	
-	if (flags & GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST)
-		encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
-	
-	/* create an array of recipient keys for GpgMe */
-	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
-	for (i = 0; i < recipients->len; i++) {
-		if (!(key = pkcs7_get_key_by_name (pkcs7, recipients->pdata[i], FALSE, err))) {
-			g_mime_gpgme_keylist_free (rcpts);
-			return -1;
-		}
-		
-		rcpts[i] = key;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		g_mime_gpgme_keylist_free (rcpts);
-		return -1;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		g_mime_gpgme_keylist_free (rcpts);
-		gpgme_data_release (input);
-		return -1;
-	}
-	
-	/* encrypt the input stream */
-	error = gpgme_op_encrypt (pkcs7->ctx, rcpts, encrypt_flags, input, output);
-	g_mime_gpgme_keylist_free (rcpts);
-	gpgme_data_release (output);
-	gpgme_data_release (input);
-	
-	if (error != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Encryption failed: %s"), gpgme_strerror (error));
-		return -1;
-	}
-	
-	return 0;
+	return g_mime_gpgme_encrypt (pkcs7->ctx, sign, userid, digest, flags, recipients, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
@@ -594,53 +321,8 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char 
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
-	GMimeDecryptResult *result;
-	gpgme_decrypt_result_t res;
-	gpgme_data_t input, output;
-	gpgme_error_t error;
 	
-	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		return NULL;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		gpgme_data_release (input);
-		return NULL;
-	}
-	
-	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
-		gpgme_set_ctx_flag (pkcs7->ctx, "export-session-key", "1");
-	
-	if (session_key)
-		gpgme_set_ctx_flag (pkcs7->ctx, "override-session-key", session_key);
-	
-	/* decrypt the input stream */
-	if ((error = gpgme_op_decrypt (pkcs7->ctx, input, output)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed: %s"), gpgme_strerror (error));
-		
-		if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
-			gpgme_set_ctx_flag (pkcs7->ctx, "export-session-key", "0");
-		
-		if (session_key)
-			gpgme_set_ctx_flag (pkcs7->ctx, "override-session-key", NULL);
-		
-		gpgme_data_release (output);
-		gpgme_data_release (input);
-		return NULL;
-	}
-	
-	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
-		gpgme_set_ctx_flag (pkcs7->ctx, "export-session-key", "0");
-	
-	if (session_key)
-		gpgme_set_ctx_flag (pkcs7->ctx, "override-session-key", NULL);
-	
-	gpgme_data_release (output);
-	gpgme_data_release (input);
-	
-	return g_mime_gpgme_get_decrypt_result (pkcs7->ctx);
+	return g_mime_gpgme_decrypt (pkcs7->ctx, flags, session_key, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
@@ -653,24 +335,8 @@ pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **e
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
-	gpgme_data_t keydata;
-	gpgme_error_t error;
 	
-	if ((error = gpgme_data_new_from_cbs (&keydata, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		return -1;
-	}
-	
-	/* import the key(s) */
-	if ((error = gpgme_op_import (pkcs7->ctx, keydata)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not import key data: %s"), gpgme_strerror (error));
-		gpgme_data_release (keydata);
-		return -1;
-	}
-	
-	gpgme_data_release (keydata);
-	
-	return 0;
+	return g_mime_gpgme_import (pkcs7->ctx, istream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
@@ -683,25 +349,8 @@ pkcs7_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream 
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
-	gpgme_data_t keydata;
-	gpgme_error_t error;
-	guint i;
 	
-	if ((error = gpgme_data_new_from_cbs (&keydata, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		return -1;
-	}
-	
-	/* export the key(s) */
-	if ((error = gpgme_op_export_ext (pkcs7->ctx, keys, 0, keydata)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data: %s"), gpgme_strerror (error));
-		gpgme_data_release (keydata);
-		return -1;
-	}
-	
-	gpgme_data_release (keydata);
-	
-	return 0;
+	return g_mime_gpgme_export (pkcs7->ctx, keys, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	

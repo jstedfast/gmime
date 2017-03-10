@@ -266,49 +266,6 @@ gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 	return "application/pgp-keys";
 }
 
-#ifdef ENABLE_CRYPTO
-static ssize_t
-gpg_stream_read (void *stream, void *buffer, size_t size)
-{
-	return g_mime_stream_read ((GMimeStream *) stream, (char *) buffer, size);
-}
-
-static ssize_t
-gpg_stream_write (void *stream, const void *buffer, size_t size)
-{
-	return g_mime_stream_write ((GMimeStream *) stream, (const char *) buffer, size);
-}
-
-static off_t
-gpg_stream_seek (void *stream, off_t offset, int whence)
-{
-	switch (whence) {
-	case SEEK_SET:
-		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_SET);
-	case SEEK_CUR:
-		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_CUR);
-	case SEEK_END:
-		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_END);
-	default:
-		return -1;
-	}
-}
-
-static void
-gpg_stream_free (void *stream)
-{
-	/* no-op */
-}
-
-static struct gpgme_data_cbs gpg_stream_funcs = {
-	gpg_stream_read,
-	gpg_stream_write,
-	gpg_stream_seek,
-	gpg_stream_free
-};
-
-#endif /* ENABLE_CRYPTO */
-
 static int
 gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMimeDigestAlgo digest,
 	  GMimeStream *istream, GMimeStream *ostream, GError **err)
@@ -316,45 +273,10 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMim
 #ifdef ENABLE_CRYPTO
 	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_CLEAR;
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	gpgme_sign_result_t result;
-	gpgme_data_t input, output;
-	gpgme_error_t error;
-	
-	if (!g_mime_gpgme_add_signer (gpg->ctx, userid, err))
-		return -1;
-	
-	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		gpgme_signers_clear (gpg->ctx);
-		return -1;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		gpgme_signers_clear (gpg->ctx);
-		gpgme_data_release (input);
-		return -1;
-	}
 	
 	gpgme_set_textmode (gpg->ctx, !detach);
 	
-	/* sign the input stream */
-	if ((error = gpgme_op_sign (gpg->ctx, input, output, mode)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Signing failed: %s"), gpgme_strerror (error));
-		gpgme_signers_clear (gpg->ctx);
-		gpgme_data_release (output);
-		gpgme_data_release (input);
-		return -1;
-	}
-	
-	gpgme_signers_clear (gpg->ctx);
-	gpgme_data_release (output);
-	gpgme_data_release (input);
-	
-	/* return the digest algorithm used for signing */
-	result = gpgme_op_sign_result (gpg->ctx);
-	
-	return (GMimeDigestAlgo) result->signatures->hash_algo;
+	return g_mime_gpgme_sign (gpg->ctx, mode, userid, digest, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
@@ -368,56 +290,8 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	gpgme_data_t sig, signed_text, plain;
-	gpgme_error_t error;
 	
-	if (sigstream != NULL) {
-		/* if @sigstream is non-NULL, then it is a detached signature */
-		if ((error = gpgme_data_new_from_cbs (&signed_text, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-			return NULL;
-		}
-		
-		if ((error = gpgme_data_new_from_cbs (&sig, &gpg_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open signature stream: %s"), gpgme_strerror (error));
-			gpgme_data_release (signed_text);
-			return NULL;
-		}
-		
-		plain = NULL;
-	} else if (ostream != NULL) {
-		/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
-		if ((error = gpgme_data_new_from_cbs (&sig, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-			return NULL;
-		}
-		
-		if ((error = gpgme_data_new_from_cbs (&plain, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-			gpgme_data_release (sig);
-			return NULL;
-		}
-		
-		signed_text = NULL;
-	} else {
-		g_set_error_literal (err, GMIME_GPGME_ERROR, error, _("Missing signature stream or output stream"));
-		return NULL;
-	}
-	
-	error = gpgme_op_verify (gpg->ctx, sig, signed_text, plain);
-	if (signed_text)
-		gpgme_data_release (signed_text);
-	if (plain)
-		gpgme_data_release (plain);
-	gpgme_data_release (sig);
-	
-	if (error != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify gpg signature: %s"), gpgme_strerror (error));
-		return NULL;
-	}
-	
-	/* get/return the gpg signatures */
-	return g_mime_gpgme_get_signatures (gpg->ctx, TRUE);
+	return g_mime_gpgme_verify (gpg->ctx, flags, istream, sigstream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
@@ -432,66 +306,8 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMi
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	gpgme_encrypt_flags_t encrypt_flags = 0;
-	gpgme_data_t input, output;
-	gpgme_error_t error;
-	gpgme_key_t *rcpts;
-	gpgme_key_t key;
-	guint i;
 	
-	if (flags & GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST)
-		encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
-	
-	/* create an array of recipient keys for GpgMe */
-	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
-	for (i = 0; i < recipients->len; i++) {
-		if (!(key = g_mime_gpgme_get_key_by_name (gpg->ctx, recipients->pdata[i], FALSE, err))) {
-			g_mime_gpgme_keylist_free (rcpts);
-			return -1;
-		}
-		
-		rcpts[i] = key;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		g_mime_gpgme_keylist_free (rcpts);
-		return -1;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		g_mime_gpgme_keylist_free (rcpts);
-		gpgme_data_release (input);
-		return -1;
-	}
-	
-	/* encrypt the input stream */
-	if (sign) {
-		if (!g_mime_gpgme_add_signer (gpg->ctx, userid, err)) {
-			g_mime_gpgme_keylist_free (rcpts);
-			gpgme_data_release (output);
-			gpgme_data_release (input);
-			return -1;
-		}
-		
-		error = gpgme_op_encrypt_sign (gpg->ctx, rcpts, encrypt_flags, input, output);
-		
-		gpgme_signers_clear (gpg->ctx);
-	} else {
-		error = gpgme_op_encrypt (gpg->ctx, rcpts, encrypt_flags, input, output);
-	}
-	
-	g_mime_gpgme_keylist_free (rcpts);
-	gpgme_data_release (output);
-	gpgme_data_release (input);
-	
-	if (error != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Encryption failed: %s"), gpgme_strerror (error));
-		return -1;
-	}
-	
-	return 0;
+	return g_mime_gpgme_encrypt (gpg->ctx, sign, userid, digest, flags, recipients, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
@@ -505,53 +321,8 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char *s
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	GMimeDecryptResult *result;
-	gpgme_decrypt_result_t res;
-	gpgme_data_t input, output;
-	gpgme_error_t error;
 	
-	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		return NULL;
-	}
-	
-	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		gpgme_data_release (input);
-		return NULL;
-	}
-	
-	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
-		gpgme_set_ctx_flag (gpg->ctx, "export-session-key", "1");
-	
-	if (session_key)
-		gpgme_set_ctx_flag (gpg->ctx, "override-session-key", session_key);
-	
-	/* decrypt the input stream */
-	if ((error = gpgme_op_decrypt_verify (gpg->ctx, input, output)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed: %s"), gpgme_strerror (error));
-		
-		if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
-			gpgme_set_ctx_flag (gpg->ctx, "export-session-key", "0");
-		
-		if (session_key)
-			gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
-		
-		gpgme_data_release (output);
-		gpgme_data_release (input);
-		return NULL;
-	}
-	
-	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
-		gpgme_set_ctx_flag (gpg->ctx, "export-session-key", "0");
-	
-	if (session_key)
-		gpgme_set_ctx_flag (gpg->ctx, "override-session-key", NULL);
-	
-	gpgme_data_release (output);
-	gpgme_data_release (input);
-	
-	return g_mime_gpgme_get_decrypt_result (gpg->ctx);
+	return g_mime_gpgme_decrypt (gpg->ctx, flags, session_key, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
@@ -564,25 +335,8 @@ gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	gpgme_data_t keydata;
-	gpgme_error_t error;
 	
-	if ((error = gpgme_data_new_from_cbs (&keydata, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		return -1;
-	}
-	
-	/* import the key(s) */
-	if ((error = gpgme_op_import (gpg->ctx, keydata)) != GPG_ERR_NO_ERROR) {
-		//printf ("import error (%d): %s\n", error & GPG_ERR_CODE_MASK, gpg_strerror (error));
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not import key data: %s"), gpgme_strerror (error));
-		gpgme_data_release (keydata);
-		return -1;
-	}
-	
-	gpgme_data_release (keydata);
-	
-	return 0;
+	return g_mime_gpgme_import (gpg->ctx, istream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
@@ -595,25 +349,8 @@ gpg_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *o
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	gpgme_data_t keydata;
-	gpgme_error_t error;
-	guint i;
 	
-	if ((error = gpgme_data_new_from_cbs (&keydata, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-		return -1;
-	}
-	
-	/* export the key(s) */
-	if ((error = gpgme_op_export_ext (gpg->ctx, keys, 0, keydata)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data: %s"), gpgme_strerror (error));
-		gpgme_data_release (keydata);
-		return -1;
-	}
-	
-	gpgme_data_release (keydata);
-	
-	return 0;
+	return g_mime_gpgme_export (gpg->ctx, keys, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	

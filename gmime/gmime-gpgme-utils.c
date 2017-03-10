@@ -32,6 +32,46 @@
 
 #define _(x) x
 
+static ssize_t
+g_mime_gpgme_stream_read (void *stream, void *buffer, size_t size)
+{
+	return g_mime_stream_read ((GMimeStream *) stream, (char *) buffer, size);
+}
+
+static ssize_t
+g_mime_gpgme_stream_write (void *stream, const void *buffer, size_t size)
+{
+	return g_mime_stream_write ((GMimeStream *) stream, (const char *) buffer, size);
+}
+
+static off_t
+g_mime_gpgme_stream_seek (void *stream, off_t offset, int whence)
+{
+	switch (whence) {
+	case SEEK_SET:
+		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_SET);
+	case SEEK_CUR:
+		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_CUR);
+	case SEEK_END:
+		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_END);
+	default:
+		return -1;
+	}
+}
+
+static void
+g_mime_gpgme_stream_free (void *stream)
+{
+	/* no-op */
+}
+
+static struct gpgme_data_cbs gpg_stream_funcs = {
+	g_mime_gpgme_stream_read,
+	g_mime_gpgme_stream_write,
+	g_mime_gpgme_stream_seek,
+	g_mime_gpgme_stream_free
+};
+
 gpgme_error_t
 g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *passphrase_info, int prev_was_bad, int fd)
 {
@@ -63,7 +103,7 @@ g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *
 #define KEY_IS_OK(k)   (!((k)->expired || (k)->revoked ||	\
                           (k)->disabled || (k)->invalid))
 
-gpgme_key_t
+static gpgme_key_t
 g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret, GError **err)
 {
 	time_t now = time (NULL);
@@ -146,7 +186,7 @@ g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret
 	return key;
 }
 
-gboolean
+static gboolean
 g_mime_gpgme_add_signer (gpgme_ctx_t ctx, const char *signer, GError **err)
 {
 	gpgme_key_t key = NULL;
@@ -164,6 +204,47 @@ g_mime_gpgme_add_signer (gpgme_ctx_t ctx, const char *signer, GError **err)
 	}
 	
 	return TRUE;
+}
+
+int
+g_mime_gpgme_sign (gpgme_ctx_t ctx, gpgme_sig_mode_t mode, const char *userid, GMimeDigestAlgo digest,
+		   GMimeStream *istream, GMimeStream *ostream, GError **err)
+{
+	gpgme_sign_result_t result;
+	gpgme_data_t input, output;
+	gpgme_error_t error;
+	
+	if (!g_mime_gpgme_add_signer (ctx, userid, err))
+		return -1;
+	
+	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+		gpgme_signers_clear (ctx);
+		return -1;
+	}
+	
+	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+		gpgme_data_release (input);
+		gpgme_signers_clear (ctx);
+		return -1;
+	}
+	
+	/* sign the input stream */
+	error = gpgme_op_sign (ctx, input, output, mode);
+	gpgme_data_release (output);
+	gpgme_data_release (input);
+	gpgme_signers_clear (ctx);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Signing failed: %s"), gpgme_strerror (error));
+		return -1;
+	}
+	
+	/* return the digest algorithm used for signing */
+	result = gpgme_op_sign_result (ctx);
+	
+	return (GMimeDigestAlgo) result->signatures->hash_algo;
 }
 
 static GMimeCertificateTrust
@@ -186,7 +267,7 @@ get_trust (gpgme_validity_t trust)
 	}
 }
 
-GMimeSignatureList *
+static GMimeSignatureList *
 g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 {
 	GMimeSignatureList *signatures;
@@ -265,7 +346,63 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 	return signatures;
 }
 
-void
+GMimeSignatureList *
+g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
+		     GMimeStream *ostream, GError **err)
+{
+	gpgme_data_t sig, signed_text, plain;
+	gpgme_error_t error;
+	
+	if (sigstream != NULL) {
+		/* if @sigstream is non-NULL, then it is a detached signature */
+		if ((error = gpgme_data_new_from_cbs (&signed_text, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+			return NULL;
+		}
+		
+		if ((error = gpgme_data_new_from_cbs (&sig, &gpg_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open signature stream: %s"), gpgme_strerror (error));
+			gpgme_data_release (signed_text);
+			return NULL;
+		}
+		
+		plain = NULL;
+	} else if (ostream != NULL) {
+		/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
+		if ((error = gpgme_data_new_from_cbs (&sig, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+			return NULL;
+		}
+		
+		if ((error = gpgme_data_new_from_cbs (&plain, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+			gpgme_data_release (sig);
+			return NULL;
+		}
+		
+		signed_text = NULL;
+	} else {
+		g_set_error_literal (err, GMIME_GPGME_ERROR, error, _("Missing signature stream or output stream"));
+		return NULL;
+	}
+	
+	error = gpgme_op_verify (ctx, sig, signed_text, plain);
+	if (signed_text)
+		gpgme_data_release (signed_text);
+	if (plain)
+		gpgme_data_release (plain);
+	gpgme_data_release (sig);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify signature: %s"), gpgme_strerror (error));
+		return NULL;
+	}
+	
+	/* get/return the signatures */
+	return g_mime_gpgme_get_signatures (ctx, TRUE);
+}
+
+static void
 g_mime_gpgme_keylist_free (gpgme_key_t *keys)
 {
 	gpgme_key_t *key = keys;
@@ -278,7 +415,74 @@ g_mime_gpgme_keylist_free (gpgme_key_t *keys)
 	g_free (keys);
 }
 
-GMimeDecryptResult *
+int
+g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
+		      GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
+		      GError **err)
+{
+	gpgme_encrypt_flags_t encrypt_flags = 0;
+	gpgme_data_t input, output;
+	gpgme_error_t error;
+	gpgme_key_t *rcpts;
+	gpgme_key_t key;
+	guint i;
+	
+	if (flags & GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST)
+		encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
+	
+	/* create an array of recipient keys for GpgMe */
+	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
+	for (i = 0; i < recipients->len; i++) {
+		if (!(key = g_mime_gpgme_get_key_by_name (ctx, recipients->pdata[i], FALSE, err))) {
+			g_mime_gpgme_keylist_free (rcpts);
+			return -1;
+		}
+		
+		rcpts[i] = key;
+	}
+	
+	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+		g_mime_gpgme_keylist_free (rcpts);
+		return -1;
+	}
+	
+	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+		g_mime_gpgme_keylist_free (rcpts);
+		gpgme_data_release (input);
+		return -1;
+	}
+	
+	/* encrypt the input stream */
+	if (sign) {
+		if (!g_mime_gpgme_add_signer (ctx, userid, err)) {
+			g_mime_gpgme_keylist_free (rcpts);
+			gpgme_data_release (output);
+			gpgme_data_release (input);
+			return -1;
+		}
+		
+		error = gpgme_op_encrypt_sign (ctx, rcpts, encrypt_flags, input, output);
+		
+		gpgme_signers_clear (ctx);
+	} else {
+		error = gpgme_op_encrypt (ctx, rcpts, encrypt_flags, input, output);
+	}
+	
+	g_mime_gpgme_keylist_free (rcpts);
+	gpgme_data_release (output);
+	gpgme_data_release (input);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Encryption failed: %s"), gpgme_strerror (error));
+		return -1;
+	}
+	
+	return 0;
+}
+
+static GMimeDecryptResult *
 g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx)
 {
 	GMimeDecryptResult *result;
@@ -295,8 +499,10 @@ g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx)
 	if (!(res = gpgme_op_decrypt_result (ctx)) || !res->recipients)
 		return result;
 	
+#if GPGME_VERSION_NUMBER >= 0x010800
 	if (res->session_key)
 		result->session_key = g_strdup (res->session_key);
+#endif
 	
 	recipient = res->recipients;
 	while (recipient != NULL) {
@@ -310,6 +516,106 @@ g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx)
 	}
 	
 	return result;
+}
+
+GMimeDecryptResult *
+g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *session_key,
+		      GMimeStream *istream, GMimeStream *ostream, GError **err)
+{
+	GMimeDecryptResult *result;
+	gpgme_decrypt_result_t res;
+	gpgme_data_t input, output;
+	gpgme_error_t error;
+	
+	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+		return NULL;
+	}
+	
+	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+		gpgme_data_release (input);
+		return NULL;
+	}
+	
+#if GPGME_VERSION_NUMBER >= 0x010800
+	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
+		gpgme_set_ctx_flag (ctx, "export-session-key", "1");
+	
+	if (session_key)
+		gpgme_set_ctx_flag (ctx, "override-session-key", session_key);
+#endif
+	
+	/* decrypt the input stream */
+	if (gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP)
+		error = gpgme_op_decrypt_verify (ctx, input, output);
+	else
+		error = gpgme_op_decrypt (ctx, input, output);
+	
+#if GPGME_VERSION_NUMBER >= 0x010800
+	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
+		gpgme_set_ctx_flag (ctx, "export-session-key", "0");
+	
+	if (session_key)
+		gpgme_set_ctx_flag (ctx, "override-session-key", NULL);
+#endif
+	
+	gpgme_data_release (output);
+	gpgme_data_release (input);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed: %s"), gpgme_strerror (error));
+		return NULL;
+	}
+	
+	return g_mime_gpgme_get_decrypt_result (ctx);
+}
+
+int
+g_mime_gpgme_import (gpgme_ctx_t ctx, GMimeStream *istream, GError **err)
+{
+	gpgme_data_t keydata;
+	gpgme_error_t error;
+	
+	if ((error = gpgme_data_new_from_cbs (&keydata, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+		return -1;
+	}
+	
+	/* import the key(s) */
+	error = gpgme_op_import (ctx, keydata);
+	gpgme_data_release (keydata);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not import key data: %s"), gpgme_strerror (error));
+		return -1;
+	}
+	
+	return 0;
+}
+
+int
+g_mime_gpgme_export (gpgme_ctx_t ctx, const char *keys[], GMimeStream *ostream, GError **err)
+{
+	gpgme_data_t keydata;
+	gpgme_error_t error;
+	guint i;
+	
+	if ((error = gpgme_data_new_from_cbs (&keydata, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
+		return -1;
+	}
+	
+	/* export the key(s) */
+	error = gpgme_op_export_ext (ctx, keys, 0, keydata);
+	gpgme_data_release (keydata);
+	
+	if (error != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data: %s"), gpgme_strerror (error));
+		return -1;
+	}
+	
+	return 0;
 }
 
 #endif /* ENABLE_CRYPTO */
