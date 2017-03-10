@@ -373,12 +373,12 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 	
 	if (sigstream != NULL) {
 		/* if @sigstream is non-NULL, then it is a detached signature */
-		if ((error = gpgme_data_new_from_cbs (&signed_text, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+		if ((error = gpgme_data_new_from_cbs (&signed_text, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
 			return NULL;
 		}
 		
-		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
+		if ((error = gpgme_data_new_from_cbs (&sig, &gpg_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open signature stream: %s"), gpgme_strerror (error));
 			gpgme_data_release (signed_text);
 			return NULL;
@@ -387,12 +387,12 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 		plain = NULL;
 	} else if (ostream != NULL) {
 		/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
-		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+		if ((error = gpgme_data_new_from_cbs (&sig, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
 			return NULL;
 		}
 		
-		if ((error = gpgme_data_new_from_cbs (&plain, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		if ((error = gpgme_data_new_from_cbs (&plain, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
 			gpgme_data_release (sig);
 			return NULL;
@@ -404,7 +404,7 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 		return NULL;
 	}
 	
-	error = gpgme_op_verify (gpg->ctx, signature, message, plaintext);
+	error = gpgme_op_verify (gpg->ctx, sig, signed_text, plain);
 	if (signed_text)
 		gpgme_data_release (signed_text);
 	if (plain)
