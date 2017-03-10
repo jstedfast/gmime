@@ -547,7 +547,7 @@ g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *sess
 #endif
 	
 	/* decrypt the input stream */
-	if (gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP && gpgme_check_version ("1.7.0"))
+	if (gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP)
 		error = gpgme_op_decrypt_verify (ctx, input, output);
 	else
 		error = gpgme_op_decrypt (ctx, input, output);

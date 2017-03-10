@@ -335,6 +335,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	
 	g_mime_stream_reset (stream);
 	g_mime_stream_reset (cleartext);
+	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	
