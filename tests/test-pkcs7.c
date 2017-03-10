@@ -42,6 +42,7 @@ extern int verbose;
 
 #define v(x) if (verbose > 3) x
 
+#if 0
 static gboolean
 request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
 {
@@ -49,6 +50,7 @@ request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt
 	
 	return TRUE;
 }
+#endif
 
 static GMimeSignatureStatus
 get_sig_status (GMimeSignatureList *signatures)
@@ -346,7 +348,7 @@ int main (int argc, char **argv)
 	testsuite_start ("Pkcs7 crypto context");
 	
 	ctx = g_mime_pkcs7_context_new ();
-	g_mime_crypto_context_set_request_password (ctx, request_passwd);
+	//g_mime_crypto_context_set_request_password (ctx, request_passwd);
 	
 	testsuite_check ("GMimePkcs7Context::import");
 	try {

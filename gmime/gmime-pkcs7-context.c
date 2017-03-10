@@ -738,7 +738,6 @@ g_mime_pkcs7_context_new (void)
 		return NULL;
 	
 	pkcs7 = g_object_newv (GMIME_TYPE_PKCS7_CONTEXT, 0, NULL);
-	gpgme_set_passphrase_cb (ctx, g_mime_gpgme_passphrase_callback, pkcs7);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
 	gpgme_set_textmode (ctx, FALSE);
 	gpgme_set_armor (ctx, FALSE);
