@@ -452,18 +452,8 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	/* get the signature stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (signature));
 	
-	/* FIXME: temporary hack for Balsa to support S/MIME,
-	 * ::verify() should probably take a mime part so it can
-	 * decode this itself if it needs to. */
-	if (!g_ascii_strcasecmp (protocol, "application/pkcs7-signature") ||
-	    !g_ascii_strcasecmp (protocol, "application/x-pkcs7-signature")) {
-		sigstream = g_mime_stream_mem_new ();
-		g_mime_data_wrapper_write_to_stream (wrapper, sigstream);
-	} else {
-		sigstream = g_mime_data_wrapper_get_stream (wrapper);
-		g_object_ref (sigstream);
-	}
-	
+	sigstream = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (wrapper, sigstream);
 	g_mime_stream_reset (sigstream);
 	
 	/* verify the signature */
