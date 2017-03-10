@@ -349,6 +349,10 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFl
 	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
 	
+	fprintf (stderr, "-------- BEGIN ENCRYPTED STREAM --------\n%.*s-------- END ENCRYPTED STREAM --------\n",
+		 GMIME_STREAM_MEM (ciphertext)->buffer->len,
+		 GMIME_STREAM_MEM (ciphertext)->buffer->data);
+	
 	stream = g_mime_stream_mem_new ();
 	filtered_stream = g_mime_stream_filter_new (stream);
 	crlf_filter = g_mime_filter_crlf_new (FALSE, FALSE);
