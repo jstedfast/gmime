@@ -450,58 +450,58 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
-	gpgme_data_t message, signature, plaintext;
+	gpgme_data_t sig, signed_text, plain;
 	gpgme_error_t error;
 	
-	if ((error = gpgme_data_new_from_cbs (&message, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
-		return NULL;
-	}
-	
-	/* if @sigstream is non-NULL, then it is a detached signature */
 	if (sigstream != NULL) {
-		if ((error = gpgme_data_new_from_cbs (&signature, &pkcs7_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
+		/* if @sigstream is non-NULL, then it is a detached signature */
+		if ((error = gpgme_data_new_from_cbs (&signed_text, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+			return NULL;
+		}
+		
+		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open signature stream: %s"), gpgme_strerror (error));
-			gpgme_data_release (message);
+			gpgme_data_release (signed_text);
 			return NULL;
 		}
-	} else {
-		signature = NULL;
-	}
-	
-	/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
-	if (ostream != NULL) {
-		if ((error = gpgme_data_new_from_cbs (&plaintext, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		
+		plain = NULL;
+	} else if (ostream != NULL) {
+		/* if @ostream is non-NULL, then we are expected to write the extracted plaintext to it */
+		if ((error = gpgme_data_new_from_cbs (&sig, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream: %s"), gpgme_strerror (error));
+			return NULL;
+		}
+		
+		if ((error = gpgme_data_new_from_cbs (&plain, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"), gpgme_strerror (error));
-			if (signature)
-				gpgme_data_release (signature);
-			gpgme_data_release (message);
+			gpgme_data_release (sig);
 			return NULL;
 		}
+		
+		signed_text = NULL;
 	} else {
-		plaintext = NULL;
-	}
-	
-	// FIXME: enable auto-key-retrieve
-	
-	if ((error = gpgme_op_verify (pkcs7->ctx, signature, message, NULL)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify pkcs7 signature: %s"), gpgme_strerror (error));
-		if (plaintext)
-			gpgme_data_release (plaintext);
-		if (signature)
-			gpgme_data_release (signature);
-		gpgme_data_release (message);
 		return NULL;
 	}
 	
-	if (plaintext)
-		gpgme_data_release (plaintext);
+	if ((error = gpgme_op_verify (pkcs7->ctx, sig, signed_text, plain)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify pkcs7 signature: %s"), gpgme_strerror (error));
+		if (signed_text)
+			gpgme_data_release (signed_text);
+		if (plain)
+			gpgme_data_release (plain);
+		gpgme_data_release (sig);
+		return NULL;
+	}
 	
-	if (signature)
-		gpgme_data_release (signature);
+	if (signed_text)
+		gpgme_data_release (signed_text);
 	
-	if (message)
-		gpgme_data_release (message);
+	if (plain)
+		gpgme_data_release (plain);
+	
+	gpgme_data_release (sig);
 	
 	/* get/return the pkcs7 signatures */
 	return g_mime_gpgme_get_signatures (pkcs7->ctx, TRUE);

@@ -400,8 +400,6 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 		plaintext = NULL;
 	}
 	
-	// FIXME: enable auto-key-retrieve
-	
 	if ((error = gpgme_op_verify (gpg->ctx, signature, message, plaintext)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify gpg signature: %s"), gpgme_strerror (error));
 		if (plaintext)
