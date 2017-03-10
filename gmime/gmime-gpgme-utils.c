@@ -295,8 +295,8 @@ g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx)
 	if (!(res = gpgme_op_decrypt_result (ctx)) || !res->recipients)
 		return result;
 	
-	//if (res->session_key)
-	//	result->session_key = g_strdup (res->session_key);
+	if (res->session_key)
+		result->session_key = g_strdup (res->session_key);
 	
 	recipient = res->recipients;
 	while (recipient != NULL) {
