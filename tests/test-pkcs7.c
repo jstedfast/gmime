@@ -86,11 +86,6 @@ test_sign (GMimeCryptoContext *ctx, gboolean detached, GMimeStream *cleartext, G
 		g_error_free (err);
 		throw (ex);
 	}
-	
-	v(fprintf (stderr, "signature (%s):\n%.*s\n",
-		   g_mime_crypto_context_digest_name (ctx, rv),
-		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
-		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
 }
 
 static void
@@ -186,10 +181,6 @@ test_encrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 		g_error_free (err);
 		throw (ex);
 	}
-	
-	v(fprintf (stderr, "ciphertext:\n%.*s\n",
-		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
-		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
 }
 
 static void
