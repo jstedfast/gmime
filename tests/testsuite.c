@@ -430,11 +430,11 @@ testsuite_setup_gpghome (const char *gpg)
 	int i;
 	
 	/* reset .gnupg config directory */
-	//if (system ("/bin/rm -rf ./tmp") != 0)
-	//	return EXIT_FAILURE;
+	if (system ("/bin/rm -rf ./tmp") != 0)
+		return EXIT_FAILURE;
 	
-	//if (g_mkdir ("./tmp", 0755) != 0)
-	//	return EXIT_FAILURE;
+	if (g_mkdir ("./tmp", 0755) != 0)
+		return EXIT_FAILURE;
 	
 	g_setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
 	
@@ -442,8 +442,6 @@ testsuite_setup_gpghome (const char *gpg)
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
 	g_unsetenv ("DISPLAY");
 	g_unsetenv ("GPG_TTY");
-	
-	return 0;
 	
         command = g_strdup_printf ("%s --list-keys > /dev/null 2>&1", gpg);
 	if (system (command) != 0) {
@@ -477,6 +475,7 @@ testsuite_setup_gpghome (const char *gpg)
 	if (fclose (fp))
 		return EXIT_FAILURE;
 	
+#if DEBUG_GNUPG
 	cwd = g_get_current_dir ();
 	
 	for (i = 0; files[i]; i++) {
@@ -496,6 +495,7 @@ testsuite_setup_gpghome (const char *gpg)
 	}
 	
 	g_free (cwd);
+#endif
 	
 	return EXIT_SUCCESS;
 }
@@ -503,8 +503,8 @@ testsuite_setup_gpghome (const char *gpg)
 int
 testsuite_destroy_gpghome (void)
 {
-	//if (system ("/bin/rm -rf ./tmp") != 0)
-	//	return EXIT_FAILURE;
+	if (system ("/bin/rm -rf ./tmp") != 0)
+		return EXIT_FAILURE;
 	return EXIT_SUCCESS;
 }
 
