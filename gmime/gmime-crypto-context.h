@@ -105,13 +105,11 @@ typedef enum {
 /**
  * GMimeVerifyFlags:
  * @GMIME_VERIFY_FLAGS_NONE: No flags specified.
- * @GMIME_VERIFY_FLAGS_AUTO_KEY_RETRIEVE: Automatically retrieve keys from a keyserver.
  *
  * Signature verification flags.
  **/
 typedef enum {
-	GMIME_VERIFY_FLAGS_NONE              = 0,
-	GMIME_VERIFY_FLAGS_AUTO_KEY_RETRIEVE = 1 << 0,
+	GMIME_VERIFY_FLAGS_NONE              = 0
 } GMimeVerifyFlags;
 
 

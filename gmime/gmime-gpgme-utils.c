@@ -574,6 +574,7 @@ g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *sess
 int
 g_mime_gpgme_import (gpgme_ctx_t ctx, GMimeStream *istream, GError **err)
 {
+	gpgme_import_result_t result;
 	gpgme_data_t keydata;
 	gpgme_error_t error;
 	
@@ -591,7 +592,9 @@ g_mime_gpgme_import (gpgme_ctx_t ctx, GMimeStream *istream, GError **err)
 		return -1;
 	}
 	
-	return 0;
+	result = gpgme_op_import_result (ctx);
+	
+	return result->imported;
 }
 
 int

@@ -546,7 +546,7 @@ crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err)
  * Imports a stream of keys/certificates contained within @istream
  * into the key/certificate database controlled by @ctx.
  *
- * Returns: %0 on success or %-1 on fail.
+ * Returns: the total number of keys imported on success or %-1 on fail.
  **/
 int
 g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err)

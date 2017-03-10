@@ -74,6 +74,7 @@ print_verify_results (GMimeSignatureList *signatures)
 	
 	status = get_sig_status (signatures);
 	
+	fputs ("Overall status: ", stdout);
 	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
 		fputs ("BAD\n", stdout);
 	else if ((status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
@@ -135,6 +136,8 @@ print_verify_results (GMimeSignatureList *signatures)
 			fputs ("Key Expired, ", stdout);
 		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
 			fputs ("Key Revoked", stdout);
+		if ((sig->status & ~(GMIME_SIGNATURE_STATUS_GREEN | GMIME_SIGNATURE_STATUS_RED)) == 0)
+			fputs ("None", stdout);
 		fputc ('\n', stdout);
 		
 		if (i + 1 < count)
@@ -359,6 +362,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 		ex = exception_new ("No session key returned!");
 		throw (ex);
 	}
+	
 	ret = g_strdup (result->session_key);
 #endif
 	
@@ -492,8 +496,10 @@ int main (int argc, char *argv[])
 	try {
 		create_encrypted_message (ctx, FALSE, &cleartext, &stream);
 		session_key = test_multipart_encrypted (ctx, FALSE, cleartext, stream, NULL);
+#if GPGME_VERSION_NUMBER >= 0x010800
 		if (testsuite_can_safely_override_session_key (gpg))
 			g_free (test_multipart_encrypted (ctx, FALSE, cleartext, stream, session_key));
+#endif
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
@@ -505,34 +511,28 @@ int main (int argc, char *argv[])
 	if (stream)
 		g_object_unref (stream);
 	
-	cleartext = stream = NULL;
-	
-	if (session_key) {
-		memset (session_key, 0, strlen (session_key));
-		g_free (session_key);
-		session_key = NULL;
-	}
+	g_free (session_key);
 	
 	testsuite_check ("multipart/encrypted+sign");
 	try {
 		create_encrypted_message (ctx, TRUE, &cleartext, &stream);
 		session_key = test_multipart_encrypted (ctx, TRUE, cleartext, stream, NULL);
+#if GPGME_VERSION_NUMBER >= 0x010800
 		if (testsuite_can_safely_override_session_key (gpg))
 			g_free (test_multipart_encrypted (ctx, TRUE, cleartext, stream, session_key));
+#endif
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted+sign failed: %s", ex->message);
 	} finally;
+	
 	if (cleartext)
 		g_object_unref (cleartext);
+	
 	if (stream)
 		g_object_unref (stream);
-	cleartext = stream = NULL;
-	if (session_key) {
-		memset (session_key, 0, strlen (session_key));
-		g_free (session_key);
-		session_key = NULL;
-	}
+	
+	g_free (session_key);
 	
 	g_object_unref (ctx);
 	g_free (gpg);
