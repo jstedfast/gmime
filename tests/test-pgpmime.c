@@ -226,7 +226,6 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	
 	mps = (GMimeMultipartSigned *) message->mime_part;
 	
-	v(fputs ("Trying to verify signature... ", stdout));
 	if (!(signatures = g_mime_multipart_signed_verify (mps, 0, &err))) {
 		ex = exception_new ("%s", err->message);
 		v(fputs ("failed.\n", stdout));
