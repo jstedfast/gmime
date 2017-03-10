@@ -440,6 +440,8 @@ int main (int argc, char *argv[])
 	
 	testsuite_init (argc, argv);
 	
+	verbose = 4;
+	
 	if (!(gpg = g_find_program_in_path ("gpg2")))
 		if (!(gpg = g_find_program_in_path ("gpg")))
 			return EXIT_FAILURE;
