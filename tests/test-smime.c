@@ -36,8 +36,6 @@
 
 #include "testsuite.h"
 
-#define GPG_PATH "/usr/bin/gpg"
-
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
@@ -150,6 +148,51 @@ print_verify_results (GMimeSignatureList *signatures)
 	}
 }
 
+static GMimeMessage *
+create_message (GMimeObject *body)
+{
+	InternetAddressList *list;
+	InternetAddress *mailbox;
+	GMimeMessage *message;
+	GMimeParser *parser;
+	GMimeStream *stream;
+	
+	message = g_mime_message_new (TRUE);
+	
+	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	list = g_mime_message_get_from (message);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
+	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	list = g_mime_message_get_reply_to (message);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
+	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
+	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
+	g_mime_message_set_subject (message, "This is a test message", NULL);
+	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
+	g_mime_message_set_mime_part (message, body);
+	
+	stream = g_mime_stream_mem_new ();
+	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
+	g_mime_stream_reset (stream);
+	g_object_unref (message);
+	
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	g_object_unref (stream);
+	
+	message = g_mime_parser_construct_message (parser);
+	g_object_unref (parser);
+	
+	return message;
+}
+
 #define MULTIPART_SIGNED_CONTENT "This is a test of the emergency broadcast system \
 with an sha1 detach-sign.\n\nFrom now on, there will be text to try and break     \t\
   \nvarious things. For example, the F in \"From\" in the previous line...\n...and \
@@ -162,11 +205,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 {
 	GMimeSignatureList *signatures;
 	GMimeMultipartSigned *mps;
-	InternetAddressList *list;
-	InternetAddress *mailbox;
 	GMimeMessage *message;
-	GMimeStream *stream;
-	GMimeParser *parser;
 	GMimeTextPart *part;
 	GError *err = NULL;
 	Exception *ex;
@@ -178,7 +217,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	mps = g_mime_multipart_signed_new ();
 	
 	/* sign the part */
-	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (part), ctx, "alice@example.net",
+	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (part), ctx, "mimekit@example.com",
 				      GMIME_DIGEST_ALGO_SHA1, &err);
 	g_object_unref (part);
 	
@@ -189,39 +228,8 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 		throw (ex);
 	}
 	
-	message = g_mime_message_new (TRUE);
-	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
-	list = g_mime_message_get_from (message);
-	internet_address_list_add (list, mailbox);
-	g_object_unref (mailbox);
-	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
-	list = g_mime_message_get_reply_to (message);
-	internet_address_list_add (list, mailbox);
-	g_object_unref (mailbox);
-	
-	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
-	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
-	internet_address_list_add (list, mailbox);
-	g_object_unref (mailbox);
-	
-	g_mime_message_set_subject (message, "This is a test message", NULL);
-	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
-	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
+	message = create_message ((GMimeObject *) mps);
 	g_object_unref (mps);
-	
-	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
-	g_mime_stream_reset (stream);
-	g_object_unref (message);
-	
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, stream);
-	g_object_unref (stream);
-	
-	message = g_mime_parser_construct_message (parser);
-	g_object_unref (parser);
 	
 	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not a multipart/signed?");
@@ -231,10 +239,8 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	
 	mps = (GMimeMultipartSigned *) message->mime_part;
 	
-	v(fputs ("Trying to verify signature... ", stdout));
 	if (!(signatures = g_mime_multipart_signed_verify (mps, 0, &err))) {
 		ex = exception_new ("%s", err->message);
-		v(fputs ("failed.\n", stdout));
 		g_error_free (err);
 		throw (ex);
 	}
@@ -245,139 +251,144 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	g_object_unref (message);
 }
 
-#define MULTIPART_ENCRYPTED_CONTENT "This is a test of multipart/encrypted.\n"
+#define SIGNED_CONTENT "This is a test of application/pkcs7-mime; smime-type=signed-data.\n"
 
 static void
-test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
+test_pkcs7_mime_sign (void)
 {
-	GMimeSignatureStatus status;
-	GMimeStream *cleartext, *stream;
-	GMimeMultipartEncrypted *mpe;
-	GMimeDecryptResult *result;
-	InternetAddressList *list;
-	InternetAddress *mailbox;
-	GMimeObject *decrypted;
-	GPtrArray *recipients;
+	GMimeApplicationPkcs7Mime *pkcs7_mime;
+	GMimeSignatureList *signatures;
 	GMimeMessage *message;
-	Exception *ex = NULL;
-	GMimeParser *parser;
+	GMimeObject *entity;
 	GMimeTextPart *part;
-	GByteArray *buf[2];
 	GError *err = NULL;
+	Exception *ex;
+	char *text;
 	
 	part = g_mime_text_part_new ();
-	g_mime_text_part_set_text (part, MULTIPART_ENCRYPTED_CONTENT);
+	g_mime_text_part_set_text (part, SIGNED_CONTENT);
 	
-	/* hold onto this for comparison later */
-	cleartext = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) part, cleartext);
-	g_mime_stream_reset (cleartext);
-	
-	/* create the multipart/encrypted container part */
-	mpe = g_mime_multipart_encrypted_new ();
-	
-	/* encrypt the part */
-	recipients = g_ptr_array_new ();
-	g_ptr_array_add (recipients, "alice@example.net");
-	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, sign,
-					    "alice@example.net", GMIME_DIGEST_ALGO_SHA256,
-					    GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
-	g_ptr_array_free (recipients, TRUE);
+	pkcs7_mime = g_mime_application_pkcs7_mime_sign ((GMimeObject *) part, "mimekit@example.com", GMIME_DIGEST_ALGO_SHA1, &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
-		ex = exception_new ("encryption failed: %s", err->message);
-		g_object_unref (cleartext);
-		g_object_unref (mpe);
+		ex = exception_new ("sign failed: %s", err->message);
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	message = g_mime_message_new (TRUE);
+	message = create_message ((GMimeObject *) pkcs7_mime);
+	g_object_unref (pkcs7_mime);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
-	list = g_mime_message_get_from (message);
-	internet_address_list_add (list, mailbox);
-	g_object_unref (mailbox);
-	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
-	list = g_mime_message_get_reply_to (message);
-	internet_address_list_add (list, mailbox);
-	g_object_unref (mailbox);
-	
-	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
-	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
-	internet_address_list_add (list, mailbox);
-	g_object_unref (mailbox);
-	
-	g_mime_message_set_subject (message, "This is a test message", NULL);
-	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
-	g_mime_message_set_mime_part (message, GMIME_OBJECT (mpe));
-	g_object_unref (mpe);
-	
-	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
-	g_mime_stream_reset (stream);
-	g_object_unref (message);
-	
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, stream);
-	g_object_unref (stream);
-	
-	message = g_mime_parser_construct_message (parser);
-	g_object_unref (parser);
-	
-	if (!GMIME_IS_MULTIPART_ENCRYPTED (message->mime_part)) {
-		ex = exception_new ("resultant top-level mime part not a multipart/encrypted?");
+	if (!GMIME_IS_APPLICATION_PKCS7_MIME (message->mime_part)) {
+		ex = exception_new ("resultant top-level mime part not an application/pkcs7-mime?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	mpe = (GMimeMultipartEncrypted *) message->mime_part;
+	pkcs7_mime = (GMimeApplicationPkcs7Mime *) message->mime_part;
 	
-	/* okay, now to test our decrypt function... */
-	decrypted = g_mime_multipart_encrypted_decrypt (mpe, 0, NULL, &result, &err);
-	if (!decrypted || err != NULL) {
-		ex = exception_new ("decryption failed: %s", err->message);
-		g_object_unref (cleartext);
+	if (!(signatures = g_mime_application_pkcs7_mime_verify (pkcs7_mime, 0, &entity, &err))) {
+		ex = exception_new ("verify failed: %s", err->message);
+		g_object_unref (message);
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	if (result->signatures)
-		v(print_verify_results (result->signatures));
+	v(print_verify_results (signatures));
+	g_object_unref (signatures);
+	g_object_unref (message);
 	
-	if (sign) {
-		status = get_sig_status (result->signatures);
-		
-		if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
-			ex = exception_new ("signature status expected to be GOOD");
-	} else {
-		if (result->signatures)
-			ex = exception_new ("signature status expected to be NONE");
+	/* TODO: verify extracted content... */
+	if (!GMIME_IS_TEXT_PART (entity)) {
+		g_object_unref (entity);
+		throw (exception_new ("extracted entity was not a text/plain part?"));
 	}
+	
+	text = g_mime_text_part_get_text ((GMimeTextPart *) entity);
+	if (strcmp (SIGNED_CONTENT, text) != 0) {
+		ex = exception_new ("text part content does not match");
+		g_object_unref (entity);
+		g_free (text);
+		throw (ex);
+	}
+	
+	g_object_unref (entity);
+	g_free (text);
+}
+
+#define ENCRYPTED_CONTENT "This is a test of application/pkcs7-mime; smime-type=enveloped-data.\n"
+
+static void
+test_pkcs7_mime_encrypt (void)
+{
+	GMimeApplicationPkcs7Mime *pkcs7_mime;
+	GMimeDecryptResult *result;
+	GPtrArray *recipients;
+	GMimeMessage *message;
+	GMimeObject *entity;
+	GMimeTextPart *part;
+	GError *err = NULL;
+	Exception *ex;
+	char *text;
+	
+	part = g_mime_text_part_new ();
+	g_mime_text_part_set_text (part, ENCRYPTED_CONTENT);
+	
+	recipients = g_ptr_array_new ();
+	g_ptr_array_add (recipients, "mimekit@example.com");
+	
+	pkcs7_mime = g_mime_application_pkcs7_mime_encrypt ((GMimeObject *) part, GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
+	g_ptr_array_free (recipients, TRUE);
+	g_object_unref (part);
+	
+	if (err != NULL) {
+		ex = exception_new ("encrypt failed: %s", err->message);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	message = create_message ((GMimeObject *) pkcs7_mime);
+	g_object_unref (pkcs7_mime);
+	
+	if (!GMIME_IS_APPLICATION_PKCS7_MIME (message->mime_part)) {
+		ex = exception_new ("resultant top-level mime part not an application/pkcs7-mime?");
+		g_object_unref (message);
+		throw (ex);
+	}
+	
+	pkcs7_mime = (GMimeApplicationPkcs7Mime *) message->mime_part;
+	
+	if (!(entity = g_mime_application_pkcs7_mime_decrypt (pkcs7_mime, 0, NULL, &result, &err))) {
+		ex = exception_new ("decrypt failed: %s", err->message);
+		g_object_unref (message);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	g_object_unref (message);
+	
+	if (result->signatures)
+		ex = exception_new ("signature status expected to be NONE");
 	
 	g_object_unref (result);
 	
-	if (ex != NULL) {
-		g_object_unref (cleartext);
+	/* TODO: verify decrypted content... */
+	if (!GMIME_IS_TEXT_PART (entity)) {
+		g_object_unref (entity);
+		throw (exception_new ("decrypted entity was not a text/plain part?"));
+	}
+	
+	text = g_mime_text_part_get_text ((GMimeTextPart *) entity);
+	if (strcmp (SIGNED_CONTENT, text) != 0) {
+		ex = exception_new ("text part content does not match");
+		g_object_unref (entity);
+		g_free (text);
 		throw (ex);
 	}
 	
-	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (decrypted, stream);
-	
-	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
-	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
-	
-	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
-		ex = exception_new ("decrypted data does not match original cleartext");
-	
-	g_object_unref (cleartext);
-	g_object_unref (stream);
-	
-	if (ex != NULL)
-		throw (ex);
+	g_object_unref (entity);
+	g_free (text);
 }
 
 static void
@@ -414,7 +425,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_init (argc, argv);
 	
-	if (testsuite_setup_gpghome (GPG_PATH) != 0)
+	if (testsuite_setup_gpghome ("gpgsm") != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
@@ -434,11 +445,11 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("GMimePkcs7Context::import");
 	try {
-		key = g_build_filename (datadir, "gmime-cert.p7", NULL);
+		key = g_build_filename (datadir, "certificate-authority.crt", NULL);
 		import_key (ctx, key);
 		g_free (key);
 		
-		key = g_build_filename (datadir, "gmime-cert.p12", NULL);
+		key = g_build_filename (datadir, "smime.p12", NULL);
 		import_key (ctx, key);
 		g_free (key);
 		
@@ -456,20 +467,20 @@ int main (int argc, char *argv[])
 		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
 	} finally;
 	
-	testsuite_check ("multipart/encrypted");
+	testsuite_check ("application/pkcs7-mime; smime-type=signed-data");
 	try {
-		test_multipart_encrypted (ctx, FALSE);
+		test_pkcs7_mime_sign ();
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
+	} finally;
+	
+	testsuite_check ("application/pkcs7-mime; smime-type=enveloped-data");
+	try {
+		test_pkcs7_mime_encrypt ();
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
-	} finally;
-	
-	testsuite_check ("multipart/encrypted+sign");
-	try {
-		test_multipart_encrypted (ctx, TRUE);
-		testsuite_check_passed ();
-	} catch (ex) {
-		testsuite_check_failed ("multipart/encrypted+sign failed: %s", ex->message);
 	} finally;
 	
 	g_object_unref (ctx);
