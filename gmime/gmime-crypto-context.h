@@ -52,7 +52,7 @@ typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
  * GMimePasswordRequestFunc:
  * @ctx: the #GMimeCryptoContext making the request
  * @user_id: the user_id of the password being requested
- * @prompt_ctx: a string containing some helpful context for the prompt
+ * @prompt: a string containing some helpful context for the prompt
  * @reprompt: %TRUE if this password request is a reprompt due to a previously bad password response
  * @response: a stream for the application to write the password to (followed by a newline '\n' character)
  * @err: a #GError for the callback to set if an error occurs
@@ -62,7 +62,7 @@ typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
  *
  * Returns: %TRUE on success or %FALSE on error.
  **/
-typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx,
+typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt,
 					       gboolean reprompt, GMimeStream *response, GError **err);
 
 
@@ -160,9 +160,6 @@ struct _GMimeCryptoContextClass {
 	
 	int                      (* export_keys) (GMimeCryptoContext *ctx, const char *keys[],
 						  GMimeStream *ostream, GError **err);
-
-	gboolean                 (* get_always_trust) (GMimeCryptoContext *ctx);
-	void                     (* set_always_trust) (GMimeCryptoContext *ctx, gboolean always_trust);
 };
 
 
