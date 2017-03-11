@@ -82,6 +82,8 @@ print_verify_results (GMimeSignatureList *signatures)
 		fputs ("BAD\n", stdout);
 	else if ((status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
 		fputs ("GOOD\n", stdout);
+	else if ((status & GMIME_SIGNATURE_STATUS_VALID) != 0)
+		fputs ("VALID\n", stdout);
 	else
 		fputs ("UNKNOWN\n", stdout);
 	
@@ -121,6 +123,8 @@ print_verify_results (GMimeSignatureList *signatures)
 			fputs ("BAD\n", stdout);
 		else if ((sig->status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
 			fputs ("GOOD\n", stdout);
+		else if ((sig->status & GMIME_SIGNATURE_STATUS_VALID) != 0)
+			fputs ("VALID\n", stdout);
 		else
 			fputs ("UNKNOWN\n", stdout);
 		
@@ -131,15 +135,25 @@ print_verify_results (GMimeSignatureList *signatures)
 			fprintf (stdout, "\tSignature never expires\n");
 		
 		fprintf (stdout, "\tErrors: ");
-		if (sig->status & GMIME_SIGNATURE_STATUS_SIG_EXPIRED)
-			fputs ("Expired, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_MISSING)
-			fputs ("No Pub Key, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
+			fputs ("Key Revoked, ", stdout);
 		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_EXPIRED)
 			fputs ("Key Expired, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
-			fputs ("Key Revoked", stdout);
-		if ((sig->status & ~(GMIME_SIGNATURE_STATUS_GREEN | GMIME_SIGNATURE_STATUS_RED)) == 0)
+		if (sig->status & GMIME_SIGNATURE_STATUS_SIG_EXPIRED)
+			fputs ("Sig Expired, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_MISSING)
+			fputs ("Key Missing, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_CRL_MISSING)
+			fputs ("CRL Missing, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_CRL_TOO_OLD)
+			fputs ("CRL Too Old, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_BAD_POLICY)
+			fputs ("Bad Policy, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_SYS_ERROR)
+			fputs ("System Error, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_TOFU_CONFLICT)
+			fputs ("Tofu Conflict", stdout);
+		if ((sig->status & ~(GMIME_SIGNATURE_STATUS_VALID | GMIME_SIGNATURE_STATUS_GREEN | GMIME_SIGNATURE_STATUS_RED)) == 0)
 			fputs ("None", stdout);
 		fputc ('\n', stdout);
 		
