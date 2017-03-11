@@ -41,7 +41,7 @@ extern int verbose;
 #define v(x) if (verbose > 3) x
 
 static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, GError **err)
 {
 	g_mime_stream_write_string (response, "no.secret\n");
 	
@@ -491,7 +491,7 @@ int main (int argc, char *argv[])
 		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
 	} finally;
 	
-#if GPGME_VERSION_NUMBER >= 0x010200
+#if GPGME_VERSION_NUMBER >= 0x010000
 	testsuite_check ("multipart/encrypted");
 	try {
 		create_encrypted_message (ctx, FALSE, &cleartext, &stream);

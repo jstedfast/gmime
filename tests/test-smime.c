@@ -44,7 +44,7 @@ extern int verbose;
 
 #if 0
 static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, GError **err)
 {
 	g_mime_stream_write_string (response, "no.secret\n");
 	
@@ -79,6 +79,7 @@ print_verify_results (GMimeSignatureList *signatures)
 	
 	status = get_sig_status (signatures);
 	
+	fputs ("Overall status: ", stdout);
 	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
 		fputs ("BAD\n", stdout);
 	else if ((status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
@@ -140,6 +141,8 @@ print_verify_results (GMimeSignatureList *signatures)
 			fputs ("Key Expired, ", stdout);
 		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
 			fputs ("Key Revoked", stdout);
+		if ((sig->status & ~(GMIME_SIGNATURE_STATUS_GREEN | GMIME_SIGNATURE_STATUS_RED)) == 0)
+			fputs ("None", stdout);
 		fputc ('\n', stdout);
 		
 		if (i + 1 < count)

@@ -44,7 +44,7 @@ extern int verbose;
 
 #if 0
 static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, GError **err)
 {
 	g_mime_stream_write_string (response, "no.secret\n");
 	
