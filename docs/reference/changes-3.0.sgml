@@ -1,0 +1,53 @@
+<refentry id="gmime-changes-3-0" revision="11 Mar 2017">
+  <refmeta>
+    <refentrytitle>Changes from 2.6 to 3.0</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>Changes from 2.6 to 3.0</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>Changes from 2.6 to 3.0</refname>
+    <refpurpose>Changes made between version 2.6 and version 3.0</refpurpose>
+  </refnamediv>
+  <refsect1>
+    <title>Changes from 2.6 to 3.0</title>
+    <para>GMimeMessage API changes:</para>
+    <itemizedlist>
+      <listitem><para><function>g_mime_message_get_sender()</function> no longer returns the value of the From header, it now returns an InternetAddressList* containing the parsed address(es) from the Sender header. For the From addresses, use <function>g_mime_message_get_from()</function>.</para></listitem>
+      <listitem><para><function>g_mime_message_get_reply_to()</function> no longer returns a const char*, instead it returns an InternetAddressList* for easier use.</para></listitem>
+      <listitem><para><function>g_mime_message_set_sender()</function> and <function>g_mime_message_set_reply_to()</function> have been removed. You will either need to use the appropriate getter method and then <function>internet_address_list_add()</function> to add a new InternetAddressMailbox or, alternatively, you can use <function>g_mime_message_add_mailbox()</function>.</para></listitem>
+      <listitem><para>GMimeRecipientType has been replaced by GMimeAddressType because it now contains non-recipient-based enum values (SENDER, FROM, and REPLY_TO).</para></listitem>
+      <listitem><para><function>g_mime_message_get_recipients()</function> has been replaced by <function>g_mime_message_get_addresses()</function> which allows you to access the address lists of any address header.</para></listitem>
+      <listitem><para><function>g_mime_message_add_recipient()</function> has been renamed to <function>g_mime_message_add_mailbox()</function> due to the fact that it can now be used to add mailbox addresses to the Sender, From, and Reply-To headers as well.</para></listitem>
+      <listitem><para><function>g_mime_message_set_subject()</function> now takes a charset argument used when encoding the subject into rfc2047 encoded-word tokens (if needed). Use NULL to get the old behavior of using a best-fit charset.</para></listitem>
+    </itemizedlist>
+    <para>Cryptography related API changes:</para>
+    <itemizedlist>
+      <listitem><para>Removed <function>g_mime_gpg_context_get_always_trust()</function> and <function>g_mime_gpg_context_set_always_trust()</function>. This can now be accomplished by passing GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST to <function>g_mime_crypto_context_encrypt()</function>.</para></listitem>
+      <listitem><para>Removed <function>g_mime_gpg_context_get_use_agent()</function> and <function>g_mime_gpg_context_set_use_agent()</function>. This should no longer be needed.</para></listitem>
+      <listitem><para>Removed <function>g_mime_gpg_context_get_auto_key_retrieve()</function> and <function>g_mime_gpg_context_set_auto_key_retrieve()</function>.</para></listitem>
+      <listitem><para>Removed <function>g_mime_crypto_context_get_retrieve_session_key()</function> and <function>g_mime_crypto_context_set_retrieve_session_key()</function>. This is now handled by passing GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY to the <function>g_mime_crypto_context_decrypt()</function> method.</para></listitem>
+      <listitem><para>GMimeCryptoContext's encrypt, decrypt, and verify methods now all take a flags argument that can enable additional features (see above examples).</para></listitem>
+      <listitem><para><function>g_mime_crypto_context_sign()</function> now takes a boolean 'detach' argument that specifies whether or not to generate a detached signature. To get the old behavior, pass TRUE as the detach argument.</para></listitem>
+      <listitem><para><function>g_mime_crypto_context_decrypt_session()<function> has been merged with <function>g_mime_crypto_context_decrypt()</function> and so the decryot method now takes a session_key argument that is allowed to be NULL.</para></listitem>
+      <listitem><para><function>g_mime_crypto_context_verify()</function> no longer takes a 'digest' argument as it was unused (it was originally meant to be a hint but wasnever really needed).</para></listitem>
+      <listitem><para><function>g_mime_multipart_signed_verify()</function> and <function>g_mime_multipart_encrypted_decrypt()</function> no longer take GMimeCryptoContext arguments. Instead, they instantiate their own contexts based on the protocol specified in the Content-Type header. These methods now also take a flags argument and in the case of the decrypt() method, it now also takes a session_key argument.</para></listitem>
+      <listitem><para>GMimeSignatureStatus and GMimeSignatureErrors have been merged into a single bitfield (GMimeSignatureStatus) which mirrors gpgme_sigsum_t and thus <function>g_mime_signature_get_errors()</function> and <function>g_mime_signature_set_errors()</function> have been removed.</para></listitem>
+    </itemizedlist>
+    <para>Other API changes:</para>
+      <listitem><para><function>g_mime_set_user_charsets()</function> and <function>g_mime_user_charsets()</function> have been removed. All encoding API's now have a way to specify a charset to use and all decoder API's take a GMimeParserOptions argument that allows for specifying fallback charsets.</para></listitem>
+      <listitem><para>GMimeObject's prepend_header(), append_header(), and set_header() virtual methods now all take a const char *raw_value and gint64 offset arguments. The raw_value is the raw header value cloned exactly as the parser found it in the stream (meaning it retains the original folding). The 'value' argument remains as it has always been, an unfolded (but still encoded) header value.</para></listitem>
+      <listitem><para><function>g_mime_object_new()</function> and <function>g_mime_object_new_with_type()</function> both now take a GMimeParserOptions argument.</para></listitem>
+      <listitem><para><function>g_mime_param_new_from_string()</function> has been replaced by <function>g_mime_param_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
+      <listitem><para><function>g_mime_content_type_new_from_string()</function> has been replaced by <function>g_mime_content_type_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
+      <listitem><para><function>g_mime_content_disposition_new_from_string()<function> has been replaced by <function>g_mime_content_disposition_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
+      <listitem><para><function>internet_address_list_parse_string()</function> has been replaced by <function>internet_address_list_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
+      <listitem><para>GMimeHeaderIter has been dropped in favour of a more direct way of iterating over a GMimeHeaderList using int indexes.</para></listitem>
+      <listitem><para><function>g_mime_stream_write_to_stream()</function>, <function>g_mime_stream_writev()</function>, and <function>g_mime_stream_printf()</function> now return a gint64.</para></listitem>
+      <listitem><para><function>g_mime_stream_file_new_for_path()</function> has been renamed to <function>g_mime_stream_file_open()</function>.</para></listitem>
+      <listitem><para><function>g_mime_stream_fs_new_for_path()</function> has been renamed to <function>g_mime_stream_fs_open()</function>.</para></listitem>
+      <listitem><para><function>g_mime_part_new()</function> now returns a GMimePart with a Content-Type of "application/octet-stream" instead of "text/plain" since there is now a GMimeTextPart who's <function>g_mime_text_part_new()</function> returns a GMimeTextPart with a Content-Type of "text/plain".</para></listitem>
+      <listitem><para><function>g_mime_part_get_content_object()</function> has been renamed to <function>g_mime_part_get_content()</function>.</para></listitem>
+      <listitem><para><function>g_mime_part_set_content_object()</function> has been renamed to <function>g_mime_part_set_content()</function>.</para></listitem>
+    </itemizedlist>
+  </refsect1>
+</refentry>

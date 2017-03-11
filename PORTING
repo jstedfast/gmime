@@ -21,7 +21,7 @@ Porting from GMime 2.6 to GMime 3.0
 
 - g_mime_message_set_sender() and g_mime_message_set_reply_to() have been
   removed. You will either need to use the appropriate getter method and
-  then internet_address_add_address() to add a new InternetAddressMailbox
+  then internet_address_list_add() to add a new InternetAddressMailbox
   or, alternatively, you can use g_mime_message_add_mailbox().
 
 - GMimeRecipientType has been replaced by GMimeAddressType because it now
@@ -71,17 +71,12 @@ Porting from GMime 2.6 to GMime 3.0
 - g_mime_stream_write_to_stream(), g_mime_stream_writev(), and g_mime_stream_printf()
   now return a gint64.
 
-- Renamed g_mime_gpg_context_[get,set]_always_trust() to
-  g_mime_crypto_context_[get,set]_always_trust().
+- Removed g_mime_gpg_context_[get,set]_always_trust(). This can now be accomplished
+  by passing GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST to g_mime_crypto_context_encrypt().
 
 - Removed g_mime_gpg_context_[get,set]_use_agent(). This should no longer be needed.
 
-- Removed g_mime_gpg_context_[get,set]_always_trust(). This is now handled by passing
-  GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST to the g_mime_crypto_context_encrypt() method.
-
-- Removed g_mime_gpg_context_[get,set]_auto_key_retrieve(). This is now handled by
-  passing GMIME_VERIFY_FLAGS_AUTO_KEY_RETRIEVE to the g_mime_crypto_context_verify()
-  method.
+- Removed g_mime_gpg_context_[get,set]_auto_key_retrieve().
 
 - Removed g_mime_crypto_context_[get,set]_retrieve_session_key(). This is now handled by
   passing GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY to the g_mime_crypto_context_decrypt()

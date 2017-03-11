@@ -46,12 +46,12 @@ typedef struct _GMimeMessageClass GMimeMessageClass;
 
 /**
  * GMimeAddressType:
- * @GMIME_ADDRESS_TYPE_SENDER:
- * @GMIME_ADDRESS_TYPE_FROM:
- * @GMIME_ADDRESS_TYPE_REPLY_TO:
- * @GMIME_ADDRESS_TYPE_TO: Represents the recipients in the To: header.
- * @GMIME_ADDRESS_TYPE_CC: Represents the recipients in the Cc: header.
- * @GMIME_ADDRESS_TYPE_BCC: Represents the recipients in the Bcc: header.
+ * @GMIME_ADDRESS_TYPE_SENDER: Represents the addresses in the Sender header.
+ * @GMIME_ADDRESS_TYPE_FROM: Represents the addresses in the From header.
+ * @GMIME_ADDRESS_TYPE_REPLY_TO: Represents the addresses in the Reply-To header.
+ * @GMIME_ADDRESS_TYPE_TO: Represents the recipients in the To header.
+ * @GMIME_ADDRESS_TYPE_CC: Represents the recipients in the Cc header.
+ * @GMIME_ADDRESS_TYPE_BCC: Represents the recipients in the Bcc header.
  *
  * An address type.
  **/
