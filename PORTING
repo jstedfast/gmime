@@ -118,6 +118,14 @@ Porting from GMime 2.6 to GMime 3.0
 - g_mime_part_[get,set]_content_object() have been renamed to
   g_mime_part_[get,set]_content().
 
+- g_mime_multipart_encrypted_encrypt() no longer takes a GMimeMultipartEncrypted
+  argument nor does it return int. Instead, this function now returns a newly
+  allocated GMimeMultipartEncrypted.
+
+- g_mime_multipart_signed_sign() no longer takes a GMimeMultipartSigned
+  argument nor does it return int. Instead, this function now returns a newly
+  allocated GMimeMultipartSigned.
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

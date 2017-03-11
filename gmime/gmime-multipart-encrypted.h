@@ -64,13 +64,11 @@ GType g_mime_multipart_encrypted_get_type (void);
 
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
 
-int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
-					GMimeCryptoContext *ctx, gboolean sign,
-					const char *userid, GMimeDigestAlgo digest,
-					GMimeEncryptFlags flags, GPtrArray *recipients,
-					GError **err);
+GMimeMultipartEncrypted *g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity,
+							     gboolean sign, const char *user_id, GMimeDigestAlgo digest,
+							     GMimeEncryptFlags flags, GPtrArray *recipients, GError **err);
 
-GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
+GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted,
 						 GMimeDecryptFlags flags,
 						 const char *session_key,
 						 GMimeDecryptResult **result,

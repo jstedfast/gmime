@@ -160,44 +160,14 @@ print_verify_results (GMimeSignatureList *signatures)
 	}
 }
 
-#define MULTIPART_SIGNED_CONTENT "This is a test of the emergency broadcast system \
-with an sha1 detach-sign.\n\nFrom now on, there will be text to try and break     \t\
-  \nvarious things. For example, the F in \"From\" in the previous line...\n...and \
-the first dot of this line have been pre-encoded in the QP encoding in order to test \
-that GMime properly treats MIME part content as opaque.\nIf this still verifies okay, \
-then we have ourselves a winner I guess...\n"
-
-static void
-test_multipart_signed (GMimeCryptoContext *ctx)
+static GMimeMessage *
+create_message (GMimeObject *body)
 {
-	GMimeSignatureList *signatures;
-	GMimeMultipartSigned *mps;
 	InternetAddressList *list;
 	InternetAddress *mailbox;
 	GMimeMessage *message;
-	GMimeStream *stream;
 	GMimeParser *parser;
-	GMimeTextPart *part;
-	GError *err = NULL;
-	Exception *ex;
-	
-	part = g_mime_text_part_new_with_subtype ("plain");
-	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
-	
-	/* create the multipart/signed container part */
-	mps = g_mime_multipart_signed_new ();
-	
-	/* sign the part */
-	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (part), ctx, "no.user@no.domain",
-				      GMIME_DIGEST_ALGO_SHA1, &err);
-	g_object_unref (part);
-	
-	if (err != NULL) {
-		ex = exception_new ("signing failed: %s", err->message);
-		g_object_unref (mps);
-		g_error_free (err);
-		throw (ex);
-	}
+	GMimeStream *stream;
 	
 	message = g_mime_message_new (TRUE);
 	
@@ -218,13 +188,16 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	
 	g_mime_message_set_subject (message, "This is a test message", NULL);
 	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
-	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
-	g_object_unref (mps);
+	g_mime_message_set_mime_part (message, body);
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
+	
+	/*fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
+		 GMIME_STREAM_MEM (stream)->buffer->len,
+		 GMIME_STREAM_MEM (stream)->buffer->data);*/
 	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
@@ -232,6 +205,43 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	
 	message = g_mime_parser_construct_message (parser);
 	g_object_unref (parser);
+	
+	return message;
+}
+
+#define MULTIPART_SIGNED_CONTENT "This is a test of the emergency broadcast system \
+with an sha1 detach-sign.\n\nFrom now on, there will be text to try and break     \t\
+  \nvarious things. For example, the F in \"From\" in the previous line...\n...and \
+the first dot of this line have been pre-encoded in the QP encoding in order to test \
+that GMime properly treats MIME part content as opaque.\nIf this still verifies okay, \
+then we have ourselves a winner I guess...\n"
+
+static void
+test_multipart_signed (GMimeCryptoContext *ctx)
+{
+	GMimeSignatureList *signatures;
+	GMimeMultipartSigned *mps;
+	GMimeMessage *message;
+	GMimeTextPart *part;
+	GError *err = NULL;
+	Exception *ex;
+	
+	part = g_mime_text_part_new_with_subtype ("plain");
+	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
+	
+	/* sign the part */
+	mps = g_mime_multipart_signed_sign (ctx, (GMimeObject *) part, "no.user@no.domain",
+					    GMIME_DIGEST_ALGO_SHA1, &err);
+	g_object_unref (part);
+	
+	if (err != NULL) {
+		ex = exception_new ("signing failed: %s", err->message);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	message = create_message ((GMimeObject *) mps);
+	g_object_unref (mps);
 	
 	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not a multipart/signed?");
@@ -278,22 +288,18 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	g_mime_object_write_to_stream ((GMimeObject *) part, cleartext);
 	g_mime_stream_reset (cleartext);
 	
-	/* create the multipart/encrypted container part */
-	mpe = g_mime_multipart_encrypted_new ();
-	
 	/* encrypt the part */
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
-	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, sign,
-					    "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
-					    GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
+	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeObject *) part,
+						  sign, "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
+						  GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
 	
 	if (err != NULL) {
 		ex = exception_new ("encryption failed: %s", err->message);
 		g_object_unref (cleartext);
-		g_object_unref (mpe);
 		g_error_free (err);
 		throw (ex);
 	}

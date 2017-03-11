@@ -355,6 +355,123 @@ g_mime_message_set_mime_part (message, (GMimeObject *) mixed);
 g_object_unref (mixed);
 ```
 
+### Encrypting Messages with S/MIME
+
+S/MIME uses an `application/pkcs7-mime` MIME part to encapsulate encrypted content (as well as other things).
+
+```c
+GMimeApplicationPkcs7Mime *encrypted;
+GMimeMessage *message;
+GError *err = NULL;
+GMimeObject *body;
+GPtrArray *rcpts;
+
+message = g_mime_message_new (TRUE);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_set_subject (message, "How you doin?", NULL);
+
+/* create our message body (perhaps a multipart/mixed with the message text and some
+ * image attachments, for example) */
+body = CreateMessageBody ();
+
+/* create a list of key ids to encrypt to */
+rcpts = g_ptr_array_new ();
+g_ptr_array_add (rcpts, "alice@wonderland.com"); // or use her fingerprint
+
+/* now to encrypt our message body */
+if (!(encrypted = g_mime_application_pkcs7_mime_encrypt (body, GMIME_ENCRYPT_FLAGS_NONE, rcpts, &err))) {
+    fprintf (stderr, "encrypt failed: %s\n", err->message);
+    g_object_unref (body);
+    g_error_free (err);
+    return;
+}
+
+g_object_unref (body);
+
+g_mime_message_set_mime_part (message, encrypted);
+g_object_unref (encrypted);
+```
+
+### Decrypting S/MIME Messages
+
+As mentioned earlier, S/MIME uses an `application/pkcs7-mime` part with an "smime-type" parameter with a value of
+"enveloped-data" to encapsulate the encrypted content.
+
+The first thing you must do is find the `GMimeApplicationPkcs7Mime` part (see the section on traversing MIME parts).
+
+```c
+if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
+    GMimeApplicationPkcs7Mime *pkcs7_mime = (GMimeApplicationPkcs7Mime *) entity;
+    GMimeSecureMimeType smime_type;
+
+    smime_type = g_mime_application_pkcs7_mime_get_smime_type (pkcs7_mime);
+    if (smime_type == GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA)
+        return g_mime_application_pkcs7_mime_decrypt (pkcs7_mime, GMIME_DECRYPT_FLAGS_NONE, NULL, NULL, &err);
+}
+```
+
+### Encrypting Messages with PGP/MIME
+
+Unlike S/MIME, PGP/MIME uses `multipart/encrypted` to encapsulate its encrypted data.
+
+```c
+GMimeMultipartEncrypted *encrypted;
+GMimeCryptoContext *ctx;
+GMimeMessage *message;
+GError *err = NULL;
+GMimeObject *body;
+GPtrArray *rcpts;
+
+message = g_mime_message_new (TRUE);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_set_subject (message, "How you doin?", NULL);
+
+/* create our message body (perhaps a multipart/mixed with the message text and some
+ * image attachments, for example) */
+body = CreateMessageBody ();
+
+/* create a list of key ids to encrypt to */
+rcpts = g_ptr_array_new ();
+g_ptr_array_add (rcpts, "alice@wonderland.com"); // or use her fingerprint
+
+/* now to encrypt our message body */
+ctx = g_mime_gpg_context_new ();
+
+encrypted = g_mime_multipart_encrypted_encrypt (ctx, body, FALSE, NULL, GMIME_DIGEST_ALGO_DEFAULT,
+     GMIME_ENCRYPT_FLAGS_NONE, rcpts, &err);
+g_ptr_array_free (rcpts, TRUE);
+g_object_unref (body);
+g_object_unref (ctx);
+
+if (encrypted == NULL) {
+    fprintf (stderr, "encrypt failed: %s\n", err->message);
+    g_error_free (err);
+    return;
+}
+
+g_mime_message_set_mime_part (message, encrypted);
+g_object_unref (encrypted);
+```
+
+### Decrypting PGP/MIME Messages
+
+As mentioned earlier, PGP/MIME uses a `multipart/encrypted` part to encapsulate the encrypted content.
+
+A `multipart/encrypted` contains exactly 2 parts: the first `GMimeObject` is the version information while the
+second `GMimeObject` is the actual encrypted content and will typically be an `application/octet-stream`.
+
+The first thing you must do is find the `GMimeMultipartEncrypted` part (see the section on traversing MIME parts).
+
+```c
+if (GMIME_IS_MULTIPART_ENCRYPTED (entity)) {
+    GMimeMultipartEncrypted *encrypted = (GMimeMultipartEncrypted *) entity;
+
+    return g_mime_multipart_encrypted_decrypt (encrypted, GMIME_DECRYPT_FLAGS_NONE, NULL, NULL, &err);
+}
+```
+
 ## Documentation
 
 This is the README file for GMime. Additional documentation related to
