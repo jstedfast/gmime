@@ -253,8 +253,8 @@ g_object_unref (body);
 ### Creating a Message with Attachments
 
 Attachments are just like any other `GMimePart`, the only difference is that they typically have
-a Content-Disposition header with a value of "attachment" instead of "inline" or no
-Content-Disposition header at all.
+a `Content-Disposition` header with a value of "attachment" instead of "inline" or no
+`Content-Disposition` header at all.
 
 Typically, when a mail client adds attachments to a message, it will create a `multipart/mixed`
 part and add the text body part and all of the file attachments to the `multipart/mixed`.
@@ -315,9 +315,9 @@ g_object_unref (multipart);
 ```
 
 Of course, that is just a simple example. A lot of modern mail clients such as Outlook or Thunderbird will 
-send out both a text/html and a text/plain version of the message text. To do this, you'd create a `TextPart`
-for the text/plain part and a `TextPart` for the text/html part and then add them to a multipart/alternative
-like so:
+send out both a `text/html` and a `text/plain` version of the message text. To do this, you'd create a
+`GMimeTextPart` for the `text/plain` part and another `GMimeTextPart` for the `text/html` part and then add
+them to a `multipart/alternative` like so:
 
 ```c
 GMimeMultipart *mixed, *alternative;
@@ -332,7 +332,7 @@ html = CreateTextHtmlPart ();
 /* Note: it is important that the text/html part is added second, because it is the
  * most expressive version and (probably) the most faithful to the sender's WYSIWYG 
  * editor. */
-alternative = new Multipart ("alternative");
+alternative = g_mime_multipart_with_subtype ("alternative");
 
 g_mime_multipart_add (alternative, (GMimeObject *) plain);
 g_object_unref (plain);
