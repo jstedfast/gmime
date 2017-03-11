@@ -172,10 +172,11 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 		break;
 	}
 	
-	g_mime_object_set_content_type (GMIME_OBJECT (pkcs7_mime), content_type);
+	g_mime_object_set_content_type ((GMimeObject *) pkcs7_mime, content_type);
 	g_object_unref (content_type);
 	
-	g_mime_part_set_filename (GMIME_PART (pkcs7_mime), name);
+	g_mime_part_set_filename ((GMimePart *) pkcs7_mime, name);
+	g_mime_part_set_content_encoding ((GMimePart *) pkcs7_mime, GMIME_CONTENT_ENCODING_BASE64);
 	
 	return pkcs7_mime;
 }
@@ -446,7 +447,7 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GMi
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
 	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_mime_part_set_content (GMIME_PART (pkcs7_mime), content);
+	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
 	
@@ -488,7 +489,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	}
 	
 	/* get the ciphertext stream */
-	content = g_mime_part_get_content (GMIME_PART (pkcs7_mime));
+	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
 	ciphertext = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
@@ -496,7 +497,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	stream = g_mime_stream_mem_new ();
 	filtered_stream = g_mime_stream_filter_new (stream);
 	crlf_filter = g_mime_filter_crlf_new (FALSE, FALSE);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered_stream, crlf_filter);
 	g_object_unref (crlf_filter);
 	
 	/* decrypt the content stream */
