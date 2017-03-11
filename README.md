@@ -230,21 +230,13 @@ for (int i = 0; i < attachments->len; i++) {
 Creating MIME messages using GMime is really trivial.
 
 ```csharp
-GMimeMessage *message = g_mime_message_new (TRUE);
-InternetAddressMailbox *mailbox;
-InternetAddressList *list;
+GMimeMessage *message;
 GMimePart *body;
 
-list = g_mime_message_get_from (message);
-mailbox = internet_address_mailbox_new ("Joey", "joey@friends.com");
-internet_address_list_add (list, mailbox);
-g_object_unref (mailbox);
+message = g_mime_message_new (TRUE);
 
-list = g_mime_message_get_to (message);
-mailbox = internet_address_mailbox_new ("Alice", "alice@wonderland.com");
-internet_address_list_add (list, mailbox);
-g_object_unref (mailbox);
-
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 body = g_mime_text_part_new_with_subtype ("plain");
@@ -256,6 +248,111 @@ g_mime_text_part_set_text (body, "Hey Alice,\n\n"
 
 g_mime_message_set_mime_part (message, (GMimeObject *) body);
 g_object_unref (body);
+```
+
+### Creating a Message with Attachments
+
+Attachments are just like any other `GMimePart`, the only difference is that they typically have
+a Content-Disposition header with a value of "attachment" instead of "inline" or no
+Content-Disposition header at all.
+
+Typically, when a mail client adds attachments to a message, it will create a `multipart/mixed`
+part and add the text body part and all of the file attachments to the `multipart/mixed`.
+
+Here's how you can do that with GMime:
+
+```c
+GMimeMultipart *multipart;
+GMimeDataWrapper *content;
+GMimeMessage *message;
+GMimePart *attachment;
+GMimeTextPart *body;
+GMimeStream *stream;
+
+message = g_mime_message_new (TRUE);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_set_subject (message, "How you doin?", NULL);
+
+/* create our message text, just like before... */
+body = g_mime_text_part_new_with_subtype ("plain");
+g_mime_text_part_set_text (body, "Hey Alice,\n\n"
+    "What are you up to this weekend? Monica is throwing one of her parties on\n"
+    "Saturday and I was hoping you could make it.\n\n"
+    "Will you be my +1?\n\n"
+    "-- Joey\n");
+
+/* create an image attachment for the file located at path */
+attachment = g_mime_part_new_with_type ("image", "gif");
+g_mime_part_set_filename (attachment, basename (path));
+
+/* create the content for the image attachment */
+stream = g_mime_stream_fs_open (path, O_RDONLY);
+content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
+g_object_unref (stream);
+
+/* set the content of the attachment */
+g_mime_part_set_content (attachment, content);
+g_object_unref (content);
+
+/* set the Content-Transfer-Encoding to base64 */
+g_mime_part_set_content_encoding (attachment, GMIME_CONTENT_ENCODING_BASE64);
+
+/* now create the multipart/mixed container to hold the message text and the image attachment */
+multipart = g_mime_multipart_new_with_subtype ("mixed");
+
+/* add the text body first */
+g_mime_multipart_add (multipart, (GMimeObject *) body);
+g_object_unref (body);
+
+/* now add the attachment(s) */
+g_mime_multipart_add (multipart, (GMimeObject *) attachment);
+g_object_unref (attachment);
+
+/* set the multipart/mixed as the message body */
+g_mime_message_set_mime_part (message, (GMimeObject *) multipart);
+g_object_unref (multipart);
+```
+
+Of course, that is just a simple example. A lot of modern mail clients such as Outlook or Thunderbird will 
+send out both a text/html and a text/plain version of the message text. To do this, you'd create a `TextPart`
+for the text/plain part and a `TextPart` for the text/html part and then add them to a multipart/alternative
+like so:
+
+```c
+GMimeMultipart *mixed, *alternative;
+GMimeTextPart *plain, *html;
+GMimePart *attachment;
+
+/* see above for how to create each of these... */
+attachment = CreateAttachment ();
+plain = CreateTextPlainPart ();
+html = CreateTextHtmlPart ();
+
+/* Note: it is important that the text/html part is added second, because it is the
+ * most expressive version and (probably) the most faithful to the sender's WYSIWYG 
+ * editor. */
+alternative = new Multipart ("alternative");
+
+g_mime_multipart_add (alternative, (GMimeObject *) plain);
+g_object_unref (plain);
+
+g_mime_multipart_add (alternative, (GMimeObject *) html);
+g_object_unref (html);
+
+/* now create the multipart/mixed container to hold the multipart/alternative
+ * and the image attachment */
+mixed = g_mime_multipart_new_with_subtype ("mixed");
+
+g_mime_multipart_add (mixed, (GMimeObject *) alternative);
+g_object_unref (alternative);
+
+g_mime_multipart_add (mixed, (GMimeObject *) attachment);
+g_object_unref (attachment);
+
+/* now set the multipart/mixed as the message body */
+g_mime_message_set_mime_part (message, (GMimeObject *) mixed);
+g_object_unref (mixed);
 ```
 
 ## Documentation
