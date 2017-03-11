@@ -311,7 +311,7 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 
 int main (int argc, char **argv)
 {
-	const char *datadir = "data/pkcs7";
+	const char *datadir = "data/smime";
 	GMimeStream *istream, *ostream;
 	GMimeCryptoContext *ctx;
 	const char *what;
