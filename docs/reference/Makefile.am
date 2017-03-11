@@ -58,10 +58,10 @@ CFILE_GLOB=$(top_srcdir)/gmime/*.c
 
 # Header files to ignore when scanning
 IGNORE_HFILES = 			\
-	gmime-application-pkcs7-mime.h	\
 	gmime-charset-map-private.h	\
 	gmime-table-private.h		\
 	gmime-parse-utils.h		\
+	gmime-gpgme-utils.h		\
 	gmime-common.h			\
 	gmime-events.h
 

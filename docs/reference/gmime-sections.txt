@@ -19,7 +19,12 @@ g_mime_check_version
 <SECTION>
 <FILE>gmime-error</FILE>
 GMIME_ERROR
+GMIME_GPGME_ERROR
 GMIME_ERROR_IS_SYSTEM
+
+<SUBSECTION Private>
+gmime_error_quark
+gmime_gpgme_error_quark
 </SECTION>
 
 <SECTION>
@@ -101,8 +106,8 @@ GMIME_STREAM_CAT_GET_CLASS
 <FILE>gmime-stream-file</FILE>
 GMimeStreamFile
 g_mime_stream_file_new
+g_mime_stream_file_open
 g_mime_stream_file_new_with_bounds
-g_mime_stream_file_new_for_path
 g_mime_stream_file_get_owner
 g_mime_stream_file_set_owner
 
@@ -123,8 +128,8 @@ GMIME_STREAM_FILE_GET_CLASS
 <FILE>gmime-stream-fs</FILE>
 GMimeStreamFs
 g_mime_stream_fs_new
+g_mime_stream_fs_open
 g_mime_stream_fs_new_with_bounds
-g_mime_stream_fs_new_for_path
 g_mime_stream_fs_get_owner
 g_mime_stream_fs_set_owner
 
@@ -991,6 +996,12 @@ g_mime_utils_header_decode_phrase
 g_mime_utils_header_encode_phrase
 g_mime_utils_structured_header_fold
 g_mime_utils_unstructured_header_fold
+
+<SUBSECTION Private>
+g_mime_references_get_type
+
+<SUBSECTION Standard>
+GMIME_TYPE_REFERENCES
 </SECTION>
 
 <SECTION>
@@ -1118,6 +1129,23 @@ INTERNET_ADDRESS_LIST_TYPE
 INTERNET_ADDRESS_LIST_CLASS
 IS_INTERNET_ADDRESS_LIST_CLASS
 InternetAddressListClass
+</SECTION>
+
+<SECTION>
+<FILE>gmime-parser-options</FILE>
+GMimeParserOptions
+GMimeRfcComplianceMode
+g_mime_parser_options_new
+g_mime_parser_options_free
+g_mime_parser_options_get_default
+g_mime_parser_options_get_address_parser_compliance_mode
+g_mime_parser_options_set_address_parser_compliance_mode
+g_mime_parser_options_get_parameter_compliance_mode
+g_mime_parser_options_set_parameter_compliance_mode
+g_mime_parser_options_get_rfc2047_compliance_mode
+g_mime_parser_options_set_rfc2047_compliance_mode
+g_mime_parser_options_get_fallback_charsets
+g_mime_parser_options_set_fallback_charsets
 </SECTION>
 
 <SECTION>

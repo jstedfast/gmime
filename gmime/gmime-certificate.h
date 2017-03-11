@@ -101,7 +101,7 @@ typedef enum {
  * @GMIME_PUBKEY_ALGO_ELG: The ElGamal algorithm.
  * @GMIME_PUBKEY_ALGO_ECDSA: The Eliptic Curve + DSA algorithm.
  * @GMIME_PUBKEY_ALGO_ECDH: The Eliptic Curve + Diffie Helman algorithm.
- * @GMIME_PUBKEY_ALGO_ECDSA: The Eliptic Curve + DSA algorithm.
+ * @GMIME_PUBKEY_ALGO_EDDSA: The Eliptic Curve + DSA algorithm.
  *
  * A public-key algorithm.
  **/

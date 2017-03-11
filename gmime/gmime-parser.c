@@ -1999,7 +1999,7 @@ g_mime_parser_construct_message (GMimeParser *parser)
 
 
 /**
- * g_mime_parser_construct_message:
+ * g_mime_parser_construct_message_with_options:
  * @parser: a #GMimeParser context
  *
  * Constructs a MIME message from @parser.

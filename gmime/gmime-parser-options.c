@@ -32,6 +32,17 @@ static char *default_charsets[3] = { "utf-8", "iso-8859-1", NULL };
 static GMimeParserOptions *default_options = NULL;
 
 
+/**
+ * SECTION: gmime-parser-options
+ * @title: GMimeParserOptions
+ * @short_description: Parser options
+ * @see_also:
+ *
+ * A #GMimeParserOptions is used to pass various options to #GMimeParser
+ * and all of the various other parser functions in GMime.
+ **/
+
+
 void
 g_mime_parser_options_init (void)
 {
@@ -66,7 +77,7 @@ g_mime_parser_options_get_default (void)
 
 
 /**
- * @g_mime_parser_options_new:
+ * g_mime_parser_options_new:
  *
  * Creates a new set of #GMimeParserOptions.
  *

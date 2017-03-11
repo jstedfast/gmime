@@ -250,7 +250,6 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 /**
  * g_mime_text_part_get_text:
  * @mime_part: a #GMimeTextPart
- * @charset: the charset
  *
  * Gets the text content of the @mime_part as a string.
  *

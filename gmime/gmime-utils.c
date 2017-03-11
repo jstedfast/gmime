@@ -1449,6 +1449,7 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 
 /**
  * g_mime_utils_decode_8bit:
+ * @options: a #GMimeParserOptions
  * @text: (array length=len) (element-type guint8): input text in
  *   unknown 8bit/multibyte character set
  * @len: input text length

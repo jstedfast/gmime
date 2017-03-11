@@ -103,7 +103,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 #define GMIME_FILTER_HTML_CITE                (1 << 7)
 
 /**
- * GMIME_FILTER_HTML_MARK_CITATION_BLOCKQUOTE:
+ * GMIME_FILTER_HTML_BLOCKQUOTE_CITATION:
  *
  * Enclose citation text in blockquotes.
  **/
