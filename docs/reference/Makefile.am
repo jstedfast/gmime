@@ -44,6 +44,7 @@ content_files = 			\
 	changes-2.2.sgml		\
 	changes-2.4.sgml		\
 	changes-2.6.sgml		\
+	changes-3.0.sgml		\
 	compiling.sgml			\
 	data-wrappers.sgml		\
 	filters.sgml			\
@@ -62,6 +63,7 @@ IGNORE_HFILES = 			\
 	gmime-table-private.h		\
 	gmime-parse-utils.h		\
 	gmime-gpgme-utils.h		\
+	gmime-internal.h		\
 	gmime-common.h			\
 	gmime-events.h
 
