@@ -197,6 +197,10 @@ create_message (GMimeObject *body)
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	
+	/*fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
+		 GMIME_STREAM_MEM (stream)->buffer->len,
+		 GMIME_STREAM_MEM (stream)->buffer->data);*/
+	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
@@ -394,7 +398,8 @@ test_pkcs7_mime_encrypt (void)
 	}
 	
 	text = g_mime_text_part_get_text ((GMimeTextPart *) entity);
-	if (strcmp (SIGNED_CONTENT, text) != 0) {
+	
+	if (strcmp (ENCRYPTED_CONTENT, text) != 0) {
 		ex = exception_new ("text part content does not match");
 		g_object_unref (entity);
 		g_free (text);
