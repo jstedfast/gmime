@@ -83,6 +83,14 @@ typedef enum {
 
 
 /**
+ * GMIME_SIGNATURE_STATUS_ERROR_MASK:
+ *
+ * A convenience macro for masking out the non-error bit flags.
+ **/
+#define GMIME_SIGNATURE_STATUS_ERROR_MASK ~(GMIME_SIGNATURE_STATUS_VALID | GMIME_SIGNATURE_STATUS_GREEN | GMIME_SIGNATURE_STATUS_RED)
+
+
+/**
  * GMimeSignature:
  * @parent_object: parent #GObject
  * @status: A bitfield of #GMimeSignatureStatus values.

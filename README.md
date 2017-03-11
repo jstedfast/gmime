@@ -402,12 +402,12 @@ The first thing you must do is find the `GMimeApplicationPkcs7Mime` part (see th
 
 ```c
 if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
-    GMimeApplicationPkcs7Mime *pkcs7_mime = (GMimeApplicationPkcs7Mime *) entity;
+    GMimeApplicationPkcs7Mime *pkcs7 = (GMimeApplicationPkcs7Mime *) entity;
     GMimeSecureMimeType smime_type;
 
     smime_type = g_mime_application_pkcs7_mime_get_smime_type (pkcs7_mime);
     if (smime_type == GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA)
-        return g_mime_application_pkcs7_mime_decrypt (pkcs7_mime, GMIME_DECRYPT_FLAGS_NONE, NULL, NULL, &err);
+        return g_mime_application_pkcs7_mime_decrypt (pkcs7, 0, NULL, NULL, &err);
 }
 ```
 
@@ -439,8 +439,7 @@ g_ptr_array_add (rcpts, "alice@wonderland.com"); // or use her fingerprint
 /* now to encrypt our message body */
 ctx = g_mime_gpg_context_new ();
 
-encrypted = g_mime_multipart_encrypted_encrypt (ctx, body, FALSE, NULL, GMIME_DIGEST_ALGO_DEFAULT,
-     GMIME_ENCRYPT_FLAGS_NONE, rcpts, &err);
+encrypted = g_mime_multipart_encrypted_encrypt (ctx, body, FALSE, NULL, 0, 0, rcpts, &err);
 g_ptr_array_free (rcpts, TRUE);
 g_object_unref (body);
 g_object_unref (ctx);
@@ -468,7 +467,245 @@ The first thing you must do is find the `GMimeMultipartEncrypted` part (see the 
 if (GMIME_IS_MULTIPART_ENCRYPTED (entity)) {
     GMimeMultipartEncrypted *encrypted = (GMimeMultipartEncrypted *) entity;
 
-    return g_mime_multipart_encrypted_decrypt (encrypted, GMIME_DECRYPT_FLAGS_NONE, NULL, NULL, &err);
+    return g_mime_multipart_encrypted_decrypt (encrypted, 0, NULL, NULL, &err);
+}
+```
+
+### Digitally Signing Messages with S/MIME or PGP/MIME
+
+Both S/MIME and PGP/MIME use a `multipart/signed` to contain the signed content and the detached signature data.
+
+Here's how you might digitally sign a message using S/MIME:
+
+```c
+GMimeApplicationPkcs7Mime *pkcs7;
+GMimeMessage *message;
+GError *err = NULL;
+GMimeObject *body;
+
+message = g_mime_message_new (TRUE);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_set_subject (message, "How you doin?", NULL);
+
+/* create our message body (perhaps a multipart/mixed with the message text and some
+ * image attachments, for example) */
+body = CreateMessageBody ();
+
+/* now to sign our message body */
+if (!(pkcs7 = g_mime_application_pkcs7_mime_sign (body, "joey@friends.com", GMIME_DIGEST_ALGO_DEFAULT, &err))) {
+    fprintf (stderr, "sign failed: %s\n", err->message);
+    g_object_unref (body);
+    g_error_free (err);
+    return;
+}
+
+g_object_unref (body);
+
+g_mime_message_set_mime_part (message, pkcs7);
+g_object_unref (pkcs7);
+```
+
+S/MIME also gives you the option of using a `multipart/signed` method of signing a message.
+
+```c
+GMimeMultipartSigned *ms;
+GMimeCryptoContext *ctx;
+GMimeMessage *message;
+GError *err = NULL;
+GMimeObject *body;
+
+message = g_mime_message_new (TRUE);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_set_subject (message, "How you doin?", NULL);
+
+/* create our message body (perhaps a multipart/mixed with the message text and some
+ * image attachments, for example) */
+body = CreateMessageBody ();
+
+/* create our crypto context - needed because multipart/signed works for both S/MIME and PGP/MIME */
+ctx = g_mime_pkcs7_context_new ();
+
+/* now to sign our message body */
+if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", GMIME_DIGEST_ALGO_DEFAULT, &err))) {
+    fprintf (stderr, "sign failed: %s\n", err->message);
+    g_object_unref (body);
+    g_object_unref (ctx);
+    g_error_free (err);
+    return;
+}
+
+g_object_unref (body);
+g_object_unref (ctx);
+
+g_mime_message_set_mime_part (message, ms);
+g_object_unref (ms);
+```
+
+If you'd prefer to use PGP instead of S/MIME, things work almost exactly the same except that you
+would use the `GMimeGpgContext`.
+
+```c
+GMimeMultipartSigned *ms;
+GMimeCryptoContext *ctx;
+GMimeMessage *message;
+GError *err = NULL;
+GMimeObject *body;
+
+message = g_mime_message_new (TRUE);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_set_subject (message, "How you doin?", NULL);
+
+/* create our message body (perhaps a multipart/mixed with the message text and some
+ * image attachments, for example) */
+body = CreateMessageBody ();
+
+/* create our crypto context - needed because multipart/signed works for both S/MIME and PGP/MIME */
+ctx = g_mime_gpg_context_new ();
+
+/* now to sign our message body */
+if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", GMIME_DIGEST_ALGO_DEFAULT, &err))) {
+    fprintf (stderr, "sign failed: %s\n", err->message);
+    g_object_unref (body);
+    g_object_unref (ctx);
+    g_error_free (err);
+    return;
+}
+
+g_object_unref (body);
+g_object_unref (ctx);
+
+g_mime_message_set_mime_part (message, ms);
+g_object_unref (ms);
+```
+
+### Verifying S/MIME and PGP/MIME Digital Signatures
+
+As mentioned earlier, both S/MIME and PGP/MIME typically use a `multipart/signed` part to contain the
+signed content and the detached signature data.
+
+A `multipart/signed` contains exactly 2 parts: the first `GMimeObject` is the signed content while the second
+`GMimeObject` is the detached signature and, by default, will either be a `GMimeApplicationPgpSignature` part
+or a `GMimeApplicationPkcs7Signature` part (depending on whether the sending client signed using OpenPGP or
+S/MIME).
+
+Because the `multipart/signed` part may have been signed by multiple signers, the
+`g_mime_multipart_signed_verify()` function returns a `GMimeSignatureList` which contains a list of
+digital signatures (one for each signer) that each contain their own metdata describing who that
+signer is and what the status of their signature is.
+
+```c
+if (GMIME_IS_MULTIPART_SIGNED (entity)) {
+    GMimeMultipartSigned *ms = (GMimeMultipartSigned *) entity;
+    GMimeSignatureList *signatures;
+    GError *err = NULL;
+    int i, count;
+
+    if (!(signatures = g_mime_multipart_signed_verify (ms, 0, &err))) {
+        fprintf (stderr, "verify failed: %s\n", err->message);
+        g_error_free (err);
+        return;
+    }
+
+    fputs ("\nSignatures:\n", stdout);
+    count = g_mime_signature_list_length (signatures);
+    for (i = 0; i < count; i++) {
+        GMimeSignature *sig = g_mime_signature_list_get_signature (signatures, i);
+        GMimeSignatureStatus status = g_mime_signature_get_status (sig);
+        GMimeCertificate *cert = g_mime_signature_get_certificate (sig);
+        time_t created = g_mime_signature_get_created (sig);
+        time_t expires = g_mime_signature_get_expires (sig);
+
+        fprintf (stdout, "\tName: %s\n", g_mime_certificate_get_name (cert));
+        fprintf (stdout, "\tKeyId: %s\n", g_mime_certificate_get_key_id (cert));
+        fprintf (stdout, "\tFingerprint: %s\n", g_mime_certificate_get_fingerprint (cert));
+
+        fprintf (stdout, "\tTrust: ");
+        switch (g_mime_certificate_get_trust (cert)) {
+        case GMIME_CERTIFICATE_TRUST_NONE:      fputs ("None\n", stdout); break;
+        case GMIME_CERTIFICATE_TRUST_NEVER:     fputs ("Never\n", stdout); break;
+        case GMIME_CERTIFICATE_TRUST_UNDEFINED: fputs ("Undefined\n", stdout); break;
+        case GMIME_CERTIFICATE_TRUST_MARGINAL:  fputs ("Marginal\n", stdout); break;
+        case GMIME_CERTIFICATE_TRUST_FULLY:     fputs ("Fully\n", stdout); break;
+        case GMIME_CERTIFICATE_TRUST_ULTIMATE:  fputs ("Ultimate\n", stdout); break;
+        }
+
+        fprintf (stdout, "\tStatus: ");
+        if (status & GMIME_SIGNATURE_STATUS_RED)
+            fputs ("BAD\n", stdout);
+        else if (status & GMIME_SIGNATURE_STATUS_GREEN)
+            fputs ("GOOD\n", stdout);
+        else if (status & GMIME_SIGNATURE_STATUS_VALID)
+            fputs ("VALID\n", stdout);
+        else
+            fputs ("UNKNOWN\n", stdout);
+
+        fprintf (stdout, "\tSignature made on %s", ctime (&created));
+        if (expires != (time_t) 0)
+            fprintf (stdout, "\tSignature expires on %s", ctime (&expires));
+        else
+            fprintf (stdout, "\tSignature never expires\n");
+	
+        fprintf (stdout, "\tErrors: ");
+        if (status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
+            fputs ("Key Revoked, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_KEY_EXPIRED)
+            fputs ("Key Expired, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_SIG_EXPIRED)
+            fputs ("Sig Expired, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_KEY_MISSING)
+            fputs ("Key Missing, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_CRL_MISSING)
+            fputs ("CRL Missing, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_CRL_TOO_OLD)
+            fputs ("CRL Too Old, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_BAD_POLICY)
+            fputs ("Bad Policy, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_SYS_ERROR)
+            fputs ("System Error, ", stdout);
+        if (status & GMIME_SIGNATURE_STATUS_TOFU_CONFLICT)
+            fputs ("Tofu Conflict", stdout);
+        if ((status & GMIME_SIGNATURE_STATUS_ERROR_MASK) == 0)
+            fputs ("None", stdout);
+        fputs ("\n\n", stdout);
+    }
+}
+```
+
+It should be noted, however, that while most S/MIME clients will use the preferred `multipart/signed`
+approach, it is possible that you may encounter an `application/pkcs7-mime` part with an "smime-type"
+parameter set to "signed-data". Luckily, GMime can handle this format as well:
+
+```c
+if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
+    GMimeApplicationPkcs7Mime *pkcs7 = (GMimeApplicationPkcs7Mime *) entity;
+    GMimeSecureMimeType smime_type;
+
+    smime_type = g_mime_application_pkcs7_mime_get_smime_type (pkcs7);
+
+    if (smime_type == GMIME_SECURE_MIME_TYPE_SIGNED_DATA) {
+        /* extract the original content and get a list of signatures */
+        GMimeSignatureList *signatures;
+        GMimeObject extracted;
+        GError *err = NULL;
+        int i, count;
+
+        /* Note: if you are rendering the message, you'll want to render the
+         * extracted mime part rather than the application/pkcs7-mime part. */
+
+        if (!(signatures = g_mime_application_pkcs7_mime_verify (pkcs7, 0, &extracted, &err))) {
+            fprintf (stderr, "verify failed: %s\n", err->message);
+            g_error_free (err);
+            return;
+        }
+
+        count = g_mime_signature_list_length (signatures);
+        for (i = 0; i < count; i++) {
+            GMimeSignature *sig = g_mime_signature_list_get_signature (signatures, i);
+            /* ... */
+        }
 }
 ```
 

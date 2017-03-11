@@ -151,7 +151,7 @@ print_verify_results (GMimeSignatureList *signatures)
 			fputs ("System Error, ", stdout);
 		if (sig->status & GMIME_SIGNATURE_STATUS_TOFU_CONFLICT)
 			fputs ("Tofu Conflict", stdout);
-		if ((sig->status & ~(GMIME_SIGNATURE_STATUS_VALID | GMIME_SIGNATURE_STATUS_GREEN | GMIME_SIGNATURE_STATUS_RED)) == 0)
+		if ((sig->status & GMIME_SIGNATURE_STATUS_ERROR_MASK) == 0)
 			fputs ("None", stdout);
 		fputc ('\n', stdout);
 		
