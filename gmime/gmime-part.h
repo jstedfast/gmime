@@ -67,7 +67,7 @@ struct _GMimePart {
 struct _GMimePartClass {
 	GMimeObjectClass parent_class;
 	
-	void (* set_content_object) (GMimePart *mime_part, GMimeDataWrapper *content);
+	void (* set_content) (GMimePart *mime_part, GMimeDataWrapper *content);
 };
 
 
@@ -101,8 +101,8 @@ gboolean g_mime_part_is_attachment (GMimePart *mime_part);
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (GMimePart *mime_part);
 
-void g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
-GMimeDataWrapper *g_mime_part_get_content_object (GMimePart *mime_part);
+void g_mime_part_set_content (GMimePart *mime_part, GMimeDataWrapper *content);
+GMimeDataWrapper *g_mime_part_get_content (GMimePart *mime_part);
 
 G_END_DECLS
 

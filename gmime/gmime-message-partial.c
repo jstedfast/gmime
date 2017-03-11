@@ -329,7 +329,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 		if ((size_t) number != i + 1)
 			goto exception;
 		
-		wrapper = g_mime_part_get_content_object (GMIME_PART (partial));
+		wrapper = g_mime_part_get_content (GMIME_PART (partial));
 		stream = g_mime_data_wrapper_get_stream (wrapper);
 		
 		g_mime_stream_reset (stream);
@@ -467,7 +467,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 		wrapper = g_mime_data_wrapper_new_with_stream (GMIME_STREAM (parts->pdata[i]),
 							       GMIME_CONTENT_ENCODING_DEFAULT);
 		g_object_unref (parts->pdata[i]);
-		g_mime_part_set_content_object (GMIME_PART (partial), wrapper);
+		g_mime_part_set_content (GMIME_PART (partial), wrapper);
 		g_object_unref (wrapper);
 		
 		parts->pdata[i] = message_partial_message_new (message);

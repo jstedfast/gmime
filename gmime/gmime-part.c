@@ -67,7 +67,7 @@ static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stre
 static void mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /* GMimePart class methods */
-static void set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
+static void set_content (GMimePart *mime_part, GMimeDataWrapper *content);
 
 
 static GMimeObjectClass *parent_class = NULL;
@@ -115,7 +115,7 @@ g_mime_part_class_init (GMimePartClass *klass)
 	object_class->write_to_stream = mime_part_write_to_stream;
 	object_class->encode = mime_part_encode;
 	
-	klass->set_content_object = set_content_object;
+	klass->set_content = set_content;
 }
 
 static void
@@ -881,7 +881,7 @@ g_mime_part_get_filename (GMimePart *mime_part)
 
 
 static void
-set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
+set_content (GMimePart *mime_part, GMimeDataWrapper *content)
 {
 	if (mime_part->content)
 		g_object_unref (mime_part->content);
@@ -892,26 +892,26 @@ set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 
 
 /**
- * g_mime_part_set_content_object:
+ * g_mime_part_set_content:
  * @mime_part: a #GMimePart object
  * @content: a #GMimeDataWrapper content object
  *
- * Sets the content object on the mime part.
+ * Sets the content on the mime part.
  **/
 void
-g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
+g_mime_part_set_content (GMimePart *mime_part, GMimeDataWrapper *content)
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content == content)
 		return;
 	
-	GMIME_PART_GET_CLASS (mime_part)->set_content_object (mime_part, content);
+	GMIME_PART_GET_CLASS (mime_part)->set_content (mime_part, content);
 }
 
 
 /**
- * g_mime_part_get_content_object:
+ * g_mime_part_get_content:
  * @mime_part: a #GMimePart object
  *
  * Gets the internal data-wrapper of the specified mime part, or %NULL
@@ -921,7 +921,7 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
  * contents.
  **/
 GMimeDataWrapper *
-g_mime_part_get_content_object (GMimePart *mime_part)
+g_mime_part_get_content (GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	

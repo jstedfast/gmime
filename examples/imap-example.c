@@ -743,7 +743,7 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 	content = g_mime_data_wrapper_new_with_stream (stream, part->encoding);
 	g_object_unref (stream);
 	
-	g_mime_part_set_content_object (part, content);
+	g_mime_part_set_content (part, content);
 }
 
 static void

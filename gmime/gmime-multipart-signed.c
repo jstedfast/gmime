@@ -299,7 +299,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	wrapper = g_mime_data_wrapper_new ();
 	g_mime_data_wrapper_set_stream (wrapper, sigstream);
-	g_mime_part_set_content_object (signature, wrapper);
+	g_mime_part_set_content (signature, wrapper);
 	g_object_unref (sigstream);
 	g_object_unref (wrapper);
 	
@@ -450,7 +450,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	g_mime_stream_reset (stream);
 	
 	/* get the signature stream */
-	wrapper = g_mime_part_get_content_object (GMIME_PART (signature));
+	wrapper = g_mime_part_get_content (GMIME_PART (signature));
 	
 	sigstream = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (wrapper, sigstream);

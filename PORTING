@@ -120,6 +120,9 @@ Porting from GMime 2.6 to GMime 3.0
   now a GMimeTextPart who's g_mime_text_part_new() returns a
   GMimeTextPart with a Content-Type of "text/plain".
 
+- g_mime_part_[get,set]_content_object() have been renamed to
+  g_mime_part_[get,set]_content().
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

@@ -274,7 +274,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA);
 	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_mime_part_set_content_object (GMIME_PART (pkcs7_mime), content);
+	g_mime_part_set_content (GMIME_PART (pkcs7_mime), content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
 	
@@ -332,7 +332,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	}
 	
 	/* get the ciphertext stream */
-	content = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
+	content = g_mime_part_get_content (GMIME_PART (pkcs7_mime));
 	ciphertext = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
@@ -446,7 +446,7 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GMi
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
 	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_mime_part_set_content_object (GMIME_PART (pkcs7_mime), content);
+	g_mime_part_set_content (GMIME_PART (pkcs7_mime), content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
 	
@@ -488,7 +488,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	}
 	
 	/* get the ciphertext stream */
-	content = g_mime_part_get_content_object (GMIME_PART (pkcs7_mime));
+	content = g_mime_part_get_content (GMIME_PART (pkcs7_mime));
 	ciphertext = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);

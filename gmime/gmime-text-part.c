@@ -242,7 +242,7 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
 	g_object_unref (stream);
 	
-	g_mime_part_set_content_object ((GMimePart *) mime_part, content);
+	g_mime_part_set_content ((GMimePart *) mime_part, content);
 	g_object_unref (content);
 }
 
@@ -268,7 +268,7 @@ g_mime_text_part_get_text (GMimeTextPart *mime_part)
 	
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), NULL);
 	
-	if (!(content = g_mime_part_get_content_object ((GMimePart *) mime_part)))
+	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part)))
 		return NULL;
 	
 	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);

@@ -216,7 +216,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_mime_part_set_content_encoding (version_part, GMIME_CONTENT_ENCODING_7BIT);
 	stream = g_mime_stream_mem_new_with_buffer ("Version: 1\n", strlen ("Version: 1\n"));
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_7BIT);
-	g_mime_part_set_content_object (version_part, wrapper);
+	g_mime_part_set_content (version_part, wrapper);
 	g_object_unref (wrapper);
 	g_object_unref (stream);
 	
@@ -224,7 +224,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	encrypted_part = g_mime_part_new_with_type ("application", "octet-stream");
 	g_mime_part_set_content_encoding (encrypted_part, GMIME_CONTENT_ENCODING_7BIT);
 	wrapper = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_7BIT);
-	g_mime_part_set_content_object (encrypted_part, wrapper);
+	g_mime_part_set_content (encrypted_part, wrapper);
 	g_object_unref (ciphertext);
 	g_object_unref (wrapper);
 	
@@ -344,7 +344,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFl
 	}
 	
 	/* get the ciphertext stream */
-	content = g_mime_part_get_content_object (GMIME_PART (encrypted));
+	content = g_mime_part_get_content (GMIME_PART (encrypted));
 	ciphertext = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);

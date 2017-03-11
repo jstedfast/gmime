@@ -1569,7 +1569,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 		stream = g_mime_stream_mem_new_with_byte_array (content);
 	
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, encoding);
-	g_mime_part_set_content_object (mime_part, wrapper);
+	g_mime_part_set_content (mime_part, wrapper);
 	g_object_unref (wrapper);
 	g_object_unref (stream);
 }
