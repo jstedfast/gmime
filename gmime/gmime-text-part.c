@@ -203,6 +203,7 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 {
 	GMimeContentType *content_type;
 	GMimeStream *filtered, *stream;
+	GMimeContentEncoding encoding;
 	GMimeDataWrapper *content;
 	GMimeFilter *filter;
 	const char *charset;
@@ -244,6 +245,18 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 	
 	g_mime_part_set_content ((GMimePart *) mime_part, content);
 	g_object_unref (content);
+	
+	encoding = g_mime_part_get_content_encoding ((GMimePart *) mime_part);
+	
+	/* if the user has already specified encoding the content with base64/qp/uu, don't change it */
+	if (encoding > GMIME_CONTENT_ENCODING_BINARY)
+		return;
+	
+	/* ...otherwise, set an appropriate Content-Transfer-Encoding based on the text provided... */
+	if (mask.level > 0)
+		g_mime_part_set_content_encoding ((GMimePart *) mime_part, GMIME_CONTENT_ENCODING_8BIT);
+	else
+		g_mime_part_set_content_encoding ((GMimePart *) mime_part, GMIME_CONTENT_ENCODING_7BIT);
 }
 
 
