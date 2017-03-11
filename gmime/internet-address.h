@@ -72,6 +72,7 @@ typedef struct _InternetAddressListClass InternetAddressListClass;
  * InternetAddress:
  * @parent_object: parent #GObject
  * @priv: private data
+ * @charset: the charset used for encoding the name
  * @name: display name
  *
  * An RFC 2822 Address object.

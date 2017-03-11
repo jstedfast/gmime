@@ -60,6 +60,7 @@ typedef enum _GMimeSecureMimeType {
 /**
  * GMimeApplicationPkcs7Mime:
  * @parent_object: parent #GMimePart object
+ * @smime_type: The smime-type Content-Type parameter.
  *
  * An application/pkcs7-mime MIME part.
  **/

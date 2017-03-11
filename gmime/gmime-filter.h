@@ -42,16 +42,6 @@ typedef struct _GMimeFilterClass GMimeFilterClass;
  * GMimeFilter:
  * @parent_object: parent #GObject
  * @priv: private state data
- * @outreal: (array) (element-type guint8): real malloc'd buffer
- * @outbuf: (array length=outsize) (element-type guint8): first
- *   writable position allowed (outreal + outpre)
- * @outptr: current writale position
- * @outsize: current bytes in @outbuf
- * @outpre: current prespace of @outbuf
- * @backbuf: (array length=backsize) (element-type guint8): backup
- *   buffer
- * @backsize: backup buffer size
- * @backlen: number of bytes backed-up in @backbuf
  *
  * Base class for filters used by #GMimeStreamFilter.
  **/
@@ -61,15 +51,15 @@ struct _GMimeFilter {
 	struct _GMimeFilterPrivate *priv;
 	
 	/* <protected> */
-	char *outreal;		/* real malloc'd buffer */
-	char *outbuf;		/* first 'writable' position allowed (outreal + outpre) */
-	char *outptr;
-	size_t outsize;
-	size_t outpre;		/* prespace of this buffer */
+	char *outreal;   /* real malloc'd buffer */
+	char *outbuf;    /* first 'writable' position allowed (@outreal + @outpre) */
+	char *outptr;    /* current writable position */
+	size_t outsize;  /* current bytes in @outbuf */
+	size_t outpre;   /* current prespace of @outbuf */
 	
-	char *backbuf;
-	size_t backsize;
-	size_t backlen;		/* significant data there */
+	char *backbuf;   /* backup buffer */
+	size_t backsize; /* backup buffer size */
+	size_t backlen;  /* number of bytes backed-up in @backbuf */
 };
 
 struct _GMimeFilterClass {

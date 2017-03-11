@@ -844,7 +844,9 @@ GMimeMultipartSignedClass
 <SECTION>
 <FILE>gmime-application-pkcs7-mime</FILE>
 GMimeApplicationPkcs7Mime
+GMimeSecureMimeType
 g_mime_application_pkcs7_mime_new
+g_mime_application_pkcs7_mime_get_smime_type
 g_mime_application_pkcs7_mime_encrypt
 g_mime_application_pkcs7_mime_decrypt
 g_mime_application_pkcs7_mime_sign

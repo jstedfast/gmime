@@ -71,9 +71,7 @@ typedef enum _GMimeAddressType {
  * @mime_part: toplevel MIME part
  * @addrlists: a table of address lists
  * @message_id: Message-Id string
- * @reply_to: Reply-To string
  * @subject: Subject string
- * @from: From string
  * @date: Date value
  * @tz_offset: timezone offset
  *
