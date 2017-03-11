@@ -13,6 +13,7 @@
 <!ENTITY GMimeMultipartEncrypted SYSTEM "xml/gmime-multipart-encrypted.xml">
 <!ENTITY GMimeMultipartSigned SYSTEM "xml/gmime-multipart-signed.xml">
 <!ENTITY GMimePart SYSTEM "xml/gmime-part.xml">
+<!ENTITY GMimeTextPart SYSTEM "xml/gmime-text-part.xml">
 <!ENTITY GMimePartIter SYSTEM "xml/gmime-part-iter.xml">
 <!ENTITY GMimeMessage SYSTEM "xml/gmime-message.xml">
 <!ENTITY GMimeMessagePart SYSTEM "xml/gmime-message-part.xml">
@@ -237,6 +238,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeObject;
       &GMimeMessage;
       &GMimePart;
+      &GMimeTextPart;
       &GMimeMultipart;
       &GMimeMultipartEncrypted;
       &GMimeMultipartSigned;

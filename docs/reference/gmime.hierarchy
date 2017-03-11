@@ -4,6 +4,7 @@ GObject
     GMimePart
       GMimeApplicationPkcs7Mime
       GMimeMessagePartial
+      GMimeTextPart
     GMimeMultipart
       GMimeMultipartEncrypted
       GMimeMultipartSigned

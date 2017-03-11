@@ -725,8 +725,8 @@ g_mime_part_get_content_encoding
 g_mime_part_get_best_content_encoding
 g_mime_part_set_filename
 g_mime_part_get_filename
-g_mime_part_get_content_object
-g_mime_part_set_content_object
+g_mime_part_get_content
+g_mime_part_set_content
 
 <SUBSECTION Private>
 g_mime_part_get_type
@@ -940,6 +940,29 @@ GMIME_MESSAGE_PARTIAL_CLASS
 GMIME_IS_MESSAGE_PARTIAL_CLASS
 GMIME_MESSAGE_PARTIAL_GET_CLASS
 GMimeMessagePartialClass
+</SECTION>
+
+<SECTION>
+<FILE>gmime-text-part</FILE>
+GMimeTextPart
+g_mime_text_part_new
+g_mime_text_part_new_with_subtype
+g_mime_text_part_get_charset
+g_mime_text_part_set_charset
+g_mime_text_part_get_text
+g_mime_text_part_set_text
+
+<SUBSECTION Private>
+g_mime_text_part_get_type
+
+<SUBSECTION Standard>
+GMIME_TEXT_PART
+GMIME_IS_TEXT_PART
+GMIME_TYPE_TEXT_PART
+GMIME_TEXT_PART_CLASS
+GMIME_IS_TEXT_PART_CLASS
+GMIME_TEXT_PART_GET_CLASS
+GMimeTextPartClass
 </SECTION>
 
 <SECTION>
