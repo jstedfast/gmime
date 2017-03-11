@@ -276,13 +276,6 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 	g_mime_stream_reset (sigstream);
 	g_mime_stream_reset (stream);
 	
-	/* set the multipart/signed protocol and micalg */
-	content_type = g_mime_object_get_content_type ((GMimeObject *) mps);
-	g_mime_content_type_set_parameter (content_type, "protocol", protocol);
-	micalg = g_strdup (g_mime_crypto_context_digest_name (ctx, (GMimeDigestAlgo) algo));
-	g_mime_content_type_set_parameter (content_type, "micalg", micalg);
-	g_mime_multipart_set_boundary ((GMimeMultipart *) mps, NULL);
-	
 	/* construct the content part */
 	parser = g_mime_parser_new_with_stream (stream);
 	entity = g_mime_parser_construct_part (parser);
@@ -314,6 +307,12 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 	g_mime_multipart_add ((GMimeMultipart *) mps, (GMimeObject *) signature);
 	g_object_unref (signature);
 	g_object_unref (entity);
+	
+	/* set the multipart/signed protocol and micalg */
+	micalg = g_mime_crypto_context_digest_name (ctx, (GMimeDigestAlgo) algo);
+	g_mime_object_set_content_type_parameter ((GMimeObject *) mps, "protocol", protocol);
+	g_mime_object_set_content_type_parameter ((GMimeObject *) mps, "micalg", micalg);
+	g_mime_multipart_set_boundary ((GMimeMultipart *) mps, NULL);
 	
 	return mps;
 }
