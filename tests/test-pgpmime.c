@@ -491,7 +491,7 @@ int main (int argc, char *argv[])
 		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
 	} finally;
 	
-#if GPGME_VERSION_NUMBER >= 0x010700
+#if GPGME_VERSION_NUMBER >= 0x010200
 	testsuite_check ("multipart/encrypted");
 	try {
 		create_encrypted_message (ctx, FALSE, &cleartext, &stream);
