@@ -31,6 +31,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <gpgme.h>
 #include <gmime/gmime.h>
 
 #include "testsuite.h"
@@ -492,6 +493,7 @@ int main (int argc, char *argv[])
 		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
 	} finally;
 	
+#if GPGME_VERSION_NUMBER >= 0x010700
 	testsuite_check ("multipart/encrypted");
 	try {
 		create_encrypted_message (ctx, FALSE, &cleartext, &stream);
@@ -541,6 +543,7 @@ int main (int argc, char *argv[])
 	}
 	
 	g_free (session_key);
+#endif /* GPGME_VERSION NUMBER >= 0x010700 */
 	
 	g_object_unref (ctx);
 	g_free (gpg);
