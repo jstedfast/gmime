@@ -388,9 +388,9 @@ g_mime_header_list_get_count (GMimeHeaderList *headers)
  * Returns: %TRUE if the specified header exists or %FALSE otherwise.
  **/
 gboolean
-g_mime_header_list_contains (const GMimeHeaderList *headers, const char *name)
+g_mime_header_list_contains (GMimeHeaderList *headers, const char *name)
 {
-	const GMimeHeader *header;
+	GMimeHeader *header;
 	
 	g_return_val_if_fail (headers != NULL, FALSE);
 	g_return_val_if_fail (name != NULL, FALSE);
@@ -403,9 +403,9 @@ g_mime_header_list_contains (const GMimeHeaderList *headers, const char *name)
 
 
 gboolean
-_g_mime_header_list_has_raw_value (const GMimeHeaderList *headers, const char *name)
+_g_mime_header_list_has_raw_value (GMimeHeaderList *headers, const char *name)
 {
-	const GMimeHeader *header;
+	GMimeHeader *header;
 	
 	if (!(header = g_hash_table_lookup (headers->hash, name)))
 		return FALSE;
@@ -503,7 +503,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
 
 
 /**
- * g_mime_header_list_get:
+ * g_mime_header_list_get_value:
  * @headers: a #GMimeHeaderList
  * @name: header name
  *
@@ -515,9 +515,9 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
  * g_mime_utils_header_decode_text() before displaying to the user.
  **/
 const char *
-g_mime_header_list_get (const GMimeHeaderList *headers, const char *name)
+g_mime_header_list_get_value (GMimeHeaderList *headers, const char *name)
 {
-	const GMimeHeader *header;
+	GMimeHeader *header;
 	
 	g_return_val_if_fail (headers != NULL, NULL);
 	g_return_val_if_fail (name != NULL, NULL);
@@ -530,7 +530,7 @@ g_mime_header_list_get (const GMimeHeaderList *headers, const char *name)
 
 
 void
-_g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
+_g_mime_header_list_set_value (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
 {
 	GMimeHeader *header, *hdr;
 	guint i;
@@ -565,7 +565,7 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
 
 
 /**
- * g_mime_header_list_set:
+ * g_mime_header_list_set_value:
  * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
@@ -583,12 +583,12 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
  * g_mime_utils_header_encode_text().
  **/
 void
-g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value)
+g_mime_header_list_set_value (GMimeHeaderList *headers, const char *name, const char *value)
 {
 	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	_g_mime_header_list_set (headers, name, value, NULL, -1);
+	_g_mime_header_list_set_value (headers, name, value, NULL, -1);
 }
 
 
@@ -627,7 +627,7 @@ g_mime_header_list_get_header (GMimeHeaderList *headers, int index)
 gboolean
 g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 {
-	GMimeHeader *header, *node;
+	GMimeHeader *header;
 	guint i;
 	
 	g_return_val_if_fail (headers != NULL, FALSE);
@@ -718,7 +718,7 @@ g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
  * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
-g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream)
+g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeStream *stream)
 {
 	ssize_t nwritten, total = 0;
 	GMimeHeader *header;
@@ -750,7 +750,7 @@ g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream 
  * Returns: a string containing the header block.
  **/
 char *
-g_mime_header_list_to_string (const GMimeHeaderList *headers)
+g_mime_header_list_to_string (GMimeHeaderList *headers)
 {
 	GMimeStream *stream;
 	GByteArray *array;

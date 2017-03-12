@@ -126,6 +126,9 @@ Porting from GMime 2.6 to GMime 3.0
   argument nor does it return int. Instead, this function now returns a newly
   allocated GMimeMultipartSigned.
 
+- g_mime_header_list_[get,set]() have been renamed to
+  g_mime_header_list_[get,set]_value().
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

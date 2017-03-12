@@ -213,7 +213,7 @@ content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject
 	g_string_free (string, FALSE);
 	
 	type = p + strlen ("Content-Type: ");
-	g_mime_header_list_set (object->headers, "Content-Type", type);
+	g_mime_header_list_set_value (object->headers, "Content-Type", type);
 	g_free (p);
 }
 
@@ -246,7 +246,7 @@ content_disposition_changed (GMimeContentDisposition *disposition, gpointer args
 	
 	if (object->disposition) {
 		str = g_mime_content_disposition_to_string (object->disposition, FALSE);
-		g_mime_header_list_set (object->headers, "Content-Disposition", str);
+		g_mime_header_list_set_value (object->headers, "Content-Disposition", str);
 		g_free (str);
 	} else {
 		g_mime_header_list_remove (object->headers, "Content-Disposition");
@@ -775,7 +775,7 @@ process_header (GMimeObject *object, const char *header, const char *value, cons
 		return FALSE;
 	}
 	
-	_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
+	_g_mime_header_list_set_value (object->headers, header, value, raw_value, offset);
 	
 	return TRUE;
 }
@@ -857,7 +857,7 @@ static void
 object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	if (!process_header (object, header, value, raw_value, offset))
-		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
+		_g_mime_header_list_set_value (object->headers, header, value, raw_value, offset);
 }
 
 
@@ -893,7 +893,7 @@ g_mime_object_set_header (GMimeObject *object, const char *header, const char *v
 static const char *
 object_get_header (GMimeObject *object, const char *header)
 {
-	return g_mime_header_list_get (object->headers, header);
+	return g_mime_header_list_get_value (object->headers, header);
 }
 
 

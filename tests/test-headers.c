@@ -58,8 +58,9 @@ header_list_new (void)
 	guint i;
 	
 	list = g_mime_header_list_new (g_mime_parser_options_get_default ());
-	for (i = 0; i < G_N_ELEMENTS (initial); i++)
+	for (i = 1; i < G_N_ELEMENTS (initial); i++)
 		g_mime_header_list_append (list, initial[i].name, initial[i].value);
+	g_mime_header_list_prepend (list, initial[0].name, initial[0].value);
 	
 	return list;
 }
@@ -109,6 +110,59 @@ test_indexing (void)
 }
 
 static void
+test_remove (void)
+{
+	const char *name, *value;
+	GMimeHeaderList *list;
+	GMimeHeader *header;
+	guint i;
+	
+	list = header_list_new ();
+	
+	testsuite_check ("remove first header");
+	try {
+		/* remove the first header */
+		if (!g_mime_header_list_remove (list, initial[0].name))
+			throw (exception_new ("failed to remove header"));
+		
+		/* make sure the first header is now the same as the second original header */
+		header = g_mime_header_list_get_header (list, 0);
+		name = g_mime_header_get_name (header);
+		value = g_mime_header_get_value (header);
+		
+		if (strcmp (initial[1].name, name) != 0 ||
+		    strcmp (initial[1].value, value) != 0)
+			throw (exception_new ("expected second Received header"));
+		
+		/* make sure that the internal hash table was properly updated */
+		if (!(value = g_mime_header_list_get_value (list, "Received")))
+			throw (exception_new ("lookup of Received header failed"));
+		
+		if (strcmp (initial[1].value, value) != 0)
+			throw (exception_new ("expected second Received header value"));
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("remove first header: %s", ex->message);
+	} finally;
+	
+	testsuite_check ("remove last header");
+	try {
+		/* remove the last header */
+		g_mime_header_list_remove (list, "Message-Id");
+		
+		if ((value = g_mime_header_list_get_value (list, "Message-Id")) != NULL)
+			throw (exception_new ("lookup of Message-Id should have failed"));
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("remove last header: %s", ex->message);
+	} finally;
+	
+	g_mime_header_list_destroy (list);
+}
+
+static void
 test_remove_at (void)
 {
 	const char *name, *value;
@@ -134,7 +188,7 @@ test_remove_at (void)
 			throw (exception_new ("expected second Received header"));
 		
 		/* make sure that the internal hash table was properly updated */
-		if (!(value = g_mime_header_list_get (list, "Received")))
+		if (!(value = g_mime_header_list_get_value (list, "Received")))
 			throw (exception_new ("lookup of Received header failed"));
 		
 		if (strcmp (initial[1].value, value) != 0)
@@ -151,7 +205,7 @@ test_remove_at (void)
 		count = g_mime_header_list_get_count (list);
 		g_mime_header_list_remove_at (list, count - 1);
 		
-		if ((value = g_mime_header_list_get (list, "Message-Id")) != NULL)
+		if ((value = g_mime_header_list_get_value (list, "Message-Id")) != NULL)
 			throw (exception_new ("lookup of Message-Id should have failed"));
 		
 		testsuite_check_passed ();
@@ -168,14 +222,18 @@ test_header_sync (void)
 	GMimeContentDisposition *disposition;
 	InternetAddressList *list;
 	InternetAddress *addr, *ia;
+	GMimeHeaderList *headers;
 	GMimeContentType *type;
 	GMimeMessage *message;
 	GMimeObject *object;
+	GMimeHeader *header;
 	const char *value;
 	GMimePart *part;
 	
 	part = g_mime_part_new_with_type ("application", "octet-stream");
 	object = (GMimeObject *) part;
+
+	headers = g_mime_object_get_header_list (object);
 	
 	testsuite_check ("content-type synchronization");
 	try {
@@ -216,6 +274,13 @@ test_header_sync (void)
 		if (strcmp ("text/plain", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after setting params"));
 		
+		/* let's try this in reverse... set the header value and make sure GMimeContentType gets updated */
+		//header = g_mime_header_list_get_header (headers, 0);
+		//g_mime_header_set_value (header, "text/html; charset=utf-8");
+		//type = g_mime_object_get_content_type (object);
+		//if (!g_mime_content_type_is_type (type, "text", "html"))
+		//	throw (exception_new ("GMimeContentType object was not updated"));
+		
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("content-type header not synchronized: %s", ex->message);
@@ -254,6 +319,13 @@ test_header_sync (void)
 			throw (exception_new ("content-disposition header was unexpectedly null after setting params"));
 		if (strcmp ("inline", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after setting params"));
+		
+		/* let's try this in reverse... set the header value and make sure GMimeContentDisposition gets updated */
+		//header = g_mime_header_list_get_header (headers, 1);
+		//g_mime_header_set_value (header, "attachment; filename=xyz");
+		//disposition = g_mime_object_get_content_disposition (object);
+		//if (!g_mime_content_disposition_is_attachment (disposition))
+		//	throw (exception_new ("GMimeContentDisposition object was not updated"));
 		
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -347,6 +419,10 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("indexing");
 	test_indexing ();
+	testsuite_end ();
+
+	testsuite_start ("removing");
+	test_remove ();
 	testsuite_end ();
 	
 	testsuite_start ("removing at an index");

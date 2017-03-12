@@ -240,7 +240,7 @@ mime_part_set_header (GMimeObject *object, const char *header, const char *value
 	if (!process_header (object, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
 	else
-		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
+		_g_mime_header_list_set_value (object->headers, header, value, raw_value, offset);
 }
 
 static gboolean
@@ -500,7 +500,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 	
 	g_free (mime_part->content_description);
 	mime_part->content_description = g_strdup (description);
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Description", description);
+	g_mime_header_list_set_value (GMIME_OBJECT (mime_part)->headers, "Content-Description", description);
 }
 
 
@@ -613,7 +613,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	}
 	
 	mime_part->content_md5 = g_strdup (content_md5);
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Md5", content_md5);
+	g_mime_header_list_set_value (GMIME_OBJECT (mime_part)->headers, "Content-Md5", content_md5);
 }
 
 
@@ -711,7 +711,7 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 	
 	g_free (mime_part->content_location);
 	mime_part->content_location = g_strdup (content_location);
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Location", content_location);
+	g_mime_header_list_set_value (GMIME_OBJECT (mime_part)->headers, "Content-Location", content_location);
 }
 
 
@@ -743,11 +743,14 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 void
 g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding encoding)
 {
+	const char *value;
+	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
+	value = g_mime_content_encoding_to_string (encoding);
 	mime_part->encoding = encoding;
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Transfer-Encoding",
-				g_mime_content_encoding_to_string (encoding));
+	
+	g_mime_header_list_set_value (GMIME_OBJECT (mime_part)->headers, "Content-Transfer-Encoding", value);
 }
 
 
