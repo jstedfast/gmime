@@ -29,6 +29,18 @@
 
 G_BEGIN_DECLS
 
+typedef enum {
+	GMIME_HEADER_LIST_CHANGED_ACTION_ADDED,
+	GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED,
+	GMIME_HEADER_LIST_CHANGED_ACTION_REMOVED,
+	GMIME_HEADER_LIST_CHANGED_ACTION_CLEARED
+} GMimeHeaderListChangedAction;
+
+typedef struct {
+	GMimeHeaderListChangedAction action;
+	GMimeHeader *header;
+} GMimeHeaderListChangedEventArgs;
+
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
 G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);

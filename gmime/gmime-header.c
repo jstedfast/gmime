@@ -157,6 +157,8 @@ g_mime_header_get_value (GMimeHeader *header)
 void
 g_mime_header_set_value (GMimeHeader *header, const char *value)
 {
+	GMimeHeaderListChangedEventArgs args;
+	
 	g_return_if_fail (header != NULL);
 	g_return_if_fail (value != NULL);
 	
@@ -165,7 +167,10 @@ g_mime_header_set_value (GMimeHeader *header, const char *value)
 	
 	header->value = g_strdup (value);
 	
-	g_mime_event_emit (header->list->changed, NULL);
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED;
+	args.header = header;
+	
+	g_mime_event_emit (header->list->changed, &args);
 }
 
 
@@ -332,6 +337,7 @@ g_mime_header_list_destroy (GMimeHeaderList *headers)
 void
 g_mime_header_list_clear (GMimeHeaderList *headers)
 {
+	GMimeHeaderListChangedEventArgs args;
 	guint i;
 	
 	g_return_if_fail (headers != NULL);
@@ -343,7 +349,10 @@ g_mime_header_list_clear (GMimeHeaderList *headers)
 	
 	g_ptr_array_set_size (headers->list, 0);
 	
-	g_mime_event_emit (headers->changed, NULL);
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CLEARED;
+	args.header = NULL;
+	
+	g_mime_event_emit (headers->changed, &args);
 }
 
 
@@ -417,6 +426,7 @@ _g_mime_header_list_has_raw_value (GMimeHeaderList *headers, const char *name)
 void
 _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
 {
+	GMimeHeaderListChangedEventArgs args;
 	unsigned char *dest, *src;
 	GMimeHeader *header;
 	guint n;
@@ -437,7 +447,10 @@ _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const c
 		g_ptr_array_add (headers->list, header);
 	}
 	
-	g_mime_event_emit (headers->changed, NULL);
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_ADDED;
+	args.header = header;
+	
+	g_mime_event_emit (headers->changed, &args);
 }
 
 
@@ -467,6 +480,7 @@ g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const ch
 void
 _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
 {
+	GMimeHeaderListChangedEventArgs args;
 	GMimeHeader *header;
 	
 	header = g_mime_header_new (headers, name, value, raw_value, offset);
@@ -475,7 +489,10 @@ _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const ch
 	if (!g_hash_table_lookup (headers->hash, name))
 		g_hash_table_insert (headers->hash, header->name, header);
 	
-	g_mime_event_emit (headers->changed, NULL);
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_ADDED;
+	args.header = header;
+	
+	g_mime_event_emit (headers->changed, &args);
 }
 
 
@@ -532,6 +549,7 @@ g_mime_header_list_get (GMimeHeaderList *headers, const char *name)
 void
 _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
 {
+	GMimeHeaderListChangedEventArgs args;
 	GMimeHeader *header, *hdr;
 	guint i;
 	
@@ -557,7 +575,10 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
 			g_mime_header_free (hdr);
 		}
 		
-		g_mime_event_emit (headers->changed, NULL);
+		args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED;
+		args.header = header;
+		
+		g_mime_event_emit (headers->changed, &args);
 	} else {
 		_g_mime_header_list_append (headers, name, value, raw_value, offset);
 	}
@@ -627,7 +648,8 @@ g_mime_header_list_get_header (GMimeHeaderList *headers, int index)
 gboolean
 g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 {
-	GMimeHeader *header;
+	GMimeHeaderListChangedEventArgs args;
+	GMimeHeader *header, *hdr;
 	guint i;
 	
 	g_return_val_if_fail (headers != NULL, FALSE);
@@ -644,22 +666,25 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 	
 	g_ptr_array_remove_index (headers->list, i);
 	g_hash_table_remove (headers->hash, name);
-	g_mime_header_free (header);
 	
 	/* look for another header with the same name... */
 	while (i < headers->list->len) {
-		header = (GMimeHeader *) headers->list->pdata[i];
+		hdr = (GMimeHeader *) headers->list->pdata[i];
 		
-		if (!g_ascii_strcasecmp (header->name, name)) {
+		if (!g_ascii_strcasecmp (hdr->name, name)) {
 			/* enter this node into the lookup table */
-			g_hash_table_insert (headers->hash, header->name, header);
+			g_hash_table_insert (headers->hash, hdr->name, hdr);
 			break;
 		}
 		
 		i++;
 	}
 	
-	g_mime_event_emit (headers->changed, NULL);
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_REMOVED;
+	args.header = header;
+	
+	g_mime_event_emit (headers->changed, &args);
+	g_mime_header_free (header);
 	
 	return TRUE;
 }
@@ -675,6 +700,7 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 void
 g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
 {
+	GMimeHeaderListChangedEventArgs args;
 	GMimeHeader *header, *hdr;
 	guint i;
 	
@@ -702,9 +728,11 @@ g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
 		}
 	}
 	
-	g_mime_header_free (header);
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_REMOVED;
+	args.header = header;
 	
-	g_mime_event_emit (headers->changed, NULL);
+	g_mime_event_emit (headers->changed, &args);
+	g_mime_header_free (header);
 }
 
 
