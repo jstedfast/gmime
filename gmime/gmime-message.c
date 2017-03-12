@@ -55,11 +55,11 @@ static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass
 static void g_mime_message_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void message_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static void message_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static void message_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static const char *message_get_header (GMimeObject *object, const char *header);
-static gboolean message_remove_header (GMimeObject *object, const char *header);
+static void message_header_added    (GMimeObject *object, GMimeHeader *header);
+static void message_header_changed  (GMimeObject *object, GMimeHeader *header);
+static void message_header_removed  (GMimeObject *object, GMimeHeader *header);
+static void message_headers_cleared (GMimeObject *object);
+
 static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void message_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
@@ -144,11 +144,10 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	
 	gobject_class->finalize = g_mime_message_finalize;
 	
-	object_class->prepend_header = message_prepend_header;
-	object_class->append_header = message_append_header;
-	object_class->remove_header = message_remove_header;
-	object_class->set_header = message_set_header;
-	object_class->get_header = message_get_header;
+	object_class->header_added = message_header_added;
+	object_class->header_changed = message_header_changed;
+	object_class->header_removed = message_header_removed;
+	object_class->headers_cleared = message_headers_cleared;
 	object_class->get_headers = message_get_headers;
 	object_class->write_to_stream = message_write_to_stream;
 	object_class->encode = message_encode;
@@ -658,84 +657,86 @@ static const char *message_headers[] = {
 	"MIME-Version",
 };
 
-enum {
-	PREPEND,
-	APPEND,
-	SET
-};
-
 static void
-message_add_addresses_from_string (GMimeParserOptions *options, GMimeMessage *message, int action, GMimeAddressType type, const char *str)
+message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GMimeAddressType type)
 {
+	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
 	InternetAddressList *addrlist, *list;
+	const char *name, *value;
+	GMimeHeader *header;
+	int count, i;
+	
+	block_changed_event (message, type);
 	
 	addrlist = message->addrlists[type];
 	
-	if (action == SET)
-		internet_address_list_clear (addrlist);
+	internet_address_list_clear (addrlist);
 	
-	if ((list = internet_address_list_parse (options, str))) {
-		if (action == PREPEND)
-			internet_address_list_prepend (addrlist, list);
-		else
-			internet_address_list_append (addrlist, list);
+	count = g_mime_header_list_get_count (headers);
+	for (i = 0; i < count; i++) {
+		header = g_mime_header_list_get_header (headers, i);
+		name = g_mime_header_get_name (header);
 		
-		g_object_unref (list);
+		if (g_ascii_strcasecmp (address_types[type].name, name) != 0)
+			continue;
+		
+		if ((value = g_mime_header_get_value (header))) {
+			if ((list = internet_address_list_parse (options, value))) {
+				internet_address_list_append (addrlist, list);
+				g_object_unref (list);
+			}
+		}
 	}
+	
+	unblock_changed_event (message, type);
 }
 
-static gboolean
-process_header (GMimeObject *object, int action, const char *header, const char *value)
+static void
+process_header (GMimeObject *object, GMimeHeader *header)
 {
 	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeMessage *message = (GMimeMessage *) object;
-	InternetAddressList *addrlist;
+	const char *name, *value;
 	time_t date;
 	int offset;
 	guint i;
 	
+	name = g_mime_header_get_name (header);
+	
 	for (i = 0; i < G_N_ELEMENTS (message_headers); i++) {
-		if (!g_ascii_strcasecmp (message_headers[i], header))
+		if (!g_ascii_strcasecmp (message_headers[i], name))
 			break;
 	}
 	
 	switch (i) {
 	case HEADER_SENDER:
-		block_changed_event (message, GMIME_ADDRESS_TYPE_SENDER);
-		message_add_addresses_from_string (options, message, SET, GMIME_ADDRESS_TYPE_SENDER, value);
-		unblock_changed_event (message, GMIME_ADDRESS_TYPE_SENDER);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_SENDER);
 		break;
 	case HEADER_FROM:
-		block_changed_event (message, GMIME_ADDRESS_TYPE_FROM);
-		message_add_addresses_from_string (options, message, SET, GMIME_ADDRESS_TYPE_FROM, value);
-		unblock_changed_event (message, GMIME_ADDRESS_TYPE_FROM);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_FROM);
 		break;
 	case HEADER_REPLY_TO:
-		block_changed_event (message, GMIME_ADDRESS_TYPE_REPLY_TO);
-		message_add_addresses_from_string (options, message, SET, GMIME_ADDRESS_TYPE_REPLY_TO, value);
-		unblock_changed_event (message, GMIME_ADDRESS_TYPE_REPLY_TO);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_REPLY_TO);
 		break;
 	case HEADER_TO:
-		block_changed_event (message, GMIME_ADDRESS_TYPE_TO);
-		message_add_addresses_from_string (options, message, action, GMIME_ADDRESS_TYPE_TO, value);
-		unblock_changed_event (message, GMIME_ADDRESS_TYPE_TO);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_TO);
 		break;
 	case HEADER_CC:
-		block_changed_event (message, GMIME_ADDRESS_TYPE_CC);
-		message_add_addresses_from_string (options, message, action, GMIME_ADDRESS_TYPE_CC, value);
-		unblock_changed_event (message, GMIME_ADDRESS_TYPE_CC);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_CC);
 		break;
 	case HEADER_BCC:
-		block_changed_event (message, GMIME_ADDRESS_TYPE_BCC);
-		message_add_addresses_from_string (options, message, action, GMIME_ADDRESS_TYPE_BCC, value);
-		unblock_changed_event (message, GMIME_ADDRESS_TYPE_BCC);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
-		message->subject = g_mime_utils_header_decode_text (options, value);
+		
+		if ((value = g_mime_header_get_value (header)))
+			message->subject = g_mime_utils_header_decode_text (options, value);
+		else
+			message->subject = NULL;
 		break;
 	case HEADER_DATE:
-		if (value) {
+		if ((value = g_mime_header_get_value (header))) {
 			date = g_mime_utils_header_decode_date (value, &offset);
 			message->date = date;
 			message->tz_offset = offset;
@@ -743,139 +744,66 @@ process_header (GMimeObject *object, int action, const char *header, const char 
 		break;
 	case HEADER_MESSAGE_ID:
 		g_free (message->message_id);
-		message->message_id = g_mime_utils_decode_message_id (value);
-		break;
-	case HEADER_MIME_VERSION:
-		break;
-	default:
-		return FALSE;
-	}
-	
-	return TRUE;
-}
-
-static void
-message_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	GMimeMessage *message = (GMimeMessage *) object;
-	
-	/* Content-* headers don't belong on the message, they belong on the part. */
-	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
-		if (message->mime_part)
-			_g_mime_object_prepend_header (message->mime_part, header, value, raw_value, offset);
-		return;
-	}
-	
-	if (!process_header (object, PREPEND, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value, raw_value, offset);
-	else
-		_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
-}
-
-static void
-message_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	GMimeMessage *message = (GMimeMessage *) object;
-	
-	/* Content-* headers don't belong on the message, they belong on the part. */
-	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
-		if (message->mime_part)
-			_g_mime_object_append_header (message->mime_part, header, value, raw_value, offset);
-		return;
-	}
-	
-	if (!process_header (object, APPEND, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value, raw_value, offset);
-	else
-		_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
-}
-
-static void
-message_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	GMimeMessage *message = (GMimeMessage *) object;
-	
-	/* Content-* headers don't belong on the message, they belong on the part. */
-	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
-		if (message->mime_part)
-			_g_mime_object_set_header (message->mime_part, header, value, raw_value, offset);
-		return;
-	}
-	
-	if (!process_header (object, SET, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
-	else
-		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
-}
-
-static const char *
-message_get_header (GMimeObject *object, const char *header)
-{
-	GMimeMessage *message = (GMimeMessage *) object;
-	const char *value;
-	
-	/* Content-* headers don't belong on the message, they belong on the part. */
-	if (g_ascii_strncasecmp ("Content-", header, 8) != 0) {
-		if ((value = GMIME_OBJECT_CLASS (parent_class)->get_header (object, header)))
-			return value;
 		
-		if (!g_ascii_strcasecmp ("MIME-Version", header))
-			return "1.0";
-	} else if (message->mime_part) {
-		return g_mime_object_get_header (message->mime_part, header);
+		if ((value = g_mime_header_get_value (header)))
+			message->message_id = g_mime_utils_decode_message_id (value);
+		else
+			message->message_id = NULL;
+		break;
 	}
-	
-	return NULL;
 }
 
 static void
-remove_address_header (GMimeMessage *message, GMimeAddressType type)
+message_header_added (GMimeObject *object, GMimeHeader *header)
 {
-	InternetAddressList *addrlist;
+	process_header (object, header);
 	
-	block_changed_event (message, type);
-	addrlist = message->addrlists[type];
-	internet_address_list_clear (addrlist);
-	unblock_changed_event (message, type);
+	GMIME_OBJECT_CLASS (parent_class)->header_added (object, header);
 }
 
-static gboolean
-message_remove_header (GMimeObject *object, const char *header)
+static void
+message_header_changed (GMimeObject *object, GMimeHeader *header)
 {
+	process_header (object, header);
+	
+	GMIME_OBJECT_CLASS (parent_class)->header_changed (object, header);
+}
+
+static void
+message_header_removed (GMimeObject *object, GMimeHeader *header)
+{
+	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeMessage *message = (GMimeMessage *) object;
+	const char *name;
+	time_t date;
+	int offset;
 	guint i;
 	
-	/* Content-* headers don't belong on the message, they belong on the part. */
-	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
-		if (message->mime_part)
-			return g_mime_object_remove_header (message->mime_part, header);
-		
-		return FALSE;
-	}
+	name = g_mime_header_get_name (header);
 	
 	for (i = 0; i < G_N_ELEMENTS (message_headers); i++) {
-		if (!g_ascii_strcasecmp (message_headers[i], header))
+		if (!g_ascii_strcasecmp (message_headers[i], name))
 			break;
 	}
 	
 	switch (i) {
 	case HEADER_SENDER:
-		remove_address_header (message, GMIME_ADDRESS_TYPE_SENDER);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_SENDER);
 		break;
 	case HEADER_FROM:
-		remove_address_header (message, GMIME_ADDRESS_TYPE_FROM);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_FROM);
 		break;
 	case HEADER_REPLY_TO:
-		remove_address_header (message, GMIME_ADDRESS_TYPE_REPLY_TO);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_REPLY_TO);
 		break;
 	case HEADER_TO:
-		remove_address_header (message, GMIME_ADDRESS_TYPE_TO);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_TO);
 		break;
 	case HEADER_CC:
-		remove_address_header (message, GMIME_ADDRESS_TYPE_CC);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_CC);
 		break;
 	case HEADER_BCC:
-		remove_address_header (message, GMIME_ADDRESS_TYPE_BCC);
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -889,11 +817,31 @@ message_remove_header (GMimeObject *object, const char *header)
 		g_free (message->message_id);
 		message->message_id = NULL;
 		break;
-	default:
-		break;
 	}
 	
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+	GMIME_OBJECT_CLASS (parent_class)->header_removed (object, header);
+}
+
+static void
+message_headers_cleared (GMimeObject *object)
+{
+	GMimeMessage *message = (GMimeMessage *) object;
+	guint i;
+	
+	for (i = 0; i < N_ADDRESS_TYPES; i++) {
+		block_changed_event (message, i);
+		internet_address_list_clear (message->addrlists[i]);
+		unblock_changed_event (message, i);
+	}
+	
+	g_free (message->message_id);
+	message->message_id = NULL;
+	g_free (message->subject);
+	message->subject = NULL;
+	message->tz_offset = 0;
+	message->date = 0;
+	
+	GMIME_OBJECT_CLASS (parent_class)->headers_cleared (object);
 }
 
 
@@ -1044,8 +992,11 @@ g_mime_message_new (gboolean pretty_headers)
 	if (pretty_headers) {
 		/* Populate with the "standard" rfc822 headers so we can have a standard order */
 		headers = ((GMimeObject *) message)->headers;
+		
+		_g_mime_object_block_header_list_changed ((GMimeObject *) message);
 		for (i = 0; i < G_N_ELEMENTS (rfc822_headers); i++) 
 			g_mime_header_list_set (headers, rfc822_headers[i], NULL);
+		_g_mime_object_unblock_header_list_changed ((GMimeObject *) message);
 	}
 	
 	return message;
@@ -1161,7 +1112,11 @@ sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, co
 	char *string;
 	
 	string = internet_address_list_to_string (list, TRUE);
+	
+	_g_mime_object_block_header_list_changed (object);
 	g_mime_header_list_set (object->headers, name, string);
+	_g_mime_object_unblock_header_list_changed (object);
+	
 	g_free (string);
 }
 

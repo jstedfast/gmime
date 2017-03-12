@@ -38,7 +38,7 @@
 #endif
 
 #define TEST_RAW_HEADER
-//#define TEST_PRESERVE_HEADERS
+#define TEST_PRESERVE_HEADERS
 #define PRINT_MIME_STRUCT
 //#define TEST_WRITE_TO_STREAM
 

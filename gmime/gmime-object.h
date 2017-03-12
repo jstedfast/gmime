@@ -67,11 +67,10 @@ struct _GMimeObject {
 struct _GMimeObjectClass {
 	GObjectClass parent_class;
 	
-	void         (* prepend_header) (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-	void         (* append_header)  (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-	void         (* set_header)     (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-	const char * (* get_header)     (GMimeObject *object, const char *header);
-	gboolean     (* remove_header)  (GMimeObject *object, const char *header);
+	void         (* header_added)    (GMimeObject *object, GMimeHeader *header);
+	void         (* header_changed)  (GMimeObject *object, GMimeHeader *header);
+	void         (* header_removed)  (GMimeObject *object, GMimeHeader *header);
+	void         (* headers_cleared) (GMimeObject *object);
 	
 	void         (* set_content_type) (GMimeObject *object, GMimeContentType *content_type);
 	

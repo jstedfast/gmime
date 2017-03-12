@@ -364,7 +364,7 @@ test_header_sync (void)
 			throw (exception_new ("address list header unexpectedly null after changing name"));
 		
 		if (strcmp ("Eva Lucy-Ann Tester <tester@localhost.com>", value) != 0)
-			throw (exception_new ("unexpected address list header after changing name"));
+			throw (exception_new ("unexpected address list header after changing name: %s", value));
 		
 		/* now let's try changing the address mailbox... */
 		internet_address_mailbox_set_addr ((InternetAddressMailbox *) addr,

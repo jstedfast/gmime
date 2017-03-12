@@ -48,9 +48,6 @@ static void g_mime_message_partial_init (GMimeMessagePartial *catpart, GMimeMess
 static void g_mime_message_partial_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void message_partial_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static void message_partial_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static void message_partial_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 static void message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 
 
@@ -92,9 +89,6 @@ g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 	
 	gobject_class->finalize = g_mime_message_partial_finalize;
 	
-	object_class->prepend_header = message_partial_prepend_header;
-	object_class->append_header = message_partial_append_header;
-	object_class->set_header = message_partial_set_header;
 	object_class->set_content_type = message_partial_set_content_type;
 }
 
@@ -116,35 +110,6 @@ g_mime_message_partial_finalize (GObject *object)
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
-static void
-message_partial_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return;
-	
-	GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value, raw_value, offset);
-}
-
-static void
-message_partial_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return;
-	
-	GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value, raw_value, offset);
-}
-
-static void
-message_partial_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return;
-	
-	GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
-}
 
 static void
 message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type)

@@ -62,11 +62,11 @@ static void g_mime_object_class_init (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
 
-static void object_prepend_header (GMimeObject *object, const char *name, const char *value, const char *raw_value, gint64 offset);
-static void object_append_header (GMimeObject *object, const char *name, const char *value, const char *raw_value, gint64 offset);
-static void object_set_header (GMimeObject *object, const char *name, const char *value, const char *raw_value, gint64 offset);
-static const char *object_get_header (GMimeObject *object, const char *name);
-static gboolean object_remove_header (GMimeObject *object, const char *name);
+static void object_header_added    (GMimeObject *object, GMimeHeader *header);
+static void object_header_changed  (GMimeObject *object, GMimeHeader *header);
+static void object_header_removed  (GMimeObject *object, GMimeHeader *header);
+static void object_headers_cleared (GMimeObject *object);
+
 static void object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *object_get_headers (GMimeObject *object);
 static ssize_t object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
@@ -75,6 +75,7 @@ static void object_encode (GMimeObject *object, GMimeEncodingConstraint constrai
 static ssize_t write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
 
+static void header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *args, GMimeObject *object);
 static void content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object);
 static void content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeObject *object);
 
@@ -116,14 +117,13 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (G_TYPE_OBJECT);
-
+	
 	object_class->finalize = g_mime_object_finalize;
 	
-	klass->prepend_header = object_prepend_header;
-	klass->append_header = object_append_header;
-	klass->remove_header = object_remove_header;
-	klass->set_header = object_set_header;
-	klass->get_header = object_get_header;
+	klass->header_added = object_header_added;
+	klass->header_changed = object_header_changed;
+	klass->header_removed = object_header_removed;
+	klass->headers_cleared = object_headers_cleared;
 	klass->set_content_type = object_set_content_type;
 	klass->get_headers = object_get_headers;
 	klass->write_to_stream = object_write_to_stream;
@@ -133,7 +133,12 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 static void
 g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 {
+	GMimeEvent *changed;
+	
 	object->headers = g_mime_header_list_new (g_mime_parser_options_get_default ());
+	changed = _g_mime_header_list_get_changed_event (object->headers);
+	g_mime_event_add (changed, (GMimeEventCallback) header_list_changed, object);
+	
 	object->content_type = NULL;
 	object->disposition = NULL;
 	object->content_id = NULL;
@@ -147,25 +152,158 @@ static void
 g_mime_object_finalize (GObject *object)
 {
 	GMimeObject *mime = (GMimeObject *) object;
+	GMimeEvent *event;
 	
 	if (mime->content_type) {
-		g_mime_event_remove (mime->content_type->priv, (GMimeEventCallback) content_type_changed, object);
+		event = mime->content_type->priv;
+		g_mime_event_remove (event, (GMimeEventCallback) content_type_changed, object);
 		g_object_unref (mime->content_type);
 	}
 	
 	if (mime->disposition) {
-		g_mime_event_remove (mime->disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
+		event = mime->disposition->priv;
+		g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
 		g_object_unref (mime->disposition);
 	}
 	
-	if (mime->headers)
+	if (mime->headers) {
+		event = _g_mime_header_list_get_changed_event (mime->headers);
+		g_mime_event_remove (event, (GMimeEventCallback) header_list_changed, object);
 		g_mime_header_list_destroy (mime->headers);
+	}
 	
 	g_free (mime->content_id);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
+enum {
+	HEADER_CONTENT_DISPOSITION,
+	HEADER_CONTENT_TYPE,
+	HEADER_CONTENT_ID,
+	HEADER_UNKNOWN,
+};
+
+static char *content_headers[] = {
+	"Content-Disposition",
+	"Content-Type",
+	"Content-Id",
+};
+
+static void
+object_header_added (GMimeObject *object, GMimeHeader *header)
+{
+	object_header_changed (object, header);
+}
+
+static void
+object_header_changed (GMimeObject *object, GMimeHeader *header)
+{
+	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
+	GMimeContentDisposition *disposition;
+	GMimeContentType *content_type;
+	const char *name, *value;
+	guint i;
+	
+	value = g_mime_header_get_value (header);
+	name = g_mime_header_get_name (header);
+	
+	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
+		return;
+	
+	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
+		if (!g_ascii_strcasecmp (content_headers[i] + 8, name + 8))
+			break;
+	}
+	
+	switch (i) {
+	case HEADER_CONTENT_DISPOSITION:
+		disposition = g_mime_content_disposition_parse (options, value);
+		_g_mime_object_set_content_disposition (object, disposition);
+		g_object_unref (disposition);
+		break;
+	case HEADER_CONTENT_TYPE:
+		content_type = g_mime_content_type_parse (options, value);
+		_g_mime_object_set_content_type (object, content_type);
+		g_object_unref (content_type);
+		break;
+	case HEADER_CONTENT_ID:
+		g_free (object->content_id);
+		object->content_id = g_mime_utils_decode_message_id (value);
+		break;
+	}
+}
+
+static void
+object_header_removed (GMimeObject *object, GMimeHeader *header)
+{
+	GMimeEvent *event;
+	const char *name;
+	guint i;
+	
+	name = g_mime_header_get_name (header);
+	
+	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
+		return;
+	
+	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
+		if (!g_ascii_strcasecmp (content_headers[i] + 8, name + 8))
+			break;
+	}
+	
+	switch (i) {
+	case HEADER_CONTENT_DISPOSITION:
+		if (object->disposition) {
+			event = object->disposition->priv;
+			g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
+			g_object_unref (object->disposition);
+			object->disposition = NULL;
+		}
+		break;
+	case HEADER_CONTENT_TYPE:
+		/* never allow the removal of the Content-Type header */
+		break;
+	case HEADER_CONTENT_ID:
+		g_free (object->content_id);
+		object->content_id = NULL;
+		break;
+	}
+}
+
+static void
+object_headers_cleared (GMimeObject *object)
+{
+	GMimeEvent *event;
+	
+	if (object->disposition) {
+		event = object->disposition->priv;
+		g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
+		g_object_unref (object->disposition);
+		object->disposition = NULL;
+	}
+	
+	g_free (object->content_id);
+	object->content_id = NULL;
+}
+
+static void
+header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *args, GMimeObject *object)
+{
+	switch (args->action) {
+	case GMIME_HEADER_LIST_CHANGED_ACTION_ADDED:
+		GMIME_OBJECT_GET_CLASS (object)->header_added (object, args->header);
+		break;
+	case GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED:
+		GMIME_OBJECT_GET_CLASS (object)->header_changed (object, args->header);
+		break;
+	case GMIME_HEADER_LIST_CHANGED_ACTION_REMOVED:
+		GMIME_OBJECT_GET_CLASS (object)->header_removed (object, args->header);
+		break;
+	case GMIME_HEADER_LIST_CHANGED_ACTION_CLEARED:
+		GMIME_OBJECT_GET_CLASS (object)->headers_cleared (object);
+		break;
+	}
+}
 
 static ssize_t
 write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
@@ -193,6 +331,24 @@ write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char
 	return nwritten;
 }
 
+void
+_g_mime_object_block_header_list_changed (GMimeObject *object)
+{
+	GMimeEvent *event;
+	
+	event = _g_mime_header_list_get_changed_event (object->headers);
+	g_mime_event_block (event, (GMimeEventCallback) header_list_changed, object);
+}
+
+void
+_g_mime_object_unblock_header_list_changed (GMimeObject *object)
+{
+	GMimeEvent *event;
+	
+	event = _g_mime_header_list_get_changed_event (object->headers);
+	g_mime_event_unblock (event, (GMimeEventCallback) header_list_changed, object);
+}
+
 static void
 content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object)
 {
@@ -213,7 +369,9 @@ content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject
 	g_string_free (string, FALSE);
 	
 	type = p + strlen ("Content-Type: ");
+	_g_mime_object_block_header_list_changed (object);
 	g_mime_header_list_set (object->headers, "Content-Type", type);
+	_g_mime_object_unblock_header_list_changed (object);
 	g_free (p);
 }
 
@@ -244,6 +402,8 @@ content_disposition_changed (GMimeContentDisposition *disposition, gpointer args
 {
 	char *str;
 	
+	_g_mime_object_block_header_list_changed (object);
+	
 	if (object->disposition) {
 		str = g_mime_content_disposition_to_string (object->disposition, FALSE);
 		g_mime_header_list_set (object->headers, "Content-Disposition", str);
@@ -251,6 +411,8 @@ content_disposition_changed (GMimeContentDisposition *disposition, gpointer args
 	} else {
 		g_mime_header_list_remove (object->headers, "Content-Disposition");
 	}
+	
+	_g_mime_object_unblock_header_list_changed (object);
 }
 
 
@@ -727,71 +889,10 @@ g_mime_object_get_content_id (GMimeObject *object)
 }
 
 
-enum {
-	HEADER_CONTENT_DISPOSITION,
-	HEADER_CONTENT_TYPE,
-	HEADER_CONTENT_ID,
-	HEADER_UNKNOWN,
-};
-
-static char *content_headers[] = {
-	"Content-Disposition",
-	"Content-Type",
-	"Content-Id",
-};
-
-static gboolean
-process_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
-	GMimeContentDisposition *disposition;
-	GMimeContentType *content_type;
-	guint i;
-	
-	if (g_ascii_strncasecmp (header, "Content-", 8) != 0)
-		return FALSE;
-	
-	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
-		if (!g_ascii_strcasecmp (content_headers[i] + 8, header + 8))
-			break;
-	}
-	
-	switch (i) {
-	case HEADER_CONTENT_DISPOSITION:
-		disposition = g_mime_content_disposition_parse (options, value);
-		_g_mime_object_set_content_disposition (object, disposition);
-		g_object_unref (disposition);
-		break;
-	case HEADER_CONTENT_TYPE:
-		content_type = g_mime_content_type_parse (options, value);
-		_g_mime_object_set_content_type (object, content_type);
-		g_object_unref (content_type);
-		break;
-	case HEADER_CONTENT_ID:
-		g_free (object->content_id);
-		object->content_id = g_mime_utils_decode_message_id (value);
-		break;
-	default:
-		return FALSE;
-	}
-	
-	_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
-	
-	return TRUE;
-}
-
-static void
-object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	if (!process_header (object, header, value, raw_value, offset))
-		_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
-}
-
-
 void
 _g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	GMIME_OBJECT_GET_CLASS (object)->prepend_header (object, header, value, raw_value, offset);
+	_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
 }
 
 
@@ -810,24 +911,15 @@ void
 g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value)
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (value != NULL);
 	
-	GMIME_OBJECT_GET_CLASS (object)->prepend_header (object, header, value, NULL, 0);
-}
-
-static void
-object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	if (!process_header (object, header, value, raw_value, offset))
-		_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
+	g_mime_header_list_prepend (object->headers, header, value);
 }
 
 
 void
 _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	GMIME_OBJECT_GET_CLASS (object)->append_header (object, header, value, raw_value, offset);
+	_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
 }
 
 
@@ -846,25 +938,15 @@ void
 g_mime_object_append_header (GMimeObject *object, const char *header, const char *value)
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (value != NULL);
 	
-	GMIME_OBJECT_GET_CLASS (object)->append_header (object, header, value, NULL, 0);
-}
-
-
-static void
-object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	if (!process_header (object, header, value, raw_value, offset))
-		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
+	g_mime_header_list_append (object->headers, header, value);
 }
 
 
 void
 _g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	GMIME_OBJECT_GET_CLASS (object)->set_header (object, header, value, raw_value, offset);
+	_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
 }
 
 
@@ -883,17 +965,8 @@ void
 g_mime_object_set_header (GMimeObject *object, const char *header, const char *value)
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (value != NULL);
 	
-	GMIME_OBJECT_GET_CLASS (object)->set_header (object, header, value, NULL, 0);
-}
-
-
-static const char *
-object_get_header (GMimeObject *object, const char *header)
-{
-	return g_mime_header_list_get (object->headers, header);
+	g_mime_header_list_set (object->headers, header, value);
 }
 
 
@@ -914,42 +987,8 @@ const char *
 g_mime_object_get_header (GMimeObject *object, const char *header)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
-	g_return_val_if_fail (header != NULL, NULL);
 	
-	return GMIME_OBJECT_GET_CLASS (object)->get_header (object, header);
-}
-
-
-static gboolean
-object_remove_header (GMimeObject *object, const char *header)
-{
-	guint i;
-	
-	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
-		if (!g_ascii_strcasecmp (content_headers[i], header))
-			break;
-	}
-	
-	switch (i) {
-	case HEADER_CONTENT_DISPOSITION:
-		if (object->disposition) {
-			g_mime_event_remove (object->disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
-			g_object_unref (object->disposition);
-			object->disposition = NULL;
-		}
-		break;
-	case HEADER_CONTENT_TYPE:
-		/* never allow the removal of the Content-Type header */
-		return FALSE;
-	case HEADER_CONTENT_ID:
-		g_free (object->content_id);
-		object->content_id = NULL;
-		break;
-	default:
-		break;
-	}
-	
-	return g_mime_header_list_remove (object->headers, header);
+	return g_mime_header_list_get (object->headers, header);
 }
 
 
@@ -967,9 +1006,8 @@ gboolean
 g_mime_object_remove_header (GMimeObject *object, const char *header)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), FALSE);
-	g_return_val_if_fail (header != NULL, FALSE);
 	
-	return GMIME_OBJECT_GET_CLASS (object)->remove_header (object, header);
+	return g_mime_header_list_remove (object->headers, header);
 }
 
 

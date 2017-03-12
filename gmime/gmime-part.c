@@ -59,10 +59,11 @@ static void g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass);
 static void g_mime_part_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void mime_part_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static void mime_part_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static void mime_part_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-static gboolean mime_part_remove_header (GMimeObject *object, const char *header);
+static void mime_part_header_added    (GMimeObject *object, GMimeHeader *header);
+static void mime_part_header_changed  (GMimeObject *object, GMimeHeader *header);
+static void mime_part_header_removed  (GMimeObject *object, GMimeHeader *header);
+static void mime_part_headers_cleared (GMimeObject *object);
+
 static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
@@ -108,10 +109,10 @@ g_mime_part_class_init (GMimePartClass *klass)
 	
 	gobject_class->finalize = g_mime_part_finalize;
 	
-	object_class->prepend_header = mime_part_prepend_header;
-	object_class->append_header = mime_part_append_header;
-	object_class->remove_header = mime_part_remove_header;
-	object_class->set_header = mime_part_set_header;
+	object_class->header_added = mime_part_header_added;
+	object_class->header_changed = mime_part_header_changed;
+	object_class->header_removed = mime_part_header_removed;
+	object_class->headers_cleared = mime_part_headers_cleared;
 	object_class->write_to_stream = mime_part_write_to_stream;
 	object_class->encode = mime_part_encode;
 	
@@ -177,17 +178,21 @@ copy_atom (const char *src, char *dest, size_t n)
 }
 
 static gboolean
-process_header (GMimeObject *object, const char *header, const char *value)
+process_header (GMimeObject *object, GMimeHeader *header)
 {
 	GMimePart *mime_part = (GMimePart *) object;
+	const char *name, *value;
 	char encoding[32];
 	guint i;
 	
-	if (g_ascii_strncasecmp (header, "Content-", 8) != 0)
+	value = g_mime_header_get_value (header);
+	name = g_mime_header_get_name (header);
+	
+	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
 		return FALSE;
 	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
-		if (!g_ascii_strcasecmp (content_headers[i] + 8, header + 8))
+		if (!g_ascii_strcasecmp (content_headers[i] + 8, name + 8))
 			break;
 	}
 	
@@ -217,41 +222,35 @@ process_header (GMimeObject *object, const char *header, const char *value)
 }
 
 static void
-mime_part_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+mime_part_header_added (GMimeObject *object, GMimeHeader *header)
 {
-	if (!process_header (object, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value, raw_value, offset);
-	else
-		_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
+	if (process_header (object, header))
+		return;
+	
+	GMIME_OBJECT_CLASS (parent_class)->header_added (object, header);
 }
 
 static void
-mime_part_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+mime_part_header_changed (GMimeObject *object, GMimeHeader *header)
 {
-	if (!process_header (object, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value, raw_value, offset);
-	else
-		_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
+	if (process_header (object, header))
+		return;
+	
+	GMIME_OBJECT_CLASS (parent_class)->header_changed (object, header);
 }
 
 static void
-mime_part_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
-{
-	if (!process_header (object, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
-	else
-		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
-}
-
-static gboolean
-mime_part_remove_header (GMimeObject *object, const char *header)
+mime_part_header_removed (GMimeObject *object, GMimeHeader *header)
 {
 	GMimePart *mime_part = (GMimePart *) object;
+	const char *name;
 	guint i;
 	
-	if (!g_ascii_strncasecmp (header, "Content-", 8)) {
+	name = g_mime_header_get_name (header);
+	
+	if (!g_ascii_strncasecmp (name, "Content-", 8)) {
 		for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
-			if (!g_ascii_strcasecmp (content_headers[i] + 8, header + 8))
+			if (!g_ascii_strcasecmp (content_headers[i] + 8, name + 8))
 				break;
 		}
 		
@@ -276,8 +275,25 @@ mime_part_remove_header (GMimeObject *object, const char *header)
 		}
 	}
 	
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+	GMIME_OBJECT_CLASS (parent_class)->header_removed (object, header);
 }
+
+static void
+mime_part_headers_cleared (GMimeObject *object)
+{
+	GMimePart *mime_part = (GMimePart *) object;
+	
+	mime_part->encoding = GMIME_CONTENT_ENCODING_DEFAULT;
+	g_free (mime_part->content_description);
+	mime_part->content_description = NULL;
+	g_free (mime_part->content_location);
+	mime_part->content_location = NULL;
+	g_free (mime_part->content_md5);
+	mime_part->content_md5 = NULL;
+	
+	GMIME_OBJECT_CLASS (parent_class)->headers_cleared (object);
+}
+
 
 static ssize_t
 write_content (GMimePart *part, GMimeStream *stream)
@@ -493,6 +509,8 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 void
 g_mime_part_set_content_description (GMimePart *mime_part, const char *description)
 {
+	GMimeObject *object = (GMimeObject *) mime_part;
+	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content_description == description)
@@ -500,7 +518,10 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 	
 	g_free (mime_part->content_description);
 	mime_part->content_description = g_strdup (description);
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Description", description);
+	
+	_g_mime_object_block_header_list_changed (object);
+	g_mime_header_list_set (object->headers, "Content-Description", description);
+	_g_mime_object_unblock_header_list_changed (object);
 }
 
 
@@ -534,7 +555,7 @@ g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	g_mime_object_set_content_id (GMIME_OBJECT (mime_part), content_id);
+	g_mime_object_set_content_id ((GMimeObject *) mime_part, content_id);
 }
 
 
@@ -552,7 +573,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	return g_mime_object_get_content_id (GMIME_OBJECT (mime_part));
+	return g_mime_object_get_content_id ((GMimeObject *) mime_part);
 }
 
 
@@ -566,6 +587,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 void
 g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 {
+	GMimeObject *object = (GMimeObject *) mime_part;
 	unsigned char digest[16], b64digest[32];
 	GMimeStreamFilter *filtered_stream;
 	GMimeContentType *content_type;
@@ -613,7 +635,10 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	}
 	
 	mime_part->content_md5 = g_strdup (content_md5);
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Md5", content_md5);
+	
+	_g_mime_object_block_header_list_changed (object);
+	g_mime_header_list_set (object->headers, "Content-Md5", content_md5);
+	_g_mime_object_unblock_header_list_changed (object);
 }
 
 
@@ -704,6 +729,8 @@ g_mime_part_get_content_md5 (GMimePart *mime_part)
 void
 g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location)
 {
+	GMimeObject *object = (GMimeObject *) mime_part;
+	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content_location == content_location)
@@ -711,7 +738,10 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 	
 	g_free (mime_part->content_location);
 	mime_part->content_location = g_strdup (content_location);
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Location", content_location);
+
+	_g_mime_object_block_header_list_changed (object);
+	g_mime_header_list_set (object->headers, "Content-Location", content_location);
+	_g_mime_object_block_header_list_changed (object);
 }
 
 
@@ -743,6 +773,7 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 void
 g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding encoding)
 {
+	GMimeObject *object = (GMimeObject *) mime_part;
 	const char *value;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
@@ -750,7 +781,9 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
 	value = g_mime_content_encoding_to_string (encoding);
 	mime_part->encoding = encoding;
 	
-	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Transfer-Encoding", value);
+	_g_mime_object_block_header_list_changed (object);
+	g_mime_header_list_set (object->headers, "Content-Transfer-Encoding", value);
+	_g_mime_object_block_header_list_changed (object);
 }
 
 

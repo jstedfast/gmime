@@ -43,12 +43,11 @@ Porting from GMime 2.6 to GMime 3.0
   decoder API's take a GMimeParserOptions argument that allows for
   specifying fallback charsets.
 
-- GMimeObject's prepend_header(), append_header(), and set_header() virtual
-  methods now all take a const char *raw_value and gint64 offset arguments.
-  The raw_value is the raw header value cloned exactly as the parser found
-  it in the stream (meaning it retains the original folding). The 'value'
-  argument remains as it has always been, an unfolded (but still encoded)
-  header value.
+- GMimeObject's prepend_header(), append_header(), set_header(), get_header(),
+  and remove_header() virtual methods have all been removed. They have been
+  replaced by the header_added(), header_changed(), header_removed(), and
+  headers_cleared() virtual methods to allow users to set headers on the
+  GMimeHeaderList directly and still get notifications of those changes.
 
 - g_mime_object_new() and g_mime_object_new_with_type() both now take a
   GMimeParserOptions argument.
