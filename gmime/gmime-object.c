@@ -867,7 +867,9 @@ g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
 	object->content_id = g_strdup (content_id);
 	
 	msgid = g_strdup_printf ("<%s>", content_id);
-	g_mime_object_set_header (object, "Content-Id", msgid);
+	_g_mime_object_block_header_list_changed (object);
+	g_mime_header_list_set (object->headers, "Content-Id", msgid);
+	_g_mime_object_unblock_header_list_changed (object);
 	g_free (msgid);
 }
 
