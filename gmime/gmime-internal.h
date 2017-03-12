@@ -44,7 +44,7 @@ G_GNUC_INTERNAL void _g_mime_header_list_set_options (GMimeHeaderList *headers, 
 G_GNUC_INTERNAL gboolean _g_mime_header_list_has_raw_value (GMimeHeaderList *headers, const char *name);
 G_GNUC_INTERNAL void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-G_GNUC_INTERNAL void _g_mime_header_list_set_value (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 G_GNUC_INTERNAL GMimeEvent *_g_mime_header_list_get_changed_event (GMimeHeaderList *headers);
 
 /* GMimeObject */

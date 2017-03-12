@@ -135,7 +135,7 @@ test_remove (void)
 			throw (exception_new ("expected second Received header"));
 		
 		/* make sure that the internal hash table was properly updated */
-		if (!(value = g_mime_header_list_get_value (list, "Received")))
+		if (!(value = g_mime_header_list_get (list, "Received")))
 			throw (exception_new ("lookup of Received header failed"));
 		
 		if (strcmp (initial[1].value, value) != 0)
@@ -151,7 +151,7 @@ test_remove (void)
 		/* remove the last header */
 		g_mime_header_list_remove (list, "Message-Id");
 		
-		if ((value = g_mime_header_list_get_value (list, "Message-Id")) != NULL)
+		if ((value = g_mime_header_list_get (list, "Message-Id")) != NULL)
 			throw (exception_new ("lookup of Message-Id should have failed"));
 		
 		testsuite_check_passed ();
@@ -188,7 +188,7 @@ test_remove_at (void)
 			throw (exception_new ("expected second Received header"));
 		
 		/* make sure that the internal hash table was properly updated */
-		if (!(value = g_mime_header_list_get_value (list, "Received")))
+		if (!(value = g_mime_header_list_get (list, "Received")))
 			throw (exception_new ("lookup of Received header failed"));
 		
 		if (strcmp (initial[1].value, value) != 0)
@@ -205,7 +205,7 @@ test_remove_at (void)
 		count = g_mime_header_list_get_count (list);
 		g_mime_header_list_remove_at (list, count - 1);
 		
-		if ((value = g_mime_header_list_get_value (list, "Message-Id")) != NULL)
+		if ((value = g_mime_header_list_get (list, "Message-Id")) != NULL)
 			throw (exception_new ("lookup of Message-Id should have failed"));
 		
 		testsuite_check_passed ();

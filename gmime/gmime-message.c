@@ -805,7 +805,7 @@ message_set_header (GMimeObject *object, const char *header, const char *value, 
 	if (!process_header (object, SET, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
 	else
-		_g_mime_header_list_set_value (object->headers, header, value, raw_value, offset);
+		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
 }
 
 static const char *
@@ -1045,7 +1045,7 @@ g_mime_message_new (gboolean pretty_headers)
 		/* Populate with the "standard" rfc822 headers so we can have a standard order */
 		headers = ((GMimeObject *) message)->headers;
 		for (i = 0; i < G_N_ELEMENTS (rfc822_headers); i++) 
-			g_mime_header_list_set_value (headers, rfc822_headers[i], NULL);
+			g_mime_header_list_set (headers, rfc822_headers[i], NULL);
 	}
 	
 	return message;
@@ -1161,7 +1161,7 @@ sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, co
 	char *string;
 	
 	string = internet_address_list_to_string (list, TRUE);
-	g_mime_header_list_set_value (object->headers, name, string);
+	g_mime_header_list_set (object->headers, name, string);
 	g_free (string);
 }
 

@@ -503,7 +503,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
 
 
 /**
- * g_mime_header_list_get_value:
+ * g_mime_header_list_get:
  * @headers: a #GMimeHeaderList
  * @name: header name
  *
@@ -515,7 +515,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
  * g_mime_utils_header_decode_text() before displaying to the user.
  **/
 const char *
-g_mime_header_list_get_value (GMimeHeaderList *headers, const char *name)
+g_mime_header_list_get (GMimeHeaderList *headers, const char *name)
 {
 	GMimeHeader *header;
 	
@@ -530,7 +530,7 @@ g_mime_header_list_get_value (GMimeHeaderList *headers, const char *name)
 
 
 void
-_g_mime_header_list_set_value (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
+_g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
 {
 	GMimeHeader *header, *hdr;
 	guint i;
@@ -565,7 +565,7 @@ _g_mime_header_list_set_value (GMimeHeaderList *headers, const char *name, const
 
 
 /**
- * g_mime_header_list_set_value:
+ * g_mime_header_list_set:
  * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
@@ -583,12 +583,12 @@ _g_mime_header_list_set_value (GMimeHeaderList *headers, const char *name, const
  * g_mime_utils_header_encode_text().
  **/
 void
-g_mime_header_list_set_value (GMimeHeaderList *headers, const char *name, const char *value)
+g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value)
 {
 	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	_g_mime_header_list_set_value (headers, name, value, NULL, -1);
+	_g_mime_header_list_set (headers, name, value, NULL, -1);
 }
 
 
