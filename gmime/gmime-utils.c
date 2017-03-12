@@ -519,8 +519,6 @@ parse_rfc822_date (date_token *tokens, int *tzone)
 	struct tm tm;
 	time_t t;
 	
-	g_return_val_if_fail (tokens != NULL, (time_t) 0);
-	
 	token = tokens;
 	
 	memset ((void *) &tm, 0, sizeof (struct tm));
@@ -592,34 +590,41 @@ parse_rfc822_date (date_token *tokens, int *tzone)
 #define is_tzone_numeric(t) (((date_token_mask (t) & DATE_TOKEN_NON_TIMEZONE_NUMERIC) == 0) && (date_token_mask (t) & DATE_TOKEN_HAS_SIGN))
 #define is_tzone(t)         (is_tzone_alpha (t) || is_tzone_numeric (t))
 
+#define YEAR    (1 << 0)
+#define MONTH   (1 << 1)
+#define DAY     (1 << 2)
+#define WEEKDAY (1 << 3)
+#define TIME    (1 << 4)
+#define TZONE   (1 << 5)
+
 static time_t
 parse_broken_date (date_token *tokens, int *tzone)
 {
-	gboolean got_wday, got_month, got_tzone;
 	int hour, min, sec, offset, n;
 	date_token *token;
 	struct tm tm;
 	time_t t;
+	int mask;
 	
 	memset ((void *) &tm, 0, sizeof (struct tm));
-	got_wday = got_month = got_tzone = FALSE;
 	offset = 0;
+	mask = 0;
 	
 	token = tokens;
 	while (token) {
-		if (is_weekday (token) && !got_wday) {
+		if (is_weekday (token) && !(mask & WEEKDAY)) {
 			if ((n = get_wday (token->start, token->len)) != -1) {
 				d(printf ("weekday; "));
-				got_wday = TRUE;
+				mask |= WEEKDAY;
 				tm.tm_wday = n;
 				goto next;
 			}
 		}
 		
-		if (is_month (token) && !got_month) {
+		if (is_month (token) && !(mask & MONTH)) {
 			if ((n = get_month (token->start, token->len)) != -1) {
 				d(printf ("month; "));
-				got_month = TRUE;
+				mask |= MONTH;
 				tm.tm_mon = n;
 				goto next;
 			}
@@ -631,48 +636,52 @@ parse_broken_date (date_token *tokens, int *tzone)
 				tm.tm_hour = hour;
 				tm.tm_min = min;
 				tm.tm_sec = sec;
+				mask |= TIME;
 				goto next;
 			}
 		}
 		
-		if (is_tzone (token) && !got_tzone) {
+		if (is_tzone (token) && !(mask & TZONE)) {
 			date_token *t = token;
 			
 			if ((n = get_tzone (&t)) != -1) {
 				d(printf ("tzone; "));
-				got_tzone = TRUE;
+				mask |= TZONE;
 				offset = n;
 				goto next;
 			}
 		}
 		
 		if (is_numeric (token)) {
-			if (token->len == 4 && !tm.tm_year) {
+			if (token->len == 4 && !(mask & YEAR)) {
 				if ((n = get_year (token->start, token->len)) != -1) {
 					d(printf ("year; "));
 					tm.tm_year = n - 1900;
+					mask |= YEAR;
 					goto next;
 				}
 			} else {
 				/* Note: assumes MM-DD-YY ordering if '0 < MM < 12' holds true */
-				if (!got_month && token->next && is_numeric (token->next)) {
+				if (!(mask & MONTH) && token->next && is_numeric (token->next)) {
 					if ((n = decode_int (token->start, token->len)) > 12) {
 						goto mday;
 					} else if (n > 0) {
 						d(printf ("mon; "));
-						got_month = TRUE;
 						tm.tm_mon = n - 1;
+						mask |= MONTH;
 					}
 					goto next;
-				} else if (!tm.tm_mday && (n = get_mday (token->start, token->len)) != -1) {
+				} else if (!(mask & DAY) && (n = get_mday (token->start, token->len)) != -1) {
 				mday:
 					d(printf ("mday; "));
 					tm.tm_mday = n;
+					mask |= DAY;
 					goto next;
-				} else if (!tm.tm_year) {
+				} else if (!(mask & YEAR)) {
 					if ((n = get_year (token->start, token->len)) != -1) {
 						d(printf ("2-digit year; "));
 						tm.tm_year = n - 1900;
+						mask |= YEAR;
 					}
 					goto next;
 				}
@@ -687,6 +696,9 @@ parse_broken_date (date_token *tokens, int *tzone)
 	}
 	
 	d(printf ("\n"));
+	
+	if (!(mask & (YEAR | MONTH | DAY | TIME)))
+		return 0;
 	
 	t = mktime_utc (&tm);
 	

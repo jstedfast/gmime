@@ -305,18 +305,21 @@ static struct {
 	{ "17-6-2008 17:10:08",
 	  "Tue, 17 Jun 2008 17:10:08 +0000",
 	  1213722608, 0 },
+	{ "nonsense",
+	  "Thu, 01 Jan 1970 00:00:00 +0000",
+	  0, 0 }
 };
 
 static void
 test_date_parser (void)
 {
+	Exception *ex;
 	time_t date;
 	int tzone;
 	char *buf;
 	guint i;
 	
 	for (i = 0; i < G_N_ELEMENTS (dates); i++) {
-		buf = NULL;
 		testsuite_check ("Date: '%s'", dates[i].in);
 		try {
 			date = g_mime_utils_header_decode_date (dates[i].in, &tzone);
@@ -328,16 +331,19 @@ test_date_parser (void)
 				throw (exception_new ("timezones do not match"));
 			
 			buf = g_mime_utils_header_format_date (date, tzone);
-			if (strcmp (dates[i].out, buf) != 0)
-				throw (exception_new ("date strings do not match"));
+			if (strcmp (dates[i].out, buf) != 0) {
+				ex = exception_new ("date strings do not match: %s", buf);
+				g_free (buf);
+				throw (ex);
+			}
+			
+			g_free (buf);
 			
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("Date: '%s': %s", dates[i].in,
 						ex->message);
 		} finally;
-		
-		g_free (buf);
 	}
 }
 
