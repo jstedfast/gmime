@@ -37,8 +37,8 @@
 #include "zentimer.h"
 #endif
 
-//#define TEST_RAW_HEADER
-#define TEST_PRESERVE_HEADERS
+#define TEST_RAW_HEADER
+//#define TEST_PRESERVE_HEADERS
 #define PRINT_MIME_STRUCT
 //#define TEST_WRITE_TO_STREAM
 
@@ -178,7 +178,7 @@ test_parser (GMimeStream *stream)
 	ZenTimerReport (NULL, "gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
-	
+
 #ifdef TEST_RAW_HEADER
 	{
 		char *raw;
@@ -195,19 +195,19 @@ test_parser (GMimeStream *stream)
 		
 		fprintf (stdout, "\nTesting preservation of headers...\n\n");
 		stream = g_mime_stream_file_new (stdout);
+		g_mime_stream_file_set_owner ((GMimeStreamFile *) stream, FALSE);
 		g_mime_header_list_write_to_stream (GMIME_OBJECT (message)->headers, stream);
 		g_mime_stream_flush (stream);
-		GMIME_STREAM_FILE (stream)->fp = NULL;
 		g_object_unref (stream);
 		fprintf (stdout, "\n");
 	}
 #endif
 	
 #ifdef TEST_WRITE_TO_STREAM
-	stream = g_mime_stream_fs_new (2);
+	stream = g_mime_stream_pipe_new (2);
+	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
 	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
 	g_mime_stream_flush (stream);
-	GMIME_STREAM_FS (stream)->fd = -1;
 	g_object_unref (stream);
 #endif
 	
