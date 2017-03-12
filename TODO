@@ -6,9 +6,6 @@ tasks are presented in.
 GMime 3.0 Planning:
 ===================
 
-- Replace prepend/append/set_header() virtual methods with event callbacks from
-  GMimeHeaderList changed events like MimeKit does things.
-
 
 Future Planning:
 ================
