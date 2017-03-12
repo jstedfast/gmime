@@ -6,17 +6,8 @@ tasks are presented in.
 GMime 3.0 Planning:
 ===================
 
-- How about a g_mime_part_get_best_charset()? This one could be
-  awkward since it depends on the content being text and also encoded
-  in UTF-8... Maybe this calls for a GMimeTextPart? [ CONSIDERING ]
-
-- Combine GMimeGpgContext and GMimePkcs7Context by using GpgMe for
-  both. This could allow g_mime_multipart_encrypted_decrypt() and
-  g_mime_multipart_signed_verify() to set the appropriate protocol on
-  the CryptoContext so that the caller wouldn't have to figure that
-  out themselves. We'd actually be able to get rid of the need for
-  a GMimeCryptoContext parameter altogether if we could rely on
-  the backend using a gpg-agent for password requests.
+- Replace prepend/append/set_header() virtual methods with event callbacks from
+  GMimeHeaderList changed events like MimeKit does things.
 
 
 Future Planning:
