@@ -133,16 +133,17 @@ int main (int argc, char **argv)
 {
 	const char *datadir = "data/partial";
 	GMimeStream *stream, *combined, *expected;
+	GMimeMessage *message, **messages;
+	GMimeMessagePartial **parts;
 	GString *input, *output;
-	GMimeMessage *message;
 	GMimeParser *parser;
 	GPtrArray *partials;
 	int inlen, outlen;
 	GDir *data, *dir;
 	const char *dent;
 	struct stat st;
+	size_t i, n;
 	char *path;
-	int i;
 	
 	g_mime_init ();
 	
@@ -203,13 +204,22 @@ int main (int argc, char **argv)
 				path = NULL;
 			}
 			
-			if (!(message = g_mime_message_partial_reconstruct_message ((GMimeMessagePartial **) partials->pdata, partials->len)))
+			parts = (GMimeMessagePartial **) partials->pdata;
+			n = partials->len;
+			
+			if (!(message = g_mime_message_partial_reconstruct_message (parts, n))) {
+				for (i = 0; i < n; i++)
+					g_object_unref (parts[i]);
+				
 				throw (exception_new ("Failed to recombine message/partial `%s'", input->str));
+			}
+			
+			for (i = 0; i < n; i++)
+				g_object_unref (parts[i]);
 			
 			combined = g_mime_stream_mem_new ();
 			g_mime_object_write_to_stream (GMIME_OBJECT (message), combined);
 			g_mime_stream_reset (combined);
-			g_object_unref (message);
 			
 			if (!(expected = g_mime_stream_file_open (output->str, "r"))) {
 				expected = g_mime_stream_file_open (output->str, "w");
@@ -217,6 +227,7 @@ int main (int argc, char **argv)
 				g_mime_stream_flush (expected);
 				g_object_unref (expected);
 				g_object_unref (combined);
+				g_object_unref (message);
 				
 				throw (exception_new ("Failed to open `%s'", output->str));
 			}
@@ -224,8 +235,52 @@ int main (int argc, char **argv)
 			if (!streams_match (expected, combined)) {
 				g_object_unref (combined);
 				g_object_unref (expected);
+				g_object_unref (message);
 				
 				throw (exception_new ("messages do not match for `%s'", input->str));
+			}
+			
+			g_object_unref (combined);
+			
+			if (!(messages = g_mime_message_partial_split_message (message, 4096, &n))) {
+				g_object_unref (expected);
+				g_object_unref (message);
+				
+				throw (exception_new ("Failed to split message `%s'", input->str));
+			}
+			
+			g_object_unref (message);
+			
+			g_ptr_array_set_size (partials, 0);
+			for (i = 0; i < n; i++) {
+				g_ptr_array_add (partials, messages[i]->mime_part);
+				g_object_ref (messages[i]->mime_part);
+				g_object_unref (messages[i]);
+			}
+			g_free (messages);
+
+			parts = (GMimeMessagePartial **) partials->pdata;
+			n = partials->len;
+			
+			if (!(message = g_mime_message_partial_reconstruct_message (parts, n))) {
+				for (i = 0; i < n; i++)
+					g_object_unref (parts[i]);
+				g_object_unref (expected);
+				
+				throw (exception_new ("Failed to recombine split message/partial `%s'", input->str));
+			}
+			
+			combined = g_mime_stream_mem_new ();
+			g_mime_object_write_to_stream (GMIME_OBJECT (message), combined);
+			g_mime_stream_reset (combined);
+			g_mime_stream_reset (expected);
+			g_object_unref (message);
+			
+			if (!streams_match (expected, combined)) {
+				g_object_unref (combined);
+				g_object_unref (expected);
+				
+				throw (exception_new ("re-split/combined messages do not match for `%s'", input->str));
 			}
 			
 			g_object_unref (combined);
