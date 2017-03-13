@@ -1153,6 +1153,7 @@ g_mime_parser_options_set_fallback_charsets
 <SECTION>
 <FILE>gmime-parser</FILE>
 GMimeParser
+GMimeFormat
 GMimeParserHeaderRegexFunc
 g_mime_parser_new
 g_mime_parser_new_with_stream
