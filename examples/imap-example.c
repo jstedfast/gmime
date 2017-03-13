@@ -766,7 +766,6 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 	
 	stream = g_mime_stream_fs_new (fd);
 	parser = g_mime_parser_new_with_stream (stream);
-	g_mime_parser_set_scan_from (parser, FALSE);
 	g_object_unref (stream);
 	
 	message = g_mime_parser_construct_message (parser);
@@ -821,7 +820,6 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		
 		stream = g_mime_stream_fs_new (fd);
 		parser = g_mime_parser_new_with_stream (stream);
-		g_mime_parser_set_scan_from (parser, FALSE);
 		g_object_unref (stream);
 		
 		subpart = g_mime_parser_construct_part (parser);
@@ -861,7 +859,6 @@ reconstruct_message (const char *uid)
 	
 	stream = g_mime_stream_fs_new (fd);
 	parser = g_mime_parser_new_with_stream (stream);
-	g_mime_parser_set_scan_from (parser, FALSE);
 	g_object_unref (stream);
 	
 	/* constructs message object and toplevel mime part (although
@@ -916,7 +913,7 @@ reconstruct_message (const char *uid)
 
 int main (int argc, char **argv)
 {
-	gboolean scan_from = FALSE;
+	GMimeFormat format = GMIME_FORMAT_MESSAGE;
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
@@ -928,8 +925,8 @@ int main (int argc, char **argv)
 	
 	g_mime_init ();
 	
-	if (!strcmp (argv[i], "-f")) {
-		scan_from = TRUE;
+	if (!strcmp (argv[i], "--mbox")) {
+		format = GMIME_FORMAT_MBOX;
 		i++;
 	}
 	
@@ -939,7 +936,7 @@ int main (int argc, char **argv)
 	stream = g_mime_stream_fs_new (fd);
 	
 	parser = g_mime_parser_new_with_stream (stream);
-	g_mime_parser_set_scan_from (parser, scan_from);
+	g_mime_parser_set_format (parser, format);
 	g_object_unref (stream);
 	
 	message = g_mime_parser_construct_message (parser);

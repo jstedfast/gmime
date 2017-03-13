@@ -125,6 +125,9 @@ Porting from GMime 2.6 to GMime 3.0
   argument nor does it return int. Instead, this function now returns a newly
   allocated GMimeMultipartSigned.
 
+- g_mime_parser_[get,set]_scan_from() have been replaced by
+  g_mime_parser_[get,set]_format() which takes a GMimeFormat argument.
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

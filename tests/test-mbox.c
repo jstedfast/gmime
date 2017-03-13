@@ -348,7 +348,7 @@ int main (int argc, char **argv)
 				
 				parser = g_mime_parser_new_with_stream (istream);
 				g_mime_parser_set_persist_stream (parser, TRUE);
-				g_mime_parser_set_scan_from (parser, TRUE);
+				g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
 				
 				if (strstr (dent, "content-length") != NULL)
 					g_mime_parser_set_respect_content_length (parser, TRUE);
@@ -406,7 +406,7 @@ int main (int argc, char **argv)
 			goto exit;
 		
 		parser = g_mime_parser_new_with_stream (istream);
-		g_mime_parser_set_scan_from (parser, TRUE);
+		g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
 		
 #ifdef ENABLE_MBOX_MATCH
 		tmp = g_strdup ("./tmp/mbox-test.XXXXXX");

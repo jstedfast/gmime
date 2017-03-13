@@ -46,6 +46,19 @@ typedef struct _GMimeParserClass GMimeParserClass;
 
 
 /**
+ * GMimeFormat:
+ * @GMIME_FORMAT_ENTITY: The stream contains a single message.
+ * @GMIME_FORMAT_MBOX: The stream is in the UNIX mbox format.
+ *
+ * An enum of formats.
+ **/
+typedef enum {
+	GMIME_FORMAT_MESSAGE,
+	GMIME_FORMAT_MBOX
+} GMimeFormat;
+
+
+/**
  * GMimeParser:
  * @parent_object: parent #GObject
  * @priv: private parser state
@@ -90,8 +103,8 @@ void g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream);
 gboolean g_mime_parser_get_persist_stream (GMimeParser *parser);
 void g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist);
 
-gboolean g_mime_parser_get_scan_from (GMimeParser *parser);
-void g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from);
+GMimeFormat g_mime_parser_get_format (GMimeParser *parser);
+void g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format);
 
 gboolean g_mime_parser_get_respect_content_length (GMimeParser *parser);
 void g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_content_length);

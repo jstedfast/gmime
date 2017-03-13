@@ -122,6 +122,7 @@ enum {
 
 struct _GMimeParserPrivate {
 	GMimeStream *stream;
+	GMimeFormat format;
 	
 	gint64 offset;
 	
@@ -166,10 +167,9 @@ struct _GMimeParserPrivate {
 	
 	short int state;
 	
-	unsigned short int unused:10;
+	unsigned short int unused:11;
 	unsigned short int midline:1;
 	unsigned short int seekable:1;
-	unsigned short int scan_from:1;
 	unsigned short int have_regex:1;
 	unsigned short int persist_stream:1;
 	unsigned short int respect_content_length:1;
@@ -308,7 +308,8 @@ g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 	parser->priv->respect_content_length = FALSE;
 	parser->priv->persist_stream = TRUE;
 	parser->priv->have_regex = FALSE;
-	parser->priv->scan_from = FALSE;
+	
+	parser->priv->format = GMIME_FORMAT_MESSAGE;
 	
 #if defined (HAVE_GLIB_REGEX)
 	parser->priv->regex = NULL;
@@ -520,38 +521,35 @@ g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
 
 
 /**
- * g_mime_parser_get_scan_from:
+ * g_mime_parser_get_format:
  * @parser: a #GMimeParser context
  *
- * Gets whether or not @parser is set to scan mbox-style From-lines.
+ * Gets the format that the parser is set to parse.
  *
- * Returns: whether or not @parser is set to scan mbox-style
- * From-lines.
+ * Returns: the format that the parser is set to parse.
  **/
-gboolean
-g_mime_parser_get_scan_from (GMimeParser *parser)
+GMimeFormat
+g_mime_parser_get_format (GMimeParser *parser)
 {
-	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), GMIME_FORMAT_MESSAGE);
 	
-	return parser->priv->scan_from;
+	return parser->priv->format;
 }
 
 
 /**
- * g_mime_parser_set_scan_from:
+ * g_mime_parser_set_format:
  * @parser: a #GMimeParser context
- * @scan_from: %TRUE to scan From-lines or %FALSE otherwise
+ * @format: a #GMimeFormat
  *
- * Sets whether or not @parser should scan mbox-style From-lines.
- *
- * By default, this feature is disabled.
+ * Sets the format that the parser should expect the stream to be in.
  **/
 void
-g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
+g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format)
 {
 	g_return_if_fail (GMIME_IS_PARSER (parser));
 	
-	parser->priv->scan_from = scan_from ? 1 : 0;
+	parser->priv->format = format;
 }
 
 
@@ -1064,7 +1062,7 @@ parser_step_headers (GMimeParser *parser)
 				}
 				
 				if (!valid) {
-					if (priv->scan_from && (inptr - start) == 4
+					if (priv->format == GMIME_FORMAT_MBOX && (inptr - start) == 4
 					    && !strncmp (start, "From ", 5))
 						goto next_message;
 					
@@ -1272,7 +1270,7 @@ parser_step (GMimeParser *parser)
 	case GMIME_PARSER_STATE_INIT:
 		priv->message_headers_begin = -1;
 		priv->message_headers_end = -1;
-		if (priv->scan_from)
+		if (priv->format == GMIME_FORMAT_MBOX)
 			priv->state = GMIME_PARSER_STATE_FROM;
 		else
 			priv->state = GMIME_PARSER_STATE_MESSAGE_HEADERS;
@@ -1322,8 +1320,8 @@ enum {
 		g_byte_array_append (content, (unsigned char *) start, len); \
 } G_STMT_END
 
-#define possible_boundary(scan_from, start, len)                                      \
-                         ((scan_from && len >= 5 && !strncmp (start, "From ", 5)) ||  \
+#define possible_boundary(is_mbox, start, len)                                      \
+                         ((is_mbox && len >= 5 && !strncmp (start, "From ", 5)) ||  \
 			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
 
 static gboolean
@@ -1361,7 +1359,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 	if (len > 0 && start[len - 1] == '\r')
 		len--;
 	
-	if (possible_boundary (priv->scan_from, start, len)) {
+	if (possible_boundary (priv->format == GMIME_FORMAT_MBOX, start, len)) {
 		BoundaryStack *s;
 		
 		d(printf ("checking boundary '%.*s'\n", len, start));
@@ -1957,7 +1955,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 		header = header->next;
 	}
 	
-	if (priv->scan_from) {
+	if (priv->format == GMIME_FORMAT_MBOX) {
 		parser_push_boundary (parser, MBOX_BOUNDARY);
 		if (priv->respect_content_length && content_length < ULONG_MAX)
 			priv->bounds->content_end = parser_offset (priv, NULL) + content_length;
@@ -1972,7 +1970,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	content_type_destroy (content_type);
 	message->mime_part = object;
 	
-	if (priv->scan_from) {
+	if (priv->format == GMIME_FORMAT_MBOX) {
 		priv->state = GMIME_PARSER_STATE_FROM;
 		parser_pop_boundary (parser);
 	}
@@ -2035,7 +2033,7 @@ g_mime_parser_get_from (GMimeParser *parser)
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
 	
 	priv = parser->priv;
-	if (!priv->scan_from)
+	if (priv->format != GMIME_FORMAT_MBOX)
 		return NULL;
 	
 	if (priv->from_line->len)
@@ -2063,7 +2061,7 @@ g_mime_parser_get_from_offset (GMimeParser *parser)
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
 	
 	priv = parser->priv;
-	if (!priv->scan_from)
+	if (priv->format != GMIME_FORMAT_MBOX)
 		return -1;
 	
 	return priv->from_offset;

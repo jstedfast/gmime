@@ -50,6 +50,7 @@
       <listitem><para><function>g_mime_part_new()</function> now returns a GMimePart with a Content-Type of "application/octet-stream" instead of "text/plain" since there is now a GMimeTextPart who's <function>g_mime_text_part_new()</function> returns a GMimeTextPart with a Content-Type of "text/plain".</para></listitem>
       <listitem><para><function>g_mime_part_get_content_object()</function> has been renamed to <function>g_mime_part_get_content()</function>.</para></listitem>
       <listitem><para><function>g_mime_part_set_content_object()</function> has been renamed to <function>g_mime_part_set_content()</function>.</para></listitem>
+      <listitem><para><function>g_mime_parser_get_scan_from()</function> and <function>g_mime_parser_set_scan_from()</function> have been replaced by <function>g_mime_parser_get_format()</function> and <function>g_mime_parser_get_format()</function> which take a GMimeFormat argument.</para></listitem>
     </itemizedlist>
   </refsect1>
 </refentry>
