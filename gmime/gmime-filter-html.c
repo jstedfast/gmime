@@ -141,7 +141,7 @@ g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
 	filter->colour = 0;
 	filter->column = 0;
 	filter->pre_open = FALSE;
-	filter->prev_cit_depth = 0;
+	filter->citation_depth = 0;
 }
 
 static void
@@ -389,14 +389,14 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		depth = citation_depth (start, inend);
 		
 		if (html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) {
-			if (html->prev_cit_depth < depth) {
-				while (html->prev_cit_depth < depth) {
+			if (html->citation_depth < depth) {
+				while (html->citation_depth < depth) {
 					char tag[33];
 					int ldepth;
 					
-					html->prev_cit_depth++;
+					html->citation_depth++;
 					
-					ldepth = MIN (html->prev_cit_depth, 999);
+					ldepth = MIN (html->citation_depth, 999);
 					
 					g_snprintf (tag, 31, "<blockquote class=\"level_%03d\">", ldepth);
 					
@@ -405,12 +405,12 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				}
 				
 				start = citation_cut (start, inptr);
-			} else if (html->prev_cit_depth > depth) {
+			} else if (html->citation_depth > depth) {
 				/* close quotes */
-				while (html->prev_cit_depth > depth) {
+				while (html->citation_depth > depth) {
 					outptr = check_size (filter, outptr, &outend, 14);
 					outptr = g_stpcpy (outptr, "</blockquote>");
-					html->prev_cit_depth--;
+					html->citation_depth--;
 				}
 				
 				start = citation_cut (start, inptr);
@@ -509,12 +509,12 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			outptr = g_stpcpy (outptr, "</pre>");
 		}
 		
-		if ((html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) && html->prev_cit_depth > 0) {
+		if ((html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) && html->citation_depth > 0) {
 			/* close open blockquotes */
-			while (html->prev_cit_depth > 0) {
+			while (html->citation_depth > 0) {
 				outptr = check_size (filter, outptr, &outend, 14);
 				outptr = g_stpcpy (outptr, "</blockquote>");
-				html->prev_cit_depth--;
+				html->citation_depth--;
 			}
 		}
 	} else if (start < inend) {
@@ -548,7 +548,7 @@ filter_reset (GMimeFilter *filter)
 	
 	html->column = 0;
 	html->pre_open = FALSE;
-	html->prev_cit_depth = 0;
+	html->citation_depth = 0;
 }
 
 

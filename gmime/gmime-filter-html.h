@@ -41,7 +41,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 /**
  * GMIME_FILTER_HTML_PRE:
  *
- * Wrap stream in &lt;pre&gt; tags.
+ * Wrap stream in &lt;pre&gt; and &lt;/pre&gt; tags.
  **/
 #define GMIME_FILTER_HTML_PRE                 (1 << 0)
 
@@ -118,7 +118,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  * @colour: cite colour
  * @column: current column
  * @pre_open: currently inside of a 'pre' tag.
- * @prev_cit_depth: current citation depth level.
+ * @citation_depth: current citation depth level.
  *
  * A filter for converting text/plain into text/html.
  **/
@@ -132,7 +132,8 @@ struct _GMimeFilterHTML {
 	
 	guint32 column       : 31;
 	guint32 pre_open     : 1;
-  guint32 prev_cit_depth : 31;
+	
+	guint32 citation_depth;
 };
 
 struct _GMimeFilterHTMLClass {
