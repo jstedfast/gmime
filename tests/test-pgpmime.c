@@ -230,8 +230,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
 	
 	/* sign the part */
-	mps = g_mime_multipart_signed_sign (ctx, (GMimeObject *) part, "no.user@no.domain",
-					    GMIME_DIGEST_ALGO_SHA1, &err);
+	mps = g_mime_multipart_signed_sign (ctx, (GMimeObject *) part, "no.user@no.domain", &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -291,8 +290,7 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	/* encrypt the part */
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
-	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeObject *) part,
-						  sign, "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
+	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeObject *) part, sign, "no.user@no.domain",
 						  GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);

@@ -92,8 +92,7 @@ GMimeObject *g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *p
 						    GMimeDecryptFlags flags, const char *session_key,
 						    GMimeDecryptResult **result, GError **err);
 
-GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid,
-							       GMimeDigestAlgo digest, GError **err);
+GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GError **err);
 
 GMimeSignatureList *g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags,
 							  GMimeObject **entity, GError **err);

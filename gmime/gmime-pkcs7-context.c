@@ -87,18 +87,15 @@ static const char *pkcs7_get_signature_protocol (GMimeCryptoContext *ctx);
 static const char *pkcs7_get_encryption_protocol (GMimeCryptoContext *ctx);
 static const char *pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
-static int pkcs7_sign (GMimeCryptoContext *ctx, gboolean detach,
-		       const char *userid, GMimeDigestAlgo digest,
-		       GMimeStream *istream, GMimeStream *ostream,
-		       GError **err);
+static int pkcs7_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid,
+		       GMimeStream *istream, GMimeStream *ostream, GError **err);
 	
 static GMimeSignatureList *pkcs7_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
 					 GMimeStream *istream, GMimeStream *sigstream,
 					 GMimeStream *ostream, GError **err);
 
-static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-			  GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream,
-			  GMimeStream *ostream, GError **err);
+static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeEncryptFlags flags,
+			  GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err);
 
 static GMimeDecryptResult *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *session_key,
 					  GMimeStream *istream, GMimeStream *ostream, GError **err);
@@ -263,14 +260,14 @@ pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 }
 
 static int
-pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMimeDigestAlgo digest,
+pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid,
 	    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_NORMAL;
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	
-	return g_mime_gpgme_sign (pkcs7->ctx, mode, userid, digest, istream, ostream, err);
+	return g_mime_gpgme_sign (pkcs7->ctx, mode, userid, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
@@ -294,9 +291,8 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 }
 
 static int
-pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-	       GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-	       GError **err)
+pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMimeEncryptFlags flags,
+	       GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
@@ -307,7 +303,7 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 		return -1;
 	}
 	
-	return g_mime_gpgme_encrypt (pkcs7->ctx, sign, userid, digest, flags, recipients, istream, ostream, err);
+	return g_mime_gpgme_encrypt (pkcs7->ctx, sign, userid, flags, recipients, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	

@@ -197,12 +197,11 @@ sign_prepare (GMimeObject *mime_part)
  * @ctx: a #GMimeCryptoContext
  * @entity: MIME part to sign
  * @userid: user id to sign with
- * @digest: preferred digest algorithm
  * @err: a #GError
  *
  * Attempts to sign the @content MIME part with @userid's private key
- * using the @ctx signing context with the @digest algorithm. If
- * successful, a new multipart/signed object is returned.
+ * using the @ctx signing context. If successful, a new multipart/signed
+ * object is returned.
  *
  * Returns: a new #GMimeMultipartSigned object on success or %NULL on fail.
  * If signing fails, an exception will be set on @err to provide information
@@ -210,8 +209,7 @@ sign_prepare (GMimeObject *mime_part)
  **/
 GMimeMultipartSigned *
 g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
-			      const char *userid, GMimeDigestAlgo digest,
-			      GError **err)
+			      const char *userid, GError **err)
 {
 	GMimeParserOptions *options = g_mime_parser_options_get_default ();
 	GMimeStream *stream, *filtered, *sigstream;
@@ -265,7 +263,7 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 	sigstream = g_mime_stream_mem_new ();
 	
 	/* sign the content stream */
-	if ((algo = g_mime_crypto_context_sign (ctx, TRUE, userid, digest, filtered, sigstream, err)) == -1) {
+	if ((algo = g_mime_crypto_context_sign (ctx, TRUE, userid, filtered, sigstream, err)) == -1) {
 		g_object_unref (sigstream);
 		g_object_unref (filtered);
 		g_object_unref (stream);

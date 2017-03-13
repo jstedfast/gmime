@@ -65,8 +65,7 @@ GType g_mime_multipart_signed_get_type (void);
 GMimeMultipartSigned *g_mime_multipart_signed_new (void);
 
 GMimeMultipartSigned *g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
-						    const char *userid, GMimeDigestAlgo digest,
-						    GError **err);
+						    const char *userid, GError **err);
 
 GMimeSignatureList *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err);
 

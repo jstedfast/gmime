@@ -137,19 +137,17 @@ struct _GMimeCryptoContextClass {
 	const char *             (* get_key_exchange_protocol) (GMimeCryptoContext *ctx);
 	
 	int                      (* sign)        (GMimeCryptoContext *ctx, gboolean detach,
-						  const char *userid, GMimeDigestAlgo digest,
-						  GMimeStream *istream, GMimeStream *ostream,
-						  GError **err);
+						  const char *userid, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
 	
 	GMimeSignatureList *     (* verify)      (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
 						  GMimeStream *istream, GMimeStream *sigstream,
 						  GMimeStream *ostream, GError **err);
 	
 	int                      (* encrypt)     (GMimeCryptoContext *ctx, gboolean sign,
-						  const char *userid, GMimeDigestAlgo digest,
-						  GMimeEncryptFlags flags, GPtrArray *recipients,
-						  GMimeStream *istream, GMimeStream *ostream,
-						  GError **err);
+						  const char *userid, GMimeEncryptFlags flags,
+						  GPtrArray *recipients, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
 	
 	GMimeDecryptResult *     (* decrypt)     (GMimeCryptoContext *ctx, GMimeDecryptFlags flags,
 						  const char *session_key, GMimeStream *istream,
@@ -180,17 +178,14 @@ const char *g_mime_crypto_context_get_encryption_protocol (GMimeCryptoContext *c
 const char *g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 /* crypto routines */
-int g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach,
-				const char *userid, GMimeDigestAlgo digest,
-				GMimeStream *istream, GMimeStream *ostream,
-				GError **err);
+int g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid,
+				GMimeStream *istream, GMimeStream *ostream, GError **err);
 
 GMimeSignatureList *g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
 						  GMimeStream *istream, GMimeStream *sigstream,
 						  GMimeStream *ostream, GError **err);
 
-int g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign,
-				   const char *userid, GMimeDigestAlgo digest,
+int g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid,
 				   GMimeEncryptFlags flags, GPtrArray *recipients,
 				   GMimeStream *istream, GMimeStream *ostream,
 				   GError **err);

@@ -47,23 +47,20 @@ static void g_mime_crypto_context_finalize (GObject *object);
 
 static GMimeDigestAlgo crypto_digest_id (GMimeCryptoContext *ctx, const char *name);
 
-static const char *crypto_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo );
+static const char *crypto_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest);
 
 static const char *crypto_get_signature_protocol (GMimeCryptoContext *ctx);
 static const char *crypto_get_encryption_protocol (GMimeCryptoContext *ctx);
 static const char *crypto_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
-static int crypto_sign (GMimeCryptoContext *ctx, gboolean detach,
-			const char *userid, GMimeDigestAlgo digest,
-			GMimeStream *istream, GMimeStream *ostream,
-			GError **err);
+static int crypto_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid, 
+			GMimeStream *istream, GMimeStream *ostream, GError **err);
 	
 static GMimeSignatureList *crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags,
 					  GMimeStream *istream, GMimeStream *sigstream,
 					  GMimeStream *ostream, GError **err);
 	
-static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign,
-			   const char *userid, GMimeDigestAlgo digest,
+static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid,
 			   GMimeEncryptFlags flags, GPtrArray *recipients,
 			   GMimeStream *istream, GMimeStream *ostream,
 			   GError **err);
@@ -352,7 +349,7 @@ g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 
 
 static int
-crypto_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid, GMimeDigestAlgo digest,
+crypto_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid,
 	     GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
@@ -367,25 +364,23 @@ crypto_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid, GMime
  * @ctx: a #GMimeCryptoContext
  * @detach: %TRUE if @ostream should be the detached signature; otherwise, %FALSE
  * @userid: private key to use to sign the stream
- * @digest: digest algorithm to use
  * @istream: input stream
  * @ostream: output stream
  * @err: a #GError
  *
  * Signs the input stream and writes the resulting signature to the output stream.
  *
- * Returns: the #GMimeDigestAlgo used on success (useful if @digest is
- * specified as #GMIME_DIGEST_ALGO_DEFAULT) or %-1 on fail.
+ * Returns: the #GMimeDigestAlgo used on success or %-1 on fail.
  **/
 int
-g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid, GMimeDigestAlgo digest,
+g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid,
 			    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->sign (ctx, detach, userid, digest, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->sign (ctx, detach, userid, istream, ostream, err);
 }
 
 
@@ -430,9 +425,8 @@ g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, G
 
 
 static int
-crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-		GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-		GError **err)
+crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeEncryptFlags flags,
+		GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Encryption is not supported by this crypto context");
@@ -446,7 +440,6 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * @ctx: a #GMimeCryptoContext
  * @sign: sign as well as encrypt
  * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
- * @digest: digest algorithm to use when signing
  * @flags: a #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipient key ids
  *   and/or email addresses
@@ -460,15 +453,14 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * Returns: %0 on success or %-1 on fail.
  **/
 int
-g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-			       GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-			       GError **err)
+g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeEncryptFlags flags,
+			       GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, digest, flags, recipients, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, flags, recipients, istream, ostream, err);
 }
 
 

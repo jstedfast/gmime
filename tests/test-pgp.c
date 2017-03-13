@@ -71,9 +71,7 @@ test_sign (GMimeCryptoContext *ctx, gboolean detached, GMimeStream *cleartext, G
 	Exception *ex;
 	int rv;
 	
-	rv = g_mime_crypto_context_sign (ctx, detached, "no.user@no.domain",
-					 GMIME_DIGEST_ALGO_SHA256,
-					 cleartext, ciphertext, &err);
+	rv = g_mime_crypto_context_sign (ctx, detached, "no.user@no.domain", cleartext, ciphertext, &err);
 	
 	if (rv == -1 || err != NULL) {
 		ex = exception_new ("%s", err->message);
@@ -167,8 +165,10 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
-	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
-				       GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, cleartext, ciphertext, &err);
+	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain",
+				       GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST,
+				       recipients, cleartext, ciphertext,
+				       &err);
 	
 	g_ptr_array_free (recipients, TRUE);
 	

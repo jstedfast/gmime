@@ -232,8 +232,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
 	
 	/* sign the part */
-	mps = g_mime_multipart_signed_sign (ctx, (GMimeObject *) part, "mimekit@example.com",
-					    GMIME_DIGEST_ALGO_SHA1, &err);
+	mps = g_mime_multipart_signed_sign (ctx, (GMimeObject *) part, "mimekit@example.com", &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -282,7 +281,7 @@ test_pkcs7_mime_sign (void)
 	part = g_mime_text_part_new ();
 	g_mime_text_part_set_text (part, SIGNED_CONTENT);
 	
-	pkcs7_mime = g_mime_application_pkcs7_mime_sign ((GMimeObject *) part, "mimekit@example.com", GMIME_DIGEST_ALGO_SHA1, &err);
+	pkcs7_mime = g_mime_application_pkcs7_mime_sign ((GMimeObject *) part, "mimekit@example.com", &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {

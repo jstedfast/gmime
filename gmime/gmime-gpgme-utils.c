@@ -208,7 +208,7 @@ g_mime_gpgme_add_signer (gpgme_ctx_t ctx, const char *signer, GError **err)
 }
 
 int
-g_mime_gpgme_sign (gpgme_ctx_t ctx, gpgme_sig_mode_t mode, const char *userid, GMimeDigestAlgo digest,
+g_mime_gpgme_sign (gpgme_ctx_t ctx, gpgme_sig_mode_t mode, const char *userid,
 		   GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	gpgme_sign_result_t result;
@@ -417,8 +417,9 @@ g_mime_gpgme_keylist_free (gpgme_key_t *keys)
 }
 
 int
-g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-		      GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
+g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, const char *userid,
+		      GMimeEncryptFlags flags, GPtrArray *recipients,
+		      GMimeStream *istream, GMimeStream *ostream,
 		      GError **err)
 {
 	gpgme_encrypt_flags_t encrypt_flags = 0;

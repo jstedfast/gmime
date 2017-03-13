@@ -142,7 +142,6 @@ g_mime_multipart_encrypted_new (void)
  * @entity: MIME part to encrypt
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
- * @digest: digest algorithm to use when signing
  * @flags: a #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipients to encrypt to
  * @err: a #GError
@@ -156,8 +155,7 @@ g_mime_multipart_encrypted_new (void)
  * as to why the failure occured.
  **/
 GMimeMultipartEncrypted *
-g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity,
-				    gboolean sign, const char *userid, GMimeDigestAlgo digest,
+g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity, gboolean sign, const char *userid,
 				    GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
 {
 	GMimeParserOptions *options = g_mime_parser_options_get_default ();
@@ -194,7 +192,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_encrypt (ctx, sign, userid, digest, flags, recipients, stream, ciphertext, err) == -1) {
+	if (g_mime_crypto_context_encrypt (ctx, sign, userid, flags, recipients, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return NULL;

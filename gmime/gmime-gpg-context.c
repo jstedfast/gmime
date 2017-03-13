@@ -84,10 +84,8 @@ static void g_mime_gpg_context_finalize (GObject *object);
 static GMimeDigestAlgo gpg_digest_id (GMimeCryptoContext *ctx, const char *name);
 static const char *gpg_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest);
 
-static int gpg_sign (GMimeCryptoContext *ctx, gboolean detach,
-		     const char *userid, GMimeDigestAlgo digest,
-		     GMimeStream *istream, GMimeStream *ostream,
-		     GError **err);
+static int gpg_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid,
+		     GMimeStream *istream, GMimeStream *ostream, GError **err);
 
 static const char *gpg_get_signature_protocol (GMimeCryptoContext *ctx);
 static const char *gpg_get_encryption_protocol (GMimeCryptoContext *ctx);
@@ -97,9 +95,8 @@ static GMimeSignatureList *gpg_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags
 				       GMimeStream *istream, GMimeStream *sigstream,
 				       GMimeStream *ostream, GError **err);
 
-static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-			GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-			GError **err);
+static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeEncryptFlags flags,
+			GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err);
 
 static GMimeDecryptResult *gpg_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *session_key,
 					GMimeStream *istream, GMimeStream *ostream, GError **err);
@@ -267,7 +264,7 @@ gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 }
 
 static int
-gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMimeDigestAlgo digest,
+gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid,
 	  GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
@@ -276,7 +273,7 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMim
 	
 	gpgme_set_textmode (gpg->ctx, !detach);
 	
-	return g_mime_gpgme_sign (gpg->ctx, mode, userid, digest, istream, ostream, err);
+	return g_mime_gpgme_sign (gpg->ctx, mode, userid, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
@@ -300,14 +297,13 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 }
 
 static int
-gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMimeDigestAlgo digest,
-	     GMimeEncryptFlags flags, GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-	     GError **err)
+gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMimeEncryptFlags flags,
+	     GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	
-	return g_mime_gpgme_encrypt (gpg->ctx, sign, userid, digest, flags, recipients, istream, ostream, err);
+	return g_mime_gpgme_encrypt (gpg->ctx, sign, userid, flags, recipients, istream, ostream, err);
 #else
 	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
