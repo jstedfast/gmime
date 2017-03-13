@@ -922,6 +922,9 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 		priv->headerleft += priv->headerptr - priv->headerbuf;
 		priv->headerptr = priv->headerbuf;
 		
+		priv->rawleft += priv->rawptr - priv->rawbuf;
+		priv->rawptr = priv->rawbuf;
+		
 		return;
 	}
 	
