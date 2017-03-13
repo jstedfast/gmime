@@ -43,9 +43,24 @@ typedef struct _GMimePart GMimePart;
 typedef struct _GMimePartClass GMimePartClass;
 
 /**
+ * GMimeOpenPGPData:
+ * @GMIME_OPENPGP_DATA_NONE: The #GMimePart does not contain any OpenPGP data.
+ * @GMIME_OPENPGP_DATA_ENCRYPTED: The #GMimePart contains OpenPGP encrypted data.
+ * @GMIME_OPENPGP_DATA_SIGNED: The #GMimePart contains OpenPGP signed data.
+ *
+ * The type of OpenPGP data contained within the content of the #GMimePart, if any.
+ **/
+typedef enum {
+	GMIME_OPENPGP_DATA_NONE,
+	GMIME_OPENPGP_DATA_ENCRYPTED,
+	GMIME_OPENPGP_DATA_SIGNED
+} GMimeOpenPGPData;
+
+/**
  * GMimePart:
  * @parent_object: parent #GMimeObject
  * @encoding: a #GMimeContentEncoding
+ * @openpgp: a #GMimeOpenPGPData
  * @content_description: Content-Description string
  * @content_location: Content-Location string
  * @content_md5: Content-MD5 string
@@ -57,6 +72,7 @@ struct _GMimePart {
 	GMimeObject parent_object;
 	
 	GMimeContentEncoding encoding;
+	GMimeOpenPGPData openpgp;
 	char *content_description;
 	char *content_location;
 	char *content_md5;
@@ -100,6 +116,9 @@ gboolean g_mime_part_is_attachment (GMimePart *mime_part);
 
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (GMimePart *mime_part);
+
+void g_mime_part_set_openpgp_data (GMimePart *mime_part, GMimeOpenPGPData data);
+GMimeOpenPGPData g_mime_part_get_openpgp_data (GMimePart *mime_part);
 
 void g_mime_part_set_content (GMimePart *mime_part, GMimeDataWrapper *content);
 GMimeDataWrapper *g_mime_part_get_content (GMimePart *mime_part);

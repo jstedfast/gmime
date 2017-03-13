@@ -64,6 +64,18 @@
  * into multiple #GMimeMessage objects.
  **/
 
+typedef struct {
+	const char *begin;
+	const char *end;
+	size_t begin_len;
+	size_t end_len;
+} GMimeOpenPGPMarker;
+
+static const GMimeOpenPGPMarker openpgp_markers[] = {
+	{ "-----BEGIN PGP MESSAGE-----",        "-----END PGP MESSAGE-----",        27, 25 },
+	{ "-----BEGIN PGP SIGNED MESSAGE-----", "-----END PGP SIGNED MESSAGE-----", 34, 32 }
+};
+
 typedef struct _boundary_stack {
 	struct _boundary_stack *parent;
 	char *boundary;
@@ -109,7 +121,7 @@ static GObjectClass *parent_class = NULL;
 #define HEADER_RAW_INIT_SIZE 1024
 
 
-enum {
+typedef enum {
 	GMIME_PARSER_STATE_ERROR = -1,
 	GMIME_PARSER_STATE_INIT,
 	GMIME_PARSER_STATE_FROM,
@@ -119,7 +131,7 @@ enum {
 	GMIME_PARSER_STATE_HEADERS_END,
 	GMIME_PARSER_STATE_CONTENT,
 	GMIME_PARSER_STATE_COMPLETE,
-};
+} GMimeParserState;
 
 struct _GMimeParserPrivate {
 	GMimeStream *stream;
@@ -168,12 +180,14 @@ struct _GMimeParserPrivate {
 	
 	short int state;
 	
-	unsigned short int unused:11;
 	unsigned short int midline:1;
 	unsigned short int seekable:1;
 	unsigned short int have_regex:1;
 	unsigned short int persist_stream:1;
 	unsigned short int respect_content_length:1;
+	unsigned short int openpgp_begin:2;
+	unsigned short int openpgp_end:2;
+	unsigned short int unused:7;
 	
 	HeaderRaw *headers;
 	
@@ -386,6 +400,9 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->headers_end = -1;
 	
 	priv->header_offset = -1;
+	
+	priv->openpgp_begin = GMIME_OPENPGP_DATA_NONE;
+	priv->openpgp_end = GMIME_OPENPGP_DATA_NONE;
 	
 	priv->midline = FALSE;
 	priv->seekable = offset != -1;
@@ -1393,7 +1410,9 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 {
 	gint64 offset = parser_offset (priv, start);
 	const char *marker;
+	BoundaryStack *s;
 	size_t mlen;
+	guint i;
 	
 	switch (priv->format) {
 	case GMIME_FORMAT_MBOX: marker = MBOX_BOUNDARY; mlen = MBOX_BOUNDARY_LEN; break;
@@ -1404,29 +1423,46 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 	if (len > 0 && start[len - 1] == '\r')
 		len--;
 	
-	if (possible_boundary (marker, mlen, start, len)) {
-		BoundaryStack *s;
-		
-		d(printf ("checking boundary '%.*s'\n", len, start));
-		
-		s = priv->bounds;
-		while (s) {
-			if (offset >= s->content_end &&
-			    is_boundary (priv, start, len, s->boundary, s->boundarylenfinal)) {
-				d(printf ("found %s\n", s->content_end != -1 && offset >= s->content_end ?
-					  "end of content" : "end boundary"));
-				return FOUND_END_BOUNDARY;
-			}
-			
-			if (is_boundary (priv, start, len, s->boundary, s->boundarylen)) {
-				d(printf ("found boundary\n"));
-				return FOUND_BOUNDARY;
-			}
-			
-			s = s->parent;
+	if (!possible_boundary (marker, mlen, start, len))
+		return FOUND_NOTHING;
+	
+	d(printf ("checking boundary '%.*s'\n", len, start));
+	
+	s = priv->bounds;
+	while (s) {
+		if (offset >= s->content_end &&
+		    is_boundary (priv, start, len, s->boundary, s->boundarylenfinal)) {
+			d(printf ("found %s\n", s->content_end != -1 && offset >= s->content_end ?
+				  "end of content" : "end boundary"));
+			return FOUND_END_BOUNDARY;
 		}
 		
-		d(printf ("'%.*s' not a boundary\n", len, start));
+		if (is_boundary (priv, start, len, s->boundary, s->boundarylen)) {
+			d(printf ("found boundary\n"));
+			return FOUND_BOUNDARY;
+		}
+		
+		s = s->parent;
+	}
+	
+	d(printf ("'%.*s' not a boundary\n", len, start));
+	
+	if (!strncmp (start, "--", 2)) {
+		start += 2;
+		len -= 2;
+		
+		/* check for OpenPGP markers... */
+		for (i = 0; i < G_N_ELEMENTS (openpgp_markers); i++) {
+			size_t begin_len = openpgp_markers[i].begin_len - 2;
+			const char *begin = openpgp_markers[i].begin + 2;
+			size_t end_len = openpgp_markers[i].end_len - 2;
+			const char *end = openpgp_markers[i].end + 2;
+			
+			if (len == begin_len && !strncmp (begin, start, len))
+				priv->openpgp_begin = (GMimeOpenPGPData) (i + 1);
+			else if (len == end_len && !strncmp (end, start, len))
+				priv->openpgp_end = (GMimeOpenPGPData) (i + 1);
+		}
 	}
 	
 	return FOUND_NOTHING;
@@ -1476,6 +1512,8 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 	
 	d(printf ("scan-content\n"));
 	
+	priv->openpgp_begin = GMIME_OPENPGP_DATA_NONE;
+	priv->openpgp_end = GMIME_OPENPGP_DATA_NONE;
 	priv->midline = FALSE;
 	
 	g_assert (priv->inptr <= priv->inend);
@@ -1615,6 +1653,9 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	g_mime_part_set_content (mime_part, wrapper);
 	g_object_unref (wrapper);
 	g_object_unref (stream);
+	
+	if (priv->openpgp_begin && priv->openpgp_begin == priv->openpgp_end)
+		g_mime_part_set_openpgp_data (mime_part, priv->openpgp_begin);
 }
 
 static void

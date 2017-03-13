@@ -916,6 +916,41 @@ g_mime_part_get_filename (GMimePart *mime_part)
 }
 
 
+/**
+ * g_mime_part_set_openpgp_data:
+ * @mime_part: a #GMimePart
+ * @data: a #GMimeOpenPGPData
+ *
+ * Sets whether or not (and what type) of OpenPGP data is contained
+ * within the #GMimePart.
+ **/
+void
+g_mime_part_set_openpgp_data (GMimePart *mime_part, GMimeOpenPGPData data)
+{
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	
+	mime_part->openpgp = data;
+}
+
+
+/**
+ * g_mime_part_get_openpgp_data:
+ * @mime_part: a #GMimePart
+ *
+ * Gets whether or not (and what type) of OpenPGP data is contained
+ * within the #GMimePart.
+ *
+ * Returns: a #GMimeOpenPGPData.
+ **/
+GMimeOpenPGPData
+g_mime_part_get_openpgp_data (GMimePart *mime_part)
+{
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_OPENPGP_DATA_NONE);
+	
+	return mime_part->openpgp;
+}
+
+
 static void
 set_content (GMimePart *mime_part, GMimeDataWrapper *content)
 {
