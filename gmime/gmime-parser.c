@@ -1349,12 +1349,12 @@ enum {
 		g_byte_array_append (content, (unsigned char *) start, len); \
 } G_STMT_END
 
-#define possible_boundary(is_mbox, start, len)                                      \
-                         ((is_mbox && len >= 5 && !strncmp (start, "From ", 5)) ||  \
+#define possible_boundary(marker, mlen, start, len)				        \
+                         ((marker && len >= mlen && !strncmp (start, marker, mlen)) ||  \
 			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
 
 static gboolean
-is_boundary (const char *text, size_t len, const char *boundary, size_t boundary_len)
+is_boundary (struct _GMimeParserPrivate *priv, const char *text, size_t len, const char *boundary, size_t boundary_len)
 {
 	const char *inptr = text + boundary_len;
 	const char *inend = text + len;
@@ -1366,8 +1366,13 @@ is_boundary (const char *text, size_t len, const char *boundary, size_t boundary
 	if (strncmp (text, boundary, boundary_len) != 0)
 		return FALSE;
 	
-	if (!strncmp (text, "From ", 5))
-		return TRUE;
+	if (priv->format == GMIME_FORMAT_MBOX) {
+		if (!strncmp (text, MBOX_BOUNDARY, MBOX_BOUNDARY_LEN))
+			return TRUE;
+	} else if (priv->format == GMIME_FORMAT_MMDF) {
+		if (!strncmp (text, MMDF_BOUNDARY, MMDF_BOUNDARY_LEN))
+			return TRUE;
+	}
 	
 	/* the boundary may be optionally followed by linear whitespace */
 	while (inptr < inend) {
@@ -1384,11 +1389,19 @@ static int
 check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 {
 	gint64 offset = parser_offset (priv, start);
+	const char *marker;
+	size_t mlen;
+	
+	switch (priv->format) {
+	case GMIME_FORMAT_MBOX: marker = MBOX_BOUNDARY; mlen = MBOX_BOUNDARY_LEN; break;
+	case GMIME_FORMAT_MMDF: marker = MMDF_BOUNDARY; mlen = MMDF_BOUNDARY_LEN; break;
+	default: marker = NULL; mlen = 0; break;
+	}
 	
 	if (len > 0 && start[len - 1] == '\r')
 		len--;
 	
-	if (possible_boundary (priv->format == GMIME_FORMAT_MBOX, start, len)) {
+	if (possible_boundary (marker, mlen, start, len)) {
 		BoundaryStack *s;
 		
 		d(printf ("checking boundary '%.*s'\n", len, start));
@@ -1396,13 +1409,13 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		s = priv->bounds;
 		while (s) {
 			if (offset >= s->content_end &&
-			    is_boundary (start, len, s->boundary, s->boundarylenfinal)) {
+			    is_boundary (priv, start, len, s->boundary, s->boundarylenfinal)) {
 				d(printf ("found %s\n", s->content_end != -1 && offset >= s->content_end ?
 					  "end of content" : "end boundary"));
 				return FOUND_END_BOUNDARY;
 			}
 			
-			if (is_boundary (start, len, s->boundary, s->boundarylen)) {
+			if (is_boundary (priv, start, len, s->boundary, s->boundarylen)) {
 				d(printf ("found boundary\n"));
 				return FOUND_BOUNDARY;
 			}
@@ -1429,7 +1442,7 @@ found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
 	while (*inptr != '\n')
 		inptr++;
 	
-	return is_boundary (priv->inptr, inptr - priv->inptr, s->boundary, boundary_len);
+	return is_boundary (priv, priv->inptr, inptr - priv->inptr, s->boundary, boundary_len);
 }
 
 /* Optimization Notes:
