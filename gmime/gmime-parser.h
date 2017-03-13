@@ -54,7 +54,8 @@ typedef struct _GMimeParserClass GMimeParserClass;
  **/
 typedef enum {
 	GMIME_FORMAT_MESSAGE,
-	GMIME_FORMAT_MBOX
+	GMIME_FORMAT_MBOX,
+	GMIME_FORMAT_MMDF
 } GMimeFormat;
 
 

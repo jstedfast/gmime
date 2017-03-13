@@ -113,6 +113,7 @@ enum {
 	GMIME_PARSER_STATE_ERROR = -1,
 	GMIME_PARSER_STATE_INIT,
 	GMIME_PARSER_STATE_FROM,
+	GMIME_PARSER_STATE_AAAA,
 	GMIME_PARSER_STATE_MESSAGE_HEADERS,
 	GMIME_PARSER_STATE_HEADERS,
 	GMIME_PARSER_STATE_HEADERS_END,
@@ -182,6 +183,9 @@ struct _GMimeParserPrivate {
 static const char MBOX_BOUNDARY[6] = "From ";
 #define MBOX_BOUNDARY_LEN 5
 
+static const char MMDF_BOUNDARY[6] = "\1\1\1\1";
+#define MMDF_BOUNDARY_LEN 4
+
 static void
 parser_push_boundary (GMimeParser *parser, const char *boundary)
 {
@@ -199,6 +203,10 @@ parser_push_boundary (GMimeParser *parser, const char *boundary)
 		s->boundary = g_strdup (boundary);
 		s->boundarylen = MBOX_BOUNDARY_LEN;
 		s->boundarylenfinal = MBOX_BOUNDARY_LEN;
+	} else if (boundary == MMDF_BOUNDARY) {
+		s->boundary = g_strdup (boundary);
+		s->boundarylen = MMDF_BOUNDARY_LEN;
+		s->boundarylenfinal = MMDF_BOUNDARY_LEN;
 	} else {
 		s->boundary = g_strdup_printf ("--%s--", boundary);
 		s->boundarylen = strlen (boundary) + 2;
@@ -746,7 +754,7 @@ g_mime_parser_eos (GMimeParser *parser)
 }
 
 static int
-parser_step_from (GMimeParser *parser)
+parser_step_marker (GMimeParser *parser, const char *marker, size_t marker_len)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	register char *inptr;
@@ -788,10 +796,12 @@ parser_step_from (GMimeParser *parser)
 			len = (size_t) (inptr - start);
 			inptr++;
 			
-			if (len >= 5 && !strncmp (start, "From ", 5)) {
+			if (len >= marker_len && !strncmp (start, marker, marker_len)) {
 				priv->from_offset = parser_offset (priv, start);
-				g_byte_array_append (priv->from_line, (unsigned char *) start, len);
-				goto got_from;
+				
+				if (priv->format == GMIME_FORMAT_MBOX)
+					g_byte_array_append (priv->from_line, (unsigned char *) start, len);
+				goto got_marker;
 			}
 		}
 		
@@ -799,13 +809,25 @@ parser_step_from (GMimeParser *parser)
 		left = 0;
 	} while (1);
 	
- got_from:
+ got_marker:
 	
 	priv->state = GMIME_PARSER_STATE_MESSAGE_HEADERS;
 	
 	priv->inptr = inptr;
 	
 	return 0;
+}
+
+static int
+parser_step_from (GMimeParser *parser)
+{
+	return parser_step_marker (parser, MBOX_BOUNDARY, MBOX_BOUNDARY_LEN);
+}
+
+static int
+parser_step_mmdf (GMimeParser *parser)
+{
+	return parser_step_marker (parser, MMDF_BOUNDARY, MMDF_BOUNDARY_LEN);
 }
 
 #ifdef ALLOC_NEAREST_POW2
@@ -1272,6 +1294,8 @@ parser_step (GMimeParser *parser)
 		priv->message_headers_end = -1;
 		if (priv->format == GMIME_FORMAT_MBOX)
 			priv->state = GMIME_PARSER_STATE_FROM;
+		else if (priv->format == GMIME_FORMAT_MMDF)
+			priv->state = GMIME_PARSER_STATE_AAAA;
 		else
 			priv->state = GMIME_PARSER_STATE_MESSAGE_HEADERS;
 		break;
@@ -1279,6 +1303,11 @@ parser_step (GMimeParser *parser)
 		priv->message_headers_begin = -1;
 		priv->message_headers_end = -1;
 		parser_step_from (parser);
+		break;
+	case GMIME_PARSER_STATE_AAAA:
+		priv->message_headers_begin = -1;
+		priv->message_headers_end = -1;
+		parser_step_mmdf (parser);
 		break;
 	case GMIME_PARSER_STATE_MESSAGE_HEADERS:
 	case GMIME_PARSER_STATE_HEADERS:
@@ -1959,6 +1988,8 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 		parser_push_boundary (parser, MBOX_BOUNDARY);
 		if (priv->respect_content_length && content_length < ULONG_MAX)
 			priv->bounds->content_end = parser_offset (priv, NULL) + content_length;
+	} else if (priv->format == GMIME_FORMAT_MMDF) {
+		parser_push_boundary (parser, MMDF_BOUNDARY);
 	}
 	
 	content_type = parser_content_type (parser, NULL);
