@@ -332,6 +332,7 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 
 int main (int argc, char **argv)
 {
+#ifdef ENABLE_CRYPTO
 	const char *datadir = "data/pgp";
 	GMimeStream *istream, *ostream;
 	GMimeCryptoContext *ctx;
@@ -489,4 +490,8 @@ int main (int argc, char **argv)
 		return EXIT_FAILURE;
 	
 	return testsuite_exit ();
+#else
+	fprintf (stderr, "PGP support not enabled in this build.\n");
+	return EXIT_SUCCESS;
+#endif
 }
