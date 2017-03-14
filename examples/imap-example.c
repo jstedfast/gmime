@@ -768,7 +768,7 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 	parser = g_mime_parser_new_with_stream (stream);
 	g_object_unref (stream);
 	
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	g_object_unref (parser);
 	
 	g_mime_message_part_set_message (msgpart, message);
@@ -822,7 +822,7 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		parser = g_mime_parser_new_with_stream (stream);
 		g_object_unref (stream);
 		
-		subpart = g_mime_parser_construct_part (parser);
+		subpart = g_mime_parser_construct_part (parser, NULL);
 		g_object_unref (parser);
 		
 		if (GMIME_IS_MULTIPART (subpart)) {
@@ -863,7 +863,7 @@ reconstruct_message (const char *uid)
 	
 	/* constructs message object and toplevel mime part (although
 	   the toplevel mime part will not have any content... */
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	g_object_unref (parser);
 	
 	if (GMIME_IS_MULTIPART (message->mime_part)) {
@@ -939,7 +939,7 @@ int main (int argc, char **argv)
 	g_mime_parser_set_format (parser, format);
 	g_object_unref (stream);
 	
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	g_object_unref (parser);
 	
 	if (message) {

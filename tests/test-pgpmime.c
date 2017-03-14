@@ -203,7 +203,7 @@ create_message (GMimeObject *body)
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	g_object_unref (parser);
 	
 	return message;
@@ -357,7 +357,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	g_object_unref (parser);
 	
 	if (!GMIME_IS_MULTIPART_ENCRYPTED (message->mime_part)) {

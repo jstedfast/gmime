@@ -305,7 +305,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 	g_mime_parser_init_with_stream (parser, cat);
 	g_object_unref (cat);
 	
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	g_object_unref (parser);
 	
 	return message;

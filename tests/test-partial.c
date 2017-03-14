@@ -189,7 +189,7 @@ int main (int argc, char **argv)
 				g_mime_parser_init_with_stream (parser, stream);
 				g_object_unref (stream);
 				
-				if (!(message = g_mime_parser_construct_message (parser)))
+				if (!(message = g_mime_parser_construct_message (parser, NULL)))
 					throw (exception_new ("Failed to parse `%s'", path));
 				
 				if (!GMIME_IS_MESSAGE_PARTIAL (message->mime_part)) {

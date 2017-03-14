@@ -68,7 +68,7 @@ parse_message (int fd)
 	g_object_unref (stream);
 	
 	/* parse the message from the stream */
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	
 	/* free the parser (and the stream) */
 	g_object_unref (parser);

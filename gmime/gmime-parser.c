@@ -1967,6 +1967,7 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 /**
  * g_mime_parser_construct_part:
  * @parser: a #GMimeParser context
+ * @options: a #GMimeParserOptions or %NULL for the default options
  *
  * Constructs a MIME part from @parser.
  *
@@ -1974,29 +1975,12 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
  * fail.
  **/
 GMimeObject *
-g_mime_parser_construct_part (GMimeParser *parser)
+g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
 	
-	return parser_construct_part (parser, g_mime_parser_options_get_default ());
-}
-
-
-/**
- * g_mime_parser_construct_part_with_options:
- * @parser: a #GMimeParser context
- * @options: a #GMimeParserOptions
- *
- * Constructs a MIME part from @parser.
- *
- * Returns: (transfer full): a MIME part based on @parser or %NULL on
- * fail.
- **/
-GMimeObject *
-g_mime_parser_construct_part_with_options (GMimeParser *parser, GMimeParserOptions *options)
-{
-	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	g_return_val_if_fail (options != NULL, NULL);
+	if (options == NULL)
+		options = g_mime_parser_options_get_default ();
 	
 	return parser_construct_part (parser, options);
 }
@@ -2070,34 +2054,19 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 /**
  * g_mime_parser_construct_message:
  * @parser: a #GMimeParser context
+ * @options: a #GMimeParserOptions or %NULL for the default options
  *
  * Constructs a MIME message from @parser.
  *
  * Returns: (transfer full): a MIME message or %NULL on fail.
  **/
 GMimeMessage *
-g_mime_parser_construct_message (GMimeParser *parser)
+g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
 	
-	return parser_construct_message (parser, g_mime_parser_options_get_default ());
-}
-
-
-/**
- * g_mime_parser_construct_message_with_options:
- * @parser: a #GMimeParser context
- * @options: a #GMimeParserOptions
- *
- * Constructs a MIME message from @parser.
- *
- * Returns: (transfer full): a MIME message or %NULL on fail.
- **/
-GMimeMessage *
-g_mime_parser_construct_message_with_options (GMimeParser *parser, GMimeParserOptions *options)
-{
-	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	g_return_val_if_fail (options != NULL, NULL);
+	if (options == NULL)
+		options = g_mime_parser_options_get_default ();
 	
 	return parser_construct_message (parser, options);
 }

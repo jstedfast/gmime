@@ -114,7 +114,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 	
 	while (!g_mime_parser_eos (parser)) {
 		message_begin = g_mime_parser_tell (parser);
-		if (!(message = g_mime_parser_construct_message (parser)))
+		if (!(message = g_mime_parser_construct_message (parser, NULL)))
 			throw (exception_new ("failed to parse message #%d", nmsg));
 		
 		message_end = g_mime_parser_tell (parser);

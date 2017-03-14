@@ -276,7 +276,7 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 	
 	/* construct the content part */
 	parser = g_mime_parser_new_with_stream (stream);
-	entity = g_mime_parser_construct_part (parser);
+	entity = g_mime_parser_construct_part (parser, NULL);
 	g_object_unref (stream);
 	g_object_unref (parser);
 	

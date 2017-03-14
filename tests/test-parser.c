@@ -166,7 +166,7 @@ test_parser (GMimeStream *stream)
 	g_mime_parser_init_with_stream (parser, stream);
 	
 	ZenTimerStart (NULL);
-	message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser, NULL);
 	ZenTimerStop (NULL);
 	ZenTimerReport (NULL, "gmime::parser_construct_message");
 	

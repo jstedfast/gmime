@@ -369,7 +369,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	decrypted = g_mime_parser_construct_part (parser);
+	decrypted = g_mime_parser_construct_part (parser, NULL);
 	g_object_unref (parser);
 	
 	if (!decrypted) {

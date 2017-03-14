@@ -364,7 +364,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	decrypted = g_mime_parser_construct_part (parser);
+	decrypted = g_mime_parser_construct_part (parser, NULL);
 	g_object_unref (parser);
 	
 	if (!decrypted) {
@@ -519,7 +519,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	*entity = g_mime_parser_construct_part (parser);
+	*entity = g_mime_parser_construct_part (parser, NULL);
 	g_object_unref (parser);
 	
 	if (*entity == NULL) {
