@@ -82,7 +82,7 @@ typedef struct {
 
 static const GMimeOpenPGPMarker openpgp_markers[] = {
 	{ "-----BEGIN PGP MESSAGE-----",        27, OPENPGP_NONE,                     OPENPGP_BEGIN_PGP_MESSAGE },
-        { "-----END PGP MESSAGE-----",          25, OPENPGP_BEGIN_PGP_MESSAGE,        OPENPGP_END_PGP_MESSAGE   },
+	{ "-----END PGP MESSAGE-----",          25, OPENPGP_BEGIN_PGP_MESSAGE,        OPENPGP_END_PGP_MESSAGE   },
 	{ "-----BEGIN PGP SIGNED MESSAGE-----", 34, OPENPGP_NONE,                     OPENPGP_BEGIN_PGP_SIGNED_MESSAGE },
 	{ "-----BEGIN PGP SIGNATURE-----",      29, OPENPGP_BEGIN_PGP_SIGNED_MESSAGE, OPENPGP_BEGIN_PGP_SIGNATURE },
 	{ "-----END PGP SIGNATURE-----",        27, OPENPGP_BEGIN_PGP_SIGNATURE,      OPENPGP_END_PGP_SIGNATURE }
