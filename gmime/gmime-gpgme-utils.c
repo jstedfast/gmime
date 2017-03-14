@@ -97,8 +97,7 @@ g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *
 }
 
 
-#define KEY_IS_OK(k)   (!((k)->expired || (k)->revoked ||	\
-                          (k)->disabled || (k)->invalid))
+#define KEY_IS_OK(k)   (!((k)->expired || (k)->revoked || (k)->disabled || (k)->invalid))
 
 static gpgme_key_t
 g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret, GError **err)
@@ -123,18 +122,18 @@ g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret
 		if (KEY_IS_OK (key)) {
 			subkey = key->subkeys;
 			
-			while (subkey && ((secret && !subkey->can_sign) ||
-					  (!secret && !subkey->can_encrypt)))
+			while (subkey && ((secret && !subkey->can_sign) || (!secret && !subkey->can_encrypt)))
 				subkey = subkey->next;
 			
-			if (subkey && KEY_IS_OK (subkey) && 
-			    (subkey->expires == 0 || subkey->expires > now))
-				break;
-			
-			if (subkey->expired)
-				errval = GPG_ERR_KEY_EXPIRED;
-			else
-				errval = GPG_ERR_BAD_KEY;
+			if (subkey) {
+				if (KEY_IS_OK (subkey) && (subkey->expires == 0 || subkey->expires > now))
+					break;
+				
+				if (subkey->expired)
+					errval = GPG_ERR_KEY_EXPIRED;
+				else
+					errval = GPG_ERR_BAD_KEY;
+			}
 		} else {
 			if (key->expired)
 				errval = GPG_ERR_KEY_EXPIRED;
