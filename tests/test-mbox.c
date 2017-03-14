@@ -95,9 +95,14 @@ print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 }
 
 static void
+xevcb (GMimeParser *parser, const char *header, const char *value, gint64 offset, gpointer user_data)
+{
+}
+
+static void
 test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
-	gint64 message_begin, message_end, headers_begin, headers_end;
+	gint64 message_begin, message_end, headers_begin, headers_end, marker_offset;
 	InternetAddressList *list;
 	GMimeMessage *message;
 	char *marker, *buf;
@@ -121,7 +126,8 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 				      message_begin, message_end);
 		g_mime_stream_printf (summary, "header offsets: %" G_GINT64_FORMAT ", %" G_GINT64_FORMAT "\n",
 				      headers_begin, headers_end);
-		
+
+		marker_offset = g_mime_parser_get_from_offset (parser);
 		marker = g_mime_parser_get_from (parser);
 		g_mime_stream_printf (summary, "%s\n", marker);
 		
@@ -350,8 +356,25 @@ int main (int argc, char **argv)
 				g_mime_parser_set_persist_stream (parser, TRUE);
 				g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
 				
-				if (strstr (dent, "content-length") != NULL)
+				if (!g_mime_parser_get_persist_stream (parser))
+					throw (exception_new ("persist stream check failed"));
+				
+				if (g_mime_parser_get_format (parser) != GMIME_FORMAT_MBOX)
+					throw (exception_new ("format check failed"));
+				
+				if (strstr (dent, "content-length") != NULL) {
 					g_mime_parser_set_respect_content_length (parser, TRUE);
+					
+					if (!g_mime_parser_get_respect_content_length (parser))
+						throw (exception_new ("respect content-length check failed"));
+				} else {
+					g_mime_parser_set_respect_content_length (parser, FALSE);
+					
+					if (g_mime_parser_get_respect_content_length (parser))
+						throw (exception_new ("respect content-length check failed"));
+				}
+				
+				g_mime_parser_set_header_regex (parser, "^X-Evolution", xevcb, NULL);
 				
 				pstream = g_mime_stream_mem_new ();
 				test_parser (parser, mstream, pstream);
