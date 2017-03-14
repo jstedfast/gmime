@@ -352,8 +352,8 @@ static int
 crypto_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid,
 	     GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Signing is not supported by this crypto context");
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "Signing is not supported by this crypto context");
 	
 	return -1;
 }
@@ -388,8 +388,8 @@ static GMimeSignatureList *
 crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
 	       GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Verifying is not supported by this crypto context");
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "Verifying is not supported by this crypto context");
 	
 	return NULL;
 }
@@ -428,8 +428,8 @@ static int
 crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeEncryptFlags flags,
 		GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Encryption is not supported by this crypto context");
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "Encryption is not supported by this crypto context");
 	
 	return -1;
 }
@@ -467,8 +467,8 @@ static GMimeDecryptResult *
 crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *session_key,
 		GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Decryption is not supported by this crypto context");
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "Decrysption is not supported by this crypto context");
 	
 	return NULL;
 }
@@ -521,8 +521,8 @@ g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags,
 static int
 crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "You may not import keys with this crypto");
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "You may not import keys with this crypto");
 	
 	return -1;
 }
@@ -553,8 +553,8 @@ static int
 crypto_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 		    GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "You may not export keys with this crypto");
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "You may not export keys with this crypto");
 	
 	return -1;
 }
