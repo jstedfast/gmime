@@ -263,6 +263,17 @@ gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 	return "application/pgp-keys";
 }
 
+static void
+set_passphrase_callback (GMimeCryptoContext *context)
+{
+	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
+	
+	if (context->request_passwd)
+		gpgme_set_passphrase_cb (gpg->ctx, g_mime_gpgme_passphrase_callback, gpg);
+	else
+		gpgme_set_passphrase_cb (gpg->ctx, NULL, NULL);
+}
+
 static int
 gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid,
 	  GMimeStream *istream, GMimeStream *ostream, GError **err)
@@ -271,11 +282,14 @@ gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid,
 	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_CLEAR;
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	
+	set_passphrase_callback (context);
+	
 	gpgme_set_textmode (gpg->ctx, !detach);
 	
 	return g_mime_gpgme_sign (gpg->ctx, mode, userid, istream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -290,7 +304,8 @@ gpg_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *is
 	
 	return g_mime_gpgme_verify (gpg->ctx, flags, istream, sigstream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("PGP support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -303,9 +318,13 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, GMi
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	
+	if (sign)
+		set_passphrase_callback (context);
+	
 	return g_mime_gpgme_encrypt (gpg->ctx, sign, userid, flags, recipients, istream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -318,9 +337,12 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char *s
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	
+	set_passphrase_callback (context);
+	
 	return g_mime_gpgme_decrypt (gpg->ctx, flags, session_key, istream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("PGP support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -332,9 +354,12 @@ gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	
+	set_passphrase_callback (context);
+	
 	return g_mime_gpgme_import (gpg->ctx, istream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -346,9 +371,12 @@ gpg_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *o
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	
+	set_passphrase_callback (context);
+	
 	return g_mime_gpgme_export (gpg->ctx, keys, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("PGP support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -378,7 +406,6 @@ g_mime_gpg_context_new (void)
 		return NULL;
 	
 	gpg = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
-	gpgme_set_passphrase_cb (ctx, g_mime_gpgme_passphrase_callback, gpg);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_OpenPGP);
 	gpgme_set_armor (ctx, TRUE);
 	gpg->ctx = ctx;

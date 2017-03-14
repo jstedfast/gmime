@@ -81,14 +81,10 @@ g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *
 	GError *err = NULL;
 	gboolean rv;
 	
-	if (context->request_passwd) {
-		stream = g_mime_stream_pipe_new (fd);
-		g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
-		rv = context->request_passwd (context, uid_hint, passphrase_info, prev_was_bad, stream, &err);
-		g_object_unref (stream);
-	} else {
-		return GPG_ERR_GENERAL;
-	}
+	stream = g_mime_stream_pipe_new (fd);
+	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
+	rv = context->request_passwd (context, uid_hint, passphrase_info, prev_was_bad, stream, &err);
+	g_object_unref (stream);
 	
 	if (!rv) {
 		error = GPG_ERR_CANCELED;

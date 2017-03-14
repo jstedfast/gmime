@@ -259,6 +259,8 @@ pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 	return "application/pkcs7-keys";
 }
 
+#define set_passphrase_callback(context)
+
 static int
 pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid,
 	    GMimeStream *istream, GMimeStream *ostream, GError **err)
@@ -267,9 +269,12 @@ pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid,
 	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_NORMAL;
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	
+	set_passphrase_callback (context);
+	
 	return g_mime_gpgme_sign (pkcs7->ctx, mode, userid, istream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -284,7 +289,8 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeVerifyFlags flags, GMimeStream *
 	
 	return g_mime_gpgme_verify (pkcs7->ctx, flags, istream, sigstream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("S/MIME support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -305,7 +311,8 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid, G
 	
 	return g_mime_gpgme_encrypt (pkcs7->ctx, sign, userid, flags, recipients, istream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -318,9 +325,12 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeDecryptFlags flags, const char 
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	
+	set_passphrase_callback (context);
+	
 	return g_mime_gpgme_decrypt (pkcs7->ctx, flags, session_key, istream, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("S/MIME support is not enabled in this build"));
 	
 	return NULL;
 #endif /* ENABLE_CRYPTO */
@@ -332,9 +342,12 @@ pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **e
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	
+	set_passphrase_callback (context);
+	
 	return g_mime_gpgme_import (pkcs7->ctx, istream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
@@ -346,9 +359,12 @@ pkcs7_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream 
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	
+	set_passphrase_callback (context);
+	
 	return g_mime_gpgme_export (pkcs7->ctx, keys, ostream, err);
 #else
-	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
+	g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     _("S/MIME support is not enabled in this build"));
 	
 	return -1;
 #endif /* ENABLE_CRYPTO */
