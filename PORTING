@@ -128,6 +128,8 @@ Porting from GMime 2.6 to GMime 3.0
 - g_mime_parser_[get,set]_scan_from() have been replaced by
   g_mime_parser_[get,set]_format() which takes a GMimeFormat argument.
 
+- g_mime_parser_construct_[part,message]() now take a GMimeParserOptions argument.
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------
