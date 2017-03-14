@@ -588,6 +588,17 @@ test_openpgp_encrypt (gboolean sign)
 		throw (ex);
 }
 
+static GMimeCryptoContext *
+create_gpg_context (void)
+{
+	GMimeCryptoContext *ctx;
+	
+	ctx = g_mime_gpg_context_new ();
+	g_mime_crypto_context_set_request_password (ctx, request_passwd);
+	
+	return ctx;
+}
+
 int main (int argc, char *argv[])
 {
 #ifdef ENABLE_CRYPTO
@@ -623,8 +634,10 @@ int main (int argc, char *argv[])
 	
 	testsuite_start ("PGP/MIME implementation");
 	
-	ctx = g_mime_gpg_context_new ();
-	g_mime_crypto_context_set_request_password (ctx, request_passwd);
+	g_mime_crypto_context_register ("application/pgp-encrypted", create_gpg_context);
+	g_mime_crypto_context_register ("application/pgp-signature", create_gpg_context);
+	g_mime_crypto_context_register ("application/pgp-keys", create_gpg_context);
+	ctx = create_gpg_context ();
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {
@@ -650,7 +663,6 @@ int main (int argc, char *argv[])
 		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
 	} finally;
 	
-#if GPGME_VERSION_NUMBER >= 0x010000
 	testsuite_check ("multipart/encrypted");
 	try {
 		create_encrypted_message (ctx, FALSE, &cleartext, &stream);
@@ -724,7 +736,6 @@ int main (int argc, char *argv[])
 	} catch (ex) {
 		testsuite_check_failed ("rfc2440 sign+encrypt failed: %s", ex->message);
 	} finally;
-#endif /* GPGME_VERSION NUMBER >= 0x010700 */
 	
 	g_object_unref (ctx);
 	g_free (gpg);
