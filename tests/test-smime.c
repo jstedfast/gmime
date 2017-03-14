@@ -98,22 +98,22 @@ print_verify_results (GMimeSignatureList *signatures)
 		fprintf (stdout, "\tTrust: ");
 		
 		switch (sig->cert->trust) {
-		case GMIME_CERTIFICATE_TRUST_NONE:
-			fputs ("None\n", stdout);
+		case GMIME_TRUST_UNKNOWN:
+			fputs ("Unknown\n", stdout);
 			break;
-		case GMIME_CERTIFICATE_TRUST_NEVER:
+		case GMIME_TRUST_NEVER:
 			fputs ("Never\n", stdout);
 			break;
-		case GMIME_CERTIFICATE_TRUST_UNDEFINED:
+		case GMIME_TRUST_UNDEFINED:
 			fputs ("Undefined\n", stdout);
 			break;
-		case GMIME_CERTIFICATE_TRUST_MARGINAL:
+		case GMIME_TRUST_MARGINAL:
 			fputs ("Marginal\n", stdout);
 			break;
-		case GMIME_CERTIFICATE_TRUST_FULLY:
-			fputs ("Fully\n", stdout);
+		case GMIME_TRUST_FULL:
+			fputs ("Full\n", stdout);
 			break;
-		case GMIME_CERTIFICATE_TRUST_ULTIMATE:
+		case GMIME_TRUST_ULTIMATE:
 			fputs ("Ultimate\n", stdout);
 			break;
 		}

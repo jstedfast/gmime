@@ -244,26 +244,6 @@ g_mime_gpgme_sign (gpgme_ctx_t ctx, gpgme_sig_mode_t mode, const char *userid,
 	return (GMimeDigestAlgo) result->signatures->hash_algo;
 }
 
-static GMimeCertificateTrust
-get_trust (gpgme_validity_t trust)
-{
-	switch (trust) {
-	case GPGME_VALIDITY_UNKNOWN:
-	default:
-		return GMIME_CERTIFICATE_TRUST_NONE;
-	case GPGME_VALIDITY_UNDEFINED:
-		return GMIME_CERTIFICATE_TRUST_UNDEFINED;
-	case GPGME_VALIDITY_NEVER:
-		return GMIME_CERTIFICATE_TRUST_NEVER;
-	case GPGME_VALIDITY_MARGINAL:
-		return GMIME_CERTIFICATE_TRUST_MARGINAL;
-	case GPGME_VALIDITY_FULL:
-		return GMIME_CERTIFICATE_TRUST_FULLY;
-	case GPGME_VALIDITY_ULTIMATE:
-		return GMIME_CERTIFICATE_TRUST_ULTIMATE;
-	}
-}
-
 static GMimeSignatureList *
 g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 {
@@ -297,7 +277,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 		
 		if (gpgme_get_key (ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
 			/* get more signer info from their signing key */
-			g_mime_certificate_set_trust (signature->cert, get_trust (key->owner_trust));
+			g_mime_certificate_set_trust (signature->cert, (GMimeTrust) key->owner_trust);
 			g_mime_certificate_set_issuer_serial (signature->cert, key->issuer_serial);
 			g_mime_certificate_set_issuer_name (signature->cert, key->issuer_name);
 			
@@ -334,7 +314,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 			/* If we don't have the signer's public key, then we can't tell what
 			 * the status is, so set it to ERROR if it hasn't already been
 			 * designated as BAD. */
-			g_mime_certificate_set_trust (signature->cert, GMIME_CERTIFICATE_TRUST_UNDEFINED);
+			g_mime_certificate_set_trust (signature->cert, GMIME_TRUST_UNDEFINED);
 		}
 		
 		sig = sig->next;

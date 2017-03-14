@@ -85,7 +85,7 @@ g_mime_certificate_init (GMimeCertificate *cert, GMimeCertificateClass *klass)
 {
 	cert->pubkey_algo = GMIME_PUBKEY_ALGO_DEFAULT;
 	cert->digest_algo = GMIME_DIGEST_ALGO_DEFAULT;
-	cert->trust = GMIME_CERTIFICATE_TRUST_NONE;
+	cert->trust = GMIME_TRUST_UNKNOWN;
 	cert->issuer_serial = NULL;
 	cert->issuer_name = NULL;
 	cert->fingerprint = NULL;
@@ -129,12 +129,12 @@ g_mime_certificate_new (void)
 /**
  * g_mime_certificate_set_trust:
  * @cert: a #GMimeCertificate
- * @trust: a #GMimeCertificateTrust value
+ * @trust: a #GMimeTrust value
  *
  * Set the certificate trust.
  **/
 void
-g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeCertificateTrust trust)
+g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeTrust trust)
 {
 	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
 	
@@ -150,10 +150,10 @@ g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeCertificateTrust trus
  *
  * Returns: the certificate trust.
  **/
-GMimeCertificateTrust
+GMimeTrust
 g_mime_certificate_get_trust (GMimeCertificate *cert)
 {
-	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), GMIME_CERTIFICATE_TRUST_NONE);
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), GMIME_TRUST_UNKNOWN);
 	
 	return cert->trust;
 }

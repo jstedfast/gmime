@@ -1237,7 +1237,7 @@ g_mime_iconv_locale_to_utf8_length
 <FILE>gmime-certificate</FILE>
 GMimePubKeyAlgo
 GMimeDigestAlgo
-GMimeCertificateTrust
+GMimeTrust
 GMimeCertificate
 g_mime_certificate_new
 g_mime_certificate_get_pubkey_algo

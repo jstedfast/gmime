@@ -22,6 +22,7 @@
     </itemizedlist>
     <para>Cryptography related API changes:</para>
     <itemizedlist>
+      <listitem><para>Renamed GMimeCertificateTrust to GMimeTrust and GMIME_CERTIFICATE_TRUST_NONE to GMIME_TRUST_UNKNOWN.</para></listitem>
       <listitem><para>Removed <function>g_mime_gpg_context_get_always_trust()</function> and <function>g_mime_gpg_context_set_always_trust()</function>. This can now be accomplished by passing GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST to <function>g_mime_crypto_context_encrypt()</function>.</para></listitem>
       <listitem><para>Removed <function>g_mime_gpg_context_get_use_agent()</function> and <function>g_mime_gpg_context_set_use_agent()</function>. This should no longer be needed.</para></listitem>
       <listitem><para>Removed <function>g_mime_gpg_context_get_auto_key_retrieve()</function> and <function>g_mime_gpg_context_set_auto_key_retrieve()</function>.</para></listitem>

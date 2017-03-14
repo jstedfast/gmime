@@ -120,24 +120,24 @@ typedef enum {
 } GMimePubKeyAlgo;
 
 /**
- * GMimeCertificateTrust:
- * @GMIME_CERTIFICATE_TRUST_NONE: No trust assigned.
- * @GMIME_CERTIFICATE_TRUST_NEVER: Never trust this certificate.
- * @GMIME_CERTIFICATE_TRUST_UNDEFINED: Undefined trust for this certificate.
- * @GMIME_CERTIFICATE_TRUST_MARGINAL: Trust this certificate maginally.
- * @GMIME_CERTIFICATE_TRUST_FULLY: Trust this certificate fully.
- * @GMIME_CERTIFICATE_TRUST_ULTIMATE: Trust this certificate ultimately.
+ * GMimeTrustLevel:
+ * @GMIME_TRUST_UNKNOWN: The certificate or key is of unknown validity.
+ * @GMIME_TRUST_UNDEFINED: The validity of the certificate or key is undefined.
+ * @GMIME_TRUST_NEVER: The certificate or key should never be treated as valid.
+ * @GMIME_TRUST_MARGINAL: The certificate or key is marginally valid.
+ * @GMIME_TRUST_FULL: The certificate or key is fully valid.
+ * @GMIME_TRUST_ULTIMATE: The certificate or key is ultimately valid.
  *
- * The trust value of a certificate.
+ * The trust level of a certificate or key.
  **/
 typedef enum {
-	GMIME_CERTIFICATE_TRUST_NONE,
-	GMIME_CERTIFICATE_TRUST_NEVER,
-	GMIME_CERTIFICATE_TRUST_UNDEFINED,
-	GMIME_CERTIFICATE_TRUST_MARGINAL,
-	GMIME_CERTIFICATE_TRUST_FULLY,
-	GMIME_CERTIFICATE_TRUST_ULTIMATE
-} GMimeCertificateTrust;
+	GMIME_TRUST_UNKNOWN   = 0,
+	GMIME_TRUST_UNDEFINED = 1,
+	GMIME_TRUST_NEVER     = 2,
+	GMIME_TRUST_MARGINAL  = 3,
+	GMIME_TRUST_FULL      = 4,
+	GMIME_TRUST_ULTIMATE  = 5
+} GMimeTrust;
 
 /**
  * GMimeCertificate:
@@ -161,7 +161,7 @@ struct _GMimeCertificate {
 	
 	GMimePubKeyAlgo pubkey_algo;
 	GMimeDigestAlgo digest_algo;
-	GMimeCertificateTrust trust;
+	GMimeTrust trust;
 	char *issuer_serial;
 	char *issuer_name;
 	char *fingerprint;
@@ -182,8 +182,8 @@ GType g_mime_certificate_get_type (void);
 
 GMimeCertificate *g_mime_certificate_new (void);
 
-void g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeCertificateTrust trust);
-GMimeCertificateTrust g_mime_certificate_get_trust (GMimeCertificate *cert);
+void g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeTrust trust);
+GMimeTrust g_mime_certificate_get_trust (GMimeCertificate *cert);
 
 void g_mime_certificate_set_pubkey_algo (GMimeCertificate *cert, GMimePubKeyAlgo algo);
 GMimePubKeyAlgo g_mime_certificate_get_pubkey_algo (GMimeCertificate *cert);
