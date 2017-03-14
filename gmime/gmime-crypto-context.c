@@ -439,10 +439,9 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * g_mime_crypto_context_encrypt:
  * @ctx: a #GMimeCryptoContext
  * @sign: sign as well as encrypt
- * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
- * @flags: a #GMimeEncryptFlags
- * @recipients: (element-type utf8): an array of recipient key ids
- *   and/or email addresses
+ * @userid: the key id (or email address) to use when signing (assuming @sign is %TRUE)
+ * @flags: a set of #GMimeEncryptFlags
+ * @recipients: (element-type utf8): an array of recipient key ids and/or email addresses
  * @istream: cleartext input stream
  * @ostream: ciphertext output stream
  * @err: a #GError
@@ -478,8 +477,8 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *se
 /**
  * g_mime_crypto_context_decrypt:
  * @ctx: a #GMimeCryptoContext
- * @flags: a #GMimeDecryptFlags
- * @session_key: session key to use or %NULL
+ * @flags: a set of #GMimeDecryptFlags
+ * @session_key: the session key to use or %NULL
  * @istream: input/ciphertext stream
  * @ostream: output/cleartext stream
  * @err: a #GError

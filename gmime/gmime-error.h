@@ -48,12 +48,11 @@ extern GQuark gmime_error_quark;
 
 /* errno is a positive value, so negative values should be safe to use */
 enum {
-	GMIME_ERROR_GENERAL             =  0,
-	GMIME_ERROR_NOT_SUPPORTED       = -1,
-	GMIME_ERROR_PARSE_ERROR         = -2,
-	GMIME_ERROR_PROTOCOL_ERROR      = -3,
-	GMIME_ERROR_BAD_PASSWORD        = -4,
-	GMIME_ERROR_NO_VALID_RECIPIENTS = -5
+	GMIME_ERROR_GENERAL             = -1,
+	GMIME_ERROR_NOT_SUPPORTED       = -2,
+	GMIME_ERROR_INVALID_OPERATION   = -3,
+	GMIME_ERROR_PARSE_ERROR         = -4,
+	GMIME_ERROR_PROTOCOL_ERROR      = -5
 };
 
 

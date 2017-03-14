@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "gmime-part.h"
+#include "gmime-error.h"
 #include "gmime-utils.h"
 #include "gmime-common.h"
 #include "gmime-internal.h"
@@ -40,6 +41,7 @@
 #include "gmime-filter-md5.h"
 #include "gmime-table-private.h"
 
+#define _(x) x
 #define d(x)
 
 
@@ -916,41 +918,6 @@ g_mime_part_get_filename (GMimePart *mime_part)
 }
 
 
-/**
- * g_mime_part_set_openpgp_data:
- * @mime_part: a #GMimePart
- * @data: a #GMimeOpenPGPData
- *
- * Sets whether or not (and what type) of OpenPGP data is contained
- * within the #GMimePart.
- **/
-void
-g_mime_part_set_openpgp_data (GMimePart *mime_part, GMimeOpenPGPData data)
-{
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
-	mime_part->openpgp = data;
-}
-
-
-/**
- * g_mime_part_get_openpgp_data:
- * @mime_part: a #GMimePart
- *
- * Gets whether or not (and what type) of OpenPGP data is contained
- * within the #GMimePart.
- *
- * Returns: a #GMimeOpenPGPData.
- **/
-GMimeOpenPGPData
-g_mime_part_get_openpgp_data (GMimePart *mime_part)
-{
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_OPENPGP_DATA_NONE);
-	
-	return mime_part->openpgp;
-}
-
-
 static void
 set_content (GMimePart *mime_part, GMimeDataWrapper *content)
 {
@@ -997,4 +964,274 @@ g_mime_part_get_content (GMimePart *mime_part)
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return mime_part->content;
+}
+
+
+/**
+ * g_mime_part_set_openpgp_data:
+ * @mime_part: a #GMimePart
+ * @data: a #GMimeOpenPGPData
+ *
+ * Sets whether or not (and what type) of OpenPGP data is contained
+ * within the #GMimePart.
+ **/
+void
+g_mime_part_set_openpgp_data (GMimePart *mime_part, GMimeOpenPGPData data)
+{
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	
+	mime_part->openpgp = data;
+}
+
+
+/**
+ * g_mime_part_get_openpgp_data:
+ * @mime_part: a #GMimePart
+ *
+ * Gets whether or not (and what type) of OpenPGP data is contained
+ * within the #GMimePart.
+ *
+ * Returns: a #GMimeOpenPGPData.
+ **/
+GMimeOpenPGPData
+g_mime_part_get_openpgp_data (GMimePart *mime_part)
+{
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_OPENPGP_DATA_NONE);
+	
+	return mime_part->openpgp;
+}
+
+
+/**
+ * g_mime_part_openpgp_encrypt:
+ * @mime_part: a #GMimePart
+ * @sign: %TRUE if the content should also be signed; otherwise, %FALSE
+ * @userid: the key id (or email address) to use when signing (assuming @sign is %TRUE)
+ * @flags: a set of #GMimeEncryptFlags
+ * @recipients: (element-type utf8): an array of recipient key ids and/or email addresses
+ * @err: a #GError
+ *
+ * Encrypts (and optionally signs) the content of the @mime_part and then replaces
+ * the content with the new, encrypted, content.
+ *
+ * Returns: %TRUE on success or %FALSE on error.
+ **/
+gboolean
+g_mime_part_openpgp_encrypt (GMimePart *mime_part, gboolean sign, const char *userid,
+			     GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
+{
+	GMimeStream *istream, *encrypted;
+	GMimeCryptoContext *ctx;
+	int rv;
+	
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
+	
+	if (mime_part->content == NULL) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("No content set on the MIME part."));
+		return FALSE;
+	}
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-encrypted"))) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("No crypto context registered for application/pgp-encrypted."));
+		return FALSE;
+	}
+	
+	encrypted = g_mime_stream_mem_new ();
+	istream = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (mime_part->content, istream);
+	g_mime_stream_reset (istream);
+	
+	rv = g_mime_crypto_context_encrypt (ctx, sign, userid, flags, recipients, istream, encrypted, err);
+	g_object_unref (istream);
+	g_object_unref (ctx);
+	
+	if (rv == -1) {
+		g_object_unref (encrypted);
+		return FALSE;
+	}
+	
+	g_mime_stream_reset (encrypted);
+	
+	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_CONTENT_ENCODING_DEFAULT);
+	g_mime_data_wrapper_set_stream (mime_part->content, encrypted);
+	mime_part->encoding = GMIME_CONTENT_ENCODING_7BIT;
+	mime_part->openpgp = GMIME_OPENPGP_DATA_ENCRYPTED;
+	g_object_unref (encrypted);
+	
+	return TRUE;
+}
+
+
+/**
+ * g_mime_part_openpgp_decrypt:
+ * @mime_part: a #GMimePart
+ * @flags: a set of #GMimeDecryptFlags
+ * @session_key: the session key to use or %NULL
+ * @err: a #GError
+ *
+ * Decrypts the content of the @mime_part and then replaces the content with
+ * the new, decrypted, content.
+ *
+ * Returns: (transfer full): a #GMimeDecryptResult on success or %NULL on error.
+ **/
+GMimeDecryptResult *
+g_mime_part_openpgp_decrypt (GMimePart *mime_part, GMimeDecryptFlags flags, const char *session_key, GError **err)
+{
+	GMimeStream *istream, *decrypted;
+	GMimeDecryptResult *result;
+	GMimeCryptoContext *ctx;
+	
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
+	
+	if (mime_part->content == NULL) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("No content set on the MIME part."));
+		return NULL;
+	}
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-encrypted"))) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("No crypto context registered for application/pgp-encrypted."));
+		return NULL;
+	}
+	
+	decrypted = g_mime_stream_mem_new ();
+	istream = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (mime_part->content, istream);
+	g_mime_stream_reset (istream);
+
+	result = g_mime_crypto_context_decrypt (ctx, flags, session_key, istream, decrypted, err);
+	g_object_unref (istream);
+	g_object_unref (ctx);
+	
+	if (result == NULL) {
+		g_object_unref (decrypted);
+		return NULL;
+	}
+	
+	g_mime_stream_reset (decrypted);
+	
+	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_CONTENT_ENCODING_DEFAULT);
+	g_mime_data_wrapper_set_stream (mime_part->content, decrypted);
+	mime_part->openpgp = GMIME_OPENPGP_DATA_NONE;
+	g_object_unref (decrypted);
+	
+	return result;
+}
+
+
+/**
+ * g_mime_part_openpgp_sign:
+ * @mime_part: a #GMimePart
+ * @userid: the key id (or email address) to use for signing
+ * @err: a #GError
+ *
+ * Signs the content of the @mime_part and then replaces the content with
+ * the new, signed, content.
+ *
+ * Returns: %TRUE on success or %FALSE on error.
+ **/
+gboolean
+g_mime_part_openpgp_sign (GMimePart *mime_part, const char *userid, GError **err)
+{
+	GMimeStream *istream, *ostream;
+	GMimeCryptoContext *ctx;
+	int rv;
+	
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
+	
+	if (mime_part->content == NULL) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("No content set on the MIME part."));
+		return FALSE;
+	}
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-signature"))) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("No crypto context registered for application/pgp-signature."));
+		return FALSE;
+	}
+	
+	ostream = g_mime_stream_mem_new ();
+	istream = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (mime_part->content, istream);
+	g_mime_stream_reset (istream);
+	
+	rv = g_mime_crypto_context_sign (ctx, FALSE, userid, istream, ostream, err);
+	g_object_unref (istream);
+	g_object_unref (ctx);
+	
+	if (rv == -1) {
+		g_object_unref (ostream);
+		return FALSE;
+	}
+	
+	g_mime_stream_reset (ostream);
+	
+	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_CONTENT_ENCODING_DEFAULT);
+	g_mime_data_wrapper_set_stream (mime_part->content, ostream);
+	mime_part->encoding = GMIME_CONTENT_ENCODING_7BIT;
+	mime_part->openpgp = GMIME_OPENPGP_DATA_SIGNED;
+	g_object_unref (ostream);
+	
+	return TRUE;
+}
+
+
+/**
+ * g_mime_part_openpgp_verify:
+ * @mime_part: a #GMimePart
+ * @flags: a set of #GMimeVerifyFlags
+ * @err: a #GError
+ *
+ * Verifies the OpenPGP signature of the @mime_part and then replaces the content
+ * with the original, raw, content.
+ *
+ * Returns: (transfer full): a #GMimeSignatureList on success or %NULL on error.
+ **/
+GMimeSignatureList *
+g_mime_part_openpgp_verify (GMimePart *mime_part, GMimeVerifyFlags flags, GError **err)
+{
+	GMimeStream *istream, *extracted;
+	GMimeSignatureList *signatures;
+	GMimeCryptoContext *ctx;
+	
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
+	
+	if (mime_part->content == NULL) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("No content set on the MIME part."));
+		return NULL;
+	}
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-signature"))) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("No crypto context registered for application/pgp-signature."));
+		return NULL;
+	}
+	
+	extracted = g_mime_stream_mem_new ();
+	istream = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (mime_part->content, istream);
+	g_mime_stream_reset (istream);
+
+	signatures = g_mime_crypto_context_verify (ctx, flags, istream, NULL, extracted, err);
+	g_object_unref (istream);
+	g_object_unref (ctx);
+	
+	if (signatures == NULL) {
+		g_object_unref (extracted);
+		return NULL;
+	}
+	
+	g_mime_stream_reset (extracted);
+	
+	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_CONTENT_ENCODING_DEFAULT);
+	g_mime_data_wrapper_set_stream (mime_part->content, extracted);
+	mime_part->openpgp = GMIME_OPENPGP_DATA_NONE;
+	g_object_unref (extracted);
+	
+	return signatures;
 }

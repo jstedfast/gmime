@@ -448,6 +448,146 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 	}
 }
 
+static GMimePart *
+create_mime_part (void)
+{
+	GMimeTextPart *part;
+	
+	part = g_mime_text_part_new_with_subtype ("plain");
+	g_mime_text_part_set_text (part, "This is the body of the message...\n\n"
+				   "Does inline-PGP support work properly?\n\n"
+				   "Let's find out!\n\n");
+	g_mime_part_set_content_encoding ((GMimePart *) part, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	g_mime_text_part_set_charset (part, "UTF-8");
+	
+	return (GMimePart *) part;
+}
+
+static void
+test_openpgp_sign (void)
+{
+	GMimeSignatureList *signatures;
+	GMimeStream *original;
+	GMimePart *mime_part;
+	Exception *ex = NULL;
+	GError *err = NULL;
+	GByteArray *buf[2];
+	
+	mime_part = create_mime_part ();
+	original = mime_part->content->stream;
+	g_object_ref (original);
+	
+	if (!g_mime_part_openpgp_sign (mime_part, "no.user@no.domain", &err)) {
+		ex = exception_new ("signing failed: %s", err->message);
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	if (g_mime_part_get_openpgp_data (mime_part) != GMIME_OPENPGP_DATA_SIGNED) {
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		
+		throw (exception_new ("OpenPGP data property not updated after signing"));
+	}
+	
+	if (!(signatures = g_mime_part_openpgp_verify (mime_part, 0, &err))) {
+		ex = exception_new ("verifying failed: %s", err->message);
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	if (g_mime_part_get_openpgp_data (mime_part) != GMIME_OPENPGP_DATA_NONE) {
+		g_object_unref (signatures);
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		
+		throw (exception_new ("OpenPGP data property not updated after verifying"));
+	}
+
+	buf[0] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (original));
+	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (mime_part->content->stream));
+	
+	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+		ex = exception_new ("extracted data does not match original cleartext");
+	
+	g_object_unref (signatures);
+	g_object_unref (mime_part);
+	g_object_unref (original);
+	
+	if (ex != NULL)
+		throw (ex);
+}
+
+static void
+test_openpgp_encrypt (gboolean sign)
+{
+	GMimeDecryptResult *result;
+	GMimeStream *original;
+	GMimePart *mime_part;
+	Exception *ex = NULL;
+	GError *err = NULL;
+	GByteArray *buf[2];
+	GPtrArray *rcpts;
+	
+	rcpts = g_ptr_array_new ();
+	g_ptr_array_add (rcpts, "no.user@no.domain");
+	
+	mime_part = create_mime_part ();
+	original = mime_part->content->stream;
+	g_object_ref (original);
+	
+	if (!g_mime_part_openpgp_encrypt (mime_part, sign, "no.user@no.domain", GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, rcpts, &err)) {
+		ex = exception_new ("encrypting failed: %s", err->message);
+		g_ptr_array_free (rcpts, TRUE);
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	g_ptr_array_free (rcpts, TRUE);
+	
+	if (g_mime_part_get_openpgp_data (mime_part) != GMIME_OPENPGP_DATA_ENCRYPTED) {
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		
+		throw (exception_new ("OpenPGP data property not updated after encrypting"));
+	}
+	
+	if (!(result = g_mime_part_openpgp_decrypt (mime_part, 0, NULL, &err))) {
+		ex = exception_new ("decrypting failed: %s", err->message);
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	if (g_mime_part_get_openpgp_data (mime_part) != GMIME_OPENPGP_DATA_NONE) {
+		g_object_unref (mime_part);
+		g_object_unref (original);
+		g_object_unref (result);
+		
+		throw (exception_new ("OpenPGP data property not updated after decrypting"));
+	}
+	
+	buf[0] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (original));
+	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (mime_part->content->stream));
+	
+	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+		ex = exception_new ("decrypted data does not match original cleartext");
+	
+	g_object_unref (mime_part);
+	g_object_unref (original);
+	g_object_unref (result);
+	
+	if (ex != NULL)
+		throw (ex);
+}
+
 int main (int argc, char *argv[])
 {
 #ifdef ENABLE_CRYPTO
@@ -560,6 +700,30 @@ int main (int argc, char *argv[])
 	}
 	
 	g_free (session_key);
+	
+	testsuite_check ("rfc2440 sign");
+	try {
+		test_openpgp_sign ();
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("rfc2440 sign failed: %s", ex->message);
+	} finally;
+	
+	testsuite_check ("rfc2440 encrypt");
+	try {
+		test_openpgp_encrypt (FALSE);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("rfc2440 encrypt failed: %s", ex->message);
+	} finally;
+	
+	testsuite_check ("rfc2440 sign+encrypt");
+	try {
+		test_openpgp_encrypt (TRUE);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("rfc2440 sign+encrypt failed: %s", ex->message);
+	} finally;
 #endif /* GPGME_VERSION NUMBER >= 0x010700 */
 	
 	g_object_unref (ctx);
