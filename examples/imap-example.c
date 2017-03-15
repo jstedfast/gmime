@@ -631,7 +631,7 @@ bodystruct_dump (struct _bodystruct *part, int depth)
 	
 	if (part->content.params) {
 		n = g_mime_param_list_length (part->content.params);
-		for (int i = 0; i < n; i++) {
+		for (i = 0; i < n; i++) {
 			param = g_mime_param_list_get_parameter_at (part->content.params, i);
 			fprintf (stderr, "; %s=%s", g_mime_param_get_name (param),
 				 g_mime_param_get_value (param));
