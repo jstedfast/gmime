@@ -577,7 +577,7 @@ test_rfc2184 (GMimeParserOptions *options)
 		} finally;
 		
 		if (params != NULL)
-			g_mime_param_destroy (params);
+			g_mime_param_free (params);
 		
 		g_string_truncate (str, n);
 	}

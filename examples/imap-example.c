@@ -691,11 +691,11 @@ bodystruct_free (struct _bodystruct *node)
 		g_free (node->content.type);
 		g_free (node->content.subtype);
 		if (node->content.params)
-			g_mime_param_destroy (node->content.params);
+			g_mime_param_free (node->content.params);
 		
 		g_free (node->disposition.type);
 		if (node->disposition.params)
-			g_mime_param_destroy (node->disposition.params);
+			g_mime_param_free (node->disposition.params);
 		
 		g_free (node->encoding);
 		
