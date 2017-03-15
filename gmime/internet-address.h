@@ -71,7 +71,6 @@ typedef struct _InternetAddressListClass InternetAddressListClass;
 /**
  * InternetAddress:
  * @parent_object: parent #GObject
- * @priv: private data
  * @charset: the charset used for encoding the name
  * @name: display name
  *
@@ -79,10 +78,12 @@ typedef struct _InternetAddressListClass InternetAddressListClass;
  **/
 struct _InternetAddress {
 	GObject parent_object;
-	gpointer priv;
 	
 	char *charset;
 	char *name;
+	
+	/* < private > */
+	gpointer changed;
 };
 
 struct _InternetAddressClass {
@@ -163,16 +164,17 @@ int internet_address_group_add_member (InternetAddressGroup *group, InternetAddr
 /**
  * InternetAddressList:
  * @parent_object: parent #GObject
- * @priv: private data
  * @array: The array of #InternetAddress objects.
  *
  * A collection of #InternetAddress objects.
  **/
 struct _InternetAddressList {
 	GObject parent_object;
-	gpointer priv;
 	
 	GPtrArray *array;
+	
+	/* < private > */
+	gpointer changed;
 };
 
 struct _InternetAddressListClass {

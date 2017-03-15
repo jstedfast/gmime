@@ -141,7 +141,7 @@ internet_address_class_init (InternetAddressClass *klass)
 static void
 internet_address_init (InternetAddress *ia, InternetAddressClass *klass)
 {
-	ia->priv = g_mime_event_new ((GObject *) ia);
+	ia->changed = g_mime_event_new ((GObject *) ia);
 	ia->charset = NULL;
 	ia->name = NULL;
 }
@@ -151,7 +151,7 @@ internet_address_finalize (GObject *object)
 {
 	InternetAddress *ia = (InternetAddress *) object;
 	
-	g_mime_event_destroy (ia->priv);
+	g_mime_event_free (ia->changed);
 	g_free (ia->charset);
 	g_free (ia->name);
 	
@@ -186,7 +186,7 @@ internet_address_set_name (InternetAddress *ia, const char *name)
 	
 	_internet_address_set_name (ia, name);
 	
-	g_mime_event_emit (ia->priv, NULL);
+	g_mime_event_emit (ia->changed, NULL);
 }
 
 
@@ -227,7 +227,7 @@ internet_address_set_charset (InternetAddress *ia, const char *charset)
 	g_free (ia->charset);
 	ia->charset = buf;
 	
-	g_mime_event_emit (ia->priv, NULL);
+	g_mime_event_emit (ia->changed, NULL);
 }
 
 
@@ -389,7 +389,7 @@ internet_address_mailbox_set_addr (InternetAddressMailbox *mailbox, const char *
 	g_free (mailbox->addr);
 	mailbox->addr = g_strdup (addr);
 	
-	g_mime_event_emit (((InternetAddress *) mailbox)->priv, NULL);
+	g_mime_event_emit (((InternetAddress *) mailbox)->changed, NULL);
 }
 
 
@@ -461,7 +461,7 @@ internet_address_group_class_init (InternetAddressGroupClass *klass)
 static void
 members_changed (InternetAddressList *members, gpointer args, InternetAddress *group)
 {
-	g_mime_event_emit (((InternetAddress *) group)->priv, NULL);
+	g_mime_event_emit (((InternetAddress *) group)->changed, NULL);
 }
 
 static void
@@ -469,7 +469,7 @@ internet_address_group_init (InternetAddressGroup *group, InternetAddressGroupCl
 {
 	group->members = internet_address_list_new ();
 	
-	g_mime_event_add (group->members->priv, (GMimeEventCallback) members_changed, group);
+	g_mime_event_add (group->members->changed, (GMimeEventCallback) members_changed, group);
 }
 
 static void
@@ -477,7 +477,7 @@ internet_address_group_finalize (GObject *object)
 {
 	InternetAddressGroup *group = (InternetAddressGroup *) object;
 	
-	g_mime_event_remove (group->members->priv, (GMimeEventCallback) members_changed, group);
+	g_mime_event_remove (group->members->changed, (GMimeEventCallback) members_changed, group);
 	
 	g_object_unref (group->members);
 	
@@ -525,18 +525,18 @@ internet_address_group_set_members (InternetAddressGroup *group, InternetAddress
 		return;
 	
 	if (group->members) {
-		g_mime_event_remove (group->members->priv, (GMimeEventCallback) members_changed, group);
+		g_mime_event_remove (group->members->changed, (GMimeEventCallback) members_changed, group);
 		g_object_unref (group->members);
 	}
 	
 	if (members) {
-		g_mime_event_add (members->priv, (GMimeEventCallback) members_changed, group);
+		g_mime_event_add (members->changed, (GMimeEventCallback) members_changed, group);
 		g_object_ref (members);
 	}
 	
 	group->members = members;
 	
-	g_mime_event_emit (((InternetAddress *) group)->priv, NULL);
+	g_mime_event_emit (((InternetAddress *) group)->changed, NULL);
 }
 
 
@@ -626,14 +626,14 @@ internet_address_list_class_init (InternetAddressListClass *klass)
 static void
 internet_address_list_init (InternetAddressList *list, InternetAddressListClass *klass)
 {
-	list->priv = g_mime_event_new ((GObject *) list);
+	list->changed = g_mime_event_new ((GObject *) list);
 	list->array = g_ptr_array_new ();
 }
 
 static void
 address_changed (InternetAddress *ia, gpointer args, InternetAddressList *list)
 {
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 }
 
 static void
@@ -645,11 +645,11 @@ internet_address_list_finalize (GObject *object)
 	
 	for (i = 0; i < list->array->len; i++) {
 		ia = (InternetAddress *) list->array->pdata[i];
-		g_mime_event_remove (ia->priv, (GMimeEventCallback) address_changed, list);
+		g_mime_event_remove (ia->changed, (GMimeEventCallback) address_changed, list);
 		g_object_unref (ia);
 	}
 	
-	g_mime_event_destroy (list->priv);
+	g_mime_event_free (list->changed);
 	
 	g_ptr_array_free (list->array, TRUE);
 	
@@ -704,13 +704,13 @@ internet_address_list_clear (InternetAddressList *list)
 	
 	for (i = 0; i < list->array->len; i++) {
 		ia = (InternetAddress *) list->array->pdata[i];
-		g_mime_event_remove (ia->priv, (GMimeEventCallback) address_changed, list);
+		g_mime_event_remove (ia->changed, (GMimeEventCallback) address_changed, list);
 		g_object_unref (ia);
 	}
 	
 	g_ptr_array_set_size (list->array, 0);
 	
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 }
 
 
@@ -719,7 +719,7 @@ _internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
 {
 	int index;
 	
-	g_mime_event_add (ia->priv, (GMimeEventCallback) address_changed, list);
+	g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
 	
 	index = list->array->len;
 	g_ptr_array_add (list->array, ia);
@@ -748,7 +748,7 @@ internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
 	index = _internet_address_list_add (list, ia);
 	g_object_ref (ia);
 	
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 	
 	return index;
 }
@@ -784,12 +784,12 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddressList *p
 	
 	for (i = 0; i < prepend->array->len; i++) {
 		ia = (InternetAddress *) prepend->array->pdata[i];
-		g_mime_event_add (ia->priv, (GMimeEventCallback) address_changed, list);
+		g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
 		list->array->pdata[i] = ia;
 		g_object_ref (ia);
 	}
 	
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 }
 
 
@@ -814,12 +814,12 @@ internet_address_list_append (InternetAddressList *list, InternetAddressList *ap
 	
 	for (i = 0; i < append->array->len; i++) {
 		ia = (InternetAddress *) append->array->pdata[i];
-		g_mime_event_add (ia->priv, (GMimeEventCallback) address_changed, list);
+		g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
 		list->array->pdata[len + i] = ia;
 		g_object_ref (ia);
 	}
 	
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 }
 
 
@@ -842,7 +842,7 @@ internet_address_list_insert (InternetAddressList *list, int index, InternetAddr
 	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
 	g_return_if_fail (index >= 0);
 	
-	g_mime_event_add (ia->priv, (GMimeEventCallback) address_changed, list);
+	g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
 	g_object_ref (ia);
 	
 	if ((guint) index < list->array->len) {
@@ -859,7 +859,7 @@ internet_address_list_insert (InternetAddressList *list, int index, InternetAddr
 		g_ptr_array_add (list->array, ia);
 	}
 	
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 }
 
 
@@ -913,12 +913,12 @@ internet_address_list_remove_at (InternetAddressList *list, int index)
 		return FALSE;
 	
 	ia = list->array->pdata[index];
-	g_mime_event_remove (ia->priv, (GMimeEventCallback) address_changed, list);
+	g_mime_event_remove (ia->changed, (GMimeEventCallback) address_changed, list);
 	g_object_unref (ia);
 	
 	g_ptr_array_remove_index (list->array, index);
 	
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 	
 	return TRUE;
 }
@@ -1022,14 +1022,14 @@ internet_address_list_set_address (InternetAddressList *list, int index, Interne
 	if ((old = list->array->pdata[index]) == ia)
 		return;
 	
-	g_mime_event_remove (old->priv, (GMimeEventCallback) address_changed, list);
+	g_mime_event_remove (old->changed, (GMimeEventCallback) address_changed, list);
 	g_object_unref (old);
 	
-	g_mime_event_add (ia->priv, (GMimeEventCallback) address_changed, list);
+	g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
 	list->array->pdata[index] = ia;
 	g_object_ref (ia);
 	
-	g_mime_event_emit (list->priv, NULL);
+	g_mime_event_emit (list->changed, NULL);
 }
 
 

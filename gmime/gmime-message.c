@@ -160,7 +160,7 @@ connect_changed_event (GMimeMessage *message, GMimeAddressType type)
 	
 	addrlist = message->addrlists[type];
 	
-	g_mime_event_add (addrlist->priv, address_types[type].changed_cb, message);
+	g_mime_event_add (addrlist->changed, address_types[type].changed_cb, message);
 }
 
 static void
@@ -170,7 +170,7 @@ disconnect_changed_event (GMimeMessage *message, GMimeAddressType type)
 	
 	addrlist = message->addrlists[type];
 	
-	g_mime_event_remove (addrlist->priv, address_types[type].changed_cb, message);
+	g_mime_event_remove (addrlist->changed, address_types[type].changed_cb, message);
 }
 
 static void
@@ -180,7 +180,7 @@ block_changed_event (GMimeMessage *message, GMimeAddressType type)
 	
 	addrlist = message->addrlists[type];
 	
-	g_mime_event_block (addrlist->priv, address_types[type].changed_cb, message);
+	g_mime_event_block (addrlist->changed, address_types[type].changed_cb, message);
 }
 
 static void
@@ -190,7 +190,7 @@ unblock_changed_event (GMimeMessage *message, GMimeAddressType type)
 	
 	addrlist = message->addrlists[type];
 	
-	g_mime_event_unblock (addrlist->priv, address_types[type].changed_cb, message);
+	g_mime_event_unblock (addrlist->changed, address_types[type].changed_cb, message);
 }
 
 static void
