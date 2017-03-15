@@ -599,7 +599,7 @@ g_mime_certificate_list_length (GMimeCertificateList *list)
  * g_mime_certificate_list_clear:
  * @list: a #GMimeCertificateList
  *
- * Clears the list of addresses.
+ * Clears the list of certificates.
  **/
 void
 g_mime_certificate_list_clear (GMimeCertificateList *list)
@@ -701,21 +701,19 @@ g_mime_certificate_list_remove (GMimeCertificateList *list, GMimeCertificate *ce
 	if ((index = g_mime_certificate_list_index_of (list, cert)) == -1)
 		return FALSE;
 	
-	g_mime_certificate_list_remove_at (list, index);
-	
-	return TRUE;
+	return g_mime_certificate_list_remove_at (list, index);
 }
 
 
 /**
  * g_mime_certificate_list_remove_at:
  * @list: a #GMimeCertificateList
- * @index: index to remove
+ * @index: index of the certificate to remove
  *
  * Removes a #GMimeCertificate from the #GMimeCertificateList at the specified
  * index.
  *
- * Returns: %TRUE if an #GMimeCertificate was removed or %FALSE otherwise.
+ * Returns: %TRUE if a #GMimeCertificate was removed or %FALSE otherwise.
  **/
 gboolean
 g_mime_certificate_list_remove_at (GMimeCertificateList *list, int index)
