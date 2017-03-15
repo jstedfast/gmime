@@ -291,7 +291,7 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeObject *) part, sign, "no.user@no.domain",
-						  GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
+						  GMIME_ENCRYPT_ALWAYS_TRUST, recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
 	
@@ -369,7 +369,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	mpe = (GMimeMultipartEncrypted *) message->mime_part;
 	
 	/* okay, now to test our decrypt function... */
-	decrypted = g_mime_multipart_encrypted_decrypt (mpe, GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY, session_key, &result, &err);
+	decrypted = g_mime_multipart_encrypted_decrypt (mpe, GMIME_DECRYPT_EXPORT_SESSION_KEY, session_key, &result, &err);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
 		g_error_free (err);
@@ -540,7 +540,7 @@ test_openpgp_encrypt (gboolean sign)
 	original = mime_part->content->stream;
 	g_object_ref (original);
 	
-	if (!g_mime_part_openpgp_encrypt (mime_part, sign, "no.user@no.domain", GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, rcpts, &err)) {
+	if (!g_mime_part_openpgp_encrypt (mime_part, sign, "no.user@no.domain", GMIME_ENCRYPT_ALWAYS_TRUST, rcpts, &err)) {
 		ex = exception_new ("encrypting failed: %s", err->message);
 		g_ptr_array_free (rcpts, TRUE);
 		g_object_unref (mime_part);

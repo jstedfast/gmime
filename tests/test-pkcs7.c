@@ -166,7 +166,7 @@ test_encrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "mimekit@example.com");
 	
-	g_mime_crypto_context_encrypt (ctx, FALSE, NULL, GMIME_ENCRYPT_FLAGS_NONE,
+	g_mime_crypto_context_encrypt (ctx, FALSE, NULL, GMIME_ENCRYPT_NONE,
 				       recipients, cleartext, ciphertext, &err);
 	
 	g_ptr_array_free (recipients, TRUE);

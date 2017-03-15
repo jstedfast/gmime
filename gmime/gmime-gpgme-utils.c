@@ -419,15 +419,12 @@ g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, const char *userid,
 		      GMimeStream *istream, GMimeStream *ostream,
 		      GError **err)
 {
-	gpgme_encrypt_flags_t encrypt_flags = 0;
+	gpgme_encrypt_flags_t encrypt_flags = (gpgme_encrypt_flags_t) flags;
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	gpgme_key_t *rcpts;
 	gpgme_key_t key;
 	guint i;
-	
-	if (flags & GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST)
-		encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
 	
 	/* create an array of recipient keys for GpgMe */
 	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
@@ -542,7 +539,7 @@ g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *sess
 	}
 	
 #if GPGME_VERSION_NUMBER >= 0x010800
-	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
+	if (flags & GMIME_DECRYPT_EXPORT_SESSION_KEY)
 		gpgme_set_ctx_flag (ctx, "export-session-key", "1");
 	
 	if (session_key)
@@ -556,7 +553,7 @@ g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *sess
 		error = gpgme_op_decrypt (ctx, input, output);
 	
 #if GPGME_VERSION_NUMBER >= 0x010800
-	if (flags & GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY)
+	if (flags & GMIME_DECRYPT_EXPORT_SESSION_KEY)
 		gpgme_set_ctx_flag (ctx, "export-session-key", "0");
 	
 	if (session_key)

@@ -148,7 +148,7 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 		const char *str;
 		int i;
 		
-		if (!(signatures = g_mime_multipart_signed_verify (mps, GMIME_VERIFY_FLAGS_NONE, &err))) {
+		if (!(signatures = g_mime_multipart_signed_verify (mps, GMIME_VERIFY_NONE, &err))) {
 			/* an error occured - probably couldn't start gpg? */
 			
 			/* for more information about GError, see:

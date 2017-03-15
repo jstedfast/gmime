@@ -74,14 +74,14 @@ Porting from GMime 2.6 to GMime 3.0
   to GMIME_TRUST_UNKNOWN.
 
 - Removed g_mime_gpg_context_[get,set]_always_trust(). This can now be accomplished
-  by passing GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST to g_mime_crypto_context_encrypt().
+  by passing GMIME_ENCRYPT_ALWAYS_TRUST to g_mime_crypto_context_encrypt().
 
 - Removed g_mime_gpg_context_[get,set]_use_agent(). This should no longer be needed.
 
 - Removed g_mime_gpg_context_[get,set]_auto_key_retrieve().
 
 - Removed g_mime_crypto_context_[get,set]_retrieve_session_key(). This is now handled by
-  passing GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY to the g_mime_crypto_context_decrypt()
+  passing GMIME_DECRYPT_EXPORT_SESSION_KEY to the g_mime_crypto_context_decrypt()
   method.
 
 - GMimeCryptoContext's encrypt, decrypt, and verify methods now all take a flags argument

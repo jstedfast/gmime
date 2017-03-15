@@ -166,7 +166,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
 	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain",
-				       GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST,
+				       GMIME_ENCRYPT_ALWAYS_TRUST,
 				       recipients, cleartext, ciphertext,
 				       &err);
 	

@@ -351,7 +351,7 @@ test_pkcs7_mime_encrypt (void)
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "mimekit@example.com");
 	
-	pkcs7_mime = g_mime_application_pkcs7_mime_encrypt ((GMimeObject *) part, GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
+	pkcs7_mime = g_mime_application_pkcs7_mime_encrypt ((GMimeObject *) part, GMIME_ENCRYPT_ALWAYS_TRUST, recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
 	

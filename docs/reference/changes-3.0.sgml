@@ -23,10 +23,10 @@
     <para>Cryptography related API changes:</para>
     <itemizedlist>
       <listitem><para>Renamed GMimeCertificateTrust to GMimeTrust and GMIME_CERTIFICATE_TRUST_NONE to GMIME_TRUST_UNKNOWN.</para></listitem>
-      <listitem><para>Removed <function>g_mime_gpg_context_get_always_trust()</function> and <function>g_mime_gpg_context_set_always_trust()</function>. This can now be accomplished by passing GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST to <function>g_mime_crypto_context_encrypt()</function>.</para></listitem>
+      <listitem><para>Removed <function>g_mime_gpg_context_get_always_trust()</function> and <function>g_mime_gpg_context_set_always_trust()</function>. This can now be accomplished by passing GMIME_ENCRYPT_ALWAYS_TRUST to <function>g_mime_crypto_context_encrypt()</function>.</para></listitem>
       <listitem><para>Removed <function>g_mime_gpg_context_get_use_agent()</function> and <function>g_mime_gpg_context_set_use_agent()</function>. This should no longer be needed.</para></listitem>
       <listitem><para>Removed <function>g_mime_gpg_context_get_auto_key_retrieve()</function> and <function>g_mime_gpg_context_set_auto_key_retrieve()</function>.</para></listitem>
-      <listitem><para>Removed <function>g_mime_crypto_context_get_retrieve_session_key()</function> and <function>g_mime_crypto_context_set_retrieve_session_key()</function>. This is now handled by passing GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY to the <function>g_mime_crypto_context_decrypt()</function> method.</para></listitem>
+      <listitem><para>Removed <function>g_mime_crypto_context_get_retrieve_session_key()</function> and <function>g_mime_crypto_context_set_retrieve_session_key()</function>. This is now handled by passing GMIME_DECRYPT_EXPORT_SESSION_KEY to the <function>g_mime_crypto_context_decrypt()</function> method.</para></listitem>
       <listitem><para>GMimeCryptoContext's encrypt, decrypt, and verify methods now all take a flags argument that can enable additional features (see above examples).</para></listitem>
       <listitem><para><function>g_mime_crypto_context_sign()</function> now takes a boolean 'detach' argument that specifies whether or not to generate a detached signature. To get the old behavior, pass TRUE as the detach argument.</para></listitem>
       <listitem><para><function>g_mime_crypto_context_decrypt_session()<function> has been merged with <function>g_mime_crypto_context_decrypt()</function> and so the decryot method now takes a session_key argument that is allowed to be NULL.</para></listitem>

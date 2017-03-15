@@ -78,38 +78,42 @@ typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) (void);
 
 /**
  * GMimeDecryptFlags:
- * @GMIME_DECRYPT_FLAGS_NONE: No flags specified.
- * @GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY: Export the decryption session-key
+ * @GMIME_DECRYPT_NONE: No flags specified.
+ * @GMIME_DECRYPT_EXPORT_SESSION_KEY: Export the decryption session-key
  *
  * Decryption flags.
  **/
 typedef enum {
-	GMIME_DECRYPT_FLAGS_NONE               = 0,
-	GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY = 1 << 0,
+	GMIME_DECRYPT_NONE               = 0,
+	GMIME_DECRYPT_EXPORT_SESSION_KEY = 1 << 0,
 } GMimeDecryptFlags;
 
 
 /**
  * GMimeEncryptFlags:
- * @GMIME_ENCRYPT_FLAGS_NONE: No flags specified.
- * @GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST: Always trust the specified keys.
+ * @GMIME_ENCRYPT_NONE: No flags specified.
+ * @GMIME_ENCRYPT_ALWAYS_TRUST: Always trust the specified keys.
+ * @GMIME_ENCRYPT_NO_COMPRESS: Don't compress the plaintext before encrypting.
+ * @GMIME_ENCRYPT_SYMMETRIC: Encrypt symmetrically.
  *
  * Encryption flags.
  **/
 typedef enum {
-	GMIME_ENCRYPT_FLAGS_NONE         = 0,
-	GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST = 1 << 0,
+	GMIME_ENCRYPT_NONE          = 0,
+	GMIME_ENCRYPT_ALWAYS_TRUST  = 1,
+	GMIME_ENCRYPT_NO_COMPRESS   = 16,
+	GMIME_ENCRYPT_SYMMETRIC     = 32
 } GMimeEncryptFlags;
 
 
 /**
  * GMimeVerifyFlags:
- * @GMIME_VERIFY_FLAGS_NONE: No flags specified.
+ * @GMIME_VERIFY_NONE: No flags specified.
  *
  * Signature verification flags.
  **/
 typedef enum {
-	GMIME_VERIFY_FLAGS_NONE              = 0
+	GMIME_VERIFY_NONE           = 0
 } GMimeVerifyFlags;
 
 
