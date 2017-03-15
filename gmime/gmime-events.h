@@ -31,7 +31,7 @@ typedef void (* GMimeEventCallback) (gpointer sender, gpointer args, gpointer us
 typedef struct _GMimeEvent GMimeEvent;
 
 G_GNUC_INTERNAL GMimeEvent *g_mime_event_new (gpointer owner);
-G_GNUC_INTERNAL void g_mime_event_destroy (GMimeEvent *event);
+G_GNUC_INTERNAL void g_mime_event_free (GMimeEvent *event);
 
 G_GNUC_INTERNAL void g_mime_event_add (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data);
 G_GNUC_INTERNAL void g_mime_event_remove (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data);

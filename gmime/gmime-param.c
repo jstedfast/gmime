@@ -648,14 +648,14 @@ g_mime_param_parse (GMimeParserOptions *options, const char *str)
 
 
 /**
- * g_mime_param_destroy:
- * @param: Mime param list to destroy
+ * g_mime_param_free:
+ * @param: a #GMimeParam
  *
  * Releases all memory used by this mime param back to the Operating
  * System.
  **/
 void
-g_mime_param_destroy (GMimeParam *param)
+g_mime_param_free (GMimeParam *param)
 {
 	GMimeParam *next;
 	

@@ -100,8 +100,8 @@ g_mime_content_disposition_finalize (GObject *object)
 	GMimeContentDisposition *disposition = (GMimeContentDisposition *) object;
 	
 	g_hash_table_destroy (disposition->param_hash);
-	g_mime_param_destroy (disposition->params);
-	g_mime_event_destroy (disposition->priv);
+	g_mime_param_free (disposition->params);
+	g_mime_event_free (disposition->priv);
 	g_free (disposition->disposition);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -230,7 +230,7 @@ g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMi
 	
 	/* destroy the current list/hash */
 	g_hash_table_remove_all (disposition->param_hash);
-	g_mime_param_destroy (disposition->params);
+	g_mime_param_free (disposition->params);
 	disposition->params = params;
 	
 	while (params != NULL) {

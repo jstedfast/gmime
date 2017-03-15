@@ -300,13 +300,13 @@ g_mime_header_list_new (GMimeParserOptions *options)
 
 
 /**
- * g_mime_header_list_destroy:
+ * g_mime_header_list_free:
  * @headers: a #GMimeHeaderList
  *
- * Destroy the header list.
+ * Frees the header list.
  **/
 void
-g_mime_header_list_destroy (GMimeHeaderList *headers)
+g_mime_header_list_free (GMimeHeaderList *headers)
 {
 	guint i;
 	

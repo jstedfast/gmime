@@ -106,7 +106,7 @@ test_indexing (void)
 		testsuite_check_failed ("indexing past end of headers: %s", ex->message);
 	} finally;
 	
-	g_mime_header_list_destroy (list);
+	g_mime_header_list_free (list);
 }
 
 static void

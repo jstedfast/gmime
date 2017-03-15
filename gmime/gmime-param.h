@@ -46,7 +46,7 @@ struct _GMimeParam {
 
 GMimeParam *g_mime_param_new (const char *name, const char *value);
 GMimeParam *g_mime_param_parse (GMimeParserOptions *options, const char *str);
-void g_mime_param_destroy (GMimeParam *param);
+void g_mime_param_free (GMimeParam *param);
 
 const GMimeParam *g_mime_param_next (const GMimeParam *param);
 

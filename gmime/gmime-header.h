@@ -69,8 +69,7 @@ ssize_t g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream)
 typedef struct _GMimeHeaderList GMimeHeaderList;
 
 GMimeHeaderList *g_mime_header_list_new (GMimeParserOptions *options);
-
-void g_mime_header_list_destroy (GMimeHeaderList *headers);
+void g_mime_header_list_free (GMimeHeaderList *headers);
 
 void g_mime_header_list_clear (GMimeHeaderList *headers);
 int g_mime_header_list_get_count (GMimeHeaderList *headers);

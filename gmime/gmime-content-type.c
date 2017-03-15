@@ -112,8 +112,8 @@ g_mime_content_type_finalize (GObject *object)
 	GMimeContentType *content_type = (GMimeContentType *) object;
 	
 	g_hash_table_destroy (content_type->param_hash);
-	g_mime_param_destroy (content_type->params);
-	g_mime_event_destroy (content_type->priv);
+	g_mime_param_free (content_type->params);
+	g_mime_event_free (content_type->priv);
 	g_free (content_type->subtype);
 	g_free (content_type->type);
 	
@@ -364,7 +364,7 @@ g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params)
 	
 	/* clear the current list/hash */
 	g_hash_table_remove_all (mime_type->param_hash);
-	g_mime_param_destroy (mime_type->params);
+	g_mime_param_free (mime_type->params);
 	mime_type->params = params;
 	
 	while (params != NULL) {

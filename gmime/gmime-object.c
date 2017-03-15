@@ -169,7 +169,7 @@ g_mime_object_finalize (GObject *object)
 	if (mime->headers) {
 		event = _g_mime_header_list_get_changed_event (mime->headers);
 		g_mime_event_remove (event, (GMimeEventCallback) header_list_changed, object);
-		g_mime_header_list_destroy (mime->headers);
+		g_mime_header_list_free (mime->headers);
 	}
 	
 	g_free (mime->content_id);

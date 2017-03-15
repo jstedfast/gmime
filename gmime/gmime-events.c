@@ -84,13 +84,13 @@ g_mime_event_new (gpointer owner)
 
 
 /**
- * g_mime_event_destroy:
+ * g_mime_event_free:
  * @event: a #GMimeEvent
  *
- * Destroys an event context.
+ * Frees an event context.
  **/
 void
-g_mime_event_destroy (GMimeEvent *event)
+g_mime_event_free (GMimeEvent *event)
 {
 	EventListener *node, *next;
 	
