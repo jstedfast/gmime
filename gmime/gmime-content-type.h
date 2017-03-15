@@ -52,10 +52,9 @@ struct _GMimeContentType {
 	GObject parent_object;
 	
 	char *type, *subtype;
-	GMimeParam *params;
+	GMimeParamList *params;
 	
 	/* < private > */
-	GHashTable *param_hash;
 	gpointer changed;
 };
 
@@ -65,7 +64,6 @@ struct _GMimeContentTypeClass {
 };
 
 GType g_mime_content_type_get_type (void);
-
 
 GMimeContentType *g_mime_content_type_new (const char *type, const char *subtype);
 GMimeContentType *g_mime_content_type_parse (GMimeParserOptions *options, const char *str);
@@ -80,8 +78,7 @@ const char *g_mime_content_type_get_media_type (GMimeContentType *mime_type);
 void g_mime_content_type_set_media_subtype (GMimeContentType *mime_type, const char *subtype);
 const char *g_mime_content_type_get_media_subtype (GMimeContentType *mime_type);
 
-void g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params);
-const GMimeParam *g_mime_content_type_get_params (GMimeContentType *mime_type);
+GMimeParamList *g_mime_content_type_get_params (GMimeContentType *mime_type);
 
 void g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *name, const char *value);
 const char *g_mime_content_type_get_parameter (GMimeContentType *mime_type, const char *name);

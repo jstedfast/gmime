@@ -32,32 +32,56 @@ typedef struct _GMimeParamList GMimeParamList;
 
 
 /**
- * GMimeParam:
- * @next: Pointer to the next param.
- * @name: Parameter name.
- * @value: Parameter value.
+ * GMimeParamEncodingMethod:
+ * @GMIME_PARAM_ENCODING_METHOD_DEFAULT: Use the default encoding method set on the #GMimeFormatOptions.
+ * @GMIME_PARAM_ENCODING_METHOD_RFC2231: Use the encoding method described in rfc2231.
+ * @GMIME_PARAM_ENCODING_METHOD_RFC2047: Use the encoding method described in rfc2047.
  *
- * A parameter name/value pair as used for some Content header fields.
+ * The MIME specifications specify that the proper method for encoding Content-Type and
+ * Content-Disposition parameter values is the method described in
+ * <a href="https://tools.ietf.org/html/rfc2231">rfc2231</a>. However, it is common for
+ * some older email clients to improperly encode using the method described in
+ * <a href="https://tools.ietf.org/html/rfc2047">rfc2047</a> instead.
+ **/
+typedef enum {
+	GMIME_PARAM_ENCODING_METHOD_DEFAULT = 0,
+	GMIME_PARAM_ENCODING_METHOD_RFC2231 = 1,
+	GMIME_PARAM_ENCODING_METHOD_RFC2047 = 2
+} GMimeParamEncodingMethod;
+
+
+/**
+ * GMimeParam:
+ * @method: The encoding method used for the parameter value.
+ * @charset: The charset to use when encoding the parameter value.
+ * @lang: the language specifier to use when encoding the value.
+ * @name: The parameter name.
+ * @value: The parameter value.
+ *
+ * A parameter name/value pair as used in the Content-Type and Content-Disposition headers.
  **/
 struct _GMimeParam {
-	GMimeParam *next;
-	char *name;
-	char *value;
+	GMimeParamEncodingMethod method;
+	char *charset, *lang;
+	char *name, *value;
+	
+	/* < private > */
+	gpointer changed;
 };
 
-GMimeParam *g_mime_param_new (const char *name, const char *value);
-GMimeParam *g_mime_param_parse (GMimeParserOptions *options, const char *str);
-void g_mime_param_free (GMimeParam *param);
+const char *g_mime_param_get_name (GMimeParam *param);
 
-const GMimeParam *g_mime_param_next (const GMimeParam *param);
+const char *g_mime_param_get_value (GMimeParam *param);
+void g_mime_param_set_value (GMimeParam *param, const char *value);
 
-GMimeParam *g_mime_param_append (GMimeParam *params, const char *name, const char *value);
-GMimeParam *g_mime_param_append_param (GMimeParam *params, GMimeParam *param);
+const char *g_mime_param_get_charset (GMimeParam *param);
+void g_mime_param_set_charset (GMimeParam *param, const char *charset);
 
-const char *g_mime_param_get_name (const GMimeParam *param);
-const char *g_mime_param_get_value (const GMimeParam *param);
+const char *g_mime_param_get_lang (GMimeParam *param);
+void g_mime_param_set_lang (GMimeParam *param, const char *lang);
 
-void g_mime_param_write_to_string (const GMimeParam *param, gboolean fold, GString *str);
+GMimeParamEncodingMethod g_mime_param_get_encoding_method (GMimeParam *param);
+void g_mime_param_set_encoding_method (GMimeParam *param, GMimeParamEncodingMethod method);
 
 
 /**
@@ -73,22 +97,21 @@ struct _GMimeParamList {
 };
 
 GMimeParamList *g_mime_param_list_new (void);
+GMimeParamList *g_mime_param_list_parse (GMimeParserOptions *options, const char *str);
 void g_mime_param_list_free (GMimeParamList *list);
 
 int g_mime_param_list_length (GMimeParamList *list);
 
 void g_mime_param_list_clear (GMimeParamList *list);
 
-int g_mime_param_list_add (GMimeParamList *list, GMimeParam *param);
-void g_mime_param_list_insert (GMimeParamList *list, int index, GMimeParam *param);
-gboolean g_mime_param_list_remove (GMimeParamList *list, GMimeParam *param);
+void g_mime_param_list_set_parameter (GMimeParamList *list, const char *name, const char *value);
+GMimeParam *g_mime_param_list_get_parameter (GMimeParamList *list, const char *name);
+GMimeParam *g_mime_param_list_get_parameter_at (GMimeParamList *list, int index);
+
+gboolean g_mime_param_list_remove (GMimeParamList *list, const char *name);
 gboolean g_mime_param_list_remove_at (GMimeParamList *list, int index);
 
-gboolean g_mime_param_list_contains (GMimeParamList *list, GMimeParam *param);
-int g_mime_param_list_index_of (GMimeParamList *list, GMimeParam *param);
-
-GMimeParam *g_mime_param_list_get_param (GMimeParamList *list, int index);
-void g_mime_param_list_set_param (GMimeParamList *list, int index, GMimeParam *param);
+void g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str);
 
 G_END_DECLS
 

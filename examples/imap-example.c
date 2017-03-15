@@ -77,23 +77,35 @@ escape_string (const char *string)
 static void
 write_part_bodystructure (GMimeObject *part, FILE *fp)
 {
+	GMimeContentType *content_type;
+	GMimeParamList *params;
+	const char *subtype;
 	GMimeParam *param;
+	int i, n;
 	
 	fputc ('(', fp);
 	
-	fprintf (fp, "\"%s\" ", part->content_type->type);
-	if (part->content_type->subtype)
-		fprintf (fp, "\"%s\" ", part->content_type->subtype);
+	content_type = g_mime_object_get_content_type (part);
+	
+	fprintf (fp, "\"%s\" ", g_mime_content_type_get_media_type (content_type));
+	
+	if ((subtype = g_mime_content_type_get_media_subtype (content_type)))
+		fprintf (fp, "\"%s\" ", subtype);
 	else
 		fputs ("\"\"", fp);
 	
 	/* Content-Type params */
-	if ((param = part->content_type->params)) {
+	params = g_mime_content_type_get_params (content_type);
+	if ((n = g_mime_param_list_length (params)) > 0) {
 		fputc ('(', fp);
-		while (param) {
-			fprintf (fp, "\"%s\" \"%s\"", param->name, param->value);
-			if ((param = param->next))
+		for (i = 0; i < n; i++) {
+			if (i > 0)
 				fputc (' ', fp);
+			
+			param = g_mime_param_list_get_parameter_at (params, i);
+			fprintf (fp, "\"%s\" \"%s\"", g_mime_param_get_name (param),
+				 g_mime_param_get_value (param));
+				
 		}
 		fputs (") ", fp);
 	} else {
@@ -103,7 +115,6 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 	if (GMIME_IS_MULTIPART (part)) {
 		GMimeMultipart *multipart = (GMimeMultipart *) part;
 		GMimeObject *subpart;
-		int i, n;
 		
 		n = g_mime_multipart_get_count (multipart);
 		for (i = 0; i < n; i++) {
@@ -192,14 +203,23 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		/* print body */
 		write_part_bodystructure ((GMimeObject *) message->mime_part, fp);
 	} else if (GMIME_IS_PART (part)) {
-		if (GMIME_OBJECT (part)->disposition) {
-			fprintf (fp, "\"%s\" ", GMIME_OBJECT (part)->disposition->disposition);
-			if ((param = GMIME_OBJECT (part)->disposition->params)) {
+		GMimeContentDisposition *disposition;
+		
+		disposition = g_mime_object_get_content_disposition (part);
+		
+		if (disposition) {
+			fprintf (fp, "\"%s\" ", g_mime_content_disposition_get_disposition (disposition));
+			
+			params = g_mime_content_disposition_get_params (disposition);
+			if ((n = g_mime_param_list_length (params)) > 0) {
 				fputc ('(', fp);
-				while (param) {
-					fprintf (fp, "\"%s\" \"%s\"", param->name, param->value);
-					if ((param = param->next))
+				for (i = 0; i < n; i++) {
+					if (i > 0)
 						fputc (' ', fp);
+					
+					param = g_mime_param_list_get_parameter_at (params, i);
+					fprintf (fp, "\"%s\" \"%s\"", g_mime_param_get_name (param),
+						 g_mime_param_get_value (param));
 				}
 				fputs (") ", fp);
 			} else {
@@ -209,7 +229,7 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 			fputs ("NIL NIL ", fp);
 		}
 		
-		switch (GMIME_PART (part)->encoding) {
+		switch (g_mime_part_get_content_encoding ((GMimePart *) part)) {
 		case GMIME_CONTENT_ENCODING_7BIT:
 			fputs ("\"7bit\"", fp);
 			break;
@@ -351,11 +371,11 @@ struct _bodystruct {
 	struct {
 		char *type;
 		char *subtype;
-		GMimeParam *params;
+		GMimeParamList *params;
 	} content;
 	struct {
 		char *type;
-		GMimeParam *params;
+		GMimeParamList *params;
 	} disposition;
 	char *encoding;
 	struct _envelope *envelope;
@@ -415,49 +435,53 @@ decode_qstring (unsigned char **in, unsigned char *inend)
 	return qstring;
 }
 
-static GMimeParam *
-decode_param (unsigned char **in, unsigned char *inend)
+static gboolean
+decode_param (unsigned char **in, unsigned char *inend, char **name, char **value)
 {
 	GMimeParam *param;
-	char *name, *val;
+	char *n, *v;
 	
-	if (!(name = decode_qstring (in, inend)))
-		return NULL;
+	if (!(n = decode_qstring (in, inend)))
+		return FALSE;
 	
-	g_assert ((val = decode_qstring (in, inend)));
+	if (!(v = decode_qstring (in, inend))) {
+		g_free (n);
+		return FALSE;
+	}
 	
-	param = g_mime_param_new (name, val);
-	g_free (name);
-	g_free (val);
+	*name = n;
+	*value = v;
 	
-	return param;
+	return TRUE;
 }
 
-static GMimeParam *
+static GMimeParamList *
 decode_params (unsigned char **in, unsigned char *inend)
 {
-	GMimeParam *params, *tail, *n;
+	GMimeParamList *params;
 	unsigned char *inptr;
+	char *name, *value;
 	
 	inptr = *in;
-	params = NULL;
-	tail = (GMimeParam *) &params;
+	
+	params = g_mime_param_list_new ();
 	
 	while (inptr < inend && *inptr == ' ')
 		inptr++;
 	
 	if (inptr == inend) {
 		g_assert_not_reached ();
-		return NULL;
+		return params;
 	}
 	
 	if (strncmp ((const char *) inptr, "NIL", 3) != 0) {
 		g_assert (*inptr == '(');
 		inptr++;
 		
-		while ((n = decode_param (&inptr, inend)) != NULL) {
-			tail->next = n;
-			tail = n;
+		while (decode_param (&inptr, inend, &name, &value)) {
+			g_mime_param_list_set_parameter (params, name, value);
+			g_free (value);
+			g_free (name);
 			
 			while (inptr < inend && *inptr == ' ')
 				inptr++;
@@ -597,7 +621,7 @@ static void
 bodystruct_dump (struct _bodystruct *part, int depth)
 {
 	GMimeParam *param;
-	int i;
+	int i, n;
 	
 	for (i = 0; i < depth; i++)
 		fputs ("  ", stderr);
@@ -606,10 +630,11 @@ bodystruct_dump (struct _bodystruct *part, int depth)
 		 part->content.subtype);
 	
 	if (part->content.params) {
-		param = part->content.params;
-		while (param) {
-			fprintf (stderr, "; %s=%s", param->name, param->value);
-			param = param->next;
+		n = g_mime_param_list_length (part->content.params);
+		for (int i = 0; i < n; i++) {
+			param = g_mime_param_list_get_parameter_at (part->content.params, i);
+			fprintf (stderr, "; %s=%s", g_mime_param_get_name (param),
+				 g_mime_param_get_value (param));
 		}
 	}
 	
@@ -662,10 +687,11 @@ bodystruct_dump (struct _bodystruct *part, int depth)
 				fputs ("  ", stderr);
 			fprintf (stderr, "Content-Disposition: %s", part->disposition.type);
 			if (part->disposition.params) {
-				param = part->disposition.params;
-				while (param) {
-					fprintf (stderr, "; %s=%s", param->name, param->value);
-					param = param->next;
+				n = g_mime_param_list_length (part->disposition.params);
+				for (i = 0; i < n; i++) {
+					param = g_mime_param_list_get_parameter_at (part->disposition.params, i);
+					fprintf (stderr, "; %s=%s", g_mime_param_get_name (param),
+						 g_mime_param_get_value (param));
 				}
 			}
 			
@@ -691,11 +717,11 @@ bodystruct_free (struct _bodystruct *node)
 		g_free (node->content.type);
 		g_free (node->content.subtype);
 		if (node->content.params)
-			g_mime_param_free (node->content.params);
+			g_mime_param_list_free (node->content.params);
 		
 		g_free (node->disposition.type);
 		if (node->disposition.params)
-			g_mime_param_free (node->disposition.params);
+			g_mime_param_list_free (node->disposition.params);
 		
 		g_free (node->encoding);
 		

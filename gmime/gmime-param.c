@@ -31,6 +31,7 @@
 #include "gmime-param.h"
 #include "gmime-common.h"
 #include "gmime-events.h"
+#include "gmime-internal.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-iconv-utils.h"
@@ -64,6 +65,24 @@ static unsigned char tohex[16] = {
 };
 
 
+static GMimeParam *
+g_mime_param_new_internal (void)
+{
+	GMimeParam *param;
+	
+	param = g_slice_new (GMimeParam);
+	
+	param->changed = g_mime_event_new (param);
+	param->method = GMIME_PARAM_ENCODING_METHOD_DEFAULT;
+	param->charset = NULL;
+	param->value = NULL;
+	param->name = NULL;
+	param->lang = NULL;
+	
+	return param;
+}
+
+
 /**
  * g_mime_param_new:
  * @name: parameter name
@@ -73,19 +92,670 @@ static unsigned char tohex[16] = {
  *
  * Returns: a new paramter structure.
  **/
-GMimeParam *
+static GMimeParam *
 g_mime_param_new (const char *name, const char *value)
 {
 	GMimeParam *param;
 	
-	param = g_new (GMimeParam, 1);
-	
-	param->next = NULL;
-	param->name = g_strdup (name);
+	param = g_mime_param_new_internal ();
 	param->value = g_strdup (value);
+	param->name = g_strdup (name);
 	
 	return param;
 }
+
+
+/**
+ * g_mime_param_free:
+ * @param: a #GMimeParam
+ *
+ * Releases all memory used by this mime param back to the Operating
+ * System.
+ **/
+static void
+g_mime_param_free (GMimeParam *param)
+{
+	g_return_if_fail (param != NULL);
+	
+	g_mime_event_free (param->changed);
+	g_free (param->charset);
+	g_free (param->value);
+	g_free (param->name);
+	g_free (param->lang);
+	
+	g_slice_free (GMimeParam, param);
+}
+
+
+/**
+ * g_mime_param_get_name:
+ * @param: a #GMimeParam
+ *
+ * Gets the name of the parameter.
+ *
+ * Returns: the name of the parameter.
+ **/
+const char *
+g_mime_param_get_name (GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, NULL);
+	
+	return param->name;
+}
+
+
+/**
+ * g_mime_param_get_value:
+ * @param: a #GMimeParam
+ *
+ * Gets the value of the parameter.
+ *
+ * Returns: the value of the parameter.
+ **/
+const char *
+g_mime_param_get_value (GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, NULL);
+	
+	return param->value;
+}
+
+
+/**
+ * g_mime_param_set_value:
+ * @param: a #GMimeParam
+ * @value: the new parameter value
+ *
+ * Sets the parameter value to @value.
+ **/
+void
+g_mime_param_set_value (GMimeParam *param, const char *value)
+{
+	g_return_if_fail (param != NULL);
+	g_return_if_fail (value != NULL);
+	
+	g_free (param->value);
+	param->value = g_strdup (value);
+	
+	g_mime_event_emit (param->changed, NULL);
+}
+
+
+/**
+ * g_mime_param_get_charset:
+ * @param: a #GMimeParam
+ *
+ * Gets the charset used for encoding the parameter.
+ *
+ * Returns: the charset used for encoding the parameter.
+ **/
+const char *
+g_mime_param_get_charset (GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, NULL);
+	
+	return param->charset;
+}
+
+
+/**
+ * g_mime_param_set_charset:
+ * @param: a #GMimeParam
+ * @charset: the charset or %NULL to use the default
+ *
+ * Sets the parameter charset used for encoding the value.
+ **/
+void
+g_mime_param_set_charset (GMimeParam *param, const char *charset)
+{
+	g_return_if_fail (param != NULL);
+	
+	g_free (param->charset);
+	param->charset = charset ? g_strdup (charset) : NULL;
+	
+	g_mime_event_emit (param->changed, NULL);
+}
+
+
+/**
+ * g_mime_param_get_lang:
+ * @param: a #GMimeParam
+ *
+ * Gets the language specifier used for encoding the parameter.
+ *
+ * Returns: the language specifier used for encoding the parameter.
+ **/
+const char *
+g_mime_param_get_lang (GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, NULL);
+	
+	return param->lang;
+}
+
+
+/**
+ * g_mime_param_set_lang:
+ * @param: a #GMimeParam
+ * @lang: the language specifier
+ *
+ * Sets the parameter language specifier used for encoding the value.
+ **/
+void
+g_mime_param_set_lang (GMimeParam *param, const char *lang)
+{
+	g_return_if_fail (param != NULL);
+	
+	g_free (param->lang);
+	param->lang = lang ? g_strdup (lang) : NULL;
+	
+	g_mime_event_emit (param->changed, NULL);
+}
+
+
+/**
+ * g_mime_param_get_encoding_method:
+ * @param: a #GMimeParam
+ *
+ * Gets the encoding method used for encoding the parameter.
+ *
+ * Returns: the encoding method used for encoding the parameter.
+ **/
+GMimeParamEncodingMethod
+g_mime_param_get_encoding_method (GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, GMIME_PARAM_ENCODING_METHOD_DEFAULT);
+	
+	return param->method;
+}
+
+
+/**
+ * g_mime_param_set_encoding_method:
+ * @param: a #GMimeParam
+ * @method: a #GMimeParamEncodingMethod
+ *
+ * Sets the encoding method used for encoding the value.
+ **/
+void
+g_mime_param_set_encoding_method (GMimeParam *param, GMimeParamEncodingMethod method)
+{
+	g_return_if_fail (param != NULL);
+	
+	param->method = method;
+	
+	g_mime_event_emit (param->changed, NULL);
+}
+
+
+static void
+param_changed (GMimeParam *param, gpointer args, GMimeParamList *list)
+{
+	g_mime_event_emit (list->changed, NULL);
+}
+
+
+/**
+ * g_mime_param_list_new:
+ *
+ * Creates a new Content-Type or Content-Disposition parameter list.
+ *
+ * Returns: a new #GMimeParamList.
+ **/
+GMimeParamList *
+g_mime_param_list_new (void)
+{
+	GMimeParamList *list;
+	
+	list = g_slice_new (GMimeParamList);
+	list->changed = g_mime_event_new (list);
+	list->params = g_ptr_array_new ();
+	
+	return list;
+}
+
+
+/**
+ * g_mime_param_list_free:
+ * @list: a #GMimeParamList
+ *
+ * Frees the #GMimeParamList.
+ **/
+void
+g_mime_param_list_free (GMimeParamList *list)
+{
+	guint i;
+	
+	g_return_if_fail (list != NULL);
+	
+	for (i = 0; i < list->params->len; i++)
+		g_mime_param_free (list->params->pdata[i]);
+	
+	g_ptr_array_free (list->params, TRUE);
+	g_mime_event_free (list->changed);
+	
+	g_slice_free (GMimeParamList, list);
+}
+
+
+/**
+ * g_mime_param_list_length:
+ * @list: a #GMimeParamList
+ *
+ * Gets the length of the list.
+ *
+ * Returns: the number of #GMimeParam items in the list.
+ **/
+int
+g_mime_param_list_length (GMimeParamList *list)
+{
+	g_return_val_if_fail (list != NULL, -1);
+	
+	return list->params->len;
+}
+
+
+/**
+ * g_mime_param_list_clear:
+ * @list: a #GMimeParamList
+ *
+ * Clears the list of parameters.
+ **/
+void
+g_mime_param_list_clear (GMimeParamList *list)
+{
+	guint i;
+	
+	g_return_if_fail (list != NULL);
+	
+	for (i = 0; i < list->params->len; i++)
+		g_mime_param_free (list->params->pdata[i]);
+	
+	g_ptr_array_set_size (list->params, 0);
+	
+	g_mime_event_emit (list->changed, NULL);
+}
+
+
+/**
+ * g_mime_param_list_add:
+ * @list: a #GMimeParamList
+ * @param: a #GMimeParam
+ *
+ * Adds a #GMimeParam to the #GMimeParamList.
+ *
+ * Returns: the index of the added #GMimeParam.
+ **/
+static void
+g_mime_param_list_add (GMimeParamList *list, GMimeParam *param)
+{
+	g_mime_event_add (param->changed, (GMimeEventCallback) param_changed, list);
+	g_ptr_array_add (list->params, param);
+}
+
+
+/**
+ * g_mime_param_list_set_parameter:
+ * @list: a #GMimeParamList
+ * @name: The name of the parameter
+ * @value: The parameter value
+ *
+ * Sets the specified parameter to @value.
+ **/
+void
+g_mime_param_list_set_parameter (GMimeParamList *list, const char *name, const char *value)
+{
+	GMimeParam *param;
+	guint i;
+	
+	g_return_if_fail (list != NULL);
+	g_return_if_fail (name != NULL);
+	g_return_if_fail (value != NULL);
+	
+	for (i = 0; i < list->params->len; i++) {
+		param = list->params->pdata[i];
+		
+		if (!g_ascii_strcasecmp (param->name, name)) {
+			g_mime_param_set_value (param, value);
+			return;
+		}
+	}
+	
+	param = g_mime_param_new (name, value);
+	g_mime_param_list_add (list, param);
+	
+	g_mime_event_emit (list->changed, NULL);
+}
+
+
+/**
+ * g_mime_param_list_get_parameter:
+ * @list: list: a #GMimeParamList
+ * @name: the name of the parameter
+ *
+ * Gets the #GMimeParam with the given @name.
+ *
+ * Returns: the requested #GMimeParam.
+ **/
+GMimeParam *
+g_mime_param_list_get_parameter (GMimeParamList *list, const char *name)
+{
+	GMimeParam *param;
+	guint i;
+	
+	g_return_val_if_fail (list != NULL, NULL);
+	g_return_val_if_fail (name != NULL, NULL);
+	
+	for (i = 0; i < list->params->len; i++) {
+		param = list->params->pdata[i];
+		
+		if (!g_ascii_strcasecmp (param->name, name))
+			return param;
+	}
+	
+	return NULL;
+}
+
+
+/**
+ * g_mime_param_list_get_parameter_at:
+ * @list: a #GMimeParamList
+ * @index: the index of the requested parameter
+ *
+ * Gets the #GMimeParam at the specified @index.
+ *
+ * Returns: the #GMimeParam at the specified index.
+ **/
+GMimeParam *
+g_mime_param_list_get_parameter_at (GMimeParamList *list, int index)
+{
+	g_return_val_if_fail (list != NULL, NULL);
+	g_return_val_if_fail (index >= 0, NULL);
+	
+	if ((guint) index >= list->params->len)
+		return NULL;
+	
+	return list->params->pdata[index];
+}
+
+
+/**
+ * g_mime_param_list_remove:
+ * @list: a #GMimeParamList
+ * @name: the name of the parameter
+ *
+ * Removes a parameter from the #GMimeParamList.
+ *
+ * Returns: %TRUE if the specified parameter was removed or %FALSE otherwise.
+ **/
+gboolean
+g_mime_param_list_remove (GMimeParamList *list, const char *name)
+{
+	GMimeParam *param;
+	guint i;
+	
+	g_return_val_if_fail (list != NULL, FALSE);
+	g_return_val_if_fail (name != NULL, FALSE);
+	
+	for (i = 0; i < list->params->len; i++) {
+		param = list->params->pdata[i];
+		
+		if (!g_ascii_strcasecmp (param->name, name)) {
+			g_ptr_array_remove_index (list->params, i);
+			g_mime_param_free (param);
+			return TRUE;
+		}
+	}
+	
+	return FALSE;
+}
+
+
+/**
+ * g_mime_param_list_remove_at:
+ * @list: a #GMimeParamList
+ * @index: index of the param to remove
+ *
+ * Removes a #GMimeParam from the #GMimeParamList at the specified index.
+ *
+ * Returns: %TRUE if a #GMimeParam was removed or %FALSE otherwise.
+ **/
+gboolean
+g_mime_param_list_remove_at (GMimeParamList *list, int index)
+{
+	GMimeParam *param;
+	
+	g_return_val_if_fail (list != NULL, FALSE);
+	g_return_val_if_fail (index >= 0, FALSE);
+	
+	if ((guint) index >= list->params->len)
+		return FALSE;
+	
+	param = list->params->pdata[index];
+	g_ptr_array_remove_index (list->params, index);
+	g_mime_param_free (param);
+	
+	return TRUE;
+}
+
+
+/* FIXME: I wrote this in a quick & dirty fasion - it may not be 100% correct */
+static char *
+encode_param (GMimeParam *param, gboolean *encoded)
+{
+	register const unsigned char *inptr = (const unsigned char *) param->value;
+	const unsigned char *start = inptr;
+	const char *charset = NULL;
+	iconv_t cd = (iconv_t) -1;
+	char *outbuf = NULL;
+	unsigned char c;
+	char *outstr;
+	GString *str;
+	
+	*encoded = FALSE;
+	
+	while (*inptr && ((inptr - start) < GMIME_FOLD_LEN)) {
+		if (*inptr > 127)
+			break;
+		inptr++;
+	}
+	
+	if (*inptr == '\0')
+		return g_strdup (param->value);
+	
+	if (!param->charset) {
+		if (*inptr > 127)
+			charset = g_mime_charset_best (param->value, strlen (param->value));
+		
+		if (!charset)
+			charset = "iso-8859-1";
+	} else {
+		charset = param->charset;
+	}
+	
+	if (g_ascii_strcasecmp (charset, "UTF-8") != 0)
+		cd = g_mime_iconv_open (charset, "UTF-8");
+	
+	if (cd != (iconv_t) -1) {
+		outbuf = g_mime_iconv_strdup (cd, param->value);
+		g_mime_iconv_close (cd);
+		if (outbuf == NULL) {
+			charset = "UTF-8";
+			inptr = start;
+		} else {
+			inptr = (const unsigned char *) outbuf;
+		}
+	} else {
+		charset = "UTF-8";
+		inptr = start;
+	}
+	
+	/* FIXME: use rfc2047 encoding if requested... */
+	str = g_string_new (charset);
+	g_string_append_c (str, '\'');
+	if (param->lang)
+		g_string_append (str, param->lang);
+	g_string_append_c (str, '\'');
+	
+	while ((c = *inptr++)) {
+		if (!is_attrchar (c))
+			g_string_append_printf (str, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
+		else
+			g_string_append_c (str, c);
+	}
+	
+	g_free (outbuf);
+	
+	outstr = g_string_free (str, FALSE);
+	*encoded = TRUE;
+	
+	return outstr;
+}
+
+static void
+g_string_append_len_quoted (GString *str, const char *text, size_t len)
+{
+	register const char *inptr = text;
+	const char *inend = text + len;
+	
+	g_string_append_c (str, '"');
+	
+	while (inptr < inend) {
+		if ((*inptr == '"') || *inptr == '\\')
+			g_string_append_c (str, '\\');
+		
+		g_string_append_c (str, *inptr);
+		
+		inptr++;
+	}
+	
+	g_string_append_c (str, '"');
+}
+
+
+/**
+ * g_mime_param_list_encode:
+ * @list: a #GMimeParamList
+ * @fold: %TRUE if the parameter list should be folded; otherwise, %FALSE
+ * @str: the output string buffer
+ *
+ * Encodes the parameter list into @str, folding lines if required.
+ **/
+void
+g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str)
+{
+	guint count, i;
+	int used;
+	
+	g_return_if_fail (list != NULL);
+	g_return_if_fail (str != NULL);
+	
+	count = list->params->len;
+	used = str->len;
+	
+	for (i = 0; i < count; i++) {
+		gboolean encoded = FALSE;
+		int here = str->len;
+		size_t nlen, vlen;
+		GMimeParam *param;
+		int quote = 0;
+		char *value;
+		
+		param = (GMimeParam *) list->params->pdata[i];
+		
+		if (!param->value)
+			continue;
+		
+		if (!(value = encode_param (param, &encoded))) {
+			w(g_warning ("appending parameter %s=%s violates rfc2184",
+				     param->name, param->value));
+			value = g_strdup (param->value);
+		}
+		
+		if (!encoded) {
+			char *ch;
+			
+			for (ch = value; *ch; ch++) {
+				if (!is_attrchar (*ch) || is_lwsp (*ch))
+					quote++;
+			}
+		}
+		
+		nlen = strlen (param->name);
+		vlen = strlen (value);
+		
+		if (fold && (used + nlen + vlen + quote > GMIME_FOLD_LEN - 2)) {
+			g_string_append (str, ";\n\t");
+			here = str->len;
+			used = 1;
+		} else {
+			g_string_append (str, "; ");
+			here = str->len;
+			used += 2;
+		}
+		
+		if (nlen + vlen + quote > GMIME_FOLD_LEN - 2) {
+			/* we need to do special rfc2184 parameter wrapping */
+			size_t maxlen = GMIME_FOLD_LEN - (nlen + 6);
+			char *inptr, *inend;
+			int i = 0;
+			
+			inptr = value;
+			inend = value + vlen;
+			
+			while (inptr < inend) {
+				char *ptr = inptr + MIN ((size_t) (inend - inptr), maxlen);
+				
+				if (encoded && ptr < inend) {
+					/* be careful not to break an encoded char (ie %20) */
+					char *q = ptr;
+					int j = 2;
+					
+					for ( ; j > 0 && q > inptr && *q != '%'; j--, q--);
+					if (*q == '%')
+						ptr = q;
+				}
+				
+				if (i != 0) {
+					if (fold)
+						g_string_append (str, ";\n\t");
+					else
+						g_string_append (str, "; ");
+					
+					here = str->len;
+					used = 1;
+				}
+				
+				g_string_append_printf (str, "%s*%d%s=", param->name,
+							i++, encoded ? "*" : "");
+				
+				if (encoded || !quote)
+					g_string_append_len (str, inptr, (size_t) (ptr - inptr));
+				else
+					g_string_append_len_quoted (str, inptr, (size_t) (ptr - inptr));
+				
+				used += (str->len - here);
+				
+				inptr = ptr;
+			}
+		} else {
+			g_string_append_printf (str, "%s%s=", param->name, encoded ? "*" : "");
+			
+			if (encoded || !quote)
+				g_string_append_len (str, value, vlen);
+			else
+				g_string_append_len_quoted (str, value, vlen);
+			
+			used += (str->len - here);
+		}
+		
+		g_free (value);
+	}
+	
+	if (fold)
+		g_string_append_c (str, '\n');
+}
+
 
 #define INT_OVERFLOW(x,d) (((x) > (INT_MAX / 10)) || ((x) == (INT_MAX / 10) && (d) > (INT_MAX % 10)))
 
@@ -239,16 +909,16 @@ decode_param_token (const char **in)
 }
 
 static gboolean
-decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *encoded)
+decode_rfc2184_param (const char **in, char **namep, int *part, gboolean *encoded)
 {
 	gboolean is_rfc2184 = FALSE;
 	const char *inptr = *in;
-	char *param;
+	char *name;
 	
 	*encoded = FALSE;
 	*part = -1;
 	
-	param = decode_param_token (&inptr);
+	name = decode_param_token (&inptr);
 	
 	skip_cfws (&inptr);
 	
@@ -274,24 +944,23 @@ decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *encod
 		}
 	}
 	
-	if (paramp)
-		*paramp = param;
+	*namep = name;
 	
-	if (param)
+	if (name)
 		*in = inptr;
 	
 	return is_rfc2184;
 }
 
 static gboolean
-decode_param (GMimeParserOptions *options, const char **in, char **paramp, char **valuep, int *id, gboolean *encoded)
+decode_param (GMimeParserOptions *options, const char **in, char **namep, char **valuep, int *id, gboolean *encoded)
 {
 	gboolean is_rfc2184 = FALSE;
 	const char *inptr = *in;
-	char *param, *value = NULL;
+	char *name, *value = NULL;
 	char *val;
 	
-	is_rfc2184 = decode_rfc2184_param (&inptr, &param, id, encoded);
+	is_rfc2184 = decode_rfc2184_param (&inptr, &name, id, encoded);
 	
 	if (*inptr == '=') {
 		inptr++;
@@ -320,20 +989,20 @@ decode_param (GMimeParserOptions *options, const char **in, char **paramp, char 
 					value = val;
 				} else {
 					d(g_warning ("Failed to convert %s param value (\"%s\") to UTF-8: %s",
-						     param, value, g_strerror (errno)));
+						     name, value, g_strerror (errno)));
 				}
 			}
 		}
 	}
 	
-	if (param && value) {
-		*paramp = param;
+	if (name && value) {
 		*valuep = value;
+		*namep = name;
 		*in = inptr;
 		return TRUE;
 	} else {
-		g_free (param);
 		g_free (value);
+		g_free (name);
 		return FALSE;
 	}
 }
@@ -520,30 +1189,28 @@ rfc2184_param_new (char *name, char *value, int id, gboolean encoded)
 		g_free (value);
 	}
 	
-	rfc2184->param = g_new (GMimeParam, 1);
-	rfc2184->param->next = NULL;
+	rfc2184->param = g_mime_param_new_internal ();
 	rfc2184->param->name = name;
-	rfc2184->param->value = NULL;
 	
 	return rfc2184;
 }
 
-static GMimeParam *
+static GMimeParamList *
 decode_param_list (GMimeParserOptions *options, const char *in)
 {
 	struct _rfc2184_param *rfc2184, *list, *t;
-	GMimeParam *param, *params, *tail;
+	char *name, *value, *charset;
 	struct _rfc2184_part *part;
 	GHashTable *rfc2184_hash;
 	const char *inptr = in;
-	char *name, *value;
+	GMimeParamList *params;
+	GMimeParam *param;
 	gboolean encoded;
 	GString *gvalue;
 	guint i;
 	int id;
 	
-	params = NULL;
-	tail = (GMimeParam *) &params;
+	params = g_mime_param_list_new ();
 	
 	list = NULL;
 	t = (struct _rfc2184_param *) &list;
@@ -571,16 +1238,13 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 				t = rfc2184;
 				
 				g_hash_table_insert (rfc2184_hash, param->name, rfc2184);
-				
-				tail->next = param;
-				tail = param;
+				g_mime_param_list_add (params, param);
 			} else {
 				rfc2184_param_add_part (rfc2184, value, id, encoded);
 				g_free (name);
 			}
 		} else {
-			param = g_new (GMimeParam, 1);
-			param->next = NULL;
+			param = g_mime_param_new_internal ();
 			param->name = name;
 			
 			if (encoded) {
@@ -592,8 +1256,7 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 				param->value = value;
 			}
 			
-			tail->next = param;
-			tail = param;
+			g_mime_param_list_add (params, param);
 		}
 		
 		skip_cfws (&inptr);
@@ -619,9 +1282,10 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 		g_ptr_array_free (rfc2184->parts, TRUE);
 		
 		param->value = charset_convert (rfc2184->charset, gvalue->str, gvalue->len);
-		g_string_free (gvalue, FALSE);
+		param->charset = rfc2184->charset ? g_strdup (rfc2184->charset) : NULL;
+		param->lang = rfc2184->lang;
 		
-		g_free (rfc2184->lang);
+		g_string_free (gvalue, FALSE);
 		g_free (rfc2184);
 		rfc2184 = t;
 	}
@@ -631,666 +1295,18 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 
 
 /**
- * g_mime_param_parse:
+ * g_mime_param_list_parse:
  * @options: a #GMimeParserOptions
- * @str: input string
+ * @str: a string to parse
  *
- * Parses the input stringinto a parameter list.
+ * Parses the input string into a parameter list.
  *
- * Returns: a #GMimeParam linked list based on @text.
+ * Returns: a #GMimeParamList.
  **/
-GMimeParam *
-g_mime_param_parse (GMimeParserOptions *options, const char *str)
+GMimeParamList *
+g_mime_param_list_parse (GMimeParserOptions *options, const char *str)
 {
 	g_return_val_if_fail (str != NULL, NULL);
 	
 	return decode_param_list (options, str);
-}
-
-
-/**
- * g_mime_param_free:
- * @param: a #GMimeParam
- *
- * Releases all memory used by this mime param back to the Operating
- * System.
- **/
-void
-g_mime_param_free (GMimeParam *param)
-{
-	GMimeParam *next;
-	
-	while (param) {
-		next = param->next;
-		g_free (param->name);
-		g_free (param->value);
-		g_free (param);
-		param = next;
-	}
-}
-
-
-/**
- * g_mime_param_next:
- * @param: a #GMimeParam node
- *
- * Gets the next #GMimeParam node in the list.
- *
- * Returns: the next #GMimeParam node in the list.
- **/
-const GMimeParam *
-g_mime_param_next (const GMimeParam *param)
-{
-	g_return_val_if_fail (param != NULL, NULL);
-	
-	return param->next;
-}
-
-
-/**
- * g_mime_param_get_name:
- * @param: a #GMimeParam
- *
- * Gets the name of the parameter.
- *
- * Returns: the name of the parameter.
- **/
-const char *
-g_mime_param_get_name (const GMimeParam *param)
-{
-	g_return_val_if_fail (param != NULL, NULL);
-	
-	return param->name;
-}
-
-
-/**
- * g_mime_param_get_value:
- * @param: a #GMimeParam
- *
- * Gets the value of the parameter.
- *
- * Returns: the value of the parameter.
- **/
-const char *
-g_mime_param_get_value (const GMimeParam *param)
-{
-	g_return_val_if_fail (param != NULL, NULL);
-	
-	return param->value;
-}
-
-
-/**
- * g_mime_param_append:
- * @params: param list
- * @name: new param name
- * @value: new param value
- *
- * Appends a new parameter with name @name and value @value to the
- * parameter list @params.
- *
- * Returns: a param list with the new param of name @name and value
- * @value appended to the list of params @params.
- **/
-GMimeParam *
-g_mime_param_append (GMimeParam *params, const char *name, const char *value)
-{
-	GMimeParam *param, *p;
-	
-	g_return_val_if_fail (name != NULL, params);
-	g_return_val_if_fail (value != NULL, params);
-	
-	param = g_mime_param_new (name, value);
-	if (params) {
-		p = params;
-		while (p->next)
-			p = p->next;
-		p->next = param;
-	} else
-		params = param;
-	
-	return params;
-}
-
-
-/**
- * g_mime_param_append_param:
- * @params: param list
- * @param: param to append
- *
- * Appends @param to the param list @params.
- *
- * Returns: a param list with the new param @param appended to the list
- * of params @params.
- **/
-GMimeParam *
-g_mime_param_append_param (GMimeParam *params, GMimeParam *param)
-{
-	GMimeParam *p;
-	
-	g_return_val_if_fail (param != NULL, params);
-	
-	if (params) {
-		p = params;
-		while (p->next)
-			p = p->next;
-		p->next = param;
-	} else
-		params = param;
-	
-	return params;
-}
-
-/* FIXME: I wrote this in a quick & dirty fasion - it may not be 100% correct */
-static char *
-encode_param (const char *in, gboolean *encoded)
-{
-	register const unsigned char *inptr = (const unsigned char *) in;
-	const unsigned char *instart = inptr;
-	iconv_t cd = (iconv_t) -1;
-	const char *charset = NULL;
-	char *outbuf = NULL;
-	unsigned char c;
-	char *outstr;
-	GString *out;
-	
-	*encoded = FALSE;
-	
-	while (*inptr && ((inptr - instart) < GMIME_FOLD_LEN)) {
-		if (*inptr > 127)
-			break;
-		inptr++;
-	}
-	
-	if (*inptr == '\0')
-		return g_strdup (in);
-	
-	if (*inptr > 127)
-		charset = g_mime_charset_best (in, strlen (in));
-	
-	if (!charset)
-		charset = "iso-8859-1";
-	
-	if (g_ascii_strcasecmp (charset, "UTF-8") != 0)
-		cd = g_mime_iconv_open (charset, "UTF-8");
-	
-	if (cd != (iconv_t) -1) {
-		outbuf = g_mime_iconv_strdup (cd, in);
-		g_mime_iconv_close (cd);
-		if (outbuf == NULL) {
-			charset = "UTF-8";
-			inptr = instart;
-		} else {
-			inptr = (const unsigned char *) outbuf;
-		}
-	} else {
-		charset = "UTF-8";
-		inptr = instart;
-	}
-	
-	/* FIXME: set the 'language' as well, assuming we can get that info...? */
-	out = g_string_new ("");
-	g_string_append_printf (out, "%s''", charset);
-	
-	while ((c = *inptr++)) {
-		if (!is_attrchar (c))
-			g_string_append_printf (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
-		else
-			g_string_append_c (out, c);
-	}
-	
-	g_free (outbuf);
-	
-	outstr = out->str;
-	g_string_free (out, FALSE);
-	*encoded = TRUE;
-	
-	return outstr;
-}
-
-static void
-g_string_append_len_quoted (GString *out, const char *in, size_t len)
-{
-	register const char *inptr;
-	const char *inend;
-	
-	g_string_append_c (out, '"');
-	
-	inptr = in;
-	inend = in + len;
-	
-	while (inptr < inend) {
-		if ((*inptr == '"') || *inptr == '\\')
-			g_string_append_c (out, '\\');
-		
-		g_string_append_c (out, *inptr);
-		
-		inptr++;
-	}
-	
-	g_string_append_c (out, '"');
-}
-
-static void
-param_list_format (GString *out, const GMimeParam *param, gboolean fold)
-{
-	int used = out->len;
-	
-	while (param) {
-		gboolean encoded = FALSE;
-		int here = out->len;
-		size_t nlen, vlen;
-		int quote = 0;
-		char *value;
-		
-		if (!param->value) {
-			param = param->next;
-			continue;
-		}
-		
-		if (!(value = encode_param (param->value, &encoded))) {
-			w(g_warning ("appending parameter %s=%s violates rfc2184",
-				     param->name, param->value));
-			value = g_strdup (param->value);
-		}
-		
-		if (!encoded) {
-			char *ch;
-			
-			for (ch = value; *ch; ch++) {
-				if (!is_attrchar (*ch) || is_lwsp (*ch))
-					quote++;
-			}
-		}
-		
-		nlen = strlen (param->name);
-		vlen = strlen (value);
-		
-		if (fold && (used + nlen + vlen + quote > GMIME_FOLD_LEN - 2)) {
-			g_string_append (out, ";\n\t");
-			here = out->len;
-			used = 1;
-		} else {
-			g_string_append (out, "; ");
-			here = out->len;
-			used += 2;
-		}
-		
-		if (nlen + vlen + quote > GMIME_FOLD_LEN - 2) {
-			/* we need to do special rfc2184 parameter wrapping */
-			size_t maxlen = GMIME_FOLD_LEN - (nlen + 6);
-			char *inptr, *inend;
-			int i = 0;
-			
-			inptr = value;
-			inend = value + vlen;
-			
-			while (inptr < inend) {
-				char *ptr = inptr + MIN ((size_t) (inend - inptr), maxlen);
-				
-				if (encoded && ptr < inend) {
-					/* be careful not to break an encoded char (ie %20) */
-					char *q = ptr;
-					int j = 2;
-					
-					for ( ; j > 0 && q > inptr && *q != '%'; j--, q--);
-					if (*q == '%')
-						ptr = q;
-				}
-				
-				if (i != 0) {
-					if (fold)
-						g_string_append (out, ";\n\t");
-					else
-						g_string_append (out, "; ");
-					
-					here = out->len;
-					used = 1;
-				}
-				
-				g_string_append_printf (out, "%s*%d%s=", param->name,
-							i++, encoded ? "*" : "");
-				
-				if (encoded || !quote)
-					g_string_append_len (out, inptr, (size_t) (ptr - inptr));
-				else
-					g_string_append_len_quoted (out, inptr, (size_t) (ptr - inptr));
-				
-				used += (out->len - here);
-				
-				inptr = ptr;
-			}
-		} else {
-			g_string_append_printf (out, "%s%s=", param->name, encoded ? "*" : "");
-			
-			if (encoded || !quote)
-				g_string_append_len (out, value, vlen);
-			else
-				g_string_append_len_quoted (out, value, vlen);
-			
-			used += (out->len - here);
-		}
-		
-		g_free (value);
-		
-		param = param->next;
-	}
-	
-	if (fold)
-		g_string_append_c (out, '\n');
-}
-
-
-/**
- * g_mime_param_write_to_string:
- * @param: MIME Param list
- * @fold: specifies whether or not to fold headers
- * @str: output string
- *
- * Assumes the output string contains only the Content-* header and
- * it's immediate value.
- *
- * Writes the params out to the string @string.
- **/
-void
-g_mime_param_write_to_string (const GMimeParam *param, gboolean fold, GString *str)
-{
-	g_return_if_fail (str != NULL);
-	
-	param_list_format (str, param, fold);
-}
-
-
-/**
- * g_mime_param_list_new:
- *
- * Creates a new Content-Type or Content-Disposition parameter list.
- *
- * Returns: a new #GMimeParamList.
- **/
-GMimeParamList *
-g_mime_param_list_new (void)
-{
-	GMimeParamList *list;
-	
-	list = g_slice_new (GMimeParamList);
-	list->hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, NULL, NULL);
-	list->changed = g_mime_event_new (list);
-	list->params = g_ptr_array_new ();
-	
-	return list;
-}
-
-
-/**
- * g_mime_param_list_free:
- * @list: a #GMimeParamList
- *
- * Frees the #GMimeParamList.
- **/
-void
-g_mime_param_list_free (GMimeParamList *list)
-{
-	guint i;
-	
-	g_return_if_fail (list != NULL);
-	
-	for (i = 0; i < list->params->len; i++)
-		g_mime_param_free (list->params->pdata[i]);
-	
-	g_ptr_array_free (list->params, TRUE);
-	g_hash_table_destroy (list->hash);
-	g_mime_event_free (list->changed);
-	
-	g_slice_free (GMimeParamList, list);
-}
-
-
-/**
- * g_mime_param_list_length:
- * @list: a #GMimeParamList
- *
- * Gets the length of the list.
- *
- * Returns: the number of #GMimeParam items in the list.
- **/
-int
-g_mime_param_list_length (GMimeParamList *list)
-{
-	g_return_val_if_fail (list != NULL, -1);
-	
-	return list->params->len;
-}
-
-
-/**
- * g_mime_param_list_clear:
- * @list: a #GMimeParamList
- *
- * Clears the list of parameters.
- **/
-void
-g_mime_param_list_clear (GMimeParamList *list)
-{
-	guint i;
-	
-	g_return_if_fail (list != NULL);
-	
-	for (i = 0; i < list->params->len; i++)
-		g_mime_param_free (list->params->pdata[i]);
-	
-	g_ptr_array_set_size (list->params, 0);
-}
-
-
-/**
- * g_mime_param_list_add:
- * @list: a #GMimeParamList
- * @param: a #GMimeParam
- *
- * Adds a #GMimeParam to the #GMimeParamList.
- *
- * Returns: the index of the added #GMimeParam.
- **/
-int
-g_mime_param_list_add (GMimeParamList *list, GMimeParam *param)
-{
-	int index;
-	
-	g_return_val_if_fail (param != NULL, -1);
-	g_return_val_if_fail (list != NULL, -1);
-	
-	index = list->params->len;
-	g_ptr_array_add (list->params, param);
-	
-	return index;
-}
-
-
-/**
- * g_mime_param_list_insert:
- * @list: a #GMimeParamList
- * @index: index to insert at
- * @param: a #GMimeParam
- *
- * Inserts a #GMimeParam into the #GMimeParamList at the specified index.
- **/
-void
-g_mime_param_list_insert (GMimeParamList *list, int index, GMimeParam *param)
-{
-	char *dest, *src;
-	size_t n;
-
-	g_return_if_fail (param != NULL);
-	g_return_if_fail (list != NULL);
-	g_return_if_fail (index >= 0);
-
-	if ((guint) index < list->params->len) {
-		g_ptr_array_set_size (list->params, list->params->len + 1);
-		
-		dest = ((char *) list->params->pdata) + (sizeof (void *) * (index + 1));
-		src = ((char *) list->params->pdata) + (sizeof (void *) * index);
-		n = list->params->len - index - 1;
-		
-		g_memmove (dest, src, (sizeof (void *) * n));
-		list->params->pdata[index] = param;
-	} else {
-		/* the easy case */
-		g_ptr_array_add (list->params, param);
-	}
-}
-
-
-/**
- * g_mime_param_list_remove:
- * @list: a #GMimeParamList
- * @param: a #GMimeParam
- *
- * Removes a #GMimeParam from the #GMimeParamList.
- *
- * Returns: %TRUE if the specified #GMimeParam was removed or %FALSE otherwise.
- **/
-gboolean
-g_mime_param_list_remove (GMimeParamList *list, GMimeParam *param)
-{
-	int index;
-	
-	g_return_val_if_fail (param != NULL, FALSE);
-	g_return_val_if_fail (list != NULL, FALSE);
-	
-	if ((index = g_mime_param_list_index_of (list, param)) == -1)
-		return FALSE;
-	
-	return g_mime_param_list_remove_at (list, index);
-}
-
-
-/**
- * g_mime_param_list_remove_at:
- * @list: a #GMimeParamList
- * @index: index of the param to remove
- *
- * Removes a #GMimeParam from the #GMimeParamList at the specified index.
- *
- * Returns: %TRUE if a #GMimeParam was removed or %FALSE otherwise.
- **/
-gboolean
-g_mime_param_list_remove_at (GMimeParamList *list, int index)
-{
-	GMimeParam *param;
-	
-	g_return_val_if_fail (list != NULL, FALSE);
-	g_return_val_if_fail (index >= 0, FALSE);
-	
-	if ((guint) index >= list->params->len)
-		return FALSE;
-	
-	param = list->params->pdata[index];
-	g_ptr_array_remove_index (list->params, index);
-	g_mime_param_free (param);
-	
-	return TRUE;
-}
-
-
-/**
- * g_mime_param_list_contains:
- * @list: a #GMimeParamList
- * @param: a #GMimeParam
- *
- * Checks whether or not the specified #GMimeParam is contained within
- * the #GMimeParamList.
- *
- * Returns: %TRUE if the specified #GMimeParam is contained within the
- * specified #GMimeParamList or %FALSE otherwise.
- **/
-gboolean
-g_mime_param_list_contains (GMimeParamList *list, GMimeParam *param)
-{
-	return g_mime_param_list_index_of (list, param) != -1;
-}
-
-
-/**
- * g_mime_param_list_index_of:
- * @list: a #GMimeParamList
- * @param: a #GMimeParam
- *
- * Gets the index of the specified #GMimeParam inside the
- * #GMimeParamList.
- *
- * Returns: the index of the requested #GMimeParam within the
- * #GMimeParamList or %-1 if it is not contained within the
- * #GMimeParamList.
- **/
-int
-g_mime_param_list_index_of (GMimeParamList *list, GMimeParam *param)
-{
-	guint i;
-	
-	g_return_val_if_fail (param != NULL, -1);
-	g_return_val_if_fail (list != NULL, -1);
-	
-	for (i = 0; i < list->params->len; i++) {
-		if (list->params->pdata[i] == param)
-			return i;
-	}
-	
-	return -1;
-}
-
-
-/**
- * g_mime_param_list_get_param:
- * @list: a #GMimeParamList
- * @index: index of #GMimeParam to get
- *
- * Gets the #GMimeParam at the specified index.
- *
- * Returns: the #GMimeParam at the specified index or %NULL if the index is out of range.
- **/
-GMimeParam *
-g_mime_param_list_get_param (GMimeParamList *list, int index)
-{
-	g_return_val_if_fail (list != NULL, NULL);
-	g_return_val_if_fail (index >= 0, NULL);
-	
-	if ((guint) index >= list->params->len)
-		return NULL;
-	
-	return list->params->pdata[index];
-}
-
-
-/**
- * g_mime_param_list_set_param:
- * @list: a #GMimeParamList
- * @index: index of #GMimeParam to set
- * @param: a #GMimeParam
- *
- * Sets the #GMimeParam at the specified index to @param.
- **/
-void
-g_mime_param_list_set_param (GMimeParamList *list, int index, GMimeParam *param)
-{
-	GMimeParam *old;
-	
-	g_return_if_fail (param != NULL);
-	g_return_if_fail (list != NULL);
-	g_return_if_fail (index >= 0);
-	
-	if ((guint) index > list->params->len)
-		return;
-	
-	if ((guint) index == list->params->len) {
-		g_mime_param_list_add (list, param);
-		return;
-	}
-	
-	if ((old = list->params->pdata[index]) == param)
-		return;
-	
-	list->params->pdata[index] = param;
-	g_mime_param_free (old);
 }

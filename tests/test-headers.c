@@ -224,6 +224,7 @@ test_header_sync (void)
 	InternetAddress *addr, *ia;
 	GMimeHeaderList *headers;
 	GMimeContentType *type;
+	GMimeParamList *params;
 	GMimeMessage *message;
 	GMimeObject *object;
 	GMimeHeader *header;
@@ -232,7 +233,7 @@ test_header_sync (void)
 	
 	part = g_mime_part_new_with_type ("application", "octet-stream");
 	object = (GMimeObject *) part;
-
+	
 	headers = g_mime_object_get_header_list (object);
 	
 	testsuite_check ("content-type synchronization");
@@ -267,10 +268,11 @@ test_header_sync (void)
 		if (strcmp ("text/plain; format=flowed", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after setting a param"));
 		
-		/* now change the content-type's parameters by setting a param list */
-		g_mime_content_type_set_params (type, NULL);
+		/* now change the content-type's parameters by clearing the params */
+		params = g_mime_content_type_get_params (type);
+		g_mime_param_list_clear (params);
 		if (!(value = g_mime_object_get_header (object, "Content-Type")))
-			throw (exception_new ("content-type header was unexpectedly null after setting params"));
+			throw (exception_new ("content-type header was unexpectedly null after clearing params"));
 		if (strcmp ("text/plain", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after setting params"));
 		
@@ -313,8 +315,9 @@ test_header_sync (void)
 		if (strcmp ("inline; filename=hello.txt", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after setting a param"));
 		
-		/* now change the content-disposition's parameters by setting a param list */
-		g_mime_content_disposition_set_params (disposition, NULL);
+		/* now change the content-disposition's parameters by clearing the params */
+		params = g_mime_content_disposition_get_params (disposition);
+		g_mime_param_list_clear (params);
 		if (!(value = g_mime_object_get_header (object, "Content-Disposition")))
 			throw (exception_new ("content-disposition header was unexpectedly null after setting params"));
 		if (strcmp ("inline", value) != 0)

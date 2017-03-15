@@ -526,9 +526,11 @@ test_header_folding (GMimeParserOptions *options)
 
 static struct {
 	const char *input;
+	const char *charset;
 	const char *encoded;
 } rfc2184[] = {
 	{ "this is a really really long filename that should force gmime to rfc2184 encode it - yay!.html",
+	  "iso-8859-1",
 	  "Content-Disposition: attachment;\n\t"
 	  "filename*0*=iso-8859-1''this%20is%20a%20really%20really%20long%20filename%20;\n\t"
 	  "filename*1*=that%20should%20force%20gmime%20to%20rfc2184%20encode%20it%20-;\n\t"
@@ -538,38 +540,43 @@ static struct {
 static void
 test_rfc2184 (GMimeParserOptions *options)
 {
-	GMimeParam param, *params;
+	GMimeParamList *params;
+	GMimeParam *param;
 	const char *value;
 	GString *str;
+	int count;
 	size_t n;
 	guint i;
 	
-	param.next = NULL;
-	param.name = "filename";
-	
-	str = g_string_new ("Content-Disposition: attachment");
-	n = str->len;
-	
 	for (i = 0; i < G_N_ELEMENTS (rfc2184); i++) {
-		params = NULL;
+		params = g_mime_param_list_new ();
+		g_mime_param_list_set_parameter (params, "filename", rfc2184[i].input);
 		
-		param.value = (char *) rfc2184[i].input;
+		str = g_string_new ("Content-Disposition: attachment");
+		n = str->len;
 		
 		testsuite_check ("rfc2184[%u]", i);
 		try {
-			g_mime_param_write_to_string (&param, TRUE, str);
+			g_mime_param_list_encode (params, TRUE, str);
 			if (strcmp (rfc2184[i].encoded, str->str) != 0)
 				throw (exception_new ("encoded param does not match: %s", str->str));
 			
-			if (!(params = g_mime_param_parse (options, str->str + n + 2)))
+			g_mime_param_list_free (params);
+			
+			if (!(params = g_mime_param_list_parse (options, str->str + n + 2)))
 				throw (exception_new ("could not parse encoded param list"));
 			
-			if (params->next != NULL)
-				throw (exception_new ("parsed more than a single param?"));
+			if ((count = g_mime_param_list_length (params)) != 1)
+				throw (exception_new ("expected only 1 param, but parsed %d", count));
 			
-			value = g_mime_param_get_value (params);
-			if (strcmp (rfc2184[i].input, value) != 0)
+			if (!(param = g_mime_param_list_get_parameter (params, "filename")))
+				throw (exception_new ("failed to get filename param"));
+			
+			if (strcmp (rfc2184[i].input, param->value) != 0)
 				throw (exception_new ("parsed param value does not match"));
+			
+			if (strcmp (rfc2184[i].charset, param->charset) != 0)
+				throw (exception_new ("parsed charset does not match"));
 			
 			testsuite_check_passed ();
 		} catch (ex) {
@@ -577,12 +584,10 @@ test_rfc2184 (GMimeParserOptions *options)
 		} finally;
 		
 		if (params != NULL)
-			g_mime_param_free (params);
+			g_mime_param_list_free (params);
 		
-		g_string_truncate (str, n);
+		g_string_free (str, TRUE);
 	}
-	
-	g_string_free (str, TRUE);
 }
 
 

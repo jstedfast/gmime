@@ -57,6 +57,8 @@ static void g_mime_content_type_class_init (GMimeContentTypeClass *klass);
 static void g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass);
 static void g_mime_content_type_finalize (GObject *object);
 
+static void param_list_changed (GMimeParamList *list, gpointer args, GMimeContentType *content_type);
+
 
 static GObjectClass *parent_class = NULL;
 
@@ -99,11 +101,12 @@ g_mime_content_type_class_init (GMimeContentTypeClass *klass)
 static void
 g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass)
 {
-	content_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	content_type->changed = g_mime_event_new ((GObject *) content_type);
-	content_type->params = NULL;
+	content_type->params = g_mime_param_list_new ();
 	content_type->subtype = NULL;
 	content_type->type = NULL;
+	
+	g_mime_event_add (content_type->params->changed, (GMimeEventCallback) param_list_changed, content_type);
 }
 
 static void
@@ -111,13 +114,19 @@ g_mime_content_type_finalize (GObject *object)
 {
 	GMimeContentType *content_type = (GMimeContentType *) object;
 	
-	g_hash_table_destroy (content_type->param_hash);
-	g_mime_param_free (content_type->params);
+	g_mime_param_list_free (content_type->params);
 	g_mime_event_free (content_type->changed);
 	g_free (content_type->subtype);
 	g_free (content_type->type);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+
+static void
+param_list_changed (GMimeParamList *list, gpointer args, GMimeContentType *content_type)
+{
+	g_mime_event_emit (content_type->changed, NULL);
 }
 
 
@@ -180,6 +189,7 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 {
 	GMimeContentType *mime_type;
 	const char *inptr = str;
+	GMimeParamList *params;
 	char *type, *subtype;
 	
 	g_return_val_if_fail (str != NULL, NULL);
@@ -196,14 +206,10 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 	while (*inptr && *inptr != ';')
 		inptr++;
 	
-	if (*inptr++ == ';' && *inptr) {
-		GMimeParam *param;
-		
-		param = mime_type->params = g_mime_param_parse (options, inptr);
-		while (param != NULL) {
-			g_hash_table_insert (mime_type->param_hash, param->name, param);
-			param = param->next;
-		}
+	if (*inptr++ == ';' && *inptr && (params = g_mime_param_list_parse (options, inptr))) {
+		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, mime_type);
+		g_mime_param_list_free (mime_type->params);
+		mime_type->params = params;
 	}
 	
 	return mime_type;
@@ -351,32 +357,6 @@ g_mime_content_type_get_media_subtype (GMimeContentType *mime_type)
 
 
 /**
- * g_mime_content_type_set_params:
- * @mime_type: a #GMimeContentType object
- * @params: a list of #GMimeParam objects
- *
- * Sets the Content-Type's parameter list.
- **/
-void
-g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params)
-{
-	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
-	
-	/* clear the current list/hash */
-	g_hash_table_remove_all (mime_type->param_hash);
-	g_mime_param_free (mime_type->params);
-	mime_type->params = params;
-	
-	while (params != NULL) {
-		g_hash_table_insert (mime_type->param_hash, params->name, params);
-		params = params->next;
-	}
-	
-	g_mime_event_emit (mime_type->changed, NULL);
-}
-
-
-/**
  * g_mime_content_type_get_params:
  * @mime_type: a #GMimeContentType object
  *
@@ -384,7 +364,7 @@ g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params)
  *
  * Returns: the Content-Type's parameter list.
  **/
-const GMimeParam *
+GMimeParamList *
 g_mime_content_type_get_params (GMimeContentType *mime_type)
 {
 	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
@@ -407,22 +387,9 @@ g_mime_content_type_get_params (GMimeContentType *mime_type)
 void
 g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *name, const char *value)
 {
-	GMimeParam *param = NULL;
-	
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
-	g_return_if_fail (name != NULL);
-	g_return_if_fail (value != NULL);
 	
-	if ((param = g_hash_table_lookup (mime_type->param_hash, name))) {
-		g_free (param->value);
-		param->value = g_strdup (value);
-	} else {
-		param = g_mime_param_new (name, value);
-		mime_type->params = g_mime_param_append_param (mime_type->params, param);
-		g_hash_table_insert (mime_type->param_hash, param->name, param);
-	}
-	
-	g_mime_event_emit (mime_type->changed, NULL);
+	g_mime_param_list_set_parameter (mime_type->params, name, value);
 }
 
 
@@ -443,9 +410,8 @@ g_mime_content_type_get_parameter (GMimeContentType *mime_type, const char *name
 	GMimeParam *param;
 	
 	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
-	g_return_val_if_fail (name != NULL, NULL);
 	
-	if (!(param = g_hash_table_lookup (mime_type->param_hash, name)))
+	if (!(param = g_mime_param_list_get_parameter (mime_type->params, name)))
 		return NULL;
 	
 	return param->value;

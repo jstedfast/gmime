@@ -322,7 +322,7 @@ write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char
 	g_string_append (out, val);
 	g_free (val);
 	
-	g_mime_param_write_to_string (content_type->params, TRUE, out);
+	g_mime_param_list_encode (content_type->params, TRUE, out);
 	g_object_unref (content_type);
 	
 	nwritten = g_mime_stream_write (stream, out->str, out->len);
@@ -352,9 +352,8 @@ _g_mime_object_unblock_header_list_changed (GMimeObject *object)
 static void
 content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object)
 {
-	GMimeParam *params;
 	GString *string;
-	char *type, *p;
+	char *type, *str;
 	
 	string = g_string_new ("Content-Type: ");
 	
@@ -362,17 +361,15 @@ content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject
 	g_string_append (string, type);
 	g_free (type);
 	
-	if ((params = content_type->params))
-		g_mime_param_write_to_string (params, FALSE, string);
+	g_mime_param_list_encode (content_type->params, FALSE, string);
 	
-	p = string->str;
-	g_string_free (string, FALSE);
+	str = g_string_free (string, FALSE);
 	
-	type = p + strlen ("Content-Type: ");
+	type = str + strlen ("Content-Type: ");
 	_g_mime_object_block_header_list_changed (object);
 	g_mime_header_list_set (object->headers, "Content-Type", type);
 	_g_mime_object_unblock_header_list_changed (object);
-	g_free (p);
+	g_free (str);
 }
 
 static ssize_t
@@ -388,7 +385,7 @@ write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char 
 	disposition = g_mime_content_disposition_parse (options, value);
 	g_string_append (out, disposition->disposition);
 	
-	g_mime_param_write_to_string (disposition->params, TRUE, out);
+	g_mime_param_list_encode (disposition->params, TRUE, out);
 	g_object_unref (disposition);
 	
 	nwritten = g_mime_stream_write (stream, out->str, out->len);
