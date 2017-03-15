@@ -321,8 +321,7 @@ g_mime_header_list_free (GMimeHeaderList *headers)
 	g_mime_parser_options_free (headers->options);
 	g_hash_table_destroy (headers->writers);
 	g_hash_table_destroy (headers->hash);
-	
-	g_mime_event_destroy (headers->changed);
+	g_mime_event_free (headers->changed);
 	
 	g_slice_free (GMimeHeaderList, headers);
 }
