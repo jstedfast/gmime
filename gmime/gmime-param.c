@@ -1081,8 +1081,6 @@ g_mime_param_list_clear (GMimeParamList *list)
 		g_mime_param_free (list->params->pdata[i]);
 	
 	g_ptr_array_set_size (list->params, 0);
-	
-	g_hash_table_clear (list->hash);
 }
 
 
