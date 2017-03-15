@@ -28,6 +28,7 @@
 G_BEGIN_DECLS
 
 typedef struct _GMimeParam GMimeParam;
+typedef struct _GMimeParamList GMimeParamList;
 
 
 /**
@@ -57,6 +58,37 @@ const char *g_mime_param_get_name (const GMimeParam *param);
 const char *g_mime_param_get_value (const GMimeParam *param);
 
 void g_mime_param_write_to_string (const GMimeParam *param, gboolean fold, GString *str);
+
+
+/**
+ * GMimeParamList:
+ *
+ * A list of Content-Type or Content-Disposition parameters.
+ **/
+struct _GMimeParamList {
+	/* < private > */
+	GPtrArray *params;
+	GHashTable *hash;
+	void *changed;
+};
+
+GMimeParamList *g_mime_param_list_new (void);
+void g_mime_param_list_free (GMimeParamList *list);
+
+int g_mime_param_list_length (GMimeParamList *list);
+
+void g_mime_param_list_clear (GMimeParamList *list);
+
+int g_mime_param_list_add (GMimeParamList *list, GMimeParam *param);
+void g_mime_param_list_insert (GMimeParamList *list, int index, GMimeParam *param);
+gboolean g_mime_param_list_remove (GMimeParamList *list, GMimeParam *param);
+gboolean g_mime_param_list_remove_at (GMimeParamList *list, int index);
+
+gboolean g_mime_param_list_contains (GMimeParamList *list, GMimeParam *param);
+int g_mime_param_list_index_of (GMimeParamList *list, GMimeParam *param);
+
+GMimeParam *g_mime_param_list_get_param (GMimeParamList *list, int index);
+void g_mime_param_list_set_param (GMimeParamList *list, int index, GMimeParam *param);
 
 G_END_DECLS
 

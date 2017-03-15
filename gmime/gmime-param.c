@@ -30,6 +30,7 @@
 
 #include "gmime-param.h"
 #include "gmime-common.h"
+#include "gmime-events.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-iconv-utils.h"
@@ -998,4 +999,300 @@ g_mime_param_write_to_string (const GMimeParam *param, gboolean fold, GString *s
 	g_return_if_fail (str != NULL);
 	
 	param_list_format (str, param, fold);
+}
+
+
+/**
+ * g_mime_param_list_new:
+ *
+ * Creates a new Content-Type or Content-Disposition parameter list.
+ *
+ * Returns: a new #GMimeParamList.
+ **/
+GMimeParamList *
+g_mime_param_list_new (void)
+{
+	GMimeParamList *list;
+	
+	list = g_slice_new (GMimeParamList);
+	list->hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, NULL, NULL);
+	list->changed = g_mime_event_new (list);
+	list->params = g_ptr_array_new ();
+	
+	return list;
+}
+
+
+/**
+ * g_mime_param_list_free:
+ * @list: a #GMimeParamList
+ *
+ * Frees the #GMimeParamList.
+ **/
+void
+g_mime_param_list_free (GMimeParamList *list)
+{
+	guint i;
+	
+	g_return_if_fail (list != NULL);
+	
+	for (i = 0; i < list->params->len; i++)
+		g_mime_param_free (list->params->pdata[i]);
+	
+	g_ptr_array_free (list->params, TRUE);
+	g_hash_table_destroy (list->hash);
+	g_mime_event_free (list->changed);
+	
+	g_slice_free (GMimeParamList, list);
+}
+
+
+/**
+ * g_mime_param_list_length:
+ * @list: a #GMimeParamList
+ *
+ * Gets the length of the list.
+ *
+ * Returns: the number of #GMimeParam items in the list.
+ **/
+int
+g_mime_param_list_length (GMimeParamList *list)
+{
+	g_return_val_if_fail (list != NULL, -1);
+	
+	return list->params->len;
+}
+
+
+/**
+ * g_mime_param_list_clear:
+ * @list: a #GMimeParamList
+ *
+ * Clears the list of parameters.
+ **/
+void
+g_mime_param_list_clear (GMimeParamList *list)
+{
+	guint i;
+	
+	g_return_if_fail (list != NULL);
+	
+	for (i = 0; i < list->params->len; i++)
+		g_mime_param_free (list->params->pdata[i]);
+	
+	g_ptr_array_set_size (list->params, 0);
+	
+	g_hash_table_clear (list->hash);
+}
+
+
+/**
+ * g_mime_param_list_add:
+ * @list: a #GMimeParamList
+ * @param: a #GMimeParam
+ *
+ * Adds a #GMimeParam to the #GMimeParamList.
+ *
+ * Returns: the index of the added #GMimeParam.
+ **/
+int
+g_mime_param_list_add (GMimeParamList *list, GMimeParam *param)
+{
+	int index;
+	
+	g_return_val_if_fail (param != NULL, -1);
+	g_return_val_if_fail (list != NULL, -1);
+	
+	index = list->params->len;
+	g_ptr_array_add (list->params, param);
+	
+	return index;
+}
+
+
+/**
+ * g_mime_param_list_insert:
+ * @list: a #GMimeParamList
+ * @index: index to insert at
+ * @param: a #GMimeParam
+ *
+ * Inserts a #GMimeParam into the #GMimeParamList at the specified index.
+ **/
+void
+g_mime_param_list_insert (GMimeParamList *list, int index, GMimeParam *param)
+{
+	char *dest, *src;
+	size_t n;
+
+	g_return_if_fail (param != NULL);
+	g_return_if_fail (list != NULL);
+	g_return_if_fail (index >= 0);
+
+	if ((guint) index < list->params->len) {
+		g_ptr_array_set_size (list->params, list->params->len + 1);
+		
+		dest = ((char *) list->params->pdata) + (sizeof (void *) * (index + 1));
+		src = ((char *) list->params->pdata) + (sizeof (void *) * index);
+		n = list->params->len - index - 1;
+		
+		g_memmove (dest, src, (sizeof (void *) * n));
+		list->params->pdata[index] = param;
+	} else {
+		/* the easy case */
+		g_ptr_array_add (list->params, param);
+	}
+}
+
+
+/**
+ * g_mime_param_list_remove:
+ * @list: a #GMimeParamList
+ * @param: a #GMimeParam
+ *
+ * Removes a #GMimeParam from the #GMimeParamList.
+ *
+ * Returns: %TRUE if the specified #GMimeParam was removed or %FALSE otherwise.
+ **/
+gboolean
+g_mime_param_list_remove (GMimeParamList *list, GMimeParam *param)
+{
+	int index;
+	
+	g_return_val_if_fail (param != NULL, FALSE);
+	g_return_val_if_fail (list != NULL, FALSE);
+	
+	if ((index = g_mime_param_list_index_of (list, param)) == -1)
+		return FALSE;
+	
+	return g_mime_param_list_remove_at (list, index);
+}
+
+
+/**
+ * g_mime_param_list_remove_at:
+ * @list: a #GMimeParamList
+ * @index: index of the param to remove
+ *
+ * Removes a #GMimeParam from the #GMimeParamList at the specified index.
+ *
+ * Returns: %TRUE if a #GMimeParam was removed or %FALSE otherwise.
+ **/
+gboolean
+g_mime_param_list_remove_at (GMimeParamList *list, int index)
+{
+	GMimeParam *param;
+	
+	g_return_val_if_fail (list != NULL, FALSE);
+	g_return_val_if_fail (index >= 0, FALSE);
+	
+	if ((guint) index >= list->params->len)
+		return FALSE;
+	
+	param = list->params->pdata[index];
+	g_ptr_array_remove_index (list->params, index);
+	g_mime_param_free (param);
+	
+	return TRUE;
+}
+
+
+/**
+ * g_mime_param_list_contains:
+ * @list: a #GMimeParamList
+ * @param: a #GMimeParam
+ *
+ * Checks whether or not the specified #GMimeParam is contained within
+ * the #GMimeParamList.
+ *
+ * Returns: %TRUE if the specified #GMimeParam is contained within the
+ * specified #GMimeParamList or %FALSE otherwise.
+ **/
+gboolean
+g_mime_param_list_contains (GMimeParamList *list, GMimeParam *param)
+{
+	return g_mime_param_list_index_of (list, param) != -1;
+}
+
+
+/**
+ * g_mime_param_list_index_of:
+ * @list: a #GMimeParamList
+ * @param: a #GMimeParam
+ *
+ * Gets the index of the specified #GMimeParam inside the
+ * #GMimeParamList.
+ *
+ * Returns: the index of the requested #GMimeParam within the
+ * #GMimeParamList or %-1 if it is not contained within the
+ * #GMimeParamList.
+ **/
+int
+g_mime_param_list_index_of (GMimeParamList *list, GMimeParam *param)
+{
+	guint i;
+	
+	g_return_val_if_fail (param != NULL, -1);
+	g_return_val_if_fail (list != NULL, -1);
+	
+	for (i = 0; i < list->params->len; i++) {
+		if (list->params->pdata[i] == param)
+			return i;
+	}
+	
+	return -1;
+}
+
+
+/**
+ * g_mime_param_list_get_param:
+ * @list: a #GMimeParamList
+ * @index: index of #GMimeParam to get
+ *
+ * Gets the #GMimeParam at the specified index.
+ *
+ * Returns: the #GMimeParam at the specified index or %NULL if the index is out of range.
+ **/
+GMimeParam *
+g_mime_param_list_get_param (GMimeParamList *list, int index)
+{
+	g_return_val_if_fail (list != NULL, NULL);
+	g_return_val_if_fail (index >= 0, NULL);
+	
+	if ((guint) index >= list->params->len)
+		return NULL;
+	
+	return list->params->pdata[index];
+}
+
+
+/**
+ * g_mime_param_list_set_param:
+ * @list: a #GMimeParamList
+ * @index: index of #GMimeParam to set
+ * @param: a #GMimeParam
+ *
+ * Sets the #GMimeParam at the specified index to @param.
+ **/
+void
+g_mime_param_list_set_param (GMimeParamList *list, int index, GMimeParam *param)
+{
+	GMimeParam *old;
+	
+	g_return_if_fail (param != NULL);
+	g_return_if_fail (list != NULL);
+	g_return_if_fail (index >= 0);
+	
+	if ((guint) index > list->params->len)
+		return;
+	
+	if ((guint) index == list->params->len) {
+		g_mime_param_list_add (list, param);
+		return;
+	}
+	
+	if ((old = list->params->pdata[index]) == param)
+		return;
+	
+	list->params->pdata[index] = param;
+	g_mime_param_free (old);
 }
