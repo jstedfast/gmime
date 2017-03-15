@@ -42,24 +42,21 @@ typedef struct _GMimeContentTypeClass GMimeContentTypeClass;
 /**
  * GMimeContentType:
  * @parent_object: parent #GObject
- * @param_hash: parameter hash keyed by param name
- * @params: a #GMimeParam list
- * @priv: private fields
  * @type: media type
  * @subtype: media subtype
+ * @params: a #GMimeParam list
  *
  * A data structure representing a Content-Type.
  **/
 struct _GMimeContentType {
 	GObject parent_object;
 	
-	GHashTable *param_hash;
+	char *type, *subtype;
 	GMimeParam *params;
 	
-	gpointer priv;
-	
-	char *type;
-	char *subtype;
+	/* < private > */
+	GHashTable *param_hash;
+	gpointer changed;
 };
 
 struct _GMimeContentTypeClass {

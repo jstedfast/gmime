@@ -100,7 +100,7 @@ static void
 g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass)
 {
 	content_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-	content_type->priv = g_mime_event_new ((GObject *) content_type);
+	content_type->changed = g_mime_event_new ((GObject *) content_type);
 	content_type->params = NULL;
 	content_type->subtype = NULL;
 	content_type->type = NULL;
@@ -113,7 +113,7 @@ g_mime_content_type_finalize (GObject *object)
 	
 	g_hash_table_destroy (content_type->param_hash);
 	g_mime_param_free (content_type->params);
-	g_mime_event_free (content_type->priv);
+	g_mime_event_free (content_type->changed);
 	g_free (content_type->subtype);
 	g_free (content_type->type);
 	
@@ -289,7 +289,7 @@ g_mime_content_type_set_media_type (GMimeContentType *mime_type, const char *typ
 	g_free (mime_type->type);
 	mime_type->type = buf;
 	
-	g_mime_event_emit (mime_type->priv, NULL);
+	g_mime_event_emit (mime_type->changed, NULL);
 }
 
 
@@ -329,7 +329,7 @@ g_mime_content_type_set_media_subtype (GMimeContentType *mime_type, const char *
 	g_free (mime_type->subtype);
 	mime_type->subtype = buf;
 	
-	g_mime_event_emit (mime_type->priv, NULL);
+	g_mime_event_emit (mime_type->changed, NULL);
 }
 
 
@@ -372,7 +372,7 @@ g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params)
 		params = params->next;
 	}
 	
-	g_mime_event_emit (mime_type->priv, NULL);
+	g_mime_event_emit (mime_type->changed, NULL);
 }
 
 
@@ -422,7 +422,7 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *name
 		g_hash_table_insert (mime_type->param_hash, param->name, param);
 	}
 	
-	g_mime_event_emit (mime_type->priv, NULL);
+	g_mime_event_emit (mime_type->changed, NULL);
 }
 
 

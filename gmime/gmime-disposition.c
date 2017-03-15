@@ -89,7 +89,7 @@ static void
 g_mime_content_disposition_init (GMimeContentDisposition *disposition, GMimeContentDispositionClass *klass)
 {
 	disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-	disposition->priv = g_mime_event_new ((GObject *) disposition);
+	disposition->changed = g_mime_event_new ((GObject *) disposition);
 	disposition->disposition = NULL;
 	disposition->params = NULL;
 }
@@ -101,7 +101,7 @@ g_mime_content_disposition_finalize (GObject *object)
 	
 	g_hash_table_destroy (disposition->param_hash);
 	g_mime_param_free (disposition->params);
-	g_mime_event_free (disposition->priv);
+	g_mime_event_free (disposition->changed);
 	g_free (disposition->disposition);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -194,7 +194,7 @@ g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition
 	g_free (disposition->disposition);
 	disposition->disposition = buf;
 	
-	g_mime_event_emit (disposition->priv, NULL);
+	g_mime_event_emit (disposition->changed, NULL);
 }
 
 
@@ -238,7 +238,7 @@ g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMi
 		params = params->next;
 	}
 	
-	g_mime_event_emit (disposition->priv, NULL);
+	g_mime_event_emit (disposition->changed, NULL);
 }
 
 
@@ -288,7 +288,7 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
 		g_hash_table_insert (disposition->param_hash, param->name, param);
 	}
 	
-	g_mime_event_emit (disposition->priv, NULL);
+	g_mime_event_emit (disposition->changed, NULL);
 }
 
 

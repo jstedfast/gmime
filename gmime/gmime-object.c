@@ -155,13 +155,13 @@ g_mime_object_finalize (GObject *object)
 	GMimeEvent *event;
 	
 	if (mime->content_type) {
-		event = mime->content_type->priv;
+		event = mime->content_type->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) content_type_changed, object);
 		g_object_unref (mime->content_type);
 	}
 	
 	if (mime->disposition) {
-		event = mime->disposition->priv;
+		event = mime->disposition->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
 		g_object_unref (mime->disposition);
 	}
@@ -254,7 +254,7 @@ object_header_removed (GMimeObject *object, GMimeHeader *header)
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
 		if (object->disposition) {
-			event = object->disposition->priv;
+			event = object->disposition->changed;
 			g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
 			g_object_unref (object->disposition);
 			object->disposition = NULL;
@@ -276,7 +276,7 @@ object_headers_cleared (GMimeObject *object)
 	GMimeEvent *event;
 	
 	if (object->disposition) {
-		event = object->disposition->priv;
+		event = object->disposition->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
 		g_object_unref (object->disposition);
 		object->disposition = NULL;
@@ -567,11 +567,11 @@ static void
 object_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
 	if (object->content_type) {
-		g_mime_event_remove (object->content_type->priv, (GMimeEventCallback) content_type_changed, object);
+		g_mime_event_remove (object->content_type->changed, (GMimeEventCallback) content_type_changed, object);
 		g_object_unref (object->content_type);
 	}
 	
-	g_mime_event_add (content_type->priv, (GMimeEventCallback) content_type_changed, object);
+	g_mime_event_add (content_type->changed, (GMimeEventCallback) content_type_changed, object);
 	object->content_type = content_type;
 	g_object_ref (content_type);
 }
@@ -711,11 +711,11 @@ static void
 _g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition)
 {
 	if (object->disposition) {
-		g_mime_event_remove (object->disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
+		g_mime_event_remove (object->disposition->changed, (GMimeEventCallback) content_disposition_changed, object);
 		g_object_unref (object->disposition);
 	}
 	
-	g_mime_event_add (disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
+	g_mime_event_add (disposition->changed, (GMimeEventCallback) content_disposition_changed, object);
 	object->disposition = disposition;
 	g_object_ref (disposition);
 }
