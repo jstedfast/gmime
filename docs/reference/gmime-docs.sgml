@@ -188,6 +188,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeStream;
       &GMimeStreamFile;
       &GMimeStreamFs;
+      &GMimeStreamGIO;
       &GMimeStreamMem;
       &GMimeStreamMmap;
       &GMimeStreamNull;

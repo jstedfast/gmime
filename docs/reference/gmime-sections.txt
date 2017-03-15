@@ -571,19 +571,29 @@ GMimeDataWrapperClass
 <SECTION>
 <FILE>gmime-param</FILE>
 GMimeParam
-g_mime_param_new
-g_mime_param_parse
-g_mime_param_destroy
-g_mime_param_next
+GMimeParamList
 g_mime_param_get_name
 g_mime_param_get_value
-g_mime_param_append
-g_mime_param_append_param
-g_mime_param_write_to_string
+g_mime_param_set_value
+g_mime_param_get_charset
+g_mime_param_set_charset
+g_mime_param_get_encoding_method
+g_mime_param_set_encoding_method
+g_mime_param_list_new
+g_mime_param_list_parse
+g_mime_param_list_free
+g_mime_param_list_clear
+g_mime_param_list_length
+g_mime_param_list_set_parameter
+g_mime_param_list_get_parameter
+g_mime_param_list_get_parameter_at
+g_mime_param_list_remove
+g_mime_param_list_remove_at
+g_mime_param_list_encode
 </SECTION>
 
 <SECTION>
-<FILE>gmime-header</FILE>
+<FILE>gmime-header</FILE>g
 GMimeHeader
 GMimeHeaderList
 GMimeHeaderWriter
@@ -621,7 +631,6 @@ g_mime_content_type_set_media_type
 g_mime_content_type_get_media_subtype
 g_mime_content_type_set_media_subtype
 g_mime_content_type_get_params
-g_mime_content_type_set_params
 g_mime_content_type_get_parameter
 g_mime_content_type_set_parameter
 
@@ -649,7 +658,6 @@ g_mime_content_disposition_is_attachment
 g_mime_content_disposition_set_disposition
 g_mime_content_disposition_get_disposition
 g_mime_content_disposition_get_params
-g_mime_content_disposition_set_params
 g_mime_content_disposition_set_parameter
 g_mime_content_disposition_get_parameter
 g_mime_content_disposition_to_string
