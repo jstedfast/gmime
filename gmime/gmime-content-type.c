@@ -142,36 +142,36 @@ param_list_changed (GMimeParamList *list, gpointer args, GMimeContentType *conte
 GMimeContentType *
 g_mime_content_type_new (const char *type, const char *subtype)
 {
-	GMimeContentType *mime_type;
+	GMimeContentType *content_type;
 	
-	mime_type = g_object_newv (GMIME_TYPE_CONTENT_TYPE, 0, NULL);
+	content_type = g_object_newv (GMIME_TYPE_CONTENT_TYPE, 0, NULL);
 	
 	if (type && *type && subtype && *subtype) {
-		mime_type->type = g_strdup (type);
-		mime_type->subtype = g_strdup (subtype);
+		content_type->type = g_strdup (type);
+		content_type->subtype = g_strdup (subtype);
 	} else {
 		if (type && *type) {
-			mime_type->type = g_strdup (type);
+			content_type->type = g_strdup (type);
 			if (!g_ascii_strcasecmp (type, "text")) {
-				mime_type->subtype = g_strdup ("plain");
+				content_type->subtype = g_strdup ("plain");
 			} else if (!g_ascii_strcasecmp (type, "multipart")) {
-				mime_type->subtype = g_strdup ("mixed");
+				content_type->subtype = g_strdup ("mixed");
 			} else {
-				g_free (mime_type->type);
-				mime_type->type = g_strdup ("application");
-				mime_type->subtype = g_strdup ("octet-stream");
+				g_free (content_type->type);
+				content_type->type = g_strdup ("application");
+				content_type->subtype = g_strdup ("octet-stream");
 			}
 		} else {
-			mime_type->type = g_strdup ("application");
-			mime_type->subtype = g_strdup ("octet-stream");
+			content_type->type = g_strdup ("application");
+			content_type->subtype = g_strdup ("octet-stream");
 		}
 		
 		w(g_warning ("Invalid or incomplete type: %s%s%s: defaulting to %s/%s",
 			     type ? type : "", subtype ? "/" : "", subtype ? subtype : "",
-			     mime_type->type, mime_type->subtype));
+			     content_type->type, content_type->subtype));
 	}
 	
-	return mime_type;
+	return content_type;
 }
 
 
@@ -187,7 +187,7 @@ g_mime_content_type_new (const char *type, const char *subtype)
 GMimeContentType *
 g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 {
-	GMimeContentType *mime_type;
+	GMimeContentType *content_type;
 	const char *inptr = str;
 	GMimeParamList *params;
 	char *type, *subtype;
@@ -197,9 +197,9 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 	if (!g_mime_parse_content_type (&inptr, &type, &subtype))
 		return g_mime_content_type_new ("application", "octet-stream");
 	
-	mime_type = g_object_newv (GMIME_TYPE_CONTENT_TYPE, 0, NULL);
-	mime_type->subtype = subtype;
-	mime_type->type = type;
+	content_type = g_object_newv (GMIME_TYPE_CONTENT_TYPE, 0, NULL);
+	content_type->subtype = subtype;
+	content_type->type = type;
 	
 	/* skip past any remaining junk that shouldn't be here... */
 	skip_cfws (&inptr);
@@ -207,43 +207,80 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 		inptr++;
 	
 	if (*inptr++ == ';' && *inptr && (params = g_mime_param_list_parse (options, inptr))) {
-		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, mime_type);
-		g_mime_param_list_free (mime_type->params);
-		mime_type->params = params;
+		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
+		g_mime_param_list_free (content_type->params);
+		content_type->params = params;
 	}
+	
+	return content_type;
+}
+
+
+/**
+ * g_mime_content_type_get_mime_type:
+ * @content_type: a #GMimeContentType
+ *
+ * Allocates a string buffer containing the type and subtype defined
+ * by the @content_type.
+ *
+ * Returns: an allocated string containing the type and subtype of the
+ * content-type in the format: type/subtype.
+ **/
+char *
+g_mime_content_type_get_mime_type (GMimeContentType *content_type)
+{
+	char *mime_type;
+	
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
+	
+	/* type and subtype should never be NULL, but check anyway */
+	mime_type = g_strdup_printf ("%s/%s", content_type->type ? content_type->type : "text",
+				     content_type->subtype ? content_type->subtype : "plain");
 	
 	return mime_type;
 }
 
 
 /**
- * g_mime_content_type_to_string:
- * @mime_type: a #GMimeContentType object
+ * g_mime_content_type_encode:
+ * @content_type: a #GMimeContentType
  *
- * Allocates a string buffer containing the type and subtype defined
- * by the @mime_type.
+ * Encodes the Content-Disposition header.
  *
- * Returns: an allocated string containing the type and subtype of the
- * content-type in the format: type/subtype.
+ * Returns: a new string containing the encoded header value.
  **/
 char *
-g_mime_content_type_to_string (GMimeContentType *mime_type)
+g_mime_content_type_encode (GMimeContentType *content_type)
 {
-	char *string;
+	char *raw_value;
+	GString *str;
+	guint len, n;
 	
-	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
 	
-	/* type and subtype should never be NULL, but check anyway */
-	string = g_strdup_printf ("%s/%s", mime_type->type ? mime_type->type : "text",
-				  mime_type->subtype ? mime_type->subtype : "plain");
+	/* we need to have this so wrapping is correct */
+	str = g_string_new ("Content-Type:");
+	n = str->len;
 	
-	return string;
+	g_string_append_c (str, ' ');
+	g_string_append (str, content_type->type ? content_type->type : "text");
+	g_string_append_c (str, '/');
+	g_string_append (str, content_type->subtype ? content_type->subtype : "plain");
+	
+	g_mime_param_list_encode (content_type->params, TRUE, str);
+	len = str->len - n;
+	
+	raw_value = g_string_free (str, FALSE);
+	
+	memmove (raw_value, raw_value + n, len + 1);
+	
+	return raw_value;
 }
 
 
 /**
  * g_mime_content_type_is_type:
- * @mime_type: a #GMimeContentType object
+ * @content_type: a #GMimeContentType
  * @type: MIME type to compare against
  * @subtype: MIME subtype to compare against
  *
@@ -254,21 +291,21 @@ g_mime_content_type_to_string (GMimeContentType *mime_type)
  * use "*" in place of @type and/or @subtype as a wilcard.
  **/
 gboolean
-g_mime_content_type_is_type (GMimeContentType *mime_type, const char *type, const char *subtype)
+g_mime_content_type_is_type (GMimeContentType *content_type, const char *type, const char *subtype)
 {
-	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), FALSE);
-	g_return_val_if_fail (mime_type->type != NULL, FALSE);
-	g_return_val_if_fail (mime_type->subtype != NULL, FALSE);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), FALSE);
+	g_return_val_if_fail (content_type->type != NULL, FALSE);
+	g_return_val_if_fail (content_type->subtype != NULL, FALSE);
 	g_return_val_if_fail (type != NULL, FALSE);
 	g_return_val_if_fail (subtype != NULL, FALSE);
 	
-	if (!strcmp (type, "*") || !g_ascii_strcasecmp (mime_type->type, type)) {
+	if (!strcmp (type, "*") || !g_ascii_strcasecmp (content_type->type, type)) {
 		if (!strcmp (subtype, "*")) {
 			/* special case */
 			return TRUE;
 		}
 		
-		if (!g_ascii_strcasecmp (mime_type->subtype, subtype))
+		if (!g_ascii_strcasecmp (content_type->subtype, subtype))
 			return TRUE;
 	}
 	
@@ -278,104 +315,104 @@ g_mime_content_type_is_type (GMimeContentType *mime_type, const char *type, cons
 
 /**
  * g_mime_content_type_set_media_type:
- * @mime_type: a #GMimeContentType object
+ * @content_type: a #GMimeContentType
  * @type: media type
  *
  * Sets the Content-Type's media type.
  **/
 void
-g_mime_content_type_set_media_type (GMimeContentType *mime_type, const char *type)
+g_mime_content_type_set_media_type (GMimeContentType *content_type, const char *type)
 {
 	char *buf;
 	
-	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 	g_return_if_fail (type != NULL);
 	
 	buf = g_strdup (type);
-	g_free (mime_type->type);
-	mime_type->type = buf;
+	g_free (content_type->type);
+	content_type->type = buf;
 	
-	g_mime_event_emit (mime_type->changed, NULL);
+	g_mime_event_emit (content_type->changed, NULL);
 }
 
 
 /**
  * g_mime_content_type_get_media_type:
- * @mime_type: a #GMimeContentType object
+ * @content_type: a #GMimeContentType
  *
  * Gets the Content-Type's media type.
  *
  * Returns: the Content-Type's media type.
  **/
 const char *
-g_mime_content_type_get_media_type (GMimeContentType *mime_type)
+g_mime_content_type_get_media_type (GMimeContentType *content_type)
 {
-	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
 	
-	return mime_type->type;
+	return content_type->type;
 }
 
 
 /**
  * g_mime_content_type_set_media_subtype:
- * @mime_type: a #GMimeContentType object
+ * @content_type: a #GMimeContentType
  * @subtype: media subtype
  *
  * Sets the Content-Type's media subtype.
  **/
 void
-g_mime_content_type_set_media_subtype (GMimeContentType *mime_type, const char *subtype)
+g_mime_content_type_set_media_subtype (GMimeContentType *content_type, const char *subtype)
 {
 	char *buf;
 	
-	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 	g_return_if_fail (subtype != NULL);
 	
 	buf = g_strdup (subtype);
-	g_free (mime_type->subtype);
-	mime_type->subtype = buf;
+	g_free (content_type->subtype);
+	content_type->subtype = buf;
 	
-	g_mime_event_emit (mime_type->changed, NULL);
+	g_mime_event_emit (content_type->changed, NULL);
 }
 
 
 /**
  * g_mime_content_type_get_media_subtype:
- * @mime_type: a #GMimeContentType object
+ * @content_type: a #GMimeContentType
  *
  * Gets the Content-Type's media sub-type.
  *
  * Returns: the Content-Type's media sub-type.
  **/
 const char *
-g_mime_content_type_get_media_subtype (GMimeContentType *mime_type)
+g_mime_content_type_get_media_subtype (GMimeContentType *content_type)
 {
-	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
 	
-	return mime_type->subtype;
+	return content_type->subtype;
 }
 
 
 /**
  * g_mime_content_type_get_params:
- * @mime_type: a #GMimeContentType object
+ * @content_type: a #GMimeContentType
  *
  * Gets the Content-Type's parameter list.
  *
  * Returns: the Content-Type's parameter list.
  **/
 GMimeParamList *
-g_mime_content_type_get_params (GMimeContentType *mime_type)
+g_mime_content_type_get_params (GMimeContentType *content_type)
 {
-	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
 	
-	return mime_type->params;
+	return content_type->params;
 }
 
 
 /**
  * g_mime_content_type_set_parameter:
- * @mime_type: MIME Content-Type
+ * @content_type: a #GMimeContentType
  * @name: parameter name (aka attribute)
  * @value: parameter value
  *
@@ -385,17 +422,17 @@ g_mime_content_type_get_params (GMimeContentType *mime_type)
  * UTF-8.
  **/
 void
-g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *name, const char *value)
+g_mime_content_type_set_parameter (GMimeContentType *content_type, const char *name, const char *value)
 {
-	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 	
-	g_mime_param_list_set_parameter (mime_type->params, name, value);
+	g_mime_param_list_set_parameter (content_type->params, name, value);
 }
 
 
 /**
  * g_mime_content_type_get_parameter:
- * @mime_type: a #GMimeContentType object
+ * @content_type: a #GMimeContentType
  * @name: parameter name (aka attribute)
  *
  * Gets the parameter value specified by @name if it's available.
@@ -405,13 +442,13 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *name
  * will be in UTF-8.
  **/
 const char *
-g_mime_content_type_get_parameter (GMimeContentType *mime_type, const char *name)
+g_mime_content_type_get_parameter (GMimeContentType *content_type, const char *name)
 {
 	GMimeParam *param;
 	
-	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
 	
-	if (!(param = g_mime_param_list_get_parameter (mime_type->params, name)))
+	if (!(param = g_mime_param_list_get_parameter (content_type->params, name)))
 		return NULL;
 	
 	return param->value;

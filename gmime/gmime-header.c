@@ -192,6 +192,25 @@ _g_mime_header_get_raw_value (GMimeHeader *header)
 
 
 /**
+ * g_mime_header_set_raw_value:
+ * @header: a #GMimeHeader
+ * @raw_value: the raw value
+ *
+ * Sets the header's raw value.
+ **/
+void
+_g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
+{
+	g_return_if_fail (header != NULL);
+	g_return_if_fail (raw_value != NULL);
+	
+	g_free (header->raw_value);
+	
+	header->raw_value = g_strdup (raw_value);
+}
+
+
+/**
  * g_mime_header_get_offset:
  * @header: a #GMimeHeader
  *
@@ -519,29 +538,23 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
 
 
 /**
- * g_mime_header_list_get:
+ * g_mime_header_list_get_header:
  * @headers: a #GMimeHeaderList
  * @name: header name
  *
- * Gets the value of the first header with the specified name.
+ * Gets the first header with the specified name.
  *
- * Returns: the value of the header requested.
- *
- * Note: The returned value should be decoded with a function such as
- * g_mime_utils_header_decode_text() before displaying to the user.
+ * Returns: a #GMimeHeader for the specified @name.
  **/
-const char *
-g_mime_header_list_get (GMimeHeaderList *headers, const char *name)
+GMimeHeader *
+g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name)
 {
 	GMimeHeader *header;
 	
 	g_return_val_if_fail (headers != NULL, NULL);
 	g_return_val_if_fail (name != NULL, NULL);
 	
-	if (!(header = g_hash_table_lookup (headers->hash, name)))
-		return NULL;
-	
-	return header->value;
+	return g_hash_table_lookup (headers->hash, name);
 }
 
 
@@ -613,7 +626,7 @@ g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *
 
 
 /**
- * g_mime_header_list_get_header:
+ * g_mime_header_list_get_header_at:
  * @headers: a #GMimeHeaderList
  * @index: the 0-based index of the header
  *
@@ -622,7 +635,7 @@ g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *
  * Returns: (transfer none): the header at position @index.
  **/
 GMimeHeader *
-g_mime_header_list_get_header (GMimeHeaderList *headers, int index)
+g_mime_header_list_get_header_at (GMimeHeaderList *headers, int index)
 {
 	g_return_val_if_fail (headers != NULL, NULL);
 	g_return_val_if_fail (index >= 0, NULL);

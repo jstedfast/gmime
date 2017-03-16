@@ -12,16 +12,6 @@ GMime 3.0 Planning:
 
 - Rewrite GMimeReferences into a GObject and split into its own file
 
-- Rename g_mime_content_type_to_string() to g_mime_content_type_get_mime_type()
-
-- Add g_mime_content_type_encode()
-
-- Rename g_mime_content_disposition_to_string() to g_mime_content_disposition_encode()
-
-- Fix GMimeObject's content_type_changed() and content_disposition_changed handlers to
-  use the new g_mime_*_encode() functions and update both the value and raw_value of
-  their respective headers.
-
 - Add g_mime_utils_header_decode_[text,phrase]() variants that also return charset/lang values?
 
 

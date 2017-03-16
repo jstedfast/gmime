@@ -310,23 +310,21 @@ write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char
 {
 	GMimeContentType *content_type;
 	ssize_t nwritten;
-	GString *out;
-	char *val;
+	char *raw_value;
+	GString *str;
 	
-	out = g_string_new ("");
-	g_string_printf (out, "%s: ", name);
+	str = g_string_new (name);
+	g_string_append_c (str, ':');
 	
 	content_type = g_mime_content_type_parse (options, value);
-	
-	val = g_mime_content_type_to_string (content_type);
-	g_string_append (out, val);
-	g_free (val);
-	
-	g_mime_param_list_encode (content_type->params, TRUE, out);
+	raw_value = g_mime_content_type_encode (content_type);
 	g_object_unref (content_type);
 	
-	nwritten = g_mime_stream_write (stream, out->str, out->len);
-	g_string_free (out, TRUE);
+	g_string_append (str, raw_value);
+	g_free (raw_value);
+	
+	nwritten = g_mime_stream_write (stream, str->str, str->len);
+	g_string_free (str, TRUE);
 	
 	return nwritten;
 }
@@ -349,27 +347,52 @@ _g_mime_object_unblock_header_list_changed (GMimeObject *object)
 	g_mime_event_unblock (event, (GMimeEventCallback) header_list_changed, object);
 }
 
+static char *
+unfold_raw_value (const char *raw_value)
+{
+	char *value = g_malloc (strlen (raw_value) + 1);
+	register const char *inptr = raw_value;
+	register char *outptr = value;
+	
+	while (*inptr) {
+		if (*inptr == '\n') {
+			inptr++;
+			
+			if (*inptr == '\0')
+				break;
+			
+			if (*inptr == '\t') {
+				*outptr++ = ' ';
+				inptr++;
+			} else {
+				*outptr++ = *inptr++;
+			}
+		} else {
+			*outptr++ = *inptr++;
+		}
+	}
+	
+	*outptr = '\0';
+	
+	return value;
+}
+
 static void
 content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object)
 {
-	GString *string;
-	char *type, *str;
+	char *raw_value, *value;
+	GMimeHeader *header;
 	
-	string = g_string_new ("Content-Type: ");
+	raw_value = g_mime_content_type_encode (content_type);
+	value = unfold_raw_value (raw_value);
 	
-	type = g_mime_content_type_to_string (content_type);
-	g_string_append (string, type);
-	g_free (type);
-	
-	g_mime_param_list_encode (content_type->params, FALSE, string);
-	
-	str = g_string_free (string, FALSE);
-	
-	type = str + strlen ("Content-Type: ");
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Type", type);
+	g_mime_header_list_set (object->headers, "Content-Type", value);
+	header = g_mime_header_list_get_header (object->headers, "Content-Type");
+	_g_mime_header_set_raw_value (header, raw_value);
 	_g_mime_object_unblock_header_list_changed (object);
-	g_free (str);
+	g_free (raw_value);
+	g_free (value);
 }
 
 static ssize_t
@@ -377,19 +400,20 @@ write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char 
 {
 	GMimeContentDisposition *disposition;
 	ssize_t nwritten;
-	GString *out;
+	char *raw_value;
+	GString *str;
 	
-	out = g_string_new ("");
-	g_string_printf (out, "%s: ", name);
+	str = g_string_new (name);
+	g_string_append_c (str, ':');
 	
 	disposition = g_mime_content_disposition_parse (options, value);
-	g_string_append (out, disposition->disposition);
+	g_string_append (str, disposition->disposition);
 	
-	g_mime_param_list_encode (disposition->params, TRUE, out);
+	g_mime_param_list_encode (disposition->params, TRUE, str);
 	g_object_unref (disposition);
 	
-	nwritten = g_mime_stream_write (stream, out->str, out->len);
-	g_string_free (out, TRUE);
+	nwritten = g_mime_stream_write (stream, str->str, str->len);
+	g_string_free (str, TRUE);
 	
 	return nwritten;
 }
@@ -397,14 +421,20 @@ write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char 
 static void
 content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeObject *object)
 {
-	char *str;
+	char *raw_value, *value;
+	GMimeHeader *header;
 	
 	_g_mime_object_block_header_list_changed (object);
 	
 	if (object->disposition) {
-		str = g_mime_content_disposition_to_string (object->disposition, FALSE);
-		g_mime_header_list_set (object->headers, "Content-Disposition", str);
-		g_free (str);
+		raw_value = g_mime_content_disposition_encode (object->disposition);
+		value = unfold_raw_value (raw_value);
+		
+		g_mime_header_list_set (object->headers, "Content-Disposition", value);
+		header = g_mime_header_list_get_header (object->headers, "Content-Disposition");
+		_g_mime_header_set_raw_value (header, raw_value);
+		g_free (raw_value);
+		g_free (value);
 	} else {
 		g_mime_header_list_remove (object->headers, "Content-Disposition");
 	}
@@ -985,9 +1015,14 @@ g_mime_object_set_header (GMimeObject *object, const char *header, const char *v
 const char *
 g_mime_object_get_header (GMimeObject *object, const char *header)
 {
+	GMimeHeader *hdr;
+	
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
 	
-	return g_mime_header_list_get (object->headers, header);
+	if (!(hdr = g_mime_header_list_get_header (object->headers, header)))
+		return NULL;
+	
+	return g_mime_header_get_value (hdr);
 }
 
 

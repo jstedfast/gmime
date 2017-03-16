@@ -42,7 +42,9 @@
       <listitem><para><function>g_mime_object_new()</function> and <function>g_mime_object_new_with_type()</function> both now take a GMimeParserOptions argument.</para></listitem>
       <listitem><para><function>g_mime_param_new_from_string()</function> has been replaced by <function>g_mime_param_list_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
       <listitem><para><function>g_mime_content_type_new_from_string()</function> has been replaced by <function>g_mime_content_type_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
+      <listitem><para><function>g_mime_content_type_to_string()</function> has been replaced by <function>g_mime_content_type_get_mime_type()</function> and a new function has been introduced called <function>g_mime_content_type_encode()</function> that includes the encoded parameter list.</para></listitem>
       <listitem><para><function>g_mime_content_disposition_new_from_string()<function> has been replaced by <function>g_mime_content_disposition_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
+      <listitem><para><function>g_mime_content_disposition_to_string()</function> has been replaced by <function>g_mime_content_disposition_encode()</function>.</para></listitem>
       <listitem><para><function>internet_address_list_parse_string()</function> has been replaced by <function>internet_address_list_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
       <listitem><para>GMimeHeaderIter has been dropped in favour of a more direct way of iterating over a GMimeHeaderList using int indexes.</para></listitem>
       <listitem><para><function>g_mime_stream_write_to_stream()</function>, <function>g_mime_stream_writev()</function>, and <function>g_mime_stream_printf()</function> now return a gint64.</para></listitem>

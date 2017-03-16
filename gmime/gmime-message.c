@@ -674,7 +674,7 @@ message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GM
 	
 	count = g_mime_header_list_get_count (headers);
 	for (i = 0; i < count; i++) {
-		header = g_mime_header_list_get_header (headers, i);
+		header = g_mime_header_list_get_header_at (headers, i);
 		name = g_mime_header_get_name (header);
 		
 		if (g_ascii_strcasecmp (address_types[type].name, name) != 0)
@@ -861,11 +861,11 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		int index = 0;
 		
 		while (index < count && body_index < body_count) {
-			body_header = g_mime_header_list_get_header (mime_part->headers, body_index);
+			body_header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			if ((body_offset = g_mime_header_get_offset (body_header)) < 0)
 				break;
 			
-			header = g_mime_header_list_get_header (object->headers, index);
+			header = g_mime_header_list_get_header_at (object->headers, index);
 			offset = g_mime_header_get_offset (header);
 			
 			if (offset >= 0 && offset < body_offset) {
@@ -884,7 +884,7 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		}
 		
 		while (index < count) {
-			header = g_mime_header_list_get_header (object->headers, index);
+			header = g_mime_header_list_get_header_at (object->headers, index);
 			
 			if ((nwritten = g_mime_header_write_to_stream (header, stream)) == -1)
 				return -1;
@@ -894,7 +894,7 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		}
 		
 		while (body_index < body_count) {
-			header = g_mime_header_list_get_header (mime_part->headers, body_index);
+			header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			
 			if ((nwritten = g_mime_header_write_to_stream (header, stream)) == -1)
 				return -1;
@@ -1473,7 +1473,7 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 			g_mime_header_list_append (headers, "MIME-Version", "1.0");
 		
 		for (i = 0; i < g_mime_header_list_get_count (mime_part->headers); i++) {
-			header = g_mime_header_list_get_header (mime_part->headers, i);
+			header = g_mime_header_list_get_header_at (mime_part->headers, i);
 			_g_mime_header_set_offset (header, -1);
 		}
 		

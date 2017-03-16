@@ -77,8 +77,8 @@ gboolean g_mime_header_list_contains (GMimeHeaderList *headers, const char *name
 void g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value);
 void g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value);
 void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value);
-const char *g_mime_header_list_get (GMimeHeaderList *headers, const char *name);
-GMimeHeader *g_mime_header_list_get_header (GMimeHeaderList *headers, int index);
+GMimeHeader *g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name);
+GMimeHeader *g_mime_header_list_get_header_at (GMimeHeaderList *headers, int index);
 gboolean g_mime_header_list_remove (GMimeHeaderList *headers, const char *name);
 void g_mime_header_list_remove_at (GMimeHeaderList *headers, int index);
 

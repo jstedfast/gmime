@@ -304,34 +304,34 @@ g_mime_content_disposition_is_attachment (GMimeContentDisposition *disposition)
 
 
 /**
- * g_mime_content_disposition_to_string:
+ * g_mime_content_disposition_encode:
  * @disposition: a #GMimeContentDisposition object
- * @fold: fold header if needed
  *
- * Allocates a string buffer containing the Content-Disposition header
- * represented by the disposition object @disposition.
+ * Encodes the Content-Disposition header.
  *
- * Returns: a string containing the disposition header
+ * Returns: a new string containing the encoded header value.
  **/
 char *
-g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold)
+g_mime_content_disposition_encode (GMimeContentDisposition *disposition)
 {
-	char *header, *buf;
-	GString *string;
+	char *raw_value;
+	GString *str;
+	guint len, n;
 	
 	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), NULL);
 	
 	/* we need to have this so wrapping is correct */
-	string = g_string_new ("Content-Disposition: ");
+	str = g_string_new ("Content-Disposition:");
+	n = str->len;
 	
-	g_string_append (string, disposition->disposition);
-	g_mime_param_list_encode (disposition->params, fold, string);
+	g_string_append_c (str, ' ');
+	g_string_append (str, disposition->disposition);
+	g_mime_param_list_encode (disposition->params, TRUE, str);
+	len = str->len - n;
 	
-	header = string->str;
-	g_string_free (string, FALSE);
+	raw_value = g_string_free (str, FALSE);
 	
-	buf = header + strlen ("Content-Disposition: ");
-	memmove (header, buf, strlen (buf) + 1);
+	memmove (raw_value, raw_value + n, len + 1);
 	
-	return header;
+	return raw_value;
 }
