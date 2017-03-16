@@ -566,7 +566,7 @@ test_rfc2184 (GMimeParserOptions *options)
 		n = str->len;
 		
 		g_mime_param_list_encode (params, TRUE, str);
-		g_mime_param_list_free (params);
+		g_object_unref (params);
 		params = NULL;
 		
 		testsuite_check ("rfc2184[%u]", i);
@@ -606,7 +606,7 @@ test_rfc2184 (GMimeParserOptions *options)
 		} finally;
 		
 		if (params != NULL)
-			g_mime_param_list_free (params);
+			g_object_unref (params);
 		
 		g_string_free (str, TRUE);
 	}

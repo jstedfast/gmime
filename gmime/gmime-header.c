@@ -48,7 +48,7 @@
 
 
 static void g_mime_header_class_init (GMimeHeaderClass *klass);
-static void g_mime_header_init (GMimeHeader *cert, GMimeHeaderClass *klass);
+static void g_mime_header_init (GMimeHeader *header, GMimeHeaderClass *klass);
 static void g_mime_header_finalize (GObject *object);
 
 static GObjectClass *parent_class = NULL;
@@ -318,6 +318,18 @@ g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header, GM
 }
 
 
+static void
+header_changed (GMimeHeader *header, gpointer user_args, GMimeHeaderList *list)
+{
+	GMimeHeaderListChangedEventArgs args;
+	
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED;
+	args.header = header;
+	
+	g_mime_event_emit (list->changed, &args);
+}
+
+
 static void g_mime_header_list_class_init (GMimeHeaderListClass *klass);
 static void g_mime_header_list_init (GMimeHeaderList *list, GMimeHeaderListClass *klass);
 static void g_mime_header_list_finalize (GObject *object);
@@ -377,10 +389,14 @@ static void
 g_mime_header_list_finalize (GObject *object)
 {
 	GMimeHeaderList *headers = (GMimeHeaderList *) object;
+	GMimeHeader *header;
 	guint i;
 	
-	for (i = 0; i < headers->array->len; i++)
-		g_object_unref (headers->array->pdata[i]);
+	for (i = 0; i < headers->array->len; i++) {
+		header = (GMimeHeader *) headers->array->pdata[i];
+		g_mime_event_remove (header->changed, (GMimeEventCallback) header_changed, headers);
+		g_object_unref (header);
+	}
 	
 	g_ptr_array_free (headers->array, TRUE);
 	
@@ -390,18 +406,6 @@ g_mime_header_list_finalize (GObject *object)
 	g_mime_event_free (headers->changed);
 	
 	G_OBJECT_CLASS (list_parent_class)->finalize (object);
-}
-
-
-static void
-header_changed (GMimeHeader *header, gpointer user_args, GMimeHeaderList *list)
-{
-	GMimeHeaderListChangedEventArgs args;
-	
-	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED;
-	args.header = header;
-	
-	g_mime_event_emit (list->changed, &args);
 }
 
 

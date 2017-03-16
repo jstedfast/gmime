@@ -581,7 +581,6 @@ g_mime_param_get_encoding_method
 g_mime_param_set_encoding_method
 g_mime_param_list_new
 g_mime_param_list_parse
-g_mime_param_list_free
 g_mime_param_list_clear
 g_mime_param_list_length
 g_mime_param_list_set_parameter
@@ -590,6 +589,26 @@ g_mime_param_list_get_parameter_at
 g_mime_param_list_remove
 g_mime_param_list_remove_at
 g_mime_param_list_encode
+
+<SUBSECTION Private>
+g_mime_param_get_type
+g_mime_param_list_get_type
+
+<SUBSECTION Standard>
+GMIME_PARAM
+GMIME_IS_PARAM
+GMIME_TYPE_PARAM
+GMIME_PARAM_CLASS
+GMIME_IS_PARAM_CLASS
+GMIME_PARAM_GET_CLASS
+GMimeParamClass
+GMIME_PARAM_LIST
+GMIME_IS_PARAM_LIST
+GMIME_TYPE_PARAM_LIST
+GMIME_PARAM_LIST_CLASS
+GMIME_IS_PARAM_LIST_CLASS
+GMIME_PARAM_LIST_GET_CLASS
+GMimeParamListClass
 </SECTION>
 
 <SECTION>

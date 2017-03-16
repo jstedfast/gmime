@@ -9,8 +9,12 @@ GObject
       GMimeMultipartEncrypted
       GMimeMultipartSigned
     GMimeMessagePart
+  GMimeParam
+  GMimeParamList
   GMimeContentType
   GMimeContentDisposition
+  GMimeHeader
+  GMimeHeaderList
   InternetAddress
     InternetAddressGroup
     InternetAddressMailbox
@@ -44,6 +48,7 @@ GObject
     GMimeStreamFile
     GMimeStreamFilter
     GMimeStreamFs
+    GMimeStreamGIO
     GMimeStreamMem
     GMimeStreamMmap
     GMimeStreamNull

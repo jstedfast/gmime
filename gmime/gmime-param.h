@@ -23,12 +23,30 @@
 #define __GMIME_PARAM_H__
 
 #include <glib.h>
+#include <glib-object.h>
 #include <gmime/gmime-parser-options.h>
 
 G_BEGIN_DECLS
 
+#define GMIME_TYPE_PARAM                  (g_mime_param_get_type ())
+#define GMIME_PARAM(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PARAM, GMimeParam))
+#define GMIME_PARAM_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PARAM, GMimeParamClass))
+#define GMIME_IS_PARAM(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_PARAM))
+#define GMIME_IS_PARAM_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PARAM))
+#define GMIME_PARAM_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_PARAM, GMimeParamClass))
+
+#define GMIME_TYPE_PARAM_LIST             (g_mime_param_list_get_type ())
+#define GMIME_PARAM_LIST(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PARAM_LIST, GMimeParamList))
+#define GMIME_PARAM_LIST_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PARAM_LIST, GMimeParamListClass))
+#define GMIME_IS_PARAM_LIST(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_PARAM_LIST))
+#define GMIME_IS_PARAM_LIST_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PARAM_LIST))
+#define GMIME_PARAM_LIST_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_PARAM_LIST, GMimeParamListClass))
+
 typedef struct _GMimeParam GMimeParam;
+typedef struct _GMimeParamClass GMimeParamClass;
+
 typedef struct _GMimeParamList GMimeParamList;
+typedef struct _GMimeParamListClass GMimeParamListClass;
 
 
 /**
@@ -61,6 +79,8 @@ typedef enum {
  * A parameter name/value pair as used in the Content-Type and Content-Disposition headers.
  **/
 struct _GMimeParam {
+	GObject parent_object;
+	
 	GMimeParamEncodingMethod method;
 	char *charset, *lang;
 	char *name, *value;
@@ -68,6 +88,14 @@ struct _GMimeParam {
 	/* < private > */
 	gpointer changed;
 };
+
+struct _GMimeParamClass {
+	GObjectClass parent_class;
+	
+};
+
+
+GType g_mime_param_get_type (void);
 
 const char *g_mime_param_get_name (GMimeParam *param);
 
@@ -91,13 +119,21 @@ void g_mime_param_set_encoding_method (GMimeParam *param, GMimeParamEncodingMeth
  **/
 struct _GMimeParamList {
 	/* < private > */
-	GPtrArray *params;
+	GObject parent_object;
+	GPtrArray *array;
 	gpointer changed;
 };
 
+struct _GMimeParamListClass {
+	GObjectClass parent_class;
+	
+};
+
+
+GType g_mime_param_list_get_type (void);
+
 GMimeParamList *g_mime_param_list_new (void);
 GMimeParamList *g_mime_param_list_parse (GMimeParserOptions *options, const char *str);
-void g_mime_param_list_free (GMimeParamList *list);
 
 int g_mime_param_list_length (GMimeParamList *list);
 

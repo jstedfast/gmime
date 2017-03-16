@@ -95,7 +95,7 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		fputs ("\"\"", fp);
 	
 	/* Content-Type params */
-	params = g_mime_content_type_get_params (content_type);
+	params = g_mime_content_type_get_parameters (content_type);
 	if ((n = g_mime_param_list_length (params)) > 0) {
 		fputc ('(', fp);
 		for (i = 0; i < n; i++) {
@@ -210,7 +210,7 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		if (disposition) {
 			fprintf (fp, "\"%s\" ", g_mime_content_disposition_get_disposition (disposition));
 			
-			params = g_mime_content_disposition_get_params (disposition);
+			params = g_mime_content_disposition_get_parameters (disposition);
 			if ((n = g_mime_param_list_length (params)) > 0) {
 				fputc ('(', fp);
 				for (i = 0; i < n; i++) {
@@ -717,11 +717,11 @@ bodystruct_free (struct _bodystruct *node)
 		g_free (node->content.type);
 		g_free (node->content.subtype);
 		if (node->content.params)
-			g_mime_param_list_free (node->content.params);
+			g_object_unref (node->content.params);
 		
 		g_free (node->disposition.type);
 		if (node->disposition.params)
-			g_mime_param_list_free (node->disposition.params);
+			g_object_unref (node->disposition.params);
 		
 		g_free (node->encoding);
 		

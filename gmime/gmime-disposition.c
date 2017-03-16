@@ -102,8 +102,8 @@ g_mime_content_disposition_finalize (GObject *object)
 {
 	GMimeContentDisposition *disposition = (GMimeContentDisposition *) object;
 	
-	g_mime_param_list_free (disposition->params);
 	g_mime_event_free (disposition->changed);
+	g_object_unref (disposition->params);
 	g_free (disposition->disposition);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -170,7 +170,7 @@ g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
 	/* parse the parameters, if any */
 	if (*inptr++ == ';' && *inptr && (params = g_mime_param_list_parse (options, inptr))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, disposition);
-		g_mime_param_list_free (disposition->params);
+		g_object_unref (disposition->params);
 		disposition->params = params;
 	}
 	
@@ -223,7 +223,7 @@ g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition
 
 
 /**
- * g_mime_content_disposition_get_params:
+ * g_mime_content_disposition_get_parameters:
  * @disposition: a #GMimeContentDisposition object
  *
  * Gets the Content-Disposition parameter list.
@@ -231,7 +231,7 @@ g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition
  * Returns: the Content-Disposition's parameter list.
  **/
 GMimeParamList *
-g_mime_content_disposition_get_params (GMimeContentDisposition *disposition)
+g_mime_content_disposition_get_parameters (GMimeContentDisposition *disposition)
 {
 	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), NULL);
 	

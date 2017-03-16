@@ -87,7 +87,7 @@ GMimeContentDisposition *g_mime_content_disposition_parse (GMimeParserOptions *o
 void g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value);
 const char *g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition);
 
-GMimeParamList *g_mime_content_disposition_get_params (GMimeContentDisposition *disposition);
+GMimeParamList *g_mime_content_disposition_get_parameters (GMimeContentDisposition *disposition);
 
 void g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition,
 					       const char *name, const char *value);

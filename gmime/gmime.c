@@ -176,7 +176,9 @@ g_mime_init (void)
 	internet_address_group_get_type ();
 	internet_address_mailbox_get_type ();
 	
+	g_mime_param_get_type ();
 	g_mime_header_get_type ();
+	g_mime_param_list_get_type ();
 	g_mime_header_list_get_type ();
 	g_mime_content_type_get_type ();
 	g_mime_content_disposition_get_type ();

@@ -114,8 +114,8 @@ g_mime_content_type_finalize (GObject *object)
 {
 	GMimeContentType *content_type = (GMimeContentType *) object;
 	
-	g_mime_param_list_free (content_type->params);
 	g_mime_event_free (content_type->changed);
+	g_object_unref (content_type->params);
 	g_free (content_type->subtype);
 	g_free (content_type->type);
 	
@@ -208,7 +208,7 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 	
 	if (*inptr++ == ';' && *inptr && (params = g_mime_param_list_parse (options, inptr))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
-		g_mime_param_list_free (content_type->params);
+		g_object_unref (content_type->params);
 		content_type->params = params;
 	}
 	
@@ -394,7 +394,7 @@ g_mime_content_type_get_media_subtype (GMimeContentType *content_type)
 
 
 /**
- * g_mime_content_type_get_params:
+ * g_mime_content_type_get_parameters:
  * @content_type: a #GMimeContentType
  *
  * Gets the Content-Type's parameter list.
@@ -402,7 +402,7 @@ g_mime_content_type_get_media_subtype (GMimeContentType *content_type)
  * Returns: the Content-Type's parameter list.
  **/
 GMimeParamList *
-g_mime_content_type_get_params (GMimeContentType *content_type)
+g_mime_content_type_get_parameters (GMimeContentType *content_type)
 {
 	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
 	

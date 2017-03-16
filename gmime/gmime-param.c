@@ -65,6 +65,73 @@ static unsigned char tohex[16] = {
 };
 
 
+static void g_mime_param_class_init (GMimeParamClass *klass);
+static void g_mime_param_init (GMimeParam *cert, GMimeParamClass *klass);
+static void g_mime_param_finalize (GObject *object);
+
+static GObjectClass *parent_class = NULL;
+
+
+GType
+g_mime_param_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeParamClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_param_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeParam),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_param_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeParam", &info, 0);
+	}
+	
+	return type;
+}
+
+static void
+g_mime_param_class_init (GMimeParamClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_param_finalize;
+}
+
+static void
+g_mime_param_init (GMimeParam *param, GMimeParamClass *klass)
+{
+	param->method = GMIME_PARAM_ENCODING_METHOD_DEFAULT;
+	param->changed = g_mime_event_new (param);
+	param->charset = NULL;
+	param->value = NULL;
+	param->name = NULL;
+	param->lang = NULL;
+}
+
+static void
+g_mime_param_finalize (GObject *object)
+{
+	GMimeParam *param = (GMimeParam *) object;
+	
+	g_mime_event_free (param->changed);
+	g_free (param->charset);
+	g_free (param->value);
+	g_free (param->name);
+	g_free (param->lang);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+
 /**
  * g_mime_param_new:
  *
@@ -75,39 +142,7 @@ static unsigned char tohex[16] = {
 static GMimeParam *
 g_mime_param_new (void)
 {
-	GMimeParam *param;
-	
-	param = g_slice_new (GMimeParam);
-	param->changed = g_mime_event_new (param);
-	param->method = GMIME_PARAM_ENCODING_METHOD_DEFAULT;
-	param->charset = NULL;
-	param->value = NULL;
-	param->name = NULL;
-	param->lang = NULL;
-	
-	return param;
-}
-
-
-/**
- * g_mime_param_free:
- * @param: a #GMimeParam
- *
- * Releases all memory used by this mime param back to the Operating
- * System.
- **/
-static void
-g_mime_param_free (GMimeParam *param)
-{
-	g_return_if_fail (param != NULL);
-	
-	g_mime_event_free (param->changed);
-	g_free (param->charset);
-	g_free (param->value);
-	g_free (param->name);
-	g_free (param->lang);
-	
-	g_slice_free (GMimeParam, param);
+	return g_object_newv (GMIME_TYPE_PARAM, 0, NULL);
 }
 
 
@@ -122,7 +157,7 @@ g_mime_param_free (GMimeParam *param)
 const char *
 g_mime_param_get_name (GMimeParam *param)
 {
-	g_return_val_if_fail (param != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PARAM (param), NULL);
 	
 	return param->name;
 }
@@ -139,7 +174,7 @@ g_mime_param_get_name (GMimeParam *param)
 const char *
 g_mime_param_get_value (GMimeParam *param)
 {
-	g_return_val_if_fail (param != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PARAM (param), NULL);
 	
 	return param->value;
 }
@@ -155,7 +190,7 @@ g_mime_param_get_value (GMimeParam *param)
 void
 g_mime_param_set_value (GMimeParam *param, const char *value)
 {
-	g_return_if_fail (param != NULL);
+	g_return_if_fail (GMIME_IS_PARAM (param));
 	g_return_if_fail (value != NULL);
 	
 	g_free (param->value);
@@ -176,7 +211,7 @@ g_mime_param_set_value (GMimeParam *param, const char *value)
 const char *
 g_mime_param_get_charset (GMimeParam *param)
 {
-	g_return_val_if_fail (param != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PARAM (param), NULL);
 	
 	return param->charset;
 }
@@ -192,7 +227,7 @@ g_mime_param_get_charset (GMimeParam *param)
 void
 g_mime_param_set_charset (GMimeParam *param, const char *charset)
 {
-	g_return_if_fail (param != NULL);
+	g_return_if_fail (GMIME_IS_PARAM (param));
 	
 	g_free (param->charset);
 	param->charset = charset ? g_strdup (charset) : NULL;
@@ -212,7 +247,7 @@ g_mime_param_set_charset (GMimeParam *param, const char *charset)
 const char *
 g_mime_param_get_lang (GMimeParam *param)
 {
-	g_return_val_if_fail (param != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PARAM (param), NULL);
 	
 	return param->lang;
 }
@@ -228,7 +263,7 @@ g_mime_param_get_lang (GMimeParam *param)
 void
 g_mime_param_set_lang (GMimeParam *param, const char *lang)
 {
-	g_return_if_fail (param != NULL);
+	g_return_if_fail (GMIME_IS_PARAM (param));
 	
 	g_free (param->lang);
 	param->lang = lang ? g_strdup (lang) : NULL;
@@ -248,7 +283,7 @@ g_mime_param_set_lang (GMimeParam *param, const char *lang)
 GMimeParamEncodingMethod
 g_mime_param_get_encoding_method (GMimeParam *param)
 {
-	g_return_val_if_fail (param != NULL, GMIME_PARAM_ENCODING_METHOD_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_PARAM (param), GMIME_PARAM_ENCODING_METHOD_DEFAULT);
 	
 	return param->method;
 }
@@ -264,7 +299,7 @@ g_mime_param_get_encoding_method (GMimeParam *param)
 void
 g_mime_param_set_encoding_method (GMimeParam *param, GMimeParamEncodingMethod method)
 {
-	g_return_if_fail (param != NULL);
+	g_return_if_fail (GMIME_IS_PARAM (param));
 	
 	param->method = method;
 	
@@ -279,6 +314,76 @@ param_changed (GMimeParam *param, gpointer args, GMimeParamList *list)
 }
 
 
+static void g_mime_param_list_class_init (GMimeParamListClass *klass);
+static void g_mime_param_list_init (GMimeParamList *list, GMimeParamListClass *klass);
+static void g_mime_param_list_finalize (GObject *object);
+
+
+static GObjectClass *list_parent_class = NULL;
+
+
+GType
+g_mime_param_list_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeParamListClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_param_list_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeParamList),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_param_list_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeParamList", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_param_list_class_init (GMimeParamListClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	list_parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_param_list_finalize;
+}
+
+static void
+g_mime_param_list_init (GMimeParamList *list, GMimeParamListClass *klass)
+{
+	list->changed = g_mime_event_new (list);
+	list->array = g_ptr_array_new ();
+}
+
+static void
+g_mime_param_list_finalize (GObject *object)
+{
+	GMimeParamList *list = (GMimeParamList *) object;
+	GMimeParam *param;
+	guint i;
+	
+	for (i = 0; i < list->array->len; i++) {
+		param = (GMimeParam *) list->array->pdata[i];
+		g_mime_event_remove (param->changed, (GMimeEventCallback) param_changed, list);
+		g_object_unref (param);
+	}
+	
+	g_ptr_array_free (list->array, TRUE);
+	g_mime_event_free (list->changed);
+	
+	G_OBJECT_CLASS (list_parent_class)->finalize (object);
+}
+
+
 /**
  * g_mime_param_list_new:
  *
@@ -289,36 +394,7 @@ param_changed (GMimeParam *param, gpointer args, GMimeParamList *list)
 GMimeParamList *
 g_mime_param_list_new (void)
 {
-	GMimeParamList *list;
-	
-	list = g_slice_new (GMimeParamList);
-	list->changed = g_mime_event_new (list);
-	list->params = g_ptr_array_new ();
-	
-	return list;
-}
-
-
-/**
- * g_mime_param_list_free:
- * @list: a #GMimeParamList
- *
- * Frees the #GMimeParamList.
- **/
-void
-g_mime_param_list_free (GMimeParamList *list)
-{
-	guint i;
-	
-	g_return_if_fail (list != NULL);
-	
-	for (i = 0; i < list->params->len; i++)
-		g_mime_param_free (list->params->pdata[i]);
-	
-	g_ptr_array_free (list->params, TRUE);
-	g_mime_event_free (list->changed);
-	
-	g_slice_free (GMimeParamList, list);
+	return g_object_newv (GMIME_TYPE_PARAM_LIST, 0, NULL);
 }
 
 
@@ -333,9 +409,9 @@ g_mime_param_list_free (GMimeParamList *list)
 int
 g_mime_param_list_length (GMimeParamList *list)
 {
-	g_return_val_if_fail (list != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_PARAM_LIST (list), -1);
 	
-	return list->params->len;
+	return list->array->len;
 }
 
 
@@ -348,14 +424,18 @@ g_mime_param_list_length (GMimeParamList *list)
 void
 g_mime_param_list_clear (GMimeParamList *list)
 {
+	GMimeParam *param;
 	guint i;
 	
-	g_return_if_fail (list != NULL);
+	g_return_if_fail (GMIME_IS_PARAM_LIST (list));
 	
-	for (i = 0; i < list->params->len; i++)
-		g_mime_param_free (list->params->pdata[i]);
+	for (i = 0; i < list->array->len; i++) {
+		param = (GMimeParam *) list->array->pdata[i];
+		g_mime_event_remove (param->changed, (GMimeEventCallback) param_changed, list);
+		g_object_unref (param);
+	}
 	
-	g_ptr_array_set_size (list->params, 0);
+	g_ptr_array_set_size (list->array, 0);
 	
 	g_mime_event_emit (list->changed, NULL);
 }
@@ -374,7 +454,7 @@ static void
 g_mime_param_list_add (GMimeParamList *list, GMimeParam *param)
 {
 	g_mime_event_add (param->changed, (GMimeEventCallback) param_changed, list);
-	g_ptr_array_add (list->params, param);
+	g_ptr_array_add (list->array, param);
 }
 
 
@@ -392,12 +472,12 @@ g_mime_param_list_set_parameter (GMimeParamList *list, const char *name, const c
 	GMimeParam *param;
 	guint i;
 	
-	g_return_if_fail (list != NULL);
+	g_return_if_fail (GMIME_IS_PARAM_LIST (list));
 	g_return_if_fail (name != NULL);
 	g_return_if_fail (value != NULL);
 	
-	for (i = 0; i < list->params->len; i++) {
-		param = list->params->pdata[i];
+	for (i = 0; i < list->array->len; i++) {
+		param = list->array->pdata[i];
 		
 		if (!g_ascii_strcasecmp (param->name, name)) {
 			g_mime_param_set_value (param, value);
@@ -430,11 +510,11 @@ g_mime_param_list_get_parameter (GMimeParamList *list, const char *name)
 	GMimeParam *param;
 	guint i;
 	
-	g_return_val_if_fail (list != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PARAM_LIST (list), NULL);
 	g_return_val_if_fail (name != NULL, NULL);
 	
-	for (i = 0; i < list->params->len; i++) {
-		param = list->params->pdata[i];
+	for (i = 0; i < list->array->len; i++) {
+		param = list->array->pdata[i];
 		
 		if (!g_ascii_strcasecmp (param->name, name))
 			return param;
@@ -456,13 +536,13 @@ g_mime_param_list_get_parameter (GMimeParamList *list, const char *name)
 GMimeParam *
 g_mime_param_list_get_parameter_at (GMimeParamList *list, int index)
 {
-	g_return_val_if_fail (list != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PARAM_LIST (list), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
 	
-	if ((guint) index >= list->params->len)
+	if ((guint) index >= list->array->len)
 		return NULL;
 	
-	return list->params->pdata[index];
+	return list->array->pdata[index];
 }
 
 
@@ -481,15 +561,16 @@ g_mime_param_list_remove (GMimeParamList *list, const char *name)
 	GMimeParam *param;
 	guint i;
 	
-	g_return_val_if_fail (list != NULL, FALSE);
+	g_return_val_if_fail (GMIME_IS_PARAM_LIST (list), FALSE);
 	g_return_val_if_fail (name != NULL, FALSE);
 	
-	for (i = 0; i < list->params->len; i++) {
-		param = list->params->pdata[i];
+	for (i = 0; i < list->array->len; i++) {
+		param = list->array->pdata[i];
 		
 		if (!g_ascii_strcasecmp (param->name, name)) {
-			g_ptr_array_remove_index (list->params, i);
-			g_mime_param_free (param);
+			g_mime_event_remove (param->changed, (GMimeEventCallback) param_changed, list);
+			g_ptr_array_remove_index (list->array, i);
+			g_object_unref (param);
 			return TRUE;
 		}
 	}
@@ -512,15 +593,16 @@ g_mime_param_list_remove_at (GMimeParamList *list, int index)
 {
 	GMimeParam *param;
 	
-	g_return_val_if_fail (list != NULL, FALSE);
+	g_return_val_if_fail (GMIME_IS_PARAM_LIST (list), FALSE);
 	g_return_val_if_fail (index >= 0, FALSE);
 	
-	if ((guint) index >= list->params->len)
+	if ((guint) index >= list->array->len)
 		return FALSE;
 	
-	param = list->params->pdata[index];
-	g_ptr_array_remove_index (list->params, index);
-	g_mime_param_free (param);
+	param = list->array->pdata[index];
+	g_mime_event_remove (param->changed, (GMimeEventCallback) param_changed, list);
+	g_ptr_array_remove_index (list->array, index);
+	g_object_unref (param);
 	
 	return TRUE;
 }
@@ -641,10 +723,10 @@ g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str)
 	guint count, i;
 	int used;
 	
-	g_return_if_fail (list != NULL);
+	g_return_if_fail (GMIME_IS_PARAM_LIST (list));
 	g_return_if_fail (str != NULL);
 	
-	count = list->params->len;
+	count = list->array->len;
 	used = str->len;
 	
 	for (i = 0; i < count; i++) {
@@ -656,7 +738,7 @@ g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str)
 		GMimeParam *param;
 		int quote = 0;
 		
-		param = (GMimeParam *) list->params->pdata[i];
+		param = (GMimeParam *) list->array->pdata[i];
 		
 		if (!param->value)
 			continue;

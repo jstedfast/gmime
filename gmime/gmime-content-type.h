@@ -80,7 +80,7 @@ const char *g_mime_content_type_get_media_type (GMimeContentType *content_type);
 void g_mime_content_type_set_media_subtype (GMimeContentType *content_type, const char *subtype);
 const char *g_mime_content_type_get_media_subtype (GMimeContentType *content_type);
 
-GMimeParamList *g_mime_content_type_get_params (GMimeContentType *content_type);
+GMimeParamList *g_mime_content_type_get_parameters (GMimeContentType *content_type);
 
 void g_mime_content_type_set_parameter (GMimeContentType *content_type, const char *name, const char *value);
 const char *g_mime_content_type_get_parameter (GMimeContentType *content_type, const char *name);

@@ -275,7 +275,7 @@ test_header_sync (void)
 			throw (exception_new ("content-type header had unexpected value after setting a param"));
 		
 		/* now change the content-type's parameters by clearing the params */
-		params = g_mime_content_type_get_params (type);
+		params = g_mime_content_type_get_parameters (type);
 		g_mime_param_list_clear (params);
 		if (!(value = g_mime_object_get_header (object, "Content-Type")))
 			throw (exception_new ("content-type header was unexpectedly null after clearing params"));
@@ -322,7 +322,7 @@ test_header_sync (void)
 			throw (exception_new ("content-disposition header had unexpected value after setting a param"));
 		
 		/* now change the content-disposition's parameters by clearing the params */
-		params = g_mime_content_disposition_get_params (disposition);
+		params = g_mime_content_disposition_get_parameters (disposition);
 		g_mime_param_list_clear (params);
 		if (!(value = g_mime_object_get_header (object, "Content-Disposition")))
 			throw (exception_new ("content-disposition header was unexpectedly null after setting params"));
