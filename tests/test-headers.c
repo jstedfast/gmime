@@ -106,7 +106,7 @@ test_indexing (void)
 		testsuite_check_failed ("indexing past end of headers: %s", ex->message);
 	} finally;
 	
-	g_mime_header_list_free (list);
+	g_object_unref (list);
 }
 
 static void
@@ -162,7 +162,7 @@ test_remove (void)
 		testsuite_check_failed ("remove last header: %s", ex->message);
 	} finally;
 	
-	g_mime_header_list_free (list);
+	g_object_unref (list);
 }
 
 static void
@@ -219,7 +219,7 @@ test_remove_at (void)
 		testsuite_check_failed ("remove last header: %s", ex->message);
 	} finally;
 	
-	g_mime_header_list_free (list);
+	g_object_unref (list);
 }
 
 static void

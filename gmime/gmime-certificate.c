@@ -550,13 +550,10 @@ static void
 g_mime_certificate_list_finalize (GObject *object)
 {
 	GMimeCertificateList *list = (GMimeCertificateList *) object;
-	GMimeCertificate *cert;
 	guint i;
 	
-	for (i = 0; i < list->array->len; i++) {
-		cert = (GMimeCertificate *) list->array->pdata[i];
-		g_object_unref (cert);
-	}
+	for (i = 0; i < list->array->len; i++)
+		g_object_unref (list->array->pdata[i]);
 	
 	g_ptr_array_free (list->array, TRUE);
 	

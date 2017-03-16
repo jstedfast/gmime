@@ -134,11 +134,11 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 static void
 g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 {
-	GMimeEvent *changed;
+	GMimeHeaderList *headers;
 	
-	object->headers = g_mime_header_list_new (g_mime_parser_options_get_default ());
-	changed = _g_mime_header_list_get_changed_event (object->headers);
-	g_mime_event_add (changed, (GMimeEventCallback) header_list_changed, object);
+	headers = g_mime_header_list_new (g_mime_parser_options_get_default ());
+	g_mime_event_add (headers->changed, (GMimeEventCallback) header_list_changed, object);
+	object->headers = headers;
 	
 	object->content_type = NULL;
 	object->disposition = NULL;
@@ -168,9 +168,9 @@ g_mime_object_finalize (GObject *object)
 	}
 	
 	if (mime->headers) {
-		event = _g_mime_header_list_get_changed_event (mime->headers);
+		event = mime->headers->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) header_list_changed, object);
-		g_mime_header_list_free (mime->headers);
+		g_object_unref (mime->headers);
 	}
 	
 	g_free (mime->content_id);
@@ -333,19 +333,13 @@ write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char
 void
 _g_mime_object_block_header_list_changed (GMimeObject *object)
 {
-	GMimeEvent *event;
-	
-	event = _g_mime_header_list_get_changed_event (object->headers);
-	g_mime_event_block (event, (GMimeEventCallback) header_list_changed, object);
+	g_mime_event_block (object->headers->changed, (GMimeEventCallback) header_list_changed, object);
 }
 
 void
 _g_mime_object_unblock_header_list_changed (GMimeObject *object)
 {
-	GMimeEvent *event;
-	
-	event = _g_mime_header_list_get_changed_event (object->headers);
-	g_mime_event_unblock (event, (GMimeEventCallback) header_list_changed, object);
+	g_mime_event_unblock (object->headers->changed, (GMimeEventCallback) header_list_changed, object);
 }
 
 static char *

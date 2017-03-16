@@ -869,13 +869,13 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 			offset = g_mime_header_get_offset (header);
 			
 			if (offset >= 0 && offset < body_offset) {
-				if ((nwritten = g_mime_header_write_to_stream (header, stream)) == -1)
+				if ((nwritten = g_mime_header_write_to_stream (object->headers, header, stream)) == -1)
 					return -1;
 				
 				total += nwritten;
 				index++;
 			} else {
-				if ((nwritten = g_mime_header_write_to_stream (body_header, stream)) == -1)
+				if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, body_header, stream)) == -1)
 					return -1;
 				
 				total += nwritten;
@@ -886,7 +886,7 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		while (index < count) {
 			header = g_mime_header_list_get_header_at (object->headers, index);
 			
-			if ((nwritten = g_mime_header_write_to_stream (header, stream)) == -1)
+			if ((nwritten = g_mime_header_write_to_stream (object->headers, header, stream)) == -1)
 				return -1;
 			
 			total += nwritten;
@@ -896,7 +896,7 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		while (body_index < body_count) {
 			header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			
-			if ((nwritten = g_mime_header_write_to_stream (header, stream)) == -1)
+			if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, header, stream)) == -1)
 				return -1;
 			
 			total += nwritten;

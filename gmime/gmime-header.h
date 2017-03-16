@@ -28,6 +28,26 @@
 
 G_BEGIN_DECLS
 
+#define GMIME_TYPE_HEADER                  (g_mime_header_get_type ())
+#define GMIME_HEADER(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_HEADER, GMimeHeader))
+#define GMIME_HEADER_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_HEADER, GMimeHeaderClass))
+#define GMIME_IS_HEADER(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_HEADER))
+#define GMIME_IS_HEADER_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_HEADER))
+#define GMIME_HEADER_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_HEADER, GMimeHeaderClass))
+
+#define GMIME_TYPE_HEADER_LIST             (g_mime_header_list_get_type ())
+#define GMIME_HEADER_LIST(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_HEADER_LIST, GMimeHeaderList))
+#define GMIME_HEADER_LIST_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_HEADER_LIST, GMimeHeaderListClass))
+#define GMIME_IS_HEADER_LIST(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_HEADER_LIST))
+#define GMIME_IS_HEADER_LIST_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_HEADER_LIST))
+#define GMIME_HEADER_LIST_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_HEADER_LIST, GMimeHeaderListClass))
+
+typedef struct _GMimeHeader GMimeHeader;
+typedef struct _GMimeHeaderClass GMimeHeaderClass;
+
+typedef struct _GMimeHeaderList GMimeHeaderList;
+typedef struct _GMimeHeaderListClass GMimeHeaderListClass;
+
 
 /**
  * GMimeHeaderWriter:
@@ -46,10 +66,30 @@ typedef ssize_t (* GMimeHeaderWriter) (GMimeParserOptions *options, GMimeStream 
 
 /**
  * GMimeHeader:
+ * @name: the name of the header
+ * @value: the unfolded value of the header
  *
- * A message/rfc822 header.
+ * A message or mime-part header.
  **/
-typedef struct _GMimeHeader GMimeHeader;
+struct _GMimeHeader {
+	GObject parent_object;
+	
+	char *name, *value;
+	
+	/* < private > */
+	gpointer changed;
+	char *raw_value;
+	char *raw_name;
+	gint64 offset;
+};
+
+struct _GMimeHeaderClass {
+	GObjectClass parent_class;
+	
+};
+
+
+GType g_mime_header_get_type (void);
 
 const char *g_mime_header_get_name (GMimeHeader *header);
 
@@ -58,7 +98,7 @@ void g_mime_header_set_value (GMimeHeader *header, const char *value);
 
 gint64 g_mime_header_get_offset (GMimeHeader *header);
 
-ssize_t g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream);
+ssize_t g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header, GMimeStream *stream);
 
 
 /**
@@ -66,10 +106,26 @@ ssize_t g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream)
  *
  * A list of message or mime-part headers.
  **/
-typedef struct _GMimeHeaderList GMimeHeaderList;
+struct _GMimeHeaderList {
+	GObject parent_object;
+	
+	/* < private > */
+	GMimeParserOptions *options;
+	GHashTable *writers;
+	gpointer changed;
+	GHashTable *hash;
+	GPtrArray *array;
+};
+
+struct _GMimeHeaderListClass {
+	GObjectClass parent_class;
+	
+};
+
+
+GType g_mime_header_list_get_type (void);
 
 GMimeHeaderList *g_mime_header_list_new (GMimeParserOptions *options);
-void g_mime_header_list_free (GMimeHeaderList *headers);
 
 void g_mime_header_list_clear (GMimeHeaderList *headers);
 int g_mime_header_list_get_count (GMimeHeaderList *headers);

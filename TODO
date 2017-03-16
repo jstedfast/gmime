@@ -8,8 +8,6 @@ GMime 3.0 Planning:
 
 - Convert GMimeParam[List] into GObjects
 
-- Convert GMimeHeader[List] into GObjects
-
 - Rewrite GMimeReferences into a GObject and split into its own file
 
 - Add g_mime_utils_header_decode_[text,phrase]() variants that also return charset/lang values?
