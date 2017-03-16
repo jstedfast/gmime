@@ -555,6 +555,10 @@ test_rfc2184 (GMimeParserOptions *options)
 	int count;
 	size_t n;
 	guint i;
+	int v;
+	
+	v = verbose;
+	verbose = 4;
 	
 	for (i = 0; i < G_N_ELEMENTS (rfc2184); i++) {
 		params = g_mime_param_list_new ();
@@ -609,6 +613,8 @@ test_rfc2184 (GMimeParserOptions *options)
 		
 		g_string_free (str, TRUE);
 	}
+	
+	verbose = v;
 }
 
 
