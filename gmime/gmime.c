@@ -136,7 +136,7 @@ g_mime_init (void)
 	g_mime_signature_list_get_type ();
 	g_mime_certificate_get_type ();
 	g_mime_signature_get_type ();
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	g_mime_gpg_context_get_type ();
 	g_mime_pkcs7_context_get_type ();
 #endif
@@ -170,13 +170,16 @@ g_mime_init (void)
 	g_mime_parser_get_type ();
 	g_mime_message_get_type ();
 	g_mime_data_wrapper_get_type ();
-	g_mime_content_type_get_type ();
-	g_mime_content_disposition_get_type ();
 	
 	internet_address_get_type ();
 	internet_address_list_get_type ();
 	internet_address_group_get_type ();
 	internet_address_mailbox_get_type ();
+	
+	g_mime_header_get_type ();
+	g_mime_header_list_get_type ();
+	g_mime_content_type_get_type ();
+	g_mime_content_disposition_get_type ();
 	
 	/* register our default mime object types */
 	g_mime_object_type_registry_init ();
