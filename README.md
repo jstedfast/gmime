@@ -671,6 +671,8 @@ if (GMIME_IS_MULTIPART_SIGNED (entity)) {
             fputs ("None", stdout);
         fputs ("\n\n", stdout);
     }
+
+    g_object_unref (signatures);
 }
 ```
 
@@ -706,6 +708,9 @@ if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
             GMimeSignature *sig = g_mime_signature_list_get_signature (signatures, i);
             /* ... */
         }
+
+	g_object_unref (signatures);
+    }
 }
 ```
 
