@@ -194,8 +194,9 @@ g_mime_header_set_value (GMimeHeader *header, const char *value)
 	g_return_if_fail (value != NULL);
 	
 	g_free (header->raw_value);
-	g_free (header->value);
+	header->raw_value = NULL;
 	
+	g_free (header->value);
 	header->value = g_strdup (value);
 	
 	g_mime_event_emit (header->changed, NULL);

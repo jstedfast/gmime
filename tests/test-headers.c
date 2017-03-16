@@ -223,23 +223,17 @@ test_remove_at (void)
 }
 
 static void
-test_header_sync (void)
+test_content_type_sync (void)
 {
-	GMimeContentDisposition *disposition;
-	InternetAddressList *list;
-	InternetAddress *addr, *ia;
 	GMimeHeaderList *headers;
 	GMimeContentType *type;
 	GMimeParamList *params;
-	GMimeMessage *message;
 	GMimeObject *object;
 	GMimeHeader *header;
 	const char *value;
 	GMimePart *part;
 	
-	part = g_mime_part_new_with_type ("application", "octet-stream");
-	object = (GMimeObject *) part;
-	
+	object = (GMimeObject *) (part = g_mime_part_new ());
 	headers = g_mime_object_get_header_list (object);
 	
 	testsuite_check ("content-type synchronization");
@@ -283,16 +277,33 @@ test_header_sync (void)
 			throw (exception_new ("content-type header had unexpected value after setting params"));
 		
 		/* let's try this in reverse... set the header value and make sure GMimeContentType gets updated */
-		//header = g_mime_header_list_get_header (headers, 0);
-		//g_mime_header_set_value (header, "text/html; charset=utf-8");
-		//type = g_mime_object_get_content_type (object);
-		//if (!g_mime_content_type_is_type (type, "text", "html"))
-		//	throw (exception_new ("GMimeContentType object was not updated"));
+		header = g_mime_header_list_get_header_at (headers, 0);
+		g_mime_header_set_value (header, "text/html; charset=utf-8");
+		type = g_mime_object_get_content_type (object);
+		if (!g_mime_content_type_is_type (type, "text", "html"))
+			throw (exception_new ("GMimeContentType object was not updated"));
 		
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("content-type header not synchronized: %s", ex->message);
 	} finally;
+	
+	g_object_unref (part);
+}
+
+static void
+test_disposition_sync (void)
+{
+	GMimeContentDisposition *disposition;
+	GMimeHeaderList *headers;
+	GMimeParamList *params;
+	GMimeObject *object;
+	GMimeHeader *header;
+	const char *value;
+	GMimePart *part;
+	
+	object = (GMimeObject *) (part = g_mime_part_new ());
+	headers = g_mime_object_get_header_list (object);
 	
 	testsuite_check ("content-disposition synchronization");
 	try {
@@ -330,11 +341,11 @@ test_header_sync (void)
 			throw (exception_new ("content-disposition header had unexpected value after setting params"));
 		
 		/* let's try this in reverse... set the header value and make sure GMimeContentDisposition gets updated */
-		//header = g_mime_header_list_get_header (headers, 1);
-		//g_mime_header_set_value (header, "attachment; filename=xyz");
-		//disposition = g_mime_object_get_content_disposition (object);
-		//if (!g_mime_content_disposition_is_attachment (disposition))
-		//	throw (exception_new ("GMimeContentDisposition object was not updated"));
+		header = g_mime_header_list_get_header_at (headers, 1);
+		g_mime_header_set_value (header, "attachment; filename=xyz");
+		disposition = g_mime_object_get_content_disposition (object);
+		if (!g_mime_content_disposition_is_attachment (disposition))
+			throw (exception_new ("GMimeContentDisposition object was not updated"));
 		
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -342,6 +353,18 @@ test_header_sync (void)
 	} finally;
 	
 	g_object_unref (part);
+}
+
+static void
+test_address_sync (void)
+{
+	InternetAddress *addr, *ia;
+	InternetAddressList *list;
+	GMimeHeaderList *headers;
+	GMimeParamList *params;
+	GMimeMessage *message;
+	GMimeObject *object;
+	const char *value;
 	
 	message = g_mime_message_new (TRUE);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
@@ -439,7 +462,9 @@ int main (int argc, char **argv)
 	testsuite_end ();
 	
 	testsuite_start ("header synchronization");
-	test_header_sync ();
+	test_content_type_sync ();
+	test_disposition_sync ();
+	test_address_sync ();
 	testsuite_end ();
 	
 	g_mime_shutdown ();
