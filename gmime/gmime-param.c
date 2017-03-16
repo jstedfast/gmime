@@ -707,7 +707,7 @@ g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str)
 			while (inptr < inend) {
 				char *ptr = inptr + MIN ((size_t) (inend - inptr), maxlen);
 				
-				if (encoded && ptr < inend) {
+				if (ptr < inend) {
 					/* be careful not to break an encoded char (ie %20) */
 					char *q = ptr;
 					int j = 2;
