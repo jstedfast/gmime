@@ -376,7 +376,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
 	GMimeDigestAlgo digest;
-	char *content_type;
+	char *mime_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);
 	
@@ -416,16 +416,16 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	signature = g_mime_multipart_get_part (GMIME_MULTIPART (mps), GMIME_MULTIPART_SIGNED_SIGNATURE);
 	
 	/* make sure the protocol matches the signature content-type */
-	content_type = g_mime_content_type_to_string (signature->content_type);
-	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
+	mime_type = g_mime_content_type_get_mime_type (signature->content_type);
+	if (g_ascii_strcasecmp (mime_type, protocol) != 0) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot verify multipart/signed part: signature content-type does not match protocol."));
-		g_free (content_type);
 		g_object_unref (ctx);
+		g_free (mime_type);
 		
 		return NULL;
 	}
-	g_free (content_type);
+	g_free (mime_type);
 	
 	content = g_mime_multipart_get_part (GMIME_MULTIPART (mps), GMIME_MULTIPART_SIGNED_CONTENT);
 	

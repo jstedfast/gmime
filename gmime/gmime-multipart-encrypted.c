@@ -271,13 +271,13 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 	GMimeObject *decrypted, *version_part, *encrypted_part;
 	GMimeStream *filtered, *stream, *ciphertext;
 	const char *protocol, *supported;
-	GMimeContentType *mime_type;
+	GMimeContentType *content_type;
 	GMimeDataWrapper *content;
 	GMimeDecryptResult *res;
 	GMimeCryptoContext *ctx;
 	GMimeFilter *filter;
 	GMimeParser *parser;
-	char *content_type;
+	char *mime_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (encrypted), NULL);
 	
@@ -314,22 +314,22 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 	version_part = g_mime_multipart_get_part ((GMimeMultipart *) encrypted, GMIME_MULTIPART_ENCRYPTED_VERSION);
 	
 	/* make sure the protocol matches the version part's content-type */
-	content_type = g_mime_content_type_to_string (version_part->content_type);
-	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
+	mime_type = g_mime_content_type_get_mime_type (version_part->content_type);
+	if (g_ascii_strcasecmp (mime_type, protocol) != 0) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: content-type does not match protocol."));
 		
-		g_free (content_type);
 		g_object_unref (ctx);
+		g_free (mime_type);
 		
 		return NULL;
 	}
-	g_free (content_type);
+	g_free (mime_type);
 	
 	/* get the encrypted part and check that it is of type application/octet-stream */
 	encrypted_part = g_mime_multipart_get_part ((GMimeMultipart *) encrypted, GMIME_MULTIPART_ENCRYPTED_CONTENT);
-	mime_type = g_mime_object_get_content_type (encrypted_part);
-	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
+	content_type = g_mime_object_get_content_type (encrypted_part);
+	if (!g_mime_content_type_is_type (content_type, "application", "octet-stream")) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: unexpected content type."));
 		g_object_unref (ctx);
