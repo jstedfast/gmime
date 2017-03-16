@@ -250,7 +250,7 @@ test_header_sync (void)
 			throw (exception_new ("initial content-type header was unexpectedly null"));
 		
 		if (strcmp ("application/octet-stream", value) != 0)
-			throw (exception_new ("initial content-type header had unexpected value"));
+			throw (exception_new ("initial content-type header had unexpected value: %s", value));
 		
 		/* now change the content-type's media type... */
 		type = g_mime_object_get_content_type (object);
@@ -304,7 +304,7 @@ test_header_sync (void)
 			throw (exception_new ("initial content-disposition header was unexpectedly null"));
 		
 		if (strcmp ("attachment", value) != 0)
-			throw (exception_new ("initial content-disposition header had unexpected value"));
+			throw (exception_new ("initial content-disposition header had unexpected value: %s", value));
 		
 		/* now change the content-disposition's disposition */
 		disposition = g_mime_object_get_content_disposition (object);

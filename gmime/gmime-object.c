@@ -26,6 +26,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "gmime-table-private.h"
 #include "gmime-common.h"
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"
@@ -353,6 +354,9 @@ unfold_raw_value (const char *raw_value)
 	char *value = g_malloc (strlen (raw_value) + 1);
 	register const char *inptr = raw_value;
 	register char *outptr = value;
+	
+	while (is_lwsp (*inptr))
+		inptr++;
 	
 	while (*inptr) {
 		if (*inptr == '\n') {
