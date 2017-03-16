@@ -555,6 +555,8 @@ test_rfc2184 (GMimeParserOptions *options)
 	int count;
 	size_t n;
 	guint i;
+
+	verbose = 4;
 	
 	for (i = 0; i < G_N_ELEMENTS (rfc2184); i++) {
 		params = g_mime_param_list_new ();
@@ -572,7 +574,8 @@ test_rfc2184 (GMimeParserOptions *options)
 		testsuite_check ("rfc2184[%u]", i);
 		try {
 			if (strcmp (rfc2184[i].encoded, str->str) != 0)
-				throw (exception_new ("encoded param list does not match: %s", str->str));
+				throw (exception_new ("encoded param list does not match: \n%s\nvs\n%s",
+						      rfc2184[i].encoded, str->str));
 			
 			if (!(params = g_mime_param_list_parse (options, str->str + n + 2)))
 				throw (exception_new ("could not parse encoded param list"));
@@ -609,6 +612,8 @@ test_rfc2184 (GMimeParserOptions *options)
 		
 		g_string_free (str, TRUE);
 	}
+
+	verbose = 1;
 }
 
 
