@@ -519,18 +519,6 @@ g_mime_header_list_contains (GMimeHeaderList *headers, const char *name)
 }
 
 
-gboolean
-_g_mime_header_list_has_raw_value (GMimeHeaderList *headers, const char *name)
-{
-	GMimeHeader *header;
-	
-	if (!(header = g_hash_table_lookup (headers->hash, name)))
-		return FALSE;
-	
-	return header->raw_value != NULL;
-}
-
-
 void
 _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
 {
