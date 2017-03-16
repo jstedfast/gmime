@@ -528,18 +528,26 @@ static struct {
 	const char *input;
 	const char *charset;
 	const char *encoded;
+	GMimeParamEncodingMethod method;
 } rfc2184[] = {
 	{ "this is a really really long filename that should force gmime to rfc2184 encode it - yay!.html",
+	  "us-ascii",
+	  "Content-Disposition: attachment;\n\t"
+	  "filename*0*=us-ascii'en'this%20is%20a%20really%20really%20long%20filename%20;\n\t"
+	  "filename*1*=that%20should%20force%20gmime%20to%20rfc2184%20encode%20it%20-;\n\t"
+	  "filename*2*=%20yay!.html\n",
+	  GMIME_PARAM_ENCODING_METHOD_RFC2231 },
+	{ "{#Dèé£åý M$áí.çøm}.doc",
 	  "iso-8859-1",
 	  "Content-Disposition: attachment;\n\t"
-	  "filename*0*=iso-8859-1''this%20is%20a%20really%20really%20long%20filename%20;\n\t"
-	  "filename*1*=that%20should%20force%20gmime%20to%20rfc2184%20encode%20it%20-;\n\t"
-	  "filename*2*=%20yay!.html\n" },
+	  "filename*=iso-8859-1'en'{#D%E8%E9%A3%E5%FD%20M$%E1%ED.%E7%F8m}.doc\n",
+	  GMIME_PARAM_ENCODING_METHOD_RFC2231 },
 };
 
 static void
 test_rfc2184 (GMimeParserOptions *options)
 {
+	GMimeParamEncodingMethod method;
 	GMimeParamList *params;
 	GMimeParam *param;
 	const char *value;
@@ -551,17 +559,20 @@ test_rfc2184 (GMimeParserOptions *options)
 	for (i = 0; i < G_N_ELEMENTS (rfc2184); i++) {
 		params = g_mime_param_list_new ();
 		g_mime_param_list_set_parameter (params, "filename", rfc2184[i].input);
+		param = g_mime_param_list_get_parameter (params, "filename");
+		g_mime_param_set_lang (param, "en");
 		
 		str = g_string_new ("Content-Disposition: attachment");
 		n = str->len;
 		
+		g_mime_param_list_encode (params, TRUE, str);
+		g_mime_param_list_free (params);
+		params = NULL;
+		
 		testsuite_check ("rfc2184[%u]", i);
 		try {
-			g_mime_param_list_encode (params, TRUE, str);
 			if (strcmp (rfc2184[i].encoded, str->str) != 0)
-				throw (exception_new ("encoded param does not match: %s", str->str));
-			
-			g_mime_param_list_free (params);
+				throw (exception_new ("encoded param list does not match: %s", str->str));
 			
 			if (!(params = g_mime_param_list_parse (options, str->str + n + 2)))
 				throw (exception_new ("could not parse encoded param list"));
@@ -572,11 +583,21 @@ test_rfc2184 (GMimeParserOptions *options)
 			if (!(param = g_mime_param_list_get_parameter (params, "filename")))
 				throw (exception_new ("failed to get filename param"));
 			
-			if (strcmp (rfc2184[i].input, param->value) != 0)
-				throw (exception_new ("parsed param value does not match"));
+			value = g_mime_param_get_value (param);
+			if (strcmp (rfc2184[i].input, value) != 0)
+				throw (exception_new ("parsed param value does not match: %s", value));
 			
-			if (strcmp (rfc2184[i].charset, param->charset) != 0)
-				throw (exception_new ("parsed charset does not match"));
+			value = g_mime_param_get_charset (param);
+			if (strcmp (rfc2184[i].charset, value) != 0)
+				throw (exception_new ("parsed charset does not match: %s", value));
+			
+			value = g_mime_param_get_lang (param);
+			if (strcmp (value, "en") != 0)
+				throw (exception_new ("parsed lang does not match: %s", value));
+			
+			method = g_mime_param_get_encoding_method (param);
+			if (method != rfc2184[i].method)
+				throw (exception_new ("parsed encoding method does not match: %d", method));
 			
 			testsuite_check_passed ();
 		} catch (ex) {

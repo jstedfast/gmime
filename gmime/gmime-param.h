@@ -92,8 +92,7 @@ void g_mime_param_set_encoding_method (GMimeParam *param, GMimeParamEncodingMeth
 struct _GMimeParamList {
 	/* < private > */
 	GPtrArray *params;
-	GHashTable *hash;
-	void *changed;
+	gpointer changed;
 };
 
 GMimeParamList *g_mime_param_list_new (void);
