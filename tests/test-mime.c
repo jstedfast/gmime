@@ -556,8 +556,6 @@ test_rfc2184 (GMimeParserOptions *options)
 	size_t n;
 	guint i;
 
-	verbose = 4;
-	
 	for (i = 0; i < G_N_ELEMENTS (rfc2184); i++) {
 		params = g_mime_param_list_new ();
 		g_mime_param_list_set_parameter (params, "filename", rfc2184[i].input);
@@ -612,8 +610,6 @@ test_rfc2184 (GMimeParserOptions *options)
 		
 		g_string_free (str, TRUE);
 	}
-
-	verbose = 1;
 }
 
 

@@ -731,13 +731,12 @@ g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str)
 					used = 1;
 				}
 				
-				g_string_append_printf (str, "%s*%d%s=", param->name,
-							i++, encoded ? "*" : "");
+				g_string_append_printf (str, "%s*%d*=", param->name, i++);
 				
-				if (encoded || !quote)
-					g_string_append_len (str, inptr, (size_t) (ptr - inptr));
-				else
+				if (quote)
 					g_string_append_len_quoted (str, inptr, (size_t) (ptr - inptr));
+				else
+					g_string_append_len (str, inptr, (size_t) (ptr - inptr));
 				
 				used += (str->len - here);
 				
