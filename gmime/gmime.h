@@ -45,6 +45,7 @@
 #include <gmime/gmime-message-partial.h>
 #include <gmime/internet-address.h>
 #include <gmime/gmime-encodings.h>
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-parser.h>
 #include <gmime/gmime-utils.h>

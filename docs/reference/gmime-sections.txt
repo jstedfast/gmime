@@ -1188,6 +1188,25 @@ InternetAddressListClass
 </SECTION>
 
 <SECTION>
+<FILE>gmime-format-options</FILE>
+GMimeNewLineFormat
+GMimeFormatOptions
+g_mime_format_options_new
+g_mime_format_options_free
+g_mime_format_options_get_default
+g_mime_format_options_get_param_encoding_method
+g_mime_format_options_set_param_encoding_method
+g_mime_format_options_get_newline_format
+g_mime_format_options_set_newline_format
+g_mime_format_options_get_newline
+g_mime_format_options_create_newline_filter
+g_mime_format_options_is_hidden_header
+g_mime_format_options_add_hidden_header
+g_mime_format_options_remove_hidden_header
+g_mime_format_options_clear_hidden_headers
+</SECTION>
+
+<SECTION>
 <FILE>gmime-parser-options</FILE>
 GMimeParserOptions
 GMimeRfcComplianceMode

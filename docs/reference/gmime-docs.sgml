@@ -24,6 +24,8 @@
 <!ENTITY InternetAddressGroup SYSTEM "xml/internet-address-group.xml">
 <!ENTITY InternetAddressMailbox SYSTEM "xml/internet-address-mailbox.xml">
 <!ENTITY InternetAddressList SYSTEM "xml/internet-address-list.xml">
+<!ENTITY GMimeFormatOptions SYSTEM "xml/gmime-format-options.xml">
+<!ENTITY GMimeParserOptions SYSTEM "xml/gmime-parser-options.xml">
 <!ENTITY GMimeParser SYSTEM "xml/gmime-parser.xml">
 <!ENTITY gmime-charset SYSTEM "xml/gmime-charset.xml">
 <!ENTITY gmime-iconv SYSTEM "xml/gmime-iconv.xml">
@@ -174,6 +176,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-iconv-utils;
     &gmime-encodings;
     &gmime-utils;
+    &GMimeFormatOptions;
   </part>
 
   <part id="classes">
@@ -253,6 +256,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
 
     <chapter id="Parsers">
       <title>Parsing Messages and MIME Parts</title>
+      &GMimeParserOptions;
       &GMimeParser;
     </chapter>
 

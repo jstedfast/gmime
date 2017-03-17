@@ -1,0 +1,97 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
+/*  GMime
+ *  Copyright (C) 2000-2017 Jeffrey Stedfast
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
+ *  02110-1301, USA.
+ */
+
+
+#ifndef __GMIME_FORMAT_OPTIONS_H__
+#define __GMIME_FORMAT_OPTIONS_H__
+
+#include <glib.h>
+#include <gmime/gmime-param.h>
+#include <gmime/gmime-filter.h>
+
+G_BEGIN_DECLS
+
+/**
+ * GMimeNewLineFormat:
+ * @GMIME_NEWLINE_FORMAT_UNIX: The Unix New-Line format ("\n").
+ * @GMIME_NEWLINE_FORMAT_DOS: The DOS New-Line format ("\r\n").
+ *
+ * There are two commonly used line-endings used by modern Operating Systems.
+ * Unix-based systems such as Linux and Mac OS use a single character ('\n' aka LF)
+ * to represent the end of line where-as Windows (or DOS) uses a sequence of two
+ * characters ("\r\n" aka CRLF). Most text-based network protocols such as SMTP,
+ * POP3, and IMAP use the CRLF sequence as well.
+ **/
+typedef enum {
+	GMIME_NEWLINE_FORMAT_UNIX,
+	GMIME_NEWLINE_FORMAT_DOS
+} GMimeNewLineFormat;
+
+/**
+ * GMimeFormatOptions:
+ * @method: The method to use for parameter encoding.
+ * @newline: The new-line format to use.
+ * @mixed_charsets: Whether or not to allow mixed charsets when encoding header values.
+ * @international: Whether or not to allow internationalized header values.
+ * @hidden: A list of hidden headers.
+ * @maxline: The max line length to allow for encoded content.
+ *
+ * Format options for serializing various GMime objects.
+ **/
+typedef struct {
+	GMimeParamEncodingMethod method;
+	GMimeNewLineFormat newline;
+	gboolean mixed_charsets;
+	gboolean international;
+	GPtrArray *hidden;
+	guint maxline;
+} GMimeFormatOptions;
+
+GMimeFormatOptions *g_mime_format_options_get_default (void);
+
+GMimeFormatOptions *g_mime_format_options_new (void);
+void g_mime_format_options_free (GMimeFormatOptions *options);
+
+GMimeParamEncodingMethod g_mime_format_options_get_param_encoding_method (GMimeFormatOptions *options);
+void g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GMimeParamEncodingMethod method);
+
+GMimeNewLineFormat g_mime_format_get_newline_format (GMimeFormatOptions *options);
+void g_mime_format_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline);
+
+const char *g_mime_format_options_get_newline (GMimeFormatOptions *options);
+GMimeFilter *g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboolean ensure_newline);
+
+/*gboolean g_mime_format_options_get_allow_mixed_charsets (GMimeFormatOptions *options);*/
+/*void g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gboolean allow);*/
+
+/*gboolean g_mime_format_options_get_allow_international (GMimeFormatOptions *options);*/
+/*void g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboolean allow);*/
+
+/*gboolean g_mime_format_options_get_max_line (GMimeFormatOptions *options);*/
+/*void g_mime_format_options_set_max_line (GMimeFormatOptions *options, gboolean maxline);*/
+
+gboolean g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char *header);
+void g_mime_format_options_add_hidden_header (GMimeFormatOptions *options, const char *header);
+void g_mime_format_options_remove_hidden_header (GMimeFormatOptions *options, const char *header);
+void g_mime_format_options_clear_hidden_headers (GMimeFormatOptions *options);
+
+G_END_DECLS
+
+#endif /* __GMIME_FORMAT_OPTIONS_H__ */

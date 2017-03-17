@@ -44,6 +44,7 @@ libgmime_3_0_la_SOURCES = 		\
 	gmime-filter-strip.c		\
 	gmime-filter-windows.c		\
 	gmime-filter-yenc.c		\
+	gmime-format-options.c		\
 	gmime-gpg-context.c		\
 	gmime-gpgme-utils.c		\
 	gmime-header.c			\
@@ -103,6 +104,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-strip.h		\
 	gmime-filter-windows.h		\
 	gmime-filter-yenc.h		\
+	gmime-format-options.h		\
 	gmime-gpg-context.h		\
 	gmime-header.h			\
 	gmime-iconv.h			\
