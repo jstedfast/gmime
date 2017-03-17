@@ -69,6 +69,8 @@ G_GNUC_INTERNAL void _g_mime_object_set_header (GMimeObject *object, const char 
 /* utils */
 G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
 G_GNUC_INTERNAL char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *text, const char **charset);
 
 G_END_DECLS
 

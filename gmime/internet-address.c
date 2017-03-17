@@ -32,9 +32,9 @@
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-iconv-utils.h"
+#include "gmime-internal.h"
 #include "gmime-events.h"
 #include "gmime-utils.h"
-#include "list.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -1278,7 +1278,7 @@ internet_address_list_writer (InternetAddressList *list, GString *str)
 
 
 static char *
-decode_name (GMimeParserOptions *options, const char *name, size_t len)
+decode_name (GMimeParserOptions *options, const char *name, size_t len, const char **charset)
 {
 	char *value, *buf = NULL;
 	
@@ -1291,7 +1291,7 @@ decode_name (GMimeParserOptions *options, const char *name, size_t len)
 	
 	/* decode the phrase */
 	g_mime_utils_unquote_string (buf);
-	value = g_mime_utils_header_decode_phrase (options, buf);
+	value = _g_mime_utils_header_decode_phrase (options, buf, charset);
 	g_strstrip (value);
 	g_free (buf);
 	
@@ -1659,7 +1659,7 @@ group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const cha
 }
 
 static gboolean
-address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, InternetAddress **address)
+address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char **charset, InternetAddress **address)
 {
 	gboolean strict = options->addresses != GMIME_RFC_COMPLIANCE_LOOSE;
 	gboolean trim_leading_quote = FALSE;
@@ -1718,7 +1718,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		/* Note: some clients don't quote commas in the name */
 		if (*inptr == ',' && words > 1) {
 			inptr++;
-
+			
 			length = (size_t) (inptr - start);
 			
 			if (!skip_cfws (&inptr))
@@ -1759,7 +1759,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			
 			comment++;
 			
-			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment));
+			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment), charset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -1795,7 +1795,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (length > 0) {
-			name = decode_name (options, phrase, length);
+			name = decode_name (options, phrase, length, charset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -1814,7 +1814,8 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		goto error;
 	
 	if (*inptr == '@') {
-		/* we're either in the middle of an addr-spec token or we completely gobbled up an addr-spec w/o a domain */
+		/* we're either in the middle of an addr-spec token or we completely gobbled up
+		 * an addr-spec w/o a domain */
 		char *name, *addrspec;
 		
 		/* rewind back to the beginning of the local-part */
@@ -1834,7 +1835,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			
 			comment++;
 			
-			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment));
+			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment), charset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -1855,7 +1856,8 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (*inptr == '<') {
-			/* We have an address like "user@example.com <user@example.com>"; i.e. the name is an unquoted string with an '@'. */
+			/* We have an address like "user@example.com <user@example.com>"; i.e. the name
+			 * is an unquoted string with an '@'. */
 			const char *end;
 			
 			if (strict)
@@ -1871,8 +1873,9 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			
 			/* fall through to the rfc822 angle-addr token case... */
 		} else {
-			// Note: since there was no '<', there should not be a '>'... but we handle it anyway in order to
-			// deal with the second Unbalanced Angle Brackets example in section 7.1.3: second@example.org>
+			/* Note: since there was no '<', there should not be a '>'... but we handle it
+			 * anyway in order to deal with the second Unbalanced Angle Brackets example in
+			 * section 7.1.3: second@example.org> */
 			if (*inptr == '>') {
 				if (strict)
 					goto error;
@@ -1901,7 +1904,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (length > 0) {
-			name = decode_name (options, phrase, length);
+			name = decode_name (options, phrase, length, charset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -1924,6 +1927,7 @@ static gboolean
 address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group)
 {
 	InternetAddress *address;
+	const char *charset;
 	const char *inptr;
 	
 	if (!skip_cfws (in))
@@ -1938,12 +1942,17 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 		if (is_group && *inptr ==  ';')
 			break;
 		
-		if (!address_parse (options, ALLOW_ANY, &inptr, &address)) {
+		charset = NULL;
+		
+		if (!address_parse (options, ALLOW_ANY, &inptr, &charset, &address)) {
 			/* skip this address... */
 			while (*inptr && *inptr != ',' && (!is_group || *inptr != ';'))
 				inptr++;
 		} else {
 			_internet_address_list_add (list, address);
+			
+			if (charset)
+				address->charset = g_strdup (charset);
 		}
 		
 		/* Note: we loop here in case there are any null addresses between commas */

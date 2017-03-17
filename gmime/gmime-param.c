@@ -1042,7 +1042,7 @@ decode_rfc2184_param (const char **in, char **namep, int *part, gboolean *encode
 
 static gboolean
 decode_param (GMimeParserOptions *options, const char **in, char **namep, char **valuep, int *id,
-	      gboolean *encoded, GMimeParamEncodingMethod *method)
+	      const char **rfc2047_charset, gboolean *encoded, GMimeParamEncodingMethod *method)
 {
 	gboolean is_rfc2184 = FALSE;
 	const char *inptr = *in;
@@ -1050,6 +1050,7 @@ decode_param (GMimeParserOptions *options, const char **in, char **namep, char *
 	char *val;
 	
 	*method = GMIME_PARAM_ENCODING_METHOD_DEFAULT;
+	*rfc2047_charset = NULL;
 	
 	if ((is_rfc2184 = decode_rfc2184_param (&inptr, &name, id, encoded)))
 		*method = GMIME_PARAM_ENCODING_METHOD_RFC2231;
@@ -1065,7 +1066,7 @@ decode_param (GMimeParserOptions *options, const char **in, char **namep, char *
 				 * this, we should handle this case.
 				 */
 				
-				if ((val = g_mime_utils_header_decode_text (options, value))) {
+				if ((val = _g_mime_utils_header_decode_text (options, value, rfc2047_charset))) {
 					*method = GMIME_PARAM_ENCODING_METHOD_RFC2047;
 					g_free (value);
 					value = val;
@@ -1301,6 +1302,7 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 	struct _rfc2184_param *rfc2184, *list, *t;
 	char *name, *value, *charset, *lang;
 	GMimeParamEncodingMethod method;
+	const char *rfc2047_charset;
 	struct _rfc2184_part *part;
 	GHashTable *rfc2184_hash;
 	const char *inptr = in;
@@ -1321,7 +1323,7 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 	
 	do {
 		/* invalid format? */
-		if (!decode_param (options, &inptr, &name, &value, &id, &encoded, &method)) {
+		if (!decode_param (options, &inptr, &name, &value, &id, &rfc2047_charset, &encoded, &method)) {
 			skip_cfws (&inptr);
 			
 			if (*inptr == ';')
@@ -1357,6 +1359,7 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 				g_free (value);
 			} else {
 				/* normal parameter value */
+				param->charset = rfc2047_charset ? g_strdup (rfc2047_charset) : NULL;
 				param->method = method;
 				param->value = value;
 			}

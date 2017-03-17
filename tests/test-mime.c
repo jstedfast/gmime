@@ -63,150 +63,152 @@ uputs (const char *str, FILE *out)
 
 static struct {
 	const char *input;
+	const char *charset;
 	const char *display;
 	const char *encoded;
 } addrspec[] = {
-	{ "fejj@helixcode.com",
+	{ "fejj@helixcode.com", NULL,
 	  "fejj@helixcode.com",
 	  "fejj@helixcode.com" },
-	{ "Jeffrey Stedfast <fejj@helixcode.com>",
+	{ "Jeffrey Stedfast <fejj@helixcode.com>", NULL,
 	  "Jeffrey Stedfast <fejj@helixcode.com>",
 	  "Jeffrey Stedfast <fejj@helixcode.com>" },
-	{ "Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
+	{ "Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>", NULL,
 	  "Jeffrey fejj Stedfast <fejj@helixcode.com>",
 	  "Jeffrey fejj Stedfast <fejj@helixcode.com>" },
-	{ "\"Jeffrey \\\"fejj\\\" Stedfast\" <fejj@helixcode.com>",
+	{ "\"Jeffrey \\\"fejj\\\" Stedfast\" <fejj@helixcode.com>", NULL,
 	  "Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
 	  "\"Jeffrey \\\"fejj\\\" Stedfast\" <fejj@helixcode.com>" },
-	{ "\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
+	{ "\"Stedfast, Jeffrey\" <fejj@helixcode.com>", NULL,
 	  "\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
 	  "\"Stedfast, Jeffrey\" <fejj@helixcode.com>" },
-	{ "fejj@helixcode.com (Jeffrey Stedfast)",
+	{ "fejj@helixcode.com (Jeffrey Stedfast)", NULL,
 	  "Jeffrey Stedfast <fejj@helixcode.com>",
 	  "Jeffrey Stedfast <fejj@helixcode.com>" },
-	{ "Jeff <fejj(recursive (comment) block)@helixcode.(and a comment here)com>",
+	{ "Jeff <fejj(recursive (comment) block)@helixcode.(and a comment here)com>", NULL,
 	  "Jeff <fejj@helixcode.com>",
 	  "Jeff <fejj@helixcode.com>" },
-	{ "=?iso-8859-1?q?Kristoffer_Br=E5nemyr?= <ztion@swipenet.se>",
+	{ "=?iso-8859-1?q?Kristoffer_Br=E5nemyr?= <ztion@swipenet.se>", "iso-8859-1",
 	  "Kristoffer Br\xc3\xa5nemyr <ztion@swipenet.se>",
 	  "Kristoffer =?iso-8859-1?q?Br=E5nemyr?= <ztion@swipenet.se>" },
-	{ "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)",
+	{ "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)", "iso-8859-1",
 	  "Fran\xc3\xa7ois Pons <fpons@mandrakesoft.com>",
 	  "=?iso-8859-1?q?Fran=E7ois?= Pons <fpons@mandrakesoft.com>" },
-	{ "GNOME Hackers: miguel@gnome.org (Miguel de Icaza), Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
+	{ "GNOME Hackers: miguel@gnome.org (Miguel de Icaza), Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com", NULL,
 	  "GNOME Hackers: Miguel de Icaza <miguel@gnome.org>, Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
 	  "GNOME Hackers: Miguel de Icaza <miguel@gnome.org>, Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com" },
-	{ "Local recipients: phil, joe, alex, bob",
+	{ "Local recipients: phil, joe, alex, bob", NULL,
 	  "Local recipients: phil, joe, alex, bob;",
 	  "Local recipients: phil, joe, alex, bob;" },
-	{ "\":sysmail\"@  Some-Group. Some-Org,\n Muhammed.(I am  the greatest) Ali @(the)Vegas.WBA",
+	{ "\":sysmail\"@  Some-Group. Some-Org,\n Muhammed.(I am  the greatest) Ali @(the)Vegas.WBA", NULL,
 	  "\":sysmail\"@Some-Group.Some-Org, Muhammed.Ali@Vegas.WBA",
 	  "\":sysmail\"@Some-Group.Some-Org, Muhammed.Ali@Vegas.WBA" },
-	{ "Charles S. Kerr <charles@foo.com>",
+	{ "Charles S. Kerr <charles@foo.com>", NULL,
 	  "\"Charles S. Kerr\" <charles@foo.com>",
 	  "\"Charles S. Kerr\" <charles@foo.com>" },
-	{ "Charles \"Likes, to, put, commas, in, quoted, strings\" Kerr <charles@foo.com>",
+	{ "Charles \"Likes, to, put, commas, in, quoted, strings\" Kerr <charles@foo.com>", NULL,
 	  "\"Charles Likes, to, put, commas, in, quoted, strings Kerr\" <charles@foo.com>",
 	  "\"Charles Likes, to, put, commas, in, quoted, strings Kerr\" <charles@foo.com>" },
-	{ "Charles Kerr, Pan Programmer <charles@superpimp.org>",
+	{ "Charles Kerr, Pan Programmer <charles@superpimp.org>", NULL,
 	  "\"Charles Kerr, Pan Programmer\" <charles@superpimp.org>",
 	  "\"Charles Kerr, Pan Programmer\" <charles@superpimp.org>" },
-	{ "Charles Kerr <charles@[127.0.0.1]>",
+	{ "Charles Kerr <charles@[127.0.0.1]>", NULL,
 	  "Charles Kerr <charles@[127.0.0.1]>",
 	  "Charles Kerr <charles@[127.0.0.1]>" },
-	{ "Charles <charles@[127..0.1]>",
+	{ "Charles <charles@[127..0.1]>", NULL,
 	  "Charles <charles@[127..0.1]>",
 	  "Charles <charles@[127..0.1]>" },
-	{ "Charles,, likes illegal commas <charles@superpimp.org>",
+	{ "Charles,, likes illegal commas <charles@superpimp.org>", NULL,
 	  "Charles, likes illegal commas <charles@superpimp.org>",
 	  "Charles, likes illegal commas <charles@superpimp.org>" },
-	{ "<charles@broken.host.com.>",
+	{ "<charles@broken.host.com.>", NULL,
 	  "charles@broken.host.com",
 	  "charles@broken.host.com" },
-	{ "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and 	's too)",
+	{ "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and 	's too)", "iso-8859-1",
 	  "\"Fran\xc3\xa7ois Pons likes _'s and 	's too\" <fpons@mandrakesoft.com>",
 	  "=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and 	's too <fpons@mandrakesoft.com>" },
-	{ "T\x81\xf5ivo Leedj\x81\xe4rv <leedjarv@interest.ee>",
+	{ "T\x81\xf5ivo Leedj\x81\xe4rv <leedjarv@interest.ee>", NULL,
 	  "T\xc2\x81\xc3\xb5ivo Leedj\xc2\x81\xc3\xa4rv <leedjarv@interest.ee>",
 	  "=?iso-8859-1?b?VIH1aXZvIExlZWRqgeRydg==?= <leedjarv@interest.ee>" },
-	{ "fbosi@mokabyte.it;, rspazzoli@mokabyte.it",
+	{ "fbosi@mokabyte.it;, rspazzoli@mokabyte.it", NULL,
 	  "fbosi@mokabyte.it, rspazzoli@mokabyte.it",
 	  "fbosi@mokabyte.it, rspazzoli@mokabyte.it" },
-	{ "\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
+	{ "\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>", NULL,
 	  "\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
 	  "\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>" },
-	{ "undisclosed-recipients: ;",
+	{ "undisclosed-recipients: ;", NULL,
 	  "undisclosed-recipients: ;",
 	  "undisclosed-recipients: ;" },
-	{ "undisclosed-recipients:;",
+	{ "undisclosed-recipients:;", NULL,
 	  "undisclosed-recipients: ;",
 	  "undisclosed-recipients: ;" },
-	{ "undisclosed-recipients:",
+	{ "undisclosed-recipients:", NULL,
 	  "undisclosed-recipients: ;",
 	  "undisclosed-recipients: ;" },
-	{ "undisclosed-recipients",
+	{ "undisclosed-recipients", NULL,
 	  "undisclosed-recipients",
 	  "undisclosed-recipients" },
 	/* The following test case is to check that we properly handle
 	 * mailbox addresses that do not have any lwsp between the
 	 * name component and the addr-spec. See Evolution bug
 	 * #347520 */
-	{ "Canonical Patch Queue Manager<pqm@pqm.ubuntu.com>",
+	{ "Canonical Patch Queue Manager<pqm@pqm.ubuntu.com>", NULL,
 	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>",
 	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>" },
 	/* Some examples pulled from rfc5322 */
-	{ "Pete(A nice \\) chap) <pete(his account)@silly.test(his host)>",
+	{ "Pete(A nice \\) chap) <pete(his account)@silly.test(his host)>", NULL,
 	  "Pete <pete@silly.test>",
 	  "Pete <pete@silly.test>" },
-	{ "A Group(Some people):Chris Jones <c@(Chris's host.)public.example>, joe@example.org, John <jdoe@one.test> (my dear friend); (the end of the group)",
+	{ "A Group(Some people):Chris Jones <c@(Chris's host.)public.example>, joe@example.org, John <jdoe@one.test> (my dear friend); (the end of the group)", NULL,
 	  "A Group: Chris Jones <c@public.example>, joe@example.org, John <jdoe@one.test>;",
 	  "A Group: Chris Jones <c@public.example>, joe@example.org, John <jdoe@one.test>;" },
 	/* The following tests cases are meant to test forgivingness
 	 * of the parser when it encounters unquoted specials in the
 	 * name component */
-	{ "Warren Worthington, Jr. <warren@worthington.com>",
+	{ "Warren Worthington, Jr. <warren@worthington.com>", NULL,
 	  "\"Warren Worthington, Jr.\" <warren@worthington.com>",
 	  "\"Warren Worthington, Jr.\" <warren@worthington.com>" },
-	{ "dot.com <dot.com>",
+	{ "dot.com <dot.com>", NULL,
 	  "\"dot.com\" <dot.com>",
 	  "\"dot.com\" <dot.com>" },
-	{ "=?UTF-8?Q?agatest123_\"test\"?= <agatest123@o2.pl>",
+	{ "=?UTF-8?Q?agatest123_\"test\"?= <agatest123@o2.pl>", "utf-8",
 	  "agatest123 test <agatest123@o2.pl>",
 	  "agatest123 test <agatest123@o2.pl>" },
-	{ "\"=?ISO-8859-2?Q?TEST?=\" <p@p.org>",
+	{ "\"=?ISO-8859-2?Q?TEST?=\" <p@p.org>", "iso-8859-2",
 	  "TEST <p@p.org>",
 	  "TEST <p@p.org>" },
-	{ "sdfasf@wp.pl,c tert@wp.pl,sffdg.rtre@op.pl",
+	{ "sdfasf@wp.pl,c tert@wp.pl,sffdg.rtre@op.pl", NULL,
 	  "sdfasf@wp.pl, sffdg.rtre@op.pl",
 	  "sdfasf@wp.pl, sffdg.rtre@op.pl" },
 	
 	/* obsolete routing address syntax tests */
-	{ "<@route:user@domain.com>",
+	{ "<@route:user@domain.com>", NULL,
 	  "user@domain.com",
 	  "user@domain.com" },
-	{ "<@route1,,@route2,,,@route3:user@domain.com>",
+	{ "<@route1,,@route2,,,@route3:user@domain.com>", NULL,
 	  "user@domain.com",
 	  "user@domain.com" },
 };
 
 static struct {
 	const char *input;
+	const char *charset;
 	const char *display;
 	const char *encoded;
 } broken_addrspec[] = {
-	{ "\"Biznes=?ISO-8859-2?Q?_?=INTERIA.PL\"=?ISO-8859-2?Q?_?=<biuletyny@firma.interia.pl>",
+	{ "\"Biznes=?ISO-8859-2?Q?_?=INTERIA.PL\"=?ISO-8859-2?Q?_?=<biuletyny@firma.interia.pl>", "iso-8859-2",
 	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>",
 	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>", },
 	/* UTF-8 sequence split between multiple encoded-word tokens */
-	{ "=?utf-8?Q?{#D=C3=A8=C3=A9=C2=A3=C3=A5=C3=BD_M$=C3=A1=C3?= =?utf-8?Q?=AD.=C3=A7=C3=B8m}?= <user@domain.com>",
+	{ "=?utf-8?Q?{#D=C3=A8=C3=A9=C2=A3=C3=A5=C3=BD_M$=C3=A1=C3?= =?utf-8?Q?=AD.=C3=A7=C3=B8m}?= <user@domain.com>", "utf-8",
 	  "\"{#Dèé£åý M$áí.çøm}\" <user@domain.com>",
-	  "=?iso-8859-1?b?eyNE6Omj5f0gTSTh7S7n+G19?= <user@domain.com>" },
+	  "=?UTF-8?b?eyNEw6jDqcKjw6XDvSBNJMOhw60uw6fDuG19?= <user@domain.com>" },
 	/* quoted-printable payload split between multiple encoded-word tokens */
-	{ "=?utf-8?Q?{#D=C3=A8=C3=A9=C2=?= =?utf-8?Q?A3=C3=A5=C3=BD_M$=C3=A1=C?= =?utf-8?Q?3=AD.=C3=A7=C3=B8m}?= <user@domain.com>",
+	{ "=?utf-8?Q?{#D=C3=A8=C3=A9=C2=?= =?utf-8?Q?A3=C3=A5=C3=BD_M$=C3=A1=C?= =?utf-8?Q?3=AD.=C3=A7=C3=B8m}?= <user@domain.com>", "utf-8",
 	  "\"{#Dèé£åý M$áí.çøm}\" <user@domain.com>",
-	  "=?iso-8859-1?b?eyNE6Omj5f0gTSTh7S7n+G19?= <user@domain.com>" },
+	  "=?UTF-8?b?eyNEw6jDqcKjw6XDvSBNJMOhw60uw6fDuG19?= <user@domain.com>" },
 	/* base64 payload split between multiple encoded-word tokens */
-	{ "=?iso-8859-1?b?ey?= =?iso-8859-1?b?NE6Omj5f0gTSTh7S7n+G1AI30=?= <user@domain.com>",
+	{ "=?iso-8859-1?b?ey?= =?iso-8859-1?b?NE6Omj5f0gTSTh7S7n+G1AI30=?= <user@domain.com>", "iso-8859-1",
 	  "\"{#Dèé£åý M$áí.çøm@#}\" <user@domain.com>",
 	  "=?iso-8859-1?b?eyNE6Omj5f0gTSTh7S7n+G1AI30=?= <user@domain.com>" },
 };
@@ -215,6 +217,8 @@ static void
 test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 {
 	InternetAddressList *addrlist;
+	InternetAddress *address;
+	const char *charset;
 	char *str;
 	guint i;
 	
@@ -226,6 +230,19 @@ test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 		try {
 			if (!(addrlist = internet_address_list_parse (options, addrspec[i].input)))
 				throw (exception_new ("could not parse: %s", addrspec[i].input));
+			
+			if (!(address = internet_address_list_get_address (addrlist, 0)))
+				throw (exception_new ("could not get first address: %s", addrspec[i].input));
+			
+			charset = internet_address_get_charset (address);
+			if (addrspec[i].charset != NULL) {
+				if (charset == NULL)
+					throw (exception_new ("expected '%s' but got NULL charset: %s", addrspec[i].charset, addrspec[i].input));
+				if (g_ascii_strcasecmp (addrspec[i].charset, charset) != 0)
+					throw (exception_new ("expected '%s' but got '%s' charset: %s", addrspec[i].charset, charset, addrspec[i].input));
+			} else if (charset != NULL) {
+				throw (exception_new ("expected NULL charset but address has a charset of '%s': %s", charset, addrspec[i].input));
+			}
 			
 			str = internet_address_list_to_string (addrlist, FALSE);
 			if (strcmp (addrspec[i].display, str) != 0)
@@ -255,6 +272,19 @@ test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 			try {
 				if (!(addrlist = internet_address_list_parse (options, broken_addrspec[i].input)))
 					throw (exception_new ("could not parse: %s", broken_addrspec[i].input));
+
+				if (!(address = internet_address_list_get_address (addrlist, 0)))
+					throw (exception_new ("could not get first address: %s", broken_addrspec[i].input));
+				
+				charset = internet_address_get_charset (address);
+				if (broken_addrspec[i].charset != NULL) {
+					if (charset == NULL)
+						throw (exception_new ("expected '%s' but got NULL charset: %s", broken_addrspec[i].charset, broken_addrspec[i].input));
+					if (g_ascii_strcasecmp (broken_addrspec[i].charset, charset) != 0)
+						throw (exception_new ("expected '%s' but got '%s' charset: %s", broken_addrspec[i].charset, charset, broken_addrspec[i].input));
+				} else if (charset != NULL) {
+					throw (exception_new ("expected NULL charset but address has a charset of '%s': %s", charset, broken_addrspec[i].input));
+				}
 				
 				str = internet_address_list_to_string (addrlist, FALSE);
 				if (strcmp (broken_addrspec[i].display, str) != 0)
@@ -542,6 +572,13 @@ static struct {
 	  "Content-Disposition: attachment;\n\t"
 	  "filename*=iso-8859-1'en'{#D%E8%E9%A3%E5%FD%20M$%E1%ED.%E7%F8m}.doc\n",
 	  GMIME_PARAM_ENCODING_METHOD_RFC2231 },
+	
+	/* Note: technically these aren't rfc2184-encoded... but they need to be parsed... */
+	{ "{#Dèé£åý M$áí.çøm}.doc",
+	  "iso-8859-1",
+	  "Content-Disposition: attachment;\n\t"
+	  "filename=\"=?iso-8859-1?b?eyNE6Omj5f0gTSTh7S7n+G19LmRvYw==?=\"\n",
+	  GMIME_PARAM_ENCODING_METHOD_RFC2047 },
 };
 
 static void
@@ -555,11 +592,12 @@ test_rfc2184 (GMimeParserOptions *options)
 	int count;
 	size_t n;
 	guint i;
-
+	
 	for (i = 0; i < G_N_ELEMENTS (rfc2184); i++) {
 		params = g_mime_param_list_new ();
 		g_mime_param_list_set_parameter (params, "filename", rfc2184[i].input);
 		param = g_mime_param_list_get_parameter (params, "filename");
+		g_mime_param_set_encoding_method (param, rfc2184[i].method);
 		g_mime_param_set_lang (param, "en");
 		
 		str = g_string_new ("Content-Disposition: attachment");
@@ -588,13 +626,19 @@ test_rfc2184 (GMimeParserOptions *options)
 			if (strcmp (rfc2184[i].input, value) != 0)
 				throw (exception_new ("parsed param value does not match: %s", value));
 			
-			value = g_mime_param_get_charset (param);
+			if (!(value = g_mime_param_get_charset (param)))
+				throw (exception_new ("parsed charset is NULL"));
+			
 			if (strcmp (rfc2184[i].charset, value) != 0)
 				throw (exception_new ("parsed charset does not match: %s", value));
 			
-			value = g_mime_param_get_lang (param);
-			if (strcmp (value, "en") != 0)
-				throw (exception_new ("parsed lang does not match: %s", value));
+			if (rfc2184[i].method != GMIME_PARAM_ENCODING_METHOD_RFC2047) {
+				if (!(value = g_mime_param_get_lang (param)))
+					throw (exception_new ("parsed lang is NULL"));
+				
+				if (strcmp (value, "en") != 0)
+					throw (exception_new ("parsed lang does not match: %s", value));
+			}
 			
 			method = g_mime_param_get_encoding_method (param);
 			if (method != rfc2184[i].method)

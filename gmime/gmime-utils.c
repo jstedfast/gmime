@@ -52,6 +52,7 @@
 
 #include "gmime-utils.h"
 #include "gmime-common.h"
+#include "gmime-internal.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-part.h"
@@ -2042,7 +2043,7 @@ rfc2047_token_decode (rfc2047_token *token, unsigned char *outbuf, int *state, g
 }
 
 static char *
-rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_t buflen)
+rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_t buflen, const char **charset_out)
 {
 	rfc2047_token *token, *next;
 	size_t outlen, ninval, len;
@@ -2058,6 +2059,9 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 	
 	decoded = g_string_sized_new (buflen + 1);
 	outbuf = g_byte_array_sized_new (76);
+
+	if (charset_out)
+		*charset_out = NULL;
 	
 	token = tokens;
 	while (token != NULL) {
@@ -2072,6 +2076,11 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 			len = token->length;
 			state = 0;
 			save = 0;
+			
+			/* Note: if any token was encoded in UTF-8, return UTF-8 as the charset used;
+			 * otherwise, use the first charset we encounter... */
+			if (charset_out && (*charset_out == NULL || !g_ascii_strcasecmp (charset, "UTF-8")))
+				*charset_out = charset;
 			
 			/* find the end of the run (and measure the buffer length we'll need) */
 			while (next && next->encoding == encoding && !strcmp (next->charset, charset)) {
@@ -2155,6 +2164,39 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 
 
 /**
+ * _g_mime_utils_header_decode_text:
+ * @text: header text to decode
+ * @options: a #GMimeParserOptions
+ * @charset: if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
+ *
+ * Decodes an rfc2047 encoded 'text' header.
+ *
+ * Returns: a newly allocated UTF-8 string representing the the decoded
+ * header.
+ **/
+char *
+_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset)
+{
+	rfc2047_token *tokens;
+	char *decoded;
+	size_t len;
+	
+	if (text == NULL) {
+		if (charset)
+			*charset = NULL;
+		
+		return g_strdup ("");
+	}
+	
+	tokens = tokenize_rfc2047_text (options, text, &len);
+	decoded = rfc2047_decode_tokens (options, tokens, len, charset);
+	rfc2047_token_list_free (tokens);
+	
+	return decoded;
+}
+
+
+/**
  * g_mime_utils_header_decode_text:
  * @text: header text to decode
  * @options: a #GMimeParserOptions
@@ -2167,15 +2209,37 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 char *
 g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
 {
+	return _g_mime_utils_header_decode_text (options, text, NULL);
+}
+
+
+/**
+ * _g_mime_utils_header_decode_phrase:
+ * @phrase: header to decode
+ * @options: a #GMimeParserOptions
+ * @charset: if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
+ *
+ * Decodes an rfc2047 encoded 'phrase' header.
+ *
+ * Returns: a newly allocated UTF-8 string representing the the decoded
+ * header.
+ **/
+char *
+_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase, const char **charset)
+{
 	rfc2047_token *tokens;
 	char *decoded;
 	size_t len;
 	
-	if (text == NULL)
+	if (phrase == NULL) {
+		if (charset)
+			*charset = NULL;
+		
 		return g_strdup ("");
+	}
 	
-	tokens = tokenize_rfc2047_text (options, text, &len);
-	decoded = rfc2047_decode_tokens (options, tokens, len);
+	tokens = tokenize_rfc2047_phrase (options, phrase, &len);
+	decoded = rfc2047_decode_tokens (options, tokens, len, charset);
 	rfc2047_token_list_free (tokens);
 	
 	return decoded;
@@ -2195,18 +2259,7 @@ g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
 char *
 g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase)
 {
-	rfc2047_token *tokens;
-	char *decoded;
-	size_t len;
-	
-	if (phrase == NULL)
-		return g_strdup ("");
-	
-	tokens = tokenize_rfc2047_phrase (options, phrase, &len);
-	decoded = rfc2047_decode_tokens (options, tokens, len);
-	rfc2047_token_list_free (tokens);
-	
-	return decoded;
+	return _g_mime_utils_header_decode_phrase (options, phrase, NULL);
 }
 
 
