@@ -32,6 +32,7 @@
 #include <errno.h>
 
 #include "gmime-stream-file.h"
+#include "gmime-error.h"
 
 
 /**
@@ -426,6 +427,7 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
  * g_mime_stream_file_open:
  * @path: the path to a file
  * @mode: as in fopen(3)
+ * @err: a #GError
  *
  * Creates a new #GMimeStreamFile object for the specified @path.
  *
@@ -433,15 +435,17 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
  * file path or %NULL on error.
  **/
 GMimeStream *
-g_mime_stream_file_open (const char *path, const char *mode)
+g_mime_stream_file_open (const char *path, const char *mode, GError **err)
 {
 	FILE *fp;
 	
 	g_return_val_if_fail (path != NULL, NULL);
 	g_return_val_if_fail (mode != NULL, NULL);
 	
-	if (!(fp = fopen (path, mode)))
+	if (!(fp = fopen (path, mode))) {
+		g_set_error (err, GMIME_ERROR, errno, "Failed to open `%s': %s", path, g_strerror (errno));
 		return NULL;
+	}
 	
 	return g_mime_stream_file_new (fp);
 }

@@ -183,7 +183,7 @@ int main (int argc, char **argv)
 			while ((dent = g_dir_read_name (dir))) {
 				path = g_build_filename (input->str, dent, NULL);
 				
-				if (!(stream = g_mime_stream_file_open (path, "r")))
+				if (!(stream = g_mime_stream_file_open (path, "r", NULL)))
 					throw (exception_new ("Failed to open `%s'", path));
 				
 				g_mime_parser_init_with_stream (parser, stream);
@@ -221,8 +221,8 @@ int main (int argc, char **argv)
 			g_mime_object_write_to_stream (GMIME_OBJECT (message), combined);
 			g_mime_stream_reset (combined);
 			
-			if (!(expected = g_mime_stream_file_open (output->str, "r"))) {
-				expected = g_mime_stream_file_open (output->str, "w");
+			if (!(expected = g_mime_stream_file_open (output->str, "r", NULL))) {
+				expected = g_mime_stream_file_open (output->str, "w", NULL);
 				g_mime_stream_write_to_stream (combined, expected);
 				g_mime_stream_flush (expected);
 				g_object_unref (expected);

@@ -115,10 +115,10 @@ Porting from GMime 2.6 to GMime 3.0
   single bitfield (GMimeSignatureStatus) which mirrors gpgme_sigsum_t.
 
 - g_mime_stream_file_new_for_path() has been renamed to
-  g_mime_stream_file_open().
+  g_mime_stream_file_open() and now also takes a GError argument.
 
 - g_mime_stream_fs_new_for_path() has been renamed to
-  g_mime_stream_fs_open().
+  g_mime_stream_fs_open() and now also takes a GError argument.
 
 - g_mime_part_new() now returns a GMimePart with a Content-Type of
   "application/octet-stream" instead of "text/plain" since there is

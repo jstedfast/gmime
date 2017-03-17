@@ -24,11 +24,8 @@
 #endif
 
 #include "gmime-events.h"
-#include "list.h"
 
 typedef struct _EventListener {
-	struct _EventListener *next;
-	struct _EventListener *prev;
 	GMimeEventCallback callback;
 	gpointer user_data;
 	int blocked;
@@ -42,8 +39,6 @@ event_listener_new (GMimeEventCallback callback, gpointer user_data)
 	listener = g_slice_new (EventListener);
 	listener->user_data = user_data;
 	listener->callback = callback;
-	listener->prev = NULL;
-	listener->next = NULL;
 	listener->blocked = 0;
 	
 	return listener;
@@ -57,8 +52,8 @@ event_listener_free (EventListener *listener)
 
 
 struct _GMimeEvent {
+	GPtrArray *array;
 	gpointer owner;
-	List list;
 };
 
 
@@ -76,7 +71,7 @@ g_mime_event_new (gpointer owner)
 	GMimeEvent *event;
 	
 	event = g_slice_new (GMimeEvent);
-	list_init (&event->list);
+	event->array = g_ptr_array_new ();
 	event->owner = owner;
 	
 	return event;
@@ -92,32 +87,29 @@ g_mime_event_new (gpointer owner)
 void
 g_mime_event_free (GMimeEvent *event)
 {
-	EventListener *node, *next;
+	guint i;
 	
-	node = (EventListener *) event->list.head;
-	while (node->next) {
-		next = node->next;
-		event_listener_free (node);
-		node = next;
-	}
+	for (i = 0; i < event->array->len; i++)
+		event_listener_free (event->array->pdata[i]);
+	g_ptr_array_free (event->array, TRUE);
 	
 	g_slice_free (GMimeEvent, event);
 }
 
 
-static EventListener *
-g_mime_event_find_listener (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data)
+static int
+g_mime_event_index_of (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data)
 {
-	EventListener *node;
+	EventListener *listener;
+	int i;
 	
-	node = (EventListener *) event->list.head;
-	while (node->next) {
-		if (node->callback == callback && node->user_data == user_data)
-			return node;
-		node = node->next;
+	for (i = 0; i < event->array->len; i++) {
+		listener = (EventListener *) event->array->pdata[i];
+		if (listener->callback == callback && listener->user_data == user_data)
+			return i;
 	}
 	
-	return NULL;
+	return -1;
 }
 
 
@@ -133,9 +125,13 @@ void
 g_mime_event_block (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data)
 {
 	EventListener *listener;
+	int index;
 	
-	if ((listener = g_mime_event_find_listener (event, callback, user_data)))
-		listener->blocked++;
+	if ((index = g_mime_event_index_of (event, callback, user_data)) == -1)
+		return;
+	
+	listener = (EventListener *) event->array->pdata[index];
+	listener->blocked++;
 }
 
 
@@ -152,9 +148,13 @@ void
 g_mime_event_unblock (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data)
 {
 	EventListener *listener;
+	int index;
 	
-	if ((listener = g_mime_event_find_listener (event, callback, user_data)))
-		listener->blocked--;
+	if ((index = g_mime_event_index_of (event, callback, user_data)) == -1)
+		return;
+	
+	listener = (EventListener *) event->array->pdata[index];
+	listener->blocked--;
 }
 
 
@@ -173,7 +173,7 @@ g_mime_event_add (GMimeEvent *event, GMimeEventCallback callback, gpointer user_
 	EventListener *listener;
 	
 	listener = event_listener_new (callback, user_data);
-	list_append (&event->list, (ListNode *) listener);
+	g_ptr_array_add (event->array, listener);
 }
 
 
@@ -190,11 +190,14 @@ void
 g_mime_event_remove (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data)
 {
 	EventListener *listener;
+	int index;
 	
-	if ((listener = g_mime_event_find_listener (event, callback, user_data))) {
-		list_unlink ((ListNode *) listener);
-		event_listener_free (listener);
-	}
+	if ((index = g_mime_event_index_of (event, callback, user_data)) == -1)
+		return;
+	
+	listener = (EventListener *) event->array->pdata[index];
+	g_ptr_array_remove_index (event->array, index);
+	event_listener_free (listener);
 }
 
 
@@ -209,12 +212,12 @@ g_mime_event_remove (GMimeEvent *event, GMimeEventCallback callback, gpointer us
 void
 g_mime_event_emit (GMimeEvent *event, gpointer args)
 {
-	EventListener *node;
+	EventListener *listener;
+	guint i;
 	
-	node = (EventListener *) event->list.head;
-	while (node->next) {
-		if (node->blocked <= 0)
-			node->callback (event->owner, args, node->user_data);
-		node = node->next;
+	for (i = 0; i < event->array->len; i++) {
+		listener = (EventListener *) event->array->pdata[i];
+		if (listener->blocked <= 0)
+			listener->callback (event->owner, args, listener->user_data);
 	}
 }

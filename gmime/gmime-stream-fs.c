@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include "gmime-stream-fs.h"
+#include "gmime-error.h"
 
 #ifndef HAVE_FSYNC
 #ifdef G_OS_WIN32
@@ -469,6 +470,7 @@ g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
  * @path: the path to a file
  * @flags: as in open(2)
  * @mode: as in open(2)
+ * @err: a #GError
  *
  * Creates a new #GMimeStreamFs object for the specified @path.
  *
@@ -476,14 +478,16 @@ g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
  * file path or %NULL on error.
  **/
 GMimeStream *
-g_mime_stream_fs_open (const char *path, int flags, int mode)
+g_mime_stream_fs_open (const char *path, int flags, int mode, GError **err)
 {
 	int fd;
 	
 	g_return_val_if_fail (path != NULL, NULL);
 	
-	if ((fd = g_open (path, flags, mode)) == -1)
+	if ((fd = g_open (path, flags, mode)) == -1) {
+		g_set_error (err, GMIME_ERROR, errno, "Failed to open `%s': %s", path, g_strerror (errno));
 		return NULL;
+	}
 	
 	return g_mime_stream_fs_new (fd);
 }

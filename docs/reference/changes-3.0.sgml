@@ -50,8 +50,8 @@
       <listitem><para><function>internet_address_list_parse_string()</function> has been replaced by <function>internet_address_list_parse()</function> and now takes a GMimeParserOptions argument.</para></listitem>
       <listitem><para>GMimeHeaderIter has been dropped in favour of a more direct way of iterating over a GMimeHeaderList using int indexes.</para></listitem>
       <listitem><para><function>g_mime_stream_write_to_stream()</function>, <function>g_mime_stream_writev()</function>, and <function>g_mime_stream_printf()</function> now return a gint64.</para></listitem>
-      <listitem><para><function>g_mime_stream_file_new_for_path()</function> has been renamed to <function>g_mime_stream_file_open()</function>.</para></listitem>
-      <listitem><para><function>g_mime_stream_fs_new_for_path()</function> has been renamed to <function>g_mime_stream_fs_open()</function>.</para></listitem>
+      <listitem><para><function>g_mime_stream_file_new_for_path()</function> has been renamed to <function>g_mime_stream_file_open()</function> and now also takes a GError argument.</para></listitem>
+      <listitem><para><function>g_mime_stream_fs_new_for_path()</function> has been renamed to <function>g_mime_stream_fs_open()</function> and now also takes a GError argument.</para></listitem>
       <listitem><para><function>g_mime_part_new()</function> now returns a GMimePart with a Content-Type of "application/octet-stream" instead of "text/plain" since there is now a GMimeTextPart who's <function>g_mime_text_part_new()</function> returns a GMimeTextPart with a Content-Type of "text/plain".</para></listitem>
       <listitem><para><function>g_mime_part_get_content_object()</function> has been renamed to <function>g_mime_part_get_content()</function>.</para></listitem>
       <listitem><para><function>g_mime_part_set_content_object()</function> has been renamed to <function>g_mime_part_set_content()</function>.</para></listitem>

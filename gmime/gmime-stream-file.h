@@ -64,7 +64,7 @@ GType g_mime_stream_file_get_type (void);
 GMimeStream *g_mime_stream_file_new (FILE *fp);
 GMimeStream *g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end);
 
-GMimeStream *g_mime_stream_file_open (const char *path, const char *mode);
+GMimeStream *g_mime_stream_file_open (const char *path, const char *mode, GError **err);
 
 gboolean g_mime_stream_file_get_owner (GMimeStreamFile *stream);
 void g_mime_stream_file_set_owner (GMimeStreamFile *stream, gboolean owner);
