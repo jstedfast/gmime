@@ -51,6 +51,7 @@ struct _GMimeStreamFilter {
 	struct _GMimeStreamFilterPrivate *priv;
 	
 	GMimeStream *source;
+	gboolean owner;
 };
 
 struct _GMimeStreamFilterClass {
@@ -65,6 +66,9 @@ GMimeStream *g_mime_stream_filter_new (GMimeStream *stream);
 
 int g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter);
 void g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id);
+
+void g_mime_stream_filter_set_owner (GMimeStreamFilter *stream, gboolean owner);
+gboolean g_mime_stream_filter_get_owner (GMimeStreamFilter *stream);
 
 G_END_DECLS
 

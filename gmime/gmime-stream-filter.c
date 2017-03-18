@@ -139,6 +139,7 @@ static void
 g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *klass)
 {
 	stream->source = NULL;
+	stream->owner = FALSE;
 	stream->priv = g_new (struct _GMimeStreamFilterPrivate, 1);
 	stream->priv->filters = NULL;
 	stream->priv->filterid = 0;
@@ -287,7 +288,7 @@ stream_flush (GMimeStream *stream)
 	if (len > 0 && g_mime_stream_write (filter->source, buffer, len) == -1)
 		return -1;
 	
-	return g_mime_stream_flush (filter->source);
+	return 0;
 }
 
 static int
@@ -299,7 +300,10 @@ stream_close (GMimeStream *stream)
 	if (!priv->last_was_read)
 		stream_flush (stream);
 	
-	return g_mime_stream_close (filter->source);
+	if (filter->owner)
+		return g_mime_stream_close (filter->source);
+	
+	return 0;
 }
 
 static gboolean
@@ -392,9 +396,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 		sub->priv->filterid = filter->priv->filterid;
 	}
 	
-	g_mime_stream_construct (GMIME_STREAM (filter), start, end);
+	g_mime_stream_construct ((GMimeStream *) filter, start, end);
 	
-	return GMIME_STREAM (sub);
+	return (GMimeStream *) sub;
 }
 
 
@@ -496,4 +500,41 @@ g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id)
 		}
 		f = f->next;
 	}
+}
+
+
+/**
+ * g_mime_stream_filter_set_owner:
+ * @stream: a #GMimeStreamFilter
+ * @owner: %TRUE if this stream should own the source stream or %FALSE otherwise
+ *
+ * Sets whether or not @stream owns the source stream..
+ *
+ * Note: @owner should be %TRUE if the stream should close() the
+ * backend source stream when destroyed or %FALSE otherwise.
+ **/
+void
+g_mime_stream_filter_set_owner (GMimeStreamFilter *stream, gboolean owner)
+{
+	g_return_if_fail (GMIME_IS_STREAM_FILTER (stream));
+	
+	stream->owner = owner;
+}
+
+
+/**
+ * g_mime_stream_filter_get_owner:
+ * @stream: a #GMimeStreamFilter
+ *
+ * Gets whether or not @stream owns the source stream.
+ *
+ * Returns: %TRUE if @stream owns the source stream or %FALSE
+ * otherwise.
+ **/
+gboolean
+g_mime_stream_filter_get_owner (GMimeStreamFilter *stream)
+{
+	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (stream), FALSE);
+	
+	return stream->owner;
 }
