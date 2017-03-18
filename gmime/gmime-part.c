@@ -442,7 +442,7 @@ mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 	g_mime_stream_filter_add ((GMimeStreamFilter *) stream, filter);
 	g_object_unref (null);
 	
-	g_mime_object_write_to_stream (object, stream);
+	g_mime_data_wrapper_write_to_stream (part->content, stream);
 	g_object_unref (stream);
 	
 	encoding = g_mime_filter_best_encoding ((GMimeFilterBest *) filter, constraint);
