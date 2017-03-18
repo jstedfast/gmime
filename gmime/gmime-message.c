@@ -905,7 +905,7 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 		while (index < count) {
 			header = g_mime_header_list_get_header_at (object->headers, index);
 			
-			if (g_mime_format_options_is_hidden_header (options, header->name)) {
+			if (!g_mime_format_options_is_hidden_header (options, header->name)) {
 				if ((nwritten = g_mime_header_write_to_stream (object->headers, header, options, stream)) == -1)
 					return -1;
 				
@@ -918,7 +918,7 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 		while (body_index < body_count) {
 			header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			
-			if (g_mime_format_options_is_hidden_header (options, header->name)) {
+			if (!g_mime_format_options_is_hidden_header (options, header->name)) {
 				if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, header, options, stream)) == -1)
 					return -1;
 				
@@ -960,6 +960,7 @@ message_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbool
 	GMimeMessage *message = (GMimeMessage *) object;
 	GMimeObject *mime_part = message->mime_part;
 	ssize_t nwritten, total = 0;
+	const char *newline;
 	
 	if (!content_only) {
 		if ((nwritten = write_headers_to_stream (object, options, stream)) == -1)
@@ -967,7 +968,8 @@ message_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbool
 		
 		total += nwritten;
 		
-		if ((nwritten = g_mime_stream_write (stream, "\n", 1)) == -1)
+		newline = g_mime_format_options_get_newline (options);
+		if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -975,6 +977,8 @@ message_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbool
 	
 	if (mime_part) {
 		GMimeObjectClass *klass = GMIME_OBJECT_GET_CLASS (mime_part);
+		
+		options = _g_mime_format_options_clone (options, FALSE);
 		
 		if ((nwritten = klass->write_to_stream (mime_part, options, TRUE, stream)) == -1)
 			return -1;

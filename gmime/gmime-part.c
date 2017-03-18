@@ -299,9 +299,11 @@ mime_part_headers_cleared (GMimeObject *object)
 
 
 static ssize_t
-write_content (GMimePart *part, GMimeStream *stream)
+write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	ssize_t nwritten, total = 0;
+	GMimeStream *filtered;
+	GMimeFilter *filter;
 	
 	if (!part->content)
 		return 0;
@@ -313,16 +315,17 @@ write_content (GMimePart *part, GMimeStream *stream)
 	 */
 	
 	if (part->encoding != g_mime_data_wrapper_get_encoding (part->content)) {
-		GMimeStream *filtered;
+		const char *newline = g_mime_format_options_get_newline (options);
 		const char *filename;
-		GMimeFilter *filter;
+		
+		filtered = g_mime_stream_filter_new (stream);
 		
 		switch (part->encoding) {
 		case GMIME_CONTENT_ENCODING_UUENCODE:
-			filename = g_mime_part_get_filename (part);
-			nwritten = g_mime_stream_printf (stream, "begin 0644 %s\n",
-							 filename ? filename : "unknown");
-			if (nwritten == -1)
+			if (!(filename = g_mime_part_get_filename (part)))
+				filename = "unknown";
+			
+			if ((nwritten = g_mime_stream_printf (stream, "begin 0644 %s%s", filename, newline)) == -1)
 				return -1;
 			
 			total += nwritten;
@@ -330,16 +333,17 @@ write_content (GMimePart *part, GMimeStream *stream)
 			/* fall thru... */
 		case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 		case GMIME_CONTENT_ENCODING_BASE64:
-			filtered = g_mime_stream_filter_new (stream);
 			filter = g_mime_filter_basic_new (part->encoding, TRUE);
 			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 			g_object_unref (filter);
 			break;
 		default:
-			g_object_ref (stream);
-			filtered = stream;
 			break;
 		}
+		
+		filter = g_mime_format_options_create_newline_filter (options, FALSE);
+		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+		g_object_unref (filter);
 		
 		nwritten = g_mime_data_wrapper_write_to_stream (part->content, filtered);
 		g_mime_stream_flush (filtered);
@@ -351,9 +355,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 		total += nwritten;
 		
 		if (part->encoding == GMIME_CONTENT_ENCODING_UUENCODE) {
-			/* FIXME: get rid of this special-case x-uuencode crap */
-			nwritten = g_mime_stream_write (stream, "end\n", 4);
-			if (nwritten == -1)
+			if ((nwritten = g_mime_stream_printf (stream, "end%s", newline)) == -1)
 				return -1;
 			
 			total += nwritten;
@@ -363,8 +365,15 @@ write_content (GMimePart *part, GMimeStream *stream)
 		
 		content = g_mime_data_wrapper_get_stream (part->content);
 		g_mime_stream_reset (content);
-		nwritten = g_mime_stream_write_to_stream (content, stream);
+		
+		filtered = g_mime_stream_filter_new (stream);
+		filter = g_mime_format_options_create_newline_filter (options, FALSE);
+		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+		g_object_unref (filter);
+		
+		nwritten = g_mime_stream_write_to_stream (content, filtered);
 		g_mime_stream_reset (content);
+		g_object_unref (filtered);
 		
 		if (nwritten == -1)
 			return -1;
@@ -380,6 +389,7 @@ mime_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 {
 	GMimePart *mime_part = (GMimePart *) object;
 	ssize_t nwritten, total = 0;
+	const char *newline;
 	
 	if (!content_only) {
 		/* write the content headers */
@@ -389,13 +399,14 @@ mime_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		total += nwritten;
 		
 		/* terminate the headers */
-		if (g_mime_stream_write (stream, "\n", 1) == -1)
+		newline = g_mime_format_options_get_newline (options);
+		if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
 			return -1;
 		
-		total++;
+		total += nwritten;
 	}
 	
-	if ((nwritten = write_content (mime_part, stream)) == -1)
+	if ((nwritten = write_content (mime_part, options, stream)) == -1)
 		return -1;
 	
 	total += nwritten;

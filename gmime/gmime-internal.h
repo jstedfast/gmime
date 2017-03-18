@@ -45,7 +45,7 @@ typedef struct {
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_format_options_init (void);
 G_GNUC_INTERNAL void g_mime_format_options_shutdown (void);
-G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOptions *options);
+G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden);
 
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);

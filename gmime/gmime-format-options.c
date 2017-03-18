@@ -107,16 +107,20 @@ g_mime_format_options_new (void)
 /**
  * _g_mime_format_options_clone:
  * @options: a #GMimeFormatOptions
+ * @hidden: %TRUE if the hidden headers should also be cloned
  *
  * Clones a #GMimeFormatOptions.
  *
  * Returns: a newly allocated #GMimeFormatOptions.
  **/
 GMimeFormatOptions *
-_g_mime_format_options_clone (GMimeFormatOptions *options)
+_g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 {
 	GMimeFormatOptions *clone;
 	guint i;
+	
+	if (options == NULL)
+		options = default_options;
 	
 	clone = g_slice_new (GMimeFormatOptions);
 	clone->method = options->method;
@@ -126,8 +130,11 @@ _g_mime_format_options_clone (GMimeFormatOptions *options)
 	clone->maxline = options->newline;
 	
 	clone->hidden = g_ptr_array_new ();
-	for (i = 0; i < options->hidden->len; i++)
-		g_ptr_array_add (clone->hidden, g_strdup (options->hidden->pdata[i]));
+	
+	if (hidden) {
+		for (i = 0; i < options->hidden->len; i++)
+			g_ptr_array_add (clone->hidden, g_strdup (options->hidden->pdata[i]));
+	}
 	
 	return clone;
 }
@@ -168,7 +175,8 @@ g_mime_format_options_free (GMimeFormatOptions *options)
 GMimeParamEncodingMethod
 g_mime_format_options_get_param_encoding_method (GMimeFormatOptions *options)
 {
-	g_return_val_if_fail (options != NULL, GMIME_PARAM_ENCODING_METHOD_RFC2231);
+	if (options == NULL)
+		options = default_options;
 	
 	return options->method;
 }
@@ -205,7 +213,8 @@ g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GM
 GMimeNewLineFormat
 g_mime_format_options_get_newline_format (GMimeFormatOptions *options)
 {
-	g_return_val_if_fail (options != NULL, GMIME_NEWLINE_FORMAT_UNIX);
+	if (options == NULL)
+		options = default_options;
 	
 	return options->newline;
 }
@@ -239,7 +248,10 @@ g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewL
 const char *
 g_mime_format_options_get_newline (GMimeFormatOptions *options)
 {
-	if (options != NULL && options->newline == GMIME_NEWLINE_FORMAT_DOS)
+	if (options == NULL)
+		options = default_options;
+	
+	if (options->newline == GMIME_NEWLINE_FORMAT_DOS)
 		return "\r\n";
 	
 	return "\n";
@@ -259,7 +271,10 @@ g_mime_format_options_get_newline (GMimeFormatOptions *options)
 GMimeFilter *
 g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboolean ensure_newline)
 {
-	if (options != NULL && options->newline == GMIME_NEWLINE_FORMAT_DOS)
+	if (options == NULL)
+		options = default_options;
+	
+	if (options->newline == GMIME_NEWLINE_FORMAT_DOS)
 		return g_mime_filter_crlf_new (TRUE, FALSE);
 	
 	return g_mime_filter_crlf_new (FALSE, FALSE);
@@ -278,7 +293,8 @@ g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboole
 gboolean
 g_mime_format_options_get_allow_mixed_charsets (GMimeFormatOptions *options)
 {
-	g_return_val_if_fail (options != NULL, TRUE);
+	if (options == NULL)
+		options = default_options;
 	
 	return options->mixed_charsets;
 }
@@ -311,7 +327,8 @@ g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gbo
 gboolean
 g_mime_format_options_get_allow_international (GMimeFormatOptions *options)
 {
-	g_return_val_if_fail (options != NULL, FALSE);
+	if (options == NULL)
+		options = default_options;
 	
 	return options->international;
 }
@@ -344,7 +361,8 @@ g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboo
 guint
 g_mime_format_options_get_max_line (GMimeFormatOptions *options)
 {
-	g_return_val_if_fail (options != NULL, 78);
+	if (options == NULL)
+		options = default_options;
 	
 	return options->maxline;
 }
@@ -380,8 +398,10 @@ g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char 
 {
 	guint i;
 	
-	g_return_val_if_fail (options != NULL, FALSE);
 	g_return_val_if_fail (header != NULL, FALSE);
+	
+	if (options == NULL)
+		options = default_options;
 	
 	for (i = 0; i < options->hidden->len; i++) {
 		if (!g_ascii_strcasecmp (options->hidden->pdata[i], header))

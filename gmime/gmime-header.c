@@ -26,6 +26,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "gmime-stream-filter.h"
 #include "gmime-stream-mem.h"
 #include "gmime-internal.h"
 #include "gmime-common.h"
@@ -849,22 +850,32 @@ ssize_t
 g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	ssize_t nwritten, total = 0;
+	GMimeStream *filtered;
 	GMimeHeader *header;
+	GMimeFilter *filter;
 	guint i;
 	
 	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_format_options_create_newline_filter (options, FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
+	
 	for (i = 0; i < headers->array->len; i++) {
 		header = (GMimeHeader *) headers->array->pdata[i];
 		
-		if (g_mime_format_options_is_hidden_header (options, header->name)) {
+		if (!g_mime_format_options_is_hidden_header (options, header->name)) {
 			if ((nwritten = g_mime_header_write_to_stream (headers, header, options, stream)) == -1)
 				return -1;
 			
 			total += nwritten;
 		}
 	}
+	
+	g_mime_stream_flush (filtered);
+	g_object_unref (filtered);
 	
 	return total;
 }
@@ -891,7 +902,7 @@ g_mime_header_list_to_string (GMimeHeaderList *headers, GMimeFormatOptions *opti
 	
 	array = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
-	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
+	g_mime_stream_mem_set_byte_array ((GMimeStreamMem *) stream, array);
 	g_mime_header_list_write_to_stream (headers, options, stream);
 	g_object_unref (stream);
 	

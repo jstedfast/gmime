@@ -151,12 +151,13 @@ static ssize_t
 multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
+	const char *boundary, *newline;
 	ssize_t nwritten, total = 0;
-	const char *boundary;
 	GMimeObject *part;
 	guint i;
 	
 	boundary = g_mime_object_get_content_type_parameter (object, "boundary");
+	newline = g_mime_format_options_get_newline (options);
 	
 	if (!content_only) {
 		/* write the content headers */
@@ -166,10 +167,10 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		total += nwritten;
 		
 		/* terminate the headers */
-		if (g_mime_stream_write (stream, "\n", 1) == -1)
+		if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
 			return -1;
 		
-		total++;
+		total += nwritten;
 	}
 	
 	/* write the preface */
@@ -179,17 +180,17 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		
 		total += nwritten;
 		
-		if (g_mime_stream_write (stream, "\n", 1) == -1)
+		if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
 			return -1;
 		
-		total++;
+		total += nwritten;
 	}
 	
 	for (i = 0; i < multipart->children->len; i++) {
 		part = multipart->children->pdata[i];
 		
 		/* write the boundary */
-		if ((nwritten = g_mime_stream_printf (stream, "--%s\n", boundary)) == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "--%s%s", boundary, newline)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -201,16 +202,16 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		total += nwritten;
 
 		if (!GMIME_IS_MULTIPART (part) || ((GMimeMultipart *) part)->write_end_boundary) {
-			if (g_mime_stream_write (stream, "\n", 1) == -1)
+			if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
 				return -1;
 			
-			total++;
+			total += nwritten;
 		}
 	}
 	
 	/* write the end-boundary (but only if a boundary is set) */
 	if (multipart->write_end_boundary && boundary) {
-		if ((nwritten = g_mime_stream_printf (stream, "--%s--\n", boundary)) == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "--%s--%s", boundary, newline)) == -1)
 			return -1;
 		
 		total += nwritten;
