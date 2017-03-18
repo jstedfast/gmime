@@ -727,12 +727,14 @@ g_string_append_len_quoted (GString *str, const char *text, size_t len)
 void
 g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gboolean fold, GString *str)
 {
+	const char *newline;
 	guint count, i;
 	int used;
 	
 	g_return_if_fail (GMIME_IS_PARAM_LIST (list));
 	g_return_if_fail (str != NULL);
 	
+	newline = g_mime_format_options_get_newline (options);
 	count = list->array->len;
 	used = str->len;
 	
@@ -772,14 +774,18 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 		
 		nlen = strlen (param->name);
 		
-		if (fold && (used + nlen + vlen + quote > GMIME_FOLD_LEN - 2)) {
-			g_string_append (str, ";\n\t");
+		g_string_append_c (str, ';');
+		used++;
+		
+		if (fold && (used + nlen + vlen + quote > GMIME_FOLD_LEN - 1)) {
+			g_string_append (str, newline);
+			g_string_append_c (str, '\t');
 			here = str->len;
 			used = 1;
 		} else {
-			g_string_append (str, "; ");
+			g_string_append_c (str, ' ');
 			here = str->len;
-			used += 2;
+			used++;
 		}
 		
 		toolong = nlen + vlen + quote > GMIME_FOLD_LEN - 2;
@@ -811,10 +817,14 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 				}
 				
 				if (i != 0) {
-					if (fold)
-						g_string_append (str, ";\n\t");
-					else
-						g_string_append (str, "; ");
+					g_string_append_c (str, ';');
+					
+					if (fold) {
+						g_string_append (str, newline);
+						g_string_append_c (str, '\t');
+					} else {
+						g_string_append_c (str, ' ');
+					}
 					
 					here = str->len;
 					used = 1;
@@ -848,7 +858,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 	}
 	
 	if (fold)
-		g_string_append_c (str, '\n');
+		g_string_append (str, newline);
 }
 
 
