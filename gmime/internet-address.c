@@ -1559,6 +1559,7 @@ addrspec_parse (const char **in, const char *sentinels, char **addrspec)
 static gboolean
 mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, InternetAddress **address)
 {
+	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
 	const char *inptr = *in;
 	char *addrspec = NULL;
 	
@@ -1567,7 +1568,7 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 	
 	/* Note: check for excessive angle brackets like the example described in section 7.1.2 of rfc7103... */
 	if (*inptr == '<') {
-		if (options->addresses != GMIME_RFC_COMPLIANCE_LOOSE)
+		if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
 			goto error;
 		
 		do {
@@ -1606,7 +1607,7 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 		goto error;
 	
 	if (*inptr != '>') {
-		if (options->addresses != GMIME_RFC_COMPLIANCE_LOOSE)
+		if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
 			goto error;
 	} else {
 		/* skip over the '>' */
@@ -1614,7 +1615,7 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 		
 		/* Note: check for excessive angle brackets like the example described in section 7.1.2 of rfc7103... */
 		if (*inptr == '>') {
-			if (options->addresses != GMIME_RFC_COMPLIANCE_LOOSE)
+			if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
 				goto error;
 			
 			do {
@@ -1666,7 +1667,7 @@ group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const cha
 static gboolean
 address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char **charset, InternetAddress **address)
 {
-	gboolean strict = options->addresses != GMIME_RFC_COMPLIANCE_LOOSE;
+	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
 	gboolean trim_leading_quote = FALSE;
 	const char *inptr = *in;
 	const char *start;
@@ -1681,7 +1682,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 	length = 0;
 	
 	while (*inptr) {
-		if (strict) {
+		if (mode != GMIME_RFC_COMPLIANCE_LOOSE) {
 			if (!skip_word (&inptr))
 				break;
 		} else if (*inptr == '"') {
@@ -1770,7 +1771,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (*inptr == '>') {
-			if (strict)
+			if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
 				goto error;
 			
 			inptr++;
@@ -1865,7 +1866,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			 * is an unquoted string with an '@'. */
 			const char *end;
 			
-			if (strict)
+			if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
 				goto error;
 			
 			end = inptr;
@@ -1882,7 +1883,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			 * anyway in order to deal with the second Unbalanced Angle Brackets example in
 			 * section 7.1.3: second@example.org> */
 			if (*inptr == '>') {
-				if (strict)
+				if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
 					goto error;
 				
 				inptr++;

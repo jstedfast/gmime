@@ -1479,6 +1479,7 @@ char *
 g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t len)
 {
 	size_t outleft, outlen, min, ninval;
+	const char **charsets;
 	const char *best;
 	iconv_t cd;
 	char *out;
@@ -1486,14 +1487,15 @@ g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t 
 	
 	g_return_val_if_fail (text != NULL, NULL);
 	
-	best = options->charsets[0];
+	charsets = g_mime_parser_options_get_fallback_charsets (options);
+	best = charsets[0];
 	min = len;
 	
 	outleft = (len * 2) + 16;
 	out = g_malloc (outleft + 1);
 	
-	for (i = 0; options->charsets[i]; i++) {
-		if ((cd = g_mime_iconv_open ("UTF-8", options->charsets[i])) == (iconv_t) -1)
+	for (i = 0; charsets[i]; i++) {
+		if ((cd = g_mime_iconv_open ("UTF-8", charsets[i])) == (iconv_t) -1)
 			continue;
 		
 		outlen = charset_convert (cd, text, len, &out, &outleft, &ninval);
@@ -1504,7 +1506,7 @@ g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t 
 			return g_realloc (out, outlen + 1);
 		
 		if (ninval < min) {
-			best = options->charsets[i];
+			best = charsets[i];
 			min = ninval;
 		}
 	}
@@ -1781,11 +1783,13 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 {
 	rfc2047_token list, *lwsp, *token, *tail;
 	register const char *inptr = in;
+	GMimeRfcComplianceMode mode;
 	gboolean encoded = FALSE;
 	const char *text, *word;
 	gboolean ascii;
 	size_t n;
 	
+	mode = g_mime_parser_options_get_rfc2047_compliance_mode (options);
 	tail = (rfc2047_token *) &list;
 	list.next = NULL;
 	lwsp = NULL;
@@ -1803,7 +1807,7 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 		word = inptr;
 		ascii = TRUE;
 		if (is_atom (*inptr)) {
-			if (G_LIKELY (options->rfc2047 == GMIME_RFC_COMPLIANCE_LOOSE)) {
+			if (G_LIKELY (mode == GMIME_RFC_COMPLIANCE_LOOSE)) {
 				/* Make an extra effort to detect and
 				 * separate encoded-word tokens that
 				 * have been merged with other
@@ -1914,11 +1918,13 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len)
 {
 	rfc2047_token list, *lwsp, *token, *tail;
 	register const char *inptr = in;
+	GMimeRfcComplianceMode mode;
 	gboolean encoded = FALSE;
 	const char *text, *word;
 	gboolean ascii;
 	size_t n;
 	
+	mode = g_mime_parser_options_get_rfc2047_compliance_mode (options);
 	tail = (rfc2047_token *) &list;
 	list.next = NULL;
 	lwsp = NULL;
@@ -1937,7 +1943,7 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len)
 			word = inptr;
 			ascii = TRUE;
 			
-			if (G_LIKELY (options->rfc2047 == GMIME_RFC_COMPLIANCE_LOOSE)) {
+			if (G_LIKELY (mode == GMIME_RFC_COMPLIANCE_LOOSE)) {
 				if (!strncmp (inptr, "=?", 2)) {
 					inptr += 2;
 					

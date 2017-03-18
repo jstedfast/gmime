@@ -59,8 +59,8 @@ GMimeParserOptions *g_mime_parser_options_get_default (void);
 GMimeParserOptions *g_mime_parser_options_new (void);
 void g_mime_parser_options_free (GMimeParserOptions *options);
 
-GMimeRfcComplianceMode g_mime_parser_options_get_address_parser_compliance_mode (GMimeParserOptions *options);
-void g_mime_parser_options_set_address_parser_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);
+GMimeRfcComplianceMode g_mime_parser_options_get_address_compliance_mode (GMimeParserOptions *options);
+void g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);
 
 GMimeRfcComplianceMode g_mime_parser_options_get_parameter_compliance_mode (GMimeParserOptions *options);
 void g_mime_parser_options_set_parameter_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);

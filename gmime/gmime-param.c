@@ -940,7 +940,7 @@ decode_quoted_string (const char **in)
 }
 
 static char *
-decode_token (GMimeParserOptions *options, const char **in)
+decode_token (GMimeRfcComplianceMode mode, const char **in)
 {
 	const char *inptr = *in;
 	const char *start;
@@ -948,7 +948,7 @@ decode_token (GMimeParserOptions *options, const char **in)
 	skip_cfws (&inptr);
 	
 	start = inptr;
-	if (options->parameters != GMIME_RFC_COMPLIANCE_LOOSE) {
+	if (mode != GMIME_RFC_COMPLIANCE_LOOSE) {
 		while (is_ttoken (*inptr))
 			inptr++;
 	} else {
@@ -972,7 +972,7 @@ decode_token (GMimeParserOptions *options, const char **in)
 }
 
 static char *
-decode_value (GMimeParserOptions *options, const char **in)
+decode_value (GMimeRfcComplianceMode mode, const char **in)
 {
 	const char *inptr = *in;
 	
@@ -982,11 +982,11 @@ decode_value (GMimeParserOptions *options, const char **in)
 	if (*inptr == '"') {
 		return decode_quoted_string (in);
 	} else if (is_ttoken (*inptr)) {
-		return decode_token (options, in);
+		return decode_token (mode, in);
 	}
 	
-	if (options->parameters == GMIME_RFC_COMPLIANCE_LOOSE)
-		return decode_token (options, in);
+	if (mode == GMIME_RFC_COMPLIANCE_LOOSE)
+		return decode_token (mode, in);
 	
 	return NULL;
 }
@@ -1061,6 +1061,7 @@ static gboolean
 decode_param (GMimeParserOptions *options, const char **in, char **namep, char **valuep, int *id,
 	      const char **rfc2047_charset, gboolean *encoded, GMimeParamEncodingMethod *method)
 {
+	GMimeRfcComplianceMode mode = g_mime_parser_options_get_parameter_compliance_mode (options);
 	gboolean is_rfc2184 = FALSE;
 	const char *inptr = *in;
 	char *name, *value = NULL;
@@ -1074,7 +1075,7 @@ decode_param (GMimeParserOptions *options, const char **in, char **namep, char *
 	
 	if (*inptr == '=') {
 		inptr++;
-		value = decode_value (options, &inptr);
+		value = decode_value (mode, &inptr);
 		
 		if (!is_rfc2184 && value) {
 			if (strstr (value, "=?") != NULL) {

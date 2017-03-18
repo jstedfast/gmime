@@ -116,6 +116,9 @@ _g_mime_parser_options_clone (GMimeParserOptions *options)
 	GMimeParserOptions *clone;
 	guint i, n = 0;
 	
+	if (options == NULL)
+		options = default_options;
+	
 	clone = g_slice_new (GMimeParserOptions);
 	clone->addresses = options->addresses;
 	clone->parameters = options->parameters;
@@ -152,8 +155,8 @@ g_mime_parser_options_free (GMimeParserOptions *options)
 
 
 /**
- * g_mime_parser_options_get_address_parser_compliance_mode:
- * @options: a #GMimeParserOptions
+ * g_mime_parser_options_get_address_compliance_mode:
+ * @options: a #GMimeParserOptions or %NULL
  *
  * Gets the compliance mode that should be used when parsing rfc822 addresses.
  *
@@ -164,16 +167,14 @@ g_mime_parser_options_free (GMimeParserOptions *options)
  * Returns: the compliance mode that is currently set.
  **/
 GMimeRfcComplianceMode
-g_mime_parser_options_get_address_parser_compliance_mode (GMimeParserOptions *options)
+g_mime_parser_options_get_address_compliance_mode (GMimeParserOptions *options)
 {
-	g_return_val_if_fail (options != NULL, GMIME_RFC_COMPLIANCE_LOOSE);
-	
-	return options->addresses;
+	return options ? options->addresses : default_options->addresses;
 }
 
 
 /**
- * g_mime_parser_options_set_address_parser_compliance_mode:
+ * g_mime_parser_options_set_address_compliance_mode:
  * @options: a #GMimeParserOptions
  * @mode: a #GMimeRfcComplianceMode
  *
@@ -188,7 +189,7 @@ g_mime_parser_options_get_address_parser_compliance_mode (GMimeParserOptions *op
  * deal with garbage input.
  **/
 void
-g_mime_parser_options_set_address_parser_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode)
+g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode)
 {
 	g_return_if_fail (options != NULL);
 	
@@ -198,7 +199,7 @@ g_mime_parser_options_set_address_parser_compliance_mode (GMimeParserOptions *op
 
 /**
  * g_mime_parser_options_get_parameter_compliance_mode:
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  *
  * Gets the compliance mode that should be used when parsing Content-Type and
  * Content-Disposition parameters.
@@ -212,9 +213,7 @@ g_mime_parser_options_set_address_parser_compliance_mode (GMimeParserOptions *op
 GMimeRfcComplianceMode
 g_mime_parser_options_get_parameter_compliance_mode (GMimeParserOptions *options)
 {
-	g_return_val_if_fail (options != NULL, GMIME_RFC_COMPLIANCE_LOOSE);
-	
-	return options->parameters;
+	return options ? options->parameters : default_options->parameters;
 }
 
 
@@ -245,7 +244,7 @@ g_mime_parser_options_set_parameter_compliance_mode (GMimeParserOptions *options
 
 /**
  * g_mime_parser_options_get_rfc2047_compliance_mode:
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  *
  * Gets the compliance mode that should be used when parsing rfc2047 encoded words.
  *
@@ -258,9 +257,7 @@ g_mime_parser_options_set_parameter_compliance_mode (GMimeParserOptions *options
 GMimeRfcComplianceMode
 g_mime_parser_options_get_rfc2047_compliance_mode (GMimeParserOptions *options)
 {
-	g_return_val_if_fail (options != NULL, GMIME_RFC_COMPLIANCE_LOOSE);
-	
-	return options->rfc2047;
+	return options ? options->rfc2047 : default_options->rfc2047;
 }
 
 
@@ -290,7 +287,7 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
 
 /**
  * g_mime_parser_options_get_fallback_charsets:
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  *
  * Gets the fallback charsets to try when decoding 8-bit headers.
  *
@@ -300,9 +297,7 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
 const char **
 g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options)
 {
-	g_return_val_if_fail (options != NULL, (const char **) default_charsets);
-	
-	return (const char **) options->charsets;
+	return (const char **) (options ? options->charsets : default_options->charsets);
 }
 
 
