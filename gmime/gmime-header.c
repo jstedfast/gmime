@@ -858,10 +858,12 @@ g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions
 	for (i = 0; i < headers->array->len; i++) {
 		header = (GMimeHeader *) headers->array->pdata[i];
 		
-		if ((nwritten = g_mime_header_write_to_stream (headers, header, options, stream)) == -1)
-			return -1;
-		
-		total += nwritten;
+		if (g_mime_format_options_is_hidden_header (options, header->name)) {
+			if ((nwritten = g_mime_header_write_to_stream (headers, header, options, stream)) == -1)
+				return -1;
+			
+			total += nwritten;
+		}
 	}
 	
 	return total;

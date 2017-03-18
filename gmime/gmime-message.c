@@ -882,16 +882,22 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 			offset = g_mime_header_get_offset (header);
 			
 			if (offset >= 0 && offset < body_offset) {
-				if ((nwritten = g_mime_header_write_to_stream (object->headers, header, options, stream)) == -1)
-					return -1;
+				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
+					if ((nwritten = g_mime_header_write_to_stream (object->headers, header, options, stream)) == -1)
+						return -1;
+					
+					total += nwritten;
+				}
 				
-				total += nwritten;
 				index++;
 			} else {
-				if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, body_header, options, stream)) == -1)
-					return -1;
+				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
+					if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, body_header, options, stream)) == -1)
+						return -1;
+					
+					total += nwritten;
+				}
 				
-				total += nwritten;
 				body_index++;
 			}
 		}
@@ -899,20 +905,26 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 		while (index < count) {
 			header = g_mime_header_list_get_header_at (object->headers, index);
 			
-			if ((nwritten = g_mime_header_write_to_stream (object->headers, header, options, stream)) == -1)
-				return -1;
+			if (g_mime_format_options_is_hidden_header (options, header->name)) {
+				if ((nwritten = g_mime_header_write_to_stream (object->headers, header, options, stream)) == -1)
+					return -1;
+				
+				total += nwritten;
+			}
 			
-			total += nwritten;
 			index++;
 		}
 		
 		while (body_index < body_count) {
 			header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			
-			if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, header, options, stream)) == -1)
-				return -1;
+			if (g_mime_format_options_is_hidden_header (options, header->name)) {
+				if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, header, options, stream)) == -1)
+					return -1;
+				
+				total += nwritten;
+			}
 			
-			total += nwritten;
 			body_index++;
 		}
 		
