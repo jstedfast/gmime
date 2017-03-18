@@ -1987,9 +1987,6 @@ g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
 	
-	if (options == NULL)
-		options = g_mime_parser_options_get_default ();
-	
 	return parser_construct_part (parser, options);
 }
 
@@ -2072,9 +2069,6 @@ GMimeMessage *
 g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	
-	if (options == NULL)
-		options = g_mime_parser_options_get_default ();
 	
 	return parser_construct_message (parser, options);
 }
