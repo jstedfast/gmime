@@ -613,6 +613,7 @@ static char *
 encode_param (GMimeParam *param, GMimeFormatOptions *options, GMimeParamEncodingMethod *method)
 {
 	register const unsigned char *inptr = (const unsigned char *) param->value;
+	GMimeParamEncodingMethod requested;
 	const unsigned char *start = inptr;
 	const char *charset = NULL;
 	iconv_t cd = (iconv_t) -1;
@@ -633,7 +634,12 @@ encode_param (GMimeParam *param, GMimeFormatOptions *options, GMimeParamEncoding
 		return g_strdup (param->value);
 	}
 	
-	if (param->method == GMIME_PARAM_ENCODING_METHOD_RFC2047) {
+	if (param->method == GMIME_PARAM_ENCODING_METHOD_DEFAULT)
+		requested = g_mime_format_options_get_param_encoding_method (options);
+	else
+		requested = param->method;
+	
+	if (requested == GMIME_PARAM_ENCODING_METHOD_RFC2047) {
 		*method = GMIME_PARAM_ENCODING_METHOD_RFC2047;
 		
 		return g_mime_utils_header_encode_text (options, param->value, param->charset);
