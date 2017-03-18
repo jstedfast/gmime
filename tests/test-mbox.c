@@ -103,6 +103,7 @@ static void
 test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
 	gint64 message_begin, message_end, headers_begin, headers_end, marker_offset;
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	InternetAddressList *list;
 	GMimeMessage *message;
 	char *marker, *buf;
@@ -133,14 +134,14 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		
 		if ((list = g_mime_message_get_from (message)) != NULL &&
 		    internet_address_list_length (list) > 0) {
-			buf = internet_address_list_to_string (list, FALSE);
+			buf = internet_address_list_to_string (list, format, FALSE);
 			g_mime_stream_printf (summary, "From: %s\n", buf);
 			g_free (buf);
 		}
 		
 		if ((list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO)) != NULL &&
 		    internet_address_list_length (list) > 0) {
-			buf = internet_address_list_to_string (list, FALSE);
+			buf = internet_address_list_to_string (list, format, FALSE);
 			g_mime_stream_printf (summary, "To: %s\n", buf);
 			g_free (buf);
 		}
@@ -160,7 +161,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		
 		if (mbox) {
 			g_mime_stream_printf (mbox, "%s%s\n", nmsg > 0 ? "\n" : "", marker);
-			g_mime_object_write_to_stream ((GMimeObject *) message, mbox);
+			g_mime_object_write_to_stream ((GMimeObject *) message, format, mbox);
 		}
 		
 		g_object_unref (message);

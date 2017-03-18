@@ -165,6 +165,7 @@ print_verify_results (GMimeSignatureList *signatures)
 static GMimeMessage *
 create_message (GMimeObject *body)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	InternetAddressList *list;
 	InternetAddress *mailbox;
 	GMimeMessage *message;
@@ -193,7 +194,7 @@ create_message (GMimeObject *body)
 	g_mime_message_set_mime_part (message, body);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	

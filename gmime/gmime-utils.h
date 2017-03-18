@@ -27,6 +27,7 @@
 #include <time.h>
 #include <stdarg.h>
 
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-encodings.h>
 
@@ -68,9 +69,9 @@ void g_mime_references_free (GMimeReferences *refs);
 const GMimeReferences *g_mime_references_get_next (const GMimeReferences *ref);
 const char *g_mime_references_get_message_id (const GMimeReferences *ref);
 
-char  *g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *header);
-char  *g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *header);
-char  *g_mime_utils_header_printf (GMimeParserOptions *options, const char *format, ...) G_GNUC_PRINTF (2, 3);
+char  *g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *header);
+char  *g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *header);
+char  *g_mime_utils_header_printf (GMimeParserOptions *options, GMimeFormatOptions *format, const char *text, ...) G_GNUC_PRINTF (3, 4);
 
 char  *g_mime_utils_quote_string (const char *str);
 void   g_mime_utils_unquote_string (char *str);
@@ -84,10 +85,10 @@ char *g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, s
 
 /* utilities to (de/en)code headers */
 char *g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text);
-char *g_mime_utils_header_encode_text (const char *text, const char *charset);
+char *g_mime_utils_header_encode_text (GMimeFormatOptions *options, const char *text, const char *charset);
 
 char *g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase);
-char *g_mime_utils_header_encode_phrase (const char *phrase, const char *charset);
+char *g_mime_utils_header_encode_phrase (GMimeFormatOptions *options, const char *phrase, const char *charset);
 
 G_END_DECLS
 

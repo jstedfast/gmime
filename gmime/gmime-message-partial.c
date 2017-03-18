@@ -368,6 +368,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	GMimeMessage **messages;
 	GMimeMessagePartial *partial;
 	GMimeStream *stream, *substream;
+	GMimeFormatOptions *options;
 	GMimeDataWrapper *wrapper;
 	const unsigned char *buf;
 	GPtrArray *parts;
@@ -380,8 +381,10 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
+	options = g_mime_format_options_get_default ();
 	stream = g_mime_stream_mem_new ();
-	if (g_mime_object_write_to_stream (GMIME_OBJECT (message), stream) == -1) {
+	
+	if (g_mime_object_write_to_stream ((GMimeObject *) message, options, stream) == -1) {
 		g_object_unref (stream);
 		return NULL;
 	}

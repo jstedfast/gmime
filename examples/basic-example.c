@@ -186,6 +186,7 @@ verify_signed_parts (GMimeMessage *message)
 static void
 write_message_to_screen (GMimeMessage *message)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *stream;
 	
 	/* create a new stream for writing to stdout */
@@ -193,7 +194,7 @@ write_message_to_screen (GMimeMessage *message)
 	g_mime_stream_file_set_owner ((GMimeStreamFile *) stream, FALSE);
 	
 	/* write the message to the stream */
-	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
 	
 	/* flush the stream (kinda like fflush() in libc's stdio) */
 	g_mime_stream_flush (stream);

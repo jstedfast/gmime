@@ -227,12 +227,13 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 GMimeApplicationPkcs7Mime *
 g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
 {
-	GMimeStream *filtered_stream, *ciphertext, *stream;
+	GMimeStream *filtered, *ciphertext, *stream;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeContentType *content_type;
+	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
-	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
+	GMimeFilter *filter;
 	
 	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
 	g_return_val_if_fail (recipients != NULL, NULL);
@@ -244,17 +245,19 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 		return NULL;
 	}
 	
+	options = g_mime_format_options_get_default ();
+	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new (stream);
+	filtered = g_mime_stream_filter_new (stream);
 	
-	crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	g_object_unref (crlf_filter);
+	filter = g_mime_filter_crlf_new (TRUE, FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
 	
-	g_mime_object_write_to_stream (entity, filtered_stream);
-	g_mime_stream_flush (filtered_stream);
-	g_object_unref (filtered_stream);
+	g_mime_object_write_to_stream (entity, options, filtered);
+	g_mime_stream_flush (filtered);
+	g_object_unref (filtered);
 	
 	/* reset the content stream */
 	g_mime_stream_reset (stream);
@@ -312,12 +315,12 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 				       GMimeDecryptFlags flags, const char *session_key,
 				       GMimeDecryptResult **result, GError **err)
 {
-	GMimeStream *filtered_stream, *ciphertext, *stream;
+	GMimeStream *filtered, *ciphertext, *stream;
 	GMimeDataWrapper *content;
-	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
 	GMimeDecryptResult *res;
 	GMimeObject *decrypted;
+	GMimeFilter *filter;
 	GMimeParser *parser;
 	
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
@@ -333,30 +336,30 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	}
 	
 	/* get the ciphertext stream */
-	content = g_mime_part_get_content (GMIME_PART (pkcs7_mime));
+	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
 	ciphertext = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
 	
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new (stream);
-	crlf_filter = g_mime_filter_crlf_new (FALSE, FALSE);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	g_object_unref (crlf_filter);
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_filter_crlf_new (FALSE, FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
 	
 	/* decrypt the content stream */
-	if (!(res = g_mime_crypto_context_decrypt (ctx, flags, session_key, ciphertext, filtered_stream, err))) {
-		g_object_unref (filtered_stream);
+	if (!(res = g_mime_crypto_context_decrypt (ctx, flags, session_key, ciphertext, filtered, err))) {
 		g_object_unref (ciphertext);
+		g_object_unref (filtered);
 		g_object_unref (stream);
 		g_object_unref (ctx);
 		
 		return NULL;
 	}
 	
-	g_mime_stream_flush (filtered_stream);
-	g_object_unref (filtered_stream);
+	g_mime_stream_flush (filtered);
 	g_object_unref (ciphertext);
+	g_object_unref (filtered);
 	g_object_unref (ctx);
 	
 	g_mime_stream_reset (stream);
@@ -398,12 +401,13 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 GMimeApplicationPkcs7Mime *
 g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GError **err)
 {
-	GMimeStream *filtered_stream, *ciphertext, *stream;
+	GMimeStream *filtered, *ciphertext, *stream;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeContentType *content_type;
+	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
-	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
+	GMimeFilter *filter;
 	
 	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
 	g_return_val_if_fail (userid != NULL, NULL);
@@ -415,17 +419,19 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 		return NULL;
 	}
 	
+	options = g_mime_format_options_get_default ();
+	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new (stream);
+	filtered = g_mime_stream_filter_new (stream);
 	
-	crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	g_object_unref (crlf_filter);
+	filter = g_mime_filter_crlf_new (TRUE, FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
 	
-	g_mime_object_write_to_stream (entity, filtered_stream);
-	g_mime_stream_flush (filtered_stream);
-	g_object_unref (filtered_stream);
+	g_mime_object_write_to_stream (entity, options, filtered);
+	g_mime_stream_flush (filtered);
+	g_object_unref (filtered);
 	
 	/* reset the content stream */
 	g_mime_stream_reset (stream);
@@ -468,11 +474,11 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 GMimeSignatureList *
 g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags, GMimeObject **entity, GError **err)
 {
-	GMimeStream *filtered_stream, *ciphertext, *stream;
+	GMimeStream *filtered, *ciphertext, *stream;
 	GMimeSignatureList *signatures;
 	GMimeDataWrapper *content;
-	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
+	GMimeFilter *filter;
 	GMimeParser *parser;
 	
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
@@ -494,24 +500,24 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	g_mime_stream_reset (ciphertext);
 	
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new (stream);
-	crlf_filter = g_mime_filter_crlf_new (FALSE, FALSE);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered_stream, crlf_filter);
-	g_object_unref (crlf_filter);
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_filter_crlf_new (FALSE, FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
 	
 	/* decrypt the content stream */
-	if (!(signatures = g_mime_crypto_context_verify (ctx, flags, ciphertext, NULL, filtered_stream, err))) {
-		g_object_unref (filtered_stream);
+	if (!(signatures = g_mime_crypto_context_verify (ctx, flags, ciphertext, NULL, filtered, err))) {
 		g_object_unref (ciphertext);
+		g_object_unref (filtered);
 		g_object_unref (stream);
 		g_object_unref (ctx);
 		
 		return NULL;
 	}
 	
-	g_mime_stream_flush (filtered_stream);
-	g_object_unref (filtered_stream);
+	g_mime_stream_flush (filtered);
 	g_object_unref (ciphertext);
+	g_object_unref (filtered);
 	g_object_unref (ctx);
 	
 	g_mime_stream_reset (stream);

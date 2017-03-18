@@ -69,12 +69,14 @@ static void object_header_removed  (GMimeObject *object, GMimeHeader *header);
 static void object_headers_cleared (GMimeObject *object);
 
 static void object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
-static char *object_get_headers (GMimeObject *object);
-static ssize_t object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
+static char *object_get_headers (GMimeObject *object, GMimeFormatOptions *options);
+static ssize_t object_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream);
 static void object_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
-static ssize_t write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_content_type (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+				   const char *name, const char *value);
+static ssize_t write_disposition (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+				  const char *name, const char *value);
 
 static void header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *args, GMimeObject *object);
 static void content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object);
@@ -307,7 +309,8 @@ header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *
 }
 
 static ssize_t
-write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_content_type (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+		    const char *name, const char *value)
 {
 	GMimeContentType *content_type;
 	ssize_t nwritten;
@@ -318,7 +321,7 @@ write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char
 	g_string_append_c (str, ':');
 	
 	content_type = g_mime_content_type_parse (options, value);
-	raw_value = g_mime_content_type_encode (content_type);
+	raw_value = g_mime_content_type_encode (content_type, format);
 	g_object_unref (content_type);
 	
 	g_string_append (str, raw_value);
@@ -378,10 +381,11 @@ unfold_raw_value (const char *raw_value)
 static void
 content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object)
 {
+	GMimeFormatOptions *options = g_mime_format_options_get_default ();
 	char *raw_value, *value;
 	GMimeHeader *header;
 	
-	raw_value = g_mime_content_type_encode (content_type);
+	raw_value = g_mime_content_type_encode (content_type, options);
 	value = unfold_raw_value (raw_value);
 	
 	_g_mime_object_block_header_list_changed (object);
@@ -394,7 +398,8 @@ content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject
 }
 
 static ssize_t
-write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_disposition (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+		   const char *name, const char *value)
 {
 	GMimeContentDisposition *disposition;
 	ssize_t nwritten;
@@ -407,7 +412,7 @@ write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char 
 	disposition = g_mime_content_disposition_parse (options, value);
 	g_string_append (str, disposition->disposition);
 	
-	g_mime_param_list_encode (disposition->params, TRUE, str);
+	g_mime_param_list_encode (disposition->params, format, TRUE, str);
 	g_object_unref (disposition);
 	
 	nwritten = g_mime_stream_write (stream, str->str, str->len);
@@ -419,13 +424,15 @@ write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char 
 static void
 content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeObject *object)
 {
+	GMimeFormatOptions *options;
 	char *raw_value, *value;
 	GMimeHeader *header;
 	
 	_g_mime_object_block_header_list_changed (object);
 	
 	if (object->disposition) {
-		raw_value = g_mime_content_disposition_encode (object->disposition);
+		options = g_mime_format_options_get_default ();
+		raw_value = g_mime_content_disposition_encode (object->disposition, options);
 		value = unfold_raw_value (raw_value);
 		
 		g_mime_header_list_set (object->headers, "Content-Disposition", value);
@@ -1044,15 +1051,16 @@ g_mime_object_remove_header (GMimeObject *object, const char *header)
 
 
 static char *
-object_get_headers (GMimeObject *object)
+object_get_headers (GMimeObject *object, GMimeFormatOptions *options)
 {
-	return g_mime_header_list_to_string (object->headers);
+	return g_mime_header_list_to_string (object->headers, options);
 }
 
 
 /**
  * g_mime_object_get_headers:
  * @object: a #GMimeObject
+ * @options: a #GMimeFormatOptions
  *
  * Allocates a string buffer containing all of the MIME object's raw
  * headers.
@@ -1062,16 +1070,16 @@ object_get_headers (GMimeObject *object)
  * Note: The returned string will not be suitable for display.
  **/
 char *
-g_mime_object_get_headers (GMimeObject *object)
+g_mime_object_get_headers (GMimeObject *object, GMimeFormatOptions *options)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
 	
-	return GMIME_OBJECT_GET_CLASS (object)->get_headers (object);
+	return GMIME_OBJECT_GET_CLASS (object)->get_headers (object, options);
 }
 
 
 static ssize_t
-object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
+object_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	return -1;
 }
@@ -1080,6 +1088,7 @@ object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean conte
 /**
  * g_mime_object_write_to_stream:
  * @object: a #GMimeObject
+ * @options: a #GMimeFormatOptions
  * @stream: stream
  *
  * Write the contents of the MIME object to @stream.
@@ -1087,12 +1096,12 @@ object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean conte
  * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
-g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream)
+g_mime_object_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return GMIME_OBJECT_GET_CLASS (object)->write_to_stream (object, stream, FALSE);
+	return GMIME_OBJECT_GET_CLASS (object)->write_to_stream (object, options, FALSE, stream);
 }
 
 
@@ -1124,6 +1133,7 @@ g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 /**
  * g_mime_object_to_string:
  * @object: a #GMimeObject
+ * @options: a #GMimeFormatOptions
  *
  * Allocates a string buffer containing the contents of @object.
  *
@@ -1131,7 +1141,7 @@ g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
  * object.
  **/
 char *
-g_mime_object_to_string (GMimeObject *object)
+g_mime_object_to_string (GMimeObject *object, GMimeFormatOptions *options)
 {
 	GMimeStream *stream;
 	GByteArray *array;
@@ -1143,7 +1153,7 @@ g_mime_object_to_string (GMimeObject *object)
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
 	
-	g_mime_object_write_to_stream (object, stream);
+	g_mime_object_write_to_stream (object, options, stream);
 	
 	g_object_unref (stream);
 	g_byte_array_append (array, (unsigned char *) "", 1);

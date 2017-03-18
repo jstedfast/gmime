@@ -274,6 +274,7 @@ write_bodystructure (GMimeMessage *message, const char *uid)
 static void
 write_header (GMimeMessage *message, const char *uid)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	char *buf;
 	FILE *fp;
 	
@@ -281,7 +282,7 @@ write_header (GMimeMessage *message, const char *uid)
 	fp = fopen (buf, "wt");
 	g_free (buf);
 	
-	buf = g_mime_object_get_headers ((GMimeObject *) message);
+	buf = g_mime_object_get_headers ((GMimeObject *) message, format);
 	
 	fwrite (buf, 1, strlen (buf), fp);
 	g_free (buf);
@@ -292,8 +293,10 @@ write_header (GMimeMessage *message, const char *uid)
 static void
 write_part (GMimeObject *part, const char *uid, const char *spec)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *istream, *ostream;
 	GMimeMultipart *multipart;
+	GMimeDataWrapper *content;
 	GMimeMessage *message;
 	GMimeObject *subpart;
 	char *buf, *id;
@@ -304,7 +307,7 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 	fp = fopen (buf, "wt");
 	g_free (buf);
 	
-	buf = g_mime_object_get_headers (part);
+	buf = g_mime_object_get_headers (part, format);
 	fwrite (buf, 1, strlen (buf), fp);
 	g_free (buf);
 	
@@ -327,10 +330,10 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		fp = fopen (buf, "wt");
 		g_free (buf);
 		
-		message = GMIME_MESSAGE_PART (part)->message;
+		message = g_mime_message_part_get_message ((GMimeMessagePart *) part);
 		
 		ostream = g_mime_stream_file_new (fp);
-		g_mime_object_write_to_stream (GMIME_OBJECT (message), ostream);
+		g_mime_object_write_to_stream ((GMimeObject *) message, format, ostream);
 		g_object_unref (ostream);
 	} else if (GMIME_IS_PART (part)) {
 		buf = g_strdup_printf ("%s/%s.TEXT", uid, spec);
@@ -338,7 +341,8 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		g_free (buf);
 		
 		ostream = g_mime_stream_file_new (fp);
-		istream = g_mime_data_wrapper_get_stream (GMIME_PART (part)->content);
+		content = g_mime_part_get_content ((GMimePart *) part);
+		istream = g_mime_data_wrapper_get_stream (content);
 		g_mime_stream_write_to_stream (istream, ostream);
 		g_object_unref (ostream);
 	}
@@ -869,6 +873,8 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 static void
 reconstruct_message (const char *uid)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
+	GMimeObject *mime_part;
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
@@ -892,7 +898,9 @@ reconstruct_message (const char *uid)
 	message = g_mime_parser_construct_message (parser, NULL);
 	g_object_unref (parser);
 	
-	if (GMIME_IS_MULTIPART (message->mime_part)) {
+	mime_part = g_mime_message_get_mime_part (message);
+	
+	if (GMIME_IS_MULTIPART (mime_part)) {
 		struct _bodystruct *body;
 		GByteArray *buffer;
 		GMimeStream *mem;
@@ -911,16 +919,16 @@ reconstruct_message (const char *uid)
 		g_mime_stream_write_to_stream (stream, mem);
 		g_object_unref (stream);
 		
-		buffer = GMIME_STREAM_MEM (mem)->buffer;
+		buffer = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) mem);
 		body = bodystruct_parse (buffer->data, buffer->len);
 		g_object_unref (mem);
 		
 		bodystruct_dump (body, 0);
 		
-		reconstruct_multipart ((GMimeMultipart *) message->mime_part, body, uid, "1");
+		reconstruct_multipart ((GMimeMultipart *) mime_part, body, uid, "1");
 		bodystruct_free (body);
-	} else if (GMIME_IS_PART (message->mime_part)) {
-		reconstruct_part_content ((GMimePart *) message->mime_part, uid, "1");
+	} else if (GMIME_IS_PART (mime_part)) {
+		reconstruct_part_content ((GMimePart *) mime_part, uid, "1");
 	}
 	
 	filename = g_strdup_printf ("%s/MESSAGE", uid);
@@ -931,7 +939,7 @@ reconstruct_message (const char *uid)
 	
 	g_free (filename);
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
 	g_object_unref (message);
 	g_object_unref (stream);
 }

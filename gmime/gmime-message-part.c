@@ -47,7 +47,8 @@ static void g_mime_message_part_init (GMimeMessagePart *message_part, GMimeMessa
 static void g_mime_message_part_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static ssize_t message_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
+static ssize_t message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options,
+					     gboolean content_only, GMimeStream *stream);
 
 
 static GMimeObjectClass *parent_class = NULL;
@@ -109,14 +110,14 @@ g_mime_message_part_finalize (GObject *object)
 }
 
 static ssize_t
-message_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
+message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimeMessagePart *part = (GMimeMessagePart *) object;
 	ssize_t nwritten, total = 0;
 	
 	if (!content_only) {
 		/* write the content headers */
-		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
+		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -130,7 +131,7 @@ message_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean
 	
 	/* write the message */
 	if (part->message) {
-		if ((nwritten = g_mime_object_write_to_stream (GMIME_OBJECT (part->message), stream)) == -1)
+		if ((nwritten = g_mime_object_write_to_stream ((GMimeObject *) part->message, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;

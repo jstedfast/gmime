@@ -135,6 +135,7 @@ int main (int argc, char **argv)
 	GMimeStream *stream, *combined, *expected;
 	GMimeMessage *message, **messages;
 	GMimeMessagePartial **parts;
+	GMimeFormatOptions *format;
 	GString *input, *output;
 	GMimeParser *parser;
 	GPtrArray *partials;
@@ -150,6 +151,8 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	testsuite_start ("message/partial");
+	
+	format = g_mime_format_options_get_default ();
 	
 	output = g_string_new (datadir);
 	g_string_append_c (output, G_DIR_SEPARATOR);
@@ -218,7 +221,7 @@ int main (int argc, char **argv)
 				g_object_unref (parts[i]);
 			
 			combined = g_mime_stream_mem_new ();
-			g_mime_object_write_to_stream (GMIME_OBJECT (message), combined);
+			g_mime_object_write_to_stream (GMIME_OBJECT (message), format, combined);
 			g_mime_stream_reset (combined);
 			
 			if (!(expected = g_mime_stream_file_open (output->str, "r", NULL))) {
@@ -271,7 +274,7 @@ int main (int argc, char **argv)
 			}
 			
 			combined = g_mime_stream_mem_new ();
-			g_mime_object_write_to_stream (GMIME_OBJECT (message), combined);
+			g_mime_object_write_to_stream (GMIME_OBJECT (message), format, combined);
 			g_mime_stream_reset (combined);
 			g_mime_stream_reset (expected);
 			g_object_unref (message);

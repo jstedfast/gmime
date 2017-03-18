@@ -70,7 +70,7 @@ GMimeContentType *g_mime_content_type_parse (GMimeParserOptions *options, const 
 
 char *g_mime_content_type_get_mime_type (GMimeContentType *content_type);
 
-char *g_mime_content_type_encode (GMimeContentType *content_type);
+char *g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *options);
 
 gboolean g_mime_content_type_is_type (GMimeContentType *content_type, const char *type, const char *subtype);
 

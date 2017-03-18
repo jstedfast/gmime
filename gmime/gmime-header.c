@@ -263,12 +263,13 @@ _g_mime_header_set_offset (GMimeHeader *header, gint64 offset)
 }
 
 static ssize_t
-default_writer (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+default_writer (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+		const char *name, const char *value)
 {
 	ssize_t nwritten;
 	char *val;
 	
-	val = g_mime_utils_header_printf (options, "%s: %s\n", name, value);
+	val = g_mime_utils_header_printf (options, format, "%s: %s\n", name, value);
 	nwritten = g_mime_stream_write_string (stream, val);
 	g_free (val);
 	
@@ -278,7 +279,9 @@ default_writer (GMimeParserOptions *options, GMimeStream *stream, const char *na
 
 /**
  * g_mime_header_write_to_stream:
+ * @headers: the #GMimeHeaderList that contains @header
  * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
  * @stream: a #GMimeStream
  *
  * Write the header to the specified stream.
@@ -286,7 +289,8 @@ default_writer (GMimeParserOptions *options, GMimeStream *stream, const char *na
  * Returns: the number of bytes written, or %-1 on fail.
  **/
 ssize_t
-g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header, GMimeStream *stream)
+g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header,
+			       GMimeFormatOptions *options, GMimeStream *stream)
 {
 	ssize_t nwritten, total = 0;
 	GMimeHeaderWriter writer;
@@ -309,7 +313,7 @@ g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header, GM
 		if (!(writer = g_hash_table_lookup (headers->writers, header->name)))
 			writer = default_writer;
 		
-		if ((nwritten = writer (headers->options, stream, header->name, header->value)) == -1)
+		if ((nwritten = writer (headers->options, options, stream, header->name, header->value)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -834,6 +838,7 @@ g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
 /**
  * g_mime_header_list_write_to_stream:
  * @headers: a #GMimeHeaderList
+ * @options: a #GMimeFormatOptions
  * @stream: output stream
  *
  * Write the headers to a stream.
@@ -841,19 +846,19 @@ g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
  * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
-g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeStream *stream)
+g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	ssize_t nwritten, total = 0;
 	GMimeHeader *header;
 	guint i;
 	
 	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), -1);
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	for (i = 0; i < headers->array->len; i++) {
 		header = (GMimeHeader *) headers->array->pdata[i];
 		
-		if ((nwritten = g_mime_header_write_to_stream (headers, header, stream)) == -1)
+		if ((nwritten = g_mime_header_write_to_stream (headers, header, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -866,6 +871,7 @@ g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeStream *strea
 /**
  * g_mime_header_list_to_string:
  * @headers: a #GMimeHeaderList
+ * @options: a #GMimeFormatOptions
  *
  * Allocates a string buffer containing the raw rfc822 headers
  * contained in @headers.
@@ -873,7 +879,7 @@ g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeStream *strea
  * Returns: a string containing the header block.
  **/
 char *
-g_mime_header_list_to_string (GMimeHeaderList *headers)
+g_mime_header_list_to_string (GMimeHeaderList *headers, GMimeFormatOptions *options)
 {
 	GMimeStream *stream;
 	GByteArray *array;
@@ -884,7 +890,7 @@ g_mime_header_list_to_string (GMimeHeaderList *headers)
 	array = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
-	g_mime_header_list_write_to_stream (headers, stream);
+	g_mime_header_list_write_to_stream (headers, options, stream);
 	g_object_unref (stream);
 	
 	g_byte_array_append (array, (unsigned char *) "", 1);

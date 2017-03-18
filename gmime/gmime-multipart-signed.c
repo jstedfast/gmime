@@ -212,6 +212,7 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 			      const char *userid, GError **err)
 {
 	GMimeParserOptions *options = g_mime_parser_options_get_default ();
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *stream, *filtered, *sigstream;
 	GMimeContentType *content_type;
 	GMimeDataWrapper *content;
@@ -248,7 +249,7 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
 	
-	g_mime_object_write_to_stream (entity, filtered);
+	g_mime_object_write_to_stream (entity, format, filtered);
 	g_mime_stream_flush (filtered);
 	g_mime_stream_reset (stream);
 	g_object_unref (filtered);
@@ -367,15 +368,15 @@ check_protocol_supported (const char *protocol, const char *supported)
 GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)
 {
+	GMimeFormatOptions *options = g_mime_format_options_get_default ();
+	GMimeStream *filtered, *stream, *sigstream;
 	const char *supported, *protocol;
 	GMimeObject *content, *signature;
-	GMimeStream *stream, *sigstream;
 	GMimeSignatureList *signatures;
-	GMimeStream *filtered_stream;
 	GMimeDataWrapper *wrapper;
-	GMimeFilter *crlf_filter;
 	GMimeCryptoContext *ctx;
 	GMimeDigestAlgo digest;
+	GMimeFilter *filter;
 	char *mime_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);
@@ -413,7 +414,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 		return NULL;
 	}
 	
-	signature = g_mime_multipart_get_part (GMIME_MULTIPART (mps), GMIME_MULTIPART_SIGNED_SIGNATURE);
+	signature = g_mime_multipart_get_part ((GMimeMultipart *) mps, GMIME_MULTIPART_SIGNED_SIGNATURE);
 	
 	/* make sure the protocol matches the signature content-type */
 	mime_type = g_mime_content_type_get_mime_type (signature->content_type);
@@ -427,24 +428,24 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	}
 	g_free (mime_type);
 	
-	content = g_mime_multipart_get_part (GMIME_MULTIPART (mps), GMIME_MULTIPART_SIGNED_CONTENT);
+	content = g_mime_multipart_get_part ((GMimeMultipart *) mps, GMIME_MULTIPART_SIGNED_CONTENT);
 	
 	/* get the content stream */
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new (stream);
+	filtered = g_mime_stream_filter_new (stream);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
-	crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	g_object_unref (crlf_filter);
+	filter = g_mime_filter_crlf_new (TRUE, FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
 	
-	g_mime_object_write_to_stream (content, filtered_stream);
-	g_mime_stream_flush (filtered_stream);
-	g_object_unref (filtered_stream);
+	g_mime_object_write_to_stream (content, options, filtered);
+	g_mime_stream_flush (filtered);
+	g_object_unref (filtered);
 	g_mime_stream_reset (stream);
 	
 	/* get the signature stream */
-	wrapper = g_mime_part_get_content (GMIME_PART (signature));
+	wrapper = g_mime_part_get_content ((GMimePart *) signature);
 	
 	sigstream = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (wrapper, sigstream);

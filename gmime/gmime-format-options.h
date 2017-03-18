@@ -23,7 +23,6 @@
 #define __GMIME_FORMAT_OPTIONS_H__
 
 #include <glib.h>
-#include <gmime/gmime-param.h>
 #include <gmime/gmime-filter.h>
 
 G_BEGIN_DECLS
@@ -43,6 +42,26 @@ typedef enum {
 	GMIME_NEWLINE_FORMAT_UNIX,
 	GMIME_NEWLINE_FORMAT_DOS
 } GMimeNewLineFormat;
+
+
+/**
+ * GMimeParamEncodingMethod:
+ * @GMIME_PARAM_ENCODING_METHOD_DEFAULT: Use the default encoding method set on the #GMimeFormatOptions.
+ * @GMIME_PARAM_ENCODING_METHOD_RFC2231: Use the encoding method described in rfc2231.
+ * @GMIME_PARAM_ENCODING_METHOD_RFC2047: Use the encoding method described in rfc2047.
+ *
+ * The MIME specifications specify that the proper method for encoding Content-Type and
+ * Content-Disposition parameter values is the method described in
+ * <a href="https://tools.ietf.org/html/rfc2231">rfc2231</a>. However, it is common for
+ * some older email clients to improperly encode using the method described in
+ * <a href="https://tools.ietf.org/html/rfc2047">rfc2047</a> instead.
+ **/
+typedef enum {
+	GMIME_PARAM_ENCODING_METHOD_DEFAULT = 0,
+	GMIME_PARAM_ENCODING_METHOD_RFC2231 = 1,
+	GMIME_PARAM_ENCODING_METHOD_RFC2047 = 2
+} GMimeParamEncodingMethod;
+
 
 /**
  * GMimeFormatOptions:

@@ -163,6 +163,7 @@ print_verify_results (GMimeSignatureList *signatures)
 static GMimeMessage *
 create_message (GMimeObject *body)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	InternetAddressList *list;
 	InternetAddress *mailbox;
 	GMimeMessage *message;
@@ -191,7 +192,7 @@ create_message (GMimeObject *body)
 	g_mime_message_set_mime_part (message, body);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	
@@ -269,6 +270,7 @@ static void
 create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 			  GMimeStream **cleartext_out, GMimeStream **stream_out)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
 	InternetAddressList *list;
@@ -284,7 +286,7 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	
 	/* hold onto this for comparison later */
 	cleartext = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) part, cleartext);
+	g_mime_object_write_to_stream ((GMimeObject *) part, format, cleartext);
 	g_mime_stream_reset (cleartext);
 	
 	/* encrypt the part */
@@ -325,7 +327,7 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	g_object_unref (mpe);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
 	g_object_unref (message);
 	
 	*stream_out = stream;
@@ -337,6 +339,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 			  GMimeStream *cleartext, GMimeStream *stream,
 			  const char *session_key)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeSignatureStatus status;
 	GMimeStream *test_stream;
  	GMimeMultipartEncrypted *mpe;
@@ -407,10 +410,10 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	}
 	
 	test_stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (decrypted, test_stream);
+	g_mime_object_write_to_stream (decrypted, format, test_stream);
 	
-	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
-	buf[1] = GMIME_STREAM_MEM (test_stream)->buffer;
+	buf[0] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) cleartext);
+	buf[1] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) test_stream);
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("decrypted data does not match original cleartext");

@@ -159,6 +159,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
 				    GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
 {
 	GMimeParserOptions *options = g_mime_parser_options_get_default ();
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *filtered, *stream, *ciphertext;
 	GMimePart *version_part, *encrypted_part;
 	GMimeMultipartEncrypted *encrypted;
@@ -183,7 +184,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
 	
-	g_mime_object_write_to_stream (entity, filtered);
+	g_mime_object_write_to_stream (entity, format, filtered);
 	g_mime_stream_flush (filtered);
 	g_object_unref (filtered);
 	

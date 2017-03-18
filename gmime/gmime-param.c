@@ -610,7 +610,7 @@ g_mime_param_list_remove_at (GMimeParamList *list, int index)
 
 /* FIXME: I wrote this in a quick & dirty fashion - it may not be 100% correct */
 static char *
-encode_param (GMimeParam *param, GMimeParamEncodingMethod *method)
+encode_param (GMimeParam *param, GMimeFormatOptions *options, GMimeParamEncodingMethod *method)
 {
 	register const unsigned char *inptr = (const unsigned char *) param->value;
 	const unsigned char *start = inptr;
@@ -636,7 +636,7 @@ encode_param (GMimeParam *param, GMimeParamEncodingMethod *method)
 	if (param->method == GMIME_PARAM_ENCODING_METHOD_RFC2047) {
 		*method = GMIME_PARAM_ENCODING_METHOD_RFC2047;
 		
-		return g_mime_utils_header_encode_text (param->value, param->charset);
+		return g_mime_utils_header_encode_text (options, param->value, param->charset);
 	}
 	
 	*method = GMIME_PARAM_ENCODING_METHOD_RFC2231;
@@ -712,13 +712,14 @@ g_string_append_len_quoted (GString *str, const char *text, size_t len)
 /**
  * g_mime_param_list_encode:
  * @list: a #GMimeParamList
+ * @options: a #GMimeFormatOptions
  * @fold: %TRUE if the parameter list should be folded; otherwise, %FALSE
  * @str: the output string buffer
  *
  * Encodes the parameter list into @str, folding lines if required.
  **/
 void
-g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str)
+g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gboolean fold, GString *str)
 {
 	guint count, i;
 	int used;
@@ -743,7 +744,7 @@ g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str)
 		if (!param->value)
 			continue;
 		
-		if (!(value = encode_param (param, &method))) {
+		if (!(value = encode_param (param, options, &method))) {
 			w(g_warning ("appending parameter %s=%s violates rfc2184",
 				     param->name, param->value));
 			value = g_strdup (param->value);

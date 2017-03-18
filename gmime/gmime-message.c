@@ -60,16 +60,23 @@ static void message_header_changed  (GMimeObject *object, GMimeHeader *header);
 static void message_header_removed  (GMimeObject *object, GMimeHeader *header);
 static void message_headers_cleared (GMimeObject *object);
 
-static char *message_get_headers (GMimeObject *object);
-static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
+static char *message_get_headers (GMimeObject *object, GMimeFormatOptions *options);
+static ssize_t message_write_to_stream (GMimeObject *object, GMimeFormatOptions *options,
+					gboolean content_only, GMimeStream *stream);
 static void message_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
-/*static ssize_t write_structured (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);*/
-static ssize_t write_references (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_addrspec (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_received (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_subject (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_msgid (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+/*static ssize_t write_structured (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+  const char *name, const char *value);*/
+static ssize_t write_references (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+				 const char *name, const char *value);
+static ssize_t write_addrspec (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+			       const char *name, const char *value);
+static ssize_t write_received (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+			       const char *name, const char *value);
+static ssize_t write_subject (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+			      const char *name, const char *value);
+static ssize_t write_msgid (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+			    const char *name, const char *value);
 
 
 static void sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
@@ -416,7 +423,8 @@ struct _received_part {
 };
 
 static ssize_t
-write_received (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_received (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+		const char *name, const char *value)
 {
 	struct _received_part *parts, *part, *tail;
 	const char *inptr, *lwsp = NULL;
@@ -529,12 +537,13 @@ write_received (GMimeParserOptions *options, GMimeStream *stream, const char *na
 }
 
 static ssize_t
-write_subject (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_subject (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+	       const char *name, const char *value)
 {
 	char *folded;
 	ssize_t n;
 	
-	folded = _g_mime_utils_unstructured_header_fold (options, name, value);
+	folded = _g_mime_utils_unstructured_header_fold (options, format, name, value);
 	n = g_mime_stream_write_string (stream, folded);
 	g_free (folded);
 	
@@ -542,7 +551,8 @@ write_subject (GMimeParserOptions *options, GMimeStream *stream, const char *nam
 }
 
 static ssize_t
-write_msgid (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_msgid (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+	     const char *name, const char *value)
 {
 	/* Note: we don't want to wrap the Message-Id header - seems to
 	   break a lot of clients (and servers) */
@@ -550,7 +560,8 @@ write_msgid (GMimeParserOptions *options, GMimeStream *stream, const char *name,
 }
 
 static ssize_t
-write_references (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_references (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+		  const char *name, const char *value)
 {
 	GMimeReferences *references, *reference;
 	ssize_t nwritten;
@@ -594,12 +605,13 @@ write_references (GMimeParserOptions *options, GMimeStream *stream, const char *
 
 #if 0
 static ssize_t
-write_structured (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_structured (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+		  const char *name, const char *value)
 {
 	char *folded;
 	ssize_t n;
 	
-	folded = _g_mime_utils_structured_header_fold (options, name, value);
+	folded = _g_mime_utils_structured_header_fold (options, format, name, value);
 	n = g_mime_stream_write_string (stream, folded);
 	g_free (folded);
 	
@@ -608,7 +620,8 @@ write_structured (GMimeParserOptions *options, GMimeStream *stream, const char *
 #endif
 
 static ssize_t
-write_addrspec (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
+write_addrspec (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+		const char *name, const char *value)
 {
 	InternetAddressList *addrlist;
 	GString *str;
@@ -618,7 +631,7 @@ write_addrspec (GMimeParserOptions *options, GMimeStream *stream, const char *na
 	g_string_append (str, ": ");
 	
 	if (value && (addrlist = internet_address_list_parse (options, value))) {
-		internet_address_list_writer (addrlist, str);
+		internet_address_list_writer (addrlist, format, str);
 		g_object_unref (addrlist);
 	}
 	
@@ -846,7 +859,7 @@ message_headers_cleared (GMimeObject *object)
 
 
 static ssize_t
-write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
+write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	GMimeObject *mime_part = message->mime_part;
@@ -869,13 +882,13 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 			offset = g_mime_header_get_offset (header);
 			
 			if (offset >= 0 && offset < body_offset) {
-				if ((nwritten = g_mime_header_write_to_stream (object->headers, header, stream)) == -1)
+				if ((nwritten = g_mime_header_write_to_stream (object->headers, header, options, stream)) == -1)
 					return -1;
 				
 				total += nwritten;
 				index++;
 			} else {
-				if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, body_header, stream)) == -1)
+				if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, body_header, options, stream)) == -1)
 					return -1;
 				
 				total += nwritten;
@@ -886,7 +899,7 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		while (index < count) {
 			header = g_mime_header_list_get_header_at (object->headers, index);
 			
-			if ((nwritten = g_mime_header_write_to_stream (object->headers, header, stream)) == -1)
+			if ((nwritten = g_mime_header_write_to_stream (object->headers, header, options, stream)) == -1)
 				return -1;
 			
 			total += nwritten;
@@ -896,7 +909,7 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		while (body_index < body_count) {
 			header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			
-			if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, header, stream)) == -1)
+			if ((nwritten = g_mime_header_write_to_stream (mime_part->headers, header, options, stream)) == -1)
 				return -1;
 			
 			total += nwritten;
@@ -906,12 +919,12 @@ write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
 		return total;
 	}
 	
-	return g_mime_header_list_write_to_stream (object->headers, stream);
+	return g_mime_header_list_write_to_stream (object->headers, options, stream);
 }
 
 
 static char *
-message_get_headers (GMimeObject *object)
+message_get_headers (GMimeObject *object, GMimeFormatOptions *options)
 {
 	GMimeStream *stream;
 	GByteArray *ba;
@@ -919,8 +932,8 @@ message_get_headers (GMimeObject *object)
 	
 	ba = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
-	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), ba);
-	write_headers_to_stream (object, stream);
+	g_mime_stream_mem_set_byte_array ((GMimeStreamMem *) stream, ba);
+	write_headers_to_stream (object, options, stream);
 	g_object_unref (stream);
 	g_byte_array_append (ba, (unsigned char *) "", 1);
 	str = (char *) ba->data;
@@ -930,14 +943,14 @@ message_get_headers (GMimeObject *object)
 }
 
 static ssize_t
-message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
+message_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	GMimeObject *mime_part = message->mime_part;
 	ssize_t nwritten, total = 0;
 	
 	if (!content_only) {
-		if ((nwritten = write_headers_to_stream (object, stream)) == -1)
+		if ((nwritten = write_headers_to_stream (object, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -949,7 +962,9 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean cont
 	}
 	
 	if (mime_part) {
-		if ((nwritten = GMIME_OBJECT_GET_CLASS (mime_part)->write_to_stream (mime_part, stream, TRUE)) == -1)
+		GMimeObjectClass *klass = GMIME_OBJECT_GET_CLASS (mime_part);
+		
+		if ((nwritten = klass->write_to_stream (mime_part, options, TRUE, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -1108,10 +1123,11 @@ g_mime_message_get_bcc (GMimeMessage *message)
 static void
 sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, const char *name)
 {
+	GMimeFormatOptions *options = g_mime_format_options_get_default ();
 	GMimeObject *object = (GMimeObject *) message;
 	char *string;
 	
-	string = internet_address_list_to_string (list, TRUE);
+	string = internet_address_list_to_string (list, options, TRUE);
 	
 	_g_mime_object_block_header_list_changed (object);
 	g_mime_header_list_set (object->headers, name, string);
@@ -1261,6 +1277,7 @@ g_mime_message_get_all_recipients (GMimeMessage *message)
 void
 g_mime_message_set_subject (GMimeMessage *message, const char *subject, const char *charset)
 {
+	GMimeFormatOptions *options;
 	char *encoded;
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
@@ -1269,8 +1286,9 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject, const ch
 	g_free (message->subject);
 	message->subject = g_mime_strdup_trim (subject);
 	
-	encoded = g_mime_utils_header_encode_text (message->subject, charset);
-	g_mime_object_set_header (GMIME_OBJECT (message), "Subject", encoded);
+	options = g_mime_format_options_get_default ();
+	encoded = g_mime_utils_header_encode_text (options, message->subject, charset);
+	g_mime_object_set_header ((GMimeObject *) message, "Subject", encoded);
 	g_free (encoded);
 }
 

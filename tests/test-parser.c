@@ -156,6 +156,7 @@ print_mime_struct_iter (GMimeMessage *message)
 static void
 test_parser (GMimeStream *stream)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeParser *parser;
 	GMimeMessage *message;
 	char *text;
@@ -173,7 +174,7 @@ test_parser (GMimeStream *stream)
 	g_object_unref (parser);
 	
 	ZenTimerStart (NULL);
-	text = g_mime_object_to_string ((GMimeObject *) message);
+	text = g_mime_object_to_string ((GMimeObject *) message, format);
 	ZenTimerStop (NULL);
 	ZenTimerReport (NULL, "gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
@@ -183,7 +184,7 @@ test_parser (GMimeStream *stream)
 	{
 		char *raw;
 		
-		raw = g_mime_object_get_headers ((GMimeObject *) message);
+		raw = g_mime_object_get_headers ((GMimeObject *) message, format);
 		fprintf (stdout, "\nTesting raw headers...\n\n%s\n", raw);
 		g_free (raw);
 	}
@@ -196,7 +197,7 @@ test_parser (GMimeStream *stream)
 		fprintf (stdout, "\nTesting preservation of headers...\n\n");
 		stream = g_mime_stream_file_new (stdout);
 		g_mime_stream_file_set_owner ((GMimeStreamFile *) stream, FALSE);
-		g_mime_header_list_write_to_stream (GMIME_OBJECT (message)->headers, stream);
+		g_mime_header_list_write_to_stream (GMIME_OBJECT (message)->headers, format, stream);
 		g_mime_stream_flush (stream);
 		g_object_unref (stream);
 		fprintf (stdout, "\n");
@@ -206,7 +207,7 @@ test_parser (GMimeStream *stream)
 #ifdef TEST_WRITE_TO_STREAM
 	stream = g_mime_stream_pipe_new (2);
 	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
-	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
 	g_mime_stream_flush (stream);
 	g_object_unref (stream);
 #endif

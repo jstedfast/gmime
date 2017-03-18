@@ -216,6 +216,7 @@ static struct {
 static void
 test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	InternetAddressList *addrlist;
 	InternetAddress *address;
 	const char *charset;
@@ -244,12 +245,12 @@ test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 				throw (exception_new ("expected NULL charset but address has a charset of '%s': %s", charset, addrspec[i].input));
 			}
 			
-			str = internet_address_list_to_string (addrlist, FALSE);
+			str = internet_address_list_to_string (addrlist, format, FALSE);
 			if (strcmp (addrspec[i].display, str) != 0)
 				throw (exception_new ("display strings do not match.\ninput: %s\nexpected: %s\nactual: %s", addrspec[i].input, addrspec[i].display, str));
 			g_free (str);
 			
-			str = internet_address_list_to_string (addrlist, TRUE);
+			str = internet_address_list_to_string (addrlist, format, TRUE);
 			if (strcmp (addrspec[i].encoded, str) != 0)
 				throw (exception_new ("encoded strings do not match.\nexpected: %s\nactual: %s", addrspec[i].encoded, str));
 			
@@ -286,12 +287,12 @@ test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 					throw (exception_new ("expected NULL charset but address has a charset of '%s': %s", charset, broken_addrspec[i].input));
 				}
 				
-				str = internet_address_list_to_string (addrlist, FALSE);
+				str = internet_address_list_to_string (addrlist, format, FALSE);
 				if (strcmp (broken_addrspec[i].display, str) != 0)
 					throw (exception_new ("display strings do not match.\ninput: %s\nexpected: %s\nactual: %s", broken_addrspec[i].input, broken_addrspec[i].display, str));
 				g_free (str);
 				
-				str = internet_address_list_to_string (addrlist, TRUE);
+				str = internet_address_list_to_string (addrlist, format, TRUE);
 				if (strcmp (broken_addrspec[i].encoded, str) != 0)
 					throw (exception_new ("encoded strings do not match.\nexpected: %s\nactual: %s", broken_addrspec[i].encoded, str));
 				
@@ -450,6 +451,7 @@ static struct {
 static void
 test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	char *enc, *dec;
 	guint i;
 	
@@ -461,7 +463,7 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 			if (strcmp (rfc2047_text[i].decoded, dec) != 0)
 				throw (exception_new ("decoded text does not match: %s", dec));
 			
-			enc = g_mime_utils_header_encode_text (dec, NULL);
+			enc = g_mime_utils_header_encode_text (format, dec, NULL);
 			if (strcmp (rfc2047_text[i].encoded, enc) != 0)
 				throw (exception_new ("encoded text does not match: actual=\"%s\", expected=\"%s\"", enc, rfc2047_text[i].encoded));
 
@@ -486,7 +488,7 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 			if (strcmp (broken_rfc2047_text[i].decoded, dec) != 0)
 				throw (exception_new ("decoded text does not match: %s", dec));
 			
-			enc = g_mime_utils_header_encode_text (dec, NULL);
+			enc = g_mime_utils_header_encode_text (format, dec, NULL);
 			if (strcmp (broken_rfc2047_text[i].encoded, enc) != 0)
 				throw (exception_new ("encoded text does not match: %s", enc));
 			
@@ -508,7 +510,7 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 			if (strcmp (rfc2047_phrase[i].decoded, dec) != 0)
 				throw (exception_new ("decoded phrase does not match"));
 			
-			enc = g_mime_utils_header_encode_phrase (dec, NULL);
+			enc = g_mime_utils_header_encode_phrase (format, dec, NULL);
 			if (strcmp (rfc2047_phrase[i].encoded, enc) != 0)
 				throw (exception_new ("encoded phrase does not match"));
 			
@@ -534,6 +536,7 @@ static struct {
 static void
 test_header_folding (GMimeParserOptions *options)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	char *folded;
 	guint i;
 	
@@ -541,7 +544,7 @@ test_header_folding (GMimeParserOptions *options)
 	        folded = NULL;
 		testsuite_check ("header_folding[%u]", i);
 		try {
-			folded = g_mime_utils_unstructured_header_fold (options, header_folding[i].input);
+			folded = g_mime_utils_unstructured_header_fold (options, format, header_folding[i].input);
 			if (strcmp (header_folding[i].folded, folded) != 0)
 				throw (exception_new ("folded text does not match: -->%s<-- vs -->%s<--", header_folding[i].folded, folded));
 			
@@ -584,6 +587,7 @@ static struct {
 static void
 test_rfc2184 (GMimeParserOptions *options)
 {
+	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeParamEncodingMethod method;
 	GMimeParamList *params;
 	GMimeParam *param;
@@ -603,7 +607,7 @@ test_rfc2184 (GMimeParserOptions *options)
 		str = g_string_new ("Content-Disposition: attachment");
 		n = str->len;
 		
-		g_mime_param_list_encode (params, TRUE, str);
+		g_mime_param_list_encode (params, format, TRUE, str);
 		g_object_unref (params);
 		params = NULL;
 		

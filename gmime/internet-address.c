@@ -252,6 +252,7 @@ internet_address_get_charset (InternetAddress *ia)
 /**
  * internet_address_to_string:
  * @ia: Internet Address object
+ * @options: a #GMimeFormatOptions
  * @encode: %TRUE if the address should be rfc2047 encoded
  *
  * Allocates a string containing the contents of the #InternetAddress
@@ -261,7 +262,7 @@ internet_address_get_charset (InternetAddress *ia)
  * rfc822 format.
  **/
 char *
-internet_address_to_string (InternetAddress *ia, gboolean encode)
+internet_address_to_string (InternetAddress *ia, GMimeFormatOptions *options, gboolean encode)
 {
 	guint32 flags = encode ? INTERNET_ADDRESS_ENCODE : 0;
 	size_t linelen = 0;
@@ -269,7 +270,7 @@ internet_address_to_string (InternetAddress *ia, gboolean encode)
 	char *str;
 	
 	string = g_string_new ("");
-	INTERNET_ADDRESS_GET_CLASS (ia)->to_string (ia, flags, &linelen, string);
+	INTERNET_ADDRESS_GET_CLASS (ia)->to_string (ia, options, flags, &linelen, string);
 	str = string->str;
 	
 	g_string_free (string, FALSE);
@@ -282,7 +283,8 @@ static void internet_address_mailbox_class_init (InternetAddressMailboxClass *kl
 static void internet_address_mailbox_init (InternetAddressMailbox *mailbox, InternetAddressMailboxClass *klass);
 static void internet_address_mailbox_finalize (GObject *object);
 
-static void mailbox_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *out);
+static void mailbox_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags,
+			       size_t *linelen, GString *out);
 
 
 static GObjectClass *mailbox_parent_class = NULL;
@@ -414,7 +416,8 @@ static void internet_address_group_class_init (InternetAddressGroupClass *klass)
 static void internet_address_group_init (InternetAddressGroup *group, InternetAddressGroupClass *klass);
 static void internet_address_group_finalize (GObject *object);
 
-static void group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *out);
+static void group_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags,
+			     size_t *linelen, GString *out);
 
 
 static GObjectClass *group_parent_class = NULL;
@@ -1034,14 +1037,14 @@ internet_address_list_set_address (InternetAddressList *list, int index, Interne
 
 
 static char *
-encoded_name (const char *raw, gboolean rfc2047_encode, const char *charset)
+encoded_name (GMimeFormatOptions *options, const char *raw, gboolean rfc2047_encode, const char *charset)
 {
 	char *name;
 	
 	g_return_val_if_fail (raw != NULL, NULL);
 	
 	if (rfc2047_encode) {
-		name = g_mime_utils_header_encode_phrase (raw, charset);
+		name = g_mime_utils_header_encode_phrase (options, raw, charset);
 	} else {
 		name = g_mime_utils_quote_string (raw);
 	}
@@ -1112,7 +1115,7 @@ append_folded_name (GString *string, size_t *linelen, const char *name)
 }
 
 static void
-mailbox_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *string)
+mailbox_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags, size_t *linelen, GString *string)
 {
 	InternetAddressMailbox *mailbox = (InternetAddressMailbox *) ia;
 	gboolean encode = flags & INTERNET_ADDRESS_ENCODE;
@@ -1121,7 +1124,7 @@ mailbox_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString 
 	size_t len;
 	
 	if (ia->name && *ia->name) {
-		name = encoded_name (ia->name, encode, ia->charset);
+		name = encoded_name (options, ia->name, encode, ia->charset);
 		len = strlen (name);
 		
 		if (fold && (*linelen + len) > GMIME_FOLD_LEN) {
@@ -1174,7 +1177,8 @@ mailbox_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString 
 }
 
 static void
-_internet_address_list_to_string (const InternetAddressList *list, guint32 flags, size_t *linelen, GString *string)
+_internet_address_list_to_string (const InternetAddressList *list, GMimeFormatOptions *options, guint32 flags,
+				  size_t *linelen, GString *string)
 {
 	InternetAddress *ia;
 	guint i;
@@ -1182,7 +1186,7 @@ _internet_address_list_to_string (const InternetAddressList *list, guint32 flags
 	for (i = 0; i < list->array->len; i++) {
 		ia = (InternetAddress *) list->array->pdata[i];
 		
-		INTERNET_ADDRESS_GET_CLASS (ia)->to_string (ia, flags, linelen, string);
+		INTERNET_ADDRESS_GET_CLASS (ia)->to_string (ia, options, flags, linelen, string);
 		
 		if (i + 1 < list->array->len) {
 			g_string_append (string, ", ");
@@ -1192,7 +1196,7 @@ _internet_address_list_to_string (const InternetAddressList *list, guint32 flags
 }
 
 static void
-group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *string)
+group_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags, size_t *linelen, GString *string)
 {
 	InternetAddressGroup *group = (InternetAddressGroup *) ia;
 	gboolean encode = flags & INTERNET_ADDRESS_ENCODE;
@@ -1201,7 +1205,7 @@ group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *s
 	size_t len = 0;
 	
 	if (ia->name != NULL) {
-		name = encoded_name (ia->name, encode, ia->charset);
+		name = encoded_name (options, ia->name, encode, ia->charset);
 		len = strlen (name);
 		
 		if (fold && *linelen > 1 && (*linelen + len + 1) > GMIME_FOLD_LEN) {
@@ -1216,7 +1220,7 @@ group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *s
 	*linelen += len + 2;
 	g_free (name);
 	
-	_internet_address_list_to_string (group->members, flags, linelen, string);
+	_internet_address_list_to_string (group->members, options, flags, linelen, string);
 	g_string_append_c (string, ';');
 	*linelen += 1;
 }
@@ -1225,6 +1229,7 @@ group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *s
 /**
  * internet_address_list_to_string:
  * @list: list of internet addresses
+ * @options: a #GMimeFormatOptions
  * @encode: %TRUE if the address should be rfc2047 encoded
  *
  * Allocates a string buffer containing the rfc822 formatted addresses
@@ -1234,7 +1239,7 @@ group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *s
  * or %NULL if no addresses are contained in the list.
  **/
 char *
-internet_address_list_to_string (InternetAddressList *list, gboolean encode)
+internet_address_list_to_string (InternetAddressList *list, GMimeFormatOptions *options, gboolean encode)
 {
 	guint32 flags = encode ? INTERNET_ADDRESS_ENCODE : 0;
 	size_t linelen = 0;
@@ -1247,7 +1252,7 @@ internet_address_list_to_string (InternetAddressList *list, gboolean encode)
 		return NULL;
 	
 	string = g_string_new ("");
-	_internet_address_list_to_string (list, flags, &linelen, string);
+	_internet_address_list_to_string (list, options, flags, &linelen, string);
 	str = string->str;
 	
 	g_string_free (string, FALSE);
@@ -1265,7 +1270,7 @@ internet_address_list_to_string (InternetAddressList *list, gboolean encode)
  * @str, folding appropriately.
  **/
 void
-internet_address_list_writer (InternetAddressList *list, GString *str)
+internet_address_list_writer (InternetAddressList *list, GMimeFormatOptions *options, GString *str)
 {
 	guint32 flags = INTERNET_ADDRESS_ENCODE | INTERNET_ADDRESS_FOLD;
 	size_t linelen = str->len;
@@ -1273,7 +1278,7 @@ internet_address_list_writer (InternetAddressList *list, GString *str)
 	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
 	g_return_if_fail (str != NULL);
 	
-	_internet_address_list_to_string (list, flags, &linelen, str);
+	_internet_address_list_to_string (list, options, flags, &linelen, str);
 }
 
 

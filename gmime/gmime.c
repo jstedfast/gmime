@@ -116,6 +116,7 @@ g_mime_init (void)
 	g_type_init ();
 #endif
 	
+	g_mime_format_options_init ();
 	g_mime_parser_options_init ();
 	g_mime_charset_map_init ();
 	g_mime_iconv_utils_init ();
@@ -225,6 +226,7 @@ g_mime_shutdown (void)
 	
 	g_mime_object_type_registry_shutdown ();
 	g_mime_crypto_context_shutdown ();
+	g_mime_format_options_shutdown ();
 	g_mime_parser_options_shutdown ();
 	g_mime_charset_map_shutdown ();
 	g_mime_iconv_utils_shutdown ();

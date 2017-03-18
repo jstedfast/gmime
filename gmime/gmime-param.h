@@ -24,6 +24,7 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 
 G_BEGIN_DECLS
@@ -47,25 +48,6 @@ typedef struct _GMimeParamClass GMimeParamClass;
 
 typedef struct _GMimeParamList GMimeParamList;
 typedef struct _GMimeParamListClass GMimeParamListClass;
-
-
-/**
- * GMimeParamEncodingMethod:
- * @GMIME_PARAM_ENCODING_METHOD_DEFAULT: Use the default encoding method set on the #GMimeFormatOptions.
- * @GMIME_PARAM_ENCODING_METHOD_RFC2231: Use the encoding method described in rfc2231.
- * @GMIME_PARAM_ENCODING_METHOD_RFC2047: Use the encoding method described in rfc2047.
- *
- * The MIME specifications specify that the proper method for encoding Content-Type and
- * Content-Disposition parameter values is the method described in
- * <a href="https://tools.ietf.org/html/rfc2231">rfc2231</a>. However, it is common for
- * some older email clients to improperly encode using the method described in
- * <a href="https://tools.ietf.org/html/rfc2047">rfc2047</a> instead.
- **/
-typedef enum {
-	GMIME_PARAM_ENCODING_METHOD_DEFAULT = 0,
-	GMIME_PARAM_ENCODING_METHOD_RFC2231 = 1,
-	GMIME_PARAM_ENCODING_METHOD_RFC2047 = 2
-} GMimeParamEncodingMethod;
 
 
 /**
@@ -146,7 +128,7 @@ GMimeParam *g_mime_param_list_get_parameter_at (GMimeParamList *list, int index)
 gboolean g_mime_param_list_remove (GMimeParamList *list, const char *name);
 gboolean g_mime_param_list_remove_at (GMimeParamList *list, int index);
 
-void g_mime_param_list_encode (GMimeParamList *list, gboolean fold, GString *str);
+void g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gboolean fold, GString *str);
 
 G_END_DECLS
 

@@ -23,6 +23,7 @@
 #define __GMIME_HEADER_H__
 
 #include <glib.h>
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-stream.h>
 
@@ -52,6 +53,7 @@ typedef struct _GMimeHeaderListClass GMimeHeaderListClass;
 /**
  * GMimeHeaderWriter:
  * @options: The #GMimeParserOptions
+ * @format: The #GMimeFormatOptions
  * @stream: The output stream.
  * @name: The field name.
  * @value: The field value.
@@ -61,7 +63,8 @@ typedef struct _GMimeHeaderListClass GMimeHeaderListClass;
  *
  * Returns: the number of bytes written or %-1 on error.
  **/
-typedef ssize_t (* GMimeHeaderWriter) (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+typedef ssize_t (* GMimeHeaderWriter) (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
+				       const char *name, const char *value);
 
 
 /**
@@ -98,7 +101,8 @@ void g_mime_header_set_value (GMimeHeader *header, const char *value);
 
 gint64 g_mime_header_get_offset (GMimeHeader *header);
 
-ssize_t g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header, GMimeStream *stream);
+ssize_t g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header,
+				       GMimeFormatOptions *options, GMimeStream *stream);
 
 
 /**
@@ -139,8 +143,8 @@ gboolean g_mime_header_list_remove (GMimeHeaderList *headers, const char *name);
 void g_mime_header_list_remove_at (GMimeHeaderList *headers, int index);
 
 void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer);
-ssize_t g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeStream *stream);
-char *g_mime_header_list_to_string (GMimeHeaderList *headers);
+ssize_t g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions *options, GMimeStream *stream);
+char *g_mime_header_list_to_string (GMimeHeaderList *headers, GMimeFormatOptions *options);
 
 G_END_DECLS
 

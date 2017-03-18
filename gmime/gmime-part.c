@@ -66,7 +66,8 @@ static void mime_part_header_changed  (GMimeObject *object, GMimeHeader *header)
 static void mime_part_header_removed  (GMimeObject *object, GMimeHeader *header);
 static void mime_part_headers_cleared (GMimeObject *object);
 
-static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
+static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options,
+					  gboolean content_only, GMimeStream *stream);
 static void mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /* GMimePart class methods */
@@ -312,7 +313,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 	 */
 	
 	if (part->encoding != g_mime_data_wrapper_get_encoding (part->content)) {
-		GMimeStream *filtered_stream;
+		GMimeStream *filtered;
 		const char *filename;
 		GMimeFilter *filter;
 		
@@ -329,20 +330,20 @@ write_content (GMimePart *part, GMimeStream *stream)
 			/* fall thru... */
 		case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 		case GMIME_CONTENT_ENCODING_BASE64:
-			filtered_stream = g_mime_stream_filter_new (stream);
+			filtered = g_mime_stream_filter_new (stream);
 			filter = g_mime_filter_basic_new (part->encoding, TRUE);
-			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 			g_object_unref (filter);
 			break;
 		default:
-			filtered_stream = stream;
 			g_object_ref (stream);
+			filtered = stream;
 			break;
 		}
 		
-		nwritten = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
-		g_mime_stream_flush (filtered_stream);
-		g_object_unref (filtered_stream);
+		nwritten = g_mime_data_wrapper_write_to_stream (part->content, filtered);
+		g_mime_stream_flush (filtered);
+		g_object_unref (filtered);
 		
 		if (nwritten == -1)
 			return -1;
@@ -358,12 +359,12 @@ write_content (GMimePart *part, GMimeStream *stream)
 			total += nwritten;
 		}
 	} else {
-		GMimeStream *content_stream;
+		GMimeStream *content;
 		
-		content_stream = g_mime_data_wrapper_get_stream (part->content);
-		g_mime_stream_reset (content_stream);
-		nwritten = g_mime_stream_write_to_stream (content_stream, stream);
-		g_mime_stream_reset (content_stream);
+		content = g_mime_data_wrapper_get_stream (part->content);
+		g_mime_stream_reset (content);
+		nwritten = g_mime_stream_write_to_stream (content, stream);
+		g_mime_stream_reset (content);
 		
 		if (nwritten == -1)
 			return -1;
@@ -375,14 +376,14 @@ write_content (GMimePart *part, GMimeStream *stream)
 }
 
 static ssize_t
-mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
+mime_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimePart *mime_part = (GMimePart *) object;
 	ssize_t nwritten, total = 0;
 	
 	if (!content_only) {
 		/* write the content headers */
-		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
+		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;

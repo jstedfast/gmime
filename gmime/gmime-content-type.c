@@ -244,13 +244,14 @@ g_mime_content_type_get_mime_type (GMimeContentType *content_type)
 /**
  * g_mime_content_type_encode:
  * @content_type: a #GMimeContentType
+ * @options: a #GMimeFormatOptions
  *
  * Encodes the Content-Disposition header.
  *
  * Returns: a new string containing the encoded header value.
  **/
 char *
-g_mime_content_type_encode (GMimeContentType *content_type)
+g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *options)
 {
 	char *raw_value;
 	GString *str;
@@ -267,7 +268,7 @@ g_mime_content_type_encode (GMimeContentType *content_type)
 	g_string_append_c (str, '/');
 	g_string_append (str, content_type->subtype ? content_type->subtype : "plain");
 	
-	g_mime_param_list_encode (content_type->params, TRUE, str);
+	g_mime_param_list_encode (content_type->params, options, TRUE, str);
 	len = str->len - n;
 	
 	raw_value = g_string_free (str, FALSE);

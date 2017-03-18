@@ -22,6 +22,7 @@
 #ifndef __GMIME_INTERNAL_H__
 #define __GMIME_INTERNAL_H__
 
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-events.h>
@@ -40,6 +41,11 @@ typedef struct {
 	GMimeHeaderListChangedAction action;
 	GMimeHeader *header;
 } GMimeHeaderListChangedEventArgs;
+
+/* GMimeParserOptions */
+G_GNUC_INTERNAL void g_mime_format_options_init (void);
+G_GNUC_INTERNAL void g_mime_format_options_shutdown (void);
+G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOptions *options);
 
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
@@ -67,8 +73,10 @@ G_GNUC_INTERNAL void _g_mime_object_append_header (GMimeObject *object, const ch
 G_GNUC_INTERNAL void _g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 
 /* utils */
-G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
-G_GNUC_INTERNAL char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
+G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
+							      const char *field, const char *value);
+G_GNUC_INTERNAL char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
+							    const char *field, const char *value);
 G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset);
 G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *text, const char **charset);
 

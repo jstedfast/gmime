@@ -306,13 +306,14 @@ g_mime_content_disposition_is_attachment (GMimeContentDisposition *disposition)
 /**
  * g_mime_content_disposition_encode:
  * @disposition: a #GMimeContentDisposition object
+ * @options: a #GMimeFormatOptions
  *
  * Encodes the Content-Disposition header.
  *
  * Returns: a new string containing the encoded header value.
  **/
 char *
-g_mime_content_disposition_encode (GMimeContentDisposition *disposition)
+g_mime_content_disposition_encode (GMimeContentDisposition *disposition, GMimeFormatOptions *options)
 {
 	char *raw_value;
 	GString *str;
@@ -326,7 +327,7 @@ g_mime_content_disposition_encode (GMimeContentDisposition *disposition)
 	
 	g_string_append_c (str, ' ');
 	g_string_append (str, disposition->disposition);
-	g_mime_param_list_encode (disposition->params, TRUE, str);
+	g_mime_param_list_encode (disposition->params, options, TRUE, str);
 	len = str->len - n;
 	
 	raw_value = g_string_free (str, FALSE);

@@ -2614,7 +2614,7 @@ g_string_append_len_quoted (GString *out, const char *in, size_t len)
 }
 
 static char *
-rfc2047_encode (const char *in, gushort safemask, const char *user_charset)
+rfc2047_encode (GMimeFormatOptions *options, const char *in, gushort safemask, const char *user_charset)
 {
 	rfc822_word *words, *word, *prev = NULL;
 	const char *charset, *start;
@@ -2707,6 +2707,7 @@ rfc2047_encode (const char *in, gushort safemask, const char *user_charset)
 
 /**
  * g_mime_utils_header_encode_phrase:
+ * @options: a #GMimeFormatOptions
  * @phrase: phrase to encode
  * @charset: the charset to use or %NULL to use the default
  *
@@ -2716,17 +2717,18 @@ rfc2047_encode (const char *in, gushort safemask, const char *user_charset)
  * addresses.
  **/
 char *
-g_mime_utils_header_encode_phrase (const char *phrase, const char *charset)
+g_mime_utils_header_encode_phrase (GMimeFormatOptions *options, const char *phrase, const char *charset)
 {
 	if (phrase == NULL)
 		return NULL;
 	
-	return rfc2047_encode (phrase, IS_PSAFE, charset);
+	return rfc2047_encode (options, phrase, IS_PSAFE, charset);
 }
 
 
 /**
  * g_mime_utils_header_encode_text:
+ * @options: a #GMimeFormatOptions
  * @text: text to encode
  * @charset: the charset to use or %NULL to use the default
  *
@@ -2736,17 +2738,18 @@ g_mime_utils_header_encode_phrase (const char *phrase, const char *charset)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_header_encode_text (const char *text, const char *charset)
+g_mime_utils_header_encode_text (GMimeFormatOptions *options, const char *text, const char *charset)
 {
 	if (text == NULL)
 		return NULL;
 	
-	return rfc2047_encode (text, IS_ESAFE, charset);
+	return rfc2047_encode (options, text, IS_ESAFE, charset);
 }
 
 
 static char *
-header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_token *tokens, gboolean structured)
+header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *value,
+		    size_t vlen, rfc2047_token *tokens, gboolean structured)
 {
 	rfc2047_token *token, *next;
 	size_t lwsp, tab, len, n;
@@ -2873,15 +2876,16 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 
 /**
  * g_mime_utils_structured_header_fold:
- * @header: header field and value string
  * @options: a #GMimeParserOptions
+ * @format: a #GMimeFormatOptions
+ * @header: header field and value string
  *
  * Folds a structured header according to the rules in rfc822.
  *
  * Returns: an allocated string containing the folded header.
  **/
 char *
-g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *header)
+g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *header)
 {
 	rfc2047_token *tokens;
 	const char *value;
@@ -2906,7 +2910,7 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *he
 		value++;
 	
 	tokens = tokenize_rfc2047_phrase (options, value, &len);
-	folded = header_fold_tokens (field, value, len, tokens, TRUE);
+	folded = header_fold_tokens (format, field, value, len, tokens, TRUE);
 	g_free (field);
 	
 	return folded;
@@ -2916,6 +2920,7 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *he
 /**
  * _g_mime_utils_structured_header_fold:
  * @options: a #GMimeParserOptions
+ * @format: a #GMimeFormatOptions
  * @field: header field
  * @value: header value
  *
@@ -2924,7 +2929,8 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *he
  * Returns: an allocated string containing the folded header.
  **/
 char *
-_g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *field, const char *value)
+_g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
+				      const char *field, const char *value)
 {
 	rfc2047_token *tokens;
 	size_t len;
@@ -2937,13 +2943,14 @@ _g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *f
 	
 	tokens = tokenize_rfc2047_phrase (options, value, &len);
 	
-	return header_fold_tokens (field, value, len, tokens, TRUE);
+	return header_fold_tokens (format, field, value, len, tokens, TRUE);
 }
 
 
 /**
  * g_mime_utils_unstructured_header_fold:
  * @options: a #GMimeParserOptions
+ * @format: a #GMimeFormatOptions
  * @header: header field and value string
  *
  * Folds an unstructured header according to the rules in rfc822.
@@ -2951,7 +2958,7 @@ _g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *f
  * Returns: an allocated string containing the folded header.
  **/
 char *
-g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *header)
+g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *header)
 {
 	rfc2047_token *tokens;
 	const char *value;
@@ -2976,7 +2983,7 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *
 		value++;
 	
 	tokens = tokenize_rfc2047_text (options, value, &len);
-	folded = header_fold_tokens (field, value, len, tokens, FALSE);
+	folded = header_fold_tokens (format, field, value, len, tokens, FALSE);
 	g_free (field);
 	
 	return folded;
@@ -2986,6 +2993,7 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *
 /**
  * _g_mime_utils_unstructured_header_fold:
  * @options: a #GMimeParserOptions
+ * @format: a #GMimeFormatOptions
  * @field: header field
  * @value: header value
  *
@@ -2994,7 +3002,7 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *
  * Returns: an allocated string containing the folded header.
  **/
 char *
-_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *field, const char *value)
+_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *field, const char *value)
 {
 	rfc2047_token *tokens;
 	size_t len;
@@ -3007,33 +3015,34 @@ _g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char 
 	
 	tokens = tokenize_rfc2047_text (options, value, &len);
 	
-	return header_fold_tokens (field, value, len, tokens, FALSE);
+	return header_fold_tokens (format, field, value, len, tokens, FALSE);
 }
 
 
 /**
  * g_mime_utils_header_printf:
  * @options: a #GMimeParserOptions
- * @format: string format
+ * @format: a #GMimeFormatOptions
+ * @text: text with printf-style formatters
  * @...: arguments
  *
  * Allocates a buffer containing a formatted header specified by the
  * @Varargs.
  *
  * Returns: an allocated string containing the folded header specified
- * by @format and the following arguments.
+ * by @text and the following arguments.
  **/
 char *
-g_mime_utils_header_printf (GMimeParserOptions *options, const char *format, ...)
+g_mime_utils_header_printf (GMimeParserOptions *options, GMimeFormatOptions *format, const char *text, ...)
 {
 	char *buf, *ret;
 	va_list ap;
 	
-	va_start (ap, format);
-	buf = g_strdup_vprintf (format, ap);
+	va_start (ap, text);
+	buf = g_strdup_vprintf (text, ap);
 	va_end (ap);
 	
-	ret = g_mime_utils_unstructured_header_fold (options, buf);
+	ret = g_mime_utils_unstructured_header_fold (options, format, buf);
 	g_free (buf);
 	
 	return ret;

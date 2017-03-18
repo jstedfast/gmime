@@ -25,6 +25,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 
 G_BEGIN_DECLS
@@ -90,7 +91,8 @@ struct _InternetAddressClass {
 	GObjectClass parent_class;
 	
 	/* public virtual methods */
-	void (* to_string) (InternetAddress *ia, guint32 flags, size_t *linelen, GString *out);
+	void (* to_string) (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags,
+			    size_t *linelen, GString *out);
 };
 
 
@@ -102,7 +104,7 @@ const char *internet_address_get_name (InternetAddress *ia);
 void internet_address_set_charset (InternetAddress *ia, const char *charset);
 const char *internet_address_get_charset (InternetAddress *ia);
 
-char *internet_address_to_string (InternetAddress *ia, gboolean encode);
+char *internet_address_to_string (InternetAddress *ia, GMimeFormatOptions *options, gboolean encode);
 
 
 /**
@@ -204,11 +206,11 @@ int internet_address_list_index_of (InternetAddressList *list, InternetAddress *
 InternetAddress *internet_address_list_get_address (InternetAddressList *list, int index);
 void internet_address_list_set_address (InternetAddressList *list, int index, InternetAddress *ia);
 
-char *internet_address_list_to_string (InternetAddressList *list, gboolean encode);
+char *internet_address_list_to_string (InternetAddressList *list, GMimeFormatOptions *options, gboolean encode);
 
 InternetAddressList *internet_address_list_parse (GMimeParserOptions *options, const char *str);
 
-void internet_address_list_writer (InternetAddressList *list, GString *str);
+void internet_address_list_writer (InternetAddressList *list, GMimeFormatOptions *options, GString *str);
 
 G_END_DECLS
 

@@ -49,7 +49,8 @@ static void g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClas
 static void g_mime_multipart_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
+static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options,
+					  gboolean content_only, GMimeStream *stream);
 static void multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /* GMimeMultipart class methods */
@@ -147,7 +148,7 @@ g_mime_multipart_finalize (GObject *object)
 }
 
 static ssize_t
-multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
+multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	ssize_t nwritten, total = 0;
@@ -159,7 +160,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean co
 	
 	if (!content_only) {
 		/* write the content headers */
-		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
+		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -194,7 +195,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean co
 		total += nwritten;
 		
 		/* write this part out */
-		if ((nwritten = g_mime_object_write_to_stream (part, stream)) == -1)
+		if ((nwritten = g_mime_object_write_to_stream (part, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
