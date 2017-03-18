@@ -254,6 +254,8 @@ GMimeStreamFilter
 g_mime_stream_filter_new
 g_mime_stream_filter_add
 g_mime_stream_filter_remove
+g_mime_stream_filter_get_owner
+g_mime_stream_filter_set_owner
 
 <SUBSECTION Private>
 g_mime_stream_filter_get_type
