@@ -38,12 +38,6 @@
 #include "gmime-common.h"
 #include "gmime-part.h"
 
-#if GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 14)
-#define HAVE_GLIB_REGEX
-#elif defined (HAVE_REGEX_H)
-#include <regex.h>
-#endif
-
 #ifdef ENABLE_WARNINGS
 #define w(x) x
 #else
@@ -171,12 +165,7 @@ struct _GMimeParserPrivate {
 	
 	GMimeParserHeaderRegexFunc header_cb;
 	gpointer user_data;
-	
-#if defined (HAVE_GLIB_REGEX)
 	GRegex *regex;
-#elif defined (HAVE_REGEX_H)
-	regex_t regex;
-#endif
 	
 	/* header buffer */
 	char *headerbuf;
@@ -348,14 +337,10 @@ g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 {
 	parser->priv = g_new (struct _GMimeParserPrivate, 1);
 	parser->priv->respect_content_length = FALSE;
+	parser->priv->format = GMIME_FORMAT_MESSAGE;
 	parser->priv->persist_stream = TRUE;
 	parser->priv->have_regex = FALSE;
-	
-	parser->priv->format = GMIME_FORMAT_MESSAGE;
-	
-#if defined (HAVE_GLIB_REGEX)
 	parser->priv->regex = NULL;
-#endif
 	
 	parser_init (parser, NULL);
 }
@@ -367,13 +352,8 @@ g_mime_parser_finalize (GObject *object)
 	
 	parser_close (parser);
 	
-#if defined (HAVE_GLIB_REGEX)
 	if (parser->priv->regex)
 		g_regex_unref (parser->priv->regex);
-#elif defined (HAVE_REGEX_H)
-	if (parser->priv->have_regex)
-		regfree (&parser->priv->regex);
-#endif
 	
 	g_free (parser->priv);
 	
@@ -663,17 +643,10 @@ g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 	
 	priv = parser->priv;
 	
-#if defined (HAVE_GLIB_REGEX)
 	if (priv->regex) {
 		g_regex_unref (priv->regex);
 		priv->regex = NULL;
 	}
-#elif defined (HAVE_REGEX_H)
-	if (priv->have_regex) {
-		regfree (&priv->regex);
-		priv->have_regex = FALSE;
-	}
-#endif
 	
 	if (!regex || !header_cb)
 		return;
@@ -681,11 +654,7 @@ g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 	priv->header_cb = header_cb;
 	priv->user_data = user_data;
 	
-#if defined (HAVE_GLIB_REGEX)
 	priv->regex = g_regex_new (regex, G_REGEX_RAW | G_REGEX_EXTENDED | G_REGEX_CASELESS, 0, NULL);
-#elif defined (HAVE_REGEX_H)
-	priv->have_regex = !regcomp (&priv->regex, regex, REG_EXTENDED | REG_ICASE | REG_NOSUB);
-#endif
 }
 
 
@@ -987,16 +956,9 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 	priv->rawleft += priv->rawptr - priv->rawbuf;
 	priv->rawptr = priv->rawbuf;
 	
-#if defined (HAVE_GLIB_REGEX)
 	if (priv->regex && g_regex_match (priv->regex, header->name, 0, NULL))
 		priv->header_cb (parser, header->name, header->value,
 				 header->offset, priv->user_data);
-#elif defined (HAVE_REGEX_H)
-	if (priv->have_regex &&
-	    !regexec (&priv->header_regex, header->name, 0, NULL, 0))
-		priv->header_cb (parser, header->name, header->value,
-				 header->offset, priv->user_data);
-#endif
 }
 
 enum {
