@@ -88,6 +88,15 @@ static const GMimeOpenPGPMarker openpgp_markers[] = {
 	{ "-----END PGP SIGNATURE-----",        27, OPENPGP_BEGIN_PGP_SIGNATURE,      OPENPGP_END_PGP_SIGNATURE }
 };
 
+typedef enum {
+	BOUNDARY_NONE,
+	BOUNDARY_EOS,
+	BOUNDARY_IMMEDIATE,
+	BOUNDARY_IMMEDIATE_END,
+	BOUNDARY_PARENT,
+	BOUNDARY_PARENT_END
+} BoundaryType;
+
 typedef struct _boundary_stack {
 	struct _boundary_stack *parent;
 	char *boundary;
@@ -116,9 +125,9 @@ static void parser_init (GMimeParser *parser, GMimeStream *stream);
 static void parser_close (GMimeParser *parser);
 
 static GMimeObject *parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
-						gboolean toplevel, int *found);
+						gboolean toplevel, BoundaryType *found);
 static GMimeObject *parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
-						gboolean toplevel, int *found);
+						gboolean toplevel, BoundaryType *found);
 
 static GObjectClass *parent_class = NULL;
 
@@ -1366,14 +1375,6 @@ parser_step (GMimeParser *parser)
 	return priv->state;
 }
 
-
-enum {
-	FOUND_NOTHING,
-	FOUND_EOS,
-	FOUND_BOUNDARY,
-	FOUND_END_BOUNDARY
-};
-
 #define content_save(content, start, len) G_STMT_START {                     \
 	if (content)                                                         \
 		g_byte_array_append (content, (unsigned char *) start, len); \
@@ -1415,7 +1416,7 @@ is_boundary (struct _GMimeParserPrivate *priv, const char *text, size_t len, con
 	return TRUE;
 }
 
-static int
+static BoundaryType
 check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 {
 	gint64 offset = parser_offset (priv, start);
@@ -1434,7 +1435,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		len--;
 	
 	if (!possible_boundary (marker, mlen, start, len))
-		return FOUND_NOTHING;
+		return BOUNDARY_NONE;
 	
 	d(printf ("checking boundary '%.*s'\n", len, start));
 	
@@ -1444,12 +1445,12 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		    is_boundary (priv, start, len, s->boundary, s->boundarylenfinal)) {
 			d(printf ("found %s\n", s->content_end != -1 && offset >= s->content_end ?
 				  "end of content" : "end boundary"));
-			return FOUND_END_BOUNDARY;
+			return s == priv->bounds ? BOUNDARY_IMMEDIATE_END : BOUNDARY_PARENT_END;
 		}
 		
 		if (is_boundary (priv, start, len, s->boundary, s->boundarylen)) {
 			d(printf ("found boundary\n"));
-			return FOUND_BOUNDARY;
+			return s == priv->bounds ? BOUNDARY_IMMEDIATE : BOUNDARY_PARENT;
 		}
 		
 		s = s->parent;
@@ -1472,7 +1473,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		}
 	}
 	
-	return FOUND_NOTHING;
+	return BOUNDARY_NONE;
 }
 
 static gboolean
@@ -1505,16 +1506,16 @@ found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
 /* we add 2 for \r\n */
 #define MAX_BOUNDARY_LEN(bounds) (bounds ? bounds->boundarylenmax + 2 : 0)
 
-static int
+static BoundaryType
 parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
+	BoundaryType found = BOUNDARY_NONE;
 	char *aligned, *start, *inend;
 	register char *inptr;
 	register int *dword;
 	size_t nleft, len;
 	size_t atleast;
-	int found = 0;
 	int mask;
 	char c;
 	
@@ -1535,7 +1536,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 		nleft = priv->inend - inptr;
 		if (parser_fill (parser, atleast) <= 0) {
 			start = priv->inptr;
-			found = FOUND_EOS;
+			found = BOUNDARY_EOS;
 			break;
 		}
 		
@@ -1546,7 +1547,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 		
 		len = (size_t) (inend - inptr);
 		if (priv->midline && len == nleft)
-			found = FOUND_EOS;
+			found = BOUNDARY_EOS;
 		
 		priv->midline = FALSE;
 		
@@ -1611,7 +1612,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 	/* don't chew up the boundary */
 	priv->inptr = start;
 	
-	if (found != FOUND_EOS) {
+	if (found != BOUNDARY_EOS) {
 		if (inptr[-1] == '\r')
 			*crlf = 2;
 		else
@@ -1624,7 +1625,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 }
 
 static void
-parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *found)
+parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, BoundaryType *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeContentEncoding encoding;
@@ -1642,7 +1643,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 		content = g_byte_array_new ();
 	
 	*found = parser_scan_content (parser, content, &crlf);
-	if (*found != FOUND_EOS) {
+	if (*found != BOUNDARY_EOS) {
 		/* last '\n' belongs to the boundary */
 		if (priv->persist_stream && priv->seekable)
 			end = parser_offset (priv, NULL) - crlf;
@@ -1673,7 +1674,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 }
 
 static void
-parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMimeMessagePart *mpart, int *found)
+parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMimeMessagePart *mpart, BoundaryType *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
@@ -1694,7 +1695,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 		atleast = MAX (SCAN_HEAD, MAX_BOUNDARY_LEN (priv->bounds));
 		
 		if (parser_fill (parser, atleast) <= 0) {
-			*found = FOUND_EOS;
+			*found = BOUNDARY_EOS;
 			return;
 		}
 		
@@ -1708,13 +1709,18 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 		
 		*found = check_boundary (priv, priv->inptr, inptr - priv->inptr);
 		switch (*found) {
-		case FOUND_END_BOUNDARY:
+		case BOUNDARY_IMMEDIATE_END:
+		case BOUNDARY_IMMEDIATE:
+		case BOUNDARY_PARENT:
+			return;
+		case BOUNDARY_PARENT_END:
 			/* ignore "From " boundaries, boken mailers tend to include these lines... */
 			if (strncmp (priv->inptr, "From ", 5) != 0)
 				return;
 			break;
-		case FOUND_BOUNDARY:
-			return;
+		case BOUNDARY_NONE:
+		case BOUNDARY_EOS:
+			break;
 		}
 	}
 	
@@ -1723,15 +1729,19 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
 		/* Note: currently cannot happen because
 		 * parser_step_headers() never returns error */
-		*found = FOUND_EOS;
+		*found = BOUNDARY_EOS;
 		return;
 	}
 	
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
 	while (header) {
-		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0)
-			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->value, header->raw_value, header->offset);
+		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
+			_g_mime_object_append_header ((GMimeObject *) message, header->name,
+						      header->value, header->raw_value,
+						      header->offset);
+		}
+		
 		header = header->next;
 	}
 	
@@ -1749,7 +1759,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 }
 
 static GMimeObject *
-parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, int *found)
+parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeObject *object;
@@ -1769,8 +1779,11 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	
 	header = priv->headers;
 	while (header) {
-		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8))
-			_g_mime_object_append_header (object, header->name, header->value, header->raw_value, header->offset);
+		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
+			_g_mime_object_append_header (object, header->name, header->value,
+						      header->raw_value, header->offset);
+		}
+		
 		header = header->next;
 	}
 	
@@ -1779,7 +1792,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
 		/* skip empty line after headers */
 		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
-			*found = FOUND_EOS;
+			*found = BOUNDARY_EOS;
 			return object;
 		}
 	}
@@ -1817,13 +1830,13 @@ crlf2lf (char *in)
 	*outptr = '\0';
 }
 
-static int
+static BoundaryType
 parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean preface)
 {
+	BoundaryType found;
 	GByteArray *buffer;
 	char *face;
 	guint crlf;
-	int found;
 	
 	buffer = g_byte_array_new ();
 	found = parser_scan_content (parser, buffer, &crlf);
@@ -1849,30 +1862,30 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 #define parser_scan_multipart_preface(parser, multipart) parser_scan_multipart_face (parser, multipart, TRUE)
 #define parser_scan_multipart_postface(parser, multipart) parser_scan_multipart_face (parser, multipart, FALSE)
 
-static int
+static BoundaryType
 parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options, GMimeMultipart *multipart)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
 	GMimeObject *subpart;
-	int found;
+	BoundaryType found;
 	
 	do {
 		/* skip over the boundary marker */
 		if (parser_skip_line (parser) == -1) {
-			found = FOUND_EOS;
+			found = BOUNDARY_EOS;
 			break;
 		}
 		
 		/* get the headers */
 		priv->state = GMIME_PARSER_STATE_HEADERS;
 		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
-			found = FOUND_EOS;
+			found = BOUNDARY_EOS;
 			break;
 		}
 		
 		if (priv->state == GMIME_PARSER_STATE_COMPLETE && priv->headers == NULL) {
-			found = FOUND_END_BOUNDARY;
+			found = BOUNDARY_IMMEDIATE_END;
 			break;
 		}
 		
@@ -1885,13 +1898,13 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 		g_mime_multipart_add (multipart, subpart);
 		content_type_destroy (content_type);
 		g_object_unref (subpart);
-	} while (found == FOUND_BOUNDARY && found_immediate_boundary (priv, FALSE));
+	} while (found == BOUNDARY_IMMEDIATE);
 	
 	return found;
 }
 
 static GMimeObject *
-parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, int *found)
+parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeMultipart *multipart;
@@ -1906,8 +1919,11 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	
 	header = priv->headers;
 	while (header) {
-		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8))
-			_g_mime_object_append_header (object, header->name, header->value, header->raw_value, header->offset);
+		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
+			_g_mime_object_append_header (object, header->name, header->value,
+						      header->raw_value, header->offset);
+		}
+		
 		header = header->next;
 	}
 	
@@ -1918,30 +1934,35 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
 		/* skip empty line after headers */
 		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
-			*found = FOUND_EOS;
+			*found = BOUNDARY_EOS;
 			return object;
 		}
 	}
 	
-	boundary = g_mime_object_get_content_type_parameter (object, "boundary");
-	if (boundary) {
+	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary"))) {
 		parser_push_boundary (parser, boundary);
 		
 		*found = parser_scan_multipart_preface (parser, multipart);
 		
-		if (*found == FOUND_BOUNDARY)
+		if (*found == BOUNDARY_IMMEDIATE)
 			*found = parser_scan_multipart_subparts (parser, options, multipart);
 		
-		if (*found == FOUND_END_BOUNDARY && found_immediate_boundary (priv, TRUE)) {
+		if (*found == BOUNDARY_IMMEDIATE_END) {
 			/* eat end boundary */
 			multipart->write_end_boundary = TRUE;
 			parser_skip_line (parser);
 			parser_pop_boundary (parser);
 			*found = parser_scan_multipart_postface (parser, multipart);
-		} else {
-			multipart->write_end_boundary = FALSE;
-			parser_pop_boundary (parser);
+			return object;
 		}
+		
+		multipart->write_end_boundary = FALSE;
+		parser_pop_boundary (parser);
+		
+		if (*found == BOUNDARY_PARENT_END && found_immediate_boundary (priv, TRUE))
+			*found = BOUNDARY_IMMEDIATE_END;
+		else if (*found == BOUNDARY_PARENT && found_immediate_boundary (priv, FALSE))
+			*found = BOUNDARY_IMMEDIATE;
 	} else {
 		w(g_warning ("multipart without boundary encountered"));
 		/* this will scan everything into the preface */
@@ -1957,7 +1978,7 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
 	GMimeObject *object;
-	int found;
+	BoundaryType found;
 	
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
@@ -2006,9 +2027,9 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	GMimeMessage *message;
 	GMimeObject *object;
 	GMimeStream *stream;
+	BoundaryType found;
 	HeaderRaw *header;
 	char *endptr;
-	int found;
 	
 	/* scan the from-line if we are parsing an mbox */
 	while (priv->state != GMIME_PARSER_STATE_MESSAGE_HEADERS) {
