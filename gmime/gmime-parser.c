@@ -1516,6 +1516,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 	size_t atleast;
 	int found = 0;
 	int mask;
+	char c;
 	
 	d(printf ("scan-content\n"));
 	
@@ -1554,10 +1555,15 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 			start = inptr;
 			
 			/* Note: see optimization comment [1] */
-			while (inptr < aligned && *inptr != '\n')
+			c = *aligned;
+			*aligned = '\n';
+			
+			while (*inptr != '\n')
 				inptr++;
 			
-			if (inptr == aligned) {
+			*aligned = c;
+			
+			if (inptr == aligned && c != '\n') {
 				dword = (int *) inptr;
 				
 				do {
