@@ -32,6 +32,7 @@
 #include "gmime-table-private.h"
 #include "gmime-message-part.h"
 #include "gmime-parse-utils.h"
+#include "gmime-stream-null.h"
 #include "gmime-stream-mem.h"
 #include "gmime-multipart.h"
 #include "gmime-internal.h"
@@ -1337,11 +1338,6 @@ parser_step (GMimeParser *parser)
 	return priv->state;
 }
 
-#define content_save(content, start, len) G_STMT_START {                     \
-	if (content)                                                         \
-		g_byte_array_append (content, (unsigned char *) start, len); \
-} G_STMT_END
-
 #define possible_boundary(marker, mlen, start, len)				        \
                          ((marker && len >= mlen && !strncmp (start, marker, mlen)) ||  \
 			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
@@ -1469,7 +1465,7 @@ found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
 #define MAX_BOUNDARY_LEN(bounds) (bounds ? bounds->boundarylenmax + 2 : 0)
 
 static BoundaryType
-parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
+parser_scan_content (GMimeParser *parser, GMimeStream *content, gboolean *empty)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	BoundaryType found = BOUNDARY_NONE;
@@ -1478,6 +1474,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 	register int *dword;
 	size_t nleft, len;
 	size_t atleast;
+	gint64 pos;
 	int mask;
 	char c;
 	
@@ -1563,7 +1560,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 					goto boundary;
 			}
 			
-			content_save (content, start, len);
+			g_mime_stream_write (content, start, len);
 		}
 		
 		priv->inptr = inptr;
@@ -1574,13 +1571,15 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 	/* don't chew up the boundary */
 	priv->inptr = start;
 	
-	if (found != BOUNDARY_EOS) {
+	pos = g_mime_stream_tell (content);
+	*empty = pos == 0;
+	
+	if (found != BOUNDARY_EOS && pos > 0) {
+		/* the last \r\n belongs to the boundary */
 		if (inptr[-1] == '\r')
-			*crlf = 2;
+			g_mime_stream_seek (content, -2, GMIME_STREAM_SEEK_CUR);
 		else
-			*crlf = 1;
-	} else {
-		*crlf = 0;
+			g_mime_stream_seek (content, -1, GMIME_STREAM_SEEK_CUR);
 	}
 	
 	return found;
@@ -1591,43 +1590,40 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, Bounda
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeContentEncoding encoding;
-	GByteArray *content = NULL;
-	GMimeDataWrapper *wrapper;
+	GMimeDataWrapper *content;
 	GMimeStream *stream;
-	gint64 start, end;
-	guint crlf;
+	GByteArray *buffer;
+	gint64 start, len;
+	gboolean empty;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
-	if (priv->persist_stream && priv->seekable)
+	if (priv->persist_stream && priv->seekable) {
+		stream = g_mime_stream_null_new ();
 		start = parser_offset (priv, NULL);
-	else
-		content = g_byte_array_new ();
+	} else {
+		stream = g_mime_stream_mem_new ();
+	}
 	
-	*found = parser_scan_content (parser, content, &crlf);
-	if (*found != BOUNDARY_EOS) {
-		/* last '\n' belongs to the boundary */
-		if (priv->persist_stream && priv->seekable)
-			end = parser_offset (priv, NULL) - crlf;
-		else if (content->len > crlf)
-			g_byte_array_set_size (content, content->len - crlf);
-		else
-			g_byte_array_set_size (content, 0);
-	} else if (priv->persist_stream && priv->seekable) {
-		end = parser_offset (priv, NULL);
+	*found = parser_scan_content (parser, stream, &empty);
+	len = g_mime_stream_tell (stream);
+	
+	if (priv->persist_stream && priv->seekable) {
+		g_object_unref (stream);
+		
+		stream = g_mime_stream_substream (priv->stream, start, start + len);
+	} else {
+		buffer = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
+		g_byte_array_set_size (buffer, (guint) len);
+		g_mime_stream_reset (stream);
 	}
 	
 	encoding = g_mime_part_get_content_encoding (mime_part);
-	
-	if (priv->persist_stream && priv->seekable)
-		stream = g_mime_stream_substream (priv->stream, start, end);
-	else
-		stream = g_mime_stream_mem_new_with_byte_array (content);
-	
-	wrapper = g_mime_data_wrapper_new_with_stream (stream, encoding);
-	g_mime_part_set_content (mime_part, wrapper);
-	g_object_unref (wrapper);
+	content = g_mime_data_wrapper_new_with_stream (stream, encoding);
 	g_object_unref (stream);
+	
+	g_mime_part_set_content (mime_part, content);
+	g_object_unref (content);
 	
 	if (priv->openpgp == OPENPGP_END_PGP_SIGNATURE)
 		g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_SIGNED);
@@ -1795,18 +1791,21 @@ crlf2lf (char *in)
 static BoundaryType
 parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean preface)
 {
+	GMimeStream *stream;
 	BoundaryType found;
 	GByteArray *buffer;
+	gboolean empty;
+	gint64 len;
 	char *face;
-	guint crlf;
 	
-	buffer = g_byte_array_new ();
-	found = parser_scan_content (parser, buffer, &crlf);
+	stream = g_mime_stream_mem_new ();
+	found = parser_scan_content (parser, stream, &empty);
 	
-	if (buffer->len >= crlf) {
-		/* last '\n' belongs to the boundary */
-		g_byte_array_set_size (buffer, buffer->len + 1);
-		buffer->data[buffer->len - crlf - 1] = '\0';
+	if (!empty) {
+		buffer = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
+		len = g_mime_stream_tell (stream);
+		g_byte_array_set_size (buffer, len + 1);
+		buffer->data[buffer->len - 1] = '\0';
 		face = (char *) buffer->data;
 		crlf2lf (face);
 		
@@ -1816,7 +1815,7 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 			g_mime_multipart_set_postface (multipart, face);
 	}
 	
-	g_byte_array_free (buffer, TRUE);
+	g_object_unref (stream);
 	
 	return found;
 }
