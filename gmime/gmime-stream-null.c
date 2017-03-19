@@ -113,6 +113,7 @@ g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass)
 {
 	stream->written = 0;
 	stream->newlines = 0;
+	stream->count_newlines = FALSE;
 }
 
 static void
@@ -139,10 +140,12 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	register const char *inptr = buf;
 	const char *inend = buf + len;
 	
-	while (inptr < inend) {
-		if (*inptr == '\n')
-			null->newlines++;
-		inptr++;
+	if (null->count_newlines) {
+		while (inptr < inend) {
+			if (*inptr == '\n')
+				null->newlines++;
+			inptr++;
+		}
 	}
 	
 	null->written += len;
@@ -251,4 +254,39 @@ g_mime_stream_null_new (void)
 	g_mime_stream_construct (null, 0, -1);
 	
 	return null;
+}
+
+
+/**
+ * g_mime_stream_null_set_count_newlines:
+ * @stream: a #GMimeStreamNull
+ * @count: %TRUE if newlines should be counted or %FALSE otherwise
+ *
+ * Sets whether or not the stream should keep track of the number of newlines
+ * encountered.
+ **/
+void
+g_mime_stream_null_count_newlines (GMimeStreamNull *stream, gboolean count)
+{
+	g_return_if_fail (GMIME_IS_STREAM_NULL (stream));
+	
+	stream->count_newlines = count;
+}
+
+
+/**
+ * g_mime_stream_null_get_count_newlines:
+ * @stream: a #GMimeStreamNull
+ *
+ * Gets whether or not the stream should keep track of the number of newlines
+ * encountered.
+ *
+ * Returns: %TRUE if the stream should count the number of newlines or %FALSE otherwise.
+ **/
+gboolean
+g_mime_stream_null_get_count_newlines (GMimeStreamNull *stream)
+{
+	g_return_val_if_fail (GMIME_IS_STREAM_NULL (stream), FALSE);
+	
+	return stream->count_newlines;
 }
