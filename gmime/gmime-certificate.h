@@ -120,7 +120,7 @@ typedef enum {
 } GMimePubKeyAlgo;
 
 /**
- * GMimeTrustLevel:
+ * GMimeTrust:
  * @GMIME_TRUST_UNKNOWN: The certificate or key is of unknown validity.
  * @GMIME_TRUST_UNDEFINED: The validity of the certificate or key is undefined.
  * @GMIME_TRUST_NEVER: The certificate or key should never be treated as valid.

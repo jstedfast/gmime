@@ -65,7 +65,7 @@ GType g_mime_multipart_encrypted_get_type (void);
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
 
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity,
-							     gboolean sign, const char *user_id,
+							     gboolean sign, const char *userid,
 							     GMimeEncryptFlags flags, GPtrArray *recipients,
 							     GError **err);
 

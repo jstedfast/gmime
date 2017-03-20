@@ -214,6 +214,8 @@ GMIME_STREAM_MMAP_GET_CLASS
 <FILE>gmime-stream-null</FILE>
 GMimeStreamNull
 g_mime_stream_null_new
+g_mime_stream_null_get_count_newlines
+g_mime_stream_null_set_count_newlines
 
 <SUBSECTION Private>
 g_mime_stream_null_get_type
@@ -615,6 +617,8 @@ g_mime_param_get_value
 g_mime_param_set_value
 g_mime_param_get_charset
 g_mime_param_set_charset
+g_mime_param_get_lang
+g_mime_param_set_lang
 g_mime_param_get_encoding_method
 g_mime_param_set_encoding_method
 g_mime_param_list_new
@@ -707,7 +711,7 @@ g_mime_content_type_get_media_type
 g_mime_content_type_set_media_type
 g_mime_content_type_get_media_subtype
 g_mime_content_type_set_media_subtype
-g_mime_content_type_get_params
+g_mime_content_type_get_parameters
 g_mime_content_type_get_parameter
 g_mime_content_type_set_parameter
 
@@ -734,7 +738,7 @@ g_mime_content_disposition_parse
 g_mime_content_disposition_is_attachment
 g_mime_content_disposition_set_disposition
 g_mime_content_disposition_get_disposition
-g_mime_content_disposition_get_params
+g_mime_content_disposition_get_parameters
 g_mime_content_disposition_set_parameter
 g_mime_content_disposition_get_parameter
 g_mime_content_disposition_encode
@@ -1227,6 +1231,7 @@ InternetAddressListClass
 
 <SECTION>
 <FILE>gmime-format-options</FILE>
+GMimeParamEncodingMethod
 GMimeNewLineFormat
 GMimeFormatOptions
 g_mime_format_options_new
