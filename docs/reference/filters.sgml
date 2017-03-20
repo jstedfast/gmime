@@ -16,8 +16,8 @@
     filters to it.</para>
 
     <para>GMime comes equipped with some basic filters such as
-    GMimeFilterBasic, GMimeFilterCharset, GMimeFilterCRLF,
-    GMimeFilterFrom and GMimeFilterHTML.</para>
+    GMimeFilterBasic, GMimeFilterCharset, GMimeFilterDos2Unix,
+    GMimeFilterUnix2Dos, GMimeFilterFrom and GMimeFilterHTML.</para>
 
     <para>The GMimeFilterBasic filter is actually a collection of
     filters for common transfer encodings used by MIME. So far, it is
@@ -32,10 +32,8 @@
 
     <para>A common conversion needed for text is CRLF -> LF and LF ->
     CRLF which is needed for most (all?) internet protocols. Luckily,
-    GMime comes equipped with a filter to handle this for you,
-    GMimeFilterCRLF. You'll notice that GMimeFilterCRLF can also
-    handle dot-escaping, which is especially useful for SMTP
-    (rfc821).</para>
+    GMime comes equipped with a set of filters to handle this for you:
+    GMimeFilterDos2Unix and GMimeFilterUnix2Dos.</para>
 
     <para>On Unix systems, mail often resides in spools in mbox
     format. Mbox uses a line that starts with "From " to delimit
