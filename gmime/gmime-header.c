@@ -39,7 +39,7 @@
 
 /**
  * SECTION: gmime-header
- * @title: GMimeHeader
+ * @title: GMimeHeaderList
  * @short_description: Message and MIME part headers
  * @see_also: #GMimeObject
  *

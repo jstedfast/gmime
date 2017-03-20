@@ -50,7 +50,7 @@
 
 /**
  * SECTION: gmime-param
- * @title: GMimeParam
+ * @title: GMimeParamList
  * @short_description: Content-Type and Content-Disposition parameters
  * @see_also: #GMimeContentType
  *
