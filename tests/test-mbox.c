@@ -160,7 +160,10 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		g_mime_stream_write (summary, "\n", 1);
 		
 		if (mbox) {
-			g_mime_stream_printf (mbox, "%s%s\n", nmsg > 0 ? "\n" : "", marker);
+			if (nmsg > 0)
+				g_mime_stream_write (mbox, "\n", 1);
+			
+			g_mime_stream_printf (mbox, "%s\n", marker);
 			g_mime_object_write_to_stream ((GMimeObject *) message, format, mbox);
 		}
 		
@@ -344,8 +347,8 @@ int main (int argc, char **argv)
 				}
 				
 #ifdef ENABLE_MBOX_MATCH
-				tmp = g_strdup_printf ("./tmp/%s.XXXXXX", dent);
-				if ((fd = g_mkstemp (tmp)) == -1) {
+				tmp = g_strdup_printf ("./tmp/%s", dent);
+				if ((fd = open (tmp, O_CREAT | O_RDWR | O_TRUNC, 0644)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
 							      tmp, g_strerror (errno)));
 				}
@@ -481,19 +484,19 @@ int main (int argc, char **argv)
  exit:
 	
 #ifdef ENABLE_MBOX_MATCH
-	if ((dir = g_dir_open ("./tmp", 0, NULL))) {
-		p = g_stpcpy (input, "./tmp");
-		*p++ = G_DIR_SEPARATOR;
-		
-		while ((dent = g_dir_read_name (dir))) {
-			strcpy (p, dent);
-			unlink (input);
-		}
-		
-		g_dir_close (dir);
-	}
+	//if ((dir = g_dir_open ("./tmp", 0, NULL))) {
+	//	p = g_stpcpy (input, "./tmp");
+	//	*p++ = G_DIR_SEPARATOR;
+	//	
+	//	while ((dent = g_dir_read_name (dir))) {
+	//		strcpy (p, dent);
+	//		unlink (input);
+	//	}
+	//	
+	//	g_dir_close (dir);
+	//}
 	
-	rmdir ("./tmp");
+	//rmdir ("./tmp");
 #endif
 	
 	testsuite_end ();
