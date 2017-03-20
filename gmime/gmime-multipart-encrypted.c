@@ -27,11 +27,12 @@
 #include <string.h>
 
 #include "gmime-multipart-encrypted.h"
+#include "gmime-filter-dos2unix.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
 #include "gmime-filter-from.h"
-#include "gmime-filter-crlf.h"
 #include "gmime-stream-mem.h"
+#include "gmime-internal.h"
 #include "gmime-parser.h"
 #include "gmime-part.h"
 #include "gmime-error.h"
@@ -158,12 +159,11 @@ GMimeMultipartEncrypted *
 g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity, gboolean sign, const char *userid,
 				    GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
 {
-	GMimeParserOptions *options = g_mime_parser_options_get_default ();
-	GMimeFormatOptions *format = g_mime_format_options_get_default ();
-	GMimeStream *filtered, *stream, *ciphertext;
 	GMimePart *version_part, *encrypted_part;
 	GMimeMultipartEncrypted *encrypted;
+	GMimeStream *stream, *ciphertext;
 	GMimeContentType *content_type;
+	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
 	const char *protocol;
 	GMimeFilter *filter;
@@ -178,15 +178,11 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered = g_mime_stream_filter_new (stream);
 	
-	filter = g_mime_filter_crlf_new (TRUE, FALSE);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	g_object_unref (filter);
+	options = _g_mime_format_options_clone (NULL, FALSE);
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
-	g_mime_object_write_to_stream (entity, format, filtered);
-	g_mime_stream_flush (filtered);
-	g_object_unref (filtered);
+	g_mime_object_write_to_stream (entity, options, stream);
 	
 	/* reset the content stream */
 	g_mime_stream_reset (stream);
@@ -203,12 +199,10 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
 	g_mime_stream_reset (ciphertext);
 	
 	/* construct the version part */
-	content_type = g_mime_content_type_parse (options, protocol);
+	content_type = g_mime_content_type_parse (NULL, protocol);
 	version_part = g_mime_part_new_with_type (content_type->type, content_type->subtype);
 	g_object_unref (content_type);
 	
-	content_type = g_mime_content_type_parse (options, protocol);
-	g_mime_object_set_content_type ((GMimeObject *) version_part, content_type);
 	g_mime_part_set_content_encoding (version_part, GMIME_CONTENT_ENCODING_7BIT);
 	stream = g_mime_stream_mem_new_with_buffer ("Version: 1\n", strlen ("Version: 1\n"));
 	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_7BIT);
@@ -346,7 +340,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 	
 	stream = g_mime_stream_mem_new ();
 	filtered = g_mime_stream_filter_new (stream);
-	filter = g_mime_filter_crlf_new (FALSE, FALSE);
+	filter = g_mime_filter_dos2unix_new (FALSE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
 	

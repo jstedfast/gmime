@@ -85,8 +85,11 @@ struct _GMimeMessage {
 	char *message_id;
 	char *subject;
 	
-	time_t date;
 	int tz_offset;
+	time_t date;
+	
+	/* < private > */
+	GMimeRfcComplianceMode compliance;
 };
 
 struct _GMimeMessageClass {

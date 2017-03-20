@@ -61,8 +61,10 @@ struct _GMimeObject {
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
 	GMimeHeaderList *headers;
-	
 	char *content_id;
+	
+	/* < private > */
+	gboolean ensure_newline;
 };
 
 struct _GMimeObjectClass {

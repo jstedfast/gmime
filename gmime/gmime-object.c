@@ -142,6 +142,7 @@ g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 	g_mime_event_add (headers->changed, (GMimeEventCallback) header_list_changed, object);
 	object->headers = headers;
 	
+	object->ensure_newline = FALSE;
 	object->content_type = NULL;
 	object->disposition = NULL;
 	object->content_id = NULL;

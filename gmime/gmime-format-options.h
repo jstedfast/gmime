@@ -91,8 +91,8 @@ void g_mime_format_options_free (GMimeFormatOptions *options);
 GMimeParamEncodingMethod g_mime_format_options_get_param_encoding_method (GMimeFormatOptions *options);
 void g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GMimeParamEncodingMethod method);
 
-GMimeNewLineFormat g_mime_format_get_newline_format (GMimeFormatOptions *options);
-void g_mime_format_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline);
+GMimeNewLineFormat g_mime_format_options_get_newline_format (GMimeFormatOptions *options);
+void g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline);
 
 const char *g_mime_format_options_get_newline (GMimeFormatOptions *options);
 GMimeFilter *g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboolean ensure_newline);

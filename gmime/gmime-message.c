@@ -207,6 +207,7 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	guint i;
 	
 	message->addrlists = g_new (InternetAddressList *, N_ADDRESS_TYPES);
+	message->compliance = GMIME_RFC_COMPLIANCE_STRICT;
 	message->message_id = NULL;
 	message->mime_part = NULL;
 	message->subject = NULL;
@@ -979,8 +980,11 @@ message_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbool
 		GMimeObjectClass *klass = GMIME_OBJECT_GET_CLASS (mime_part);
 		
 		options = _g_mime_format_options_clone (options, FALSE);
+		mime_part->ensure_newline = message->compliance == GMIME_RFC_COMPLIANCE_STRICT;
+		nwritten = klass->write_to_stream (mime_part, options, TRUE, stream);
+		mime_part->ensure_newline = FALSE;
 		
-		if ((nwritten = klass->write_to_stream (mime_part, options, TRUE, stream)) == -1)
+		if (nwritten == -1)
 			return -1;
 		
 		total += nwritten;

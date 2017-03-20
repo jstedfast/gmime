@@ -29,10 +29,11 @@
 #include "gmime-multipart-encrypted.h"
 #include "gmime-message-part.h"
 #include "gmime-stream-filter.h"
+#include "gmime-filter-unix2dos.h"
 #include "gmime-filter-strip.h"
 #include "gmime-filter-from.h"
-#include "gmime-filter-crlf.h"
 #include "gmime-stream-mem.h"
+#include "gmime-internal.h"
 #include "gmime-parser.h"
 #include "gmime-error.h"
 #include "gmime-part.h"
@@ -211,8 +212,6 @@ GMimeMultipartSigned *
 g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 			      const char *userid, GError **err)
 {
-	GMimeParserOptions *options = g_mime_parser_options_get_default ();
-	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *stream, *filtered, *sigstream;
 	GMimeContentType *content_type;
 	GMimeDataWrapper *content;
@@ -249,14 +248,17 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
 	
-	g_mime_object_write_to_stream (entity, format, filtered);
+	/* write the entity out to the stream */
+	g_mime_object_write_to_stream (entity, NULL, filtered);
 	g_mime_stream_flush (filtered);
 	g_mime_stream_reset (stream);
 	g_object_unref (filtered);
 	
-	/* Note: see rfc2015 or rfc3156, section 5.1 */
+	/* Note: see rfc2015 or rfc3156, section 5.1 - we do this *after* writing out
+	 * the entity because we'll end up parsing the mime part back out again and
+	 * we don't want it to be in DOS format. */
 	filtered = g_mime_stream_filter_new (stream);
-	filter = g_mime_filter_crlf_new (TRUE, FALSE);
+	filter = g_mime_filter_unix2dos_new (FALSE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
 	
@@ -282,7 +284,7 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
 	g_object_unref (parser);
 	
 	/* construct the signature part */
-	content_type = g_mime_content_type_parse (options, protocol);
+	content_type = g_mime_content_type_parse (NULL, protocol);
 	signature = g_mime_part_new_with_type (content_type->type, content_type->subtype);
 	g_object_unref (content_type);
 	
@@ -368,11 +370,11 @@ check_protocol_supported (const char *protocol, const char *supported)
 GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)
 {
-	GMimeFormatOptions *options = g_mime_format_options_get_default ();
 	GMimeStream *filtered, *stream, *sigstream;
 	const char *supported, *protocol;
 	GMimeObject *content, *signature;
 	GMimeSignatureList *signatures;
+	GMimeFormatOptions *options;
 	GMimeDataWrapper *wrapper;
 	GMimeCryptoContext *ctx;
 	GMimeDigestAlgo digest;
@@ -435,14 +437,17 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	filtered = g_mime_stream_filter_new (stream);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
-	filter = g_mime_filter_crlf_new (TRUE, FALSE);
+	filter = g_mime_filter_unix2dos_new (FALSE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
+	// FIXME: use the GMimeFormatOptions...
+	//options = _g_mime_format_options_clone (NULL, FALSE);
+	//g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
-	g_mime_object_write_to_stream (content, options, filtered);
-	g_mime_stream_flush (filtered);
-	g_object_unref (filtered);
+	g_mime_object_write_to_stream (content, NULL, filtered);
+	//g_mime_format_options_free (options);
 	g_mime_stream_reset (stream);
+	g_object_unref (filtered);
 	
 	/* get the signature stream */
 	wrapper = g_mime_part_get_content ((GMimePart *) signature);

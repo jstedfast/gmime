@@ -26,10 +26,11 @@
 #include <string.h>
 
 #include "gmime-application-pkcs7-mime.h"
+#include "gmime-filter-dos2unix.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
-#include "gmime-filter-crlf.h"
 #include "gmime-stream-mem.h"
+#include "gmime-internal.h"
 #include "gmime-parser.h"
 #include "gmime-error.h"
 
@@ -227,8 +228,8 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 GMimeApplicationPkcs7Mime *
 g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
 {
-	GMimeStream *filtered, *ciphertext, *stream;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
+	GMimeStream *ciphertext, *stream;
 	GMimeContentType *content_type;
 	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
@@ -245,19 +246,13 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 		return NULL;
 	}
 	
-	options = g_mime_format_options_get_default ();
+	options = _g_mime_format_options_clone (NULL, FALSE);
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered = g_mime_stream_filter_new (stream);
-	
-	filter = g_mime_filter_crlf_new (TRUE, FALSE);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	g_object_unref (filter);
-	
-	g_mime_object_write_to_stream (entity, options, filtered);
-	g_mime_stream_flush (filtered);
-	g_object_unref (filtered);
+	g_mime_object_write_to_stream (entity, options, stream);
+	g_mime_format_options_free (options);
 	
 	/* reset the content stream */
 	g_mime_stream_reset (stream);
@@ -278,7 +273,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA);
 	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
-	g_mime_part_set_content (GMIME_PART (pkcs7_mime), content);
+	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
 	
@@ -343,7 +338,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	
 	stream = g_mime_stream_mem_new ();
 	filtered = g_mime_stream_filter_new (stream);
-	filter = g_mime_filter_crlf_new (FALSE, FALSE);
+	filter = g_mime_filter_dos2unix_new (FALSE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
 	
@@ -401,8 +396,8 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 GMimeApplicationPkcs7Mime *
 g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GError **err)
 {
-	GMimeStream *filtered, *ciphertext, *stream;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
+	GMimeStream *ciphertext, *stream;
 	GMimeContentType *content_type;
 	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
@@ -419,19 +414,13 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 		return NULL;
 	}
 	
-	options = g_mime_format_options_get_default ();
+	options = _g_mime_format_options_clone (NULL, FALSE);
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered = g_mime_stream_filter_new (stream);
-	
-	filter = g_mime_filter_crlf_new (TRUE, FALSE);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	g_object_unref (filter);
-	
-	g_mime_object_write_to_stream (entity, options, filtered);
-	g_mime_stream_flush (filtered);
-	g_object_unref (filtered);
+	g_mime_object_write_to_stream (entity, options, stream);
+	g_mime_format_options_free (options);
 	
 	/* reset the content stream */
 	g_mime_stream_reset (stream);
@@ -501,7 +490,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	
 	stream = g_mime_stream_mem_new ();
 	filtered = g_mime_stream_filter_new (stream);
-	filter = g_mime_filter_crlf_new (FALSE, FALSE);
+	filter = g_mime_filter_dos2unix_new (FALSE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
 	

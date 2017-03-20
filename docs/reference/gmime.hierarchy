@@ -33,12 +33,14 @@ GObject
     GMimeFilterBest
     GMimeFilterCharset
     GMimeFilterCRLF
+    GMimeFilterDos2Unix
     GMimeFilterEnriched
     GMimeFilterFrom
     GMimeFilterGZip
     GMimeFilterHTML
     GMimeFilterMd5
     GMimeFilterStrip
+    GMimeFilterUnix2Dos
     GMimeFilterWindows
     GMimeFilterYenc
   GMimeParser

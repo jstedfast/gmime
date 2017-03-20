@@ -221,6 +221,7 @@ static void
 test_multipart_signed (GMimeCryptoContext *ctx)
 {
 	GMimeSignatureList *signatures;
+	GMimeSignatureStatus status;
 	GMimeMultipartSigned *mps;
 	GMimeMessage *message;
 	GMimeTextPart *part;
@@ -259,9 +260,13 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	}
 	
 	v(print_verify_results (signatures));
-	g_object_unref (signatures);
 	
+	status = get_sig_status (signatures);
+	g_object_unref (signatures);
 	g_object_unref (message);
+	
+	if (status & GMIME_SIGNATURE_STATUS_RED)
+		throw (exception_new ("signature status was BAD"));
 }
 
 #define MULTIPART_ENCRYPTED_CONTENT "This is a test of multipart/encrypted.\n"

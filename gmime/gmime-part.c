@@ -37,8 +37,8 @@
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
 #include "gmime-filter-best.h"
-#include "gmime-filter-crlf.h"
 #include "gmime-filter-md5.h"
+#include "gmime-filter-unix2dos.h"
 #include "gmime-table-private.h"
 
 #define _(x) x
@@ -301,6 +301,7 @@ mime_part_headers_cleared (GMimeObject *object)
 static ssize_t
 write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream)
 {
+	GMimeObject *object = (GMimeObject *) part;
 	ssize_t nwritten, total = 0;
 	GMimeStream *filtered;
 	GMimeFilter *filter;
@@ -341,9 +342,11 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 			break;
 		}
 		
-		filter = g_mime_format_options_create_newline_filter (options, FALSE);
-		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-		g_object_unref (filter);
+		if (part->encoding != GMIME_CONTENT_ENCODING_BINARY) {
+			filter = g_mime_format_options_create_newline_filter (options, object->ensure_newline);
+			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+			g_object_unref (filter);
+		}
 		
 		nwritten = g_mime_data_wrapper_write_to_stream (part->content, filtered);
 		g_mime_stream_flush (filtered);
@@ -367,11 +370,15 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 		g_mime_stream_reset (content);
 		
 		filtered = g_mime_stream_filter_new (stream);
-		filter = g_mime_format_options_create_newline_filter (options, FALSE);
-		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-		g_object_unref (filter);
+		
+		if (part->encoding != GMIME_CONTENT_ENCODING_BINARY) {
+			filter = g_mime_format_options_create_newline_filter (options, object->ensure_newline);
+			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+			g_object_unref (filter);
+		}
 		
 		nwritten = g_mime_stream_write_to_stream (content, filtered);
+		g_mime_stream_flush (filtered);
 		g_mime_stream_reset (content);
 		g_object_unref (filtered);
 		
@@ -603,10 +610,9 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 {
 	GMimeObject *object = (GMimeObject *) mime_part;
 	unsigned char digest[16], b64digest[32];
-	GMimeStreamFilter *filtered_stream;
 	GMimeContentType *content_type;
-	GMimeFilter *md5_filter;
-	GMimeStream *stream;
+	GMimeStream *filtered, *stream;
+	GMimeFilter *filter;
 	guint32 save = 0;
 	int state = 0;
 	size_t len;
@@ -618,28 +624,25 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	if (!content_md5) {
 		/* compute a md5sum */
 		stream = g_mime_stream_null_new ();
-		filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new (stream);
+		filtered = g_mime_stream_filter_new (stream);
 		g_object_unref (stream);
 		
 		content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
 		if (g_mime_content_type_is_type (content_type, "text", "*")) {
-			GMimeFilter *crlf_filter;
-			
-			crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
-			g_mime_stream_filter_add (filtered_stream, crlf_filter);
-			g_object_unref (crlf_filter);
+			filter = g_mime_filter_unix2dos_new (FALSE);
+			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+			g_object_unref (filter);
 		}
 		
-		md5_filter = g_mime_filter_md5_new ();
-		g_mime_stream_filter_add (filtered_stream, md5_filter);
+	        filter = g_mime_filter_md5_new ();
+		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 		
-		stream = (GMimeStream *) filtered_stream;
-		g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-		g_object_unref (stream);
+		g_mime_data_wrapper_write_to_stream (mime_part->content, filtered);
+		g_object_unref (filtered);
 		
 		memset (digest, 0, 16);
-		g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
-		g_object_unref (md5_filter);
+		g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) filter, digest);
+		g_object_unref (filter);
 		
 		len = g_mime_encoding_base64_encode_close (digest, 16, b64digest, &state, &save);
 		b64digest[len] = '\0';
@@ -669,10 +672,9 @@ gboolean
 g_mime_part_verify_content_md5 (GMimePart *mime_part)
 {
 	unsigned char digest[16], b64digest[32];
-	GMimeStreamFilter *filtered_stream;
 	GMimeContentType *content_type;
-	GMimeFilter *md5_filter;
-	GMimeStream *stream;
+	GMimeStream *filtered, *stream;
+	GMimeFilter *filter;
 	guint32 save = 0;
 	int state = 0;
 	size_t len;
@@ -684,28 +686,25 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 		return FALSE;
 	
 	stream = g_mime_stream_null_new ();
-	filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new (stream);
+	filtered = g_mime_stream_filter_new (stream);
 	g_object_unref (stream);
 	
 	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
 	if (g_mime_content_type_is_type (content_type, "text", "*")) {
-		GMimeFilter *crlf_filter;
-		
-		crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
-		g_mime_stream_filter_add (filtered_stream, crlf_filter);
-		g_object_unref (crlf_filter);
+		filter = g_mime_filter_unix2dos_new (FALSE);
+		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+		g_object_unref (filter);
 	}
 	
-	md5_filter = g_mime_filter_md5_new ();
-	g_mime_stream_filter_add (filtered_stream, md5_filter);
+	filter = g_mime_filter_md5_new ();
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	
-	stream = (GMimeStream *) filtered_stream;
-	g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-	g_object_unref (stream);
+	g_mime_data_wrapper_write_to_stream (mime_part->content, filtered);
+	g_object_unref (filtered);
 	
 	memset (digest, 0, 16);
-	g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
-	g_object_unref (md5_filter);
+	g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) filter, digest);
+	g_object_unref (filter);
 	
 	len = g_mime_encoding_base64_encode_close (digest, 16, b64digest, &state, &save);
 	b64digest[len] = '\0';

@@ -36,12 +36,14 @@ libgmime_3_0_la_SOURCES = 		\
 	gmime-filter-best.c		\
 	gmime-filter-charset.c		\
 	gmime-filter-crlf.c		\
+	gmime-filter-dos2unix.c		\
 	gmime-filter-enriched.c		\
 	gmime-filter-from.c		\
 	gmime-filter-gzip.c		\
 	gmime-filter-html.c		\
 	gmime-filter-md5.c		\
 	gmime-filter-strip.c		\
+	gmime-filter-unix2dos.c		\
 	gmime-filter-windows.c		\
 	gmime-filter-yenc.c		\
 	gmime-format-options.c		\
@@ -96,12 +98,14 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-best.h		\
 	gmime-filter-charset.h		\
 	gmime-filter-crlf.h		\
+	gmime-filter-dos2unix.h		\
 	gmime-filter-enriched.h		\
 	gmime-filter-from.h		\
 	gmime-filter-gzip.h		\
 	gmime-filter-html.h		\
 	gmime-filter-md5.h		\
 	gmime-filter-strip.h		\
+	gmime-filter-unix2dos.h		\
 	gmime-filter-windows.h		\
 	gmime-filter-yenc.h		\
 	gmime-format-options.h		\

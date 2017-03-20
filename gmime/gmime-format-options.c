@@ -26,7 +26,8 @@
 #include <string.h>
 
 #include "gmime-format-options.h"
-#include "gmime-filter-crlf.h"
+#include "gmime-filter-dos2unix.h"
+#include "gmime-filter-unix2dos.h"
 
 
 static GMimeFormatOptions *default_options = NULL;
@@ -269,9 +270,9 @@ g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboole
 		options = default_options;
 	
 	if (options->newline == GMIME_NEWLINE_FORMAT_DOS)
-		return g_mime_filter_crlf_new (TRUE, FALSE);
+		return g_mime_filter_unix2dos_new (ensure_newline);
 	
-	return g_mime_filter_crlf_new (FALSE, FALSE);
+	return g_mime_filter_dos2unix_new (ensure_newline);
 }
 
 

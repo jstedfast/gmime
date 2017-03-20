@@ -1692,6 +1692,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	}
 	
 	message = g_mime_message_new (FALSE);
+	message->compliance = GMIME_RFC_COMPLIANCE_LOOSE;
 	header = priv->headers;
 	while (header) {
 		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
@@ -2005,6 +2006,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	}
 	
 	message = g_mime_message_new (FALSE);
+	message->compliance = GMIME_RFC_COMPLIANCE_LOOSE;
 	header = priv->headers;
 	while (header) {
 		if (priv->respect_content_length && !g_ascii_strcasecmp (header->name, "Content-Length")) {
