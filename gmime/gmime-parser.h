@@ -47,7 +47,7 @@ typedef struct _GMimeParserClass GMimeParserClass;
 
 /**
  * GMimeFormat:
- * @GMIME_FORMAT_ENTITY: The stream contains a single message.
+ * @GMIME_FORMAT_MESSAGE: The stream contains a single message.
  * @GMIME_FORMAT_MBOX: The stream is in the UNIX mbox format.
  * @GMIME_FORMAT_MMDF: The stream is in the MMDF format.
  *
