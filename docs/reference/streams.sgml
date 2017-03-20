@@ -29,7 +29,8 @@
     added benefits is buffered I/O. GMimeStreamFs, on the other hand,
     is an abstracted layer above Unix file descriptors. While a
     GMimeStreamFs can be used on top of a UNIX socket or pipe, you
-    must be careful because sockets and pipes are not seekable.</para>
+    must be careful because sockets and pipes are not seekable
+    (see GMimeStreamPipe for a solution to this).</para>
 
     <para>Unlike the previous 2 stream types, GMimeStreamMem does not
     interact with the file system at all (except maybe the swap
@@ -37,8 +38,9 @@
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</para>
 
-    <para>The four (4) advanced stream types are GMimeStreamMmap,
-    GMimeStreamNull, GMimeStreamBuffer and GMimeStreamFilter.</para>
+    <para>The five (5) advanced stream types are GMimeStreamMmap,
+    GMimeStreamNull, GMimeStreamPipe, GMimeStreamBuffer and
+    GMimeStreamFilter.</para>
 
     <para>Our most simple stream, GMimeStreamNull, is the stream
     equivalent of /dev/null on Unix systems. The main difference is
@@ -52,6 +54,10 @@
     present a faster stream than GMimeStreamFs and/or
     GMimeStreamFile. You'll have to do some experimentation to know
     for sure.</para>
+
+    <para>GMimeStreamPipe is just like GMimeStreamFs except that it
+    doesn't support seeking, thus being perfect for use with sockets
+    and pipes.</para>
 
     <para>The GMimeStreamBuffer can be used on top of any other type
     of stream and has 3 modes: block reads, block writes, and cached
