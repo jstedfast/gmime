@@ -15,8 +15,6 @@ GMime 3.0 Planning:
 - Should GMimeHeader->value be decoded by GMime? i.e. work a bit more like
   MimeKit.
 
-- Fix GMimeParser to handle lwsp between header field anme and ':'
-
 - Fix GMimeParser to save mbox From markers on the GMimeMessage so
   that GMimeMessagePart::write_to_stream() can use it.
 

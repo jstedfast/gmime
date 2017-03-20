@@ -53,6 +53,7 @@ G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_parser_options_clone (GMimeParserOptions *options);
 
 /* GMimeHeader */
+G_GNUC_INTERNAL const char *_g_mime_header_get_raw_name (GMimeHeader *header);
 G_GNUC_INTERNAL const char *_g_mime_header_get_raw_value (GMimeHeader *header);
 G_GNUC_INTERNAL void _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
 G_GNUC_INTERNAL void _g_mime_header_set_offset (GMimeHeader *header, gint64 offset);
@@ -60,17 +61,23 @@ G_GNUC_INTERNAL void _g_mime_header_set_offset (GMimeHeader *header, gint64 offs
 /* GMimeHeaderList */
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
 G_GNUC_INTERNAL void _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options);
-G_GNUC_INTERNAL void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-G_GNUC_INTERNAL void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value,
+						  const char *raw_name, const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value,
+						 const char *raw_name, const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value,
+					      const char *raw_name, const char *raw_value, gint64 offset);
 
 /* GMimeObject */
 G_GNUC_INTERNAL void _g_mime_object_block_header_list_changed (GMimeObject *object);
 G_GNUC_INTERNAL void _g_mime_object_unblock_header_list_changed (GMimeObject *object);
 G_GNUC_INTERNAL void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
-G_GNUC_INTERNAL void _g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-G_GNUC_INTERNAL void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-G_GNUC_INTERNAL void _g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_object_prepend_header (GMimeObject *object, const char *name, const char *value,
+						    const char *raw_name, const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_object_append_header (GMimeObject *object, const char *name, const char *value,
+						   const char *raw_name, const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_object_set_header (GMimeObject *object, const char *name, const char *value,
+						const char *raw_name, const char *raw_value, gint64 offset);
 
 /* utils */
 G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,

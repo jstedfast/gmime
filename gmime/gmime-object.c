@@ -925,9 +925,10 @@ g_mime_object_get_content_id (GMimeObject *object)
 
 
 void
-_g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+_g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value,
+			       const char *raw_name, const char *raw_value, gint64 offset)
 {
-	_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
+	_g_mime_header_list_prepend (object->headers, header, value, raw_name, raw_value, offset);
 }
 
 
@@ -952,9 +953,10 @@ g_mime_object_prepend_header (GMimeObject *object, const char *header, const cha
 
 
 void
-_g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+_g_mime_object_append_header (GMimeObject *object, const char *header, const char *value,
+			      const char *raw_name, const char *raw_value, gint64 offset)
 {
-	_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
+	_g_mime_header_list_append (object->headers, header, value, raw_name, raw_value, offset);
 }
 
 
@@ -979,9 +981,10 @@ g_mime_object_append_header (GMimeObject *object, const char *header, const char
 
 
 void
-_g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+_g_mime_object_set_header (GMimeObject *object, const char *header, const char *value,
+			   const char *raw_name, const char *raw_value, gint64 offset)
 {
-	_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
+	_g_mime_header_list_set (object->headers, header, value, raw_name, raw_value, offset);
 }
 
 

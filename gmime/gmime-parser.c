@@ -103,7 +103,8 @@ typedef struct _boundary_stack {
 
 typedef struct _header_raw {
 	struct _header_raw *next;
-	char *name, *value, *raw_value;
+	char *raw_name, *raw_value;
+	char *name, *value;
 	gint64 offset;
 } HeaderRaw;
 
@@ -289,7 +290,8 @@ header_raw_clear (HeaderRaw **headers)
 		next = header->next;
 		g_free (header->name);
 		g_free (header->value);
-		
+		g_free (header->raw_name);
+		g_free (header->raw_value);
 		g_slice_free (HeaderRaw, header);
 		
 		header = next;
@@ -914,10 +916,11 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 	register char *inptr;
 	HeaderRaw *header;
 	
-	*priv->headerptr = '\0';
+	*priv->headerptr = ':';
 	inptr = priv->headerbuf;
-	while (*inptr && *inptr != ':' && !is_type (*inptr, IS_SPACE | IS_CTRL))
+	while (*inptr != ':')
 		inptr++;
+	*priv->headerptr = '\0';
 	
 	if (*inptr != ':') {
 		/* ignore invalid headers */
@@ -937,14 +940,21 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 	header = g_slice_new (HeaderRaw);
 	header->next = NULL;
 	
-	header->name = g_strndup (priv->headerbuf, (size_t) (inptr - priv->headerbuf));
 	header->value = g_mime_strdup_trim (inptr + 1);
 	
-	*priv->rawptr = '\0';
+	/* now walk backwards over lwsp characters */
+	while (inptr > priv->headerbuf && is_blank (inptr[-1]))
+		inptr--;
+	
+	header->name = g_strndup (priv->headerbuf, (size_t) (inptr - priv->headerbuf));
+	
+	*priv->rawptr = ':';
 	inptr = priv->rawbuf;
 	while (*inptr != ':')
 		inptr++;
+	*priv->rawptr = '\0';
 	
+	header->raw_name = g_strndup (priv->rawbuf, (size_t) (inptr - priv->rawbuf));
 	header->raw_value = g_strdup (inptr + 1);
 	header->offset = priv->header_offset;
 	
@@ -1017,6 +1027,7 @@ parser_step_headers (GMimeParser *parser)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	gboolean eoln, valid = TRUE, fieldname = TRUE;
 	gboolean continuation = FALSE;
+	gboolean blank = FALSE;
 	register char *inptr;
 	char *start, *inend;
 	ssize_t left = 0;
@@ -1053,6 +1064,7 @@ parser_step_headers (GMimeParser *parser)
 				priv->header_offset = parser_offset (priv, inptr);
 				continuation = FALSE;
 				fieldname = TRUE;
+				blank = FALSE;
 				valid = TRUE;
 			}
 			
@@ -1064,7 +1076,12 @@ parser_step_headers (GMimeParser *parser)
 					*inend = ':';
 					
 					while (*inptr != ':') {
-						if (is_type (*inptr, IS_SPACE | IS_CTRL)) {
+						/* Note: blank spaces are allowed between the field name
+						 * and the ':', but field names themselves are not allowed
+						 * to contain spaces. */
+						if (is_blank (*inptr)) {
+							blank = TRUE;
+						} else if (blank || is_ctrl (*inptr)) {
 							valid = FALSE;
 							break;
 						}
@@ -1696,9 +1713,8 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	header = priv->headers;
 	while (header) {
 		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
-			_g_mime_object_append_header ((GMimeObject *) message, header->name,
-						      header->value, header->raw_value,
-						      header->offset);
+			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->value,
+						      header->raw_name, header->raw_value, header->offset);
 		}
 		
 		header = header->next;
@@ -1740,7 +1756,8 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	while (header) {
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
 			_g_mime_object_append_header (object, header->name, header->value,
-						      header->raw_value, header->offset);
+						      header->raw_name, header->raw_value,
+						      header->offset);
 		}
 		
 		header = header->next;
@@ -1883,7 +1900,8 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	while (header) {
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
 			_g_mime_object_append_header (object, header->name, header->value,
-						      header->raw_value, header->offset);
+						      header->raw_name, header->raw_value,
+						      header->offset);
 		}
 		
 		header = header->next;
@@ -2015,8 +2033,11 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 				content_length = ULONG_MAX;
 		}
 		
-		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0)
-			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->value, header->raw_value, header->offset);
+		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
+			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->value,
+						      header->raw_name, header->raw_value, header->offset);
+		}
+		
 		header = header->next;
 	}
 	
