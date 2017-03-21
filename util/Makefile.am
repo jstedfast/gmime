@@ -11,12 +11,8 @@ AM_CPPFLAGS = -I$(top_srcdir) 		\
 	$(GLIB_CFLAGS)
 
 libutil_la_SOURCES =			\
-	cache.c				\
-	cache.h				\
 	gtrie.c				\
 	gtrie.h				\
-	list.c				\
-	list.h				\
 	packed.c			\
 	packed.h			\
 	url-scanner.c			\

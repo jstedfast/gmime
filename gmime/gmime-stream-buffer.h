@@ -39,14 +39,12 @@ typedef struct _GMimeStreamBufferClass GMimeStreamBufferClass;
 
 /**
  * GMimeStreamBufferMode:
- * @GMIME_STREAM_BUFFER_CACHE_READ: Cache all reads.
  * @GMIME_STREAM_BUFFER_BLOCK_READ: Read in 4k blocks.
  * @GMIME_STREAM_BUFFER_BLOCK_WRITE: Write in 4k blocks.
  *
  * The buffering mode for a #GMimeStreamBuffer stream.
  **/
 typedef enum {
-	GMIME_STREAM_BUFFER_CACHE_READ,
 	GMIME_STREAM_BUFFER_BLOCK_READ,
 	GMIME_STREAM_BUFFER_BLOCK_WRITE
 } GMimeStreamBufferMode;

@@ -168,27 +168,14 @@ test_stream_buffer_gets (const char *filename)
 	
 	stream = g_mime_stream_fs_new (fd);
 	
-	testsuite_check ("GMimeStreamBuffer::block gets");
+	testsuite_check ("GMimeStreamBuffer::gets()");
 	try {
 		g_mime_stream_reset (stream);
 		buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_BLOCK_READ);
 		test_stream_gets (buffered, filename);
 		testsuite_check_passed ();
 	} catch (ex) {
-		testsuite_check_failed ("GMimeStreamBuffer::block gets() failed: %s",
-					ex->message);
-	} finally {
-		g_object_unref (buffered);
-	}
-	
-	testsuite_check ("GMimeStreamBuffer::cache gets");
-	try {
-		g_mime_stream_reset (stream);
-		buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_CACHE_READ);
-		test_stream_gets (buffered, filename);
-		testsuite_check_passed ();
-	} catch (ex) {
-		testsuite_check_failed ("GMimeStreamBuffer::block gets() failed: %s",
+		testsuite_check_failed ("GMimeStreamBuffer::gets() failed: %s",
 					ex->message);
 	} finally {
 		g_object_unref (buffered);
@@ -342,7 +329,7 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 #endif /* HAVE_MMAP */
 
 static gboolean
-check_stream_buffer_block (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
+check_stream_buffer (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
 	GMimeStream *streams[2], *stream;
 	Exception *ex = NULL;
@@ -377,41 +364,6 @@ check_stream_buffer_block (const char *input, const char *output, const char *fi
 }
 
 static gboolean
-check_stream_buffer_cache (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
-{
-	GMimeStream *streams[2], *stream;
-	Exception *ex = NULL;
-	int fd[2];
-	
-	if ((fd[0] = open (input, O_RDONLY, 0)) == -1)
-		return FALSE;
-	
-	if ((fd[1] = open (output, O_RDONLY, 0)) == -1) {
-		close (fd[0]);
-		return FALSE;
-	}
-	
-	streams[0] = g_mime_stream_fs_new (fd[0]);
-	stream = g_mime_stream_buffer_new (streams[0], GMIME_STREAM_BUFFER_CACHE_READ);
-	g_object_unref (streams[0]);
-	streams[0] = g_mime_stream_substream (stream, start, end);
-	g_object_unref (stream);
-	
-	streams[1] = g_mime_stream_fs_new (fd[1]);
-	
-	if (!streams_match (streams, filename))
-		ex = exception_new ("GMimeStreamBuffer (Cache Mode) streams did not match for `%s'", filename);
-	
-	g_object_unref (streams[0]);
-	g_object_unref (streams[1]);
-	
-	if (ex != NULL)
-		throw (ex);
-	
-	return TRUE;
-}
-
-static gboolean
 check_stream_gio (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
 	GMimeStream *streams[2];
@@ -431,7 +383,7 @@ check_stream_gio (const char *input, const char *output, const char *filename, g
 	streams[1] = g_mime_stream_fs_new (fd);
 	
 	if (!streams_match (streams, filename))
-		ex = exception_new ("GMimeStreamBuffer (Cache Mode) streams did not match for `%s'", filename);
+		ex = exception_new ("GMimeStreamGIO streams did not match for `%s'", filename);
 	
 	g_object_unref (streams[0]);
 	g_object_unref (streams[1]);
@@ -449,14 +401,13 @@ static struct {
 	const char *what;
 	checkFunc check;
 } checks[] = {
-	{ "GMimeStreamFs",                  check_stream_fs           },
-	{ "GMimeStreamFile",                check_stream_file         },
+	{ "GMimeStreamFs",     check_stream_fs     },
+	{ "GMimeStreamFile",   check_stream_file   },
 #ifdef HAVE_MMAP
-	{ "GMimeStreamMmap",                check_stream_mmap         },
+	{ "GMimeStreamMmap",   check_stream_mmap   },
 #endif /* HAVE_MMAP */
-	{ "GMimeStreamBuffer (block mode)", check_stream_buffer_block },
-	{ "GMimeStreamBuffer (cache mode)", check_stream_buffer_cache },
-	{ "GMimeStreamGIO",                 check_stream_gio          },
+	{ "GMimeStreamBuffer", check_stream_buffer },
+	{ "GMimeStreamGIO",    check_stream_gio    },
 };
 
 static void
