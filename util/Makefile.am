@@ -19,6 +19,8 @@ libutil_la_SOURCES =			\
 	list.h				\
 	md5-utils.c			\
 	md5-utils.h			\
+	packed.c			\
+	packed.h			\
 	url-scanner.c			\
 	url-scanner.h
 

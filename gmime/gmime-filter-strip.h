@@ -45,6 +45,8 @@ typedef struct _GMimeFilterStripClass GMimeFilterStripClass;
 struct _GMimeFilterStrip {
 	GMimeFilter parent_object;
 	
+	/* < private > */
+	void *lwsp;
 };
 
 struct _GMimeFilterStripClass {
