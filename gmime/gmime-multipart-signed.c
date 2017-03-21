@@ -370,9 +370,9 @@ check_protocol_supported (const char *protocol, const char *supported)
 GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)
 {
-	GMimeStream *filtered, *stream, *sigstream;
 	const char *supported, *protocol;
 	GMimeObject *content, *signature;
+	GMimeStream *stream, *sigstream;
 	GMimeSignatureList *signatures;
 	GMimeFormatOptions *options;
 	GMimeDataWrapper *wrapper;
@@ -434,20 +434,14 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	
 	/* get the content stream */
 	stream = g_mime_stream_mem_new ();
-	filtered = g_mime_stream_filter_new (stream);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
-	filter = g_mime_filter_unix2dos_new (FALSE);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	g_object_unref (filter);
-	// FIXME: use the GMimeFormatOptions...
-	//options = _g_mime_format_options_clone (NULL, FALSE);
-	//g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	options = _g_mime_format_options_clone (NULL, FALSE);
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
-	g_mime_object_write_to_stream (content, NULL, filtered);
-	//g_mime_format_options_free (options);
+	g_mime_object_write_to_stream (content, options, stream);
+	g_mime_format_options_free (options);
 	g_mime_stream_reset (stream);
-	g_object_unref (filtered);
 	
 	/* get the signature stream */
 	wrapper = g_mime_part_get_content ((GMimePart *) signature);

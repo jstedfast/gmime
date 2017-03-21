@@ -36,6 +36,8 @@ packed_byte_array_new (void)
 	packed->allocated = 64;
 	packed->cur = -1;
 	packed->len = 0;
+	
+	return packed;
 }
 
 

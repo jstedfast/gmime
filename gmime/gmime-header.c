@@ -890,7 +890,7 @@ g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions
 		header = (GMimeHeader *) headers->array->pdata[i];
 		
 		if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-			if ((nwritten = g_mime_header_write_to_stream (headers, header, options, stream)) == -1)
+			if ((nwritten = g_mime_header_write_to_stream (headers, header, options, filtered)) == -1)
 				return -1;
 			
 			total += nwritten;
