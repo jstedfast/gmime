@@ -23,8 +23,6 @@
 #include <config.h>
 #endif
 
-#include "md5-utils.h"
-
 #include "gmime-filter-md5.h"
 
 
@@ -36,11 +34,6 @@
  *
  * Calculate an md5sum for a stream.
  **/
-
-
-struct _GMimeFilterMd5Private {
-	MD5Context md5;
-};
 
 static void g_mime_filter_md5_class_init (GMimeFilterMd5Class *klass);
 static void g_mime_filter_md5_init (GMimeFilterMd5 *filter, GMimeFilterMd5Class *klass);
@@ -101,8 +94,7 @@ g_mime_filter_md5_class_init (GMimeFilterMd5Class *klass)
 static void
 g_mime_filter_md5_init (GMimeFilterMd5 *filter, GMimeFilterMd5Class *klass)
 {
-	filter->priv = g_new (struct _GMimeFilterMd5Private, 1);
-	md5_init (&filter->priv->md5);
+	filter->md5 = g_checksum_new (G_CHECKSUM_MD5);
 }
 
 static void
@@ -110,7 +102,7 @@ g_mime_filter_md5_finalize (GObject *object)
 {
 	GMimeFilterMd5 *filter = (GMimeFilterMd5 *) object;
 	
-	g_free (filter->priv);
+	g_checksum_free (filter->md5);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -127,9 +119,9 @@ static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterMd5 *md5 = (GMimeFilterMd5 *) filter;
+	GChecksum *md5 = ((GMimeFilterMd5 *) filter)->md5;
 	
-	md5_update (&md5->priv->md5, (unsigned char *) in, len);
+	g_checksum_update (md5, (unsigned char *) in, len);
 	
 	*out = in;
 	*outlen = len;
@@ -146,9 +138,9 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterMd5 *md5 = (GMimeFilterMd5 *) filter;
+	GChecksum *md5 = ((GMimeFilterMd5 *) filter)->md5;
 	
-	md5_init (&md5->priv->md5);
+	g_checksum_reset (md5);
 }
 
 
@@ -176,7 +168,9 @@ g_mime_filter_md5_new (void)
 void
 g_mime_filter_md5_get_digest (GMimeFilterMd5 *md5, unsigned char digest[16])
 {
+	gsize len = 16;
+	
 	g_return_if_fail (GMIME_IS_FILTER_MD5 (md5));
 	
-	md5_final (&md5->priv->md5, digest);
+	g_checksum_get_digest (md5->md5, digest, &len);
 }
