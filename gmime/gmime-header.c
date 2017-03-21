@@ -34,8 +34,6 @@
 #include "gmime-events.h"
 #include "gmime-utils.h"
 
-#include "list.h"
-
 
 /**
  * SECTION: gmime-header

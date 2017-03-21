@@ -27,11 +27,9 @@
 
 G_BEGIN_DECLS
 
-void g_mime_iconv_init (void);
-void g_mime_iconv_shutdown (void);
-
 iconv_t g_mime_iconv_open (const char *to, const char *from);
 
+int g_mime_iconv_close (iconv_t cd);
 
 /**
  * g_mime_iconv:
@@ -97,8 +95,6 @@ iconv_t g_mime_iconv_open (const char *to, const char *from);
  * of error, it sets errno and returns (size_t)(-1).
  **/
 #define g_mime_iconv(cd,inbuf,inleft,outbuf,outleft) iconv (cd, inbuf, inleft, outbuf, outleft)
-
-int g_mime_iconv_close (iconv_t cd);
 
 G_END_DECLS
 

@@ -47,74 +47,6 @@
  **/
 
 
-#ifdef G_THREADS_ENABLED
-static GMutex lock;
-#define UNLOCK() g_mutex_unlock (&lock)
-#define LOCK()   g_mutex_lock (&lock);
-#else
-#define UNLOCK()
-#define LOCK()
-#endif /* G_THREADS_ENABLED */
-
-static iconv_t utf8_to_locale = (iconv_t) -1;
-static iconv_t locale_to_utf8 = (iconv_t) -1;
-static int initialized = 0;
-
-
-void
-g_mime_iconv_utils_init (void)
-{
-	const char *utf8, *locale;
-	
-	initialized = MAX (initialized, 0);
-	
-	if (initialized++)
-		return;
-	
-#ifdef G_THREADS_ENABLED
-	g_mutex_init (&lock);
-#endif
-	
-	utf8 = g_mime_charset_iconv_name ("UTF-8");
-	
-	if (!(locale = g_mime_locale_charset ()))
-		locale = "US-ASCII";
-	
-	if ((locale = g_mime_charset_iconv_name (locale))) {
-		utf8_to_locale = iconv_open (locale, utf8);
-		locale_to_utf8 = iconv_open (utf8, locale);
-	}
-}
-
-void
-g_mime_iconv_utils_shutdown (void)
-{
-	if (--initialized)
-		return;
-	
-#ifdef G_THREADS_ENABLED
-	if (glib_check_version (2, 37, 4) == NULL) {
-		/* The implementation of g_mutex_clear() prior
-		 * to glib 2.37.4 did not properly reset the
-		 * internal mutex pointer to NULL, so re-initializing
-		 * GMime would not properly re-initialize the mutexes.
-		 **/
-		g_mutex_clear (&lock);
-	}
-#endif
-	
-	if (utf8_to_locale != (iconv_t) -1) {
-		iconv_close (utf8_to_locale);
-		utf8_to_locale = (iconv_t) -1;
-	}
-	
-	if (locale_to_utf8 != (iconv_t) -1) {
-		iconv_close (locale_to_utf8);
-		locale_to_utf8 = (iconv_t) -1;
-	}
-}
-
-
 /**
  * g_mime_iconv_strndup: (skip)
  * @cd: conversion descriptor
@@ -247,11 +179,19 @@ g_mime_iconv_strdup (iconv_t cd, const char *str)
 char *
 g_mime_iconv_locale_to_utf8 (const char *str)
 {
+	const char *locale, *utf8;
+	iconv_t cd;
 	char *buf;
 	
-	LOCK ();
-	buf = g_mime_iconv_strdup (locale_to_utf8, str);
-	UNLOCK ();
+	if (!(locale = g_mime_locale_charset ()))
+		locale = "iso-8859-1";
+	
+	locale = g_mime_charset_iconv_name (locale);
+	utf8 = g_mime_charset_iconv_name ("UTF-8");
+	
+	cd = iconv_open (locale, utf8);
+	buf = g_mime_iconv_strdup (cd, str);
+	iconv_close (cd);
 	
 	return buf;
 }
@@ -271,11 +211,19 @@ g_mime_iconv_locale_to_utf8 (const char *str)
 char *
 g_mime_iconv_locale_to_utf8_length (const char *str, size_t n)
 {
+	const char *locale, *utf8;
+	iconv_t cd;
 	char *buf;
 	
-	LOCK ();
-	buf = g_mime_iconv_strndup (locale_to_utf8, str, n);
-	UNLOCK ();
+	if (!(locale = g_mime_locale_charset ()))
+		locale = "iso-8859-1";
+	
+	locale = g_mime_charset_iconv_name (locale);
+	utf8 = g_mime_charset_iconv_name ("UTF-8");
+	
+	cd = iconv_open (locale, utf8);
+	buf = g_mime_iconv_strndup (cd, str, n);
+	iconv_close (cd);
 	
 	return buf;
 }
@@ -294,11 +242,21 @@ g_mime_iconv_locale_to_utf8_length (const char *str, size_t n)
 char *
 g_mime_iconv_utf8_to_locale (const char *str)
 {
+	const char *locale, *utf8;
+	iconv_t cd;
 	char *buf;
 	
-	LOCK ();
-	buf = g_mime_iconv_strdup (utf8_to_locale, str);
-	UNLOCK ();
+	if (!(locale = g_mime_locale_charset ()))
+		return g_strdup (str);
+	
+	locale = g_mime_charset_iconv_name (locale);
+	utf8 = g_mime_charset_iconv_name ("UTF-8");
+	
+	if ((cd = iconv_open (utf8, locale)) == (iconv_t) -1)
+		return g_strdup (str);
+	
+	buf = g_mime_iconv_strdup (cd, str);
+	iconv_close (cd);
 	
 	return buf;
 }
@@ -318,11 +276,21 @@ g_mime_iconv_utf8_to_locale (const char *str)
 char *
 g_mime_iconv_utf8_to_locale_length (const char *str, size_t n)
 {
+	const char *locale, *utf8;
+	iconv_t cd;
 	char *buf;
 	
-	LOCK ();
-	buf = g_mime_iconv_strndup (utf8_to_locale, str, n);
-	UNLOCK ();
+	if (!(locale = g_mime_locale_charset ()))
+		return g_strndup (str, n);
+	
+	locale = g_mime_charset_iconv_name (locale);
+	utf8 = g_mime_charset_iconv_name ("UTF-8");
+	
+	if ((cd = iconv_open (utf8, locale)) == (iconv_t) -1)
+		return g_strndup (str, n);
+	
+	buf = g_mime_iconv_strndup (cd, str, n);
+	iconv_close (cd);
 	
 	return buf;
 }

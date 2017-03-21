@@ -33,78 +33,6 @@
 /*#define ENABLE_ZENTIMER*/
 #include "zentimer.h"
 
-#ifdef TEST_CACHE
-static char *charsets[] = {
-	"iso-8859-1",
-	"iso-8859-2",
-	"iso-8859-4",
-	"iso-8859-5",
-	"iso-8859-7",
-	"iso-8859-8",
-	"iso-8859-9",
-	"iso-8859-13",
-	"iso-8859-15",
-	"koi8-r",
-	"koi8-u",
-	"windows-1250",
-	"windows-1251",
-	"windows-1252",
-	"windows-1253",
-	"windows-1254",
-	"windows-1255",
-	"windows-1256",
-	"windows-1257",
-	"euc-kr",
-	"euc-jp",
-	"iso-2022-kr",
-	"iso-2022-jp",
-	"utf-8",
-};
-
-static void
-test_cache (void)
-{
-	GSList *node, *next, *open_cds = NULL;
-	iconv_t cd;
-	int i;
-	
-	srand (time (NULL));
-	
-	for (i = 0; i < 5000; i++) {
-		const char *from, *to;
-		int which;
-		
-		which = rand () % G_N_ELEMENTS (charsets);
-		from = charsets[which];
-		which = rand () % G_N_ELEMENTS (charsets);
-		to = charsets[which];
-		
-		cd = g_mime_iconv_open (from, to);
-		if (cd == (iconv_t) -1) {
-			g_warning ("%d: failed to open converter for %s to %s",
-				   i, from, to);
-			continue;
-		}
-		
-		which = rand () % 3;
-		if (!which) {
-			g_mime_iconv_close (cd);
-		} else {
-			open_cds = g_slist_prepend (open_cds, cd);
-		}
-	}
-	
-	node = open_cds;
-	while (node) {
-		next = node->next;
-		cd = node->data;
-		g_mime_iconv_close (cd);
-		g_slist_free_1 (node);
-		node = next;
-	}
-}
-#endif /* TEST_CACHE */
-
 
 struct {
 	const char *text;
@@ -206,20 +134,13 @@ test_utils (void)
 
 int main (int argc, char **argv)
 {
-	g_mime_iconv_init ();
+	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	
-#ifdef TEST_CACHE
-	ZenTimerStart (NULL);
-	test_cache ();
-	ZenTimerStop (NULL);
-	ZenTimerReport (NULL, "test_cache()");
-#endif
-	
 	test_utils ();
 	
-	g_mime_iconv_shutdown ();
+	g_mime_shutdown ();
 	
 	return testsuite_exit ();
 }

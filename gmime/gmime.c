@@ -49,8 +49,6 @@
  **/
 
 extern void g_mime_crypto_context_shutdown (void);
-extern void g_mime_iconv_utils_shutdown (void);
-extern void g_mime_iconv_utils_init (void);
 
 GQuark gmime_gpgme_error_quark;
 GQuark gmime_error_quark;
@@ -119,8 +117,6 @@ g_mime_init (void)
 	g_mime_format_options_init ();
 	g_mime_parser_options_init ();
 	g_mime_charset_map_init ();
-	g_mime_iconv_utils_init ();
-	g_mime_iconv_init ();
 	
 #ifdef ENABLE_CRYPTO
 	/* gpgme_check_version() initializes GpgMe */
@@ -217,8 +213,7 @@ g_mime_init (void)
 /**
  * g_mime_shutdown:
  *
- * Frees internally allocated tables created in g_mime_init(). Also
- * calls g_mime_charset_map_shutdown() and g_mime_iconv_shutdown().
+ * Frees internally allocated tables created in g_mime_init().
  **/
 void
 g_mime_shutdown (void)
@@ -231,6 +226,4 @@ g_mime_shutdown (void)
 	g_mime_format_options_shutdown ();
 	g_mime_parser_options_shutdown ();
 	g_mime_charset_map_shutdown ();
-	g_mime_iconv_utils_shutdown ();
-	g_mime_iconv_shutdown ();
 }
