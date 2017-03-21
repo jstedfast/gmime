@@ -39,14 +39,14 @@ typedef struct _GMimeFilterMd5Class GMimeFilterMd5Class;
 /**
  * GMimeFilterMd5:
  * @parent_object: parent #GMimeFilter
- * @priv: private state data
+ * @md5: The MD5 checksum context
  *
  * A filter for calculating the MD5 checksum of a stream.
  **/
 struct _GMimeFilterMd5 {
 	GMimeFilter parent_object;
 	
-	struct _GMimeFilterMd5Private *priv;
+	GChecksum *md5;
 };
 
 struct _GMimeFilterMd5Class {
