@@ -128,8 +128,8 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		g_mime_stream_printf (summary, "header offsets: %" G_GINT64_FORMAT ", %" G_GINT64_FORMAT "\n",
 				      headers_begin, headers_end);
 
-		marker_offset = g_mime_parser_get_from_offset (parser);
-		marker = g_mime_parser_get_from (parser);
+		marker_offset = g_mime_parser_get_mbox_marker_offset (parser);
+		marker = g_mime_parser_get_mbox_marker (parser);
 		g_mime_stream_printf (summary, "%s\n", marker);
 		
 		if ((list = g_mime_message_get_from (message)) != NULL &&
