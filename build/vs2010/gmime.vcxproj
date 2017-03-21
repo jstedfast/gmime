@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -102,7 +102,7 @@ copy unistd.h ..\..\unistd.h
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Lib>
-      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+      <OutputFile>$(OutDir)$(ProjectName)-3.0.lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -135,7 +135,7 @@ copy unistd.h ..\..\unistd.h
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Lib>
-      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+      <OutputFile>$(OutDir)$(ProjectName)-3.0.lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -162,7 +162,7 @@ copy unistd.h ..\..\unistd.h
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Lib>
-      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+      <OutputFile>$(OutDir)$(ProjectName)-3.0.lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -192,11 +192,14 @@ copy unistd.h ..\..\unistd.h
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Lib>
-      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+      <OutputFile>$(OutDir)$(ProjectName)-3.0.lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\util\cache.h" />
+    <ClInclude Include="..\..\util\gtrie.h" />
+    <ClInclude Include="..\..\util\packed.h" />
+    <ClInclude Include="..\..\util\url-scanner.h" />
+    <ClInclude Include="..\..\gmime\gmime-application-pkcs7-mime.h" />
     <ClInclude Include="..\..\gmime\gmime-certificate.h" />
     <ClInclude Include="..\..\gmime\gmime-charset-map-private.h" />
     <ClInclude Include="..\..\gmime\gmime-charset.h" />
@@ -212,18 +215,24 @@ copy unistd.h ..\..\unistd.h
     <ClInclude Include="..\..\gmime\gmime-filter-best.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-charset.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-crlf.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-dos2unix.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-enriched.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-from.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-gzip.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-html.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-md5.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-strip.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-unix2dos.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-windows.h" />
     <ClInclude Include="..\..\gmime\gmime-filter-yenc.h" />
     <ClInclude Include="..\..\gmime\gmime-filter.h" />
+    <ClInclude Include="..\..\gmime\gmime-format-options.h" />
+    <ClInclude Include="..\..\gmime\gmime-gpg-context.h" />
+    <ClInclude Include="..\..\gmime\gmime-gpgme-utils.h" />
     <ClInclude Include="..\..\gmime\gmime-header.h" />
     <ClInclude Include="..\..\gmime\gmime-iconv-utils.h" />
     <ClInclude Include="..\..\gmime\gmime-iconv.h" />
+    <ClInclude Include="..\..\gmime\gmime-internal.h" />
     <ClInclude Include="..\..\gmime\gmime-message-part.h" />
     <ClInclude Include="..\..\gmime\gmime-message-partial.h" />
     <ClInclude Include="..\..\gmime\gmime-message.h" />
@@ -233,8 +242,11 @@ copy unistd.h ..\..\unistd.h
     <ClInclude Include="..\..\gmime\gmime-object.h" />
     <ClInclude Include="..\..\gmime\gmime-param.h" />
     <ClInclude Include="..\..\gmime\gmime-parse-utils.h" />
+    <ClInclude Include="..\..\gmime\gmime-parser-options.h" />
     <ClInclude Include="..\..\gmime\gmime-parser.h" />
+    <ClInclude Include="..\..\gmime\gmime-part-iter.h" />
     <ClInclude Include="..\..\gmime\gmime-part.h" />
+    <ClInclude Include="..\..\gmime\gmime-pkcs7-context.h" />
     <ClInclude Include="..\..\gmime\gmime-signature.h" />
     <ClInclude Include="..\..\gmime\gmime-stream-buffer.h" />
     <ClInclude Include="..\..\gmime\gmime-stream-cat.h" />
@@ -243,20 +255,22 @@ copy unistd.h ..\..\unistd.h
     <ClInclude Include="..\..\gmime\gmime-stream-fs.h" />
     <ClInclude Include="..\..\gmime\gmime-stream-gio.h" />
     <ClInclude Include="..\..\gmime\gmime-stream-mem.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-mmap.h" />
     <ClInclude Include="..\..\gmime\gmime-stream-null.h" />
     <ClInclude Include="..\..\gmime\gmime-stream-pipe.h" />
     <ClInclude Include="..\..\gmime\gmime-stream.h" />
     <ClInclude Include="..\..\gmime\gmime-table-private.h" />
+    <ClInclude Include="..\..\gmime\gmime-text-part.h" />
     <ClInclude Include="..\..\gmime\gmime-utils.h" />
+    <ClInclude Include="..\..\gmime\gmime-version.h" />
     <ClInclude Include="..\..\gmime\gmime.h" />
-    <ClInclude Include="..\..\util\gtrie.h" />
     <ClInclude Include="..\..\gmime\internet-address.h" />
-    <ClInclude Include="..\..\util\list.h" />
-    <ClInclude Include="..\..\util\md5-utils.h" />
-    <ClInclude Include="..\..\util\url-scanner.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\util\cache.c" />
+    <ClCompile Include="..\..\util\gtrie.c" />
+    <ClCompile Include="..\..\util\packed.c" />
+    <ClCompile Include="..\..\util\url-scanner.c" />
+    <ClCompile Include="..\..\gmime\gmime-application-pkcs7-mime.c" />
     <ClCompile Include="..\..\gmime\gmime-certificate.c" />
     <ClCompile Include="..\..\gmime\gmime-charset.c" />
     <ClCompile Include="..\..\gmime\gmime-common.c" />
@@ -270,15 +284,20 @@ copy unistd.h ..\..\unistd.h
     <ClCompile Include="..\..\gmime\gmime-filter-best.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-charset.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-crlf.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-dos2unix.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-enriched.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-from.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-gzip.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-html.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-md5.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-strip.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-unix2dos.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-windows.c" />
     <ClCompile Include="..\..\gmime\gmime-filter-yenc.c" />
     <ClCompile Include="..\..\gmime\gmime-filter.c" />
+    <ClCompile Include="..\..\gmime\gmime-format-options.c" />
+    <ClCompile Include="..\..\gmime\gmime-gpg-context.c" />
+    <ClCompile Include="..\..\gmime\gmime-gpgme-utils.c" />
     <ClCompile Include="..\..\gmime\gmime-header.c" />
     <ClCompile Include="..\..\gmime\gmime-iconv-utils.c" />
     <ClCompile Include="..\..\gmime\gmime-iconv.c" />
@@ -291,7 +310,9 @@ copy unistd.h ..\..\unistd.h
     <ClCompile Include="..\..\gmime\gmime-object.c" />
     <ClCompile Include="..\..\gmime\gmime-param.c" />
     <ClCompile Include="..\..\gmime\gmime-parse-utils.c" />
+    <ClCompile Include="..\..\gmime\gmime-parser-options.c" />
     <ClCompile Include="..\..\gmime\gmime-parser.c" />
+    <ClCompile Include="..\..\gmime\gmime-part-iter.c" />
     <ClCompile Include="..\..\gmime\gmime-part.c" />
     <ClCompile Include="..\..\gmime\gmime-signature.c" />
     <ClCompile Include="..\..\gmime\gmime-stream-buffer.c" />
@@ -301,20 +322,17 @@ copy unistd.h ..\..\unistd.h
     <ClCompile Include="..\..\gmime\gmime-stream-fs.c" />
     <ClCompile Include="..\..\gmime\gmime-stream-gio.c" />
     <ClCompile Include="..\..\gmime\gmime-stream-mem.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-mmap.c" />
     <ClCompile Include="..\..\gmime\gmime-stream-null.c" />
     <ClCompile Include="..\..\gmime\gmime-stream-pipe.c" />
     <ClCompile Include="..\..\gmime\gmime-stream.c" />
+    <ClCompile Include="..\..\gmime\gmime-text-part.c" />
     <ClCompile Include="..\..\gmime\gmime-utils.c" />
     <ClCompile Include="..\..\gmime\gmime.c" />
-    <ClCompile Include="..\..\util\gtrie.c" />
     <ClCompile Include="..\..\gmime\internet-address.c" />
-    <ClCompile Include="..\..\util\list.c" />
-    <ClCompile Include="..\..\util\md5-utils.c" />
-    <ClCompile Include="..\..\util\url-scanner.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\AUTHORS" />
-    <None Include="..\..\ChangeLog" />
     <None Include="..\..\COPYING" />
     <None Include="..\..\HACKING" />
     <None Include="..\..\INSTALL" />
@@ -322,7 +340,7 @@ copy unistd.h ..\..\unistd.h
     <None Include="..\..\MAINTAINERS" />
     <None Include="..\..\NEWS" />
     <None Include="..\..\PORTING" />
-    <None Include="..\..\README" />
+    <None Include="..\..\README.md" />
     <None Include="..\..\TODO" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
