@@ -162,12 +162,12 @@ struct _GMimeParserPrivate {
 	char *inptr;
 	char *inend;
 	
-	gint64 from_offset;
-	GByteArray *from_line;
-	
 	GMimeParserHeaderRegexFunc header_cb;
 	gpointer user_data;
 	GRegex *regex;
+	
+	GByteArray *marker;
+	gint64 marker_offset;
 	
 	/* header buffer */
 	char *headerbuf;
@@ -385,8 +385,8 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->inptr = priv->inbuf;
 	priv->inend = priv->inbuf;
 	
-	priv->from_offset = -1;
-	priv->from_line = g_byte_array_new ();
+	priv->marker_offset = -1;
+	priv->marker = g_byte_array_new ();
 	
 	priv->headerbuf = g_malloc (HEADER_INIT_SIZE);
 	priv->headerleft = HEADER_INIT_SIZE - 1;
@@ -422,7 +422,7 @@ parser_close (GMimeParser *parser)
 	if (priv->stream)
 		g_object_unref (priv->stream);
 	
-	g_byte_array_free (priv->from_line, TRUE);
+	g_byte_array_free (priv->marker, TRUE);
 	
 	g_free (priv->headerbuf);
 	g_free (priv->rawbuf);
@@ -770,7 +770,7 @@ parser_step_marker (GMimeParser *parser, const char *marker, size_t marker_len)
 	ssize_t left = 0;
 	size_t len;
 	
-	g_byte_array_set_size (priv->from_line, 0);
+	g_byte_array_set_size (priv->marker, 0);
 	
 	inptr = priv->inptr;
 	
@@ -805,10 +805,10 @@ parser_step_marker (GMimeParser *parser, const char *marker, size_t marker_len)
 			inptr++;
 			
 			if (len >= marker_len && !strncmp (start, marker, marker_len)) {
-				priv->from_offset = parser_offset (priv, start);
+				priv->marker_offset = parser_offset (priv, start);
 				
 				if (priv->format == GMIME_FORMAT_MBOX)
-					g_byte_array_append (priv->from_line, (unsigned char *) start, len);
+					g_byte_array_append (priv->marker, (unsigned char *) start, len);
 				goto got_marker;
 			}
 		}
@@ -1103,7 +1103,7 @@ parser_step_headers (GMimeParser *parser)
 				}
 				
 				if (!valid) {
-					if (priv->format == GMIME_FORMAT_MBOX && (inptr - start) == 4
+					if (priv->format == GMIME_FORMAT_MBOX && (inptr - start) >= 5
 					    && !strncmp (start, "From ", 5))
 						goto next_message;
 					
@@ -1124,7 +1124,7 @@ parser_step_headers (GMimeParser *parser)
 					} else if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
 						/* Be a little more strict when scanning toplevel message
 						 * headers, but remain lenient with From-lines. */
-						if ((inptr - start) != 4 || strncmp (start, "From ", 5) != 0) {
+						if ((inptr - start) < 5 || strncmp (start, "From ", 5) != 0) {
 							priv->state = GMIME_PARSER_STATE_ERROR;
 							return -1;
 						}
@@ -2086,7 +2086,7 @@ g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *option
 
 
 /**
- * g_mime_parser_get_from:
+ * g_mime_parser_get_mbox_marker:
  * @parser: a #GMimeParser context
  *
  * Gets the mbox-style From-line of the most recently parsed message
@@ -2096,7 +2096,7 @@ g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *option
  * message or %NULL on error.
  **/
 char *
-g_mime_parser_get_from (GMimeParser *parser)
+g_mime_parser_get_mbox_marker (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv;
 	
@@ -2106,15 +2106,15 @@ g_mime_parser_get_from (GMimeParser *parser)
 	if (priv->format != GMIME_FORMAT_MBOX)
 		return NULL;
 	
-	if (priv->from_line->len)
-		return g_strndup ((char *) priv->from_line->data, priv->from_line->len);
+	if (priv->marker->len)
+		return g_strndup ((char *) priv->marker->data, priv->marker->len);
 	
 	return NULL;
 }
 
 
 /**
- * g_mime_parser_get_from_offset:
+ * g_mime_parser_get_mbox_marker_offset:
  * @parser: a #GMimeParser context
  *
  * Gets the offset of the most recently parsed mbox-style From-line
@@ -2124,7 +2124,7 @@ g_mime_parser_get_from (GMimeParser *parser)
  * or %-1 on error.
  **/
 gint64
-g_mime_parser_get_from_offset (GMimeParser *parser)
+g_mime_parser_get_mbox_marker_offset (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv;
 	
@@ -2134,7 +2134,7 @@ g_mime_parser_get_from_offset (GMimeParser *parser)
 	if (priv->format != GMIME_FORMAT_MBOX)
 		return -1;
 	
-	return priv->from_offset;
+	return priv->marker_offset;
 }
 
 

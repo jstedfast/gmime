@@ -27,6 +27,8 @@
 #include <string.h>
 
 #include "gmime-filter-strip.h"
+#include "gmime-table-private.h"
+#include "packed.h"
 
 
 /**
@@ -99,12 +101,16 @@ g_mime_filter_strip_class_init (GMimeFilterStripClass *klass)
 static void
 g_mime_filter_strip_init (GMimeFilterStrip *filter, GMimeFilterStripClass *klass)
 {
-	/* no-op */
+	filter->lwsp = packed_byte_array_new ();
 }
 
 static void
 g_mime_filter_strip_finalize (GObject *object)
 {
+	GMimeFilterStrip *filter = (GMimeFilterStrip *) object;
+	
+	packed_byte_array_free (filter->lwsp);
+	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -116,56 +122,83 @@ filter_copy (GMimeFilter *filter)
 }
 
 static void
+convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+	 char **out, size_t *outlen, size_t *outprespace, gboolean flush)
+{
+	GMimeFilterStrip *strip = (GMimeFilterStrip *) filter;
+	PackedByteArray *lwsp = (PackedByteArray *) strip->lwsp;
+	register char *inptr, *outptr;
+	char *inend, *outbuf;
+	
+	if (len == 0) {
+		if (flush)
+			packed_byte_array_clear (lwsp);
+		
+		*outprespace = prespace;
+		*outlen = len;
+		*out = in;
+		
+		return;
+	}
+	
+	g_mime_filter_set_size (filter, len + lwsp->len, FALSE);
+	outptr = outbuf = filter->outbuf;
+	inend = in + len;
+	inptr = in;
+	
+	if (flush)
+		packed_byte_array_clear (strip->lwsp);
+	
+	while (inptr < inend) {
+		if (is_blank (*inptr)) {
+			packed_byte_array_add (lwsp, *inptr);
+		} else if (*inptr == '\r') {
+			packed_byte_array_clear (lwsp);
+			*outptr++ = *inptr;
+		} else if (*inptr == '\n') {
+			packed_byte_array_clear (lwsp);
+			*outptr++ = *inptr;
+		} else {
+			if (lwsp->len > 0) {
+				packed_byte_array_copy_to (lwsp, outptr);
+				outptr += lwsp->len;
+				packed_byte_array_clear (lwsp);
+			}
+			
+			*outptr++ = *inptr;
+		}
+		
+		inptr++;
+	}
+	
+	if (flush)
+		packed_byte_array_clear (lwsp);
+	
+	*outprespace = filter->outpre;
+	*outlen = (outptr - filter->outbuf);
+	*out = filter->outbuf;
+}
+
+static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	register unsigned char *inptr, *last;
-	unsigned char *inend, *start;
-	char *outptr;
-	
-	g_mime_filter_set_size (filter, len, FALSE);
-	
-	last = inptr = (unsigned char *) in;
-	inend = (unsigned char *) in + len;
-	
-	outptr = filter->outbuf;
-	
-	while (inptr < inend) {
-		start = inptr;
-		while (inptr < inend && *inptr != '\n') {
-			if (*inptr != ' ' && *inptr != '\t')
-				last = inptr + 1;
-			inptr++;
-		}
-		
-		memcpy (outptr, start, last - start);
-		outptr += (last - start);
-		if (inptr < inend) {
-			/* write the newline */
-			*outptr++ = (char) *inptr++;
-			last = inptr;
-		}
-	}
-	
-	g_mime_filter_backup (filter, (char *) last, inptr - last);
-	
-	*out = filter->outbuf;
-	*outlen = outptr - filter->outbuf;
-	*outprespace = filter->outpre;
+	convert (filter, in, len, prespace, out, outlen, outprespace, FALSE);
 }
 
 static void 
 filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
-	if (len)
-		filter_filter (filter, in, len, prespace, out, outlen, outprespace);
+	convert (filter, in, len, prespace, out, outlen, outprespace, TRUE);
 }
 
 static void
 filter_reset (GMimeFilter *filter)
 {
-	/* no-op */
+	GMimeFilterStrip *strip = (GMimeFilterStrip *) filter;
+	
+	packed_byte_array_clear (strip->lwsp);
 }
 
 

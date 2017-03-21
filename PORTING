@@ -139,6 +139,10 @@ Porting from GMime 2.6 to GMime 3.0
 - g_mime_parser_[get,set]_scan_from() have been replaced by
   g_mime_parser_[get,set]_format() which takes a GMimeFormat argument.
 
+- g_mime_parser_get_from() has been renamed to g_mime_parser_get_mbox_marker().
+
+- g_mime_parser_get_from_offset() has been renamed to g_mime_parser_get_mbox_marker_offset().
+
 - g_mime_parser_construct_[part,message]() now take a GMimeParserOptions argument.
 
 

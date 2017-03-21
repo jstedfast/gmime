@@ -1285,8 +1285,8 @@ g_mime_parser_tell
 g_mime_parser_eos
 g_mime_parser_construct_part
 g_mime_parser_construct_message
-g_mime_parser_get_from
-g_mime_parser_get_from_offset
+g_mime_parser_get_mbox_marker
+g_mime_parser_get_mbox_marker_offset
 g_mime_parser_get_headers_begin
 g_mime_parser_get_headers_end
 
