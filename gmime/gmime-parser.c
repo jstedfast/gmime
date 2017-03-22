@@ -1072,7 +1072,7 @@ parser_step_headers (GMimeParser *parser)
 					    && !strncmp (start, "From ", 5))
 						goto next_message;
 					
-					if (priv->headers != NULL) {
+					if (priv->headers->len > 0) {
 						if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
 							if (has_message_headers (priv->headers)) {
 								/* probably the start of the content,
@@ -1828,7 +1828,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 			break;
 		}
 		
-		if (priv->state == GMIME_PARSER_STATE_COMPLETE && priv->headers == NULL) {
+		if (priv->state == GMIME_PARSER_STATE_COMPLETE && priv->headers->len == 0) {
 			found = BOUNDARY_IMMEDIATE_END;
 			break;
 		}
