@@ -168,6 +168,17 @@ struct _GMimeParserPrivate {
 	GByteArray *marker;
 	gint64 marker_offset;
 	
+	/* current message headerblock offsets */
+	gint64 message_headers_begin;
+	gint64 message_headers_end;
+	
+	/* current mime-part headerblock offsets */
+	gint64 headers_begin;
+	gint64 headers_end;
+	
+	/* current header field offset */
+	gint64 header_offset;
+	
 	GPtrArray *headers;
 	
 	/* header buffer */
@@ -180,16 +191,7 @@ struct _GMimeParserPrivate {
 	char *rawptr;
 	size_t rawleft;
 	
-	/* current message headerblock offsets */
-	gint64 message_headers_begin;
-	gint64 message_headers_end;
-	
-	/* current mime-part headerblock offsets */
-	gint64 headers_begin;
-	gint64 headers_end;
-	
-	/* current header field offset */
-	gint64 header_offset;
+	BoundaryStack *bounds;
 	
 	short int state;
 	
@@ -200,8 +202,6 @@ struct _GMimeParserPrivate {
 	unsigned short int respect_content_length:1;
 	unsigned short int openpgp:4;
 	unsigned short int unused:7;
-	
-	BoundaryStack *bounds;
 };
 
 static const char MBOX_BOUNDARY[6] = "From ";
