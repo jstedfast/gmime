@@ -133,9 +133,7 @@ static GObjectClass *parent_class = NULL;
 #define SCAN_HEAD 128
 
 /* conservative growth sizes */
-#define HEADER_INIT_SIZE 128
-#define HEADER_RAW_INIT_SIZE 1024
-
+#define HEADER_INIT_SIZE 256
 
 typedef enum {
 	GMIME_PARSER_STATE_ERROR = -1,
@@ -396,8 +394,8 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->headerleft = HEADER_INIT_SIZE - 1;
 	priv->headerptr = priv->headerbuf;
 	
-	priv->rawbuf = g_malloc (HEADER_RAW_INIT_SIZE);
-	priv->rawleft = HEADER_RAW_INIT_SIZE - 1;
+	priv->rawbuf = g_malloc (HEADER_INIT_SIZE);
+	priv->rawleft = HEADER_INIT_SIZE - 1;
 	priv->rawptr = priv->rawbuf;
 	
 	priv->message_headers_begin = -1;
@@ -841,42 +839,11 @@ parser_step_mmdf (GMimeParser *parser)
 	return parser_step_marker (parser, MMDF_BOUNDARY, MMDF_BOUNDARY_LEN);
 }
 
-#ifdef ALLOC_NEAREST_POW2
-static inline size_t
-nearest_pow (size_t num)
-{
-	size_t n;
-	
-	if (num == 0)
-		return 0;
-	
-	n = num - 1;
-#if defined (__GNUC__) && defined (__i386__)
-	__asm__("bsrl %1,%0\n\t"
-		"jnz 1f\n\t"
-		"movl $-1,%0\n"
-		"1:" : "=r" (n) : "rm" (n));
-	n = (1 << (n + 1));
-#else
-	n |= n >> 1;
-	n |= n >> 2;
-	n |= n >> 4;
-	n |= n >> 8;
-	n |= n >> 16;
-	n++;
-#endif
-	
-	return n;
-}
-
-#define next_alloc_size(n) nearest_pow (n)
-#else
 static inline size_t
 next_alloc_size (size_t n)
 {
 	return (n + 63) & ~63;
 }
-#endif
 
 #define header_append(priv, start, len) G_STMT_START {                    \
 	if (priv->headerleft <= len) {                                    \
