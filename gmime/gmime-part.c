@@ -37,7 +37,7 @@
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
 #include "gmime-filter-best.h"
-#include "gmime-filter-md5.h"
+#include "gmime-filter-checksum.h"
 #include "gmime-filter-unix2dos.h"
 #include "gmime-table-private.h"
 
@@ -634,14 +634,14 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 			g_object_unref (filter);
 		}
 		
-	        filter = g_mime_filter_md5_new ();
+	        filter = g_mime_filter_checksum_new (G_CHECKSUM_MD5);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 		
 		g_mime_data_wrapper_write_to_stream (mime_part->content, filtered);
 		g_object_unref (filtered);
 		
 		memset (digest, 0, 16);
-		g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) filter, digest);
+		g_mime_filter_checksum_get_digest ((GMimeFilterChecksum *) filter, digest, 16);
 		g_object_unref (filter);
 		
 		len = g_mime_encoding_base64_encode_close (digest, 16, b64digest, &state, &save);
@@ -680,7 +680,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	size_t len;
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
-	g_return_val_if_fail (mime_part->content != NULL, FALSE);
+	g_return_val_if_fail (GMIME_IS_DATA_WRAPPER (mime_part->content), FALSE);
 	
 	if (!mime_part->content_md5)
 		return FALSE;
@@ -696,14 +696,14 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 		g_object_unref (filter);
 	}
 	
-	filter = g_mime_filter_md5_new ();
+	filter = g_mime_filter_checksum_new (G_CHECKSUM_MD5);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	
 	g_mime_data_wrapper_write_to_stream (mime_part->content, filtered);
 	g_object_unref (filtered);
 	
 	memset (digest, 0, 16);
-	g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) filter, digest);
+	g_mime_filter_checksum_get_digest ((GMimeFilterChecksum *) filter, digest, 16);
 	g_object_unref (filter);
 	
 	len = g_mime_encoding_base64_encode_close (digest, 16, b64digest, &state, &save);

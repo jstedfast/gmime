@@ -23,21 +23,21 @@
 #include <config.h>
 #endif
 
-#include "gmime-filter-md5.h"
+#include "gmime-filter-checksum.h"
 
 
 /**
- * SECTION: gmime-filter-md5
- * @title: GMimeFilterMd5
- * @short_description: Calculate an md5sum
+ * SECTION: gmime-filter-checksum
+ * @title: GMimeFilterChecksum
+ * @short_description: Calculate a checksum
  * @see_also: #GMimeFilter
  *
- * Calculate an md5sum for a stream.
+ * Calculate a checksum for a stream.
  **/
 
-static void g_mime_filter_md5_class_init (GMimeFilterMd5Class *klass);
-static void g_mime_filter_md5_init (GMimeFilterMd5 *filter, GMimeFilterMd5Class *klass);
-static void g_mime_filter_md5_finalize (GObject *object);
+static void g_mime_filter_checksum_class_init (GMimeFilterChecksumClass *klass);
+static void g_mime_filter_checksum_init (GMimeFilterChecksum *filter, GMimeFilterChecksumClass *klass);
+static void g_mime_filter_checksum_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
 static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
@@ -51,24 +51,24 @@ static GMimeFilterClass *parent_class = NULL;
 
 
 GType
-g_mime_filter_md5_get_type (void)
+g_mime_filter_checksum_get_type (void)
 {
 	static GType type = 0;
 	
 	if (!type) {
 		static const GTypeInfo info = {
-			sizeof (GMimeFilterMd5Class),
+			sizeof (GMimeFilterChecksumClass),
 			NULL, /* base_class_init */
 			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_md5_class_init,
+			(GClassInitFunc) g_mime_filter_checksum_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
-			sizeof (GMimeFilterMd5),
+			sizeof (GMimeFilterChecksum),
 			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_md5_init,
+			(GInstanceInitFunc) g_mime_filter_checksum_init,
 		};
 		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterMd5", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterChecksum", &info, 0);
 	}
 	
 	return type;
@@ -76,14 +76,14 @@ g_mime_filter_md5_get_type (void)
 
 
 static void
-g_mime_filter_md5_class_init (GMimeFilterMd5Class *klass)
+g_mime_filter_checksum_class_init (GMimeFilterChecksumClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
 	
-	object_class->finalize = g_mime_filter_md5_finalize;
+	object_class->finalize = g_mime_filter_checksum_finalize;
 	
 	filter_class->copy = filter_copy;
 	filter_class->filter = filter_filter;
@@ -92,17 +92,18 @@ g_mime_filter_md5_class_init (GMimeFilterMd5Class *klass)
 }
 
 static void
-g_mime_filter_md5_init (GMimeFilterMd5 *filter, GMimeFilterMd5Class *klass)
+g_mime_filter_checksum_init (GMimeFilterChecksum *filter, GMimeFilterChecksumClass *klass)
 {
-	filter->md5 = g_checksum_new (G_CHECKSUM_MD5);
+	filter->checksum = NULL;
 }
 
 static void
-g_mime_filter_md5_finalize (GObject *object)
+g_mime_filter_checksum_finalize (GObject *object)
 {
-	GMimeFilterMd5 *filter = (GMimeFilterMd5 *) object;
+	GMimeFilterChecksum *filter = (GMimeFilterChecksum *) object;
 	
-	g_checksum_free (filter->md5);
+	if (filter->checksum)
+		g_checksum_free (filter->checksum);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -111,7 +112,13 @@ g_mime_filter_md5_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	return g_mime_filter_md5_new ();
+	GChecksum *checksum = ((GMimeFilterChecksum *) filter)->checksum;
+	GMimeFilterChecksum *copy;
+	
+	copy = g_object_newv (GMIME_TYPE_FILTER_CHECKSUM, 0, NULL);
+	copy->checksum = checksum ? g_checksum_copy (checksum) : NULL;
+	
+	return (GMimeFilter *) copy;
 }
 
 
@@ -119,9 +126,9 @@ static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	GChecksum *md5 = ((GMimeFilterMd5 *) filter)->md5;
+	GChecksum *checksum = ((GMimeFilterChecksum *) filter)->checksum;
 	
-	g_checksum_update (md5, (unsigned char *) in, len);
+	g_checksum_update (checksum, (unsigned char *) in, len);
 	
 	*out = in;
 	*outlen = len;
@@ -138,39 +145,48 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GChecksum *md5 = ((GMimeFilterMd5 *) filter)->md5;
+	GChecksum *checksum = ((GMimeFilterChecksum *) filter)->checksum;
 	
-	g_checksum_reset (md5);
+	g_checksum_reset (checksum);
 }
 
 
 /**
- * g_mime_filter_md5_new:
+ * g_mime_filter_checksum_new:
+ * @type: the type of checksum
  *
- * Creates a new Md5 filter.
+ * Creates a new checksum filter.
  *
- * Returns: a new Md5 filter.
+ * Returns: a new #GMimeFilterChecksum filter.
  **/
 GMimeFilter *
-g_mime_filter_md5_new (void)
+g_mime_filter_checksum_new (GChecksumType type)
 {
-	return g_object_newv (GMIME_TYPE_FILTER_MD5, 0, NULL);
+	GMimeFilterChecksum *checksum;
+	
+	checksum = g_object_newv (GMIME_TYPE_FILTER_CHECKSUM, 0, NULL);
+	checksum->checksum = g_checksum_new (type);
+	
+	return (GMimeFilter *) checksum;
 }
 
 
 /**
- * g_mime_filter_md5_get_digest:
- * @md5: md5 filter object
- * @digest: output buffer of at least 16 bytes
+ * g_mime_filter_checksum_get_digest:
+ * @checksum: checksum filter object
+ * @digest: the digest buffer
+ * @len: the length of the digest buffer
  *
- * Outputs the md5 digest into @digest.
+ * Outputs the checksum digest into @digest.
+ *
+ * Returns: the number of bytes used of the @digest buffer.
  **/
-void
-g_mime_filter_md5_get_digest (GMimeFilterMd5 *md5, unsigned char digest[16])
+size_t
+g_mime_filter_checksum_get_digest (GMimeFilterChecksum *checksum, unsigned char *digest, size_t len)
 {
-	gsize len = 16;
+	g_return_val_if_fail (GMIME_IS_FILTER_CHECKSUM (checksum), 0);
 	
-	g_return_if_fail (GMIME_IS_FILTER_MD5 (md5));
+	g_checksum_get_digest (checksum->checksum, digest, &len);
 	
-	g_checksum_get_digest (md5->md5, digest, &len);
+	return len;
 }

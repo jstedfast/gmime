@@ -473,22 +473,22 @@ GMIME_FILTER_HTML_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>gmime-filter-md5</FILE>
-GMimeFilterMd5
-g_mime_filter_md5_new
-g_mime_filter_md5_get_digest
+<FILE>gmime-filter-checksum</FILE>
+GMimeFilterChecksum
+g_mime_filter_checksum_new
+g_mime_filter_checksum_get_digest
 
 <SUBSECTION Private>
-g_mime_filter_md5_get_type
+g_mime_filter_checksum_get_type
 
 <SUBSECTION Standard>
-GMimeFilterMd5Class
-GMIME_TYPE_FILTER_MD5
-GMIME_FILTER_MD5
-GMIME_IS_FILTER_MD5
-GMIME_FILTER_MD5_CLASS
-GMIME_IS_FILTER_MD5_CLASS
-GMIME_FILTER_MD5_GET_CLASS
+GMimeFilterChecksumClass
+GMIME_TYPE_FILTER_CHECKSUM
+GMIME_FILTER_CHECKSUM
+GMIME_IS_FILTER_CHECKSUM
+GMIME_FILTER_CHECKSUM_CLASS
+GMIME_IS_FILTER_CHECKSUM_CLASS
+GMIME_FILTER_CHECKSUM_GET_CLASS
 </SECTION>
 
 <SECTION>

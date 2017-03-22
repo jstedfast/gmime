@@ -57,8 +57,9 @@
       <listitem><para><function>g_mime_part_set_content_object()</function> has been renamed to <function>g_mime_part_set_content()</function>.</para></listitem>
       <listitem><para><function>g_mime_parser_get_scan_from()</function> and <function>g_mime_parser_set_scan_from()</function> have been replaced by <function>g_mime_parser_get_format()</function> and <function>g_mime_parser_get_format()</function> which take a GMimeFormat argument.</para></listitem>
       <listitem><para><function>g_mime_parser_get_from()</function> has been renamed to <function>g_mime_parser_get_mbox_marker()</function>.</para></listitem>
-      <likstitem><para><function>g_mime_parser_get_from_offset()</function> has been renamed to <function>g_mime_parser_get_mbox_marker_offset()</function>.</para></listitem>
+      <listitem><para><function>g_mime_parser_get_from_offset()</function> has been renamed to <function>g_mime_parser_get_mbox_marker_offset()</function>.</para></listitem>
       <listitem><para><function>g_mime_parser_construct_message()</function> and <function>g_mime_parser_construct_part()</function> now take a GMimeParserOptions argument.</para></listitem>
+      <listitem><para>Renamed GMimeFilterMd5 to GMimeFilterChecksum.</para></listitem>
     </itemizedlist>
   </refsect1>
 </refentry>

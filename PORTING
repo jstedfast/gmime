@@ -146,6 +146,8 @@ Porting from GMime 2.6 to GMime 3.0
 
 - g_mime_parser_construct_[part,message]() now take a GMimeParserOptions argument.
 
+- Renamed GMimeFilterMd5 to GMimeFilterChecksum.
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

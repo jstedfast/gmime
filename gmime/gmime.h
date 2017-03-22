@@ -64,13 +64,13 @@
 #include <gmime/gmime-filter-basic.h>
 #include <gmime/gmime-filter-best.h>
 #include <gmime/gmime-filter-charset.h>
+#include <gmime/gmime-filter-checksum.h>
 #include <gmime/gmime-filter-crlf.h>
 #include <gmime/gmime-filter-dos2unix.h>
 #include <gmime/gmime-filter-enriched.h>
 #include <gmime/gmime-filter-from.h>
 #include <gmime/gmime-filter-gzip.h>
 #include <gmime/gmime-filter-html.h>
-#include <gmime/gmime-filter-md5.h>
 #include <gmime/gmime-filter-strip.h>
 #include <gmime/gmime-filter-unix2dos.h>
 #include <gmime/gmime-filter-windows.h>
