@@ -206,7 +206,7 @@ int main (int argc, char **argv)
 	printf ("#define CHARS_ATTRCHAR \"*'%% \"              /* attribute-char from rfc2184 */\n");
 	printf ("\n");
 	
-	printf ("#define GMIME_FOLD_LEN 76\n");
+	printf ("#define GMIME_FOLD_LEN 78\n");
 	
 	return 0;
 }
