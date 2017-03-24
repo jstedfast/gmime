@@ -45,13 +45,13 @@
 <!ENTITY GMimeFilterBasic SYSTEM "xml/gmime-filter-basic.xml">
 <!ENTITY GMimeFilterBest SYSTEM "xml/gmime-filter-best.xml">
 <!ENTITY GMimeFilterCharset SYSTEM "xml/gmime-filter-charset.xml">
-<!ENTITY GMimeFilterCRLF SYSTEM "xml/gmime-filter-crlf.xml">
 <!ENTITY GMimeFilterDos2Unix SYSTEM "xml/gmime-filter-dos2unix.xml">
 <!ENTITY GMimeFilterEnriched SYSTEM "xml/gmime-filter-enriched.xml">
 <!ENTITY GMimeFilterFrom SYSTEM "xml/gmime-filter-from.xml">
 <!ENTITY GMimeFilterGZip SYSTEM "xml/gmime-filter-gzip.xml">
 <!ENTITY GMimeFilterHTML SYSTEM "xml/gmime-filter-html.xml">
 <!ENTITY GMimeFilterMd5 SYSTEM "xml/gmime-filter-md5.xml">
+<!ENTITY GMimeFilterSmtpData SYSTEM "xml/gmime-filter-smtp-data.xml">
 <!ENTITY GMimeFilterStrip SYSTEM "xml/gmime-filter-strip.xml">
 <!ENTITY GMimeFilterUnix2Dos SYSTEM "xml/gmime-filter-unix2dos.xml">
 <!ENTITY GMimeFilterWindows SYSTEM "xml/gmime-filter-windows.xml">
@@ -209,13 +209,13 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterBasic;
       &GMimeFilterBest;
       &GMimeFilterCharset;
-      &GMimeFilterCRLF;
       &GMimeFilterDos2Unix;
       &GMimeFilterEnriched;
       &GMimeFilterFrom;
       &GMimeFilterGZip;
       &GMimeFilterHTML;
       &GMimeFilterMd5;
+      &GMimeFilterSmtpData;
       &GMimeFilterStrip;
       &GMimeFilterUnix2Dos;
       &GMimeFilterWindows;
