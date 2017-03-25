@@ -336,8 +336,8 @@ message_partial_message_new (GMimeMessage *base)
 	
 	for (i = 0; i < count; i++) {
 		header = g_mime_header_list_get_header_at (headers, i);
-		raw_value = _g_mime_header_get_raw_value (header);
-		raw_name = _g_mime_header_get_raw_name (header);
+		raw_value = g_mime_header_get_raw_value (header);
+		raw_name = g_mime_header_get_raw_name (header);
 		offset = g_mime_header_get_offset (header);
 		value = g_mime_header_get_value (header);
 		name = g_mime_header_get_name (header);

@@ -207,14 +207,18 @@ g_mime_header_set_value (GMimeHeader *header, const char *value)
  * g_mime_header_get_raw_name:
  * @header: a #GMimeHeader
  *
- * Gets the header's raw name.
+ * Gets the header's raw name. The raw header name is the complete string up to
+ * (but not including) the ':' separating the header's name from its value. This
+ * string may be different from the value returned by g_mime_header_get_name()
+ * if the parsed message's header contained trailing whitespace after the header
+ * name, such as: "Subject : this is the subject\r\n".
  *
- * Returns: the header name.
+ * Returns: the raw header name.
  **/
 const char *
-_g_mime_header_get_raw_name (GMimeHeader *header)
+g_mime_header_get_raw_name (GMimeHeader *header)
 {
-	//g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
+	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
 	return header->raw_name;
 }
@@ -229,9 +233,9 @@ _g_mime_header_get_raw_name (GMimeHeader *header)
  * Returns: the header value or %NULL if invalid.
  **/
 const char *
-_g_mime_header_get_raw_value (GMimeHeader *header)
+g_mime_header_get_raw_value (GMimeHeader *header)
 {
-	//g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
+	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
 	return header->raw_value;
 }

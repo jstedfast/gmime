@@ -95,9 +95,12 @@ struct _GMimeHeaderClass {
 GType g_mime_header_get_type (void);
 
 const char *g_mime_header_get_name (GMimeHeader *header);
+const char *g_mime_header_get_raw_name (GMimeHeader *header);
 
 const char *g_mime_header_get_value (GMimeHeader *header);
 void g_mime_header_set_value (GMimeHeader *header, const char *value);
+
+const char *g_mime_header_get_raw_value (GMimeHeader *header);
 
 gint64 g_mime_header_get_offset (GMimeHeader *header);
 

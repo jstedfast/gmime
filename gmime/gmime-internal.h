@@ -53,8 +53,6 @@ G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_parser_options_clone (GMimeParserOptions *options);
 
 /* GMimeHeader */
-G_GNUC_INTERNAL const char *_g_mime_header_get_raw_name (GMimeHeader *header);
-G_GNUC_INTERNAL const char *_g_mime_header_get_raw_value (GMimeHeader *header);
 G_GNUC_INTERNAL void _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
 G_GNUC_INTERNAL void _g_mime_header_set_offset (GMimeHeader *header, gint64 offset);
 
