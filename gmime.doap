@@ -6,6 +6,7 @@
 
   <name xml:lang="en">GMime</name>
   <shortdesc xml:lang="en">Glorious MIME Utility Library</shortdesc>
+  <description>GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose Internet Mail Extension (MIME) as defined by numerous IETF specifications.</description>
   <homepage rdf:resource="https://github.com/jstedfast/gmime" />
   <mailing-list rdf:resource="http://mail.gnome.org/mailman/listinfo/gmime-devel-list" />
   <category rdf:resource="http://api.gnome.org/doap-extensions#core" />
