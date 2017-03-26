@@ -68,10 +68,11 @@ header_list_new (void)
 static void
 test_indexing (void)
 {
-	const char *name, *value;
+	const char *name, *value, *raw_value;
 	GMimeHeaderList *list;
 	GMimeHeader *header;
 	int index, count;
+	size_t len;
 	
 	list = header_list_new ();
 	
@@ -89,7 +90,15 @@ test_indexing (void)
 			
 			if (strcmp (initial[index].name, name) != 0 ||
 			    strcmp (initial[index].value, value) != 0)
-				throw (exception_new ("resulted in unexpected header"));
+				throw (exception_new ("resulted in unexpected value"));
+			
+			if (!(raw_value = g_mime_header_get_raw_value (header)))
+				throw (exception_new ("null raw value"));
+			
+			len = strlen (raw_value);
+			if (raw_value[len - 1] != '\n')
+				throw (exception_new ("raw value does not end with a \\n"));
+			
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("next iter[%d]: %s", index, ex->message);
@@ -225,12 +234,12 @@ test_remove_at (void)
 static void
 test_content_type_sync (void)
 {
+	const char *raw_value, *value;
 	GMimeHeaderList *headers;
 	GMimeContentType *type;
 	GMimeParamList *params;
 	GMimeObject *object;
 	GMimeHeader *header;
-	const char *value;
 	GMimePart *part;
 	
 	object = (GMimeObject *) (part = g_mime_part_new ());
@@ -253,6 +262,11 @@ test_content_type_sync (void)
 			throw (exception_new ("content-type header was unexpectedly null after changing type"));
 		if (strcmp ("text/octet-stream", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after changing type"));
+		header = g_mime_header_list_get_header (headers, "Content-Type");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-type raw_value was unexpectedly null after changing type"));
+		if (strcmp (" text/octet-stream\n", raw_value) != 0)
+			throw (exception_new ("content-type raw_value had unexpected value after changing type"));
 		
 		/* now change the content-type's media subtype... */
 		g_mime_content_type_set_media_subtype (type, "plain");
@@ -260,6 +274,11 @@ test_content_type_sync (void)
 			throw (exception_new ("content-type header was unexpectedly null after changing subtype"));
 		if (strcmp ("text/plain", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after changing subtype"));
+		header = g_mime_header_list_get_header (headers, "Content-Type");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-type raw_value was unexpectedly null after changing subtype"));
+		if (strcmp (" text/plain\n", raw_value) != 0)
+			throw (exception_new ("content-type raw_value had unexpected value after changing subtype"));
 		
 		/* now change the content-type's parameters by setting a param */
 		g_mime_content_type_set_parameter (type, "format", "flowed");
@@ -267,6 +286,11 @@ test_content_type_sync (void)
 			throw (exception_new ("content-type header was unexpectedly null after setting a param"));
 		if (strcmp ("text/plain; format=flowed", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after setting a param"));
+		header = g_mime_header_list_get_header (headers, "Content-Type");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-type raw_value was unexpectedly null after setting a param"));
+		if (strcmp (" text/plain; format=flowed\n", raw_value) != 0)
+			throw (exception_new ("content-type raw_value had unexpected value after setting a param"));
 		
 		/* now change the content-type's parameters by clearing the params */
 		params = g_mime_content_type_get_parameters (type);
@@ -274,7 +298,12 @@ test_content_type_sync (void)
 		if (!(value = g_mime_object_get_header (object, "Content-Type")))
 			throw (exception_new ("content-type header was unexpectedly null after clearing params"));
 		if (strcmp ("text/plain", value) != 0)
-			throw (exception_new ("content-type header had unexpected value after setting params"));
+			throw (exception_new ("content-type header had unexpected value after clearing params"));
+		header = g_mime_header_list_get_header (headers, "Content-Type");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-type raw_value was unexpectedly null after clearing params"));
+		if (strcmp (" text/plain\n", raw_value) != 0)
+			throw (exception_new ("content-type raw_value had unexpected value after clearing params"));
 		
 		/* let's try this in reverse... set the header value and make sure GMimeContentType gets updated */
 		header = g_mime_header_list_get_header_at (headers, 0);
@@ -282,6 +311,11 @@ test_content_type_sync (void)
 		type = g_mime_object_get_content_type (object);
 		if (!g_mime_content_type_is_type (type, "text", "html"))
 			throw (exception_new ("GMimeContentType object was not updated"));
+		header = g_mime_header_list_get_header (headers, "Content-Type");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-type raw_value was unexpectedly null after setting value"));
+		if (strcmp (" text/html; charset=utf-8\n", raw_value) != 0)
+			throw (exception_new ("content-type raw_value had unexpected value after setting value"));
 		
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -295,11 +329,11 @@ static void
 test_disposition_sync (void)
 {
 	GMimeContentDisposition *disposition;
+	const char *raw_value, *value;
 	GMimeHeaderList *headers;
 	GMimeParamList *params;
 	GMimeObject *object;
 	GMimeHeader *header;
-	const char *value;
 	GMimePart *part;
 	
 	object = (GMimeObject *) (part = g_mime_part_new ());
@@ -313,9 +347,13 @@ test_disposition_sync (void)
 		 * value is "application/octet-stream" as expected */
 		if (!(value = g_mime_object_get_header (object, "Content-Disposition")))
 			throw (exception_new ("initial content-disposition header was unexpectedly null"));
-		
 		if (strcmp ("attachment", value) != 0)
 			throw (exception_new ("initial content-disposition header had unexpected value: %s", value));
+		header = g_mime_header_list_get_header (headers, "Content-Disposition");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("initial content-disposition raw_value was unexpectedly null"));
+		if (strcmp (" attachment\n", raw_value) != 0)
+			throw (exception_new ("initial content-disposition raw_value had unexpected value: %s", raw_value));
 		
 		/* now change the content-disposition's disposition */
 		disposition = g_mime_object_get_content_disposition (object);
@@ -324,6 +362,11 @@ test_disposition_sync (void)
 			throw (exception_new ("content-disposition header was unexpectedly null after changing type"));
 		if (strcmp ("inline", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after changing type"));
+		header = g_mime_header_list_get_header (headers, "Content-Disposition");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-disposition raw_value was unexpectedly null after changing type"));
+		if (strcmp (" inline\n", raw_value) != 0)
+			throw (exception_new ("content-disposition raw_value had unexpected value after changing type: %s", raw_value));
 		
 		/* now change the content-disposition's parameters by setting a param */
 		g_mime_content_disposition_set_parameter (disposition, "filename", "hello.txt");
@@ -331,14 +374,24 @@ test_disposition_sync (void)
 			throw (exception_new ("content-disposition header was unexpectedly null after setting a param"));
 		if (strcmp ("inline; filename=hello.txt", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after setting a param"));
+		header = g_mime_header_list_get_header (headers, "Content-Disposition");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-disposition raw_value was unexpectedly null after setting a param"));
+		if (strcmp (" inline; filename=hello.txt\n", raw_value) != 0)
+			throw (exception_new ("content-disposition raw_value had unexpected value after setting a param: %s", raw_value));
 		
 		/* now change the content-disposition's parameters by clearing the params */
 		params = g_mime_content_disposition_get_parameters (disposition);
 		g_mime_param_list_clear (params);
 		if (!(value = g_mime_object_get_header (object, "Content-Disposition")))
-			throw (exception_new ("content-disposition header was unexpectedly null after setting params"));
+			throw (exception_new ("content-disposition header was unexpectedly null after clearing params"));
 		if (strcmp ("inline", value) != 0)
-			throw (exception_new ("content-disposition header had unexpected value after setting params"));
+			throw (exception_new ("content-disposition header had unexpected value after clearing params"));
+		header = g_mime_header_list_get_header (headers, "Content-Disposition");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-disposition raw_value was unexpectedly null after clearing params"));
+		if (strcmp (" inline\n", raw_value) != 0)
+			throw (exception_new ("content-disposition raw_value had unexpected value after clearing params: %s", raw_value));
 		
 		/* let's try this in reverse... set the header value and make sure GMimeContentDisposition gets updated */
 		header = g_mime_header_list_get_header_at (headers, 1);
@@ -346,6 +399,11 @@ test_disposition_sync (void)
 		disposition = g_mime_object_get_content_disposition (object);
 		if (!g_mime_content_disposition_is_attachment (disposition))
 			throw (exception_new ("GMimeContentDisposition object was not updated"));
+		header = g_mime_header_list_get_header (headers, "Content-Disposition");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("content-disposition raw_value was unexpectedly null after setting value"));
+		if (strcmp (" attachment; filename=xyz\n", raw_value) != 0)
+			throw (exception_new ("content-disposition raw_value had unexpected value after setting value: %s", raw_value));
 		
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -358,17 +416,19 @@ test_disposition_sync (void)
 static void
 test_address_sync (void)
 {
+	const char *raw_value, *value;
 	InternetAddress *addr, *ia;
 	InternetAddressList *list;
 	GMimeHeaderList *headers;
 	GMimeParamList *params;
 	GMimeMessage *message;
 	GMimeObject *object;
-	const char *value;
+	GMimeHeader *header;
 	
 	message = g_mime_message_new (TRUE);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
 	object = (GMimeObject *) message;
+	headers = object->headers;
 	
 	testsuite_check ("address header synchronization");
 	try {
@@ -378,7 +438,11 @@ test_address_sync (void)
 		
 		/* now check that the initial header value is null */
 		if ((value = g_mime_object_get_header (object, "To")) != NULL)
-			throw (exception_new ("unexpected initial address list header"));
+			throw (exception_new ("unexpected initial value"));
+		
+		header = g_mime_header_list_get_header (headers, "To");
+		if ((raw_value = g_mime_header_get_raw_value (header)) != NULL)
+			throw (exception_new ("unexpected initial raw_value"));
 		
 		/* now try adding an address */
 		addr = internet_address_mailbox_new ("Tester", "tester@localhost.com");
@@ -386,26 +450,37 @@ test_address_sync (void)
 		
 		if (!(value = g_mime_object_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after adding recipient"));
-		
 		if (strcmp ("Tester <tester@localhost.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after adding recipient"));
+		header = g_mime_header_list_get_header (headers, "To");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("raw_value is null after adding recipient"));
+		if (strcmp (" Tester <tester@localhost.com>\n", raw_value) != 0)
+			throw (exception_new ("unexpected raw_value after adding recipient: %s", raw_value));
 		
 		/* now let's try changing the address name to make sure signals properly chain up */
 		internet_address_set_name (addr, "Eva Lucy-Ann Tester");
 		if (!(value = g_mime_object_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after changing name"));
-		
 		if (strcmp ("Eva Lucy-Ann Tester <tester@localhost.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after changing name: %s", value));
+		header = g_mime_header_list_get_header (headers, "To");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("raw_value is null after changing name"));
+		if (strcmp (" Eva Lucy-Ann Tester <tester@localhost.com>\n", raw_value) != 0)
+			throw (exception_new ("unexpected raw_value after changing name"));
 		
 		/* now let's try changing the address mailbox... */
-		internet_address_mailbox_set_addr ((InternetAddressMailbox *) addr,
-						   "evalucyann@ximian.com");
+		internet_address_mailbox_set_addr ((InternetAddressMailbox *) addr, "evalucyann@ximian.com");
 		if (!(value = g_mime_object_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after changing mailbox"));
-		
 		if (strcmp ("Eva Lucy-Ann Tester <evalucyann@ximian.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after changing mailbox"));
+		header = g_mime_header_list_get_header (headers, "To");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("raw_value is null after changing mailbox"));
+		if (strcmp (" Eva Lucy-Ann Tester <evalucyann@ximian.com>\n", raw_value) != 0)
+			throw (exception_new ("unexpected raw_value after changing mailbox"));
 		
 		/* now let's try inserting a group address */
 		g_object_unref (addr);
@@ -414,26 +489,55 @@ test_address_sync (void)
 		
 		if (!(value = g_mime_object_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after inserting group"));
-		
 		if (strcmp ("Group: ;, Eva Lucy-Ann Tester <evalucyann@ximian.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after inserting group"));
+		header = g_mime_header_list_get_header (headers, "To");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("raw_value is null after inserting group"));
+		if (strcmp (" Group: ;, Eva Lucy-Ann Tester <evalucyann@ximian.com>\n", raw_value) != 0)
+			throw (exception_new ("unexpected raw_value after inserting group"));
 		
 		/* now let's try removing the original recipient */
 		internet_address_list_remove_at (list, 1);
 		if (!(value = g_mime_object_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after removing recipient"));
-		
 		if (strcmp ("Group: ;", value) != 0)
 			throw (exception_new ("unexpected address list header after removing recipient"));
+		header = g_mime_header_list_get_header (headers, "To");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("raw_value is null after removing recipient"));
+		if (strcmp (" Group: ;\n", raw_value) != 0)
+			throw (exception_new ("unexpected raw_value after removing recipient"));
 		
 		/* now let's try adding an address to the group... */
 		ia = internet_address_mailbox_new ("Tester", "tester@hotmail.com");
 		internet_address_list_add (((InternetAddressGroup *) addr)->members, ia);
 		if (!(value = g_mime_object_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after adding addr to group"));
-		
 		if (strcmp ("Group: Tester <tester@hotmail.com>;", value) != 0)
 			throw (exception_new ("unexpected address list header after adding addr to group"));
+		header = g_mime_header_list_get_header (headers, "To");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("raw_value is null after adding addr to group"));
+		if (strcmp (" Group: Tester <tester@hotmail.com>;\n", raw_value) != 0)
+			throw (exception_new ("unexpected raw_value after adding addr to group"));
+		
+		/* let's try this in reverse... set the header value and make sure InternetAddressList gets updated */
+		g_mime_object_set_header (object, "To", "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)", NULL);
+		if (internet_address_list_length (list) != 1)
+			throw (exception_new ("unexpected number of addresses in addrlist after setting header value"));
+		ia = internet_address_list_get_address (list, 0);
+		value = internet_address_get_name (ia);
+		if (strcmp ("Fran\xc3\xa7ois Pons", value) != 0)
+			throw (exception_new ("unexpected name after setting header value"));
+		value = internet_address_mailbox_get_addr ((InternetAddressMailbox *) ia);
+		if (strcmp ("fpons@mandrakesoft.com", value) != 0)
+			throw (exception_new ("unexpected addr after setting header value"));
+		header = g_mime_header_list_get_header (headers, "To");
+		if (!(raw_value = g_mime_header_get_raw_value (header)))
+			throw (exception_new ("raw_value is null after setting header value"));
+		if (strcmp (" =?iso-8859-1?q?Fran=E7ois?= Pons <fpons@mandrakesoft.com>\n", raw_value) != 0)
+			throw (exception_new ("unexpected raw_value after setting header value: %s", raw_value));
 		
 		testsuite_check_passed ();
 	} catch (ex) {

@@ -1281,12 +1281,18 @@ void
 internet_address_list_encode (InternetAddressList *list, GMimeFormatOptions *options, GString *str)
 {
 	guint32 flags = INTERNET_ADDRESS_ENCODE | INTERNET_ADDRESS_FOLD;
-	size_t linelen = str->len;
+	const char *newline;
+	size_t linelen;
 	
 	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
 	g_return_if_fail (str != NULL);
 	
+	newline = g_mime_format_options_get_newline (options);
+	linelen = str->len;
+	
 	_internet_address_list_to_string (list, options, flags, &linelen, str);
+	
+	g_string_append (str, newline);
 }
 
 
