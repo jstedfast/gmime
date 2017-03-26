@@ -135,12 +135,13 @@ time_t g_mime_signature_get_expires (GMimeSignature *sig);
 /**
  * GMimeSignatureList:
  * @parent_object: parent #GObject
- * @array: An array of #GMimeSignature objects.
  *
  * A collection of #GMimeSignature objects.
  **/
 struct _GMimeSignatureList {
 	GObject parent_object;
+	
+	/* < private > */
 	GPtrArray *array;
 };
 

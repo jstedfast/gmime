@@ -27,7 +27,7 @@
 
 
 /**
- * SECTION: gmime-filter-smtp_data
+ * SECTION: gmime-filter-smtp-data
  * @title: GMimeFilterSmtpData
  * @short_description: Byte-stuffs outgoing SMTP DATA.
  *

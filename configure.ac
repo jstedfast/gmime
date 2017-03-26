@@ -586,7 +586,7 @@ AS_IF([ test "x$enable_coverage" = "xyes"], [
     AC_MSG_ERROR([ccache must be disabled when --enable-coverage option is used. You can disable ccache by setting environment variable CCACHE_DISABLE=1.])
   fi
 
-  ltp_version_list="1.6 1.7 1.8 1.9 1.10"
+  ltp_version_list="1.6 1.7 1.8 1.9 1.10 1.11 1.12 1.13"
   AC_CHECK_PROG(LTP, lcov, lcov)
   AC_CHECK_PROG(LTP_GENHTML, genhtml, genhtml)
 
