@@ -190,7 +190,7 @@ create_message (GMimeObject *body)
 	g_object_unref (mailbox);
 	
 	g_mime_message_set_subject (message, "This is a test message", NULL);
-	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
+	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c", NULL);
 	g_mime_message_set_mime_part (message, body);
 	
 	stream = g_mime_stream_mem_new ();

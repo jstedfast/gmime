@@ -27,7 +27,10 @@
 #include <ctype.h>
 
 #include "gmime-stream-filter.h"
+#include "gmime-table-private.h"
+#include "gmime-parse-utils.h"
 #include "gmime-stream-mem.h"
+#include "internet-address.h"
 #include "gmime-internal.h"
 #include "gmime-common.h"
 #include "gmime-header.h"
@@ -44,6 +47,34 @@
  * A #GMimeHeader is a collection of rfc822 header fields and their
  * values.
  **/
+
+
+static struct {
+	const char *name;
+	GMimeHeaderRawValueFormatter formatter;
+} formatters[] = {
+	{ "Received",                    g_mime_header_format_received            },
+	{ "Sender",                      g_mime_header_format_addrlist            },
+	{ "From",                        g_mime_header_format_addrlist            },
+	{ "Reply-To",                    g_mime_header_format_addrlist            },
+	{ "To",                          g_mime_header_format_addrlist            },
+	{ "Cc",                          g_mime_header_format_addrlist            },
+	{ "Bcc",                         g_mime_header_format_addrlist            },
+	{ "Message-Id",                  g_mime_header_format_message_id          },
+	{ "In-Reply-To",                 g_mime_header_format_references          },
+	{ "References",                  g_mime_header_format_references          },
+	{ "Resent-Sender",               g_mime_header_format_addrlist            },
+	{ "Resent-From",                 g_mime_header_format_addrlist            },
+	{ "Resent-Reply-To",             g_mime_header_format_addrlist            },
+	{ "Resent-To",                   g_mime_header_format_addrlist            },
+	{ "Resent-Cc",                   g_mime_header_format_addrlist            },
+	{ "Resent-Bcc",                  g_mime_header_format_addrlist            },
+	{ "Resent-Message-Id",           g_mime_header_format_message_id          },
+	{ "Content-Type",                g_mime_header_format_content_type        },
+	{ "Content-Disposition",         g_mime_header_format_content_disposition },
+	{ "Content-Id",                  g_mime_header_format_message_id          },
+	{ "Disposition-Notification-To", g_mime_header_format_addrlist            },
+};
 
 
 static void g_mime_header_class_init (GMimeHeaderClass *klass);
@@ -91,6 +122,8 @@ static void
 g_mime_header_init (GMimeHeader *header, GMimeHeaderClass *klass)
 {
 	header->changed = g_mime_event_new (header);
+	header->formatter = NULL;
+	header->options = NULL;
 	header->raw_value = NULL;
 	header->raw_name = NULL;
 	header->value = NULL;
@@ -115,9 +148,11 @@ g_mime_header_finalize (GObject *object)
 
 /**
  * g_mime_header_new:
+ * @options: a #GMimeParserOptions
  * @name: header name
  * @value: header value
  * @raw_value: raw header value
+ * @charset: a charset
  * @offset: file/stream offset for the start of the header (or %-1 if unknown)
  *
  * Creates a new #GMimeHeader.
@@ -125,16 +160,32 @@ g_mime_header_finalize (GObject *object)
  * Returns: a new #GMimeHeader with the specified values.
  **/
 static GMimeHeader *
-g_mime_header_new (const char *name, const char *value, const char *raw_name, const char *raw_value, gint64 offset)
+g_mime_header_new (GMimeParserOptions *options, const char *name, const char *value,
+		   const char *raw_name, const char *raw_value, const char *charset,
+		   gint64 offset)
 {
+	GMimeHeaderRawValueFormatter formatter;
 	GMimeHeader *header;
+	guint i;
 	
 	header = g_object_newv (GMIME_TYPE_HEADER, 0, NULL);
 	header->raw_value = raw_value ? g_strdup (raw_value) : NULL;
+	header->value = value ? g_strdup (value) : NULL;
 	header->raw_name = g_strdup (raw_name);
-	header->value = g_strdup (value);
 	header->name = g_strdup (name);
+	header->options = options;
 	header->offset = offset;
+	
+	formatter = g_mime_header_format_default;
+	for (i = 0; i < G_N_ELEMENTS (formatters); i++) {
+		if (!g_ascii_strcasecmp (formatters[i].name, name)) {
+			formatter = header->formatter = formatters[i].formatter;
+			break;
+		}
+	}
+	
+	if (!raw_value && value)
+		header->raw_value = formatter (header, NULL, header->value, charset);
 	
 	return header;
 }
@@ -157,6 +208,37 @@ g_mime_header_get_name (GMimeHeader *header)
 }
 
 
+static char *
+unfold (const char *value)
+{
+	register const char *inptr = value;
+	const char *start, *inend;
+	char *str, *outptr;
+	
+	while (is_lwsp (*inptr))
+		inptr++;
+	
+	start = inptr;
+	while (*inptr) {
+		if (!is_lwsp (*inptr++))
+			inend = inptr;
+	}
+	
+	outptr = str = g_malloc ((size_t) (inend - start) + 1);
+	inptr = start;
+	
+	while (inptr < inend) {
+		if (*inptr != '\r' && *inptr != '\n')
+			*outptr++ = *inptr;
+		inptr++;
+	}
+	
+	*outptr = '\0';
+	
+	return str;
+}
+
+
 /**
  * g_mime_header_get_value:
  * @header: a #GMimeHeader
@@ -171,7 +253,15 @@ g_mime_header_get_name (GMimeHeader *header)
 const char *
 g_mime_header_get_value (GMimeHeader *header)
 {
+	char *buf;
+	
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
+	
+	if (!header->value && header->raw_value) {
+		buf = unfold (header->raw_value);
+		header->value = g_mime_utils_header_decode_text (header->options, buf);
+		g_free (buf);
+	}
 	
 	return header->value;
 }
@@ -180,24 +270,28 @@ g_mime_header_get_value (GMimeHeader *header)
 /**
  * g_mime_header_set_value:
  * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
  * @value: the new header value
+ * @charset: a charset
  *
  * Sets the header's value.
- *
- * Note: @value should be encoded with a function such as
- * g_mime_utils_header_encode_text().
  **/
 void
-g_mime_header_set_value (GMimeHeader *header, const char *value)
+g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
+	GMimeHeaderRawValueFormatter formatter;
+	char *buf;
+	
 	g_return_if_fail (GMIME_IS_HEADER (header));
 	g_return_if_fail (value != NULL);
 	
+	formatter = header->formatter ? header->formatter : g_mime_header_format_default;
+	buf = g_mime_strdup_trim (value);
 	g_free (header->raw_value);
-	header->raw_value = NULL;
-	
 	g_free (header->value);
-	header->value = g_strdup (value);
+	
+	header->raw_value = formatter (header, options, buf, charset);
+	header->value = buf;
 	
 	g_mime_event_emit (header->changed, NULL);
 }
@@ -207,14 +301,18 @@ g_mime_header_set_value (GMimeHeader *header, const char *value)
  * g_mime_header_get_raw_name:
  * @header: a #GMimeHeader
  *
- * Gets the header's raw name.
+ * Gets the header's raw name. The raw header name is the complete string up to
+ * (but not including) the ':' separating the header's name from its value. This
+ * string may be different from the value returned by g_mime_header_get_name()
+ * if the parsed message's header contained trailing whitespace after the header
+ * name, such as: "Subject : this is the subject\r\n".
  *
- * Returns: the header name.
+ * Returns: the raw header name.
  **/
 const char *
-_g_mime_header_get_raw_name (GMimeHeader *header)
+g_mime_header_get_raw_name (GMimeHeader *header)
 {
-	//g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
+	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
 	return header->raw_name;
 }
@@ -229,11 +327,24 @@ _g_mime_header_get_raw_name (GMimeHeader *header)
  * Returns: the header value or %NULL if invalid.
  **/
 const char *
-_g_mime_header_get_raw_value (GMimeHeader *header)
+g_mime_header_get_raw_value (GMimeHeader *header)
 {
-	//g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
+	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
 	return header->raw_value;
+}
+
+
+void
+_g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
+{
+	char *buf = g_strdup (raw_value);
+	
+	g_free (header->raw_value);
+	g_free (header->value);
+	
+	header->raw_value = buf;
+	header->value = NULL;
 }
 
 
@@ -245,13 +356,21 @@ _g_mime_header_get_raw_value (GMimeHeader *header)
  * Sets the header's raw value.
  **/
 void
-_g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
+g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
 {
-	//g_return_if_fail (GMIME_IS_HEADER (header));
-	//g_return_if_fail (raw_value != NULL);
+	char *buf;
 	
+	g_return_if_fail (GMIME_IS_HEADER (header));
+	g_return_if_fail (raw_value != NULL);
+	
+	buf = g_strdup (raw_value);
 	g_free (header->raw_value);
-	header->raw_value = g_strdup (raw_value);
+	g_free (header->value);
+	
+	header->raw_value = buf;
+	header->value = NULL;
+	
+	g_mime_event_emit (header->changed, NULL);
 }
 
 
@@ -278,24 +397,9 @@ _g_mime_header_set_offset (GMimeHeader *header, gint64 offset)
 	header->offset = offset;
 }
 
-static ssize_t
-default_writer (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeStream *stream,
-		const char *name, const char *value)
-{
-	ssize_t nwritten;
-	char *val;
-	
-	val = g_mime_utils_header_printf (options, format, "%s: %s\n", name, value);
-	nwritten = g_mime_stream_write_string (stream, val);
-	g_free (val);
-	
-	return nwritten;
-}
-
 
 /**
  * g_mime_header_write_to_stream:
- * @headers: the #GMimeHeaderList that contains @header
  * @header: a #GMimeHeader
  * @options: a #GMimeFormatOptions
  * @stream: a #GMimeStream
@@ -305,37 +409,453 @@ default_writer (GMimeParserOptions *options, GMimeFormatOptions *format, GMimeSt
  * Returns: the number of bytes written, or %-1 on fail.
  **/
 ssize_t
-g_mime_header_write_to_stream (GMimeHeaderList *headers, GMimeHeader *header,
-			       GMimeFormatOptions *options, GMimeStream *stream)
+g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	ssize_t nwritten, total = 0;
-	GMimeHeaderWriter writer;
 	char *val;
 	
-	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), -1);
 	g_return_val_if_fail (GMIME_IS_HEADER (header), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	if (header->raw_value) {
-		val = g_strdup_printf ("%s:%s", header->raw_name, header->raw_value);
-		nwritten = g_mime_stream_write_string (stream, val);
-		g_free (val);
-		
-		if (nwritten == -1)
-			return -1;
-		
-		total += nwritten;
-	} else if (header->value) {
-		if (!(writer = g_hash_table_lookup (headers->writers, header->name)))
-			writer = default_writer;
-		
-		if ((nwritten = writer (headers->options, options, stream, header->name, header->value)) == -1)
-			return -1;
-		
-		total += nwritten;
-	}
+	if (!header->raw_value)
+		return 0;
+	
+	val = g_strdup_printf ("%s:%s", header->raw_name, header->raw_value);
+	nwritten = g_mime_stream_write_string (stream, val);
+	g_free (val);
+	
+	if (nwritten == -1)
+		return -1;
+	
+	total += nwritten;
 	
 	return total;
+}
+
+
+char *
+g_mime_header_format_content_disposition (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	GMimeContentDisposition *disposition;
+	GString *str;
+	guint n;
+	
+	str = g_string_new (header->raw_name);
+	g_string_append_c (str, ':');
+	n = str->len;
+	
+	g_string_append_c (str, ' ');
+	
+	disposition = g_mime_content_disposition_parse (header->options, value);
+	g_string_append (str, disposition->disposition);
+	
+	g_mime_param_list_encode (disposition->params, options, TRUE, str);
+	g_object_unref (disposition);
+	
+	memmove (str->str, str->str + n, (str->len - n) + 1);
+	
+	return g_string_free (str, FALSE);
+}
+
+
+char *
+g_mime_header_format_content_type (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	GMimeContentType *content_type;
+	GString *str;
+	guint n;
+	
+	str = g_string_new (header->raw_name);
+	g_string_append_c (str, ':');
+	n = str->len;
+	
+	content_type = g_mime_content_type_parse (header->options, value);
+	
+	g_string_append_c (str, ' ');
+	g_string_append (str, content_type->type ? content_type->type : "text");
+	g_string_append_c (str, '/');
+	g_string_append (str, content_type->subtype ? content_type->subtype : "plain");
+	
+	g_mime_param_list_encode (content_type->params, options, TRUE, str);
+	g_object_unref (content_type);
+	
+	memmove (str->str, str->str + n, (str->len - n) + 1);
+	
+	return g_string_free (str, FALSE);
+}
+
+
+char *
+g_mime_header_format_message_id (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	const char *newline = g_mime_format_options_get_newline (options);
+	
+	return g_strdup_printf (" %s%s", value, newline);
+}
+
+
+char *
+g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	GMimeReferences *references, *reference;
+	const char *newline;
+	guint cur, len, n;
+	GString *str;
+	
+	/* Note: we don't want to break in the middle of msgid tokens as
+	   it seems to break a lot of clients (and servers) */
+	newline = g_mime_format_options_get_newline (options);
+	references = g_mime_references_decode (value);
+	str = g_string_new (header->raw_name);
+	g_string_append_c (str, ':');
+	cur = n = str->len;
+	
+	reference = references;
+	while (reference != NULL) {
+		len = strlen (reference->msgid);
+		if (cur > 1 && cur + len + 3 >= GMIME_FOLD_LEN) {
+			g_string_append (str, newline);
+			g_string_append_c (str, '\t');
+			cur = 1;
+		} else {
+			g_string_append_c (str, ' ');
+			cur++;
+		}
+		
+		g_string_append_c (str, '<');
+		g_string_append_len (str, reference->msgid, len);
+		g_string_append_c (str, '>');
+		cur += len + 2;
+		
+		reference = reference->next;
+	}
+	
+	g_mime_references_clear (&references);
+	
+	g_string_append (str, newline);
+	
+	memmove (str->str, str->str + n, (str->len - n) + 1);
+	
+	return g_string_free (str, FALSE);
+}
+
+
+char *
+g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	InternetAddressList *addrlist;
+	const char *newline;
+	GString *str;
+	guint n;
+	
+	newline = g_mime_format_options_get_newline (options);
+	str = g_string_new (header->raw_name);
+	g_string_append_c (str, ':');
+	n = str->len;
+	
+	g_string_append_c (str, ' ');
+	
+	if (value && (addrlist = internet_address_list_parse (header->options, value))) {
+		internet_address_list_encode (addrlist, options, str);
+		g_object_unref (addrlist);
+	}
+	
+	g_string_append (str, newline);
+	
+	memmove (str->str, str->str + n, (str->len - n) + 1);
+	
+	return g_string_free (str, FALSE);
+}
+
+
+typedef void (* token_skip_t) (const char **in);
+
+struct _received_token {
+	char *token;
+	size_t len;
+	token_skip_t skip;
+};
+
+static void skip_cfws_atom (const char **in);
+static void skip_domain    (const char **in);
+static void skip_addr      (const char **in);
+static void skip_msgid     (const char **in);
+
+static struct _received_token received_tokens[] = {
+	{ "from ", 5, skip_domain    },
+	{ "by ",   3, skip_domain    },
+	{ "via ",  4, skip_cfws_atom },
+	{ "with ", 5, skip_cfws_atom },
+	{ "id ",   3, skip_msgid     },
+	{ "for ",  4, skip_addr      }
+};
+
+static void
+skip_cfws_atom (const char **in)
+{
+	skip_cfws (in);
+	skip_atom (in);
+}
+
+static void
+skip_domain_subliteral (const char **in)
+{
+	const char *inptr = *in;
+	
+	while (*inptr && *inptr != '.' && *inptr != ']') {
+		if (is_dtext (*inptr)) {
+			inptr++;
+		} else if (is_lwsp (*inptr)) {
+			skip_cfws (&inptr);
+		} else {
+			break;
+		}
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_domain_literal (const char **in)
+{
+	const char *inptr = *in;
+	
+	skip_cfws (&inptr);
+	while (*inptr && *inptr != ']') {
+		skip_domain_subliteral (&inptr);
+		if (*inptr && *inptr != ']')
+			inptr++;
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_domain (const char **in)
+{
+	const char *save, *inptr = *in;
+	
+	while (inptr && *inptr) {
+		skip_cfws (&inptr);
+		if (*inptr == '[') {
+			/* domain literal */
+			inptr++;
+			skip_domain_literal (&inptr);
+			if (*inptr == ']')
+				inptr++;
+		} else {
+			skip_atom (&inptr);
+		}
+		
+		save = inptr;
+		skip_cfws (&inptr);
+		if (*inptr != '.') {
+			inptr = save;
+			break;
+		}
+		
+		inptr++;
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_addrspec (const char **in)
+{
+	const char *inptr = *in;
+	
+	skip_cfws (&inptr);
+	skip_word (&inptr);
+	skip_cfws (&inptr);
+	
+	while (*inptr == '.') {
+		inptr++;
+		skip_cfws (&inptr);
+		skip_word (&inptr);
+		skip_cfws (&inptr);
+	}
+	
+	if (*inptr == '@') {
+		inptr++;
+		skip_domain (&inptr);
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_addr (const char **in)
+{
+	const char *inptr = *in;
+	
+	skip_cfws (&inptr);
+	if (*inptr == '<') {
+		inptr++;
+		skip_addrspec (&inptr);
+		if (*inptr == '>')
+			inptr++;
+	} else {
+		skip_addrspec (&inptr);
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_msgid (const char **in)
+{
+	const char *inptr = *in;
+	
+	skip_cfws (&inptr);
+	if (*inptr == '<') {
+		inptr++;
+		skip_addrspec (&inptr);
+		if (*inptr == '>')
+			inptr++;
+	} else {
+		skip_atom (&inptr);
+	}
+	
+	*in = inptr;
+}
+
+struct _received_part {
+	struct _received_part *next;
+	const char *start;
+	size_t len;
+};
+
+
+
+char *
+g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	struct _received_part *parts, *part, *tail;
+	const char *inptr, *lwsp = NULL;
+	const char *newline;
+	guint len, n, i;
+	GString *str;
+	
+	newline = g_mime_format_options_get_newline (options);
+	
+	while (is_lwsp (*value))
+		value++;
+	
+	if (*value == '\0')
+		return g_strdup (newline);
+	
+	str = g_string_new (header->raw_name);
+	g_string_append_c (str, ':');
+	n = str->len;
+	
+	g_string_append_c (str, ' ');
+	len = str->len;
+	
+	tail = parts = part = g_alloca (sizeof (struct _received_part));
+	part->start = inptr = value;
+	part->next = NULL;
+	
+	while (*inptr) {
+		for (i = 0; i < G_N_ELEMENTS (received_tokens); i++) {
+			if (!strncmp (inptr, received_tokens[i].token, received_tokens[i].len)) {
+				if (inptr > part->start) {
+					g_assert (lwsp != NULL);
+					part->len = lwsp - part->start;
+					
+					part = g_alloca (sizeof (struct _received_part));
+					part->start = inptr;
+					part->next = NULL;
+					
+					tail->next = part;
+					tail = part;
+				}
+				
+				inptr += received_tokens[i].len;
+				received_tokens[i].skip (&inptr);
+				
+				lwsp = inptr;
+				while (is_lwsp (*inptr))
+					inptr++;
+				
+				if (*inptr == ';') {
+					inptr++;
+					
+					part->len = inptr - part->start;
+					
+					lwsp = inptr;
+					while (is_lwsp (*inptr))
+						inptr++;
+					
+					part = g_alloca (sizeof (struct _received_part));
+					part->start = inptr;
+					part->next = NULL;
+					
+					tail->next = part;
+					tail = part;
+				}
+				
+				break;
+			}
+		}
+		
+		if (i == G_N_ELEMENTS (received_tokens)) {
+			while (*inptr && !is_lwsp (*inptr))
+				inptr++;
+			
+			lwsp = inptr;
+			while (is_lwsp (*inptr))
+				inptr++;
+		}
+		
+		if (*inptr == '(') {
+			skip_comment (&inptr);
+			
+			lwsp = inptr;
+			while (is_lwsp (*inptr))
+				inptr++;
+		}
+	}
+	
+	part->len = lwsp - part->start;
+	
+	lwsp = NULL;
+	part = parts;
+	do {
+		len += lwsp ? part->start - lwsp : 0;
+		if (len + part->len > GMIME_FOLD_LEN && part != parts) {
+			g_string_append (str, newline);
+			g_string_append_c (str, '\t');
+			len = 1;
+		} else if (lwsp) {
+			g_string_append_len (str, lwsp, (size_t) (part->start - lwsp));
+		}
+		
+		g_string_append_len (str, part->start, part->len);
+		lwsp = part->start + part->len;
+		len += part->len;
+		
+		part = part->next;
+	} while (part != NULL);
+	
+	g_string_append (str, newline);
+	
+	memmove (str->str, str->str + n, (str->len - n) + 1);
+	
+	return g_string_free (str, FALSE);
+}
+
+
+char *
+g_mime_header_format_default (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	char *encoded, *raw_value;
+	
+	encoded = g_mime_utils_header_encode_text (options, value, charset);
+	raw_value = _g_mime_utils_unstructured_header_fold (header->options, options, header->raw_name, encoded);
+	g_free (encoded);
+	
+	return raw_value;
 }
 
 
@@ -397,9 +917,6 @@ g_mime_header_list_class_init (GMimeHeaderListClass *klass)
 static void
 g_mime_header_list_init (GMimeHeaderList *list, GMimeHeaderListClass *klass)
 {
-	list->writers = g_hash_table_new_full (g_mime_strcase_hash,
-					       g_mime_strcase_equal,
-					       g_free, NULL);
 	list->hash = g_hash_table_new (g_mime_strcase_hash,
 				       g_mime_strcase_equal);
 	list->changed = g_mime_event_new (list);
@@ -422,7 +939,6 @@ g_mime_header_list_finalize (GObject *object)
 	g_ptr_array_free (headers->array, TRUE);
 	
 	g_mime_parser_options_free (headers->options);
-	g_hash_table_destroy (headers->writers);
 	g_hash_table_destroy (headers->hash);
 	g_mime_event_free (headers->changed);
 	
@@ -539,16 +1055,29 @@ g_mime_header_list_contains (GMimeHeaderList *headers, const char *name)
 }
 
 
+/**
+ * g_mime_header_list_prepend:
+ * @headers: a #GMimeHeaderList
+ * @name: header name
+ * @value: header value
+ * @charset: a charset
+ *
+ * Prepends a header. If @value is %NULL, a space will be set aside
+ * for it (useful for setting the order of headers before values can
+ * be obtained for them) otherwise the header will be unset.
+ **/
 void
-_g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value,
-			     const char *raw_name, const char *raw_value, gint64 offset)
+g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *charset)
 {
 	GMimeHeaderListChangedEventArgs args;
 	unsigned char *dest, *src;
 	GMimeHeader *header;
 	guint n;
 	
-	header = g_mime_header_new (name, value, raw_name, raw_value, offset);
+	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
+	g_return_if_fail (name != NULL);
+	
+	header = g_mime_header_new (headers->options, name, value, name, NULL, charset, -1);
 	g_mime_event_add (header->changed, (GMimeEventCallback) header_changed, headers);
 	g_hash_table_replace (headers->hash, header->name, header);
 	
@@ -572,37 +1101,14 @@ _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const c
 }
 
 
-/**
- * g_mime_header_list_prepend:
- * @headers: a #GMimeHeaderList
- * @name: header name
- * @value: header value
- *
- * Prepends a header. If @value is %NULL, a space will be set aside
- * for it (useful for setting the order of headers before values can
- * be obtained for them) otherwise the header will be unset.
- *
- * Note: @value should be encoded with a function such as
- * g_mime_utils_header_encode_text().
- **/
 void
-g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value)
-{
-	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
-	g_return_if_fail (name != NULL);
-	
-	_g_mime_header_list_prepend (headers, name, value, name, NULL, -1);
-}
-
-
-void
-_g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value,
-			    const char *raw_name, const char *raw_value, gint64 offset)
+_g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *raw_name,
+			    const char *raw_value, gint64 offset)
 {
 	GMimeHeaderListChangedEventArgs args;
 	GMimeHeader *header;
 	
-	header = g_mime_header_new (name, value, raw_name, raw_value, offset);
+	header = g_mime_header_new (headers->options, name, NULL, raw_name, raw_value, NULL, offset);
 	g_mime_event_add (header->changed, (GMimeEventCallback) header_changed, headers);
 	g_ptr_array_add (headers->array, header);
 	
@@ -621,21 +1127,32 @@ _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const ch
  * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
+ * @charset: a charset
  *
  * Appends a header. If @value is %NULL, a space will be set aside for it
  * (useful for setting the order of headers before values can be
  * obtained for them) otherwise the header will be unset.
- *
- * Note: @value should be encoded with a function such as
- * g_mime_utils_header_encode_text().
  **/
 void
-g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value)
+g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *charset)
 {
+	GMimeHeaderListChangedEventArgs args;
+	GMimeHeader *header;
+	
 	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
 	g_return_if_fail (name != NULL);
 	
-	_g_mime_header_list_append (headers, name, value, name, NULL, -1);
+	header = g_mime_header_new (headers->options, name, value, name, NULL, charset, -1);
+	g_mime_event_add (header->changed, (GMimeEventCallback) header_changed, headers);
+	g_ptr_array_add (headers->array, header);
+	
+	if (!g_hash_table_lookup (headers->hash, name))
+		g_hash_table_insert (headers->hash, header->name, header);
+	
+	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_ADDED;
+	args.header = header;
+	
+	g_mime_event_emit (headers->changed, &args);
 }
 
 
@@ -661,24 +1178,17 @@ g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name)
 
 
 void
-_g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value,
-			 const char *raw_name, const char *raw_value, gint64 offset)
+_g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *raw_value)
 {
 	GMimeHeaderListChangedEventArgs args;
 	GMimeHeader *header, *hdr;
 	guint i;
 	
+	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
+	g_return_if_fail (name != NULL);
+	
 	if ((header = g_hash_table_lookup (headers->hash, name))) {
-		g_free (header->raw_value);
-		header->raw_value = raw_value ? g_strdup (raw_value) : NULL;
-		
-		g_free (header->raw_name);
-		header->raw_name = g_strdup (raw_name);
-		
-		g_free (header->value);
-		header->value = g_strdup (value);
-		
-		header->offset = offset;
+		g_mime_header_set_raw_value (header, raw_value);
 		
 		for (i = headers->array->len - 1; i > 0; i--) {
 			hdr = (GMimeHeader *) headers->array->pdata[i];
@@ -699,7 +1209,7 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
 		
 		g_mime_event_emit (headers->changed, &args);
 	} else {
-		_g_mime_header_list_append (headers, name, value, raw_name, raw_value, offset);
+		_g_mime_header_list_append (headers, name, name, raw_value, -1);
 	}
 }
 
@@ -709,6 +1219,7 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
  * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
+ * @charset: a charset
  *
  * Set the value of the specified header. If @value is %NULL and the
  * header, @name, had not been previously set, a space will be set
@@ -718,17 +1229,41 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
  * Note: If there are multiple headers with the specified field name,
  * the first instance of the header will be replaced and further
  * instances will be removed.
- *
- * Additionally, @value should be encoded with a function such as
- * g_mime_utils_header_encode_text().
  **/
 void
-g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value)
+g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *charset)
 {
+	GMimeHeaderListChangedEventArgs args;
+	GMimeHeader *header, *hdr;
+	guint i;
+	
 	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
 	g_return_if_fail (name != NULL);
 	
-	_g_mime_header_list_set (headers, name, value, name, NULL, -1);
+	if ((header = g_hash_table_lookup (headers->hash, name))) {
+		g_mime_header_set_value (header, NULL, value, charset);
+		
+		for (i = headers->array->len - 1; i > 0; i--) {
+			hdr = (GMimeHeader *) headers->array->pdata[i];
+			
+			if (hdr == header)
+				break;
+			
+			if (g_ascii_strcasecmp (header->name, hdr->name) != 0)
+				continue;
+			
+			g_mime_event_remove (hdr->changed, (GMimeEventCallback) header_changed, headers);
+			g_ptr_array_remove_index (headers->array, i);
+			g_object_unref (hdr);
+		}
+		
+		args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED;
+		args.header = header;
+		
+		g_mime_event_emit (headers->changed, &args);
+	} else {
+		g_mime_header_list_append (headers, name, value, charset);
+	}
 }
 
 
@@ -888,7 +1423,7 @@ g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions
 		header = (GMimeHeader *) headers->array->pdata[i];
 		
 		if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-			if ((nwritten = g_mime_header_write_to_stream (headers, header, options, filtered)) == -1)
+			if ((nwritten = g_mime_header_write_to_stream (header, options, filtered)) == -1)
 				return -1;
 			
 			total += nwritten;
@@ -932,29 +1467,4 @@ g_mime_header_list_to_string (GMimeHeaderList *headers, GMimeFormatOptions *opti
 	g_byte_array_free (array, FALSE);
 	
 	return str;
-}
-
-
-/**
- * g_mime_header_list_register_writer:
- * @headers: a #GMimeHeaderList
- * @name: header name
- * @writer: writer function
- *
- * Changes the function used to write @name headers to @writer (or the
- * default if @writer is %NULL). This is useful if you want to change
- * the default header folding style for a particular header.
- **/
-void
-g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer)
-{
-	gpointer okey, oval;
-	
-	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
-	g_return_if_fail (name != NULL);
-	
-	g_hash_table_remove (headers->writers, name);
-	
-	if (writer)
-		g_hash_table_insert (headers->writers, g_strdup (name), writer);
 }

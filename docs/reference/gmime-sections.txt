@@ -353,21 +353,21 @@ GMIME_FILTER_CHARSET_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>gmime-filter-crlf</FILE>
-GMimeFilterCRLF
-g_mime_filter_crlf_new
+<FILE>gmime-filter-smtp-data</FILE>
+GMimeFilterSmtpData
+g_mime_filter_smtp_data_new
 
 <SUBSECTION Private>
-g_mime_filter_crlf_get_type
+g_mime_filter_smtp_data_get_type
 
 <SUBSECTION Standard>
-GMimeFilterCRLFClass
-GMIME_TYPE_FILTER_CRLF
-GMIME_FILTER_CRLF
-GMIME_IS_FILTER_CRLF
-GMIME_FILTER_CRLF_CLASS
-GMIME_IS_FILTER_CRLF_CLASS
-GMIME_FILTER_CRLF_GET_CLASS
+GMimeFilterSmtpDataClass
+GMIME_TYPE_FILTER_SMTP_DATA
+GMIME_FILTER_SMTP_DATA
+GMIME_IS_FILTER_SMTP_DATA
+GMIME_FILTER_SMTP_DATA_CLASS
+GMIME_IS_FILTER_SMTP_DATA_CLASS
+GMIME_FILTER_SMTP_DATA_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -473,22 +473,22 @@ GMIME_FILTER_HTML_GET_CLASS
 </SECTION>
 
 <SECTION>
-<FILE>gmime-filter-md5</FILE>
-GMimeFilterMd5
-g_mime_filter_md5_new
-g_mime_filter_md5_get_digest
+<FILE>gmime-filter-checksum</FILE>
+GMimeFilterChecksum
+g_mime_filter_checksum_new
+g_mime_filter_checksum_get_digest
 
 <SUBSECTION Private>
-g_mime_filter_md5_get_type
+g_mime_filter_checksum_get_type
 
 <SUBSECTION Standard>
-GMimeFilterMd5Class
-GMIME_TYPE_FILTER_MD5
-GMIME_FILTER_MD5
-GMIME_IS_FILTER_MD5
-GMIME_FILTER_MD5_CLASS
-GMIME_IS_FILTER_MD5_CLASS
-GMIME_FILTER_MD5_GET_CLASS
+GMimeFilterChecksumClass
+GMIME_TYPE_FILTER_CHECKSUM
+GMIME_FILTER_CHECKSUM
+GMIME_IS_FILTER_CHECKSUM
+GMIME_FILTER_CHECKSUM_CLASS
+GMIME_IS_FILTER_CHECKSUM_CLASS
+GMIME_FILTER_CHECKSUM_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -657,11 +657,21 @@ GMimeParamListClass
 <FILE>gmime-header</FILE>g
 GMimeHeader
 GMimeHeaderList
-GMimeHeaderWriter
+GMimeHeaderRawValueFormatter
+g_mime_header_format_addrlist
+g_mime_header_format_content_disposition
+g_mime_header_format_content_type
+g_mime_header_format_default
+g_mime_header_format_message_id
+g_mime_header_format_received
+g_mime_header_format_references
 g_mime_header_get_name
+g_mime_header_get_raw_name
 g_mime_header_get_offset
 g_mime_header_get_value
 g_mime_header_set_value
+g_mime_header_get_raw_value
+g_mime_header_set_raw_value
 g_mime_header_write_to_stream
 g_mime_header_list_new
 g_mime_header_list_get_count
@@ -674,7 +684,6 @@ g_mime_header_list_append
 g_mime_header_list_set
 g_mime_header_list_remove
 g_mime_header_list_remove_at
-g_mime_header_list_register_writer
 g_mime_header_list_write_to_stream
 g_mime_header_list_to_string
 
@@ -979,8 +988,6 @@ g_mime_message_set_subject
 g_mime_message_get_subject
 g_mime_message_set_date
 g_mime_message_get_date
-g_mime_message_set_date_as_string
-g_mime_message_get_date_as_string
 g_mime_message_set_message_id
 g_mime_message_get_message_id
 g_mime_message_set_mime_part
@@ -1215,7 +1222,7 @@ internet_address_list_set_address
 internet_address_list_prepend
 internet_address_list_append
 internet_address_list_to_string
-internet_address_list_writer
+internet_address_list_encode
 
 <SUBSECTION Private>
 internet_address_list_get_type
@@ -1325,8 +1332,6 @@ g_mime_charset_can_encode
 
 <SECTION>
 <FILE>gmime-iconv</FILE>
-g_mime_iconv_init
-g_mime_iconv_shutdown
 g_mime_iconv_open
 g_mime_iconv
 g_mime_iconv_close

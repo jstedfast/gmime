@@ -122,9 +122,9 @@ const char *g_mime_object_get_content_disposition_parameter (GMimeObject *object
 void g_mime_object_set_content_id (GMimeObject *object, const char *content_id);
 const char *g_mime_object_get_content_id (GMimeObject *object);
 
-void g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value);
-void g_mime_object_append_header (GMimeObject *object, const char *header, const char *value);
-void g_mime_object_set_header (GMimeObject *object, const char *header, const char *value);
+void g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *charset);
+void g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *charset);
+void g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *charset);
 const char *g_mime_object_get_header (GMimeObject *object, const char *header);
 gboolean g_mime_object_remove_header (GMimeObject *object, const char *header);
 

@@ -59,8 +59,8 @@ header_list_new (void)
 	
 	list = g_mime_header_list_new (g_mime_parser_options_get_default ());
 	for (i = 1; i < G_N_ELEMENTS (initial); i++)
-		g_mime_header_list_append (list, initial[i].name, initial[i].value);
-	g_mime_header_list_prepend (list, initial[0].name, initial[0].value);
+		g_mime_header_list_append (list, initial[i].name, initial[i].value, NULL);
+	g_mime_header_list_prepend (list, initial[0].name, initial[0].value, NULL);
 	
 	return list;
 }
@@ -278,7 +278,7 @@ test_content_type_sync (void)
 		
 		/* let's try this in reverse... set the header value and make sure GMimeContentType gets updated */
 		header = g_mime_header_list_get_header_at (headers, 0);
-		g_mime_header_set_value (header, "text/html; charset=utf-8");
+		g_mime_header_set_value (header, NULL, "text/html; charset=utf-8", NULL);
 		type = g_mime_object_get_content_type (object);
 		if (!g_mime_content_type_is_type (type, "text", "html"))
 			throw (exception_new ("GMimeContentType object was not updated"));
@@ -342,7 +342,7 @@ test_disposition_sync (void)
 		
 		/* let's try this in reverse... set the header value and make sure GMimeContentDisposition gets updated */
 		header = g_mime_header_list_get_header_at (headers, 1);
-		g_mime_header_set_value (header, "attachment; filename=xyz");
+		g_mime_header_set_value (header, NULL, "attachment; filename=xyz", NULL);
 		disposition = g_mime_object_get_content_disposition (object);
 		if (!g_mime_content_disposition_is_attachment (disposition))
 			throw (exception_new ("GMimeContentDisposition object was not updated"));

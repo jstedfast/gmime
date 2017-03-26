@@ -19,7 +19,7 @@ HTML_IMAGES =
 SCAN_OPTIONS = --deprecated-guards="GMIME_DISABLE_DEPRECATED"
 
 # Extra options to pass to gtkdoc-scangobj
-SCANGOBJ_OPTIONS=--type-init-func="g_mime_init (0)"
+SCANGOBJ_OPTIONS=--type-init-func="g_mime_init ()"
 
 # Extra options to supply to gtkdoc-mkdb
 MKDB_OPTIONS = --sgml-mode --output-format=xml --ignore-files=trio

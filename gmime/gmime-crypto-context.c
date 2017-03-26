@@ -830,7 +830,7 @@ g_mime_decrypt_result_get_mdc (GMimeDecryptResult *result)
  * @result: a #GMimeDecryptResult
  * @session_key: a pointer to a null-terminated string representing the session key
  *
- * Set the session_key to be returned by this decryption result.
+ * Set the session key to be returned by this decryption result.
  **/
 void
 g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *session_key)
@@ -850,12 +850,9 @@ g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *s
  * g_mime_decrypt_result_get_session_key:
  * @result: a #GMimeDecryptResult
  *
- * Get the session_key used for this decryption, if the underlying
- * crypto context is capable of and (configured to) retrieve session
- * keys during decryption.  See, for example,
- * g_mime_crypto_context_set_retrieve_session_key().
+ * Get the session_key used for this decryption.
  *
- * Returns: the session_key digest algorithm used, or NULL if no
+ * Returns: the session key digest algorithm used, or %NULL if no
  * session key was requested or found.
  **/
 const char *

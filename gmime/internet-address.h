@@ -92,7 +92,7 @@ struct _InternetAddressClass {
 	
 	/* public virtual methods */
 	void (* to_string) (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags,
-			    size_t *linelen, GString *out);
+			    size_t *linelen, GString *str);
 };
 
 
@@ -207,10 +207,9 @@ InternetAddress *internet_address_list_get_address (InternetAddressList *list, i
 void internet_address_list_set_address (InternetAddressList *list, int index, InternetAddress *ia);
 
 char *internet_address_list_to_string (InternetAddressList *list, GMimeFormatOptions *options, gboolean encode);
+void internet_address_list_encode (InternetAddressList *list, GMimeFormatOptions *options, GString *str);
 
 InternetAddressList *internet_address_list_parse (GMimeParserOptions *options, const char *str);
-
-void internet_address_list_writer (InternetAddressList *list, GMimeFormatOptions *options, GString *str);
 
 G_END_DECLS
 

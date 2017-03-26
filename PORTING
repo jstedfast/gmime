@@ -38,6 +38,9 @@ Porting from GMime 2.6 to GMime 3.0
   the subject into rfc2047 encoded-word tokens (if needed). Use `NULL` to
   get the old behavior of using a best-fit charset.
 
+- Removed g_mime_message_[get,set]_date_as_string(). This is unnecessary since
+  this can be done using g_mime_object_[get,set]_header().
+
 - g_mime_set_user_charsets() and g_mime_user_charsets() have been removed.
   All encoding API's now have a way to specify a charset to use and all
   decoder API's take a GMimeParserOptions argument that allows for
@@ -78,8 +81,9 @@ Porting from GMime 2.6 to GMime 3.0
 - g_mime_stream_write_to_stream(), g_mime_stream_writev(), and g_mime_stream_printf()
   now return a gint64.
 
-- Renamed GMimeCertificateTrust to GMimeTrust and GMIME_CERTIFICATE_TRUST_NONE
-  to GMIME_TRUST_UNKNOWN.
+- Renamed GMimeCertificateTrust to GMimeTrust. GMIME_CERTIFICATE_TRUST_NONE
+  has been renamed to GMIME_TRUST_UNKNOWN and GMIME_CERTIFICATE_TRUST_FULLY has been 
+  renamed to GMIME_TRUST_FULL.
 
 - Removed g_mime_gpg_context_[get,set]_always_trust(). This can now be accomplished
   by passing GMIME_ENCRYPT_ALWAYS_TRUST to g_mime_crypto_context_encrypt().
@@ -144,6 +148,8 @@ Porting from GMime 2.6 to GMime 3.0
 - g_mime_parser_get_from_offset() has been renamed to g_mime_parser_get_mbox_marker_offset().
 
 - g_mime_parser_construct_[part,message]() now take a GMimeParserOptions argument.
+
+- Renamed GMimeFilterMd5 to GMimeFilterChecksum.
 
 
 Porting from GMime 2.4 to GMime 2.6

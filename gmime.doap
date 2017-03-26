@@ -6,7 +6,7 @@
 
   <name xml:lang="en">GMime</name>
   <shortdesc xml:lang="en">Glorious MIME Utility Library</shortdesc>
-  <homepage rdf:resource="http://spruce.sourceforge.net/gmime/" />
+  <homepage rdf:resource="https://github.com/jstedfast/gmime" />
   <mailing-list rdf:resource="http://mail.gnome.org/mailman/listinfo/gmime-devel-list" />
   <category rdf:resource="http://api.gnome.org/doap-extensions#core" />
   <programming-language>C</programming-language>
