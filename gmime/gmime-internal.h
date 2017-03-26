@@ -61,6 +61,7 @@ G_GNUC_INTERNAL GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeader
 G_GNUC_INTERNAL void _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options);
 G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *raw_name,
 						 const char *raw_value, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *raw_value);
 
 /* GMimeObject */
 G_GNUC_INTERNAL void _g_mime_object_block_header_list_changed (GMimeObject *object);

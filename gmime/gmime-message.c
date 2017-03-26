@@ -730,17 +730,22 @@ g_mime_message_get_bcc (GMimeMessage *message)
 static void
 sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, const char *name)
 {
-	GMimeFormatOptions *options = g_mime_format_options_get_default ();
 	GMimeObject *object = (GMimeObject *) message;
-	char *string;
+	GString *str;
+	guint n;
 	
-	string = internet_address_list_to_string (list, options, TRUE);
+	str = g_string_new (name);
+	g_string_append_c (str, ':');
+	n = str->len;
+	
+	g_string_append_c (str, ' ');
+	internet_address_list_encode (list, NULL, str);
 	
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_object_set_header (object, name, string, NULL);
+	_g_mime_header_list_set (object->headers, name, str->str + n);
 	_g_mime_object_unblock_header_list_changed (object);
 	
-	g_free (string);
+	g_string_free (str, TRUE);
 }
 
 static void

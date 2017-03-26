@@ -315,77 +315,30 @@ _g_mime_object_unblock_header_list_changed (GMimeObject *object)
 	g_mime_event_unblock (object->headers->changed, (GMimeEventCallback) header_list_changed, object);
 }
 
-static char *
-unfold_raw_value (const char *raw_value)
-{
-	char *value = g_malloc (strlen (raw_value) + 1);
-	register const char *inptr = raw_value;
-	register char *outptr = value;
-	
-	while (is_lwsp (*inptr))
-		inptr++;
-	
-	while (*inptr) {
-		if (*inptr == '\n') {
-			inptr++;
-			
-			if (*inptr == '\0')
-				break;
-			
-			if (*inptr == '\t') {
-				*outptr++ = ' ';
-				inptr++;
-			} else {
-				*outptr++ = *inptr++;
-			}
-		} else {
-			*outptr++ = *inptr++;
-		}
-	}
-	
-	*outptr = '\0';
-	
-	return value;
-}
-
 static void
 content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object)
 {
-	GMimeFormatOptions *options = g_mime_format_options_get_default ();
-	char *raw_value, *value;
-	GMimeHeader *header;
+	char *raw_value;
 	
-	raw_value = g_mime_content_type_encode (content_type, options);
-	value = unfold_raw_value (raw_value);
+	raw_value = g_mime_content_type_encode (content_type, NULL);
 	
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Type", value, NULL);
-	header = g_mime_header_list_get_header (object->headers, "Content-Type");
-	_g_mime_header_set_raw_value (header, raw_value);
+	_g_mime_header_list_set (object->headers, "Content-Type", raw_value);
 	_g_mime_object_unblock_header_list_changed (object);
 	g_free (raw_value);
-	g_free (value);
 }
 
 static void
 content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeObject *object)
 {
-	GMimeFormatOptions *options;
-	char *raw_value, *value;
-	GMimeHeader *header;
+	char *raw_value;
 	
 	_g_mime_object_block_header_list_changed (object);
 	
-	if (object->disposition) {
-		options = g_mime_format_options_get_default ();
-		raw_value = g_mime_content_disposition_encode (object->disposition, options);
-		value = unfold_raw_value (raw_value);
-		
-		g_mime_header_list_set (object->headers, "Content-Disposition", value, NULL);
-		header = g_mime_header_list_get_header (object->headers, "Content-Disposition");
-		_g_mime_header_set_raw_value (header, raw_value);
+	if (disposition) {
+		raw_value = g_mime_content_disposition_encode (disposition, NULL);
+		_g_mime_header_list_set (object->headers, "Content-Disposition", raw_value);
 		g_free (raw_value);
-		g_free (value);
 	} else {
 		g_mime_header_list_remove (object->headers, "Content-Disposition");
 	}

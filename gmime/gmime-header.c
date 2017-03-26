@@ -333,6 +333,19 @@ g_mime_header_get_raw_value (GMimeHeader *header)
 }
 
 
+void
+_g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
+{
+	char *buf = g_strdup (raw_value);
+	
+	g_free (header->raw_value);
+	g_free (header->value);
+	
+	header->raw_value = buf;
+	header->value = NULL;
+}
+
+
 /**
  * g_mime_header_set_raw_value:
  * @header: a #GMimeHeader
@@ -341,13 +354,21 @@ g_mime_header_get_raw_value (GMimeHeader *header)
  * Sets the header's raw value.
  **/
 void
-_g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
+g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
 {
-	//g_return_if_fail (GMIME_IS_HEADER (header));
-	//g_return_if_fail (raw_value != NULL);
+	char *buf;
 	
+	g_return_if_fail (GMIME_IS_HEADER (header));
+	g_return_if_fail (raw_value != NULL);
+	
+	buf = g_strdup (raw_value);
 	g_free (header->raw_value);
-	header->raw_value = g_strdup (raw_value);
+	g_free (header->value);
+	
+	header->raw_value = buf;
+	header->value = NULL;
+	
+	g_mime_event_emit (header->changed, NULL);
 }
 
 
@@ -533,7 +554,7 @@ g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options,
 	g_string_append_c (str, ' ');
 	
 	if (value && (addrlist = internet_address_list_parse (header->options, value))) {
-		internet_address_list_writer (addrlist, options, str);
+		internet_address_list_encode (addrlist, options, str);
 		g_object_unref (addrlist);
 	}
 	
@@ -1151,6 +1172,43 @@ g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name)
 	g_return_val_if_fail (name != NULL, NULL);
 	
 	return g_hash_table_lookup (headers->hash, name);
+}
+
+
+void
+_g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *raw_value)
+{
+	GMimeHeaderListChangedEventArgs args;
+	GMimeHeader *header, *hdr;
+	guint i;
+	
+	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
+	g_return_if_fail (name != NULL);
+	
+	if ((header = g_hash_table_lookup (headers->hash, name))) {
+		g_mime_header_set_raw_value (header, raw_value);
+		
+		for (i = headers->array->len - 1; i > 0; i--) {
+			hdr = (GMimeHeader *) headers->array->pdata[i];
+			
+			if (hdr == header)
+				break;
+			
+			if (g_ascii_strcasecmp (header->name, hdr->name) != 0)
+				continue;
+			
+			g_mime_event_remove (hdr->changed, (GMimeEventCallback) header_changed, headers);
+			g_ptr_array_remove_index (headers->array, i);
+			g_object_unref (hdr);
+		}
+		
+		args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED;
+		args.header = header;
+		
+		g_mime_event_emit (headers->changed, &args);
+	} else {
+		_g_mime_header_list_append (headers, name, name, raw_value, -1);
+	}
 }
 
 

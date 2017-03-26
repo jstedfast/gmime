@@ -109,6 +109,7 @@ const char *g_mime_header_get_value (GMimeHeader *header);
 void g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 
 const char *g_mime_header_get_raw_value (GMimeHeader *header);
+void g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
 
 gint64 g_mime_header_get_offset (GMimeHeader *header);
 
