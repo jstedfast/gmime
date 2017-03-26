@@ -321,7 +321,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 static GMimeMessage *
 message_partial_message_new (GMimeMessage *base)
 {
-	const char *name, *value, *raw_name, *raw_value;
+	const char *name, *raw_name, *raw_value;
 	GMimeHeaderList *headers;
 	GMimeMessage *message;
 	GMimeHeader *header;
@@ -339,10 +339,9 @@ message_partial_message_new (GMimeMessage *base)
 		raw_value = g_mime_header_get_raw_value (header);
 		raw_name = g_mime_header_get_raw_name (header);
 		offset = g_mime_header_get_offset (header);
-		value = g_mime_header_get_value (header);
 		name = g_mime_header_get_name (header);
 		
-		_g_mime_object_append_header ((GMimeObject *) message, name, value, raw_name, raw_value, offset);
+		_g_mime_object_append_header ((GMimeObject *) message, name, raw_name, raw_value, offset);
 	}
 	
 	return message;

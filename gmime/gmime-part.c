@@ -188,7 +188,6 @@ process_header (GMimeObject *object, GMimeHeader *header)
 	char encoding[32];
 	guint i;
 	
-	value = g_mime_header_get_value (header);
 	name = g_mime_header_get_name (header);
 	
 	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
@@ -201,21 +200,24 @@ process_header (GMimeObject *object, GMimeHeader *header)
 	
 	switch (i) {
 	case HEADER_CONTENT_TRANSFER_ENCODING:
+		value = g_mime_header_get_value (header);
 		copy_atom (value, encoding, sizeof (encoding) - 1);
 		mime_part->encoding = g_mime_content_encoding_from_string (encoding);
 		break;
 	case HEADER_CONTENT_DESCRIPTION:
-		/* FIXME: we should decode this */
+		value = g_mime_header_get_value (header);
 		g_free (mime_part->content_description);
-		mime_part->content_description = g_mime_strdup_trim (value);
+		mime_part->content_description = g_strdup (value);
 		break;
 	case HEADER_CONTENT_LOCATION:
+		value = g_mime_header_get_value (header);
 		g_free (mime_part->content_location);
-		mime_part->content_location = g_mime_strdup_trim (value);
+		mime_part->content_location = g_strdup (value);
 		break;
 	case HEADER_CONTENT_MD5:
+		value = g_mime_header_get_value (header);
 		g_free (mime_part->content_md5);
-		mime_part->content_md5 = g_mime_strdup_trim (value);
+		mime_part->content_md5 = g_strdup (value);
 		break;
 	default:
 		return FALSE;
@@ -541,7 +543,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 	mime_part->content_description = g_strdup (description);
 	
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Description", description);
+	g_mime_header_list_set (object->headers, "Content-Description", description, NULL);
 	_g_mime_object_unblock_header_list_changed (object);
 }
 
@@ -654,7 +656,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	mime_part->content_md5 = g_strdup (content_md5);
 	
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Md5", content_md5);
+	g_mime_header_list_set (object->headers, "Content-Md5", content_md5, NULL);
 	_g_mime_object_unblock_header_list_changed (object);
 }
 
@@ -753,7 +755,7 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 	mime_part->content_location = g_strdup (content_location);
 
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Location", content_location);
+	g_mime_header_list_set (object->headers, "Content-Location", content_location, NULL);
 	_g_mime_object_block_header_list_changed (object);
 }
 
@@ -795,7 +797,7 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
 	mime_part->encoding = encoding;
 	
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Transfer-Encoding", value);
+	g_mime_header_list_set (object->headers, "Content-Transfer-Encoding", value, NULL);
 	_g_mime_object_block_header_list_changed (object);
 }
 
