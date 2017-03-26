@@ -19,6 +19,7 @@
       <listitem><para><function>g_mime_message_get_recipients()</function> has been replaced by <function>g_mime_message_get_addresses()</function> which allows you to access the address lists of any address header.</para></listitem>
       <listitem><para><function>g_mime_message_add_recipient()</function> has been renamed to <function>g_mime_message_add_mailbox()</function> due to the fact that it can now be used to add mailbox addresses to the Sender, From, and Reply-To headers as well.</para></listitem>
       <listitem><para><function>g_mime_message_set_subject()</function> now takes a charset argument used when encoding the subject into rfc2047 encoded-word tokens (if needed). Use NULL to get the old behavior of using a best-fit charset.</para></listitem>
+      <listitem><para>Removed <function>g_mime_message_get_date_as_string()</para> and <function>g_mime_message_get_date_as_string()</function>. This is unnecessary since this can be done using <function>g_mime_object_get_header()</function> and <function>g_mime_object_set_header()</function>.
     </itemizedlist>
     <para>Cryptography related API changes:</para>
     <itemizedlist>

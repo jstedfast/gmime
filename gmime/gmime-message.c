@@ -958,49 +958,6 @@ g_mime_message_get_date (GMimeMessage *message, time_t *date, int *tz_offset)
 
 
 /**
- * g_mime_message_get_date_as_string:
- * @message: A #GMimeMessage
- *
- * Gets the message's sent-date in string format.
- * 
- * Returns: a newly allocated string containing the Date header value.
- **/
-char *
-g_mime_message_get_date_as_string (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return g_mime_utils_header_format_date (message->date, message->tz_offset);
-}
-
-
-/**
- * g_mime_message_set_date_as_string:
- * @message: A #GMimeMessage
- * @str: a date string
- *
- * Sets the sent-date of the message.
- **/
-void
-g_mime_message_set_date_as_string (GMimeMessage *message, const char *str)
-{
-	int tz_offset;
-	time_t date;
-	char *buf;
-	
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	
-	date = g_mime_utils_header_decode_date (str, &tz_offset);
-	message->tz_offset = tz_offset;
-	message->date = date;
-	
-	buf = g_mime_utils_header_format_date (date, tz_offset);
-	g_mime_object_set_header ((GMimeObject *) message, "Date", buf, NULL);
-	g_free (buf);
-}
-
-
-/**
  * g_mime_message_set_message_id: 
  * @message: A #GMimeMessage
  * @message_id: message-id (addr-spec portion)

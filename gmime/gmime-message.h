@@ -118,8 +118,6 @@ const char *g_mime_message_get_subject (GMimeMessage *message);
 
 void g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset);
 void g_mime_message_get_date (GMimeMessage *message, time_t *date, int *tz_offset);
-void g_mime_message_set_date_as_string (GMimeMessage *message, const char *str);
-char *g_mime_message_get_date_as_string (GMimeMessage *message);
 
 void g_mime_message_set_message_id (GMimeMessage *message, const char *message_id);
 const char *g_mime_message_get_message_id (GMimeMessage *message);

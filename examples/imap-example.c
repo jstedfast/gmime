@@ -131,9 +131,8 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		/* print envelope */
 		fputc ('(', fp);
 		
-		nstring = g_mime_message_get_date_as_string (message);
-		fprintf (fp, "\"%s\" ", nstring);
-		g_free (nstring);
+		str = g_mime_object_get_header ((GMimeObject *) message, "Date");
+		fprintf (fp, "\"%s\" ", str);
 		
 		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Subject")))
 			nstring = escape_string (str);
