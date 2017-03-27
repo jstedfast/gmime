@@ -187,35 +187,40 @@ static char *tm_days[] = {
 
 /**
  * g_mime_utils_header_format_date:
- * @date: time_t date representation
- * @tz_offset: Timezone offset
+ * @date: a #GDateTime
  *
  * Allocates a string buffer containing the rfc822 formatted date
- * string represented by @time and @tz_offset.
+ * string represented by @date.
  *
  * Returns: a valid string representation of the date.
  **/
 char *
-g_mime_utils_header_format_date (time_t date, int tz_offset)
+g_mime_utils_header_format_date (GDateTime *date)
 {
-	struct tm tm;
+	int wday, year, month, day, hour, min, sec, tz_offset, sign;
+	GTimeSpan tz;
 	
-	date += ((tz_offset / 100) * (60 * 60)) + (tz_offset % 100) * 60;
+	g_return_val_if_fail (date != NULL, NULL);
 	
-#if defined (HAVE_GMTIME_R)
-	gmtime_r (&date, &tm);
-#elif defined (HAVE_GMTIME_S)
-	gmtime_s (&tm, &date);
-#else
-	memcpy (&tm, gmtime (&date), sizeof (tm));
-#endif
+	wday = g_date_time_get_day_of_week (date);
+	year = g_date_time_get_year (date);
+	month = g_date_time_get_month (date);
+	day = g_date_time_get_day_of_month (date);
+	hour = g_date_time_get_hour (date);
+	min = g_date_time_get_minute (date);
+	sec = g_date_time_get_second (date);
+	tz = g_date_time_get_utc_offset (date);
+	
+	sign = tz < 0 ? -1 : 1;
+	tz *= sign;
+	
+	tz_offset = 100 * (tz / G_TIME_SPAN_HOUR);
+	tz_offset += (tz % G_TIME_SPAN_HOUR) / G_TIME_SPAN_MINUTE;
+	tz_offset *= sign;
 	
 	return g_strdup_printf ("%s, %02d %s %04d %02d:%02d:%02d %+05d",
-				tm_days[tm.tm_wday], tm.tm_mday,
-				tm_months[tm.tm_mon],
-				tm.tm_year + 1900,
-				tm.tm_hour, tm.tm_min, tm.tm_sec,
-				tz_offset);
+				tm_days[wday % 7], day, tm_months[month - 1],
+				year, hour, min, sec, tz_offset);
 }
 
 /* This is where it gets ugly... */
@@ -289,14 +294,16 @@ decode_int (const char *in, size_t inlen)
 	if (*inptr == '-') {
 		sign = -1;
 		inptr++;
-	} else if (*inptr == '+')
+	} else if (*inptr == '+') {
 		inptr++;
+	}
 	
-	for ( ; inptr < inend; inptr++) {
+	while (inptr < inend) {
 		if (!(*inptr >= '0' && *inptr <= '9'))
 			return -1;
-		else
-			val = (val * 10) + (*inptr - '0');
+		
+		val = (val * 10) + (*inptr - '0');
+		inptr++;
 	}
 	
 	val *= sign;
@@ -378,7 +385,7 @@ get_month (const char *in, size_t inlen)
 	
 	for (i = 0; i < 12; i++) {
 		if (!g_ascii_strncasecmp (in, tm_months[i], 3))
-			return i;
+			return i + 1;
 	}
 	
 	return -1;  /* unknown month */
@@ -436,149 +443,112 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 	return TRUE;
 }
 
-static int
+static GTimeZone *
 get_tzone (date_token **token)
 {
 	const char *inptr, *inend;
-	size_t inlen;
-	int i, t;
+	char tzone[8];
+	GTimeZone *tz;
+	size_t len, n;
+	int value, i;
+	guint t;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
 		inptr = (*token)->start;
-		inlen = (*token)->len;
-		inend = inptr + inlen;
+		len = (*token)->len;
+		inend = inptr + len;
 		
-		if (*inptr == '+' || *inptr == '-') {
-			return decode_int (inptr, inlen);
-		} else {
-			if (*inptr == '(') {
-				inptr++;
-				if (*(inend - 1) == ')')
-					inlen -= 2;
-				else
-					inlen--;
-			}
+		if (len >= 6)
+			continue;
+		
+		if (len == 5 && (*inptr == '+' || *inptr == '-')) {
+			if ((value = decode_int (inptr, len)) == -1)
+				return NULL;
 			
-			for (t = 0; t < 15; t++) {
-				size_t len = strlen (tz_offsets[t].name);
-				
-				if (len != inlen)
-					continue;
-				
-				if (!strncmp (inptr, tz_offsets[t].name, len))
-					return tz_offsets[t].offset;
-			}
+			memcpy (tzone, inptr, len);
+			tzone[len] = '\0';
+			
+			return g_time_zone_new (tzone);
+		}
+		
+		if (*inptr == '(') {
+			inptr++;
+			if (*(inend - 1) == ')')
+				len -= 2;
+			else
+				len--;
+		}
+		
+		for (t = 0; t < G_N_ELEMENTS (tz_offsets); t++) {
+			n = strlen (tz_offsets[t].name);
+			
+			if (n != len || strncmp (inptr, tz_offsets[t].name, n) != 0)
+				continue;
+			
+			snprintf (tzone, 6, "%+05d", tz_offsets[t].offset);
+			
+			return g_time_zone_new (tzone);
 		}
 	}
 	
-	return -1;
+	return NULL;
 }
 
-static time_t
-mktime_utc (struct tm *tm)
+static GDateTime *
+parse_rfc822_date (date_token *tokens)
 {
-	time_t tt;
-	long tz;
-	
-	tm->tm_isdst = -1;
-	tt = mktime (tm);
-	
-#if defined (G_OS_WIN32) && !defined (__MINGW32__)
-	_get_timezone (&tz);
-	if (tm->tm_isdst > 0) {
-		int dst;
-		
-		_get_dstbias (&dst);
-		tz += dst;
-	}
-#elif defined (HAVE_TM_GMTOFF)
-	tz = -tm->tm_gmtoff;
-#elif defined (HAVE_TIMEZONE)
-	if (tm->tm_isdst > 0) {
-#if defined (HAVE_ALTZONE)
-		tz = altzone;
-#else /* !defined (HAVE_ALTZONE) */
-		tz = (timezone - 3600);
-#endif
-	} else {
-		tz = timezone;
-	}
-#elif defined (HAVE__TIMEZONE)
-	tz = _timezone;
-#else
-#error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
-#endif
-	
-	return tt - tz;
-}
-
-static time_t
-parse_rfc822_date (date_token *tokens, int *tzone)
-{
-	int hour, min, sec, offset, n;
+	int wday, year, month, day, hour, min, sec, n;
+	GTimeZone *tz = NULL;
 	date_token *token;
-	struct tm tm;
-	time_t t;
+	GDateTime *date;
 	
 	token = tokens;
 	
-	memset ((void *) &tm, 0, sizeof (struct tm));
+	wday = year = month = day = hour = min = sec = 0;
 	
 	if ((n = get_wday (token->start, token->len)) != -1) {
 		/* not all dates may have this... */
-		tm.tm_wday = n;
 		token = token->next;
+		wday = n;
 	}
 	
 	/* get the mday */
 	if (!token || (n = get_mday (token->start, token->len)) == -1)
-		return (time_t) 0;
+		return NULL;
 	
-	tm.tm_mday = n;
 	token = token->next;
+	day = n;
 	
 	/* get the month */
 	if (!token || (n = get_month (token->start, token->len)) == -1)
-		return (time_t) 0;
+		return NULL;
 	
-	tm.tm_mon = n;
 	token = token->next;
+	month = n;
 	
 	/* get the year */
 	if (!token || (n = get_year (token->start, token->len)) == -1)
-		return (time_t) 0;
+		return NULL;
 	
-	tm.tm_year = n - 1900;
 	token = token->next;
+	year = n;
 	
 	/* get the hour/min/sec */
 	if (!token || !get_time (token->start, token->len, &hour, &min, &sec))
-		return (time_t) 0;
+		return NULL;
 	
-	tm.tm_hour = hour;
-	tm.tm_min = min;
-	tm.tm_sec = sec;
 	token = token->next;
 	
 	/* get the timezone */
-	if (!token || (n = get_tzone (&token)) == -1) {
+	if (!token || !(tz = get_tzone (&token))) {
 		/* I guess we assume tz is GMT? */
-		offset = 0;
-	} else {
-		offset = n;
+		tz = g_time_zone_new_utc ();
 	}
 	
-	t = mktime_utc (&tm);
+	date = g_date_time_new (tz, year, month, day, hour, min, (gdouble) sec);
+	g_time_zone_unref (tz);
 	
-	/* t is now GMT of the time we want, but not offset by the timezone ... */
-	
-	/* this should convert the time to the GMT equiv time */
-	t -= ((offset / 100) * 60 * 60) + (offset % 100) * 60;
-	
-	if (tzone)
-		*tzone = offset;
-	
-	return t;
+	return date;
 }
 
 
@@ -598,17 +568,16 @@ parse_rfc822_date (date_token *tokens, int *tzone)
 #define TIME    (1 << 4)
 #define TZONE   (1 << 5)
 
-static time_t
-parse_broken_date (date_token *tokens, int *tzone)
+static GDateTime *
+parse_broken_date (date_token *tokens)
 {
-	int hour, min, sec, offset, n;
+	int wday, year, month, day, hour, min, sec, n;
+	GTimeZone *tz = NULL;
 	date_token *token;
-	struct tm tm;
-	time_t t;
+	GDateTime *date;
 	int mask;
 	
-	memset ((void *) &tm, 0, sizeof (struct tm));
-	offset = 0;
+	wday = year = month = day = hour = min = sec = 0;
 	mask = 0;
 	
 	token = tokens;
@@ -617,7 +586,7 @@ parse_broken_date (date_token *tokens, int *tzone)
 			if ((n = get_wday (token->start, token->len)) != -1) {
 				d(printf ("weekday; "));
 				mask |= WEEKDAY;
-				tm.tm_wday = n;
+				wday = n;
 				goto next;
 			}
 		}
@@ -626,17 +595,14 @@ parse_broken_date (date_token *tokens, int *tzone)
 			if ((n = get_month (token->start, token->len)) != -1) {
 				d(printf ("month; "));
 				mask |= MONTH;
-				tm.tm_mon = n;
+				month = n;
 				goto next;
 			}
 		}
 		
-		if (is_time (token) && !tm.tm_hour && !tm.tm_min && !tm.tm_sec) {
+		if (is_time (token) && !(mask & TIME)) {
 			if (get_time (token->start, token->len, &hour, &min, &sec)) {
 				d(printf ("time; "));
-				tm.tm_hour = hour;
-				tm.tm_min = min;
-				tm.tm_sec = sec;
 				mask |= TIME;
 				goto next;
 			}
@@ -645,10 +611,9 @@ parse_broken_date (date_token *tokens, int *tzone)
 		if (is_tzone (token) && !(mask & TZONE)) {
 			date_token *t = token;
 			
-			if ((n = get_tzone (&t)) != -1) {
+			if ((tz = get_tzone (&t))) {
 				d(printf ("tzone; "));
 				mask |= TZONE;
-				offset = n;
 				goto next;
 			}
 		}
@@ -657,8 +622,8 @@ parse_broken_date (date_token *tokens, int *tzone)
 			if (token->len == 4 && !(mask & YEAR)) {
 				if ((n = get_year (token->start, token->len)) != -1) {
 					d(printf ("year; "));
-					tm.tm_year = n - 1900;
 					mask |= YEAR;
+					year = n;
 					goto next;
 				}
 			} else {
@@ -668,21 +633,21 @@ parse_broken_date (date_token *tokens, int *tzone)
 						goto mday;
 					} else if (n > 0) {
 						d(printf ("mon; "));
-						tm.tm_mon = n - 1;
 						mask |= MONTH;
+						month = n;
 					}
 					goto next;
 				} else if (!(mask & DAY) && (n = get_mday (token->start, token->len)) != -1) {
 				mday:
 					d(printf ("mday; "));
-					tm.tm_mday = n;
 					mask |= DAY;
+					day = n;
 					goto next;
 				} else if (!(mask & YEAR)) {
 					if ((n = get_year (token->start, token->len)) != -1) {
 						d(printf ("2-digit year; "));
-						tm.tm_year = n - 1900;
 						mask |= YEAR;
+						year = n;
 					}
 					goto next;
 				}
@@ -698,20 +663,20 @@ parse_broken_date (date_token *tokens, int *tzone)
 	
 	d(printf ("\n"));
 	
-	if (!(mask & (YEAR | MONTH | DAY | TIME)))
-		return 0;
+	if (!(mask & (YEAR | MONTH | DAY | TIME))) {
+		if (tz != NULL)
+			g_time_zone_unref (tz);
+		
+		return NULL;
+	}
 	
-	t = mktime_utc (&tm);
+	if (tz == NULL)
+		tz = g_time_zone_new_utc ();
 	
-	/* t is now GMT of the time we want, but not offset by the timezone ... */
+	date = g_date_time_new (tz, year, month, day, hour, min, (gdouble) sec);
+	g_time_zone_unref (tz);
 	
-	/* this should convert the time to the GMT equiv time */
-	t -= ((offset / 100) * 60 * 60) + (offset % 100) * 60;
-	
-	if (tzone)
-		*tzone = offset;
-	
-	return t;
+	return date;
 }
 
 #if 0
@@ -762,30 +727,23 @@ gmime_datetok_table_init (void)
 /**
  * g_mime_utils_header_decode_date:
  * @str: input date string
- * @tz_offset: (out): timezone offset
  *
- * Decodes the rfc822 date string and saves the GMT offset into
- * @tz_offset if non-NULL.
+ * Parses the rfc822 date string.
  *
- * Returns: the time_t representation of the date string specified by
- * @str or (time_t) %0 on error. If @tz_offset is non-NULL, the value
- * of the timezone offset will be stored.
+ * Returns: the #GDateTime representation of the date string specified by
+ * @str or %NULL on error.
  **/
-time_t
-g_mime_utils_header_decode_date (const char *str, int *tz_offset)
+GDateTime *
+g_mime_utils_header_decode_date (const char *str)
 {
 	date_token *token, *tokens;
-	time_t date;
+	GDateTime *date;
 	
-	if (!(tokens = datetok (str))) {
-		if (tz_offset)
-			*tz_offset = 0;
-		
-		return (time_t) 0;
-	}
+	if (!(tokens = datetok (str)))
+		return NULL;
 	
-	if (!(date = parse_rfc822_date (tokens, tz_offset)))
-		date = parse_broken_date (tokens, tz_offset);
+	if (!(date = parse_rfc822_date (tokens)))
+		date = parse_broken_date (tokens);
 	
 	/* cleanup */
 	while (tokens) {

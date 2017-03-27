@@ -68,12 +68,11 @@ typedef enum _GMimeAddressType {
 /**
  * GMimeMessage:
  * @parent_object: parent #GMimeObject
- * @mime_part: toplevel MIME part
  * @addrlists: a table of address lists
+ * @mime_part: toplevel MIME part
  * @message_id: Message-Id string
- * @subject: Subject string
  * @date: Date value
- * @tz_offset: timezone offset
+ * @subject: Subject string
  *
  * A MIME Message object.
  **/
@@ -83,10 +82,8 @@ struct _GMimeMessage {
 	InternetAddressList **addrlists;
 	GMimeObject *mime_part;
 	char *message_id;
+	GDateTime *date;
 	char *subject;
-	
-	int tz_offset;
-	time_t date;
 	
 	/* < private > */
 	GMimeRfcComplianceMode compliance;
@@ -116,8 +113,8 @@ InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
 void g_mime_message_set_subject (GMimeMessage *message, const char *subject, const char *charset);
 const char *g_mime_message_get_subject (GMimeMessage *message);
 
-void g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset);
-void g_mime_message_get_date (GMimeMessage *message, time_t *date, int *tz_offset);
+void g_mime_message_set_date (GMimeMessage *message, GDateTime *date);
+GDateTime *g_mime_message_get_date (GMimeMessage *message);
 
 void g_mime_message_set_message_id (GMimeMessage *message, const char *message_id);
 const char *g_mime_message_get_message_id (GMimeMessage *message);

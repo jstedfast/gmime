@@ -51,8 +51,8 @@ struct _GMimeReferences {
 };
 
 
-time_t g_mime_utils_header_decode_date (const char *str, int *tz_offset);
-char  *g_mime_utils_header_format_date (time_t date, int tz_offset);
+GDateTime *g_mime_utils_header_decode_date (const char *str);
+char *g_mime_utils_header_format_date (GDateTime *date);
 
 char *g_mime_utils_generate_message_id (const char *fqdn);
 
