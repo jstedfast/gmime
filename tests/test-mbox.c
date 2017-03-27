@@ -109,9 +109,8 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 	char *marker, *buf;
 	const char *subject;
 	GMimeObject *body;
-	int tz_offset;
+	GDateTime *date;
 	int nmsg = 0;
-	time_t date;
 	
 	while (!g_mime_parser_eos (parser)) {
 		message_begin = g_mime_parser_tell (parser);
@@ -127,7 +126,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 				      message_begin, message_end);
 		g_mime_stream_printf (summary, "header offsets: %" G_GINT64_FORMAT ", %" G_GINT64_FORMAT "\n",
 				      headers_begin, headers_end);
-
+		
 		marker_offset = g_mime_parser_get_mbox_marker_offset (parser);
 		marker = g_mime_parser_get_mbox_marker (parser);
 		g_mime_stream_printf (summary, "%s\n", marker);
@@ -150,9 +149,14 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 			subject = "";
 		g_mime_stream_printf (summary, "Subject: %s\n", subject);
 		
-		g_mime_message_get_date (message, &date, &tz_offset);
-		buf = g_mime_utils_header_format_date (date, tz_offset);
+		if (!(date = g_mime_message_get_date (message))) {
+			date = g_date_time_new_from_unix_utc (0);
+		} else {
+			g_date_time_ref (date);
+		}
+		buf = g_mime_utils_header_format_date (date);
 		g_mime_stream_printf (summary, "Date: %s\n", buf);
+		g_date_time_unref (date);
 		g_free (buf);
 		
 		body = g_mime_message_get_mime_part (message);

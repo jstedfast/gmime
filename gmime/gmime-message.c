@@ -197,8 +197,7 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	message->message_id = NULL;
 	message->mime_part = NULL;
 	message->subject = NULL;
-	message->tz_offset = 0;
-	message->date = 0;
+	message->date = NULL;
 	
 	/* initialize recipient lists */
 	for (i = 0; i < N_ADDRESS_TYPES; i++) {
@@ -222,6 +221,9 @@ g_mime_message_finalize (GObject *object)
 	g_free (message->addrlists);
 	g_free (message->message_id);
 	g_free (message->subject);
+	
+	if (message->date)
+		g_date_time_unref (message->date);
 	
 	/* unref child mime part */
 	if (message->mime_part)
@@ -298,8 +300,6 @@ process_header (GMimeObject *object, GMimeHeader *header)
 	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeMessage *message = (GMimeMessage *) object;
 	const char *name, *value;
-	time_t date;
-	int offset;
 	guint i;
 	
 	name = g_mime_header_get_name (header);
@@ -338,9 +338,10 @@ process_header (GMimeObject *object, GMimeHeader *header)
 		break;
 	case HEADER_DATE:
 		if ((value = g_mime_header_get_value (header))) {
-			date = g_mime_utils_header_decode_date (value, &offset);
-			message->date = date;
-			message->tz_offset = offset;
+			if (message->date)
+				g_date_time_unref (message->date);
+			
+			message->date = g_mime_utils_header_decode_date (value);
 		}
 		break;
 	case HEADER_MESSAGE_ID:
@@ -411,8 +412,10 @@ message_header_removed (GMimeObject *object, GMimeHeader *header)
 		message->subject = NULL;
 		break;
 	case HEADER_DATE:
-		message->date = 0;
-		message->tz_offset = 0;
+		if (message->date) {
+			g_date_time_unref (message->date);
+			message->date = NULL;
+		}
 		break;
 	case HEADER_MESSAGE_ID:
 		g_free (message->message_id);
@@ -439,8 +442,11 @@ message_headers_cleared (GMimeObject *object)
 	message->message_id = NULL;
 	g_free (message->subject);
 	message->subject = NULL;
-	message->tz_offset = 0;
-	message->date = 0;
+	
+	if (message->date) {
+		g_date_time_unref (message->date);
+		message->date = NULL;
+	}
 	
 	GMIME_OBJECT_CLASS (parent_class)->headers_cleared (object);
 }
@@ -919,21 +925,17 @@ g_mime_message_get_subject (GMimeMessage *message)
  * g_mime_message_set_date:
  * @message: A #GMimeMessage
  * @date: a date to be used in the Date header
- * @tz_offset: timezone offset (in +/- hours)
  * 
  * Sets the Date header on a MIME Message.
  **/
 void
-g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset)
+g_mime_message_set_date (GMimeMessage *message, GDateTime *date)
 {
 	char *str;
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	message->date = date;
-	message->tz_offset = tz_offset;
-	
-	str = g_mime_utils_header_format_date (date, tz_offset);
+	str = g_mime_utils_header_format_date (date);
 	g_mime_object_set_header ((GMimeObject *) message, "Date", str, NULL);
 	g_free (str);
 }
@@ -942,23 +944,17 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset)
 /**
  * g_mime_message_get_date:
  * @message: A #GMimeMessage
- * @date: (out): pointer to a date in time_t
- * @tz_offset: (out): pointer to timezone offset (in +/- hours)
  * 
- * Stores the date in time_t format in @date. If @tz_offset is
- * non-%NULL, then the timezone offset in will be stored in
- * @tz_offset.
+ * Gets the parsed date and time value from the Date header.
+ *
+ * Returns: a #GDateTime on success or %NULL if the date could not be parsed.
  **/
-void
-g_mime_message_get_date (GMimeMessage *message, time_t *date, int *tz_offset)
+GDateTime *
+g_mime_message_get_date (GMimeMessage *message)
 {
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (date != NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	*date = message->date;
-	
-	if (tz_offset)
-		*tz_offset = message->tz_offset;
+	return message->date;
 }
 
 

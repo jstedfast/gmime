@@ -12,8 +12,7 @@ GMime 3.0 Planning:
   This would require me to rename g_mime_message_get_body() to
   g_mime_message_get_text_body()?
 
-- Should GMimeHeader->value be decoded by GMime? i.e. work a bit more like
-  MimeKit.
+- Make g_mime_message_[get,set]_date() take/return a GDateTime?
 
 - Fix GMimeParser to save mbox From markers on the GMimeMessage so
   that GMimeMessagePart::write_to_stream() can use it.

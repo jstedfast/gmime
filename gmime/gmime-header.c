@@ -544,11 +544,9 @@ char *
 g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
 	InternetAddressList *addrlist;
-	const char *newline;
 	GString *str;
 	guint n;
 	
-	newline = g_mime_format_options_get_newline (options);
 	str = g_string_new (header->raw_name);
 	g_string_append_c (str, ':');
 	n = str->len;
@@ -559,8 +557,6 @@ g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options,
 		internet_address_list_encode (addrlist, options, str);
 		g_object_unref (addrlist);
 	}
-	
-	g_string_append (str, newline);
 	
 	memmove (str->str, str->str + n, (str->len - n) + 1);
 	

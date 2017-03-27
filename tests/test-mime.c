@@ -344,26 +344,43 @@ static struct {
 static void
 test_date_parser (void)
 {
+	GDateTime *date;
 	Exception *ex;
-	time_t date;
-	int tzone;
+	int tz_offset;
+	GTimeSpan tz;
+	time_t time;
 	char *buf;
+	int sign;
 	guint i;
 	
 	for (i = 0; i < G_N_ELEMENTS (dates); i++) {
 		testsuite_check ("Date: '%s'", dates[i].in);
 		try {
-			date = g_mime_utils_header_decode_date (dates[i].in, &tzone);
+			if (!(date = g_mime_utils_header_decode_date (dates[i].in))) {
+				if (dates[i].date != 0)
+					throw (exception_new ("failed to parse date: %s", dates[i].in));
+				continue;
+			}
 			
-			if (date != dates[i].date)
-				throw (exception_new ("time_t's do not match"));
+			time = (time_t) g_date_time_to_unix (date);
+			tz = g_date_time_get_utc_offset (date);
 			
-			if (tzone != dates[i].tzone)
+			sign = tz < 0 ? -1 : 1;
+			tz *= sign;
+			
+			tz_offset = 100 * (tz / G_TIME_SPAN_HOUR);
+			tz_offset += (tz % G_TIME_SPAN_HOUR) / G_TIME_SPAN_MINUTE;
+			tz_offset *= sign;
+			
+			if (time != dates[i].date)
+				throw (exception_new ("time_t's do not match: %ld vs %ld", time, dates[i].date));
+			
+			if (tz_offset != dates[i].tzone)
 				throw (exception_new ("timezones do not match"));
 			
-			buf = g_mime_utils_header_format_date (date, tzone);
+			buf = g_mime_utils_header_format_date (date);
 			if (strcmp (dates[i].out, buf) != 0) {
-				ex = exception_new ("date strings do not match: %s", buf);
+				ex = exception_new ("date strings do not match: %s vs %s", buf, dates[i].out);
 				g_free (buf);
 				throw (ex);
 			}
@@ -372,8 +389,7 @@ test_date_parser (void)
 			
 			testsuite_check_passed ();
 		} catch (ex) {
-			testsuite_check_failed ("Date: '%s': %s", dates[i].in,
-						ex->message);
+			testsuite_check_failed ("Date: '%s': %s", dates[i].in, ex->message);
 		} finally;
 	}
 }
