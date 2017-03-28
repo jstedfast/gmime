@@ -263,6 +263,7 @@ gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 	return "application/pgp-keys";
 }
 
+#ifdef ENABLE_CRYPTO
 static void
 set_passphrase_callback (GMimeCryptoContext *context)
 {
@@ -273,6 +274,7 @@ set_passphrase_callback (GMimeCryptoContext *context)
 	else
 		gpgme_set_passphrase_cb (gpg->ctx, NULL, NULL);
 }
+#endif
 
 static int
 gpg_sign (GMimeCryptoContext *context, gboolean detach, const char *userid,
