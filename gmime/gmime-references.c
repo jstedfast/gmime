@@ -97,7 +97,7 @@ g_mime_references_free (GMimeReferences *refs)
  * Returns: a new #GMimeReferences containing the parsed message ids.
  **/
 GMimeReferences *
-g_mime_references_decode (const char *text)
+g_mime_references_parse (const char *text)
 {
 	const char *word, *inptr = text;
 	GMimeReferences *refs;
