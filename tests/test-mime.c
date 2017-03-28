@@ -744,7 +744,7 @@ static struct {
 static void
 test_references (GMimeParserOptions *options)
 {
-	GMimeReferences *refs;
+	GMimeReferences *refs, *copy;
 	guint i;
 	int j;
 	
@@ -752,23 +752,35 @@ test_references (GMimeParserOptions *options)
 		testsuite_check ("references[%u]", i);
 		try {
 			if (!(refs = g_mime_references_parse (references[i].input)))
-				throw (exception_new ("failed to parse references[%u]", i));
+				throw (exception_new ("failed to parse references"));
 			
 			if (g_mime_references_length (refs) != references[i].count)
-				throw (exception_new ("number of references does not match for references[%u]", i));
+				throw (exception_new ("number of references does not match"));
 			
 			for (j = 0; j < references[i].count; j++) {
 				const char *msgid = g_mime_references_get_message_id (refs, j);
 				
 				if (strcmp (references[i].ids[j], msgid) != 0)
-					throw (exception_new ("message ids do not match for references[%u][%d]", i, j));
+					throw (exception_new ("message ids do not match for ids[%d]", j));
 			}
 			
-			g_mime_references_clear (refs);
+			copy = g_mime_references_copy (refs);
+			if (g_mime_references_length (copy) != g_mime_references_length (refs))
+				throw (exception_new ("number of copied references does not match"));
 			
-			if (g_mime_references_length (refs) != 0)
+			for (j = 0; j < references[i].count; j++) {
+				const char *msgid = g_mime_references_get_message_id (copy, j);
+				
+				if (strcmp (references[i].ids[j], msgid) != 0)
+					throw (exception_new ("copied message ids do not match for ids[%d]", j));
+			}
+			
+			g_mime_references_clear (copy);
+			
+			if (g_mime_references_length (copy) != 0)
 				throw (exception_new ("references were not cleared"));
 			
+			g_mime_references_free (copy);
 			g_mime_references_free (refs);
 			
 			testsuite_check_passed ();
