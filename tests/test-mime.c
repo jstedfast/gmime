@@ -725,6 +725,59 @@ test_qstring (void)
 }
 
 
+static struct {
+	const char *input;
+	int count;
+	const char *ids[5];
+} references[] = {
+	{ "<3ohapq$h3b@gandalf.rutgers.edu> <3notqh$b52@ns2.ny.ubs.com> <3npoh0$2oo@news.blkbox.com> <3nqp09$r7t@ns2.ny.ubs.com>",
+	  4,
+	  { "3ohapq$h3b@gandalf.rutgers.edu", "3notqh$b52@ns2.ny.ubs.com", "3npoh0$2oo@news.blkbox.com", "3nqp09$r7t@ns2.ny.ubs.com", NULL }
+	},
+	{ "<3lmtu0$dv1@secnews.netscape.com> <3lpjth$g97@secnews.netscape.com> <3lrbuf$gvp@secnews.netscape.com> <3lst13$iur@secnews.netscape.com>",
+	  4,
+	  { "3lmtu0$dv1@secnews.netscape.com", "3lpjth$g97@secnews.netscape.com", "3lrbuf$gvp@secnews.netscape.com", "3lst13$iur@secnews.netscape.com", NULL }
+	},
+};
+
+
+static void
+test_references (GMimeParserOptions *options)
+{
+	GMimeReferences *refs;
+	guint i;
+	int j;
+	
+	for (i = 0; i < G_N_ELEMENTS (references); i++) {
+		testsuite_check ("references[%u]", i);
+		try {
+			if (!(refs = g_mime_references_parse (references[i].input)))
+				throw (exception_new ("failed to parse references[%u]", i));
+			
+			if (g_mime_references_length (refs) != references[i].count)
+				throw (exception_new ("number of references does not match for references[%u]", i));
+			
+			for (j = 0; j < references[i].count; j++) {
+				const char *msgid = g_mime_references_get_message_id (refs, j);
+				
+				if (strcmp (references[i].ids[j], msgid) != 0)
+					throw (exception_new ("message ids do not match for references[%u][%d]", i, j));
+			}
+			
+			g_mime_references_clear (refs);
+			
+			if (g_mime_references_length (refs) != 0)
+				throw (exception_new ("references were not cleared"));
+			
+			g_mime_references_free (refs);
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("references[%u]: %s", i, ex->message);
+		} finally;
+	}
+}
+
 int main (int argc, char **argv)
 {
 	GMimeParserOptions *options = g_mime_parser_options_new ();
@@ -767,6 +820,10 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("header folding");
 	test_header_folding (options);
+	testsuite_end ();
+	
+	testsuite_start ("references");
+	test_references (options);
 	testsuite_end ();
 	
 	g_mime_parser_options_free (options);
