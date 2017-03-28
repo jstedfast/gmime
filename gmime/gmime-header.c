@@ -31,6 +31,7 @@
 #include "gmime-parse-utils.h"
 #include "gmime-stream-mem.h"
 #include "internet-address.h"
+#include "gmime-references.h"
 #include "gmime-internal.h"
 #include "gmime-common.h"
 #include "gmime-header.h"
@@ -497,22 +498,24 @@ g_mime_header_format_message_id (GMimeHeader *header, GMimeFormatOptions *option
 char *
 g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
-	GMimeReferences *references, *reference;
-	const char *newline;
+	const char *newline, *msgid;
+	GMimeReferences *refs;
 	guint cur, len, n;
 	GString *str;
+	int count, i;
 	
 	/* Note: we don't want to break in the middle of msgid tokens as
 	   it seems to break a lot of clients (and servers) */
 	newline = g_mime_format_options_get_newline (options);
-	references = g_mime_references_decode (value);
+	refs = g_mime_references_parse (value);
 	str = g_string_new (header->raw_name);
 	g_string_append_c (str, ':');
 	cur = n = str->len;
 	
-	reference = references;
-	while (reference != NULL) {
-		len = strlen (reference->msgid);
+	count = g_mime_references_length (refs);
+	for (i = 0; i < count; i++) {
+		msgid = g_mime_references_get_message_id (refs, i);
+		len = strlen (msgid);
 		if (cur > 1 && cur + len + 3 >= GMIME_FOLD_LEN) {
 			g_string_append (str, newline);
 			g_string_append_c (str, '\t');
@@ -523,14 +526,12 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 		}
 		
 		g_string_append_c (str, '<');
-		g_string_append_len (str, reference->msgid, len);
+		g_string_append_len (str, msgid, len);
 		g_string_append_c (str, '>');
 		cur += len + 2;
-		
-		reference = reference->next;
 	}
 	
-	g_mime_references_clear (&references);
+	g_mime_references_free (refs);
 	
 	g_string_append (str, newline);
 	

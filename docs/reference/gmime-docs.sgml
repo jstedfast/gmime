@@ -30,6 +30,7 @@
 <!ENTITY gmime-charset SYSTEM "xml/gmime-charset.xml">
 <!ENTITY gmime-iconv SYSTEM "xml/gmime-iconv.xml">
 <!ENTITY gmime-iconv-utils SYSTEM "xml/gmime-iconv-utils.xml">
+<!ENTITY GMimeReferences SYSTEM "xml/gmime-references.xml">
 <!ENTITY GMimeStream SYSTEM "xml/gmime-stream.xml">
 <!ENTITY GMimeStreamBuffer SYSTEM "xml/gmime-stream-buffer.xml">
 <!ENTITY GMimeStreamCat SYSTEM "xml/gmime-stream-cat.xml">
@@ -178,6 +179,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-iconv-utils;
     &gmime-encodings;
     &gmime-utils;
+    &GMimeReferences;
     &GMimeFormatOptions;
   </part>
 

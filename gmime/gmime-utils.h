@@ -23,8 +23,6 @@
 #define __GMIME_UTILS_H__
 
 #include <glib.h>
-#include <glib-object.h>
-#include <time.h>
 #include <stdarg.h>
 
 #include <gmime/gmime-format-options.h>
@@ -33,24 +31,6 @@
 
 G_BEGIN_DECLS
 
-#define GMIME_TYPE_REFERENCES (gmime_references_get_type ())
-
-typedef struct _GMimeReferences GMimeReferences;
-
-/**
- * GMimeReferences:
- * @next: Pointer to the next reference.
- * @msgid: Reference message-id.
- *
- * A List of references, as per the References or In-Reply-To header
- * fields.
- **/
-struct _GMimeReferences {
-	GMimeReferences *next;
-	char *msgid;
-};
-
-
 GDateTime *g_mime_utils_header_decode_date (const char *str);
 char *g_mime_utils_header_format_date (GDateTime *date);
 
@@ -58,16 +38,6 @@ char *g_mime_utils_generate_message_id (const char *fqdn);
 
 /* decode a message-id */
 char *g_mime_utils_decode_message_id (const char *message_id);
-
-/* decode a References or In-Reply-To header */
-GType g_mime_references_get_type (void) G_GNUC_CONST;
-GMimeReferences *g_mime_references_decode (const char *text);
-GMimeReferences *g_mime_references_copy (GMimeReferences *references);
-void g_mime_references_append (GMimeReferences **refs, const char *msgid);
-void g_mime_references_clear (GMimeReferences **refs);
-void g_mime_references_free (GMimeReferences *refs);
-const GMimeReferences *g_mime_references_get_next (const GMimeReferences *ref);
-const char *g_mime_references_get_message_id (const GMimeReferences *ref);
 
 char  *g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *header);
 char  *g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *header);

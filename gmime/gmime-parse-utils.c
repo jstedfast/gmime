@@ -446,3 +446,97 @@ g_mime_decode_domain (const char **in, GString *domain)
 	
 	return domain->len > initial;
 }
+
+
+char *
+g_mime_decode_addrspec (const char **in)
+{
+	const char *word, *inptr;
+	GString *addrspec;
+	char *str;
+	
+	skip_cfws (in);
+	inptr = *in;
+	
+	if (!(word = decode_word (&inptr))) {
+		w(g_warning ("No local-part in addr-spec: %s", *in));
+		return NULL;
+	}
+	
+	addrspec = g_string_new ("");
+	g_string_append_len (addrspec, word, (size_t) (inptr - word));
+	
+	/* get the rest of the local-part */
+	skip_cfws (&inptr);
+	while (*inptr == '.') {
+		g_string_append_c (addrspec, *inptr++);
+		if ((word = decode_word (&inptr))) {
+			g_string_append_len (addrspec, word, (size_t) (inptr - word));
+			skip_cfws (&inptr);
+		} else {
+			w(g_warning ("Invalid local-part in addr-spec: %s", *in));
+			goto exception;
+		}
+	}
+	
+	/* we should be at the '@' now... */
+	if (*inptr++ != '@') {
+		w(g_warning ("Invalid addr-spec; missing '@': %s", *in));
+		goto exception;
+	}
+	
+	g_string_append_c (addrspec, '@');
+	if (!decode_domain (&inptr, addrspec)) {
+		w(g_warning ("No domain in addr-spec: %s", *in));
+		goto exception;
+	}
+	
+	str = addrspec->str;
+	g_string_free (addrspec, FALSE);
+	
+	*in = inptr;
+	
+	return str;
+	
+ exception:
+	
+	g_string_free (addrspec, TRUE);
+	
+	return NULL;
+}
+
+char *
+g_mime_decode_msgid (const char **in)
+{
+	const char *inptr = *in;
+	char *msgid = NULL;
+	
+	skip_cfws (&inptr);
+	if (*inptr != '<') {
+		w(g_warning ("Invalid msg-id; missing '<': %s", *in));
+	} else {
+		inptr++;
+	}
+	
+	skip_cfws (&inptr);
+	if ((msgid = decode_addrspec (&inptr))) {
+		skip_cfws (&inptr);
+		if (*inptr != '>') {
+			w(g_warning ("Invalid msg-id; missing '>': %s", *in));
+		} else {
+			inptr++;
+		}
+		
+		*in = inptr;
+	} else {
+		w(g_warning ("Invalid msg-id; missing addr-spec: %s", *in));
+		*in = inptr;
+		while (*inptr && *inptr != '>')
+			inptr++;
+		
+		msgid = g_strndup (*in, (size_t) (inptr - *in));
+		*in = inptr;
+	}
+	
+	return msgid;
+}

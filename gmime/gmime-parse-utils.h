@@ -22,6 +22,8 @@
 #ifndef __GMIME_PARSE_UTILS_H__
 #define __GMIME_PARSE_UTILS_H__
 
+#include <glib.h>
+
 G_BEGIN_DECLS
 
 G_GNUC_INTERNAL gboolean g_mime_parse_content_type (const char **in, char **type, char **subtype);
@@ -50,6 +52,13 @@ G_GNUC_INTERNAL const char *g_mime_decode_word (const char **in);
 
 G_GNUC_INTERNAL gboolean g_mime_decode_domain (const char **in, GString *domain);
 #define decode_domain(in, domain) g_mime_decode_domain (in, domain)
+
+
+G_GNUC_INTERNAL char *g_mime_decode_addrspec (const char **in);
+#define decode_addrspec(in) g_mime_decode_addrspec (in)
+
+G_GNUC_INTERNAL char *g_mime_decode_msgid (const char **in);
+#define decode_msgid(in) g_mime_decode_msgid (in)
 
 G_END_DECLS
 
