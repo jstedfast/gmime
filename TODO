@@ -6,8 +6,6 @@ tasks are presented in.
 GMime 3.0 Planning:
 ===================
 
-- Rewrite GMimeReferences into a GObject and split into its own file
-
 - Rename g_mime_message_[get,set]_mime_part() to g_mime_message_[get,set]_body()?
   This would require me to rename g_mime_message_get_body() to
   g_mime_message_get_text_body()?
