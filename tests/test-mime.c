@@ -359,6 +359,7 @@ test_date_parser (void)
 			if (!(date = g_mime_utils_header_decode_date (dates[i].in))) {
 				if (dates[i].date != 0)
 					throw (exception_new ("failed to parse date: %s", dates[i].in));
+				testsuite_check_passed ();
 				continue;
 			}
 			

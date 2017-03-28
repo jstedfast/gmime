@@ -66,6 +66,7 @@ libgmime_3_0_la_SOURCES = 		\
 	gmime-part.c			\
 	gmime-part-iter.c		\
 	gmime-pkcs7-context.c		\
+	gmime-references.c		\
 	gmime-signature.c		\
 	gmime-stream.c			\
 	gmime-stream-buffer.c		\
@@ -126,6 +127,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-part.h			\
 	gmime-part-iter.h		\
 	gmime-pkcs7-context.h		\
+	gmime-references.h		\
 	gmime-signature.h		\
 	gmime-stream.h			\
 	gmime-stream-buffer.h		\

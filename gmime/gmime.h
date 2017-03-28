@@ -49,6 +49,7 @@
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-parser.h>
 #include <gmime/gmime-utils.h>
+#include <gmime/gmime-references.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-stream-buffer.h>
 #include <gmime/gmime-stream-cat.h>

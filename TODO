@@ -6,13 +6,9 @@ tasks are presented in.
 GMime 3.0 Planning:
 ===================
 
-- Rewrite GMimeReferences into a GObject and split into its own file
-
 - Rename g_mime_message_[get,set]_mime_part() to g_mime_message_[get,set]_body()?
   This would require me to rename g_mime_message_get_body() to
   g_mime_message_get_text_body()?
-
-- Make g_mime_message_[get,set]_date() take/return a GDateTime?
 
 - Fix GMimeParser to save mbox From markers on the GMimeMessage so
   that GMimeMessagePart::write_to_stream() can use it.

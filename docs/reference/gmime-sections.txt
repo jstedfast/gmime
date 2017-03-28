@@ -1076,19 +1076,32 @@ GMimeTextPartClass
 </SECTION>
 
 <SECTION>
+<FILE>gmime-references</FILE>
+GMimeReferences
+g_mime_references_new
+g_mime_references_free
+g_mime_references_copy
+g_mime_references_parse
+g_mime_references_length
+g_mime_references_append
+g_mime_references_clear
+g_mime_references_get_message_id
+g_mime_references_set_message_id
+
+<SUBSECTION Private>
+g_mime_references_get_type
+
+<SUBSECTION Standard>
+GMIME_TYPE_REFERENCES
+</SECTION>
+
+<SECTION>
 <FILE>gmime-utils</FILE>
 GMimeReferences
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
 g_mime_utils_generate_message_id
 g_mime_utils_decode_message_id
-g_mime_references_get_message_id
-g_mime_references_get_next
-g_mime_references_decode
-g_mime_references_append
-g_mime_references_clear
-g_mime_references_copy
-g_mime_references_free
 g_mime_utils_header_printf
 g_mime_utils_quote_string
 g_mime_utils_unquote_string
@@ -1101,12 +1114,6 @@ g_mime_utils_header_decode_phrase
 g_mime_utils_header_encode_phrase
 g_mime_utils_structured_header_fold
 g_mime_utils_unstructured_header_fold
-
-<SUBSECTION Private>
-g_mime_references_get_type
-
-<SUBSECTION Standard>
-GMIME_TYPE_REFERENCES
 </SECTION>
 
 <SECTION>
