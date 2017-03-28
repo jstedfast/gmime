@@ -223,8 +223,8 @@ const char *
 g_mime_references_get_message_id (GMimeReferences *refs, int index)
 {
 	g_return_val_if_fail (refs != NULL, NULL);
-	g_return_val_if_fail (index < 0, NULL);
-	g_return_val_if_fail (index >= refs->array->len, NULL);
+	g_return_val_if_fail (index >= 0, NULL);
+	g_return_val_if_fail (index < refs->array->len, NULL);
 	
 	return refs->array->pdata[index];
 }
@@ -244,8 +244,8 @@ g_mime_references_set_message_id (GMimeReferences *refs, int index, const char *
 	char *buf;
 	
 	g_return_if_fail (refs != NULL);
-	g_return_if_fail (index < 0);
-	g_return_if_fail (index >= refs->array->len);
+	g_return_if_fail (index >= 0);
+	g_return_if_fail (index < refs->array->len);
 	
 	buf = g_strdup (msgid);
 	g_free (refs->array->pdata[index]);
