@@ -95,6 +95,7 @@ typedef enum {
  * @GMIME_ENCRYPT_ALWAYS_TRUST: Always trust the specified keys.
  * @GMIME_ENCRYPT_NO_COMPRESS: Don't compress the plaintext before encrypting.
  * @GMIME_ENCRYPT_SYMMETRIC: Encrypt symmetrically.
+ * @GMIME_ENCRYPT_THROW_KEYIDS: Do not include the key ids in the ciphertext.
  *
  * Encryption flags.
  **/
@@ -102,7 +103,8 @@ typedef enum {
 	GMIME_ENCRYPT_NONE          = 0,
 	GMIME_ENCRYPT_ALWAYS_TRUST  = 1,
 	GMIME_ENCRYPT_NO_COMPRESS   = 16,
-	GMIME_ENCRYPT_SYMMETRIC     = 32
+	GMIME_ENCRYPT_SYMMETRIC     = 32,
+	GMIME_ENCRYPT_THROW_KEYIDS  = 64,
 } GMimeEncryptFlags;
 
 
