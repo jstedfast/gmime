@@ -856,6 +856,7 @@ GMimePartClass
 GMimePartIter
 g_mime_part_iter_new
 g_mime_part_iter_free
+g_mime_part_iter_clone
 g_mime_part_iter_reset
 g_mime_part_iter_jump_to
 g_mime_part_iter_is_valid
@@ -867,6 +868,12 @@ g_mime_part_iter_get_parent
 g_mime_part_iter_get_path
 g_mime_part_iter_replace
 g_mime_part_iter_remove
+
+<SUBSECTION Private>
+g_mime_part_iter_get_type
+
+<SUBSECTION Standard>
+GMIME_TYPE_PART_ITER
 </SECTION>
 
 <SECTION>
@@ -1250,6 +1257,7 @@ GMimeNewLineFormat
 GMimeFormatOptions
 g_mime_format_options_new
 g_mime_format_options_free
+g_mime_format_options_clone
 g_mime_format_options_get_default
 g_mime_format_options_get_param_encoding_method
 g_mime_format_options_set_param_encoding_method
@@ -1261,6 +1269,12 @@ g_mime_format_options_is_hidden_header
 g_mime_format_options_add_hidden_header
 g_mime_format_options_remove_hidden_header
 g_mime_format_options_clear_hidden_headers
+
+<SUBSECTION Private>
+g_mime_format_options_get_type
+
+<SUBSECTION Standard>
+GMIME_TYPE_FORMAT_OPTIONS
 </SECTION>
 
 <SECTION>
@@ -1269,6 +1283,7 @@ GMimeParserOptions
 GMimeRfcComplianceMode
 g_mime_parser_options_new
 g_mime_parser_options_free
+g_mime_parser_options_clone
 g_mime_parser_options_get_default
 g_mime_parser_options_get_address_compliance_mode
 g_mime_parser_options_set_address_compliance_mode
@@ -1278,6 +1293,12 @@ g_mime_parser_options_get_rfc2047_compliance_mode
 g_mime_parser_options_set_rfc2047_compliance_mode
 g_mime_parser_options_get_fallback_charsets
 g_mime_parser_options_set_fallback_charsets
+
+<SUBSECTION Private>
+g_mime_parser_options_get_type
+
+<SUBSECTION Standard>
+GMIME_TYPE_PARSER_OPTIONS
 </SECTION>
 
 <SECTION>

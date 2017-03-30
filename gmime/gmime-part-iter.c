@@ -44,6 +44,9 @@
  **/
 
 
+G_DEFINE_BOXED_TYPE (GMimePartIter, g_mime_part_iter, g_mime_part_iter_clone, g_mime_part_iter_free);
+
+
 typedef struct _GMimeObjectStack GMimeObjectStack;
 
 struct _GMimeObjectStack {
@@ -143,6 +146,32 @@ g_mime_part_iter_free (GMimePartIter *iter)
 	if (iter->parent != NULL)
 		g_slice_free_chain (GMimeObjectStack, iter->parent, parent);
 	g_slice_free (GMimePartIter, iter);
+}
+
+
+/**
+ * g_mime_part_iter_clone:
+ * @iter: a #GMimePartIter
+ *
+ * Clones the @iter, including its current state.
+ *
+ * Returns: (transfer full): a new #GMimePartIter that is identical to @iter.
+ **/
+GMimePartIter *
+g_mime_part_iter_clone (GMimePartIter *iter)
+{
+	GMimePartIter *clone;
+	char *path;
+	
+	g_return_val_if_fail (iter != NULL, NULL);
+	
+	clone = g_mime_part_iter_new (iter->toplevel);
+	if ((path = g_mime_part_iter_get_path (iter))) {
+		g_mime_part_iter_jump_to (clone, path);
+		g_free (path);
+	}
+	
+	return clone;
 }
 
 
