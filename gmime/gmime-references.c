@@ -138,7 +138,7 @@ g_mime_references_parse (GMimeParserOptions *options, const char *text)
  *
  * Copies a #GMimeReferences list.
  *
- * Returns: (transfer full): a new #GMimeRewferencxes list that contains
+ * Returns: (transfer full): a new #GMimeRewferences list that contains
  * an identical list of items as @refs.
  **/
 GMimeReferences *
