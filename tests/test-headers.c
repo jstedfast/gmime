@@ -547,6 +547,58 @@ test_address_sync (void)
 	g_object_unref (message);
 }
 
+static struct {
+	const char *name;
+	const char *value;
+	const char *raw_value;
+} headers[] = {
+	{ "Received",
+	  "by greenbush.bellcore.com (4.1/4.7) id <AA12840> for nsb; Thu, 19 Sep 91 12:41:43 EDT",
+	  " by greenbush.bellcore.com (4.1/4.7) id <AA12840> for nsb;\n\tThu, 19 Sep 91 12:41:43 EDT\n" },
+	{ "Received",
+	  "from thumper.bellcore.com by greenbush.bellcore.com (4.1/4.7) id <AA01648> for nsb; Fri, 29 Nov 91 07:13:33 EST",
+	  " from thumper.bellcore.com by greenbush.bellcore.com (4.1/4.7)\n\tid <AA01648> for nsb; Fri, 29 Nov 91 07:13:33 EST\n" },
+	{ "To",
+	  "abel, bianchi, braun, cameron, carmen, jfp, jxr, kraut, lamb, lowery, lynn, mlittman, nancyg, sau, shoshi, slr, stornett@flash, tkl",
+	  " abel, bianchi, braun, cameron, carmen, jfp, jxr, kraut, lamb, lowery, lynn,\n\tmlittman, nancyg, sau, shoshi, slr, stornett@flash, tkl\n" },
+	{ "References",
+	  "<3ohapq$h3b@gandalf.rutgers.edu> <3notqh$b52@ns2.ny.ubs.com> <3npoh0$2oo@news.blkbox.com> <3nqp09$r7t@ns2.ny.ubs.com>",
+	  " <3ohapq$h3b@gandalf.rutgers.edu> <3notqh$b52@ns2.ny.ubs.com>\n\t<3npoh0$2oo@news.blkbox.com> <3nqp09$r7t@ns2.ny.ubs.com>\n" },
+	{ "Message-Id",
+	  "<this.is.a.really.really.reeeaalllllllllllllly.looooooooooong.message.id@some.internet.host.com>",
+	  " <this.is.a.really.really.reeeaalllllllllllllly.looooooooooong.message.id@some.internet.host.com>\n" },
+};
+
+static void
+test_header_formatting (void)
+{
+	const char *raw_value;
+	GMimeHeaderList *list;
+	GMimeHeader *header;
+	guint i;
+	
+	list = g_mime_header_list_new (g_mime_parser_options_get_default ());
+	
+	for (i = 0; i < G_N_ELEMENTS (headers); i++) {
+		testsuite_check ("header[%u]", i);
+		
+		try {
+			g_mime_header_list_append (list, headers[i].name, headers[i].value, NULL);
+			header = g_mime_header_list_get_header_at (list, (int) i);
+			raw_value = g_mime_header_get_raw_value (header);
+			
+			if (strcmp (headers[i].raw_value, raw_value) != 0)
+				throw (exception_new ("raw values do not match: %s", raw_value));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("header[%u] failed: %s", i, ex->message);
+		} finally;
+	}
+	
+	g_object_unref (list);
+}
+
 int main (int argc, char **argv)
 {
 	g_mime_init ();
@@ -569,6 +621,10 @@ int main (int argc, char **argv)
 	test_content_type_sync ();
 	test_disposition_sync ();
 	test_address_sync ();
+	testsuite_end ();
+	
+	testsuite_start ("header formatting");
+	test_header_formatting ();
 	testsuite_end ();
 	
 	g_mime_shutdown ();

@@ -212,7 +212,7 @@ g_mime_references_clear (GMimeReferences *refs)
 
 /**
  * g_mime_references_get_message_id:
- * @ref: a #GMimeReferences
+ * @refs: a #GMimeReferences
  * @index: the index of the message id
  *
  * Gets the specified Message-Id reference from the #GMimeReferences.
@@ -232,7 +232,7 @@ g_mime_references_get_message_id (GMimeReferences *refs, int index)
 
 /**
  * g_mime_references_set_message_id:
- * @ref: a #GMimeReferences
+ * @refs: a #GMimeReferences
  * @index: the index of the message id
  * @msgid: the message id
  *
