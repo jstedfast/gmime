@@ -191,7 +191,7 @@ g_mime_crypto_context_new (const char *protocol)
 
 
 /**
- * g_mime_crypto_context_set_request_password:
+ * g_mime_crypto_context_set_request_password: (skip)
  * @ctx: a #GMimeCryptoContext
  * @request_passwd: a callback function for requesting a password
  *
