@@ -238,7 +238,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
  * @encrypted: a #GMimeMultipartEncrypted
  * @flags: a #GMimeDecryptFlags
  * @session_key: session key to use or %NULL
- * @result: (out) (transfer full): a #GMimeDecryptionResult
+ * @result: (out) (transfer full): a #GMimeDecryptResult
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
