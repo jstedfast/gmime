@@ -434,6 +434,18 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options,
 }
 
 
+/**
+ * g_mime_header_format_content_disposition:
+ * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
+ * @value: a Content-Disposition header value
+ * @charset: a charset (note: unused)
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
 char *
 g_mime_header_format_content_disposition (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
@@ -459,6 +471,18 @@ g_mime_header_format_content_disposition (GMimeHeader *header, GMimeFormatOption
 }
 
 
+/**
+ * g_mime_header_format_content_type:
+ * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
+ * @value: a Content-Type header value
+ * @charset: a charset (note: unused)
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
 char *
 g_mime_header_format_content_type (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
@@ -486,6 +510,18 @@ g_mime_header_format_content_type (GMimeHeader *header, GMimeFormatOptions *opti
 }
 
 
+/**
+ * g_mime_header_format_message_id:
+ * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
+ * @value: a Message-Id or Content-Id header value
+ * @charset: a charset (note: unused)
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
 char *
 g_mime_header_format_message_id (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
@@ -495,6 +531,18 @@ g_mime_header_format_message_id (GMimeHeader *header, GMimeFormatOptions *option
 }
 
 
+/**
+ * g_mime_header_format_references:
+ * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
+ * @value: a References or In-Reply-To header value
+ * @charset: a charset (note: unused)
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
 char *
 g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
@@ -541,6 +589,18 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 }
 
 
+/**
+ * g_mime_header_format_addrlist:
+ * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
+ * @value: a Sender, From, Reply-To, To, Cc, or Bcc header value
+ * @charset: a charset (note: unused)
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
 char *
 g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
@@ -724,7 +784,18 @@ struct _received_part {
 };
 
 
-
+/**
+ * g_mime_header_format_received:
+ * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
+ * @value: a Received header value
+ * @charset: a charset (note: unused)
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
 char *
 g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
@@ -843,6 +914,18 @@ g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options,
 }
 
 
+/**
+ * g_mime_header_format_default:
+ * @header: a #GMimeHeader
+ * @options: a #GMimeFormatOptions
+ * @value: a header value
+ * @charset: a charset to use when encoding the @value
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
 char *
 g_mime_header_format_default (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
