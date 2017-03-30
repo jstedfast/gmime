@@ -58,7 +58,7 @@ typedef struct {
 } GMimeParserOptions;
 
 
-GType g_mime_parser_options_get_type (void) G_GNUC_CONST;
+GType g_mime_parser_options_get_type (void);
 
 GMimeParserOptions *g_mime_parser_options_get_default (void);
 
