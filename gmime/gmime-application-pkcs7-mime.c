@@ -224,8 +224,8 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
  * Attempts to encrypt the @entity MIME part to the public keys of @recipients
  * using S/MIME. If successful, a new application/pkcs7-mime object is returned.
  *
- * Returns: (transfer full): a new #GMimeApplicationPkcs7Mime object on success or
- * %NULL on fail. If encrypting fails, an exception will be set on @err to provide
+ * Returns: (nullable) (transfer full): a new #GMimeApplicationPkcs7Mime object on success
+ * or %NULL on fail. If encrypting fails, an exception will be set on @err to provide
  * information as to why the failure occured.
  **/
 GMimeApplicationPkcs7Mime *
@@ -304,7 +304,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
  * status information as well as a list of recipients that the part was
  * encrypted to.
  *
- * Returns: (transfer full): the decrypted MIME part on success or
+ * Returns: (nullable) (transfer full): the decrypted MIME part on success or
  * %NULL on fail. If the decryption fails, an exception will be set on
  * @err to provide information as to why the failure occured.
  **/
@@ -395,8 +395,8 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
  * Attempts to sign the @entity MIME part with @userid's private key using
  * S/MIME. If successful, a new application/pkcs7-mime object is returned.
  *
- * Returns: (transfer full): a new #GMimeApplicationPkcs7Mime object on success or
- * %NULL on fail. If signing fails, an exception will be set on @err to provide
+ * Returns: (nullable) (transfer full): a new #GMimeApplicationPkcs7Mime object on success
+ * or %NULL on fail. If signing fails, an exception will be set on @err to provide
  * information as to why the failure occured.
  **/
 GMimeApplicationPkcs7Mime *
@@ -459,13 +459,13 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
  * g_mime_application_pkcs7_mime_verify:
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
  * @flags: a #GMimeVerifyFlags
- * @entity: the extracted entity
+ * @entity: (out) (transfer full): the extracted entity
  * @err: a #GError
  *
  * Attempts to verify the signed @pkcs7_mime part and extract the original
  * MIME entity.
  *
- * Returns: (transfer full): a new #GMimeSignatureList object on
+ * Returns: (nullable) (transfer full): a new #GMimeSignatureList object on
  * success or %NULL on fail. If the verification fails, an exception
  * will be set on @err to provide information as to why the failure
  * occured.

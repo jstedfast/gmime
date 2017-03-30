@@ -1902,7 +1902,7 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
  *
  * Constructs a MIME part from @parser.
  *
- * Returns: (transfer full): a MIME part based on @parser or %NULL on
+ * Returns: (nullable) (transfer full): a MIME part based on @parser or %NULL on
  * fail.
  **/
 GMimeObject *
@@ -1996,7 +1996,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
  *
  * Constructs a MIME message from @parser.
  *
- * Returns: (transfer full): a MIME message or %NULL on fail.
+ * Returns: (nullable) (transfer full): a MIME message or %NULL on fail.
  **/
 GMimeMessage *
 g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
@@ -2014,7 +2014,7 @@ g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *option
  * Gets the mbox-style From-line of the most recently parsed message
  * (gotten from g_mime_parser_construct_message()).
  *
- * Returns: the mbox-style From-line of the most recently parsed
+ * Returns: (nullable): the mbox-style From-line of the most recently parsed
  * message or %NULL on error.
  **/
 char *

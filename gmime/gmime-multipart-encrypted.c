@@ -142,7 +142,7 @@ g_mime_multipart_encrypted_new (void)
  * @ctx: a #GMimeCryptoContext
  * @entity: MIME part to encrypt
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
- * @userid: user id to use for signing (only used if @sign is %TRUE)
+ * @userid: (nullable): user id to use for signing (only used if @sign is %TRUE)
  * @flags: a #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipients to encrypt to
  * @err: a #GError
@@ -151,8 +151,8 @@ g_mime_multipart_encrypted_new (void)
  * to the public keys of @recipients using the @ctx encryption
  * context. If successful, a new multipart/encrypted object is returned.
  *
- * Returns: (transfer full): a new #GMimeMultipartEncrypted object on success or
- * %NULL on fail. If encrypting fails, an exception will be set on @err to provide
+ * Returns: (nullable) (transfer full): a new #GMimeMultipartEncrypted object on success
+ * or %NULL on fail. If encrypting fails, an exception will be set on @err to provide
  * information as to why the failure occured.
  **/
 GMimeMultipartEncrypted *
@@ -238,7 +238,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
  * @encrypted: a #GMimeMultipartEncrypted
  * @flags: a #GMimeDecryptFlags
  * @session_key: session key to use or %NULL
- * @result: a #GMimeDecryptionResult
+ * @result: (out) (transfer full): a #GMimeDecryptionResult
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
@@ -254,7 +254,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
  * status information as well as a list of recipients that the part was
  * encrypted to.
  *
- * Returns: (transfer full): the decrypted MIME part on success or
+ * Returns: (nullable) (transfer full): the decrypted MIME part on success or
  * %NULL on fail. If the decryption fails, an exception will be set on
  * @err to provide information as to why the failure occured.
  **/

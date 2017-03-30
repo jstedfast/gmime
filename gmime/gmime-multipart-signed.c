@@ -204,8 +204,8 @@ sign_prepare (GMimeObject *mime_part)
  * using the @ctx signing context. If successful, a new multipart/signed
  * object is returned.
  *
- * Returns: (transfer full): a new #GMimeMultipartSigned object on success or
- * %NULL on fail. If signing fails, an exception will be set on @err to provide
+ * Returns: (nullable) (transfer full): a new #GMimeMultipartSigned object on success
+ * or %NULL on fail. If signing fails, an exception will be set on @err to provide
  * information as to why the failure occured.
  **/
 GMimeMultipartSigned *
@@ -362,7 +362,7 @@ check_protocol_supported (const char *protocol, const char *supported)
  * Attempts to verify the signed MIME part contained within the
  * multipart/signed object @mps.
  *
- * Returns: (transfer full): a new #GMimeSignatureList object on
+ * Returns: (nullable) (transfer full): a new #GMimeSignatureList object on
  * success or %NULL on fail. If the verification fails, an exception
  * will be set on @err to provide information as to why the failure
  * occured.

@@ -291,8 +291,6 @@ g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, 
  * Determines if a Content-Disposition has a value of "attachment".
  *
  * Returns: %TRUE if the value matches "attachment", otherwise %FALSE.
- *
- * Since: 2.6.21
  **/
 gboolean
 g_mime_content_disposition_is_attachment (GMimeContentDisposition *disposition)
