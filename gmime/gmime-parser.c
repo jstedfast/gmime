@@ -613,7 +613,7 @@ g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_
 
 
 /**
- * g_mime_parser_set_header_regex:
+ * g_mime_parser_set_header_regex: (skip)
  * @parser: a #GMimeParser context
  * @regex: regular expression
  * @header_cb: callback function
