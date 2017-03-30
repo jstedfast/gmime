@@ -204,9 +204,9 @@ sign_prepare (GMimeObject *mime_part)
  * using the @ctx signing context. If successful, a new multipart/signed
  * object is returned.
  *
- * Returns: a new #GMimeMultipartSigned object on success or %NULL on fail.
- * If signing fails, an exception will be set on @err to provide information
- * as to why the failure occured.
+ * Returns: (transfer full): a new #GMimeMultipartSigned object on success or
+ * %NULL on fail. If signing fails, an exception will be set on @err to provide
+ * information as to why the failure occured.
  **/
 GMimeMultipartSigned *
 g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,

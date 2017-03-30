@@ -138,12 +138,12 @@ g_mime_content_disposition_new (void)
 
 /**
  * g_mime_content_disposition_parse:
- * @options: a #GMimeParserOptions
- * @str: Content-Disposition field value or %NULL
+ * @options: a #GMimeParserOptions or %NULL
+ * @str: Content-Disposition field value
  *
  * Parses the input string into a #GMimeContentDisposition object.
  *
- * Returns: a new #GMimeContentDisposition object.
+ * Returns: (transfer full): a new #GMimeContentDisposition object.
  **/
 GMimeContentDisposition *
 g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
@@ -228,7 +228,7 @@ g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition
  *
  * Gets the Content-Disposition parameter list.
  *
- * Returns: the Content-Disposition's parameter list.
+ * Returns: (transfer none): the Content-Disposition's parameter list.
  **/
 GMimeParamList *
 g_mime_content_disposition_get_parameters (GMimeContentDisposition *disposition)
@@ -306,7 +306,7 @@ g_mime_content_disposition_is_attachment (GMimeContentDisposition *disposition)
 /**
  * g_mime_content_disposition_encode:
  * @disposition: a #GMimeContentDisposition object
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  *
  * Encodes the Content-Disposition header.
  *

@@ -27,6 +27,7 @@
 
 #include "gmime-parser-options.h"
 
+
 static char *default_charsets[3] = { "utf-8", "iso-8859-1", NULL };
 
 static GMimeParserOptions *default_options = NULL;
@@ -42,6 +43,8 @@ static GMimeParserOptions *default_options = NULL;
  * and all of the various other parser functions in GMime.
  **/
 
+
+G_DEFINE_BOXED_TYPE (GMimeParserOptions, g_mime_parser_options, g_mime_parser_options_clone, g_mime_parser_options_free);
 
 void
 g_mime_parser_options_init (void)
@@ -103,15 +106,15 @@ g_mime_parser_options_new (void)
 
 
 /**
- * _g_mime_parser_options_clone:
+ * g_mime_parser_options_clone:
  * @options: a #GMimeParserOptions
  *
  * Clones a #GMimeParserOptions.
  *
- * Returns: a newly allocated #GMimeParserOptions.
+ * Returns: (transfer full): a newly allocated #GMimeParserOptions.
  **/
 GMimeParserOptions *
-_g_mime_parser_options_clone (GMimeParserOptions *options)
+g_mime_parser_options_clone (GMimeParserOptions *options)
 {
 	GMimeParserOptions *clone;
 	guint i, n = 0;
@@ -291,8 +294,8 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
  *
  * Gets the fallback charsets to try when decoding 8-bit headers.
  *
- * Returns: a %NULL-terminated list of charsets to try when decoding
- * 8-bit headers.
+ * Returns: (transfer none): a %NULL-terminated list of charsets to try when
+ * decoding 8-bit headers.
  **/
 const char **
 g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options)

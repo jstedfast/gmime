@@ -628,7 +628,7 @@ g_mime_object_get_content_disposition (GMimeObject *object)
 }
 
 /**
- * g_mime_object_set_content_disposition:
+ * _g_mime_object_set_content_disposition:
  * @object: a #GMimeObject
  * @disposition: a #GMimeContentDisposition object
  *

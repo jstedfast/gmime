@@ -474,8 +474,8 @@ g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
  *
  * Creates a new #GMimeStreamFs object for the specified @path.
  *
- * Returns: a stream using for reading and/or writing to the specified
- * file path or %NULL on error.
+ * Returns: (transfer full): a stream using for reading and/or writing to the
+ * specified file path or %NULL on error.
  **/
 GMimeStream *
 g_mime_stream_fs_open (const char *path, int flags, int mode, GError **err)

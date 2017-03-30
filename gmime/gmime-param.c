@@ -502,7 +502,7 @@ g_mime_param_list_set_parameter (GMimeParamList *list, const char *name, const c
  *
  * Gets the #GMimeParam with the given @name.
  *
- * Returns: the requested #GMimeParam.
+ * Returns: (transfer none): the requested #GMimeParam.
  **/
 GMimeParam *
 g_mime_param_list_get_parameter (GMimeParamList *list, const char *name)
@@ -531,7 +531,7 @@ g_mime_param_list_get_parameter (GMimeParamList *list, const char *name)
  *
  * Gets the #GMimeParam at the specified @index.
  *
- * Returns: the #GMimeParam at the specified index.
+ * Returns: (transfer none): the #GMimeParam at the specified index.
  **/
 GMimeParam *
 g_mime_param_list_get_parameter_at (GMimeParamList *list, int index)
@@ -718,7 +718,7 @@ g_string_append_len_quoted (GString *str, const char *text, size_t len)
 /**
  * g_mime_param_list_encode:
  * @list: a #GMimeParamList
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @fold: %TRUE if the parameter list should be folded; otherwise, %FALSE
  * @str: the output string buffer
  *
@@ -1422,12 +1422,12 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 
 /**
  * g_mime_param_list_parse:
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  * @str: a string to parse
  *
  * Parses the input string into a parameter list.
  *
- * Returns: a #GMimeParamList.
+ * Returns: (transfer full): a new #GMimeParamList.
  **/
 GMimeParamList *
 g_mime_param_list_parse (GMimeParserOptions *options, const char *str)

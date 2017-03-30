@@ -26,6 +26,8 @@
 
 G_BEGIN_DECLS
 
+#define GMIME_TYPE_PART_ITER (g_mime_part_iter_get_type ())
+
 /**
  * GMimePartIter:
  *
@@ -33,8 +35,12 @@ G_BEGIN_DECLS
  **/
 typedef struct _GMimePartIter GMimePartIter;
 
+GType g_mime_part_iter_get_type (void) G_GNUC_CONST;
+
 GMimePartIter *g_mime_part_iter_new (GMimeObject *toplevel);
 void g_mime_part_iter_free (GMimePartIter *iter);
+
+GMimePartIter *g_mime_part_iter_clone (GMimePartIter *iter);
 
 void g_mime_part_iter_reset (GMimePartIter *iter);
 

@@ -149,7 +149,7 @@ g_mime_header_finalize (GObject *object)
 
 /**
  * g_mime_header_new:
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  * @name: header name
  * @value: header value
  * @raw_value: raw header value
@@ -271,7 +271,7 @@ g_mime_header_get_value (GMimeHeader *header)
 /**
  * g_mime_header_set_value:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: the new header value
  * @charset: a charset
  *
@@ -402,7 +402,7 @@ _g_mime_header_set_offset (GMimeHeader *header, gint64 offset)
 /**
  * g_mime_header_write_to_stream:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @stream: a #GMimeStream
  *
  * Write the header to the specified stream.
@@ -437,7 +437,7 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options,
 /**
  * g_mime_header_format_content_disposition:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: a Content-Disposition header value
  * @charset: a charset (note: unused)
  *
@@ -474,7 +474,7 @@ g_mime_header_format_content_disposition (GMimeHeader *header, GMimeFormatOption
 /**
  * g_mime_header_format_content_type:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: a Content-Type header value
  * @charset: a charset (note: unused)
  *
@@ -513,7 +513,7 @@ g_mime_header_format_content_type (GMimeHeader *header, GMimeFormatOptions *opti
 /**
  * g_mime_header_format_message_id:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: a Message-Id or Content-Id header value
  * @charset: a charset (note: unused)
  *
@@ -534,7 +534,7 @@ g_mime_header_format_message_id (GMimeHeader *header, GMimeFormatOptions *option
 /**
  * g_mime_header_format_references:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: a References or In-Reply-To header value
  * @charset: a charset (note: unused)
  *
@@ -555,7 +555,7 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 	/* Note: we don't want to break in the middle of msgid tokens as
 	   it seems to break a lot of clients (and servers) */
 	newline = g_mime_format_options_get_newline (options);
-	refs = g_mime_references_parse (value);
+	refs = g_mime_references_parse (header->options, value);
 	str = g_string_new (header->raw_name);
 	g_string_append_c (str, ':');
 	cur = n = str->len;
@@ -592,7 +592,7 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 /**
  * g_mime_header_format_addrlist:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: a Sender, From, Reply-To, To, Cc, or Bcc header value
  * @charset: a charset (note: unused)
  *
@@ -787,7 +787,7 @@ struct _received_part {
 /**
  * g_mime_header_format_received:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: a Received header value
  * @charset: a charset (note: unused)
  *
@@ -917,7 +917,7 @@ g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options,
 /**
  * g_mime_header_format_default:
  * @header: a #GMimeHeader
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @value: a header value
  * @charset: a charset to use when encoding the @value
  *
@@ -1028,7 +1028,7 @@ g_mime_header_list_finalize (GObject *object)
 
 /**
  * g_mime_header_list_new:
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  *
  * Creates a new #GMimeHeaderList object.
  *
@@ -1042,7 +1042,7 @@ g_mime_header_list_new (GMimeParserOptions *options)
 	g_return_val_if_fail (options != NULL, NULL);
 	
 	headers = g_object_newv (GMIME_TYPE_HEADER_LIST, 0, NULL);
-	headers->options = _g_mime_parser_options_clone (options);
+	headers->options = g_mime_parser_options_clone (options);
 	
 	return headers;
 }
@@ -1090,7 +1090,7 @@ void
 _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options)
 {
 	g_mime_parser_options_free (headers->options);
-	headers->options = _g_mime_parser_options_clone (options);
+	headers->options = g_mime_parser_options_clone (options);
 }
 
 
@@ -1243,7 +1243,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
  *
  * Gets the first header with the specified name.
  *
- * Returns: a #GMimeHeader for the specified @name.
+ * Returns: (transfer none): a #GMimeHeader for the specified @name.
  **/
 GMimeHeader *
 g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name)
@@ -1475,7 +1475,7 @@ g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
 /**
  * g_mime_header_list_write_to_stream:
  * @headers: a #GMimeHeaderList
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @stream: output stream
  *
  * Write the headers to a stream.
@@ -1520,7 +1520,7 @@ g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions
 /**
  * g_mime_header_list_to_string:
  * @headers: a #GMimeHeaderList
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  *
  * Allocates a string buffer containing the raw rfc822 headers
  * contained in @headers.

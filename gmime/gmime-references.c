@@ -89,6 +89,7 @@ g_mime_references_free (GMimeReferences *refs)
 
 /**
  * g_mime_references_parse:
+ * @options: a #GMimeParserOptions or %NULL
  * @text: string containing a list of msg-ids
  *
  * Decodes a list of msg-ids as in the References and/or In-Reply-To
@@ -97,7 +98,7 @@ g_mime_references_free (GMimeReferences *refs)
  * Returns: a new #GMimeReferences containing the parsed message ids.
  **/
 GMimeReferences *
-g_mime_references_parse (const char *text)
+g_mime_references_parse (GMimeParserOptions *options, const char *text)
 {
 	const char *word, *inptr = text;
 	GMimeReferences *refs;

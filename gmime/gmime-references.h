@@ -22,8 +22,7 @@
 #ifndef __GMIME_REFERENCES_H__
 #define __GMIME_REFERENCES_H__
 
-#include <glib.h>
-#include <glib-object.h>
+#include <gmime/gmime-parser-options.h>
 
 G_BEGIN_DECLS
 
@@ -48,7 +47,7 @@ GType g_mime_references_get_type (void) G_GNUC_CONST;
 GMimeReferences *g_mime_references_new (void);
 void g_mime_references_free (GMimeReferences *refs);
 
-GMimeReferences *g_mime_references_parse (const char *text);
+GMimeReferences *g_mime_references_parse (GMimeParserOptions *options, const char *text);
 
 GMimeReferences *g_mime_references_copy (GMimeReferences *refs);
 

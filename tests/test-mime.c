@@ -751,7 +751,7 @@ test_references (GMimeParserOptions *options)
 	for (i = 0; i < G_N_ELEMENTS (references); i++) {
 		testsuite_check ("references[%u]", i);
 		try {
-			if (!(refs = g_mime_references_parse (references[i].input)))
+			if (!(refs = g_mime_references_parse (options, references[i].input)))
 				throw (exception_new ("failed to parse references"));
 			
 			if (g_mime_references_length (refs) != references[i].count)

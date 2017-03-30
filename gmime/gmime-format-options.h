@@ -22,10 +22,11 @@
 #ifndef __GMIME_FORMAT_OPTIONS_H__
 #define __GMIME_FORMAT_OPTIONS_H__
 
-#include <glib.h>
 #include <gmime/gmime-filter.h>
 
 G_BEGIN_DECLS
+
+#define GMIME_TYPE_FORMAT_OPTIONS (gmime_format_options_get_type ())
 
 /**
  * GMimeNewLineFormat:
@@ -83,10 +84,14 @@ typedef struct {
 	guint maxline;
 } GMimeFormatOptions;
 
+GType g_mime_format_options_get_type (void) G_GNUC_CONST;
+
 GMimeFormatOptions *g_mime_format_options_get_default (void);
 
 GMimeFormatOptions *g_mime_format_options_new (void);
 void g_mime_format_options_free (GMimeFormatOptions *options);
+
+GMimeFormatOptions *g_mime_format_options_clone (GMimeFormatOptions *options);
 
 GMimeParamEncodingMethod g_mime_format_options_get_param_encoding_method (GMimeFormatOptions *options);
 void g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GMimeParamEncodingMethod method);
