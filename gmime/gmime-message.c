@@ -637,7 +637,7 @@ g_mime_message_new (gboolean pretty_headers)
  *
  * Gets the parsed list of addresses in the Sender header.
  *
- * Returns: the parsed list of addresses in the Sender header.
+ * Returns: (transfer none): the parsed list of addresses in the Sender header.
  **/
 InternetAddressList *
 g_mime_message_get_sender (GMimeMessage *message)
@@ -654,7 +654,7 @@ g_mime_message_get_sender (GMimeMessage *message)
  *
  * Gets the parsed list of addresses in the From header.
  *
- * Returns: the parsed list of addresses in the From header.
+ * Returns: (transfer none): the parsed list of addresses in the From header.
  **/
 InternetAddressList *
 g_mime_message_get_from (GMimeMessage *message)
@@ -671,7 +671,7 @@ g_mime_message_get_from (GMimeMessage *message)
  *
  * Gets the parsed list of addresses in the Reply-To header.
  *
- * Returns: the parsed list of addresses in the Reply-To header.
+ * Returns: (transfer none): the parsed list of addresses in the Reply-To header.
  **/
 InternetAddressList *
 g_mime_message_get_reply_to (GMimeMessage *message)
@@ -688,7 +688,7 @@ g_mime_message_get_reply_to (GMimeMessage *message)
  *
  * Gets combined list of parsed addresses in the To header(s).
  *
- * Returns: the parsed list of addresses in the To header(s).
+ * Returns: (transfer none): the parsed list of addresses in the To header(s).
  **/
 InternetAddressList *
 g_mime_message_get_to (GMimeMessage *message)
@@ -705,7 +705,7 @@ g_mime_message_get_to (GMimeMessage *message)
  *
  * Gets combined list of parsed addresses in the Cc header(s).
  *
- * Returns: the parsed list of addresses in the Cc header(s).
+ * Returns: (transfer none): the parsed list of addresses in the Cc header(s).
  **/
 InternetAddressList *
 g_mime_message_get_cc (GMimeMessage *message)
@@ -722,7 +722,7 @@ g_mime_message_get_cc (GMimeMessage *message)
  *
  * Gets combined list of parsed addresses in the Bcc header(s).
  *
- * Returns: the parsed list of addresses in the Bcc header(s).
+ * Returns: (transfer none): the parsed list of addresses in the Bcc header(s).
  **/
 InternetAddressList *
 g_mime_message_get_bcc (GMimeMessage *message)

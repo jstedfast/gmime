@@ -1243,7 +1243,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
  *
  * Gets the first header with the specified name.
  *
- * Returns: a #GMimeHeader for the specified @name.
+ * Returns: (transfer none): a #GMimeHeader for the specified @name.
  **/
 GMimeHeader *
 g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name)

@@ -563,7 +563,7 @@ crypto_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 /**
  * g_mime_crypto_context_export_keys:
  * @ctx: a #GMimeCryptoContext
- * @keys: (element-type utf8): an array of key ids, terminated by a %NULL element
+ * @keys: an array of key ids, terminated by a %NULL element
  * @ostream: output stream
  * @err: a #GError
  *

@@ -343,7 +343,7 @@ g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboo
 
 
 /**
- * g_mime_format_options_get_allow_international:
+ * g_mime_format_options_get_max_line:
  * @options: a #GMimeFormatOptions or %NULL
  *
  * Gets the max line length to use with encoders.

@@ -291,8 +291,8 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
  *
  * Gets the fallback charsets to try when decoding 8-bit headers.
  *
- * Returns: a %NULL-terminated list of charsets to try when decoding
- * 8-bit headers.
+ * Returns: (transfer none): a %NULL-terminated list of charsets to try when
+ * decoding 8-bit headers.
  **/
 const char **
 g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options)

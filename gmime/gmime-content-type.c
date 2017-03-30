@@ -182,7 +182,7 @@ g_mime_content_type_new (const char *type, const char *subtype)
  *
  * Parses the input string into a #GMimeContentType object.
  *
- * Returns: a new #GMimeContentType object based on the input string.
+ * Returns: (transfer full): a new #GMimeContentType object.
  **/
 GMimeContentType *
 g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
@@ -400,7 +400,7 @@ g_mime_content_type_get_media_subtype (GMimeContentType *content_type)
  *
  * Gets the Content-Type's parameter list.
  *
- * Returns: the Content-Type's parameter list.
+ * Returns: (transfer none): the Content-Type's parameter list.
  **/
 GMimeParamList *
 g_mime_content_type_get_parameters (GMimeContentType *content_type)

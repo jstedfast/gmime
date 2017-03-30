@@ -143,7 +143,7 @@ g_mime_content_disposition_new (void)
  *
  * Parses the input string into a #GMimeContentDisposition object.
  *
- * Returns: a new #GMimeContentDisposition object.
+ * Returns: (transfer full): a new #GMimeContentDisposition object.
  **/
 GMimeContentDisposition *
 g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
@@ -228,7 +228,7 @@ g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition
  *
  * Gets the Content-Disposition parameter list.
  *
- * Returns: the Content-Disposition's parameter list.
+ * Returns: (transfer none): the Content-Disposition's parameter list.
  **/
 GMimeParamList *
 g_mime_content_disposition_get_parameters (GMimeContentDisposition *disposition)

@@ -151,9 +151,9 @@ g_mime_multipart_encrypted_new (void)
  * to the public keys of @recipients using the @ctx encryption
  * context. If successful, a new multipart/encrypted object is returned.
  *
- * Returns: a new #GMimeMultipartEncrypted object on success or %NULL on fail.
- * If encrypting fails, an exception will be set on @err to provide information
- * as to why the failure occured.
+ * Returns: (transfer full): a new #GMimeMultipartEncrypted object on success or
+ * %NULL on fail. If encrypting fails, an exception will be set on @err to provide
+ * information as to why the failure occured.
  **/
 GMimeMultipartEncrypted *
 g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity, gboolean sign, const char *userid,
