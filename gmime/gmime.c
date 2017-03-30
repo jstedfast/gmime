@@ -166,6 +166,9 @@ g_mime_init (void)
 	g_mime_stream_null_get_type ();
 	g_mime_stream_pipe_get_type ();
 	
+	g_mime_format_options_get_type ();
+	g_mime_parser_options_get_type ();
+	
 	g_mime_parser_get_type ();
 	g_mime_message_get_type ();
 	g_mime_data_wrapper_get_type ();

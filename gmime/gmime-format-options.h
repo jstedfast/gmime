@@ -84,7 +84,7 @@ typedef struct {
 	guint maxline;
 } GMimeFormatOptions;
 
-GType g_mime_format_options_get_type (void) G_GNUC_CONST;
+GType g_mime_format_options_get_type (void);
 
 GMimeFormatOptions *g_mime_format_options_get_default (void);
 
