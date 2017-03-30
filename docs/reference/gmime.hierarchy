@@ -32,12 +32,12 @@ GObject
     GMimeFilterBasic
     GMimeFilterBest
     GMimeFilterCharset
+    GMimeFilterChecksum
     GMimeFilterDos2Unix
     GMimeFilterEnriched
     GMimeFilterFrom
     GMimeFilterGZip
     GMimeFilterHTML
-    GMimeFilterMd5
     GMimeFilterSmtpData
     GMimeFilterStrip
     GMimeFilterUnix2Dos
