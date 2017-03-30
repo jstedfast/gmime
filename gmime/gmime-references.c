@@ -95,7 +95,7 @@ g_mime_references_free (GMimeReferences *refs)
  * Decodes a list of msg-ids as in the References and/or In-Reply-To
  * headers defined in rfc822.
  *
- * Returns: a new #GMimeReferences containing the parsed message ids.
+ * Returns: (transfer full): a new #GMimeReferences containing the parsed message ids.
  **/
 GMimeReferences *
 g_mime_references_parse (GMimeParserOptions *options, const char *text)
@@ -138,7 +138,7 @@ g_mime_references_parse (GMimeParserOptions *options, const char *text)
  *
  * Copies a #GMimeReferences list.
  *
- * Returns: a new #GMimeRewferencxes list that contains
+ * Returns: (transfer full): a new #GMimeRewferencxes list that contains
  * an identical list of items as @refs.
  **/
 GMimeReferences *
