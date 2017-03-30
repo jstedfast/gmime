@@ -1,14 +1,7 @@
 # Note that this is NOT a relocatable package
 %define ver      @VERSION@
 %define prefix   /usr
-%define enable_mono 0
 %define enable_gtk_doc 0
-
-%if %{enable_mono}
-%define mono_configure_flags --enable-mono
-%else
-%define mono_configure_flags --disable-mono
-%endif
 
 %if %{enable_gtk_doc}
 %define gtkdoc_configure_flags --enable-gtk-doc
@@ -22,47 +15,31 @@ Version: %ver
 Release: 1
 Copyright: LGPL
 Group: Development/Libraries
-URL: http://spruce.sourceforge.net/gmime/
+URL: https://github.com/jstedfast/gmime
 
-Source: ftp://ftp.gnome.org/pub/GNOME/sources/gmime/2.4/gmime-%{version}.tar.bz2
+Source: ftp://ftp.gnome.org/pub/GNOME/sources/gmime/3.0/gmime-%{version}.tar.bz2
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 
-Requires: glib2 >= 2.12.0
-BuildRequires: glib2-devel >= 2.12.0
+Requires: glib2 >= 2.26.0
+BuildRequires: glib2-devel >= 2.26.0
 
 %description
 GMime is a set of utilities for parsing and creating messages using
 the Multipurpose Internet Mail Extension (MIME)
-
-%if %{enable_mono}
-
-%package sharp
-Summary: .NET bindings for GMime
-Group: Development/Libraries
-Requires: %{name} = %{version}-%{release}
-BuildRequires: mono-core >= 2.0.0
-BuildRequires: gtk-sharp >= 2.4.0
-Requires: mono-core >= 2.0.0
-Requires: gtk-sharp >= 2.4.0
-
-%description sharp
-.NET Bindings for GMime
-
-%endif
 
 %prep
 %setup
 
 %build
 if [ ! -f configure ]; then
-  CFLAGS="$RPM_OPT_FLAGS" ./autogen.sh $ARCHFLAG %{config_opts} %{mono_configure_flags}
+  CFLAGS="$RPM_OPT_FLAGS" ./autogen.sh $ARCHFLAG %{config_opts}
 fi
-CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%prefix %{mono_configure_flags}
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%prefix
 make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=${RPM_BUILD_ROOT} GACUTIL_FLAGS="/package gtk-sharp /root ${RPM_BUILD_ROOT}/usr/lib"
+make install DESTDIR=${RPM_BUILD_ROOT}
 
 # rename to prevent conflict with uu* utils from sharutils
 
@@ -83,15 +60,6 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/include/gmime-3.0/gmime/*.h
 %if %{enable_gtk_doc}
 %{_datadir}/gtk-doc/html/*/*
-%endif
-
-%if %{enable_mono}
-
-%files sharp
-%{prefix}/lib/mono/gmime-sharp/*
-%{prefix}/lib/mono/gac/gmime-sharp/*
-%{prefix}/share/gapi/gmime-api.xml
-
 %endif
 
 %changelog
