@@ -555,7 +555,7 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 	/* Note: we don't want to break in the middle of msgid tokens as
 	   it seems to break a lot of clients (and servers) */
 	newline = g_mime_format_options_get_newline (options);
-	refs = g_mime_references_parse (value);
+	refs = g_mime_references_parse (header->options, value);
 	str = g_string_new (header->raw_name);
 	g_string_append_c (str, ':');
 	cur = n = str->len;
@@ -1042,7 +1042,7 @@ g_mime_header_list_new (GMimeParserOptions *options)
 	g_return_val_if_fail (options != NULL, NULL);
 	
 	headers = g_object_newv (GMIME_TYPE_HEADER_LIST, 0, NULL);
-	headers->options = _g_mime_parser_options_clone (options);
+	headers->options = g_mime_parser_options_clone (options);
 	
 	return headers;
 }
@@ -1090,7 +1090,7 @@ void
 _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options)
 {
 	g_mime_parser_options_free (headers->options);
-	headers->options = _g_mime_parser_options_clone (options);
+	headers->options = g_mime_parser_options_clone (options);
 }
 
 

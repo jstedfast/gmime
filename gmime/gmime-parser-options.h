@@ -23,8 +23,11 @@
 #define __GMIME_PARSER_OPTIONS_H__
 
 #include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
+
+#define GMIME_TYPE_PARSER_OPTIONS (gmime_parser_options_get_type ())
 
 /**
  * GMimeRfcComplianceMode:
@@ -54,10 +57,15 @@ typedef struct {
 	char **charsets;
 } GMimeParserOptions;
 
+
+GType g_mime_parser_options_get_type (void) G_GNUC_CONST;
+
 GMimeParserOptions *g_mime_parser_options_get_default (void);
 
 GMimeParserOptions *g_mime_parser_options_new (void);
 void g_mime_parser_options_free (GMimeParserOptions *options);
+
+GMimeParserOptions *g_mime_parser_options_clone (GMimeParserOptions *options);
 
 GMimeRfcComplianceMode g_mime_parser_options_get_address_compliance_mode (GMimeParserOptions *options);
 void g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);

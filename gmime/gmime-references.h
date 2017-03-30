@@ -22,11 +22,7 @@
 #ifndef __GMIME_REFERENCES_H__
 #define __GMIME_REFERENCES_H__
 
-#include <glib.h>
-#include <glib-object.h>
-
 #include <gmime/gmime-parser-options.h>
-
 
 G_BEGIN_DECLS
 
