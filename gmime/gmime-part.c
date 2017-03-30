@@ -866,8 +866,6 @@ g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstr
  * value of the Content-Disposition header.
  *
  * Returns: %TRUE if the part is an attachment, otherwise %FALSE.
- *
- * Since: 2.6.21
  **/
 gboolean
 g_mime_part_is_attachment (GMimePart *mime_part)
@@ -1019,7 +1017,7 @@ g_mime_part_get_openpgp_data (GMimePart *mime_part)
  * g_mime_part_openpgp_encrypt:
  * @mime_part: a #GMimePart
  * @sign: %TRUE if the content should also be signed; otherwise, %FALSE
- * @userid: the key id (or email address) to use when signing (assuming @sign is %TRUE)
+ * @userid: (nullable): the key id (or email address) to use when signing (assuming @sign is %TRUE)
  * @flags: a set of #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipient key ids and/or email addresses
  * @err: a #GError
@@ -1081,13 +1079,13 @@ g_mime_part_openpgp_encrypt (GMimePart *mime_part, gboolean sign, const char *us
  * g_mime_part_openpgp_decrypt:
  * @mime_part: a #GMimePart
  * @flags: a set of #GMimeDecryptFlags
- * @session_key: the session key to use or %NULL
+ * @session_key: (nullable): the session key to use or %NULL
  * @err: a #GError
  *
  * Decrypts the content of the @mime_part and then replaces the content with
  * the new, decrypted, content.
  *
- * Returns: (transfer full): a #GMimeDecryptResult on success or %NULL on error.
+ * Returns: (nullable) (transfer full): a #GMimeDecryptResult on success or %NULL on error.
  **/
 GMimeDecryptResult *
 g_mime_part_openpgp_decrypt (GMimePart *mime_part, GMimeDecryptFlags flags, const char *session_key, GError **err)
@@ -1114,7 +1112,7 @@ g_mime_part_openpgp_decrypt (GMimePart *mime_part, GMimeDecryptFlags flags, cons
 	istream = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (mime_part->content, istream);
 	g_mime_stream_reset (istream);
-
+	
 	result = g_mime_crypto_context_decrypt (ctx, flags, session_key, istream, decrypted, err);
 	g_object_unref (istream);
 	g_object_unref (ctx);
@@ -1202,7 +1200,7 @@ g_mime_part_openpgp_sign (GMimePart *mime_part, const char *userid, GError **err
  * Verifies the OpenPGP signature of the @mime_part and then replaces the content
  * with the original, raw, content.
  *
- * Returns: (transfer full): a #GMimeSignatureList on success or %NULL on error.
+ * Returns: (nullable) (transfer full): a #GMimeSignatureList on success or %NULL on error.
  **/
 GMimeSignatureList *
 g_mime_part_openpgp_verify (GMimePart *mime_part, GMimeVerifyFlags flags, GError **err)
@@ -1229,7 +1227,7 @@ g_mime_part_openpgp_verify (GMimePart *mime_part, GMimeVerifyFlags flags, GError
 	istream = g_mime_stream_mem_new ();
 	g_mime_data_wrapper_write_to_stream (mime_part->content, istream);
 	g_mime_stream_reset (istream);
-
+	
 	signatures = g_mime_crypto_context_verify (ctx, flags, istream, NULL, extracted, err);
 	g_object_unref (istream);
 	g_object_unref (ctx);

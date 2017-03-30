@@ -288,7 +288,7 @@ g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *
  * Compares the given type and subtype with that of the given mime
  * type object.
  *
- * Returns: TRUE if the MIME types match or FALSE otherwise. You may
+ * Returns: %TRUE if the MIME types match or %FALSE otherwise. You may
  * use "*" in place of @type and/or @subtype as a wilcard.
  **/
 gboolean

@@ -196,8 +196,8 @@ internet_address_set_name (InternetAddress *ia, const char *name)
  *
  * Gets the display name of the #InternetAddress.
  *
- * Returns: the name of the mailbox or group in a form suitable for
- * display if available or %NULL otherwise. If the name is available,
+ * Returns: (nullable): the name of the mailbox or group in a form suitable
+ * for display if available or %NULL otherwise. If the name is available,
  * the returned string will be in UTF-8.
  **/
 const char *
@@ -212,7 +212,7 @@ internet_address_get_name (InternetAddress *ia)
 /**
  * internet_address_set_charset:
  * @ia: a #InternetAddress
- * @charset: the charset to use when encoding the name or %NULL to use the defaults
+ * @charset: (nullable): the charset to use when encoding the name or %NULL to use the defaults
  *
  * Set the charset to use for encoding the name of the mailbox or group.
  **/
@@ -223,7 +223,7 @@ internet_address_set_charset (InternetAddress *ia, const char *charset)
 	
 	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
 	
-	buf = g_strdup (charset);
+	buf = charset ? g_strdup (charset) : NULL;
 	g_free (ia->charset);
 	ia->charset = buf;
 	
@@ -237,8 +237,8 @@ internet_address_set_charset (InternetAddress *ia, const char *charset)
  *
  * Gets the charset to be used when encoding the name of the mailbox or group.
  *
- * Returns: the charset to be used when encoding the name of the mailbox or
- * group if available or %NULL otherwise.
+ * Returns: (nullable): the charset to be used when encoding the name of the
+ * mailbox or group if available or %NULL otherwise.
  **/
 const char *
 internet_address_get_charset (InternetAddress *ia)
@@ -1246,8 +1246,8 @@ group_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags
  * Allocates a string buffer containing the rfc822 formatted addresses
  * in @list.
  *
- * Returns: a string containing the list of addresses in rfc822 format
- * or %NULL if no addresses are contained in the list.
+ * Returns: (nullable): a string containing the list of addresses in rfc822
+ * format or %NULL if no addresses are contained in the list.
  **/
 char *
 internet_address_list_to_string (InternetAddressList *list, GMimeFormatOptions *options, gboolean encode)
@@ -2003,7 +2003,7 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
  *
  * Construct a list of internet addresses from the given string.
  *
- * Returns: (transfer full): a #InternetAddressList or %NULL if the
+ * Returns: (nullable) (transfer full): a #InternetAddressList or %NULL if the
  * input string does not contain any addresses.
  **/
 InternetAddressList *

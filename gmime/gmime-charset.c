@@ -370,7 +370,7 @@ g_mime_locale_charset (void)
  *
  * Gets the user's locale language code (or %NULL by default).
  *
- * Returns: the user's locale language code (or %NULL by default).
+ * Returns: (nullable): the user's locale language code (or %NULL by default).
  **/
 const char *
 g_mime_locale_language (void)
@@ -387,8 +387,8 @@ g_mime_locale_language (void)
  * @charset. Currently only handles CJK and Russian/Ukranian
  * charset->lang mapping. Everything else will return %NULL.
  *
- * Returns: a language code that is specific to @charset, or %NULL on
- * fail.
+ * Returns: (nullable): a language code that is specific to @charset,
+ * or %NULL on fail.
  **/
 const char *
 g_mime_charset_language (const char *charset)
@@ -787,8 +787,8 @@ charset_best_mask (unsigned int mask)
  *
  * Gets the best charset name based on the charset mask @charset.
  *
- * Returns: a pointer to a string containing the best charset name that
- * can represent the charset mask @charset.
+ * Returns: (nullable): the charset name that best represents the charset
+ * mask @charset or %NULL for us-ascii.
  **/
 const char *
 g_mime_charset_best_name (GMimeCharset *charset)
@@ -809,8 +809,8 @@ g_mime_charset_best_name (GMimeCharset *charset)
  *
  * Computes the best charset to use to encode this text buffer.
  *
- * Returns: the charset name best suited for the input text or %NULL if
- * it is US-ASCII safe.
+ * Returns: (nullable): the charset name best suited for the input text
+ * or %NULL if it is ascii-safe.
  **/
 const char *
 g_mime_charset_best (const char *inbuf, size_t inlen)

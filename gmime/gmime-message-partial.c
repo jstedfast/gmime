@@ -352,14 +352,14 @@ message_partial_message_new (GMimeMessage *base)
  * g_mime_message_partial_split_message:
  * @message: message object
  * @max_size: max size
- * @nparts: number of parts
+ * @nparts: (out): number of parts
  *
  * Splits @message into an array of #GMimeMessage objects each
  * containing a single #GMimeMessagePartial object containing
  * @max_size bytes or fewer. @nparts is set to the number of
  * #GMimeMessagePartial objects created.
  *
- * Returns: (transfer full): an array of #GMimeMessage objects and
+ * Returns: (nullable) (transfer full): an array of #GMimeMessage objects and
  * sets @nparts to the number of messages returned or %NULL on fail.
  **/
 GMimeMessage **

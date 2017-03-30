@@ -730,8 +730,8 @@ gmime_datetok_table_init (void)
  *
  * Parses the rfc822 date string.
  *
- * Returns: the #GDateTime representation of the date string specified by
- * @str or %NULL on error.
+ * Returns: (nullable) (transfer full): the #GDateTime representation of the date
+ * string specified by @str or %NULL on error.
  **/
 GDateTime *
 g_mime_utils_header_decode_date (const char *str)
@@ -991,7 +991,7 @@ g_mime_utils_unquote_string (char *str)
 
 /**
  * g_mime_utils_text_is_8bit:
- * @text: text to check for 8bit chars
+ * @text: (array length=len) (element-type guint8): text to check for 8bit chars
  * @len: text length
  *
  * Determines if @text contains 8bit characters within the first @len
@@ -1019,7 +1019,7 @@ g_mime_utils_text_is_8bit (const unsigned char *text, size_t len)
 
 /**
  * g_mime_utils_best_encoding:
- * @text: text to encode
+ * @text: (array length=len) (element-type guint8): text to encode
  * @len: text length
  *
  * Determines the best content encoding for the first @len bytes of
@@ -1861,7 +1861,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
  * _g_mime_utils_header_decode_text:
  * @text: header text to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
- * @charset: if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
+ * @charset: (optional): if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
  *
  * Decodes an rfc2047 encoded 'text' header.
  *
@@ -1911,7 +1911,7 @@ g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
  * _g_mime_utils_header_decode_phrase:
  * @phrase: header to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
- * @charset: if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
+ * @charset: (optional): if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
  *
  * Decodes an rfc2047 encoded 'phrase' header.
  *
@@ -2403,7 +2403,7 @@ rfc2047_encode (GMimeFormatOptions *options, const char *in, gushort safemask, c
  * g_mime_utils_header_encode_phrase:
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @phrase: phrase to encode
- * @charset: the charset to use or %NULL to use the default
+ * @charset: (nullable): the charset to use or %NULL to use the default
  *
  * Encodes a 'phrase' header according to the rules in rfc2047.
  *
@@ -2424,7 +2424,7 @@ g_mime_utils_header_encode_phrase (GMimeFormatOptions *options, const char *phra
  * g_mime_utils_header_encode_text:
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @text: text to encode
- * @charset: the charset to use or %NULL to use the default
+ * @charset: (nullable): the charset to use or %NULL to use the default
  *
  * Encodes a 'text' header according to the rules in rfc2047.
  *

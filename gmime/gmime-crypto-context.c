@@ -400,8 +400,8 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *ist
  * @ctx: a #GMimeCryptoContext
  * @flags: a #GMimeVerifyFlags
  * @istream: input stream
- * @sigstream: (optional): detached-signature stream
- * @ostream: (optional): output stream for use with encapsulated signature input streams
+ * @sigstream: (nullable): detached-signature stream
+ * @ostream: (nullable): output stream for use with encapsulated signature input streams
  * @err: a #GError
  *
  * Verifies the signature. If @istream is a clearsigned stream, you
@@ -439,7 +439,7 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * g_mime_crypto_context_encrypt:
  * @ctx: a #GMimeCryptoContext
  * @sign: sign as well as encrypt
- * @userid: the key id (or email address) to use when signing (assuming @sign is %TRUE)
+ * @userid: (nullable): the key id (or email address) to use when signing (assuming @sign is %TRUE)
  * @flags: a set of #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipient key ids and/or email addresses
  * @istream: cleartext input stream
@@ -478,7 +478,7 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *se
  * g_mime_crypto_context_decrypt:
  * @ctx: a #GMimeCryptoContext
  * @flags: a set of #GMimeDecryptFlags
- * @session_key: (optional): the session key to use or %NULL
+ * @session_key: (nullable): the session key to use or %NULL
  * @istream: input/ciphertext stream
  * @ostream: output/cleartext stream
  * @err: a #GError
