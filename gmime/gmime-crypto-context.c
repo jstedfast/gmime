@@ -152,7 +152,7 @@ g_mime_crypto_context_shutdown (void)
 
 
 /**
- * g_mime_crypto_context_register:
+ * g_mime_crypto_context_register: (skip)
  * @protocol: crypto protocol
  * @callback: a #GMimeCryptoContextNewFunc
  *
