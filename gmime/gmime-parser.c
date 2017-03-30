@@ -1898,7 +1898,7 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 /**
  * g_mime_parser_construct_part:
  * @parser: a #GMimeParser context
- * @options: a #GMimeParserOptions or %NULL for the default options
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Constructs a MIME part from @parser.
  *
@@ -1992,7 +1992,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 /**
  * g_mime_parser_construct_message:
  * @parser: a #GMimeParser context
- * @options: a #GMimeParserOptions or %NULL for the default options
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Constructs a MIME message from @parser.
  *

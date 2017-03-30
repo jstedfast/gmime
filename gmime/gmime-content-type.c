@@ -177,7 +177,7 @@ g_mime_content_type_new (const char *type, const char *subtype)
 
 /**
  * g_mime_content_type_parse:
- * @options: a #GMimeParserOptions or %NULL
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  * @str: input string containing a content-type (and params)
  *
  * Parses the input string into a #GMimeContentType object.
@@ -244,7 +244,7 @@ g_mime_content_type_get_mime_type (GMimeContentType *content_type)
 /**
  * g_mime_content_type_encode:
  * @content_type: a #GMimeContentType
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Encodes the Content-Disposition header.
  *

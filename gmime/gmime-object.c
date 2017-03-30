@@ -386,7 +386,7 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 
 /**
  * g_mime_object_new:
- * @options: a #GMimeParserOptions
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  * @content_type: a #GMimeContentType object
  *
  * Performs a lookup of registered #GMimeObject subclasses, registered
@@ -442,7 +442,7 @@ g_mime_object_new (GMimeParserOptions *options, GMimeContentType *content_type)
 
 /**
  * g_mime_object_new_type:
- * @options: a #GMimeParserOptions
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  * @type: mime type
  * @subtype: mime subtype
  *
@@ -940,7 +940,7 @@ object_get_headers (GMimeObject *object, GMimeFormatOptions *options)
 /**
  * g_mime_object_get_headers:
  * @object: a #GMimeObject
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Allocates a string buffer containing all of the MIME object's raw
  * headers.
@@ -968,7 +968,7 @@ object_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboole
 /**
  * g_mime_object_write_to_stream:
  * @object: a #GMimeObject
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @stream: stream
  *
  * Write the contents of the MIME object to @stream.
@@ -1013,7 +1013,7 @@ g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 /**
  * g_mime_object_to_string:
  * @object: a #GMimeObject
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Allocates a string buffer containing the contents of @object.
  *
