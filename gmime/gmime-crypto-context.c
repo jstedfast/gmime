@@ -174,7 +174,7 @@ g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc 
  *
  * Creates a new crypto context for the specified @protocol.
  *
- * Returns: a newly allocated #GMimeCryptoContext.
+ * Returns: (nullable): a newly allocated #GMimeCryptoContext.
  **/
 GMimeCryptoContext *
 g_mime_crypto_context_new (const char *protocol)
@@ -221,7 +221,7 @@ crypto_digest_id (GMimeCryptoContext *ctx, const char *name)
  * Gets the function used by the @ctx for requesting a password from
  * the user.
  *
- * Returns: a #GMimePasswordRequestFunc or %NULL if not set.
+ * Returns: (nullable): a #GMimePasswordRequestFunc or %NULL if not set.
  **/
 GMimePasswordRequestFunc
 g_mime_crypto_context_get_request_password (GMimeCryptoContext *ctx)
@@ -265,7 +265,7 @@ crypto_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest)
  *
  * Gets the digest name based on the digest id @digest.
  *
- * Returns: the equivalent digest name or %NULL on fail.
+ * Returns: (nullable): the equivalent digest name or %NULL on fail.
  **/
 const char *
 g_mime_crypto_context_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest)
@@ -289,7 +289,7 @@ crypto_get_signature_protocol (GMimeCryptoContext *ctx)
  *
  * Gets the signature protocol for the crypto context.
  *
- * Returns: the signature protocol or %NULL if not supported.
+ * Returns: (nullable): the signature protocol or %NULL if not supported.
  **/
 const char *
 g_mime_crypto_context_get_signature_protocol (GMimeCryptoContext *ctx)
@@ -313,7 +313,7 @@ crypto_get_encryption_protocol (GMimeCryptoContext *ctx)
  *
  * Gets the encryption protocol for the crypto context.
  *
- * Returns: the encryption protocol or %NULL if not supported.
+ * Returns: (nullable): the encryption protocol or %NULL if not supported.
  **/
 const char *
 g_mime_crypto_context_get_encryption_protocol (GMimeCryptoContext *ctx)
@@ -337,7 +337,7 @@ crypto_get_key_exchange_protocol (GMimeCryptoContext *ctx)
  *
  * Gets the key exchange protocol for the crypto context.
  *
- * Returns: the key exchange protocol or %NULL if not supported.
+ * Returns: (nullable): the key exchange protocol or %NULL if not supported.
  **/
 const char *
 g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx)
@@ -400,8 +400,8 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *ist
  * @ctx: a #GMimeCryptoContext
  * @flags: a #GMimeVerifyFlags
  * @istream: input stream
- * @sigstream: optional detached-signature stream
- * @ostream: optional output stream for use with encapsulated signature input streams
+ * @sigstream: (optional): detached-signature stream
+ * @ostream: (optional): output stream for use with encapsulated signature input streams
  * @err: a #GError
  *
  * Verifies the signature. If @istream is a clearsigned stream, you
@@ -410,7 +410,7 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *ist
  * plaintext into. Otherwise @sigstream is assumed to be the signature
  * stream and is used to verify the integirity of the @istream.
  *
- * Returns: (transfer full): a #GMimeSignatureList object containing
+ * Returns: (nullable) (transfer full): a #GMimeSignatureList object containing
  * the status of each signature or %NULL on error.
  **/
 GMimeSignatureList *
@@ -478,7 +478,7 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *se
  * g_mime_crypto_context_decrypt:
  * @ctx: a #GMimeCryptoContext
  * @flags: a set of #GMimeDecryptFlags
- * @session_key: the session key to use or %NULL
+ * @session_key: (optional): the session key to use or %NULL
  * @istream: input/ciphertext stream
  * @ostream: output/cleartext stream
  * @err: a #GError
@@ -747,7 +747,7 @@ g_mime_decrypt_result_set_signatures (GMimeDecryptResult *result, GMimeSignature
  *
  * Gets a list of signatures if the encrypted stream had also been signed.
  *
- * Returns: (transfer none): a #GMimeSignatureList or %NULL if the
+ * Returns: (nullable) (transfer none): a #GMimeSignatureList or %NULL if the
  * stream was not signed.
  **/
 GMimeSignatureList *
@@ -828,7 +828,7 @@ g_mime_decrypt_result_get_mdc (GMimeDecryptResult *result)
 /**
  * g_mime_decrypt_result_set_session_key:
  * @result: a #GMimeDecryptResult
- * @session_key: a pointer to a null-terminated string representing the session key
+ * @session_key: (nullable): a string representing the session key or %NULL to unset the key
  *
  * Set the session key to be returned by this decryption result.
  **/
@@ -842,7 +842,7 @@ g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *s
 		g_free (result->session_key);
 	}
 	
-	result->session_key = g_strdup (session_key);
+	result->session_key = session_key ? g_strdup (session_key) : NULL;
 }
 
 
@@ -850,9 +850,9 @@ g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *s
  * g_mime_decrypt_result_get_session_key:
  * @result: a #GMimeDecryptResult
  *
- * Get the session_key used for this decryption.
+ * Get the session key used for this decryption.
  *
- * Returns: the session key digest algorithm used, or %NULL if no
+ * Returns: (nullable): the session key digest algorithm used, or %NULL if no
  * session key was requested or found.
  **/
 const char *
