@@ -89,7 +89,7 @@ g_mime_references_free (GMimeReferences *refs)
 
 /**
  * g_mime_references_parse:
- * @options: a #GMimeParserOptions or %NULL
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  * @text: string containing a list of msg-ids
  *
  * Decodes a list of msg-ids as in the References and/or In-Reply-To

@@ -252,7 +252,7 @@ internet_address_get_charset (InternetAddress *ia)
 /**
  * internet_address_to_string:
  * @ia: Internet Address object
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @encode: %TRUE if the address should be rfc2047 encoded
  *
  * Allocates a string containing the contents of the #InternetAddress
@@ -1240,7 +1240,7 @@ group_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 flags
 /**
  * internet_address_list_to_string:
  * @list: list of internet addresses
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @encode: %TRUE if the address should be rfc2047 encoded
  *
  * Allocates a string buffer containing the rfc822 formatted addresses
@@ -1271,7 +1271,7 @@ internet_address_list_to_string (InternetAddressList *list, GMimeFormatOptions *
 /**
  * internet_address_list_encode:
  * @list: list of internet addresses
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @str: string to write to
  *
  * Writes the rfc2047-encoded rfc822 formatted addresses in @list to
@@ -1998,7 +1998,7 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 
 /**
  * internet_address_list_parse:
- * @options: a #GMimeParserOptions
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  * @str: a string containing internet addresses
  *
  * Construct a list of internet addresses from the given string.

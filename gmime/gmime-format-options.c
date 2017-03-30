@@ -109,7 +109,7 @@ g_mime_format_options_new (void)
 
 /**
  * _g_mime_format_options_clone:
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @hidden: %TRUE if the hidden headers should also be cloned
  *
  * Clones a #GMimeFormatOptions.
@@ -145,7 +145,7 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 
 /**
  * g_mime_format_options_clone:
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Clones a #GMimeFormatOptions.
  *
@@ -183,7 +183,7 @@ g_mime_format_options_free (GMimeFormatOptions *options)
 
 /**
  * g_mime_format_options_get_param_encoding_method:
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Gets the parameter encoding method to use for #GMimeParam parameters that do not
  * already have an encoding method specified.
@@ -219,7 +219,7 @@ g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GM
 
 /**
  * g_mime_format_options_get_newline_format:
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Gets the new-line format to use when writing out messages and headers.
  *
@@ -251,7 +251,7 @@ g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewL
 
 /**
  * g_mime_format_options_get_newline:
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Gets a string representing the currently set new-line format.
  *
@@ -272,7 +272,7 @@ g_mime_format_options_get_newline (GMimeFormatOptions *options)
 
 /**
  * g_mime_format_options_create_newline_filter:
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @ensure_newline: %TRUE if the output must *always* end with a new line
  *
  * Creates a #GMimeFilter suitable for converting line-endings to the
@@ -296,7 +296,7 @@ g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboole
 #ifdef NOT_YET_IMPLEMENTED
 /**
  * g_mime_format_options_get_allow_mixed_charsets:
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Gets whether or not headers are allowed to be encoded using mixed charsets.
  *
@@ -330,7 +330,7 @@ g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gbo
 
 /**
  * g_mime_format_options_get_allow_international:
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Gets whether or not international encoding is allowed.
  *
@@ -361,7 +361,7 @@ g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboo
 
 /**
  * g_mime_format_options_get_max_line:
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
  * Gets the max line length to use with encoders.
  *
@@ -392,7 +392,7 @@ g_mime_format_options_set_max_line (GMimeFormatOptions *options, guint maxline)
 
 /**
  * g_mime_format_options_is_hidden_header:
- * @options: a #GMimeFormatOptions
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @header: the name of a header
  *
  * Gets whether or not the specified header should be hidden.

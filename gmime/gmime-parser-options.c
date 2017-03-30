@@ -107,7 +107,7 @@ g_mime_parser_options_new (void)
 
 /**
  * g_mime_parser_options_clone:
- * @options: a #GMimeParserOptions
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Clones a #GMimeParserOptions.
  *
@@ -159,7 +159,7 @@ g_mime_parser_options_free (GMimeParserOptions *options)
 
 /**
  * g_mime_parser_options_get_address_compliance_mode:
- * @options: a #GMimeParserOptions or %NULL
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Gets the compliance mode that should be used when parsing rfc822 addresses.
  *
@@ -202,7 +202,7 @@ g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, 
 
 /**
  * g_mime_parser_options_get_parameter_compliance_mode:
- * @options: a #GMimeParserOptions or %NULL
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Gets the compliance mode that should be used when parsing Content-Type and
  * Content-Disposition parameters.
@@ -247,7 +247,7 @@ g_mime_parser_options_set_parameter_compliance_mode (GMimeParserOptions *options
 
 /**
  * g_mime_parser_options_get_rfc2047_compliance_mode:
- * @options: a #GMimeParserOptions or %NULL
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Gets the compliance mode that should be used when parsing rfc2047 encoded words.
  *
@@ -290,7 +290,7 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
 
 /**
  * g_mime_parser_options_get_fallback_charsets:
- * @options: a #GMimeParserOptions or %NULL
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Gets the fallback charsets to try when decoding 8-bit headers.
  *
