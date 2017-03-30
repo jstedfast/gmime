@@ -1150,7 +1150,7 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 
 /**
  * g_mime_utils_decode_8bit:
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  * @text: (array length=len) (element-type guint8): input text in
  *   unknown 8bit/multibyte character set
  * @len: input text length
@@ -1860,7 +1860,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 /**
  * _g_mime_utils_header_decode_text:
  * @text: header text to decode
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  * @charset: if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
  *
  * Decodes an rfc2047 encoded 'text' header.
@@ -1893,7 +1893,7 @@ _g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text,
 /**
  * g_mime_utils_header_decode_text:
  * @text: header text to decode
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  *
  * Decodes an rfc2047 encoded 'text' header.
  *
@@ -1910,7 +1910,7 @@ g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
 /**
  * _g_mime_utils_header_decode_phrase:
  * @phrase: header to decode
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  * @charset: if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
  *
  * Decodes an rfc2047 encoded 'phrase' header.
@@ -1943,7 +1943,7 @@ _g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phr
 /**
  * g_mime_utils_header_decode_phrase:
  * @phrase: header to decode
- * @options: a #GMimeParserOptions
+ * @options: a #GMimeParserOptions or %NULL
  *
  * Decodes an rfc2047 encoded 'phrase' header.
  *
@@ -2401,7 +2401,7 @@ rfc2047_encode (GMimeFormatOptions *options, const char *in, gushort safemask, c
 
 /**
  * g_mime_utils_header_encode_phrase:
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @phrase: phrase to encode
  * @charset: the charset to use or %NULL to use the default
  *
@@ -2422,7 +2422,7 @@ g_mime_utils_header_encode_phrase (GMimeFormatOptions *options, const char *phra
 
 /**
  * g_mime_utils_header_encode_text:
- * @options: a #GMimeFormatOptions
+ * @options: a #GMimeFormatOptions or %NULL
  * @text: text to encode
  * @charset: the charset to use or %NULL to use the default
  *
@@ -2570,8 +2570,8 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 
 /**
  * g_mime_utils_structured_header_fold:
- * @options: a #GMimeParserOptions
- * @format: a #GMimeFormatOptions
+ * @options: a #GMimeParserOptions or %NULL
+ * @format: a #GMimeFormatOptions or %NULL
  * @header: header field and value string
  *
  * Folds a structured header according to the rules in rfc822.
@@ -2613,8 +2613,8 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
 
 /**
  * _g_mime_utils_structured_header_fold:
- * @options: a #GMimeParserOptions
- * @format: a #GMimeFormatOptions
+ * @options: a #GMimeParserOptions or %NULL
+ * @format: a #GMimeFormatOptions or %NULL
  * @field: header field
  * @value: header value
  *
@@ -2643,8 +2643,8 @@ _g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOp
 
 /**
  * g_mime_utils_unstructured_header_fold:
- * @options: a #GMimeParserOptions
- * @format: a #GMimeFormatOptions
+ * @options: a #GMimeParserOptions or %NULL
+ * @format: a #GMimeFormatOptions or %NULL
  * @header: header field and value string
  *
  * Folds an unstructured header according to the rules in rfc822.
@@ -2686,8 +2686,8 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
 
 /**
  * _g_mime_utils_unstructured_header_fold:
- * @options: a #GMimeParserOptions
- * @format: a #GMimeFormatOptions
+ * @options: a #GMimeParserOptions or %NULL
+ * @format: a #GMimeFormatOptions or %NULL
  * @field: header field
  * @value: header value
  *
@@ -2715,8 +2715,8 @@ _g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormat
 
 /**
  * g_mime_utils_header_printf:
- * @options: a #GMimeParserOptions
- * @format: a #GMimeFormatOptions
+ * @options: a #GMimeParserOptions or %NULL
+ * @format: a #GMimeFormatOptions or %NULL
  * @text: text with printf-style formatters
  * @...: arguments
  *
