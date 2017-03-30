@@ -43,6 +43,8 @@ static GMimeFormatOptions *default_options = NULL;
  **/
 
 
+G_DEFINE_BOXED_TYPE (GMimeFormatOptions, g_mime_format_options, g_mime_format_options_clone, g_mime_format_options_free);
+
 void
 g_mime_format_options_init (void)
 {
@@ -112,7 +114,7 @@ g_mime_format_options_new (void)
  *
  * Clones a #GMimeFormatOptions.
  *
- * Returns: a newly allocated #GMimeFormatOptions.
+ * Returns: (transfer full): a newly allocated #GMimeFormatOptions.
  **/
 GMimeFormatOptions *
 _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
@@ -138,6 +140,21 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 	}
 	
 	return clone;
+}
+
+
+/**
+ * g_mime_format_options_clone:
+ * @options: a #GMimeFormatOptions
+ *
+ * Clones a #GMimeFormatOptions.
+ *
+ * Returns: (transfer full): a newly allocated #GMimeFormatOptions.
+ **/
+GMimeFormatOptions *
+g_mime_format_options_clone (GMimeFormatOptions *options)
+{
+	return _g_mime_format_options_clone (options, TRUE);
 }
 
 
