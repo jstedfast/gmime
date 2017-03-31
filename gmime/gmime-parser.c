@@ -166,6 +166,8 @@ struct _GMimeParserPrivate {
 	GByteArray *marker;
 	gint64 marker_offset;
 	
+	char *preheader;
+	
 	/* current message headerblock offsets */
 	gint64 message_headers_begin;
 	gint64 message_headers_end;
@@ -282,6 +284,9 @@ parser_free_headers (struct _GMimeParserPrivate *priv)
 	Header *header;
 	guint i;
 	
+	g_free (priv->preheader);
+	priv->preheader = NULL;
+	
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
 		
@@ -381,6 +386,8 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	
 	priv->marker = g_byte_array_new ();
 	priv->marker_offset = -1;
+	
+	priv->preheader = NULL;
 	
 	priv->headers = g_ptr_array_new ();
 	
@@ -751,6 +758,17 @@ g_mime_parser_eos (GMimeParser *parser)
 	return g_mime_stream_eos (priv->stream) && priv->inptr == priv->inend;
 }
 
+static gboolean
+is_mbox_marker (const char *inptr, size_t len, gboolean allow_munged)
+{
+	if (allow_munged && *inptr == '>') {
+		inptr++;
+		len--;
+	}
+	
+	return len >= 5 && !strncmp ("From ", inptr, 5);
+}
+
 static int
 parser_step_marker (GMimeParser *parser, const char *marker, size_t marker_len)
 {
@@ -855,13 +873,27 @@ static void
 header_parse (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
+	gboolean valid = TRUE, blank = FALSE;
 	register char *inptr;
 	Header *header;
 	
 	*priv->headerptr = ':';
 	inptr = priv->headerbuf;
-	while (*inptr != ':')
+	
+	while (*inptr != ':') {
+		/* Note: blank spaces are allowed between the field name
+		 * and the ':', but field names themselves are not allowed
+		 * to contain spaces (or control characters). */
+		if (is_blank (*inptr)) {
+			blank = TRUE;
+		} else if (blank || is_ctrl (*inptr)) {
+			valid = FALSE;
+			break;
+		}
+		
 		inptr++;
+	}
+	
 	*priv->headerptr = '\0';
 	
 	if (*inptr != ':') {
@@ -869,6 +901,9 @@ header_parse (GMimeParser *parser)
 		w(g_warning ("Invalid header at %lld: '%s'",
 			     (long long) priv->header_offset,
 			     priv->headerbuf));
+		
+		if (priv->preheader == NULL)
+			priv->preheader = g_strdup (priv->headerbuf);
 		
 		priv->headerleft += priv->headerptr - priv->headerbuf;
 		priv->headerptr = priv->headerbuf;
@@ -1000,7 +1035,7 @@ parser_step_headers (GMimeParser *parser)
 					while (*inptr != ':') {
 						/* Note: blank spaces are allowed between the field name
 						 * and the ':', but field names themselves are not allowed
-						 * to contain spaces. */
+						 * to contain spaces (or control characters). */
 						if (is_blank (*inptr)) {
 							blank = TRUE;
 						} else if (blank || is_ctrl (*inptr)) {
@@ -1025,8 +1060,8 @@ parser_step_headers (GMimeParser *parser)
 				}
 				
 				if (!valid) {
-					if (priv->format == GMIME_FORMAT_MBOX && (inptr - start) >= 5
-					    && !strncmp (start, "From ", 5))
+					if (priv->format == GMIME_FORMAT_MBOX &&
+					    is_mbox_marker (start, (size_t) (inptr - start), FALSE))
 						goto next_message;
 					
 					if (priv->headers->len > 0) {
@@ -1045,8 +1080,9 @@ parser_step_headers (GMimeParser *parser)
 						}
 					} else if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
 						/* Be a little more strict when scanning toplevel message
-						 * headers, but remain lenient with From-lines. */
-						if ((inptr - start) < 5 || strncmp (start, "From ", 5) != 0) {
+						 * headers, but remain lenient with lines starting with
+						 * "From " or ">From ". */
+						if (!is_mbox_marker (start, (size_t) (inptr - start), TRUE)) {
 							priv->state = GMIME_PARSER_STATE_ERROR;
 							return -1;
 						}
@@ -1628,6 +1664,8 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	
 	message = g_mime_message_new (FALSE);
 	message->compliance = GMIME_RFC_COMPLIANCE_LOOSE;
+	message->marker = priv->preheader;
+	priv->preheader = NULL;
 	
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];

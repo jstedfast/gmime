@@ -221,6 +221,7 @@ g_mime_message_finalize (GObject *object)
 	g_free (message->addrlists);
 	g_free (message->message_id);
 	g_free (message->subject);
+	g_free (message->marker);
 	
 	if (message->date)
 		g_date_time_unref (message->date);
