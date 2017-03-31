@@ -113,7 +113,13 @@ static ssize_t
 message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimeMessagePart *part = (GMimeMessagePart *) object;
+	GMimeMessage *message = part->message;
 	ssize_t nwritten, total = 0;
+	const char *newline, *eoln;
+	gboolean match;
+	size_t len;
+	
+	newline = g_mime_format_options_get_newline (options);
 	
 	if (!content_only) {
 		/* write the content headers */
@@ -123,15 +129,42 @@ message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, 
 		total += nwritten;
 		
 		/* terminate the headers */
-		if ((nwritten = g_mime_stream_write (stream, "\n", 1)) == -1)
+		if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
 			return -1;
 		
 		total += nwritten;
 	}
 	
 	/* write the message */
-	if (part->message) {
-		if ((nwritten = g_mime_object_write_to_stream ((GMimeObject *) part->message, options, stream)) == -1)
+	if (message) {
+		if (message->marker && (len = strlen (message->marker)) > 0) {
+			if (*(eoln = message->marker + (len - 1)) == '\n') {
+				if (eoln > message->marker && eoln[-1] == '\r')
+					eoln--;
+				
+				/* check if newline sequences match... */
+				if (!(match = !strcmp (eoln, newline))) {
+					/* they don't match... trim off the eoln sequence */
+					len = (size_t) (eoln - message->marker);
+				}
+			} else {
+				match = FALSE;
+			}
+			
+			if ((nwritten = g_mime_stream_write (stream, message->marker, len)) == -1)
+				return -1;
+			
+			total += nwritten;
+			
+			if (!match) {
+				if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
+					return -1;
+				
+				total += nwritten;
+			}
+		}
+		
+		if ((nwritten = g_mime_object_write_to_stream ((GMimeObject *) message, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
