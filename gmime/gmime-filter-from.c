@@ -250,19 +250,19 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_from_new (GMimeFilterFromMode mode)
 {
-	GMimeFilterFrom *new;
+	GMimeFilterFrom *from;
 	
-	new = g_object_newv (GMIME_TYPE_FILTER_FROM, 0, NULL);
-	new->midline = FALSE;
+	from = g_object_new (GMIME_TYPE_FILTER_FROM, NULL);
+	from->midline = FALSE;
 	switch (mode) {
 	case GMIME_FILTER_FROM_MODE_ARMOR:
-		new->mode = mode;
+		from->mode = mode;
 		break;
 	case GMIME_FILTER_FROM_MODE_ESCAPE:
 	default:
-		new->mode = GMIME_FILTER_FROM_MODE_ESCAPE;
+		from->mode = GMIME_FILTER_FROM_MODE_ESCAPE;
 		break;
 	}
 	
-	return (GMimeFilter *) new;
+	return (GMimeFilter *) from;
 }

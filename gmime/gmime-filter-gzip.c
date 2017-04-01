@@ -503,22 +503,22 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_gzip_new (GMimeFilterGZipMode mode, int level)
 {
-	GMimeFilterGZip *new;
+	GMimeFilterGZip *gzip;
 	int retval;
 	
-	new = g_object_newv (GMIME_TYPE_FILTER_GZIP, 0, NULL);
-	new->mode = mode;
-	new->level = level;
+	gzip = g_object_new (GMIME_TYPE_FILTER_GZIP, NULL);
+	gzip->mode = mode;
+	gzip->level = level;
 	
 	if (mode == GMIME_FILTER_GZIP_MODE_ZIP)
-		retval = deflateInit2 (new->priv->stream, level, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+		retval = deflateInit2 (gzip->priv->stream, level, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 	else
-		retval = inflateInit2 (new->priv->stream, -MAX_WBITS);
+		retval = inflateInit2 (gzip->priv->stream, -MAX_WBITS);
 	
 	if (retval != Z_OK) {
-		g_object_unref (new);
+		g_object_unref (gzip);
 		return NULL;
 	}
 	
-	return (GMimeFilter *) new;
+	return (GMimeFilter *) gzip;
 }

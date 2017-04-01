@@ -393,7 +393,7 @@ g_mime_pkcs7_context_new (void)
 	if (gpgme_new (&ctx) != GPG_ERR_NO_ERROR)
 		return NULL;
 	
-	pkcs7 = g_object_newv (GMIME_TYPE_PKCS7_CONTEXT, 0, NULL);
+	pkcs7 = g_object_new (GMIME_TYPE_PKCS7_CONTEXT, NULL);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
 	gpgme_set_textmode (ctx, FALSE);
 	gpgme_set_armor (ctx, FALSE);

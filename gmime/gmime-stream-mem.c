@@ -319,9 +319,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	g_mime_stream_construct ((GMimeStream *) mem, start, end);
-	mem->buffer = GMIME_STREAM_MEM (stream)->buffer;
+	mem->buffer = ((GMimeStreamMem *) stream)->buffer;
 	mem->owner = FALSE;
 	
 	return (GMimeStream *) mem;
@@ -340,7 +340,7 @@ g_mime_stream_mem_new (void)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	g_mime_stream_construct ((GMimeStream *) mem, 0, -1);
 	mem->buffer = g_byte_array_new ();
 	mem->owner = TRUE;
@@ -362,7 +362,7 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	g_mime_stream_construct ((GMimeStream *) mem, 0, -1);
 	mem->buffer = array;
 	mem->owner = TRUE;
@@ -385,12 +385,10 @@ GMimeStream *
 g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 {
 	GMimeStreamMem *mem;
+
+	g_return_val_if_fail (buffer != NULL, NULL);
 	
-	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
-	g_mime_stream_construct ((GMimeStream *) mem, 0, -1);
-	mem->buffer = g_byte_array_new ();
-	mem->owner = TRUE;
-	
+	mem = (GMimeStreamMem *) g_mime_stream_mem_new ();
 	g_byte_array_append (mem->buffer, (unsigned char *) buffer, len);
 	
 	return (GMimeStream *) mem;
@@ -427,7 +425,7 @@ g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem)
 void
 g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 {
-	GMimeStream *stream;
+	GMimeStream *stream = (GMimeStream *) mem;
 	
 	g_return_if_fail (GMIME_IS_STREAM_MEM (mem));
 	g_return_if_fail (array != NULL);
@@ -437,8 +435,6 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 	
 	mem->buffer = array;
 	mem->owner = FALSE;
-	
-	stream = GMIME_STREAM (mem);
 	
 	stream->position = 0;
 	stream->bound_start = 0;

@@ -122,7 +122,7 @@ g_mime_certificate_finalize (GObject *object)
 GMimeCertificate *
 g_mime_certificate_new (void)
 {
-	return g_object_newv (GMIME_TYPE_CERTIFICATE, 0, NULL);
+	return g_object_new (GMIME_TYPE_CERTIFICATE, NULL);
 }
 
 
@@ -571,7 +571,7 @@ g_mime_certificate_list_finalize (GObject *object)
 GMimeCertificateList *
 g_mime_certificate_list_new (void)
 {
-	return g_object_newv (GMIME_TYPE_CERTIFICATE_LIST, 0, NULL);
+	return g_object_new (GMIME_TYPE_CERTIFICATE_LIST, NULL);
 }
 
 

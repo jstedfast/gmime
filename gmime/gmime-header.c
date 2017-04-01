@@ -169,7 +169,7 @@ g_mime_header_new (GMimeParserOptions *options, const char *name, const char *va
 	GMimeHeader *header;
 	guint i;
 	
-	header = g_object_newv (GMIME_TYPE_HEADER, 0, NULL);
+	header = g_object_new (GMIME_TYPE_HEADER, NULL);
 	header->raw_value = raw_value ? g_strdup (raw_value) : NULL;
 	header->value = value ? g_strdup (value) : NULL;
 	header->raw_name = g_strdup (raw_name);
@@ -1039,7 +1039,7 @@ g_mime_header_list_new (GMimeParserOptions *options)
 {
 	GMimeHeaderList *headers;
 	
-	headers = g_object_newv (GMIME_TYPE_HEADER_LIST, 0, NULL);
+	headers = g_object_new (GMIME_TYPE_HEADER_LIST, NULL);
 	headers->options = g_mime_parser_options_clone (options);
 	
 	return headers;

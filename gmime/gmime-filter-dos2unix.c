@@ -181,7 +181,7 @@ g_mime_filter_dos2unix_new (gboolean ensure_newline)
 {
 	GMimeFilterDos2Unix *dos2unix;
 	
-	dos2unix = g_object_newv (GMIME_TYPE_FILTER_DOS2UNIX, 0, NULL);
+	dos2unix = g_object_new (GMIME_TYPE_FILTER_DOS2UNIX, NULL);
 	dos2unix->ensure_newline = ensure_newline;
 	
 	return (GMimeFilter *) dos2unix;

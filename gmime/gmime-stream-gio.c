@@ -620,9 +620,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamGIO *gio;
 	
-	gio = g_object_newv (GMIME_TYPE_STREAM_GIO, 0, NULL);
-	g_mime_stream_construct (GMIME_STREAM (gio), start, end);
-	gio->file = GMIME_STREAM_GIO (stream)->file;
+	gio = g_object_new (GMIME_TYPE_STREAM_GIO, NULL);
+	g_mime_stream_construct ((GMimeStream *) gio, start, end);
+	gio->file = ((GMimeStreamGIO *) stream)->file;
 	gio->owner = FALSE;
 	gio->eos = FALSE;
 	
@@ -645,8 +645,8 @@ g_mime_stream_gio_new (GFile *file)
 	
 	g_return_val_if_fail (G_IS_FILE (file), NULL);
 	
-	gio = g_object_newv (GMIME_TYPE_STREAM_GIO, 0, NULL);
-	g_mime_stream_construct (GMIME_STREAM (gio), 0, -1);
+	gio = g_object_new (GMIME_TYPE_STREAM_GIO, NULL);
+	g_mime_stream_construct ((GMimeStream *) gio, 0, -1);
 	gio->file = file;
 	gio->owner = TRUE;
 	gio->eos = FALSE;
@@ -674,8 +674,8 @@ g_mime_stream_gio_new_with_bounds (GFile *file, gint64 start, gint64 end)
 	
 	g_return_val_if_fail (G_IS_FILE (file), NULL);
 	
-	gio = g_object_newv (GMIME_TYPE_STREAM_GIO, 0, NULL);
-	g_mime_stream_construct (GMIME_STREAM (gio), start, end);
+	gio = g_object_new (GMIME_TYPE_STREAM_GIO, NULL);
+	g_mime_stream_construct ((GMimeStream *) gio, start, end);
 	gio->file = file;
 	gio->owner = TRUE;
 	gio->eos = FALSE;

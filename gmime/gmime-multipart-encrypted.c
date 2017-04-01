@@ -127,7 +127,7 @@ g_mime_multipart_encrypted_new (void)
 	GMimeMultipartEncrypted *multipart;
 	GMimeContentType *content_type;
 	
-	multipart = g_object_newv (GMIME_TYPE_MULTIPART_ENCRYPTED, 0, NULL);
+	multipart = g_object_new (GMIME_TYPE_MULTIPART_ENCRYPTED, NULL);
 	
 	content_type = g_mime_content_type_new ("multipart", "encrypted");
 	g_mime_object_set_content_type ((GMimeObject *) multipart, content_type);

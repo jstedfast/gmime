@@ -231,7 +231,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStream *null;
 	
-	null = g_object_newv (GMIME_TYPE_STREAM_NULL, 0, NULL);
+	null = g_object_new (GMIME_TYPE_STREAM_NULL, NULL);
 	g_mime_stream_construct (null, start, end);
 	
 	return null;
@@ -250,7 +250,7 @@ g_mime_stream_null_new (void)
 {
 	GMimeStream *null;
 	
-	null = g_object_newv (GMIME_TYPE_STREAM_NULL, 0, NULL);
+	null = g_object_new (GMIME_TYPE_STREAM_NULL, NULL);
 	g_mime_stream_construct (null, 0, -1);
 	
 	return null;

@@ -243,13 +243,13 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_best_new (GMimeFilterBestFlags flags)
 {
-	GMimeFilterBest *new;
+	GMimeFilterBest *best;
 	
-	new = g_object_newv (GMIME_TYPE_FILTER_BEST, 0, NULL);
-	new->flags = flags;
-	filter_reset ((GMimeFilter *) new);
+	best = g_object_new (GMIME_TYPE_FILTER_BEST, NULL);
+	best->flags = flags;
+	filter_reset ((GMimeFilter *) best);
 	
-	return (GMimeFilter *) new;
+	return (GMimeFilter *) best;
 }
 
 

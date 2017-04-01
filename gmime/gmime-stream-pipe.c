@@ -279,7 +279,15 @@ stream_length (GMimeStream *stream)
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
-	return NULL;
+	GMimeStreamPipe *pipes;
+	
+	pipes = g_object_new (GMIME_TYPE_STREAM_PIPE, NULL);
+	g_mime_stream_construct ((GMimeStream *) pipes, start, end);
+	pipes->fd = ((GMimeStreamPipe *) stream)->fd;
+	pipes->owner = FALSE;
+	pipes->eos = FALSE;
+	
+	return (GMimeStream *) pipes;
 }
 
 
@@ -296,8 +304,8 @@ g_mime_stream_pipe_new (int fd)
 {
 	GMimeStreamPipe *pipes;
 	
-	pipes = g_object_newv (GMIME_TYPE_STREAM_PIPE, 0, NULL);
-	g_mime_stream_construct (GMIME_STREAM (pipes), 0, -1);
+	pipes = g_object_new (GMIME_TYPE_STREAM_PIPE, NULL);
+	g_mime_stream_construct ((GMimeStream *) pipes, 0, -1);
 	pipes->owner = TRUE;
 	pipes->eos = FALSE;
 	pipes->fd = fd;

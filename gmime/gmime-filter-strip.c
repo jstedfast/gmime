@@ -213,5 +213,5 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_strip_new (void)
 {
-	return g_object_newv (GMIME_TYPE_FILTER_STRIP, 0, NULL);
+	return g_object_new (GMIME_TYPE_FILTER_STRIP, NULL);
 }

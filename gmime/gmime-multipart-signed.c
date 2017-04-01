@@ -141,7 +141,7 @@ g_mime_multipart_signed_new (void)
 	GMimeMultipartSigned *multipart;
 	GMimeContentType *content_type;
 	
-	multipart = g_object_newv (GMIME_TYPE_MULTIPART_SIGNED, 0, NULL);
+	multipart = g_object_new (GMIME_TYPE_MULTIPART_SIGNED, NULL);
 	
 	content_type = g_mime_content_type_new ("multipart", "signed");
 	g_mime_object_set_content_type ((GMimeObject *) multipart, content_type);
@@ -389,7 +389,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 		return NULL;
 	}
 	
-	if (!(protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mps), "protocol"))) {
+	if (!(protocol = g_mime_object_get_content_type_parameter ((GMimeObject *) mps, "protocol"))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 				     _("Cannot verify multipart/signed part: unspecified signature protocol."));
 		
