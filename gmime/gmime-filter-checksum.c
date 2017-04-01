@@ -115,7 +115,7 @@ filter_copy (GMimeFilter *filter)
 	GChecksum *checksum = ((GMimeFilterChecksum *) filter)->checksum;
 	GMimeFilterChecksum *copy;
 	
-	copy = g_object_newv (GMIME_TYPE_FILTER_CHECKSUM, 0, NULL);
+	copy = g_object_new (GMIME_TYPE_FILTER_CHECKSUM, NULL);
 	copy->checksum = checksum ? g_checksum_copy (checksum) : NULL;
 	
 	return (GMimeFilter *) copy;
@@ -164,7 +164,7 @@ g_mime_filter_checksum_new (GChecksumType type)
 {
 	GMimeFilterChecksum *checksum;
 	
-	checksum = g_object_newv (GMIME_TYPE_FILTER_CHECKSUM, 0, NULL);
+	checksum = g_object_new (GMIME_TYPE_FILTER_CHECKSUM, NULL);
 	checksum->checksum = g_checksum_new (type);
 	
 	return (GMimeFilter *) checksum;

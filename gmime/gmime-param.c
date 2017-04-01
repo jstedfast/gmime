@@ -142,7 +142,7 @@ g_mime_param_finalize (GObject *object)
 static GMimeParam *
 g_mime_param_new (void)
 {
-	return g_object_newv (GMIME_TYPE_PARAM, 0, NULL);
+	return g_object_new (GMIME_TYPE_PARAM, NULL);
 }
 
 
@@ -394,7 +394,7 @@ g_mime_param_list_finalize (GObject *object)
 GMimeParamList *
 g_mime_param_list_new (void)
 {
-	return g_object_newv (GMIME_TYPE_PARAM_LIST, 0, NULL);
+	return g_object_new (GMIME_TYPE_PARAM_LIST, NULL);
 }
 
 

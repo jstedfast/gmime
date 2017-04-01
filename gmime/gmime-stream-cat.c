@@ -641,11 +641,11 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	} while (n != NULL);
 	
 	d(fprintf (stderr, "returning a substream containing multiple source streams\n"));
-	cat = g_object_newv (GMIME_TYPE_STREAM_CAT, 0, NULL);
+	cat = g_object_new (GMIME_TYPE_STREAM_CAT, NULL);
 	/* Note: we could pass -1 as bound_end, it should Just
 	 * Work(tm) but setting absolute bounds is kinda
 	 * nice... */
-	g_mime_stream_construct (GMIME_STREAM (cat), 0, subend);
+	g_mime_stream_construct ((GMimeStream *) cat, 0, subend);
 	
 	while (streams != NULL) {
 		s = streams->next;
@@ -684,7 +684,7 @@ g_mime_stream_cat_new (void)
 {
 	GMimeStream *stream;
 	
-	stream = g_object_newv (GMIME_TYPE_STREAM_CAT, 0, NULL);
+	stream = g_object_new (GMIME_TYPE_STREAM_CAT, NULL);
 	g_mime_stream_construct (stream, 0, -1);
 	
 	return stream;

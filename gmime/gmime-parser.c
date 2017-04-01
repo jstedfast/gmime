@@ -441,7 +441,7 @@ parser_close (GMimeParser *parser)
 GMimeParser *
 g_mime_parser_new (void)
 {
-	return g_object_newv (GMIME_TYPE_PARSER, 0, NULL);
+	return g_object_new (GMIME_TYPE_PARSER, NULL);
 }
 
 

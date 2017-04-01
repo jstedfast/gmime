@@ -502,7 +502,7 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (source), NULL);
 	
-	buffer = g_object_newv (GMIME_TYPE_STREAM_BUFFER, 0, NULL);
+	buffer = g_object_new (GMIME_TYPE_STREAM_BUFFER, NULL);
 	
 	buffer->source = source;
 	g_object_ref (source);
@@ -550,7 +550,7 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 	outend = buf + max - 1;
 	
 	if (GMIME_IS_STREAM_BUFFER (stream)) {
-		GMimeStreamBuffer *buffer = GMIME_STREAM_BUFFER (stream);
+		GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 		
 		if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_READ) {
 			while (outptr < outend) {

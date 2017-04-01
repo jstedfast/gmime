@@ -364,7 +364,7 @@ internet_address_mailbox_new (const char *name, const char *addr)
 	
 	g_return_val_if_fail (addr != NULL, NULL);
 	
-	mailbox = g_object_newv (INTERNET_ADDRESS_TYPE_MAILBOX, 0, NULL);
+	mailbox = g_object_new (INTERNET_ADDRESS_TYPE_MAILBOX, NULL);
 	mailbox->addr = g_strdup (addr);
 	
 	_internet_address_set_name ((InternetAddress *) mailbox, name);
@@ -504,7 +504,7 @@ internet_address_group_new (const char *name)
 {
 	InternetAddress *group;
 	
-	group = g_object_newv (INTERNET_ADDRESS_TYPE_GROUP, 0, NULL);
+	group = g_object_new (INTERNET_ADDRESS_TYPE_GROUP, NULL);
 	_internet_address_set_name (group, name);
 	
 	return group;
@@ -670,7 +670,7 @@ internet_address_list_finalize (GObject *object)
 InternetAddressList *
 internet_address_list_new (void)
 {
-	return g_object_newv (INTERNET_ADDRESS_LIST_TYPE, 0, NULL);
+	return g_object_new (INTERNET_ADDRESS_LIST_TYPE, NULL);
 }
 
 

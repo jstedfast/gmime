@@ -144,7 +144,7 @@ g_mime_content_type_new (const char *type, const char *subtype)
 {
 	GMimeContentType *content_type;
 	
-	content_type = g_object_newv (GMIME_TYPE_CONTENT_TYPE, 0, NULL);
+	content_type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
 	
 	if (type && *type && subtype && *subtype) {
 		content_type->type = g_strdup (type);
@@ -197,7 +197,7 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 	if (!g_mime_parse_content_type (&inptr, &type, &subtype))
 		return g_mime_content_type_new ("application", "octet-stream");
 	
-	content_type = g_object_newv (GMIME_TYPE_CONTENT_TYPE, 0, NULL);
+	content_type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
 	content_type->subtype = subtype;
 	content_type->type = type;
 	

@@ -407,7 +407,7 @@ g_mime_gpg_context_new (void)
 	if (gpgme_new (&ctx) != GPG_ERR_NO_ERROR)
 		return NULL;
 	
-	gpg = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
+	gpg = g_object_new (GMIME_TYPE_GPG_CONTEXT, NULL);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_OpenPGP);
 	gpgme_set_armor (ctx, TRUE);
 	gpg->ctx = ctx;

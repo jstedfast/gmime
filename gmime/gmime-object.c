@@ -431,7 +431,7 @@ g_mime_object_new (GMimeParserOptions *options, GMimeContentType *content_type)
 			return NULL;
 	}
 	
-	object = g_object_newv (obj_type, 0, NULL);
+	object = g_object_new (obj_type, NULL);
 	_g_mime_header_list_set_options (object->headers, options);
 	
 	g_mime_object_set_content_type (object, content_type);
@@ -487,7 +487,7 @@ g_mime_object_new_type (GMimeParserOptions *options, const char *type, const cha
 			return NULL;
 	}
 	
-	object = g_object_newv (obj_type, 0, NULL);
+	object = g_object_new (obj_type, NULL);
 	_g_mime_header_list_set_options (object->headers, options);
 	
 	return object;

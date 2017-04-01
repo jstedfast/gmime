@@ -111,7 +111,7 @@ g_mime_signature_finalize (GObject *object)
 GMimeSignature *
 g_mime_signature_new (void)
 {
-	return g_object_newv (GMIME_TYPE_SIGNATURE, 0, NULL);
+	return g_object_new (GMIME_TYPE_SIGNATURE, NULL);
 }
 
 
@@ -334,7 +334,7 @@ g_mime_signature_list_finalize (GObject *object)
 GMimeSignatureList *
 g_mime_signature_list_new (void)
 {
-	return g_object_newv (GMIME_TYPE_SIGNATURE_LIST, 0, NULL);
+	return g_object_new (GMIME_TYPE_SIGNATURE_LIST, NULL);
 }
 
 

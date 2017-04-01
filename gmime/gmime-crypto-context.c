@@ -668,7 +668,7 @@ g_mime_decrypt_result_finalize (GObject *object)
 GMimeDecryptResult *
 g_mime_decrypt_result_new (void)
 {
-	return g_object_newv (GMIME_TYPE_DECRYPT_RESULT, 0, NULL);
+	return g_object_new (GMIME_TYPE_DECRYPT_RESULT, NULL);
 }
 
 

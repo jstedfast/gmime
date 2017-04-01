@@ -129,7 +129,7 @@ g_mime_content_disposition_new (void)
 {
 	GMimeContentDisposition *disposition;
 	
-	disposition = g_object_newv (GMIME_TYPE_CONTENT_DISPOSITION, 0, NULL);
+	disposition = g_object_new (GMIME_TYPE_CONTENT_DISPOSITION, NULL);
 	disposition->disposition = g_strdup (GMIME_DISPOSITION_ATTACHMENT);
 	
 	return disposition;
@@ -156,7 +156,7 @@ g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
 	if (str == NULL)
 		return g_mime_content_disposition_new ();
 	
-	disposition = g_object_newv (GMIME_TYPE_CONTENT_DISPOSITION, 0, NULL);
+	disposition = g_object_new (GMIME_TYPE_CONTENT_DISPOSITION, NULL);
 	
 	/* get content disposition part */
 	

@@ -254,18 +254,7 @@ multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 GMimeMultipart *
 g_mime_multipart_new (void)
 {
-	GMimeContentType *content_type;
-	GMimeMultipart *multipart;
-	
-	multipart = g_object_newv (GMIME_TYPE_MULTIPART, 0, NULL);
-	
-	content_type = g_mime_content_type_new ("multipart", "mixed");
-	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);
-	g_object_unref (content_type);
-	
-	g_mime_multipart_set_boundary (multipart, NULL);
-	
-	return multipart;
+	return g_mime_multipart_new_with_subtype ("mixed");
 }
 
 
@@ -285,10 +274,10 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 	GMimeContentType *content_type;
 	GMimeMultipart *multipart;
 	
-	multipart = g_object_newv (GMIME_TYPE_MULTIPART, 0, NULL);
+	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL);
 	
 	content_type = g_mime_content_type_new ("multipart", subtype ? subtype : "mixed");
-	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);
+	g_mime_object_set_content_type ((GMimeObject *) multipart, content_type);
 	g_object_unref (content_type);
 	
 	g_mime_multipart_set_boundary (multipart, NULL);
@@ -710,7 +699,7 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 		boundary = bbuf;
 	}
 	
-	g_mime_object_set_content_type_parameter (GMIME_OBJECT (multipart), "boundary", boundary);
+	g_mime_object_set_content_type_parameter ((GMimeObject *) multipart, "boundary", boundary);
 }
 
 

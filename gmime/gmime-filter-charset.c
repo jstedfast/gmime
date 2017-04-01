@@ -304,17 +304,17 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 {
-	GMimeFilterCharset *new;
+	GMimeFilterCharset *charset;
 	iconv_t cd;
 	
 	cd = g_mime_iconv_open (to_charset, from_charset);
 	if (cd == (iconv_t) -1)
 		return NULL;
 	
-	new = g_object_newv (GMIME_TYPE_FILTER_CHARSET, 0, NULL);
-	new->from_charset = g_strdup (from_charset);
-	new->to_charset = g_strdup (to_charset);
-	new->cd = cd;
+	charset = g_object_new (GMIME_TYPE_FILTER_CHARSET, NULL);
+	charset->from_charset = g_strdup (from_charset);
+	charset->to_charset = g_strdup (to_charset);
+	charset->cd = cd;
 	
-	return (GMimeFilter *) new;
+	return (GMimeFilter *) charset;
 }

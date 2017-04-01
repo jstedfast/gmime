@@ -149,7 +149,7 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 	
 	g_return_val_if_fail (type != GMIME_SECURE_MIME_TYPE_UNKNOWN, NULL);
 	
-	pkcs7_mime = g_object_newv (GMIME_TYPE_APPLICATION_PKCS7_MIME, 0, NULL);
+	pkcs7_mime = g_object_new (GMIME_TYPE_APPLICATION_PKCS7_MIME, NULL);
 	content_type = g_mime_content_type_new ("application", "pkcs7-mime");
 	
 	switch (type) {
