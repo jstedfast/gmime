@@ -1663,7 +1663,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	}
 	
 	message = g_mime_message_new (FALSE);
-	message->compliance = GMIME_RFC_COMPLIANCE_LOOSE;
+	((GMimeObject *) message)->ensure_newline = FALSE;
 	message->marker = priv->preheader;
 	priv->preheader = NULL;
 	
@@ -1980,7 +1980,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	}
 	
 	message = g_mime_message_new (FALSE);
-	message->compliance = GMIME_RFC_COMPLIANCE_LOOSE;
+	((GMimeObject *) message)->ensure_newline = FALSE;
 	
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
