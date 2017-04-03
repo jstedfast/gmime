@@ -86,7 +86,6 @@ struct _GMimeMessage {
 	char *subject;
 	
 	/* < private > */
-	GMimeRfcComplianceMode compliance;
 	char *marker;
 };
 

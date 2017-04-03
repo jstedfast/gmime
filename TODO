@@ -10,8 +10,6 @@ GMime 3.0 Planning:
   This would require me to rename g_mime_message_get_body() to
   g_mime_message_get_text_body()?
 
-- Other GMimeParser improvements based on MimeKit
-
 
 Future Planning:
 ================
