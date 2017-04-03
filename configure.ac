@@ -183,9 +183,6 @@ AC_TRY_COMPILE([
 	AC_MSG_RESULT(no)
 )
 
-dnl Check for some time functions
-AC_CHECK_FUNCS(strftime localtime gmtime_r gmtime_s)
-
 dnl Check for working mmap
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(munmap msync)
@@ -412,50 +409,6 @@ AC_TRY_COMPILE([
 ,
 	AC_MSG_RESULT(no)
 )
-
-dnl Timezone checks
-AC_CACHE_CHECK(for tm_gmtoff in struct tm, ac_cv_struct_tm_gmtoff,
-	AC_TRY_COMPILE([
-		#include <time.h>
-		], [
-		struct tm tm;
-		tm.tm_gmtoff = 1;
-		return tm.tm_gmtoff;
-		], ac_cv_struct_tm_gmtoff="yes", ac_cv_struct_tm_gmtoff="no"))
-if test "$ac_cv_struct_tm_gmtoff" = "yes"; then
-	AC_DEFINE(HAVE_TM_GMTOFF, 1, [Define if struct tm has a tm_gmtoff member])
-else
-	AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
-		AC_TRY_COMPILE([
-			#include <time.h>
-		], [
-			timezone = 1;
-		], ac_cv_var_timezone="yes", ac_cv_var_timezone="no"))
-	if test "$ac_cv_var_timezone" = "yes"; then
-		AC_DEFINE(HAVE_TIMEZONE, 1, [Define if libc defines a timezone variable])
-		AC_CACHE_CHECK(for altzone variable, ac_cv_var_altzone,
-			AC_TRY_COMPILE([
-				#include <time.h>
-			], [
-				altzone = 1;
-			], ac_cv_var_altzone="yes", ac_cv_var_altzone="no"))
-		if test "$ac_cv_var_altzone" = "yes"; then
-			AC_DEFINE(HAVE_ALTZONE, 1, [Define if libc defines an altzone variable])
-		fi
-	else
-		AC_CACHE_CHECK(for _timezone variable, ac_cv_var__timezone,
-			AC_TRY_COMPILE([
-				#include <time.h>
-			], [
-				_timezone = 1;
-			], ac_cv_var__timezone="yes", ac_cv_var__timezone="no"))
-		if test "$ac_cv_var__timezone" = "yes"; then
-			AC_DEFINE(HAVE__TIMEZONE, 1, [Define if libc defines a _timezone variable])
-		else
-			AC_ERROR(unable to find a way to determine timezone)
-		fi
-	fi
-fi
 
 dnl *************************************
 dnl *** Checks for large file support ***
