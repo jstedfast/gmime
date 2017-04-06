@@ -159,7 +159,6 @@ uudecode (const char *progname, int argc, char **argv)
 		if (p == NULL) {
 			fprintf (stderr, "%s: %s: No `begin' line\n", progname,
 				 (!strcmp (infile, DEFAULT_FILENAME)) ? "stdin" : infile);
-			fclose (fin);
 			goto nexti;
 		}
 		
@@ -234,9 +233,10 @@ uudecode (const char *progname, int argc, char **argv)
 		
 		fflush (fout);
 		fclose (fout);
-		fclose (fin);
 		
 	nexti:
+		fclose (fin);
+		
 		if (str) {
 			g_string_free (str, TRUE);
 			str = NULL;
