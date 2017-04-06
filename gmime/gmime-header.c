@@ -219,7 +219,7 @@ unfold (const char *value)
 	while (is_lwsp (*inptr))
 		inptr++;
 	
-	start = inptr;
+	inend = start = inptr;
 	while (*inptr) {
 		if (!is_lwsp (*inptr++))
 			inend = inptr;
