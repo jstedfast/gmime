@@ -382,8 +382,10 @@ test_pkcs7_mime_encrypt (void)
 	
 	g_object_unref (message);
 	
-	if (result->signatures)
-		ex = exception_new ("signature status expected to be NONE");
+	if (result->signatures) {
+		g_object_unref (result);
+		throw (exception_new ("signature status expected to be NONE"));
+	}
 	
 	g_object_unref (result);
 	

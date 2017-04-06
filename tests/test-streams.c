@@ -546,7 +546,6 @@ gen_test_data (const char *datadir, char **stream_name)
 		start = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
 		len = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
 		if (start + len > size) {
-			len = size - start;
 			end = -1;
 		} else {
 			end = start + len;
