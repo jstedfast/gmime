@@ -781,7 +781,7 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 	int fd;
 	
 	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
-	if ((fd = open (filename, O_RDONLY, 0))) {
+	if ((fd = open (filename, O_RDONLY, 0)) == -1) {
 		g_mime_message_part_set_message (msgpart, NULL);
 		g_free (filename);
 		return;
