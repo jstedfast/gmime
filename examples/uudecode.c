@@ -76,7 +76,7 @@ uufopen (const char *filename, const char *rw, int flags, mode_t mode)
 		if ((fd = open (filename, flags, mode)) == -1)
 			return NULL;
 	} else {
-		fd = (flags & O_RDONLY) == O_RDONLY ? 0 : 1;
+		fd = (flags & O_WRONLY) == O_WRONLY ? 1 : 0;
 		if ((fd = dup (fd)) == -1)
 			return NULL;
 	}
