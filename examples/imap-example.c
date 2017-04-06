@@ -50,7 +50,6 @@ escape_string (const char *string)
 {
 	const char *start, *inptr;
 	GString *str;
-	char *buf;
 	
 	str = g_string_new ("");
 	
@@ -68,10 +67,7 @@ escape_string (const char *string)
 		}
 	}
 	
-	buf = str->str;
-	g_string_free (str, FALSE);
-	
-	return buf;
+	return g_string_free (str, FALSE);
 }
 
 static void
