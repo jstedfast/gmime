@@ -35,7 +35,6 @@
 #include <errno.h>
 
 #ifndef G_OS_WIN32
-static const char *path = "/usr/bin/gpg";
 static const char *passphrase = "no.secret";
 
 static gboolean
@@ -186,7 +185,6 @@ verify_signed_parts (GMimeMessage *message)
 static void
 write_message_to_screen (GMimeMessage *message)
 {
-	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *stream;
 	
 	/* create a new stream for writing to stdout */
@@ -194,7 +192,7 @@ write_message_to_screen (GMimeMessage *message)
 	g_mime_stream_file_set_owner ((GMimeStreamFile *) stream, FALSE);
 	
 	/* write the message to the stream */
-	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, NULL, stream);
 	
 	/* flush the stream (kinda like fflush() in libc's stdio) */
 	g_mime_stream_flush (stream);
@@ -272,11 +270,11 @@ int main (int argc, char **argv)
 	if (argc < 2) {
 		printf ("Usage: a.out <message file>\n");
 		return 0;
-	} else {
-		if ((fd = open (argv[1], O_RDONLY, 0)) == -1) {
-			fprintf (stderr, "Cannot open message `%s': %s\n", argv[1], g_strerror (errno));
-			return 0;
-		}
+	}
+	
+	if ((fd = open (argv[1], O_RDONLY, 0)) == -1) {
+		fprintf (stderr, "Cannot open message `%s': %s\n", argv[1], g_strerror (errno));
+		return 0;
 	}
 	
 	/* init the gmime library */
@@ -285,7 +283,7 @@ int main (int argc, char **argv)
 	/* parse the message */
 	message = parse_message (fd);
 	if (message == NULL) {
-		printf("Error parsing message");
+		printf ("Error parsing message\n");
 		return 1;
 	}
 	
