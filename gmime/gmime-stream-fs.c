@@ -162,7 +162,8 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
-	lseek (fs->fd, (off_t) stream->position, SEEK_SET);
+	if (lseek (fs->fd, (off_t) stream->position, SEEK_SET) == -1)
+		return -1;
 	
 	do {
 		nread = read (fs->fd, buf, len);
@@ -198,7 +199,8 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
-	lseek (fs->fd, (off_t) stream->position, SEEK_SET);
+	if (lseek (fs->fd, (off_t) stream->position, SEEK_SET) == -1)
+		return -1;
 	
 	do {
 		do {
@@ -378,8 +380,11 @@ stream_length (GMimeStream *stream)
 	if (stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	bound_end = lseek (fs->fd, (off_t) 0, SEEK_END);
-	lseek (fs->fd, (off_t) stream->position, SEEK_SET);
+	if ((bound_end = lseek (fs->fd, (off_t) 0, SEEK_END)) == -1)
+		return -1;
+	
+	if (lseek (fs->fd, (off_t) stream->position, SEEK_SET) == -1)
+		return -1;
 	
 	if (bound_end < stream->bound_start) {
 		errno = EINVAL;
