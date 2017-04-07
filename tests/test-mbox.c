@@ -453,7 +453,8 @@ int main (int argc, char **argv)
 		mstream = NULL;
 #endif
 		
-		ostream = g_mime_stream_fs_new (dup (1));
+		ostream = g_mime_stream_file_new (stdout);
+		g_mime_stream_file_set_owner ((GMimeStreamFile *) ostream, FALSE);
 		
 		testsuite_check ("user-input mbox: `%s'", path);
 		try {

@@ -831,12 +831,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 				}
 				
 				g_string_append_printf (str, "%s*%d*=", param->name, i++);
-				
-				if (quote)
-					g_string_append_len_quoted (str, inptr, (size_t) (ptr - inptr));
-				else
-					g_string_append_len (str, inptr, (size_t) (ptr - inptr));
-				
+				g_string_append_len (str, inptr, (size_t) (ptr - inptr));
 				used += (str->len - here);
 				
 				inptr = ptr;

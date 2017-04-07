@@ -379,7 +379,7 @@ g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeVerifyFlags flags, GMimeStream *istre
 		
 		signed_text = NULL;
 	} else {
-		g_set_error_literal (err, GMIME_GPGME_ERROR, error, _("Missing signature stream or output stream"));
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL, _("Missing signature stream or output stream"));
 		return NULL;
 	}
 	

@@ -5,8 +5,8 @@
 <book id="gmime-tut">
 
   <bookinfo>
-    <title>GMime 2.6 tutorial</title>
-    <date>Oct 28, 2010</date>
+    <title>GMime 3.0 tutorial</title>
+    <date>Apr 5, 2017</date>
     <authorgroup>
       <author>
 	<firstname>Jeffrey</firstname>
@@ -108,7 +108,7 @@ url="http://library.gnome.org/devel/gmime/stable/gmime-building.html">http://lib
 
       <para>
         <literallayout>
-          <literal>gcc -g -Wall -o simple simple.c `pkg-config --cflags --libs gmime-2.4`</literal>
+          <literal>gcc -g -Wall -o simple simple.c `pkg-config --cflags --libs gmime-3.0`</literal>
         </literallayout>
       </para>
     </sect1>
@@ -127,7 +127,7 @@ url="http://library.gnome.org/devel/gmime/stable/gmime-building.html">http://lib
       use file descriptors) but with a few extras taken from the
       higher-level Standard C I/O API.</para>
       
-      <para>Let's take a moment to regres back to our early days of
+      <para>Let's take a moment to think back to our early days of
       programming where we learned how to write "Hello World!" on the
       console:</para>
       
@@ -156,7 +156,7 @@ int main (int argc, char **argv)
 	GMimeStream *stream;
 	
 	/* initialize GMime */
-	g_mime_init (0);
+	g_mime_init ();
 	
 	/* create a stream around stdout */
 	stream = g_mime_stream_file_new (stdout);
@@ -184,14 +184,8 @@ int main (int argc, char **argv)
       have left.</para>
       
       <para>The first function called in the second example is
-      <literal>g_mime_init</literal> with a value of
-      <literal>0</literal>. If you haven't guessed,
-      <literal>g_mime_init</literal> initializes the GMime library. It
-      takes a single bit-mask argument specifying which options to
-      enable. Currently there is only one optional bit-flag,
-      <literal>GMIME_INIT_FLAG_UTF8</literal> which is the default
-      anyway, so a value of <literal>0</literal> is used here. The
-      UTF-8 flag only exists for historical reasons.</para>
+      <literal>g_mime_init</literal>. If you haven't guessed,
+      <literal>g_mime_init</literal> initializes the GMime library.</para>
       
       <para>The only other line that should need explaining might be:</para>
       
@@ -220,7 +214,7 @@ int main (int argc, char **argv)
 	GMimeStream *stream;
 	
 	/* initialize GMime */
-	g_mime_init (0);
+	g_mime_init ();
 	
 	/* create a stream around stdout */
 	stream = g_mime_stream_fs_new (dup (fileno (stdout)));
@@ -551,13 +545,12 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       GMimeFilterCharset which provides a convenient way to convert
       text streams of one charset into another charset.</para>
       
-      <para>GMimeFilterCRLF will likely become very useful to you if
+      <para>GMimeFilterUnix2Dos will likely become very useful to you if
       you are implementing any internet standards or DOS/UNIX
       compatability. This filter is meant for converting line endings
       from the traditional UNIX sequence (LF) to the internet standard
-      (and DOS) sequence, CRLF, and vice versa. Also included in this
-      filter is a way to escape and unescape lines beginning with '.'
-      in the method used by the SMTP and POP protocols.</para>
+      (and DOS) sequence. There's also a GMimeFilterDos2Unix to perform
+      the opposite conversion.</para>
       
       <para>GMimeFilterFrom is one you will likely need to use if ever
       you need to write to an mbox-formatted mail spool. At present,

@@ -188,6 +188,7 @@ struct _GMimeParserPrivate {
 	
 	BoundaryStack *bounds;
 	
+	openpgp_state_t openpgp;
 	short int state;
 	
 	unsigned short int midline:1;
@@ -195,8 +196,7 @@ struct _GMimeParserPrivate {
 	unsigned short int have_regex:1;
 	unsigned short int persist_stream:1;
 	unsigned short int respect_content_length:1;
-	unsigned short int openpgp:4;
-	unsigned short int unused:7;
+	unsigned short int unused:11;
 };
 
 static const char MBOX_BOUNDARY[6] = "From ";

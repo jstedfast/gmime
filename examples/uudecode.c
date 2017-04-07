@@ -76,7 +76,7 @@ uufopen (const char *filename, const char *rw, int flags, mode_t mode)
 		if ((fd = open (filename, flags, mode)) == -1)
 			return NULL;
 	} else {
-		fd = (flags & O_RDONLY) == O_RDONLY ? 0 : 1;
+		fd = (flags & O_WRONLY) == O_WRONLY ? 1 : 0;
 		if ((fd = dup (fd)) == -1)
 			return NULL;
 	}
@@ -159,7 +159,6 @@ uudecode (const char *progname, int argc, char **argv)
 		if (p == NULL) {
 			fprintf (stderr, "%s: %s: No `begin' line\n", progname,
 				 (!strcmp (infile, DEFAULT_FILENAME)) ? "stdin" : infile);
-			fclose (fin);
 			goto nexti;
 		}
 		
@@ -234,9 +233,10 @@ uudecode (const char *progname, int argc, char **argv)
 		
 		fflush (fout);
 		fclose (fout);
-		fclose (fin);
 		
 	nexti:
+		fclose (fin);
+		
 		if (str) {
 			g_string_free (str, TRUE);
 			str = NULL;
