@@ -136,7 +136,7 @@ InternetAddress *internet_address_mailbox_new (const char *name, const char *add
 
 void internet_address_mailbox_set_addr (InternetAddressMailbox *mailbox, const char *addr);
 const char *internet_address_mailbox_get_addr (InternetAddressMailbox *mailbox);
-
+const char *internet_address_mailbox_get_idn_addr (InternetAddressMailbox *mailbox);
 
 /**
  * InternetAddressGroup:
