@@ -664,6 +664,8 @@ Configuration:
   Install prefix:       ${prefix}
   Compiler:             ${CC}
 
+  Documentation:        ${enable_gtk_doc}
+
   Profiling enabled:    ${enable_profiling}
   Coverage enabled:     ${enable_coverage}
 

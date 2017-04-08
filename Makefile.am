@@ -16,6 +16,7 @@ DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc --enable-introspection
 DISTCLEANFILES = iconv-detect.h gmime-$(GMIME_API_VERSION).pc config.lt doltcompile doltlibtool
 
 EXTRA_DIST = 				\
+	README.md			\
 	PORTING				\
 	gmime.pc.in			\
 	gmime.spec.in 			\

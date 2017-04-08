@@ -112,8 +112,9 @@ test_smime_DEPENDENCIES = $(DEPS)
 test_smime_LDADD = $(LDADDS)
 endif
 
-EXTRA_DIST = $(wildcard empty*.msg rfc2060.msg data/pgp*/* data/smime/* data/partial/input/*/* \
-	data/partial/output/* data/mbox/*put/jwz.mbox data/mbox/*put/substring.mbox)
+EXTRA_DIST = $(wildcard empty*.msg rfc2060.msg data/pgp*/* data/smime/* \
+	data/partial/input/photo-discuss/*.eml data/partial/output/* \
+	data/mbox/*put/jwz.mbox data/mbox/*put/substring.mbox)
 
 VERBOSITY=-v
 

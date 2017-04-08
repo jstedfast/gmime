@@ -1205,6 +1205,7 @@ InternetAddressMailbox
 internet_address_mailbox_new
 internet_address_mailbox_get_addr
 internet_address_mailbox_set_addr
+internet_address_mailbox_get_idn_addr
 
 <SUBSECTION Private>
 internet_address_mailbox_get_type
