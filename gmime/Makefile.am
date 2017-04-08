@@ -11,8 +11,7 @@ AM_CPPFLAGS = 				\
 	-I$(top_builddir)/util		\
 	-DG_LOG_DOMAIN=\"gmime\"	\
 	$(GMIME_CFLAGS)			\
-	$(GLIB_CFLAGS)			\
-	$(LIBIDN_CFLAGS)
+	$(GLIB_CFLAGS)
 
 noinst_PROGRAMS = gen-table charset-map
 
