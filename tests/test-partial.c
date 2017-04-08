@@ -154,11 +154,19 @@ int main (int argc, char **argv)
 	
 	format = g_mime_format_options_get_default ();
 	
-	output = g_string_new (datadir);
+	path = datadir;
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] != '-') {
+			path = argv[i];
+			break;
+		}
+	}
+	
+	output = g_string_new (path);
 	g_string_append_c (output, G_DIR_SEPARATOR);
 	g_string_append (output, "output");
 	
-	input = g_string_new (datadir);
+	input = g_string_new (path);
 	g_string_append_c (input, G_DIR_SEPARATOR);
 	g_string_append (input, "input");
 	
