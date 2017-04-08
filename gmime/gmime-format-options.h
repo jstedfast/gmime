@@ -66,23 +66,10 @@ typedef enum {
 
 /**
  * GMimeFormatOptions:
- * @method: The method to use for parameter encoding.
- * @newline: The new-line format to use.
- * @mixed_charsets: Whether or not to allow mixed charsets when encoding header values.
- * @international: Whether or not to allow internationalized header values.
- * @hidden: A list of hidden headers.
- * @maxline: The max line length to allow for encoded content.
  *
  * Format options for serializing various GMime objects.
  **/
-typedef struct {
-	GMimeParamEncodingMethod method;
-	GMimeNewLineFormat newline;
-	gboolean mixed_charsets;
-	gboolean international;
-	GPtrArray *hidden;
-	guint maxline;
-} GMimeFormatOptions;
+typedef struct _GMimeFormatOptions GMimeFormatOptions;
 
 GType g_mime_format_options_get_type (void);
 

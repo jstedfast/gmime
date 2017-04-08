@@ -30,8 +30,6 @@
 
 static char *default_charsets[3] = { "utf-8", "iso-8859-1", NULL };
 
-static GMimeParserOptions *default_options = NULL;
-
 
 /**
  * SECTION: gmime-parser-options
@@ -43,6 +41,15 @@ static GMimeParserOptions *default_options = NULL;
  * and all of the various other parser functions in GMime.
  **/
 
+
+struct _GMimeParserOptions {
+	GMimeRfcComplianceMode addresses;
+	GMimeRfcComplianceMode parameters;
+	GMimeRfcComplianceMode rfc2047;
+	char **charsets;
+};
+
+static GMimeParserOptions *default_options = NULL;
 
 G_DEFINE_BOXED_TYPE (GMimeParserOptions, g_mime_parser_options, g_mime_parser_options_clone, g_mime_parser_options_free);
 
