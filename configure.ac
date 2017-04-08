@@ -509,6 +509,25 @@ AS_IF([test "x$enable_crypto" = "xyes"], [
 ])
 AM_CONDITIONAL(ENABLE_CRYPTO, test "x$enable_crypto" != "xno")
 
+dnl *****************************
+dnl *** Checks for GNU Libidn ***
+dnl *****************************
+AC_ARG_WITH(libidn, AC_HELP_STRING([--with-libidn=[DIR]],
+                                [Support IDN (needs GNU Libidn)]),
+  libidn=$withval, libidn=yes)
+if test "$libidn" != "no" ; then
+  PKG_CHECK_MODULES(LIBIDN, libidn >= 0.0.0, [libidn=yes], [libidn=no])
+  if test "$libidn" != "yes" ; then
+    libidn=no
+    AC_MSG_WARN([Libidn not found])
+  else
+    libidn=yes
+    AC_DEFINE(LIBIDN, 1, [Define to 1 if GNU Libidn should be used.])
+  fi
+fi
+AC_MSG_CHECKING([if Libidn should be used])
+AC_MSG_RESULT($libidn)
+
 dnl Check for GObject introspection and Vala binding generator
 GOBJECT_INTROSPECTION_CHECK([1.30.0])
 VAPIGEN_CHECK
@@ -649,6 +668,7 @@ Configuration:
   Console warnings:     ${enable_warnings}
   PGP/MIME support:     ${enable_crypto}
   S/MIME support:       ${enable_crypto}
+  libidn support:       ${libidn}
 
   Vala bindings:        ${enable_vala}
 "

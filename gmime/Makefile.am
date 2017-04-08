@@ -11,7 +11,8 @@ AM_CPPFLAGS = 				\
 	-I$(top_builddir)/util		\
 	-DG_LOG_DOMAIN=\"gmime\"	\
 	$(GMIME_CFLAGS)			\
-	$(GLIB_CFLAGS)
+	$(GLIB_CFLAGS)			\
+	$(LIBIDN_CFLAGS)
 
 noinst_PROGRAMS = gen-table charset-map
 
@@ -173,7 +174,7 @@ install-libtool-import-lib:
 uninstall-libtool-import-lib:
 endif
 
-libgmime_3_0_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
+libgmime_3_0_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS) $(LIBIDN_LIBS)
 libgmime_3_0_la_LDFLAGS = \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
 	-export-dynamic $(no_undefined)

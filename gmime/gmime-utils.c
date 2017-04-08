@@ -50,6 +50,10 @@
 #include <ctype.h>
 #include <errno.h>
 
+#ifdef LIBIDN
+#include <idna.h>
+#endif
+
 #include "gmime-utils.h"
 #include "gmime-common.h"
 #include "gmime-internal.h"
@@ -774,6 +778,7 @@ g_mime_utils_generate_message_id (const char *fqdn)
 	unsigned long value;
 	char *name = NULL;
 	GString *msgid;
+	char *ascii;
 	int i;
 	
 	if (!fqdn) {
@@ -859,7 +864,17 @@ g_mime_utils_generate_message_id (const char *fqdn)
 	} while (value != 0);
 	
 	g_string_append_c (msgid, '@');
+	
+#ifdef LIBIDN
+	if (idna_to_ascii_8z (fqdn, &ascii, 0) == IDNA_SUCCESS) {
+		g_string_append (msgid, ascii);
+		free (ascii);
+	} else {
+		g_string_append (msgid, fqdn);
+	}
+#else
 	g_string_append (msgid, fqdn);
+#endif
 	
 	g_free (name);
 	
