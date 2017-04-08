@@ -261,7 +261,7 @@ int main (int argc, char **argv)
 				g_object_unref (messages[i]);
 			}
 			g_free (messages);
-
+			
 			parts = (GMimeMessagePartial **) partials->pdata;
 			n = partials->len;
 			
@@ -306,10 +306,11 @@ int main (int argc, char **argv)
 		g_object_unref (parser);
 	}
 	
+	g_dir_close (data);
+	
  exit:
 	g_string_free (output, TRUE);
 	g_string_free (input, TRUE);
-	g_dir_close (data);
 	
 	testsuite_end ();
 	
