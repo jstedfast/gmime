@@ -65,6 +65,21 @@ are REQUIRED:
     distributions.  Glib sources may be obtained from:
       ftp://ftp.gtk.org/pub/glib
 
+The following packages are RECOMMENDED:
+
+  - Libidn
+
+    Libidn provides APIs needed for encoding and decoding Internationalized
+    Domain Names. Libidn sources may be obtained from:
+      https://www.gnu.org/software/libidn/#downloading
+
+  - GPGME >= 1.8.0 (will build with 1.2.0, but will be missing some functionality)
+
+    GPGME (GnuPG Made Easy) provides high-level crypto APIs needed for
+    encryption, decryption, signing and signature verification for both
+    OpenPGP and S/MIME. GPGME sources may be obtained from:
+      https://www.gnupg.org/download/index.html#gpgme
+
 ## Using GMime
 
 ### Parsing Messages
