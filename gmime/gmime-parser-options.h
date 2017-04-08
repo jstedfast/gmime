@@ -43,19 +43,10 @@ typedef enum {
 
 /**
  * GMimeParserOptions:
- * @addresses: The compliance mode that should be used when parsing rfc822 addresses.
- * @parameters: The compliance mode that should be used when parsing Content-Type and Content-Disposition parameters.
- * @rfc2047: The compliance mode that should be used when decoding rfc2047 encoded words.
- * @charsets: The fallback charsets to try when decoding 8-bit headers.
  *
  * A set of parser options used by #GMimeParser and various other parsing functions.
  **/
-typedef struct {
-	GMimeRfcComplianceMode addresses;
-	GMimeRfcComplianceMode parameters;
-	GMimeRfcComplianceMode rfc2047;
-	char **charsets;
-} GMimeParserOptions;
+typedef struct _GMimeParserOptions GMimeParserOptions;
 
 
 GType g_mime_parser_options_get_type (void);

@@ -110,14 +110,18 @@ char *internet_address_to_string (InternetAddress *ia, GMimeFormatOptions *optio
 /**
  * InternetAddressMailbox:
  * @parent_object: parent #InternetAddress
- * @addr: address string
+ * @idn_addr: the ascii-encoded version of @addr
+ * @addr: the address string
+ * @at: the index of the '@' character
  *
  * An RFC 2822 Mailbox address.
  **/
 struct _InternetAddressMailbox {
 	InternetAddress parent_object;
 	
+	char *idn_addr;
 	char *addr;
+	int at;
 };
 
 struct _InternetAddressMailboxClass {

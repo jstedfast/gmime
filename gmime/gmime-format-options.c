@@ -30,9 +30,6 @@
 #include "gmime-filter-unix2dos.h"
 
 
-static GMimeFormatOptions *default_options = NULL;
-
-
 /**
  * SECTION: gmime-format-options
  * @title: GMimeFormatOptions
@@ -42,6 +39,17 @@ static GMimeFormatOptions *default_options = NULL;
  * A #GMimeFormatOptions is used by GMime to determine how to serialize various objects and headers.
  **/
 
+
+struct _GMimeFormatOptions {
+	GMimeParamEncodingMethod method;
+	GMimeNewLineFormat newline;
+	gboolean mixed_charsets;
+	gboolean international;
+	GPtrArray *hidden;
+	guint maxline;
+};
+
+static GMimeFormatOptions *default_options = NULL;
 
 G_DEFINE_BOXED_TYPE (GMimeFormatOptions, g_mime_format_options, g_mime_format_options_clone, g_mime_format_options_free);
 

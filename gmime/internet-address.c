@@ -24,9 +24,14 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+
+#ifdef LIBIDN
+#include <idna.h>
+#endif
 
 #include "internet-address.h"
 #include "gmime-table-private.h"
@@ -91,6 +96,7 @@ enum {
 	INTERNET_ADDRESS_FOLD   = 1 << 1,
 };
 
+static gboolean addrspec_parse (const char **in, const char *sentinels, char **addrspec, int *at);
 
 static void internet_address_class_init (InternetAddressClass *klass);
 static void internet_address_init (InternetAddress *ia, InternetAddressClass *klass);
@@ -331,7 +337,9 @@ internet_address_mailbox_class_init (InternetAddressMailboxClass *klass)
 static void
 internet_address_mailbox_init (InternetAddressMailbox *mailbox, InternetAddressMailboxClass *klass)
 {
+	mailbox->idn_addr = NULL;
 	mailbox->addr = NULL;
+	mailbox->at = -1;
 }
 
 static void
@@ -339,9 +347,24 @@ internet_address_mailbox_finalize (GObject *object)
 {
 	InternetAddressMailbox *mailbox = (InternetAddressMailbox *) object;
 	
+	g_free (mailbox->idn_addr);
 	g_free (mailbox->addr);
 	
 	G_OBJECT_CLASS (mailbox_parent_class)->finalize (object);
+}
+
+static InternetAddress *
+_internet_address_mailbox_new (const char *name, const char *addr, int at)
+{
+	InternetAddressMailbox *mailbox;
+	
+	mailbox = g_object_new (INTERNET_ADDRESS_TYPE_MAILBOX, NULL);
+	mailbox->addr = g_strdup (addr);
+	mailbox->at = at;
+	
+	_internet_address_set_name ((InternetAddress *) mailbox, name);
+	
+	return (InternetAddress *) mailbox;
 }
 
 
@@ -361,11 +384,14 @@ InternetAddress *
 internet_address_mailbox_new (const char *name, const char *addr)
 {
 	InternetAddressMailbox *mailbox;
+	const char *inptr = addr;
 	
 	g_return_val_if_fail (addr != NULL, NULL);
 	
 	mailbox = g_object_new (INTERNET_ADDRESS_TYPE_MAILBOX, NULL);
-	mailbox->addr = g_strdup (addr);
+
+	if (!addrspec_parse (&inptr, "", &mailbox->addr, &mailbox->at))
+		mailbox->addr = g_strdup (addr);
 	
 	_internet_address_set_name ((InternetAddress *) mailbox, name);
 	
@@ -383,13 +409,20 @@ internet_address_mailbox_new (const char *name, const char *addr)
 void
 internet_address_mailbox_set_addr (InternetAddressMailbox *mailbox, const char *addr)
 {
+	const char *inptr = addr;
+	
 	g_return_if_fail (INTERNET_ADDRESS_IS_MAILBOX (mailbox));
 	
 	if (mailbox->addr == addr)
 		return;
 	
+	g_free (mailbox->idn_addr);
+	mailbox->idn_addr = NULL;
+	
 	g_free (mailbox->addr);
-	mailbox->addr = g_strdup (addr);
+	
+	if (!addrspec_parse (&inptr, "", &mailbox->addr, &mailbox->at))
+		mailbox->addr = g_strdup (addr);
 	
 	g_mime_event_emit (((InternetAddress *) mailbox)->changed, NULL);
 }
@@ -401,7 +434,7 @@ internet_address_mailbox_set_addr (InternetAddressMailbox *mailbox, const char *
  *
  * Gets the addr-spec of the internet address mailbox.
  *
- * Returns: the address of the mailbox.
+ * Returns: the addr-spec string.
  **/
 const char *
 internet_address_mailbox_get_addr (InternetAddressMailbox *mailbox)
@@ -409,6 +442,43 @@ internet_address_mailbox_get_addr (InternetAddressMailbox *mailbox)
 	g_return_val_if_fail (INTERNET_ADDRESS_IS_MAILBOX (mailbox), NULL);
 	
 	return mailbox->addr;
+}
+
+
+/**
+ * internet_address_mailbox_get_idn_addr:
+ * @mailbox: a #InternetAddressMailbox
+ *
+ * Gets the IDN ascii-encoded addr-spec.
+ *
+ * Returns: the encoded addr-spec string.
+ **/
+const char *
+internet_address_mailbox_get_idn_addr (InternetAddressMailbox *mailbox)
+{
+	GString *encoded;
+	char *ascii;
+	
+	g_return_val_if_fail (INTERNET_ADDRESS_IS_MAILBOX (mailbox), NULL);
+	
+#ifdef LIBIDN
+	if (!mailbox->idn_addr && mailbox->at > 0) {
+		encoded = g_string_new ("");
+		g_string_append_len (encoded, mailbox->addr, mailbox->at + 1);
+		if (idna_to_ascii_8z (mailbox->addr + mailbox->at + 1, &ascii, 0) == IDNA_SUCCESS) {
+			g_string_append (encoded, ascii);
+			free (ascii);
+		} else {
+			g_string_append (encoded, mailbox->addr + mailbox->at + 1);
+		}
+		
+		mailbox->idn_addr = g_string_free (encoded, FALSE);
+	}
+	
+	return mailbox->idn_addr ? mailbox->idn_addr : mailbox->addr;
+#else
+	return mailbox->addr;
+#endif
 }
 
 
@@ -1124,11 +1194,13 @@ mailbox_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 fla
 	InternetAddressMailbox *mailbox = (InternetAddressMailbox *) ia;
 	gboolean encode = flags & INTERNET_ADDRESS_ENCODE;
 	gboolean fold = flags & INTERNET_ADDRESS_FOLD;
-	const char *newline;
+	const char *newline, *addr;
 	char *name;
 	size_t len;
 	
 	newline = g_mime_format_options_get_newline (options);
+	
+	addr = internet_address_mailbox_get_idn_addr (mailbox);
 	
 	if (ia->name && *ia->name) {
 		name = encoded_name (options, ia->name, encode, ia->charset);
@@ -1157,7 +1229,7 @@ mailbox_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 fla
 		
 		g_free (name);
 		
-		len = strlen (mailbox->addr);
+		len = strlen (addr);
 		
 		if (fold && (*linelen + len + 3) >= GMIME_FOLD_LEN) {
 			g_string_append (str, newline);
@@ -1168,18 +1240,18 @@ mailbox_to_string (InternetAddress *ia, GMimeFormatOptions *options, guint32 fla
 			*linelen += 2;
 		}
 		
-		g_string_append_len (str, mailbox->addr, len);
+		g_string_append_len (str, addr, len);
 		g_string_append_c (str, '>');
 		*linelen += len + 1;
 	} else {
-		len = strlen (mailbox->addr);
+		len = strlen (addr);
 		
 		if (fold && (*linelen + len) > GMIME_FOLD_LEN) {
 			linewrap (str, newline);
 			*linelen = 1;
 		}
 		
-		g_string_append_len (str, mailbox->addr, len);
+		g_string_append_len (str, addr, len);
 		*linelen += len;
 	}
 }
@@ -1429,6 +1501,7 @@ dotatom_parse (GString *str, const char **in, const char *sentinels)
 	const char *atom, *comment;
 	const char *inptr = *in;
 	const char *start = *in;
+	GString *domain = str;
 	
 	do {
 		if (!is_atom (*inptr))
@@ -1441,7 +1514,15 @@ dotatom_parse (GString *str, const char **in, const char *sentinels)
 		if (!g_utf8_validate (atom, (size_t) (inptr - atom), NULL))
 			goto error;
 		
-		g_string_append_len (str, atom, (size_t) (inptr - atom));
+#if LIBIDN
+		if (domain == str && !strncmp (atom, "xn--", 4)) {
+			/* from here on out, we'll use a temp domain buffer so that
+			 * we can decode it once we're done parsing it */
+			domain = g_string_new ("");
+		}
+#endif
+		
+		g_string_append_len (domain, atom, (size_t) (inptr - atom));
 		
 		comment = inptr;
 		if (!skip_cfws (&inptr))
@@ -1462,14 +1543,36 @@ dotatom_parse (GString *str, const char **in, const char *sentinels)
 		if (*inptr == '\0' || strchr (sentinels, *inptr))
 			break;
 		
-		g_string_append_c (str, '.');
+		g_string_append_c (domain, '.');
 	} while (TRUE);
+	
+#ifdef LIBIDN
+	if (domain != str) {
+		char *unicode;
+		
+		if (idna_to_unicode_8z8z (domain->str, &unicode, 0) == IDNA_SUCCESS) {
+			g_string_append (str, unicode);
+			free (unicode);
+		} else {
+			g_string_append_len (str, domain->str, domain->len);
+		}
+		
+		g_string_free (domain, TRUE);
+	}
+#endif
 	
 	*in = inptr;
 	
 	return TRUE;
 	
  error:
+#ifdef LIBIDN
+	if (domain != str) {
+		g_string_append_len (str, domain->str, domain->len);
+		g_string_free (domain, TRUE);
+	}
+#endif
+	
 	*in = inptr;
 	
 	return FALSE;
@@ -1522,11 +1625,12 @@ domain_parse (GString *str, const char **in, const char *sentinels)
 }
 
 static gboolean
-addrspec_parse (const char **in, const char *sentinels, char **addrspec)
+addrspec_parse (const char **in, const char *sentinels, char **addrspec, int *at)
 {
 	const char *inptr = *in;
 	const char *start = *in;
 	GString *str;
+	guint domain;
 	
 	str = g_string_new ("");
 	
@@ -1536,12 +1640,14 @@ addrspec_parse (const char **in, const char *sentinels, char **addrspec)
 	if (*inptr == '\0' || strchr (sentinels, *inptr)) {
 		*addrspec = g_string_free (str, FALSE);
 		*in = inptr;
+		*at = -1;
 		return TRUE;
 	}
 	
 	if (*inptr != '@')
 		goto error;
 	
+	*at = str->len;
 	g_string_append_c (str, *inptr++);
 	
 	if (*inptr == '\0')
@@ -1565,6 +1671,7 @@ addrspec_parse (const char **in, const char *sentinels, char **addrspec)
 	g_string_free (str, TRUE);
 	*addrspec = NULL;
 	*in = inptr;
+	*at = -1;
 	
 	return FALSE;
 }
@@ -1576,6 +1683,7 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
 	const char *inptr = *in;
 	char *addrspec = NULL;
+	int at;
 	
 	/* skip over the '<' */
 	inptr++;
@@ -1609,12 +1717,12 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 			goto error;
 	}
 	
-	// Note: The only syntactically correct sentinel token here is the '>', but alas... to deal with the first example
-	// in section 7.1.5 of rfc7103, we need to at least handle ',' as a sentinel and might as well handle ';' as well
-	// in case the mailbox is within a group address.
+	// Note: The only syntactically correct sentinel token here is the '>', but alas... to deal with the first
+	// example in section 7.1.5 of rfc7103, we need to at least handle ',' as a sentinel and might as well handle
+	// ';' as well in case the mailbox is within a group address.
 	//
 	// Example: <third@example.net, fourth@example.net>
-	if (!addrspec_parse (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, &addrspec))
+	if (!addrspec_parse (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, &addrspec, &at))
 		goto error;
 	
 	if (!skip_cfws (&inptr))
@@ -1638,7 +1746,7 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 		}
 	}
 	
-	*address = internet_address_mailbox_new (name, addrspec);
+	*address = _internet_address_mailbox_new (name, addrspec, at);
 	g_free (addrspec);
 	*in = inptr;
 	
@@ -1758,6 +1866,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		char sentinel = *inptr != '\0' ? *inptr : ',';
 		char sentinels[2] = { sentinel, 0 };
 		char *name, *addrspec;
+		int at;
 		
 		/* rewind back to the beginning of the local-part */
 		inptr = start;
@@ -1765,7 +1874,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		if (!(flags & ALLOW_MAILBOX))
 			goto error;
 		
-		if (!addrspec_parse (&inptr, sentinels, &addrspec))
+		if (!addrspec_parse (&inptr, sentinels, &addrspec, &at))
 			goto error;
 		
 		skip_lwsp (&inptr);
@@ -1791,7 +1900,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			inptr++;
 		}
 		
-		*address = internet_address_mailbox_new (name, addrspec);
+		*address = _internet_address_mailbox_new (name, addrspec, at);
 		g_free (addrspec);
 		g_free (name);
 		*in = inptr;
@@ -1837,11 +1946,12 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		/* we're either in the middle of an addr-spec token or we completely gobbled up
 		 * an addr-spec w/o a domain */
 		char *name, *addrspec;
+		int at;
 		
 		/* rewind back to the beginning of the local-part */
 		inptr = start;
 		
-		if (!addrspec_parse (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, &addrspec))
+		if (!addrspec_parse (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, &addrspec, &at))
 			goto error;
 		
 		skip_lwsp (&inptr);
@@ -1867,7 +1977,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (*inptr == '\0') {
-			*address = internet_address_mailbox_new (name, addrspec);
+			*address = _internet_address_mailbox_new (name, addrspec, at);
 			g_free (addrspec);
 			g_free (name);
 			*in = inptr;
@@ -1903,7 +2013,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 				inptr++;
 			}
 			
-			*address = internet_address_mailbox_new (name, addrspec);
+			*address = _internet_address_mailbox_new (name, addrspec, at);
 			g_free (addrspec);
 			g_free (name);
 			*in = inptr;
