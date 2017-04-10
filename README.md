@@ -47,7 +47,7 @@ The GMime library is Copyright (C) 2000-2017 Jeffrey Stedfast and is licensed un
 
 ## Getting the Source Code
 
-You can download either official public release tarballs of GMime at
+You can download official public release tarballs of GMime at
 [https://download.gnome.org/sources/gmime/](https://download.gnome.org/sources/gmime/)
 or
 [ftp://ftp.gnome.org/pub/GNOME/sources/gmime/](ftp://ftp.gnome.org/pub/GNOME/sources/gmime/).
