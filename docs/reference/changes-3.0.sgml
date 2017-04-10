@@ -62,6 +62,8 @@
       <listitem><para><function>g_mime_parser_get_from_offset()</function> has been renamed to <function>g_mime_parser_get_mbox_marker_offset()</function>.</para></listitem>
       <listitem><para><function>g_mime_parser_construct_message()</function> and <function>g_mime_parser_construct_part()</function> now take a GMimeParserOptions argument.</para></listitem>
       <listitem><para>Renamed GMimeFilterMd5 to GMimeFilterChecksum.</para></listitem>
+      <listitem><para>Renamed <function>g_mime_multipart_get_preface</function> to <function>g_mime_multipart_get_prologue</function> and <function>g_mime_multipart_set_preface</function> to <function>g_mime_multipart_set_prologue</function>.</para></listitem>
+      <listitem><para>Renamed <function>g_mime_multipart_get_postface</function> to <function>g_mime_multipart_get_epilogue</function> and <function>g_mime_multipart_set_postface</function> to <function>g_mime_multipart_set_epilogue</function>.</para></listitem>
     </itemizedlist>
   </refsect1>
 </refentry>

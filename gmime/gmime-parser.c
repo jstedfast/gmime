@@ -1762,7 +1762,7 @@ crlf2lf (char *in)
 }
 
 static BoundaryType
-parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean preface)
+parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean prologue)
 {
 	GMimeStream *stream;
 	BoundaryType found;
@@ -1782,10 +1782,10 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 		face = (char *) buffer->data;
 		crlf2lf (face);
 		
-		if (preface)
-			g_mime_multipart_set_preface (multipart, face);
+		if (prologue)
+			g_mime_multipart_set_prologue (multipart, face);
 		else
-			g_mime_multipart_set_postface (multipart, face);
+			g_mime_multipart_set_epilogue (multipart, face);
 	}
 	
 	g_object_unref (stream);
@@ -1793,8 +1793,8 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 	return found;
 }
 
-#define parser_scan_multipart_preface(parser, multipart) parser_scan_multipart_face (parser, multipart, TRUE)
-#define parser_scan_multipart_postface(parser, multipart) parser_scan_multipart_face (parser, multipart, FALSE)
+#define parser_scan_multipart_prologue(parser, multipart) parser_scan_multipart_face (parser, multipart, TRUE)
+#define parser_scan_multipart_epilogue(parser, multipart) parser_scan_multipart_face (parser, multipart, FALSE)
 
 static BoundaryType
 parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options, GMimeMultipart *multipart)
@@ -1876,7 +1876,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary"))) {
 		parser_push_boundary (parser, boundary);
 		
-		*found = parser_scan_multipart_preface (parser, multipart);
+		*found = parser_scan_multipart_prologue (parser, multipart);
 		
 		if (*found == BOUNDARY_IMMEDIATE)
 			*found = parser_scan_multipart_subparts (parser, options, multipart);
@@ -1886,7 +1886,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 			multipart->write_end_boundary = TRUE;
 			parser_skip_line (parser);
 			parser_pop_boundary (parser);
-			*found = parser_scan_multipart_postface (parser, multipart);
+			*found = parser_scan_multipart_epilogue (parser, multipart);
 			return object;
 		}
 		
@@ -1899,8 +1899,8 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 			*found = BOUNDARY_IMMEDIATE;
 	} else {
 		w(g_warning ("multipart without boundary encountered"));
-		/* this will scan everything into the preface */
-		*found = parser_scan_multipart_preface (parser, multipart);
+		/* this will scan everything into the prologue */
+		*found = parser_scan_multipart_prologue (parser, multipart);
 	}
 	
 	return object;
