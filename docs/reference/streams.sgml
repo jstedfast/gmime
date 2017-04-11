@@ -1,12 +1,12 @@
 <refentry id="gmime-streams">
   <refmeta>
-    <refentrytitle>GMime Streams</refentrytitle>
+    <refentrytitle>Streams</refentrytitle>
     <refmiscinfo>GMime Library</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>GMime Streams</refname>
-    <refpurpose>How to use GMime Streams</refpurpose>
+    <refname>Streams</refname>
+    <refpurpose>How to use Streams</refpurpose>
   </refnamediv>
   <refsect1 id="stream-overview">
     <title>Overview of Streams</title>
