@@ -44,8 +44,8 @@ typedef struct _GMimeMultipartClass GMimeMultipartClass;
  * @parent_object: parent #GMimeObject
  * @children: array of MIME sub-parts
  * @boundary: MIME boundary
- * @preface: multipart preface
- * @postface: multipart postface
+ * @prologue: multipart prologue
+ * @epilogue: multipart epilogue
  *
  * A base MIME multipart object.
  **/
@@ -54,8 +54,8 @@ struct _GMimeMultipart {
 	
 	GPtrArray *children;
 	char *boundary;
-	char *preface;
-	char *postface;
+	char *prologue;
+	char *epilogue;
 	
 	/* < private > */
 	gboolean write_end_boundary;
@@ -87,11 +87,11 @@ GMimeMultipart *g_mime_multipart_new (void);
 
 GMimeMultipart *g_mime_multipart_new_with_subtype (const char *subtype);
 
-void g_mime_multipart_set_preface (GMimeMultipart *multipart, const char *preface);
-const char *g_mime_multipart_get_preface (GMimeMultipart *multipart);
+void g_mime_multipart_set_prologue (GMimeMultipart *multipart, const char *prologue);
+const char *g_mime_multipart_get_prologue (GMimeMultipart *multipart);
 
-void g_mime_multipart_set_postface (GMimeMultipart *multipart, const char *postface);
-const char *g_mime_multipart_get_postface (GMimeMultipart *multipart);
+void g_mime_multipart_set_epilogue (GMimeMultipart *multipart, const char *epilogue);
+const char *g_mime_multipart_get_epilogue (GMimeMultipart *multipart);
 
 void g_mime_multipart_clear (GMimeMultipart *multipart);
 

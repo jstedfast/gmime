@@ -7,6 +7,13 @@
 GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose
 Internet Mail Extension (MIME) as defined by [numerous IETF specifications](https://github.com/jstedfast/gmime/blob/master/RFCs.md).
 
+GMime features an extremely robust high-performance parser designed to be able to preserve byte-for-byte information
+allowing developers to re-seralize the parsed messages back to a stream exactly as the parser found them. It also features
+integrated GnuPG and S/MIME v3.2 support.
+
+Built on top of GObject (the object system used by the [GNOME desktop](https://www.gnome.org)), many developers should find
+its API design and memory management very familiar.
+
 ## History
 
 As a developer and user of Electronic Mail clients, I had come to
@@ -40,8 +47,8 @@ The GMime library is Copyright (C) 2000-2017 Jeffrey Stedfast and is licensed un
 
 ## Getting the Source Code
 
-You can download either official public release tarballs of GMime at
-[http://download.gnome.org/pub/GNOME/sources/gmime/](http://download.gnome.org/pub/GNOME/sources/gmime/)
+You can download official public release tarballs of GMime at
+[https://download.gnome.org/sources/gmime/](https://download.gnome.org/sources/gmime/)
 or
 [ftp://ftp.gnome.org/pub/GNOME/sources/gmime/](ftp://ftp.gnome.org/pub/GNOME/sources/gmime/).
 

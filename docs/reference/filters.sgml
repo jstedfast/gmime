@@ -1,12 +1,12 @@
 <refentry id="gmime-filters">
   <refmeta>
-    <refentrytitle>GMime Stream Filters</refentrytitle>
+    <refentrytitle>Stream Filters</refentrytitle>
     <refmiscinfo>GMime Library</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>GMime Stream Filters</refname>
-    <refpurpose>How to use GMime Stream Filters</refpurpose>
+    <refname>Stream Filters</refname>
+    <refpurpose>How to use Stream Filters</refpurpose>
   </refnamediv>
   <refsect1 id="filter-overview">
     <title>Overview of Filters</title>

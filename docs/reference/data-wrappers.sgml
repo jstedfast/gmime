@@ -1,12 +1,12 @@
 <refentry id="gmime-data-wrappers">
   <refmeta>
-    <refentrytitle>GMime Data Wrappers</refentrytitle>
+    <refentrytitle>Data Wrappers</refentrytitle>
     <refmiscinfo>GMime Library</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>GMime Data Wrappers</refname>
-    <refpurpose>How to use GMime Data Wrappers</refpurpose>
+    <refname>Data Wrappers</refname>
+    <refpurpose>How to use Data Wrappers</refpurpose>
   </refnamediv>
   <refsect1 id="data-wrapper-overview">
     <title>Overview of Data Wrappers</title>

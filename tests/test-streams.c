@@ -469,21 +469,30 @@ test_streams (GDir *dir, const char *datadir, const char *filename)
 
 
 static size_t
-gen_random_stream (GMimeStream *stream)
+gen_random_stream (int randfd, GMimeStream *stream)
 {
 	size_t nwritten, buflen, total = 0, size, i;
+	unsigned char r;
 	char buf[4096];
 	ssize_t n;
 	
+	do {
+		n = read (randfd, &r, 1);
+	} while (n == -1 && errno == EINTR);
+	
 	/* read between 4k and 14k bytes */
-	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
+	size = 4096 + (size_t) (10240.0 * (r / 256.0));
 	v(fprintf (stdout, "Generating %" G_GSIZE_FORMAT " bytes of random data... ", size));
 	v(fflush (stdout));
 	
 	while (total < size) {
 		buflen = size - total > sizeof (buf) ? sizeof (buf) : size - total;
-		for (i = 0; i < buflen; i++)
-			buf[i] = (char) (255 * (rand () / (RAND_MAX + 1.0)));
+		
+		nwritten = 0;
+		do {
+			if ((n = read (randfd, buf + nwritten, buflen - nwritten)) > 0)
+				nwritten += n;
+		} while (nwritten < buflen);
 		
 		nwritten = 0;
 		do {
@@ -501,7 +510,7 @@ gen_random_stream (GMimeStream *stream)
 	g_mime_stream_reset (stream);
 	
 	v(fputs ("done\n", stdout));
-
+	
 	return size;
 }
 
@@ -511,9 +520,10 @@ gen_test_data (const char *datadir, char **stream_name)
 	GMimeStream *istream, *ostream, *stream;
 	char input[256], output[256], *name, *p;
 	gint64 start, end, len, size;
-	int fd, i;
+	int randfd, fd, i;
 	
-	srand (time (NULL));
+	if ((randfd = open ("/dev/urandom", O_RDONLY)) == -1)
+		return -1;
 	
 	name = g_stpcpy (input, datadir);
 	*name++ = G_DIR_SEPARATOR;
@@ -529,8 +539,10 @@ gen_test_data (const char *datadir, char **stream_name)
 	*name++ = G_DIR_SEPARATOR;
 	strcpy (name, "streamXXXXXX");
 	
-	if ((fd = g_mkstemp (input)) == -1)
+	if ((fd = g_mkstemp (input)) == -1) {
+		close (randfd);
 		return -1;
+	}
 	
 	*stream_name = g_strdup (name);
 	
@@ -539,7 +551,7 @@ gen_test_data (const char *datadir, char **stream_name)
 	*p++ = '_';
 	
 	istream = g_mime_stream_fs_new (fd);
-	size = gen_random_stream (istream);
+	size = gen_random_stream (randfd, istream);
 	
 	for (i = 0; i < 64; i++) {
 	retry:
@@ -563,6 +575,8 @@ gen_test_data (const char *datadir, char **stream_name)
 		g_object_unref (ostream);
 		g_object_unref (stream);
 	}
+	
+	close (randfd);
 	
 	return 0;
 }

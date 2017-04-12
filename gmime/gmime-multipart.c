@@ -126,8 +126,8 @@ g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass)
 {
 	multipart->children = g_ptr_array_new ();
 	multipart->write_end_boundary = TRUE;
-	multipart->preface = NULL;
-	multipart->postface = NULL;
+	multipart->prologue = NULL;
+	multipart->epilogue = NULL;
 }
 
 static void
@@ -136,8 +136,8 @@ g_mime_multipart_finalize (GObject *object)
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	guint i;
 	
-	g_free (multipart->preface);
-	g_free (multipart->postface);
+	g_free (multipart->prologue);
+	g_free (multipart->epilogue);
 	
 	for (i = 0; i < multipart->children->len; i++)
 		g_object_unref (multipart->children->pdata[i]);
@@ -173,9 +173,9 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		total += nwritten;
 	}
 	
-	/* write the preface */
-	if (multipart->preface) {
-		if ((nwritten = g_mime_stream_write_string (stream, multipart->preface)) == -1)
+	/* write the prologue */
+	if (multipart->prologue) {
+		if ((nwritten = g_mime_stream_write_string (stream, multipart->prologue)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -217,9 +217,9 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		total += nwritten;
 	}
 	
-	/* write the postface */
-	if (multipart->postface) {
-		if ((nwritten = g_mime_stream_write_string (stream, multipart->postface)) == -1)
+	/* write the epilogue */
+	if (multipart->epilogue) {
+		if ((nwritten = g_mime_stream_write_string (stream, multipart->epilogue)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -287,70 +287,70 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 
 
 /**
- * g_mime_multipart_set_preface:
+ * g_mime_multipart_set_prologue:
  * @multipart: a #GMimeMultipart object
- * @preface: preface
+ * @prologue: prologue
  *
- * Sets the preface on the multipart.
+ * Sets the prologue on the multipart.
  **/
 void
-g_mime_multipart_set_preface (GMimeMultipart *multipart, const char *preface)
+g_mime_multipart_set_prologue (GMimeMultipart *multipart, const char *prologue)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	
-	g_free (multipart->preface);
-	multipart->preface = g_strdup (preface);
+	g_free (multipart->prologue);
+	multipart->prologue = g_strdup (prologue);
 }
 
 
 /**
- * g_mime_multipart_get_preface:
+ * g_mime_multipart_get_prologue:
  * @multipart: a #GMimeMultipart object
  *
- * Gets the preface on the multipart.
+ * Gets the prologue on the multipart.
  *
- * Returns: a pointer to the preface string on the multipart.
+ * Returns: a pointer to the prologue string on the multipart.
  **/
 const char *
-g_mime_multipart_get_preface (GMimeMultipart *multipart)
+g_mime_multipart_get_prologue (GMimeMultipart *multipart)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	
-	return multipart->preface;
+	return multipart->prologue;
 }
 
 
 /**
- * g_mime_multipart_set_postface:
+ * g_mime_multipart_set_epilogue:
  * @multipart: a #GMimeMultipart object
- * @postface: postface
+ * @epilogue: epilogue
  *
- * Sets the postface on the multipart.
+ * Sets the epilogue on the multipart.
  **/
 void
-g_mime_multipart_set_postface (GMimeMultipart *multipart, const char *postface)
+g_mime_multipart_set_epilogue (GMimeMultipart *multipart, const char *epilogue)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	
-	g_free (multipart->postface);
-	multipart->postface = g_strdup (postface);
+	g_free (multipart->epilogue);
+	multipart->epilogue = g_strdup (epilogue);
 }
 
 
 /**
- * g_mime_multipart_get_postface:
+ * g_mime_multipart_get_epilogue:
  * @multipart: a #GMimeMultipart object
  *
- * Gets the postface on the multipart.
+ * Gets the epilogue on the multipart.
  *
- * Returns: a pointer to the postface string on the multipart.
+ * Returns: a pointer to the epilogue string on the multipart.
  **/
 const char *
-g_mime_multipart_get_postface (GMimeMultipart *multipart)
+g_mime_multipart_get_epilogue (GMimeMultipart *multipart)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	
-	return multipart->postface;
+	return multipart->epilogue;
 }
 
 
