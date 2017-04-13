@@ -47,6 +47,39 @@ extern int verbose;
 #define d(x)
 #define v(x) if (verbose > 3) x;
 
+static int randfd;
+
+static unsigned char
+randc (void)
+{
+	unsigned char c;
+	ssize_t n;
+	
+	do {
+		if ((n = read (randfd, &c, 1)) > 0)
+		    break;
+	} while (n == -1 && errno == EINTR);
+	
+	return c;
+}
+
+static float
+randf (void)
+{
+	size_t nread = 0;
+	unsigned int v;
+	ssize_t n;
+	
+	do {
+		if ((n = read (randfd, ((char *) &v) + nread, sizeof (v) - nread)) > 0) {
+			if ((nread += n) == sizeof (v))
+				break;
+		}
+	} while (n == -1 && errno == EINTR);
+	
+	return (v * 1.0) / UINT_MAX;
+}
+
 
 static GMimeStream *
 random_whole_stream (const char *datadir, char **filename)
@@ -58,7 +91,7 @@ random_whole_stream (const char *datadir, char **filename)
 	int fd;
 	
 	/* read between 4k and 14k bytes */
-	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
+	size = 4096 + (size_t) (10240.0 * randf ());
 	v(fprintf (stdout, "Generating %zu bytes of random data... ", size));
 	v(fflush (stdout));
 	
@@ -76,8 +109,12 @@ random_whole_stream (const char *datadir, char **filename)
 	
 	while (total < size) {
 		buflen = size - total > sizeof (buf) ? sizeof (buf) : size - total;
-		for (i = 0; i < buflen; i++)
-			buf[i] = (char) (255 * (rand () / (RAND_MAX + 1.0)));
+		
+		nwritten = 0;
+		do {
+			if ((n = read (randfd, buf + nwritten, buflen - nwritten)) > 0)
+				nwritten += n;
+		} while (nwritten < buflen);
 		
 		nwritten = 0;
 		do {
@@ -328,7 +365,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	}
 	
 	/* calculate a random seek offset to compare at */
-	offset = (gint64) (len * (rand () / (RAND_MAX + 1.0)));
+	offset = (gint64) (len * randf ());
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld in original stream: %s",
@@ -385,9 +422,9 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	}
 	
 	/* calculate a random start/end offsets */
-	start = (gint64) (len * (rand () / (RAND_MAX + 1.0)));
-	if (rand () % 2)
-		end = start + (gint64) ((len - start) * (rand () / (RAND_MAX + 1.0)));
+	start = (gint64) (len * randf ());
+	if (randc () % 2)
+		end = start + (gint64) ((len - start) * randf ());
 	else
 		end = -1;
 	
@@ -449,11 +486,12 @@ int main (int argc, char **argv)
 	gint64 len;
 	int fd, i;
 	
-	srand (time (NULL));
-	
 	g_mime_init ();
 	
 	testsuite_init (argc, argv);
+	
+	if ((randfd = open ("/dev/urandom", O_RDONLY)) == -1)
+		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
@@ -466,16 +504,25 @@ int main (int argc, char **argv)
 		if (stat (datadir, &st) == -1) {
 			if (errno == ENOENT) {
 				g_mkdir_with_parents (datadir, 0755);
-				if (stat (datadir, &st) == -1)
+				if (stat (datadir, &st) == -1) {
+					close (randfd);
+					
 					return EXIT_FAILURE;
-			} else
+				}
+			} else {
+				close (randfd);
+				
 				return EXIT_FAILURE;
+			}
 		}
 		
 		if (S_ISREG (st.st_mode)) {
 			/* test a particular input file */
-			if ((fd = open (argv[i], O_RDONLY, 0)) == -1)
+			if ((fd = open (argv[i], O_RDONLY, 0)) == -1) {
+				close (randfd);
+				
 				return EXIT_FAILURE;
+			}
 			
 			filename = g_strdup (argv[i]);
 			whole = g_mime_stream_fs_new (fd);
@@ -483,6 +530,8 @@ int main (int argc, char **argv)
 			/* use path as test suite data dir */
 			whole = random_whole_stream (argv[i], &filename);
 		} else {
+			close (randfd);
+			
 			return EXIT_FAILURE;
 		}
 	} else {
@@ -492,10 +541,14 @@ int main (int argc, char **argv)
 	if ((wholelen = g_mime_stream_length (whole)) == -1) {
 		fprintf (stderr, "Error: length of test stream unknown\n");
 		g_object_unref (whole);
+		close (randfd);
+		
 		return EXIT_FAILURE;
 	} else if (wholelen == 64) {
 		fprintf (stderr, "Error: length of test stream is unsuitable for testing\n");
 		g_object_unref (whole);
+		close (randfd);
+		
 		return EXIT_FAILURE;
 	}
 	
@@ -504,7 +557,7 @@ int main (int argc, char **argv)
 	
 	left = wholelen;
 	while (left > 0) {
-		len = 1 + (gint64) (left * (rand () / (RAND_MAX + 1.0)));
+		len = 1 + (gint64) (left * randf ());
 		n = g_new (struct _StreamPart, 1);
 		sprintf (n->filename, "%s.%u", filename, part++);
 		n->pstart = (gint64) 0; /* FIXME: we could make this a random offset */
@@ -550,6 +603,7 @@ int main (int argc, char **argv)
 		unlink (filename);
 	
 	g_free (filename);
+	close (randfd);
 	
 	g_mime_shutdown ();
 	
