@@ -436,7 +436,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					goto backup;
 				}
 			} else {
-				const char *html_tag = NULL;
+				const char *fmt, *html_tag = NULL;
 				char *enriched_tag;
 				size_t len;
 				guint i;
@@ -454,7 +454,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				}
 				
 				if (i < G_N_ELEMENTS (enriched_tags)) {
-					if (html_tag_needs_param (html_tag)) {
+					if ((fmt = strstr (html_tag, "%s")) != NULL) {
 						const char *start;
 						char *param;
 						
@@ -499,7 +499,15 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 						len += strlen (html_tag);
 						
 						if ((outptr + len) < outend) {
-							outptr += g_snprintf (outptr, len, html_tag, param);
+							size_t n = (size_t) (fmt - html_tag);
+							
+							memcpy (outptr, html_tag, n);
+							outptr += n;
+							fmt += 2;
+							
+							outptr = g_stpcpy (outptr, param);
+							outptr = g_stpcpy (outptr, fmt);
+							
 							g_free (param);
 						} else {
 							g_free (param);
