@@ -44,6 +44,23 @@ extern int verbose;
 #define v(x) if (verbose > 3) x;
 
 
+static float
+randf (int randfd)
+{
+	size_t nread = 0;
+	unsigned int v;
+	ssize_t n;
+	
+	do {
+		if ((n = read (randfd, ((char *) &v) + nread, sizeof (v) - nread)) > 0) {
+			if ((nread += n) == sizeof (v))
+				break;
+		}
+	} while (n == -1 && errno == EINTR);
+	
+	return (v * 1.0) / UINT_MAX;
+}
+
 static gboolean
 streams_match (GMimeStream **streams, const char *filename)
 {
@@ -472,16 +489,11 @@ static size_t
 gen_random_stream (int randfd, GMimeStream *stream)
 {
 	size_t nwritten, buflen, total = 0, size, i;
-	unsigned char r;
 	char buf[4096];
 	ssize_t n;
 	
-	do {
-		n = read (randfd, &r, 1);
-	} while (n == -1 && errno == EINTR);
-	
 	/* read between 4k and 14k bytes */
-	size = 4096 + (size_t) (10240.0 * (r / 256.0));
+	size = 4096 + (size_t) (10240 * randf (randfd));
 	v(fprintf (stdout, "Generating %" G_GSIZE_FORMAT " bytes of random data... ", size));
 	v(fflush (stdout));
 	
@@ -555,8 +567,8 @@ gen_test_data (const char *datadir, char **stream_name)
 	
 	for (i = 0; i < 64; i++) {
 	retry:
-		start = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
-		len = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
+		start = (gint64) (size * randf (randfd));
+		len = (gint64) (size * randf (randfd));
 		if (start + len > size) {
 			end = -1;
 		} else {
