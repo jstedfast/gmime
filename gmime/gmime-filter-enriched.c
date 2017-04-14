@@ -99,10 +99,6 @@ static struct {
 	{ "/param",      " -->",                FALSE, NULL               },
 };
 
-#define NUM_ENRICHED_TAGS (sizeof (enriched_tags) / sizeof (enriched_tags[0]))
-
-static GHashTable *enriched_hash = NULL;
-
 
 static void g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass);
 static void g_mime_filter_enriched_init       (GMimeFilterEnriched *filter, GMimeFilterEnrichedClass *klass);
@@ -158,13 +154,6 @@ g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass)
 	filter_class->reset = filter_reset;
 	filter_class->filter = filter_filter;
 	filter_class->complete = filter_complete;
-	
-	if (!enriched_hash) {
-		enriched_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-		for (i = 0; i < NUM_ENRICHED_TAGS; i++)
-			g_hash_table_insert (enriched_hash, enriched_tags[i].enriched,
-					     enriched_tags[i].html);
-	}
 }
 
 static void
@@ -195,7 +184,7 @@ enriched_tag_needs_param (const char *tag)
 {
 	int i;
 	
-	for (i = 0; i < NUM_ENRICHED_TAGS; i++)
+	for (i = 0; i < G_N_ELEMENTS (enriched_tags); i++)
 		if (!g_ascii_strcasecmp (tag, enriched_tags[i].enriched))
 			return enriched_tags[i].needs_param;
 	
@@ -290,7 +279,7 @@ param_parse (const char *enriched, const char *inptr, size_t inlen)
 {
 	guint i;
 	
-	for (i = 0; i < NUM_ENRICHED_TAGS; i++) {
+	for (i = 0; i < G_N_ELEMENTS (enriched_tags); i++) {
 		if (!g_ascii_strcasecmp (enriched, enriched_tags[i].enriched))
 			return enriched_tags[i].parse_param (inptr, inlen);
 	}
@@ -447,19 +436,25 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					goto backup;
 				}
 			} else {
-				const char *html_tag;
+				const char *fmt, *html_tag = NULL;
 				char *enriched_tag;
 				size_t len;
+				guint i;
 				
 				len = inptr - tag;
 				enriched_tag = g_alloca (len + 1);
 				memcpy (enriched_tag, tag, len);
 				enriched_tag[len] = '\0';
 				
-				html_tag = g_hash_table_lookup (enriched_hash, enriched_tag);
+				for (i = 0; i < G_N_ELEMENTS (enriched_tags); i++) {
+					if (!g_ascii_strcasecmp (enriched_tag, enriched_tags[i].enriched)) {
+						html_tag = enriched_tags[i].html;
+						break;
+					}
+				}
 				
-				if (html_tag) {
-					if (html_tag_needs_param (html_tag)) {
+				if (i < G_N_ELEMENTS (enriched_tags)) {
+					if ((fmt = strstr (html_tag, "%s")) != NULL) {
 						const char *start;
 						char *param;
 						
@@ -504,7 +499,15 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 						len += strlen (html_tag);
 						
 						if ((outptr + len) < outend) {
-							outptr += g_snprintf (outptr, len, html_tag, param);
+							size_t n = (size_t) (fmt - html_tag);
+							
+							memcpy (outptr, html_tag, n);
+							outptr += n;
+							fmt += 2;
+							
+							outptr = g_stpcpy (outptr, param);
+							outptr = g_stpcpy (outptr, fmt);
+							
 							g_free (param);
 						} else {
 							g_free (param);
