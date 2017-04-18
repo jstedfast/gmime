@@ -1790,6 +1790,7 @@ static gboolean
 address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char **charset, InternetAddress **address)
 {
 	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
+	int min_words = g_mime_parser_options_get_allow_addresses_without_domain (options) ? 1 : 0;
 	gboolean trim_leading_quote = FALSE;
 	const char *inptr = *in;
 	const char *start;
@@ -1844,7 +1845,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		words++;
 		
 		/* Note: some clients don't quote commas in the name */
-		if (*inptr == ',' && words > 1) {
+		if (*inptr == ',' && words > min_words) {
 			inptr++;
 			
 			length = (size_t) (inptr - start);

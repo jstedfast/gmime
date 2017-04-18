@@ -46,6 +46,7 @@ struct _GMimeParserOptions {
 	GMimeRfcComplianceMode addresses;
 	GMimeRfcComplianceMode parameters;
 	GMimeRfcComplianceMode rfc2047;
+	gboolean allow_no_domain;
 	char **charsets;
 };
 
@@ -102,6 +103,7 @@ g_mime_parser_options_new (void)
 	options->addresses = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->parameters = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
+	options->allow_no_domain = FALSE;
 	
 	options->charsets = g_malloc (sizeof (char *) * 3);
 	options->charsets[0] = g_strdup ("utf-8");
@@ -130,6 +132,7 @@ g_mime_parser_options_clone (GMimeParserOptions *options)
 		options = default_options;
 	
 	clone = g_slice_new (GMimeParserOptions);
+	clone->allow_no_domain = options->allow_no_domain;
 	clone->addresses = options->addresses;
 	clone->parameters = options->parameters;
 	clone->rfc2047 = options->rfc2047;
@@ -204,6 +207,55 @@ g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, 
 	g_return_if_fail (options != NULL);
 	
 	options->addresses = mode;
+}
+
+
+/**
+ * g_mime_parser_options_get_allow_addresses_without_domain:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets whether or not the rfc822 address parser should allow addresses without a domain.
+ *
+ * In general, you'll probably want this value to be %FALSE (the default) as it allows 
+ * maximum interoperability with existing (broken) mail clients and other mail software
+ * such as sloppily written perl scripts (aka spambots) that do not properly quote the
+ * name when it contains a comma.
+ *
+ * This option exists in order to allow parsing of mailbox addresses that do not have a
+ * domain component. These types of addresses are rare and were typically only used when
+ * sending mail to other users on the same UNIX system.
+ *
+ * Returns: %TRUE if the address parser should allow addresses without a domain.
+ **/
+GMimeRfcComplianceMode
+g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *options)
+{
+	return options ? options->allow_no_domain : default_options->allow_no_domain;
+}
+
+
+/**
+ * g_mime_parser_options_set_allow_addresses_without_domain:
+ * @options: a #GMimeParserOptions
+ * @allow: %TRUE if the parser should allow addresses without a domain or %FALSE otherwise
+ *
+ * Sets whether the rfc822 address parser should allow addresses without a domain.
+ *
+ * In general, you'll probably want this value to be %FALSE (the default) as it allows 
+ * maximum interoperability with existing (broken) mail clients and other mail software
+ * such as sloppily written perl scripts (aka spambots) that do not properly quote the
+ * name when it contains a comma.
+ *
+ * This option exists in order to allow parsing of mailbox addresses that do not have a
+ * domain component. These types of addresses are rare and were typically only used when
+ * sending mail to other users on the same UNIX system.
+ **/
+void
+g_mime_parser_options_set_allow_addresses_without_domain (GMimeParserOptions *options, gboolean allow)
+{
+	g_return_if_fail (options != NULL);
+	
+	options->allow_no_domain = allow;
 }
 
 
