@@ -61,7 +61,7 @@ GMimeParserOptions *g_mime_parser_options_clone (GMimeParserOptions *options);
 GMimeRfcComplianceMode g_mime_parser_options_get_address_compliance_mode (GMimeParserOptions *options);
 void g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);
 
-gboolean g_mime_parser_options_allow_addresses_without_domain (GMimeParserOptions *options);
+gboolean g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *options);
 void g_mime_parser_options_set_allow_addresses_without_domain (GMimeParserOptions *options, gboolean allow);
 
 GMimeRfcComplianceMode g_mime_parser_options_get_parameter_compliance_mode (GMimeParserOptions *options);

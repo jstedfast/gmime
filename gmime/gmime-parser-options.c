@@ -227,7 +227,7 @@ g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, 
  *
  * Returns: %TRUE if the address parser should allow addresses without a domain.
  **/
-GMimeRfcComplianceMode
+gboolean
 g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *options)
 {
 	return options ? options->allow_no_domain : default_options->allow_no_domain;
