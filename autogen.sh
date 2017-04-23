@@ -89,6 +89,8 @@ if test -z "$AUTOGEN_SUBDIR_MODE" && test -z "$NOCONFIGURE"; then
         fi
 fi
 
+touch ChangeLog
+
 $ACLOCAL -I m4/ $ACLOCAL_FLAGS || exit $?
 
 $LIBTOOLIZE --force || exit $?

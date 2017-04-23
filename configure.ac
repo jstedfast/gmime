@@ -10,8 +10,8 @@ AC_PREREQ(2.54)
 # if backwards compatibility has been broken,
 # set gmime_binary_age _and_ gmime_interface_age to 0.
 #
-m4_define([gmime_major_version], [2])
-m4_define([gmime_minor_version], [99])
+m4_define([gmime_major_version], [3])
+m4_define([gmime_minor_version], [0])
 m4_define([gmime_micro_version], [0])
 m4_define([gmime_interface_age], [0])
 m4_define([gmime_binary_age],
@@ -50,7 +50,7 @@ AC_CANONICAL_HOST
 # Save this value here, since automake will set cflags later
 cflags_set=${CFLAGS+set}
 
-AM_INIT_AUTOMAKE([1.9 dist-bzip2 tar-ustar no-dist-gzip foreign -Wno-portability])
+AM_INIT_AUTOMAKE([1.9 -Wno-portability no-define no-dist-gzip dist-xz tar-ustar])
 AC_SUBST([ACLOCAL_AMFLAGS], ["-I m4 \${ACLOCAL_FLAGS}"])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
          [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
