@@ -24,10 +24,10 @@ find the GMime header files and libraries. This is done with the
 The following interactive shell session demonstrates how
 <literal>pkg-config</literal> is used:
 <programlisting>
-$ pkg-config --cflags gmime-2.4
- -I/usr/include/gmime-2.4 -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include 
-$ pkg-config --libs gmime-2.4
- -L/opt/gnome2/lib -lgmime-2.4 -lnsl -lgobject-2.0 -lglib-2.0
+$ pkg-config --cflags gmime-3.0
+ -I/usr/include/gmime-3.0 -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include 
+$ pkg-config --libs gmime-3.0
+ -L/opt/gnome2/lib -lgmime-3.0 -lnsl -lgobject-2.0 -lglib-2.0
 </programlisting>
 </para>
 <para>
@@ -37,7 +37,7 @@ feature of the shell. If you enclose a command in backticks
 substituted into the command line before execution. So to compile 
 a GTK+ Hello, World, you would type the following:
 <programlisting>
-$ cc `pkg-config --cflags --libs gmime-2.4` hello.c -o hello
+$ cc `pkg-config --cflags --libs gmime-3.0` hello.c -o hello
 </programlisting>
 </para>
 

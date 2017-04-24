@@ -44,7 +44,7 @@
       directory full of the source files as follows:
     </para>
     <programlisting>
-      tar -zxvf gmime-2.6.x.tar.gz
+      tar -zxvf gmime-3.0.x.tar.gz
     </programlisting>
     <para>
       In the toplevel of the directory that is created, there will be
@@ -197,7 +197,7 @@
       lucky, this will all go smoothly, and you'll be ready to
       <link linkend="gmime-compiling">start compiling your own GMime
 	applications</link>. You can test your GMime installation
-      by running <command>pkg-config --modversion gmime-2.6</command>
+      by running <command>pkg-config --modversion gmime-3.0</command>
       and making sure that it can both find GMime and reports the 
       correct version.
     </para>
