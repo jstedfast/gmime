@@ -114,7 +114,7 @@ endif
 
 EXTRA_DIST = $(wildcard empty*.msg rfc2060.msg data/pgp*/* data/smime/* \
 	data/partial/input/photo-discuss/*.eml data/partial/output/* \
-	data/mbox/*put/jwz.mbox data/mbox/*put/substring.mbox)
+	data/mbox/*put/substring.mbox)
 
 VERBOSITY=-v
 
