@@ -155,6 +155,8 @@ Porting from GMime 2.6 to GMime 3.0
 
 - Renamed g_mime_multipart_[get,set]_postface() to g_mime_multipart_[get,set]_epilogue().
 
+- Modified g_mime_object_write_to_stream() to take a GMimeFormatOptions argument.
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------
