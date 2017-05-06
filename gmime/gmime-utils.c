@@ -2458,7 +2458,7 @@ g_mime_utils_header_encode_text (GMimeFormatOptions *options, const char *text, 
 
 static char *
 header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *value,
-		    size_t vlen, rfc2047_token *tokens, gboolean structured)
+		    size_t vlen, rfc2047_token *tokens, gboolean structured, gboolean include_field)
 {
 	rfc2047_token *token, *next;
 	size_t lwsp, tab, len, n;
@@ -2467,8 +2467,12 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 	
 	len = strlen (field) + 2;
 	output = g_string_sized_new (len + vlen + 1);
-	g_string_append (output, field);
-	g_string_append (output, ": ");
+	if (include_field) {
+		g_string_append (output, field);
+		g_string_append (output, ": ");
+	} else {
+		g_string_append_c (output, ' ');
+	}
 	lwsp = 0;
 	tab = 0;
 	
@@ -2619,7 +2623,7 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
 		value++;
 	
 	tokens = tokenize_rfc2047_phrase (options, value, &len);
-	folded = header_fold_tokens (format, field, value, len, tokens, TRUE);
+	folded = header_fold_tokens (format, field, value, len, tokens, TRUE, TRUE);
 	g_free (field);
 	
 	return folded;
@@ -2648,11 +2652,11 @@ _g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOp
 		return NULL;
 	
 	if (value == NULL)
-		return g_strdup_printf ("%s: \n", field);
+		return g_strdup ("\n");
 	
 	tokens = tokenize_rfc2047_phrase (options, value, &len);
 	
-	return header_fold_tokens (format, field, value, len, tokens, TRUE);
+	return header_fold_tokens (format, field, value, len, tokens, TRUE, FALSE);
 }
 
 
@@ -2692,7 +2696,7 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
 		value++;
 	
 	tokens = tokenize_rfc2047_text (options, value, &len);
-	folded = header_fold_tokens (format, field, value, len, tokens, FALSE);
+	folded = header_fold_tokens (format, field, value, len, tokens, FALSE, TRUE);
 	g_free (field);
 	
 	return folded;
@@ -2720,11 +2724,11 @@ _g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormat
 		return NULL;
 	
 	if (value == NULL)
-		return g_strdup_printf ("%s: \n", field);
+		return g_strdup ("\n");
 	
 	tokens = tokenize_rfc2047_text (options, value, &len);
 	
-	return header_fold_tokens (format, field, value, len, tokens, FALSE);
+	return header_fold_tokens (format, field, value, len, tokens, FALSE, FALSE);
 }
 
 
