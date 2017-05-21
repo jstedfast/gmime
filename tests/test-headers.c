@@ -567,6 +567,9 @@ static struct {
 	{ "Message-Id",
 	  "<this.is.a.really.really.reeeaalllllllllllllly.looooooooooong.message.id@some.internet.host.com>",
 	  " <this.is.a.really.really.reeeaalllllllllllllly.looooooooooong.message.id@some.internet.host.com>\n" },
+	{ "Subject",
+	  "this is a really, really, reeeeeeaaaaaaalllllllllllllly loooooooooooooonnnnnggggggggggg test subject which should get folded into multiple lines",
+	  " this is a really, really, reeeeeeaaaaaaalllllllllllllly\n loooooooooooooonnnnnggggggggggg test subject which should get folded into\n multiple lines\n" },
 };
 
 static void
