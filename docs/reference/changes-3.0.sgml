@@ -65,6 +65,7 @@
       <listitem><para>Renamed <function>g_mime_multipart_get_preface()</function> to <function>g_mime_multipart_get_prologue()</function> and <function>g_mime_multipart_set_preface</function> to <function>g_mime_multipart_set_prologue</function>.</para></listitem>
       <listitem><para>Renamed <function>g_mime_multipart_get_postface()</function> to <function>g_mime_multipart_get_epilogue()</function> and <function>g_mime_multipart_set_postface()</function> to <function>g_mime_multipart_set_epilogue()</function>.</para></listitem>
       <listitem><para>Updated <function>g_mime_object_write_to_stream()</function> to take a GMimeFormatOptions argument.</para></listitem>
+      <listitem><para>Split GMimeFilterCRLF into GMimeFilterDos2Unix, GMimeFilterUnix2Dos and GMimeFilterSmtpData.</para></listitem>
     </itemizedlist>
   </refsect1>
 </refentry>

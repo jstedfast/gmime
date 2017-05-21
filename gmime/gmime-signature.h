@@ -63,7 +63,7 @@ typedef struct _GMimeSignatureListClass GMimeSignatureListClass;
  * @GMIME_SIGNATURE_STATUS_SYS_ERROR: A system error occurred.
  * @GMIME_SIGNATURE_STATUS_TOFU_CONFLICT: Tofu conflict detected.
  *
- * A value representing the signature status flags for a particular
+ * A value representing the signature status bit flags for a particular
  * #GMimeSignature.
  **/
 typedef enum {

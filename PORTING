@@ -157,6 +157,8 @@ Porting from GMime 2.6 to GMime 3.0
 
 - Modified g_mime_object_write_to_stream() to take a GMimeFormatOptions argument.
 
+- Split GMimeFilterCRLF into GMimeFilterUnix2Dos, GMimeFilterDos2Unix and GMimeFilterSmtpData.
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------

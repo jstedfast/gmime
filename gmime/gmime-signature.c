@@ -135,7 +135,7 @@ g_mime_signature_set_status (GMimeSignature *sig, GMimeSignatureStatus status)
  * g_mime_signature_get_status:
  * @sig: a #GMimeSignature
  *
- * Get the signature status.
+ * Get the signature status as a bitfield of #GMimeSignatureStatus flags.
  *
  * Returns: the signature status.
  **/
