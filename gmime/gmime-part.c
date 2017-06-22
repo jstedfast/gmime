@@ -788,7 +788,10 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
 	mime_part->encoding = encoding;
 	
 	_g_mime_object_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Transfer-Encoding", value, NULL);
+	if (value != NULL)
+		g_mime_header_list_set (object->headers, "Content-Transfer-Encoding", value, NULL);
+	else
+		g_mime_header_list_remove (object->headers, "Content-Transfer-Encoding");
 	_g_mime_object_block_header_list_changed (object);
 }
 
