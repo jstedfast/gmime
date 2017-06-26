@@ -246,10 +246,7 @@ unfold (const char *value)
  *
  * Gets the header's unfolded value.
  *
- * Returns: the header's unfolded value or %NULL if invalid.
- *
- * Note: The returned value should be decoded with a function such as
- * g_mime_utils_header_decode_text() before displaying to the user.
+ * Returns: the header's decoded value or %NULL if invalid.
  **/
 const char *
 g_mime_header_get_value (GMimeHeader *header)
@@ -275,7 +272,7 @@ g_mime_header_get_value (GMimeHeader *header)
  * @value: the new header value
  * @charset: a charset
  *
- * Sets the header's (unfolded) value.
+ * Sets the header's decoded value.
  **/
 void
 g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
