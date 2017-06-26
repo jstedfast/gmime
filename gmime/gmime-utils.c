@@ -2466,11 +2466,13 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 	GString *output;
 	
 	len = strlen (field) + 2;
-	output = g_string_sized_new (len + vlen + 1);
+	
 	if (include_field) {
+		output = g_string_sized_new (len + vlen + 1);
 		g_string_append (output, field);
 		g_string_append (output, ": ");
 	} else {
+		output = g_string_sized_new (vlen + 2);
 		g_string_append_c (output, ' ');
 	}
 	lwsp = 0;
