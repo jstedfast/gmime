@@ -465,13 +465,13 @@ mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 	case GMIME_CONTENT_ENCODING_7BIT:
 		/* This encoding is generally safe, but we may need to encode From-lines. */
 		if (((GMimeFilterBest *) filter)->hadfrom)
-			g_mime_part_set_content_encoding (part, GMIME_ENCODING_QUOTED_PRINTABLE);
+			g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
 		break;
 	case GMIME_CONTENT_ENCODING_8BIT:
 		if (constraint == GMIME_ENCODING_CONSTRAINT_7BIT)
 			g_mime_part_set_content_encoding (part, encoding);
 		else if (((GMimeFilterBest *) filter)->hadfrom)
-			g_mime_part_set_content_encoding (part, GMIME_ENCODING_QUOTED_PRINTABLE);
+			g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
 		break;
 	default:
 		break;
