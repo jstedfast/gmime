@@ -432,18 +432,6 @@ mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 	GMimeFilter *filter;
 	
 	switch (part->encoding) {
-	case GMIME_CONTENT_ENCODING_DEFAULT:
-		/* Unspecified encoding, we need to figure out the
-		 * best encoding no matter what */
-		break;
-	case GMIME_CONTENT_ENCODING_7BIT:
-		/* This encoding is always safe. */
-		return;
-	case GMIME_CONTENT_ENCODING_8BIT:
-		/* This encoding is safe unless the constraint is 7bit. */
-		if (constraint != GMIME_ENCODING_CONSTRAINT_7BIT)
-			return;
-		break;
 	case GMIME_CONTENT_ENCODING_BINARY:
 		/* This encoding is only safe if the constraint is binary. */
 		if (constraint == GMIME_ENCODING_CONSTRAINT_BINARY)
@@ -454,6 +442,8 @@ mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 	case GMIME_CONTENT_ENCODING_UUENCODE:
 		/* These encodings are always safe. */
 		return;
+	default:
+		break;
 	}
 	
 	filter = g_mime_filter_best_new (GMIME_FILTER_BEST_ENCODING);
@@ -467,7 +457,26 @@ mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 	g_object_unref (stream);
 	
 	encoding = g_mime_filter_best_encoding ((GMimeFilterBest *) filter, constraint);
-	g_mime_part_set_content_encoding (part, encoding);
+	
+	switch (part->encoding) {
+	case GMIME_CONTENT_ENCODING_DEFAULT:
+		g_mime_part_set_content_encoding (part, encoding);
+		break;
+	case GMIME_CONTENT_ENCODING_7BIT:
+		/* This encoding is generally safe, but we may need to encode From-lines. */
+		if (((GMimeFilterBest *) filter)->hadfrom)
+			g_mime_part_set_content_encoding (part, GMIME_ENCODING_QUOTED_PRINTABLE);
+		break;
+	case GMIME_CONTENT_ENCODING_8BIT:
+		if (constraint == GMIME_ENCODING_CONSTRAINT_7BIT)
+			g_mime_part_set_content_encoding (part, encoding);
+		else if (((GMimeFilterBest *) filter)->hadfrom)
+			g_mime_part_set_content_encoding (part, GMIME_ENCODING_QUOTED_PRINTABLE);
+		break;
+	default:
+		break;
+	}
+	
 	g_object_unref (filter);
 }
 
