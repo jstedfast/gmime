@@ -1140,7 +1140,7 @@ multipart_guess_body (GMimeMultipart *multipart)
  * Returns: (transfer none): a #GMimeObject containing the textual
  * content that appears to be the main body of the message.
  *
- * Note: This function is NOT guarenteed to always work as it
+ * Note: This function is NOT guaranteed to always work as it
  * makes some assumptions that are not necessarily true. It is
  * recommended that you traverse the MIME structure yourself.
  **/

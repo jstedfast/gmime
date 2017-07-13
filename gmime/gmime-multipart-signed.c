@@ -206,7 +206,7 @@ sign_prepare (GMimeObject *mime_part)
  *
  * Returns: (nullable) (transfer full): a new #GMimeMultipartSigned object on success
  * or %NULL on fail. If signing fails, an exception will be set on @err to provide
- * information as to why the failure occured.
+ * information as to why the failure occurred.
  **/
 GMimeMultipartSigned *
 g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeObject *entity,
@@ -365,7 +365,7 @@ check_protocol_supported (const char *protocol, const char *supported)
  * Returns: (nullable) (transfer full): a new #GMimeSignatureList object on
  * success or %NULL on fail. If the verification fails, an exception
  * will be set on @err to provide information as to why the failure
- * occured.
+ * occurred.
  **/
 GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)

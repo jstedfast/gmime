@@ -49,7 +49,7 @@
     GMimeObject (for example) will require.</para>
 
     <para>GMimeStreamMmap is a memory-mapped stream. This isn't
-    guarenteed to work on all systems since not all systems support
+    guaranteed to work on all systems since not all systems support
     the POSIX mmap system call, but for those that do - this might
     present a faster stream than GMimeStreamFs and/or
     GMimeStreamFile. You'll have to do some experimentation to know

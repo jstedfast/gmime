@@ -103,7 +103,7 @@ static struct {
 	/* Note: according to http://www.iana.org/assignments/character-sets,
 	 * ks_c_5601-1987 should really map to ISO-2022-KR, but the EUC-KR
 	 * mapping was given to me via a native Korean user, so I'm not sure
-	 * if I should change this... perhaps they are compatable? */
+	 * if I should change this... perhaps they are compatible? */
 	{ "ks_c_5601-1987",  "EUC-KR"     },
 	{ "5601",            "EUC-KR"     },
 	{ "ksc-5601",        "EUC-KR"     },
