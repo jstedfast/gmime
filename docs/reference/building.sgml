@@ -155,7 +155,7 @@
       </listitem>
     </itemizedlist>
     <para>
-      GMime depends on the existance of two (2) libraries: GLib and iconv.
+      GMime depends on the existence of two (2) libraries: GLib and iconv.
     </para>
     <itemizedlist>
       <listitem>

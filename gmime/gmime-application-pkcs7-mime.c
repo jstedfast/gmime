@@ -226,7 +226,7 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
  *
  * Returns: (nullable) (transfer full): a new #GMimeApplicationPkcs7Mime object on success
  * or %NULL on fail. If encrypting fails, an exception will be set on @err to provide
- * information as to why the failure occured.
+ * information as to why the failure occurred.
  **/
 GMimeApplicationPkcs7Mime *
 g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
@@ -296,7 +296,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
  *
  * When non-%NULL, @session_key should be a %NULL-terminated string,
  * such as the one returned by g_mime_decrypt_result_get_session_key()
- * from a previous decryption. If the @sesion_key is not valid, decryption
+ * from a previous decryption. If the @session_key is not valid, decryption
  * will fail.
  *
  * If @result is non-%NULL, then on a successful decrypt operation, it will be
@@ -306,7 +306,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
  *
  * Returns: (nullable) (transfer full): the decrypted MIME part on success or
  * %NULL on fail. If the decryption fails, an exception will be set on
- * @err to provide information as to why the failure occured.
+ * @err to provide information as to why the failure occurred.
  **/
 GMimeObject *
 g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
@@ -397,7 +397,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
  *
  * Returns: (nullable) (transfer full): a new #GMimeApplicationPkcs7Mime object on success
  * or %NULL on fail. If signing fails, an exception will be set on @err to provide
- * information as to why the failure occured.
+ * information as to why the failure occurred.
  **/
 GMimeApplicationPkcs7Mime *
 g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GError **err)
@@ -468,7 +468,7 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
  * Returns: (nullable) (transfer full): a new #GMimeSignatureList object on
  * success or %NULL on fail. If the verification fails, an exception
  * will be set on @err to provide information as to why the failure
- * occured.
+ * occurred.
  **/
 GMimeSignatureList *
 g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags, GMimeObject **entity, GError **err)

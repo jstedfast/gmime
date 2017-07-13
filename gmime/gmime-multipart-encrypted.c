@@ -153,7 +153,7 @@ g_mime_multipart_encrypted_new (void)
  *
  * Returns: (nullable) (transfer full): a new #GMimeMultipartEncrypted object on success
  * or %NULL on fail. If encrypting fails, an exception will be set on @err to provide
- * information as to why the failure occured.
+ * information as to why the failure occurred.
  **/
 GMimeMultipartEncrypted *
 g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity, gboolean sign, const char *userid,
@@ -246,7 +246,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
  *
  * When non-%NULL, @session_key should be a %NULL-terminated string,
  * such as the one returned by g_mime_decrypt_result_get_session_key()
- * from a previous decryption. If the @sesion_key is not valid, decryption
+ * from a previous decryption. If the @session_key is not valid, decryption
  * will fail.
  *
  * If @result is non-%NULL, then on a successful decrypt operation, it will be
@@ -256,7 +256,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
  *
  * Returns: (nullable) (transfer full): the decrypted MIME part on success or
  * %NULL on fail. If the decryption fails, an exception will be set on
- * @err to provide information as to why the failure occured.
+ * @err to provide information as to why the failure occurred.
  **/
 GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDecryptFlags flags,

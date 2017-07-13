@@ -119,7 +119,7 @@ url="http://library.gnome.org/devel/gmime/stable/gmime-building.html">http://lib
       
       <para>Before we get too deep into using GMime, it is important
       to understand how to use the underlying I/O classes since GMime
-      is so very heavily dependant upon them.</para>
+      is so very heavily dependent upon them.</para>
       
       <para>If you've looked at the API at all already, you will have
       probably noticed that the stream functions work very much like
@@ -547,7 +547,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       
       <para>GMimeFilterUnix2Dos will likely become very useful to you if
       you are implementing any internet standards or DOS/UNIX
-      compatability. This filter is meant for converting line endings
+      compatibility. This filter is meant for converting line endings
       from the traditional UNIX sequence (LF) to the internet standard
       (and DOS) sequence. There's also a GMimeFilterDos2Unix to perform
       the opposite conversion.</para>

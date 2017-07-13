@@ -170,7 +170,7 @@ filter_run (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		size_t newlen = inlen + prespace + filter->backlen;
 		
 		if (p->inlen < newlen) {
-			/* NOTE: g_realloc copies data, we dont need that (slower) */
+			/* NOTE: g_realloc copies data, we don't need that (slower) */
 			g_free (p->inbuf);
 			p->inbuf = g_malloc (newlen + PRE_HEAD);
 			p->inlen = newlen + PRE_HEAD;

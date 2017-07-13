@@ -488,7 +488,7 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *se
  *
  * When non-%NULL, @session_key should be a %NULL-terminated string,
  * such as the one returned by g_mime_decrypt_result_get_session_key()
- * from a previous decryption. If the @sesion_key is not valid, decryption
+ * from a previous decryption. If the @session_key is not valid, decryption
  * will fail.
  *
  * If the encrypted input stream was also signed, the returned

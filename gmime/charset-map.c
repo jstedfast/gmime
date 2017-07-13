@@ -120,7 +120,7 @@ int main (int argc, char **argv)
 	int bytes;
 	int j, k;
 	
-	/* dont count the terminator */
+	/* don't count the terminator */
 	bytes = ((sizeof (tables) / sizeof (tables[0])) + 7 - 1) / 8;
 	g_assert (bytes <= 4);
 	

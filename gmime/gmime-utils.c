@@ -1819,7 +1819,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 			
 			/* convert the raw decoded text into UTF-8 */
 			if (!g_ascii_strcasecmp (charset, "UTF-8")) {
-				/* slight optimization over going thru iconv */
+				/* slight optimization over going through iconv */
 				str = (char *) outptr;
 				len = outlen;
 				

@@ -1,6 +1,6 @@
 It is my intention to make migrating code using one version of GMime
 to another as easy as I can and so for the most part, I will try not
-to break API/ABI compatability between versions, however this isn't
+to break API/ABI compatibility between versions, however this isn't
 always easy to do.
 
 This document is intended to help developers port their application(s)
@@ -104,7 +104,7 @@ Porting from GMime 2.6 to GMime 3.0
   detach argument.
 
 - g_mime_crypto_context_decrypt_session() has been merged with
-  g_mime_crypto_context_decrypt() and so the decryot method now takes a session_key
+  g_mime_crypto_context_decrypt() and so the decrypt method now takes a session_key
   argument that is allowed to be NULL.
 
 - g_mime_crypto_context_verify() no longer takes a 'digest' argument.

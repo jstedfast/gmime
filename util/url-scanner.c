@@ -557,7 +557,7 @@ url_scanner_table_init (void)
 	
 	/* not defined to be special in rfc0822, but when scanning
            backwards to find the beginning of the email address we do
-           not want to include this char if we come accross it - so
+           not want to include this char if we come across it - so
            this is kind of a hack, but it's ok */
 	url_scanner_table['/'] |= IS_SPECIAL;
 	
