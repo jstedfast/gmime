@@ -92,6 +92,11 @@ Porting from GMime 2.6 to GMime 3.0
 
 - Removed g_mime_gpg_context_[get,set]_auto_key_retrieve().
 
+- When using GMimeGpgContext, there is no longer a way to explicitly
+  set the path to the "gpg" executable.  Of course, users can still
+  use the $PATH environment variable to select any executable named
+  "gpg" as always.
+
 - Removed g_mime_crypto_context_[get,set]_retrieve_session_key(). This is now handled by
   passing GMIME_DECRYPT_EXPORT_SESSION_KEY to the g_mime_crypto_context_decrypt()
   method.
