@@ -354,7 +354,7 @@ decode_subliteral (const char **in, GString *domain)
 			inptr++;
 			got = TRUE;
 		} else if (is_lwsp (*inptr)) {
-			skip_cfws (&inptr);
+			skip_lwsp (&inptr);
 		} else {
 			break;
 		}
@@ -417,8 +417,9 @@ g_mime_decode_domain (const char **in, GString *domain)
 			if (*inptr == ']') {
 				g_string_append_c (domain, ']');
 				inptr++;
-			} else
+			} else {
 				w(g_warning ("Missing ']' in domain-literal: %s", *in));
+			}
 		} else {
 			if (!(atom = decode_atom (&inptr))) {
 				w(g_warning ("Unexpected char '%c' in domain: %s", *inptr, *in));
