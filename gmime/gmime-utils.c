@@ -1526,7 +1526,7 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 					}
 					
 					/* sanity check encoding type */
-					if (inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
+					if (inptr[0] != '?' || inptr[1] == '\0' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
 						goto non_rfc2047;
 					
 					inptr += 3;
@@ -1657,7 +1657,7 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len)
 					}
 					
 					/* sanity check encoding type */
-					if (inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
+					if (inptr[0] != '?' || inptr[1] == '\0' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
 						goto non_rfc2047;
 					
 					inptr += 3;
