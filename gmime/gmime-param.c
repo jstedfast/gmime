@@ -903,7 +903,7 @@ decode_quoted_string (const char **in)
 	start = inptr++;
 	
 	while (*inptr && *inptr != '"') {
-		if (*inptr++ == '\\') {
+		if (*inptr++ == '\\' && *inptr) {
 			unescape = TRUE;
 			inptr++;
 		}
@@ -925,7 +925,8 @@ decode_quoted_string (const char **in)
 		while (*inptr) {
 			if (*inptr == '\\')
 				inptr++;
-			*outptr++ = *inptr++;
+			if (*inptr)
+				*outptr++ = *inptr++;
 		}
 		
 		*outptr = '\0';
