@@ -380,7 +380,8 @@ decode_domain_literal (const char **in, GString *domain)
 				     *inptr, *in));
 			
 			/* try and skip to the next char ?? */
-			inptr++;
+			if (*inptr)
+				inptr++;
 		}
 	}
 	
