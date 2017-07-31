@@ -299,7 +299,7 @@ header this is supposed to encode. If you haven't guessed, this
 function is for encoding rfc822 'text' headers (such as Subject).
 
 - g_mime_utils_8bit_header_encode_phrase() has been renamed to
-g_mime_utils_header_encode_phrase() mostly for consistancy with the
+g_mime_utils_header_encode_phrase() mostly for consistency with the
 previous 2 changes.
 
 - g_mime_charset_name() has been renamed to

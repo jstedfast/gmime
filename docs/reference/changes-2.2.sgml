@@ -46,7 +46,7 @@ headers (such as Subject).</para>
         <para>
 <function>g_mime_utils_8bit_header_encode_phrase()</function> has been
 renamed to <function>g_mime_utils_header_encode_phrase()</function>
-mostly for consistancy with the previous 2 changes.</para>
+mostly for consistency with the previous 2 changes.</para>
       </listitem>
       <listitem>
         <para>
