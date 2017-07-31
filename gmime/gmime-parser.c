@@ -1441,11 +1441,11 @@ parser_scan_content (GMimeParser *parser, GMimeStream *content, gboolean *empty)
 	BoundaryType found = BOUNDARY_NONE;
 	char *aligned, *start, *inend;
 	register char *inptr;
-	register int *dword;
+	register unsigned int *dword;
 	size_t nleft, len;
 	size_t atleast;
 	gint64 pos;
-	int mask;
+	unsigned int mask;
 	char c;
 	
 	d(printf ("scan-content\n"));
@@ -1494,11 +1494,11 @@ parser_scan_content (GMimeParser *parser, GMimeStream *content, gboolean *empty)
 			*aligned = c;
 			
 			if (inptr == aligned && c != '\n') {
-				dword = (int *) inptr;
+				dword = (unsigned int *) inptr;
 				
 				do {
-					mask = *dword++ ^ 0x0A0A0A0A;
-					mask = ((mask - 0x01010101) & (~mask & 0x80808080));
+					mask = *dword++ ^ 0x0A0A0A0AU;
+					mask = ((mask - 0x01010101U) & (~mask & 0x80808080U));
 				} while (mask == 0);
 				
 				inptr = (char *) (dword - 1);
