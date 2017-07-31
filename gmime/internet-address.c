@@ -1589,7 +1589,7 @@ domain_literal_parse (GString *str, const char **in)
 	skip_lwsp (&inptr);
 	
 	do {
-		while (is_dtext (*inptr))
+		while (*inptr && is_dtext (*inptr))
 			g_string_append_c (str, *inptr++);
 		
 		skip_lwsp (&inptr);
