@@ -1440,12 +1440,12 @@ parser_scan_content (GMimeParser *parser, GMimeStream *content, gboolean *empty)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	BoundaryType found = BOUNDARY_NONE;
 	char *aligned, *start, *inend;
-	register char *inptr;
 	register unsigned int *dword;
+	register char *inptr;
+	unsigned int mask;
 	size_t nleft, len;
 	size_t atleast;
 	gint64 pos;
-	unsigned int mask;
 	char c;
 	
 	d(printf ("scan-content\n"));
