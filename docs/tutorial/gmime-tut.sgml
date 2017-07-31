@@ -178,7 +178,7 @@ int main (int argc, char **argv)
       of the above examples is the flushing of the stream after
       writing to it. Most likely, in both examples, it is an unneeded
       call, however it is there for completeness and you should
-      probably get into the habbit of flushing a stream after you've
+      probably get into the habit of flushing a stream after you've
       finished writing to it. Like fflush(), g_mime_stream_flush()
       will flush any write-buffers that the previous write-calls may
       have left.</para>
@@ -345,7 +345,7 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
       own.</para>
       
       <para>We've already seen GMimeStreamFile and GMimeStreamFs in
-      action in the prevous chapter, so let's skip them and start with
+      action in the previous chapter, so let's skip them and start with
       GMimeStreamMem.</para>
       
       <para>GMimeStremMem is a stream abstraction that reads and

@@ -13,7 +13,7 @@
     <para>Streams are the fundamental method for reading and writing
     data used by GMime. You'll probably notice that the basic API is 
     similar to that of the low-level Unix I/O layer (read(), write(), 
-    lseek(), etc) with some additional nicities such as a printf-like 
+    lseek(), etc) with some additional niceties such as a printf-like 
     function.</para>
 
     <para>The three (3) basic stream types are: GMimeStreamFile,

@@ -162,7 +162,7 @@
         <para>
 	  The GLib library provides core non-graphical functionality
 	  such as high level data types, Unicode manipulation, and
-	  a object and type system to C programs. It is available
+	  an object and type system to C programs. It is available
 	  from the <ulink url="ftp://ftp.gtk.org/pub/gtk/v2.0/">GTK+
 	  FTP site.</ulink>
 	</para>

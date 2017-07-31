@@ -615,7 +615,7 @@ S/MIME).
 
 Because the `multipart/signed` part may have been signed by multiple signers, the
 `g_mime_multipart_signed_verify()` function returns a `GMimeSignatureList` which contains a list of
-digital signatures (one for each signer) that each contain their own metdata describing who that
+digital signatures (one for each signer) that each contain their own metadata describing who that
 signer is and what the status of their signature is.
 
 ```c
