@@ -34,8 +34,8 @@
 
 #if !defined (G_OS_WIN32) || defined (__MINGW32__)
 #define ENABLE_ZENTIMER
-#include "zentimer.h"
 #endif
+#include "zentimer.h"
 
 #define TEST_RAW_HEADER
 #define TEST_PRESERVE_HEADERS
