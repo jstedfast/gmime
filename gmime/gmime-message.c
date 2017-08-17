@@ -35,6 +35,7 @@
 #include "gmime-utils.h"
 #include "gmime-common.h"
 #include "gmime-stream-mem.h"
+#include "gmime-stream-filter.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-internal.h"
@@ -459,6 +460,13 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 	GMimeMessage *message = (GMimeMessage *) object;
 	GMimeObject *mime_part = message->mime_part;
 	ssize_t nwritten, total = 0;
+	GMimeStream *filtered;
+	GMimeFilter *filter;
+	
+	filter = g_mime_format_options_create_newline_filter (options, FALSE);
+	filtered = g_mime_stream_filter_new (stream);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
 	
 	if (mime_part != NULL) {
 		int body_count = g_mime_header_list_get_count (mime_part->headers);
@@ -478,8 +486,10 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 			
 			if (offset >= 0 && offset < body_offset) {
 				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-					if ((nwritten = g_mime_header_write_to_stream (header, options, stream)) == -1)
+					if ((nwritten = g_mime_header_write_to_stream (header, options, filtered)) == -1) {
+						g_object_unref (filtered);
 						return -1;
+					}
 					
 					total += nwritten;
 				}
@@ -487,8 +497,10 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 				index++;
 			} else {
 				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-					if ((nwritten = g_mime_header_write_to_stream (body_header, options, stream)) == -1)
+					if ((nwritten = g_mime_header_write_to_stream (body_header, options, filtered)) == -1) {
+						g_object_unref (filtered);
 						return -1;
+					}
 					
 					total += nwritten;
 				}
@@ -501,8 +513,10 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 			header = g_mime_header_list_get_header_at (object->headers, index);
 			
 			if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-				if ((nwritten = g_mime_header_write_to_stream (header, options, stream)) == -1)
+				if ((nwritten = g_mime_header_write_to_stream (header, options, filtered)) == -1) {
+					g_object_unref (filtered);
 					return -1;
+				}
 				
 				total += nwritten;
 			}
@@ -514,8 +528,10 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 			header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			
 			if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-				if ((nwritten = g_mime_header_write_to_stream (header, options, stream)) == -1)
+				if ((nwritten = g_mime_header_write_to_stream (header, options, filtered)) == -1) {
+					g_object_unref (filtered);
 					return -1;
+				}
 				
 				total += nwritten;
 			}
@@ -523,10 +539,15 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 			body_index++;
 		}
 		
+		g_object_unref (filtered);
+		
 		return total;
 	}
 	
-	return g_mime_header_list_write_to_stream (object->headers, options, stream);
+	nwritten = g_mime_header_list_write_to_stream (object->headers, options, filtered);
+	g_object_unref (filtered);
+	
+	return nwritten;
 }
 
 
