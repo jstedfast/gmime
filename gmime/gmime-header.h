@@ -88,9 +88,11 @@ struct _GMimeHeader {
 	/* < private > */
 	GMimeHeaderRawValueFormatter formatter;
 	GMimeParserOptions *options;
+	gboolean reformat;
 	gpointer changed;
 	char *raw_value;
 	char *raw_name;
+	char *charset;
 	gint64 offset;
 };
 

@@ -125,8 +125,10 @@ g_mime_header_init (GMimeHeader *header, GMimeHeaderClass *klass)
 	header->changed = g_mime_event_new (header);
 	header->formatter = NULL;
 	header->options = NULL;
+	header->reformat = FALSE;
 	header->raw_value = NULL;
 	header->raw_name = NULL;
+	header->charset = NULL;
 	header->value = NULL;
 	header->name = NULL;
 	header->offset = -1;
@@ -140,6 +142,7 @@ g_mime_header_finalize (GObject *object)
 	g_mime_event_free (header->changed);
 	g_free (header->raw_value);
 	g_free (header->raw_name);
+	g_free (header->charset);
 	g_free (header->value);
 	g_free (header->name);
 	
@@ -171,9 +174,11 @@ g_mime_header_new (GMimeParserOptions *options, const char *name, const char *va
 	
 	header = g_object_new (GMIME_TYPE_HEADER, NULL);
 	header->raw_value = raw_value ? g_strdup (raw_value) : NULL;
+	header->charset = charset ? g_strdup (charset) : NULL;
 	header->value = value ? g_strdup (value) : NULL;
 	header->raw_name = g_strdup (raw_name);
 	header->name = g_strdup (name);
+	header->reformat = !raw_value;
 	header->options = options;
 	header->offset = offset;
 	
@@ -286,9 +291,12 @@ g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const
 	formatter = header->formatter ? header->formatter : g_mime_header_format_default;
 	buf = g_mime_strdup_trim (value);
 	g_free (header->raw_value);
+	g_free (header->charset);
 	g_free (header->value);
 	
 	header->raw_value = formatter (header, options, buf, charset);
+	header->charset = charset ? g_strdup (charset) : NULL;
+	header->reformat = TRUE;
 	header->value = buf;
 	
 	g_mime_event_emit (header->changed, NULL);
@@ -333,6 +341,7 @@ g_mime_header_get_raw_value (GMimeHeader *header)
 }
 
 
+#if 0
 void
 _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
 {
@@ -344,6 +353,7 @@ _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
 	header->raw_value = buf;
 	header->value = NULL;
 }
+#endif
 
 
 /**
@@ -364,7 +374,8 @@ g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
 	buf = g_strdup (raw_value);
 	g_free (header->raw_value);
 	g_free (header->value);
-	
+
+	header->reformat = FALSE;
 	header->raw_value = buf;
 	header->value = NULL;
 	
@@ -409,18 +420,29 @@ _g_mime_header_set_offset (GMimeHeader *header, gint64 offset)
 ssize_t
 g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options, GMimeStream *stream)
 {
+	GMimeHeaderRawValueFormatter formatter;
 	ssize_t nwritten, total = 0;
-	char *val;
+	char *raw_value, *buf;
 	
 	g_return_val_if_fail (GMIME_IS_HEADER (header), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	if (!header->raw_value)
 		return 0;
+
+	if (header->reformat) {
+		formatter = header->formatter ? header->formatter : g_mime_header_format_default;
+		raw_value = formatter (header, options, header->value, header->charset);
+	} else {
+		raw_value = header->raw_value;
+	}
 	
-	val = g_strdup_printf ("%s:%s", header->raw_name, header->raw_value);
-	nwritten = g_mime_stream_write_string (stream, val);
-	g_free (val);
+	buf = g_strdup_printf ("%s:%s", header->raw_name, raw_value);
+	nwritten = g_mime_stream_write_string (stream, buf);
+	
+	if (header->reformat)
+		g_free (raw_value);
+	g_free (buf);
 	
 	if (nwritten == -1)
 		return -1;
