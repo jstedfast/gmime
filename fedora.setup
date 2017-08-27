@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo -n "Installing packages needed to build gmime..."
+yum install automake libtool gtk-doc glib-devel libidn-devel zlib-devel gpgme-devel
+
+echo -n "Installing packages needed for building Vala support..."
+yum install redhat-rpm-config vala-devel
+
+echo -n "Installing packages needed for code coverage analysis..."
+yum install lcov
