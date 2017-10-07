@@ -1770,6 +1770,10 @@ group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const cha
 	/* skip over the ':' */
 	inptr++;
 	
+	/* ignore superfluous colons (and whitespace) */
+	while (*inptr == ':' || is_lwsp (*inptr))
+		inptr++;
+	
 	if (*inptr != '\0') {
 		address_list_parse (group->members, options, &inptr, TRUE);
 		
