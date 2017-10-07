@@ -587,7 +587,7 @@ g_mime_charset_canon_name (const char *charset)
 		if (endptr == ptr || *endptr != '\0')
 			return charset;
 		
-		if (iso > G_N_ELEMENTS (iso_charsets))
+		if (iso >= G_N_ELEMENTS (iso_charsets))
 			return charset;
 		
 		return iso_charsets[iso];
