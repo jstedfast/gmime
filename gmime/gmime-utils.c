@@ -305,7 +305,8 @@ decode_int (const char *in, size_t inlen)
 	while (inptr < inend) {
 		if (!(*inptr >= '0' && *inptr <= '9'))
 			return -1;
-		
+		if (val > (INT_MAX - (*inptr - '0')) / 10)
+			return -1;
 		val = (val * 10) + (*inptr - '0');
 		inptr++;
 	}
@@ -418,30 +419,36 @@ static gboolean
 get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 {
 	register const char *inptr;
-	int *val, colons = 0;
+	int *val, max, colons = 0;
 	const char *inend;
 	
 	*hour = *min = *sec = 0;
 	
 	inend = in + inlen;
 	val = hour;
+	max = 23;
 	for (inptr = in; inptr < inend; inptr++) {
 		if (*inptr == ':') {
 			colons++;
 			switch (colons) {
 			case 1:
 				val = min;
+				max = 59;
 				break;
 			case 2:
 				val = sec;
+				max = 60;
 				break;
 			default:
 				return FALSE;
 			}
 		} else if (!(*inptr >= '0' && *inptr <= '9'))
 			return FALSE;
-		else
+		else {
 			*val = (*val * 10) + (*inptr - '0');
+			if (*val > max)
+				return FALSE;
+		}
 	}
 	
 	return TRUE;
