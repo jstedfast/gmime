@@ -298,7 +298,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 			g_mime_certificate_set_issuer_serial (signature->cert, key->issuer_serial);
 			g_mime_certificate_set_issuer_name (signature->cert, key->issuer_name);
 			
-			/* get the name and email address */
+			/* get the name, email address, and full user id */
 			uid = key->uids;
 			while (uid) {
 				if (uid->name && *uid->name)
@@ -307,7 +307,10 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 				if (uid->email && *uid->email)
 					g_mime_certificate_set_email (signature->cert, uid->email);
 				
-				if (signature->cert->name && signature->cert->email)
+				if (uid->uid && *uid->uid)
+					g_mime_certificate_set_user_id (signature->cert, uid->uid);
+				
+				if (signature->cert->name && signature->cert->email && signature->cert->user_id)
 					break;
 				
 				uid = uid->next;
