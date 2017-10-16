@@ -94,6 +94,7 @@ g_mime_certificate_init (GMimeCertificate *cert, GMimeCertificateClass *klass)
 	cert->keyid = NULL;
 	cert->email = NULL;
 	cert->name = NULL;
+	cert->user_id = NULL;
 }
 
 static void
@@ -107,6 +108,7 @@ g_mime_certificate_finalize (GObject *object)
 	g_free (cert->keyid);
 	g_free (cert->email);
 	g_free (cert->name);
+	g_free (cert->user_id);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -428,6 +430,40 @@ g_mime_certificate_get_name (GMimeCertificate *cert)
 	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
 	
 	return cert->name;
+}
+
+
+/**
+ * g_mime_certificate_set_user_id:
+ * @cert: a #GMimeCertificate
+ * @name: the full User ID for a certificate
+ *
+ * Set the certificate's User ID.
+ **/
+void
+g_mime_certificate_set_user_id (GMimeCertificate *cert, const char *user_id)
+{
+	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
+	
+	g_free (cert->user_id);
+	cert->user_id = g_strdup (user_id);
+}
+
+
+/**
+ * g_mime_certificate_get_user_id:
+ * @cert: a #GMimeCertificate
+ *
+ * Get the certificate's full User ID.
+ *
+ * Returns: the certificate's User ID or %NULL if unspecified.
+ **/
+const char *
+g_mime_certificate_get_user_id (GMimeCertificate *cert)
+{
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
+	
+	return cert->user_id;
 }
 
 

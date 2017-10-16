@@ -1407,6 +1407,8 @@ g_mime_certificate_get_email
 g_mime_certificate_set_email
 g_mime_certificate_get_name
 g_mime_certificate_set_name
+g_mime_certificate_get_user_id
+g_mime_certificate_set_user_id
 <SUBSECTION>
 GMimeCertificateList
 g_mime_certificate_list_new
