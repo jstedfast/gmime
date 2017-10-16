@@ -260,6 +260,44 @@ g_mime_gpgme_sign (gpgme_ctx_t ctx, gpgme_sig_mode_t mode, const char *userid,
 	return (GMimeDigestAlgo) result->signatures->hash_algo;
 }
 
+
+/* return TRUE iff a < b */
+static gboolean
+_gpgv_lt(gpgme_validity_t a, gpgme_validity_t b) {
+	switch (a) {
+	case GPGME_VALIDITY_NEVER:
+		return b != GPGME_VALIDITY_NEVER;
+	case GPGME_VALIDITY_UNKNOWN:
+	case GPGME_VALIDITY_UNDEFINED:
+		switch (b) {
+		case GPGME_VALIDITY_NEVER:
+		case GPGME_VALIDITY_UNKNOWN:
+		case GPGME_VALIDITY_UNDEFINED:
+			return FALSE;
+		default:
+			return TRUE;
+		}
+	case GPGME_VALIDITY_MARGINAL:
+		switch (b) {
+		case GPGME_VALIDITY_NEVER:
+		case GPGME_VALIDITY_UNKNOWN:
+		case GPGME_VALIDITY_UNDEFINED:
+		case GPGME_VALIDITY_MARGINAL:
+			return FALSE;
+		default:
+			return TRUE;
+		}
+	case GPGME_VALIDITY_FULL:
+		return b == GPGME_VALIDITY_ULTIMATE;
+	case GPGME_VALIDITY_ULTIMATE:
+		return FALSE;
+	default:
+		g_assert_not_reached();
+		return FALSE;
+	}
+}
+
+
 static GMimeSignatureList *
 g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 {
@@ -298,21 +336,34 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 			g_mime_certificate_set_issuer_serial (signature->cert, key->issuer_serial);
 			g_mime_certificate_set_issuer_name (signature->cert, key->issuer_name);
 			
-			/* get the name, email address, and full user id */
+			gpgme_validity_t validity = GPGME_VALIDITY_NEVER;
+			gboolean founduid = FALSE;
+ 			
+			/* get the most valid name, email address, and full user id */
 			uid = key->uids;
 			while (uid) {
-				if (uid->name && *uid->name)
-					g_mime_certificate_set_name (signature->cert, uid->name);
-				
-				if (uid->email && *uid->email)
-					g_mime_certificate_set_email (signature->cert, uid->email);
-				
-				if (uid->uid && *uid->uid)
-					g_mime_certificate_set_user_id (signature->cert, uid->uid);
-				
-				if (signature->cert->name && signature->cert->email && signature->cert->user_id)
-					break;
-				
+				if (!founduid || !_gpgv_lt (uid->validity, validity)) {
+					/* this is as good as the best UID we've found so far */
+					founduid = TRUE;
+					if (_gpgv_lt (validity, uid->validity)) {
+						/* this is actually better than the last best,
+						   so clear all the previously-found uids */
+						g_mime_certificate_set_name (signature->cert, NULL);
+						g_mime_certificate_set_email (signature->cert, NULL);
+						g_mime_certificate_set_user_id (signature->cert, NULL);
+					}
+					validity = uid->validity;
+
+					if (uid->name && *uid->name && !g_mime_certificate_get_name (signature->cert))
+						g_mime_certificate_set_name (signature->cert, uid->name);
+					
+					if (uid->email && *uid->email && !g_mime_certificate_get_email (signature->cert))
+						g_mime_certificate_set_email (signature->cert, uid->email);
+					
+					if (uid->uid && *uid->uid && !g_mime_certificate_get_user_id (signature->cert))
+						g_mime_certificate_set_user_id (signature->cert, uid->uid);
+					
+				}
 				uid = uid->next;
 			}
 			
