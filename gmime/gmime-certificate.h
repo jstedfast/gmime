@@ -196,6 +196,7 @@ typedef enum {
  * @email: The email address of the person or entity.
  * @name: The name of the person or entity.
  * @user_id: The full User ID of the certificate.
+ * @id_validity: the validity of the email address, name, and User ID.
  *
  * An object containing useful information about a certificate.
  **/
@@ -214,6 +215,7 @@ struct _GMimeCertificate {
 	char *email;
 	char *name;
 	char *user_id;
+	GMimeValidity id_validity;
 };
 
 struct _GMimeCertificateClass {
@@ -255,6 +257,9 @@ const char *g_mime_certificate_get_name (GMimeCertificate *cert);
 
 void g_mime_certificate_set_user_id (GMimeCertificate *cert, const char *user_id);
 const char *g_mime_certificate_get_user_id (GMimeCertificate *cert);
+
+void g_mime_certificate_set_id_validity (GMimeCertificate *cert, GMimeValidity validity);
+GMimeValidity g_mime_certificate_get_id_validity (GMimeCertificate *cert);
 
 void g_mime_certificate_set_created (GMimeCertificate *cert, time_t created);
 time_t g_mime_certificate_get_created (GMimeCertificate *cert);

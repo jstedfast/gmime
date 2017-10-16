@@ -95,6 +95,7 @@ g_mime_certificate_init (GMimeCertificate *cert, GMimeCertificateClass *klass)
 	cert->email = NULL;
 	cert->name = NULL;
 	cert->user_id = NULL;
+	cert->id_validity = GMIME_VALIDITY_UNKNOWN;
 }
 
 static void
@@ -484,6 +485,41 @@ g_mime_certificate_get_user_id (GMimeCertificate *cert)
 	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
 	
 	return cert->user_id;
+}
+
+
+/**
+ * g_mime_certificate_set_id_validity:
+ * @cert: a #GMimeCertificate
+ * @validity: a #GMimeValidity representing the validity of the certificate's identity information.
+ *
+ * Set the validity associated with the certificate's name, email, and user_id.
+ **/
+void
+g_mime_certificate_set_id_validity (GMimeCertificate *cert, GMimeValidity validity)
+{
+	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
+	
+	cert->id_validity = validity;
+}
+
+
+/**
+ * g_mime_certificate_get_id_validity:
+ * @cert: a #GMimeCertificate
+ *
+ * Get the validity of the certificate's identity information.  This
+ * validity applies to the name, email, and user_id fields associated
+ * with the certificate.
+ *
+ * Returns: the identity validity of the certificate.
+ **/
+GMimeValidity
+g_mime_certificate_get_id_validity (GMimeCertificate *cert)
+{
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), GMIME_VALIDITY_UNKNOWN);
+	
+	return cert->id_validity;
 }
 
 
