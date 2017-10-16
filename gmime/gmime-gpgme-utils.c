@@ -366,6 +366,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 				}
 				uid = uid->next;
 			}
+			g_mime_certificate_set_id_validity (signature->cert, (GMimeValidity)(validity));
 			
 			/* get the subkey used for signing */
 			subkey = key->subkeys;
