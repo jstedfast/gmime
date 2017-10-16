@@ -94,6 +94,8 @@ g_mime_certificate_init (GMimeCertificate *cert, GMimeCertificateClass *klass)
 	cert->keyid = NULL;
 	cert->email = NULL;
 	cert->name = NULL;
+	cert->user_id = NULL;
+	cert->id_validity = GMIME_VALIDITY_UNKNOWN;
 }
 
 static void
@@ -107,6 +109,7 @@ g_mime_certificate_finalize (GObject *object)
 	g_free (cert->keyid);
 	g_free (cert->email);
 	g_free (cert->name);
+	g_free (cert->user_id);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -368,7 +371,8 @@ g_mime_certificate_get_key_id (GMimeCertificate *cert)
  * @cert: a #GMimeCertificate
  * @email: certificate's email
  *
- * Set the certificate's email.
+ * Set the email address associated with the
+ * certificate. (e.g. "jane\@example.org")
  **/
 void
 g_mime_certificate_set_email (GMimeCertificate *cert, const char *email)
@@ -384,9 +388,14 @@ g_mime_certificate_set_email (GMimeCertificate *cert, const char *email)
  * g_mime_certificate_get_email:
  * @cert: a #GMimeCertificate
  *
- * Get the certificate's email.
+ * Get the email address associated with the certificate.  If the
+ * certificate contains more than one email address with different
+ * validities, the email address with the highest validity is
+ * returned.  If more than one email address appears in the
+ * certificate with the same (highest) validity, the first such email
+ * address will be returned.
  *
- * Returns: the certificate's email or %NULL if unspecified.
+ * Returns: the relevant e-mail address, or %NULL if unspecified.
  **/
 const char *
 g_mime_certificate_get_email (GMimeCertificate *cert)
@@ -402,7 +411,9 @@ g_mime_certificate_get_email (GMimeCertificate *cert)
  * @cert: a #GMimeCertificate
  * @name: certificate's name
  *
- * Set the certificate's name.
+ * Set the name associated with the certificate.  For email
+ * certificates, this is usually the name of the person who controls
+ * the certificate (encoded in UTF-8). (e.g. "Jane Doe")
  **/
 void
 g_mime_certificate_set_name (GMimeCertificate *cert, const char *name)
@@ -418,9 +429,15 @@ g_mime_certificate_set_name (GMimeCertificate *cert, const char *name)
  * g_mime_certificate_get_name:
  * @cert: a #GMimeCertificate
  *
- * Get the certificate's name.
+ * Get the name associated with the certificate.  For email
+ * certificates, this is usually the name of the person who controls
+ * the certificate (encoded in UTF-8).  If the certificate contains
+ * more than one name with different validities, the name with the
+ * highest validity is returned.  If more than one name appears in the
+ * certificate with the same (highest) validity, the first such name
+ * will be returned.
  *
- * Returns: the certificate's name or %NULL if unspecified.
+ * Returns: the the relevant name or %NULL if unspecified.
  **/
 const char *
 g_mime_certificate_get_name (GMimeCertificate *cert)
@@ -428,6 +445,81 @@ g_mime_certificate_get_name (GMimeCertificate *cert)
 	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
 	
 	return cert->name;
+}
+
+
+/**
+ * g_mime_certificate_set_user_id:
+ * @cert: a #GMimeCertificate
+ * @name: the full User ID for a certificate
+ *
+ * Set the certificate's full User ID.  By convention, this is usually
+ * a mail name-addr as described in RFC 5322.  (e.g. "Jane Doe
+ * &lt;jane\@example.org&gt;")
+ **/
+void
+g_mime_certificate_set_user_id (GMimeCertificate *cert, const char *user_id)
+{
+	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
+	
+	g_free (cert->user_id);
+	cert->user_id = g_strdup (user_id);
+}
+
+
+/**
+ * g_mime_certificate_get_user_id:
+ * @cert: a #GMimeCertificate
+ *
+ * Get the certificate's full User ID.  If the certificate contains
+ * more than one User ID with different validities, the User ID with
+ * the highest validity is returned.  If more than one User ID appears
+ * in the certificate with the same (highest) validity, the first such
+ * User ID will be returned.
+ *
+ * Returns: the relevant User ID or %NULL if unspecified.
+ **/
+const char *
+g_mime_certificate_get_user_id (GMimeCertificate *cert)
+{
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
+	
+	return cert->user_id;
+}
+
+
+/**
+ * g_mime_certificate_set_id_validity:
+ * @cert: a #GMimeCertificate
+ * @validity: a #GMimeValidity representing the validity of the certificate's identity information.
+ *
+ * Set the validity associated with the certificate's name, email, and user_id.
+ **/
+void
+g_mime_certificate_set_id_validity (GMimeCertificate *cert, GMimeValidity validity)
+{
+	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
+	
+	cert->id_validity = validity;
+}
+
+
+/**
+ * g_mime_certificate_get_id_validity:
+ * @cert: a #GMimeCertificate
+ *
+ * Get the validity of the certificate's identity information.  This
+ * validity applies to the name, email, and user_id fields associated
+ * with the certificate.
+ *
+ * Returns: the identity validity of the certificate.
+ **/
+GMimeValidity
+g_mime_certificate_get_id_validity (GMimeCertificate *cert)
+{
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), GMIME_VALIDITY_UNKNOWN);
+	
+	return cert->id_validity;
 }
 
 

@@ -1383,6 +1383,7 @@ g_mime_iconv_locale_to_utf8_length
 GMimePubKeyAlgo
 GMimeDigestAlgo
 GMimeTrust
+GMimeValidity
 GMimeCertificate
 g_mime_certificate_new
 g_mime_certificate_get_pubkey_algo
@@ -1407,6 +1408,10 @@ g_mime_certificate_get_email
 g_mime_certificate_set_email
 g_mime_certificate_get_name
 g_mime_certificate_set_name
+g_mime_certificate_get_user_id
+g_mime_certificate_set_user_id
+g_mime_certificate_get_id_validity
+g_mime_certificate_set_id_validity
 <SUBSECTION>
 GMimeCertificateList
 g_mime_certificate_list_new

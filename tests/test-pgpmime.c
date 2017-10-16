@@ -92,6 +92,7 @@ print_verify_results (GMimeSignatureList *signatures)
 		
 		fprintf (stdout, "\tName: %s\n", sig->cert->name ? sig->cert->name : "(null)");
 		fprintf (stdout, "\tKeyId: %s\n", sig->cert->keyid ? sig->cert->keyid : "(null)");
+		fprintf (stdout, "\tUserID: %s\n", sig->cert->user_id ? sig->cert->user_id : "(null)");
 		fprintf (stdout, "\tFingerprint: %s\n", sig->cert->fingerprint ? sig->cert->fingerprint : "(null)");
 		fprintf (stdout, "\tTrust: ");
 		
@@ -721,28 +722,28 @@ int main (int argc, char *argv[])
 	
 	g_free (session_key);
 	
-	testsuite_check ("rfc2440 sign");
+	testsuite_check ("rfc4880 sign");
 	try {
 		test_openpgp_sign ();
 		testsuite_check_passed ();
 	} catch (ex) {
-		testsuite_check_failed ("rfc2440 sign failed: %s", ex->message);
+		testsuite_check_failed ("rfc4880 sign failed: %s", ex->message);
 	} finally;
 	
-	testsuite_check ("rfc2440 encrypt");
+	testsuite_check ("rfc4880 encrypt");
 	try {
 		test_openpgp_encrypt (FALSE);
 		testsuite_check_passed ();
 	} catch (ex) {
-		testsuite_check_failed ("rfc2440 encrypt failed: %s", ex->message);
+		testsuite_check_failed ("rfc4880 encrypt failed: %s", ex->message);
 	} finally;
 	
-	testsuite_check ("rfc2440 sign+encrypt");
+	testsuite_check ("rfc4880 sign+encrypt");
 	try {
 		test_openpgp_encrypt (TRUE);
 		testsuite_check_passed ();
 	} catch (ex) {
-		testsuite_check_failed ("rfc2440 sign+encrypt failed: %s", ex->message);
+		testsuite_check_failed ("rfc4880 sign+encrypt failed: %s", ex->message);
 	} finally;
 	
 	g_object_unref (ctx);

@@ -94,6 +94,7 @@ print_verify_results (GMimeSignatureList *signatures)
 		
 		fprintf (stdout, "\tName: %s\n", sig->cert->name ? sig->cert->name : "(null)");
 		fprintf (stdout, "\tKeyId: %s\n", sig->cert->keyid ? sig->cert->keyid : "(null)");
+		fprintf (stdout, "\tUserID: %s\n", sig->cert->user_id ? sig->cert->user_id : "(null)");
 		fprintf (stdout, "\tFingerprint: %s\n", sig->cert->fingerprint ? sig->cert->fingerprint : "(null)");
 		fprintf (stdout, "\tTrust: ");
 		
