@@ -290,6 +290,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 		g_mime_certificate_set_pubkey_algo (signature->cert, (GMimePubKeyAlgo) sig->pubkey_algo);
 		g_mime_certificate_set_digest_algo (signature->cert, (GMimeDigestAlgo) sig->hash_algo);
 		g_mime_certificate_set_fingerprint (signature->cert, sig->fpr);
+		g_mime_certificate_set_key_id (signature->cert, sig->fpr);
 		
 		if (gpgme_get_key (ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
 			/* get more signer info from their signing key */
@@ -297,7 +298,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 			g_mime_certificate_set_issuer_serial (signature->cert, key->issuer_serial);
 			g_mime_certificate_set_issuer_name (signature->cert, key->issuer_name);
 			
-			/* get the keyid, name, and email address */
+			/* get the name and email address */
 			uid = key->uids;
 			while (uid) {
 				if (uid->name && *uid->name)
@@ -306,10 +307,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 				if (uid->email && *uid->email)
 					g_mime_certificate_set_email (signature->cert, uid->email);
 				
-				if (uid->uid && *uid->uid)
-					g_mime_certificate_set_key_id (signature->cert, uid->uid);
-				
-				if (signature->cert->name && signature->cert->email && signature->cert->keyid)
+				if (signature->cert->name && signature->cert->email)
 					break;
 				
 				uid = uid->next;
