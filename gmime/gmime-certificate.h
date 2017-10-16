@@ -121,14 +121,22 @@ typedef enum {
 
 /**
  * GMimeTrust:
- * @GMIME_TRUST_UNKNOWN: The certificate or key is of unknown validity.
- * @GMIME_TRUST_UNDEFINED: The validity of the certificate or key is undefined.
- * @GMIME_TRUST_NEVER: The certificate or key should never be treated as valid.
- * @GMIME_TRUST_MARGINAL: The certificate or key is marginally valid.
- * @GMIME_TRUST_FULL: The certificate or key is fully valid.
- * @GMIME_TRUST_ULTIMATE: The certificate or key is ultimately valid.
+ * @GMIME_TRUST_UNKNOWN: We do not know whether to rely on identity assertions made by the certificate.
+ * @GMIME_TRUST_UNDEFINED: We do not have enough information to decide whether to rely on identity assertions made by the certificate.
+ * @GMIME_TRUST_NEVER: We should never rely on identity assertions made by the certificate.
+ * @GMIME_TRUST_MARGINAL: We can rely on identity assertions made by this certificate as long as they are corroborated by other marginally-trusted certificates.
+ * @GMIME_TRUST_FULL: We can rely on identity assertions made by this certificate.
+ * @GMIME_TRUST_ULTIMATE: This certificate is an undeniable root of trust (e.g. normally, this is a certificate controlled by the user themselves).
  *
- * The trust level of a certificate or key.
+ * The trust level of a certificate.  Trust level tries to answer the
+ * question: "How much is the user willing to rely on cryptographic
+ * identity assertions made by the owner of this certificate?"
+ * 
+ * By way of comparison with web browser X.509 certificate validation
+ * stacks, the certificate of a "Root CA" has @GMIME_TRUST_ULTIMATE,
+ * while the certificate of an intermediate CA has @GMIME_TRUST_FULL,
+ * and an end-entity certificate (e.g., with CA:FALSE set) would have
+ * @GMIME_TRUST_NEVER.
  **/
 typedef enum {
 	GMIME_TRUST_UNKNOWN   = 0,
@@ -138,6 +146,40 @@ typedef enum {
 	GMIME_TRUST_FULL      = 4,
 	GMIME_TRUST_ULTIMATE  = 5
 } GMimeTrust;
+
+/**
+ * GMimeValidity:
+ * @GMIME_VALIDITY_UNKNOWN: The User ID of the certificate is of unknown validity.
+ * @GMIME_VALIDITY_UNDEFINED: The User ID of the certificate is undefined.
+ * @GMIME_VALIDITY_NEVER: The User ID of the certificate is never to be treated as valid.
+ * @GMIME_VALIDITY_MARGINAL: The User ID of the certificate is marginally valid (e.g. it has been certified by only one marginally-trusted party).
+ * @GMIME_VALIDITY_FULL: The User ID of the certificate is fully valid.
+ * @GMIME_VALIDITY_ULTIMATE: The User ID of the certificate is ultimately valid (i.e., usually the certificate belongs to the local user themselves).
+ *
+ * The validity level of a certificate's User ID.  Validity level
+ * tries to answer the question: "How strongly do we believe that this
+ * certificate belongs to the party it says it belongs to?"
+ *
+ * Note that some OpenPGP certificates have multiple User IDs, and
+ * each User ID may have a different validity level (e.g. depending on
+ * which third parties have certified which User IDs, and which third
+ * parties the local user has chosen to trust).
+ *
+ * Similarly, an X.509 certificate can have multiple SubjectAltNames,
+ * and each name may also have a different validity level (e.g. if the
+ * issuing CA is bound by name constraints).
+ *
+ * Note that the GMime API currently only exposes the highest-validty
+ * User ID for any given certificate.
+ **/
+typedef enum {
+	GMIME_VALIDITY_UNKNOWN   = 0,
+	GMIME_VALIDITY_UNDEFINED = 1,
+	GMIME_VALIDITY_NEVER     = 2,
+	GMIME_VALIDITY_MARGINAL  = 3,
+	GMIME_VALIDITY_FULL      = 4,
+	GMIME_VALIDITY_ULTIMATE  = 5
+} GMimeValidity;
 
 /**
  * GMimeCertificate:

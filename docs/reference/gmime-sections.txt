@@ -1383,6 +1383,7 @@ g_mime_iconv_locale_to_utf8_length
 GMimePubKeyAlgo
 GMimeDigestAlgo
 GMimeTrust
+GMimeValidity
 GMimeCertificate
 g_mime_certificate_new
 g_mime_certificate_get_pubkey_algo
