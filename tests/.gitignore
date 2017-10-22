@@ -4,6 +4,7 @@ Makefile
 .libs/
 *.lo
 *.o
+test-autocrypt
 test-best
 test-cat
 test-headers

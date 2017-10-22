@@ -16,6 +16,7 @@ AUTOMATED_TESTS =	\
 	test-headers	\
 	test-partial	\
 	test-mbox	\
+	test-autocrypt	\
 	test-mime
 
 if ENABLE_CRYPTO
@@ -44,6 +45,11 @@ test_best_SOURCES = test-best.c
 test_best_LDFLAGS = 
 test_best_DEPENDENCIES = $(DEPS)
 test_best_LDADD = $(LDADDS)
+
+test_autocrypt_SOURCES = test-autocrypt.c testsuite.c testsuite.h
+test_autocrypt_LDFLAGS = 
+test_autocrypt_DEPENDENCIES = $(DEPS)
+test_autocrypt_LDADD = $(LDADDS)
 
 test_mime_SOURCES = test-mime.c testsuite.c testsuite.h
 test_mime_LDFLAGS = 
