@@ -36,8 +36,19 @@ G_BEGIN_DECLS
 #define GMIME_IS_AUTOCRYPT_HEADER_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_AUTOCRYPT_HEADER))
 #define GMIME_AUTOCRYPT_HEADER_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_AUTOCRYPT_HEADER, GMimeAutocryptHeaderClass))
 
+
+#define GMIME_TYPE_AUTOCRYPT_HEADER_LIST             (g_mime_autocrypt_header_list_get_type ())
+#define GMIME_AUTOCRYPT_HEADER_LIST(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_AUTOCRYPT_HEADER_LIST, GMimeAutocryptHeaderList))
+#define GMIME_AUTOCRYPT_HEADER_LIST_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_AUTOCRYPT_HEADER_LIST, GMimeAutocryptHeaderListClass))
+#define GMIME_IS_AUTOCRYPT_HEADER_LIST(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_AUTOCRYPT_HEADER_LIST))
+#define GMIME_IS_AUTOCRYPT_HEADER_LIST_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_AUTOCRYPT_HEADER_LIST))
+#define GMIME_AUTOCRYPT_HEADER_LIST_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_AUTOCRYPT_HEADER_LIST, GMimeAutocryptHeaderListClass))
+
 typedef struct _GMimeAutocryptHeader GMimeAutocryptHeader;
 typedef struct _GMimeAutocryptHeaderClass GMimeAutocryptHeaderClass;
+
+typedef struct _GMimeAutocryptHeaderList GMimeAutocryptHeaderList;
+typedef struct _GMimeAutocryptHeaderListClass GMimeAutocryptHeaderListClass;
 
 /**
  * GMimeAutocryptPreferEncrypt:
@@ -106,6 +117,36 @@ gboolean g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah);
 
 int g_mime_autocrypt_header_compare (GMimeAutocryptHeader *ah1, GMimeAutocryptHeader *ah2);
 void g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHeader *src);
+
+
+/**
+ * GMimeAutocryptHeaderList:
+ *
+ * A list of Autocrypt headers, typically extracted from a GMimeMessage.
+ **/
+struct _GMimeAutocryptHeaderList {
+	GObject parent_object;
+	
+	/* < private > */
+	GPtrArray *array;
+};
+
+struct _GMimeAutocryptHeaderListClass {
+	GObjectClass parent_class;
+	
+};
+
+GType g_mime_autocrypt_header_list_get_type (void);
+
+GMimeAutocryptHeaderList *g_mime_autocrypt_header_list_new ();
+guint g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *ahl, InternetAddressList *list);
+void g_mime_autocrypt_header_list_add (GMimeAutocryptHeaderList *ahl, GMimeAutocryptHeader *ah);
+
+guint g_mime_autocrypt_header_list_get_count (GMimeAutocryptHeaderList *acheaders);
+GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *acheaders, guint n);
+GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_for_address (GMimeAutocryptHeaderList *acheaders, InternetAddressMailbox *addr);
+void g_mime_autocrypt_header_list_remove_incomplete (GMimeAutocryptHeaderList *acheaders);
+
 
 G_END_DECLS
 
