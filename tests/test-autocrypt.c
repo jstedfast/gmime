@@ -48,29 +48,46 @@ _gen_header (const struct _ah_gen_test *t)
 {
 	GMimeAutocryptHeader *ah = NULL;
 	GByteArray *keydata = NULL;
-	try {
-		if (!(ah = g_mime_autocrypt_header_new()))
-			throw (exception_new ("failed to make a new header"));
-		if (t->keydatacount)
-			if (!(keydata = g_byte_array_new_take (g_strnfill (t->keydatacount, t->keybyte), t->keydatacount)))
-				throw (exception_new ("failed to make a new keydata"));
-		g_mime_autocrypt_header_set_address_from_string (ah, t->addr);
-		g_mime_autocrypt_header_set_keydata (ah, keydata);
-		if (t->timestamp) {
-			GDateTime *ts = g_date_time_new_from_unix_utc (t->timestamp);
-			g_mime_autocrypt_header_set_effective_date (ah, ts);
-			g_date_time_unref (ts);
-		}
-	} catch (ex) {
-		if (keydata)
-			g_byte_array_unref (keydata);
-		if (ah)
+	if (!(ah = g_mime_autocrypt_header_new())) {
+		fprintf (stderr, "failed to make a new header");
+		return NULL;
+	}
+	if (t->keydatacount)
+		if (!(keydata = g_byte_array_new_take (g_strnfill (t->keydatacount, t->keybyte), t->keydatacount))) {
+			fprintf (stderr, "failed to make a new keydata");
 			g_object_unref (ah);
-		throw (ex);
-	} finally;
+			return NULL;
+		}
+	g_mime_autocrypt_header_set_address_from_string (ah, t->addr);
+	g_mime_autocrypt_header_set_keydata (ah, keydata);
+	if (t->timestamp) {
+		GDateTime *ts = g_date_time_new_from_unix_utc (t->timestamp);
+		g_mime_autocrypt_header_set_effective_date (ah, ts);
+		g_date_time_unref (ts);
+	}
+	if (keydata)
+		g_byte_array_unref (keydata);
 	return ah;
 }
-	
+
+/* generates a header list based on a series with an addr=NULL sentinel value */
+static GMimeAutocryptHeaderList*
+_gen_header_list (const struct _ah_gen_test *tests)
+{
+	GMimeAutocryptHeaderList *ret = g_mime_autocrypt_header_list_new ();
+	for (; tests->addr; tests++) {
+		GMimeAutocryptHeader *ah = _gen_header (tests);
+		if (!ah) {
+			fprintf (stderr, "failed to generate header <%s>", tests->addr);
+			g_object_unref (ret);
+			return NULL;
+		}
+		g_mime_autocrypt_header_list_add (ret, ah);
+		g_object_unref (ah);
+	}
+	return ret;
+}
+
 const static struct _ah_gen_test gen_test_data[] = {
 	{ .addr = "test@example.org",
 	  .keydatacount = 102,
@@ -121,6 +138,107 @@ test_ah_generation (void)
 	}
 }
 
+
+struct _ah_parse_test {
+	const char *name;
+	const struct _ah_gen_test *acheaders;
+	const char *msg;
+};
+
+const static struct _ah_gen_test alice_addr[] = {
+	{ .addr = "alice@example.org",
+	  .keydatacount = 102,
+	  .timestamp = 1508774054,
+	  .keybyte = '\013' },
+	{ .addr = NULL }, /* sentinel */
+};
+
+const static struct _ah_parse_test parse_test_data[] = {
+	{ .name = "simple",
+	  .acheaders = alice_addr,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <lovely-day@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Isn't it a lovely day?\r\n",
+	},
+};
+
+
+/* returns a non-NULL error if they're not the same */
+char *
+_acheaderlists_compare (GMimeAutocryptHeaderList *expected, GMimeAutocryptHeaderList *got)
+{
+	if (g_mime_autocrypt_header_list_get_count (expected) != g_mime_autocrypt_header_list_get_count (got))
+		return g_strdup_printf ("header counts: expected: %d, got: %d",
+					g_mime_autocrypt_header_list_get_count (expected),
+					g_mime_autocrypt_header_list_get_count (got));
+
+	guint ai;
+	for (ai = 0; ai < g_mime_autocrypt_header_list_get_count (expected); ai++) {
+		GMimeAutocryptHeader *ahe = g_mime_autocrypt_header_list_get_header_at (expected, ai);
+		GMimeAutocryptHeader *ahg = g_mime_autocrypt_header_list_get_header_for_address (got, g_mime_autocrypt_header_get_address (ahe));
+		gint cmp = g_mime_autocrypt_header_compare (ahe, ahg);
+		if (cmp) {
+			char *e = g_mime_autocrypt_header_get_string (ahe);
+			char *g = g_mime_autocrypt_header_get_string (ahg);
+			char *ret = g_strdup_printf ("comparing <%s> got cmp = %d \nexpected: \n%s\n\ngot:\n%s\n",
+						     g_mime_autocrypt_header_get_address (ahe), cmp, e, g);
+			g_free(e);
+			g_free(g);
+			return ret;
+		}
+	}
+	return NULL;
+}
+
+static void
+test_ah_message_parse (void)
+{
+	guint i;
+	for (i = 0; i < G_N_ELEMENTS (parse_test_data); i++) {
+		GMimeAutocryptHeaderList *ahl_expected = NULL;
+		GMimeAutocryptHeaderList *ahl_got = NULL;
+		GMimeMessage *message = NULL;
+		const struct _ah_parse_test *test = parse_test_data + i;
+		try {
+			testsuite_check ("Autocrypt message[%u] (%s)", i, test->name);
+
+			ahl_expected = _gen_header_list (test->acheaders);
+
+			/* make GMimeMessage from test->msg */
+			GMimeStream *stream = g_mime_stream_mem_new_with_buffer (test->msg, strlen(test->msg));
+			GMimeParser *parser = g_mime_parser_new_with_stream (stream);
+			message = g_mime_parser_construct_message (parser, NULL);
+			g_object_unref (parser);
+			g_object_unref (stream);
+
+			ahl_got = g_mime_message_get_autocrypt_headers (message, 1, NULL);
+			if (!ahl_got)
+				throw (exception_new ("failed to extract headers from message!"));
+			gchar *err = NULL;
+			err = _acheaderlists_compare (ahl_expected, ahl_got);
+			if (err)
+				throw (exception_new ("sender headers: %s", err));
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("autocrypt message parse[%u] (%s) failed: %s", i, test->name, ex->message);
+		} finally;
+		if (ahl_expected)
+			g_object_unref (ahl_expected);
+		if (ahl_got)
+			g_object_unref (ahl_got);
+	}
+}
+
+
 int main (int argc, char **argv)
 {
 	g_mime_init ();
@@ -129,6 +247,10 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("Autocrypt: generate headers");
 	test_ah_generation ();
+	testsuite_end ();
+	
+	testsuite_start ("Autocrypt: parse messages");
+	test_ah_message_parse ();
 	testsuite_end ();
 	
 	g_mime_shutdown ();
