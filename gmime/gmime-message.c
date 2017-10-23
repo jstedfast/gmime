@@ -1184,6 +1184,11 @@ g_mime_message_get_body (GMimeMessage *message)
 }
 
 
+static GMimeAutocryptHeaderList *
+_get_autocrypt_headers (GMimeMessage *message, gint actype, GDateTime *now, const char *matchheader,
+			InternetAddressList *addresses, gboolean keep_incomplete);
+
+
 /**
  * g_mime_message_get_autocrypt_headers:
  * @message: a #GMimeMessage object.
@@ -1224,14 +1229,20 @@ g_mime_message_get_body (GMimeMessage *message)
 GMimeAutocryptHeaderList *
 g_mime_message_get_autocrypt_headers (GMimeMessage *message, gint actype, GDateTime *now)
 {
+	return _get_autocrypt_headers (message, actype, now, "autocrypt", message->addrlists[GMIME_ADDRESS_TYPE_FROM], TRUE);
+}
+
+		
+static GMimeAutocryptHeaderList *
+_get_autocrypt_headers (GMimeMessage *message, gint actype, GDateTime *now, const char *matchheader,
+			InternetAddressList *addresses, gboolean keep_incomplete)
+{
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	if (actype != 1)
 		return NULL;
-	
+
 	GMimeObject *mime_part = GMIME_OBJECT (message);
 	int i;
-
-	InternetAddressList *addresses = message->addrlists[GMIME_ADDRESS_TYPE_FROM];
 
 	GMimeAutocryptHeaderList *ret = g_mime_autocrypt_header_list_new ();
 	guint count = g_mime_autocrypt_header_list_add_missing_addresses (ret, addresses);
@@ -1245,7 +1256,7 @@ g_mime_message_get_autocrypt_headers (GMimeMessage *message, gint actype, GDateT
 	GMimeHeaderList *headers = g_mime_object_get_header_list(mime_part);
 	for (i = 0; i < g_mime_header_list_get_count (headers); i++) {
 		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
-		if (g_ascii_strcasecmp ("autocrypt", header->name) == 0) {
+		if (g_ascii_strcasecmp (matchheader, header->name) == 0) {
 			GMimeAutocryptHeader *ah = g_mime_autocrypt_header_new_from_string (g_mime_header_get_value (header));
 			if (!ah || ah->actype != actype || ! g_mime_autocrypt_header_is_complete (ah))
 				goto done;
@@ -1279,6 +1290,9 @@ g_mime_message_get_autocrypt_headers (GMimeMessage *message, gint actype, GDateT
 			ah->actype = actype;
 		}
 	}
+
+	if (!keep_incomplete)
+		g_mime_autocrypt_header_list_remove_incomplete (ret);
 	if (newnow)
 		g_date_time_unref (newnow);
 	return ret;
