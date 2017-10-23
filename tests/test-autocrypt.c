@@ -98,6 +98,10 @@ const static struct _ah_gen_test gen_test_data[] = {
 	}
 };
 
+const static struct _ah_gen_test no_addrs[] = {
+	{ .addr = NULL }, /* sentinel */
+};
+
 
 static void
 test_ah_generation (void)
@@ -142,6 +146,7 @@ test_ah_generation (void)
 struct _ah_parse_test {
 	const char *name;
 	const struct _ah_gen_test *acheaders;
+	const struct _ah_gen_test *gossipheaders;
 	const char *msg;
 };
 
@@ -153,9 +158,18 @@ const static struct _ah_gen_test alice_addr[] = {
 	{ .addr = NULL }, /* sentinel */
 };
 
+const static struct _ah_gen_test bob_addr[] = {
+	{ .addr = "bob@example.org",
+	  .keydatacount = 99,
+	  .timestamp = 1508774054,
+	  .keybyte = '\133' },
+	{ .addr = NULL }, /* sentinel */
+};
+
 const static struct _ah_parse_test parse_test_data[] = {
 	{ .name = "simple",
 	  .acheaders = alice_addr,
+	  .gossipheaders = no_addrs,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -168,6 +182,49 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "Content-Type: text/plain\r\n"
 	  "\r\n"
 	  "Isn't it a lovely day?\r\n",
+	},
+	
+	{ .name = "simple+gossip",
+	  .acheaders = alice_addr,
+	  .gossipheaders = bob_addr,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org, carol@example.org\r\n"
+	  "Subject: A gossipy lovely day\r\n"
+	  "Message-Id: <lovely-gossip-day@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Autocrypt-Gossip: addr=bob@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Isn't a lovely day?  Now Carol can encrypt to Bob, hopefully.\r\n",
+	},
+	
+	{ .name = "simple+badgossip",
+	  .acheaders = alice_addr,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org, carol@example.org\r\n"
+	  "Subject: A gossipy lovely day\r\n"
+	  "Message-Id: <lovely-badgossip-day@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Autocrypt-Gossip: addr=borb@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  "Autocrypt: addr=bob@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "There are at least two headers here which will be ignored.\r\n",
 	},
 };
 
@@ -206,12 +263,15 @@ test_ah_message_parse (void)
 	for (i = 0; i < G_N_ELEMENTS (parse_test_data); i++) {
 		GMimeAutocryptHeaderList *ahl_expected = NULL;
 		GMimeAutocryptHeaderList *ahl_got = NULL;
+		GMimeAutocryptHeaderList *gossip_expected = NULL;
+		GMimeAutocryptHeaderList *gossip_got = NULL;
 		GMimeMessage *message = NULL;
 		const struct _ah_parse_test *test = parse_test_data + i;
 		try {
 			testsuite_check ("Autocrypt message[%u] (%s)", i, test->name);
 
 			ahl_expected = _gen_header_list (test->acheaders);
+			gossip_expected = _gen_header_list (test->gossipheaders);
 
 			/* make GMimeMessage from test->msg */
 			GMimeStream *stream = g_mime_stream_mem_new_with_buffer (test->msg, strlen(test->msg));
@@ -223,10 +283,16 @@ test_ah_message_parse (void)
 			ahl_got = g_mime_message_get_autocrypt_headers (message, 1, NULL);
 			if (!ahl_got)
 				throw (exception_new ("failed to extract headers from message!"));
+			gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, 1, NULL);
+			if (!gossip_got)
+				throw (exception_new ("failed to extract gossip headers from message!"));
 			gchar *err = NULL;
 			err = _acheaderlists_compare (ahl_expected, ahl_got);
 			if (err)
 				throw (exception_new ("sender headers: %s", err));
+			err = _acheaderlists_compare (gossip_expected, gossip_got);
+			if (err)
+				throw (exception_new ("gossip headers: %s", err));
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("autocrypt message parse[%u] (%s) failed: %s", i, test->name, ex->message);
@@ -235,6 +301,10 @@ test_ah_message_parse (void)
 			g_object_unref (ahl_expected);
 		if (ahl_got)
 			g_object_unref (ahl_got);
+		if (gossip_expected)
+			g_object_unref (gossip_expected);
+		if (gossip_got)
+			g_object_unref (gossip_got);
 	}
 }
 
