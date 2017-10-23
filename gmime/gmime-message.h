@@ -30,6 +30,7 @@
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-header.h>
 #include <gmime/gmime-stream.h>
+#include <gmime/gmime-autocrypt.h>
 
 G_BEGIN_DECLS
 
@@ -121,6 +122,8 @@ const char *g_mime_message_get_message_id (GMimeMessage *message);
 
 GMimeObject *g_mime_message_get_mime_part (GMimeMessage *message);
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
+
+GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_headers (GMimeMessage *part, gint actype, GDateTime *now);
 
 /* convenience functions */
 
