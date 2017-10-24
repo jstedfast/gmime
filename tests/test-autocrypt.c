@@ -158,6 +158,13 @@ const static struct _ah_gen_test alice_addr[] = {
 	{ .addr = NULL }, /* sentinel */
 };
 
+const static struct _ah_gen_test alice_incomplete[] = {
+	{ .addr = "alice@example.org",
+	  .timestamp = 1508774054,
+	},
+	{ .addr = NULL }, /* sentinel */
+};
+
 const static struct _ah_gen_test bob_addr[] = {
 	{ .addr = "bob@example.org",
 	  .keydatacount = 99,
@@ -225,6 +232,97 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "Content-Type: text/plain\r\n"
 	  "\r\n"
 	  "There are at least two headers here which will be ignored.\r\n",
+	},
+	
+	{ .name = "duplicate",
+	  .acheaders = alice_incomplete,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <duplicated-headers@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Duplicate Autocrypt headers should cause none to match?\r\n",
+	},
+	
+	{ .name = "unknown type",
+	  .acheaders = alice_incomplete,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <unknown-type@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; type=1532633; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Unknown Autocrypt type value should cause nothing to match\r\n",
+	},
+	
+	{ .name = "unknown type + type1",
+	  .acheaders = alice_addr,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <unknown-type+type1@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Autocrypt: addr=alice@example.org; type=1532633; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Unknown Autocrypt type value should cause nothing to match but should not block type=1\r\n",
+	},
+	
+	{ .name = "unrecognized critical attribute",
+	  .acheaders = alice_incomplete,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <unknown-critical-attribute@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; emergency=true; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "An unrecognized attribute that does not start with _ is critical and should not cause a match\r\n",
+	},
+	
+	{ .name = "unrecognized non-critical attribute",
+	  .acheaders = alice_addr,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <unknown-critical-attribute@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; _not_an_emergency=true; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "An unrecognized attribute that does not start with _ is critical and should not cause a match\r\n",
 	},
 };
 
