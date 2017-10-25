@@ -62,6 +62,7 @@
 <!ENTITY GMimeCryptoContext SYSTEM "xml/gmime-crypto-context.xml">
 <!ENTITY GMimeGpgContext SYSTEM "xml/gmime-gpg-context.xml">
 <!ENTITY GMimePkcs7Context SYSTEM "xml/gmime-pkcs7-context.xml">
+<!ENTITY GMimeAutocrypt SYSTEM "xml/gmime-autocrypt.xml">
 
 <!ENTITY index-Class-Tree SYSTEM "tree_index.sgml">
 
