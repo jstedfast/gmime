@@ -295,13 +295,6 @@ decode_int (const char *in, size_t inlen)
 	inptr = in;
 	inend = in + inlen;
 	
-	if (*inptr == '-') {
-		sign = -1;
-		inptr++;
-	} else if (*inptr == '+') {
-		inptr++;
-	}
-	
 	while (inptr < inend) {
 		if (!(*inptr >= '0' && *inptr <= '9'))
 			return -1;
@@ -310,8 +303,6 @@ decode_int (const char *in, size_t inlen)
 		val = (val * 10) + (*inptr - '0');
 		inptr++;
 	}
-	
-	val *= sign;
 	
 	return val;
 }
@@ -473,7 +464,7 @@ get_tzone (date_token **token)
 			continue;
 		
 		if (len == 5 && (*inptr == '+' || *inptr == '-')) {
-			if ((value = decode_int (inptr, len)) == -1)
+			if ((value = decode_int (inptr + 1, len - 1)) == -1)
 				return NULL;
 			
 			memcpy (tzone, inptr, len);
