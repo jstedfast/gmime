@@ -36,7 +36,6 @@
 #include "gmime-common.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-filter.h"
-#include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-internal.h"
 #include "gmime-events.h"
@@ -190,7 +189,6 @@ unblock_changed_event (GMimeMessage *message, GMimeAddressType type)
 static void
 g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 {
-	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
 	guint i;
 	
 	message->addrlists = g_new (InternetAddressList *, N_ADDRESS_TYPES);
@@ -379,8 +377,6 @@ message_header_removed (GMimeObject *object, GMimeHeader *header)
 	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeMessage *message = (GMimeMessage *) object;
 	const char *name;
-	time_t date;
-	int offset;
 	guint i;
 	
 	name = g_mime_header_get_name (header);

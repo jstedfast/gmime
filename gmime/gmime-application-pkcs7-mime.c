@@ -170,6 +170,7 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 		name = "smime.p7c";
 		break;
 	default:
+		g_assert_not_reached();
 		break;
 	}
 	
@@ -233,11 +234,9 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeStream *ciphertext, *stream;
-	GMimeContentType *content_type;
 	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
 	GMimeCryptoContext *ctx;
-	GMimeFilter *filter;
 	
 	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
 	g_return_val_if_fail (recipients != NULL, NULL);
@@ -404,11 +403,9 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeStream *ciphertext, *stream;
-	GMimeContentType *content_type;
 	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
 	GMimeCryptoContext *ctx;
-	GMimeFilter *filter;
 	
 	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
 	g_return_val_if_fail (userid != NULL, NULL);

@@ -142,7 +142,6 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	size_t buflen, offset;
 	ssize_t n, nread = 0;
 	
 	if (buffer->source == NULL) {

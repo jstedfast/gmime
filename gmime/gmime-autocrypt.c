@@ -214,7 +214,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	kjoined = g_strjoinv ("", ksplit);
 	gsize decodedlen = 0;
 	g_base64_decode_inplace (kjoined, &decodedlen);
-	newkeydata = g_byte_array_new_take (kjoined, decodedlen);
+	newkeydata = g_byte_array_new_take ((guint8 *) kjoined, decodedlen);
 	kjoined = NULL;
 	g_mime_autocrypt_header_set_keydata (ret, newkeydata);
 	
@@ -780,6 +780,8 @@ g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *acheaders,
 
 	if (n < acheaders->array->len)
 		return (GMimeAutocryptHeader*)(acheaders->array->pdata[n]);
+	else
+		return NULL;
 }
 
 /**

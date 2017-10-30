@@ -37,7 +37,6 @@
 
 static void g_mime_filter_smtp_data_class_init (GMimeFilterSmtpDataClass *klass);
 static void g_mime_filter_smtp_data_init (GMimeFilterSmtpData *filter, GMimeFilterSmtpDataClass *klass);
-static void g_mime_filter_smtp_data_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
 static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
@@ -96,8 +95,6 @@ g_mime_filter_smtp_data_init (GMimeFilterSmtpData *filter, GMimeFilterSmtpDataCl
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterSmtpData *smtp_data = (GMimeFilterSmtpData *) filter;
-	
 	return g_mime_filter_smtp_data_new ();
 }
 

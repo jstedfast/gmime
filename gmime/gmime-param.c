@@ -794,7 +794,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 			/* we need to do special rfc2184 parameter wrapping */
 			size_t maxlen = GMIME_FOLD_LEN - (nlen + 6);
 			char *inend;
-			int i = 0;
+			int cnt = 0;
 			
 			inptr = value;
 			inend = value + vlen;
@@ -816,7 +816,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 						ptr = q;
 				}
 				
-				if (i != 0) {
+				if (cnt != 0) {
 					g_string_append_c (str, ';');
 					
 					if (fold) {
@@ -830,7 +830,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 					used = 1;
 				}
 				
-				g_string_append_printf (str, "%s*%d*=", param->name, i++);
+				g_string_append_printf (str, "%s*%d*=", param->name, cnt++);
 				g_string_append_len (str, inptr, (size_t) (ptr - inptr));
 				used += (str->len - here);
 				

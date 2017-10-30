@@ -377,8 +377,6 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	GMimeFormatOptions *options;
 	GMimeDataWrapper *wrapper;
 	GMimeCryptoContext *ctx;
-	GMimeDigestAlgo digest;
-	GMimeFilter *filter;
 	char *mime_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);

@@ -26,7 +26,6 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "gmime-table-private.h"
 #include "gmime-common.h"
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"

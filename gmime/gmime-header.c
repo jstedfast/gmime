@@ -1265,8 +1265,6 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
 GMimeHeader *
 g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name)
 {
-	GMimeHeader *header;
-	
 	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), NULL);
 	g_return_val_if_fail (name != NULL, NULL);
 	

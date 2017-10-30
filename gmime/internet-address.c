@@ -1399,7 +1399,6 @@ typedef enum {
 static gboolean
 decode_route (const char **in)
 {
-	const char *start = *in;
 	const char *inptr = *in;
 	GString *route;
 	
@@ -1454,7 +1453,6 @@ static gboolean
 localpart_parse (GString *localpart, const char **in)
 {
 	const char *inptr = *in;
-	const char *start = *in;
 	const char *word;
 	
 	do {
@@ -1500,7 +1498,6 @@ dotatom_parse (GString *str, const char **in, const char *sentinels)
 {
 	const char *atom, *comment;
 	const char *inptr = *in;
-	const char *start = *in;
 	GString *domain = str;
 	
 	do {
@@ -1628,9 +1625,7 @@ static gboolean
 addrspec_parse (const char **in, const char *sentinels, char **addrspec, int *at)
 {
 	const char *inptr = *in;
-	const char *start = *in;
 	GString *str;
-	guint domain;
 	
 	str = g_string_new ("");
 	
@@ -1886,7 +1881,6 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		
 		if (*inptr == '(') {
 			const char *comment = inptr;
-			char *buf;
 			
 			if (!skip_comment (&inptr))
 				goto error;
@@ -1963,7 +1957,6 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		
 		if (*inptr == '(') {
 			const char *comment = inptr;
-			char *buf;
 			
 			if (!skip_comment (&inptr))
 				goto error;

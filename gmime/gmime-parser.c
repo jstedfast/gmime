@@ -873,7 +873,7 @@ static void
 header_parse (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	gboolean valid = TRUE, blank = FALSE;
+	gboolean blank = FALSE;
 	register char *inptr;
 	Header *header;
 	
@@ -887,7 +887,6 @@ header_parse (GMimeParser *parser)
 		if (is_blank (*inptr)) {
 			blank = TRUE;
 		} else if (blank || is_ctrl (*inptr)) {
-			valid = FALSE;
 			break;
 		}
 		
@@ -1392,11 +1391,11 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		
 		/* check for OpenPGP markers... */
 		for (i = 0; i < G_N_ELEMENTS (openpgp_markers); i++) {
-			const char *marker = openpgp_markers[i].marker + 2;
+			const char *this_marker = openpgp_markers[i].marker + 2;
 			openpgp_state_t state = openpgp_markers[i].before;
 			size_t n = openpgp_markers[i].len - 2;
 			
-			if (len == n && priv->openpgp == state && !strncmp (marker, start, len))
+			if (len == n && priv->openpgp == state && !strncmp (this_marker, start, len))
 				priv->openpgp = openpgp_markers[i].after;
 		}
 	}
@@ -1573,6 +1572,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, Bounda
 		start = parser_offset (priv, NULL);
 	} else {
 		stream = g_mime_stream_mem_new ();
+		start = len = 0;	/* values are unused, make compiler happy */
 	}
 	
 	*found = parser_scan_content (parser, stream, &empty);
@@ -1608,7 +1608,6 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
-	GMimeStream *stream;
 	Header *header;
 	guint i;
 	
@@ -1844,7 +1843,6 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	GMimeMultipart *multipart;
 	const char *boundary;
 	GMimeObject *object;
-	GMimeStream *stream;
 	Header *header;
 	guint i;
 	
@@ -1960,7 +1958,6 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
-	GMimeStream *stream;
 	BoundaryType found;
 	const char *inptr;
 	Header *header;
