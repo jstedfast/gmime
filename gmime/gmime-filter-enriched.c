@@ -144,7 +144,6 @@ g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
-	guint i;
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
 	
@@ -191,12 +190,6 @@ enriched_tag_needs_param (const char *tag)
 	return FALSE;
 }
 #endif
-
-static gboolean
-html_tag_needs_param (const char *tag)
-{
-	return strstr (tag, "%s") != NULL;
-}
 
 static const char *valid_colours[] = {
 	"red", "green", "blue", "yellow", "cyan", "magenta", "black", "white"

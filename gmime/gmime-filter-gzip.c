@@ -259,12 +259,12 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			w(fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg));
 		
 		if (flush == Z_FULL_FLUSH) {
-			size_t outlen;
+			size_t olen;
 			
-			outlen = filter->outsize - priv->stream->avail_out;
-			g_mime_filter_set_size (filter, outlen + (priv->stream->avail_in * 2) + 12, TRUE);
-			priv->stream->next_out = (unsigned char *) filter->outbuf + outlen;
-			priv->stream->avail_out = filter->outsize - outlen;
+			olen = filter->outsize - priv->stream->avail_out;
+			g_mime_filter_set_size (filter, olen + (priv->stream->avail_in * 2) + 12, TRUE);
+			priv->stream->next_out = (unsigned char *) filter->outbuf + olen;
+			priv->stream->avail_out = filter->outsize - olen;
 			
 			if (priv->stream->avail_in == 0) {
 				guint32 val;
@@ -415,17 +415,17 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			w(fprintf (stderr, "gunzip: %d: %s\n", retval, priv->stream->msg));
 		
 		if (flush == Z_FULL_FLUSH) {
-			size_t outlen;
+			size_t olen;
 			
 			if (priv->stream->avail_in == 0) {
 				/* FIXME: extract & compare calculated crc32 and isize values? */
 				break;
 			}
 			
-			outlen = filter->outsize - priv->stream->avail_out;
-			g_mime_filter_set_size (filter, outlen + (priv->stream->avail_in * 2) + 12, TRUE);
-			priv->stream->next_out = (unsigned char *) filter->outbuf + outlen;
-			priv->stream->avail_out = filter->outsize - outlen;
+			olen = filter->outsize - priv->stream->avail_out;
+			g_mime_filter_set_size (filter, olen + (priv->stream->avail_in * 2) + 12, TRUE);
+			priv->stream->next_out = (unsigned char *) filter->outbuf + olen;
+			priv->stream->avail_out = filter->outsize - olen;
 		} else {
 			priv->stream->avail_in += 8;
 			

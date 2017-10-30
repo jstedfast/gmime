@@ -166,7 +166,6 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity
 	GMimeFormatOptions *options;
 	GMimeDataWrapper *content;
 	const char *protocol;
-	GMimeFilter *filter;
 	
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);

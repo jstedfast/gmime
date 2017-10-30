@@ -289,7 +289,7 @@ static int
 decode_int (const char *in, size_t inlen)
 {
 	register const char *inptr;
-	int sign = 1, val = 0;
+	int val = 0;
 	const char *inend;
 	
 	inptr = in;
@@ -450,7 +450,6 @@ get_tzone (date_token **token)
 {
 	const char *inptr, *inend;
 	char tzone[8];
-	GTimeZone *tz;
 	size_t len, n;
 	int value, i;
 	guint t;
@@ -499,19 +498,18 @@ get_tzone (date_token **token)
 static GDateTime *
 parse_rfc822_date (date_token *tokens)
 {
-	int wday, year, month, day, hour, min, sec, n;
+	int year, month, day, hour, min, sec, n;
 	GTimeZone *tz = NULL;
 	date_token *token;
 	GDateTime *date;
 	
 	token = tokens;
 	
-	wday = year = month = day = hour = min = sec = 0;
+	year = month = day = hour = min = sec = 0;
 	
 	if ((n = get_wday (token->start, token->len)) != -1) {
 		/* not all dates may have this... */
 		token = token->next;
-		wday = n;
 	}
 	
 	/* get the mday */
@@ -573,13 +571,13 @@ parse_rfc822_date (date_token *tokens)
 static GDateTime *
 parse_broken_date (date_token *tokens)
 {
-	int wday, year, month, day, hour, min, sec, n;
+	int year, month, day, hour, min, sec, n;
 	GTimeZone *tz = NULL;
 	date_token *token;
 	GDateTime *date;
 	int mask;
 	
-	wday = year = month = day = hour = min = sec = 0;
+	year = month = day = hour = min = sec = 0;
 	mask = 0;
 	
 	token = tokens;
@@ -588,7 +586,6 @@ parse_broken_date (date_token *tokens)
 			if ((n = get_wday (token->start, token->len)) != -1) {
 				d(printf ("weekday; "));
 				mask |= WEEKDAY;
-				wday = n;
 				goto next;
 			}
 		}
@@ -770,7 +767,6 @@ g_mime_utils_header_decode_date (const char *str)
 char *
 g_mime_utils_generate_message_id (const char *fqdn)
 {
-	static unsigned long int count = 0;
 	const char *hostname = NULL;
 	unsigned char block[8];
 	unsigned long value;
@@ -2329,7 +2325,6 @@ rfc2047_encode (GMimeFormatOptions *options, const char *in, gushort safemask, c
 	GString *out;
 	char *outstr;
 	size_t len;
-	int i = 0;
 	
 	if (!(words = rfc2047_encode_get_rfc822_words (in, safemask & IS_PSAFE)))
 		return g_strdup (in);

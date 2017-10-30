@@ -23,7 +23,6 @@
 #include <config.h>
 #endif
 
-#include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-references.h"
 

@@ -618,6 +618,11 @@ if test "x$LIBIDN_LIBS" != "x"; then
 fi
 
 CFLAGS="$CFLAGS -fno-strict-aliasing"
+# enable more warnings when building from Git (assume we use gcc/clang)
+# add -Werror to make them fatal (so they get fixed, actually...)
+if test -d "${srcdir}/.git"; then
+	CFLAGS="$CFLAGS -Wall -Wshadow -Wunreachable-code -Wformat=2"
+fi
 LIBS="$LIBS $EXTRA_LIBS"
 
 AC_SUBST(CFLAGS)

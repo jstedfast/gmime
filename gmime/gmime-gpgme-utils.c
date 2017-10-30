@@ -573,8 +573,6 @@ GMimeDecryptResult *
 g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *session_key,
 		      GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	GMimeDecryptResult *result;
-	gpgme_decrypt_result_t res;
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	
@@ -657,7 +655,6 @@ g_mime_gpgme_export (gpgme_ctx_t ctx, const char *keys[], GMimeStream *ostream, 
 {
 	gpgme_data_t keydata;
 	gpgme_error_t error;
-	guint i;
 	
 	if ((error = gpgme_data_new_from_cbs (&keydata, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream: %s"),

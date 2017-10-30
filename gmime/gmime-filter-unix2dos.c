@@ -37,7 +37,6 @@
 
 static void g_mime_filter_unix2dos_class_init (GMimeFilterUnix2DosClass *klass);
 static void g_mime_filter_unix2dos_init (GMimeFilterUnix2Dos *filter, GMimeFilterUnix2DosClass *klass);
-static void g_mime_filter_unix2dos_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
 static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
