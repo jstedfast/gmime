@@ -1480,7 +1480,7 @@ parser_scan_content (GMimeParser *parser, GMimeStream *content, gboolean *empty)
 		priv->midline = FALSE;
 		
 		while (inptr < inend) {
-			aligned = (char *) (((long) (inptr + 3)) & ~3);
+			aligned = (char *) (((size_t) (inptr + 3)) & ~3);
 			start = inptr;
 			
 			/* Note: see optimization comment [1] */
