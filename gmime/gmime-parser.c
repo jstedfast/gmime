@@ -1391,11 +1391,11 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		
 		/* check for OpenPGP markers... */
 		for (i = 0; i < G_N_ELEMENTS (openpgp_markers); i++) {
-			const char *this_marker = openpgp_markers[i].marker + 2;
+			const char *pgp_marker = openpgp_markers[i].marker + 2;
 			openpgp_state_t state = openpgp_markers[i].before;
 			size_t n = openpgp_markers[i].len - 2;
 			
-			if (len == n && priv->openpgp == state && !strncmp (this_marker, start, len))
+			if (len == n && priv->openpgp == state && !strncmp (pgp_marker, start, len))
 				priv->openpgp = openpgp_markers[i].after;
 		}
 	}
@@ -1572,7 +1572,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, Bounda
 		start = parser_offset (priv, NULL);
 	} else {
 		stream = g_mime_stream_mem_new ();
-		start = len = 0;	/* values are unused, make compiler happy */
+		start = 0;
 	}
 	
 	*found = parser_scan_content (parser, stream, &empty);

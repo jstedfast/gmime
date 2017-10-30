@@ -780,8 +780,8 @@ g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *acheaders,
 
 	if (n < acheaders->array->len)
 		return (GMimeAutocryptHeader*)(acheaders->array->pdata[n]);
-	else
-		return NULL;
+
+	return NULL;
 }
 
 /**

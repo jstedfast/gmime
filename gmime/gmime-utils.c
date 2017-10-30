@@ -288,12 +288,9 @@ datetok (const char *date)
 static int
 decode_int (const char *in, size_t inlen)
 {
-	register const char *inptr;
+	register const char *inptr = in;
+	const char *inend = in + inlen;
 	int val = 0;
-	const char *inend;
-	
-	inptr = in;
-	inend = in + inlen;
 	
 	while (inptr < inend) {
 		if (!(*inptr >= '0' && *inptr <= '9'))

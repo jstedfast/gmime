@@ -170,7 +170,7 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 		name = "smime.p7c";
 		break;
 	default:
-		g_assert_not_reached();
+		g_assert_not_reached ();
 		break;
 	}
 	
