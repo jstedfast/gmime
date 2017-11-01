@@ -54,6 +54,27 @@
 #define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
 
+static char base64_alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static unsigned char gmime_base64_rank[256] = {
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255, 62,255,255,255, 63,
+	 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,255,255,255,  0,255,255,
+	255,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+	 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,255,255,255,255,255,
+	255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+	 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+};
+
 static unsigned char gmime_uu_rank[256] = {
 	 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
 	 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,
@@ -350,20 +371,35 @@ g_mime_encoding_flush (GMimeEncoding *state, const char *inbuf, size_t inlen, ch
 size_t
 g_mime_encoding_base64_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	gint glib_save;
-	gsize glib_res;
-
-	glib_save = *save;
-	if (inlen > 0U) {
-		glib_res = g_base64_encode_step ((const guchar *) inbuf, inlen, TRUE, (gchar *) outbuf, state, &glib_save);
-		outbuf = &outbuf[glib_res];
-	} else {
-		glib_res = 0U;
+	unsigned char *outptr = outbuf;
+	int c1, c2;
+	
+	if (inlen > 0)
+		outptr += g_mime_encoding_base64_encode_step (inbuf, inlen, outptr, state, save);
+	
+	c1 = ((unsigned char *)save)[1];
+	c2 = ((unsigned char *)save)[2];
+	
+	switch (((unsigned char *)save)[0]) {
+	case 2:
+		outptr[2] = base64_alphabet [(c2 & 0x0f) << 2];
+		goto skip;
+	case 1:
+		outptr[2] = '=';
+	skip:
+		outptr[0] = base64_alphabet [c1 >> 2];
+		outptr[1] = base64_alphabet [c2 >> 4 | ((c1 & 0x3) << 4)];
+		outptr[3] = '=';
+		outptr += 4;
+		break;
 	}
-	glib_res += g_base64_encode_close (TRUE, (gchar *) outbuf, state, &glib_save);
-	*save = glib_save;
-
-	return glib_res;
+	
+	*outptr++ = '\n';
+	
+	*save = 0;
+	*state = 0;
+	
+	return (outptr - outbuf);
 }
 
 
@@ -385,14 +421,73 @@ g_mime_encoding_base64_encode_close (const unsigned char *inbuf, size_t inlen, u
 size_t
 g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	gint glib_save;
-	gsize glib_res;
-
-	glib_save = *save;
-	glib_res = g_base64_encode_step ((const guchar *) inbuf, inlen, TRUE, (gchar *) outbuf, state, &glib_save);
-	*save = glib_save;
-
-	return glib_res;
+	register const unsigned char *inptr;
+	register unsigned char *outptr;
+	
+	if (inlen == 0)
+		return 0;
+	
+	outptr = outbuf;
+	inptr = inbuf;
+	
+	if (inlen + ((unsigned char *)save)[0] > 2) {
+		const unsigned char *inend = inbuf + inlen - 2;
+		register int c1 = 0, c2 = 0, c3 = 0;
+		register int already;
+		
+		already = *state;
+		
+		switch (((char *)save)[0]) {
+		case 1:	c1 = ((unsigned char *)save)[1]; goto skip1;
+		case 2:	c1 = ((unsigned char *)save)[1];
+			c2 = ((unsigned char *)save)[2]; goto skip2;
+		}
+		
+		/* yes, we jump into the loop, no i'm not going to change it, its beautiful! */
+		while (inptr < inend) {
+			c1 = *inptr++;
+		skip1:
+			c2 = *inptr++;
+		skip2:
+			c3 = *inptr++;
+			*outptr++ = base64_alphabet [c1 >> 2];
+			*outptr++ = base64_alphabet [(c2 >> 4) | ((c1 & 0x3) << 4)];
+			*outptr++ = base64_alphabet [((c2 & 0x0f) << 2) | (c3 >> 6)];
+			*outptr++ = base64_alphabet [c3 & 0x3f];
+			/* this is a bit ugly ... */
+			if ((++already) >= 19) {
+				*outptr++ = '\n';
+				already = 0;
+			}
+		}
+		
+		((unsigned char *)save)[0] = 0;
+		inlen = 2 - (inptr - inend);
+		*state = already;
+	}
+	
+	d(printf ("state = %d, inlen = %d\n", (int)((char *)save)[0], inlen));
+	
+	if (inlen > 0) {
+		register char *saveout;
+		
+		/* points to the slot for the next char to save */
+		saveout = & (((char *)save)[1]) + ((char *)save)[0];
+		
+		/* inlen can only be 0, 1 or 2 */
+		switch (inlen) {
+		case 2:	*saveout++ = *inptr++;
+		case 1:	*saveout++ = *inptr++;
+		}
+		((char *)save)[0] += (char) inlen;
+	}
+	
+	d(printf ("mode = %d\nc1 = %c\nc2 = %c\n",
+		  (int)((char *)save)[0],
+		  (int)((char *)save)[1],
+		  (int)((char *)save)[2]));
+	
+	return (outptr - outbuf);
 }
 
 
@@ -412,14 +507,53 @@ g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, un
 size_t
 g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	guint glib_save;
-	gsize glib_res;
-
-	glib_save = *save;
-	glib_res = g_base64_decode_step ((const gchar *) inbuf, inlen, outbuf, state, &glib_save);
-	*save = glib_save;
-
-	return glib_res;
+	register const unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
+	register guint32 saved;
+	unsigned char last[2];
+	unsigned char c, rank;
+	int n;
+	
+	inend = inbuf + inlen;
+	outptr = outbuf;
+	inptr = inbuf;
+	
+	saved = *save;
+	n = *state;
+	
+	if (n < 0) {
+		last[0] = '=';
+		n = -n;
+	} else {
+		last[0] = '\0';
+	}
+	
+	last[1] = '\0';
+	
+	/* convert 4 base64 bytes to 3 normal bytes */
+	while (inptr < inend) {
+		rank = gmime_base64_rank[(c = *inptr++)];
+		if (rank != 0xff) {
+			saved = (saved << 6) | rank;
+			last[1] = last[0];
+			last[0] = c;
+			n++;
+			if (n == 4) {
+				*outptr++ = saved >> 16;
+				if (last[1] != '=')
+					*outptr++ = saved >> 8;
+				if (last[0] != '=')
+					*outptr++ = saved;
+				n = 0;
+			}
+		}
+	}
+	
+	*state = last[0] == '=' ? -n : n;
+	*save = saved;
+	
+	return (outptr - outbuf);
 }
 
 
