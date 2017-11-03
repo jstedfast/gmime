@@ -901,10 +901,6 @@ header_parse (GMimeParser *parser)
 			     (long long) priv->header_offset,
 			     priv->headerbuf));
 		
-		printf ("Invalid header at %lld: '%s'",
-			(long long) priv->header_offset,
-			priv->headerbuf);
-		
 		if (priv->preheader == NULL)
 			priv->preheader = g_strdup (priv->headerbuf);
 		
