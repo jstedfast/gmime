@@ -39,7 +39,8 @@
 
 #define TEST_RAW_HEADER
 #define TEST_PRESERVE_HEADERS
-#define PRINT_MIME_STRUCT
+//#define PRINT_MIME_STRUCT
+#define PRINT_MIME_STRUCT_ITER
 //#define TEST_WRITE_TO_STREAM
 
 #ifdef PRINT_MIME_STRUCT
@@ -89,7 +90,9 @@ print_mime_struct (GMimeObject *part, int depth)
 			fprintf (stdout, "BAD\n");
 	}
 }
+#endif
 
+#ifdef PRINT_MIME_STRUCT_ITER
 static void
 print_mime_part_info (const char *path, GMimeObject *object)
 {
@@ -151,7 +154,7 @@ print_mime_struct_iter (GMimeMessage *message)
 	
 	g_mime_part_iter_free (iter);
 }
-#endif /* PRINT_MIME_STRUCT */
+#endif /* PRINT_MIME_STRUCT_ITER */
 
 static void
 test_parser (GMimeStream *stream)
@@ -192,14 +195,14 @@ test_parser (GMimeStream *stream)
 	
 #ifdef TEST_PRESERVE_HEADERS
 	{
-		GMimeStream *stream;
+		GMimeStream *output;
 		
 		fprintf (stdout, "\nTesting preservation of headers...\n\n");
-		stream = g_mime_stream_file_new (stdout);
-		g_mime_stream_file_set_owner ((GMimeStreamFile *) stream, FALSE);
-		g_mime_header_list_write_to_stream (GMIME_OBJECT (message)->headers, format, stream);
-		g_mime_stream_flush (stream);
-		g_object_unref (stream);
+		output = g_mime_stream_file_new (stdout);
+		g_mime_stream_file_set_owner ((GMimeStreamFile *) output, FALSE);
+		g_mime_header_list_write_to_stream (GMIME_OBJECT (message)->headers, format, output);
+		g_mime_stream_flush (output);
+		g_object_unref (output);
 		fprintf (stdout, "\n");
 	}
 #endif
@@ -213,8 +216,8 @@ test_parser (GMimeStream *stream)
 #endif
 	
 #ifdef PRINT_MIME_STRUCT
-	/* print mime structure */
-	//print_mime_struct (message->mime_part, 0);
+	print_mime_struct (message->mime_part, 0);
+#elif defined (PRINT_MIME_STRUCT_ITER)
 	print_mime_struct_iter (message);
 #endif
 	
