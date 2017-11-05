@@ -423,11 +423,14 @@ testsuite_can_safely_override_session_key (const char *gpg)
 int
 testsuite_setup_gpghome (const char *gpg)
 {
+	char *command;
+	FILE *fp;
+#if DEBUG_GNUPG
 	const char *files[] = { "./tmp/.gnupg/gpg.conf", "./tmp/.gnupg/gpgsm.conf", "./tmp/.gnupg/gpg-agent.conf", "./tmp/.gnupg/dirmngr.conf", NULL };
 	const char debug[] = "log-file socket://%s/tmp/.gnupg/S.log\ndebug 1024\nverbose\n";
-	char *command, *cwd;
-	FILE *fp;
 	int i;
+	char *cwd;
+#endif
 	
 	/* reset .gnupg config directory */
 	if (system ("/bin/rm -rf ./tmp") != 0)

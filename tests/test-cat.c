@@ -84,7 +84,7 @@ randf (void)
 static GMimeStream *
 random_whole_stream (const char *datadir, char **filename)
 {
-	size_t nwritten, buflen, total = 0, size, i;
+	size_t nwritten, buflen, total = 0, size;
 	GMimeStream *stream;
 	char buf[4096];
 	ssize_t n;

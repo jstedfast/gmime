@@ -53,7 +53,7 @@ _gen_header (const struct _ah_gen_test *t)
 		return NULL;
 	}
 	if (t->keydatacount)
-		if (!(keydata = g_byte_array_new_take (g_strnfill (t->keydatacount, t->keybyte), t->keydatacount))) {
+		if (!(keydata = g_byte_array_new_take ((guint8*) g_strnfill (t->keydatacount, t->keybyte), t->keydatacount))) {
 			fprintf (stderr, "failed to make a new keydata");
 			g_object_unref (ah);
 			return NULL;
@@ -345,7 +345,8 @@ _acheaderlists_compare (GMimeAutocryptHeaderList *expected, GMimeAutocryptHeader
 			char *e = g_mime_autocrypt_header_get_string (ahe);
 			char *g = g_mime_autocrypt_header_get_string (ahg);
 			char *ret = g_strdup_printf ("comparing <%s> got cmp = %d \nexpected: \n%s\n\ngot:\n%s\n",
-						     g_mime_autocrypt_header_get_address (ahe), cmp, e, g);
+						     internet_address_mailbox_get_idn_addr (g_mime_autocrypt_header_get_address (ahe)),
+						     cmp, e, g);
 			g_free(e);
 			g_free(g);
 			return ret;

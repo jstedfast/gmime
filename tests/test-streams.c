@@ -144,7 +144,6 @@ static void
 test_stream_gets (GMimeStream *stream, const char *filename)
 {
 	char sbuf[100], rbuf[100];
-	ssize_t slen;
 	FILE *fp;
 	
 	/* '0x1a' character is treated as EOF (Ctrl+Z) on Windows if file is opened in text mode,
@@ -155,7 +154,7 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	
 	while (!g_mime_stream_eos (stream)) {
 		rbuf[0] = '\0';
-		slen = g_mime_stream_buffer_gets (stream, sbuf, sizeof (sbuf));
+		g_mime_stream_buffer_gets (stream, sbuf, sizeof (sbuf));
 		if (!fgets (rbuf, sizeof (rbuf), fp))
 			break;
 		
@@ -488,7 +487,7 @@ test_streams (GDir *dir, const char *datadir, const char *filename)
 static size_t
 gen_random_stream (int randfd, GMimeStream *stream)
 {
-	size_t nwritten, buflen, total = 0, size, i;
+	size_t nwritten, buflen, total = 0, size;
 	char buf[4096];
 	ssize_t n;
 	

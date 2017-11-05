@@ -34,22 +34,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifndef G_OS_WIN32
-static const char *passphrase = "no.secret";
-
-static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
-{
-	if (g_mime_stream_write_string (response, passphrase) == -1 ||
-	    g_mime_stream_write (response, "\n", 1) == -1) {
-		g_set_error (err, GMIME_ERROR, errno, "%s", g_strerror (errno));
-		return FALSE;
-	}
-	
-	return TRUE;
-}
-#endif /* ! G_OS_WIN32 */
-
 static GMimeMessage *
 parse_message (int fd)
 {
@@ -135,6 +119,7 @@ count_parts_in_message (GMimeMessage *message)
 }
 
 #ifndef G_OS_WIN32
+#ifdef ENABLE_CRYPTOGRAPHY
 static void
 verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
 {
@@ -181,6 +166,7 @@ verify_signed_parts (GMimeMessage *message)
 	g_mime_message_foreach (message, verify_foreach_callback, NULL);
 }
 #endif
+#endif
 
 static void
 write_message_to_screen (GMimeMessage *message)
@@ -207,9 +193,7 @@ static void
 add_a_mime_part (GMimeMessage *message)
 {
 	GMimeMultipart *multipart;
-	GMimeDataWrapper *content;
 	GMimeTextPart *mime_part;
-	GMimeStream *stream;
 	
 	/* create the new part that we are going to add... */
 	mime_part = g_mime_text_part_new_with_subtype ("plain");
@@ -261,9 +245,6 @@ remove_a_mime_part (GMimeMessage *message)
 
 int main (int argc, char **argv)
 {
-#ifndef G_OS_WIN32
-	GMimeCryptoContext *ctx;
-#endif
 	GMimeMessage *message;
 	int fd;
 	
