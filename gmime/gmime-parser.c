@@ -996,6 +996,9 @@ parser_step_headers (GMimeParser *parser)
 	priv->headers_begin = parser_offset (priv, NULL);
 	priv->header_offset = priv->headers_begin;
 	
+	priv->headerleft += priv->headerptr - priv->headerbuf;
+	priv->headerptr = priv->headerbuf;
+	
 	inptr = priv->inptr;
 	inend = priv->inend;
 	
@@ -1113,8 +1116,6 @@ parser_step_headers (GMimeParser *parser)
 				goto refill;
 			}
 			
-			header_append (priv, start, len);
-			
 			if (inptr > start && inptr[-1] == '\r')
 				len--;
 			
@@ -1122,8 +1123,13 @@ parser_step_headers (GMimeParser *parser)
 			if (!priv->midline && len == 0)
 				goto headers_end;
 			
-			/* inptr has to be less than inend - 1 */
-			header_append (priv, "\n", 1);
+			if (inptr > start && inptr[-1] == '\r')
+				len++;
+			
+			/* increment len to include the \n */
+			len++;
+			
+			header_append (priv, start, len);
 			priv->midline = FALSE;
 			continuation = TRUE;
 			inptr++;

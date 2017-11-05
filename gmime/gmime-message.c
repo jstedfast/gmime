@@ -455,22 +455,22 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	GMimeObject *mime_part = message->mime_part;
-	ssize_t nwritten, total = 0;
-	GMimeStream *filtered;
-	GMimeFilter *filter;
-	
-	filter = g_mime_format_options_create_newline_filter (options, FALSE);
-	filtered = g_mime_stream_filter_new (stream);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	g_object_unref (filter);
 	
 	if (mime_part != NULL) {
 		int body_count = g_mime_header_list_get_count (mime_part->headers);
 		int count = g_mime_header_list_get_count (object->headers);
 		GMimeHeader *header, *body_header;
+		ssize_t nwritten, total = 0;
 		gint64 body_offset, offset;
+		GMimeStream *filtered;
+		GMimeFilter *filter;
 		int body_index = 0;
 		int index = 0;
+		
+		filtered = g_mime_stream_filter_new (stream);
+		filter = g_mime_format_options_create_newline_filter (options, FALSE);
+		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+		g_object_unref (filter);
 		
 		while (index < count && body_index < body_count) {
 			body_header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
@@ -540,10 +540,7 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 		return total;
 	}
 	
-	nwritten = g_mime_header_list_write_to_stream (object->headers, options, filtered);
-	g_object_unref (filtered);
-	
-	return nwritten;
+	return g_mime_header_list_write_to_stream (object->headers, options, stream);
 }
 
 
