@@ -92,9 +92,9 @@ const static struct _ah_gen_test gen_test_data[] = {
 	{ .addr = "test@example.org",
 	  .keydatacount = 102,
 	  .keybyte = '\013',
-	  .txt = "addr=test@example.org; type=1; keydata=CwsLCwsLCwsLCwsLCwsL\r\n"
+	  .txt = "addr=test@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL",
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL",
 	}
 };
 
@@ -253,44 +253,6 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "\r\n"
 	  "Duplicate Autocrypt headers should cause none to match?\r\n",
 	},
-	
-	{ .name = "unknown type",
-	  .acheaders = alice_incomplete,
-	  .gossipheaders = no_addrs,
-	  .msg = "From: alice@example.org\r\n"
-	  "To: bob@example.org\r\n"
-	  "Subject: A lovely day\r\n"
-	  "Message-Id: <unknown-type@example.net>\r\n"
-	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
-	  "Autocrypt: addr=alice@example.org; type=1532633; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  "Mime-Version: 1.0\r\n"
-	  "Content-Type: text/plain\r\n"
-	  "\r\n"
-	  "Unknown Autocrypt type value should cause nothing to match\r\n",
-	},
-	
-	{ .name = "unknown type + type1",
-	  .acheaders = alice_addr,
-	  .gossipheaders = no_addrs,
-	  .msg = "From: alice@example.org\r\n"
-	  "To: bob@example.org\r\n"
-	  "Subject: A lovely day\r\n"
-	  "Message-Id: <unknown-type+type1@example.net>\r\n"
-	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
-	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  "Autocrypt: addr=alice@example.org; type=1532633; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  "Mime-Version: 1.0\r\n"
-	  "Content-Type: text/plain\r\n"
-	  "\r\n"
-	  "Unknown Autocrypt type value should cause nothing to match but should not block type=1\r\n",
-	},
-	
 	{ .name = "unrecognized critical attribute",
 	  .acheaders = alice_incomplete,
 	  .gossipheaders = no_addrs,
@@ -306,6 +268,26 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "Content-Type: text/plain\r\n"
 	  "\r\n"
 	  "An unrecognized attribute that does not start with _ is critical and should not cause a match\r\n",
+	},
+
+	{ .name = "unrecognized critical attribute + simple",
+	  .acheaders = alice_addr,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <unknown-critical+simple@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Autocrypt: addr=alice@example.org; emergency=true; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Unknown Autocrypt critical attribute should cause nothing to match but should not block a classic type header\r\n",
 	},
 	
 	{ .name = "unrecognized non-critical attribute",
@@ -379,10 +361,10 @@ test_ah_message_parse (void)
 			g_object_unref (parser);
 			g_object_unref (stream);
 
-			ahl_got = g_mime_message_get_autocrypt_headers (message, 1, NULL);
+			ahl_got = g_mime_message_get_autocrypt_headers (message, NULL);
 			if (!ahl_got)
 				throw (exception_new ("failed to extract headers from message!"));
-			gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, 1, NULL);
+			gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, NULL);
 			if (!gossip_got)
 				throw (exception_new ("failed to extract gossip headers from message!"));
 			gchar *err = NULL;
