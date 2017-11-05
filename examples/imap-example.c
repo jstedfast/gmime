@@ -437,7 +437,6 @@ decode_qstring (unsigned char **in, unsigned char *inend)
 static gboolean
 decode_param (unsigned char **in, unsigned char *inend, char **name, char **value)
 {
-	GMimeParam *param;
 	char *n, *v;
 	
 	if (!(n = decode_qstring (in, inend)))

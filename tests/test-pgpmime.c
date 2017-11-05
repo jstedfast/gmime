@@ -350,14 +350,12 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	GMimeStream *test_stream;
  	GMimeMultipartEncrypted *mpe;
 	GMimeDecryptResult *result;
-	GMimeDataWrapper *content;
 	GMimeObject *decrypted;
 	GMimeMessage *message;
 	Exception *ex = NULL;
 	GMimeParser *parser;
 	GByteArray *buf[2];
 	GError *err = NULL;
-	GMimePart *part;
 	char *ret = NULL;
 	
 	g_mime_stream_reset (stream);
@@ -615,7 +613,6 @@ int main (int argc, char *argv[])
 	const char *datadir = "data/pgpmime";
 	char *session_key = NULL;
 	GMimeCryptoContext *ctx;
-	GError *err = NULL;
 	char *gpg, *key;
 	struct stat st;
 	int i;

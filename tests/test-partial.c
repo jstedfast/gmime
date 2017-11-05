@@ -142,7 +142,6 @@ int main (int argc, char **argv)
 	int inlen, outlen;
 	GDir *data, *dir;
 	const char *dent;
-	struct stat st;
 	size_t i, n;
 	char *path;
 	

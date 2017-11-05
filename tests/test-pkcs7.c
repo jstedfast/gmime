@@ -227,7 +227,6 @@ static void
 test_export (GMimeCryptoContext *ctx, const char *path)
 {
 	GMimeStream *istream, *ostream;
-	register const char *inptr;
 	const char *inbuf, *outbuf;
 	size_t inlen, outlen;
 	Exception *ex = NULL;
