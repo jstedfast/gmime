@@ -348,7 +348,7 @@ static void
 test_date_parser (void)
 {
 	GDateTime *date;
-	Exception *ex;
+	Exception *newex;
 	int tz_offset;
 	GTimeSpan tz;
 	time_t time;
@@ -384,9 +384,9 @@ test_date_parser (void)
 			
 			buf = g_mime_utils_header_format_date (date);
 			if (strcmp (dates[i].out, buf) != 0) {
-				ex = exception_new ("date strings do not match: %s vs %s", buf, dates[i].out);
+				newex = exception_new ("date strings do not match: %s vs %s", buf, dates[i].out);
 				g_free (buf);
-				throw (ex);
+				throw (newex);
 			}
 			
 			g_free (buf);

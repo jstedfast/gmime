@@ -102,7 +102,7 @@ xevcb (GMimeParser *parser, const char *header, const char *value, gint64 offset
 static void
 test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
-	gint64 message_begin, message_end, headers_begin, headers_end, marker_offset;
+	gint64 message_begin, message_end, headers_begin, headers_end;
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	InternetAddressList *list;
 	GMimeMessage *message;
@@ -127,7 +127,6 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		g_mime_stream_printf (summary, "header offsets: %" G_GINT64_FORMAT ", %" G_GINT64_FORMAT "\n",
 				      headers_begin, headers_end);
 		
-		marker_offset = g_mime_parser_get_mbox_marker_offset (parser);
 		marker = g_mime_parser_get_mbox_marker (parser);
 		g_mime_stream_printf (summary, "%s\n", marker);
 		
@@ -282,9 +281,10 @@ int main (int argc, char **argv)
 	const char *path;
 	struct stat st;
 	GDir *dir;
-	int fd, i;
-	
+	int i;
 #ifdef ENABLE_MBOX_MATCH
+	int fd;
+
 	if (mkdir ("./tmp", 0755) == -1 && errno != EEXIST)
 		return 0;
 #endif

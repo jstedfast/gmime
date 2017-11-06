@@ -71,12 +71,10 @@ test_indexing (void)
 	const char *name, *value, *raw_value;
 	GMimeHeaderList *list;
 	GMimeHeader *header;
-	int index, count;
+	int index;
 	size_t len;
 	
 	list = header_list_new ();
-	
-	count = g_mime_header_list_get_count (list);
 	
 	/* make sure indexing works as expected */
 	for (index = 0; index < G_N_ELEMENTS (initial); index++) {
@@ -124,7 +122,6 @@ test_remove (void)
 	const char *name, *value;
 	GMimeHeaderList *list;
 	GMimeHeader *header;
-	guint i;
 	
 	list = header_list_new ();
 	
@@ -181,7 +178,6 @@ test_remove_at (void)
 	GMimeHeaderList *list;
 	GMimeHeader *header;
 	int count;
-	guint i;
 	
 	list = header_list_new ();
 	
@@ -420,7 +416,6 @@ test_address_sync (void)
 	InternetAddress *addr, *ia;
 	InternetAddressList *list;
 	GMimeHeaderList *headers;
-	GMimeParamList *params;
 	GMimeMessage *message;
 	GMimeObject *object;
 	GMimeHeader *header;
