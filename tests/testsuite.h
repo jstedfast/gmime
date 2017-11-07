@@ -32,7 +32,6 @@ void testsuite_init (int argc, char **argv);
 int testsuite_exit (void);
 
 void testsuite_printf (FILE *out, int verbosity, const char *fmt, ...) G_GNUC_PRINTF (3, 4);
-void testsuite_vprintf (FILE *out, int verbosity, const char *fmt, va_list args);
 
 /* start/end a test collection */
 void testsuite_start (const char *test);

@@ -136,15 +136,6 @@ testsuite_printf (FILE *out, int verbosity, const char *fmt, ...)
 }
 
 void
-testsuite_vprintf (FILE *out, int verbosity, const char *fmt, va_list args)
-{
-	if (verbose < verbosity)
-		return;
-	
-	vfprintf (out, fmt, args);
-}
-
-void
 testsuite_start (const char *test)
 {
 	struct _stack *s;
