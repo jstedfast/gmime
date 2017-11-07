@@ -1177,11 +1177,6 @@ g_mime_message_get_body (GMimeMessage *message)
 }
 
 
-static GMimeAutocryptHeaderList *
-_get_autocrypt_headers (GMimeMessage *message, GDateTime *now, const char *matchheader,
-			InternetAddressList *addresses, gboolean keep_incomplete);
-
-
 /**
  * g_mime_message_get_autocrypt_headers:
  * @message: a #GMimeMessage object.
@@ -1221,7 +1216,24 @@ _get_autocrypt_headers (GMimeMessage *message, GDateTime *now, const char *match
 GMimeAutocryptHeaderList *
 g_mime_message_get_autocrypt_headers (GMimeMessage *message, GDateTime *now)
 {
-	return _get_autocrypt_headers (message, now, "autocrypt", message->addrlists[GMIME_ADDRESS_TYPE_FROM], TRUE);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+
+	GMimeAutocryptHeaderList *ret = NULL;
+	GDateTime *newnow = NULL;
+	GDateTime *effective_date = NULL;
+	if (now == NULL)
+		now = newnow = g_date_time_new_now_utc ();
+	effective_date = now;
+	if (message->date && g_date_time_compare (message->date, now) < 0)
+		effective_date = message->date;
+	ret = g_mime_object_get_autocrypt_headers (GMIME_OBJECT (message),
+						   effective_date,
+						   "autocrypt",
+						   message->addrlists[GMIME_ADDRESS_TYPE_FROM],
+						   TRUE);
+	if (newnow)
+		g_date_time_unref (newnow);
+	return ret;
 }
 
 
@@ -1267,72 +1279,21 @@ g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message, GDateTime *n
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	InternetAddressList *addresses = g_mime_message_get_all_recipients (message);
-	GMimeAutocryptHeaderList *ret = _get_autocrypt_headers (message, now, "autocrypt-gossip", addresses, FALSE);
-	g_object_unref (addresses);
-	return ret;
-}
-
-
-static GMimeAutocryptHeaderList *
-_get_autocrypt_headers (GMimeMessage *message, GDateTime *now, const char *matchheader,
-			InternetAddressList *addresses, gboolean keep_incomplete)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-
-	GMimeObject *mime_part = GMIME_OBJECT (message);
-	int i;
-
-	GMimeAutocryptHeaderList *ret = g_mime_autocrypt_header_list_new ();
-	guint count = g_mime_autocrypt_header_list_add_missing_addresses (ret, addresses);
-	if (!count)
-		return ret;
-	
 	GDateTime *newnow = NULL;
+	GDateTime *effective_date = NULL;
+	GMimeAutocryptHeaderList *ret = NULL;
 	if (now == NULL)
 		now = newnow = g_date_time_new_now_utc ();
-	GDateTime *effective = now;
+	effective_date = now;
 	if (message->date && g_date_time_compare (message->date, now) < 0)
-		effective = message->date;
-
-	/* scan for Autocrypt headers whose addr= attribute matches
-	 * the From: header.  calculate effective_date based on now
-	 * and the Date: header. */
-	
-	GMimeHeaderList *headers = g_mime_object_get_header_list(mime_part);
-	for (i = 0; i < g_mime_header_list_get_count (headers); i++) {
-		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
-		if (g_ascii_strcasecmp (matchheader, header->name) == 0) {
-			GMimeAutocryptHeader *ah = g_mime_autocrypt_header_new_from_string (g_mime_header_get_value (header));
-			if (!ah || ! g_mime_autocrypt_header_is_complete (ah))
-				goto done;
-			g_mime_autocrypt_header_set_effective_date (ah, effective);
-			GMimeAutocryptHeader *prev = g_mime_autocrypt_header_list_get_header_for_address (ret, ah->address);
-			if (!prev) /* not a valid address (was not in From:) */
-				goto done;
-			if (g_mime_autocrypt_header_is_complete (prev)) {
-				/* this is a duplicate (we use effective_date=NULL as an internal marker for this) */
-				g_mime_autocrypt_header_set_effective_date (prev, NULL);
-			} else {
-				g_mime_autocrypt_header_clone (prev, ah);
-			}
-		done:
-			if (ah)
-				g_object_unref (ah);
-		}
-			
-	}
-	for (i = 0; i < g_mime_autocrypt_header_list_get_count (ret); i++) {
-		GMimeAutocryptHeader *ah = g_mime_autocrypt_header_list_get_header_at (ret, i);
-		/* drop keydata from duplicates */
-		if (ah->effective_date == NULL) {
-			g_mime_autocrypt_header_set_keydata (ah, NULL);
-			g_mime_autocrypt_header_set_effective_date (ah, effective);
-		}
-	}
-
-	if (!keep_incomplete)
-		g_mime_autocrypt_header_list_remove_incomplete (ret);
+		effective_date = message->date;
+	ret = g_mime_object_get_autocrypt_headers (GMIME_OBJECT (message),
+						   effective_date,
+						   "autocrypt-gossip",
+						   addresses, FALSE);
+	g_object_unref (addresses);
 	if (newnow)
 		g_date_time_unref (newnow);
 	return ret;
 }
+
