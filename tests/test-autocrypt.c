@@ -315,6 +315,77 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "\r\n"
 	  "An unrecognized attribute that does not start with _ is critical and should not cause a match\r\n",
 	},
+
+	{ .name = "no From: at all",
+	  .acheader = NULL,
+	  .gossipheaders = no_addrs,
+	  .msg = "To: carol@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <no-from@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "This message has no sender at all\r\n",
+	},
+
+	{ .name = "with Sender: header",
+	  .acheader = &bob_incomplete,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: bob@example.org\r\n"
+	  "Sender: alice@example.org\r\n"
+	  "To: carol@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <with-sender-header@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "This message has an Autocrypt header that matches the Sender: attribute but not the From:\r\n",
+	},
+
+	{ .name = "no senders",
+	  .acheader = NULL,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: undisclosed sender\r\n"
+	  "To: carol@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <no-senders@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "This message has no sender at all\r\n",
+	},
+
+	{ .name = "two senders",
+	  .acheader = NULL,
+	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org, bob@example.org\r\n"
+	  "To: carol@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <two-senders@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Autocrypt: addr=bob@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "When Alice and Bob are both present, we should not update Autocrypt state at all\r\n",
+	},
 };
 
 
