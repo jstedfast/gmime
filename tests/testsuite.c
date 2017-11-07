@@ -425,12 +425,6 @@ testsuite_setup_gpghome (const char *gpg)
 {
 	char *command;
 	FILE *fp;
-#if DEBUG_GNUPG
-	const char *files[] = { "./tmp/.gnupg/gpg.conf", "./tmp/.gnupg/gpgsm.conf", "./tmp/.gnupg/gpg-agent.conf", "./tmp/.gnupg/dirmngr.conf", NULL };
-	const char debug[] = "log-file socket://%s/tmp/.gnupg/S.log\ndebug 1024\nverbose\n";
-	int i;
-	char *cwd;
-#endif
 	
 	/* reset .gnupg config directory */
 	if (system ("/bin/rm -rf ./tmp") != 0)
@@ -479,25 +473,30 @@ testsuite_setup_gpghome (const char *gpg)
 		return EXIT_FAILURE;
 	
 #if DEBUG_GNUPG
-	cwd = g_get_current_dir ();
-	
-	for (i = 0; files[i]; i++) {
-		if (!(fp = fopen (files[i], "a")))
-			return EXIT_FAILURE;
+	if (TRUE) {
+		const char *files[] = { "./tmp/.gnupg/gpg.conf", "./tmp/.gnupg/gpgsm.conf", "./tmp/.gnupg/gpg-agent.conf", "./tmp/.gnupg/dirmngr.conf", NULL };
+		const char debug[] = "log-file socket://%s/tmp/.gnupg/S.log\ndebug 1024\nverbose\n";
+		char *cwd = g_get_current_dir ();
+		int i;
 		
-		if (fprintf (fp, debug, cwd) == -1) {
-			g_free (cwd);
-			fclose (fp);
-			return EXIT_FAILURE;
+		for (i = 0; files[i]; i++) {
+			if (!(fp = fopen (files[i], "a")))
+				return EXIT_FAILURE;
+			
+			if (fprintf (fp, debug, cwd) == -1) {
+				g_free (cwd);
+				fclose (fp);
+				return EXIT_FAILURE;
+			}
+			
+			if (fclose (fp)) {
+				g_free (cwd);
+				return EXIT_FAILURE;
+			}
 		}
 		
-		if (fclose (fp)) {
-			g_free (cwd);
-			return EXIT_FAILURE;
-		}
+		g_free (cwd);
 	}
-	
-	g_free (cwd);
 #endif
 	
 	return EXIT_SUCCESS;

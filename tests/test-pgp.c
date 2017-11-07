@@ -403,13 +403,13 @@ int main (int argc, char **argv)
 	g_mime_stream_reset (istream);
 	
 	what = "GMimeGpgContext::sign";
-	testsuite_check (what);
+	testsuite_check ("%s", what);
 	try {
 		test_sign (ctx, FALSE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimeGpgContext::verify";
-		testsuite_check (what);
+		testsuite_check ("%s", what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_verify (ctx, istream, ostream);
@@ -423,13 +423,13 @@ int main (int argc, char **argv)
 	ostream = g_mime_stream_mem_new ();
 	
 	what = "GMimeGpgContext::sign (detached)";
-	testsuite_check (what);
+	testsuite_check ("%s", what);
 	try {
 		test_sign (ctx, TRUE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimeGpgContext::verify (detached)";
-		testsuite_check (what);
+		testsuite_check ("%s", what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_verify_detached (ctx, istream, ostream);
@@ -443,13 +443,13 @@ int main (int argc, char **argv)
 	ostream = g_mime_stream_mem_new ();
 	
 	what = "GMimeGpgContext::encrypt";
-	testsuite_check (what);
+	testsuite_check ("%s", what);
 	try {
 		test_encrypt (ctx, FALSE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimeGpgContext::decrypt";
-		testsuite_check (what);
+		testsuite_check ("%s", what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_decrypt (ctx, FALSE, istream, ostream);
@@ -463,13 +463,13 @@ int main (int argc, char **argv)
 	ostream = g_mime_stream_mem_new ();
 	
 	what = "GMimeGpgContext::encrypt+sign";
-	testsuite_check (what);
+	testsuite_check ("%s", what);
 	try {
 		test_encrypt (ctx, TRUE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimeGpgContext::decrypt+verify";
-		testsuite_check (what);
+		testsuite_check ("%s", what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_decrypt (ctx, TRUE, istream, ostream);

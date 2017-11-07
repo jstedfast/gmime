@@ -31,16 +31,16 @@ G_BEGIN_DECLS
 void testsuite_init (int argc, char **argv);
 int testsuite_exit (void);
 
-void testsuite_printf (FILE *out, int verbosity, const char *fmt, ...);
+void testsuite_printf (FILE *out, int verbosity, const char *fmt, ...) G_GNUC_PRINTF (3, 4);
 void testsuite_vprintf (FILE *out, int verbosity, const char *fmt, va_list args);
 
 /* start/end a test collection */
 void testsuite_start (const char *test);
 void testsuite_end (void);
 
-void testsuite_check (const char *checking, ...);
-void testsuite_check_failed (const char *fmt, ...);
-void testsuite_check_warn (const char *fmt, ...);
+void testsuite_check (const char *checking, ...) G_GNUC_PRINTF (1, 2);
+void testsuite_check_failed (const char *fmt, ...) G_GNUC_PRINTF (1, 2);
+void testsuite_check_warn (const char *fmt, ...) G_GNUC_PRINTF (1, 2);
 void testsuite_check_passed (void);
 
 int testsuite_total_errors (void);
@@ -60,7 +60,7 @@ typedef struct _Exception {
 	char *message;
 } Exception;
 
-Exception *exception_new (const char *fmt, ...);
+Exception *exception_new (const char *fmt, ...) G_GNUC_PRINTF (1, 2);
 void exception_free (Exception *ex);
 
 /* PRIVATE: do not use! */
