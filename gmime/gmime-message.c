@@ -1178,32 +1178,29 @@ g_mime_message_get_body (GMimeMessage *message)
 
 
 /**
- * g_mime_message_get_autocrypt_headers:
+ * g_mime_message_get_autocrypt_header:
  * @message: a #GMimeMessage object.
  * @now: a #GDateTime object, or %NULL
  *
- * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
- * given type based on the sender(s) of an e-mail message.
+ * Creates a new #GMimeAutocryptHeader base on the relevant Autocrypt
+ * header associated with the sender of an e-mail message.
  *
- * Each header in the list will have a valid address and will be of
- * the type requested.
+ * If the message has no sender in the From: field, or has more than
+ * one sender, then this function will return %NULL.  Autocrypt should
+ * ignore the message entirely.
  *
- * If no Autocrypt header is found for a sender, the returned
- * #GMimeAutocryptHeader associated with that address will be in the
- * list, but it will not be complete (see
+ * If there is one sender, but no single Autocrypt header is found
+ * that matches that e-mail address, a #GMimeAutocryptHeader will be
+ * returned for the sender, but it will be incomplete (see
  * #g_mime_autocrypt_header_is_complete).
  *
  * Note that the following types of Autocrypt headers will not be
  * returned by this function:
  *
- *  - headers of an unrequested type
  *  - headers that do not match an address in "From:"
  *  - unparseable headers
  *  - headers with unknown critical attributes
- *  - duplicate valid headers for a given address
- * 
- * On error (e.g. if this version of GMime cannot handle the requested
- * Autocrypt type), returns %NULL
+ *  - duplicate valid headers for the sender's address
  *
  * The returned Autocrypt headers will have their effective_date set
  * to the earliest of either:
@@ -1211,14 +1208,17 @@ g_mime_message_get_body (GMimeMessage *message)
  * - the Date: header of the message or 
  * - @now (or the current time, if @now is %NULL)
  *
- * Returns: (transfer full): a new #GMimeAutocryptHeaderList object
+ * Returns: (transfer full): a new #GMimeAutocryptHeaderList object,
+ * or %NULL if the message should be ignored for purposes of
+ * Autocrypt.
  **/
-GMimeAutocryptHeaderList *
-g_mime_message_get_autocrypt_headers (GMimeMessage *message, GDateTime *now)
+GMimeAutocryptHeader *
+g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	GMimeAutocryptHeaderList *ret = NULL;
+	GMimeAutocryptHeaderList *retlist = NULL;
+	GMimeAutocryptHeader *ret = NULL;
 	GDateTime *newnow = NULL;
 	GDateTime *effective_date = NULL;
 	if (now == NULL)
@@ -1226,13 +1226,20 @@ g_mime_message_get_autocrypt_headers (GMimeMessage *message, GDateTime *now)
 	effective_date = now;
 	if (message->date && g_date_time_compare (message->date, now) < 0)
 		effective_date = message->date;
-	ret = g_mime_object_get_autocrypt_headers (GMIME_OBJECT (message),
-						   effective_date,
-						   "autocrypt",
-						   message->addrlists[GMIME_ADDRESS_TYPE_FROM],
-						   TRUE);
+	retlist = g_mime_object_get_autocrypt_headers (GMIME_OBJECT (message),
+						       effective_date,
+						       "autocrypt",
+						       message->addrlists[GMIME_ADDRESS_TYPE_FROM],
+						       TRUE);
 	if (newnow)
 		g_date_time_unref (newnow);
+	if (retlist) {
+		if (g_mime_autocrypt_header_list_get_count (retlist) == 1) {
+			ret = g_mime_autocrypt_header_list_get_header_at (retlist, 0);
+			g_object_ref (ret);
+		}
+		g_object_unref (retlist);
+	}
 	return ret;
 }
 

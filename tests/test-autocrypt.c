@@ -48,6 +48,8 @@ _gen_header (const struct _ah_gen_test *t)
 {
 	GMimeAutocryptHeader *ah = NULL;
 	GByteArray *keydata = NULL;
+	if (t == NULL)
+		return NULL;
 	if (!(ah = g_mime_autocrypt_header_new())) {
 		fprintf (stderr, "failed to make a new header");
 		return NULL;
@@ -72,13 +74,13 @@ _gen_header (const struct _ah_gen_test *t)
 
 /* generates a header list based on a series with an addr=NULL sentinel value */
 static GMimeAutocryptHeaderList*
-_gen_header_list (const struct _ah_gen_test *tests)
+_gen_header_list (const struct _ah_gen_test **tests)
 {
 	GMimeAutocryptHeaderList *ret = g_mime_autocrypt_header_list_new ();
-	for (; tests->addr; tests++) {
-		GMimeAutocryptHeader *ah = _gen_header (tests);
+	for (; *tests; tests++) {
+		GMimeAutocryptHeader *ah = _gen_header (*tests);
 		if (!ah) {
-			fprintf (stderr, "failed to generate header <%s>", tests->addr);
+			fprintf (stderr, "failed to generate header <%s>", (*tests)->addr);
 			g_object_unref (ret);
 			return NULL;
 		}
@@ -98,8 +100,8 @@ const static struct _ah_gen_test gen_test_data[] = {
 	}
 };
 
-const static struct _ah_gen_test no_addrs[] = {
-	{ .addr = NULL }, /* sentinel */
+const static struct _ah_gen_test * no_addrs[] = {
+	NULL, /* sentinel */
 };
 
 
@@ -145,37 +147,44 @@ test_ah_generation (void)
 
 struct _ah_parse_test {
 	const char *name;
-	const struct _ah_gen_test *acheaders;
-	const struct _ah_gen_test *gossipheaders;
+	const struct _ah_gen_test *acheader;
+	const struct _ah_gen_test **gossipheaders;
 	const char *msg;
 };
 
-const static struct _ah_gen_test alice_addr[] = {
+const static struct _ah_gen_test alice_addr =
 	{ .addr = "alice@example.org",
 	  .keydatacount = 102,
 	  .timestamp = 1508774054,
-	  .keybyte = '\013' },
-	{ .addr = NULL }, /* sentinel */
-};
+	  .keybyte = '\013',
+	};
 
-const static struct _ah_gen_test alice_incomplete[] = {
+
+const static struct _ah_gen_test alice_incomplete =
 	{ .addr = "alice@example.org",
 	  .timestamp = 1508774054,
-	},
-	{ .addr = NULL }, /* sentinel */
-};
+	};
 
-const static struct _ah_gen_test bob_addr[] = {
+
+const static struct _ah_gen_test bob_addr =
 	{ .addr = "bob@example.org",
 	  .keydatacount = 99,
 	  .timestamp = 1508774054,
-	  .keybyte = '\133' },
-	{ .addr = NULL }, /* sentinel */
+	  .keybyte = '\133' };
+
+const static struct _ah_gen_test bob_incomplete =
+	{ .addr = "bob@example.org",
+	  .timestamp = 1508774054,
+	};
+
+const static struct _ah_gen_test *just_bob[] = {
+	&bob_addr,
+	NULL,
 };
 
 const static struct _ah_parse_test parse_test_data[] = {
 	{ .name = "simple",
-	  .acheaders = alice_addr,
+	  .acheader = &alice_addr,
 	  .gossipheaders = no_addrs,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
@@ -192,8 +201,8 @@ const static struct _ah_parse_test parse_test_data[] = {
 	},
 	
 	{ .name = "simple+gossip",
-	  .acheaders = alice_addr,
-	  .gossipheaders = bob_addr,
+	  .acheader = &alice_addr,
+	  .gossipheaders = just_bob,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org, carol@example.org\r\n"
 	  "Subject: A gossipy lovely day\r\n"
@@ -212,7 +221,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	},
 	
 	{ .name = "simple+badgossip",
-	  .acheaders = alice_addr,
+	  .acheader = &alice_addr,
 	  .gossipheaders = no_addrs,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org, carol@example.org\r\n"
@@ -235,7 +244,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	},
 	
 	{ .name = "duplicate",
-	  .acheaders = alice_incomplete,
+	  .acheader = &alice_incomplete,
 	  .gossipheaders = no_addrs,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
@@ -254,7 +263,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "Duplicate Autocrypt headers should cause none to match?\r\n",
 	},
 	{ .name = "unrecognized critical attribute",
-	  .acheaders = alice_incomplete,
+	  .acheader = &alice_incomplete,
 	  .gossipheaders = no_addrs,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
@@ -271,7 +280,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	},
 
 	{ .name = "unrecognized critical attribute + simple",
-	  .acheaders = alice_addr,
+	  .acheader = &alice_addr,
 	  .gossipheaders = no_addrs,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
@@ -291,7 +300,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	},
 	
 	{ .name = "unrecognized non-critical attribute",
-	  .acheaders = alice_addr,
+	  .acheader = &alice_addr,
 	  .gossipheaders = no_addrs,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
@@ -342,8 +351,8 @@ test_ah_message_parse (void)
 {
 	guint i;
 	for (i = 0; i < G_N_ELEMENTS (parse_test_data); i++) {
-		GMimeAutocryptHeaderList *ahl_expected = NULL;
-		GMimeAutocryptHeaderList *ahl_got = NULL;
+		GMimeAutocryptHeader *ah_expected = NULL;
+		GMimeAutocryptHeader *ah_got = NULL;
 		GMimeAutocryptHeaderList *gossip_expected = NULL;
 		GMimeAutocryptHeaderList *gossip_got = NULL;
 		GMimeMessage *message = NULL;
@@ -351,7 +360,7 @@ test_ah_message_parse (void)
 		try {
 			testsuite_check ("Autocrypt message[%u] (%s)", i, test->name);
 
-			ahl_expected = _gen_header_list (test->acheaders);
+			ah_expected = _gen_header (test->acheader);
 			gossip_expected = _gen_header_list (test->gossipheaders);
 
 			/* make GMimeMessage from test->msg */
@@ -361,16 +370,20 @@ test_ah_message_parse (void)
 			g_object_unref (parser);
 			g_object_unref (stream);
 
-			ahl_got = g_mime_message_get_autocrypt_headers (message, NULL);
-			if (!ahl_got)
-				throw (exception_new ("failed to extract headers from message!"));
+			ah_got = g_mime_message_get_autocrypt_header (message, NULL);
+			if (!ah_got && ah_expected)
+				throw (exception_new ("failed to extract Autocrypt header from message!"));
+			if (ah_got && !ah_expected)
+				throw (exception_new ("extracted Autocrypt header when we shouldn't!\n%s\n",
+						      g_mime_autocrypt_header_get_string (ah_got)));
 			gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, NULL);
 			if (!gossip_got)
 				throw (exception_new ("failed to extract gossip headers from message!"));
 			gchar *err = NULL;
-			err = _acheaderlists_compare (ahl_expected, ahl_got);
-			if (err)
-				throw (exception_new ("sender headers: %s", err));
+
+			if (ah_expected)
+				if (g_mime_autocrypt_header_compare (ah_expected, ah_got))
+					throw (exception_new ("Autocrypt header did not match"));
 			err = _acheaderlists_compare (gossip_expected, gossip_got);
 			if (err)
 				throw (exception_new ("gossip headers: %s", err));
@@ -378,10 +391,10 @@ test_ah_message_parse (void)
 		} catch (ex) {
 			testsuite_check_failed ("autocrypt message parse[%u] (%s) failed: %s", i, test->name, ex->message);
 		} finally;
-		if (ahl_expected)
-			g_object_unref (ahl_expected);
-		if (ahl_got)
-			g_object_unref (ahl_got);
+		if (ah_expected)
+			g_object_unref (ah_expected);
+		if (ah_got)
+			g_object_unref (ah_got);
 		if (gossip_expected)
 			g_object_unref (gossip_expected);
 		if (gossip_got)
