@@ -661,21 +661,155 @@ test_ah_message_parse (void)
 }
 
 
+static void
+import_secret_key (void)
+{
+	/* generated with GnuPG via:
+	 *
+	 * export GNUPGHOME=$(mktemp -d)
+	 * gpg --pinentry-mode loopback --passphrase '' --batch --quick-gen-key $(uuidgen)@autocrypt.org
+	 * gpg --command-fd 3 --edit-key autocrypt.org expire  3<<<0
+	 * gpg --command-fd 3 --edit-key autocrypt.org clean
+	 * gpg --armor --export-secret-keys autocrypt.org | sed -e 's/^/\t\t"/' -e 's/$/\\n"/'
+	 */
+	const char secret_key[] =
+		"-----BEGIN PGP PRIVATE KEY BLOCK-----\n"
+		"\n"
+		"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\n"
+		"7MLMmw==\n"
+		"=HQjA\n"
+		"-----END PGP PRIVATE KEY BLOCK-----\n"
+		;
+	GMimeCryptoContext *ctx = g_mime_gpg_context_new ();
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer (secret_key, sizeof(secret_key));
+	GError *err = NULL;
+
+	testsuite_check ("Importing secret key");
+	
+	g_mime_crypto_context_import_keys (ctx, stream, &err);
+	g_object_unref (stream);
+	g_object_unref (ctx);
+
+	if (err != NULL) {
+		Exception *ex;
+		ex = exception_new ("%s", err->message);
+		g_error_free (err);
+		throw (ex);
+	}
+	testsuite_check_passed ();
+}
+
 int main (int argc, char **argv)
 {
+	char *gpg;
+
 	g_mime_init ();
 	
 	testsuite_init (argc, argv);
+
+	if (!(gpg = g_find_program_in_path ("gpg2")))
+		if (!(gpg = g_find_program_in_path ("gpg")))
+			return EXIT_FAILURE;
+	
+	if (testsuite_setup_gpghome (gpg) != 0)
+		return EXIT_FAILURE;
 	
 	testsuite_start ("Autocrypt: generate headers");
 	test_ah_generation ();
 	testsuite_end ();
+
+#ifdef ENABLE_CRYPTO
+	testsuite_start ("Autocrypt: import OpenPGP secret key");
+	import_secret_key ();
+	testsuite_end ();
+#endif
 	
 	testsuite_start ("Autocrypt: parse messages");
 	test_ah_message_parse ();
 	testsuite_end ();
 	
 	g_mime_shutdown ();
+	
+#ifdef ENABLE_CRYPTO
+	if (testsuite_destroy_gpghome () != 0)
+		return EXIT_FAILURE;
+#endif
 	
 	return testsuite_exit ();
 }
