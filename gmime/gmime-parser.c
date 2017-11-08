@@ -263,8 +263,8 @@ parser_find_header (GMimeParser *parser, const char *name, gint64 *offset)
 	Header *header;
 	guint i;
 	
-	for (i = priv->headers->len; i > 0U; --i) {
-		header = priv->headers->pdata[i - 1U];
+	for (i = priv->headers->len; i > 0; i--) {
+		header = priv->headers->pdata[i - 1];
 		
 		if (g_ascii_strcasecmp (header->name, name) != 0)
 			continue;
@@ -869,17 +869,6 @@ next_alloc_size (size_t n)
 	priv->headerleft -= len;                                          \
 } G_STMT_END
 
-static inline gboolean
-is_7bit_clean (const gchar *str)
-{
-	for (; *str != '\0'; str++) {
-		if ((*str & 0x80) != 0) {
-			return FALSE;
-		}
-	}
-	return TRUE;
-}
-
 static void
 header_parse (GMimeParser *parser, GMimeParserOptions *options)
 {
@@ -908,12 +897,10 @@ header_parse (GMimeParser *parser, GMimeParserOptions *options)
 	
 	if (*inptr != ':') {
 		/* ignore invalid headers */
-		if (strcmp(priv->headerbuf, "\r") != 0) {
-			_g_mime_parser_options_warn (options, priv->header_offset, GMIME_WARN_INVALID_HEADER, priv->headerbuf);
-			w(g_warning ("Invalid header at %lld: '%s'",
-				     (long long) priv->header_offset,
-				     priv->headerbuf));
-		}
+		_g_mime_parser_options_warn (options, priv->header_offset, GMIME_WARN_INVALID_HEADER, priv->headerbuf);
+		w(g_warning ("Invalid header at %lld: '%s'",
+			     (long long) priv->header_offset,
+			     priv->headerbuf));
 		
 		if (priv->preheader == NULL)
 			priv->preheader = g_strdup (priv->headerbuf);
@@ -942,9 +929,9 @@ header_parse (GMimeParser *parser, GMimeParserOptions *options)
 	if (priv->regex && g_regex_match (priv->regex, header->name, 0, NULL))
 		priv->header_cb (parser, header->name, header->raw_value,
 				 header->offset, priv->user_data);
-	if (!is_7bit_clean (header->raw_name) || !is_7bit_clean (header->raw_value)) {
+	
+	if (!g_utf8_validate (header->raw_value, -1, NULL))
 		_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_UNENCODED_8BIT_HEADER, header->name);
-	}
 }
 
 enum {
