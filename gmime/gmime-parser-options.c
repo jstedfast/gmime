@@ -77,7 +77,7 @@ g_mime_parser_options_shutdown (void)
 void
 _g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, guint errcode, const gchar *item)
 {
-	GMimeWarningFunc warn;
+	GMimeParserWarningFunc warn;
 	gpointer user_data;
 	
 	if (options == NULL) {
