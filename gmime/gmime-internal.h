@@ -50,6 +50,8 @@ G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOpt
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
 G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);
+G_GNUC_INTERNAL void _g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, GMimeParserWarning errcode,
+						  const gchar *item);
 
 /* GMimeHeader */
 //G_GNUC_INTERNAL void _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
@@ -68,6 +70,16 @@ G_GNUC_INTERNAL void _g_mime_object_unblock_header_list_changed (GMimeObject *ob
 G_GNUC_INTERNAL void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 G_GNUC_INTERNAL void _g_mime_object_append_header (GMimeObject *object, const char *name, const char *raw_name,
 						   const char *raw_value, gint64 offset);
+
+/* GMimeContentType */
+G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64 offset);
+
+/* GMimeParamList */
+G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_parse (GMimeParserOptions *options, const char *str, gint64 offset);
+
+/* GMimeContentDisposition */
+G_GNUC_INTERNAL GMimeContentDisposition *_g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str,
+									    gint64 offset);
 
 /* utils */
 G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,

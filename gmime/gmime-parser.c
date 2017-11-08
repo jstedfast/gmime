@@ -263,8 +263,8 @@ parser_find_header (GMimeParser *parser, const char *name, gint64 *offset)
 	Header *header;
 	guint i;
 	
-	for (i = 0; i < priv->headers->len; i++) {
-		header = priv->headers->pdata[i];
+	for (i = priv->headers->len; i > 0U; --i) {
+		header = priv->headers->pdata[i - 1U];
 		
 		if (g_ascii_strcasecmp (header->name, name) != 0)
 			continue;
@@ -869,8 +869,19 @@ next_alloc_size (size_t n)
 	priv->headerleft -= len;                                          \
 } G_STMT_END
 
+static inline gboolean
+is_7bit_clean (const gchar *str)
+{
+	for (; *str != '\0'; str++) {
+		if ((*str & 0x80) != 0) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 static void
-header_parse (GMimeParser *parser)
+header_parse (GMimeParser *parser, GMimeParserOptions *options)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	gboolean blank = FALSE;
@@ -897,9 +908,12 @@ header_parse (GMimeParser *parser)
 	
 	if (*inptr != ':') {
 		/* ignore invalid headers */
-		w(g_warning ("Invalid header at %lld: '%s'",
-			     (long long) priv->header_offset,
-			     priv->headerbuf));
+		if (strcmp(priv->headerbuf, "\r") != 0) {
+			_g_mime_parser_options_warn (options, priv->header_offset, GMIME_WARN_INVALID_HEADER, priv->headerbuf);
+			w(g_warning ("Invalid header at %lld: '%s'",
+				     (long long) priv->header_offset,
+				     priv->headerbuf));
+		}
 		
 		if (priv->preheader == NULL)
 			priv->preheader = g_strdup (priv->headerbuf);
@@ -928,6 +942,9 @@ header_parse (GMimeParser *parser)
 	if (priv->regex && g_regex_match (priv->regex, header->name, 0, NULL))
 		priv->header_cb (parser, header->name, header->raw_value,
 				 header->offset, priv->user_data);
+	if (!is_7bit_clean (header->raw_name) || !is_7bit_clean (header->raw_value)) {
+		_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_UNENCODED_8BIT_HEADER, header->name);
+	}
 }
 
 enum {
@@ -980,7 +997,7 @@ has_content_headers (GPtrArray *headers)
 }
 
 static int
-parser_step_headers (GMimeParser *parser)
+parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	gboolean eoln, valid = TRUE, fieldname = TRUE;
@@ -1019,7 +1036,7 @@ parser_step_headers (GMimeParser *parser)
 			
 			/* if we are scanning a new line, check for a folded header */
 			if (!priv->midline && continuation && (*inptr != ' ' && *inptr != '\t')) {
-				header_parse (parser);
+				header_parse (parser, options);
 				priv->header_offset = parser_offset (priv, inptr);
 				continuation = FALSE;
 				fieldname = TRUE;
@@ -1149,7 +1166,7 @@ parser_step_headers (GMimeParser *parser)
  headers_end:
 	
 	if (priv->headerptr > priv->headerbuf)
-		header_parse (parser);
+		header_parse (parser, options);
 	
 	priv->headers_end = parser_offset (priv, start);
 	priv->state = GMIME_PARSER_STATE_HEADERS_END;
@@ -1259,7 +1276,7 @@ parser_skip_line (GMimeParser *parser)
 }
 
 static int
-parser_step (GMimeParser *parser)
+parser_step (GMimeParser *parser, GMimeParserOptions *options)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	
@@ -1288,7 +1305,7 @@ parser_step (GMimeParser *parser)
 		break;
 	case GMIME_PARSER_STATE_MESSAGE_HEADERS:
 	case GMIME_PARSER_STATE_HEADERS:
-		parser_step_headers (parser);
+		parser_step_headers (parser, options);
 		
 		if (priv->message_headers_begin == -1) {
 			priv->message_headers_begin = priv->headers_begin;
@@ -1660,7 +1677,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
-	if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
+	if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR) {
 		/* Note: currently cannot happen because
 		 * parser_step_headers() never returns error */
 		*found = BOUNDARY_EOS;
@@ -1694,6 +1711,21 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	g_object_unref (message);
 }
 
+static void
+check_content_header_conflict (GMimeParserOptions *options, GMimeObject *object, const Header *header)
+{
+	const GMimeHeader *exist_header;
+
+	exist_header = g_mime_header_list_get_header (object->headers, header->name);
+	if (exist_header != NULL) {
+		if (strcmp (exist_header->raw_value, header->raw_value) == 0) {
+			_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_DUPLICATED_CONTENT_HDR, header->name);
+		} else {
+			_g_mime_parser_options_warn (options, header->offset, GMIME_CRIT_CONFLICTING_CONTENT_HDR, header->name);
+		}
+	}
+}
+
 static GMimeObject *
 parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found)
 {
@@ -1718,6 +1750,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 		header = priv->headers->pdata[i];
 		
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
+			check_content_header_conflict (options, object, header);
 			_g_mime_object_append_header (object, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
@@ -1727,7 +1760,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
 		/* skip empty line after headers */
-		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
+		if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR) {
 			*found = BOUNDARY_EOS;
 			return object;
 		}
@@ -1737,7 +1770,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 		parser_scan_message_part (parser, options, (GMimeMessagePart *) object, found);
 	else
 		parser_scan_mime_part_content (parser, (GMimePart *) object, found);
-	
+
 	return object;
 }
 
@@ -1818,7 +1851,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 		
 		/* get the headers */
 		priv->state = GMIME_PARSER_STATE_HEADERS;
-		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
+		if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR) {
 			found = BOUNDARY_EOS;
 			break;
 		}
@@ -1851,6 +1884,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	GMimeObject *object;
 	Header *header;
 	guint i;
+	gint64 cont_type_offs = -1;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
@@ -1860,6 +1894,10 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		header = priv->headers->pdata[i];
 		
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
+			check_content_header_conflict (options, object, header);
+			if (g_ascii_strcasecmp (header->name, "Content-Type") == 0) {
+				cont_type_offs = header->offset;
+			}
 			_g_mime_object_append_header (object, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
@@ -1871,7 +1909,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
 		/* skip empty line after headers */
-		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
+		if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR) {
 			*found = BOUNDARY_EOS;
 			return object;
 		}
@@ -1894,6 +1932,14 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 			return object;
 		}
 		
+		if ((*found == BOUNDARY_PARENT) || (*found == BOUNDARY_PARENT_END)) {
+			_g_mime_parser_options_warn (options, cont_type_offs, GMIME_WARN_MALFORMED_MULTIPART, content_type->subtype);
+		}
+
+		if (*found == BOUNDARY_EOS) {
+			_g_mime_parser_options_warn (options, -1, GMIME_WARN_TRUNCATED_MESSAGE, NULL);
+		}
+
 		multipart->write_end_boundary = FALSE;
 		parser_pop_boundary (parser);
 		
@@ -1902,6 +1948,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		else if (*found == BOUNDARY_PARENT && found_immediate_boundary (priv, FALSE))
 			*found = BOUNDARY_IMMEDIATE;
 	} else {
+		_g_mime_parser_options_warn (options, cont_type_offs, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, content_type->subtype);
 		w(g_warning ("multipart without boundary encountered"));
 		/* this will scan everything into the prologue */
 		*found = parser_scan_multipart_prologue (parser, multipart);
@@ -1921,7 +1968,7 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
 	while (priv->state < GMIME_PARSER_STATE_HEADERS_END) {
-		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR)
+		if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR)
 			return NULL;
 	}
 	
@@ -1972,18 +2019,19 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	
 	/* scan the from-line if we are parsing an mbox */
 	while (priv->state != GMIME_PARSER_STATE_MESSAGE_HEADERS) {
-		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR)
+		if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR)
 			return NULL;
 	}
 	
 	/* parse the headers */
 	while (priv->state < GMIME_PARSER_STATE_HEADERS_END) {
-		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR)
+		if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR)
 			return NULL;
 	}
 	
 	message = g_mime_message_new (FALSE);
 	((GMimeObject *) message)->ensure_newline = FALSE;
+	_g_mime_header_list_set_options(g_mime_object_get_header_list(GMIME_OBJECT(message)), options);
 	
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
@@ -2021,6 +2069,10 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	content_type_destroy (content_type);
 	message->mime_part = object;
 	
+	if (priv->state == GMIME_PARSER_STATE_ERROR) {
+		_g_mime_parser_options_warn (options, -1, GMIME_WARN_MALFORMED_MESSAGE, NULL);
+	}
+
 	if (priv->format == GMIME_FORMAT_MBOX) {
 		priv->state = GMIME_PARSER_STATE_FROM;
 		parser_pop_boundary (parser);

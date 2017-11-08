@@ -1284,6 +1284,8 @@ GMIME_TYPE_FORMAT_OPTIONS
 <FILE>gmime-parser-options</FILE>
 GMimeParserOptions
 GMimeRfcComplianceMode
+GMimeParserWarning
+GMimeParserWarningFunc
 g_mime_parser_options_new
 g_mime_parser_options_free
 g_mime_parser_options_clone
@@ -1298,6 +1300,8 @@ g_mime_parser_options_get_rfc2047_compliance_mode
 g_mime_parser_options_set_rfc2047_compliance_mode
 g_mime_parser_options_get_fallback_charsets
 g_mime_parser_options_set_fallback_charsets
+g_mime_parser_options_get_warning_callback
+g_mime_parser_options_set_warning_callback
 
 <SUBSECTION Private>
 g_mime_parser_options_get_type

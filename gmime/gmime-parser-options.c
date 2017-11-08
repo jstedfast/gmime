@@ -48,6 +48,8 @@ struct _GMimeParserOptions {
 	GMimeRfcComplianceMode rfc2047;
 	gboolean allow_no_domain;
 	char **charsets;
+	GMimeParserWarningFunc warning_cb;
+	gpointer warning_user_data;
 };
 
 static GMimeParserOptions *default_options = NULL;
@@ -72,6 +74,13 @@ g_mime_parser_options_shutdown (void)
 	default_options = NULL;
 }
 
+void
+_g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, guint errcode, const gchar *item)
+{
+	if ((options != NULL) && (options->warning_cb != NULL)) {
+		options->warning_cb(offset, errcode, item, options->warning_user_data);
+	}
+}
 
 /**
  * g_mime_parser_options_get_default:
@@ -110,6 +119,9 @@ g_mime_parser_options_new (void)
 	options->charsets[1] = g_strdup ("iso-8859-1");
 	options->charsets[2] = NULL;
 	
+	options->warning_cb = NULL;
+	options->warning_user_data = NULL;
+
 	return options;
 }
 
@@ -145,6 +157,9 @@ g_mime_parser_options_clone (GMimeParserOptions *options)
 		clone->charsets[i] = g_strdup (options->charsets[i]);
 	clone->charsets[i] = NULL;
 	
+	clone->warning_cb = options->warning_cb;
+	clone->warning_user_data = options->warning_user_data;
+
 	return clone;
 }
 
@@ -392,4 +407,37 @@ g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const 
 	for (i = 0; i < n; i++)
 		options->charsets[i] = g_strdup (charsets[i]);
 	options->charsets[n] = NULL;
+}
+
+
+/**
+ * g_mime_parser_options_get_warning_callback:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets callback function which is called if the parser detects any issues.
+ *
+ * Returns: the currently registered warning callback function
+ **/
+GMimeParserWarningFunc
+g_mime_parser_options_get_warning_callback (GMimeParserOptions *options)
+{
+	return (options != NULL) ? options->warning_cb : default_options->warning_cb;
+}
+
+
+/**
+ * g_mime_parser_options_set_warning_callback:
+ * @options: a #GMimeParserOptions
+ * @warning_cb: a #GMimeParserWarningFunc or %NULL to clear the callback
+ * @user_data: data passed to the warning callback function
+ *
+ * Registers the callback function being called if the parser detects any issues.
+ **/
+void
+g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data)
+{
+	g_return_if_fail (options != NULL);
+
+	options->warning_cb = warning_cb;
+	options->warning_user_data = user_data;
 }

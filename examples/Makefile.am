@@ -6,7 +6,7 @@ extra_DIST = README
 
 AM_CPPFLAGS = -I$(top_srcdir) $(GMIME_CFLAGS) $(GLIB_CFLAGS)
 
-noinst_PROGRAMS = basic-example imap-example uuencode uudecode
+noinst_PROGRAMS = basic-example imap-example uuencode uudecode msgcheck
 
 DEPS = 						\
 	$(top_builddir)/util/libutil.la		\
@@ -42,3 +42,8 @@ uudecode_SOURCES = $(GETOPT_SOURCES) uudecode.c
 uudecode_LDFLAGS = 
 uudecode_DEPENDENCIES = $(DEPS)
 uudecode_LDADD = $(LDADDS)
+
+msgcheck_SOURCES = $(GETOPT_SOURCES) msgcheck.c
+msgcheck_LDFLAGS = 
+msgcheck_DEPENDENCIES = $(DEPS)
+msgcheck_LDADD = $(LDADDS)

@@ -29,6 +29,7 @@
 #include "gmime-common.h"
 #include "gmime-disposition.h"
 #include "gmime-events.h"
+#include "gmime-internal.h"
 
 
 /**
@@ -148,6 +149,12 @@ g_mime_content_disposition_new (void)
 GMimeContentDisposition *
 g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
 {
+	return _g_mime_content_disposition_parse (options, str, -1);
+}
+
+GMimeContentDisposition *
+_g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str, gint64 offset)
+{
 	GMimeContentDisposition *disposition;
 	const char *inptr = str;
 	GMimeParamList *params;
@@ -168,7 +175,7 @@ g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
 	disposition->disposition = g_strstrip (value);
 	
 	/* parse the parameters, if any */
-	if (*inptr++ == ';' && *inptr && (params = g_mime_param_list_parse (options, inptr))) {
+	if (*inptr++ == ';' && *inptr && (params = _g_mime_param_list_parse (options, inptr, offset))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, disposition);
 		g_object_unref (disposition->params);
 		disposition->params = params;
