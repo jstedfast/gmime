@@ -1245,14 +1245,19 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
 
 
 /**
- * g_mime_message_get_autocrypt_gossip_headers:
+ * g_mime_message_get_autocrypt_gossip_headers_from_inner_part:
  * @message: a #GMimeMessage object.
  * @now: a #GDateTime object, or %NULL
+ * @inner_part: a #GMimeObject which is the cleartext part of the inner message
  *
  * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
  * given type based on the recipient(s) of an e-mail message.
+ * 
+ * You must pass the decrypted inner part of the message to this
+ * function, since Autocrypt-Gossip headers are only stored within the
+ * encrypted layer.
  *
- * Each header in the list will:
+ * Each header in the returned list will:
  *
  *  - have a valid address
  *  - be of the type requested
@@ -1271,7 +1276,8 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
  *  - duplicate valid headers for a given address
  * 
  * On error (e.g. if this version of GMime cannot handle the requested
- * Autocrypt type), returns %NULL
+ * Autocrypt type, or if a parameter is missing or malformed), returns
+ * %NULL
  *
  * The returned Autocrypt headers will have their effective_date set
  * to the earliest of either:
@@ -1279,12 +1285,13 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
  * - the Date: header of the message or 
  * - @now (or the current time, if @now is %NULL)
  * 
- * Returns: (transfer full): a new #GMimeAutocryptHeaderList object
+ * Returns: (transfer full): a new #GMimeAutocryptHeaderList object, or %NULL on error.
  **/
 GMimeAutocryptHeaderList *
-g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message, GDateTime *now)
+g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeObject *inner_part)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	g_return_val_if_fail (GMIME_IS_OBJECT (inner_part), NULL);
 	InternetAddressList *addresses = g_mime_message_get_all_recipients (message);
 	GDateTime *newnow = NULL;
 	GDateTime *effective_date = NULL;
@@ -1294,7 +1301,7 @@ g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message, GDateTime *n
 	effective_date = now;
 	if (message->date && g_date_time_compare (message->date, now) < 0)
 		effective_date = message->date;
-	ret = g_mime_object_get_autocrypt_headers (GMIME_OBJECT (message),
+	ret = g_mime_object_get_autocrypt_headers (inner_part,
 						   effective_date,
 						   "autocrypt-gossip",
 						   addresses, FALSE);

@@ -150,6 +150,7 @@ struct _ah_parse_test {
 	const struct _ah_gen_test *acheader;
 	const struct _ah_gen_test **gossipheaders;
 	const char *msg;
+	const char *innerpart;
 };
 
 const static struct _ah_gen_test alice_addr =
@@ -172,6 +173,12 @@ const static struct _ah_gen_test bob_addr =
 	  .timestamp = 1508774054,
 	  .keybyte = '\133' };
 
+const static struct _ah_gen_test carol_addr =
+	{ .addr = "carol@example.org",
+	  .keydatacount = 108,
+	  .timestamp = 1508774054,
+	  .keybyte = '\131' };
+
 const static struct _ah_gen_test bob_incomplete =
 	{ .addr = "bob@example.org",
 	  .timestamp = 1508774054,
@@ -182,10 +189,16 @@ const static struct _ah_gen_test *just_bob[] = {
 	NULL,
 };
 
+const static struct _ah_gen_test *bob_and_carol[] = {
+	&bob_addr,
+	&carol_addr,
+	NULL,
+};
+
 const static struct _ah_parse_test parse_test_data[] = {
 	{ .name = "simple",
 	  .acheader = &alice_addr,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -200,29 +213,182 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "Isn't it a lovely day?\r\n",
 	},
 	
-	{ .name = "simple+gossip",
+	{ .name = "simple+onegossip",
 	  .acheader = &alice_addr,
 	  .gossipheaders = just_bob,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org, carol@example.org\r\n"
 	  "Subject: A gossipy lovely day\r\n"
-	  "Message-Id: <lovely-gossip-day@example.net>\r\n"
+	  "Message-Id: <simple-one-gossip@example.net>\r\n"
 	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
 	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: multipart/encrypted;\r\n"
+	  " protocol=\"application/pgp-encrypted\";\r\n"
+	  " boundary=\"boundary\"\r\n"
+	  "\r\n"
+	  "This is an OpenPGP/MIME encrypted message (RFC 4880 and 3156)\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/pgp-encrypted\r\n"
+	  "Content-Description: PGP/MIME version identification\r\n"
+	  "\r\n"
+	  "Version: 1\r\n"
+	  "\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/octet-stream; name=\"encrypted.asc\"\r\n"
+	  "Content-Description: OpenPGP encrypted message\r\n"
+	  "Content-Disposition: inline; filename=\"encrypted.asc\"\r\n"
+	  "\r\n"
+	  "-----BEGIN PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "NOTREALLYOPENPGPJUSTATEST\r\n"
+	  "-----END PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "--boundary--\r\n",
+	  .innerpart = "Content-Type: text/plain\r\n"
 	  "Autocrypt-Gossip: addr=bob@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
 	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
 	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
-	  "Mime-Version: 1.0\r\n"
-	  "Content-Type: text/plain\r\n"
 	  "\r\n"
 	  "Isn't a lovely day?  Now Carol can encrypt to Bob, hopefully.\r\n",
 	},
 	
-	{ .name = "simple+badgossip",
+	{ .name = "simple+nogossip",
 	  .acheader = &alice_addr,
 	  .gossipheaders = no_addrs,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org, carol@example.org\r\n"
+	  "Subject: A gossipy lovely day\r\n"
+	  "Message-Id: <simple-no-gossip@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: multipart/encrypted;\r\n"
+	  " protocol=\"application/pgp-encrypted\";\r\n"
+	  " boundary=\"boundary\"\r\n"
+	  "\r\n"
+	  "This is an OpenPGP/MIME encrypted message (RFC 4880 and 3156)\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/pgp-encrypted\r\n"
+	  "Content-Description: PGP/MIME version identification\r\n"
+	  "\r\n"
+	  "Version: 1\r\n"
+	  "\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/octet-stream; name=\"encrypted.asc\"\r\n"
+	  "Content-Description: OpenPGP encrypted message\r\n"
+	  "Content-Disposition: inline; filename=\"encrypted.asc\"\r\n"
+	  "\r\n"
+	  "-----BEGIN PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "NOTREALLYOPENPGPJUSTATEST\r\n"
+	  "-----END PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "--boundary--\r\n",
+	  .innerpart = "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Isn't a lovely day?  I sure hope Bob and Carol have each other's info\r\n"
+	  "because otherwise they won't be able to Reply All.\r\n",
+	},
+	
+	{ .name = "simple+fullgossip",
+	  .acheader = &alice_addr,
+	  .gossipheaders = bob_and_carol,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org, carol@example.org\r\n"
+	  "Subject: A gossipy lovely day\r\n"
+	  "Message-Id: <simple-full-gossip@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: multipart/encrypted;\r\n"
+	  " protocol=\"application/pgp-encrypted\";\r\n"
+	  " boundary=\"boundary\"\r\n"
+	  "\r\n"
+	  "This is an OpenPGP/MIME encrypted message (RFC 4880 and 3156)\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/pgp-encrypted\r\n"
+	  "Content-Description: PGP/MIME version identification\r\n"
+	  "\r\n"
+	  "Version: 1\r\n"
+	  "\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/octet-stream; name=\"encrypted.asc\"\r\n"
+	  "Content-Description: OpenPGP encrypted message\r\n"
+	  "Content-Disposition: inline; filename=\"encrypted.asc\"\r\n"
+	  "\r\n"
+	  "-----BEGIN PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "NOTREALLYOPENPGPJUSTATEST\r\n"
+	  "-----END PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "--boundary--\r\n",
+	  .innerpart = "Content-Type: text/plain\r\n"
+	  "Autocrypt-Gossip: addr=bob@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  "Autocrypt-Gossip: addr=carol@example.org; keydata=WVlZWVlZWVlZWVlZWVlZWVlZWVlZ\r\n"
+	  " WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZ\r\n"
+	  " WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZ\r\n"
+	  "\r\n"
+	  "Isn't a lovely day?  Now Carol and Bob can now both Reply All, hopefully.\r\n",
+	},
+		
+	{ .name = "simple+excessgossip",
+	  .acheader = &alice_addr,
+	  .gossipheaders = just_bob,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A gossipy lovely day\r\n"
+	  "Message-Id: <simple-excess-gossip@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: multipart/encrypted;\r\n"
+	  " protocol=\"application/pgp-encrypted\";\r\n"
+	  " boundary=\"boundary\"\r\n"
+	  "\r\n"
+	  "This is an OpenPGP/MIME encrypted message (RFC 4880 and 3156)\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/pgp-encrypted\r\n"
+	  "Content-Description: PGP/MIME version identification\r\n"
+	  "\r\n"
+	  "Version: 1\r\n"
+	  "\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/octet-stream; name=\"encrypted.asc\"\r\n"
+	  "Content-Description: OpenPGP encrypted message\r\n"
+	  "Content-Disposition: inline; filename=\"encrypted.asc\"\r\n"
+	  "\r\n"
+	  "-----BEGIN PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "NOTREALLYOPENPGPJUSTATEST\r\n"
+	  "-----END PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "--boundary--\r\n",
+	  .innerpart = "Content-Type: text/plain\r\n"
+	  "Autocrypt-Gossip: addr=bob@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\r\n"
+	  "Autocrypt-Gossip: addr=carol@example.org; keydata=WVlZWVlZWVlZWVlZWVlZWVlZWVlZ\r\n"
+	  " WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZ\r\n"
+	  " WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZ\r\n"
+	  "\r\n"
+	  "Recipients of this message should not accept carol's public key for gossip, since\r\n"
+	  "the message was not addressed to her\r\n"
+	},
+	
+	{ .name = "simple+badgossip",
+	  .acheader = &alice_addr,
+	  .gossipheaders = NULL,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org, carol@example.org\r\n"
 	  "Subject: A gossipy lovely day\r\n"
@@ -245,7 +411,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	
 	{ .name = "duplicate",
 	  .acheader = &alice_incomplete,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -262,9 +428,10 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "\r\n"
 	  "Duplicate Autocrypt headers should cause none to match?\r\n",
 	},
+
 	{ .name = "unrecognized critical attribute",
 	  .acheader = &alice_incomplete,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -281,7 +448,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 
 	{ .name = "unrecognized critical attribute + simple",
 	  .acheader = &alice_addr,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -301,7 +468,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	
 	{ .name = "unrecognized non-critical attribute",
 	  .acheader = &alice_addr,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: alice@example.org\r\n"
 	  "To: bob@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -318,7 +485,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 
 	{ .name = "no From: at all",
 	  .acheader = NULL,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "To: carol@example.org\r\n"
 	  "Subject: A lovely day\r\n"
 	  "Message-Id: <no-from@example.net>\r\n"
@@ -334,7 +501,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 
 	{ .name = "with Sender: header",
 	  .acheader = &bob_incomplete,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: bob@example.org\r\n"
 	  "Sender: alice@example.org\r\n"
 	  "To: carol@example.org\r\n"
@@ -352,7 +519,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 
 	{ .name = "no senders",
 	  .acheader = NULL,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: undisclosed sender\r\n"
 	  "To: carol@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -369,7 +536,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 
 	{ .name = "two senders",
 	  .acheader = NULL,
-	  .gossipheaders = no_addrs,
+	  .gossipheaders = NULL,
 	  .msg = "From: alice@example.org, bob@example.org\r\n"
 	  "To: carol@example.org\r\n"
 	  "Subject: A lovely day\r\n"
@@ -427,12 +594,10 @@ test_ah_message_parse (void)
 		GMimeAutocryptHeaderList *gossip_expected = NULL;
 		GMimeAutocryptHeaderList *gossip_got = NULL;
 		GMimeMessage *message = NULL;
+		GMimeObject *innerpart = NULL;
 		const struct _ah_parse_test *test = parse_test_data + i;
 		try {
 			testsuite_check ("Autocrypt message[%u] (%s)", i, test->name);
-
-			ah_expected = _gen_header (test->acheader);
-			gossip_expected = _gen_header_list (test->gossipheaders);
 
 			/* make GMimeMessage from test->msg */
 			GMimeStream *stream = g_mime_stream_mem_new_with_buffer (test->msg, strlen(test->msg));
@@ -440,24 +605,46 @@ test_ah_message_parse (void)
 			message = g_mime_parser_construct_message (parser, NULL);
 			g_object_unref (parser);
 			g_object_unref (stream);
+			/* make GMimeObject from test->innerpart */
+			if (test->innerpart) {
+				stream = g_mime_stream_mem_new_with_buffer (test->innerpart, strlen(test->innerpart));
+				parser = g_mime_parser_new_with_stream (stream);
+				innerpart = g_mime_parser_construct_part (parser, NULL);
+				g_object_unref (parser);
+				g_object_unref (stream);
+			}
+			
 
+			/* check on autocrypt header */
+			ah_expected = _gen_header (test->acheader);
 			ah_got = g_mime_message_get_autocrypt_header (message, NULL);
 			if (!ah_got && ah_expected)
 				throw (exception_new ("failed to extract Autocrypt header from message!"));
 			if (ah_got && !ah_expected)
 				throw (exception_new ("extracted Autocrypt header when we shouldn't!\n%s\n",
 						      g_mime_autocrypt_header_get_string (ah_got)));
-			gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, NULL);
-			if (!gossip_got)
-				throw (exception_new ("failed to extract gossip headers from message!"));
-			gchar *err = NULL;
-
 			if (ah_expected)
 				if (g_mime_autocrypt_header_compare (ah_expected, ah_got))
 					throw (exception_new ("Autocrypt header did not match"));
-			err = _acheaderlists_compare (gossip_expected, gossip_got);
-			if (err)
-				throw (exception_new ("gossip headers: %s", err));
+
+			/* check on gossip */
+			if (test->gossipheaders)
+				gossip_expected = _gen_header_list (test->gossipheaders);
+			if (innerpart) {
+				gossip_got = g_mime_message_get_autocrypt_gossip_headers_from_inner_part (message, NULL, innerpart);
+				if (!gossip_got)
+					throw (exception_new ("failed to extract gossip headers from message!"));
+			}
+			if (!gossip_got && gossip_expected)
+				throw (exception_new ("failed to extract Autocrypt gossip headers from message!"));
+			if (gossip_got && !gossip_expected)
+				throw (exception_new ("extracted Autocrypt gossip headers when we shouldn't!\n"));
+			if (gossip_expected) {
+				gchar *err = NULL;
+				err = _acheaderlists_compare (gossip_expected, gossip_got);
+				if (err)
+					throw (exception_new ("gossip headers: %s", err));
+			}
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("autocrypt message parse[%u] (%s) failed: %s", i, test->name, ex->message);
