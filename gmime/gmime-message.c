@@ -1257,6 +1257,10 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
  * function, since Autocrypt-Gossip headers are only stored within the
  * encrypted layer.
  *
+ * If you don't already have the decrypted inner part available to
+ * you, you probably want to use
+ * #g_mime_message_get_autocrypt_gossip_headers instead.
+ *
  * Each header in the returned list will:
  *
  *  - have a valid address
@@ -1311,3 +1315,59 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
 	return ret;
 }
 
+
+/**
+ * g_mime_message_get_autocrypt_gossip_headers:
+ * @message: a #GMimeMessage object, which is expected to be encrypted.
+ * @now: a #GDateTime object, or %NULL
+ * @flags: a #GMimeDecryptFlags, to be used during decryption
+ * @session_key: session key to use or %NULL
+ * @err: a #GError (can be %NULL)
+ *
+ * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
+ * given type based on the recipient(s) of an e-mail message.
+ * 
+ * Returns the same object as
+ * #g_mime_message_get_autocrypt_gossip_headers_with_inner_part , but
+ * handles decryption and cleanup automatically.
+ *
+ * @flags and @session_key are passed through to
+ * #g_mime_multipart_encrypted_decrypt, as needed.
+ *
+ * If the message is not actually an encrypted message, returns %NULL:
+ * it should be ignored for purposes of evaluating gossip.
+ *
+ * If decryption fails, returns %NULL.  In this case, an exception
+ * will be set on @err to provide information about the decryption
+ * failure.
+ *
+ * Returns: (transfer full): a new #GMimeAutocryptHeaderList object,
+ * or %NULL on error.
+ **/
+GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message,
+								       GDateTime *now,
+								       GMimeDecryptFlags flags,
+								       const char *session_key,
+								       GError **err)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	GMimeAutocryptHeaderList *ret = NULL;
+	GMimeObject *top_level = NULL;
+	GMimeObject *inner_part = NULL;
+
+	top_level = g_mime_message_get_mime_part (message);
+	if (!GMIME_IS_MULTIPART_ENCRYPTED (top_level))
+		return NULL;
+
+	inner_part = g_mime_multipart_encrypted_decrypt (GMIME_MULTIPART_ENCRYPTED (top_level),
+							 flags,
+							 session_key,
+							 NULL, /* we do not care about decryptresult */
+							 err);
+	if (inner_part) {
+		ret = g_mime_message_get_autocrypt_gossip_headers_from_inner_part (message, now, inner_part);
+		g_object_unref (inner_part);
+	}
+
+	return ret;
+}

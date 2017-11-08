@@ -1003,6 +1003,7 @@ g_mime_message_foreach
 g_mime_message_get_body
 g_mime_message_get_autocrypt_header
 g_mime_message_get_autocrypt_gossip_headers_from_inner_part
+g_mime_message_get_autocrypt_gossip_headers
 
 <SUBSECTION Private>
 g_mime_message_get_type

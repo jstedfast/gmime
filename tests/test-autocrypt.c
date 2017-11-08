@@ -340,6 +340,56 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  "Isn't a lovely day?  Now Carol and Bob can now both Reply All, hopefully.\r\n",
 	},
 		
+	{ .name = "actually encrypted, fullgossip",
+	  .acheader = &alice_addr,
+	  .gossipheaders = bob_and_carol,
+	  .msg = "From: alice@example.org\r\n"
+	  "To: bob@example.org, carol@example.org\r\n"
+	  "Subject: A gossipy lovely day\r\n"
+	  "Message-Id: <encrypted-full-gossip@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: multipart/encrypted;\r\n"
+	  " protocol=\"application/pgp-encrypted\";\r\n"
+	  " boundary=\"boundary\"\r\n"
+	  "\r\n"
+	  "This is an OpenPGP/MIME encrypted message (RFC 4880 and 3156)\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/pgp-encrypted\r\n"
+	  "Content-Description: PGP/MIME version identification\r\n"
+	  "\r\n"
+	  "Version: 1\r\n"
+	  "\r\n"
+	  "--boundary\r\n"
+	  "Content-Type: application/octet-stream; name=\"encrypted.asc\"\r\n"
+	  "Content-Description: OpenPGP encrypted message\r\n"
+	  "Content-Disposition: inline; filename=\"encrypted.asc\"\r\n"
+	  "\r\n"
+	  "-----BEGIN PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "hQGMA4xh3ftdkAY8AQv+NU4HDHKzqSk309FOoGCNfTIM16+LrT3TY+pwdQ+BHZNh\r\n"
+	  "v62TfRrG3PFd46tvH3zInIHjow7Usb3Au+nz1fF0HgIkOg7IEGXUle0OuPgQt38i\r\n"
+	  "J2B+7EhksG86aaGmlsCq7Y8v9QnBH/UsX95xSHOTpIgWDamdGed2nnqW0fdOtapK\r\n"
+	  "QyfOWkmti8vUnzvDPxiEMLr2VW5UWtyJQiu6BwyEpme15KkmO0TJUNJ71N8cWKfD\r\n"
+	  "+jK2qlQzlgKHeSy3cWmu6ejhkTqPOghxsgb6lGHNu4+/vHufZkZCKBOYrPq/6pLr\r\n"
+	  "zySDS6p8+LsDf5WwbR3u1TENxUz1YfNDmFi0FcVRPgdbx6NsUe0EQgTudqMRJ7q4\r\n"
+	  "6uID8HLG3p/i3nX3QbuJJZD5qz62AEypnNnuV2FsrZiQNkL/77uuBYrpruhNM6LZ\r\n"
+	  "PfKWNCC8dOw7ABcbMrATGnaDenoSr0mrQWR4S7UeNeJUyB3as4iaTkc9inOHeUvr\r\n"
+	  "3tck7qz96YII5gZzeo/40sA0AegT+pidzQ0xAe9llNHznJU/vqA5lV0gYpr6jCOh\r\n"
+	  "46qWO/r4GEmwgKGDyakrifTOlO9DBM5A57FuWdFsnBX5dSgBuQrfaMhwVkeYN7jE\r\n"
+	  "kGP9B6WeE53tFZKihq7fAgGKg8wOHKSlEKM42nI2V2+0XOqHySHgZbuS8gnhjG9O\r\n"
+	  "Nc90XqYNWZUMDaUsSGeOvJzrpAM29kk9Vy2TdbWd3IvWsDMDtQRQcQfruAGiJCf9\r\n"
+	  "mGH0HIKmGfHqMnIQZp+H/HOmNpEHPkEIVj5JT0XzHz/QXzuitsuV1ApGIu/lV7Ht\r\n"
+	  "gdJzmTbrijjrinZE4kPsqNJQcQbuSw==\r\n"
+	  "=/f+w\r\n"
+	  "-----END PGP MESSAGE-----\r\n"
+	  "\r\n"
+	  "--boundary--\r\n",
+	},
+		
 	{ .name = "simple+excessgossip",
 	  .acheader = &alice_addr,
 	  .gossipheaders = just_bob,
@@ -632,8 +682,21 @@ test_ah_message_parse (void)
 				gossip_expected = _gen_header_list (test->gossipheaders);
 			if (innerpart) {
 				gossip_got = g_mime_message_get_autocrypt_gossip_headers_from_inner_part (message, NULL, innerpart);
-				if (!gossip_got)
-					throw (exception_new ("failed to extract gossip headers from message!"));
+			} else {
+				GMimeObject *obj = g_mime_message_get_mime_part (message);
+				if (GMIME_IS_MULTIPART_ENCRYPTED (obj)) {
+#ifdef ENABLE_CRYPTO
+					GError *err = NULL;
+					gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, NULL, GMIME_DECRYPT_NONE, NULL, &err);
+					if (!gossip_got && err) {
+						fprintf (stderr, "%s", test->msg);
+						Exception *ex;
+						ex = exception_new ("%s", err->message);
+						g_error_free (err);
+						throw (ex);
+					}
+#endif
+				}
 			}
 			if (!gossip_got && gossip_expected)
 				throw (exception_new ("failed to extract Autocrypt gossip headers from message!"));
