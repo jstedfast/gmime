@@ -99,7 +99,7 @@ g_mime_autocrypt_header_finalize (GObject *object)
 	if (ah->address)
 		g_object_unref (ah->address);
 	if (ah->keydata)
-		g_byte_array_unref (ah->keydata);
+		g_bytes_unref (ah->keydata);
 	if (ah->effective_date)
 		g_date_time_unref (ah->effective_date);
 	
@@ -141,7 +141,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	GMimeAutocryptHeader *ret = NULL;
 	gchar **ksplit = NULL;
 	gchar *kjoined = NULL;
-	GByteArray *newkeydata = NULL;
+	GBytes *newkeydata = NULL;
 	if (string == NULL)
 		return NULL;
 	
@@ -201,7 +201,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	kjoined = g_strjoinv ("", ksplit);
 	gsize decodedlen = 0;
 	g_base64_decode_inplace (kjoined, &decodedlen);
-	newkeydata = g_byte_array_new_take ((guint8 *) kjoined, decodedlen);
+	newkeydata = g_bytes_new_take ((guint8 *) kjoined, decodedlen);
 	kjoined = NULL;
 	g_mime_autocrypt_header_set_keydata (ret, newkeydata);
 	
@@ -211,7 +211,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	if (ksplit)
 		g_strfreev (ksplit);
 	if (newkeydata)
-		g_byte_array_unref (newkeydata);
+		g_bytes_unref (newkeydata);
 	g_free (kjoined);
 	return ret;
 }
@@ -322,21 +322,21 @@ g_mime_autocrypt_header_get_prefer_encrypt (GMimeAutocryptHeader *ah)
 /**
  * g_mime_autocrypt_header_set_keydata:
  * @ah: a #GMimeAutocryptHeader object
- * @keydata: a #GByteArray object
+ * @keydata: a #GBytes object
  *
  * Set the raw key data associated with the Autocrypt header.
  **/
 void
-g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GByteArray *keydata)
+g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GBytes *keydata)
 {
 	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah));
 
 	if (ah->keydata)
-		g_byte_array_unref (ah->keydata);
+		g_bytes_unref (ah->keydata);
 	
 	ah->keydata = keydata;
 	if (keydata)
-		g_byte_array_ref (keydata);
+		g_bytes_ref (keydata);
 }
 
 /**
@@ -347,7 +347,7 @@ g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GByteArray *keyda
  *
  * Returns: (transfer none): the raw key data associated with the Autocrypt header
  **/
-GByteArray*
+GBytes*
 g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
@@ -408,7 +408,8 @@ gboolean
 g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), FALSE);
-	return (ah->address && ah->address->addr && ah->keydata && ah->keydata->len && ah->keydata->data);
+	return (ah->address && ah->address->addr && ah->keydata &&
+		g_bytes_get_size (ah->keydata) && g_bytes_get_data (ah->keydata, NULL));
 }
 
 
@@ -442,11 +443,13 @@ g_mime_autocrypt_header_get_string (GMimeAutocryptHeader *ah)
 	const size_t maxwid = 72;
 	const size_t firstline = maxwid - sizeof ("Autocrypt:");
 	gsize offset = 0;
+	gsize ksz = 0;
+	gconstpointer kp = g_bytes_get_data (ah->keydata, &ksz);
 	if (n < firstline) {
 		gsize firstlinekeylen = ((firstline - n)/4)*3;
-		if (firstlinekeylen > ah->keydata->len)
-			firstlinekeylen = ah->keydata->len;
-		gchar *kdata = g_base64_encode (ah->keydata->data, firstlinekeylen);
+		if (firstlinekeylen > ksz)
+			firstlinekeylen = ksz;
+		gchar *kdata = g_base64_encode (kp, firstlinekeylen);
 		gchar *newfirst = g_strconcat (first, kdata, NULL);
 		g_free (first);
 		g_free (kdata);
@@ -455,9 +458,9 @@ g_mime_autocrypt_header_get_string (GMimeAutocryptHeader *ah)
 	}
 	g_ptr_array_add (lines, first);
 
-	while (offset < ah->keydata->len) {
-		gsize newsz = MIN((maxwid/4)*3, ah->keydata->len - offset);
-		g_ptr_array_add (lines, g_base64_encode (ah->keydata->data + offset, newsz));
+	while (offset < ksz) {
+		gsize newsz = MIN((maxwid/4)*3, ksz - offset);
+		g_ptr_array_add (lines, g_base64_encode (kp + offset, newsz));
 		offset += newsz;
 	}
 
@@ -513,11 +516,15 @@ g_mime_autocrypt_header_compare (GMimeAutocryptHeader *ah1, GMimeAutocryptHeader
 	if (ah1->keydata && !ah2->keydata)
 		return 1;
 	if (ah1->keydata && ah2->keydata) {
-		if (ah1->keydata->len < ah2->keydata->len)
+		gsize s1, s2;
+		gconstpointer p1, p2;
+		p1 = g_bytes_get_data (ah1->keydata, &s1);
+		p2 = g_bytes_get_data (ah2->keydata, &s2);
+		if (s1 < s2)
 			return -1;
-		if (ah1->keydata->len > ah2->keydata->len)
+		if (s1 > s2)
 			return 1;
-		ret = memcmp (ah1->keydata->data, ah2->keydata->data, ah1->keydata->len);
+		ret = memcmp (p1, p2, s1);
 		if (ret)
 			return ret;
 	}
@@ -547,9 +554,9 @@ g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHeader *
 		return;
 
 	if (dst->keydata)
-		g_byte_array_unref (dst->keydata);
+		g_bytes_unref (dst->keydata);
 	if (src->keydata) {
-		g_byte_array_ref (src->keydata);
+		g_bytes_ref (src->keydata);
 		dst->keydata = src->keydata;
 	} else
 		dst->keydata = NULL;
