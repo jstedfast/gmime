@@ -872,6 +872,7 @@ next_alloc_size (size_t n)
 static void
 header_parse (GMimeParser *parser, GMimeParserOptions *options)
 {
+	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	struct _GMimeParserPrivate *priv = parser->priv;
 	gboolean blank = FALSE;
 	register char *inptr;
@@ -930,7 +931,7 @@ header_parse (GMimeParser *parser, GMimeParserOptions *options)
 		priv->header_cb (parser, header->name, header->raw_value,
 				 header->offset, priv->user_data);
 	
-	if (!g_utf8_validate (header->raw_value, -1, NULL))
+	if (can_warn && !g_utf8_validate (header->raw_value, -1, NULL))
 		_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_UNENCODED_8BIT_HEADER, header->name);
 }
 
