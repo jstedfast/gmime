@@ -369,13 +369,13 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld in original stream: %s",
-				    offset, g_strerror (errno));
+				    (long long) offset, g_strerror (errno));
 		throw (ex);
 	}
 	
 	if (g_mime_stream_seek (cat, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld: %s",
-				    offset, g_strerror (errno));
+				    (long long) offset, g_strerror (errno));
 		throw (ex);
 	}
 	
@@ -576,7 +576,7 @@ int main (int argc, char **argv)
 	testsuite_start ("GMimeStreamCat");
 	
 	for (i = 0; i < G_N_ELEMENTS (checks) && !failed; i++) {
-		testsuite_check (checks[i].what);
+		testsuite_check ("%s", checks[i].what);
 		try {
 			checks[i].check (whole, list, checks[i].bounded);
 			testsuite_check_passed ();

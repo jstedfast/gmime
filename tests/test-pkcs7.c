@@ -371,13 +371,13 @@ int main (int argc, char **argv)
 	g_mime_stream_reset (istream);
 	
 	what = "GMimePkcs7Context::sign";
-	testsuite_check (what);
+	testsuite_check ("%s", what);
 	try {
 		test_sign (ctx, FALSE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimePkcs7Context::verify";
-		testsuite_check (what);
+		testsuite_check ("%s", what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_verify (ctx, istream, ostream);
@@ -391,13 +391,13 @@ int main (int argc, char **argv)
 	ostream = g_mime_stream_mem_new ();
 	
 	what = "GMimePkcs7Context::sign (detached)";
-	testsuite_check (what);
+	testsuite_check ("%s", what);
 	try {
 		test_sign (ctx, TRUE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimePkcs7Context::verify (detached)";
-		testsuite_check (what);
+		testsuite_check ("%s", what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_verify_detached (ctx, istream, ostream);
@@ -411,13 +411,13 @@ int main (int argc, char **argv)
 	ostream = g_mime_stream_mem_new ();
 	
 	what = "GMimePkcs7Context::encrypt";
-	testsuite_check (what);
+	testsuite_check ("%s", what);
 	try {
 		test_encrypt (ctx, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimePkcs7Context::decrypt";
-		testsuite_check (what);
+		testsuite_check ("%s", what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
 		test_decrypt (ctx, istream, ostream);
