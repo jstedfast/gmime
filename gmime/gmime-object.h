@@ -32,6 +32,7 @@
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-header.h>
+#include <gmime/gmime-autocrypt.h>
 
 G_BEGIN_DECLS
 
@@ -140,6 +141,10 @@ void g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constrai
 /* Internal API */
 G_GNUC_INTERNAL void g_mime_object_type_registry_init (void);
 G_GNUC_INTERNAL void g_mime_object_type_registry_shutdown (void);
+G_GNUC_INTERNAL GMimeAutocryptHeaderList *
+g_mime_object_get_autocrypt_headers(GMimeObject *mime_part, GDateTime *effective_date,
+				    const char *matchheader, InternetAddressList *addresses,
+				    gboolean keep_incomplete);
 
 G_END_DECLS
 
