@@ -31,6 +31,7 @@
 #include "gmime-content-type.h"
 #include "gmime-parse-utils.h"
 #include "gmime-events.h"
+#include "gmime-internal.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -187,6 +188,12 @@ g_mime_content_type_new (const char *type, const char *subtype)
 GMimeContentType *
 g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 {
+	return _g_mime_content_type_parse (options, str, -1);
+}
+
+GMimeContentType *
+_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64 offset)
+{
 	GMimeContentType *content_type;
 	const char *inptr = str;
 	GMimeParamList *params;
@@ -194,8 +201,10 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 	
 	g_return_val_if_fail (str != NULL, NULL);
 	
-	if (!g_mime_parse_content_type (&inptr, &type, &subtype))
+	if (!g_mime_parse_content_type (&inptr, &type, &subtype)) {
+		_g_mime_parser_options_warn(options, offset, GMIME_WARN_INVALID_CONTENT_TYPE, str);
 		return g_mime_content_type_new ("application", "octet-stream");
+	}
 	
 	content_type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
 	content_type->subtype = subtype;
@@ -206,7 +215,7 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 	while (*inptr && *inptr != ';')
 		inptr++;
 	
-	if (*inptr++ == ';' && *inptr && (params = g_mime_param_list_parse (options, inptr))) {
+	if (*inptr++ == ';' && *inptr && (params = _g_mime_param_list_parse (options, inptr, offset))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
 		g_object_unref (content_type->params);
 		content_type->params = params;

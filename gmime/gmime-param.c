@@ -1311,7 +1311,7 @@ rfc2184_param_new (char *name, char *value, int id, gboolean encoded)
 }
 
 static GMimeParamList *
-decode_param_list (GMimeParserOptions *options, const char *in)
+decode_param_list (GMimeParserOptions *options, const char *in, gint64 offset)
 {
 	struct _rfc2184_param *rfc2184, *list, *t;
 	char *name, *value, *charset, *lang;
@@ -1361,6 +1361,8 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 				g_free (name);
 			}
 		} else {
+			const GMimeParam *exist_param;
+
 			param = g_mime_param_new ();
 			param->name = name;
 			
@@ -1378,6 +1380,15 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 				param->value = value;
 			}
 			
+			exist_param = g_mime_param_list_get_parameter (params, name);
+			if (exist_param != NULL) {
+				if (strcmp (exist_param->value, param->value) == 0) {
+					_g_mime_parser_options_warn (options, offset, GMIME_WARN_DUPLICATED_PARAMETER, name);
+				} else {
+					_g_mime_parser_options_warn (options, offset, GMIME_CRIT_CONFLICTING_PARAMETER, name);
+				}
+			}
+
 			g_mime_param_list_add (params, param);
 		}
 		
@@ -1428,7 +1439,13 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 GMimeParamList *
 g_mime_param_list_parse (GMimeParserOptions *options, const char *str)
 {
+	return _g_mime_param_list_parse (options, str, -1);
+}
+
+GMimeParamList *
+_g_mime_param_list_parse (GMimeParserOptions *options, const char *str, gint64 offset)
+{
 	g_return_val_if_fail (str != NULL, NULL);
 	
-	return decode_param_list (options, str);
+	return decode_param_list (options, str, offset);
 }

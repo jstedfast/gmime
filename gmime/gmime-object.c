@@ -213,13 +213,13 @@ object_header_changed (GMimeObject *object, GMimeHeader *header)
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
 		value = g_mime_header_get_value (header);
-		disposition = g_mime_content_disposition_parse (options, value);
+		disposition = _g_mime_content_disposition_parse (options, value, header->offset);
 		_g_mime_object_set_content_disposition (object, disposition);
 		g_object_unref (disposition);
 		break;
 	case HEADER_CONTENT_TYPE:
 		value = g_mime_header_get_value (header);
-		content_type = g_mime_content_type_parse (options, value);
+		content_type = _g_mime_content_type_parse (options, value, header->offset);
 		_g_mime_object_set_content_type (object, content_type);
 		g_object_unref (content_type);
 		break;

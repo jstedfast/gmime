@@ -42,11 +42,53 @@ typedef enum {
 } GMimeRfcComplianceMode;
 
 /**
+ * GMimeParserWarning:
+ * @GMIME_WARN_DUPLICATED_CONTENT_HDR: repeated exactly the same `Content-*` header
+ * @GMIME_WARN_DUPLICATED_PARAMETER: repeated exactly the same header parameter
+ * @GMIME_WARN_UNENCODED_8BIT_HEADER: a header contains unencoded 8-bit characters
+ * @GMIME_WARN_INVALID_CONTENT_TYPE: invalid content type, assume `application/octet-stream`
+ * @GMIME_WARN_INVALID_HEADER: invalid header, ignored
+ * @GMIME_WARN_MALFORMED_MULTIPART: no items in a `multipart/...`
+ * @GMIME_WARN_TRUNCATED_MESSAGE: the message is truncated
+ * @GMIME_WARN_MALFORMED_MESSAGE: the message is malformed
+ * @GMIME_CRIT_CONFLICTING_CONTENT_HDR: conflicting `Content-*` header
+ * @GMIME_CRIT_CONFLICTING_PARAMETER: conflicting header parameter
+ * @GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY: a `multipart/...` part lacks the required boundary parameter
+ *
+ * Issues the @GMimeParser detects. Note that the `GMIME_CRIT_*` issues indicate that some parts of the @GMimeParser input may
+ * be ignored or will be interpreted differently by other software products.
+ **/
+typedef enum {
+	GMIME_WARN_DUPLICATED_CONTENT_HDR = 1U,
+	GMIME_WARN_DUPLICATED_PARAMETER,
+	GMIME_WARN_UNENCODED_8BIT_HEADER,
+	GMIME_WARN_INVALID_CONTENT_TYPE,
+	GMIME_WARN_INVALID_HEADER,
+	GMIME_WARN_MALFORMED_MULTIPART,
+	GMIME_WARN_TRUNCATED_MESSAGE,
+	GMIME_WARN_MALFORMED_MESSAGE,
+	GMIME_CRIT_CONFLICTING_CONTENT_HDR,
+	GMIME_CRIT_CONFLICTING_PARAMETER,
+	GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY
+} GMimeParserWarning;
+
+/**
  * GMimeParserOptions:
  *
  * A set of parser options used by #GMimeParser and various other parsing functions.
  **/
 typedef struct _GMimeParserOptions GMimeParserOptions;
+
+/**
+ * GMimeParserWarningFunc:
+ * @offset: parser offset where the issue has been detected, or -1 if it is unknown
+ * @errcode: a #GMimeParserWarning
+ * @item: a NUL-terminated string containing the value causing the issue, may be %NULL
+ * @user_data: User-supplied callback data.
+ *
+ * The function signature for a callback to g_mime_parser_options_set_warning_callback().
+ **/
+typedef void (*GMimeParserWarningFunc) (gint64 offset, GMimeParserWarning errcode, const gchar *item, gpointer user_data);
 
 
 GType g_mime_parser_options_get_type (void);
@@ -72,6 +114,10 @@ void g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *opti
 
 const char **g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options);
 void g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const char **charsets);
+
+GMimeParserWarningFunc g_mime_parser_options_get_warning_callback (GMimeParserOptions *options);
+void g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb,
+						 gpointer user_data);
 
 G_END_DECLS
 
