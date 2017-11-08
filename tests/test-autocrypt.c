@@ -47,7 +47,7 @@ static GMimeAutocryptHeader*
 _gen_header (const struct _ah_gen_test *t)
 {
 	GMimeAutocryptHeader *ah = NULL;
-	GByteArray *keydata = NULL;
+	GBytes *keydata = NULL;
 	if (t == NULL)
 		return NULL;
 	if (!(ah = g_mime_autocrypt_header_new())) {
@@ -55,7 +55,7 @@ _gen_header (const struct _ah_gen_test *t)
 		return NULL;
 	}
 	if (t->keydatacount)
-		if (!(keydata = g_byte_array_new_take ((guint8*) g_strnfill (t->keydatacount, t->keybyte), t->keydatacount))) {
+		if (!(keydata = g_bytes_new_take ((guint8*) g_strnfill (t->keydatacount, t->keybyte), t->keydatacount))) {
 			fprintf (stderr, "failed to make a new keydata");
 			g_object_unref (ah);
 			return NULL;
@@ -68,7 +68,7 @@ _gen_header (const struct _ah_gen_test *t)
 		g_date_time_unref (ts);
 	}
 	if (keydata)
-		g_byte_array_unref (keydata);
+		g_bytes_unref (keydata);
 	return ah;
 }
 

@@ -80,7 +80,7 @@ struct _GMimeAutocryptHeader {
 
 	InternetAddressMailbox *address;
 	GMimeAutocryptPreferEncrypt prefer_encrypt;
-	GByteArray *keydata;
+	GBytes *keydata;
 	GDateTime *effective_date;
 };
 
@@ -101,8 +101,8 @@ const char *g_mime_autocrypt_header_get_address_as_string (GMimeAutocryptHeader 
 void g_mime_autocrypt_header_set_prefer_encrypt (GMimeAutocryptHeader *ah, GMimeAutocryptPreferEncrypt pref);
 GMimeAutocryptPreferEncrypt g_mime_autocrypt_header_get_prefer_encrypt (GMimeAutocryptHeader *ah);
 
-void g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GByteArray *data);
-GByteArray *g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah);
+void g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GBytes *data);
+GBytes *g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah);
 
 void g_mime_autocrypt_header_set_effective_date (GMimeAutocryptHeader *ah, GDateTime *effective_date);
 GDateTime *g_mime_autocrypt_header_get_effective_date (GMimeAutocryptHeader *ah);
