@@ -28,8 +28,8 @@
 
 #include "gmime-common.h"
 #include "gmime-disposition.h"
-#include "gmime-events.h"
 #include "gmime-internal.h"
+#include "gmime-events.h"
 
 
 /**

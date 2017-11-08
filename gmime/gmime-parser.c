@@ -1701,15 +1701,13 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 static void
 check_content_header_conflict (GMimeParserOptions *options, GMimeObject *object, const Header *header)
 {
-	const GMimeHeader *exist_header;
-
-	exist_header = g_mime_header_list_get_header (object->headers, header->name);
-	if (exist_header != NULL) {
-		if (strcmp (exist_header->raw_value, header->raw_value) == 0) {
-			_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_DUPLICATED_CONTENT_HDR, header->name);
-		} else {
+	const GMimeHeader *existing;
+	
+	if ((existing = g_mime_header_list_get_header (object->headers, header->name)) != NULL) {
+		if (strcmp (existing->raw_value, header->raw_value) != 0)
 			_g_mime_parser_options_warn (options, header->offset, GMIME_CRIT_CONFLICTING_CONTENT_HDR, header->name);
-		}
+		else
+			_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_DUPLICATED_CONTENT_HDR, header->name);
 	}
 }
 
@@ -1867,11 +1865,11 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeMultipart *multipart;
+	gint64 ctype_offset = -1;
 	const char *boundary;
 	GMimeObject *object;
 	Header *header;
 	guint i;
-	gint64 cont_type_offs = -1;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
@@ -1882,9 +1880,10 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
 			check_content_header_conflict (options, object, header);
-			if (g_ascii_strcasecmp (header->name, "Content-Type") == 0) {
-				cont_type_offs = header->offset;
-			}
+			
+			if (!g_ascii_strcasecmp (header->name, "Content-Type"))
+				ctype_offset = header->offset;
+			
 			_g_mime_object_append_header (object, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
@@ -1919,14 +1918,12 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 			return object;
 		}
 		
-		if ((*found == BOUNDARY_PARENT) || (*found == BOUNDARY_PARENT_END)) {
-			_g_mime_parser_options_warn (options, cont_type_offs, GMIME_WARN_MALFORMED_MULTIPART, content_type->subtype);
-		}
-
-		if (*found == BOUNDARY_EOS) {
+		if ((*found == BOUNDARY_PARENT) || (*found == BOUNDARY_PARENT_END))
+			_g_mime_parser_options_warn (options, ctype_offset, GMIME_WARN_MALFORMED_MULTIPART, content_type->subtype);
+		
+		if (*found == BOUNDARY_EOS)
 			_g_mime_parser_options_warn (options, -1, GMIME_WARN_TRUNCATED_MESSAGE, NULL);
-		}
-
+		
 		multipart->write_end_boundary = FALSE;
 		parser_pop_boundary (parser);
 		
@@ -1935,7 +1932,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		else if (*found == BOUNDARY_PARENT && found_immediate_boundary (priv, FALSE))
 			*found = BOUNDARY_IMMEDIATE;
 	} else {
-		_g_mime_parser_options_warn (options, cont_type_offs, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, content_type->subtype);
+		_g_mime_parser_options_warn (options, ctype_offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, content_type->subtype);
 		w(g_warning ("multipart without boundary encountered"));
 		/* this will scan everything into the prologue */
 		*found = parser_scan_multipart_prologue (parser, multipart);
@@ -2018,7 +2015,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	
 	message = g_mime_message_new (FALSE);
 	((GMimeObject *) message)->ensure_newline = FALSE;
-	_g_mime_header_list_set_options(g_mime_object_get_header_list(GMIME_OBJECT(message)), options);
+	_g_mime_header_list_set_options (((GMimeObject *) message)->headers, options);
 	
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
@@ -2056,10 +2053,9 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	content_type_destroy (content_type);
 	message->mime_part = object;
 	
-	if (priv->state == GMIME_PARSER_STATE_ERROR) {
+	if (priv->state == GMIME_PARSER_STATE_ERROR)
 		_g_mime_parser_options_warn (options, -1, GMIME_WARN_MALFORMED_MESSAGE, NULL);
-	}
-
+	
 	if (priv->format == GMIME_FORMAT_MBOX) {
 		priv->state = GMIME_PARSER_STATE_FROM;
 		parser_pop_boundary (parser);
