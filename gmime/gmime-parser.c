@@ -869,6 +869,17 @@ next_alloc_size (size_t n)
 	priv->headerleft -= len;                                          \
 } G_STMT_END
 
+static inline gboolean
+is_7bit_clean (const gchar *str)
+{
+	for (; *str != '\0'; str++) {
+		if ((*str & 0x80) != 0) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 static void
 header_parse (GMimeParser *parser, GMimeParserOptions *options)
 {
@@ -931,7 +942,7 @@ header_parse (GMimeParser *parser, GMimeParserOptions *options)
 		priv->header_cb (parser, header->name, header->raw_value,
 				 header->offset, priv->user_data);
 	
-	if (can_warn && !g_utf8_validate (header->raw_value, -1, NULL))
+	if (can_warn && (!is_7bit_clean(header->name) || !g_utf8_validate (header->raw_value, -1, NULL)))
 		_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_UNENCODED_8BIT_HEADER, header->name);
 }
 
