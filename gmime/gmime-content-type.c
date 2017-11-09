@@ -30,8 +30,8 @@
 #include "gmime-common.h"
 #include "gmime-content-type.h"
 #include "gmime-parse-utils.h"
-#include "gmime-events.h"
 #include "gmime-internal.h"
+#include "gmime-events.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -202,7 +202,7 @@ _g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64
 	g_return_val_if_fail (str != NULL, NULL);
 	
 	if (!g_mime_parse_content_type (&inptr, &type, &subtype)) {
-		_g_mime_parser_options_warn(options, offset, GMIME_WARN_INVALID_CONTENT_TYPE, str);
+		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_CONTENT_TYPE, str);
 		return g_mime_content_type_new ("application", "octet-stream");
 	}
 	

@@ -66,7 +66,6 @@ typedef enum {
  * GMimeAutocryptHeader:
  * @parent_object: parent #GObject
  * @address: the #InternetAddressMailbox associated with this Autocrypt header.
- * @actype: the Autocrypt type parameter (defaults to 1).
  * @prefer_encrypt: a #GMimeAutocryptPreferEncrypt value (defaults to @GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE).
  * @keydata: the raw binary form of the encoded key.
  * @effective_date: the date associated with the Autocrypt header in this message.
@@ -79,10 +78,9 @@ typedef enum {
 struct _GMimeAutocryptHeader {
 	GObject parent_object;
 
-	gint actype;
 	InternetAddressMailbox *address;
 	GMimeAutocryptPreferEncrypt prefer_encrypt;
-	GByteArray *keydata;
+	GBytes *keydata;
 	GDateTime *effective_date;
 };
 
@@ -95,9 +93,6 @@ GType g_mime_autocrypt_header_get_type (void);
 GMimeAutocryptHeader *g_mime_autocrypt_header_new (void);
 GMimeAutocryptHeader *g_mime_autocrypt_header_new_from_string (const char* header);
 
-void g_mime_autocrypt_header_set_actype (GMimeAutocryptHeader *ah, gint actype);
-gint g_mime_autocrypt_header_get_actype (GMimeAutocryptHeader *ah);
-
 void g_mime_autocrypt_header_set_address (GMimeAutocryptHeader *ah, InternetAddressMailbox *address);
 InternetAddressMailbox *g_mime_autocrypt_header_get_address (GMimeAutocryptHeader *ah);
 void g_mime_autocrypt_header_set_address_from_string (GMimeAutocryptHeader *ah, const char *address);
@@ -106,8 +101,8 @@ const char *g_mime_autocrypt_header_get_address_as_string (GMimeAutocryptHeader 
 void g_mime_autocrypt_header_set_prefer_encrypt (GMimeAutocryptHeader *ah, GMimeAutocryptPreferEncrypt pref);
 GMimeAutocryptPreferEncrypt g_mime_autocrypt_header_get_prefer_encrypt (GMimeAutocryptHeader *ah);
 
-void g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GByteArray *data);
-GByteArray *g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah);
+void g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GBytes *data);
+GBytes *g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah);
 
 void g_mime_autocrypt_header_set_effective_date (GMimeAutocryptHeader *ah, GDateTime *effective_date);
 GDateTime *g_mime_autocrypt_header_get_effective_date (GMimeAutocryptHeader *ah);

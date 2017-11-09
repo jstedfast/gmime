@@ -77,9 +77,19 @@ g_mime_parser_options_shutdown (void)
 void
 _g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, guint errcode, const gchar *item)
 {
-	if ((options != NULL) && (options->warning_cb != NULL)) {
-		options->warning_cb(offset, errcode, item, options->warning_user_data);
+	GMimeParserWarningFunc warn;
+	gpointer user_data;
+	
+	if (options == NULL) {
+		user_data = default_options->warning_user_data;
+		warn = default_options->warning_cb;
+	} else {
+		user_data = options->warning_user_data;
+		warn = options->warning_cb;
 	}
+	
+	if (warn != NULL)
+		warn (offset, errcode, item, user_data);
 }
 
 /**
@@ -421,7 +431,7 @@ g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const 
 GMimeParserWarningFunc
 g_mime_parser_options_get_warning_callback (GMimeParserOptions *options)
 {
-	return (options != NULL) ? options->warning_cb : default_options->warning_cb;
+	return options ? options->warning_cb : default_options->warning_cb;
 }
 
 
@@ -437,7 +447,7 @@ void
 g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data)
 {
 	g_return_if_fail (options != NULL);
-
+	
 	options->warning_cb = warning_cb;
 	options->warning_user_data = user_data;
 }
