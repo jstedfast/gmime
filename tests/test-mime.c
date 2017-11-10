@@ -549,32 +549,57 @@ static struct {
 	const char *input;
 	const char *folded;
 } header_folding[] = {
-	{ "Subject: qqqq wwwwwww [eee 1234]=?UTF-8?Q?=20=D0=95=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC?=",
-	  "Subject: qqqq wwwwwww [eee 1234]\n =?UTF-8?Q?=20=D0=95=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC?=\n" },
+	/* Note: This should fold w/o needing to encode or break apart words because they are designed to
+	 * just *barely* fit within 78 characters. */
+	{ "Subject: 012345678901234567890123456789012345678901234567890123456789012345678 01234567890123456789012345678901234567890123456789012345678901234567890123456 01234567890123456789012345678901234567890123456789012345678901234567890123456 0123456789",
+	  "Subject: 012345678901234567890123456789012345678901234567890123456789012345678\n 01234567890123456789012345678901234567890123456789012345678901234567890123456\n 01234567890123456789012345678901234567890123456789012345678901234567890123456\n 0123456789\n" },
+	/* Note: This should require folding for each word in order to fit within the 78 character limit */
+	{ "Subject: 012345678901234567890123456789012345678901234567890123456789012345678 012345678901234567890123456789012345678901234567890123456789012345678901234567 012345678901234567890123456789012345678901234567890123456789012345678901234567 0123456789",
+	  "Subject: 012345678901234567890123456789012345678901234567890123456789012345678\n"
+	  " =?us-ascii?Q?01234567890123456789012345678901234567890123456789012345678901?=\n"
+	  " =?us-ascii?Q?2345678901234567?=\n"
+	  " =?us-ascii?Q?_01234567890123456789012345678901234567890123456789012345678901?=\n" // FIXME: this should be 1 char shorter
+	  " =?us-ascii?Q?2345678901234567?= 0123456789\n" },
 };
 
 static void
 test_header_folding (GMimeParserOptions *options)
 {
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
-	char *folded;
+	GMimeHeaderList *list;
 	guint i;
 	
+	list = g_mime_header_list_new (NULL);
+	
 	for (i = 0; i < G_N_ELEMENTS (header_folding); i++) {
-	        folded = NULL;
+		char *folded = NULL;
+		
 		testsuite_check ("header_folding[%u]", i);
 		try {
-			folded = g_mime_utils_unstructured_header_fold (options, format, header_folding[i].input);
+			const char *colon = strchr (header_folding[i].input, ':');
+			char *name = g_strndup (header_folding[i].input, (colon - header_folding[i].input));
+			const char *value = colon + 1;
+			
+			while (*value == ' ')
+				value++;
+			
+			g_mime_header_list_append (list, name, value, NULL);
+			g_free (name);
+			
+			folded = g_mime_header_list_to_string (list, format);
 			if (strcmp (header_folding[i].folded, folded) != 0)
-				throw (exception_new ("folded text does not match: -->%s<-- vs -->%s<--", header_folding[i].folded, folded));
+				throw (exception_new ("folded text does not match: -->\n%s<-- vs -->\n%s<--", header_folding[i].folded, folded));
 			
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("header_folding[%u]: %s", i, ex->message);
 		} finally;
 		
+		g_mime_header_list_clear (list);
 		g_free (folded);
 	}
+	
+	g_object_unref (list);
 }
 
 static struct {
