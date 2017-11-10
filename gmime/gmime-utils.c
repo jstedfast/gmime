@@ -2141,7 +2141,7 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 				encoding = 2;
 			}
 			
-			if (count >= GMIME_FOLD_PREENCODED) {
+			if (count >= (type == WORD_2047 ? GMIME_FOLD_PREENCODED : GMIME_FOLD_LEN)) {
 				if (type == WORD_ATOM)
 					type = WORD_2047;
 				
