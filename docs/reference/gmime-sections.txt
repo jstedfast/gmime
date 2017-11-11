@@ -1004,6 +1004,7 @@ g_mime_message_get_body
 g_mime_message_get_autocrypt_header
 g_mime_message_get_autocrypt_gossip_headers_from_inner_part
 g_mime_message_get_autocrypt_gossip_headers
+g_mime_message_add_autocrypt_header
 
 <SUBSECTION Private>
 g_mime_message_get_type
