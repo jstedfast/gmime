@@ -94,8 +94,8 @@ const static struct _ah_gen_test gen_test_data[] = {
 	{ .addr = "test@example.org",
 	  .keydatacount = 102,
 	  .keybyte = '\013',
-	  .txt = "addr=test@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
-	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\r\n"
+	  .txt = "addr=test@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL",
 	}
 };
