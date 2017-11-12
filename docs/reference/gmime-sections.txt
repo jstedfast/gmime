@@ -794,6 +794,7 @@ g_mime_object_get_header_list
 g_mime_object_write_to_stream
 g_mime_object_to_string
 g_mime_object_encode
+g_mime_object_add_autocrypt_gossip_headers
 
 <SUBSECTION Private>
 g_mime_object_get_type
@@ -1004,6 +1005,7 @@ g_mime_message_get_body
 g_mime_message_get_autocrypt_header
 g_mime_message_get_autocrypt_gossip_headers_from_inner_part
 g_mime_message_get_autocrypt_gossip_headers
+g_mime_message_add_autocrypt_header
 
 <SUBSECTION Private>
 g_mime_message_get_type

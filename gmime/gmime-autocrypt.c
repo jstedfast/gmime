@@ -466,7 +466,7 @@ g_mime_autocrypt_header_get_string (GMimeAutocryptHeader *ah)
 
 	g_ptr_array_add (lines, NULL);
 
-	char *ret = g_strjoinv ("\r\n ", (gchar**)(lines->pdata));
+	char *ret = g_strjoinv (" ", (gchar**)(lines->pdata));
 	g_ptr_array_unref (lines);
 	return ret;
 }

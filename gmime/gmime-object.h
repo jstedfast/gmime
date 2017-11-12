@@ -137,6 +137,7 @@ ssize_t g_mime_object_write_to_stream (GMimeObject *object, GMimeFormatOptions *
 char *g_mime_object_to_string (GMimeObject *object, GMimeFormatOptions *options);
 
 void g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
+void g_mime_object_add_autocrypt_gossip_headers (GMimeObject *object, GMimeAutocryptHeaderList* ahl);
 
 /* Internal API */
 G_GNUC_INTERNAL void g_mime_object_type_registry_init (void);

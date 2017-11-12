@@ -1371,3 +1371,21 @@ GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMess
 
 	return ret;
 }
+
+
+/**
+ * g_mime_message_add_autocrypt_header:
+ * @message: a #GMimeMessage object
+ * @header: a #GMimeAutocrypt object
+ *
+ * Adds the textual form of @header to @message.
+ **/
+void g_mime_message_add_autocrypt_header (GMimeMessage *message, GMimeAutocryptHeader *header)
+{
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (header));
+	
+	char *h = g_mime_autocrypt_header_get_string (header);
+	g_mime_object_set_header ((GMimeObject *) message, "Autocrypt", h, NULL);
+	g_free (h);
+}

@@ -128,6 +128,8 @@ GMimeAutocryptHeader *g_mime_message_get_autocrypt_header (GMimeMessage *message
 GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message, GDateTime *now, GMimeDecryptFlags flags, const char *session_key, GError **err);
 GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeObject *inner_part);
 
+void g_mime_message_add_autocrypt_header (GMimeMessage *message, GMimeAutocryptHeader *header);
+
 /* convenience functions */
 
 void g_mime_message_foreach (GMimeMessage *message, GMimeObjectForeachFunc callback,
