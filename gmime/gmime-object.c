@@ -1157,3 +1157,31 @@ g_mime_object_get_autocrypt_headers (GMimeObject *mime_part, GDateTime *effectiv
 		g_mime_autocrypt_header_list_remove_incomplete (ret);
 	return ret;
 }
+
+
+/**
+ * g_mime_object_add_gossip_headers:
+ * @object: a #GMimeObject
+ *
+ * Get the header list for @object.
+ *
+ * Returns: (transfer none): the #GMimeHeaderList for @object. Do not
+ * free this pointer when you are done with it.
+ **/
+void g_mime_object_add_autocrypt_gossip_headers (GMimeObject *object, GMimeAutocryptHeaderList* ahl)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (ahl));
+	int i;
+	int count = g_mime_autocrypt_header_list_get_count (ahl);
+	for (i = 0; i < count; i++) {
+		GMimeAutocryptHeader *ah = g_mime_autocrypt_header_list_get_header_at (ahl, i);
+		GMimeAutocryptPreferEncrypt old = g_mime_autocrypt_header_get_prefer_encrypt (ah);
+		g_mime_autocrypt_header_set_prefer_encrypt (ah, GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE);
+		char *h = g_mime_autocrypt_header_get_string (ah);
+
+		g_mime_object_append_header (object, "Autocrypt-Gossip", h, NULL);
+		g_free (h);
+		g_mime_autocrypt_header_set_prefer_encrypt (ah, old);
+	}
+}
