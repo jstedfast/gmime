@@ -153,6 +153,15 @@ struct _ah_parse_test {
 	const char *innerpart;
 };
 
+
+struct _ah_inject_test {
+	const char *name;
+	const struct _ah_gen_test *acheader;
+	const char *before;
+	const char *after;
+};
+
+
 const static struct _ah_gen_test alice_addr =
 	{ .addr = "alice@example.org",
 	  .keydatacount = 102,
@@ -193,6 +202,33 @@ const static struct _ah_gen_test *bob_and_carol[] = {
 	&bob_addr,
 	&carol_addr,
 	NULL,
+};
+
+const static struct _ah_inject_test inject_test_data[] = {
+	{ .name = "simple",
+	  .acheader = &alice_addr,
+	  .before = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <lovely-day@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Isn't it a lovely day?\r\n",
+	  .after = "From: alice@example.org\n"
+	  "To: bob@example.org\n"
+	  "Subject: A lovely day\n"
+	  "Message-Id: <lovely-day@example.net>\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\n"
+	  "Mime-Version: 1.0\n"
+	  "Content-Type: text/plain\n"
+	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
+	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
+	  "\n"
+	  "Isn't it a lovely day?\n",
+	},
 };
 
 const static struct _ah_parse_test parse_test_data[] = {
@@ -606,6 +642,64 @@ const static struct _ah_parse_test parse_test_data[] = {
 };
 
 
+
+
+static void
+test_ah_injection (void)
+{
+	unsigned int i;
+	for (i = 0; i < G_N_ELEMENTS(inject_test_data); i++) {
+		GMimeAutocryptHeader *ah = NULL;
+		char *str = NULL;
+		GMimeStream *stream = NULL;
+		GMimeParser *parser = NULL;
+		GMimeMessage *before = NULL;
+		GMimeStream *afterstream = NULL;
+		GByteArray *after = NULL;
+		try {
+			const struct _ah_inject_test *test = inject_test_data + i;
+			testsuite_check ("Autocrypt injection[%u] (%s)", i, test->name);
+
+			stream = g_mime_stream_mem_new_with_buffer (test->before, strlen(test->before));
+			parser = g_mime_parser_new_with_stream (stream);
+			before = g_mime_parser_construct_message (parser, NULL);
+
+			ah = _gen_header (test->acheader);
+			g_mime_object_set_header (GMIME_OBJECT (before), "Autocrypt",
+						  g_mime_autocrypt_header_to_string (ah), NULL);
+
+			afterstream = g_mime_stream_mem_new ();
+			g_mime_object_write_to_stream (GMIME_OBJECT (before), NULL, afterstream);
+
+			after = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (afterstream));
+
+			gchar *got = (gchar*)after->data;
+			if (memcmp (got, test->after, strlen(test->after))) {
+				fprintf (stderr, "Expected: %s\nGot: %s\n", test->after, got);
+				throw (exception_new ("failed to match"));
+			}
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("autocrypt header injection failed: %s", ex->message);
+		} finally;
+		if (ah)
+			g_object_unref (ah);
+		if (stream)
+			g_object_unref (stream);
+		if (parser)
+			g_object_unref (parser);
+		if (before)
+			g_object_unref (before);
+		if (afterstream)
+			g_object_unref (afterstream);
+		if (after)
+			g_byte_array_unref (after);
+		g_free (str);
+		str = NULL;
+	}
+}
+
+
 /* returns a non-NULL error if they're not the same */
 char *
 _acheaderlists_compare (GMimeAutocryptHeaderList *expected, GMimeAutocryptHeaderList *got)
@@ -867,6 +961,10 @@ int main (int argc, char **argv)
 	test_ah_message_parse ();
 	testsuite_end ();
 	
+	testsuite_start ("Autocrypt: inject headers");
+	test_ah_injection ();
+	testsuite_end ();
+
 	g_mime_shutdown ();
 	
 #ifdef ENABLE_CRYPTO
