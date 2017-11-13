@@ -190,3 +190,20 @@ g_mime_filter_checksum_get_digest (GMimeFilterChecksum *checksum, unsigned char 
 	
 	return len;
 }
+
+
+/**
+ * g_mime_filter_checksum_get_string:
+ * @checksum: checksum filter object
+ *
+ * Outputs the checksum digest as a newly allocated hexadecimal string.
+ *
+ * Returns: the hexadecimal representation of the checksum. The returned string should be freed with g_free() when no longer needed.
+ **/
+gchar *
+g_mime_filter_checksum_get_string (GMimeFilterChecksum *checksum)
+{
+	g_return_val_if_fail (GMIME_IS_FILTER_CHECKSUM (checksum), NULL);
+
+	return g_strdup (g_checksum_get_string (checksum->checksum));
+}
