@@ -695,10 +695,12 @@ test_ah_injection (void)
 		GMimeStream *innerafterstream = NULL;
 		GByteArray *innerafter = NULL;
 		GError *err = NULL;
+		int r, ix;
+		
 		try {
 			const struct _ah_inject_test *test = inject_test_data + i;
 			testsuite_check ("Autocrypt injection[%u] (%s)", i, test->name);
-
+			
 			stream = g_mime_stream_mem_new_with_buffer (test->before, strlen(test->before));
 			parser = g_mime_parser_new_with_stream (stream);
 			before = g_mime_parser_construct_message (parser, NULL);
@@ -712,7 +714,7 @@ test_ah_injection (void)
 			if (test->encrypt_to) {
 				ctx = g_mime_gpg_context_new ();
 				recip = g_ptr_array_new ();
-				for (int r = 0; test->encrypt_to[r]; r++)
+				for (r = 0; test->encrypt_to[r]; r++)
 					g_ptr_array_add (recip, (gpointer)(test->encrypt_to[r]));
 				/* get_mime_part is "transfer none" so mainpart does not need to be cleaned up */
 				GMimeObject *mainpart = g_mime_message_get_mime_part (before);
@@ -721,7 +723,7 @@ test_ah_injection (void)
 				}
 				if (test->gossipheaders) {
 					ahl = _gen_header_list (test->gossipheaders);
-					for (int ix = 0; ix < g_mime_autocrypt_header_list_get_count (ahl); ix++) {
+					for (ix = 0; ix < g_mime_autocrypt_header_list_get_count (ahl); ix++) {
 						g_mime_object_append_header (mainpart, "Autocrypt-Gossip",
 									     g_mime_autocrypt_header_to_string (g_mime_autocrypt_header_list_get_header_at (ahl, ix), TRUE), NULL);
 					}
