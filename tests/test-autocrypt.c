@@ -157,10 +157,18 @@ struct _ah_parse_test {
 struct _ah_inject_test {
 	const char *name;
 	const struct _ah_gen_test *acheader;
+	const struct _ah_gen_test **gossipheaders;
+	const char **encrypt_to;
 	const char *before;
 	const char *after;
+	const char *inner_after;
 };
 
+const char * local_recipients[] =
+	{
+		"0x0D211DC5D9F4567271AC0582D8DECFBFC9346CD4",
+		NULL,
+	};
 
 const static struct _ah_gen_test alice_addr =
 	{ .addr = "alice@example.org",
@@ -226,6 +234,29 @@ const static struct _ah_inject_test inject_test_data[] = {
 	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
+	  "\n"
+	  "Isn't it a lovely day?\n",
+	},
+	{ .name = "gossip injection",
+	  .acheader = &alice_addr,
+	  .gossipheaders = bob_and_carol,
+	  .encrypt_to = local_recipients,
+	  .before = "From: alice@example.org\r\n"
+	  "To: bob@example.org\r\n"
+	  "Subject: A lovely day\r\n"
+	  "Message-Id: <lovely-day@example.net>\r\n"
+	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
+	  "Mime-Version: 1.0\r\n"
+	  "Content-Type: text/plain\r\n"
+	  "\r\n"
+	  "Isn't it a lovely day?\r\n",
+	  .inner_after = "Content-Type: text/plain\n"
+	  "Autocrypt-Gossip: addr=bob@example.org; keydata=W1tbW1tbW1tbW1tbW1tbW1tbW1tb\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\n"
+	  " W1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tb\n"
+	  "Autocrypt-Gossip: addr=carol@example.org; keydata=WVlZWVlZWVlZWVlZWVlZWVlZWVlZ\n"
+	  " WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZ\n"
+	  " WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZ\n"
 	  "\n"
 	  "Isn't it a lovely day?\n",
 	},
@@ -656,6 +687,14 @@ test_ah_injection (void)
 		GMimeMessage *before = NULL;
 		GMimeStream *afterstream = NULL;
 		GByteArray *after = NULL;
+		GMimeAutocryptHeaderList *ahl = NULL;
+		GMimeCryptoContext *ctx = NULL;
+		GPtrArray *recip = NULL;
+		GMimeMultipartEncrypted *encrypted = NULL;
+		GMimeObject *cleartext = NULL;
+		GMimeStream *innerafterstream = NULL;
+		GByteArray *innerafter = NULL;
+		GError *err = NULL;
 		try {
 			const struct _ah_inject_test *test = inject_test_data + i;
 			testsuite_check ("Autocrypt injection[%u] (%s)", i, test->name);
@@ -664,19 +703,72 @@ test_ah_injection (void)
 			parser = g_mime_parser_new_with_stream (stream);
 			before = g_mime_parser_construct_message (parser, NULL);
 
-			ah = _gen_header (test->acheader);
-			g_mime_object_set_header (GMIME_OBJECT (before), "Autocrypt",
-						  g_mime_autocrypt_header_to_string (ah, FALSE), NULL);
+			if (test->acheader) {
+				ah = _gen_header (test->acheader);
+			        g_mime_object_set_header (GMIME_OBJECT (before), "Autocrypt",
+						         g_mime_autocrypt_header_to_string (ah, FALSE), NULL);
+			}
 
-			afterstream = g_mime_stream_mem_new ();
-			g_mime_object_write_to_stream (GMIME_OBJECT (before), NULL, afterstream);
+			if (test->encrypt_to) {
+				ctx = g_mime_gpg_context_new ();
+				recip = g_ptr_array_new ();
+				for (int r = 0; test->encrypt_to[r]; r++)
+					g_ptr_array_add (recip, (gpointer)(test->encrypt_to[r]));
+				/* get_mime_part is "transfer none" so mainpart does not need to be cleaned up */
+				GMimeObject *mainpart = g_mime_message_get_mime_part (before);
+				if (!mainpart) {
+					throw (exception_new ("failed to find main part!\n"));
+				}
+				if (test->gossipheaders) {
+					ahl = _gen_header_list (test->gossipheaders);
+					for (int ix = 0; ix < g_mime_autocrypt_header_list_get_count (ahl); ix++) {
+						g_mime_object_append_header (mainpart, "Autocrypt-Gossip",
+									     g_mime_autocrypt_header_to_string (g_mime_autocrypt_header_list_get_header_at (ahl, ix), TRUE), NULL);
+					}
+				}
+				
+				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, TRUE, NULL,
+										GMIME_ENCRYPT_ALWAYS_TRUST,
+										recip, &err);
+				if (!encrypted) {
+					throw (exception_new ("failed to encrypt: %s", err->message));
+				}
+				g_mime_message_set_mime_part (before, GMIME_OBJECT (encrypted));
+			}
 
-			after = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (afterstream));
+			if (test->after) {
+				afterstream = g_mime_stream_mem_new ();
+				g_mime_object_write_to_stream (GMIME_OBJECT (before), NULL, afterstream);
 
-			gchar *got = (gchar*)after->data;
-			if (memcmp (got, test->after, strlen(test->after))) {
-				fprintf (stderr, "Expected: %s\nGot: %s\n", test->after, got);
-				throw (exception_new ("failed to match"));
+				after = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (afterstream));
+				
+				gchar *got = (gchar*)after->data;
+				if (memcmp (got, test->after, strlen(test->after))) {
+					fprintf (stderr, "Expected: %s\nGot: %s\n", test->after, got);
+					throw (exception_new ("failed to match"));
+				}
+			}
+			if (test->inner_after) {
+				if (!encrypted) {
+					throw (exception_new ("inner_after, but no encrypted part!\n"));
+				}
+				
+				cleartext = g_mime_multipart_encrypted_decrypt (encrypted,
+										GMIME_DECRYPT_NONE,
+										NULL, NULL, &err);
+				if (!cleartext) {
+					throw (exception_new ("decryption failed: %s!\n", err->message));
+				}
+				innerafterstream = g_mime_stream_mem_new ();
+				g_mime_object_write_to_stream (cleartext, NULL, innerafterstream);
+
+				innerafter = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (innerafterstream));
+				
+				gchar *got = (gchar*)innerafter->data;
+				if (memcmp (got, test->inner_after, strlen(test->inner_after))) {
+					fprintf (stderr, "Expected: %s\nGot: %s\n", test->inner_after, got);
+					throw (exception_new ("failed to match"));
+				}
 			}
 			testsuite_check_passed ();
 		} catch (ex) {
@@ -694,6 +786,22 @@ test_ah_injection (void)
 			g_object_unref (afterstream);
 		if (after)
 			g_byte_array_unref (after);
+		if (ahl)
+			g_object_unref (ahl);
+		if (ctx)
+			g_object_unref (ctx);
+		if (recip)
+			g_ptr_array_unref (recip);
+		if (encrypted)
+			g_object_unref (encrypted);
+		if (cleartext)
+			g_object_unref (cleartext);
+		if (err)
+			g_error_free (err);
+		if (innerafterstream)
+			g_object_unref (innerafterstream);
+		if (innerafter)
+			g_byte_array_unref (innerafter);
 		g_free (str);
 		str = NULL;
 	}
@@ -821,7 +929,7 @@ test_ah_message_parse (void)
 static void
 import_secret_key (void)
 {
-	/* generated with GnuPG via:
+	/* generated key 0x0D211DC5D9F4567271AC0582D8DECFBFC9346CD4 with GnuPG via:
 	 *
 	 * export GNUPGHOME=$(mktemp -d)
 	 * gpg --pinentry-mode loopback --passphrase '' --batch --quick-gen-key $(uuidgen)@autocrypt.org
