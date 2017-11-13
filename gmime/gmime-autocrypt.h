@@ -133,7 +133,7 @@ struct _GMimeAutocryptHeaderListClass {
 
 GType g_mime_autocrypt_header_list_get_type (void);
 
-GMimeAutocryptHeaderList *g_mime_autocrypt_header_list_new ();
+GMimeAutocryptHeaderList *g_mime_autocrypt_header_list_new (void);
 guint g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *ahl, InternetAddressList *list);
 void g_mime_autocrypt_header_list_add (GMimeAutocryptHeaderList *ahl, GMimeAutocryptHeader *ah);
 
