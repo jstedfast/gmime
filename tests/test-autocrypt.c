@@ -117,7 +117,7 @@ test_ah_generation (void)
 			const struct _ah_gen_test *test = gen_test_data + i;
 			ah = _gen_header (test);
 
-			str = g_mime_autocrypt_header_get_string (ah);
+			str = g_mime_autocrypt_header_to_string (ah);
 			if (strcmp (test->txt, str)) {
 				fprintf (stderr, "expected[%u]: \n%s\n\ngot:\n%s\n", i,
 					 test->txt, str);
@@ -126,7 +126,7 @@ test_ah_generation (void)
 			GMimeAutocryptHeader *ah2 = g_mime_autocrypt_header_new_from_string (str);
 			gint cmp = g_mime_autocrypt_header_compare (ah, ah2);
 			if (cmp) {
-				char *x = g_mime_autocrypt_header_get_string (ah2);
+				char *x = g_mime_autocrypt_header_to_string (ah2);
 				fprintf (stderr, "after-rebuild[%u] (%d) \nexpected: \n%s\n\ngot:\n%s\n", i,
 					 cmp, test->txt, x);
 				g_free(x);
@@ -621,8 +621,8 @@ _acheaderlists_compare (GMimeAutocryptHeaderList *expected, GMimeAutocryptHeader
 		GMimeAutocryptHeader *ahg = g_mime_autocrypt_header_list_get_header_for_address (got, g_mime_autocrypt_header_get_address (ahe));
 		gint cmp = g_mime_autocrypt_header_compare (ahe, ahg);
 		if (cmp) {
-			char *e = g_mime_autocrypt_header_get_string (ahe);
-			char *g = g_mime_autocrypt_header_get_string (ahg);
+			char *e = g_mime_autocrypt_header_to_string (ahe);
+			char *g = g_mime_autocrypt_header_to_string (ahg);
 			char *ret = g_strdup_printf ("comparing <%s> got cmp = %d \nexpected: \n%s\n\ngot:\n%s\n",
 						     internet_address_mailbox_get_idn_addr (g_mime_autocrypt_header_get_address (ahe)),
 						     cmp, e, g);
@@ -672,7 +672,7 @@ test_ah_message_parse (void)
 				throw (exception_new ("failed to extract Autocrypt header from message!"));
 			if (ah_got && !ah_expected)
 				throw (exception_new ("extracted Autocrypt header when we shouldn't!\n%s\n",
-						      g_mime_autocrypt_header_get_string (ah_got)));
+						      g_mime_autocrypt_header_to_string (ah_got)));
 			if (ah_expected)
 				if (g_mime_autocrypt_header_compare (ah_expected, ah_got))
 					throw (exception_new ("Autocrypt header did not match"));

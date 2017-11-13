@@ -414,7 +414,7 @@ g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah)
 
 
 /**
- * g_mime_autocrypt_header_get_string:
+ * g_mime_autocrypt_header_to_string:
  * @ah: a #GMimeAutocryptHeader object
  *
  * Gets the string representation of the Autocrypt header, or %NULL on
@@ -426,7 +426,7 @@ g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah)
  * Autocrypt header.
  **/
 char *
-g_mime_autocrypt_header_get_string (GMimeAutocryptHeader *ah)
+g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
 	if (!g_mime_autocrypt_header_is_complete (ah))
