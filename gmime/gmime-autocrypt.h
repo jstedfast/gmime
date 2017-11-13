@@ -107,7 +107,7 @@ GBytes *g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah);
 void g_mime_autocrypt_header_set_effective_date (GMimeAutocryptHeader *ah, GDateTime *effective_date);
 GDateTime *g_mime_autocrypt_header_get_effective_date (GMimeAutocryptHeader *ah);
 
-char *g_mime_autocrypt_header_get_string (GMimeAutocryptHeader *ah);
+char *g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip);
 gboolean g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah);
 
 int g_mime_autocrypt_header_compare (GMimeAutocryptHeader *ah1, GMimeAutocryptHeader *ah2);
