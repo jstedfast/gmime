@@ -414,25 +414,30 @@ g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah)
 
 
 /**
- * g_mime_autocrypt_header_get_string:
+ * g_mime_autocrypt_header_to_string:
  * @ah: a #GMimeAutocryptHeader object
+ * @gossip: a #gboolean, indicating whether this header is for use with gossip
  *
  * Gets the string representation of the Autocrypt header, or %NULL on
  * error.  For example, it might return:
  *
  *     prefer-encrypt=mutual; addr=bob\@example.com; keydata=AAAB15BE...
  *
+ * If you are using this object to populate an Autocrypt-Gossip
+ * header, you should set @gossip to %TRUE (this will suppress
+ * inclusion of prefer-encrypt).
+ *
  * Returns: (transfer full): the string representation of the
  * Autocrypt header.
  **/
 char *
-g_mime_autocrypt_header_get_string (GMimeAutocryptHeader *ah)
+g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
 	if (!g_mime_autocrypt_header_is_complete (ah))
 		return NULL;
 	char *pe = "";
-	if (ah->prefer_encrypt == GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL)
+	if (!gossip && ah->prefer_encrypt == GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL)
 		pe = "prefer-encrypt=mutual; ";
 	const char *addr = internet_address_mailbox_get_addr (ah->address);
 	GPtrArray *lines = g_ptr_array_new_with_free_func (g_free);
@@ -466,7 +471,7 @@ g_mime_autocrypt_header_get_string (GMimeAutocryptHeader *ah)
 
 	g_ptr_array_add (lines, NULL);
 
-	char *ret = g_strjoinv ("\r\n ", (gchar**)(lines->pdata));
+	char *ret = g_strjoinv (" ", (gchar**)(lines->pdata));
 	g_ptr_array_unref (lines);
 	return ret;
 }
