@@ -168,9 +168,9 @@ g_mime_pkcs7_context_init (GMimePkcs7Context *pkcs7, GMimePkcs7ContextClass *kla
 static void
 g_mime_pkcs7_context_finalize (GObject *object)
 {
+#ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) object;
 	
-#ifdef ENABLE_CRYPTO
 	if (pkcs7->ctx)
 		gpgme_release (pkcs7->ctx);
 #endif

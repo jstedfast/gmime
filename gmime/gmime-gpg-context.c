@@ -169,9 +169,9 @@ g_mime_gpg_context_init (GMimeGpgContext *gpg, GMimeGpgContextClass *klass)
 static void
 g_mime_gpg_context_finalize (GObject *object)
 {
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) object;
 	
-#ifdef ENABLE_CRYPTO
 	if (gpg->ctx)
 		gpgme_release (gpg->ctx);
 #endif

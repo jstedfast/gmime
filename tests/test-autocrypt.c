@@ -928,6 +928,7 @@ test_ah_message_parse (void)
 }
 
 
+#ifdef ENABLE_CRYPTO
 static void
 import_secret_key (void)
 {
@@ -1041,6 +1042,7 @@ import_secret_key (void)
 	}
 	testsuite_check_passed ();
 }
+#endif
 
 int main (int argc, char **argv)
 {
