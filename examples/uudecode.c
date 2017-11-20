@@ -80,7 +80,6 @@ uudecode (const char *progname, int argc, char **argv)
 	int state = 0;
 	mode_t mode;
 	size_t n;
-	int i;
 	
 	context = g_option_context_new ("[FILE]...");
 	g_option_context_add_main_entries (context, options, progname);
