@@ -33,39 +33,16 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef HAVE_GETOPT_H
-#define _GNU_SOURCE
-#include <getopt.h>
-#else
-#include "getopt.h"
-#endif
-
-
 #define DEFAULT_FILENAME "-"
 
+static gboolean version;
+static const char *outfile;
 
-static struct option longopts[] = {
-	{ "help",        no_argument,       NULL, 'h' },
-	{ "version",     no_argument,       NULL, 'v' },
-	{ "output-file", required_argument, NULL, 'o' },
-	{ NULL,          no_argument,       NULL,  0  }
+static GOptionEntry options[] = {
+	{ "version",     'v', 0, G_OPTION_ARG_NONE,     &version, "display version and exit", NULL   },
+	{ "output-file", 'o', 0, G_OPTION_ARG_FILENAME, &outfile, "output to FILE",           "FILE" },
+	{ NULL, }
 };
-
-static void
-usage (const char *progname)
-{
-	printf ("Usage: %s [options] [ file ]...\n\n", progname);
-	printf ("Options:\n");
-	printf ("  -h, --help               display help and exit\n");
-	printf ("  -v, --version            display version and exit\n");
-	printf ("  -o, --output-file=FILE   output to FILE\n");
-}
-
-static void
-version (const char *progname)
-{
-	printf ("%s - GMime %s\n", progname, GMIME_VERSION);
-}
 
 static FILE *
 uufopen (const char *filename, const char *rw, int flags, mode_t mode)
@@ -90,44 +67,44 @@ static int
 uudecode (const char *progname, int argc, char **argv)
 {
 	gboolean midline = FALSE, base64 = FALSE;
-	int opt, longindex = 0, state = 0;
+	GOptionContext *context;
 	register const char *p;
 	char inbuf[4096], *q;
 	GString *str = NULL;
+	GError *err = NULL;
 	const char *infile;
 	char outbuf[4100];
 	FILE *fin, *fout;
 	guint32 save = 0;
 	Decoder decode;
-	char *outfile;
+	int state = 0;
 	mode_t mode;
 	size_t n;
+	int i;
 	
-	outfile = NULL;
-	while ((opt = getopt_long (argc, argv, "hvo:", longopts, &longindex)) != -1) {
-		switch (opt) {
-		case 'h':
-			usage (progname);
-			return 0;
-			break;
-		case 'v':
-			version (progname);
-			return 0;
-			break;
-		case 'o':
-			if (!(outfile = optarg)) {
-				usage (progname);
-				return -1;
-			}
-			break;
-		default:
-			printf ("Try `%s --help' for more information.\n", progname);
-			return -1;
-		}
+	context = g_option_context_new ("[FILE]...");
+	g_option_context_add_main_entries (context, options, progname);
+	g_option_context_set_help_enabled (context, TRUE);
+	
+	if (!g_option_context_parse (context, &argc, &argv, &err)) {
+		printf ("Try `%s --help' for more information.\n", progname);
+		g_option_context_free (context);
+		return -1;
 	}
 	
-	optarg = outfile;
-	infile = optind < argc ? argv[optind] : DEFAULT_FILENAME;
+	g_option_context_free (context);
+	
+	if (version) {
+		printf ("%s - GMime %s\n", progname, GMIME_VERSION);
+		return 0;
+	}
+	
+	if (argc == 1) {
+		printf ("Try `%s --help' for more information.\n", progname);
+		return -1;
+	}
+	
+	infile = argc > 1 ? argv[1] : DEFAULT_FILENAME;
 	
 	do {
 		if ((fin = uufopen (infile, "rt", O_RDONLY, 0)) == NULL) {
@@ -192,7 +169,7 @@ uudecode (const char *progname, int argc, char **argv)
 				goto nexti;
 		}
 		
-		if (!outfile || outfile != optarg)
+		if (!outfile)
 			outfile = g_strchomp (str->str);
 		
 		if (!(fout = fopen (outfile, "wb"))) {

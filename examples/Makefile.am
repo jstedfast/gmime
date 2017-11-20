@@ -17,12 +17,6 @@ LDADDS = 					\
 	$(top_builddir)/gmime/libgmime-$(GMIME_API_VERSION).la 	\
 	$(GLIB_LIBS)
 
-if SYSTEM_GETOPT
-GETOPT_SOURCES =
-else
-GETOPT_SOURCES = getopt.c getopt.h getopt1.c
-endif
-
 basic_example_SOURCES = basic-example.c
 basic_example_LDFLAGS = 
 basic_example_DEPENDENCIES = $(DEPS)
@@ -33,17 +27,17 @@ imap_example_LDFLAGS =
 imap_example_DEPENDENCIES = $(DEPS)
 imap_example_LDADD = $(LDADDS)
 
-uuencode_SOURCES = $(GETOPT_SOURCES) uuencode.c
+uuencode_SOURCES = uuencode.c
 uuencode_LDFLAGS = 
 uuencode_DEPENDENCIES = $(DEPS)
 uuencode_LDADD = $(LDADDS)
 
-uudecode_SOURCES = $(GETOPT_SOURCES) uudecode.c
+uudecode_SOURCES = uudecode.c
 uudecode_LDFLAGS = 
 uudecode_DEPENDENCIES = $(DEPS)
 uudecode_LDADD = $(LDADDS)
 
-msgcheck_SOURCES = $(GETOPT_SOURCES) msgcheck.c
+msgcheck_SOURCES = msgcheck.c
 msgcheck_LDFLAGS = 
 msgcheck_DEPENDENCIES = $(DEPS)
 msgcheck_LDADD = $(LDADDS)

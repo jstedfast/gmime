@@ -63,80 +63,59 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef HAVE_GETOPT_H
-#define _GNU_SOURCE
-#include <getopt.h>
-#else
-#include "getopt.h"
-#endif
+static gboolean version;
+static gboolean base64;
 
-
-static struct option longopts[] = {
-	{ "help",        no_argument,       NULL, 'h' },
-	{ "version",     no_argument,       NULL, 'v' },
-	{ "base64",      no_argument,       NULL, 'm' },
-	{ NULL,          no_argument,       NULL,  0  }
+static GOptionEntry options[] = {
+	{ "version", 'v', 0, G_OPTION_ARG_NONE, &version, "display version and exit",    NULL },
+	{ "base64",  'm', 0, G_OPTION_ARG_NONE, &base64,  "use RFC1521 base64 encoding", NULL },
+	{ NULL, }
 };
-
-
-static void
-usage (const char *progname)
-{
-	printf ("Usage: %s [options] [ file ] name\n\n", progname);
-	printf ("Options:\n");
-	printf ("  -h, --help               display help and exit\n");
-	printf ("  -v, --version            display version and exit\n");
-	printf ("  -m, --base64             use RFC1521 base64 encoding\n");
-}
-
-static void
-version (const char *progname)
-{
-	printf ("%s - GMime %s\n", progname, GMIME_VERSION);
-}
 
 static int
 uuencode (const char *progname, int argc, char **argv)
 {
+	GMimeContentEncoding encoding = GMIME_CONTENT_ENCODING_UUENCODE;
 	GMimeStream *istream, *ostream, *fstream;
-	GMimeContentEncoding encoding;
 	const char *filename, *name;
+	GOptionContext *context;
 	GMimeFilter *filter;
-	gboolean base64;
+	GError *err = NULL;
 	struct stat st;
-	int fd, opt;
+	int index = 1;
+	int fd;
 	
-	base64 = FALSE;
-	encoding = GMIME_CONTENT_ENCODING_UUENCODE;
-	while ((opt = getopt_long (argc, argv, "hvm", longopts, NULL)) != -1) {
-		switch (opt) {
-		case 'h':
-			usage (progname);
-			return 0;
-		case 'v':
-			version (progname);
-			return 0;
-		case 'm':
-			base64 = TRUE;
-			encoding = GMIME_CONTENT_ENCODING_BASE64;
-			break;
-		default:
-			printf ("Try `%s --help' for more information.\n", progname);
-			return -1;
-		}
+	context = g_option_context_new ("[FILE] name");
+	g_option_context_add_main_entries (context, options, progname);
+	g_option_context_set_help_enabled (context, TRUE);
+	
+	if (!g_option_context_parse (context, &argc, &argv, &err)) {
+		printf ("Try `%s --help' for more information.\n", progname);
+		g_option_context_free (context);
+		return -1;
 	}
 	
-	if (optind >= argc) {
+	g_option_context_free (context);
+	
+	if (version) {
+		printf ("%s - GMime %s\n", progname, GMIME_VERSION);
+		return 0;
+	}
+	
+	if (base64)
+		encoding = GMIME_CONTENT_ENCODING_BASE64;
+	
+	if (argc == 0) {
 		printf ("Try `%s --help' for more information.\n", progname);
 		return -1;
 	}
 	
-	if (optind + 1 < argc)
-		filename = argv[optind++];
+	if (argc > 2)
+		filename = argv[index++];
 	else
 		filename = NULL;
 	
-	name = argv[optind];
+	name = argv[index];
 	
 	/* open our input file... */
 	if ((fd = filename ? open (filename, O_RDONLY, 0) : dup (0)) == -1) {
@@ -161,8 +140,8 @@ uuencode (const char *progname, int argc, char **argv)
 	istream = g_mime_stream_fs_new (fd);
 	
 	/* open our output stream */
-	ostream = g_mime_stream_fs_new (1);
-	g_mime_stream_fs_set_owner ((GMimeStreamFs *) ostream, FALSE);
+	ostream = g_mime_stream_pipe_new (1);
+	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) ostream, FALSE);
 	
 	fstream = g_mime_stream_filter_new (ostream);
 	
