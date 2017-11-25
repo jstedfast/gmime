@@ -189,16 +189,20 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 	}
 	
 	/* don't hide the headers of any children of a multipart/signed */
-	is_signed = g_mime_content_type_is_type (object->content_type, "multipart", "signed");
-	format = _g_mime_format_options_clone (options, !is_signed);
-	/*if (is_signed) g_mime_format_options_set_allow_international (format, FALSE); */
+	if ((is_signed = g_mime_content_type_is_type (object->content_type, "multipart", "signed"))) {
+		format = _g_mime_format_options_clone (options, FALSE);
+		/* g_mime_format_options_set_allow_international (format, FALSE); */
+	} else {
+		format = options;
+	}
 	
 	for (i = 0; i < multipart->children->len; i++) {
 		part = multipart->children->pdata[i];
 		
 		/* write the boundary */
 		if ((nwritten = g_mime_stream_printf (stream, "--%s%s", boundary, newline)) == -1) {
-			g_mime_format_options_free (format);
+			if (is_signed)
+				g_mime_format_options_free (format);
 			return -1;
 		}
 		
@@ -206,7 +210,8 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		
 		/* write this part out */
 		if ((nwritten = g_mime_object_write_to_stream (part, format, stream)) == -1) {
-			g_mime_format_options_free (format);
+			if (is_signed)
+				g_mime_format_options_free (format);
 			return -1;
 		}
 		
@@ -214,7 +219,8 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		
 		if (!GMIME_IS_MULTIPART (part) || ((GMimeMultipart *) part)->write_end_boundary) {
 			if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1) {
-				g_mime_format_options_free (format);
+				if (is_signed)
+					g_mime_format_options_free (format);
 				return -1;
 			}
 			
@@ -222,7 +228,8 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		}
 	}
 	
-	g_mime_format_options_free (format);
+	if (is_signed)
+		g_mime_format_options_free (format);
 	
 	/* write the end-boundary (but only if a boundary is set) */
 	if (multipart->write_end_boundary && boundary) {
