@@ -587,7 +587,6 @@ message_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbool
 	if (mime_part) {
 		GMimeObjectClass *klass = GMIME_OBJECT_GET_CLASS (mime_part);
 		
-		options = _g_mime_format_options_clone (options, FALSE);
 		mime_part->ensure_newline = ((GMimeObject *) message)->ensure_newline;
 		nwritten = klass->write_to_stream (mime_part, options, TRUE, stream);
 		mime_part->ensure_newline = FALSE;
