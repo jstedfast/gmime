@@ -1047,11 +1047,13 @@ import_secret_key (void)
 int main (int argc, char **argv)
 {
 	char *gpg;
-
+	
 	g_mime_init ();
 	
 	testsuite_init (argc, argv);
-
+	
+	verbose = 4;
+	
 	if (!(gpg = g_find_program_in_path ("gpg2")))
 		if (!(gpg = g_find_program_in_path ("gpg")))
 			return EXIT_FAILURE;
@@ -1062,7 +1064,7 @@ int main (int argc, char **argv)
 	testsuite_start ("Autocrypt: generate headers");
 	test_ah_generation ();
 	testsuite_end ();
-
+	
 #ifdef ENABLE_CRYPTO
 	testsuite_start ("Autocrypt: import OpenPGP secret key");
 	import_secret_key ();
@@ -1076,7 +1078,7 @@ int main (int argc, char **argv)
 	testsuite_start ("Autocrypt: inject headers");
 	test_ah_injection ();
 	testsuite_end ();
-
+	
 	g_mime_shutdown ();
 	
 #ifdef ENABLE_CRYPTO
