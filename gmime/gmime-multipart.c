@@ -153,6 +153,8 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	const char *boundary, *newline;
 	ssize_t nwritten, total = 0;
+	GMimeFormatOptions *format;
+	gboolean is_signed;
 	GMimeObject *part;
 	guint i;
 	
@@ -186,28 +188,41 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		total += nwritten;
 	}
 	
+	/* don't hide the headers of any children of a multipart/signed */
+	is_signed = g_mime_content_type_is_type (object->content_type, "multipart", "signed");
+	format = _g_mime_format_options_clone (options, !is_signed);
+	/*if (is_signed) g_mime_format_options_set_allow_international (format, FALSE); */
+	
 	for (i = 0; i < multipart->children->len; i++) {
 		part = multipart->children->pdata[i];
 		
 		/* write the boundary */
-		if ((nwritten = g_mime_stream_printf (stream, "--%s%s", boundary, newline)) == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "--%s%s", boundary, newline)) == -1) {
+			g_mime_format_options_free (format);
 			return -1;
+		}
 		
 		total += nwritten;
 		
 		/* write this part out */
-		if ((nwritten = g_mime_object_write_to_stream (part, options, stream)) == -1)
+		if ((nwritten = g_mime_object_write_to_stream (part, format, stream)) == -1) {
+			g_mime_format_options_free (format);
 			return -1;
+		}
 		
 		total += nwritten;
-
+		
 		if (!GMIME_IS_MULTIPART (part) || ((GMimeMultipart *) part)->write_end_boundary) {
-			if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
+			if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1) {
+				g_mime_format_options_free (format);
 				return -1;
+			}
 			
 			total += nwritten;
 		}
 	}
+	
+	g_mime_format_options_free (format);
 	
 	/* write the end-boundary (but only if a boundary is set) */
 	if (multipart->write_end_boundary && boundary) {
