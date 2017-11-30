@@ -449,7 +449,7 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 	const size_t firstline = maxwid - sizeof ("Autocrypt:");
 	gsize offset = 0;
 	gsize ksz = 0;
-	gconstpointer kp = g_bytes_get_data (ah->keydata, &ksz);
+	const guchar *kp = g_bytes_get_data (ah->keydata, &ksz);
 	if (n < firstline) {
 		gsize firstlinekeylen = ((firstline - n)/4)*3;
 		if (firstlinekeylen > ksz)
