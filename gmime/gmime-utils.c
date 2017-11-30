@@ -2754,3 +2754,42 @@ g_mime_utils_header_printf (GMimeParserOptions *options, GMimeFormatOptions *for
 	
 	return ret;
 }
+
+
+/**
+ * g_mime_utils_header_value_unfold:
+ * @value: raw header value
+ *
+ * Unfolds a raw header value according to the rules in rfc822.
+ *
+ * Returns: an allocated string containing the unfolded header value.
+ **/
+char *
+g_mime_utils_header_value_unfold (const char *value)
+{
+	register const char *inptr = value;
+	const char *start, *inend;
+	char *str, *outptr;
+
+	while (is_lwsp (*inptr))
+		inptr++;
+
+	inend = start = inptr;
+	while (*inptr) {
+		if (!is_lwsp (*inptr++))
+			inend = inptr;
+	}
+
+	outptr = str = g_malloc ((size_t) (inend - start) + 1);
+	inptr = start;
+
+	while (inptr < inend) {
+		if (*inptr != '\r' && *inptr != '\n')
+			*outptr++ = *inptr;
+		inptr++;
+	}
+
+	*outptr = '\0';
+
+	return str;
+}
