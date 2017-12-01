@@ -2757,7 +2757,7 @@ g_mime_utils_header_printf (GMimeParserOptions *options, GMimeFormatOptions *for
 
 
 /**
- * g_mime_utils_header_value_unfold:
+ * g_mime_utils_header_unfold:
  * @value: raw header value
  *
  * Unfolds a raw header value according to the rules in rfc822.
@@ -2765,7 +2765,7 @@ g_mime_utils_header_printf (GMimeParserOptions *options, GMimeFormatOptions *for
  * Returns: an allocated string containing the unfolded header value.
  **/
 char *
-g_mime_utils_header_value_unfold (const char *value)
+g_mime_utils_header_unfold (const char *value)
 {
 	register const char *inptr = value;
 	const char *start, *inend;

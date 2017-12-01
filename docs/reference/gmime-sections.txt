@@ -1124,6 +1124,7 @@ g_mime_utils_header_decode_phrase
 g_mime_utils_header_encode_phrase
 g_mime_utils_structured_header_fold
 g_mime_utils_unstructured_header_fold
+g_mime_utils_header_unfold
 </SECTION>
 
 <SECTION>

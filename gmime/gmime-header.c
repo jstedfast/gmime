@@ -230,7 +230,7 @@ g_mime_header_get_value (GMimeHeader *header)
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
 	if (!header->value && header->raw_value) {
-		buf = g_mime_utils_header_value_unfold (header->raw_value);
+		buf = g_mime_utils_header_unfold (header->raw_value);
 		header->value = g_mime_utils_header_decode_text (header->options, buf);
 		g_free (buf);
 	}
