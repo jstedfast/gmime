@@ -214,37 +214,6 @@ g_mime_header_get_name (GMimeHeader *header)
 }
 
 
-static char *
-unfold (const char *value)
-{
-	register const char *inptr = value;
-	const char *start, *inend;
-	char *str, *outptr;
-	
-	while (is_lwsp (*inptr))
-		inptr++;
-	
-	inend = start = inptr;
-	while (*inptr) {
-		if (!is_lwsp (*inptr++))
-			inend = inptr;
-	}
-	
-	outptr = str = g_malloc ((size_t) (inend - start) + 1);
-	inptr = start;
-	
-	while (inptr < inend) {
-		if (*inptr != '\r' && *inptr != '\n')
-			*outptr++ = *inptr;
-		inptr++;
-	}
-	
-	*outptr = '\0';
-	
-	return str;
-}
-
-
 /**
  * g_mime_header_get_value:
  * @header: a #GMimeHeader
@@ -261,7 +230,7 @@ g_mime_header_get_value (GMimeHeader *header)
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
 	if (!header->value && header->raw_value) {
-		buf = unfold (header->raw_value);
+		buf = g_mime_utils_header_value_unfold (header->raw_value);
 		header->value = g_mime_utils_header_decode_text (header->options, buf);
 		g_free (buf);
 	}
