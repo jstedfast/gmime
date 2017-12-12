@@ -161,9 +161,6 @@ is_partial_match (const char *input, const char *inend, const GMimeOpenPGPMarker
 		inptr++;
 	}
 	
-	if (markerptr < markerend)
-		return FALSE;
-	
 	if (inptr < inend && *inptr == '\r')
 		inptr++;
 	
