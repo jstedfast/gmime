@@ -71,6 +71,7 @@
 #include <gmime/gmime-filter-from.h>
 #include <gmime/gmime-filter-gzip.h>
 #include <gmime/gmime-filter-html.h>
+#include <gmime/gmime-filter-openpgp.h>
 #include <gmime/gmime-filter-smtp-data.h>
 #include <gmime/gmime-filter-strip.h>
 #include <gmime/gmime-filter-unix2dos.h>

@@ -42,6 +42,7 @@ libgmime_3_0_la_SOURCES = 		\
 	gmime-filter-from.c		\
 	gmime-filter-gzip.c		\
 	gmime-filter-html.c		\
+	gmime-filter-openpgp.c		\
 	gmime-filter-smtp-data.c	\
 	gmime-filter-strip.c		\
 	gmime-filter-unix2dos.c		\
@@ -106,6 +107,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-from.h		\
 	gmime-filter-gzip.h		\
 	gmime-filter-html.h		\
+	gmime-filter-openpgp.h		\
 	gmime-filter-smtp-data.h	\
 	gmime-filter-strip.h		\
 	gmime-filter-unix2dos.h		\

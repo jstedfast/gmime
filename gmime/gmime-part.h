@@ -28,6 +28,7 @@
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-filter-best.h>
+#include <gmime/gmime-filter-openpgp.h>
 #include <gmime/gmime-data-wrapper.h>
 #include <gmime/gmime-crypto-context.h>
 
@@ -42,20 +43,6 @@ G_BEGIN_DECLS
 
 typedef struct _GMimePart GMimePart;
 typedef struct _GMimePartClass GMimePartClass;
-
-/**
- * GMimeOpenPGPData:
- * @GMIME_OPENPGP_DATA_NONE: The #GMimePart does not contain any OpenPGP data.
- * @GMIME_OPENPGP_DATA_ENCRYPTED: The #GMimePart contains OpenPGP encrypted data.
- * @GMIME_OPENPGP_DATA_SIGNED: The #GMimePart contains OpenPGP signed data.
- *
- * The type of OpenPGP data contained within the content of the #GMimePart, if any.
- **/
-typedef enum {
-	GMIME_OPENPGP_DATA_NONE,
-	GMIME_OPENPGP_DATA_ENCRYPTED,
-	GMIME_OPENPGP_DATA_SIGNED
-} GMimeOpenPGPData;
 
 /**
  * GMimePart:

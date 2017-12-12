@@ -329,12 +329,29 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 	}
 }
 
+static void
+pump_data_through_filter (GMimeFilter *filter, const char *path)
+{
+	GMimeStream *filtered, *stream;
+	
+	stream = g_mime_stream_null_new ();
+	filtered = g_mime_stream_filter_new (stream);
+	g_object_unref (stream);
+	
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	
+	stream = g_mime_stream_fs_open (path, O_RDONLY, 0644, NULL);
+	g_mime_stream_write_to_stream (stream, filtered);
+	g_object_unref (filtered);
+	g_object_unref (stream);
+}
 
 int main (int argc, char **argv)
 {
 #ifdef ENABLE_CRYPTO
 	const char *datadir = "data/pgp";
 	GMimeStream *istream, *ostream;
+	GMimeFilterOpenPGP *filter;
 	GMimeCryptoContext *ctx;
 	const char *what;
 	char *gpg, *key;
@@ -481,6 +498,48 @@ int main (int argc, char **argv)
 	g_object_unref (istream);
 	g_object_unref (ostream);
 	g_object_unref (ctx);
+	
+	what = "GMimeFilterOpenPGP";
+	testsuite_check ("%s", what);
+	try {
+		gint64 offset;
+		
+		filter = (GMimeFilterOpenPGP *) g_mime_filter_openpgp_new ();
+		
+		key = g_build_filename (datadir, "gmime.gpg.pub", NULL);
+		pump_data_through_filter ((GMimeFilter *) filter, key);
+		g_free (key);
+		
+		if (g_mime_filter_openpgp_get_data_type (filter) != GMIME_OPENPGP_DATA_PUBLIC_KEY)
+			throw (exception_new ("Failed to detect public key block"));
+		
+		if ((offset = g_mime_filter_openpgp_get_begin_offset (filter)) != 0)
+			throw (exception_new ("Incorrect public key block begin offset: %ld", (long) offset));
+		
+		if ((offset = g_mime_filter_openpgp_get_end_offset (filter)) != 1690)
+			throw (exception_new ("Incorrect public key block end offset: %ld", (long) offset));
+		
+		g_mime_filter_reset ((GMimeFilter *) filter);
+		
+		key = g_build_filename (datadir, "gmime.gpg.sec", NULL);
+		pump_data_through_filter ((GMimeFilter *) filter, key);
+		g_free (key);
+		
+		if (g_mime_filter_openpgp_get_data_type (filter) != GMIME_OPENPGP_DATA_PRIVATE_KEY)
+			throw (exception_new ("Failed to detect private key block"));
+		
+		if ((offset = g_mime_filter_openpgp_get_begin_offset (filter)) != 0)
+			throw (exception_new ("Incorrect private key block begin offset: %ld", (long) offset));
+		
+		if ((offset = g_mime_filter_openpgp_get_end_offset (filter)) != 1895)
+			throw (exception_new ("Incorrect private key block end offset: %ld", (long) offset));
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
+	
+	g_object_unref (filter);
 	
 	testsuite_end ();
 	

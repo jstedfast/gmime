@@ -492,6 +492,30 @@ GMIME_FILTER_CHECKSUM_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-openpgp</FILE>
+GMimeOpenPGPData
+GMimeOpenPGPState
+GMimeOpenPGPMarker
+GMimeFilterOpenPGP
+g_mime_filter_openpgp_new
+g_mime_filter_openpgp_get_data_type
+g_mime_filter_openpgp_get_begin_offset
+g_mime_filter_openpgp_get_enbd_offset
+
+<SUBSECTION Private>
+g_mime_filter_openpgp_get_type
+
+<SUBSECTION Standard>
+GMimeFilterOpenPGPClass
+GMIME_TYPE_FILTER_OPENPGP
+GMIME_FILTER_OPENPGP
+GMIME_IS_FILTER_OPENPGP
+GMIME_FILTER_OPENPGP_CLASS
+GMIME_IS_FILTER_OPENPGP_CLASS
+GMIME_FILTER_OPENPGP_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-strip</FILE>
 GMimeFilterStrip
 g_mime_filter_strip_new
@@ -811,7 +835,6 @@ GMimeObjectClass
 <SECTION>
 <FILE>gmime-part</FILE>
 GMimePart
-GMimeOpenPGPData
 g_mime_part_new
 g_mime_part_new_with_type
 g_mime_part_is_attachment

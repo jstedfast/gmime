@@ -59,29 +59,7 @@
  * into multiple #GMimeMessage objects.
  **/
 
-typedef enum {
-	OPENPGP_NONE                     = 0,
-	OPENPGP_BEGIN_PGP_MESSAGE        = (1 << 0),
-	OPENPGP_END_PGP_MESSAGE          = (1 << 1) | (1 << 0),
-	OPENPGP_BEGIN_PGP_SIGNED_MESSAGE = (1 << 2),
-	OPENPGP_BEGIN_PGP_SIGNATURE      = (1 << 3) | (1 << 2),
-	OPENPGP_END_PGP_SIGNATURE        = (1 << 4) | (1 << 3) | (1 << 2)
-} openpgp_state_t;
-
-typedef struct {
-	const char *marker;
-	size_t len;
-	openpgp_state_t before;
-	openpgp_state_t after;
-} GMimeOpenPGPMarker;
-
-static const GMimeOpenPGPMarker openpgp_markers[] = {
-	{ "-----BEGIN PGP MESSAGE-----",        27, OPENPGP_NONE,                     OPENPGP_BEGIN_PGP_MESSAGE },
-	{ "-----END PGP MESSAGE-----",          25, OPENPGP_BEGIN_PGP_MESSAGE,        OPENPGP_END_PGP_MESSAGE   },
-	{ "-----BEGIN PGP SIGNED MESSAGE-----", 34, OPENPGP_NONE,                     OPENPGP_BEGIN_PGP_SIGNED_MESSAGE },
-	{ "-----BEGIN PGP SIGNATURE-----",      29, OPENPGP_BEGIN_PGP_SIGNED_MESSAGE, OPENPGP_BEGIN_PGP_SIGNATURE },
-	{ "-----END PGP SIGNATURE-----",        27, OPENPGP_BEGIN_PGP_SIGNATURE,      OPENPGP_END_PGP_SIGNATURE }
-};
+extern const GMimeOpenPGPMarker g_mime_openpgp_markers[9];
 
 typedef enum {
 	BOUNDARY_NONE,
@@ -188,7 +166,7 @@ struct _GMimeParserPrivate {
 	
 	BoundaryStack *bounds;
 	
-	openpgp_state_t openpgp;
+	GMimeOpenPGPState openpgp;
 	short int state;
 	
 	unsigned short int midline:1;
@@ -403,7 +381,7 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	
 	priv->header_offset = -1;
 	
-	priv->openpgp = OPENPGP_NONE;
+	priv->openpgp = GMIME_OPENPGP_NONE;
 	
 	priv->midline = FALSE;
 	priv->seekable = offset != -1;
@@ -1414,13 +1392,13 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		len -= 2;
 		
 		/* check for OpenPGP markers... */
-		for (i = 0; i < G_N_ELEMENTS (openpgp_markers); i++) {
-			const char *pgp_marker = openpgp_markers[i].marker + 2;
-			openpgp_state_t state = openpgp_markers[i].before;
-			size_t n = openpgp_markers[i].len - 2;
+		for (i = 0; i < G_N_ELEMENTS (g_mime_openpgp_markers); i++) {
+			const char *pgp_marker = g_mime_openpgp_markers[i].marker + 2;
+			GMimeOpenPGPState state = g_mime_openpgp_markers[i].before;
+			size_t n = g_mime_openpgp_markers[i].len - 2;
 			
 			if (len == n && priv->openpgp == state && !strncmp (pgp_marker, start, len))
-				priv->openpgp = openpgp_markers[i].after;
+				priv->openpgp = g_mime_openpgp_markers[i].after;
 		}
 	}
 	
@@ -1473,7 +1451,7 @@ parser_scan_content (GMimeParser *parser, GMimeStream *content, gboolean *empty)
 	
 	d(printf ("scan-content\n"));
 	
-	priv->openpgp = OPENPGP_NONE;
+	priv->openpgp = GMIME_OPENPGP_NONE;
 	priv->midline = FALSE;
 	
 	g_assert (priv->inptr <= priv->inend);
@@ -1619,10 +1597,22 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, Bounda
 	g_mime_part_set_content (mime_part, content);
 	g_object_unref (content);
 	
-	if (priv->openpgp == OPENPGP_END_PGP_SIGNATURE)
+	switch (priv->openpgp) {
+	case GMIME_OPENPGP_END_PGP_SIGNATURE:
 		g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_SIGNED);
-	else if (priv->openpgp == OPENPGP_END_PGP_MESSAGE)
+		break;
+	case GMIME_OPENPGP_END_PGP_MESSAGE:
 		g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_ENCRYPTED);
+		break;
+	case GMIME_OPENPGP_END_PGP_PUBLIC_KEY_BLOCK:
+		g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_PUBLIC_KEY);
+		break;
+	case GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK:
+		g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_PRIVATE_KEY);
+		break;
+	default:
+		break;
+	}
 }
 
 static void

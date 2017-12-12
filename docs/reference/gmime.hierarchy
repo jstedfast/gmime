@@ -38,6 +38,7 @@ GObject
     GMimeFilterFrom
     GMimeFilterGZip
     GMimeFilterHTML
+    GMimeFilterOpenPGP
     GMimeFilterSmtpData
     GMimeFilterStrip
     GMimeFilterUnix2Dos
