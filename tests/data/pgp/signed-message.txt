@@ -1,0 +1,19 @@
+From: GMime Unit Tests <no.user@no.domain>
+To: GMime Unit Tests <no.user@no.domain>
+Subject: PGP signed message
+MIME-Version: 1.0
+Content-Type: text/plain
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+This is the message body.
+-----BEGIN PGP SIGNATURE-----
+
+iF0EARECAB0WIQTaJtq3VyocXyqxp0u0d2DpUYLCAAUCWjFEowAKCRC0d2DpUYLC
+APVoAKC2edJUAUrqf8oniTOvPqLaf7jA0wCgxUDCwXL3Vh4zmZEiyKlCGzWhabY=
+=Iqan
+-----END PGP SIGNATURE-----
+
+--
+And this is the email signature...

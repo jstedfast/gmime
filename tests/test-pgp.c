@@ -330,20 +330,106 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 }
 
 static void
-pump_data_through_filter (GMimeFilter *filter, const char *path)
+pump_data_through_filter (GMimeFilter *filter, const char *path, GMimeStream *ostream)
 {
+	GMimeFilter *unix2dos, *dos2unix;
 	GMimeStream *filtered, *stream;
 	
-	stream = g_mime_stream_null_new ();
-	filtered = g_mime_stream_filter_new (stream);
-	g_object_unref (stream);
+	filtered = g_mime_stream_filter_new (ostream);
+	
+	/* convert to DOS format before piping through the OpenPGP filter to maximize testing area */
+	unix2dos = g_mime_filter_unix2dos_new (FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, unix2dos);
+	g_object_unref (unix2dos);
 	
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	
+	/* convert back to UNIX format after filtering */
+	dos2unix = g_mime_filter_dos2unix_new (FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, dos2unix);
+	g_object_unref (dos2unix);
+	
 	stream = g_mime_stream_fs_open (path, O_RDONLY, 0644, NULL);
 	g_mime_stream_write_to_stream (stream, filtered);
+	g_mime_stream_flush (filtered);
 	g_object_unref (filtered);
 	g_object_unref (stream);
+}
+
+static char *openpgp_data_types[] = {
+	"GMIME_OPENPGP_DATA_NONE",
+	"GMIME_OPENPGP_DATA_ENCRYPTED",
+	"GMIME_OPENPGP_DATA_SIGNED",
+	"GMIME_OPENPGP_DATA_PUBLIC_KEY",
+	"GMIME_OPENPGP_DATA_PRIVATE_KEY"
+};
+
+static void
+test_openpgp_filter (GMimeFilterOpenPGP *filter, const char *path, GMimeOpenPGPData data_type, gint64 begin, gint64 end)
+{
+	GMimeStream *filtered, *stream, *expected, *ostream;
+	GMimeFilter *dos2unix;
+	GMimeOpenPGPData type;
+	Exception *ex = NULL;
+	GByteArray *buf[2];
+	char *filename;
+	struct stat st;
+	gint64 offset;
+	
+	ostream = g_mime_stream_mem_new ();
+	
+	pump_data_through_filter ((GMimeFilter *) filter, path, ostream);
+	
+	if ((type = g_mime_filter_openpgp_get_data_type (filter)) != data_type) {
+		g_object_unref (ostream);
+		throw (exception_new ("Incorrect OpenPGP data type detected: %s", openpgp_data_types[type]));
+	}
+	
+	if ((offset = g_mime_filter_openpgp_get_begin_offset (filter)) != begin) {
+		g_object_unref (ostream);
+		throw (exception_new ("Incorrect begin offset: %ld", (long) offset));
+	}
+	
+	if ((offset = g_mime_filter_openpgp_get_end_offset (filter)) != end) {
+		g_object_unref (ostream);
+		throw (exception_new ("Incorrect end offset: %ld", (long) offset));
+	}
+	
+	filename = g_strdup_printf ("%s.openpgp-block", path);
+	if (stat (filename, &st) == -1) {
+		stream = g_mime_stream_fs_open (filename, O_RDWR | O_CREAT, 0644, NULL);
+		g_mime_stream_reset (ostream);
+		g_mime_stream_write_to_stream (ostream, stream);
+		g_mime_stream_flush (stream);
+		g_mime_stream_reset (stream);
+	} else {
+		stream = g_mime_stream_fs_open (filename, O_RDONLY, 0644, NULL);
+	}
+	g_free (filename);
+	
+	/* make sure the data is in UNIX format before comparing (might be running tests on Windows) */
+	expected = g_mime_stream_mem_new ();
+	filtered = g_mime_stream_filter_new (expected);
+	dos2unix = g_mime_filter_dos2unix_new (FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, dos2unix);
+	g_object_unref (dos2unix);
+	
+	g_mime_stream_write_to_stream (stream, filtered);
+	g_mime_stream_flush (filtered);
+	g_object_unref (filtered);
+	g_object_unref (stream);
+	
+	buf[0] = GMIME_STREAM_MEM (expected)->buffer;
+	buf[1] = GMIME_STREAM_MEM (ostream)->buffer;
+	
+	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+		ex = exception_new ("filtered data does not match the expected result");
+	
+	g_object_unref (expected);
+	g_object_unref (ostream);
+	
+	if (ex != NULL)
+		throw (ex);
 }
 
 int main (int argc, char **argv)
@@ -498,41 +584,43 @@ int main (int argc, char **argv)
 	g_object_unref (istream);
 	g_object_unref (ostream);
 	g_object_unref (ctx);
+
+	filter = (GMimeFilterOpenPGP *) g_mime_filter_openpgp_new ();
 	
-	what = "GMimeFilterOpenPGP";
+	what = "GMimeFilterOpenPGP::public key block";
 	testsuite_check ("%s", what);
 	try {
-		gint64 offset;
-		
-		filter = (GMimeFilterOpenPGP *) g_mime_filter_openpgp_new ();
-		
 		key = g_build_filename (datadir, "gmime.gpg.pub", NULL);
-		pump_data_through_filter ((GMimeFilter *) filter, key);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_PUBLIC_KEY, 0, 1720);
 		g_free (key);
 		
-		if (g_mime_filter_openpgp_get_data_type (filter) != GMIME_OPENPGP_DATA_PUBLIC_KEY)
-			throw (exception_new ("Failed to detect public key block"));
-		
-		if ((offset = g_mime_filter_openpgp_get_begin_offset (filter)) != 0)
-			throw (exception_new ("Incorrect public key block begin offset: %ld", (long) offset));
-		
-		if ((offset = g_mime_filter_openpgp_get_end_offset (filter)) != 1690)
-			throw (exception_new ("Incorrect public key block end offset: %ld", (long) offset));
-		
-		g_mime_filter_reset ((GMimeFilter *) filter);
-		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
+	
+	g_mime_filter_reset ((GMimeFilter *) filter);
+	
+	what = "GMimeFilterOpenPGP::private key block";
+	testsuite_check ("%s", what);
+	try {
 		key = g_build_filename (datadir, "gmime.gpg.sec", NULL);
-		pump_data_through_filter ((GMimeFilter *) filter, key);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_PRIVATE_KEY, 0, 1928);
 		g_free (key);
 		
-		if (g_mime_filter_openpgp_get_data_type (filter) != GMIME_OPENPGP_DATA_PRIVATE_KEY)
-			throw (exception_new ("Failed to detect private key block"));
-		
-		if ((offset = g_mime_filter_openpgp_get_begin_offset (filter)) != 0)
-			throw (exception_new ("Incorrect private key block begin offset: %ld", (long) offset));
-		
-		if ((offset = g_mime_filter_openpgp_get_end_offset (filter)) != 1895)
-			throw (exception_new ("Incorrect private key block end offset: %ld", (long) offset));
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
+	
+	g_mime_filter_reset ((GMimeFilter *) filter);
+	
+	what = "GMimeFilterOpenPGP::signed message block";
+	testsuite_check ("%s", what);
+	try {
+		key = g_build_filename (datadir, "signed-message.txt", NULL);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_SIGNED, 162, 440);
+		g_free (key);
 		
 		testsuite_check_passed ();
 	} catch (ex) {
