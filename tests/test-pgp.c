@@ -332,8 +332,8 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 static void
 pump_data_through_filter (GMimeFilter *filter, const char *path, GMimeStream *ostream)
 {
+	GMimeStream *onebyte, *filtered, *stream;
 	GMimeFilter *unix2dos, *dos2unix;
-	GMimeStream *filtered, *stream;
 	
 	filtered = g_mime_stream_filter_new (ostream);
 	
@@ -349,10 +349,13 @@ pump_data_through_filter (GMimeFilter *filter, const char *path, GMimeStream *os
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, dos2unix);
 	g_object_unref (dos2unix);
 	
-	stream = g_mime_stream_fs_open (path, O_RDONLY, 0644, NULL);
-	g_mime_stream_write_to_stream (stream, filtered);
-	g_mime_stream_flush (filtered);
+	onebyte = test_stream_onebyte_new (filtered);
 	g_object_unref (filtered);
+	
+	stream = g_mime_stream_fs_open (path, O_RDONLY, 0644, NULL);
+	g_mime_stream_write_to_stream (stream, onebyte);
+	g_mime_stream_flush (onebyte);
+	g_object_unref (onebyte);
 	g_object_unref (stream);
 }
 
@@ -620,6 +623,20 @@ int main (int argc, char **argv)
 	try {
 		key = g_build_filename (datadir, "signed-message.txt", NULL);
 		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_SIGNED, 162, 440);
+		g_free (key);
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
+	
+	g_mime_filter_reset ((GMimeFilter *) filter);
+	
+	what = "GMimeFilterOpenPGP::encrypted message block";
+	testsuite_check ("%s", what);
+	try {
+		key = g_build_filename (datadir, "encrypted-message.txt", NULL);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_ENCRYPTED, 165, 1084);
 		g_free (key);
 		
 		testsuite_check_passed ();

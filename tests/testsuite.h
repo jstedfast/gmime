@@ -26,6 +26,8 @@
 #include <stdarg.h>
 #include <setjmp.h>
 
+#include <gmime/gmime.h>
+
 G_BEGIN_DECLS
 
 void testsuite_init (int argc, char **argv);
@@ -77,6 +79,30 @@ void g_throw (Exception *ex) G_GNUC_NORETURN;
 #define catch(e) else { Exception *e = __env.ex; if (e != NULL)
 #define throw(e) g_throw (e)
 #define finally } if (__env.ex != NULL) exception_free (__env.ex); }
+
+
+/* A test stream that reads/writes 1 byte at a time */
+#define TEST_TYPE_STREAM_ONEBYTE            (test_stream_onebyte_get_type ())
+#define TEST_STREAM_ONEBYTE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), TEST_TYPE_STREAM_ONEBYTE, TestStreamOneByte))
+#define TEST_STREAM_ONEBYTE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), TEST_TYPE_STREAM_ONEBYTE, TestStreamOneByteClass))
+#define TEST_IS_STREAM_ONEBYTE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TEST_TYPE_STREAM_ONEBYTE))
+#define TEST_IS_STREAM_ONEBYTE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), TEST_TYPE_STREAM_ONEBYTE))
+#define TEST_STREAM_ONEBYTE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), TEST_TYPE_STREAM_ONEBYTE, TestStreamOneByteClass))
+
+typedef struct _TestStreamOneByte TestStreamOneByte;
+typedef struct _TestStreamOneByteClass TestStreamOneByteClass;
+
+struct _TestStreamOneByte {
+	GMimeStream parent_object;
+	GMimeStream *source;
+};
+
+struct _TestStreamOneByteClass {
+	GMimeStreamClass parent_class;
+};
+
+GType test_stream_onebyte_get_type (void);
+GMimeStream *test_stream_onebyte_new (GMimeStream *source);
 
 G_END_DECLS
 

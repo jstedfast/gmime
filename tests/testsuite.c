@@ -502,6 +502,203 @@ testsuite_destroy_gpghome (void)
 }
 
 
+static void test_stream_onebyte_class_init (TestStreamOneByteClass *klass);
+static void test_stream_onebyte_init (TestStreamOneByte *stream, TestStreamOneByteClass *klass);
+static void test_stream_onebyte_finalize (GObject *object);
+
+static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, const char *buf, size_t len);
+static int stream_flush (GMimeStream *stream);
+static int stream_close (GMimeStream *stream);
+static gboolean stream_eos (GMimeStream *stream);
+static int stream_reset (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
+static gint64 stream_length (GMimeStream *stream);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
+
+static GMimeStreamClass *parent_class = NULL;
+
+GType
+test_stream_onebyte_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (TestStreamOneByteClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) test_stream_onebyte_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (TestStreamOneByte),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) test_stream_onebyte_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_STREAM, "TestStreamOneByte", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+test_stream_onebyte_class_init (TestStreamOneByteClass *klass)
+{
+	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_STREAM);
+	
+	object_class->finalize = test_stream_onebyte_finalize;
+	
+	stream_class->read = stream_read;
+	stream_class->write = stream_write;
+	stream_class->flush = stream_flush;
+	stream_class->close = stream_close;
+	stream_class->eos = stream_eos;
+	stream_class->reset = stream_reset;
+	stream_class->seek = stream_seek;
+	stream_class->tell = stream_tell;
+	stream_class->length = stream_length;
+	stream_class->substream = stream_substream;
+}
+
+static void
+test_stream_onebyte_init (TestStreamOneByte *stream, TestStreamOneByteClass *klass)
+{
+	stream->source = NULL;
+}
+
+static void
+test_stream_onebyte_finalize (GObject *object)
+{
+	TestStreamOneByte *stream = (TestStreamOneByte *) object;
+	
+	if (stream->source)
+		g_object_unref (stream->source);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+
+static ssize_t
+stream_read (GMimeStream *stream, char *buf, size_t len)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_read (test->source, buf, MIN (len, 1));
+}
+
+static ssize_t
+stream_write (GMimeStream *stream, const char *buf, size_t len)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	size_t nwritten = 0;
+	
+	while (nwritten < len) {
+		if (g_mime_stream_write (test->source, buf + nwritten, 1) > 0)
+			nwritten++;
+	}
+	
+	return (ssize_t) nwritten;
+}
+
+static int
+stream_flush (GMimeStream *stream)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_flush (test->source);
+}
+
+static int
+stream_close (GMimeStream *stream)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_close (test->source);
+}
+
+static gboolean
+stream_eos (GMimeStream *stream)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_eos (test->source);
+}
+
+static int
+stream_reset (GMimeStream *stream)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_reset (test->source);
+}
+
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_seek (test->source, offset, whence);
+}
+
+static gint64
+stream_tell (GMimeStream *stream)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_tell (test->source);
+}
+
+static gint64
+stream_length (GMimeStream *stream)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_length (test->source);
+}
+
+static GMimeStream *
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
+{
+	TestStreamOneByte *test = (TestStreamOneByte *) stream;
+	
+	return g_mime_stream_substream (test->source, start, end);
+}
+
+
+/**
+ * test_stream_onebyte_new:
+ * @source: source stream
+ *
+ * Creates a new TestStreamOneByte object.
+ *
+ * Returns: a new test stream with source @source.
+ **/
+GMimeStream *
+test_stream_onebyte_new (GMimeStream *source)
+{
+	TestStreamOneByte *test;
+	
+	g_return_val_if_fail (GMIME_IS_STREAM (source), NULL);
+	
+	test = g_object_new (TEST_TYPE_STREAM_ONEBYTE, NULL);
+	
+	test->source = source;
+	g_object_ref (source);
+	
+	g_mime_stream_construct ((GMimeStream *) test,
+				 source->bound_start,
+				 source->bound_end);
+	
+	return (GMimeStream *) test;
+}
+
+
 #ifdef BUILD
 int main (int argc, char **argv)
 {
