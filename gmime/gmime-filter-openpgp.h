@@ -70,6 +70,8 @@ typedef enum {
  * @GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK: The "-----END PGP PRIVATE KEY BLOCK-----" marker has been found.
  *
  * The current state of the #GMimeFilterOpenPGP filter.
+ *
+ * Since: 3.2
  **/
 typedef enum {
 	GMIME_OPENPGP_NONE                        = 0,
@@ -84,6 +86,19 @@ typedef enum {
 	GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK   = (1 << 8) | (1 << 7)
 } GMimeOpenPGPState;
 
+
+/**
+ * GMimeOpenPGPMarker:
+ * @marker: The OpenPGP marker.
+ * @len: The length of the OpenPGP marker.
+ * @before: The #GMimeOpenPGPState that the state machine must be in before encountering this marker.
+ * @after: The #GMimeOpenPGPState that the state machine will transition into once this marker is found.
+ * @is_end_marker: %TRUE if the marker is an end marker; otherwise, %FALSE.
+ *
+ * An OpenPGP marker for use with GMime's internal state machines used for detecting OpenPGP blocks.
+ *
+ * Since: 3.2
+ **/
 typedef struct {
 	const char *marker;
 	size_t len;
@@ -92,11 +107,14 @@ typedef struct {
 	gboolean is_end_marker;
 } GMimeOpenPGPMarker;
 
+
 /**
  * GMimeFilterOpenPGP:
  * @parent_object: parent #GMimeFilter
  *
  * A filter to detect OpenPGP markers.
+ *
+ * Since: 3.2
  **/
 struct _GMimeFilterOpenPGP {
 	GMimeFilter parent_object;

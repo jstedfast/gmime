@@ -344,6 +344,8 @@ filter_reset (GMimeFilter *filter)
  * Creates a new #GMimeFilterOpenPGP filter.
  *
  * Returns: a new #GMimeFilterOpenPGP filter.
+ *
+ * Since: 3.2
  **/
 GMimeFilter *
 g_mime_filter_openpgp_new (void)
@@ -359,6 +361,8 @@ g_mime_filter_openpgp_new (void)
  * Gets the type of OpenPGP data that has been detected.
  *
  * Returns: a #GMimeOpenPGPData value.
+ *
+ * Since: 3.2
  **/
 GMimeOpenPGPData
 g_mime_filter_openpgp_get_data_type (GMimeFilterOpenPGP *openpgp)
@@ -382,6 +386,8 @@ g_mime_filter_openpgp_get_data_type (GMimeFilterOpenPGP *openpgp)
  * Gets the stream offset of the beginning of the OpenPGP data block, if any have been found.
  *
  * Returns: The stream offset or %-1 if no OpenPGP block was found.
+ *
+ * Since: 3.2
  **/
 gint64
 g_mime_filter_openpgp_get_begin_offset (GMimeFilterOpenPGP *openpgp)
@@ -399,6 +405,8 @@ g_mime_filter_openpgp_get_begin_offset (GMimeFilterOpenPGP *openpgp)
  * Gets the stream offset of the end of the OpenPGP data block, if any have been found.
  *
  * Returns: The stream offset or %-1 if no OpenPGP block was found.
+ *
+ * Since: 3.2
  **/
 gint64
 g_mime_filter_openpgp_get_end_offset (GMimeFilterOpenPGP *openpgp)

@@ -130,6 +130,7 @@ g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 	mime_part->content_location = NULL;
 	mime_part->content_md5 = NULL;
 	mime_part->content = NULL;
+	mime_part->openpgp = (GMimeOpenPGPData) -1;
 }
 
 static void
@@ -938,6 +939,8 @@ set_content (GMimePart *mime_part, GMimeDataWrapper *content)
 	if (mime_part->content)
 		g_object_unref (mime_part->content);
 	
+	mime_part->openpgp = (GMimeOpenPGPData) -1;
+	
 	mime_part->content = content;
 	g_object_ref (content);
 }
@@ -1011,6 +1014,27 @@ GMimeOpenPGPData
 g_mime_part_get_openpgp_data (GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_OPENPGP_DATA_NONE);
+	
+	if (mime_part->content == NULL)
+		return GMIME_OPENPGP_DATA_NONE;
+	
+	if (mime_part->openpgp == (GMimeOpenPGPData) -1) {
+		GMimeStream *filtered, *stream;
+		GMimeFilterOpenPGP *openpgp;
+		
+		stream = g_mime_stream_null_new ();
+		filtered = g_mime_stream_filter_new (stream);
+		g_object_unref (stream);
+		
+		openpgp = (GMimeFilterOpenPGP *) g_mime_filter_openpgp_new ();
+		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, (GMimeFilter *) openpgp);
+		g_mime_data_wrapper_write_to_stream (mime_part->content, filtered);
+		g_mime_stream_flush (filtered);
+		g_object_unref (filtered);
+		
+		mime_part->openpgp = g_mime_filter_openpgp_get_data_type (openpgp);
+		g_object_unref (openpgp);
+	}
 	
 	return mime_part->openpgp;
 }
