@@ -299,7 +299,7 @@ g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length)
 {
 	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
-	if (filter->backsize < length) {
+	if (!filter->backbuf || filter->backsize < length) {
 		/* g_realloc copies data, unnecessary overhead */
 		g_free (filter->backbuf);
 		filter->backbuf = g_malloc (length + BACK_HEAD);
@@ -324,7 +324,7 @@ g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep)
 {
 	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
-	if (filter->outsize < size) {
+	if (!filter->outreal || filter->outsize < size) {
 		size_t offset = filter->outptr - filter->outreal;
 		
 		if (keep) {
