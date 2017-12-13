@@ -164,7 +164,7 @@ struct _ah_inject_test {
 	const char *inner_after;
 };
 
-const char * local_recipients[] =
+static const char * local_recipients[] =
 	{
 		"0x0D211DC5D9F4567271AC0582D8DECFBFC9346CD4",
 		NULL,
