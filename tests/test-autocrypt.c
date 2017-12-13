@@ -729,7 +729,7 @@ test_ah_injection (void)
 					}
 				}
 				
-				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, TRUE, NULL,
+				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, FALSE, NULL,
 										GMIME_ENCRYPT_ALWAYS_TRUST,
 										recip, &err);
 				if (!encrypted) {

@@ -481,9 +481,7 @@ g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, const char *userid,
 	
 	/* create an array of recipient keys for GpgMe */
 	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
-	printf ("recipient count = %d\n", recipients->len);
 	for (i = 0; i < recipients->len; i++) {
-		printf ("\trecipient = %s\n", recipients->pdata[i]);
 		if (!(key = g_mime_gpgme_get_key_by_name (ctx, recipients->pdata[i], FALSE, err))) {
 			g_mime_gpgme_keylist_free (rcpts);
 			return -1;
