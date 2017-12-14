@@ -13,6 +13,7 @@ AUTOMATED_TESTS =	\
 	test-iconv	\
 	test-streams	\
 	test-cat	\
+	test-filters	\
 	test-headers	\
 	test-partial	\
 	test-mbox	\
@@ -71,6 +72,11 @@ test_mbox_LDFLAGS =
 test_mbox_DEPENDENCIES = $(DEPS)
 test_mbox_LDADD = $(LDADDS)
 
+test_filters_SOURCES = test-filters.c testsuite.c testsuite.h
+test_filters_LDFLAGS = 
+test_filters_DEPENDENCIES = $(DEPS)
+test_filters_LDADD = $(LDADDS)
+
 test_streams_SOURCES = test-streams.c testsuite.c testsuite.h
 test_streams_LDFLAGS = 
 test_streams_DEPENDENCIES = $(DEPS)
@@ -120,7 +126,7 @@ endif
 
 EXTRA_DIST = $(wildcard empty*.msg rfc2060.msg data/pgp*/* data/smime/* \
 	data/partial/input/photo-discuss/*.eml data/partial/output/* \
-	data/mbox/*put/substring.mbox)
+	data/mbox/*put/substring.mbox data/filters/*)
 
 VERBOSITY=-v
 

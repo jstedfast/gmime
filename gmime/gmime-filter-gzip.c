@@ -455,9 +455,9 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	GMimeFilterGZip *gzip = (GMimeFilterGZip *) filter;
 	
 	if (gzip->mode == GMIME_FILTER_GZIP_MODE_ZIP)
-		gzip_filter (filter, in, len, prespace, out, outlen, outprespace, Z_SYNC_FLUSH);
+		gzip_filter (filter, in, len, prespace, out, outlen, outprespace, Z_NO_FLUSH);
 	else
-		gunzip_filter (filter, in, len, prespace, out, outlen, outprespace, Z_SYNC_FLUSH);
+		gunzip_filter (filter, in, len, prespace, out, outlen, outprespace, Z_NO_FLUSH);
 }
 
 static void
