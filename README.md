@@ -100,7 +100,7 @@ GMimeMessage *message;
 GMimeStream *stream;
 GMimeParser *parser;
 
-stream = g_mime_stream_file_open ("message.eml", "r");
+stream = g_mime_stream_file_open ("message.eml", "r", NULL);
 parser = g_mime_parser_new_with_stream (stream);
 
 /* Note: we can unref the stream now since the GMimeParser has a reference to it... */
@@ -121,7 +121,7 @@ GMimeParser *parser;
 gint64 offset;
 char *marker;
 
-stream = g_mime_stream_file_open ("Inbox.mbox", "r");
+stream = g_mime_stream_file_open ("Inbox.mbox", "r", NULL);
 parser = g_mime_parser_new_with_stream (stream);
 
 /* tell the parser to scan mbox-style "From " markers */
@@ -309,7 +309,7 @@ attachment = g_mime_part_new_with_type ("image", "gif");
 g_mime_part_set_filename (attachment, basename (path));
 
 /* create the content for the image attachment */
-stream = g_mime_stream_fs_open (path, O_RDONLY);
+stream = g_mime_stream_fs_open (path, O_RDONLY, 0644, NULL);
 content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
 g_object_unref (stream);
 
