@@ -110,6 +110,7 @@ typedef union {
 	} unzip;
 	struct {
 		guint32 wrote_hdr:1;
+		guint32 flushed:1;
 	} zip;
 } gzip_state_t;
 
@@ -118,6 +119,9 @@ struct _GMimeFilterGZipPrivate {
 	
 	gzip_state_t state;
 	gzip_hdr_t hdr;
+	
+	char *filename;
+	char *comment;
 	
 	guint32 crc32;
 	guint32 isize;
@@ -198,6 +202,8 @@ g_mime_filter_gzip_finalize (GObject *object)
 	else
 		inflateEnd (priv->stream);
 	
+	g_free (priv->filename);
+	g_free (priv->comment);
 	g_free (priv->stream);
 	g_free (priv);
 	
@@ -221,12 +227,28 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	struct _GMimeFilterGZipPrivate *priv = gzip->priv;
 	int retval;
 	
+	if (priv->state.zip.flushed) {
+		*outprespace = prespace;
+		*outlen = 0;
+		*out = in;
+		return;
+	}
+	
 	if (!priv->state.zip.wrote_hdr) {
+		size_t filenamelen = gzip->priv->filename ? strlen (gzip->priv->filename) + 1 : 0;
+		size_t commentlen = gzip->priv->comment ? strlen (gzip->priv->comment) + 1 : 0;
+		size_t hdrlen = 10 + filenamelen + commentlen;
+		char *outptr;
+		
 		priv->hdr.v.id1 = 31;
 		priv->hdr.v.id2 = 139;
 		priv->hdr.v.cm = Z_DEFLATED;
 		priv->hdr.v.mtime = 0;
 		priv->hdr.v.flg = 0;
+		if (gzip->priv->filename)
+			priv->hdr.v.flg |= GZIP_FLAG_FNAME;
+		if (gzip->priv->comment)
+			priv->hdr.v.flg |= GZIP_FLAG_FCOMMENT;
 		if (gzip->level == Z_BEST_COMPRESSION)
 			priv->hdr.v.xfl = 2;
 		else if (gzip->level == Z_BEST_SPEED)
@@ -235,12 +257,23 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			priv->hdr.v.xfl = 0;
 		priv->hdr.v.os = GZIP_OS_UNKNOWN;
 		
-		g_mime_filter_set_size (filter, (len * 2) + 22, FALSE);
+		g_mime_filter_set_size (filter, (len * 2) + hdrlen + 12, FALSE);
 		
 		memcpy (filter->outbuf, priv->hdr.buf, 10);
+		outptr = filter->outbuf + 10;
 		
-		priv->stream->next_out = (unsigned char *) filter->outbuf + 10;
-		priv->stream->avail_out = filter->outsize - 10;
+		if (gzip->priv->filename) {
+			memcpy (outptr, gzip->priv->filename, filenamelen);
+			outptr += filenamelen;
+		}
+		
+		if (gzip->priv->comment) {
+			memcpy (outptr, gzip->priv->comment, commentlen);
+			outptr += commentlen;
+		}
+		
+		priv->stream->next_out = (unsigned char *) outptr;
+		priv->stream->avail_out = filter->outsize - hdrlen;
 		
 		priv->state.zip.wrote_hdr = TRUE;
 	} else {
@@ -255,8 +288,10 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	do {
 		/* FIXME: handle error cases? */
-		if ((retval = deflate (priv->stream, flush)) != Z_OK)
+		if ((retval = deflate (priv->stream, flush)) != Z_OK) {
 			w(fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg));
+			break;
+		}
 		
 		if (flush == Z_FULL_FLUSH) {
 			size_t olen;
@@ -279,6 +314,7 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				priv->stream->avail_out -= 4;
 				priv->stream->next_out += 4;
 				
+				priv->state.zip.flushed = TRUE;
 				break;
 			}
 		} else {
@@ -374,6 +410,8 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			return;
 		}
 		
+		g_free (priv->filename);
+		priv->filename = g_strndup (start, inptr - start);
 		priv->state.unzip.got_fname = TRUE;
 		inptr++;
 		
@@ -390,7 +428,9 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			g_mime_filter_backup (filter, start, left);
 			return;
 		}
-		
+
+		g_free (priv->comment);
+		priv->comment = g_strndup (start, inptr - start);
 		priv->state.unzip.got_fcomment = TRUE;
 		inptr++;
 		
@@ -491,10 +531,15 @@ filter_reset (GMimeFilter *filter)
 	
 	memset (&priv->state, 0, sizeof (priv->state));
 	
-	if (gzip->mode == GMIME_FILTER_GZIP_MODE_ZIP)
+	if (gzip->mode == GMIME_FILTER_GZIP_MODE_ZIP) {
 		deflateReset (priv->stream);
-	else
+	} else {
 		inflateReset (priv->stream);
+		g_free (priv->filename);
+		g_free (priv->comment);
+		priv->filename = NULL;
+		priv->comment = NULL;
+	}
 	
 	priv->crc32 = crc32 (0, Z_NULL, 0);
 	priv->isize = 0;
@@ -531,4 +576,86 @@ g_mime_filter_gzip_new (GMimeFilterGZipMode mode, int level)
 	}
 	
 	return (GMimeFilter *) gzip;
+}
+
+
+/**
+ * g_mime_filter_gzip_get_filename:
+ * @gzip: A #GMimeFilterGZip filter
+ *
+ * Gets the filename that was either previously set or retrieved when decoding a gzip stream.
+ *
+ * Returns: a string containing th ename of the file.
+ *
+ * Since: 3.2
+ **/
+const char *
+g_mime_filter_gzip_get_filename (GMimeFilterGZip *gzip)
+{
+	g_return_val_if_fail (GMIME_IS_FILTER_GZIP (gzip), NULL);
+	
+	return gzip->priv->filename;
+}
+
+
+/**
+ * g_mime_filter_gzip_set_filename:
+ * @gzip: A #GMimeFilterGZip filter
+ * @filename: The name of the file
+ *
+ * Sets the filename that should be used when generating the gzip header.
+ *
+ * Since: 3.2
+ **/
+void
+g_mime_filter_gzip_set_filename (GMimeFilterGZip *gzip, const char *filename)
+{
+	char *buf;
+	
+	g_return_if_fail (GMIME_IS_FILTER_GZIP (gzip));
+	
+	buf = g_strdup (filename);
+	g_free (gzip->priv->filename);
+	gzip->priv->filename = buf;
+}
+
+
+/**
+ * g_mime_filter_gzip_get_comment:
+ * @gzip: A #GMimeFilterGZip filter
+ *
+ * Gets the comment that was either previously set or retrieved when decoding a gzip stream.
+ *
+ * Returns: a string containing the comment.
+ *
+ * Since: 3.2
+ **/
+const char *
+g_mime_filter_gzip_get_comment (GMimeFilterGZip *gzip)
+{
+	g_return_val_if_fail (GMIME_IS_FILTER_GZIP (gzip), NULL);
+	
+	return gzip->priv->comment;
+}
+
+
+/**
+ * g_mime_filter_gzip_set_comment:
+ * @gzip: A #GMimeFilterGZip filter
+ * @comment: The comment
+ *
+ * Sets the comment that should be used when generating the gzip header.
+ *
+ * Since: 3.2
+ **/
+void
+g_mime_filter_gzip_set_comment (GMimeFilterGZip *gzip, const char *comment)
+{
+	char *buf;
+	
+	g_return_if_fail (GMIME_IS_FILTER_GZIP (gzip));
+	
+	buf = g_strdup (comment);
+	g_free (gzip->priv->comment);
+	gzip->priv->comment = buf;
 }

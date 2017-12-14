@@ -431,6 +431,10 @@ GMIME_FILTER_FROM_GET_CLASS
 GMimeFilterGZip
 GMimeFilterGZipMode
 g_mime_filter_gzip_new
+g_mime_filter_gzip_get_filename
+g_mime_filter_gzip_set_filename
+g_mime_filter_gzip_get_comment
+g_mime_filter_gzip_set_comment
 
 <SUBSECTION Private>
 g_mime_filter_gzip_get_type

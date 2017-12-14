@@ -119,6 +119,8 @@ test_gzip (const char *datadir, const char *filename)
 	g_mime_stream_mem_set_owner ((GMimeStreamMem *) stream, FALSE);
 	
 	filter = g_mime_filter_gzip_new (GMIME_FILTER_GZIP_MODE_ZIP, 9);
+	g_mime_filter_gzip_set_filename ((GMimeFilterGZip *) filter, filename);
+	g_mime_filter_gzip_set_comment ((GMimeFilterGZip *) filter, "This is a comment.");
 	
 	pump_data_through_filter (filter, path, stream, TRUE, FALSE);
 	g_mime_filter_reset (filter);
@@ -161,6 +163,7 @@ test_gunzip (const char *datadir, const char *filename)
 	GByteArray *actual, *expected;
 	GMimeStream *stream;
 	GMimeFilter *filter;
+	const char *value;
 	
 	testsuite_check ("%s", what);
 	
@@ -171,9 +174,7 @@ test_gunzip (const char *datadir, const char *filename)
 	filter = g_mime_filter_gzip_new (GMIME_FILTER_GZIP_MODE_UNZIP, 9);
 	
 	pump_data_through_filter (filter, path, stream, FALSE, TRUE);
-	g_mime_filter_reset (filter);
 	g_object_unref (stream);
-	g_object_unref (filter);
 	g_free (path);
 	g_free (name);
 	
@@ -181,13 +182,32 @@ test_gunzip (const char *datadir, const char *filename)
 	expected = read_all_bytes (path, TRUE);
 	g_free (path);
 	
-	if (actual->len != expected->len || memcmp (actual->data, expected->data, actual->len) != 0)
-		testsuite_check_failed ("%s failed: %s", what, "streams do not match");
-	else
-		testsuite_check_passed ();
+	if (actual->len != expected->len || memcmp (actual->data, expected->data, actual->len) != 0) {
+		testsuite_check_failed ("%s failed: streams do not match", what);
+		goto error;
+	}
+	
+	value = g_mime_filter_gzip_get_filename ((GMimeFilterGZip *) filter);
+	if (!value || strcmp (value, filename) != 0) {
+		testsuite_check_failed ("%s failed: filename does not match: %s", what, value);
+		goto error;
+	}
+	
+	value = g_mime_filter_gzip_get_comment ((GMimeFilterGZip *) filter);
+	if (!value || strcmp (value, "This is a comment.") != 0) {
+		testsuite_check_failed ("%s failed: comment does not match: %s", what, value);
+		goto error;
+	}
+	
+	testsuite_check_passed ();
+	
+error:
 	
 	g_byte_array_free (expected, TRUE);
 	g_byte_array_free (actual, TRUE);
+	
+	g_mime_filter_reset (filter);
+	g_object_unref (filter);
 }
 
 int main (int argc, char **argv)

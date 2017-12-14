@@ -78,6 +78,12 @@ GType g_mime_filter_gzip_get_type (void);
 
 GMimeFilter *g_mime_filter_gzip_new (GMimeFilterGZipMode mode, int level);
 
+const char *g_mime_filter_gzip_get_filename (GMimeFilterGZip *gzip);
+void g_mime_filter_gzip_set_filename (GMimeFilterGZip *gzip, const char *filename);
+
+const char *g_mime_filter_gzip_get_comment (GMimeFilterGZip *gzip);
+void g_mime_filter_gzip_set_comment (GMimeFilterGZip *gzip, const char *comment);
+
 G_END_DECLS
 
 #endif /* __GMIME_FILTER_GZIP_H__ */
