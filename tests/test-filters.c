@@ -170,7 +170,7 @@ test_gunzip (const char *datadir, const char *filename)
 	
 	filter = g_mime_filter_gzip_new (GMIME_FILTER_GZIP_MODE_UNZIP, 9);
 	
-	pump_data_through_filter (filter, path, stream, FALSE, FALSE);
+	pump_data_through_filter (filter, path, stream, FALSE, TRUE);
 	g_mime_filter_reset (filter);
 	g_object_unref (stream);
 	g_object_unref (filter);

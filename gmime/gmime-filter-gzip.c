@@ -304,19 +304,27 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterGZip *gzip = (GMimeFilterGZip *) filter;
 	struct _GMimeFilterGZipPrivate *priv = gzip->priv;
+	const char *inend = in + len;
+	const char *inptr = in;
 	guint16 need, val;
+	size_t left = len;
 	int retval;
 	
+	*outprespace = prespace;
+	*outlen = 0;
+	*out = in;
+	
 	if (!priv->state.unzip.got_hdr) {
-		if (len < 10) {
-			g_mime_filter_backup (filter, in, len);
+		if (left < 10) {
+			/* not enough data to decode the header */
+			g_mime_filter_backup (filter, inptr, left);
 			return;
 		}
 		
-		memcpy (priv->hdr.buf, in, 10);
+		memcpy (priv->hdr.buf, inptr, 10);
 		priv->state.unzip.got_hdr = TRUE;
-		len -= 10;
-		in += 10;
+		inptr += 10;
+		left -= 10;
 		
 		priv->state.unzip.is_valid = (priv->hdr.v.id1 == 31 &&
 					      priv->hdr.v.id2 == 139 &&
@@ -328,81 +336,87 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	if (priv->hdr.v.flg & GZIP_FLAG_FEXTRA) {
 		if (!priv->state.unzip.got_xlen) {
-			if (len < 2) {
-				g_mime_filter_backup (filter, in, len);
+			if (left < 2) {
+				/* not enough data to get the xlen field */
+				g_mime_filter_backup (filter, inptr, left);
 				return;
 			}
 			
-			memcpy (&val, in, 2);
+			memcpy (&val, inptr, 2);
 			priv->state.unzip.xlen = GUINT16_FROM_LE (val);
 			priv->state.unzip.got_xlen = TRUE;
-			len -= 2;
-			in += 2;
+			inptr += 2;
+			left -= 2;
 		}
 		
 		if (priv->state.unzip.xlen_nread < priv->state.unzip.xlen) {
 			need = priv->state.unzip.xlen - priv->state.unzip.xlen_nread;
 			
-			if (need < len) {
-				priv->state.unzip.xlen_nread += need;
-				len -= need;
-				in += need;
-			} else {
-				priv->state.unzip.xlen_nread += len;
+			if (need >= left) {
+				priv->state.unzip.xlen_nread += left;
 				return;
 			}
+			
+			priv->state.unzip.xlen_nread += need;
+			inptr += need;
+			left -= need;
 		}
 	}
 	
 	if ((priv->hdr.v.flg & GZIP_FLAG_FNAME) && !priv->state.unzip.got_fname) {
-		while (*in && len > 0) {
-			len--;
-			in++;
-		}
+		const char *start = inptr;
 		
-		if (*in == '\0' && len > 0) {
-			priv->state.unzip.got_fname = TRUE;
-			len--;
-			in++;
-		} else {
+		while (inptr < inend && *inptr)
+			inptr++;
+		
+		if (inptr == inend) {
+			g_mime_filter_backup (filter, start, left);
 			return;
 		}
+		
+		priv->state.unzip.got_fname = TRUE;
+		inptr++;
+		
+		left -= (inptr - start);
 	}
 	
 	if ((priv->hdr.v.flg & GZIP_FLAG_FCOMMENT) && !priv->state.unzip.got_fcomment) {
-		while (*in && len > 0) {
-			len--;
-			in++;
-		}
+		const char *start = inptr;
 		
-		if (*in == '\0' && len > 0) {
-			priv->state.unzip.got_fcomment = TRUE;
-			len--;
-			in++;
-		} else {
+		while (inptr < inend && *inptr)
+			inptr++;
+		
+		if (inptr == inend) {
+			g_mime_filter_backup (filter, start, left);
 			return;
 		}
+		
+		priv->state.unzip.got_fcomment = TRUE;
+		inptr++;
+		
+		left -= (inptr - start);
 	}
 	
 	if ((priv->hdr.v.flg & GZIP_FLAG_FHCRC) && !priv->state.unzip.got_crc16) {
-		if (len < 2) {
-			g_mime_filter_backup (filter, in, len);
+		if (left < 2) {
+			g_mime_filter_backup (filter, inptr, left);
 			return;
 		}
 		
-		memcpy (&val, in, 2);
+		memcpy (&val, inptr, 2);
 		priv->state.unzip.crc16 = GUINT16_FROM_LE (val);
-		len -= 2;
-		in += 2;
+		priv->state.unzip.got_crc16 = TRUE;
+		inptr += 2;
+		left -= 2;
 	}
 	
-	if (len == 0)
+	if (left == 0 && flush != Z_FULL_FLUSH)
 		return;
 	
-	g_mime_filter_set_size (filter, (len * 2) + 12, FALSE);
+	g_mime_filter_set_size (filter, (left * 2) + 12, FALSE);
 	
-	priv->stream->next_in = (unsigned char *) in;
-	priv->stream->avail_in = len - 8;
+	priv->stream->next_in = (unsigned char *) inptr;
+	priv->stream->avail_in = left;
 	
 	priv->stream->next_out = (unsigned char *) filter->outbuf;
 	priv->stream->avail_out = filter->outsize;
@@ -410,29 +424,25 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	do {
 		/* FIXME: handle error cases? */
 		/* Note: Z_BUF_ERROR is not really an error unless there is input available */
-		if ((retval = inflate (priv->stream, flush)) != Z_OK &&
-		    !(retval == Z_BUF_ERROR && !priv->stream->avail_in))
+		retval = inflate (priv->stream, flush);
+		
+		if (retval != Z_OK && !(retval == Z_BUF_ERROR && !priv->stream->avail_in)) {
 			w(fprintf (stderr, "gunzip: %d: %s\n", retval, priv->stream->msg));
+			break;
+		}
+		
+		if (priv->stream->avail_in == 0)
+			break;
 		
 		if (flush == Z_FULL_FLUSH) {
-			size_t olen;
+			size_t olen = filter->outsize - priv->stream->avail_out;
 			
-			if (priv->stream->avail_in == 0) {
-				/* FIXME: extract & compare calculated crc32 and isize values? */
-				break;
-			}
-			
-			olen = filter->outsize - priv->stream->avail_out;
 			g_mime_filter_set_size (filter, olen + (priv->stream->avail_in * 2) + 12, TRUE);
 			priv->stream->next_out = (unsigned char *) filter->outbuf + olen;
 			priv->stream->avail_out = filter->outsize - olen;
 		} else {
-			priv->stream->avail_in += 8;
-			
-			if (priv->stream->avail_in > 0)
-				g_mime_filter_backup (filter, (char *) priv->stream->next_in,
-						      priv->stream->avail_in);
-			
+			g_mime_filter_backup (filter, (char *) priv->stream->next_in,
+					      priv->stream->avail_in);
 			break;
 		}
 	} while (1);
