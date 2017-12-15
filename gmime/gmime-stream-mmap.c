@@ -382,30 +382,12 @@ GMimeStream *
 g_mime_stream_mmap_new (int fd, int prot, int flags)
 {
 #ifdef HAVE_MMAP
-	GMimeStreamMmap *mm;
-	struct stat st;
 	gint64 start;
-	char *map;
 	
 	if ((start = lseek (fd, 0, SEEK_CUR)) == -1)
 		return NULL;
 	
-	if (fstat (fd, &st) == -1)
-		return NULL;
-	
-	map = mmap (NULL, st.st_size, prot, flags, fd, 0);
-	if (map == MAP_FAILED)
-		return NULL;
-	
-	mm = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
-	g_mime_stream_construct ((GMimeStream *) mm, start, -1);
-	mm->owner = TRUE;
-	mm->eos = FALSE;
-	mm->fd = fd;
-	mm->map = map;
-	mm->maplen = st.st_size;
-	
-	return (GMimeStream *) mm;
+	return g_mime_stream_mmap_new_with_bounds (fd, prot, flags, start, -1);
 #else
 	return NULL;
 #endif /* HAVE_MMAP */

@@ -424,7 +424,6 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 GMimeStream *
 g_mime_stream_fs_new (int fd)
 {
-	GMimeStreamFs *fs;
 	gint64 start;
 	
 #ifdef G_OS_WIN32
@@ -434,13 +433,7 @@ g_mime_stream_fs_new (int fd)
 	if ((start = lseek (fd, (off_t) 0, SEEK_CUR)) == -1)
 		start = 0;
 	
-	fs = g_object_new (GMIME_TYPE_STREAM_FS, NULL);
-	g_mime_stream_construct ((GMimeStream *) fs, start, -1);
-	fs->owner = TRUE;
-	fs->eos = FALSE;
-	fs->fd = fd;
-	
-	return (GMimeStream *) fs;
+	return g_mime_stream_fs_new_with_bounds (fd, start, -1);
 }
 
 

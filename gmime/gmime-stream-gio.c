@@ -630,17 +630,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 GMimeStream *
 g_mime_stream_gio_new (GFile *file)
 {
-	GMimeStreamGIO *gio;
-	
-	g_return_val_if_fail (G_IS_FILE (file), NULL);
-	
-	gio = g_object_new (GMIME_TYPE_STREAM_GIO, NULL);
-	g_mime_stream_construct ((GMimeStream *) gio, 0, -1);
-	gio->file = file;
-	gio->owner = TRUE;
-	gio->eos = FALSE;
-	
-	return (GMimeStream *) gio;
+	return g_mime_stream_gio_new_with_bounds (file, 0, -1);
 }
 
 

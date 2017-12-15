@@ -373,7 +373,6 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 GMimeStream *
 g_mime_stream_file_new (FILE *fp)
 {
-	GMimeStreamFile *fstream;
 	gint64 start;
 	
 	g_return_val_if_fail (fp != NULL, NULL);
@@ -385,12 +384,7 @@ g_mime_stream_file_new (FILE *fp)
 	if ((start = ftell (fp)) == -1)
 		start = 0;
 	
-	fstream = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
-	g_mime_stream_construct ((GMimeStream *) fstream, start, -1);
-	fstream->owner = TRUE;
-	fstream->fp = fp;
-	
-	return (GMimeStream *) fstream;
+	return g_mime_stream_file_new_with_bounds (fp, start, -1);
 }
 
 
