@@ -235,7 +235,7 @@ int main (int argc, char **argv)
 	if (i < argc && (stat (datadir, &st) == -1 || !S_ISDIR (st.st_mode)))
 		return 0;
 	
-	testsuite_start ("Filter tests");
+	testsuite_start ("GMimeFilter tests");
 	
 	test_gzip (datadir, "lorem-ipsum.txt");
 	test_gunzip (datadir, "lorem-ipsum.txt");

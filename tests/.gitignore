@@ -13,6 +13,7 @@ test-html
 test-iconv
 test-mbox
 test-mime
+test-mime-part
 test-parser
 test-partial
 test-pgp

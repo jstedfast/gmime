@@ -15,6 +15,7 @@ AUTOMATED_TESTS =	\
 	test-cat	\
 	test-filters	\
 	test-headers	\
+	test-mime-part	\
 	test-partial	\
 	test-mbox	\
 	test-autocrypt	\
@@ -56,6 +57,11 @@ test_mime_SOURCES = test-mime.c testsuite.c testsuite.h
 test_mime_LDFLAGS = 
 test_mime_DEPENDENCIES = $(DEPS)
 test_mime_LDADD = $(LDADDS)
+
+test_mime_part_SOURCES = test-mime-part.c testsuite.c testsuite.h
+test_mime_part_LDFLAGS = 
+test_mime_part_DEPENDENCIES = $(DEPS)
+test_mime_part_LDADD = $(LDADDS)
 
 test_headers_SOURCES = test-headers.c testsuite.c testsuite.h
 test_headers_LDFLAGS = 
@@ -126,7 +132,7 @@ endif
 
 EXTRA_DIST = $(wildcard empty*.msg rfc2060.msg data/pgp*/* data/smime/* \
 	data/partial/input/photo-discuss/*.eml data/partial/output/* \
-	data/mbox/*put/substring.mbox data/filters/*)
+	data/mbox/*put/substring.mbox data/filters/* data/mime-part/*)
 
 VERBOSITY=-v
 
