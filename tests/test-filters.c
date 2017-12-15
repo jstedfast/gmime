@@ -122,7 +122,7 @@ test_gzip (const char *datadir, const char *filename)
 	g_mime_filter_gzip_set_filename ((GMimeFilterGZip *) filter, filename);
 	g_mime_filter_gzip_set_comment ((GMimeFilterGZip *) filter, "This is a comment.");
 	
-	pump_data_through_filter (filter, path, stream, TRUE, FALSE);
+	pump_data_through_filter (filter, path, stream, TRUE, TRUE);
 	g_mime_filter_reset (filter);
 	g_object_unref (stream);
 	g_object_unref (filter);
