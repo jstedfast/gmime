@@ -571,7 +571,6 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		gunzip_filter (filter, in, len, prespace, out, outlen, outprespace, TRUE);
 }
 
-/* should this 'flush' outstanding state/data bytes? */
 static void
 filter_reset (GMimeFilter *filter)
 {
