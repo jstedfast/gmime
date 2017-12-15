@@ -367,8 +367,6 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	*out = filter->outbuf;
 	*outlen = filter->outsize - priv->stream->avail_out;
 	*outprespace = filter->outpre;
-	
-	printf ("output %zu bytes\n", *outlen);
 }
 
 static void
