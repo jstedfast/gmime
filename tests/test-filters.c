@@ -220,6 +220,8 @@ int main (int argc, char **argv)
 	
 	testsuite_init (argc, argv);
 	
+	verbose = 4;
+	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
 			datadir = argv[i];
