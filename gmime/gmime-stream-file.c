@@ -125,10 +125,9 @@ g_mime_stream_file_init (GMimeStreamFile *stream, GMimeStreamFileClass *klass)
 static void
 g_mime_stream_file_finalize (GObject *object)
 {
-	GMimeStreamFile *stream = (GMimeStreamFile *) object;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	if (stream->owner && stream->fp)
-		fclose (stream->fp);
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -209,12 +208,12 @@ static int
 stream_close (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	int rv;
+	int rv = 0;
 	
 	if (fstream->fp == NULL)
 		return 0;
 	
-	if ((rv = fclose (fstream->fp)) != 0)
+	if (!fstream->owner || (rv = fclose (fstream->fp)) == 0)
 		fstream->fp = NULL;
 	
 	return rv;

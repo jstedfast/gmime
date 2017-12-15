@@ -122,10 +122,9 @@ g_mime_stream_pipe_init (GMimeStreamPipe *stream, GMimeStreamPipeClass *klass)
 static void
 g_mime_stream_pipe_finalize (GObject *object)
 {
-	GMimeStreamPipe *stream = (GMimeStreamPipe *) object;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	if (stream->owner && stream->fd != -1)
-		close (stream->fd);
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -226,10 +225,15 @@ stream_close (GMimeStream *stream)
 	if (pipes->fd == -1)
 		return 0;
 	
-	do {
-		if ((rv = close (pipes->fd)) == 0)
-			pipes->fd = -1;
-	} while (rv == -1 && errno == EINTR);
+	if (pipes->owner) {
+		do {
+			if ((rv = close (pipes->fd)) == 0)
+				pipes->fd = -1;
+		} while (rv == -1 && errno == EINTR);
+	} else {
+		pipes->fd = -1;
+		rv = 0;
+	}
 	
 	return rv;
 }

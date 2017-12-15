@@ -123,16 +123,9 @@ g_mime_stream_cat_init (GMimeStreamCat *stream, GMimeStreamCatClass *klass)
 static void
 g_mime_stream_cat_finalize (GObject *object)
 {
-	GMimeStreamCat *cat = (GMimeStreamCat *) object;
-	struct _cat_node *n, *nn;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	n = cat->sources;
-	while (n != NULL) {
-		nn = n->next;
-		g_object_unref (n->stream);
-		g_free (n);
-		n = nn;
-	}
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }

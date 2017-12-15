@@ -134,10 +134,9 @@ g_mime_stream_fs_init (GMimeStreamFs *stream, GMimeStreamFsClass *klass)
 static void
 g_mime_stream_fs_finalize (GObject *object)
 {
-	GMimeStreamFs *stream = (GMimeStreamFs *) object;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	if (stream->owner && stream->fd != -1)
-		close (stream->fd);
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -246,10 +245,15 @@ stream_close (GMimeStream *stream)
 	if (fs->fd == -1)
 		return 0;
 	
-	do {
-		if ((rv = close (fs->fd)) == 0)
-			fs->fd = -1;
-	} while (rv == -1 && errno == EINTR);
+	if (fs->owner) {
+		do {
+			if ((rv = close (fs->fd)) == 0)
+				fs->fd = -1;
+		} while (rv == -1 && errno == EINTR);
+	} else {
+		fs->fd = -1;
+		rv = 0;
+	}
 	
 	return rv;
 }

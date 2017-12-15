@@ -128,17 +128,9 @@ g_mime_stream_mmap_init (GMimeStreamMmap *stream, GMimeStreamMmapClass *klass)
 static void
 g_mime_stream_mmap_finalize (GObject *object)
 {
-	GMimeStreamMmap *stream = (GMimeStreamMmap *) object;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	if (stream->owner) {
-#ifdef HAVE_MUNMAP
-		if (stream->map)
-			munmap (stream->map, stream->maplen);
-#endif
-		
-		if (stream->fd != -1)
-			close (stream->fd);
-	}
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -147,11 +139,11 @@ g_mime_stream_mmap_finalize (GObject *object)
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	register char *mapptr;
 	ssize_t nread;
 	
-	if (mstream->fd == -1) {
+	if (mm->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
@@ -162,10 +154,10 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	}
 	
 	/* make sure we are at the right position */
-	mapptr = mstream->map + stream->position;
+	mapptr = mm->map + stream->position;
 	
 	if (stream->bound_end == -1)
-		nread = MIN ((gint64) ((mstream->map + mstream->maplen) - mapptr), (gint64) len);
+		nread = MIN ((gint64) ((mm->map + mm->maplen) - mapptr), (gint64) len);
 	else
 		nread = MIN (stream->bound_end - stream->position, (gint64) len);
 	
@@ -173,7 +165,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		memcpy (buf, mapptr, nread);
 		stream->position += nread;
 	} else
-		mstream->eos = TRUE;
+		mm->eos = TRUE;
 	
 	return nread;
 }
@@ -181,11 +173,11 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	register char *mapptr;
 	ssize_t nwritten;
 	
-	if (mstream->fd == -1) {
+	if (mm->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
@@ -196,10 +188,10 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	}
 	
 	/* make sure we are at the right position */
-	mapptr = mstream->map + stream->position;
+	mapptr = mm->map + stream->position;
 	
 	if (stream->bound_end == -1)
-		nwritten = MIN ((gint64) ((mstream->map + mstream->maplen) - mapptr), (gint64) len);
+		nwritten = MIN ((gint64) ((mm->map + mm->maplen) - mapptr), (gint64) len);
 	else
 		nwritten = MIN (stream->bound_end - stream->position, (gint64) len);
 	
@@ -214,15 +206,15 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 static int
 stream_flush (GMimeStream *stream)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	
-	if (mstream->fd == -1) {
+	if (mm->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
 	
 #ifdef HAVE_MSYNC
-	return msync (mstream->map, mstream->maplen, MS_SYNC /* | MS_INVALIDATE */);
+	return msync (mm->map, mm->maplen, MS_SYNC /* | MS_INVALIDATE */);
 #else
 	return 0;
 #endif
@@ -231,46 +223,48 @@ stream_flush (GMimeStream *stream)
 static int
 stream_close (GMimeStream *stream)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
-	int ret = 0;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
+	int rv = 0;
 	
-	if (mstream->owner && mstream->map) {
+	if (mm->map) {
 #ifdef HAVE_MUNMAP
-		munmap (mstream->map, mstream->maplen);
-		mstream->map = NULL;
+		munmap (mm->map, mm->maplen);
+		mm->map = NULL;
 #endif
 	}
 	
-	if (mstream->owner && mstream->fd != -1) {
-		if ((ret = close (mstream->fd)) != -1)
-			mstream->fd = -1;
+	if (mm->owner && mm->fd != -1) {
+		do {
+			if ((rv = close (mm->fd)) == 0)
+				mm->fd = -1;
+		} while (rv == -1 && errno == EINTR);
 	}
 	
-	return ret;
+	return rv;
 }
 
 static gboolean
 stream_eos (GMimeStream *stream)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	
-	if (mstream->fd == -1)
+	if (mm->fd == -1)
 		return TRUE;
 	
-	return mstream->eos;
+	return mm->eos;
 }
 
 static int
 stream_reset (GMimeStream *stream)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	
-	if (mstream->fd == -1) {
+	if (mm->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	mstream->eos = FALSE;
+	mm->eos = FALSE;
 	
 	return 0;
 }
@@ -278,10 +272,10 @@ stream_reset (GMimeStream *stream)
 static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	gint64 real = stream->position;
 	
-	if (mstream->fd == -1) {
+	if (mm->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
@@ -295,7 +289,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		break;
 	case GMIME_STREAM_SEEK_END:
 		if (stream->bound_end == -1) {
-			real = offset <= 0 ? stream->bound_start + (gint64) mstream->maplen + offset : -1;
+			real = offset <= 0 ? stream->bound_start + (gint64) mm->maplen + offset : -1;
 			if (real != -1) {
 				if (real < stream->bound_start)
 					real = stream->bound_start;
@@ -321,8 +315,8 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	
 	/* reset eos if appropriate */
 	if ((stream->bound_end != -1 && real < stream->bound_end) ||
-	    (mstream->eos && real < stream->position))
-		mstream->eos = FALSE;
+	    (mm->eos && real < stream->position))
+		mm->eos = FALSE;
 	
 	stream->position = real;
 	
@@ -332,9 +326,9 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	
-	if (mstream->fd == -1) {
+	if (mm->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
@@ -345,9 +339,9 @@ stream_tell (GMimeStream *stream)
 static gint64
 stream_length (GMimeStream *stream)
 {
-	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	
-	if (mstream->fd == -1) {
+	if (mm->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
@@ -355,22 +349,22 @@ stream_length (GMimeStream *stream)
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	return mstream->maplen - stream->bound_start;
+	return mm->maplen - stream->bound_start;
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
-	GMimeStreamMmap *mstream;
+	GMimeStreamMmap *mm;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
-	g_mime_stream_construct ((GMimeStream *) mstream, start, end);
-	mstream->maplen = ((GMimeStreamMmap *) stream)->maplen;
-	mstream->map = ((GMimeStreamMmap *) stream)->map;
-	mstream->fd = ((GMimeStreamMmap *) stream)->fd;
-	mstream->owner = FALSE;
+	mm = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
+	g_mime_stream_construct ((GMimeStream *) mm, start, end);
+	mm->maplen = ((GMimeStreamMmap *) stream)->maplen;
+	mm->map = ((GMimeStreamMmap *) stream)->map;
+	mm->fd = ((GMimeStreamMmap *) stream)->fd;
+	mm->owner = FALSE;
 	
-	return (GMimeStream *) mstream;
+	return (GMimeStream *) mm;
 }
 
 
@@ -388,7 +382,7 @@ GMimeStream *
 g_mime_stream_mmap_new (int fd, int prot, int flags)
 {
 #ifdef HAVE_MMAP
-	GMimeStreamMmap *mstream;
+	GMimeStreamMmap *mm;
 	struct stat st;
 	gint64 start;
 	char *map;
@@ -403,15 +397,15 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
 	if (map == MAP_FAILED)
 		return NULL;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
-	g_mime_stream_construct ((GMimeStream *) mstream, start, -1);
-	mstream->owner = TRUE;
-	mstream->eos = FALSE;
-	mstream->fd = fd;
-	mstream->map = map;
-	mstream->maplen = st.st_size;
+	mm = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
+	g_mime_stream_construct ((GMimeStream *) mm, start, -1);
+	mm->owner = TRUE;
+	mm->eos = FALSE;
+	mm->fd = fd;
+	mm->map = map;
+	mm->maplen = st.st_size;
 	
-	return (GMimeStream *) mstream;
+	return (GMimeStream *) mm;
 #else
 	return NULL;
 #endif /* HAVE_MMAP */
@@ -435,7 +429,7 @@ GMimeStream *
 g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, gint64 end)
 {
 #ifdef HAVE_MMAP
-	GMimeStreamMmap *mstream;
+	GMimeStreamMmap *mm;
 	struct stat st;
 	size_t len;
 	char *map;
@@ -451,15 +445,15 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 	if ((map = mmap (NULL, len, prot, flags, fd, 0)) == MAP_FAILED)
 		return NULL;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
-	g_mime_stream_construct ((GMimeStream *) mstream, start, end);
-	mstream->owner = TRUE;
-	mstream->eos = FALSE;
-	mstream->fd = fd;
-	mstream->map = map;
-	mstream->maplen = len;
+	mm = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
+	g_mime_stream_construct ((GMimeStream *) mm, start, end);
+	mm->owner = TRUE;
+	mm->eos = FALSE;
+	mm->fd = fd;
+	mm->map = map;
+	mm->maplen = len;
 	
-	return (GMimeStream *) mstream;
+	return (GMimeStream *) mm;
 #else
 	return NULL;
 #endif /* HAVE_MMAP */

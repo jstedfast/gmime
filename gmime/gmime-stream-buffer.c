@@ -127,12 +127,9 @@ g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBufferClass *kl
 static void
 g_mime_stream_buffer_finalize (GObject *object)
 {
-	GMimeStreamBuffer *stream = (GMimeStreamBuffer *) object;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	if (stream->source)
-		g_object_unref (stream->source);
-	
-	g_free (stream->buffer);
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -296,7 +293,6 @@ stream_close (GMimeStream *stream)
 	if (buffer->source == NULL)
 		return 0;
 	
-	g_mime_stream_close (buffer->source);
 	g_object_unref (buffer->source);
 	buffer->source = NULL;
 	

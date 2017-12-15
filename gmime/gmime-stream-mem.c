@@ -116,10 +116,9 @@ g_mime_stream_mem_init (GMimeStreamMem *stream, GMimeStreamMemClass *klass)
 static void
 g_mime_stream_mem_finalize (GObject *object)
 {
-	GMimeStreamMem *stream = (GMimeStreamMem *) object;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	if (stream->owner && stream->buffer)
-		g_byte_array_free (stream->buffer, TRUE);
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }

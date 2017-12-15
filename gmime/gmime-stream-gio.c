@@ -122,20 +122,9 @@ g_mime_stream_gio_init (GMimeStreamGIO *stream, GMimeStreamGIOClass *klass)
 static void
 g_mime_stream_gio_finalize (GObject *object)
 {
-	GMimeStreamGIO *gio = (GMimeStreamGIO *) object;
+	GMimeStream *stream = (GMimeStream *) object;
 	
-	if (gio->istream) {
-		g_input_stream_close (gio->istream, NULL, NULL);
-		g_object_unref (gio->istream);
-	}
-	
-	if (gio->ostream) {
-		g_output_stream_close (gio->ostream, NULL, NULL);
-		g_object_unref (gio->ostream);
-	}
-	
-	if (gio->owner && gio->file)
-		g_object_unref (gio->file);
+	stream_close (stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
