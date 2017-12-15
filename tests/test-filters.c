@@ -134,10 +134,20 @@ test_gzip (const char *datadir, const char *filename)
 	g_free (path);
 	
 	if (actual->len != expected->len || memcmp (actual->data, expected->data, actual->len) != 0) {
-		if (actual->len != expected->len)
-			testsuite_check_failed ("%s failed: streams are not the same length: %u", what, actual->len);
-		else
-			testsuite_check_failed ("%s failed: streams do not match", what);
+		//if (actual->len != expected->len)
+		//	testsuite_check_failed ("%s failed: streams are not the same length: %u", what, actual->len);
+		//else
+		//	testsuite_check_failed ("%s failed: streams do not match", what);
+		
+		guint min = MIN (actual->len, expected->len);
+		guint i;
+		
+		for (i = 0; i < min; i++) {
+			if (actual->pdata[i] != expected->pdata[i])
+				break;
+		}
+		
+		testsuite_check_failed ("%s failed: streams do not match at index %u", what, i);
 		
 		name = g_strdup_printf ("%s.1.gz", filename);
 		path = g_build_filename (datadir, name, NULL);

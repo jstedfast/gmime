@@ -299,7 +299,7 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		retval = deflate (priv->stream, Z_NO_FLUSH);
 		
 		if (retval != Z_OK && !(retval == Z_BUF_ERROR && !priv->stream->avail_in)) {
-			fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg);
+			w(fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg));
 			break;
 		}
 		
@@ -307,51 +307,39 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			if (priv->stream->avail_in > 0) {
 				g_mime_filter_backup (filter, (char *) priv->stream->next_in,
 						      priv->stream->avail_in);
-				printf ("backup %u bytes\n", priv->stream->avail_in);
 			}
-			printf ("break out due to avail_out > 0\n");
 			break;
 		}
 		
-		if (priv->stream->avail_in == 0) {
-			printf ("break out due to avail_in == 0\n");
+		if (priv->stream->avail_in == 0)
 			break;
-		}
 		
 		olen = filter->outsize - priv->stream->avail_out;
 		atleast = next_alloc_size (olen + priv->stream->avail_in * 2);
 		g_mime_filter_set_size (filter, atleast, TRUE);
 		priv->stream->next_out = (unsigned char *) filter->outbuf + olen;
 		priv->stream->avail_out = filter->outsize - olen;
-		printf ("resize outbuf to %zu\n", filter->outsize);
 	} while (1);
 	
 	if (flush) {
 		guint32 val;
 		
-		printf ("flush\n");
-		
 		do {
 			retval = deflate (priv->stream, Z_FULL_FLUSH);
 			
 			if (retval != Z_OK && !(retval == Z_BUF_ERROR && !priv->stream->avail_in)) {
-				fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg);
+				w(fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg));
 				break;
 			}
 			
-			if (priv->stream->avail_out > 0) {
-				printf ("breakout due to avail_out > 0\n");
+			if (priv->stream->avail_out > 0)
 				break;
-			}
 			
 			olen = filter->outsize;
 			g_mime_filter_set_size (filter, olen + 1024, TRUE);
 			priv->stream->next_out = (unsigned char *) filter->outbuf + olen;
 			priv->stream->avail_out = filter->outsize - olen;
-			printf ("resize outbuf to %zu\n", filter->outsize);
 		} while (1);
-		
-		printf ("output isize and crc\n");
 		
 		if (priv->stream->avail_out < 8) {
 			olen = filter->outsize;
