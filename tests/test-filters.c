@@ -143,7 +143,7 @@ test_gzip (const char *datadir, const char *filename)
 		guint i;
 		
 		for (i = 0; i < min; i++) {
-			if (actual->pdata[i] != expected->pdata[i])
+			if (actual->data[i] != expected->data[i])
 				break;
 		}
 		
