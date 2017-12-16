@@ -45,6 +45,7 @@
 
 typedef char * (*EnrichedParamParser) (const char *inptr, size_t inlen);
 
+static char *param_parse_paraindent (const char *inptr, size_t inlen);
 static char *param_parse_colour (const char *inptr, size_t inlen);
 static char *param_parse_font (const char *inptr, size_t inlen);
 static char *param_parse_lang (const char *inptr, size_t inlen);
@@ -89,16 +90,17 @@ static struct {
 	{ "/lang",       "</span>",             FALSE, NULL               },
 	
 	/* don't handle this tag yet... */
-	{ "paraindent",  "<!-- ",               /* TRUE */ FALSE, NULL    },
-	{ "/paraindent", " -->",                FALSE, NULL               },
+	{ "paraindent",  "<p style=\"%s\">",    TRUE,  param_parse_paraindent },
+	{ "/paraindent", "</p>",                FALSE, NULL              },
 	
 	/* as soon as we support all the tags that can have a param
 	 * tag argument, these should be unnecessary, but we'll keep
 	 * them anyway just in case? */
-	{ "param",       "<!-- ",               FALSE, NULL               },
+	{ "param",       "<!-- param:",         FALSE, NULL               },
 	{ "/param",      " -->",                FALSE, NULL               },
 };
 
+#define PARAM_TAG_MIN_LEN  (sizeof ("<param>") + sizeof ("</param>") - 2)
 
 static void g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass);
 static void g_mime_filter_enriched_init       (GMimeFilterEnriched *filter, GMimeFilterEnrichedClass *klass);
@@ -191,54 +193,46 @@ enriched_tag_needs_param (const char *tag)
 }
 #endif
 
+static char *
+param_parse_paraindent (const char *inptr, size_t inlen)
+{
+	return g_strdup ("text-indent:40px");
+}
+
 static const char *valid_colours[] = {
 	"red", "green", "blue", "yellow", "cyan", "magenta", "black", "white"
 };
 
-#define NUM_VALID_COLOURS  (sizeof (valid_colours) / sizeof (valid_colours[0]))
-
 static char *
-param_parse_colour (const char *inptr, size_t inlen)
+param_parse_colour (const char *in, size_t inlen)
 {
-	const char *inend, *end;
+	const char *inend = in + inlen;
+	const char *inptr = in;
+	const char *end;
 	guint32 rgb = 0;
 	guint v, i;
 	
-	for (i = 0; i < NUM_VALID_COLOURS; i++) {
-		if (!g_ascii_strncasecmp (inptr, valid_colours[i], inlen))
+	for (i = 0; i < G_N_ELEMENTS (valid_colours); i++) {
+		size_t n = strlen (valid_colours[i]);
+		
+		if (inlen == n && !g_ascii_strncasecmp (inptr, valid_colours[i], n))
 			return g_strdup (valid_colours[i]);
 	}
 	
 	/* check for numeric r/g/b in the format: ####,####,#### */
-	if (inptr[4] != ',' || inptr[9] != ',') {
-		/* okay, mailer must have used a string name that
-		 * rfc1896 did not specify? do some simple scanning
-		 * action, a colour name MUST be [a-zA-Z] */
-		end = inptr;
-		inend = inptr + inlen;
-		while (end < inend && ((*end >= 'a' && *end <= 'z') || (*end >= 'A' && *end <= 'Z')))
-			end++;
-		
-		return g_strndup (inptr, (size_t) (end - inptr));
-	}
-	
 	for (i = 0; i < 3; i++) {
 		v = strtoul (inptr, (char **) &end, 16);
-		if (end != inptr + 4)
-			goto invalid_format;
+		if (end != inptr + 4 || (i < 2 && *end != ',') || (i == 2 && end != inend))
+			return g_strndup (in, inlen);
 		
 		v >>= 8;
+		
 		rgb = (rgb << 8) | (v & 0xff);
 		
 		inptr += 5;
 	}
 	
 	return g_strdup_printf ("#%.6X", rgb);
-	
- invalid_format:
-	
-	/* default colour? */
-	return g_strdup ("black");
 }
 
 static char *
@@ -454,7 +448,6 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 						while (inptr < inend && *inptr != '<')
 							inptr++;
 						
-#define PARAM_TAG_MIN_LEN  (sizeof ("<param>") + sizeof ("</param>") - 1)
 						if (inptr == inend || (size_t) (inend - inptr) <= PARAM_TAG_MIN_LEN) {
 							inptr = tag - 1;
 							goto need_input;

@@ -1,0 +1,7 @@
+<bold>Hello, <italic>world!</italic></bold>
+
+<color><param>red</param>Blood</color> is <bold>thicker</bold> than
+<color><param>0000,0000,ffff</param>water</color>.
+
+<paraindent><param>left</param><italic>-- Well-known proverb
+</italic></paraindent>
