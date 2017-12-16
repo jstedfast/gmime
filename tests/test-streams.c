@@ -259,8 +259,21 @@ check_stream_fs (const char *input, const char *output, const char *filename, gi
 	}
 	
 	stream = g_mime_stream_fs_new (fd[0]);
+	if (!g_mime_stream_fs_get_owner ((GMimeStreamFs *) stream)) {
+		ex = exception_new ("GMimeStreamFs is not the owner `%s'", filename);
+		g_object_unref (stream);
+		close (fd[1]);
+		throw (ex);
+	}
+	
 	streams[0] = g_mime_stream_substream (stream, start, end);
 	g_object_unref (stream);
+	if (g_mime_stream_fs_get_owner ((GMimeStreamFs *) streams[0])) {
+		ex = exception_new ("GMimeStreamFs substream should not be the owner `%s'", filename);
+		g_object_unref (stream);
+		close (fd[1]);
+		throw (ex);
+	}
 	
 	streams[1] = g_mime_stream_fs_new (fd[1]);
 	
@@ -292,8 +305,21 @@ check_stream_file (const char *input, const char *output, const char *filename, 
 	}
 	
 	stream = g_mime_stream_file_new (fp[0]);
+	if (!g_mime_stream_file_get_owner ((GMimeStreamFile *) stream)) {
+		ex = exception_new ("GMimeStreamFile is not the owner `%s'", filename);
+		g_object_unref (stream);
+		fclose (fp[1]);
+		throw (ex);
+	}
+	
 	streams[0] = g_mime_stream_substream (stream, start, end);
 	g_object_unref (stream);
+	if (g_mime_stream_file_get_owner ((GMimeStreamFile *) streams[0])) {
+		ex = exception_new ("GMimeStreamFile substream should not be the owner `%s'", filename);
+		g_object_unref (stream);
+		fclose (fp[1]);
+		throw (ex);
+	}
 	
 	streams[1] = g_mime_stream_file_new (fp[1]);
 	
@@ -326,8 +352,21 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 	}
 	
 	stream = g_mime_stream_mmap_new (fd[0], PROT_READ, MAP_PRIVATE);
+	if (!g_mime_stream_mmap_get_owner ((GMimeStreamMmap *) stream)) {
+		ex = exception_new ("GMimeStreamMmap is not the owner `%s'", filename);
+		g_object_unref (stream);
+		close (fd[1]);
+		throw (ex);
+	}
+	
 	streams[0] = g_mime_stream_substream (stream, start, end);
 	g_object_unref (stream);
+	if (g_mime_stream_mmap_get_owner ((GMimeStreamMmap *) streams[0])) {
+		ex = exception_new ("GMimeStreamMmap substream should not be the owner `%s'", filename);
+		g_object_unref (stream);
+		close (fd[1]);
+		throw (ex);
+	}
 	
 	streams[1] = g_mime_stream_mmap_new (fd[1], PROT_READ, MAP_PRIVATE);
 	
@@ -384,6 +423,7 @@ check_stream_gio (const char *input, const char *output, const char *filename, g
 {
 	GMimeStream *streams[2];
 	Exception *ex = NULL;
+	GMimeStream *stream;
 	GFile *file;
 	int fd;
 	
@@ -395,7 +435,23 @@ check_stream_gio (const char *input, const char *output, const char *filename, g
 		return FALSE;
 	}
 	
-	streams[0] = g_mime_stream_gio_new_with_bounds (file, start, end);
+	stream = g_mime_stream_gio_new (file);
+	if (!g_mime_stream_gio_get_owner ((GMimeStreamGIO *) stream)) {
+		ex = exception_new ("GMimeStreamGIO is not the owner `%s'", filename);
+		g_object_unref (stream);
+		close (fd);
+		throw (ex);
+	}
+	
+	streams[0] = g_mime_stream_substream (stream, start, end);
+	g_object_unref (stream);
+	if (g_mime_stream_gio_get_owner ((GMimeStreamGIO *) streams[0])) {
+		ex = exception_new ("GMimeStreamGIO substream should not be the owner `%s'", filename);
+		g_object_unref (stream);
+		close (fd);
+		throw (ex);
+	}
+	
 	streams[1] = g_mime_stream_fs_new (fd);
 	
 	if (!streams_match (streams, filename))
