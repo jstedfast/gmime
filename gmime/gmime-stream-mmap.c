@@ -440,3 +440,44 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 	return NULL;
 #endif /* HAVE_MMAP */
 }
+
+
+/**
+ * g_mime_stream_mmap_get_owner:
+ * @stream: a #GMimeStreamFs
+ *
+ * Gets whether or not @stream owns the backend file descriptor.
+ *
+ * Returns: %TRUE if @stream owns the backend file descriptor or %FALSE
+ * otherwise.
+ *
+ * Since: 3.2
+ **/
+gboolean
+g_mime_stream_mmap_get_owner (GMimeStreamMmap *stream)
+{
+	g_return_val_if_fail (GMIME_IS_STREAM_MMAP (stream), FALSE);
+	
+	return stream->owner;
+}
+
+
+/**
+ * g_mime_stream_mmap_set_owner:
+ * @stream: a #GMimeStreamMmap
+ * @owner: %TRUE if this stream should own the file descriptor or %FALSE otherwise
+ *
+ * Sets whether or not @stream owns the backend file descriptor.
+ *
+ * Note: @owner should be %TRUE if the stream should close() the
+ * backend file descriptor when destroyed or %FALSE otherwise.
+ *
+ * Since: 3.2
+ **/
+void
+g_mime_stream_mmap_set_owner (GMimeStreamMmap *stream, gboolean owner)
+{
+	g_return_if_fail (GMIME_IS_STREAM_MMAP (stream));
+	
+	stream->owner = owner;
+}

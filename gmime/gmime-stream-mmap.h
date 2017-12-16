@@ -69,6 +69,9 @@ GType g_mime_stream_mmap_get_type (void);
 GMimeStream *g_mime_stream_mmap_new (int fd, int prot, int flags);
 GMimeStream *g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, gint64 end);
 
+gboolean g_mime_stream_mmap_get_owner (GMimeStreamMmap *stream);
+void g_mime_stream_mmap_set_owner (GMimeStreamMmap *stream, gboolean owner);
+
 G_END_DECLS
 
 #endif /* __GMIME_STREAM_MMAP_H__ */
