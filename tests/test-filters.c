@@ -184,6 +184,7 @@ test_enriched (const char *datadir, const char *input, const char *output)
 	if (actual->len != expected->len) {
 		testsuite_check_failed ("%s failed: stream lengths do not match: expected=%u; actual=%u",
 					what, expected->len, actual->len);
+		printf ("enriched: -->%.*s<--\n", (int) actual->len, (char *) actual->data);
 		goto error;
 	}
 	

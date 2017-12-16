@@ -193,10 +193,64 @@ enriched_tag_needs_param (const char *tag)
 }
 #endif
 
+typedef enum {
+	PARAINDENT_NONE  = 0,
+	PARAINDENT_LEFT  = (1 << 0),
+	PARAINDENT_RIGHT = (1 << 1),
+	PARAINDENT_IN    = (1 << 2),
+	PARAINDENT_OUT   = (1 << 3)
+} paraindent_t;
+
+static const char *valid_indents[] = {
+	"left", "right", "in", "out"
+};
+
 static char *
-param_parse_paraindent (const char *inptr, size_t inlen)
+param_parse_paraindent (const char *in, size_t inlen)
 {
-	return g_strdup ("text-indent:40px");
+	const char *inend = in + inlen;
+	const char *inptr = in;
+	paraindent_t indent = 0;
+	GString *str;
+	guint i;
+	
+	while (inptr < inend) {
+		const char *value = inptr;
+		size_t vlen;
+		
+		while (inptr < inend && *inptr != ',')
+			inptr++;
+		
+		vlen = inptr - value;
+		
+		for (i = 0; i < G_N_ELEMENTS (valid_indents); i++) {
+			size_t n = strlen (valid_indents[i]);
+			
+			if (vlen == n && !g_ascii_strncasecmp (value, valid_indents[i], n)) {
+				indent |= 1 << i;
+				break;
+			}
+		}
+		
+		inptr++;
+	}
+	
+	str = g_string_new ("");
+	
+	/* if In and Out are both specified, they cancel each other out? */
+	if (indent & PARAINDENT_IN && indent & PARAINDENT_OUT)
+		indent = indent & ~(PARAINDENT_IN | PARAINDENT_OUT);
+	
+	if (indent & PARAINDENT_LEFT)
+		g_string_append_printf (str, "%smargin-left:4em", str->len > 0 ? "; " : "");
+	if (indent & PARAINDENT_RIGHT)
+		g_string_append_printf (str, "%smargin-right:4em", str->len > 0 ? "; " : "");
+	if (indent & PARAINDENT_IN)
+		g_string_append_printf (str, "%smargin:4em", str->len > 0 ? "; " : "");
+	if (indent & PARAINDENT_OUT)
+		g_string_append_printf (str, "%smargin:-4em", str->len > 0 ? "; " : "");
+	
+	return g_string_free (str, FALSE);
 }
 
 static const char *valid_colours[] = {
