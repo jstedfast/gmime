@@ -235,8 +235,7 @@ stream_close (GMimeStream *stream)
 #endif
 		
 		do {
-			if ((rv = close (mm->fd)) == 0)
-				break;
+			rv = close (mm->fd);
 		} while (rv == -1 && errno == EINTR);
 	}
 	

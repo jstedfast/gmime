@@ -247,8 +247,7 @@ stream_close (GMimeStream *stream)
 	
 	if (fs->owner) {
 		do {
-			if ((rv = close (fs->fd)) == 0)
-				break;
+			rv = close (fs->fd);
 		} while (rv == -1 && errno == EINTR);
 	}
 	
