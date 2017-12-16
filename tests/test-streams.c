@@ -85,7 +85,7 @@ streams_match (GMimeStream **streams, const char *filename)
 		totalsize = len - (streams[0]->position - streams[0]->bound_start);
 	}
 	
-	while (totalread < totalsize) {
+	while (totalread <= totalsize) {
 		if ((n = g_mime_stream_read (streams[0], buf, sizeof (buf))) <= 0)
 			break;
 		
@@ -277,8 +277,23 @@ check_stream_fs (const char *input, const char *output, const char *filename, gi
 	
 	streams[1] = g_mime_stream_fs_new (fd[1]);
 	
-	if (!streams_match (streams, filename))
+	if (!streams_match (streams, filename)) {
 		ex = exception_new ("GMimeStreamFs streams did not match for `%s'", filename);
+		goto cleanup;
+	}
+	
+	if (!g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamFs is not at the end-of-stream `%s'", filename);
+		goto cleanup;
+	}
+	
+	g_mime_stream_reset (streams[0]);
+	if (g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamFs did not properly reset `%s'", filename);
+		goto cleanup;
+	}
+	
+cleanup:
 	
 	g_object_unref (streams[0]);
 	g_object_unref (streams[1]);
@@ -323,8 +338,23 @@ check_stream_file (const char *input, const char *output, const char *filename, 
 	
 	streams[1] = g_mime_stream_file_new (fp[1]);
 	
-	if (!streams_match (streams, filename))
+	if (!streams_match (streams, filename)) {
 		ex = exception_new ("GMimeStreamFile streams did not match for `%s'", filename);
+		goto cleanup;
+	}
+	
+	if (!g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamFile is not at the end-of-stream `%s'", filename);
+		goto cleanup;
+	}
+	
+	g_mime_stream_reset (streams[0]);
+	if (g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamFile did not properly reset `%s'", filename);
+		goto cleanup;
+	}
+	
+cleanup:
 	
 	g_object_unref (streams[0]);
 	g_object_unref (streams[1]);
@@ -370,8 +400,23 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 	
 	streams[1] = g_mime_stream_mmap_new (fd[1], PROT_READ, MAP_PRIVATE);
 	
-	if (!streams_match (streams, filename))
-		ex = exception_new ("streams did not match");
+	if (!streams_match (streams, filename)) {
+		ex = exception_new ("GMimeStreamMmap streams did not match for `%s'", filename);
+		goto cleanup;
+	}
+	
+	if (!g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamMmap is not at the end-of-stream `%s'", filename);
+		goto cleanup;
+	}
+	
+	g_mime_stream_reset (streams[0]);
+	if (g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamMmap did not properly reset `%s'", filename);
+		goto cleanup;
+	}
+	
+cleanup:
 	
 	g_object_unref (streams[0]);
 	g_object_unref (streams[1]);
@@ -454,8 +499,23 @@ check_stream_gio (const char *input, const char *output, const char *filename, g
 	
 	streams[1] = g_mime_stream_fs_new (fd);
 	
-	if (!streams_match (streams, filename))
+	if (!streams_match (streams, filename)) {
 		ex = exception_new ("GMimeStreamGIO streams did not match for `%s'", filename);
+		goto cleanup;
+	}
+	
+	if (!g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamGIO is not at the end-of-stream `%s'", filename);
+		goto cleanup;
+	}
+	
+	g_mime_stream_reset (streams[0]);
+	if (g_mime_stream_eos (streams[0])) {
+		ex = exception_new ("GMimeStreamGIO did not properly reset `%s'", filename);
+		goto cleanup;
+	}
+	
+cleanup:
 	
 	g_object_unref (streams[0]);
 	g_object_unref (streams[1]);
