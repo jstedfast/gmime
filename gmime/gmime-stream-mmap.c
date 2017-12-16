@@ -226,19 +226,22 @@ stream_close (GMimeStream *stream)
 	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	int rv = 0;
 	
-	if (mm->map) {
+	if (mm->fd == -1)
+		return 0;
+	
+	if (mm->owner) {
 #ifdef HAVE_MUNMAP
 		munmap (mm->map, mm->maplen);
-		mm->map = NULL;
 #endif
-	}
-	
-	if (mm->owner && mm->fd != -1) {
+		
 		do {
 			if ((rv = close (mm->fd)) == 0)
-				mm->fd = -1;
+				break;
 		} while (rv == -1 && errno == EINTR);
 	}
+	
+	mm->map = NULL;
+	mm->fd = -1;
 	
 	return rv;
 }

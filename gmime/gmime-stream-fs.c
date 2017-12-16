@@ -240,7 +240,7 @@ static int
 stream_close (GMimeStream *stream)
 {
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
-	int rv;
+	int rv = 0;
 	
 	if (fs->fd == -1)
 		return 0;
@@ -248,12 +248,11 @@ stream_close (GMimeStream *stream)
 	if (fs->owner) {
 		do {
 			if ((rv = close (fs->fd)) == 0)
-				fs->fd = -1;
+				break;
 		} while (rv == -1 && errno == EINTR);
-	} else {
-		fs->fd = -1;
-		rv = 0;
 	}
+	
+	fs->fd = -1;
 	
 	return rv;
 }
