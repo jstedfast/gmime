@@ -518,7 +518,7 @@ int main (int argc, char **argv)
 	
 	testsuite_init (argc, argv);
 	
-	verbose = 4;
+	//verbose = 4;
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
@@ -530,7 +530,7 @@ int main (int argc, char **argv)
 	if (i < argc && (stat (datadir, &st) == -1 || !S_ISDIR (st.st_mode)))
 		return 0;
 	
-	testsuite_start ("GMimePart tests");
+	testsuite_start ("GMimePart");
 	
 	test_content_headers (datadir);
 	

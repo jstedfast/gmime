@@ -1,0 +1,14 @@
+This input is crafted such that there are some lines
+that begin with a dot (.).
+.... Like this line, for example.
+
+ . but not this line.
+or this line ...
+.. This line is a good example, though.
+... Same with this line...
+
+And again with the next line...
+.. See?
+
+Okay, I think that's good enough...
+

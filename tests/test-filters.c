@@ -103,6 +103,57 @@ pump_data_through_filter (GMimeFilter *filter, const char *path, GMimeStream *os
 }
 
 static void
+test_charset_conversion (const char *datadir, const char *base, const char *from, const char *to)
+{
+	const char *what = "GMimeFilterCharset";
+	GByteArray *actual, *expected;
+	GMimeStream *stream;
+	GMimeFilter *filter;
+	char *path, *name;
+	
+	testsuite_check ("%s (%s %s -> %s)", what, base, from, to);
+	
+	actual = g_byte_array_new ();
+	stream = g_mime_stream_mem_new_with_byte_array (actual);
+	g_mime_stream_mem_set_owner ((GMimeStreamMem *) stream, FALSE);
+	
+	filter = g_mime_filter_charset_new (from, to);
+	
+	name = g_strdup_printf ("%s.%s.txt", base, from);
+	path = g_build_filename (datadir, name, NULL);
+	pump_data_through_filter (filter, path, stream, TRUE, TRUE);
+	g_mime_filter_reset (filter);
+	g_object_unref (stream);
+	g_object_unref (filter);
+	g_free (path);
+	g_free (name);
+	
+	name = g_strdup_printf ("%s.%s.txt", base, to);
+	path = g_build_filename (datadir, name, NULL);
+	expected = read_all_bytes (path, TRUE);
+	g_free (path);
+	g_free (name);
+	
+	if (actual->len != expected->len) {
+		testsuite_check_failed ("%s failed: stream lengths do not match: expected=%u; actual=%u",
+					what, expected->len, actual->len);
+		goto error;
+	}
+	
+	if (memcmp (actual->data, expected->data, actual->len) != 0) {
+		testsuite_check_failed ("%s failed: stream contents do not match", what);
+		goto error;
+	}
+	
+	testsuite_check_passed ();
+	
+error:
+	
+	g_byte_array_free (expected, TRUE);
+	g_byte_array_free (actual, TRUE);
+}
+
+static void
 test_gzip (const char *datadir, const char *filename)
 {
 	char *name = g_strdup_printf ("%s.gz", filename);
@@ -185,8 +236,14 @@ test_gunzip (const char *datadir, const char *filename)
 	expected = read_all_bytes (path, TRUE);
 	g_free (path);
 	
-	if (actual->len != expected->len || memcmp (actual->data, expected->data, actual->len) != 0) {
-		testsuite_check_failed ("%s failed: streams do not match", what);
+	if (actual->len != expected->len) {
+		testsuite_check_failed ("%s failed: stream lengths do not match: expected=%u; actual=%u",
+					what, expected->len, actual->len);
+		goto error;
+	}
+	
+	if (memcmp (actual->data, expected->data, actual->len) != 0) {
+		testsuite_check_failed ("%s failed: stream contents do not match", what);
 		goto error;
 	}
 	
@@ -213,6 +270,53 @@ error:
 	g_object_unref (filter);
 }
 
+static void
+test_smtp_data (const char *datadir, const char *input, const char *output)
+{
+	const char *what = "GMimeFilterSmtpData";
+	GByteArray *expected, *actual;
+	GMimeStream *stream;
+	GMimeFilter *filter;
+	char *path;
+	
+	testsuite_check ("%s", what);
+	
+	actual = g_byte_array_new ();
+	stream = g_mime_stream_mem_new_with_byte_array (actual);
+	g_mime_stream_mem_set_owner ((GMimeStreamMem *) stream, FALSE);
+	
+	filter = g_mime_filter_smtp_data_new ();
+	
+	path = g_build_filename (datadir, input, NULL);
+	pump_data_through_filter (filter, path, stream, TRUE, TRUE);
+	g_mime_filter_reset (filter);
+	g_object_unref (stream);
+	g_object_unref (filter);
+	g_free (path);
+	
+	path = g_build_filename (datadir, output, NULL);
+	expected = read_all_bytes (path, TRUE);
+	g_free (path);
+	
+	if (actual->len != expected->len) {
+		testsuite_check_failed ("%s failed: stream lengths do not match: expected=%u; actual=%u",
+					what, expected->len, actual->len);
+		goto error;
+	}
+	
+	if (memcmp (actual->data, expected->data, actual->len) != 0) {
+		testsuite_check_failed ("%s failed: stream contents do not match", what);
+		goto error;
+	}
+	
+	testsuite_check_passed ();
+	
+error:
+	
+	g_byte_array_free (expected, TRUE);
+	g_byte_array_free (actual, TRUE);
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/filters";
@@ -223,7 +327,7 @@ int main (int argc, char **argv)
 	
 	testsuite_init (argc, argv);
 	
-	verbose = 4;
+	//verbose = 4;
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
@@ -235,10 +339,23 @@ int main (int argc, char **argv)
 	if (i < argc && (stat (datadir, &st) == -1 || !S_ISDIR (st.st_mode)))
 		return 0;
 	
-	testsuite_start ("GMimeFilter tests");
+	testsuite_start ("GMimeFilter");
+
+	test_charset_conversion (datadir, "cyrillic", "utf-8", "cp1251");
+	test_charset_conversion (datadir, "cyrillic", "cp1251", "utf-8");
+	test_charset_conversion (datadir, "cyrillic", "utf-8", "iso-8859-5");
+	test_charset_conversion (datadir, "cyrillic", "iso-8859-5", "utf-8");
+	test_charset_conversion (datadir, "cyrillic", "utf-8", "koi8-r");
+	test_charset_conversion (datadir, "cyrillic", "koi8-r", "utf-8");
+	test_charset_conversion (datadir, "japanese", "utf-8", "iso-2022-jp");
+	test_charset_conversion (datadir, "japanese", "iso-2022-jp", "utf-8");
+	test_charset_conversion (datadir, "japanese", "utf-8", "shift-jis");
+	test_charset_conversion (datadir, "japanese", "shift-jis", "utf-8");
 	
 	test_gzip (datadir, "lorem-ipsum.txt");
 	test_gunzip (datadir, "lorem-ipsum.txt");
+	
+	test_smtp_data (datadir, "smtp-input.txt", "smtp-output.txt");
 	
 	testsuite_end ();
 	
