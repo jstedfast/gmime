@@ -275,7 +275,7 @@ check_stream_fs (const char *input, const char *output, const char *filename, gi
 		throw (ex);
 	}
 	
-	streams[1] = g_mime_stream_fs_new (fd[1]);
+	streams[1] = g_mime_stream_pipe_new (fd[1]);
 	
 	if (!streams_match (streams, filename)) {
 		ex = exception_new ("GMimeStreamFs streams did not match for `%s'", filename);
