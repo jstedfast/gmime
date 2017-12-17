@@ -319,6 +319,66 @@ error:
 }
 
 static void
+test_html (const char *datadir, const char *input, const char *output, guint32 citation)
+{
+	guint32 flags = GMIME_FILTER_HTML_CONVERT_NL | GMIME_FILTER_HTML_CONVERT_SPACES |
+		GMIME_FILTER_HTML_CONVERT_URLS | GMIME_FILTER_HTML_CONVERT_ADDRESSES;
+	const char *what = "GMimeFilterHtml", *mode;
+	GByteArray *expected, *actual;
+	GMimeStream *stream;
+	GMimeFilter *filter;
+	char *path;
+	
+	switch (citation) {
+	case GMIME_FILTER_HTML_BLOCKQUOTE_CITATION: mode = "blockquote"; break;
+	case GMIME_FILTER_HTML_MARK_CITATION: mode = "mark"; break;
+	case GMIME_FILTER_HTML_CITE: mode = "cite"; break;
+	default: mode = "none"; break;
+	}
+	
+	testsuite_check ("%s (%s %s)", what, input, mode);
+	
+	actual = g_byte_array_new ();
+	stream = g_mime_stream_mem_new_with_byte_array (actual);
+	g_mime_stream_mem_set_owner ((GMimeStreamMem *) stream, FALSE);
+	
+	filter = g_mime_filter_html_new (flags | citation, 0x008888);
+	
+	path = g_build_filename (datadir, input, NULL);
+	pump_data_through_filter (filter, path, stream, TRUE, TRUE);
+	g_mime_filter_reset (filter);
+	g_object_unref (stream);
+	g_object_unref (filter);
+	g_free (path);
+	
+	path = g_build_filename (datadir, output, NULL);
+	expected = read_all_bytes (path, TRUE);
+	g_free (path);
+	
+	if (actual->len != expected->len) {
+		testsuite_check_failed ("%s failed: stream lengths do not match: expected=%u; actual=%u",
+					what, expected->len, actual->len);
+		stream = g_mime_stream_fs_open (output, O_WRONLY | O_CREAT, 0644, NULL);
+		g_mime_stream_write (stream, (const char *) actual->data, actual->len);
+		g_mime_stream_flush (stream);
+		g_object_unref (stream);
+		goto error;
+	}
+	
+	if (memcmp (actual->data, expected->data, actual->len) != 0) {
+		testsuite_check_failed ("%s failed: stream contents do not match", what);
+		goto error;
+	}
+	
+	testsuite_check_passed ();
+	
+error:
+	
+	g_byte_array_free (expected, TRUE);
+	g_byte_array_free (actual, TRUE);
+}
+
+static void
 test_smtp_data (const char *datadir, const char *input, const char *output)
 {
 	const char *what = "GMimeFilterSmtpData";
@@ -445,6 +505,10 @@ int main (int argc, char **argv)
 	
 	test_gzip (datadir, "lorem-ipsum.txt");
 	test_gunzip (datadir, "lorem-ipsum.txt");
+	
+	test_html (datadir, "html-input.txt", "html-output.blockquote.html", GMIME_FILTER_HTML_BLOCKQUOTE_CITATION);
+	test_html (datadir, "html-input.txt", "html-output.mark.html", GMIME_FILTER_HTML_MARK_CITATION);
+	test_html (datadir, "html-input.txt", "html-output.cite.html", GMIME_FILTER_HTML_CITE);
 	
 	test_smtp_data (datadir, "smtp-input.txt", "smtp-output.txt");
 	

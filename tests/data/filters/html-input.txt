@@ -1,0 +1,21 @@
+This is a sample message body with some embedded urls such as Google's
+search page at www.google.com. Did it capture that last period? I hope
+not! How about ftp.freebsd.org/pub/FreeBSD/ or even an email address
+like fejj@gnome.org? It should also work with mailto urls. Let's try
+it, shall we? We can use mailto:fejj@gnome.org as a simple case...
+
+We should also check that GMimeFilterHTML is able to detect full urls
+like https://github.com/jstedfast/gmime - GMime's very own website!
+
+Or file://localhost/dev/null file URLs.
+
+And how about quoting? Let's give that a try...
+
+> This is one level of quoting
+> > And this is two levels of quoting
+> > Yet more text that is quoted twice...
+> This is back down to one level...
+> > > And this is three levels! WOW! CRAZY!
+Okay, let's not get too carried away...
+
+Did that work as expected?
