@@ -373,6 +373,10 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 			/* could be IPv4 or IPv6 */
 			if ((val = strtol (inptr, &end, 10)) < 0)
 				return FALSE;
+			if ((*end >= 'A' && *end <= 'F') || (*end >= 'a' && *end <= 'f')) {
+				if ((val = strtol (inptr, &end, 16)) < 0)
+					return FALSE;
+			}
 		} else if ((*inptr >= 'A' && *inptr <= 'F') || (*inptr >= 'a' && *inptr <= 'f')) {
 			/* IPv6 address literals are in hex */
 			if ((val = strtol (inptr, &end, 16)) < 0 || *end != ':')
@@ -418,6 +422,17 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 					end++;
 				}
 			} while (end > inptr && *end == ':');
+			
+			if (*end == '.') {
+				n = 1;
+				
+				do {
+					inptr = end + 1;
+					if ((val = strtol (inptr, &end, 10)) < 0 || val > 255)
+						return FALSE;
+					n++;
+				} while (n < 4 && end > inptr && *end == '.');
+			}
 			
 			if (*end != ']')
 				return FALSE;
