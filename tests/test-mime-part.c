@@ -508,6 +508,58 @@ error:
 	g_object_unref (mime_part);
 }
 
+static void
+test_text_part (const char *datadir, const char *filename, const char *expected_charset)
+{
+	const char *what = "GMimeTextPart";
+	GByteArray *expected;
+	GMimeTextPart *part;
+	const char *charset;
+	char *text, *path;
+	
+	testsuite_check ("%s (%s)", what, filename);
+	
+	path = g_build_filename (datadir, filename, NULL);
+	expected = read_all_bytes (path, TRUE);
+	g_byte_array_append (expected, (guint8 *) "", 1);
+	g_free (path);
+	
+	part = g_mime_text_part_new ();
+	g_mime_text_part_set_text (part, (const char *) expected->data);
+	
+	charset = g_mime_text_part_get_charset (part);
+	if (charset == NULL) {
+		testsuite_check_failed ("%s failed: charset is NULL", what);
+		goto cleanup;
+	}
+	
+	if (strcmp (charset, expected_charset) != 0) {
+		testsuite_check_failed ("%s failed: charsets do not match: expected=%s; actual=%s",
+					what, expected_charset, charset);
+		goto cleanup;
+	}
+	
+	text = g_mime_text_part_get_text (part);
+	if (text == NULL) {
+		testsuite_check_failed ("%s failed: text is NULL", what);
+		goto cleanup;
+	}
+	
+	if (strcmp (text, (const char *) expected->data) != 0) {
+		testsuite_check_failed ("%s failed: text does not match: expected=%s; actual=%s",
+					what, (const char *) expected->data, text);
+		g_free (text);
+		goto cleanup;
+	}
+	
+	testsuite_check_passed ();
+	
+cleanup:
+	
+	g_byte_array_free (expected, TRUE);
+	g_object_unref (part);
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/mime-part";
@@ -542,6 +594,8 @@ int main (int argc, char **argv)
 	test_openpgp_data (datadir, "encrypted-body.txt", GMIME_OPENPGP_DATA_ENCRYPTED);
 	test_openpgp_data (datadir, "pubkey-body.txt", GMIME_OPENPGP_DATA_PUBLIC_KEY);
 	test_openpgp_data (datadir, "privkey-body.txt", GMIME_OPENPGP_DATA_PRIVATE_KEY);
+	
+	test_text_part (datadir, "french-fable.txt", "iso-8859-1");
 	
 	testsuite_end ();
 	

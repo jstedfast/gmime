@@ -113,16 +113,7 @@ g_mime_text_part_finalize (GObject *object)
 GMimeTextPart *
 g_mime_text_part_new (void)
 {
-	GMimeContentType *content_type;
-	GMimeTextPart *mime_part;
-	
-	mime_part = g_object_new (GMIME_TYPE_TEXT_PART, NULL);
-	
-	content_type = g_mime_content_type_new ("text", "plain");
-	g_mime_object_set_content_type ((GMimeObject *) mime_part, content_type);
-	g_object_unref (content_type);
-	
-	return mime_part;
+	return g_mime_text_part_new_with_subtype ("plain");
 }
 
 
