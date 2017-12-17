@@ -365,6 +365,46 @@ error:
 	g_byte_array_free (actual, TRUE);
 }
 
+static void
+test_windows (const char *datadir, const char *filename, const char *claimed, const char *expected)
+{
+	const char *what = "GMimeFilterWindows";
+	GMimeStream *stream;
+	GMimeFilter *filter;
+	const char *actual;
+	char *path;
+	
+	testsuite_check ("%s", what);
+	
+	filter = g_mime_filter_windows_new (claimed);
+	
+	stream = g_mime_stream_null_new ();
+	path = g_build_filename (datadir, filename, NULL);
+	pump_data_through_filter (filter, path, stream, TRUE, TRUE);
+	g_object_unref (stream);
+	g_free (path);
+	
+	actual = g_mime_filter_windows_real_charset ((GMimeFilterWindows *) filter);
+	
+	if (strcmp (expected, actual) != 0) {
+		testsuite_check_failed ("%s failed: charsets do not match: expected=%s; actual=%s",
+					what, expected, actual);
+		goto error;
+	}
+	
+	if (!g_mime_filter_windows_is_windows_charset ((GMimeFilterWindows *) filter)) {
+		testsuite_check_failed ("%s failed: is_windows_charset returned FALSE", what);
+		goto error;
+	}
+	
+	testsuite_check_passed ();
+	
+error:
+	
+	g_mime_filter_reset (filter);
+	g_object_unref (filter);
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/filters";
@@ -407,6 +447,8 @@ int main (int argc, char **argv)
 	test_gunzip (datadir, "lorem-ipsum.txt");
 	
 	test_smtp_data (datadir, "smtp-input.txt", "smtp-output.txt");
+	
+	test_windows (datadir, "french-fable.cp1252.txt", "iso-8859-1", "windows-cp1252");
 	
 	testsuite_end ();
 	
