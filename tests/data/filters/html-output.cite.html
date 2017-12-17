@@ -9,6 +9,19 @@
 &gt; <br>
 &gt; Or <a href="file://localhost/dev/null">file://localhost/dev/null</a>&nbsp;file URLs.<br>
 &gt; <br>
+&gt; GMime's URL scanner should also work more complex urls:<br>
+&gt; <br>
+&gt; - addr-spec w/ domain literal: <a href="mailto:fejj@[127.0.0.1]">fejj@[127.0.0.1]</a><br>
+&gt; - web url w/ domain literal: <a href="http://[127.0.0.1]/index.html">http://[127.0.0.1]/index.html</a><br>
+&gt; - web url w/ username: <a href="http://user@domain.com/index.html">http://user@domain.com/index.html</a><br>
+&gt; - web url w/ user &amp; pass: <a href="http://user:pass@domain.com:80/index.html">http://user:pass@domain.com:80/index.html</a><br>
+&gt; - web url w/ user and domain literal: <a href="http://user@[127.0.0.1]/index.html">http://user@[127.0.0.1]/index.html</a><br>
+&gt; - web url surrounded by []'s: [<a href="http://www.google.com/">http://www.google.com/</a>]<br>
+&gt; - web url surrounded by ()'s: (<a href="http://www.google.com/">http://www.google.com/</a>)<br>
+&gt; - web url surrounded by {}'s: {<a href="http://www.google.com/">http://www.google.com/</a>}<br>
+&gt; - web url surrounded by &lt;&gt;'s: &lt;<a href="http://www.google.com/">http://www.google.com/</a>&gt;<br>
+&gt; - web url with brackets: <a href="http://www.google.com/symbols.(123){1}[2].html">http://www.google.com/symbols.(123){1}[2].html</a><br>
+&gt; <br>
 &gt; And how about quoting? Let's give that a try...<br>
 &gt; <br>
 &gt; &gt; This is one level of quoting<br>

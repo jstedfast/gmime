@@ -9,6 +9,19 @@ like https://github.com/jstedfast/gmime - GMime's very own website!
 
 Or file://localhost/dev/null file URLs.
 
+GMime's URL scanner should also work more complex urls:
+
+- addr-spec w/ domain literal: fejj@[127.0.0.1]
+- web url w/ domain literal: http://[127.0.0.1]/index.html
+- web url w/ username: http://user@domain.com/index.html
+- web url w/ user & pass: http://user:pass@domain.com:80/index.html
+- web url w/ user and domain literal: http://user@[127.0.0.1]/index.html
+- web url surrounded by []'s: [http://www.google.com/]
+- web url surrounded by ()'s: (http://www.google.com/)
+- web url surrounded by {}'s: {http://www.google.com/}
+- web url surrounded by <>'s: <http://www.google.com/>
+- web url with brackets: http://www.google.com/symbols.(123){1}[2].html
+
 And how about quoting? Let's give that a try...
 
 > This is one level of quoting
