@@ -3,8 +3,13 @@ the GMime library. This list of tasks in no way indicates priority,
 that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
-GMime 3.0 Planning:
+GMime 4.0 Planning:
 ===================
+
+- Remove g_mime_stream_close()
+
+- Remove g_mime_stream_filter_get/set_owner() - these will no longer
+  be necessary once close() is removed.
 
 - Rename g_mime_message_[get,set]_mime_part() to g_mime_message_[get,set]_body()?
   This would require me to rename g_mime_message_get_body() to

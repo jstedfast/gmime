@@ -47,6 +47,8 @@ const GMimeOpenPGPMarker g_mime_openpgp_markers[9] = {
 	{ "-----END PGP PRIVATE KEY BLOCK-----",   35, GMIME_OPENPGP_BEGIN_PGP_PRIVATE_KEY_BLOCK, GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK,   TRUE  }
 };
 
+#define NUM_OPENPGP_MARKERS G_N_ELEMENTS (g_mime_openpgp_markers)
+
 static void g_mime_filter_openpgp_class_init (GMimeFilterOpenPGPClass *klass);
 static void g_mime_filter_openpgp_init (GMimeFilterOpenPGP *filter, GMimeFilterOpenPGPClass *klass);
 
@@ -227,7 +229,7 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			if (inptr == inend) {
 				gboolean partial = FALSE;
 				
-				for (i = 0; i < G_N_ELEMENTS (g_mime_openpgp_markers); i++) {
+				for (i = 0; i < NUM_OPENPGP_MARKERS; i++) {
 					if (g_mime_openpgp_markers[i].before == openpgp->state && is_partial_match (lineptr, inend, &g_mime_openpgp_markers[i])) {
 						partial = TRUE;
 						break;
@@ -247,13 +249,16 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			
 			inptr++;
 			
-			for (i = 0; i < G_N_ELEMENTS (g_mime_openpgp_markers); i++) {
+			for (i = 0; i < NUM_OPENPGP_MARKERS; i++) {
 				if (g_mime_openpgp_markers[i].before == openpgp->state && is_marker (lineptr, inend, &g_mime_openpgp_markers[i], &cr)) {
 					openpgp->state = g_mime_openpgp_markers[i].after;
 					set_position (openpgp, lineptr - inbuf, i, cr);
 					*outbuf = (char *) lineptr;
 					*outlen = inptr - lineptr;
-					openpgp->next = i + 1;
+					
+					if (!g_mime_openpgp_markers[i].is_end_marker)
+						openpgp->next = i + 1;
+					
 					break;
 				}
 			}
@@ -264,7 +269,7 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			return;
 		}
 	}
-
+	
 	do {
 		const char *lineptr = inptr;
 		
@@ -298,10 +303,11 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			openpgp->seen_end_marker = g_mime_openpgp_markers[openpgp->next].is_end_marker;
 			openpgp->state = g_mime_openpgp_markers[openpgp->next].after;
 			set_position (openpgp, lineptr - inbuf, openpgp->next, cr);
-			openpgp->next++;
 			
 			if (openpgp->seen_end_marker)
 				break;
+			
+			openpgp->next++;
 		}
 	} while (inptr < inend);
 	

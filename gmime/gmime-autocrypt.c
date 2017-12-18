@@ -139,9 +139,10 @@ GMimeAutocryptHeader *
 g_mime_autocrypt_header_new_from_string (const char *string)
 {
 	GMimeAutocryptHeader *ret = NULL;
+	GBytes *newkeydata = NULL;
 	gchar **ksplit = NULL;
 	gchar *kjoined = NULL;
-	GBytes *newkeydata = NULL;
+	
 	if (string == NULL)
 		return NULL;
 	
@@ -149,7 +150,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	   both of which might happen to mails in transit. So this
 	   could be improved.  It's also probably not currently the
 	   most efficient implementation. */
-
+	
 	struct _attr { char *val; const char *name; size_t sz; int count; };
 #define attr(n, str) struct _attr n = { .name = str, .sz = sizeof(str)-1 }
 	attr(k, "keydata");
@@ -182,7 +183,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 			
 		}
 	}
-
+	
 	if (k.count != 1)
 		goto done;
 	if (a.count != 1)
@@ -190,7 +191,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	if (p.count > 1)
 		goto done;
 	GMimeAutocryptPreferEncrypt newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE;
-
+	
 	if (p.count && (g_ascii_strcasecmp ("mutual", p.val) == 0))
 		newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL;
 	
@@ -206,8 +207,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	g_mime_autocrypt_header_set_keydata (ret, newkeydata);
 	
  done:
-	if (vals)
-		g_strfreev (vals);
+	g_strfreev (vals);
 	if (ksplit)
 		g_strfreev (ksplit);
 	if (newkeydata)

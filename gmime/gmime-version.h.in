@@ -27,35 +27,35 @@
  *
  * GMime's major version.
  **/
-#define GMIME_MAJOR_VERSION (@GMIME_MAJOR_VERSION@)
+#define GMIME_MAJOR_VERSION (@GMIME_MAJOR_VERSION@U)
 
 /**
  * GMIME_MINOR_VERSION:
  *
  * GMime's minor version.
  **/
-#define GMIME_MINOR_VERSION (@GMIME_MINOR_VERSION@)
+#define GMIME_MINOR_VERSION (@GMIME_MINOR_VERSION@U)
 
 /**
  * GMIME_MICRO_VERSION:
  *
  * GMime's micro version.
  **/
-#define GMIME_MICRO_VERSION (@GMIME_MICRO_VERSION@)
+#define GMIME_MICRO_VERSION (@GMIME_MICRO_VERSION@U)
 
 /**
  * GMIME_BINARY_AGE:
  *
  * GMime's binary age.
  **/
-#define GMIME_BINARY_AGE    (@GMIME_BINARY_AGE@)
+#define GMIME_BINARY_AGE    (@GMIME_BINARY_AGE@U)
 
 /**
  * GMIME_INTERFACE_AGE:
  *
  * GMime's interface age.
  **/
-#define GMIME_INTERFACE_AGE (@GMIME_INTERFACE_AGE@)
+#define GMIME_INTERFACE_AGE (@GMIME_INTERFACE_AGE@U)
 
 
 /**
