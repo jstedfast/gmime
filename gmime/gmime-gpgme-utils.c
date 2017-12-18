@@ -321,6 +321,8 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 	while (sig != NULL) {
 		signature = g_mime_signature_new ();
 		g_mime_signature_list_add (signatures, signature);
+		g_object_unref (signature);
+		
 		g_mime_signature_set_status (signature, (GMimeSignatureStatus) sig->summary);
 		g_mime_signature_set_expires (signature, sig->exp_timestamp);
 		g_mime_signature_set_created (signature, sig->timestamp);
