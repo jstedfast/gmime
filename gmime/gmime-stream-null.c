@@ -266,7 +266,7 @@ g_mime_stream_null_new (void)
  * encountered.
  **/
 void
-g_mime_stream_null_count_newlines (GMimeStreamNull *stream, gboolean count)
+g_mime_stream_null_set_count_newlines (GMimeStreamNull *stream, gboolean count)
 {
 	g_return_if_fail (GMIME_IS_STREAM_NULL (stream));
 	

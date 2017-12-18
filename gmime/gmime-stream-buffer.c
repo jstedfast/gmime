@@ -45,7 +45,6 @@
  **/
 
 #define BLOCK_BUFFER_LEN   4096
-#define BUFFER_GROW_SIZE   1024  /* should this also be 4k? */
 
 static void g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass);
 static void g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBufferClass *klass);
