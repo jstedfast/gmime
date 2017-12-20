@@ -91,7 +91,7 @@ struct _GMimeAutocryptHeaderClass {
 GType g_mime_autocrypt_header_get_type (void);
 
 GMimeAutocryptHeader *g_mime_autocrypt_header_new (void);
-GMimeAutocryptHeader *g_mime_autocrypt_header_new_from_string (const char* header);
+GMimeAutocryptHeader *g_mime_autocrypt_header_new_from_string (const char *string);
 
 void g_mime_autocrypt_header_set_address (GMimeAutocryptHeader *ah, InternetAddressMailbox *address);
 InternetAddressMailbox *g_mime_autocrypt_header_get_address (GMimeAutocryptHeader *ah);

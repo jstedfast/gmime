@@ -123,6 +123,7 @@ g_mime_autocrypt_header_new (void)
 
 /**
  * g_mime_autocrypt_header_new_from_string:
+ * @string: The raw string value of an Autocrypt header
  *
  * Creates a new #GMimeAutocryptHeader object based on the value of an
  * Autocrypt: header.
@@ -231,8 +232,10 @@ g_mime_autocrypt_header_set_address_from_string (GMimeAutocryptHeader *ah, const
 
 	if (ah->address)
 		g_object_unref (ah->address);
-	ah->address = INTERNET_ADDRESS_MAILBOX(internet_address_mailbox_new (NULL, address));
+	
+	ah->address = (InternetAddressMailbox *) internet_address_mailbox_new (NULL, address);
 }
+
 
 /**
  * g_mime_autocrypt_header_set_address:
@@ -245,13 +248,14 @@ void
 g_mime_autocrypt_header_set_address (GMimeAutocryptHeader *ah, InternetAddressMailbox *address)
 {
 	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah));
-
+	g_return_if_fail (INTERNET_ADDRESS_IS_MAILBOX (address));
+	
+	g_object_ref (address);
 	if (ah->address)
 		g_object_unref (ah->address);
-	
 	ah->address = address;
-	g_object_ref (address);
 }
+
 
 /**
  * g_mime_autocrypt_header_get_address:
@@ -261,11 +265,11 @@ g_mime_autocrypt_header_set_address (GMimeAutocryptHeader *ah, InternetAddressMa
  *
  * Returns: (transfer none): the address associated with the Autocrypt header
  **/
-InternetAddressMailbox*
+InternetAddressMailbox *
 g_mime_autocrypt_header_get_address (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
-
+	
 	return ah->address;
 }
 
@@ -278,11 +282,11 @@ g_mime_autocrypt_header_get_address (GMimeAutocryptHeader *ah)
  *
  * Returns: (transfer none): the address associated with the Autocrypt header
  **/
-const char*
+const char *
 g_mime_autocrypt_header_get_address_as_string (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
-
+	
 	return ah->address->addr;
 }
 
@@ -298,9 +302,10 @@ void
 g_mime_autocrypt_header_set_prefer_encrypt (GMimeAutocryptHeader *ah, GMimeAutocryptPreferEncrypt pref)
 {
 	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah));
-
+	
 	ah->prefer_encrypt = pref;
 }
+
 
 /**
  * g_mime_autocrypt_header_get_prefer_encrypt:
@@ -314,7 +319,7 @@ GMimeAutocryptPreferEncrypt
 g_mime_autocrypt_header_get_prefer_encrypt (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE);
-
+	
 	return ah->prefer_encrypt;
 }
 
@@ -330,14 +335,16 @@ void
 g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GBytes *keydata)
 {
 	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah));
-
+	
+	if (keydata)
+		g_bytes_ref (keydata);
+	
 	if (ah->keydata)
 		g_bytes_unref (ah->keydata);
 	
 	ah->keydata = keydata;
-	if (keydata)
-		g_bytes_ref (keydata);
 }
+
 
 /**
  * g_mime_autocrypt_header_get_keydata:
@@ -351,7 +358,7 @@ GBytes*
 g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
-
+	
 	return ah->keydata;
 }
 
@@ -367,14 +374,16 @@ void
 g_mime_autocrypt_header_set_effective_date (GMimeAutocryptHeader *ah, GDateTime *effective_date)
 {
 	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah));
-
+	
+	if (effective_date)
+		g_date_time_ref (effective_date);
+	
 	if (ah->effective_date)
 		g_date_time_unref (ah->effective_date);
 	
 	ah->effective_date = effective_date;
-	if (effective_date)
-		g_date_time_ref (effective_date);
 }
+
 
 /**
  * g_mime_autocrypt_header_get_effective_date:
@@ -384,13 +393,14 @@ g_mime_autocrypt_header_set_effective_date (GMimeAutocryptHeader *ah, GDateTime 
  *
  * Returns: (transfer none): the effective date associated with the Autocrypt header
  **/
-GDateTime*
+GDateTime *
 g_mime_autocrypt_header_get_effective_date (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
-
+	
 	return ah->effective_date;
 }
+
 
 /**
  * g_mime_autocrypt_header_is_complete:
@@ -408,6 +418,7 @@ gboolean
 g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), FALSE);
+	
 	return (ah->address && ah->address->addr && ah->keydata &&
 		g_bytes_get_size (ah->keydata) && g_bytes_get_data (ah->keydata, NULL));
 }
@@ -441,9 +452,7 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 		pe = "prefer-encrypt=mutual; ";
 	const char *addr = internet_address_mailbox_get_addr (ah->address);
 	GPtrArray *lines = g_ptr_array_new_with_free_func (g_free);
-
-	gchar * first = g_strdup_printf("addr=%s; %skeydata=",
-					addr, pe);
+	gchar *first = g_strdup_printf ("addr=%s; %skeydata=", addr, pe);
 	size_t n = strlen (first);
 	const size_t maxwid = 72;
 	const size_t firstline = maxwid - sizeof ("Autocrypt:");
@@ -462,19 +471,20 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 		offset = firstlinekeylen;
 	}
 	g_ptr_array_add (lines, first);
-
+	
 	while (offset < ksz) {
 		gsize newsz = MIN((maxwid/4)*3, ksz - offset);
 		g_ptr_array_add (lines, g_base64_encode (kp + offset, newsz));
 		offset += newsz;
 	}
-
+	
 	g_ptr_array_add (lines, NULL);
-
+	
 	char *ret = g_strjoinv (" ", (gchar**)(lines->pdata));
 	g_ptr_array_unref (lines);
 	return ret;
 }
+
 
 /**
  * g_mime_autocrypt_header_compare:
@@ -489,7 +499,7 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
  *  - keydata
  *  - prefer_encrypt
  *
- * Returns: -1, 0, or 1 @ah1 is less than, equal to, or greater than @ah2.
+ * Returns: -1, 0, or 1 when @ah1 is less than, equal to, or greater than @ah2.
  **/
 int
 g_mime_autocrypt_header_compare (GMimeAutocryptHeader *ah1, GMimeAutocryptHeader *ah2)
@@ -515,7 +525,7 @@ g_mime_autocrypt_header_compare (GMimeAutocryptHeader *ah1, GMimeAutocryptHeader
 		if (ret)
 			return ret;
 	}
-
+	
 	if (!ah1->keydata && ah2->keydata)
 		return -1;
 	if (ah1->keydata && !ah2->keydata)
@@ -533,7 +543,7 @@ g_mime_autocrypt_header_compare (GMimeAutocryptHeader *ah1, GMimeAutocryptHeader
 		if (ret)
 			return ret;
 	}
-
+	
 	if (ah1->prefer_encrypt < ah2->prefer_encrypt)
 		return -1;
 	if (ah1->prefer_encrypt > ah2->prefer_encrypt)
@@ -555,26 +565,30 @@ g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHeader *
 {
 	if (!dst->address || !src->address)
 		return;
+	
 	if (g_strcmp0 (internet_address_mailbox_get_idn_addr (dst->address), internet_address_mailbox_get_idn_addr (src->address)))
 		return;
-
+	
 	if (dst->keydata)
 		g_bytes_unref (dst->keydata);
+	
 	if (src->keydata) {
 		g_bytes_ref (src->keydata);
 		dst->keydata = src->keydata;
-	} else
+	} else {
 		dst->keydata = NULL;
-
+	}
+	
 	dst->prefer_encrypt = src->prefer_encrypt;
-
+	
 	if (dst->effective_date)
 		g_date_time_unref (dst->effective_date);
 	if (src->effective_date) {
 		g_date_time_ref (src->effective_date);
 		dst->effective_date = src->effective_date;
-	} else
+	} else {
 		dst->effective_date = NULL;
+	}
 }
 
 
