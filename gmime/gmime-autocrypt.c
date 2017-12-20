@@ -582,7 +582,7 @@ g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHeader *
 
 
 static void g_mime_autocrypt_header_list_class_init (GMimeAutocryptHeaderListClass *klass);
-static void g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *ahl, GMimeAutocryptHeaderListClass *klass);
+static void g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *list, GMimeAutocryptHeaderListClass *klass);
 static void g_mime_autocrypt_header_list_finalize (GObject *object);
 
 static GObjectClass *ahl_parent_class = NULL;
@@ -623,17 +623,18 @@ g_mime_autocrypt_header_list_class_init (GMimeAutocryptHeaderListClass *klass)
 }
 
 static void
-g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *ahl, GMimeAutocryptHeaderListClass *klass)
+g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *list, GMimeAutocryptHeaderListClass *klass)
 {
-	ahl->array = g_ptr_array_new_with_free_func (g_object_unref);
+	list->array = g_ptr_array_new_with_free_func (g_object_unref);
 }
 
 static void
 g_mime_autocrypt_header_list_finalize (GObject *object)
 {
-	GMimeAutocryptHeaderList *ahl = (GMimeAutocryptHeaderList *) object;
-
-	g_ptr_array_unref (ahl->array);
+	GMimeAutocryptHeaderList *list = (GMimeAutocryptHeaderList *) object;
+	
+	g_ptr_array_unref (list->array);
+	
 	G_OBJECT_CLASS (ahl_parent_class)->finalize (object);
 }
 
@@ -654,7 +655,7 @@ g_mime_autocrypt_header_list_new (void)
 
 /**
  * g_mime_autocrypt_header_list_add_missing_addresses:
- * @acheaders: a #GMimeAutocryptHeaderList object
+ * @list: a #GMimeAutocryptHeaderList object
  * @addresses: an #InternetAddressList object
  *
  * Adds a new incomplete #GMimeAutocryptHeader object for each
@@ -663,130 +664,146 @@ g_mime_autocrypt_header_list_new (void)
  * Returns: the number of addresses added
  **/
 guint
-g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *acheaders, InternetAddressList *list)
+g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *list, InternetAddressList *addresses)
 {
-	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (acheaders), 0);
-	guint ret = 0;
+	guint count = 0;
 	guint i;
-	for (i = 0; i < internet_address_list_length (list); i++) {
-		InternetAddress *a = internet_address_list_get_address (list, i);
-		if (INTERNET_ADDRESS_IS_GROUP(a)) {
-			ret += g_mime_autocrypt_header_list_add_missing_addresses (acheaders, internet_address_group_get_members (INTERNET_ADDRESS_GROUP (a)));
-		} else if (INTERNET_ADDRESS_IS_MAILBOX(a)) {
-			InternetAddressMailbox *m = INTERNET_ADDRESS_MAILBOX (a);
-			GMimeAutocryptHeader *ah = g_mime_autocrypt_header_list_get_header_for_address (acheaders, m);
-			if (ah == NULL) {
-				ah = g_mime_autocrypt_header_new ();
-				g_mime_autocrypt_header_set_address (ah, m);
-				g_mime_autocrypt_header_list_add (acheaders, ah);
-				ret += 1;
-			}
+	
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (list), 0);
+	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (addresses), 0);
+	
+	for (i = 0; i < internet_address_list_length (addresses); i++) {
+		InternetAddress *address = internet_address_list_get_address (addresses, i);
+		
+		if (INTERNET_ADDRESS_IS_GROUP (address)) {
+			InternetAddressGroup *group = (InternetAddressGroup *) address;
+			
+			count += g_mime_autocrypt_header_list_add_missing_addresses (list, internet_address_group_get_members (group));
 		} else {
-			/* FIXME: what do we do here?  what is this
-			   thing if it's neither mailbox nor group?
-			   It should be safe to just ignore it. */
+			InternetAddressMailbox *mailbox = (InternetAddressMailbox *) address;
+			GMimeAutocryptHeader *ah;
+			
+			if (!(ah = g_mime_autocrypt_header_list_get_header_for_address (list, mailbox))) {
+				ah = g_mime_autocrypt_header_new ();
+				g_mime_autocrypt_header_set_address (ah, mailbox);
+				g_mime_autocrypt_header_list_add (list, ah);
+				count++;
+			}
 		}
 	}
-	return ret;
+	
+	return count;
 }
 
 
 /**
  * g_mime_autocrypt_header_list_add:
- * @acheaders: a #GMimeAutocryptHeaderList object
- * @ah: a #GMimeAutocryptHeader object
+ * @list: a #GMimeAutocryptHeaderList object
+ * @header: a #GMimeAutocryptHeader object
  *
  * Adds a the passed #GMimeAutocryptHeader to the list.
  **/
 void
-g_mime_autocrypt_header_list_add (GMimeAutocryptHeaderList *acheaders, GMimeAutocryptHeader *ah)
+g_mime_autocrypt_header_list_add (GMimeAutocryptHeaderList *list, GMimeAutocryptHeader *header)
 {
-	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (acheaders));
-	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah));
-
-	g_object_ref (ah);
-	g_ptr_array_add (acheaders->array, ah);
+	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (list));
+	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER (header));
+	
+	g_object_ref (header);
+	
+	g_ptr_array_add (list->array, header);
 }
+
 
 /**
  * g_mime_autocrypt_header_list_get_count:
- * @acheaders: a #GMimeAutocryptHeaderList object
+ * @list: a #GMimeAutocryptHeaderList object
  *
  * See how many Autocrypt headers are in the list.
  * 
  * Returns: the number of available Autocrypt headers
  **/
 guint
-g_mime_autocrypt_header_list_get_count (GMimeAutocryptHeaderList *acheaders)
+g_mime_autocrypt_header_list_get_count (GMimeAutocryptHeaderList *list)
 {
-	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (acheaders), 0);
-
-	return acheaders->array->len;
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (list), 0);
+	
+	return list->array->len;
 }
+
 
 /**
  * g_mime_autocrypt_header_list_get_header_at:
- * @acheaders: a #GMimeAutocryptHeaderList object
- * @n: an index into the list
+ * @list: a #GMimeAutocryptHeaderList object
+ * @index: an index into the list
  *
- * Get the Nth header in the list (returns %NULL on error, or if n is out of bounds)
+ * Get the Nth header in the list (returns %NULL on error, or if @index is out of bounds)
  * 
  * Returns: (transfer none): a pointer to the Nth header in the list.
  **/
 GMimeAutocryptHeader *
-g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *acheaders, guint n)
+g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *list, guint index)
 {
-	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (acheaders), NULL);
-
-	if (n < acheaders->array->len)
-		return (GMimeAutocryptHeader*)(acheaders->array->pdata[n]);
-
-	return NULL;
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (list), NULL);
+	
+	if (index >= list->array->len)
+		return NULL;
+	
+	return (GMimeAutocryptHeader *) list->array->pdata[index];
 }
+
 
 /**
  * g_mime_autocrypt_header_list_get_header_for_address:
- * @acheaders: a #GMimeAutocryptHeaderList object
- * @addr: an #InternetAddressMailbox object
+ * @list: a #GMimeAutocryptHeaderList object
+ * @mailbox: an #InternetAddressMailbox object
  *
- * returns an Autocrypt header corresponding to the given
- * InternetAddressMailbox.
+ * Gets the Autocrypt header corresponding to the given @mailbox.
  * 
  * Returns: (transfer none): a pointer to the header in the list which
  * matches the requested address, or %NULL if no such header exists in
  * the list.
  **/
 GMimeAutocryptHeader *
-g_mime_autocrypt_header_list_get_header_for_address (GMimeAutocryptHeaderList *acheaders, InternetAddressMailbox *addr)
+g_mime_autocrypt_header_list_get_header_for_address (GMimeAutocryptHeaderList *list, InternetAddressMailbox *mailbox)
 {
-	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (acheaders), NULL);
-	g_return_val_if_fail (INTERNET_ADDRESS_IS_MAILBOX (addr), NULL);
-
+	const char *idn;
 	guint i;
-	for (i = 0; i < acheaders->array->len; i++) {
-		GMimeAutocryptHeader* ah = (GMimeAutocryptHeader*)(acheaders->array->pdata[i]);
-		if (g_strcmp0 (internet_address_mailbox_get_idn_addr (addr), internet_address_mailbox_get_idn_addr (ah->address)) == 0)
+	
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (list), NULL);
+	g_return_val_if_fail (INTERNET_ADDRESS_IS_MAILBOX (mailbox), NULL);
+	
+	idn = internet_address_mailbox_get_idn_addr (mailbox);
+	
+	for (i = 0; i < list->array->len; i++) {
+		GMimeAutocryptHeader *ah = (GMimeAutocryptHeader *) list->array->pdata[i];
+		const char *addr = internet_address_mailbox_get_idn_addr (ah->address);
+		
+		if (!g_strcmp0 (idn, addr))
 			return ah;
 	}
+	
 	return NULL;
 }
 
 /**
  * g_mime_autocrypt_header_list_remove_incomplete:
- * @acheaders: a #GMimeAutocryptHeaderList object
+ * @list: a #GMimeAutocryptHeaderList object
  *
  * Remove all incomplete Autocrypt headers from the list.
  **/
 void
-g_mime_autocrypt_header_list_remove_incomplete (GMimeAutocryptHeaderList *acheaders)
+g_mime_autocrypt_header_list_remove_incomplete (GMimeAutocryptHeaderList *list)
 {
-	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (acheaders));
-
 	guint i;
-	for (i = 0; i < acheaders->array->len; i++) {
-		GMimeAutocryptHeader* ah = (GMimeAutocryptHeader*)(acheaders->array->pdata[i]);
+	
+	g_return_if_fail (GMIME_IS_AUTOCRYPT_HEADER_LIST (list));
+	
+	for (i = 0; i < list->array->len; i++) {
+		GMimeAutocryptHeader *ah = (GMimeAutocryptHeader *) list->array->pdata[i];
+		
 		if (!g_mime_autocrypt_header_is_complete (ah)) {
-			g_ptr_array_remove_index (acheaders->array, i);
+			g_ptr_array_remove_index (list->array, i);
 			i--;
 		}
 	}

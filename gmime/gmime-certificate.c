@@ -451,7 +451,7 @@ g_mime_certificate_get_name (GMimeCertificate *cert)
 /**
  * g_mime_certificate_set_user_id:
  * @cert: a #GMimeCertificate
- * @name: the full User ID for a certificate
+ * @user_id: the full User ID for a certificate
  *
  * Set the certificate's full User ID.  By convention, this is usually
  * a mail name-addr as described in RFC 5322.  (e.g. "Jane Doe

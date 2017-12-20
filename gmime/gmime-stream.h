@@ -77,9 +77,9 @@ typedef struct {
  * Abstract I/O stream class.
  **/
 struct _GMimeStream {
+	/* <private> */
 	GObject parent_object;
 	
-	/* <private> */
 	GMimeStream *super_stream;
 	
 	gint64 position;

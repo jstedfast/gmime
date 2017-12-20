@@ -81,11 +81,12 @@ char *g_mime_header_format_default (GMimeHeader *header, GMimeFormatOptions *opt
  * A message or mime-part header.
  **/
 struct _GMimeHeader {
+	/* <private> */
 	GObject parent_object;
 	
 	char *name, *value;
 	
-	/* < private > */
+	/* <private> */
 	GMimeHeaderRawValueFormatter formatter;
 	GMimeParserOptions *options;
 	gboolean reformat;

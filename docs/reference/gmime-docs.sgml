@@ -3,6 +3,7 @@
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY gmime-Init SYSTEM "xml/gmime.xml">
 <!ENTITY GMimeApplicationPkcs7Mime SYSTEM "xml/gmime-application-pkcs7-mime.xml">
+<!ENTITY GMimeAutocrypt SYSTEM "xml/gmime-autocrypt.xml">
 <!ENTITY GMimeParam SYSTEM "xml/gmime-param.xml">
 <!ENTITY GMimeHeader SYSTEM "xml/gmime-header.xml">
 <!ENTITY GMimeContentType SYSTEM "xml/gmime-content-type.xml">
@@ -183,6 +184,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-utils;
     &GMimeReferences;
     &GMimeFormatOptions;
+    &GMimeAutocrypt;
   </part>
 
   <part id="classes">

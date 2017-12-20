@@ -87,7 +87,7 @@ struct _GMimeMessage {
 	GDateTime *date;
 	char *subject;
 	
-	/* < private > */
+	/* <private> */
 	char *marker;
 };
 

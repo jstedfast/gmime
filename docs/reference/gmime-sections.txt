@@ -196,6 +196,8 @@ GMIME_STREAM_MEM_GET_CLASS
 GMimeStreamMmap
 g_mime_stream_mmap_new
 g_mime_stream_mmap_new_with_bounds
+g_mime_stream_mmap_get_owner
+g_mime_stream_mmap_set_owner
 
 <SUBSECTION Private>
 g_mime_stream_mmap_get_type
@@ -481,6 +483,7 @@ GMIME_FILTER_HTML_GET_CLASS
 GMimeFilterChecksum
 g_mime_filter_checksum_new
 g_mime_filter_checksum_get_digest
+g_mime_filter_checksum_get_string
 
 <SUBSECTION Private>
 g_mime_filter_checksum_get_type
@@ -504,7 +507,7 @@ GMimeFilterOpenPGP
 g_mime_filter_openpgp_new
 g_mime_filter_openpgp_get_data_type
 g_mime_filter_openpgp_get_begin_offset
-g_mime_filter_openpgp_get_enbd_offset
+g_mime_filter_openpgp_get_end_offset
 
 <SUBSECTION Private>
 g_mime_filter_openpgp_get_type
@@ -1134,7 +1137,6 @@ GMIME_TYPE_REFERENCES
 
 <SECTION>
 <FILE>gmime-utils</FILE>
-GMimeReferences
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
 g_mime_utils_generate_message_id
@@ -1620,7 +1622,6 @@ GMIME_IS_PKCS7_CONTEXT_CLASS
 GMIME_PKCS7_CONTEXT_GET_CLASS
 GMimePkcs7ContextClass
 </SECTION>
-
 
 <SECTION>
 <FILE>gmime-autocrypt</FILE>

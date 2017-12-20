@@ -134,13 +134,13 @@ struct _GMimeAutocryptHeaderListClass {
 GType g_mime_autocrypt_header_list_get_type (void);
 
 GMimeAutocryptHeaderList *g_mime_autocrypt_header_list_new (void);
-guint g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *ahl, InternetAddressList *list);
-void g_mime_autocrypt_header_list_add (GMimeAutocryptHeaderList *ahl, GMimeAutocryptHeader *ah);
+guint g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *list, InternetAddressList *addresses);
+void g_mime_autocrypt_header_list_add (GMimeAutocryptHeaderList *list, GMimeAutocryptHeader *header);
 
-guint g_mime_autocrypt_header_list_get_count (GMimeAutocryptHeaderList *acheaders);
-GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *acheaders, guint n);
-GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_for_address (GMimeAutocryptHeaderList *acheaders, InternetAddressMailbox *addr);
-void g_mime_autocrypt_header_list_remove_incomplete (GMimeAutocryptHeaderList *acheaders);
+guint g_mime_autocrypt_header_list_get_count (GMimeAutocryptHeaderList *list);
+GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *list, guint index);
+GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_for_address (GMimeAutocryptHeaderList *list, InternetAddressMailbox *mailbox);
+void g_mime_autocrypt_header_list_remove_incomplete (GMimeAutocryptHeaderList *list);
 
 
 G_END_DECLS
