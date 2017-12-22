@@ -962,21 +962,25 @@ has_content_headers (GPtrArray *headers)
 	return FALSE;
 }
 
-#define warn_bad_header G_STMT_START { 												\
-	if (can_warn) { 													\
-		gchar *eol; 													\
-		gchar *bad_header; 												\
-		 	 	 	 	 	 	 	 	 	 	 				\
-		for (eol = inptr; eol < inend && eol[0] != '\r' && eol[0] != '\n'; eol++); 					\
-		bad_header = g_strndup (start, eol - start); 									\
-		_g_mime_parser_options_warn (options, priv->header_offset, GMIME_CRIT_INVALID_HEADER_NAME, bad_header);		\
-		g_free (bad_header); 												\
-	} 															\
-} G_STMT_END
+static void
+warn_invalid_header (GMimeParser *parser, GMimeParserOptions *options, const char *start, const char *inptr, const char *inend)
+{
+	struct _GMimeParserPrivate *priv = parser->priv;
+	const char *eoln = inptr;
+	char *header;
+	
+	while (eoln < inend && *eoln != '\r' && *eoln != '\n')
+		eoln++;
+	
+	header = g_strndup (start, eoln - start);
+	_g_mime_parser_options_warn (options, priv->header_offset, GMIME_CRIT_INVALID_HEADER_NAME, header);
+	g_free (header);
+}
 
 static int
 parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 {
+	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	struct _GMimeParserPrivate *priv = parser->priv;
 	gboolean eoln, valid = TRUE, fieldname = TRUE;
 	gboolean continuation = FALSE;
@@ -1057,11 +1061,9 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 				}
 				
 				if (!valid) {
-					gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
-
-					if (priv->format == GMIME_FORMAT_MBOX &&
-					    is_mbox_marker (start, (size_t) (inptr - start), FALSE)) {
-						warn_bad_header;
+					if (priv->format == GMIME_FORMAT_MBOX && is_mbox_marker (start, (size_t) (inptr - start), FALSE)) {
+						if (can_warn)
+							warn_invalid_header (parser, options, start, inptr, inend);
 						goto next_message;
 					}
 					
@@ -1071,14 +1073,16 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 								/* probably the start of the content,
 								 * a broken mailer didn't terminate the
 								 * headers with an empty line. *sigh* */
-								warn_bad_header;
+								if (can_warn)
+									warn_invalid_header (parser, options, start, inptr, inend);
 								goto content_start;
 							}
 						} else if (has_content_headers (priv->headers)) {
 							/* probably the start of the content,
 							 * a broken mailer didn't terminate the
 							 * headers with an empty line. *sigh* */
-							warn_bad_header;
+							if (can_warn)
+								warn_invalid_header (parser, options, start, inptr, inend);
 							goto content_start;
 						}
 					} else if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
@@ -1086,8 +1090,9 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 						 * headers, but remain lenient with lines starting with
 						 * "From " or ">From ". */
 						if (!is_mbox_marker (start, (size_t) (inptr - start), TRUE)) {
+							if (can_warn)
+								warn_invalid_header (parser, options, start, inptr, inend);
 							priv->state = GMIME_PARSER_STATE_ERROR;
-							warn_bad_header;
 							return -1;
 						}
 					}
@@ -1647,19 +1652,20 @@ check_header_conflict (GMimeParserOptions *options, GMimeObject *object, const H
 }
 
 static int
-compare_header(const void *a, const void *b)
+compare_header (const void *a, const void *b)
 {
 	return g_ascii_strcasecmp ((const gchar *) a, * (const gchar **) b);
 }
 
+/* headers which may exist only once according to RFC 5322, Sect. 3.6 (keep the list sorted) */
+static const char *rfc5322_single_hdr[] = {
+	"bcc", "cc", "date", "from", "in-reply-to", "message-id", "references", "reply-to", "sender", "subject", "to"
+};
+
 static void
 check_repeated_header (GMimeParserOptions *options, GMimeObject *object, const Header *header)
 {
-	/* headers which may exist only once according to RFC 5322, Sect. 3.6 (keep the list sorted) */
-	static const gchar *rfc5322_single_hdr[] =
-		{ "bcc", "cc", "date", "from", "in-reply-to", "message-id", "references", "reply-to", "sender", "subject", "to" };
-
-	if (bsearch(header->name, rfc5322_single_hdr, G_N_ELEMENTS (rfc5322_single_hdr), sizeof (gchar *), compare_header))
+	if (bsearch (header->name, rfc5322_single_hdr, G_N_ELEMENTS (rfc5322_single_hdr), sizeof (char *), compare_header))
 		check_header_conflict (options, object, header);
 }
 
@@ -1670,9 +1676,9 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
+	gboolean can_warn;
 	Header *header;
 	guint i;
-	gboolean can_warn;
 	
 	g_assert (priv->state == GMIME_PARSER_STATE_CONTENT);
 	
@@ -2041,10 +2047,10 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	GMimeObject *object;
 	BoundaryType found;
 	const char *inptr;
+	gboolean can_warn;
 	Header *header;
 	char *endptr;
 	guint i;
-	gboolean can_warn;
 	
 	/* scan the from-line if we are parsing an mbox */
 	while (priv->state != GMIME_PARSER_STATE_MESSAGE_HEADERS) {
