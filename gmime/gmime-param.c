@@ -1055,7 +1055,7 @@ decode_rfc2184_param (const char **in, char **namep, int *part, gboolean *encode
 
 static gboolean
 decode_param (GMimeParserOptions *options, const char **in, char **namep, char **valuep, int *id,
-	      const char **rfc2047_charset, gboolean *encoded, GMimeParamEncodingMethod *method)
+	      const char **rfc2047_charset, gboolean *encoded, GMimeParamEncodingMethod *method, gint64 offset)
 {
 	GMimeRfcComplianceMode mode = g_mime_parser_options_get_parameter_compliance_mode (options);
 	gboolean is_rfc2184 = FALSE;
@@ -1080,7 +1080,7 @@ decode_param (GMimeParserOptions *options, const char **in, char **namep, char *
 				 * this, we should handle this case.
 				 */
 				
-				if ((val = _g_mime_utils_header_decode_text (options, value, rfc2047_charset))) {
+				if ((val = _g_mime_utils_header_decode_text (options, value, rfc2047_charset, offset))) {
 					*method = GMIME_PARAM_ENCODING_METHOD_RFC2047;
 					g_free (value);
 					value = val;
@@ -1338,7 +1338,7 @@ decode_param_list (GMimeParserOptions *options, const char *in, gint64 offset)
 	
 	do {
 		/* invalid format? */
-		if (!decode_param (options, &inptr, &name, &value, &id, &rfc2047_charset, &encoded, &method)) {
+		if (!decode_param (options, &inptr, &name, &value, &id, &rfc2047_charset, &encoded, &method, offset)) {
 			skip_cfws (&inptr);
 			
 			if (*inptr == ';')

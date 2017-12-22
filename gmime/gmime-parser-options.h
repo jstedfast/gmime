@@ -43,15 +43,16 @@ typedef enum {
 
 /**
  * GMimeParserWarning:
- * @GMIME_WARN_DUPLICATED_CONTENT_HDR: repeated exactly the same `Content-*` header
+ * @GMIME_WARN_DUPLICATED_HEADER: repeated exactly the same header which should exist only once
  * @GMIME_WARN_DUPLICATED_PARAMETER: repeated exactly the same header parameter
  * @GMIME_WARN_UNENCODED_8BIT_HEADER: a header contains unencoded 8-bit characters
  * @GMIME_WARN_INVALID_CONTENT_TYPE: invalid content type, assume `application/octet-stream`
- * @GMIME_WARN_INVALID_HEADER: invalid header, ignored
+ * @GMIME_WARN_INVALID_RFC2047_HEADER_VALUE: invalid RFC 2047 encoded header value
  * @GMIME_WARN_MALFORMED_MULTIPART: no items in a `multipart/...`
  * @GMIME_WARN_TRUNCATED_MESSAGE: the message is truncated
  * @GMIME_WARN_MALFORMED_MESSAGE: the message is malformed
- * @GMIME_CRIT_CONFLICTING_CONTENT_HDR: conflicting `Content-*` header
+ * @GMIME_CRIT_INVALID_HEADER_NAME: invalid header name, the parser may skip the message or parts of it
+ * @GMIME_CRIT_CONFLICTING_HEADER: conflicting header
  * @GMIME_CRIT_CONFLICTING_PARAMETER: conflicting header parameter
  * @GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY: a `multipart/...` part lacks the required boundary parameter
  *
@@ -59,15 +60,16 @@ typedef enum {
  * be ignored or will be interpreted differently by other software products.
  **/
 typedef enum {
-	GMIME_WARN_DUPLICATED_CONTENT_HDR = 1U,
+	GMIME_WARN_DUPLICATED_HEADER = 1U,
 	GMIME_WARN_DUPLICATED_PARAMETER,
 	GMIME_WARN_UNENCODED_8BIT_HEADER,
 	GMIME_WARN_INVALID_CONTENT_TYPE,
-	GMIME_WARN_INVALID_HEADER,
+	GMIME_WARN_INVALID_RFC2047_HEADER_VALUE,
 	GMIME_WARN_MALFORMED_MULTIPART,
 	GMIME_WARN_TRUNCATED_MESSAGE,
 	GMIME_WARN_MALFORMED_MESSAGE,
-	GMIME_CRIT_CONFLICTING_CONTENT_HDR,
+	GMIME_CRIT_INVALID_HEADER_NAME,
+	GMIME_CRIT_CONFLICTING_HEADER,
 	GMIME_CRIT_CONFLICTING_PARAMETER,
 	GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY
 } GMimeParserWarning;

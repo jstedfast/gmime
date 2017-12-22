@@ -1369,7 +1369,7 @@ internet_address_list_encode (InternetAddressList *list, GMimeFormatOptions *opt
 
 
 static char *
-decode_name (GMimeParserOptions *options, const char *name, size_t len, const char **charset)
+decode_name (GMimeParserOptions *options, const char *name, size_t len, const char **charset, gint64 offset)
 {
 	char *value, *buf = NULL;
 	
@@ -1382,7 +1382,7 @@ decode_name (GMimeParserOptions *options, const char *name, size_t len, const ch
 	
 	/* decode the phrase */
 	g_mime_utils_unquote_string (buf);
-	value = _g_mime_utils_header_decode_phrase (options, buf, charset);
+	value = _g_mime_utils_header_decode_phrase (options, buf, charset, offset);
 	g_strstrip (value);
 	g_free (buf);
 	
@@ -1755,10 +1755,10 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 	return FALSE;
 }
 
-static gboolean address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group);
+static gboolean address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group, gint64 offset);
 
 static gboolean
-group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const char **in)
+group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const char **in, gint64 offset)
 {
 	const char *inptr = *in;
 	
@@ -1770,7 +1770,7 @@ group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const cha
 		inptr++;
 	
 	if (*inptr != '\0') {
-		address_list_parse (group->members, options, &inptr, TRUE);
+		address_list_parse (group->members, options, &inptr, TRUE, offset);
 		
 		if (*inptr != ';') {
 			while (*inptr && *inptr != ';')
@@ -1786,7 +1786,7 @@ group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const cha
 }
 
 static gboolean
-address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char **charset, InternetAddress **address)
+address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char **charset, InternetAddress **address, gint64 offset)
 {
 	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
 	int min_words = g_mime_parser_options_get_allow_addresses_without_domain (options) ? 1 : 0;
@@ -1887,7 +1887,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			
 			comment++;
 			
-			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment), charset);
+			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment), charset, offset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -1923,7 +1923,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (length > 0) {
-			name = decode_name (options, phrase, length, charset);
+			name = decode_name (options, phrase, length, charset, offset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -1932,7 +1932,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		*address = (InternetAddress *) group;
 		g_free (name);
 		
-		retval = group_parse (group, options, &inptr);
+		retval = group_parse (group, options, &inptr, offset);
 		*in = inptr;
 		
 		return retval;
@@ -1963,7 +1963,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			
 			comment++;
 			
-			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment), charset);
+			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment), charset, offset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -2032,7 +2032,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (length > 0) {
-			name = decode_name (options, phrase, length, charset);
+			name = decode_name (options, phrase, length, charset, offset);
 		} else {
 			name = g_strdup ("");
 		}
@@ -2052,7 +2052,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 }
 
 static gboolean
-address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group)
+address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group, gint64 offset)
 {
 	InternetAddress *address;
 	const char *charset;
@@ -2072,7 +2072,7 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 		
 		charset = NULL;
 		
-		if (!address_parse (options, ALLOW_ANY, &inptr, &charset, &address)) {
+		if (!address_parse (options, ALLOW_ANY, &inptr, &charset, &address, offset)) {
 			/* skip this address... */
 			while (*inptr && *inptr != ',' && (!is_group || *inptr != ';'))
 				inptr++;
@@ -2117,13 +2117,19 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 InternetAddressList *
 internet_address_list_parse (GMimeParserOptions *options, const char *str)
 {
+	return _internet_address_list_parse (options, str, -1);
+}
+
+InternetAddressList *
+_internet_address_list_parse (GMimeParserOptions *options, const char *str, gint64 offset)
+{
 	InternetAddressList *list;
 	const char *inptr = str;
 	
 	g_return_val_if_fail (str != NULL, NULL);
 	
 	list = internet_address_list_new ();
-	if (!address_list_parse (list, options, &inptr, FALSE) || list->array->len == 0) {
+	if (!address_list_parse (list, options, &inptr, FALSE, offset) || list->array->len == 0) {
 		g_object_unref (list);
 		return NULL;
 	}

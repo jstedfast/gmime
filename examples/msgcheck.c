@@ -34,24 +34,26 @@ static const gchar *
 errcode2str(GMimeParserWarning errcode)
 {
 	switch (errcode) {
-	case GMIME_WARN_DUPLICATED_CONTENT_HDR:
-		return "duplicated content header";
+	case GMIME_WARN_DUPLICATED_HEADER:
+		return "duplicated header";
 	case GMIME_WARN_DUPLICATED_PARAMETER:
 		return "duplicated header parameter";
 	case GMIME_WARN_UNENCODED_8BIT_HEADER:
 		return "unencoded 8-bit characters in header";
 	case GMIME_WARN_INVALID_CONTENT_TYPE:
 		return "invalid Content-Type";
-	case GMIME_WARN_INVALID_HEADER:
-		return "invalid header";
+	case GMIME_WARN_INVALID_RFC2047_HEADER_VALUE:
+		return "invalid RFC 2047 encoded header value";
 	case GMIME_WARN_MALFORMED_MULTIPART:
 		return "malformed multipart";
 	case GMIME_WARN_TRUNCATED_MESSAGE:
 		return "truncated message";
 	case GMIME_WARN_MALFORMED_MESSAGE:
 		return "malformed message";
-	case GMIME_CRIT_CONFLICTING_CONTENT_HDR:
-		return "conflicting content header";
+	case GMIME_CRIT_INVALID_HEADER_NAME:
+		return "invalid header name, parser may skip the message or parts of it";
+	case GMIME_CRIT_CONFLICTING_HEADER:
+		return "conflicting duplicated header";
 	case GMIME_CRIT_CONFLICTING_PARAMETER:
 		return "conflicting header parameter";
 	case GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY:

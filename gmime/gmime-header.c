@@ -231,7 +231,7 @@ g_mime_header_get_value (GMimeHeader *header)
 	
 	if (!header->value && header->raw_value) {
 		buf = g_mime_utils_header_unfold (header->raw_value);
-		header->value = g_mime_utils_header_decode_text (header->options, buf);
+		header->value = _g_mime_utils_header_decode_text (header->options, buf, NULL, header->offset);
 		g_free (buf);
 	}
 	
@@ -602,7 +602,7 @@ g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options,
 	
 	g_string_append_c (str, ' ');
 	
-	if (value && (addrlist = internet_address_list_parse (header->options, value))) {
+	if (value && (addrlist = _internet_address_list_parse (header->options, value, -1))) {
 		internet_address_list_encode (addrlist, options, str);
 		g_object_unref (addrlist);
 	}

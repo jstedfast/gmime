@@ -284,7 +284,7 @@ message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GM
 			continue;
 		
 		if ((value = g_mime_header_get_raw_value (header))) {
-			if ((list = internet_address_list_parse (options, value))) {
+			if ((list = _internet_address_list_parse (options, value, header->offset))) {
 				internet_address_list_append (addrlist, list);
 				g_object_unref (list);
 			}

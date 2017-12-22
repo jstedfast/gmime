@@ -1374,6 +1374,7 @@ typedef struct _rfc2047_token {
 	size_t length;
 	char encoding;
 	char is_8bit;
+	char sp_in_encword;
 } rfc2047_token;
 
 #define rfc2047_token_list_free(tokens) g_slice_free_chain (rfc2047_token, tokens, next)
@@ -1468,7 +1469,9 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 	token = rfc2047_token_new (payload, inptr - payload);
 	token->charset = g_mime_charset_iconv_name (charset);
 	token->encoding = encoding;
-	
+	/* RFC 2047 forbids SP in the encoded-word */
+	token->sp_in_encword = memchr(token->text, ' ', token->length) ? 1 : 0;
+
 	return token;
 }
 
@@ -1862,12 +1865,21 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 	return g_string_free (decoded, FALSE);
 }
 
+static inline gboolean
+has_sp_in_encword(rfc2047_token *tokens)
+{
+	for (; tokens; tokens = tokens->next)
+		if (tokens->encoding != 0 && tokens->sp_in_encword != 0)
+			return TRUE;
+	return FALSE;
+}
 
 /**
  * _g_mime_utils_header_decode_text:
  * @text: header text to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
  * @charset: (optional): if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
+ * @offset: header offset, only used for reporting a #GMimeParserWarning
  *
  * Decodes an rfc2047 encoded 'text' header.
  *
@@ -1875,7 +1887,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
  * header.
  **/
 char *
-_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset)
+_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset, gint64 offset)
 {
 	rfc2047_token *tokens;
 	char *decoded;
@@ -1890,6 +1902,8 @@ _g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text,
 	
 	tokens = tokenize_rfc2047_text (options, text, &len);
 	decoded = rfc2047_decode_tokens (options, tokens, len, charset);
+	if (g_mime_parser_options_get_warning_callback (options) != NULL && has_sp_in_encword (tokens))
+		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_RFC2047_HEADER_VALUE, text);
 	rfc2047_token_list_free (tokens);
 	
 	return decoded;
@@ -1909,7 +1923,7 @@ _g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text,
 char *
 g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
 {
-	return _g_mime_utils_header_decode_text (options, text, NULL);
+	return _g_mime_utils_header_decode_text (options, text, NULL, -1);
 }
 
 
@@ -1918,6 +1932,7 @@ g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
  * @phrase: header to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
  * @charset: (optional): if non-%NULL, this will be set to the charset used in the rfc2047 encoded-word tokens
+ * @offset: header offset, only used for reporting a #GMimeParserWarning
  *
  * Decodes an rfc2047 encoded 'phrase' header.
  *
@@ -1925,7 +1940,7 @@ g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
  * header.
  **/
 char *
-_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase, const char **charset)
+_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase, const char **charset, gint64 offset)
 {
 	rfc2047_token *tokens;
 	char *decoded;
@@ -1940,6 +1955,8 @@ _g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phr
 	
 	tokens = tokenize_rfc2047_phrase (options, phrase, &len);
 	decoded = rfc2047_decode_tokens (options, tokens, len, charset);
+	if (g_mime_parser_options_get_warning_callback (options) != NULL && has_sp_in_encword (tokens))
+		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_RFC2047_HEADER_VALUE, phrase);
 	rfc2047_token_list_free (tokens);
 	
 	return decoded;
@@ -1959,7 +1976,7 @@ _g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phr
 char *
 g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase)
 {
-	return _g_mime_utils_header_decode_phrase (options, phrase, NULL);
+	return _g_mime_utils_header_decode_phrase (options, phrase, NULL, -1);
 }
 
 
