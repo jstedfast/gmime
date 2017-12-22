@@ -847,19 +847,6 @@ next_alloc_size (size_t n)
 	priv->headerleft -= len;                                          \
 } G_STMT_END
 
-static inline gboolean
-is_7bit_clean (const gchar *str)
-{
-	while (*str != '\0') {
-		if ((*str & 0x80) != 0)
-			return FALSE;
-		
-		str++;
-	}
-	
-	return TRUE;
-}
-
 static void
 header_parse (GMimeParser *parser, GMimeParserOptions *options)
 {
@@ -889,7 +876,7 @@ header_parse (GMimeParser *parser, GMimeParserOptions *options)
 	
 	if (*inptr != ':') {
 		/* ignore invalid headers */
-		_g_mime_parser_options_warn (options, priv->header_offset, GMIME_WARN_INVALID_HEADER, priv->headerbuf);
+		_g_mime_parser_options_warn (options, priv->header_offset, GMIME_CRIT_INVALID_HEADER_NAME, priv->headerbuf);
 		w(g_warning ("Invalid header at %lld: '%s'",
 			     (long long) priv->header_offset,
 			     priv->headerbuf));
@@ -922,7 +909,7 @@ header_parse (GMimeParser *parser, GMimeParserOptions *options)
 		priv->header_cb (parser, header->name, header->raw_value,
 				 header->offset, priv->user_data);
 	
-	if (can_warn && (!is_7bit_clean (header->name) || !g_utf8_validate (header->raw_value, -1, NULL)))
+	if (can_warn && (g_mime_utils_text_is_8bit ((const unsigned char *) header->name, strlen (header->name)) || !g_utf8_validate (header->raw_value, -1, NULL)))
 		_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_UNENCODED_8BIT_HEADER, header->name);
 }
 
@@ -974,6 +961,18 @@ has_content_headers (GPtrArray *headers)
 	
 	return FALSE;
 }
+
+#define warn_bad_header G_STMT_START { 												\
+	if (can_warn) { 													\
+		gchar *eol; 													\
+		gchar *bad_header; 												\
+		 	 	 	 	 	 	 	 	 	 	 				\
+		for (eol = inptr; eol < inend && eol[0] != '\r' && eol[0] != '\n'; eol++); 					\
+		bad_header = g_strndup (start, eol - start); 									\
+		_g_mime_parser_options_warn (options, priv->header_offset, GMIME_CRIT_INVALID_HEADER_NAME, bad_header);		\
+		g_free (bad_header); 												\
+	} 															\
+} G_STMT_END
 
 static int
 parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
@@ -1058,9 +1057,13 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 				}
 				
 				if (!valid) {
+					gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
+
 					if (priv->format == GMIME_FORMAT_MBOX &&
-					    is_mbox_marker (start, (size_t) (inptr - start), FALSE))
+					    is_mbox_marker (start, (size_t) (inptr - start), FALSE)) {
+						warn_bad_header;
 						goto next_message;
+					}
 					
 					if (priv->headers->len > 0) {
 						if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
@@ -1068,12 +1071,14 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 								/* probably the start of the content,
 								 * a broken mailer didn't terminate the
 								 * headers with an empty line. *sigh* */
+								warn_bad_header;
 								goto content_start;
 							}
 						} else if (has_content_headers (priv->headers)) {
 							/* probably the start of the content,
 							 * a broken mailer didn't terminate the
 							 * headers with an empty line. *sigh* */
+							warn_bad_header;
 							goto content_start;
 						}
 					} else if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
@@ -1082,6 +1087,7 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 						 * "From " or ">From ". */
 						if (!is_mbox_marker (start, (size_t) (inptr - start), TRUE)) {
 							priv->state = GMIME_PARSER_STATE_ERROR;
+							warn_bad_header;
 							return -1;
 						}
 					}
@@ -1628,6 +1634,36 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, Bounda
 }
 
 static void
+check_header_conflict (GMimeParserOptions *options, GMimeObject *object, const Header *header)
+{
+	const GMimeHeader *existing;
+
+	if ((existing = g_mime_header_list_get_header (object->headers, header->name)) != NULL) {
+		if (strcmp (existing->raw_value, header->raw_value) != 0)
+			_g_mime_parser_options_warn (options, header->offset, GMIME_CRIT_CONFLICTING_HEADER, header->name);
+		else
+			_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_DUPLICATED_HEADER, header->name);
+	}
+}
+
+static int
+compare_header(const void *a, const void *b)
+{
+	return g_ascii_strcasecmp ((const gchar *) a, * (const gchar **) b);
+}
+
+static void
+check_repeated_header (GMimeParserOptions *options, GMimeObject *object, const Header *header)
+{
+	/* headers which may exist only once according to RFC 5322, Sect. 3.6 (keep the list sorted) */
+	static const gchar *rfc5322_single_hdr[] =
+		{ "bcc", "cc", "date", "from", "in-reply-to", "message-id", "references", "reply-to", "sender", "subject", "to" };
+
+	if (bsearch(header->name, rfc5322_single_hdr, G_N_ELEMENTS (rfc5322_single_hdr), sizeof (gchar *), compare_header))
+		check_header_conflict (options, object, header);
+}
+
+static void
 parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMimeMessagePart *mpart, BoundaryType *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
@@ -1636,6 +1672,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	GMimeObject *object;
 	Header *header;
 	guint i;
+	gboolean can_warn;
 	
 	g_assert (priv->state == GMIME_PARSER_STATE_CONTENT);
 	
@@ -1689,13 +1726,17 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	
 	message = g_mime_message_new (FALSE);
 	((GMimeObject *) message)->ensure_newline = FALSE;
+	_g_mime_header_list_set_options (((GMimeObject *) message)->headers, options);
 	message->marker = priv->preheader;
 	priv->preheader = NULL;
 	
+	can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
 		
 		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
+			if (can_warn)
+				check_repeated_header (options, (GMimeObject *) message, header);
 			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
@@ -1712,19 +1753,6 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	
 	g_mime_message_part_set_message (mpart, message);
 	g_object_unref (message);
-}
-
-static void
-check_content_header_conflict (GMimeParserOptions *options, GMimeObject *object, const Header *header)
-{
-	const GMimeHeader *existing;
-	
-	if ((existing = g_mime_header_list_get_header (object->headers, header->name)) != NULL) {
-		if (strcmp (existing->raw_value, header->raw_value) != 0)
-			_g_mime_parser_options_warn (options, header->offset, GMIME_CRIT_CONFLICTING_CONTENT_HDR, header->name);
-		else
-			_g_mime_parser_options_warn (options, header->offset, GMIME_WARN_DUPLICATED_CONTENT_HDR, header->name);
-	}
 }
 
 static GMimeObject *
@@ -1751,7 +1779,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 		header = priv->headers->pdata[i];
 		
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
-			check_content_header_conflict (options, object, header);
+			check_header_conflict (options, object, header);
 			_g_mime_object_append_header (object, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
@@ -1895,7 +1923,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		header = priv->headers->pdata[i];
 		
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
-			check_content_header_conflict (options, object, header);
+			check_header_conflict (options, object, header);
 			
 			if (!g_ascii_strcasecmp (header->name, "Content-Type"))
 				ctype_offset = header->offset;
@@ -2016,6 +2044,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	Header *header;
 	char *endptr;
 	guint i;
+	gboolean can_warn;
 	
 	/* scan the from-line if we are parsing an mbox */
 	while (priv->state != GMIME_PARSER_STATE_MESSAGE_HEADERS) {
@@ -2033,6 +2062,7 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	((GMimeObject *) message)->ensure_newline = FALSE;
 	_g_mime_header_list_set_options (((GMimeObject *) message)->headers, options);
 	
+	can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
 		
@@ -2047,6 +2077,8 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 		}
 		
 		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
+			if (can_warn)
+				check_repeated_header (options, (GMimeObject *) message, header);
 			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}

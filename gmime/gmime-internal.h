@@ -86,8 +86,13 @@ G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions
 							      const char *field, const char *value);
 G_GNUC_INTERNAL char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
 							    const char *field, const char *value);
-G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset);
-G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *text, const char **charset);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset,
+							gint64 offset);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *text, const char **charset,
+							  gint64 offset);
+
+/* InternetAddressList */
+G_GNUC_INTERNAL InternetAddressList *_internet_address_list_parse (GMimeParserOptions *options, const char *str, gint64 offset);
 
 G_END_DECLS
 
