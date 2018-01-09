@@ -1108,7 +1108,8 @@ decode_param (GMimeParserOptions *options, const char **in, char **namep, char *
 		*namep = name;
 		*in = inptr;
 		return TRUE;
-	}
+	} else
+		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_PARAMETER, name);
 	
 	g_free (value);
 	g_free (name);
