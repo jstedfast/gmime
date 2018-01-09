@@ -48,6 +48,7 @@ typedef enum {
  * @GMIME_WARN_UNENCODED_8BIT_HEADER: a header contains unencoded 8-bit characters
  * @GMIME_WARN_INVALID_CONTENT_TYPE: invalid content type, assume `application/octet-stream`
  * @GMIME_WARN_INVALID_RFC2047_HEADER_VALUE: invalid RFC 2047 encoded header value
+ * @GMIME_WARN_INVALID_PARAMETER: invalid header parameter
  * @GMIME_WARN_MALFORMED_MULTIPART: no items in a `multipart/...`
  * @GMIME_WARN_TRUNCATED_MESSAGE: the message is truncated
  * @GMIME_WARN_MALFORMED_MESSAGE: the message is malformed
@@ -65,6 +66,7 @@ typedef enum {
 	GMIME_WARN_UNENCODED_8BIT_HEADER,
 	GMIME_WARN_INVALID_CONTENT_TYPE,
 	GMIME_WARN_INVALID_RFC2047_HEADER_VALUE,
+	GMIME_WARN_INVALID_PARAMETER,
 	GMIME_WARN_MALFORMED_MULTIPART,
 	GMIME_WARN_TRUNCATED_MESSAGE,
 	GMIME_WARN_MALFORMED_MESSAGE,

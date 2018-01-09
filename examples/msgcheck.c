@@ -44,6 +44,8 @@ errcode2str(GMimeParserWarning errcode)
 		return "invalid Content-Type";
 	case GMIME_WARN_INVALID_RFC2047_HEADER_VALUE:
 		return "invalid RFC 2047 encoded header value";
+	case GMIME_WARN_INVALID_PARAMETER:
+		return "invalid header parameter";
 	case GMIME_WARN_MALFORMED_MULTIPART:
 		return "malformed multipart";
 	case GMIME_WARN_TRUNCATED_MESSAGE:
