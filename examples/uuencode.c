@@ -137,7 +137,7 @@ uuencode (const char *progname, int argc, char **argv)
 	printf ("begin%s %.3o %s\n", base64 ? "-base64" : "", st.st_mode & 0777, name);
 	fflush (stdout);
 	
-	istream = g_mime_stream_fs_new (fd);
+	istream = g_mime_stream_pipe_new (fd);
 	
 	/* open our output stream */
 	ostream = g_mime_stream_pipe_new (1);
