@@ -195,12 +195,17 @@ static void
 object_header_changed (GMimeObject *object, GMimeHeader *header)
 {
 	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
+	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
 	const char *name, *value;
 	guint i;
 	
 	name = g_mime_header_get_name (header);
+
+	/* validate header if requested, caches the decoded value */
+	if (G_UNLIKELY (can_warn))
+		g_mime_header_get_value (header);
 	
 	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
 		return;
