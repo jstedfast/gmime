@@ -480,7 +480,7 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 			header = g_mime_header_list_get_header_at (object->headers, index);
 			offset = g_mime_header_get_offset (header);
 			
-			if (offset >= 0 && offset < body_offset) {
+			if (offset < body_offset) {
 				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
 					if ((nwritten = g_mime_header_write_to_stream (header, options, filtered)) == -1) {
 						g_object_unref (filtered);
