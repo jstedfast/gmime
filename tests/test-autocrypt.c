@@ -230,10 +230,10 @@ const static struct _ah_inject_test inject_test_data[] = {
 	  "Message-Id: <lovely-day@example.net>\n"
 	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\n"
 	  "Mime-Version: 1.0\n"
-	  "Content-Type: text/plain\n"
 	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
+	  "Content-Type: text/plain\n"
 	  "\n"
 	  "Isn't it a lovely day?\n",
 	},
