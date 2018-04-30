@@ -277,8 +277,8 @@ g_mime_text_part_get_text (GMimeTextPart *mime_part)
 	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
 	stream = g_mime_stream_mem_new ();
 	
-	if ((charset = g_mime_content_type_get_parameter (content_type, "charset")) != NULL) {
-		filter = g_mime_filter_charset_new (charset, "utf-8");
+	if ((charset = g_mime_content_type_get_parameter (content_type, "charset")) != NULL &&
+	    (filter = g_mime_filter_charset_new (charset, "utf-8")) != NULL) {
 		filtered = g_mime_stream_filter_new (stream);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 		g_object_unref (filter);
