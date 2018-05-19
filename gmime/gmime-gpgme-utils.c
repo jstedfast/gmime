@@ -438,6 +438,8 @@ g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeVerifyFlags flags, GMimeStream *istre
 		return NULL;
 	}
 	
+	gpgme_set_offline (ctx, (flags & GMIME_VERIFY_DISABLE_ONLINE_CERTIFICATE_CHECKS) == 0);
+	
 	error = gpgme_op_verify (ctx, sig, signed_text, plain);
 	if (signed_text)
 		gpgme_data_release (signed_text);
@@ -600,10 +602,14 @@ g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *sess
 #endif
 	
 	/* decrypt the input stream */
-	if (gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP)
+	if (gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP) {
+		/* Note: not currently supported for OpenPGP */
+		/*gpgme_set_offline (ctx, (flags & GMIME_DECRYPT_DISABLE_KEYSERVER_LOOKUPS) == 0);*/
+		
 		error = gpgme_op_decrypt_verify (ctx, input, output);
-	else
+	} else {
 		error = gpgme_op_decrypt (ctx, input, output);
+	}
 	
 #if GPGME_VERSION_NUMBER >= 0x010800
 	if (flags & GMIME_DECRYPT_EXPORT_SESSION_KEY)

@@ -80,12 +80,16 @@ typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) (void);
  * GMimeDecryptFlags:
  * @GMIME_DECRYPT_NONE: No flags specified.
  * @GMIME_DECRYPT_EXPORT_SESSION_KEY: Export the decryption session-key
+ * @GMIME_DECRYPT_DISABLE_ONLINE_CERTIFICATE_CHECKS: Disable CRL and OCSP checks that require network lookups.
  *
  * Decryption flags.
  **/
 typedef enum {
-	GMIME_DECRYPT_NONE               = 0,
-	GMIME_DECRYPT_EXPORT_SESSION_KEY = 1 << 0,
+	GMIME_DECRYPT_NONE                              = 0,
+	GMIME_DECRYPT_EXPORT_SESSION_KEY                = 1 << 0,
+
+	/* Note: these values must stay in sync with GMimeVerifyFlags */
+	GMIME_DECRYPT_DISABLE_ONLINE_CERTIFICATE_CHECKS = 1 << 15
 } GMimeDecryptFlags;
 
 
@@ -111,11 +115,13 @@ typedef enum {
 /**
  * GMimeVerifyFlags:
  * @GMIME_VERIFY_NONE: No flags specified.
+ * @GMIME_VERIFY_DISABLE_ONLINE_CERTIFICATE_CHECKS: Disable CRL and OCSP checks that require network lookups.
  *
  * Signature verification flags.
  **/
 typedef enum {
-	GMIME_VERIFY_NONE           = 0
+	GMIME_VERIFY_NONE                              = 0,
+	GMIME_VERIFY_DISABLE_ONLINE_CERTIFICATE_CHECKS = 1 << 15,
 } GMimeVerifyFlags;
 
 
