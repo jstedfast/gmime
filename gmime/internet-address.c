@@ -30,7 +30,7 @@
 #include <errno.h>
 
 #ifdef LIBIDN
-#include <idna.h>
+#include <idn2.h>
 #endif
 
 #include "internet-address.h"
@@ -465,7 +465,7 @@ internet_address_mailbox_get_idn_addr (InternetAddressMailbox *mailbox)
 	if (!mailbox->idn_addr && mailbox->at > 0) {
 		encoded = g_string_new ("");
 		g_string_append_len (encoded, mailbox->addr, mailbox->at + 1);
-		if (idna_to_ascii_8z (mailbox->addr + mailbox->at + 1, &ascii, 0) == IDNA_SUCCESS) {
+		if (idn2_to_ascii_8z (mailbox->addr + mailbox->at + 1, &ascii, 0) == IDN2_OK) {
 			g_string_append (encoded, ascii);
 			free (ascii);
 		} else {
@@ -1547,7 +1547,7 @@ dotatom_parse (GString *str, const char **in, const char *sentinels)
 	if (domain != str) {
 		char *unicode;
 		
-		if (idna_to_unicode_8z8z (domain->str, &unicode, 0) == IDNA_SUCCESS) {
+		if (idn2_to_unicode_8z8z (domain->str, &unicode, 0) == IDN2_OK) {
 			g_string_append (str, unicode);
 			free (unicode);
 		} else {

@@ -51,7 +51,7 @@
 #include <errno.h>
 
 #ifdef LIBIDN
-#include <idna.h>
+#include <idn2.h>
 #endif
 
 #include "gmime-utils.h"
@@ -857,7 +857,7 @@ g_mime_utils_generate_message_id (const char *fqdn)
 	g_string_append_c (msgid, '@');
 	
 #ifdef LIBIDN
-	if (idna_to_ascii_8z (fqdn, &ascii, 0) == IDNA_SUCCESS) {
+	if (idn2_to_ascii_8z (fqdn, &ascii, 0) == IDN2_OK) {
 		g_string_append (msgid, ascii);
 		free (ascii);
 	} else {

@@ -74,10 +74,10 @@ are REQUIRED:
 
 The following packages are RECOMMENDED:
 
-  - Libidn
+  - Libidn2 >= 2.0.0
 
-    Libidn provides APIs needed for encoding and decoding Internationalized
-    Domain Names. Libidn sources may be obtained from:
+    Libidn2 provides APIs needed for encoding and decoding Internationalized
+    Domain Names. Libidn2 sources may be obtained from:
       https://www.gnu.org/software/libidn/#downloading
 
   - GPGME >= 1.8.0 (will build with 1.2.0, but will be missing some functionality)

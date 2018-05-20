@@ -509,14 +509,14 @@ AS_IF([test "x$enable_crypto" = "xyes"], [
 ])
 AM_CONDITIONAL(ENABLE_CRYPTO, test "x$enable_crypto" != "xno")
 
-dnl *****************************
-dnl *** Checks for GNU Libidn ***
-dnl *****************************
+dnl ******************************
+dnl *** Checks for GNU Libidn2 ***
+dnl ******************************
 AC_ARG_WITH(libidn, AC_HELP_STRING([--with-libidn=[DIR]],
                                 [Support IDN (needs GNU Libidn)]),
   libidn=$withval, libidn=yes)
 if test "$libidn" != "no" ; then
-  PKG_CHECK_MODULES(LIBIDN, libidn >= 0.0.0, [libidn=yes], [libidn=no])
+  PKG_CHECK_MODULES(LIBIDN, libidn2 >= 2.0.0, [libidn=yes], [libidn=no])
   if test "$libidn" != "yes" ; then
     libidn=no
     AC_MSG_WARN([Libidn not found])
