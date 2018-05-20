@@ -80,7 +80,7 @@ The following packages are RECOMMENDED:
     Domain Names. Libidn2 sources may be obtained from:
       https://www.gnu.org/software/libidn/#downloading
 
-  - GPGME >= 1.8.0 (will build with 1.2.0, but will be missing some functionality)
+  - GPGME >= 1.8.0 (will build with 1.6.0, but will be missing some functionality)
 
     GPGME (GnuPG Made Easy) provides high-level crypto APIs needed for
     encryption, decryption, signing and signature verification for both

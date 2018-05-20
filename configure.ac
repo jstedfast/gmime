@@ -501,7 +501,7 @@ AC_ARG_ENABLE([crypto],
 
 m4_ifdef([AM_PATH_GPGME_PTHREAD], [
 AS_IF([test "x$enable_crypto" = "xyes"], [
-   AM_PATH_GPGME_PTHREAD(1.2.0, enable_crypto="yes (via GpgME)", enable_crypto="no")
+   AM_PATH_GPGME_PTHREAD(1.6.0, enable_crypto="yes (via GpgME)", enable_crypto="no")
    if test "x$enable_crypto" != "xno"; then
       AC_DEFINE(ENABLE_CRYPTO, 1, [Define if GMime should enable GpgME PGP and S/MIME support.])
    fi
