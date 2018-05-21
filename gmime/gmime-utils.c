@@ -859,7 +859,7 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #ifdef LIBIDN
 	if (idn2_to_ascii_8z (fqdn, &ascii, 0) == IDN2_OK) {
 		g_string_append (msgid, ascii);
-		free (ascii);
+		idn2_free (ascii);
 	} else {
 		g_string_append (msgid, fqdn);
 	}

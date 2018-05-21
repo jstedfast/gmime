@@ -467,7 +467,7 @@ internet_address_mailbox_get_idn_addr (InternetAddressMailbox *mailbox)
 		g_string_append_len (encoded, mailbox->addr, mailbox->at + 1);
 		if (idn2_to_ascii_8z (mailbox->addr + mailbox->at + 1, &ascii, 0) == IDN2_OK) {
 			g_string_append (encoded, ascii);
-			free (ascii);
+			idn2_free (ascii);
 		} else {
 			g_string_append (encoded, mailbox->addr + mailbox->at + 1);
 		}
