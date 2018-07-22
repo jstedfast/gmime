@@ -463,13 +463,18 @@ internet_address_mailbox_get_idn_addr (InternetAddressMailbox *mailbox)
 	
 #ifdef LIBIDN
 	if (!mailbox->idn_addr && mailbox->at > 0) {
+		const char *domain = mailbox->addr + mailbox->at + 1;
+		
 		encoded = g_string_new ("");
 		g_string_append_len (encoded, mailbox->addr, mailbox->at + 1);
-		if (idn2_to_ascii_8z (mailbox->addr + mailbox->at + 1, &ascii, 0) == IDN2_OK) {
-			g_string_append (encoded, ascii);
+		if (idn2_to_ascii_8z (domain, &ascii, 0) == IDN2_OK) {
+			if (!g_ascii_strcasecmp (domain, ascii))
+				g_string_append (encoded, domain);
+			else
+				g_string_append (encoded, ascii);
 			idn2_free (ascii);
 		} else {
-			g_string_append (encoded, mailbox->addr + mailbox->at + 1);
+			g_string_append (encoded, domain);
 		}
 		
 		mailbox->idn_addr = g_string_free (encoded, FALSE);

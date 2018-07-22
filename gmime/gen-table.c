@@ -180,6 +180,7 @@ int main (int argc, char **argv)
 	
 	printf ("#define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)\n");
 	printf ("#define is_lwsp(x) ((gmime_special_table[(unsigned char)(x)] & IS_LWSP) != 0)\n");
+	printf ("#define is_special(x) ((gmime_special_table[(unsigned char)(x)] & IS_SPECIAL) != 0)\n");
 	printf ("#define is_tspecial(x) ((gmime_special_table[(unsigned char)(x)] & IS_TSPECIAL) != 0)\n");
 	printf ("#define is_type(x, t) ((gmime_special_table[(unsigned char)(x)] & (t)) != 0)\n");
 	printf ("#define is_ttoken(x) ((gmime_special_table[(unsigned char)(x)] & (IS_TSPECIAL|IS_LWSP|IS_CTRL)) == 0)\n");

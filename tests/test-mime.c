@@ -125,7 +125,7 @@ static struct {
 	  "charles@broken.host.com",
 	  "charles@broken.host.com" },
 	{ "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and 	's too)", "iso-8859-1",
-	  "\"Fran\xc3\xa7ois Pons likes _'s and 	's too\" <fpons@mandrakesoft.com>",
+	  "Fran\xc3\xa7ois Pons likes _'s and 	's too <fpons@mandrakesoft.com>",
 	  "=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and 	's too <fpons@mandrakesoft.com>" },
 	{ "T\x81\xf5ivo Leedj\x81\xe4rv <leedjarv@interest.ee>", NULL,
 	  "T\xc2\x81\xc3\xb5ivo Leedj\xc2\x81\xc3\xa4rv <leedjarv@interest.ee>",

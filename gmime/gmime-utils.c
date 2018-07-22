@@ -902,7 +902,7 @@ need_quotes (const char *string)
 			inptr++;
 		else if (*inptr == '"')
 			quoted = !quoted;
-		else if (!quoted && (is_tspecial (*inptr) || *inptr == '.'))
+		else if (!quoted && is_special (*inptr))
 			return TRUE;
 		
 		if (*inptr)
@@ -916,12 +916,12 @@ need_quotes (const char *string)
  * g_mime_utils_quote_string:
  * @str: input string
  *
- * Quotes @string as needed according to the rules in rfc2045.
+ * Quotes @string as needed according to the rules in rfc2822.
  * 
  * Returns: an allocated string containing the escaped and quoted (if
  * needed to be) input string. The decision to quote the string is
- * based on whether or not the input string contains any 'tspecials'
- * as defined by rfc2045.
+ * based on whether or not the input string contains any 'specials'
+ * as defined by rfc2822.
  **/
 char *
 g_mime_utils_quote_string (const char *str)

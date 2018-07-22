@@ -1440,7 +1440,7 @@ message offsets: 9021425, 9028449
 header offsets: 9021457, 9022593
 From - Thu Nov 21 13:20:54 1996
 From: Eric Rosenquist <rosenqui@strataware.com>
-To: "S/MIME Developers" <smime-dev@RSA.COM>
+To: S/MIME Developers <smime-dev@RSA.COM>
 Subject: My encryption certificate for S/MIME testing
 Date: Thu, 21 Nov 1996 16:10:23 -0500
 Content-Type: multipart/mixed
