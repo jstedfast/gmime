@@ -1,0 +1,47 @@
+### GMime 3.2.1
+
+* Fixed GMimeParser to recognize the message/global mime-type
+  (a UTF-8 version of message/rfc822). (issue #50)
+
+* Updated GMime to use libidn2 instead of the older libidn
+  library. (issue #48)
+
+* Fixed address quoting logic and IDN2 encoding.
+
+    The rules for quoting address names should use 'specials'
+    instead of 'tspecials' and when encoding domain names via
+    IDN2, check if the encoded domain matches the original
+    domain name (other than case). If they match, prefer the
+    non-encoded domain name since the user may have used
+    uppercase characters to enhance readability of the domain
+    name.
+
+* Added GMIME_DECRYPT_ENABLE_ONLINE_CERTIFICATE_CHECKS and
+  GMIME_DECRYPT_ENABLE_KEYSERVER_LOOKUPS as possible flags to
+  pass to g_mime_crypto_context_decrypt(). Also added
+  GMIME_VERIFY_ENABLE_ONLINE_CERTIFICATE_CHECKS and
+  GMIME_VERIFY_ENABLE_KEYSERVER_LOOKUPS as possible flags to
+  pass to g_mime_crypto_context_verify().
+
+    Clients that wish to enable online certificate and/or
+    keyserver lookups now need to explicitly enable this
+    functionality.
+    
+    These changes are designed to make it more difficult
+    for clients to be susceptible to Efail privacy exploits.
+    Specifically, it is meant to address the privacy concerns
+    regarding CRL and OCSP status check backchannels.
+
+    For more information about Efail, see https://www.efail.de/
+
+* Fixed g_mime_message_write_to_stream() to prioritize message
+  headers over body headers (even when they have an offset of -1).
+  (issue #46)
+
+* The GMimeParser can now warn about a number of RFC-compliance
+  issues that it finds when parsing messages.
+
+* Fixed GMimeTextPart to make sure that the GMimeFilterCharset is
+  non-null before trying to use it. This can happen if the charset
+  specified in the Content-Type header is unsupported by the
+  iconv library.
