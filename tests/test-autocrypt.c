@@ -892,6 +892,10 @@ test_ah_message_parse (void)
 						g_error_free (err);
 						throw (ex);
 					}
+#else
+					/* pretend that we do not expect any gossip so that we don't fail the test
+					   simply because we don't have crypto support. */
+					gossip_expected = FALSE;
 #endif
 				}
 			}
