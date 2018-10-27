@@ -679,131 +679,124 @@ static void
 test_ah_injection (void)
 {
 	unsigned int i;
-	for (i = 0; i < G_N_ELEMENTS(inject_test_data); i++) {
-		GMimeAutocryptHeader *ah = NULL;
-		char *str = NULL;
+	
+	for (i = 0; i < G_N_ELEMENTS (inject_test_data); i++) {
+		GMimeMultipartEncrypted *encrypted = NULL;
+		GMimeMessage *before = NULL;
 		GMimeStream *stream = NULL;
 		GMimeParser *parser = NULL;
-		GMimeMessage *before = NULL;
-		GMimeStream *afterstream = NULL;
-		GByteArray *after = NULL;
-		GMimeAutocryptHeaderList *ahl = NULL;
-		GMimeCryptoContext *ctx = NULL;
-		GPtrArray *recip = NULL;
-		GMimeMultipartEncrypted *encrypted = NULL;
-		GMimeObject *cleartext = NULL;
-		GMimeStream *innerafterstream = NULL;
-		GByteArray *innerafter = NULL;
 		GError *err = NULL;
+		char *str = NULL;
 		int r, ix;
 		
 		try {
 			const struct _ah_inject_test *test = inject_test_data + i;
 			testsuite_check ("Autocrypt injection[%u] (%s)", i, test->name);
 			
-			stream = g_mime_stream_mem_new_with_buffer (test->before, strlen(test->before));
+			stream = g_mime_stream_mem_new_with_buffer (test->before, strlen (test->before));
 			parser = g_mime_parser_new_with_stream (stream);
+			g_object_unref (stream);
+			
 			before = g_mime_parser_construct_message (parser, NULL);
-
+			g_object_unref (parser);
+			
 			if (test->acheader) {
-				ah = _gen_header (test->acheader);
+				GMimeAutocryptHeader *ah = _gen_header (test->acheader);
+				
 			        g_mime_object_set_header (GMIME_OBJECT (before), "Autocrypt",
 						         g_mime_autocrypt_header_to_string (ah, FALSE), NULL);
+				g_object_unref (ah);
 			}
-
+			
 			if (test->encrypt_to) {
-				ctx = g_mime_gpg_context_new ();
-				recip = g_ptr_array_new ();
-				for (r = 0; test->encrypt_to[r]; r++)
-					g_ptr_array_add (recip, (gpointer)(test->encrypt_to[r]));
 				/* get_mime_part is "transfer none" so mainpart does not need to be cleaned up */
 				GMimeObject *mainpart = g_mime_message_get_mime_part (before);
-				if (!mainpart) {
+				
+				if (!mainpart)
 					throw (exception_new ("failed to find main part!\n"));
-				}
+				
 				if (test->gossipheaders) {
-					ahl = _gen_header_list (test->gossipheaders);
+					GMimeAutocryptHeaderList *ahl = _gen_header_list (test->gossipheaders);
+					
 					for (ix = 0; ix < g_mime_autocrypt_header_list_get_count (ahl); ix++) {
 						g_mime_object_append_header (mainpart, "Autocrypt-Gossip",
 									     g_mime_autocrypt_header_to_string (g_mime_autocrypt_header_list_get_header_at (ahl, ix), TRUE), NULL);
 					}
+					
+					g_object_unref (ahl);
 				}
+				
+				GMimeCryptoContext *ctx = g_mime_gpg_context_new ();
+				GPtrArray *recip = g_ptr_array_new ();
+				
+				for (r = 0; test->encrypt_to[r]; r++)
+					g_ptr_array_add (recip, (gpointer) test->encrypt_to[r]);
 				
 				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, FALSE, NULL,
 										GMIME_ENCRYPT_ALWAYS_TRUST,
 										recip, &err);
-				if (!encrypted) {
+				g_ptr_array_free (recip, TRUE);
+				g_object_unref (ctx);
+				
+				if (!encrypted)
 					throw (exception_new ("failed to encrypt: %s", err->message));
-				}
+				
 				g_mime_message_set_mime_part (before, GMIME_OBJECT (encrypted));
+				g_object_unref (encrypted);
 			}
-
+			
 			if (test->after) {
-				afterstream = g_mime_stream_mem_new ();
-				g_mime_object_write_to_stream (GMIME_OBJECT (before), NULL, afterstream);
-
-				after = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (afterstream));
+				stream = g_mime_stream_mem_new ();
+				g_mime_object_write_to_stream (GMIME_OBJECT (before), NULL, stream);
 				
-				gchar *got = (gchar*)after->data;
-				if (memcmp (got, test->after, strlen(test->after))) {
+				GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+				char *got = (char *) bytes->data;
+				
+				if (memcmp (got, test->after, strlen (test->after)) != 0) {
 					fprintf (stderr, "Expected: %s\nGot: %s\n", test->after, got);
+					g_object_unref (stream);
+					
 					throw (exception_new ("failed to match"));
+				} else {
+					g_object_unref (stream);
 				}
 			}
+			
 			if (test->inner_after) {
-				if (!encrypted) {
+				if (!encrypted)
 					throw (exception_new ("inner_after, but no encrypted part!\n"));
-				}
 				
-				cleartext = g_mime_multipart_encrypted_decrypt (encrypted,
-										GMIME_DECRYPT_NONE,
-										NULL, NULL, &err);
-				if (!cleartext) {
+				GMimeObject *cleartext = g_mime_multipart_encrypted_decrypt (encrypted,
+											     GMIME_DECRYPT_NONE,
+											     NULL, NULL, &err);
+				if (!cleartext)
 					throw (exception_new ("decryption failed: %s!\n", err->message));
-				}
-				innerafterstream = g_mime_stream_mem_new ();
-				g_mime_object_write_to_stream (cleartext, NULL, innerafterstream);
-
-				innerafter = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (innerafterstream));
 				
-				gchar *got = (gchar*)innerafter->data;
-				if (memcmp (got, test->inner_after, strlen(test->inner_after))) {
+				stream = g_mime_stream_mem_new ();
+				g_mime_object_write_to_stream (cleartext, NULL, stream);
+				g_object_unref (cleartext);
+				
+				GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+				char *got = (char*) bytes->data;
+				
+				if (memcmp (got, test->inner_after, strlen (test->inner_after)) != 0) {
 					fprintf (stderr, "Expected: %s\nGot: %s\n", test->inner_after, got);
+					g_object_unref (stream);
+					
 					throw (exception_new ("failed to match"));
+				} else {
+					g_object_unref (stream);
 				}
 			}
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("autocrypt header injection failed: %s", ex->message);
 		} finally;
-		if (ah)
-			g_object_unref (ah);
-		if (stream)
-			g_object_unref (stream);
-		if (parser)
-			g_object_unref (parser);
+		
 		if (before)
 			g_object_unref (before);
-		if (afterstream)
-			g_object_unref (afterstream);
-		if (after)
-			g_byte_array_unref (after);
-		if (ahl)
-			g_object_unref (ahl);
-		if (ctx)
-			g_object_unref (ctx);
-		if (recip)
-			g_ptr_array_unref (recip);
-		if (encrypted)
-			g_object_unref (encrypted);
-		if (cleartext)
-			g_object_unref (cleartext);
 		if (err)
 			g_error_free (err);
-		if (innerafterstream)
-			g_object_unref (innerafterstream);
-		if (innerafter)
-			g_byte_array_unref (innerafter);
 		g_free (str);
 		str = NULL;
 	}
