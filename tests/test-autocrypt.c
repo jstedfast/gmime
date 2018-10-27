@@ -1066,9 +1066,11 @@ int main (int argc, char **argv)
 	test_ah_message_parse ();
 	testsuite_end ();
 	
+#ifdef ENABLE_CRYPTO
 	testsuite_start ("Autocrypt: inject headers");
 	test_ah_injection ();
 	testsuite_end ();
+#endif
 	
 	g_mime_shutdown ();
 	
