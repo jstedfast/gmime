@@ -5,7 +5,7 @@ compiler:
 sudo: required
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y automake gtk-doc-tools gnome-doc-utils libgpgme11 libgpgme11-dev gpgsm lcov libidn2-dev
+  - sudo apt-get install -y automake gtk-doc-tools gnome-doc-utils libgpgme11 libgpgme11-dev gpgsm lcov libidn2-0-dev
 install:
   - pip install --user cpp-coveralls
   - gem install coveralls-lcov
