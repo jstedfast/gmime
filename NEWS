@@ -1,3 +1,7 @@
+### GMime 3.2.2
+
+* Fixed packaging to include Vala files.
+
 ### GMime 3.2.1
 
 * Fixed GMimeParser to recognize the message/global mime-type
