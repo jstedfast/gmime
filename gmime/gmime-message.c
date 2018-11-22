@@ -72,6 +72,12 @@ static void to_list_changed (InternetAddressList *list, gpointer args, GMimeMess
 static void cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 
+static void resent_sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void resent_from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void resent_reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void resent_to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void resent_cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void resent_bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 
 static GMimeObjectClass *parent_class = NULL;
 
@@ -79,12 +85,18 @@ static struct {
 	const char *name;
 	GMimeEventCallback changed_cb;
 } address_types[] = {
-	{ "Sender",   (GMimeEventCallback) sender_changed   },
-	{ "From",     (GMimeEventCallback) from_changed     },
-	{ "Reply-To", (GMimeEventCallback) reply_to_changed },
-	{ "To",       (GMimeEventCallback) to_list_changed  },
-	{ "Cc",       (GMimeEventCallback) cc_list_changed  },
-	{ "Bcc",      (GMimeEventCallback) bcc_list_changed }
+	{ "Sender",          (GMimeEventCallback) sender_changed          },
+	{ "From",            (GMimeEventCallback) from_changed            },
+	{ "Reply-To",        (GMimeEventCallback) reply_to_changed        },
+	{ "To",              (GMimeEventCallback) to_list_changed         },
+	{ "Cc",              (GMimeEventCallback) cc_list_changed         },
+	{ "Bcc",             (GMimeEventCallback) bcc_list_changed        },
+	{ "Resent-Sender",   (GMimeEventCallback) resent_sender_changed   },
+	{ "Resent-From",     (GMimeEventCallback) resent_from_changed     },
+	{ "Resent-Reply-To", (GMimeEventCallback) resent_reply_to_changed },
+	{ "Resent-To",       (GMimeEventCallback) resent_to_list_changed  },
+	{ "Resent-Cc",       (GMimeEventCallback) resent_cc_list_changed  },
+	{ "Resent-Bcc",      (GMimeEventCallback) resent_bcc_list_changed }
 };
 
 #define N_ADDRESS_TYPES G_N_ELEMENTS (address_types)
@@ -244,6 +256,12 @@ enum {
 	HEADER_DATE,
 	HEADER_MESSAGE_ID,
 	HEADER_MIME_VERSION,
+	HEADER_RESENT_SENDER,
+	HEADER_RESENT_FROM,
+	HEADER_RESENT_REPLY_TO,
+	HEADER_RESENT_TO,
+	HEADER_RESENT_CC,
+	HEADER_RESENT_BCC,
 	HEADER_UNKNOWN
 };
 
@@ -258,6 +276,12 @@ static const char *message_headers[] = {
 	"Date",
 	"Message-Id",
 	"MIME-Version",
+	"Resent-Sender",
+	"Resent-From",
+	"Resent-Reply-To",
+	"Resent-To",
+	"Resent-Cc",
+	"Resent-Bcc",
 };
 
 static void
@@ -327,6 +351,24 @@ process_header (GMimeObject *object, GMimeHeader *header)
 		break;
 	case HEADER_BCC:
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
+		break;
+	case HEADER_RESENT_SENDER:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
+		break;
+	case HEADER_RESENT_FROM:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_FROM);
+		break;
+	case HEADER_RESENT_REPLY_TO:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
+		break;
+	case HEADER_RESENT_TO:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_TO);
+		break;
+	case HEADER_RESENT_CC:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_CC);
+		break;
+	case HEADER_RESENT_BCC:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -404,6 +446,24 @@ message_header_removed (GMimeObject *object, GMimeHeader *header)
 		break;
 	case HEADER_BCC:
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
+		break;
+	case HEADER_RESENT_SENDER:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
+		break;
+	case HEADER_RESENT_FROM:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_FROM);
+		break;
+	case HEADER_RESENT_REPLY_TO:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
+		break;
+	case HEADER_RESENT_TO:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_TO);
+		break;
+	case HEADER_RESENT_CC:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_CC);
+		break;
+	case HEADER_RESENT_BCC:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -747,6 +807,108 @@ g_mime_message_get_bcc (GMimeMessage *message)
 }
 
 
+/**
+ * g_mime_message_get_resent_sender:
+ * @message: A #GMimeMessage
+ *
+ * Gets the parsed list of addresses in the Resent-Sender header.
+ *
+ * Returns: (transfer none): the parsed list of addresses in the Resent-Sender header.
+ **/
+InternetAddressList *
+g_mime_message_get_resent_sender (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_SENDER];
+}
+
+
+/**
+ * g_mime_message_get_resent_from:
+ * @message: A #GMimeMessage
+ *
+ * Gets the parsed list of addresses in the Resent-From header.
+ *
+ * Returns: (transfer none): the parsed list of addresses in the Resent-From header.
+ **/
+InternetAddressList *
+g_mime_message_get_resent_from (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_FROM];
+}
+
+
+/**
+ * g_mime_message_get_resent_reply_to:
+ * @message: A #GMimeMessage
+ *
+ * Gets the parsed list of addresses in the Resent-Reply-To header.
+ *
+ * Returns: (transfer none): the parsed list of addresses in the Resent-Reply-To header.
+ **/
+InternetAddressList *
+g_mime_message_get_resent_reply_to (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_REPLY_TO];
+}
+
+
+/**
+ * g_mime_message_get_resent_to:
+ * @message: A #GMimeMessage
+ *
+ * Gets combined list of parsed addresses in the Resent-To header(s).
+ *
+ * Returns: (transfer none): the parsed list of addresses in the resent-To header(s).
+ **/
+InternetAddressList *
+g_mime_message_get_resent_to (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_TO];
+}
+
+
+/**
+ * g_mime_message_get_resent_cc:
+ * @message: A #GMimeMessage
+ *
+ * Gets combined list of parsed addresses in the Resent-Cc header(s).
+ *
+ * Returns: (transfer none): the parsed list of addresses in the Resent-Cc header(s).
+ **/
+InternetAddressList *
+g_mime_message_get_resent_cc (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_CC];
+}
+
+
+/**
+ * g_mime_message_get_resent_bcc:
+ * @message: A #GMimeMessage
+ *
+ * Gets combined list of parsed addresses in the Resent-Bcc header(s).
+ *
+ * Returns: (transfer none): the parsed list of addresses in the Resent-Bcc header(s).
+ **/
+InternetAddressList *
+g_mime_message_get_resent_bcc (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_BCC];
+}
+
+
 static void
 sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, const char *name)
 {
@@ -813,6 +975,41 @@ bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *messag
 	sync_address_header (message, GMIME_ADDRESS_TYPE_BCC);
 }
 
+static void
+resent_sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_SENDER);
+}
+
+static void
+resent_from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_FROM);
+}
+
+static void
+resent_reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
+}
+
+static void
+resent_to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_TO);
+}
+
+static void
+resent_cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_CC);
+}
+
+static void
+resent_bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_BCC);
+}
 
 /**
  * g_mime_message_add_mailbox:

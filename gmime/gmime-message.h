@@ -54,6 +54,12 @@ typedef struct _GMimeMessageClass GMimeMessageClass;
  * @GMIME_ADDRESS_TYPE_TO: Represents the recipients in the To header.
  * @GMIME_ADDRESS_TYPE_CC: Represents the recipients in the Cc header.
  * @GMIME_ADDRESS_TYPE_BCC: Represents the recipients in the Bcc header.
+ * @GMIME_ADDRESS_TYPE_RESENT_SENDER: Represents the addresses in the Resent-Sender header.
+ * @GMIME_ADDRESS_TYPE_RESENT_FROM: Represents the addresses in the Resent-From header.
+ * @GMIME_ADDRESS_TYPE_RESENT_REPLY_TO: Represents the addresses in the Resent-Reply-To header.
+ * @GMIME_ADDRESS_TYPE_RESENT_TO: Represents the recipients in the Resent-To header.
+ * @GMIME_ADDRESS_TYPE_RESENT_CC: Represents the recipients in the Resent-Cc header.
+ * @GMIME_ADDRESS_TYPE_RESENT_BCC: Represents the recipients in the Resent-Bcc header.
  *
  * An address type.
  **/
@@ -63,7 +69,13 @@ typedef enum _GMimeAddressType {
 	GMIME_ADDRESS_TYPE_REPLY_TO,
 	GMIME_ADDRESS_TYPE_TO,
 	GMIME_ADDRESS_TYPE_CC,
-	GMIME_ADDRESS_TYPE_BCC
+	GMIME_ADDRESS_TYPE_BCC,
+	GMIME_ADDRESS_TYPE_RESENT_SENDER,
+	GMIME_ADDRESS_TYPE_RESENT_FROM,
+	GMIME_ADDRESS_TYPE_RESENT_REPLY_TO,
+	GMIME_ADDRESS_TYPE_RESENT_TO,
+	GMIME_ADDRESS_TYPE_RESENT_CC,
+	GMIME_ADDRESS_TYPE_RESENT_BCC
 } GMimeAddressType;
 
 
@@ -107,6 +119,13 @@ InternetAddressList *g_mime_message_get_reply_to (GMimeMessage *message);
 InternetAddressList *g_mime_message_get_to (GMimeMessage *message);
 InternetAddressList *g_mime_message_get_cc (GMimeMessage *message);
 InternetAddressList *g_mime_message_get_bcc (GMimeMessage *message);
+
+InternetAddressList *g_mime_message_get_resent_from (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_resent_sender (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_resent_reply_to (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_resent_to (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_resent_cc (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_resent_bcc (GMimeMessage *message);
 
 void g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, const char *name, const char *addr);
 InternetAddressList *g_mime_message_get_addresses (GMimeMessage *message, GMimeAddressType type);
