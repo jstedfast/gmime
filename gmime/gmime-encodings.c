@@ -685,7 +685,7 @@ g_mime_encoding_uuencode_step (const unsigned char *inbuf, size_t inlen, unsigne
 	i = *state & 0xff;
 	uulen = (*state >> 8) & 0xff;
 	
-	if ((inlen + uulen) < 45) {
+	if ((inlen + i + uulen) < 45) {
 		/* not enough input to write a full uuencoded line */
 		bufptr = uubuf + ((uulen / 3) * 4);
 	} else {

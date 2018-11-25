@@ -13,6 +13,7 @@ AUTOMATED_TESTS =	\
 	test-iconv	\
 	test-streams	\
 	test-cat	\
+	test-encoders	\
 	test-filters	\
 	test-headers	\
 	test-mime-part	\
@@ -77,6 +78,11 @@ test_mbox_SOURCES = test-mbox.c testsuite.c testsuite.h
 test_mbox_LDFLAGS = 
 test_mbox_DEPENDENCIES = $(DEPS)
 test_mbox_LDADD = $(LDADDS)
+
+test_encoders_SOURCES = test-encoders.c testsuite.c testsuite.h
+test_encoders_LDFLAGS = 
+test_encoders_DEPENDENCIES = $(DEPS)
+test_encoders_LDADD = $(LDADDS)
 
 test_filters_SOURCES = test-filters.c testsuite.c testsuite.h
 test_filters_LDFLAGS = 
