@@ -358,8 +358,8 @@ int main (int argc, char **argv)
 	test_encoder (GMIME_CONTENT_ENCODING_UUENCODE, photo, uu, 1);
 	test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 4096);
 	test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 1024);
-	//test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 16);
-	//test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 1);
+	test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 16);
+	test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 1);
 	testsuite_end ();
 	
 	g_mime_shutdown ();

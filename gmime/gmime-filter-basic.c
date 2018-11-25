@@ -138,7 +138,7 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			
 			while (inptr < inend) {
 				left = inend - inptr;
-				if (left < 6) {
+				if (left <= 6) {
 					if (!strncmp (inptr, "begin ", left))
 						g_mime_filter_backup (filter, inptr, left);
 					break;
@@ -174,7 +174,10 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			break;
 		default:
 			/* either we haven't seen the begin-line or we've finished decoding */
-			goto done;
+			*outprespace = filter->outpre;
+			*outlen = nwritten;
+			*outbuf = inbuf;
+			return;
 		}
 	}
 	
@@ -183,7 +186,6 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	nwritten = g_mime_encoding_step (encoder, inbuf, inlen, filter->outbuf);
 	g_assert (nwritten <= len);
 	
- done:
 	*outprespace = filter->outpre;
 	*outbuf = filter->outbuf;
 	*outlen = nwritten;
