@@ -13,7 +13,7 @@ AUTOMATED_TESTS =	\
 	test-iconv	\
 	test-streams	\
 	test-cat	\
-	test-encoders	\
+	test-encodings	\
 	test-filters	\
 	test-headers	\
 	test-mime-part	\
@@ -79,10 +79,10 @@ test_mbox_LDFLAGS =
 test_mbox_DEPENDENCIES = $(DEPS)
 test_mbox_LDADD = $(LDADDS)
 
-test_encoders_SOURCES = test-encoders.c testsuite.c testsuite.h
-test_encoders_LDFLAGS = 
-test_encoders_DEPENDENCIES = $(DEPS)
-test_encoders_LDADD = $(LDADDS)
+test_encodings_SOURCES = test-encodings.c testsuite.c testsuite.h
+test_encodings_LDFLAGS = 
+test_encodings_DEPENDENCIES = $(DEPS)
+test_encodings_LDADD = $(LDADDS)
 
 test_filters_SOURCES = test-filters.c testsuite.c testsuite.h
 test_filters_LDFLAGS = 
@@ -138,7 +138,8 @@ endif
 
 EXTRA_DIST = $(wildcard empty*.msg rfc2060.msg data/pgp*/* data/smime/* \
 	data/partial/input/photo-discuss/*.eml data/partial/output/* \
-	data/mbox/*put/substring.mbox data/filters/* data/mime-part/*)
+	data/mbox/*put/substring.mbox data/filters/* data/mime-part/* \
+	data/encodings/*)
 
 VERBOSITY=-v
 
