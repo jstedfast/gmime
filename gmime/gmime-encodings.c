@@ -104,7 +104,7 @@ static gboolean
 is (const char *str, const char *value, size_t n)
 {
 	return g_ascii_strncasecmp (str, value, n) == 0 &&
-		(str[n] == '\0' || is_lwsp (str[n]);
+		(str[n] == '\0' || is_lwsp (str[n]));
 }
 
 
