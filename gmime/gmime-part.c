@@ -165,28 +165,11 @@ static const char *content_headers[] = {
 };
 
 
-static void
-copy_atom (const char *src, char *dest, size_t n)
-{
-	register const char *inptr = src;
-	register char *outptr = dest;
-	char *outend = dest + n;
-	
-	while (is_lwsp (*inptr))
-		inptr++;
-	
-	while (is_atom (*inptr) && outptr < outend)
-		*outptr++ = *inptr++;
-	
-	*outptr = '\0';
-}
-
 static gboolean
 process_header (GMimeObject *object, GMimeHeader *header)
 {
 	GMimePart *mime_part = (GMimePart *) object;
 	const char *name, *value;
-	char encoding[32];
 	guint i;
 	
 	name = g_mime_header_get_name (header);
@@ -202,8 +185,7 @@ process_header (GMimeObject *object, GMimeHeader *header)
 	switch (i) {
 	case HEADER_CONTENT_TRANSFER_ENCODING:
 		value = g_mime_header_get_value (header);
-		copy_atom (value, encoding, sizeof (encoding) - 1);
-		mime_part->encoding = g_mime_content_encoding_from_string (encoding);
+		mime_part->encoding = g_mime_content_encoding_from_string (value);
 		break;
 	case HEADER_CONTENT_DESCRIPTION:
 		value = g_mime_header_get_value (header);

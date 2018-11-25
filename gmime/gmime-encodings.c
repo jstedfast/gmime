@@ -100,6 +100,14 @@ static unsigned char tohex[16] = {
 };
 
 
+static gboolean
+is (const char *str, const char *value, size_t n)
+{
+	return g_ascii_strncasecmp (str, value, n) == 0 &&
+		(str[n] == '\0' || is_lwsp (str[n]);
+}
+
+
 /**
  * g_mime_content_encoding_from_string:
  * @str: a string representing a Content-Transfer-Encoding value
@@ -113,25 +121,28 @@ static unsigned char tohex[16] = {
 GMimeContentEncoding
 g_mime_content_encoding_from_string (const char *str)
 {
-	if (!g_ascii_strcasecmp (str, "7bit"))
+	while (is_lwsp (*str))
+		str++;
+	
+	if (is (str, "7bit", 4))
 		return GMIME_CONTENT_ENCODING_7BIT;
-	else if (!g_ascii_strcasecmp (str, "8bit"))
+	else if (is (str, "8bit", 4))
 		return GMIME_CONTENT_ENCODING_8BIT;
-	else if (!g_ascii_strcasecmp (str, "7-bit"))
+	else if (is (str, "7-bit", 5))
 		return GMIME_CONTENT_ENCODING_7BIT;
-	else if (!g_ascii_strcasecmp (str, "8-bit"))
+	else if (is (str, "8-bit", 5))
 		return GMIME_CONTENT_ENCODING_8BIT;
-	else if (!g_ascii_strcasecmp (str, "binary"))
+	else if (is (str, "binary", 6))
 		return GMIME_CONTENT_ENCODING_BINARY;
-	else if (!g_ascii_strcasecmp (str, "base64"))
+	else if (is (str, "base64", 6))
 		return GMIME_CONTENT_ENCODING_BASE64;
-	else if (!g_ascii_strcasecmp (str, "quoted-printable"))
+	else if (is (str, "quoted-printable", 16))
 		return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
-	else if (!g_ascii_strcasecmp (str, "uuencode"))
+	else if (is (str, "uuencode", 8))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
-	else if (!g_ascii_strcasecmp (str, "x-uuencode"))
+	else if (is (str, "x-uuencode", 10))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
-	else if (!g_ascii_strcasecmp (str, "x-uue"))
+	else if (is (str, "x-uue", 5))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
 	else
 		return GMIME_CONTENT_ENCODING_DEFAULT;
