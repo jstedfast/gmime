@@ -1761,17 +1761,61 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	g_object_unref (message);
 }
 
+static gboolean
+is_rfc822 (const char *subtype)
+{
+	if (!g_ascii_strcasecmp (subtype, "rfc2822"))
+		return TRUE;
+	if (!g_ascii_strcasecmp (subtype, "rfc822"))
+		return TRUE;
+	if (!g_ascii_strcasecmp (subtype, "global"))
+		return TRUE;
+	if (!g_ascii_strcasecmp (subtype, "news"))
+		return TRUE;
+	return FALSE;
+}
+
 static GMimeObject *
 parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
+	const char *subtype = content_type->subtype;
+	const char *type = content_type->type;
 	GMimeObject *object;
 	Header *header;
 	guint i;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
-	object = g_mime_object_new_type (options, content_type->type, content_type->subtype);
+	if (!g_ascii_strcasecmp (type, "message") && is_rfc822 (subtype)) {
+		gboolean is_encoded = FALSE;
+		
+		for (i = 0; i < priv->headers->len; i++) {
+			header = priv->headers->pdata[i];
+			
+			if (g_ascii_strcasecmp (header->name, "Content-Transfer-Encoding") != 0)
+				continue;
+			
+			switch (g_mime_content_encoding_from_string (header->raw_value)) {
+			case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+			case GMIME_CONTENT_ENCODING_UUENCODE:
+			case GMIME_CONTENT_ENCODING_BASE64:
+				is_encoded = TRUE;
+				break;
+			default:
+				break;
+			}
+			
+			break;
+		}
+		
+		if (is_encoded) {
+			subtype = "octet-stream";
+			type = "application";
+		}
+	}
+	
+	object = g_mime_object_new_type (options, type, subtype);
 	
 	if (!content_type->exists) {
 		GMimeContentType *mime_type;
