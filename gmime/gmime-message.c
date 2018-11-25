@@ -205,6 +205,8 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	
 	message->addrlists = g_new (InternetAddressList *, N_ADDRESS_TYPES);
 	((GMimeObject *) message)->ensure_newline = TRUE;
+	message->resent_message_id = NULL;
+	message->resent_date = NULL;
 	message->message_id = NULL;
 	message->mime_part = NULL;
 	message->subject = NULL;
@@ -230,9 +232,13 @@ g_mime_message_finalize (GObject *object)
 	}
 	
 	g_free (message->addrlists);
+	g_free (message->resent_message_id);
 	g_free (message->message_id);
 	g_free (message->subject);
 	g_free (message->marker);
+	
+	if (message->resent_date)
+		g_date_time_unref (message->resent_date);
 	
 	if (message->date)
 		g_date_time_unref (message->date);
@@ -262,6 +268,8 @@ enum {
 	HEADER_RESENT_TO,
 	HEADER_RESENT_CC,
 	HEADER_RESENT_BCC,
+	HEADER_RESENT_DATE,
+	HEADER_RESENT_MESSAGE_ID,
 	HEADER_UNKNOWN
 };
 
@@ -282,6 +290,8 @@ static const char *message_headers[] = {
 	"Resent-To",
 	"Resent-Cc",
 	"Resent-Bcc",
+	"Resent-Date",
+	"Resent-Message-Id"
 };
 
 static void
@@ -352,24 +362,6 @@ process_header (GMimeObject *object, GMimeHeader *header)
 	case HEADER_BCC:
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
 		break;
-	case HEADER_RESENT_SENDER:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
-		break;
-	case HEADER_RESENT_FROM:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_FROM);
-		break;
-	case HEADER_RESENT_REPLY_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
-		break;
-	case HEADER_RESENT_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_TO);
-		break;
-	case HEADER_RESENT_CC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_CC);
-		break;
-	case HEADER_RESENT_BCC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
-		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
 		
@@ -393,6 +385,40 @@ process_header (GMimeObject *object, GMimeHeader *header)
 			message->message_id = g_mime_utils_decode_message_id (value);
 		else
 			message->message_id = NULL;
+		break;
+	case HEADER_RESENT_SENDER:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
+		break;
+	case HEADER_RESENT_FROM:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_FROM);
+		break;
+	case HEADER_RESENT_REPLY_TO:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
+		break;
+	case HEADER_RESENT_TO:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_TO);
+		break;
+	case HEADER_RESENT_CC:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_CC);
+		break;
+	case HEADER_RESENT_BCC:
+		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
+		break;
+	case HEADER_RESENT_DATE:
+		if ((value = g_mime_header_get_value (header))) {
+			if (message->resent_date)
+				g_date_time_unref (message->resent_date);
+			
+			message->resent_date = g_mime_utils_header_decode_date (value);
+		}
+		break;
+	case HEADER_RESENT_MESSAGE_ID:
+		g_free (message->resent_message_id);
+		
+		if ((value = g_mime_header_get_value (header)))
+			message->resent_message_id = g_mime_utils_decode_message_id (value);
+		else
+			message->resent_message_id = NULL;
 		break;
 	}
 }
@@ -447,6 +473,20 @@ message_header_removed (GMimeObject *object, GMimeHeader *header)
 	case HEADER_BCC:
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
 		break;
+	case HEADER_SUBJECT:
+		g_free (message->subject);
+		message->subject = NULL;
+		break;
+	case HEADER_DATE:
+		if (message->date) {
+			g_date_time_unref (message->date);
+			message->date = NULL;
+		}
+		break;
+	case HEADER_MESSAGE_ID:
+		g_free (message->message_id);
+		message->message_id = NULL;
+		break;
 	case HEADER_RESENT_SENDER:
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
 		break;
@@ -465,19 +505,15 @@ message_header_removed (GMimeObject *object, GMimeHeader *header)
 	case HEADER_RESENT_BCC:
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
 		break;
-	case HEADER_SUBJECT:
-		g_free (message->subject);
-		message->subject = NULL;
-		break;
-	case HEADER_DATE:
-		if (message->date) {
-			g_date_time_unref (message->date);
-			message->date = NULL;
+	case HEADER_RESENT_DATE:
+		if (message->resent_date) {
+			g_date_time_unref (message->resent_date);
+			message->resent_date = NULL;
 		}
 		break;
-	case HEADER_MESSAGE_ID:
-		g_free (message->message_id);
-		message->message_id = NULL;
+	case HEADER_RESENT_MESSAGE_ID:
+		g_free (message->resent_message_id);
+		message->resent_message_id = NULL;
 		break;
 	}
 	
@@ -496,10 +532,17 @@ message_headers_cleared (GMimeObject *object)
 		unblock_changed_event (message, i);
 	}
 	
+	g_free (message->resent_message_id);
+	message->resent_message_id = NULL;
 	g_free (message->message_id);
 	message->message_id = NULL;
 	g_free (message->subject);
 	message->subject = NULL;
+	
+	if (message->resent_date) {
+		g_date_time_unref (message->resent_date);
+		message->resent_date = NULL;
+	}
 	
 	if (message->date) {
 		g_date_time_unref (message->date);
@@ -1170,6 +1213,43 @@ g_mime_message_get_date (GMimeMessage *message)
 
 
 /**
+ * g_mime_message_set_resent_date:
+ * @message: A #GMimeMessage
+ * @date: a date to be used in the Resent-Date header
+ * 
+ * Sets the Resent-Date header on a MIME Message.
+ **/
+void
+g_mime_message_set_resent_date (GMimeMessage *message, GDateTime *date)
+{
+	char *str;
+	
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	
+	str = g_mime_utils_header_format_date (date);
+	g_mime_object_set_header ((GMimeObject *) message, "Resent-Date", str, NULL);
+	g_free (str);
+}
+
+
+/**
+ * g_mime_message_get_resent_date:
+ * @message: A #GMimeMessage
+ * 
+ * Gets the parsed date and time value from the Resent-Date header.
+ *
+ * Returns: a #GDateTime on success or %NULL if the date could not be parsed.
+ **/
+GDateTime *
+g_mime_message_get_resent_date (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->resent_date;
+}
+
+
+/**
  * g_mime_message_set_message_id: 
  * @message: A #GMimeMessage
  * @message_id: message-id (addr-spec portion)
@@ -1204,6 +1284,44 @@ g_mime_message_get_message_id (GMimeMessage *message)
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return message->message_id;
+}
+
+
+/**
+ * g_mime_message_set_resent_message_id: 
+ * @message: A #GMimeMessage
+ * @message_id: message-id (addr-spec portion)
+ *
+ * Set the Resent-Message-Id on a message.
+ **/
+void
+g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message_id)
+{
+	char *msgid;
+	
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (message_id != NULL);
+	
+	msgid = g_strdup_printf ("<%s>", message_id);
+	g_mime_object_set_header ((GMimeObject *) message, "Resent-Message-Id", msgid, NULL);
+	g_free (msgid);
+}
+
+
+/**
+ * g_mime_message_get_resent_message_id: 
+ * @message: A #GMimeMessage
+ *
+ * Gets the Resent-Message-Id header of @message.
+ *
+ * Returns: the Resent-Message-Id of a message.
+ **/
+const char *
+g_mime_message_get_resent_message_id (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->resent_message_id;
 }
 
 

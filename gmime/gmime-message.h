@@ -87,6 +87,8 @@ typedef enum _GMimeAddressType {
  * @message_id: Message-Id string
  * @date: Date value
  * @subject: Subject string
+ * @resent_message_id: The Resent-Message-Id string
+ * @resent_date: The Resent-Date value
  *
  * A MIME Message object.
  **/
@@ -98,6 +100,9 @@ struct _GMimeMessage {
 	char *message_id;
 	GDateTime *date;
 	char *subject;
+	
+	char *resent_message_id;
+	GDateTime *resent_date;
 	
 	/* <private> */
 	char *marker;
@@ -137,8 +142,14 @@ const char *g_mime_message_get_subject (GMimeMessage *message);
 void g_mime_message_set_date (GMimeMessage *message, GDateTime *date);
 GDateTime *g_mime_message_get_date (GMimeMessage *message);
 
+void g_mime_message_set_resent_date (GMimeMessage *message, GDateTime *date);
+GDateTime *g_mime_message_get_resent_date (GMimeMessage *message);
+
 void g_mime_message_set_message_id (GMimeMessage *message, const char *message_id);
 const char *g_mime_message_get_message_id (GMimeMessage *message);
+
+void g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message_id);
+const char *g_mime_message_get_resent_message_id (GMimeMessage *message);
 
 GMimeObject *g_mime_message_get_mime_part (GMimeMessage *message);
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
