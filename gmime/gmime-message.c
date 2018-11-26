@@ -72,13 +72,6 @@ static void to_list_changed (InternetAddressList *list, gpointer args, GMimeMess
 static void cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 
-static void resent_sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
-
 static GMimeObjectClass *parent_class = NULL;
 
 static struct {
@@ -91,12 +84,6 @@ static struct {
 	{ "To",              (GMimeEventCallback) to_list_changed         },
 	{ "Cc",              (GMimeEventCallback) cc_list_changed         },
 	{ "Bcc",             (GMimeEventCallback) bcc_list_changed        },
-	{ "Resent-Sender",   (GMimeEventCallback) resent_sender_changed   },
-	{ "Resent-From",     (GMimeEventCallback) resent_from_changed     },
-	{ "Resent-Reply-To", (GMimeEventCallback) resent_reply_to_changed },
-	{ "Resent-To",       (GMimeEventCallback) resent_to_list_changed  },
-	{ "Resent-Cc",       (GMimeEventCallback) resent_cc_list_changed  },
-	{ "Resent-Bcc",      (GMimeEventCallback) resent_bcc_list_changed }
 };
 
 #define N_ADDRESS_TYPES G_N_ELEMENTS (address_types)
@@ -205,8 +192,6 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	
 	message->addrlists = g_new (InternetAddressList *, N_ADDRESS_TYPES);
 	((GMimeObject *) message)->ensure_newline = TRUE;
-	message->resent_message_id = NULL;
-	message->resent_date = NULL;
 	message->message_id = NULL;
 	message->mime_part = NULL;
 	message->subject = NULL;
@@ -232,13 +217,9 @@ g_mime_message_finalize (GObject *object)
 	}
 	
 	g_free (message->addrlists);
-	g_free (message->resent_message_id);
 	g_free (message->message_id);
 	g_free (message->subject);
 	g_free (message->marker);
-	
-	if (message->resent_date)
-		g_date_time_unref (message->resent_date);
 	
 	if (message->date)
 		g_date_time_unref (message->date);
@@ -262,14 +243,6 @@ enum {
 	HEADER_DATE,
 	HEADER_MESSAGE_ID,
 	HEADER_MIME_VERSION,
-	HEADER_RESENT_SENDER,
-	HEADER_RESENT_FROM,
-	HEADER_RESENT_REPLY_TO,
-	HEADER_RESENT_TO,
-	HEADER_RESENT_CC,
-	HEADER_RESENT_BCC,
-	HEADER_RESENT_DATE,
-	HEADER_RESENT_MESSAGE_ID,
 	HEADER_UNKNOWN
 };
 
@@ -283,15 +256,7 @@ static const char *message_headers[] = {
 	"Subject",
 	"Date",
 	"Message-Id",
-	"MIME-Version",
-	"Resent-Sender",
-	"Resent-From",
-	"Resent-Reply-To",
-	"Resent-To",
-	"Resent-Cc",
-	"Resent-Bcc",
-	"Resent-Date",
-	"Resent-Message-Id"
+	"MIME-Version"
 };
 
 static void
@@ -386,40 +351,6 @@ process_header (GMimeObject *object, GMimeHeader *header)
 		else
 			message->message_id = NULL;
 		break;
-	case HEADER_RESENT_SENDER:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
-		break;
-	case HEADER_RESENT_FROM:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_FROM);
-		break;
-	case HEADER_RESENT_REPLY_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
-		break;
-	case HEADER_RESENT_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_TO);
-		break;
-	case HEADER_RESENT_CC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_CC);
-		break;
-	case HEADER_RESENT_BCC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
-		break;
-	case HEADER_RESENT_DATE:
-		if ((value = g_mime_header_get_value (header))) {
-			if (message->resent_date)
-				g_date_time_unref (message->resent_date);
-			
-			message->resent_date = g_mime_utils_header_decode_date (value);
-		}
-		break;
-	case HEADER_RESENT_MESSAGE_ID:
-		g_free (message->resent_message_id);
-		
-		if ((value = g_mime_header_get_value (header)))
-			message->resent_message_id = g_mime_utils_decode_message_id (value);
-		else
-			message->resent_message_id = NULL;
-		break;
 	}
 }
 
@@ -487,34 +418,6 @@ message_header_removed (GMimeObject *object, GMimeHeader *header)
 		g_free (message->message_id);
 		message->message_id = NULL;
 		break;
-	case HEADER_RESENT_SENDER:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
-		break;
-	case HEADER_RESENT_FROM:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_FROM);
-		break;
-	case HEADER_RESENT_REPLY_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
-		break;
-	case HEADER_RESENT_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_TO);
-		break;
-	case HEADER_RESENT_CC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_CC);
-		break;
-	case HEADER_RESENT_BCC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
-		break;
-	case HEADER_RESENT_DATE:
-		if (message->resent_date) {
-			g_date_time_unref (message->resent_date);
-			message->resent_date = NULL;
-		}
-		break;
-	case HEADER_RESENT_MESSAGE_ID:
-		g_free (message->resent_message_id);
-		message->resent_message_id = NULL;
-		break;
 	}
 	
 	GMIME_OBJECT_CLASS (parent_class)->header_removed (object, header);
@@ -532,17 +435,10 @@ message_headers_cleared (GMimeObject *object)
 		unblock_changed_event (message, i);
 	}
 	
-	g_free (message->resent_message_id);
-	message->resent_message_id = NULL;
 	g_free (message->message_id);
 	message->message_id = NULL;
 	g_free (message->subject);
 	message->subject = NULL;
-	
-	if (message->resent_date) {
-		g_date_time_unref (message->resent_date);
-		message->resent_date = NULL;
-	}
 	
 	if (message->date) {
 		g_date_time_unref (message->date);
@@ -850,108 +746,6 @@ g_mime_message_get_bcc (GMimeMessage *message)
 }
 
 
-/**
- * g_mime_message_get_resent_sender:
- * @message: A #GMimeMessage
- *
- * Gets the parsed list of addresses in the Resent-Sender header.
- *
- * Returns: (transfer none): the parsed list of addresses in the Resent-Sender header.
- **/
-InternetAddressList *
-g_mime_message_get_resent_sender (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_SENDER];
-}
-
-
-/**
- * g_mime_message_get_resent_from:
- * @message: A #GMimeMessage
- *
- * Gets the parsed list of addresses in the Resent-From header.
- *
- * Returns: (transfer none): the parsed list of addresses in the Resent-From header.
- **/
-InternetAddressList *
-g_mime_message_get_resent_from (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_FROM];
-}
-
-
-/**
- * g_mime_message_get_resent_reply_to:
- * @message: A #GMimeMessage
- *
- * Gets the parsed list of addresses in the Resent-Reply-To header.
- *
- * Returns: (transfer none): the parsed list of addresses in the Resent-Reply-To header.
- **/
-InternetAddressList *
-g_mime_message_get_resent_reply_to (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_REPLY_TO];
-}
-
-
-/**
- * g_mime_message_get_resent_to:
- * @message: A #GMimeMessage
- *
- * Gets combined list of parsed addresses in the Resent-To header(s).
- *
- * Returns: (transfer none): the parsed list of addresses in the resent-To header(s).
- **/
-InternetAddressList *
-g_mime_message_get_resent_to (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_TO];
-}
-
-
-/**
- * g_mime_message_get_resent_cc:
- * @message: A #GMimeMessage
- *
- * Gets combined list of parsed addresses in the Resent-Cc header(s).
- *
- * Returns: (transfer none): the parsed list of addresses in the Resent-Cc header(s).
- **/
-InternetAddressList *
-g_mime_message_get_resent_cc (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_CC];
-}
-
-
-/**
- * g_mime_message_get_resent_bcc:
- * @message: A #GMimeMessage
- *
- * Gets combined list of parsed addresses in the Resent-Bcc header(s).
- *
- * Returns: (transfer none): the parsed list of addresses in the Resent-Bcc header(s).
- **/
-InternetAddressList *
-g_mime_message_get_resent_bcc (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_BCC];
-}
-
-
 static void
 sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, const char *name)
 {
@@ -1018,41 +812,6 @@ bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *messag
 	sync_address_header (message, GMIME_ADDRESS_TYPE_BCC);
 }
 
-static void
-resent_sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_SENDER);
-}
-
-static void
-resent_from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_FROM);
-}
-
-static void
-resent_reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
-}
-
-static void
-resent_to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_TO);
-}
-
-static void
-resent_cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_CC);
-}
-
-static void
-resent_bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_BCC);
-}
 
 /**
  * g_mime_message_add_mailbox:
@@ -1213,43 +972,6 @@ g_mime_message_get_date (GMimeMessage *message)
 
 
 /**
- * g_mime_message_set_resent_date:
- * @message: A #GMimeMessage
- * @date: a date to be used in the Resent-Date header
- * 
- * Sets the Resent-Date header on a MIME Message.
- **/
-void
-g_mime_message_set_resent_date (GMimeMessage *message, GDateTime *date)
-{
-	char *str;
-	
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	
-	str = g_mime_utils_header_format_date (date);
-	g_mime_object_set_header ((GMimeObject *) message, "Resent-Date", str, NULL);
-	g_free (str);
-}
-
-
-/**
- * g_mime_message_get_resent_date:
- * @message: A #GMimeMessage
- * 
- * Gets the parsed date and time value from the Resent-Date header.
- *
- * Returns: a #GDateTime on success or %NULL if the date could not be parsed.
- **/
-GDateTime *
-g_mime_message_get_resent_date (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->resent_date;
-}
-
-
-/**
  * g_mime_message_set_message_id: 
  * @message: A #GMimeMessage
  * @message_id: message-id (addr-spec portion)
@@ -1284,44 +1006,6 @@ g_mime_message_get_message_id (GMimeMessage *message)
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return message->message_id;
-}
-
-
-/**
- * g_mime_message_set_resent_message_id: 
- * @message: A #GMimeMessage
- * @message_id: message-id (addr-spec portion)
- *
- * Set the Resent-Message-Id on a message.
- **/
-void
-g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message_id)
-{
-	char *msgid;
-	
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (message_id != NULL);
-	
-	msgid = g_strdup_printf ("<%s>", message_id);
-	g_mime_object_set_header ((GMimeObject *) message, "Resent-Message-Id", msgid, NULL);
-	g_free (msgid);
-}
-
-
-/**
- * g_mime_message_get_resent_message_id: 
- * @message: A #GMimeMessage
- *
- * Gets the Resent-Message-Id header of @message.
- *
- * Returns: the Resent-Message-Id of a message.
- **/
-const char *
-g_mime_message_get_resent_message_id (GMimeMessage *message)
-{
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	
-	return message->resent_message_id;
 }
 
 
