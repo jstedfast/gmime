@@ -210,7 +210,7 @@ an HTML version of the message body that references the sibling video and images
 Now that you have a rough idea of how a message is structured and how to interpret various MIME entities,
 the next step is learning how to traverse the MIME tree using GMime.
 
-### Traversing a MimeMessage
+### Traversing a GMimeMessage
 
 The top-level MIME entity of the message will generally either be a `GMimePart` or a `GMimeMultipart`.
 
