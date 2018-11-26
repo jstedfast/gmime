@@ -82,6 +82,43 @@ static const char *base64_encoded_long_patterns[] = {
 	"fo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQ=="
 };
 
+static struct _mapping {
+	const char *name;
+	const char *text;
+	GMimeContentEncoding encoding;
+} mappings[] = {
+	{ "\"7bit\"", "7bit", GMIME_CONTENT_ENCODING_7BIT },
+	{ "\"7-bit\"", "7-bit", GMIME_CONTENT_ENCODING_7BIT },
+	{ "\"8bit\"", "8bit", GMIME_CONTENT_ENCODING_8BIT },
+	{ "\"8-bit\"", "8-bit", GMIME_CONTENT_ENCODING_8BIT },
+	{ "\"binary\"", "binary", GMIME_CONTENT_ENCODING_BINARY },
+	{ "\"base64\"", "base64", GMIME_CONTENT_ENCODING_BASE64 },
+	{ "\"quoted-printable\"", "quoted-printable", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE },
+	{ "\"uuencode\"", "uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "\"x-uuencode\"", "x-uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "\"x-uue\"", "x-uue", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "\"garbage\"", "garbage", GMIME_CONTENT_ENCODING_DEFAULT },
+	{ "\" 7bit \"", " 7bit ", GMIME_CONTENT_ENCODING_7BIT }
+};
+
+static void
+test_content_encoding_mappings (void)
+{
+	GMimeContentEncoding encoding;
+	guint i;
+	
+	for (i = 0; i < G_N_ELEMENTS (mappings); i++) {
+		testsuite_check ("%s", mappings[i].name);
+		encoding = g_mime_content_encoding_from_string (mappings[i].text);
+		if (encoding != mappings[i].encoding)
+			testsuite_check_failed ("failed: expected: %s; was: %s",
+						g_mime_content_encoding_to_string (mappings[i].encoding),
+						g_mime_content_encoding_to_string (encoding));
+		else
+			testsuite_check_passed ();
+	}
+}
+
 static void
 test_base64_decode_patterns (void)
 {
@@ -229,6 +266,10 @@ test_encoder (GMimeContentEncoding encoding, GByteArray *photo, GByteArray *expe
 	
 	testsuite_check_passed ();
 	
+	g_byte_array_free (actual, TRUE);
+	
+	return;
+	
 error:
 	path = g_strdup_printf ("%s.encode.%zu.txt", name, size);
 	ostream = g_mime_stream_fs_open (path, O_CREAT | O_TRUNC | O_RDWR, 0644, NULL);
@@ -295,6 +336,10 @@ test_decoder (GMimeContentEncoding encoding, GByteArray *encoded, GByteArray *ex
 	
 	testsuite_check_passed ();
 	
+	g_byte_array_free (actual, TRUE);
+	
+	return;
+	
 error:
 	path = g_strdup_printf ("%s.decode.%zu.txt", name, size);
 	ostream = g_mime_stream_fs_open (path, O_CREAT | O_TRUNC | O_RDWR, 0644, NULL);
@@ -309,6 +354,7 @@ int main (int argc, char **argv)
 {
 	const char *datadir = "data/encodings";
 	GByteArray *photo, *b64, *uu;
+	GByteArray *wikipedia, *qp;
 	struct stat st;
 	char *path;
 	int i;
@@ -339,6 +385,18 @@ int main (int argc, char **argv)
 	uu = read_all_bytes (path, TRUE);
 	g_free (path);
 	
+	path = g_build_filename (datadir, "wikipedia.txt", NULL);
+	wikipedia = read_all_bytes (path, TRUE);
+	g_free (path);
+	
+	path = g_build_filename (datadir, "wikipedia.qp", NULL);
+	qp = read_all_bytes (path, TRUE);
+	g_free (path);
+	
+	testsuite_start ("Content-Transfer-Encoding");
+	test_content_encoding_mappings ();
+	testsuite_end ();
+	
 	testsuite_start ("base64");
 	test_base64_decode_patterns ();
 	test_encoder (GMIME_CONTENT_ENCODING_BASE64, photo, b64, 4096);
@@ -361,6 +419,23 @@ int main (int argc, char **argv)
 	test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 16);
 	test_decoder (GMIME_CONTENT_ENCODING_UUENCODE, uu, photo, 1);
 	testsuite_end ();
+	
+	testsuite_start ("quoted-printable");
+	test_encoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, wikipedia, qp, 4096);
+	test_encoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, wikipedia, qp, 1024);
+	test_encoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, wikipedia, qp, 16);
+	test_encoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, wikipedia, qp, 1);
+	test_decoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, qp, wikipedia, 4096);
+	test_decoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, qp, wikipedia, 1024);
+	test_decoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, qp, wikipedia, 16);
+	test_decoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, qp, wikipedia, 1);
+	testsuite_end ();
+	
+	g_byte_array_free (wikipedia, TRUE);
+	g_byte_array_free (photo, TRUE);
+	g_byte_array_free (b64, TRUE);
+	g_byte_array_free (uu, TRUE);
+	g_byte_array_free (qp, TRUE);
 	
 	g_mime_shutdown ();
 	
