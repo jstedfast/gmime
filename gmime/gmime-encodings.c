@@ -896,8 +896,7 @@ g_mime_encoding_quoted_encode_close (const unsigned char *inbuf, size_t inlen, u
 	
 	last = *state;
 	if (last != -1) {
-		/* space/tab must be encoded if its the last character on
-		   the line */
+		/* space/tab must be encoded if its the last character on the line */
 		if (is_qpsafe (last) && !is_blank (last)) {
 			*outptr++ = last;
 		} else {
@@ -905,17 +904,15 @@ g_mime_encoding_quoted_encode_close (const unsigned char *inbuf, size_t inlen, u
 			*outptr++ = tohex[(last >> 4) & 0xf];
 			*outptr++ = tohex[last & 0xf];
 		}
-	}
-	
-	if (last != '\n') {
+		
 		/* we end with =\n so that the \n isn't interpreted as a real
 		   \n when it gets decoded later */
 		*outptr++ = '=';
 		*outptr++ = '\n';
+		*state = -1;
 	}
 	
 	*save = 0;
-	*state = -1;
 	
 	return (outptr - outbuf);
 }

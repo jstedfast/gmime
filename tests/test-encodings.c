@@ -40,6 +40,43 @@ extern int verbose;
 #define d(x)
 #define v(x) if (verbose > 3) x
 
+static struct _mapping {
+	const char *name;
+	const char *text;
+	GMimeContentEncoding encoding;
+} mappings[] = {
+	{ "\"7bit\"", "7bit", GMIME_CONTENT_ENCODING_7BIT },
+	{ "\"7-bit\"", "7-bit", GMIME_CONTENT_ENCODING_7BIT },
+	{ "\"8bit\"", "8bit", GMIME_CONTENT_ENCODING_8BIT },
+	{ "\"8-bit\"", "8-bit", GMIME_CONTENT_ENCODING_8BIT },
+	{ "\"binary\"", "binary", GMIME_CONTENT_ENCODING_BINARY },
+	{ "\"base64\"", "base64", GMIME_CONTENT_ENCODING_BASE64 },
+	{ "\"quoted-printable\"", "quoted-printable", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE },
+	{ "\"uuencode\"", "uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "\"x-uuencode\"", "x-uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "\"x-uue\"", "x-uue", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "\"garbage\"", "garbage", GMIME_CONTENT_ENCODING_DEFAULT },
+	{ "\" 7bit \"", " 7bit ", GMIME_CONTENT_ENCODING_7BIT }
+};
+
+static void
+test_content_encoding_mappings (void)
+{
+	GMimeContentEncoding encoding;
+	guint i;
+	
+	for (i = 0; i < G_N_ELEMENTS (mappings); i++) {
+		testsuite_check ("%s", mappings[i].name);
+		encoding = g_mime_content_encoding_from_string (mappings[i].text);
+		if (encoding != mappings[i].encoding)
+			testsuite_check_failed ("failed: expected: %s; was: %s",
+						g_mime_content_encoding_to_string (mappings[i].encoding),
+						g_mime_content_encoding_to_string (encoding));
+		else
+			testsuite_check_passed ();
+	}
+}
+
 static const char *base64_encoded_patterns[] = {
 	"VGhpcyBpcyB0aGUgcGxhaW4gdGV4dCBtZXNzYWdlIQ==",
 	"VGhpcyBpcyBhIHRleHQgd2hpY2ggaGFzIHRvIGJlIHBhZGRlZCBvbmNlLi4=",
@@ -81,43 +118,6 @@ static const char *base64_encoded_long_patterns[] = {
 	"BwsPExcbHyMnKy8zNzs/Q0dLT1NXW19jZ2tvc3d7f4OHi4+Tl5u" \
 	"fo6err7O3u7/Dx8vP09fb3+Pn6+/z9/v8AAQ=="
 };
-
-static struct _mapping {
-	const char *name;
-	const char *text;
-	GMimeContentEncoding encoding;
-} mappings[] = {
-	{ "\"7bit\"", "7bit", GMIME_CONTENT_ENCODING_7BIT },
-	{ "\"7-bit\"", "7-bit", GMIME_CONTENT_ENCODING_7BIT },
-	{ "\"8bit\"", "8bit", GMIME_CONTENT_ENCODING_8BIT },
-	{ "\"8-bit\"", "8-bit", GMIME_CONTENT_ENCODING_8BIT },
-	{ "\"binary\"", "binary", GMIME_CONTENT_ENCODING_BINARY },
-	{ "\"base64\"", "base64", GMIME_CONTENT_ENCODING_BASE64 },
-	{ "\"quoted-printable\"", "quoted-printable", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE },
-	{ "\"uuencode\"", "uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
-	{ "\"x-uuencode\"", "x-uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
-	{ "\"x-uue\"", "x-uue", GMIME_CONTENT_ENCODING_UUENCODE },
-	{ "\"garbage\"", "garbage", GMIME_CONTENT_ENCODING_DEFAULT },
-	{ "\" 7bit \"", " 7bit ", GMIME_CONTENT_ENCODING_7BIT }
-};
-
-static void
-test_content_encoding_mappings (void)
-{
-	GMimeContentEncoding encoding;
-	guint i;
-	
-	for (i = 0; i < G_N_ELEMENTS (mappings); i++) {
-		testsuite_check ("%s", mappings[i].name);
-		encoding = g_mime_content_encoding_from_string (mappings[i].text);
-		if (encoding != mappings[i].encoding)
-			testsuite_check_failed ("failed: expected: %s; was: %s",
-						g_mime_content_encoding_to_string (mappings[i].encoding),
-						g_mime_content_encoding_to_string (encoding));
-		else
-			testsuite_check_passed ();
-	}
-}
 
 static void
 test_base64_decode_patterns (void)
@@ -171,6 +171,159 @@ test_base64_decode_patterns (void)
 		
 		g_mime_encoding_reset (&decoder);
 	}
+}
+
+static const char *qp_encoded_patterns[] = {
+	"=e1=e2=E3=E4\r\n",
+	"=e1=g2=E3=E4\r\n",
+	"=e1=eg=E3=E4\r\n",
+	"   =e1 =e2  =E3\t=E4  \t \t    \r\n",
+	"Soft line=\r\n\tHard line\r\n",
+	"width==\r\n340 height=3d200\r\n",
+	
+};
+
+static const char *qp_decoded_patterns[] = {
+	"\u00e1\u00e2\u00e3\u00e4\r\n",
+	"\u00e1=g2\u00e3\u00e4\r\n",
+	"\u00e1=eg\u00e3\u00e4\r\n",
+	"   \u00e1 \u00e2  \u00e3\t\u00e4  \t \t    \r\n",
+	"Soft line\tHard line\r\n",
+	"width=340 height=200\r\n"
+};
+
+static void
+test_quoted_printable_decode_patterns (void)
+{
+	const char *input;
+	GMimeEncoding decoder;
+	char output[4096];
+	char *expected;
+	size_t len, n;
+	iconv_t cd;
+	guint i;
+	
+	g_mime_encoding_init_decode (&decoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	cd = g_mime_iconv_open ("iso-8859-1", "utf-8");
+	
+	for (i = 0; i < G_N_ELEMENTS (base64_encoded_patterns); i++) {
+		testsuite_check ("qp_encoded_patterns[%u]", i);
+		
+		expected = g_mime_iconv_strdup (cd, qp_decoded_patterns[i]);
+		input = qp_encoded_patterns[i];
+		len = strlen (input);
+		
+		n = g_mime_encoding_step (&decoder, input, len, output);
+		len = strlen (expected);
+		
+		if (n != len)
+			testsuite_check_failed ("qp_encoded_patterns[%u] failed: decoded lengths did not match (expected: %zu, was: %zu, value: \"%s\")", i, len, n, expected);
+		else if (strncmp (expected, output, n) != 0)
+			testsuite_check_failed ("qp_encoded_patterns[%u] failed: decoded values did not match", i);
+		else
+			testsuite_check_passed ();
+		
+		g_mime_encoding_reset (&decoder);
+		g_free (expected);
+	}
+	
+	g_mime_iconv_close (cd);
+}
+
+static void
+test_quoted_printable_encode_space_dos_linebreak (void)
+{
+	const char *input = "This line ends with a space \r\nbefore a line break.";
+	const char *expected = "This line ends with a space=20\nbefore a line break.";
+	GMimeEncoding encoder;
+	char output[4096];
+	size_t len, n;
+	
+	testsuite_check ("quoted-printable encode <SPACE><CR><LF>");
+	
+	g_mime_encoding_init_encode (&encoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	
+	n = g_mime_encoding_flush (&encoder, input, strlen (input), output);
+	len = strlen (expected);
+	
+	if (n != len)
+		testsuite_check_failed ("failed: encoded lengths did not match (expected: %zu, was: %zu)", len, n);
+	else if (strncmp (expected, output, n) != 0)
+		testsuite_check_failed ("failed: encoded values did not match");
+	else
+		testsuite_check_passed ();
+}
+
+static void
+test_quoted_printable_encode_space_unix_linebreak (void)
+{
+	const char *input = "This line ends with a space \nbefore a line break.";
+	const char *expected = "This line ends with a space=20\nbefore a line break.";
+	GMimeEncoding encoder;
+	char output[4096];
+	size_t len, n;
+	
+	testsuite_check ("quoted-printable encode <SPACE><LF>");
+	
+	g_mime_encoding_init_encode (&encoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	
+	n = g_mime_encoding_flush (&encoder, input, strlen (input), output);
+	len = strlen (expected);
+	
+	if (n != len)
+		testsuite_check_failed ("failed: encoded lengths did not match (expected: %zu, was: %zu)", len, n);
+	else if (strncmp (expected, output, n) != 0)
+		testsuite_check_failed ("failed: encoded values did not match");
+	else
+		testsuite_check_passed ();
+}
+
+static void
+test_quoted_printable_encode_ending_with_space (void)
+{
+	const char *input = "This line ends with a space ";
+	const char *expected = "This line ends with a space=20=\n";
+	GMimeEncoding encoder;
+	char output[4096];
+	size_t len, n;
+	
+	testsuite_check ("quoted-printable encode encoding with a space");
+	
+	g_mime_encoding_init_encode (&encoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	
+	n = g_mime_encoding_flush (&encoder, input, strlen (input), output);
+	len = strlen (expected);
+	
+	if (n != len)
+		testsuite_check_failed ("failed: encoded lengths did not match (expected: %zu, was: %zu)", len, n);
+	else if (strncmp (expected, output, n) != 0)
+		testsuite_check_failed ("failed: encoded values did not match");
+	else
+		testsuite_check_passed ();
+}
+
+static void
+test_quoted_printable_decode_invalid_soft_break (void)
+{
+	const char *input = "This is an invalid=\rsoft break.";
+	const char *expected = "This is an invalid=\rsoft break.";
+	GMimeEncoding decoder;
+	char output[4096];
+	size_t len, n;
+	
+	testsuite_check ("quoted-printable decode invalid soft break");
+	
+	g_mime_encoding_init_decode (&decoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	
+	n = g_mime_encoding_step (&decoder, input, strlen (input), output);
+	len = strlen (expected);
+	
+	if (n != len)
+		testsuite_check_failed ("failed: encoded lengths did not match (expected: %zu, was: %zu)", len, n);
+	else if (strncmp (expected, output, n) != 0)
+		testsuite_check_failed ("failed: encoded values did not match");
+	else
+		testsuite_check_passed ();
 }
 
 static GByteArray *
@@ -421,6 +574,11 @@ int main (int argc, char **argv)
 	testsuite_end ();
 	
 	testsuite_start ("quoted-printable");
+	test_quoted_printable_decode_patterns ();
+	test_quoted_printable_encode_space_dos_linebreak ();
+	test_quoted_printable_encode_space_unix_linebreak ();
+	test_quoted_printable_encode_ending_with_space ();
+	test_quoted_printable_decode_invalid_soft_break ();
 	test_encoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, wikipedia, qp, 4096);
 	test_encoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, wikipedia, qp, 1024);
 	test_encoder (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, wikipedia, qp, 16);
