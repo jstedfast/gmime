@@ -19,3 +19,9 @@ Filter
   .outreal type="uint8[]"
 	.outbuf type="unowned uint8[]" array_length_field="outsize"
   .outptr type="unowned uint8[]"
+
+// Conflicts
+Object
+  .write_to_stream#virtual_method name="write_to_stream_vfunc"
+FilterBest
+  .charset#method name="get_charset"

@@ -209,8 +209,8 @@ GMime_3_0_gir_EXPORT_PACKAGES = gmime-3.0
 GMime_3_0_gir_SCANNERFLAGS = \
 	--c-include="gmime/gmime.h" \
 	--accept-unprefixed \
-	--symbol-prefix "gmime_" \
-	--symbol-prefix "g_mime_"
+	--symbol-prefix "g_mime" \
+	--symbol-prefix "gmime"
 INTROSPECTION_GIRS += GMime-3.0.gir
 
 girdir = $(datadir)/gir-1.0
