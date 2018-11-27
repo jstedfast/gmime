@@ -255,13 +255,14 @@ g_mime_filter_best_new (GMimeFilterBestFlags flags)
 
 /**
  * g_mime_filter_best_charset:
- * @best: best filter
+ * @best: a #GMimeFilterBest
  *
- * Calculates the best charset for encoding the stream filtered
+ * Calculates the best charset for encoding the content filtered
  * through the @best filter.
  *
- * Returns: a pointer to a string containing the name of the charset
- * best suited for the text filtered through @best.
+ * Returns: the name of the charset most suitable for encoding
+ * the content that has been passed through the filter or %NULL
+ * if the filter was not configured to detect this.
  **/
 const char *
 g_mime_filter_best_charset (GMimeFilterBest *best)
@@ -285,10 +286,10 @@ g_mime_filter_best_charset (GMimeFilterBest *best)
  * @constraint: a #GMimeEncodingConstraint
  *
  * Calculates the most efficient Content-Transfer-Encoding for the
- * stream filtered through @best that fits within the encoding
+ * content filtered through @best that fits within the encoding
  * @constraint.
  *
- * Returns: the best encoding for the stream filtered by @best.
+ * Returns: the best encoding for the content filtered by @best.
  **/
 GMimeContentEncoding
 g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeEncodingConstraint constraint)
