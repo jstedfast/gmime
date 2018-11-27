@@ -3,6 +3,24 @@ the GMime library. This list of tasks in no way indicates priority,
 that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
+GMime 3.4+ Planning:
+====================
+
+- Would it be valuable to add GMimeMultipartAlternative and GMimeMultipartRelated
+  subclasses (like MimeKit)? Or would it just be better to fold that functionality
+  into GMimeMultipart?
+
+- What about GMimeMultipartReport, GMimeMessageDeliveryStatus, and
+  GMimeMessageDispositionNotification?
+
+- Provide g_mime_message_get_text_body(), get_html_body(), get_attachments()-like
+  API's similar to what MimeKit offers?
+
+- Implement DKIM-Signature support?
+
+- Implement Pretty-Easy-Privacy support? What is that? Is that something that makes
+  sense to have in GMime? Or does it belong at a higher level?
+
 GMime 4.0 Planning:
 ===================
 
@@ -15,6 +33,18 @@ GMime 4.0 Planning:
   This would require me to rename g_mime_message_get_body() to
   g_mime_message_get_text_body()?
 
+- Have GMimeHeader subclasses for various headers. These could have specialized
+  accessors to get to parsed values as well as provide customized folding logic
+  that all lives in gmime-header.c right now. The most useful subclasses might be:
+    - GMimeAddressHeader
+    - GMimeReceivedHeader
+    - GMimeMessageIdHeader
+    - GMimeReferencesHeader
+
+- Change GMimeCryptoContext API's to take InternetAddressMailbox's to specify
+  identities to sign and/or encrypt to? Then we could have something like
+  MimeKit's SecureMailboxAddress that has a GPGME Key ID or a fingerprint or
+  something to make it easier for developers to specify a key.
 
 Future Planning:
 ================
