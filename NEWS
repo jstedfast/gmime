@@ -1,3 +1,32 @@
+### GMime 3.2.3
+
+* Fixed GMimeFilterBasic for uudecode.
+
+    Don't allow the outbuf to ever get set to NULL which could happen
+    if the begin-line had not yet been found (and thus
+    g_mime_filter_set_size() had never been called to allocate the
+    outbuf buffer).
+
+ * Fixed a bug in g_mime_uuencode_step().
+
+ * Modified GMimeParser to work around broken mailers that send base64
+   encoded message/rfc822 parts.
+
+   Fixes https://gitlab.gnome.org/GNOME/gmime/issues/1
+
+ * Fixed a bug in g_mime_quoted_encode_close() where it would incorrectly
+   end the quoted-printable output with a line containing only "=\n" even
+   when it is not needed.
+
+ * Improved g_mime_content_encoding_from_string(). This function no
+   longer requires the input string to be an exact match for "7bit",
+   "8bit", "base64", etc. It can now handle whitespace before and
+   after the value. In other words, it is now easy to use this
+   function on raw header values before any whitespace trimming
+   has been done.
+
+ * Really, really fixed the packaging to include the Vala build files.
+
 ### GMime 3.2.2
 
 * Fixed packaging to include Vala files.
