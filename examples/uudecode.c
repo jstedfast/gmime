@@ -195,7 +195,7 @@ uudecode (const char *progname, int argc, char **argv)
 			}
 			
 			n = strlen (inbuf);
-			midline = inbuf[n - 1] != '\n';
+			midline = n > 0 && inbuf[n - 1] != '\n';
 			
 			n = decode ((const unsigned char *) inbuf, n, (unsigned char *) outbuf, &state, &save);
 			if (fwrite (outbuf, 1, n, fout) != n) {
