@@ -52,6 +52,8 @@ errcode2str(GMimeParserWarning errcode)
 		return "truncated message";
 	case GMIME_WARN_MALFORMED_MESSAGE:
 		return "malformed message";
+	case GMIME_WARN_INVALID_ADDRESS_SPEC:
+		return "invalid address specification";
 	case GMIME_CRIT_INVALID_HEADER_NAME:
 		return "invalid header name, parser may skip the message or parts of it";
 	case GMIME_CRIT_CONFLICTING_HEADER:

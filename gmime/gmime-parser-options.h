@@ -52,6 +52,7 @@ typedef enum {
  * @GMIME_WARN_MALFORMED_MULTIPART: no items in a `multipart/...`
  * @GMIME_WARN_TRUNCATED_MESSAGE: the message is truncated
  * @GMIME_WARN_MALFORMED_MESSAGE: the message is malformed
+ * @GMIME_WARN_INVALID_ADDRESS_SPEC: invalid address specification
  * @GMIME_CRIT_INVALID_HEADER_NAME: invalid header name, the parser may skip the message or parts of it
  * @GMIME_CRIT_CONFLICTING_HEADER: conflicting header
  * @GMIME_CRIT_CONFLICTING_PARAMETER: conflicting header parameter
@@ -73,7 +74,8 @@ typedef enum {
 	GMIME_CRIT_CONFLICTING_HEADER,
 	GMIME_CRIT_CONFLICTING_PARAMETER,
 	GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY,
-	GMIME_WARN_INVALID_PARAMETER
+	GMIME_WARN_INVALID_PARAMETER,
+	GMIME_WARN_INVALID_ADDRESS_SPEC
 } GMimeParserWarning;
 
 /**
