@@ -494,7 +494,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					}
 				}
 				
-				if (i < G_N_ELEMENTS (enriched_tags)) {
+				if (html_tag != NULL) {
 					if ((fmt = strstr (html_tag, "%s")) != NULL) {
 						const char *start;
 						char *param;
