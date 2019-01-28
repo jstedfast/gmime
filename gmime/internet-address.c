@@ -2050,6 +2050,8 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 	}
 	
  error:
+	if (g_mime_parser_options_get_warning_callback (options) != NULL)
+		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_SPEC, *in);
 	*address = NULL;
 	*in = inptr;
 	
@@ -2059,6 +2061,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 static gboolean
 address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group, gint64 offset)
 {
+	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	InternetAddress *address;
 	const char *charset;
 	const char *inptr;
@@ -2072,6 +2075,8 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 		return FALSE;
 	
 	while (*inptr) {
+		gboolean separator_between_addrs = FALSE;
+
 		if (is_group && *inptr ==  ';')
 			break;
 		
@@ -2086,6 +2091,9 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 			
 			if (charset)
 				address->charset = g_strdup (charset);
+
+			if (INTERNET_ADDRESS_IS_GROUP(address))
+				separator_between_addrs = TRUE;
 		}
 		
 		/* Note: we loop here in case there are any null addresses between commas */
@@ -2099,8 +2107,11 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 			if (*inptr != ',')
 				break;
 			
+			separator_between_addrs = TRUE;
 			inptr++;
 		} while (TRUE);
+		if (can_warn && !(separator_between_addrs || (*inptr == '\0') || (is_group && (*inptr == ';'))))
+			_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_SPEC, *in);
 	}
 	
 	*in = inptr;
