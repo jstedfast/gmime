@@ -2051,7 +2051,8 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 	
  error:
 	if (g_mime_parser_options_get_warning_callback (options) != NULL)
-		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_SPEC, *in);
+		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_LIST, *in);
+	
 	*address = NULL;
 	*in = inptr;
 	
@@ -2110,8 +2111,9 @@ address_list_parse (InternetAddressList *list, GMimeParserOptions *options, cons
 			separator_between_addrs = TRUE;
 			inptr++;
 		} while (TRUE);
-		if (can_warn && !(separator_between_addrs || (*inptr == '\0') || (is_group && (*inptr == ';'))))
-			_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_SPEC, *in);
+		
+		if (can_warn && !(separator_between_addrs || (*inptr == '\0') || (is_group && *inptr == ';')))
+			_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_LIST, *in);
 	}
 	
 	*in = inptr;
