@@ -1180,7 +1180,7 @@ g_mime_message_get_body (GMimeMessage *message)
  * @message: a #GMimeMessage object.
  * @now: a #GDateTime object, or %NULL
  *
- * Creates a new #GMimeAutocryptHeader base on the relevant Autocrypt
+ * Creates a new #GMimeAutocryptHeader based on the relevant Autocrypt
  * header associated with the sender of an e-mail message.
  *
  * If the message has no sender in the From: field, or has more than
@@ -1200,13 +1200,13 @@ g_mime_message_get_body (GMimeMessage *message)
  *  - headers with unknown critical attributes
  *  - duplicate valid headers for the sender's address
  *
- * The returned Autocrypt headers will have their effective_date set
- * to the earliest of either:
+ * The returned Autocrypt header will have its effective_date set to
+ * the earliest of either:
  *
  * - the Date: header of the message or 
  * - @now (or the current time, if @now is %NULL)
  *
- * Returns: (transfer full): a new #GMimeAutocryptHeaderList object,
+ * Returns: (transfer full): a new #GMimeAutocryptHeader object,
  * or %NULL if the message should be ignored for purposes of
  * Autocrypt.
  **/
