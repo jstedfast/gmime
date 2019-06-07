@@ -361,10 +361,10 @@ test_encoder (GMimeContentEncoding encoding, GByteArray *photo, GByteArray *expe
 {
 	const char *name = g_mime_content_encoding_to_string (encoding);
 	GMimeStream *istream, *ostream, *filtered;
+	char *buf = g_alloca (size);
 	ssize_t nread, nwritten, n;
 	GMimeFilter *filter;
 	GByteArray *actual;
-	char buf[size];
 	char *path;
 	
 	testsuite_check ("%s encoding; buffer-size=%zu", name, size);
@@ -438,10 +438,10 @@ test_decoder (GMimeContentEncoding encoding, GByteArray *encoded, GByteArray *ex
 {
 	const char *name = g_mime_content_encoding_to_string (encoding);
 	GMimeStream *istream, *ostream, *filtered;
+	char *buf = g_alloca (size);
 	ssize_t nread, nwritten, n;
 	GMimeFilter *filter;
 	GByteArray *actual;
-	char buf[size];
 	char *path;
 	
 	testsuite_check ("%s decoding; buffer-size=%zu", name, size);
