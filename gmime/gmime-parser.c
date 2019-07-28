@@ -1629,10 +1629,6 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, Bounda
 			/* If the Content-Transfer-Encoding is not obfuscated by base64 or uuencode,
 			   then we can safely assume that no OpenPGP blocks exist. */
 			g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_NONE);
-		} else if (!g_mime_content_type_is_type (content_type, "text", "*")) {
-			/* The content is base64 or uuencoded, but it's not text so it should be safe
-			   to assume that there won't be any OpenPGP blocks in the decoded content. */
-			g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_NONE);
 		}
 		break;
 	}
