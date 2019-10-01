@@ -80,6 +80,7 @@ typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) (void);
  * GMimeDecryptFlags:
  * @GMIME_DECRYPT_NONE: No flags specified.
  * @GMIME_DECRYPT_EXPORT_SESSION_KEY: Export the decryption session-key.
+ * @GMIME_DECRYPT_NO_VERIFY: Disable signature verification.
  * @GMIME_DECRYPT_ENABLE_KEYSERVER_LOOKUPS: Enable OpenPGP keyserver lookups.
  * @GMIME_DECRYPT_ENABLE_ONLINE_CERTIFICATE_CHECKS: Enable CRL and OCSP checks that require network lookups.
  *
@@ -88,6 +89,7 @@ typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) (void);
 typedef enum {
 	GMIME_DECRYPT_NONE                             = 0,
 	GMIME_DECRYPT_EXPORT_SESSION_KEY               = 1 << 0,
+	GMIME_DECRYPT_NO_VERIFY                        = 1 << 1,
 
 	/* Note: these values must stay in sync with GMimeVerifyFlags */
 	GMIME_DECRYPT_ENABLE_KEYSERVER_LOOKUPS         = 1 << 15,

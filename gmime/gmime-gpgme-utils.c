@@ -602,7 +602,7 @@ g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *sess
 #endif
 	
 	/* decrypt the input stream */
-	if (gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP) {
+	if (gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP && (flags & GMIME_DECRYPT_NO_VERIFY) == 0) {
 		gpgme_set_offline (ctx, (flags & GMIME_DECRYPT_ENABLE_KEYSERVER_LOOKUPS) == 0);
 		
 		error = gpgme_op_decrypt_verify (ctx, input, output);
