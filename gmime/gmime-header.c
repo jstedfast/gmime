@@ -1154,7 +1154,7 @@ g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const ch
 		src = (unsigned char *) headers->array->pdata;
 		n = headers->array->len - 1;
 		
-		g_memmove (dest, src, (sizeof (void *) * n));
+		memmove (dest, src, (sizeof (void *) * n));
 		headers->array->pdata[0] = header;
 	} else {
 		g_ptr_array_add (headers->array, header);

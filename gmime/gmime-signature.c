@@ -429,7 +429,7 @@ g_mime_signature_list_insert (GMimeSignatureList *list, int index, GMimeSignatur
 		src = ((char *) list->array->pdata) + (sizeof (void *) * index);
 		n = list->array->len - index - 1;
 		
-		g_memmove (dest, src, (sizeof (void *) * n));
+		memmove (dest, src, (sizeof (void *) * n));
 		list->array->pdata[index] = sig;
 	} else {
 		/* the easy case */

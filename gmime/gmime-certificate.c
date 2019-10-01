@@ -758,7 +758,7 @@ g_mime_certificate_list_insert (GMimeCertificateList *list, int index, GMimeCert
 		src = ((char *) list->array->pdata) + (sizeof (void *) * index);
 		n = list->array->len - index - 1;
 		
-		g_memmove (dest, src, (sizeof (void *) * n));
+		memmove (dest, src, (sizeof (void *) * n));
 		list->array->pdata[index] = cert;
 	} else {
 		/* the easy case */

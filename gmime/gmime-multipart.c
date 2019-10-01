@@ -442,7 +442,7 @@ ptr_array_insert (GPtrArray *array, guint index, gpointer object)
 		src = ((unsigned char *) array->pdata) + (sizeof (void *) * index);
 		n = array->len - index - 1;
 		
-		g_memmove (dest, src, (sizeof (void *) * n));
+		memmove (dest, src, (sizeof (void *) * n));
 		array->pdata[index] = object;
 	} else {
 		/* the easy case */

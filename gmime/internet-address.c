@@ -858,7 +858,7 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddressList *p
 	src = ((char *) list->array->pdata);
 	dest = src + (sizeof (void *) * len);
 	
-	g_memmove (dest, src, (sizeof (void *) * list->array->len));
+	memmove (dest, src, (sizeof (void *) * list->array->len));
 	
 	for (i = 0; i < prepend->array->len; i++) {
 		ia = (InternetAddress *) prepend->array->pdata[i];
@@ -930,7 +930,7 @@ internet_address_list_insert (InternetAddressList *list, int index, InternetAddr
 		src = ((char *) list->array->pdata) + (sizeof (void *) * index);
 		n = list->array->len - index - 1;
 		
-		g_memmove (dest, src, (sizeof (void *) * n));
+		memmove (dest, src, (sizeof (void *) * n));
 		list->array->pdata[index] = ia;
 	} else {
 		/* the easy case */
