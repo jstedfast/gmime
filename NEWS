@@ -1,3 +1,43 @@
+### GMime 3.2.4
+
+* Replaced calls to g_memmove with memmove.
+
+    It seems that the latest versions of glib have deprecated g_memmove
+    in favor of having developers use libc's memmove() function directly.
+    This change reduces the number of compiler warnings during the gmime
+    build process.
+
+* Added a new GMIME_DECRYPT_NO_VERIFY flag that disables signature verification.
+
+    For cases where it is not necessary to verify the signatures (or it is known
+    that there are no signatures), making use of this flag can significantly
+    improve the performance of decrypting OpenPGP content.
+
+* Modified GMimeParser to not set the OpenPGP state for base64/uuencoded content.
+
+    While the GMimeParser is parsing a MIME message (or other MIME entity), it will
+    normally attempt to identify OpenPGP markers in the content of GMimeParts.
+    However, when the content is base64 or uu-encoded, the parser is unable to
+    accurately detect these markers and so in previous versions, it was falsely
+    claiming that such MIME parts had no OpenPGP content even though it was possible,
+    after decoding their content, that they did in fact have OpenPGP content.
+
+    For more details about this bug, see issue #60.
+
+* Added reporting of RFC 5322 addr-spec syntax violations to the GMimeParserWarning API.
+
+* Fixed a stack underflow error in the uudecode.c sample.
+
+* Improved Vala bindings.
+
+    - Use correct symbol prefixes which avoid loads of cname attributes.
+    - Unhide FilterBest.charset() method which conflicts with charset field.
+    - Object.write_to_stream conflicts with function pointer with the same name
+      but with a different signature.
+
+    Fixes https://gitlab.gnome.org/GNOME/gmime/issues/2
+    Fixes https://gitlab.gnome.org/GNOME/gmime/issues/3
+
 ### GMime 3.2.3
 
 * Fixed GMimeFilterBasic for uudecode.
