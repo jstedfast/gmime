@@ -12,8 +12,8 @@ do
 	-e "s/g_mime_content_type_to_string/g_mime_content_type_get_mime_type/g" \
 	-e "s/g_mime_content_type_get_params/g_mime_content_type_get_parameters/g" \
 	-e "s/g_mime_content_disposition_new_from_string/g_mime_content_disposition_parse/g" \
-	-e "s/g_mime_content_disposition_to_string/g_mime_content_disposition_encode/g/" \
-	-e "s/g_mime_content_disposition_get_params/g_mime_content_disposition_get_parameters/g/" \
+	-e "s/g_mime_content_disposition_to_string/g_mime_content_disposition_encode/g" \
+	-e "s/g_mime_content_disposition_get_params/g_mime_content_disposition_get_parameters/g" \
 	-e "s/internet_address_list_parse_string/internet_address_list_parse/g" \
 	-e "s/GMimeCertificateTrust/GMimeTrust/g" \
 	-e "s/GMIME_CERTIIFCATE_TRUST_NONE/GMIME_TRUST_UNKNOWN/g" \
