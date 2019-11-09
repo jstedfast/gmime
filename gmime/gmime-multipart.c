@@ -795,38 +795,41 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc call
 	GMimeForeachData *tmp;
 	GQueue *queue;
 	guint i;
+	
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (callback != NULL);
 	
 	tmp = g_malloc (sizeof (GMimeForeachData));
 	queue = g_queue_new ();
-
+	
 	tmp->parent = (GMimeObject *) multipart;
 	tmp->part = (GMimeObject *) multipart;
-
+	
 	g_queue_push_tail (queue, tmp);
-
+	
 	while ((tmp = (GMimeForeachData *) g_queue_pop_head (queue))) {
 		GMimeObject *parent = tmp->parent;
 		GMimeObject *part = tmp->part;
-
+		
 		g_free (tmp);
+		
 		if (part != parent)
 			callback (parent, part, user_data);
-
+		
 		if (GMIME_IS_MULTIPART (part)) {
 			multipart = (GMimeMultipart *) part;
 			i = multipart->children->len;
+			
 			while (i > 0) {
 				tmp = g_malloc (sizeof (GMimeForeachData));
-				tmp->parent = part;
 				tmp->part = (GMimeObject *) multipart->children->pdata[--i];
-
+				tmp->parent = part;
+				
 				g_queue_push_head (queue, tmp);
 			}
 		}
 	}
-
+	
 	g_queue_free (queue);
 }
 
