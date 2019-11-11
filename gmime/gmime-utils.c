@@ -25,8 +25,6 @@
 
 #define _GNU_SOURCE
 
-#include <glib.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,8 +50,11 @@
 
 #ifdef LIBIDN
 #include <idn2.h>
+#undef G_GNUC_UNUSED
+#undef G_GNUC_DEPRECATED
 #endif
 
+#include <glib.h>
 #include "gmime-utils.h"
 #include "gmime-common.h"
 #include "gmime-internal.h"

@@ -31,6 +31,8 @@
 
 #ifdef LIBIDN
 #include <idn2.h>
+#undef G_GNUC_UNUSED
+#undef G_GNUC_DEPRECATED
 #endif
 
 #include "internet-address.h"
