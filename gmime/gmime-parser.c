@@ -98,9 +98,9 @@ static void parser_init (GMimeParser *parser, GMimeStream *stream);
 static void parser_close (GMimeParser *parser);
 
 static GMimeObject *parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
-						gboolean toplevel, BoundaryType *found);
+						gboolean toplevel, BoundaryType *found, int depth);
 static GMimeObject *parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
-						gboolean toplevel, BoundaryType *found);
+						gboolean toplevel, BoundaryType *found, int depth);
 
 static GObjectClass *parent_class = NULL;
 
@@ -165,6 +165,7 @@ struct _GMimeParserPrivate {
 	size_t headerleft;
 	
 	BoundaryStack *bounds;
+	guint max_level;
 	
 	GMimeOpenPGPState openpgp;
 	short int state;
@@ -387,6 +388,7 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->seekable = offset != -1;
 	
 	priv->bounds = NULL;
+	priv->max_level = 1024;
 }
 
 static void
@@ -1666,7 +1668,7 @@ check_repeated_header (GMimeParserOptions *options, GMimeObject *object, const H
 }
 
 static void
-parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMimeMessagePart *mpart, BoundaryType *found)
+parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMimeMessagePart *mpart, BoundaryType *found, int depth)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
@@ -1746,9 +1748,9 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	
 	content_type = parser_content_type (parser, NULL);
 	if (content_type_is_type (content_type, "multipart", "*"))
-		object = parser_construct_multipart (parser, options, content_type, TRUE, found);
+		object = parser_construct_multipart (parser, options, content_type, TRUE, found, depth + 1);
 	else
-		object = parser_construct_leaf_part (parser, options, content_type, TRUE, found);
+		object = parser_construct_leaf_part (parser, options, content_type, TRUE, found, depth + 1);
 	
 	content_type_destroy (content_type);
 	message->mime_part = object;
@@ -1772,7 +1774,7 @@ is_rfc822 (const char *subtype)
 }
 
 static GMimeObject *
-parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found)
+parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found, int depth)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	const char *subtype = content_type->subtype;
@@ -1786,7 +1788,16 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	if (!g_ascii_strcasecmp (type, "message") && is_rfc822 (subtype)) {
 		gboolean is_encoded = FALSE;
 		
-		for (i = 0; i < priv->headers->len; i++) {
+		if (depth >= priv->max_level) {
+			/* The maximum MIME nesting level has been exceeded. Treat this message/rfc822
+			 * part as if it was a leaf-node MIME part (i.e. don't recursively parse the
+			 * message content). */
+			_g_mime_parser_options_warn (options, priv->headers_begin, GMIME_CRIT_NESTING_OVERFLOW, NULL);
+			w(g_warning ("maximum nesting level exceeded"));
+			is_encoded = TRUE;
+		}
+		
+		for (i = 0; i < priv->headers->len && !is_encoded; i++) {
 			header = priv->headers->pdata[i];
 			
 			if (g_ascii_strcasecmp (header->name, "Content-Transfer-Encoding") != 0)
@@ -1842,7 +1853,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	}
 	
 	if (GMIME_IS_MESSAGE_PART (object))
-		parser_scan_message_part (parser, options, (GMimeMessagePart *) object, found);
+		parser_scan_message_part (parser, options, (GMimeMessagePart *) object, found, depth + 1);
 	else
 		parser_scan_mime_part_content (parser, (GMimePart *) object, found);
 
@@ -1910,7 +1921,7 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 #define parser_scan_multipart_epilogue(parser, multipart) parser_scan_multipart_face (parser, multipart, FALSE)
 
 static BoundaryType
-parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options, GMimeMultipart *multipart)
+parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options, GMimeMultipart *multipart, int depth)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
@@ -1938,9 +1949,9 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 		
 		content_type = parser_content_type (parser, ((GMimeObject *) multipart)->content_type);
 		if (content_type_is_type (content_type, "multipart", "*"))
-			subpart = parser_construct_multipart (parser, options, content_type, FALSE, &found);
+			subpart = parser_construct_multipart (parser, options, content_type, FALSE, &found, depth + 1);
 		else
-			subpart = parser_construct_leaf_part (parser, options, content_type, FALSE, &found);
+			subpart = parser_construct_leaf_part (parser, options, content_type, FALSE, &found, depth + 1);
 		
 		g_mime_multipart_add (multipart, subpart);
 		content_type_destroy (content_type);
@@ -1951,7 +1962,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 }
 
 static GMimeObject *
-parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found)
+parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, BoundaryType *found, int depth)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeMultipart *multipart;
@@ -1991,13 +2002,13 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		}
 	}
 	
-	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary"))) {
+	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary")) && depth < priv->max_level) {
 		parser_push_boundary (parser, boundary);
 		
 		*found = parser_scan_multipart_prologue (parser, multipart);
 		
 		if (*found == BOUNDARY_IMMEDIATE)
-			*found = parser_scan_multipart_subparts (parser, options, multipart);
+			*found = parser_scan_multipart_subparts (parser, options, multipart, depth);
 		
 		if (*found == BOUNDARY_IMMEDIATE_END) {
 			/* eat end boundary */
@@ -2022,8 +2033,14 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		else if (*found == BOUNDARY_PARENT && found_immediate_boundary (priv, FALSE))
 			*found = BOUNDARY_IMMEDIATE;
 	} else {
-		_g_mime_parser_options_warn (options, ctype_offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, content_type->subtype);
-		w(g_warning ("multipart without boundary encountered"));
+		if (depth >= priv->max_level) {
+			_g_mime_parser_options_warn (options, priv->headers_begin, GMIME_CRIT_NESTING_OVERFLOW, NULL);
+			w(g_warning ("maximum nesting level exceeded @ boundary = %s", boundary));
+		} else {
+			_g_mime_parser_options_warn (options, ctype_offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, content_type->subtype);
+			w(g_warning ("multipart without boundary encountered"));
+		}
+		
 		/* this will scan everything into the prologue */
 		*found = parser_scan_multipart_prologue (parser, multipart);
 	}
@@ -2048,9 +2065,9 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 	
 	content_type = parser_content_type (parser, NULL);
 	if (content_type_is_type (content_type, "multipart", "*"))
-		object = parser_construct_multipart (parser, options, content_type, FALSE, &found);
+		object = parser_construct_multipart (parser, options, content_type, FALSE, &found, 0);
 	else
-		object = parser_construct_leaf_part (parser, options, content_type, FALSE, &found);
+		object = parser_construct_leaf_part (parser, options, content_type, FALSE, &found, 0);
 	
 	content_type_destroy (content_type);
 	
@@ -2140,9 +2157,9 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	
 	content_type = parser_content_type (parser, NULL);
 	if (content_type_is_type (content_type, "multipart", "*"))
-		object = parser_construct_multipart (parser, options, content_type, TRUE, &found);
+		object = parser_construct_multipart (parser, options, content_type, TRUE, &found, 0);
 	else
-		object = parser_construct_leaf_part (parser, options, content_type, TRUE, &found);
+		object = parser_construct_leaf_part (parser, options, content_type, TRUE, &found, 0);
 	
 	content_type_destroy (content_type);
 	message->mime_part = object;

@@ -43,20 +43,21 @@ typedef enum {
 
 /**
  * GMimeParserWarning:
- * @GMIME_WARN_DUPLICATED_HEADER: repeated exactly the same header which should exist only once
- * @GMIME_WARN_DUPLICATED_PARAMETER: repeated exactly the same header parameter
- * @GMIME_WARN_UNENCODED_8BIT_HEADER: a header contains unencoded 8-bit characters
- * @GMIME_WARN_INVALID_CONTENT_TYPE: invalid content type, assume `application/octet-stream`
- * @GMIME_WARN_INVALID_RFC2047_HEADER_VALUE: invalid RFC 2047 encoded header value
- * @GMIME_WARN_INVALID_PARAMETER: invalid header parameter
- * @GMIME_WARN_MALFORMED_MULTIPART: no items in a `multipart/...`
- * @GMIME_WARN_TRUNCATED_MESSAGE: the message is truncated
- * @GMIME_WARN_MALFORMED_MESSAGE: the message is malformed
- * @GMIME_WARN_INVALID_ADDRESS_LIST: invalid address list
- * @GMIME_CRIT_INVALID_HEADER_NAME: invalid header name, the parser may skip the message or parts of it
- * @GMIME_CRIT_CONFLICTING_HEADER: conflicting header
- * @GMIME_CRIT_CONFLICTING_PARAMETER: conflicting header parameter
- * @GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY: a `multipart/...` part lacks the required boundary parameter
+ * @GMIME_WARN_DUPLICATED_HEADER: Repeated exactly the same header which should exist only once.
+ * @GMIME_WARN_DUPLICATED_PARAMETER: Repeated exactly the same header parameter.
+ * @GMIME_WARN_UNENCODED_8BIT_HEADER: A header contains unencoded 8-bit characters.
+ * @GMIME_WARN_INVALID_CONTENT_TYPE: Invalid content type, assuming `application/octet-stream`.
+ * @GMIME_WARN_INVALID_RFC2047_HEADER_VALUE: Invalid RFC 2047 encoded header value.
+ * @GMIME_WARN_INVALID_PARAMETER: Invalid header parameter.
+ * @GMIME_WARN_MALFORMED_MULTIPART: No child parts detected within a multipart.
+ * @GMIME_WARN_TRUNCATED_MESSAGE: The message is truncated.
+ * @GMIME_WARN_MALFORMED_MESSAGE: The message is malformed.
+ * @GMIME_WARN_INVALID_ADDRESS_LIST: Invalid address list.
+ * @GMIME_CRIT_INVALID_HEADER_NAME: Invalid header name, the parser may skip the message or parts of it.
+ * @GMIME_CRIT_CONFLICTING_HEADER: Conflicting header.
+ * @GMIME_CRIT_CONFLICTING_PARAMETER: Conflicting header parameter.
+ * @GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY: A multipart lacks the required boundary parameter.
+ * @GMIME_CRIT_NESTING_OVERFLOW: The maximum MIME nesting level has been exceeded.
  *
  * Issues the @GMimeParser detects. Note that the `GMIME_CRIT_*` issues indicate that some parts of the @GMimeParser input may
  * be ignored or will be interpreted differently by other software products.
@@ -75,7 +76,8 @@ typedef enum {
 	GMIME_CRIT_CONFLICTING_PARAMETER,
 	GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY,
 	GMIME_WARN_INVALID_PARAMETER,
-	GMIME_WARN_INVALID_ADDRESS_LIST
+	GMIME_WARN_INVALID_ADDRESS_LIST,
+	GMIME_CRIT_NESTING_OVERFLOW
 } GMimeParserWarning;
 
 /**
