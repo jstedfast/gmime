@@ -47,6 +47,7 @@
 
 #define d(x)
 
+#define MAX_LEVEL 1024
 
 /**
  * SECTION: gmime-parser
@@ -165,7 +166,6 @@ struct _GMimeParserPrivate {
 	size_t headerleft;
 	
 	BoundaryStack *bounds;
-	guint max_level;
 	
 	GMimeOpenPGPState openpgp;
 	short int state;
@@ -388,7 +388,6 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->seekable = offset != -1;
 	
 	priv->bounds = NULL;
-	priv->max_level = 1024;
 }
 
 static void
@@ -1788,7 +1787,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	if (!g_ascii_strcasecmp (type, "message") && is_rfc822 (subtype)) {
 		gboolean is_encoded = FALSE;
 		
-		if (depth >= priv->max_level) {
+		if (depth >= MAX_LEVEL) {
 			/* The maximum MIME nesting level has been exceeded. Treat this message/rfc822
 			 * part as if it was a leaf-node MIME part (i.e. don't recursively parse the
 			 * message content). */
@@ -2002,7 +2001,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		}
 	}
 	
-	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary")) && depth < priv->max_level) {
+	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary")) && depth < MAX_LEVEL) {
 		parser_push_boundary (parser, boundary);
 		
 		*found = parser_scan_multipart_prologue (parser, multipart);
@@ -2033,7 +2032,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		else if (*found == BOUNDARY_PARENT && found_immediate_boundary (priv, FALSE))
 			*found = BOUNDARY_IMMEDIATE;
 	} else {
-		if (depth >= priv->max_level) {
+		if (depth >= MAX_LEVEL) {
 			_g_mime_parser_options_warn (options, priv->headers_begin, GMIME_CRIT_NESTING_OVERFLOW, NULL);
 			w(g_warning ("maximum nesting level exceeded @ boundary = %s", boundary));
 		} else {
