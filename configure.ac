@@ -12,8 +12,8 @@ AC_PREREQ(2.54)
 #
 m4_define([gmime_major_version], [3])
 m4_define([gmime_minor_version], [2])
-m4_define([gmime_micro_version], [4])
-m4_define([gmime_interface_age], [3])
+m4_define([gmime_micro_version], [5])
+m4_define([gmime_interface_age], [4])
 m4_define([gmime_binary_age],
           [m4_eval(100 * gmime_minor_version + gmime_micro_version)])
 m4_define([gmime_version],

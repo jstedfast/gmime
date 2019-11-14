@@ -1,3 +1,20 @@
+### GMime 3.2.5
+
+*  Modified GMimeParser to prevent stack overflows when parsing deeply nested messages.
+
+     GMimeParser now has a limit on how deep multipart and/or message/rfc822 MIME part
+     nesting is allowed to go before the parser will take action to prevent a stack
+     overflow. If the max level is reached at a message/rfc822 part, then that part
+     will be consumed by the parser as a generic GMimePart rather than a
+     GMimeMessagePart. Likewise, if the max level is reached at any type of multipart,
+     then the content of said multipart will be packed into the GMimeMultipart's
+     preface and not parsed any further.
+
+* g_mime_multipart_foreach has been rewritten to avoid recursion, thereby avoiding potential
+  stack overflows.
+
+* The gmime-port-2-6-to-3-0.sh script has been fixed to use proper sed syntax.
+
 ### GMime 3.2.4
 
 * Replaced calls to g_memmove with memmove.
