@@ -176,6 +176,14 @@ struct _GMimeCryptoContextClass {
 	
 	int                      (* export_keys) (GMimeCryptoContext *ctx, const char *keys[],
 						  GMimeStream *ostream, GError **err);
+
+#if 0
+	int                      (* compress)    (GMimeCryptoContext *ctx, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
+
+	int                      (* decompress)  (GMimeCryptoContext *ctx, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
+#endif
 };
 
 

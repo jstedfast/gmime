@@ -203,14 +203,121 @@ g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_m
 
 #if 0
 GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_compress (GMimePkcs7Context *ctx, GMimeObject *entity, GError **err)
+g_mime_application_pkcs7_mime_compress (GMimeObject *entity, GError **err)
 {
+	GMimeApplicationPkcs7Mime *pkcs7_mime;
+	GMimeStream *compressed, *stream;
+	GMimeFormatOptions *options;
+	GMimeDataWrapper *content;
+	GMimeCryptoContext *ctx;
+	
+	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+			     _("Cannot compress application/pkcs7-mime part: no crypto context registered for this type."));
+		
+		return NULL;
+	}
+	
+	options = _g_mime_format_options_clone (NULL, FALSE);
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	
+	/* get the cleartext */
+	stream = g_mime_stream_mem_new ();
+	g_mime_object_write_to_stream (entity, options, stream);
+	g_mime_format_options_free (options);
+	
+	/* reset the content stream */
+	g_mime_stream_reset (stream);
+	
+	/* compress the content stream */
+	compressed = g_mime_stream_mem_new ();
+	if (g_mime_crypto_context_compress (ctx, stream, compressed, err) == -1) {
+		g_object_unref (compressed);
+		g_object_unref (stream);
+		g_object_unref (ctx);
+		return NULL;
+	}
+	
+	g_object_unref (stream);
+	g_mime_stream_reset (compressed);
+	g_object_unref (ctx);
+	
+	/* construct the application/pkcs7-mime part */
+	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA);
+	content = g_mime_data_wrapper_new_with_stream (compressed, GMIME_CONTENT_ENCODING_DEFAULT);
+	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
+	g_object_unref (compressed);
+	g_object_unref (content);
+	
+	return pkcs7_mime;
 }
 
 
 GMimeObject *
-g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimePkcs7Context *ctx)
+g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
 {
+	GMimeStream *filtered, *compressed, *stream;
+	GMimeObject *decompressed;
+	GMimeDataWrapper *content;
+	GMimeCryptoContext *ctx;
+	GMimeDecryptResult *res;
+	GMimeFilter *filter;
+	GMimeParser *parser;
+	
+	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
+	
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+			     _("Cannot decompress application/pkcs7-mime part: no crypto context registered for this type."));
+		
+		return NULL;
+	}
+	
+	/* get the compressed stream */
+	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
+	compressed = g_mime_stream_mem_new ();
+	g_mime_data_wrapper_write_to_stream (content, compressed);
+	g_mime_stream_reset (compressed);
+	
+	stream = g_mime_stream_mem_new ();
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_filter_dos2unix_new (FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
+	
+	/* decompress the content stream */
+	if (g_mime_crypto_context_decompress (ctx, compressed, stream, err) == -1) {
+		g_object_unref (compressed);
+		g_object_unref (filtered);
+		g_object_unref (stream);
+		g_object_unref (ctx);
+		
+		return NULL;
+	}
+	
+	g_mime_stream_flush (filtered);
+	g_object_unref (compressed);
+	g_object_unref (filtered);
+	g_object_unref (ctx);
+	
+	g_mime_stream_reset (stream);
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	g_object_unref (stream);
+	
+	decompressed = g_mime_parser_construct_part (parser, NULL);
+	g_object_unref (parser);
+	
+	if (!decompressed) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot decompress application/pkcs7-mime part: failed to parse decompressed content."));
+		
+		return NULL;
+	}
+	
+	return decompressed;
 }
 #endif
 
