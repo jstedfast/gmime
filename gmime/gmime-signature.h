@@ -131,6 +131,8 @@ time_t g_mime_signature_get_created (GMimeSignature *sig);
 void g_mime_signature_set_expires (GMimeSignature *sig, time_t expires);
 time_t g_mime_signature_get_expires (GMimeSignature *sig);
 
+gboolean g_mime_signature_get_created_usecs (const GMimeSignature *sig, guint64 *created);
+gboolean g_mime_signature_get_expires_usecs (const GMimeSignature *sig, guint64 *created);
 
 /**
  * GMimeSignatureList:

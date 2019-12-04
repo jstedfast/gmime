@@ -257,6 +257,49 @@ g_mime_signature_get_expires (GMimeSignature *sig)
 }
 
 
+/**
+ * g_mime_signature_get_created_usecs:
+ * @sig: a #GMimeSignature
+ * @created: (out) pointer to output creation time [out]
+ *
+ * Get the creation date of the signature in microseconds since the UNIX epoch.
+ *
+ * Returns: TRUE if successful; FALSE if @esig is not a signature, @created is NULL, or there is no known creation date for the signature.
+ **/
+gboolean
+g_mime_signature_get_created_usecs (const GMimeSignature *sig, guint64 *created)
+{
+	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), FALSE);
+	g_return_val_if_fail (created != NULL, FALSE);
+	g_return_val_if_fail (sig->created != (time_t)-1, FALSE);
+
+	*created = ((guint64)((unsigned long)(sig->created))) * 1000000;
+
+	return TRUE;
+}
+
+/**
+ * g_mime_signature_get_expires_usecs:
+ * @sig: a #GMimeSignature
+ * @expires: (out) pointer to output expiration time [out]
+ *
+ * Get the expiration date of the signature in microseconds since the UNIX epoch.
+ *
+ * Returns: TRUE if successful; FALSE if @esig is not a signature, @expires is NULL, or there is no known expiration date for the signature.
+ **/
+gboolean
+g_mime_signature_get_expires_usecs (const GMimeSignature *sig, guint64 *expires)
+{
+	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), FALSE);
+	g_return_val_if_fail (expires != NULL, FALSE);
+	g_return_val_if_fail (sig->expires != (time_t)-1, FALSE);
+
+	*expires = ((guint64)((unsigned long)(sig->expires))) * 1000000;
+
+	return TRUE;
+}
+
+
 static void g_mime_signature_list_class_init (GMimeSignatureListClass *klass);
 static void g_mime_signature_list_init (GMimeSignatureList *list, GMimeSignatureListClass *klass);
 static void g_mime_signature_list_finalize (GObject *object);
