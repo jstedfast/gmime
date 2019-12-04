@@ -225,11 +225,31 @@ g_mime_signature_get_created (GMimeSignature *sig)
 
 
 /**
+ * g_mime_signature_get_created64:
+ * @sig: a #GMimeSignature
+ *
+ * Get the creation date of the signature.
+ *
+ * Returns: the creation date of the signature or %-1 if unknown.
+ **/
+gint64
+g_mime_signature_get_created64 (GMimeSignature *sig)
+{
+	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), -1);
+	
+	if (sig->created == (time_t) -1)
+		return -1;
+	
+	return (gint64) ((unsigned long) sig->created);
+}
+
+
+/**
  * g_mime_signature_set_expires:
  * @sig: a #GMimeSignature
  * @expires: expiration date
  *
- * Set the expiration date of the signature.
+ * Set the expiration date of the signature. A value of %0 means the signature never expires.
  **/
 void
 g_mime_signature_set_expires (GMimeSignature *sig, time_t expires)
@@ -244,7 +264,7 @@ g_mime_signature_set_expires (GMimeSignature *sig, time_t expires)
  * g_mime_signature_get_expires:
  * @sig: a #GMimeSignature
  *
- * Get the expiration date of the signature.
+ * Get the expiration date of the signature. A value of %0 means the signature never expires.
  *
  * Returns: the expiration date of the signature or %-1 if unknown.
  **/
@@ -254,6 +274,26 @@ g_mime_signature_get_expires (GMimeSignature *sig)
 	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), (time_t) -1);
 	
 	return sig->expires;
+}
+
+
+/**
+ * g_mime_signature_get_expires64:
+ * @sig: a #GMimeSignature
+ *
+ * Get the expiration date of the signature. A value of %0 means the signature never expires.
+ *
+ * Returns: the expiration date of the signature or %-1 if unknown.
+ **/
+gint64
+g_mime_signature_get_expires64 (GMimeSignature *sig)
+{
+	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), -1);
+	
+	if (sig->expires == (time_t) -1)
+		return -1;
+	
+	return (gint64) ((unsigned long) sig->expires);
 }
 
 

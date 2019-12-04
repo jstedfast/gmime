@@ -263,9 +263,11 @@ GMimeValidity g_mime_certificate_get_id_validity (GMimeCertificate *cert);
 
 void g_mime_certificate_set_created (GMimeCertificate *cert, time_t created);
 time_t g_mime_certificate_get_created (GMimeCertificate *cert);
+gint64 g_mime_certificate_get_created64 (GMimeCertificate *cert);
 
 void g_mime_certificate_set_expires (GMimeCertificate *cert, time_t expires);
 time_t g_mime_certificate_get_expires (GMimeCertificate *cert);
+gint64 g_mime_certificate_get_expires64 (GMimeCertificate *cert);
 
 
 /**

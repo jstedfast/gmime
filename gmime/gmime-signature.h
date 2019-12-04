@@ -127,9 +127,11 @@ GMimeSignatureStatus g_mime_signature_get_status (GMimeSignature *sig);
 
 void g_mime_signature_set_created (GMimeSignature *sig, time_t created);
 time_t g_mime_signature_get_created (GMimeSignature *sig);
+gint64 g_mime_signature_get_created64 (GMimeSignature *sig);
 
 void g_mime_signature_set_expires (GMimeSignature *sig, time_t expires);
 time_t g_mime_signature_get_expires (GMimeSignature *sig);
+gint64 g_mime_signature_get_expires64 (GMimeSignature *sig);
 
 
 /**

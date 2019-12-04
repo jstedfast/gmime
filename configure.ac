@@ -474,6 +474,7 @@ CFLAGS="$CFLAGS $LFS_CFLAGS"
 AC_CHECK_SIZEOF(ssize_t)
 AC_CHECK_SIZEOF(size_t)
 AC_CHECK_SIZEOF(off_t)
+AC_CHECK_SIZEOF(time_t)
 CFLAGS="$CFLAGS_save"
 
 dnl Check for some network functions
