@@ -560,7 +560,8 @@ g_mime_certificate_get_created (GMimeCertificate *cert)
  * g_mime_certificate_get_created64:
  * @cert: a #GMimeCertificate
  *
- * Get the creation date of the certificate's key.
+ * Get the creation date of the certificate's key in seconds since the
+ * UNIX epoch, represented as a 64-bit signed integer.
  *
  * Returns: the creation date of the certificate's key or %-1 if unknown.
  **/
@@ -613,7 +614,9 @@ g_mime_certificate_get_expires (GMimeCertificate *cert)
  * g_mime_certificate_get_expires64:
  * @cert: a #GMimeCertificate
  *
- * Get the expiration date of the certificate's key. A value of %0 means the certificate never expires.
+ * Get the expiration date of the certificate's key in seconds since
+ * the UNIX epoch, represented as a 64-bit signed integer. A value of
+ * %0 means the certificate never expires.
  *
  * Returns: the expiration date of the certificate's key or %-1 if unknown.
  **/

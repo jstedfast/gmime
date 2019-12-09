@@ -228,7 +228,8 @@ g_mime_signature_get_created (GMimeSignature *sig)
  * g_mime_signature_get_created64:
  * @sig: a #GMimeSignature
  *
- * Get the creation date of the signature.
+ * Get the creation date of the signature in seconds since the UNIX
+ * epoch, represented as a 64-bit signed integer.
  *
  * Returns: the creation date of the signature or %-1 if unknown.
  **/
@@ -281,7 +282,9 @@ g_mime_signature_get_expires (GMimeSignature *sig)
  * g_mime_signature_get_expires64:
  * @sig: a #GMimeSignature
  *
- * Get the expiration date of the signature. A value of %0 means the signature never expires.
+ * Get the expiration date of the signature in seconds since the UNIX
+ * epoch, represented as a 64-bit signed integer. A value of %0 means
+ * the signature never expires.
  *
  * Returns: the expiration date of the signature or %-1 if unknown.
  **/
