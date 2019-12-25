@@ -225,12 +225,12 @@ endif
 if ENABLE_VAPIGEN
 -include $(VAPIGEN_MAKEFILE)
 
-gmime-3.0.vapi: GMime-3.0.gir GMime-3.0.metadata
+gmime-3.0.vapi: GMime-3.0.gir GMime-3.0.metadata GMime-3.0-custom.vala
 
 VAPIGEN_VAPIS = gmime-3.0.vapi
 gmime_3_0_vapi_DEPS = gio-2.0
 gmime_3_0_vapi_METADATADIRS = $(srcdir)
-gmime_3_0_vapi_FILES = GMime-3.0.gir
+gmime_3_0_vapi_FILES = GMime-3.0.gir GMime-3.0-custom.vala
 
 gmime-3.0.deps:
 	$(AM_V_GEN) for pkg in $(gmime_3_0_vapi_DEPS); do \
