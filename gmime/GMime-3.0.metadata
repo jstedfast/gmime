@@ -2,6 +2,11 @@ InternetAddress
   .to_string#method name="to_new_string"
 References struct=false
 
+// These are actually static factory methods
+Object
+  .new skip
+  .new_type skip
+
 // G-I can't handle non-boxed types
 PartIter struct=false
 
