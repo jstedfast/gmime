@@ -38,10 +38,6 @@
 #endif
 #include <sys/types.h>
 #include <unistd.h>         /* Unix header for getpid() */
-#ifdef G_OS_WIN32
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
@@ -55,6 +51,11 @@
 #endif
 
 #include <glib.h>
+#ifdef G_OS_WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
+
 #include "gmime-utils.h"
 #include "gmime-common.h"
 #include "gmime-internal.h"
