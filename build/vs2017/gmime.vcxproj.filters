@@ -1,0 +1,458 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\gmime">
+      <UniqueIdentifier>{51090496-2b5a-4542-8a38-cdab05292acb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gmime">
+      <UniqueIdentifier>{551f1b15-f36e-4d50-a856-ef4a548b441f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{ec39e5e3-e11b-4402-b7be-3b1c78b170ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{4d8fd383-da8c-4271-b7c0-ee470ed3bccf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\gmime\gmime.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-application-pkcs7-mime.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-autocrypt.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-certificate.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-charset.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-common.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-content-type.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-crypto-context.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-data-wrapper.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-disposition.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-encodings.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-events.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-basic.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-best.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-charset.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-checksum.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-dos2unix.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-enriched.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-from.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-gzip.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-html.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-openpgp.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-smtp-data.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-strip.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-unix2dos.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-windows.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-filter-yenc.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-format-options.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-gpg-context.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-gpgme-utils.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-header.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-iconv.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-iconv-utils.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-message.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-message-part.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-message-partial.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-multipart.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-multipart-encrypted.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-multipart-signed.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-object.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-param.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-parser.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-parser-options.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-parse-utils.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-part.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-part-iter.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-pkcs7-context.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-references.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-signature.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-buffer.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-cat.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-file.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-filter.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-fs.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-gio.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-mem.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-mmap.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-null.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-stream-pipe.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-text-part.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\gmime-utils.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\gmime\internet-address.c">
+      <Filter>Source Files\gmime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\util\packed.c">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\util\url-scanner.c">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\util\gtrie.c">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\gmime\gmime.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-application-pkcs7-mime.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-autocrypt.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-certificate.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-charset.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-charset-map-private.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-common.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-content-type.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-crypto-context.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-data-wrapper.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-disposition.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-encodings.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-error.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-events.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-basic.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-best.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-charset.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-checksum.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-dos2unix.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-enriched.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-from.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-gzip.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-html.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-openpgp.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-smtp-data.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-strip.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-unix2dos.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-windows.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-filter-yenc.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-format-options.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-gpg-context.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-gpgme-utils.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-header.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-iconv.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-iconv-utils.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-internal.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-message.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-message-part.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-message-partial.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-multipart.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-multipart-encrypted.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-multipart-signed.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-object.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-param.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-parser.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-parser-options.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-parse-utils.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-part.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-part-iter.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-pkcs7-context.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-references.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-signature.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-buffer.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-cat.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-file.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-filter.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-fs.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-gio.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-mem.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-mmap.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-null.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-stream-pipe.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-table-private.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-text-part.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\gmime-utils.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\gmime\internet-address.h">
+      <Filter>Header Files\gmime</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unistd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\util\packed.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\util\url-scanner.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\util\gtrie.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="gmime.def">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>
