@@ -98,7 +98,7 @@ uuencode (const char *progname, int argc, char **argv)
 	g_option_context_free (context);
 	
 	if (version) {
-		printf ("%s - GMime %s\n", progname, GMIME_VERSION);
+		printf ("%s - GMime %u.%u.%u\n", progname, GMIME_MAJOR_VERSION, GMIME_MINOR_VERSION, GMIME_MICRO_VERSION);
 		return 0;
 	}
 	
