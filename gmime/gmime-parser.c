@@ -1163,6 +1163,7 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 static void
 parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 {
+	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	struct _GMimeParserPrivate *priv = parser->priv;
 	struct _StepHeadersState state;
 	ssize_t available;
@@ -1212,6 +1213,10 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 				
 				priv->state = GMIME_PARSER_STATE_CONTENT;
 			}
+			
+			if (can_warn)
+				_g_mime_parser_options_warn (options, -1, GMIME_WARN_TRUNCATED_MESSAGE, NULL);
+			
 			return;
 		}
 	} while (TRUE);
