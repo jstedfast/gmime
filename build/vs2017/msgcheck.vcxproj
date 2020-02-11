@@ -40,11 +40,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\examples\imap-example.c" />
+    <ClCompile Include="..\..\examples\msgcheck.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{F43D5E68-E39F-4C88-B8E6-7401309CC05F}</ProjectGuid>
+    <ProjectGuid>{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}</ProjectGuid>
     <RootNamespace>gmime</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
