@@ -80,6 +80,9 @@ uudecode (const char *progname, int argc, char **argv)
 	int state = 0;
 	mode_t mode;
 	size_t n;
+#ifdef WIN32
+	int optind = 1;
+#endif
 	
 	context = g_option_context_new ("[FILE]...");
 	g_option_context_add_main_entries (context, options, progname);
@@ -94,7 +97,7 @@ uudecode (const char *progname, int argc, char **argv)
 	g_option_context_free (context);
 	
 	if (version) {
-		printf ("%s - GMime %s\n", progname, GMIME_VERSION);
+		printf ("%s - GMime %u.%u.%u\n", progname, GMIME_MAJOR_VERSION, GMIME_MINOR_VERSION, GMIME_MICRO_VERSION);
 		return 0;
 	}
 	
