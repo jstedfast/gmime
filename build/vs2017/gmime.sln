@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "basic-example", "basic-exam
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "imap-example", "imap-example.vcxproj", "{F43D5E68-E39F-4C88-B8E6-7401309CC05F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "msgcheck", "msgcheck.vcxproj", "{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug-DLL|x64 = Debug-DLL|x64
@@ -105,6 +107,22 @@ Global
 		{F43D5E68-E39F-4C88-B8E6-7401309CC05F}.Release-Static|x64.Build.0 = Release-Static|x64
 		{F43D5E68-E39F-4C88-B8E6-7401309CC05F}.Release-Static|x86.ActiveCfg = Release-Static|Win32
 		{F43D5E68-E39F-4C88-B8E6-7401309CC05F}.Release-Static|x86.Build.0 = Release-Static|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-DLL|x64.ActiveCfg = Debug-DLL|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-DLL|x64.Build.0 = Debug-DLL|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-DLL|x86.ActiveCfg = Debug-DLL|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-DLL|x86.Build.0 = Debug-DLL|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-Static|x64.ActiveCfg = Debug-Static|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-Static|x64.Build.0 = Debug-Static|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-Static|x86.ActiveCfg = Debug-Static|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Debug-Static|x86.Build.0 = Debug-Static|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-DLL|x64.ActiveCfg = Release-DLL|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-DLL|x64.Build.0 = Release-DLL|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-DLL|x86.ActiveCfg = Release-DLL|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-DLL|x86.Build.0 = Release-DLL|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-Static|x64.ActiveCfg = Release-Static|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-Static|x64.Build.0 = Release-Static|x64
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-Static|x86.ActiveCfg = Release-Static|Win32
+		{4D289FD2-11CD-48DB-AFF3-3A8295A3AB5C}.Release-Static|x86.Build.0 = Release-Static|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
