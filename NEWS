@@ -1,3 +1,14 @@
+### GMime 3.2.6
+
+* Added methods to get 64-bit timestamps for the creation-date and expiration-date of
+  GMimeCertificates and GMimeSignatures. (issue #68)
+
+* Fixed the vala abstract public constructor for GMimeObject. (issue #76)
+
+* Fixed a bug in GMimeParser's header parser. (issue #78)
+
+* Added build files for Visual Studio 2017 thanks to Vitaliy Didik.
+
 ### GMime 3.2.5
 
 *  Modified GMimeParser to prevent stack overflows when parsing deeply nested messages.

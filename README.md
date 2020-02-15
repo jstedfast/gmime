@@ -28,7 +28,7 @@ high-level application programming interface (API).
 
 ## License Information
 
-The GMime library is Copyright (C) 2000-2019 Jeffrey Stedfast and is licensed under the LGPL v2.1
+The GMime library is Copyright (C) 2000-2020 Jeffrey Stedfast and is licensed under the LGPL v2.1
 
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
