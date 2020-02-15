@@ -649,6 +649,7 @@ build/vs2008/Makefile
 build/vs2008/config-win32.h
 build/vs2010/Makefile
 build/vs2010/config-win32.h
+build/vs2017/Makefile
 docs/Makefile
 docs/reference/Makefile
 docs/tutorial/Makefile
@@ -666,20 +667,21 @@ echo "
 
 Configuration:
 
-  Source code location: ${srcdir}
-  Install prefix:       ${prefix}
-  Compiler:             ${CC}
+  Source code location:  ${srcdir}
+  Install prefix:        ${prefix}
+  Compiler:              ${CC}
 
-  Documentation:        ${enable_gtk_doc}
+  Documentation:         ${enable_gtk_doc}
 
-  Profiling enabled:    ${enable_profiling}
-  Coverage enabled:     ${enable_coverage}
+  Profiling enabled:     ${enable_profiling}
+  Coverage enabled:      ${enable_coverage}
 
-  Large file support:   ${enable_largefile}
-  Console warnings:     ${enable_warnings}
-  PGP/MIME support:     ${enable_crypto}
-  S/MIME support:       ${enable_crypto}
-  libidn support:       ${libidn}
+  Large file support:    ${enable_largefile}
+  Console warnings:      ${enable_warnings}
+  PGP/MIME support:      ${enable_crypto}
+  S/MIME support:        ${enable_crypto}
+  libidn support:        ${libidn}
 
-  Vala bindings:        ${enable_vala}
+  GObject introspection: ${enable_introspection}
+  Vala bindings:         ${enable_vala}
 "
