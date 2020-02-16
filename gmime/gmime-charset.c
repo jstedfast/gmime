@@ -60,6 +60,7 @@
 #define ICONV_ISO_INT_FORMAT "iso-%u-%u"
 #define ICONV_ISO_STR_FORMAT "iso-%u-%s"
 #endif /* __aix__, __irix__, __sun__ */
+#define ICONV_SHIFT_JIS "shift-jis"
 #define ICONV_10646 "iso-10646"
 #endif /* USE_ICONV_DETECT */
 
@@ -133,10 +134,12 @@ static struct {
 	/* Japanese charsets */
 	{ "eucjp-0",         "eucJP"  	  },  /* should this map to "EUC-JP" instead? */
 	{ "ujis-0",          "ujis"  	  },  /* we might want to map this to EUC-JP */
-	{ "jisx0208.1983-0", "SJIS"       },
-	{ "jisx0212.1990-0", "SJIS"       },
-	{ "pck",	     "SJIS"       },
 	{ NULL,              NULL         }
+};
+
+static const char *shiftjis_aliases[] = {
+	"shift-jis", "shift_jis", "sjis", "shift_jis-2004", "shift_jisx0213",
+	"jisx0208.1983-0", "jisx0212.1990-0", "pck", NULL
 };
 
 /* map CJKR charsets to their language code */
@@ -147,21 +150,20 @@ static struct {
 	const char *charset;
 	const char *lang;
 } cjkr_lang_map[] = {
-	{ "Big5",        "zh" },
-	{ "BIG5HKSCS",   "zh" },
-	{ "gb2312",      "zh" },
-	{ "gb18030",     "zh" },
-	{ "gbk",         "zh" },
-	{ "euc-tw",      "zh" },
-	{ "iso-2022-jp", "ja" },
-	{ "Shift-JIS",   "ja" },
-	{ "sjis",        "ja" },
-	{ "ujis",        "ja" },
-	{ "eucJP",       "ja" },
-	{ "euc-jp",      "ja" },
-	{ "euc-kr",      "ko" },
-	{ "koi8-r",      "ru" },
-	{ "koi8-u",      "uk" }
+	{ "Big5",          "zh" },
+	{ "BIG5HKSCS",     "zh" },
+	{ "gb2312",        "zh" },
+	{ "gb18030",       "zh" },
+	{ "gbk",           "zh" },
+	{ "euc-tw",        "zh" },
+	{ "iso-2022-jp",   "ja" },
+	{ ICONV_SHIFT_JIS, "ja" },
+	{ "ujis",          "ja" },
+	{ "eucJP",         "ja" },
+	{ "euc-jp",        "ja" },
+	{ "euc-kr",        "ko" },
+	{ "koi8-r",        "ru" },
+	{ "koi8-u",        "uk" }
 };
 
 static GHashTable *iconv_charsets = NULL;
@@ -409,6 +411,18 @@ g_mime_charset_language (const char *charset)
 	return NULL;
 }
 
+static gboolean
+is_shift_jis (const char *name)
+{
+	int i;
+	
+	for (i = 0; shiftjis_aliases[i] != NULL; i++) {
+		if (!strcmp (name, shiftjis_aliases[i]))
+			return TRUE;
+	}
+	
+	return FALSE;
+}
 
 static const char *
 strdown (char *str)
@@ -483,8 +497,7 @@ g_mime_charset_iconv_name (const char *charset)
 								      iso, codepage);
 			} else {
 				/* codepage is a string - probably iso-2022-jp or something */
-				iconv_name = g_strdup_printf (ICONV_ISO_STR_FORMAT,
-							      iso, p);
+				iconv_name = g_strdup_printf (ICONV_ISO_STR_FORMAT, iso, p);
 			}
 		} else {
 			/* p == buf, which probably means we've
@@ -503,6 +516,8 @@ g_mime_charset_iconv_name (const char *charset)
 			buf += 2;
 		
 		iconv_name = g_strdup_printf ("CP%s", buf);
+	} else if (is_shift_jis (name)) {
+		iconv_name = g_strdup (ICONV_SHIFT_JIS);
 	} else {
 		/* assume charset name is ok as is? */
 		iconv_name = g_strdup (charset);

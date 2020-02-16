@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 1999-2017 Jeffrey Stedfast
+ *  Copyright (C) 1999-2020 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -47,6 +47,12 @@ enum {
 	ISO_DASH_UINT_DASH_STR_LOWER   = (1 << 0),
 	ISO_DASH_UINT_DASH_STR         = (1 << 1),
 	ISO_UINT_DASH_STR              = (1 << 2),
+
+	/* shift-jis */
+	SHIFT_DASH_JIS                 = (1 << 0),
+	SHIFT_UNDERSCORE_JIS           = (1 << 1),
+	SJIS                           = (1 << 2),
+	SHIFT_JISX0213                 = (1 << 3),
 };
 
 
@@ -76,6 +82,15 @@ static CharInfo iso2022_tests[] = {
 
 static int num_iso2022_tests = sizeof (iso2022_tests) / sizeof (CharInfo);
 
+static CharInfo shiftjis_tests[] = {
+	{ "shift-jis",      "shift-jis",      SHIFT_DASH_JIS },
+	{ "shift_jis",      "shift_jis",      SHIFT_UNDERSCORE_JIS },
+	{ "sjis",           "sjis",           SJIS },
+	{ "shift_jisx0213", "shift_jisx0213", SHIFT_JISX0213 },
+};
+
+static int num_shiftjis_tests = sizeof (shiftjis_tests) / sizeof (CharInfo);
+
 static CharInfo iso10646_tests[] = {
 	{ "iso-10646-1", "iso-%u-%u",  ISO_DASH_UINT_DASH_UINT_LOWER },
 	{ "ISO-10646-1", "ISO-%u-%u",  ISO_DASH_UINT_DASH_UINT },
@@ -91,7 +106,7 @@ static int num_iso10646_tests = sizeof (iso10646_tests) / sizeof (CharInfo);
 
 int main (int argc, char **argv)
 {
-	unsigned int iso8859, iso2022, iso10646;
+	unsigned int iso8859, iso2022, iso10646, shiftjis;
 	CharInfo *info;
 	iconv_t cd;
 	FILE *fp;
@@ -148,6 +163,30 @@ int main (int argc, char **argv)
 #endif
 	} else {
 		fprintf (fp, "#define ICONV_ISO_STR_FORMAT \"%s\"\n", info[i].format);
+	}
+	
+	shiftjis = ISO_UNSUPPORTED;
+	info = shiftjis_tests;
+	/*printf ("#define ISO_2022_FORMAT(iso,codepage)\t");*/
+	for (i = 0; i < num_shiftjis_tests; i++) {
+		cd = iconv_open (info[i].charset, "UTF-8");
+		if (cd != (iconv_t) -1) {
+			iconv_close (cd);
+			/*printf ("(\"%s\", (iso), (codepage))\n", info[i].format);*/
+			fprintf (stderr, "System prefers %s\n", info[i].charset);
+			shiftjis = info[i].id;
+			break;
+		}
+	}
+	
+	if (shiftjis == ISO_UNSUPPORTED) {
+		fprintf (stderr, "System doesn't support any SHIFT-JIS aliases\n");
+		fprintf (fp, "#define ICONV_SHIFT_JIS \"%s\"\n", info[0].format);
+#ifdef CONFIGURE_IN
+		return EXIT_FAILURE;
+#endif
+	} else {
+		fprintf (fp, "#define ICONV_SHIFT_JIS \"%s\"\n", info[i].format);
 	}
 	
 	iso10646 = ISO_UNSUPPORTED;
