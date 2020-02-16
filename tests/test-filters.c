@@ -113,11 +113,14 @@ test_charset_conversion (const char *datadir, const char *base, const char *from
 	
 	testsuite_check ("%s (%s %s -> %s)", what, base, from, to);
 	
+	if (!(filter = g_mime_filter_charset_new (from, to))) {
+		testsuite_check_failed ("%s failed: system does not support conversion from %s to %s", what, from, to);
+		return;
+	}
+	
 	actual = g_byte_array_new ();
 	stream = g_mime_stream_mem_new_with_byte_array (actual);
 	g_mime_stream_mem_set_owner ((GMimeStreamMem *) stream, FALSE);
-	
-	filter = g_mime_filter_charset_new (from, to);
 	
 	name = g_strdup_printf ("%s.%s.txt", base, from);
 	path = g_build_filename (datadir, name, NULL);
