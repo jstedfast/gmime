@@ -166,7 +166,7 @@ check-local: $(AUTOMATED_TESTS)
 	echo "Results: $${passed} tests passed; $${failed} tests failed."; \
 	if [ $${failed} -ne 0 ]; then \
 		echo -e "Failed tests: $${failed_tests}"; \
-		exit -1; \
+		exit 255; \
 	fi
 
 distclean-local: 
