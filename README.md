@@ -736,6 +736,57 @@ if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
 }
 ```
 
+## Understanding Memory Management in GMime
+
+- Functions that return `const char *` return a pointer to a string stored on the `GObject` that will be released
+when the object itself is finalized and therefore should *never* be fed to `g_free()` by the caller.
+
+- Functions that return `char *` are left up to the caller to `g_free()` when the caller is done with them.
+
+### For functions throughout the GMime API that return an object reference:
+
+- If the function that returned the object allocated the object, then you need to unref it, otherwise you don't.
+
+For example, the `stream` in the following code would need to be unreffed (using `g_object_unref()`) because it was
+freshly allocated by the function:
+
+```c
+GMimeStream *stream = g_mime_stream_mem_new ();
+```
+
+The next example shows a function that returns a reference to an *existing* `GMimeStream` object that is stored on
+(and therefor managed by) the `GMimeDataWrapper` object:
+
+```c
+GMimeStream *stream = g_mime_data_wrapper_get_stream (wrapper);
+```
+
+In the above example, the `stream` *should not* be unreffed because the `stream` object's memory is managed by the
+`wrapper` object. In other words, when the `wrapper` object is freed, the `stream` will be freed as well.
+
+Where many developers get confused is when they create a new object and then add it to another object.
+
+For example:
+
+```c
+GMimeStream *stream = g_mime_stream_mem_new ();
+GMimeDataWrapper *wrapper = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
+g_object_unref (stream);
+```
+
+Even in this situation, it is necessary to unref the allocated object because all GMime functions that add an
+object to another object will ref that object themselves.
+
+In other words, in the above example, the `GMimeStream` is being added to the `GMimeDataWrapper`. The
+`GMimeDataWrapper` calls `g_object_ref()` on the `stream` which means that the `stream` object now has
+a ref count of 2.
+
+When `g_object_unref()` is called on the stream after adding it to the `GMimeDataWrapper`, the ref count drops
+down to 1.
+
+And when the `wrapper` object is eventually finalized after calling `g_object_unref()` on it, the ref count
+on the `stream` object will be reduced to 0 as well, thereby freeing the `stream` object.
+
 ## Documentation
 
 This is the README file for GMime. Additional documentation related to
