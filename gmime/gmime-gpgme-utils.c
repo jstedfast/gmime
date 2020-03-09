@@ -129,18 +129,25 @@ g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret
 		if (KEY_IS_OK (key)) {
 			subkey = key->subkeys;
 			
-			while (subkey && ((secret && !subkey->can_sign) || (!secret && !subkey->can_encrypt)))
-				subkey = subkey->next;
-			
-			if (subkey) {
-				if (KEY_IS_OK (subkey) && (subkey->expires == 0 || subkey->expires > now))
-					break;
+			while (subkey) {
+				if ((secret && subkey->can_sign) || (!secret && subkey->can_encrypt)) {
+					if (KEY_IS_OK (subkey) && (subkey->expires == 0 || subkey->expires > now)) {
+						errval = GPG_ERR_NO_ERROR;
+						break;
+					}
+					
+					if (subkey->expired)
+						errval = GPG_ERR_KEY_EXPIRED;
+				}
 				
-				if (subkey->expired)
-					errval = GPG_ERR_KEY_EXPIRED;
-				else
-					errval = GPG_ERR_BAD_KEY;
+				subkey = subkey->next;
 			}
+			
+			if (subkey)
+				break;
+			
+			if (errval == GPG_ERR_NO_ERROR)
+				errval = GPG_ERR_BAD_KEY;
 		} else {
 			if (key->expired)
 				errval = GPG_ERR_KEY_EXPIRED;
