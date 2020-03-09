@@ -97,18 +97,61 @@ g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *
 }
 
 
-#define KEY_IS_OK(k)   (!((k)->expired || (k)->revoked || (k)->disabled || (k)->invalid))
+static gboolean
+g_mime_gpgme_key_is_usable (gpgme_key_t key, gboolean secret, time_t now, gpgme_error_t *err)
+{
+	gpgme_subkey_t subkey;
+	
+	*err = GPG_ERR_NO_ERROR;
+	
+	/* first, check the state of the key itself... */
+	if (key->expired)
+		*err = GPG_ERR_KEY_EXPIRED;
+	else if (key->revoked)
+		*err = GPG_ERR_CERT_REVOKED;
+	else if (key->disabled)
+		*err = GPG_ERR_KEY_DISABLED;
+	else if (key->invalid)
+		*err = GPG_ERR_BAD_KEY;
+	
+	if (*err != GPG_ERR_NO_ERROR)
+		return FALSE;
+	
+	/* now check if there is a subkey that we can use */
+	subkey = key->subkeys;
+	
+	while (subkey) {
+		if ((secret && subkey->can_sign) || (!secret && subkey->can_encrypt)) {
+			if (subkey->expired || (subkey->expires != 0 && subkey->expires <= now))
+				*err = GPG_ERR_KEY_EXPIRED;
+			else if (subkey->revoked)
+				*err = GPG_ERR_CERT_REVOKED;
+			else if (subkey->disabled)
+				*err = GPG_ERR_KEY_DISABLED;
+			else if (subkey->invalid)
+				*err = GPG_ERR_BAD_KEY;
+			else
+				return TRUE;
+		}
+		
+		subkey = subkey->next;
+	}
+	
+	if (*err == GPG_ERR_NO_ERROR)
+		*err = GPG_ERR_BAD_KEY;
+	
+	return FALSE;
+}
 
 /* Note: this function based on code in Balsa written by Albrecht Dreß. */
 static gpgme_key_t
 g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret, GError **err)
 {
+	gpgme_error_t key_error = GPG_ERR_NO_ERROR;
 	time_t now = time (NULL);
 	gpgme_key_t key = NULL;
-	gpgme_subkey_t subkey;
-	gboolean bad = FALSE;
+	gboolean found = FALSE;
 	gpgme_error_t error;
-	int errval = 0;
 	
 	if ((error = gpgme_op_keylist_start (ctx, name, secret)) != GPG_ERR_NO_ERROR) {
 		if (secret) {
@@ -126,37 +169,11 @@ g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret
 	
 	while ((error = gpgme_op_keylist_next (ctx, &key)) == GPG_ERR_NO_ERROR) {
 		/* check if this key and the relevant subkey are usable */
-		if (KEY_IS_OK (key)) {
-			subkey = key->subkeys;
-			
-			while (subkey) {
-				if ((secret && subkey->can_sign) || (!secret && subkey->can_encrypt)) {
-					if (KEY_IS_OK (subkey) && (subkey->expires == 0 || subkey->expires > now)) {
-						errval = GPG_ERR_NO_ERROR;
-						break;
-					}
-					
-					if (subkey->expired)
-						errval = GPG_ERR_KEY_EXPIRED;
-				}
-				
-				subkey = subkey->next;
-			}
-			
-			if (subkey)
-				break;
-			
-			if (errval == GPG_ERR_NO_ERROR)
-				errval = GPG_ERR_BAD_KEY;
-		} else {
-			if (key->expired)
-				errval = GPG_ERR_KEY_EXPIRED;
-			else
-				errval = GPG_ERR_BAD_KEY;
-		}
+		if (g_mime_gpgme_key_is_usable (key, secret, now, &key_error))
+			break;
 		
 		gpgme_key_unref (key);
-		bad = TRUE;
+		found = TRUE;
 		key = NULL;
 	}
 	
@@ -178,22 +195,22 @@ g_mime_gpgme_get_key_by_name (gpgme_ctx_t ctx, const char *name, gboolean secret
 	
 	if (!key) {
 		if (strchr (name, '@')) {
-			if (bad) {
-				g_set_error (err, GMIME_GPGME_ERROR, errval,
+			if (found && key_error != GPG_ERR_NO_ERROR) {
+				g_set_error (err, GMIME_GPGME_ERROR, key_error,
 					     _("A key for %s is present, but it is expired, disabled, revoked or invalid"),
 					     name);
 			} else {
 				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
-					     _("Could not find a key for %s"), name);
+					     _("Could not find a suitable key for %s"), name);
 			}
 		} else {
-			if (bad) {
-				g_set_error (err, GMIME_GPGME_ERROR, errval,
+			if (found && key_error != GPG_ERR_NO_ERROR) {
+				g_set_error (err, GMIME_GPGME_ERROR, key_error,
 					     _("A key with id %s is present, but it is expired, disabled, revoked or invalid"),
 					     name);
 			} else {
 				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
-					     _("Could not find a key with id %s"), name);
+					     _("Could not find a suitable key with id %s"), name);
 			}
 		}
 		
