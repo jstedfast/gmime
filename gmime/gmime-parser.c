@@ -1081,13 +1081,15 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 							priv->inptr = start;
 							return FALSE;
 						}
-					} else if (priv->toplevel && priv->state == GMIME_PARSER_STATE_HEADERS) {
+					} else if (priv->toplevel) {
 						if (can_warn)
 							warn_invalid_header (parser, options, start, inptr, inend);
 						priv->state = GMIME_PARSER_STATE_ERROR;
 						header_buffer_reset (priv);
 						priv->inptr = start;
 						return FALSE;
+					} else if (can_warn) {
+						warn_invalid_header (parser, options, start, inptr, inend);
 					}
 				}
 			}
