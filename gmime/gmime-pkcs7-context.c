@@ -384,6 +384,7 @@ g_mime_pkcs7_context_new (void)
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7;
 	gpgme_ctx_t ctx;
+	gpgme_keylist_mode_t keylist_mode;
 	
 	/* make sure GpgMe supports the CMS protocols */
 	if (gpgme_engine_check_version (GPGME_PROTOCOL_CMS) != GPG_ERR_NO_ERROR)
@@ -397,6 +398,16 @@ g_mime_pkcs7_context_new (void)
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
 	gpgme_set_textmode (ctx, FALSE);
 	gpgme_set_armor (ctx, FALSE);
+
+	/* ensure that key listings are correctly validated, since we
+	   use user ID validity to determine what identity to report */
+	keylist_mode = gpgme_get_keylist_mode (ctx);
+	if (! (keylist_mode & GPGME_KEYLIST_MODE_VALIDATE))
+		if (gpgme_set_keylist_mode (ctx, keylist_mode | GPGME_KEYLIST_MODE_VALIDATE) != GPG_ERR_NO_ERROR) {
+			gpgme_release (ctx);
+			return NULL;
+		}
+
 	pkcs7->ctx = ctx;
 	
 	return (GMimeCryptoContext *) pkcs7;
