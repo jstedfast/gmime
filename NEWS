@@ -1,3 +1,18 @@
+### GMime 3.2.7
+
+* Added some configure logic to auto-detect the system shift-jis charset alias. (issue #81)
+
+* Fixed tests/Makefile.am to exit with a non-negative value (issue #82)
+
+* Fixed logic to skip expired or revoked gpg subkeys when looking for the correct subkey to
+  use for signing or encrypting. (issue #88)
+
+* Fixed a regression introduced into 3.2.6 as part of the header parsder rewrite that lost
+  the ability to warn about invalid headers for non-toplevel MIME parts. (issue #89)
+
+* Fixed S/MIME to always set GPGME_KEYLIST_MODE_VALIDATE when looking up certificates
+  as this is needed in order to correctly populate the GMimeCertificates (issue #90)
+
 ### GMime 3.2.6
 
 * Added methods to get 64-bit timestamps for the creation-date and expiration-date of
