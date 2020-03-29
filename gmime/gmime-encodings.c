@@ -166,6 +166,8 @@ const char *
 g_mime_content_encoding_to_string (GMimeContentEncoding encoding)
 {
 	switch (encoding) {
+        case GMIME_CONTENT_ENCODING_DEFAULT:
+		return "default";
         case GMIME_CONTENT_ENCODING_7BIT:
 		return "7bit";
         case GMIME_CONTENT_ENCODING_8BIT:
