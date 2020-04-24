@@ -57,7 +57,9 @@ typedef enum {
  * @GMIME_CRIT_CONFLICTING_HEADER: Conflicting header.
  * @GMIME_CRIT_CONFLICTING_PARAMETER: Conflicting header parameter.
  * @GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY: A multipart lacks the required boundary parameter.
- * @GMIME_CRIT_NESTING_OVERFLOW: The maximum MIME nesting level has been exceeded.
+ * @GMIME_CRIT_NESTING_OVERFLOW: The maximum MIME nesting level has been exceeded. This is very likely to be an attempt to exploit the MIME parser.
+ * @GMIME_WARN_PART_WITHOUT_CONTENT: A MIME part's headers were terminated by a boundary marker.
+ * @GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT: A MIME part was encountered without any headers -or- content. This is very likely to be an attempt to exploit the MIME parser.
  *
  * Issues the @GMimeParser detects. Note that the `GMIME_CRIT_*` issues indicate that some parts of the @GMimeParser input may
  * be ignored or will be interpreted differently by other software products.
@@ -77,7 +79,9 @@ typedef enum {
 	GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY,
 	GMIME_WARN_INVALID_PARAMETER,
 	GMIME_WARN_INVALID_ADDRESS_LIST,
-	GMIME_CRIT_NESTING_OVERFLOW
+	GMIME_CRIT_NESTING_OVERFLOW,
+	GMIME_WARN_PART_WITHOUT_CONTENT,
+	GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT,
 } GMimeParserWarning;
 
 /**

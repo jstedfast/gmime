@@ -26,14 +26,6 @@
 #include <stdlib.h>
 #include <gmime/gmime.h>
 
-
-typedef struct {
-	gint64 offset;
-	GMimeParserWarning errcode;
-	gchar *message;
-} issue_log_elem_t;
-
-
 static const gchar *
 errcode2str(GMimeParserWarning errcode)
 {
@@ -66,32 +58,36 @@ errcode2str(GMimeParserWarning errcode)
 		return "conflicting header parameter";
 	case GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY:
 		return "multipart without boundary";
+	case GMIME_WARN_PART_WITHOUT_CONTENT:
+		return "MIME part without content encountered";
+	case GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT:
+		return "MIME part without headers or content encountered";
 	default:
 		return "unknown";
 	}
 }
 
+static int issues = 0;
 
 static void
 parser_issue (gint64 offset, GMimeParserWarning errcode, const gchar *item, gpointer user_data)
 {
-	GList **issues = (GList **) user_data;
-	issue_log_elem_t *new_issue;
+	char *message;
 
-	new_issue = g_new (issue_log_elem_t, 1U);
-	new_issue->offset = offset;
-	new_issue->errcode = errcode;
 	if (item == NULL) {
-		new_issue->message = g_strdup (errcode2str (errcode));
+		message = g_strdup (errcode2str (errcode));
 	} else {
 		gchar *buf;
 
 		buf = g_strdup (item);
 		g_strstrip (buf);
-		new_issue->message = g_strdup_printf ("%s: '%s'", errcode2str (errcode), buf);
+		message = g_strdup_printf ("%s: '%s'", errcode2str (errcode), buf);
 		g_free (buf);
 	}
-	*issues = g_list_append (*issues, new_issue);
+
+	g_printf ("offset %" G_GINT64_FORMAT ": [%u] %s\n", offset, errcode, message);
+	g_free (message);
+	issues++;
 }
 
 
@@ -110,12 +106,11 @@ check_msg_file (const gchar *filename)
 		GMimeParser *parser;
 		GMimeParserOptions *options;
 		GMimeMessage *message;
-		GList *issues = NULL;
 
 		parser = g_mime_parser_new ();
 		g_mime_parser_init_with_stream (parser, stream);
 		options = g_mime_parser_options_new ();
-		g_mime_parser_options_set_warning_callback (options, parser_issue, &issues);
+		g_mime_parser_options_set_warning_callback (options, parser_issue, NULL);
 		message = g_mime_parser_construct_message (parser, options);
 		g_mime_parser_options_free (options);
 		g_object_unref (parser);
@@ -124,21 +119,10 @@ check_msg_file (const gchar *filename)
 			g_object_unref (message);
 		}
 
-		if (issues == NULL) {
+		if (issues == 0) {
 			g_printf ("%s: message looks benign\n", filename);
 		} else {
-			GList *this_issue;
-
-			g_printf ("%s: message contains %u RFC violations:\n", filename, g_list_length (issues));
-			for (this_issue = issues; this_issue != NULL; this_issue = this_issue->next) {
-				issue_log_elem_t *issue_data = (issue_log_elem_t *) this_issue->data;
-
-				g_printf ("offset %" G_GINT64_FORMAT ": [%u] %s\n",
-					issue_data->offset, issue_data->errcode, issue_data->message);
-				g_free (issue_data->message);
-				g_free (issue_data);
-			}
-			g_list_free (issues);
+			g_printf ("%s: message contained %d RFC violations.\n", filename, issues);
 		}
 	}
 }
