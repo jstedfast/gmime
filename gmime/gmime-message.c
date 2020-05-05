@@ -960,7 +960,7 @@ g_mime_message_set_date (GMimeMessage *message, GDateTime *date)
  * 
  * Gets the parsed date and time value from the Date header.
  *
- * Returns: a #GDateTime on success or %NULL if the date could not be parsed.
+ * Returns: (transfer none): a #GDateTime on success or %NULL if the date could not be parsed.
  **/
 GDateTime *
 g_mime_message_get_date (GMimeMessage *message)
