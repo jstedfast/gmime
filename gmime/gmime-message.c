@@ -921,8 +921,8 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject, const ch
  *
  * Gets the subject of the @message.
  *
- * Returns: the subject of the @message in a form suitable for display
- * or %NULL if no subject is set. If not %NULL, the returned string
+ * Returns: (nullable): the subject of the @message in a form suitable for
+ * display or %NULL if no subject is set. If not %NULL, the returned string
  * will be in UTF-8.
  **/
 const char *
@@ -960,7 +960,8 @@ g_mime_message_set_date (GMimeMessage *message, GDateTime *date)
  * 
  * Gets the parsed date and time value from the Date header.
  *
- * Returns: a #GDateTime on success or %NULL if the date could not be parsed.
+ * Returns: (nullable) (transfer none): a #GDateTime on success or %NULL if
+ * the date could not be parsed.
  **/
 GDateTime *
 g_mime_message_get_date (GMimeMessage *message)
@@ -998,7 +999,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
  *
  * Gets the Message-Id header of @message.
  *
- * Returns: the Message-Id of a message.
+ * Returns: (nullable): the Message-Id of a message, or %NULL if not specified.
  **/
 const char *
 g_mime_message_get_message_id (GMimeMessage *message)
@@ -1015,7 +1016,8 @@ g_mime_message_get_message_id (GMimeMessage *message)
  *
  * Gets the toplevel MIME part contained within @message.
  *
- * Returns: (transfer none): the toplevel MIME part of @message.
+ * Returns: (nullable) (transfer none): the toplevel MIME part of @message, or
+ * %NULL if none is present.
  **/
 GMimeObject *
 g_mime_message_get_mime_part (GMimeMessage *message)
@@ -1149,8 +1151,9 @@ multipart_guess_body (GMimeMultipart *multipart)
  * Attempts to identify the MIME part containing the body of the
  * message.
  *
- * Returns: (transfer none): a #GMimeObject containing the textual
- * content that appears to be the main body of the message.
+ * Returns: (nullable) (transfer none): a #GMimeObject containing the textual
+ * content that appears to be the main body of the message, or %NULL if no
+ * body part has been set.
  *
  * Note: This function is NOT guaranteed to always work as it
  * makes some assumptions that are not necessarily true. It is
@@ -1206,7 +1209,7 @@ g_mime_message_get_body (GMimeMessage *message)
  * - the Date: header of the message or 
  * - @now (or the current time, if @now is %NULL)
  *
- * Returns: (transfer full): a new #GMimeAutocryptHeader object,
+ * Returns: (nullable) (transfer full): a new #GMimeAutocryptHeader object,
  * or %NULL if the message should be ignored for purposes of
  * Autocrypt.
  **/
@@ -1287,7 +1290,8 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
  * - the Date: header of the message or 
  * - @now (or the current time, if @now is %NULL)
  * 
- * Returns: (transfer full): a new #GMimeAutocryptHeaderList object, or %NULL on error.
+ * Returns: (nullable) (transfer full): a new #GMimeAutocryptHeaderList object,
+ * or %NULL on error.
  **/
 GMimeAutocryptHeaderList *
 g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeObject *inner_part)
@@ -1339,7 +1343,7 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
  * will be set on @err to provide information about the decryption
  * failure.
  *
- * Returns: (transfer full): a new #GMimeAutocryptHeaderList object,
+ * Returns: (nullable) (transfer full): a new #GMimeAutocryptHeaderList object,
  * or %NULL on error.
  **/
 GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message,
