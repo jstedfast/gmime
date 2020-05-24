@@ -2010,7 +2010,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 				break;
 			}
 
-			/* This part has no content, but that will be handled in in parser_construct_multipart()
+			/* This part has no content, but that will be handled in parser_construct_multipart()
 			 * or parser_consruct_leaf_part(). */
 		}
 		
