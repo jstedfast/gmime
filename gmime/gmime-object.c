@@ -975,7 +975,7 @@ object_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboole
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @stream: stream
  *
- * Write the contents of the MIME object to @stream.
+ * Write the headers and content of the MIME object to @stream.
  *
  * Returns: the number of bytes written or %-1 on fail.
  **/
@@ -988,6 +988,25 @@ g_mime_object_write_to_stream (GMimeObject *object, GMimeFormatOptions *options,
 	return GMIME_OBJECT_GET_CLASS (object)->write_to_stream (object, options, FALSE, stream);
 }
 
+
+/**
+ * g_mime_object_write_content_to_stream:
+ * @object: a #GMimeObject
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
+ * @stream: stream
+ *
+ * Write only the content of the MIME object to @stream.
+ *
+ * Returns: the number of bytes written or %-1 on fail.
+ **/
+ssize_t
+g_mime_object_write_content_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMimeStream *stream)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
+	
+	return GMIME_OBJECT_GET_CLASS (object)->write_to_stream (object, options, TRUE, stream);
+}
 
 static void
 object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
