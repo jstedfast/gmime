@@ -1,4 +1,7 @@
 dist: trusty
+arch:
+  - amd64
+  - ppc64le
 language: c
 compiler:
   - gcc
