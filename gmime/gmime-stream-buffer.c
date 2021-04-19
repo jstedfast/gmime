@@ -518,7 +518,7 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 /**
  * g_mime_stream_buffer_gets:
  * @stream: stream
- * @buf: line buffer
+ * @buf: (array length=max) (element-type guint8): line buffer
  * @max: max length of a line
  *
  * Reads in at most one less than @max characters from @stream and
