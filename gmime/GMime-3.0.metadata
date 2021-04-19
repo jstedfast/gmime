@@ -30,3 +30,7 @@ Object
   .write_to_stream#virtual_method name="write_to_stream_vfunc"
 FilterBest
   .charset#method name="get_charset"
+
+// Reparenting
+Stream
+  .buffer_* parent="GMime.StreamBuffer" name="buffer_(.+)"
