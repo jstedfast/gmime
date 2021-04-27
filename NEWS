@@ -1,3 +1,15 @@
+### GMime 3.2.8
+
+* Various fixes to Vala (and other?) language bindings. (issue #96 and issue #101)
+
+* Enabled build for PPC64LE architecture (issue #100)
+
+* Added g_mime_object_write_content_to_stream() (issue #97)
+
+* Fixed parameter list parsing logic to not report a warning when everything is valid.
+
+* Fixed the parser to handle MIME parts without headers -or- content of any kind.
+
 ### GMime 3.2.7
 
 * Added some configure logic to auto-detect the system shift-jis charset alias. (issue #81)
