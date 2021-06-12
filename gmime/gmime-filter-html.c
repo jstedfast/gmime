@@ -496,8 +496,10 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			outptr = g_stpcpy (outptr, "<br>");
 		}
 		
-		if (inptr < inend)
+		if (inptr < inend) {
+			outptr = check_size (filter, outptr, &outend, 1);
 			*outptr++ = '\n';
+		}
 		
 		start = ++inptr;
 	} while (inptr < inend);
