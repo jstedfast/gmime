@@ -265,18 +265,21 @@ stream_reset (GMimeStream *stream)
 static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
+	errno = ESPIPE;
 	return -1;
 }
 
 static gint64
 stream_tell (GMimeStream *stream)
 {
+	errno = ESPIPE;
 	return -1;
 }
 
 static gint64
 stream_length (GMimeStream *stream)
 {
+	errno = ESPIPE;
 	return -1;
 }
 
