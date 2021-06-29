@@ -66,18 +66,18 @@ randc (void)
 static float
 randf (void)
 {
+	unsigned int value = 0;
 	size_t nread = 0;
-	unsigned int v;
 	ssize_t n;
 	
 	do {
-		if ((n = read (randfd, ((char *) &v) + nread, sizeof (v) - nread)) > 0) {
-			if ((nread += n) == sizeof (v))
+		if ((n = read (randfd, ((char *) &value) + nread, sizeof (value) - nread)) > 0) {
+			if ((nread += n) == sizeof (value))
 				break;
 		}
 	} while (n == -1 && errno == EINTR);
 	
-	return (v * 1.0) / UINT_MAX;
+	return (value * 1.0) / UINT_MAX;
 }
 
 
@@ -140,7 +140,7 @@ struct _StreamPart {
 	struct _StreamPart *next;
 	gint64 pstart, pend;  /* start/end offsets of the part stream */
 	gint64 wstart, wend;  /* corresponding start/end offsets of the whole stream */
-	char filename[256];
+	char *filename;
 };
 
 
@@ -158,10 +158,10 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 	if (orig->bound_end != -1) {
 		totalsize = orig->bound_end - orig->position;
 	} else if ((len = g_mime_stream_length (orig)) == -1) {
-		sprintf (errstr, "Error: Unable to get length of original stream\n");
+		g_strlcpy (errstr, "Error: Unable to get length of original stream\n", sizeof (errstr));
 		goto fail;
 	} else if (len < (orig->position - orig->bound_start)) {
-		sprintf (errstr, "Error: Overflow on original stream?\n");
+		g_strlcpy (errstr, "Error: Overflow on original stream?\n", sizeof (errstr));
 		goto fail;
 	} else {
 		totalsize = len - (orig->position - orig->bound_start);
@@ -187,13 +187,12 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 		} while (nread < size);
 		
 		if (nread < size) {
-			sprintf (errstr, "Error: `%s' appears to be truncated, short %zu+ bytes\n",
-				 filename, size - nread);
+			snprintf (errstr, sizeof (errstr) - 1, "Error: `%s' appears to be truncated, short %zu+ bytes\n", filename, size - nread);
 			goto fail;
 		}
 		
 		if (memcmp (buf, dbuf, size) != 0) {
-			sprintf (errstr, "Error: `%s': content does not match\n", filename);
+			snprintf (errstr, sizeof (errstr) - 1, "Error: `%s': content does not match\n", filename);
 			goto fail;
 		} else {
 			d(fprintf (stderr, "%zu bytes identical\n", size));
@@ -201,12 +200,12 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 	}
 	
 	if (totalread < totalsize) {
-		sprintf (errstr, "Error: expected more data from original stream\n");
+		g_strlcpy (errstr, "Error: expected more data from original stream\n", sizeof (errstr));
 		goto fail;
 	}
 	
 	if (check_overflow && (n = g_mime_stream_read (dup, buf, sizeof (buf))) > 0) {
-		sprintf (errstr, "Error: `%s' appears to contain extra content\n", filename);
+		snprintf (errstr, sizeof (errstr) - 1, "Error: `%s' appears to contain extra content\n", filename);
 		goto fail;
 	}
 	
@@ -559,7 +558,7 @@ int main (int argc, char **argv)
 	while (left > 0) {
 		len = 1 + (gint64) (left * randf ());
 		n = g_new (struct _StreamPart, 1);
-		sprintf (n->filename, "%s.%u", filename, part++);
+		n->filename = g_strdup_printf ("%s.%u", filename, part++);
 		n->pstart = (gint64) 0; /* FIXME: we could make this a random offset */
 		n->pend = n->pstart + len;
 		n->wend = start + len;
@@ -593,6 +592,7 @@ int main (int argc, char **argv)
 		n = list->next;
 		if (!failed)
 			unlink (list->filename);
+		g_free (list->filename);
 		g_free (list);
 		list = n;
 	}
