@@ -366,7 +366,7 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 	case GMIME_STREAM_SEEK_END:
 		if (stream->bound_end == -1) {
 			/* gotta do this the slow way */
-			if ((real = g_mime_stream_seek (buffer->source, offset, GMIME_STREAM_SEEK_END) == -1))
+			if ((real = g_mime_stream_seek (buffer->source, offset, GMIME_STREAM_SEEK_END)) == -1)
 				return -1;
 			
 			stream->position = real;
