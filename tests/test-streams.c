@@ -47,18 +47,18 @@ extern int verbose;
 static float
 randf (int randfd)
 {
+	unsigned int value = 0;
 	size_t nread = 0;
-	unsigned int v;
 	ssize_t n;
 	
 	do {
-		if ((n = read (randfd, ((char *) &v) + nread, sizeof (v) - nread)) > 0) {
-			if ((nread += n) == sizeof (v))
+		if ((n = read (randfd, ((char *) &value) + nread, sizeof (value) - nread)) > 0) {
+			if ((nread += n) == sizeof (value))
 				break;
 		}
 	} while (n == -1 && errno == EINTR);
 	
-	return (v * 1.0) / UINT_MAX;
+	return (value * 1.0) / UINT_MAX;
 }
 
 static gboolean
