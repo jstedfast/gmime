@@ -1049,12 +1049,14 @@ int main (int argc, char **argv)
 	
 	testsuite_init (argc, argv);
 	
+#ifdef ENABLE_CRYPTO
 	if (!(gpg = g_find_program_in_path ("gpg2")))
 		if (!(gpg = g_find_program_in_path ("gpg")))
 			return EXIT_FAILURE;
 	
 	if (testsuite_setup_gpghome (gpg) != 0)
 		return EXIT_FAILURE;
+#endif
 	
 	testsuite_start ("Autocrypt: generate headers");
 	test_ah_generation ();
