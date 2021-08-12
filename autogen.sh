@@ -1,22 +1,22 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-test -n "$srcdir" || srcdir=`dirname $0`
-test -n "$srcdir" || srcdir=.
+test -n "$(srcdir)" || srcdir=`dirname $0`
+test -n "$(srcdir)" || srcdir=.
 
 ORIGDIR=`pwd`
-cd $srcdir
+cd $(srcdir) || exit $?
 PROJECT=GMime
 TEST_TYPE=-f
 FILE=configure.ac
 
 DIE=0
 
-LIBTOOLIZE=$(which glibtoolize 2>/dev/null)
-if test -z $LIBTOOLIZE; then
-	LIBTOOLIZE=$(which libtoolize 2>/dev/null)
+LIBTOOLIZE=$(command -v glibtoolize 2>/dev/null)
+if test -z "$(LIBTOOLIZE)"; then
+	LIBTOOLIZE=$(command -v libtoolize 2>/dev/null)
 fi
-if test -z $LIBTOOLIZE; then
+if test -z "$(LIBTOOLIZE)"; then
 	echo
 	echo "You must have libtool >= 1.4 installed to compile $PROJECT."
 	echo "Install the appropriate package for your distribution,"
@@ -26,7 +26,7 @@ fi
 
 have_libtool=false
 if $LIBTOOLIZE --version < /dev/null > /dev/null 2>&1 ; then
-	libtool_version=`$LIBTOOLIZE --version | sed '/^$/d;s/([^)]*)//g;s/^[^0-9]*//;s/[- ].*//g;q'`
+	libtool_version=`$(LIBTOOLIZE) --version | sed '/^$/d;s/([^)]*)//g;s/^[^0-9]*//;s/[- ].*//g;q'`
 	case $libtool_version in
 	    1.4*|1.5*|2.2*|2.4*)
 		have_libtool=true
