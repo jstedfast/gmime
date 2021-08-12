@@ -804,7 +804,7 @@ of GMime.
 |PORTING        |Guide for developers porting their application from an older version of GMime|
 
 You can find online developer documentation at
-http://library.gnome.org/devel/gmime/stable/
+https://developer-old.gnome.org/gmime/stable/
 
 
 # Mailing Lists
