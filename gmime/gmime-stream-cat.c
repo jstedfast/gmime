@@ -587,6 +587,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	d(fprintf (stderr, "stream[%d] is the first stream containing data we want\n", n->id));
 	
 	streams = NULL;
+	/* Little gimmick that allows us to set `streams` value to the address of a first node in linked list
+	 * without any conditions in the loop body. `tail->next` would point to `streams` itself due to
+	 * address of a structure being equal to an address of a first field. */
 	tail = (struct _sub_node *) &streams;
 	
 	do {
