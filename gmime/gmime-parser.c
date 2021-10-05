@@ -1317,13 +1317,16 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 	priv->header_offset = priv->headers_begin;
 	priv->boundary = BOUNDARY_NONE;
 	
-	parser_fill (parser, SCAN_HEAD/*, 0*/);
+	if (parser_fill (parser, SCAN_HEAD) <= 0) {
+		priv->state = GMIME_PARSER_STATE_ERROR;
+		return;
+	}
 	
 	do {
 		if (!step_headers (parser, &state, options))
 			return;
 		
-		available = parser_fill (parser, state.left + 1/*, 0*/);
+		available = parser_fill (parser, state.left + 1);
 		
 		if (available == state.left) {
 			/* EOF reached before we reached the end of the headers... */

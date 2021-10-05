@@ -477,7 +477,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		
 		if (gio->ostream) {
 			/* seek on our output stream */
-			if ((outreal = gio_seekable_seek (stream, (GSeekable *) gio->istream, offset, whence)) == -1)
+			if ((outreal = gio_seekable_seek (stream, (GSeekable *) gio->ostream, offset, whence)) == -1)
 				return -1;
 			
 			if (gio->istream == NULL)

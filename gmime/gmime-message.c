@@ -491,7 +491,7 @@ write_headers_to_stream (GMimeObject *object, GMimeFormatOptions *options, GMime
 				
 				index++;
 			} else {
-				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
+				if (!g_mime_format_options_is_hidden_header (options, body_header->name)) {
 					if ((nwritten = g_mime_header_write_to_stream (body_header, options, filtered)) == -1) {
 						g_object_unref (filtered);
 						return -1;
