@@ -807,7 +807,7 @@ You can find online developer documentation at
 https://developer-old.gnome.org/gmime/stable/
 
 
-# Mailing Lists
+## Mailing Lists
 
 For discussion of GMime development (either of GMime itself or using
 GMime in your own application), you may find the GMime-Devel
@@ -815,7 +815,7 @@ mailing-list helpful. To subscribe, please see
 [http://mail.gnome.org/mailman/listinfo/gmime-devel-list](http://mail.gnome.org/mailman/listinfo/gmime-devel-list)
 
 
-# Bindings
+## Bindings
 
 Other developers have been working to make GMime available to programmers in other languages.
 The current list of known bindings are:
@@ -827,7 +827,13 @@ The current list of known bindings are:
 |C#         |https://github.com/jstedfast/MimeKit    |
 
 
-# Reporting Bugs
+## Reporting Bugs
 
 Bugs may be reported to the GMime development team by creating a new
 [issue](https://github.com/jstedfast/gmime/issues).
+
+## Reporting Security Issues
+
+Security issues should be reported to <a href="mailto:fejj@gnome.org?subject=GMime%20security%20issue">fejj@gnome.org</a>.
+
+Using a Subject along the lines of "GMime security issue" would be helpful in helping to spot the email message.
