@@ -834,6 +834,6 @@ Bugs may be reported to the GMime development team by creating a new
 
 ## Reporting Security Issues
 
-Security issues should be reported to <a href="mailto:fejj@gnome.org?subject=GMime%20security%20issue">fejj@gnome.org</a>.
+Security issues should be reported to <a href="mailto:jestedfa@microsoft.com?subject=GMime%20security%20issue">jestedfa@microsoft.com</a>.
 
 Using a Subject along the lines of "GMime security issue" would be helpful in helping to spot the email message.
