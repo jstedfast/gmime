@@ -541,7 +541,10 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 	int count, i;
 	
 	/* Note: we don't want to break in the middle of msgid tokens as
-	   it seems to break a lot of clients (and servers) */
+	   it seems to break a lot of clients (and servers) 
+	   We also don't want to break before the first msgid because
+	   that would violate RFC5536	   */
+	
 	newline = g_mime_format_options_get_newline (options);
 	refs = g_mime_references_parse (header->options, value);
 	str = g_string_new (header->raw_name);
@@ -552,7 +555,7 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 	for (i = 0; i < count; i++) {
 		msgid = g_mime_references_get_message_id (refs, i);
 		len = strlen (msgid);
-		if (cur > 1 && cur + len + 3 >= GMIME_FOLD_LEN) {
+		if (i > 0 && cur > 1 && cur + len + 3 >= GMIME_FOLD_LEN) {
 			g_string_append (str, newline);
 			g_string_append_c (str, '\t');
 			cur = 1;
