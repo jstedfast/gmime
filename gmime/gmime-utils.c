@@ -2528,7 +2528,7 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 		} else if (token->encoding != 0) {
 			n = strlen (token->charset) + 7 + (encoded ? 1 : 0);
 			
-			if (len + token->length + n > GMIME_FOLD_LEN) {
+			if (token != tokens && len + token->length + n > GMIME_FOLD_LEN) {
 				if (tab != 0) {
 					/* tabs are the perfect breaking opportunity... */
 					g_string_insert_c (output, tab, '\n');
@@ -2559,7 +2559,7 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 			encoded = TRUE;
 			lwsp = 0;
 			tab = 0;
-		} else if (len + token->length > GMIME_FOLD_LEN) {
+		} else if (token != tokens && len + token->length > GMIME_FOLD_LEN) {
 			if (tab != 0) {
 				/* tabs are the perfect breaking opportunity... */
 				g_string_insert_c (output, tab, '\n');
