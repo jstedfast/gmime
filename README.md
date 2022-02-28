@@ -100,7 +100,7 @@ GMimeMessage *message;
 GMimeStream *stream;
 GMimeParser *parser;
 
-stream = g_mime_stream_file_open ("message.eml", "r", NULL);
+stream = g_mime_stream_fs_open ("message.eml", O_RDONLY, 0644, NULL);
 parser = g_mime_parser_new_with_stream (stream);
 
 /* Note: we can unref the stream now since the GMimeParser has a reference to it... */
@@ -121,11 +121,11 @@ GMimeParser *parser;
 gint64 offset;
 char *marker;
 
-stream = g_mime_stream_file_open ("Inbox.mbox", "r", NULL);
+stream = g_mime_stream_fs_open ("Inbox.mbox", O_RDONLY, 0644, NULL);
 parser = g_mime_parser_new_with_stream (stream);
 
 /* tell the parser to scan mbox-style "From " markers */
-g_mime_parser_set_scan_from (parser, TRUE);
+g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
 
 /* Note: we can unref the stream now since the GMimeParser has a reference to it... */
 g_object_unref (stream);
