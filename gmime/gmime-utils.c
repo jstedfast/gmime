@@ -448,7 +448,6 @@ static GTimeZone *
 get_tzone (date_token **token)
 {
 	const char *inptr, *inend;
-	char tzone[8];
 	size_t len, n;
 	int value, i;
 	guint t;
@@ -465,10 +464,7 @@ get_tzone (date_token **token)
 			if ((value = decode_int (inptr + 1, len - 1)) == -1)
 				return NULL;
 			
-			memcpy (tzone, inptr, len);
-			tzone[len] = '\0';
-			
-			return g_time_zone_new (tzone);
+			return g_time_zone_new_offset (value);
 		}
 		
 		if (*inptr == '(') {
@@ -485,9 +481,7 @@ get_tzone (date_token **token)
 			if (n != len || strncmp (inptr, tz_offsets[t].name, n) != 0)
 				continue;
 			
-			snprintf (tzone, 6, "%+05d", tz_offsets[t].offset);
-			
-			return g_time_zone_new (tzone);
+			return g_time_zone_new_offset (tz_offsets[t].offset);
 		}
 	}
 	
