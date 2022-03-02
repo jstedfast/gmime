@@ -253,7 +253,7 @@ Creating MIME messages using GMime is really trivial.
 
 ```csharp
 GMimeMessage *message;
-GMimePart *body;
+GMimeTextPart *body;
 
 message = g_mime_message_new (TRUE);
 
