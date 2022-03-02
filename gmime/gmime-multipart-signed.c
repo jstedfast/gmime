@@ -325,7 +325,7 @@ mime_types_equal (const char *mime_type, const char *official_type)
 	char *xmime_type;
 	gboolean rv;
 	
-	if (!supported)
+	if (!official_type)
 		return FALSE;
 	
 	if (!g_ascii_strcasecmp (mime_type, official_type))

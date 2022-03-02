@@ -175,7 +175,7 @@ write_message_to_screen (GMimeMessage *message)
 	
 	/* create a new stream for writing to stdout */
 	stream = g_mime_stream_pipe_new (STDOUT_FILENO);
-	g_mime_stream_pipe_set_owner ((GMimeStreamFile *) stream, FALSE);
+	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
 	
 	/* write the message to the stream */
 	g_mime_object_write_to_stream ((GMimeObject *) message, NULL, stream);
