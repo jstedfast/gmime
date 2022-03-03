@@ -136,8 +136,8 @@ while (!g_mime_parser_eos (parser)) {
         g_object_unref (message);
 
     /* get information about the mbox "From " marker... */
-    offset = g_mime_parser_get_from_offset (parser);
-    marker = g_mime_parser_get_from (parser);
+    offset = g_mime_parser_get_mbox_marker_offset (parser);
+    marker = g_mime_parser_get_mbox_marker (parser);
 }
 
 g_object_unref (parser);
@@ -238,7 +238,7 @@ while (g_mime_part_iter_next (iter)) {
     }
 }
 
-/* now remove each attachment from its parent multipart... */
+/* now remove each attachment its parent multipart... */
 for (int i = 0; i < attachments->len; i++) {
     GMimeMultipart *multipart = (GMimeMultipart *) multiparts->pdata[i];
     GMimeObject *attachment = (GMimeObject *) attachments->pdata[i];
