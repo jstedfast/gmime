@@ -426,6 +426,7 @@ The first thing you must do is find the `GMimeApplicationPkcs7Mime` part (see th
 if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
     GMimeApplicationPkcs7Mime *pkcs7 = (GMimeApplicationPkcs7Mime *) entity;
     GMimeSecureMimeType smime_type;
+    GError *err = NULL;
 
     smime_type = g_mime_application_pkcs7_mime_get_smime_type (pkcs7_mime);
     if (smime_type == GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA)
@@ -461,7 +462,7 @@ g_ptr_array_add (rcpts, "alice@wonderland.com"); // or use her fingerprint
 /* now to encrypt our message body */
 ctx = g_mime_gpg_context_new ();
 
-encrypted = g_mime_multipart_encrypted_encrypt (ctx, body, FALSE, NULL, 0, 0, rcpts, &err);
+encrypted = g_mime_multipart_encrypted_encrypt (ctx, body, FALSE, NULL, GMIME_ENCRYPT_NONE, rcpts, &err);
 g_ptr_array_free (rcpts, TRUE);
 g_object_unref (body);
 g_object_unref (ctx);
@@ -488,8 +489,10 @@ The first thing you must do is find the `GMimeMultipartEncrypted` part (see the 
 ```c
 if (GMIME_IS_MULTIPART_ENCRYPTED (entity)) {
     GMimeMultipartEncrypted *encrypted = (GMimeMultipartEncrypted *) entity;
+    GMimeDecryptResult *result = NULL;
+    GError *err = NULL;
 
-    return g_mime_multipart_encrypted_decrypt (encrypted, 0, NULL, NULL, &err);
+    return g_mime_multipart_encrypted_decrypt (encrypted, GMIME_DECRYPT_NONE, NULL, &result, &err);
 }
 ```
 
@@ -515,7 +518,7 @@ g_mime_message_set_subject (message, "How you doin?", NULL);
 body = CreateMessageBody ();
 
 /* now to sign our message body */
-if (!(pkcs7 = g_mime_application_pkcs7_mime_sign (body, "joey@friends.com", GMIME_DIGEST_ALGO_DEFAULT, &err))) {
+if (!(pkcs7 = g_mime_application_pkcs7_mime_sign (body, "joey@friends.com", &err))) {
     fprintf (stderr, "sign failed: %s\n", err->message);
     g_object_unref (body);
     g_error_free (err);
@@ -524,7 +527,7 @@ if (!(pkcs7 = g_mime_application_pkcs7_mime_sign (body, "joey@friends.com", GMIM
 
 g_object_unref (body);
 
-g_mime_message_set_mime_part (message, pkcs7);
+g_mime_message_set_mime_part (message, (GMimeObject *) pkcs7);
 g_object_unref (pkcs7);
 ```
 
@@ -550,7 +553,7 @@ body = CreateMessageBody ();
 ctx = g_mime_pkcs7_context_new ();
 
 /* now to sign our message body */
-if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", GMIME_DIGEST_ALGO_DEFAULT, &err))) {
+if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", &err))) {
     fprintf (stderr, "sign failed: %s\n", err->message);
     g_object_unref (body);
     g_object_unref (ctx);
@@ -561,7 +564,7 @@ if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", GMIME_DI
 g_object_unref (body);
 g_object_unref (ctx);
 
-g_mime_message_set_mime_part (message, ms);
+g_mime_message_set_mime_part (message, (GMimeObject *) ms);
 g_object_unref (ms);
 ```
 
@@ -588,7 +591,7 @@ body = CreateMessageBody ();
 ctx = g_mime_gpg_context_new ();
 
 /* now to sign our message body */
-if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", GMIME_DIGEST_ALGO_DEFAULT, &err))) {
+if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", &err))) {
     fprintf (stderr, "sign failed: %s\n", err->message);
     g_object_unref (body);
     g_object_unref (ctx);
@@ -599,7 +602,7 @@ if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", GMIME_DI
 g_object_unref (body);
 g_object_unref (ctx);
 
-g_mime_message_set_mime_part (message, ms);
+g_mime_message_set_mime_part (message, (GMimeObject *) ms);
 g_object_unref (ms);
 ```
 
@@ -625,7 +628,7 @@ if (GMIME_IS_MULTIPART_SIGNED (entity)) {
     GError *err = NULL;
     int i, count;
 
-    if (!(signatures = g_mime_multipart_signed_verify (ms, 0, &err))) {
+    if (!(signatures = g_mime_multipart_signed_verify (ms, GMIME_VERIFY_ENABLE_KEYSERVER_LOOKUPS, &err))) {
         fprintf (stderr, "verify failed: %s\n", err->message);
         g_error_free (err);
         return;
@@ -712,14 +715,14 @@ if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
     if (smime_type == GMIME_SECURE_MIME_TYPE_SIGNED_DATA) {
         /* extract the original content and get a list of signatures */
         GMimeSignatureList *signatures;
-        GMimeObject extracted;
+        GMimeObject *extracted;
         GError *err = NULL;
         int i, count;
 
         /* Note: if you are rendering the message, you'll want to render the
          * extracted mime part rather than the application/pkcs7-mime part. */
 
-        if (!(signatures = g_mime_application_pkcs7_mime_verify (pkcs7, 0, &extracted, &err))) {
+        if (!(signatures = g_mime_application_pkcs7_mime_verify (pkcs7, GMIME_VERIFY_NONE, &extracted, &err))) {
             fprintf (stderr, "verify failed: %s\n", err->message);
             g_error_free (err);
             return;
