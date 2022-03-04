@@ -106,7 +106,7 @@ parser = g_mime_parser_new_with_stream (stream);
 /* Note: we can unref the stream now since the GMimeParser has a reference to it... */
 g_object_unref (stream);
 
-message = g_mime_parser_construct_message (parser);
+message = g_mime_parser_construct_message (parser, NULL);
 
 /* unref the parser since we no longer need it */
 g_object_unref (parser);
@@ -132,7 +132,7 @@ g_object_unref (stream);
 
 while (!g_mime_parser_eos (parser)) {
     /* load the next message from the mbox */
-    if ((message = g_mime_parser_construct_message (parser)) != NULL)
+    if ((message = g_mime_parser_construct_message (parser, NULL)) != NULL)
         g_object_unref (message);
 
     /* get information about the mbox "From " marker... */
@@ -232,8 +232,8 @@ while (g_mime_part_iter_next (iter)) {
 
         if (g_mime_part_is_attachment (part)) {
             /* keep track of each attachment's parent multipart */
-            g_ptr_array_append (multiparts, parent);
-            g_ptr_array_append (attachments, part);
+            g_ptr_array_add (multiparts, parent);
+            g_ptr_array_add (attachments, part);
         }
     }
 }
@@ -354,7 +354,7 @@ html = CreateTextHtmlPart ();
 /* Note: it is important that the text/html part is added second, because it is the
  * most expressive version and (probably) the most faithful to the sender's WYSIWYG 
  * editor. */
-alternative = g_mime_multipart_with_subtype ("alternative");
+alternative = g_mime_multipart_new_with_subtype ("alternative");
 
 g_mime_multipart_add (alternative, (GMimeObject *) plain);
 g_object_unref (plain);
@@ -402,7 +402,7 @@ rcpts = g_ptr_array_new ();
 g_ptr_array_add (rcpts, "alice@wonderland.com"); // or use her fingerprint
 
 /* now to encrypt our message body */
-if (!(encrypted = g_mime_application_pkcs7_mime_encrypt (body, GMIME_ENCRYPT_FLAGS_NONE, rcpts, &err))) {
+if (!(encrypted = g_mime_application_pkcs7_mime_encrypt (body, GMIME_ENCRYPT_NONE, rcpts, &err))) {
     fprintf (stderr, "encrypt failed: %s\n", err->message);
     g_object_unref (body);
     g_error_free (err);
@@ -472,7 +472,7 @@ if (encrypted == NULL) {
     return;
 }
 
-g_mime_message_set_mime_part (message, encrypted);
+g_mime_message_set_mime_part (message, (GMimeObject *) encrypted);
 g_object_unref (encrypted);
 ```
 
@@ -731,7 +731,7 @@ if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
             /* ... */
         }
 
-	g_object_unref (signatures);
+        g_object_unref (signatures);
     }
 }
 ```
