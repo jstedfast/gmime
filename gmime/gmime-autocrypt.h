@@ -101,7 +101,7 @@ const char *g_mime_autocrypt_header_get_address_as_string (GMimeAutocryptHeader 
 void g_mime_autocrypt_header_set_prefer_encrypt (GMimeAutocryptHeader *ah, GMimeAutocryptPreferEncrypt pref);
 GMimeAutocryptPreferEncrypt g_mime_autocrypt_header_get_prefer_encrypt (GMimeAutocryptHeader *ah);
 
-void g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GBytes *data);
+void g_mime_autocrypt_header_set_keydata (GMimeAutocryptHeader *ah, GBytes *keydata);
 GBytes *g_mime_autocrypt_header_get_keydata (GMimeAutocryptHeader *ah);
 
 void g_mime_autocrypt_header_set_effective_date (GMimeAutocryptHeader *ah, GDateTime *effective_date);
@@ -116,6 +116,8 @@ void g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHea
 
 /**
  * GMimeAutocryptHeaderList:
+ * @parent_object: parent #GObject
+ * @array: Array of #GMimeAutocryptHeader items.
  *
  * A list of Autocrypt headers, typically extracted from a GMimeMessage.
  **/

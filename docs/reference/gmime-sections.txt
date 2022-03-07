@@ -823,6 +823,7 @@ g_mime_object_get_header
 g_mime_object_get_headers
 g_mime_object_get_header_list
 g_mime_object_write_to_stream
+g_mime_object_write_content_to_stream
 g_mime_object_to_string
 g_mime_object_encode
 
@@ -1435,8 +1436,10 @@ g_mime_certificate_get_fingerprint
 g_mime_certificate_set_fingerprint
 g_mime_certificate_get_created
 g_mime_certificate_set_created
+g_mime_certificate_get_created64
 g_mime_certificate_get_expires
 g_mime_certificate_set_expires
+g_mime_certificate_get_expires64
 g_mime_certificate_get_key_id
 g_mime_certificate_set_key_id
 g_mime_certificate_get_trust
@@ -1494,8 +1497,10 @@ g_mime_signature_get_status
 g_mime_signature_set_status
 g_mime_signature_get_created
 g_mime_signature_set_created
+g_mime_signature_get_created64
 g_mime_signature_get_expires
 g_mime_signature_set_expires
+g_mime_signature_get_expires64
 <SUBSECTION>
 GMimeSignatureList
 g_mime_signature_list_new
@@ -1651,7 +1656,6 @@ g_mime_autocrypt_header_list_get_count
 g_mime_autocrypt_header_list_get_header_at
 g_mime_autocrypt_header_list_get_header_for_address
 g_mime_autocrypt_header_list_remove_incomplete
-
 
 <SUBSECTION Private>
 g_mime_autocrypt_header_get_type

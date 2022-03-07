@@ -28,7 +28,7 @@
 #include "gmime-autocrypt.h"
 
 /**
- * SECTION: gmime-autocrypt-header
+ * SECTION: gmime-autocrypt
  * @title: GMimeAutocryptHeader
  * @short_description: A header containing cryptographic information about the sending address
  * @see_also: https://autocrypt.org
