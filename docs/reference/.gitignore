@@ -11,6 +11,7 @@ gmime-overrides.txt
 gmime-undeclared.txt
 gmime-undocumented.txt
 gmime-unused.txt
+gmime.actions
 gmime.args
 gmime.interfaces
 gmime.prerequisites
