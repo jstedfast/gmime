@@ -377,14 +377,14 @@ test_date_parser (void)
 			tz_offset *= sign;
 			
 			if (time != dates[i].date)
-				throw (exception_new ("time_t's do not match: %ld vs %ld", time, dates[i].date));
+				throw (exception_new ("time_t's do not match: actual: %ld; expected: %ld", time, dates[i].date));
 			
 			if (tz_offset != dates[i].tzone)
 				throw (exception_new ("timezones do not match"));
 			
 			buf = g_mime_utils_header_format_date (date);
 			if (strcmp (dates[i].out, buf) != 0) {
-				newex = exception_new ("date strings do not match: %s vs %s", buf, dates[i].out);
+				newex = exception_new ("date strings do not match: actual: %s; expected: %s", buf, dates[i].out);
 				g_free (buf);
 				throw (newex);
 			}

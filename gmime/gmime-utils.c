@@ -444,12 +444,30 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 	return TRUE;
 }
 
+static int
+get_timezone_offset (int tzone)
+{
+	int minutes, hours, sign;
+
+	if (tzone < 0) {
+		tzone *= -1;
+		sign = -1;
+	} else {
+		sign = 1;
+	}
+
+	hours = tzone / 100;
+	minutes = tzone % 100;
+
+	return sign * ((hours * 3600) + (minutes * 60));
+}
+
 static GTimeZone *
 get_tzone (date_token **token)
 {
 	const char *inptr, *inend;
 	size_t len, n;
-	int value, i;
+	int tzone, i;
 	guint t;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
@@ -461,10 +479,13 @@ get_tzone (date_token **token)
 			continue;
 		
 		if (len == 5 && (*inptr == '+' || *inptr == '-')) {
-			if ((value = decode_int (inptr + 1, len - 1)) == -1)
+			if ((tzone = decode_int (inptr + 1, len - 1)) == -1)
 				return NULL;
+
+			if (*inptr == '-')
+				tzone *= -1;
 			
-			return g_time_zone_new_offset (value);
+			return g_time_zone_new_offset (get_timezone_offset (tzone));
 		}
 		
 		if (*inptr == '(') {
@@ -481,7 +502,7 @@ get_tzone (date_token **token)
 			if (n != len || strncmp (inptr, tz_offsets[t].name, n) != 0)
 				continue;
 			
-			return g_time_zone_new_offset (tz_offsets[t].offset);
+			return g_time_zone_new_offset (get_timezone_offset (tz_offsets[t].offset));
 		}
 	}
 	
