@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 # require autoconf 2.54
-AC_PREREQ(2.54)
+AC_PREREQ([2.71])
 
 # Making releases:
 #   gmime_micro_version += 1;
@@ -39,12 +39,11 @@ m4_define([gmime_debug_default],
           [m4_if(m4_eval(gmime_minor_version % 2), [1], [yes], [minimum])])
 
 
-AC_INIT(gmime, [gmime_version],
-        [https://github.com/jstedfast/gmime/issues])
+AC_INIT([gmime],[gmime_version],[https://github.com/jstedfast/gmime/issues])
 
 AC_CONFIG_SRCDIR([README.md])
 AC_CONFIG_MACRO_DIR([m4])
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 AC_CANONICAL_HOST
 
 # Save this value here, since automake will set cflags later
@@ -55,7 +54,7 @@ AC_SUBST([ACLOCAL_AMFLAGS], ["-I m4 \${ACLOCAL_FLAGS}"])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
          [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
 dnl m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
 
@@ -132,12 +131,10 @@ fi
 AM_CONDITIONAL(MS_LIB_AVAILABLE, [test x$ms_librarian = xyes])
 
 dnl Checks for programs.
-AC_ISC_POSIX
+AC_SEARCH_LIBS([strerror],[cposix])
 AC_PROG_CC
-AM_PROG_CC_STDC
-AC_C_INLINE
-dnl AC_HEADER_STDC
-AC_STDC_HEADERS
+AC_CHECK_INCLUDES_DEFAULT
+
 dnl AC_ARG_PROGRAM
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -147,7 +144,7 @@ AC_PATH_PROG(MV, mv, /bin/mv)
 AC_PATH_PROG(TAR, tar, /bin/tar)
 
 AC_EXEEXT
-AC_PROG_LIBTOOL
+LT_INIT
 dnl when using libtool 2.x create libtool early, because it's used in configure
 m4_ifdef([LT_OUTPUT], [LT_OUTPUT])
 DOLT
@@ -169,19 +166,17 @@ AC_TYPE_MODE_T
 
 dnl Check for nfds_t - used by poll()
 AC_MSG_CHECKING(for nfds_t)
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	#include <sys/types.h>
 	#include <poll.h>
-	], [
+	]], [[
 	nfds_t nfds = 1;
 	return nfds;
-	]
-,
-	AC_MSG_RESULT(yes)
-,
-	AC_DEFINE(nfds_t, unsigned long int, [Define to `unsigned long int' if <poll.h> does not define.])
+	
+]])],[AC_MSG_RESULT(yes)
+],[AC_DEFINE(nfds_t, unsigned long int, Define to `unsigned long int' if <poll.h> does not define.)
 	AC_MSG_RESULT(no)
-)
+])
 
 dnl Check for working mmap
 AC_FUNC_MMAP
@@ -205,8 +200,7 @@ AM_CONDITIONAL(ENABLE_GTK_DOC, test "x$enable_gtk_doc" = "xyes")
 
 dnl Check for profiling options
 AC_ARG_ENABLE([profiling],
-              AC_HELP_STRING([--enable-profiling],
-	      [enable profiling compile flags [[default=no]]]),,
+              AS_HELP_STRING([--enable-profiling],[enable profiling compile flags [[default=no]]]),,
               [enable_profiling="no"])
 if test "x$enable_profiling" = "xyes"; then
 # CFLAGS="-O0 -g -pg -fprofile-arcs -ftest-coverage"
@@ -215,8 +209,7 @@ fi
 
 dnl Enable warning spewage on the console
 AC_ARG_ENABLE([warnings],
-              AC_HELP_STRING([--enable-warnings],
-	      [enable g_warning output when invalid MIME is encountered [[default=no]]]),,
+              AS_HELP_STRING([--enable-warnings],[enable g_warning output when invalid MIME is encountered [[default=no]]]),,
 	      [enable_warnings="no"])
 if test "x$enable_warnings" = "xyes"; then
   AC_DEFINE(ENABLE_WARNINGS, 1, [Define if GMime should enable warning output.])
@@ -346,98 +339,89 @@ LIBS="$LIBS_save"
 dnl Check for GNU getopt
 AC_CHECK_HEADER(getopt.h)
 AC_MSG_CHECKING(for GNU getopt_long)
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 	#include <string.h>
 	#include <unistd.h>
 	#define _GNU_SOURCE
 	#include <getopt.h>
-	], [
+	]], [[
 	return getopt_long (0, NULL, NULL, NULL, NULL);
-	]
-,
-	AC_MSG_RESULT([yes])
-	AC_DEFINE(HAVE_GETOPT_H, 1, [Define to 1 if you have the <getopt.h> header with the GNU `getopt_long' function.])
+	
+]])],[AC_MSG_RESULT(yes)
+	AC_DEFINE(HAVE_GETOPT_H, 1, Define to 1 if you have the <getopt.h> header with the GNU `getopt_long' function.)
 	have_getopt="yes"
-,
-	AC_MSG_RESULT([no])
+],[AC_MSG_RESULT(no)
 	have_getopt="no"
-)
+])
 AM_CONDITIONAL(SYSTEM_GETOPT, test "x$have_getopt" = "xyes")
 
 dnl Check for fsync (native win32 doesn't have this)
 AC_MSG_CHECKING(for fsync)
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 	#include <unistd.h>
-	], [
+	]], [[
 	fsync(0);
-	]
-,
-	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_FSYNC, 1, [Define to 1 if you have the `fsync' function.])
-,
-	AC_MSG_RESULT(no)
-)
+	
+]])],[AC_MSG_RESULT(yes)
+	AC_DEFINE(HAVE_FSYNC, 1, Define to 1 if you have the `fsync' function.)
+],[AC_MSG_RESULT(no)
+])
 
 dnl Check for MAXHOSTNAMELEN
 AC_MSG_CHECKING(for MAXHOSTNAMELEN)
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	#include <sys/param.h>
-	], [
+	]], [[
 	return MAXHOSTNAMELEN;
-	]
-,
-	AC_MSG_RESULT(yes)
-,
-	AC_DEFINE(MAXHOSTNAMELEN, 64, [Define with a value if your <sys/param.h> does not define MAXHOSTNAMELEN])
+	
+]])],[AC_MSG_RESULT(yes)
+],[AC_DEFINE(MAXHOSTNAMELEN, 64, Define with a value if your <sys/param.h> does not define MAXHOSTNAMELEN)
 	AC_MSG_RESULT(no; defined as 64)
-)
+])
 
 dnl Check for domainname member in struct utsname from uname(2)
 AC_MSG_CHECKING(for domainname in struct utsname)
-AC_TRY_COMPILE([
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	#define _GNU_SOURCE
 	#include <sys/utsname.h>
-	], [
+	]], [[
 	struct utsname unam;
 		
 	unam.domainname[0] = '\0';
 
 	return unam.domainname[0];
-	],
-	AC_MSG_RESULT(yes)
-   	AC_DEFINE(HAVE_UTSNAME_DOMAINNAME, 1, [Define if struct utsname has a domainname member])
-,
-	AC_MSG_RESULT(no)
-)
+	]])],[AC_MSG_RESULT(yes)
+   	AC_DEFINE(HAVE_UTSNAME_DOMAINNAME, 1, Define if struct utsname has a domainname member)
+],[AC_MSG_RESULT(no)
+])
 
 dnl *************************************
 dnl *** Checks for large file support ***
 dnl *************************************
 AC_ARG_ENABLE([largefile],
-	      AC_HELP_STRING([--enable-largefile],
-	      [enable support for large files [[default=yes]]]),,
+	      AS_HELP_STRING([--enable-largefile],[enable support for large files [[default=yes]]]),,
 	      [enable_largefile="yes"])
 if test "x$enable_largefile" != "xno"; then
     AC_SYS_LARGEFILE
     AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], ac_cv_largefile64_source,
     [
-	AC_TRY_COMPILE([
+	AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 		#include <sys/types.h>
 		#include <sys/stat.h>
 		#include <fcntl.h>
-	],[
+	]], [[
 		return open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
-	],[
+	]])],[
 		ac_cv_largefile64_source="no"
 	],[
-		AC_TRY_COMPILE([
+		AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 			#define _LARGEFILE64_SOURCE
 			#include <sys/types.h>
 			#include <sys/stat.h>
 			#include <fcntl.h>
-		],[
+		]], [[
 			return open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
-		],[
+		]])],[
 			ac_cv_largefile64_source="yes"
 		],[
 			ac_cv_largefile64_source="unknown"
@@ -496,8 +480,7 @@ dnl **************************************************
 dnl *** Checks for GpgME needed for PGP and S/MIME ***
 dnl **************************************************
 AC_ARG_ENABLE([crypto], 
-	      AC_HELP_STRING([--enable-crypto],
-	      [enable PGP and S/MIME support [[default=yes]]]),,
+	      AS_HELP_STRING([--enable-crypto],[enable PGP and S/MIME support [[default=yes]]]),,
 	      [enable_crypto="yes"])
 
 m4_ifdef([AM_PATH_GPGME_PTHREAD], [
@@ -513,8 +496,7 @@ AM_CONDITIONAL(ENABLE_CRYPTO, test "x$enable_crypto" != "xno")
 dnl ******************************
 dnl *** Checks for GNU Libidn2 ***
 dnl ******************************
-AC_ARG_WITH(libidn, AC_HELP_STRING([--with-libidn=[DIR]],
-                                [Support IDN (needs GNU Libidn)]),
+AC_ARG_WITH(libidn, AS_HELP_STRING([--with-libidn=[DIR]],[Support IDN (needs GNU Libidn)]),
   libidn=$withval, libidn=yes)
 if test "$libidn" != "no" ; then
   PKG_CHECK_MODULES(LIBIDN, libidn2 >= 2.0.0, [libidn=yes], [libidn=no])
@@ -641,7 +623,7 @@ AC_SUBST(GMIME_LIBS_PRIVATE)
 AC_SUBST(GMIME_CFLAGS)
 AC_SUBST(GMIME_LIBS)
 
-AC_OUTPUT(
+AC_CONFIG_FILES([
 Makefile
 m4/Makefile
 build/Makefile
@@ -661,7 +643,8 @@ tests/Makefile
 tools/Makefile
 gmime.spec
 gmime.pc
-)
+])
+AC_OUTPUT
 
 echo "
 
