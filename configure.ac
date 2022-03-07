@@ -304,8 +304,8 @@ AS_IF([test "x$found_zlib" = "xno"], [
   AC_SUBST(ZLIB_LIBS)
 ])
 
-dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, and 2.32.0 for g_mutex_init
-AM_PATH_GLIB_2_0(2.32.0, ,
+dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, 2.32.0 for g_mutex_init, and 2.58 for g_time_zone_new_offset
+AM_PATH_GLIB_2_0(2.58.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
 		 gobject gmodule gthread gio)
 

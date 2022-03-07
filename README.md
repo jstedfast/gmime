@@ -65,7 +65,7 @@ can be done using the following command:
 For proper compilation and functionality of GMime, the following packages
 are REQUIRED:
 
-  - Glib version >= 2.32.0
+  - Glib version >= 2.58.0
 
     Glib provides a number of portability-enhancing functions and types.
     Glib is included in most GMime-supported operating system
