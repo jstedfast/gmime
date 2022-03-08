@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2020 Jeffrey Stedfast and Michael Zucchi
+ *  Copyright (C) 2000-2022 Jeffrey Stedfast and Michael Zucchi
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -382,35 +382,37 @@ g_mime_encoding_flush (GMimeEncoding *state, const char *inbuf, size_t inlen, ch
 size_t
 g_mime_encoding_base64_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	unsigned char *outptr = outbuf;
-	int c1, c2;
-	
+	register unsigned char *outptr = outbuf;
+	register int quartets;
+	unsigned char *saved;
+
 	if (inlen > 0)
-		outptr += g_mime_encoding_base64_encode_step (inbuf, inlen, outptr, state, save);
-	
-	c1 = ((unsigned char *)save)[1];
-	c2 = ((unsigned char *)save)[2];
-	
-	switch (((unsigned char *)save)[0]) {
-	case 2:
-		outptr[2] = base64_alphabet [(c2 & 0x0f) << 2];
-		goto skip;
-	case 1:
-		outptr[2] = '=';
-	skip:
-		outptr[0] = base64_alphabet [c1 >> 2];
-		outptr[1] = base64_alphabet [c2 >> 4 | ((c1 & 0x3) << 4)];
-		outptr[3] = '=';
-		outptr += 4;
-		break;
+		outptr += g_mime_encoding_base64_encode_step (inbuf, inlen, outbuf, state, save);
+
+	saved = (unsigned char *) save;
+	quartets = *state;
+
+	if (*saved > 0) {
+		int c1 = saved[1];
+		int c2 = saved[2];
+
+		*outptr++ = base64_alphabet[c1 >> 2];
+		*outptr++ = base64_alphabet[c2 >> 4 | ((c1 & 0x3) << 4)];
+		if (*saved == 2)
+			*outptr++ = base64_alphabet[(c2 & 0x0f) << 2];
+		else
+			*outptr++ = '=';
+		*outptr++ = '=';
+		quartets++;
 	}
-	
-	*outptr++ = '\n';
-	
-	*save = 0;
+
+	if (quartets > 0)
+		*outptr++ = '\n';
+
 	*state = 0;
-	
-	return (outptr - outbuf);
+	*save = 0;
+
+	return (size_t) (outptr - outbuf);
 }
 
 
@@ -434,71 +436,74 @@ g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, un
 {
 	register const unsigned char *inptr;
 	register unsigned char *outptr;
-	
+	register int quartets;
+	unsigned char *saved;
+	size_t remaining;
+
 	if (inlen == 0)
 		return 0;
-	
+
+	saved = (unsigned char *) save;
+	quartets = *state;
 	outptr = outbuf;
 	inptr = inbuf;
-	
-	if (inlen + ((unsigned char *)save)[0] > 2) {
+
+	if (inlen + *saved > 2) {
 		const unsigned char *inend = inbuf + inlen - 2;
-		register int c1 = 0, c2 = 0, c3 = 0;
-		register int already;
-		
-		already = *state;
-		
-		switch (((char *)save)[0]) {
-		case 1:	c1 = ((unsigned char *)save)[1]; goto skip1;
-		case 2:	c1 = ((unsigned char *)save)[1];
-			c2 = ((unsigned char *)save)[2]; goto skip2;
+		register int c1, c2, c3;
+
+		c1 = *saved < 1 ? *inptr++ : saved[1];
+		c2 = *saved < 2 ? *inptr++ : saved[2];
+		c3 = *inptr++;
+
+	  loop:
+		/* encode our triplet into a quartet */
+		*outptr++ = base64_alphabet[c1 >> 2];
+		*outptr++ = base64_alphabet[(c2 >> 4) | ((c1 & 0x3) << 4)];
+		*outptr++ = base64_alphabet[((c2 & 0x0f) << 2) | (c3 >> 6)];
+		*outptr++ = base64_alphabet[c3 & 0x3f];
+
+		/* encode 19 quartets per line */
+		if ((++quartets) >= 19) {
+			*outptr++ = '\n';
+			quartets = 0;
 		}
-		
-		/* yes, we jump into the loop, no i'm not going to change it, its beautiful! */
-		while (inptr < inend) {
-			c1 = *inptr++;
-		skip1:
-			c2 = *inptr++;
-		skip2:
-			c3 = *inptr++;
-			*outptr++ = base64_alphabet [c1 >> 2];
-			*outptr++ = base64_alphabet [(c2 >> 4) | ((c1 & 0x3) << 4)];
-			*outptr++ = base64_alphabet [((c2 & 0x0f) << 2) | (c3 >> 6)];
-			*outptr++ = base64_alphabet [c3 & 0x3f];
-			/* this is a bit ugly ... */
-			if ((++already) >= 19) {
-				*outptr++ = '\n';
-				already = 0;
-			}
-		}
-		
-		((unsigned char *)save)[0] = 0;
-		inlen = 2 - (inptr - inend);
-		*state = already;
+
+		if (inptr >= inend)
+			goto loop_exit;
+
+		c1 = *inptr++;
+		c2 = *inptr++;
+		c3 = *inptr++;
+		goto loop;
+
+	  loop_exit:
+		remaining = 2 - (size_t) (inptr - inend);
+		*save = 0;
+	} else {
+		remaining = inlen;
 	}
-	
-	d(printf ("state = %d, inlen = %d\n", (int)((char *)save)[0], inlen));
-	
-	if (inlen > 0) {
-		register char *saveout;
-		
-		/* points to the slot for the next char to save */
-		saveout = & (((char *)save)[1]) + ((char *)save)[0];
-		
-		/* inlen can only be 0, 1 or 2 */
-		switch (inlen) {
-		case 2:	*saveout++ = *inptr++;
-		case 1:	*saveout++ = *inptr++;
+
+	if (remaining > 0) {
+		/* At this point, saved can only be 0 or 1. */
+		if (*saved == 0) {
+			/* We can have up to 2 remaining input bytes. */
+			saved[0] = (unsigned char) remaining;
+			saved[1] = *inptr++;
+			if (remaining == 2)
+				saved[2] = *inptr;
+			else
+				saved[2] = 0;
+		} else {
+			/* We have 1 remaining input byte. */
+			saved[2] = *inptr;
+			saved[0] = 2;
 		}
-		((char *)save)[0] += (char) inlen;
 	}
-	
-	d(printf ("mode = %d\nc1 = %c\nc2 = %c\n",
-		  (int)((char *)save)[0],
-		  (int)((char *)save)[1],
-		  (int)((char *)save)[2]));
-	
-	return (outptr - outbuf);
+
+	*state = quartets;
+
+	return (size_t) (outptr - outbuf);
 }
 
 
