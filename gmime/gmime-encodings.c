@@ -166,15 +166,15 @@ const char *
 g_mime_content_encoding_to_string (GMimeContentEncoding encoding)
 {
 	switch (encoding) {
-        case GMIME_CONTENT_ENCODING_7BIT:
+	case GMIME_CONTENT_ENCODING_7BIT:
 		return "7bit";
-        case GMIME_CONTENT_ENCODING_8BIT:
+	case GMIME_CONTENT_ENCODING_8BIT:
 		return "8bit";
 	case GMIME_CONTENT_ENCODING_BINARY:
 		return "binary";
-        case GMIME_CONTENT_ENCODING_BASE64:
+	case GMIME_CONTENT_ENCODING_BASE64:
 		return "base64";
-        case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 		return "quoted-printable";
 	case GMIME_CONTENT_ENCODING_UUENCODE:
 		return "x-uuencode";
