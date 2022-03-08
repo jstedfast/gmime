@@ -1,3 +1,15 @@
+### GMime 3.2.9
+
+* g_mime_multipart_signed_verify() now allows type/subtype and type/x-subtype signature parts. (issue #115)
+
+* Fixed header folding logic to avoid folding the first line of a header value. (issue #112 and issue #113)
+
+* Fixed bugs discovered by static analysis. (issue #110)
+
+* Fixed GMimeStreamPipe to set errno to ESPIPE for seek/tell/length methods.
+
+* Fixed GMimeCertificates to prefer gpgme_user_id_t's address field over the email field. (issue #102)
+
 ### GMime 3.2.8
 
 * Various fixes to Vala (and other?) language bindings. (issue #96 and issue #101)
