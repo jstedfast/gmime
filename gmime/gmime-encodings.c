@@ -523,53 +523,70 @@ g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, un
 size_t
 g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	register const unsigned char *inptr;
-	register unsigned char *outptr;
-	const unsigned char *inend;
-	register guint32 saved;
-	unsigned char last[2];
+	register const unsigned char *inptr = inbuf;
+	const unsigned char *inend = inptr + inlen;
+	unsigned char *outptr = outbuf;
+	unsigned int saved = *save;
 	unsigned char c, rank;
-	int n;
-	
-	inend = inbuf + inlen;
-	outptr = outbuf;
-	inptr = inbuf;
-	
-	saved = *save;
+	int n, eq, eof = 0;
+
 	n = *state;
-	
-	if (n < 0) {
-		last[0] = '=';
-		n = -n;
-	} else {
-		last[0] = '\0';
-	}
-	
-	last[1] = '\0';
-	
-	/* convert 4 base64 bytes to 3 normal bytes */
+
+	/* if n == -1, then it means we've encountered the end of the base64 stream */
+	if (n == -1)
+		return 0;
+
+	/* decode every quartet into a triplet */
 	while (inptr < inend) {
 		rank = gmime_base64_rank[(c = *inptr++)];
-		if (rank != 0xff) {
+
+		if (rank != 0xFF) {
 			saved = (saved << 6) | rank;
-			last[1] = last[0];
-			last[0] = c;
 			n++;
+
+			if (c == '=') {
+				/* Note: this marks the end of the base64 stream. The only octet(s) that can
+				 * appear after this is another '=' (and possibly mailing-list junk). */
+				eof = 1;
+				break;
+			}
+
 			if (n == 4) {
+				/* flush our decoded quartet */
 				*outptr++ = saved >> 16;
-				if (last[1] != '=')
-					*outptr++ = saved >> 8;
-				if (last[0] != '=')
-					*outptr++ = saved;
+				*outptr++ = saved >> 8;
+				*outptr++ = saved;
+				saved = 0;
 				n = 0;
 			}
 		}
 	}
-	
-	*state = last[0] == '=' ? -n : n;
+
+	if (eof) {
+		/* Note: there shouldn't be more than 2 '=' octets at the end of a quartet,
+		 * so if n < 3, then it means the encoder is broken. Keep in mind that the
+		 * first '=' octet has already ben consumed by the core loop above. */
+		if (n > 2) {
+			/* at this point, n should be either 3 or 4 */
+			eq = 5 - n;
+			if (n < 4) {
+				saved <<= 6;
+				n++;
+			}
+
+			*outptr++ = saved >> 16;
+			if (eq < 2)
+				*outptr++ = saved >> 8;
+		}
+
+		n = -1;
+	}
+
+	/* save state */
 	*save = saved;
-	
-	return (outptr - outbuf);
+	*state = n;
+
+	return (size_t) (outptr - outbuf);
 }
 
 
