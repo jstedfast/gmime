@@ -701,6 +701,7 @@ g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *li
 				ah = g_mime_autocrypt_header_new ();
 				g_mime_autocrypt_header_set_address (ah, mailbox);
 				g_mime_autocrypt_header_list_add (list, ah);
+				g_object_unref (ah);
 				count++;
 			}
 		}
