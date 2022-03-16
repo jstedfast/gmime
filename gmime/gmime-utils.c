@@ -445,27 +445,31 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 }
 
 static int
-get_timezone_offset (int tzone)
+format_timezone_identifier (char *identifier, int len, int timezone)
 {
 	int minutes, hours, sign;
 
-	if (tzone < 0) {
-		tzone *= -1;
+	if (timezone < 0) {
+		timezone *= -1;
 		sign = -1;
 	} else {
 		sign = 1;
 	}
 
-	hours = tzone / 100;
-	minutes = tzone % 100;
+	hours = timezone / 100;
+	minutes = timezone % 100;
 
-	return sign * ((hours * 3600) + (minutes * 60));
+	if (hours >= 24)
+		return -1;
+
+	return snprintf (identifier, len, "%c%02d:%02d:00", (sign > 0) ? '+' : '-', hours, minutes);
 }
 
 static GTimeZone *
 get_tzone (date_token **token)
 {
 	const char *inptr, *inend;
+	char identifier[10];
 	size_t len, n;
 	int tzone, i;
 	guint t;
@@ -484,8 +488,11 @@ get_tzone (date_token **token)
 
 			if (*inptr == '-')
 				tzone *= -1;
+
+			if (format_timezone_identifier (identifier, sizeof (identifier), tzone) < 0)
+				return NULL;
 			
-			return g_time_zone_new_offset (get_timezone_offset (tzone));
+			return g_time_zone_new_identifier (identifier);
 		}
 		
 		if (*inptr == '(') {
@@ -502,7 +509,11 @@ get_tzone (date_token **token)
 			if (n != len || strncmp (inptr, tz_offsets[t].name, n) != 0)
 				continue;
 			
-			return g_time_zone_new_offset (get_timezone_offset (tz_offsets[t].offset));
+			// TODO: modify the struct to have an `identifier` field instead of `offset` that is a pre-formatted string?
+			if (format_timezone_identifier (identifier, sizeof (identifier), tz_offsets[t].offset) < 0)
+				return NULL;
+			
+			return g_time_zone_new_identifier (identifier);
 		}
 	}
 	
