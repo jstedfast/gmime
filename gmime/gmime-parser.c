@@ -1641,7 +1641,6 @@ static void
 parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	GMimeContentType *content_type;
 	GMimeContentEncoding encoding;
 	GMimeDataWrapper *content;
 	GMimeStream *stream;
@@ -1678,8 +1677,6 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part)
 	
 	g_mime_part_set_content (mime_part, content);
 	g_object_unref (content);
-	
-	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
 	
 	switch (priv->openpgp) {
 	case GMIME_OPENPGP_END_PGP_SIGNATURE:
