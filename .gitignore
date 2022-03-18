@@ -13,6 +13,7 @@ config.lt
 config.status
 config.sub
 configure
+configure~
 depcomp
 doltcompile
 doltlibtool
@@ -25,3 +26,7 @@ libtool
 ltmain.sh
 missing
 stamp-h1
+*.tar.xz
+*.sha256sum
+.DS_Store
+update-copyright.sh

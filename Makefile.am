@@ -40,3 +40,6 @@ dist-hook: $(BUILD_EXTRA_DIST)
 
 gmime-$(GMIME_API_VERSION).pc: gmime.pc
 	-cp gmime.pc gmime-$(GMIME_API_VERSION).pc
+
+release: dist
+	shasum -a 256 gmime-$(GMIME_VERSION).tar.xz > gmime-$(GMIME_VERSION).sha256sum

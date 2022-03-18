@@ -1,3 +1,13 @@
+### GMime 3.2.10
+
+* Improved performance of base64 encoder by ~5%.
+
+* Improved performance of base64 decoder by ~25%.
+
+* Unref the autocrypt header after adding it to the list. (issue #118)
+
+* Work around a bug in g_time_zone_new_offset() by using identifiers instead. (issue #120)
+
 ### GMime 3.2.9
 
 * g_mime_multipart_signed_verify() now allows type/subtype and type/x-subtype signature parts. (issue #115)
