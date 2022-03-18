@@ -30,8 +30,9 @@
 #ifdef ENABLE_ZENTIMER
 
 #include <stdio.h>
-#ifdef WIN32
+#ifdef HAVE_WINDOWS_H
 #include <windows.h>
+#include <time.h>
 #else
 #include <sys/time.h>
 #endif
@@ -51,25 +52,26 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define ZTIME_USEC_PER_SEC 1000000
+#define ZTIME_NSEC_PER_USEC 1000
 
 /* ztime_t represents usec */
 typedef uint64_t ztime_t;
 
-#ifdef WIN32
-static uint64_t ztimer_freq = 0;
-#endif
-
 static void
 ztime (ztime_t *ztimep)
 {
-#ifdef WIN32
-	QueryPerformanceCounter ((LARGE_INTEGER *) ztimep);
+#ifdef HAVE_WINDOWS_H
+	struct timespec ts;
+
+	timespec_get (&ts, TIME_UTC);
+
+	*ztimep = (((uint64_t) ts.tv_sec) * ZTIME_USEC_PER_SEC) + (ts.tv_nsec * ZTIME_NSEC_PER_USEC);
 #else
 	struct timeval tv;
 	
 	gettimeofday (&tv, NULL);
-	
-	*ztimep = ((uint64_t) tv.tv_sec * ZTIME_USEC_PER_SEC) + tv.tv_usec;
+
+	*ztimep = (((uint64_t) tv.tv_sec) * ZTIME_USEC_PER_SEC) + tv.tv_usec;
 #endif
 }
 
@@ -139,16 +141,7 @@ ZenTimerResume (ztimer_t *ztimer)
 static double
 ZenTimerElapsed (ztimer_t *ztimer, uint64_t *usec)
 {
-#ifdef WIN32
-	static uint64_t freq = 0;
 	ztime_t delta, stop;
-	
-	if (freq == 0)
-		QueryPerformanceFrequency ((LARGE_INTEGER *) &freq);
-#else
-	static uint64_t freq = ZTIME_USEC_PER_SEC;
-	ztime_t delta, stop;
-#endif
 	
 	ztimer = ztimer ? ztimer : &__ztimer;
 	
@@ -160,9 +153,9 @@ ZenTimerElapsed (ztimer_t *ztimer, uint64_t *usec)
 	delta = stop - ztimer->start;
 	
 	if (usec != NULL)
-		*usec = (uint64_t) (delta * ((double) ZTIME_USEC_PER_SEC / (double) freq));
+		*usec = (uint64_t) delta;
 	
-	return (double) delta / (double) freq;
+	return (double) delta / (double) ZTIME_USEC_PER_SEC;
 }
 
 static void
