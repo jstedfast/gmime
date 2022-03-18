@@ -445,19 +445,19 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 }
 
 static int
-format_timezone_identifier (char *identifier, int len, int timezone)
+format_timezone_identifier (char *identifier, int len, int tz_offset)
 {
 	int minutes, hours, sign;
 
-	if (timezone < 0) {
-		timezone *= -1;
+	if (tz_offset < 0) {
+		tz_offset *= -1;
 		sign = -1;
 	} else {
 		sign = 1;
 	}
 
-	hours = timezone / 100;
-	minutes = timezone % 100;
+	hours = tz_offset / 100;
+	minutes = tz_offset % 100;
 
 	if (hours >= 24)
 		return -1;
@@ -470,8 +470,8 @@ get_tzone (date_token **token)
 {
 	const char *inptr, *inend;
 	char identifier[10];
+	int tz_offset, i;
 	size_t len, n;
-	int tzone, i;
 	guint t;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
@@ -483,13 +483,13 @@ get_tzone (date_token **token)
 			continue;
 		
 		if (len == 5 && (*inptr == '+' || *inptr == '-')) {
-			if ((tzone = decode_int (inptr + 1, len - 1)) == -1)
+			if ((tz_offset = decode_int (inptr + 1, len - 1)) == -1)
 				return NULL;
 
 			if (*inptr == '-')
-				tzone *= -1;
+				tz_offset *= -1;
 
-			if (format_timezone_identifier (identifier, sizeof (identifier), tzone) < 0)
+			if (format_timezone_identifier (identifier, sizeof (identifier), tz_offset) < 0)
 				return NULL;
 			
 			return g_time_zone_new_identifier (identifier);
