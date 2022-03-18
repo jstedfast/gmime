@@ -553,7 +553,7 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
 				n = 0;
 			}
 		} else if (c == '=') {
-			/* Note: this marks the end of the base64 stream. The only octet(s) that can
+			/* Note: this marks the end of the base64 stream. The only octet that can
 			 * appear after this is another '=' (and possibly mailing-list junk). */
 			eof = 1;
 			break;
@@ -566,13 +566,10 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
 		if (n > 1) {
 			/* at this point, n should be either 3 or 4 */
 			eq = 4 - n;
-			if (n < 4) {
-				saved <<= 6;
-				n++;
-			}
+			saved <<= (6 * eq);
 
 			*outptr++ = saved >> 16;
-			if (eq < 2)
+			if (n > 2)
 				*outptr++ = saved >> 8;
 		}
 
