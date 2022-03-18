@@ -1,3 +1,7 @@
+### GMime 3.2.11
+
+* Fixed a bug in the base64 decoder. D'oh!
+
 ### GMime 3.2.10
 
 * Improved performance of base64 encoder by ~5%.
