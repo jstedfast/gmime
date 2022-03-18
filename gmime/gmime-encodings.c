@@ -60,7 +60,7 @@ static unsigned char gmime_base64_rank[256] = {
 	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
 	255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
 	255,255,255,255,255,255,255,255,255,255,255, 62,255,255,255, 63,
-	 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,255,255,255,  0,255,255,
+	 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,255,255,255,255,255,255,
 	255,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
 	 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25,255,255,255,255,255,
 	255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
@@ -544,13 +544,6 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
 			saved = (saved << 6) | rank;
 			n++;
 
-			if (c == '=') {
-				/* Note: this marks the end of the base64 stream. The only octet(s) that can
-				 * appear after this is another '=' (and possibly mailing-list junk). */
-				eof = 1;
-				break;
-			}
-
 			if (n == 4) {
 				/* flush our decoded quartet */
 				*outptr++ = saved >> 16;
@@ -559,16 +552,20 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
 				saved = 0;
 				n = 0;
 			}
+		} else if (c == '=') {
+			/* Note: this marks the end of the base64 stream. The only octet(s) that can
+			 * appear after this is another '=' (and possibly mailing-list junk). */
+			eof = 1;
+			break;
 		}
 	}
 
 	if (eof) {
 		/* Note: there shouldn't be more than 2 '=' octets at the end of a quartet,
-		 * so if n < 3, then it means the encoder is broken. Keep in mind that the
-		 * first '=' octet has already ben consumed by the core loop above. */
-		if (n > 2) {
+		 * so if n < 2, then it means the encoder is broken. */
+		if (n > 1) {
 			/* at this point, n should be either 3 or 4 */
-			eq = 5 - n;
+			eq = 4 - n;
 			if (n < 4) {
 				saved <<= 6;
 				n++;
