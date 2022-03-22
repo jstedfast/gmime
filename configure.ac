@@ -174,7 +174,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	return nfds;
 	
 ]])],[AC_MSG_RESULT(yes)
-],[AC_DEFINE(nfds_t, unsigned long int, Define to `unsigned long int' if <poll.h> does not define.)
+],[AC_DEFINE(nfds_t, unsigned long int, Define to `unsigned long int` if <poll.h> does not define.)
 	AC_MSG_RESULT(no)
 ])
 
@@ -348,7 +348,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 	return getopt_long (0, NULL, NULL, NULL, NULL);
 	
 ]])],[AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_GETOPT_H, 1, Define to 1 if you have the <getopt.h> header with the GNU `getopt_long' function.)
+	AC_DEFINE(HAVE_GETOPT_H, 1, Define to 1 if you have the <getopt.h> header with the GNU `getopt_long` function.)
 	have_getopt="yes"
 ],[AC_MSG_RESULT(no)
 	have_getopt="no"
@@ -363,7 +363,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 	fsync(0);
 	
 ]])],[AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_FSYNC, 1, Define to 1 if you have the `fsync' function.)
+	AC_DEFINE(HAVE_FSYNC, 1, Define to 1 if you have the `fsync` function.)
 ],[AC_MSG_RESULT(no)
 ])
 
