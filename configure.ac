@@ -147,7 +147,6 @@ AC_EXEEXT
 LT_INIT
 dnl when using libtool 2.x create libtool early, because it's used in configure
 m4_ifdef([LT_OUTPUT], [LT_OUTPUT])
-DOLT
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
