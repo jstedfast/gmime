@@ -273,7 +273,6 @@ AS_IF([test x"$glib_native_win32" != xyes], [
     esac
   fi
 ])
-AC_SUBST(ICONV_LIBS)
 
 case $with_libiconv in
   gnu)
@@ -294,7 +293,6 @@ AS_IF([test "x$found_zlib" = "xno"], [
     AC_MSG_ERROR([*** Working zlib library and headers not found ***])
   fi
   ZLIB_LIBS='-lz'
-  AC_SUBST(ZLIB_LIBS)
 ])
 
 dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, 2.32.0 for g_mutex_init, and 2.58 for g_time_zone_new_offset
@@ -607,9 +605,6 @@ if test -d "${srcdir}/.git"; then
 	CFLAGS="$CFLAGS -Wall -Wshadow -Wunreachable-code -Wformat=2"
 fi
 LIBS="$LIBS $EXTRA_LIBS"
-
-AC_SUBST(CFLAGS)
-AC_SUBST(LIBS)
 
 GMIME_CFLAGS="$LFS_CFLAGS $GPGME_PTHREAD_CFLAGS $LIBIDN_CFLAGS"
 GMIME_LIBDIR="-L${libdir}"
