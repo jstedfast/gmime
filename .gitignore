@@ -15,8 +15,6 @@ config.sub
 configure
 configure~
 depcomp
-doltcompile
-doltlibtool
 gmime.spec
 gmime*.pc
 gtk-doc.make
