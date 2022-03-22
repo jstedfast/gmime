@@ -462,17 +462,7 @@ CFLAGS="$CFLAGS_save"
 dnl Check for some network functions
 AC_CHECK_FUNCS(gethostname getdomainname getaddrinfo)
 
-dnl ****************************
-dnl *** Checks for libsocket ***
-dnl ****************************
-LIBSOCKET=""
-AC_CHECK_LIB(socket, getaddrinfo, LIBSOCKET="-lsocket")
-
-dnl *************************
-dnl *** Checks for libnsl ***
-dnl *************************
-LIBNSL=""
-AC_CHECK_LIB(nsl, getaddrinfo, LIBNSL="-lnsl")
+AX_LIB_SOCKET_NSL
 
 dnl **************************************************
 dnl *** Checks for GpgME needed for PGP and S/MIME ***
@@ -582,12 +572,6 @@ AS_IF([ test "x$enable_coverage" = "xyes"], [
 
 dnl Extra libs
 EXTRA_LIBS="$ZLIB_LIBS"
-if test "x$LIBSOCKET" != "x"; then
-	EXTRA_LIBS="$EXTRA_LIBS $LIBSOCKET"
-fi
-if test "x$LIBNSL" != "x"; then
-	EXTRA_LIBS="$EXTRA_LIBS $LIBNSL"
-fi
 if test "x$ICONV_LIBS" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $ICONV_LIBS"
 fi
