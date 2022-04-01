@@ -118,22 +118,22 @@ if ENABLE_CRYPTO
 test_pgp_SOURCES = test-pgp.c testsuite.c testsuite.h
 test_pgp_LDFLAGS = 
 test_pgp_DEPENDENCIES = $(DEPS)
-test_pgp_LDADD = $(LDADDS)
+test_pgp_LDADD = $(LDADDS) $(GPGME_PTHREAD_LIBS)
 
 test_pgpmime_SOURCES = test-pgpmime.c testsuite.c testsuite.h
 test_pgpmime_LDFLAGS = 
 test_pgpmime_DEPENDENCIES = $(DEPS)
-test_pgpmime_LDADD = $(LDADDS)
+test_pgpmime_LDADD = $(LDADDS) $(GPGME_PTHREAD_LIBS)
 
 test_pkcs7_SOURCES = test-pkcs7.c testsuite.c testsuite.h
 test_pkcs7_LDFLAGS = 
 test_pkcs7_DEPENDENCIES = $(DEPS)
-test_pkcs7_LDADD = $(LDADDS) $(GPGME_PTHREAD_LIBS) -lgpg-error
+test_pkcs7_LDADD = $(LDADDS) $(GPGME_PTHREAD_LIBS)
 
 test_smime_SOURCES = test-smime.c testsuite.c testsuite.h
 test_smime_LDFLAGS = 
 test_smime_DEPENDENCIES = $(DEPS)
-test_smime_LDADD = $(LDADDS)
+test_smime_LDADD = $(LDADDS) $(GPGME_PTHREAD_LIBS)
 endif
 
 EXTRA_DIST = $(wildcard empty*.msg rfc2060.msg data/pgp*/* data/smime/* \
