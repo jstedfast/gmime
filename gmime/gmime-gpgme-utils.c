@@ -593,6 +593,7 @@ g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx)
 		
 		g_mime_certificate_set_pubkey_algo (cert, (GMimePubKeyAlgo) recipient->pubkey_algo);
 		g_mime_certificate_set_key_id (cert, recipient->keyid);
+		g_object_unref(cert);
 		
 		recipient = recipient->next;
 	}
