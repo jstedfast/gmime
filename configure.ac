@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 # require autoconf 2.54
-AC_PREREQ([2.71])
+AC_PREREQ([2.69])
 
 # Making releases:
 #   gmime_micro_version += 1;
