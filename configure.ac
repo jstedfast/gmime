@@ -287,10 +287,8 @@ dnl zlib support
 dnl
 PKG_CHECK_MODULES([ZLIB], [zlib])
 
-dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, 2.32.0 for g_mutex_init, 2.58 for g_time_zone_new_offset, and 2.68 for g_time_zone_new_identifier
-AM_PATH_GLIB_2_0(2.68.0, ,
-		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
-		 gobject gmodule gthread gio)
+dnl We need at *least* glib 2.32.0 for g_mutex_init, 2.58 for g_time_zone_new_offset, and 2.68 for g_time_zone_new_identifier
+PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.68 gobject-2.0 gio-2.0 gthread-2.0])
 
 CFLAGS_save="$CFLAGS"
 CFLAGS="$CFLAGS -I$srcdir"
