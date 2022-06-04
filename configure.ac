@@ -133,7 +133,7 @@ AM_CONDITIONAL(MS_LIB_AVAILABLE, [test x$ms_librarian = xyes])
 dnl Checks for programs.
 AC_SEARCH_LIBS([strerror],[cposix])
 AC_PROG_CC
-AC_CHECK_INCLUDES_DEFAULT
+#AC_CHECK_INCLUDES_DEFAULT
 
 dnl AC_ARG_PROGRAM
 AC_PROG_INSTALL
