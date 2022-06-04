@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-# require autoconf 2.54
-AC_PREREQ([2.69])
+# require autoconf 2.71
+AC_PREREQ([2.71])
 
 # Making releases:
 #   gmime_micro_version += 1;
@@ -133,7 +133,7 @@ AM_CONDITIONAL(MS_LIB_AVAILABLE, [test x$ms_librarian = xyes])
 dnl Checks for programs.
 AC_SEARCH_LIBS([strerror],[cposix])
 AC_PROG_CC
-#AC_CHECK_INCLUDES_DEFAULT
+AC_CHECK_INCLUDES_DEFAULT
 
 dnl AC_ARG_PROGRAM
 AC_PROG_INSTALL
@@ -294,8 +294,8 @@ AS_IF([test "x$found_zlib" = "xno"], [
   ZLIB_LIBS='-lz'
 ])
 
-dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, 2.32.0 for g_mutex_init, and 2.58 for g_time_zone_new_offset
-AM_PATH_GLIB_2_0(2.58.0, ,
+dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, 2.32.0 for g_mutex_init, 2.58 for g_time_zone_new_offset, and 2.68 for g_time_zone_new_identifier
+AM_PATH_GLIB_2_0(2.68.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
 		 gobject gmodule gthread gio)
 
