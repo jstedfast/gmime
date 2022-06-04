@@ -1,3 +1,14 @@
+### GMime 3.2.12
+
+* Fixed a memory leak in g_mime_gpgme_get_decrypt_result().
+
+* Updated vapigen.m4, introspection.m4, and gpgme.m4 to improve cross-platform builds.
+
+* Add and use ax_lib_socket_nsl.m4 so that systems that do not require linkage with libnsl
+  are not forced to link with it unnecessesarily.
+
+* Changed the build system to no longer use dolt (which is obsolete).
+
 ### GMime 3.2.11
 
 * Fixed a bug in the base64 decoder. D'oh!
