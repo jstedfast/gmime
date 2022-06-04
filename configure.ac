@@ -472,22 +472,22 @@ AS_IF([test "x$enable_crypto" = "xyes"], [
 AM_CONDITIONAL(ENABLE_CRYPTO, test "x$enable_crypto" != "xno")
 
 dnl ******************************
-dnl *** Checks for GNU Libidn2 ***
+dnl *** Checks for GNU libidn2 ***
 dnl ******************************
-AC_ARG_WITH(libidn, AS_HELP_STRING([--with-libidn=[DIR]],[Support IDN (needs GNU Libidn)]),
+AC_ARG_WITH(libidn, AS_HELP_STRING([--with-libidn=[DIR]],[Support IDN (needs GNU libidn2)]),
   libidn=$withval, libidn=yes)
+AC_MSG_CHECKING([if GNU libidn2 should be used])
+AC_MSG_RESULT($libidn)
 if test "$libidn" != "no" ; then
-  PKG_CHECK_MODULES(LIBIDN, libidn2 >= 2.0.0, [libidn=yes], [libidn=no])
+  PKG_CHECK_MODULES([LIBIDN], [libidn2 >= 2.0.0], [libidn=yes], [libidn=no])
   if test "$libidn" != "yes" ; then
     libidn=no
     AC_MSG_WARN([Libidn not found])
   else
     libidn=yes
-    AC_DEFINE(LIBIDN, 1, [Define to 1 if GNU Libidn should be used.])
+    AC_DEFINE(LIBIDN, 1, [Define to 1 if GNU libidn2 should be used.])
   fi
 fi
-AC_MSG_CHECKING([if Libidn should be used])
-AC_MSG_RESULT($libidn)
 
 dnl Check for GObject introspection and Vala binding generator
 GOBJECT_INTROSPECTION_CHECK([1.30.0])
@@ -632,7 +632,7 @@ Configuration:
   Console warnings:      ${enable_warnings}
   PGP/MIME support:      ${enable_crypto}
   S/MIME support:        ${enable_crypto}
-  libidn support:        ${libidn}
+  libidn2 support:       ${libidn}
 
   GObject introspection: ${enable_introspection}
   Vala bindings:         ${enable_vala}
