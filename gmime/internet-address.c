@@ -1593,9 +1593,13 @@ domain_literal_parse (GString *str, const char **in)
 	skip_lwsp (&inptr);
 	
 	do {
+		const char *start = inptr;
+
 		while (*inptr && is_dtext (*inptr))
-			g_string_append_c (str, *inptr++);
-		
+			*inptr++;
+
+		g_string_append_len (str, start, (size_t) (inptr - start));
+
 		skip_lwsp (&inptr);
 		
 		if (*inptr == '\0')
