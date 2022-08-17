@@ -291,8 +291,10 @@ object_headers_cleared (GMimeObject *object)
 static void
 header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *args, GMimeObject *object)
 {
+	// FIXME: add a header_inserted() API so that header_added() can be better optimized. See gmime-message.c:message_header_added()/process_header().
 	switch (args->action) {
 	case GMIME_HEADER_LIST_CHANGED_ACTION_ADDED:
+	case GMIME_HEADER_LIST_CHANGED_ACTION_INSERTED:
 		GMIME_OBJECT_GET_CLASS (object)->header_added (object, args->header);
 		break;
 	case GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED:

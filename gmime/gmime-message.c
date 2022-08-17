@@ -260,6 +260,24 @@ static const char *message_headers[] = {
 };
 
 static void
+message_add_addresses (GMimeMessage *message, GMimeParserOptions *options, GMimeHeader *header, GMimeAddressType type)
+{
+	InternetAddressList *addrlist;
+	const char *value;
+	
+	block_changed_event (message, type);
+	
+	addrlist = message->addrlists[type];
+	
+	internet_address_list_clear (addrlist);
+	
+	if ((value = g_mime_header_get_raw_value (header)))
+		_internet_address_list_append_parse (addrlist, options, value, header->offset);
+	
+	unblock_changed_event (message, type);
+}
+
+static void
 message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GMimeAddressType type)
 {
 	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
@@ -289,8 +307,21 @@ message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GM
 	unblock_changed_event (message, type);
 }
 
+static gboolean
+header_was_appended (GMimeObject *object, GMimeHeaderListChangedAction action, GMimeHeader *header)
+{
+	// Note: This is a hack until we can have a message_header_inserted() API.
+	if (action == GMIME_HEADER_LIST_CHANGED_ACTION_ADDED) {
+		int count = g_mime_header_list_get_count (object->headers);
+		GMimeHeader *last = g_mime_header_list_get_header_at (object->headers, count - 1);
+		return header == last;
+	}
+
+	return FALSE;
+}
+
 static void
-process_header (GMimeObject *object, GMimeHeader *header)
+process_header (GMimeObject *object, GMimeHeaderListChangedAction action, GMimeHeader *header)
 {
 	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeMessage *message = (GMimeMessage *) object;
@@ -306,22 +337,40 @@ process_header (GMimeObject *object, GMimeHeader *header)
 	
 	switch (i) {
 	case HEADER_SENDER:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_SENDER);
+		if (header_was_appended (object, action, header))
+			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_SENDER);
+		else
+			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_SENDER);
 		break;
 	case HEADER_FROM:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_FROM);
+		if (header_was_appended (object, action, header))
+			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_FROM);
+		else
+			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_FROM);
 		break;
 	case HEADER_REPLY_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_REPLY_TO);
+		if (header_was_appended (object, action, header))
+			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_REPLY_TO);
+		else
+			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_REPLY_TO);
 		break;
 	case HEADER_TO:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_TO);
+		if (header_was_appended (object, action, header))
+			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_TO);
+		else
+			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_TO);
 		break;
 	case HEADER_CC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_CC);
+		if (header_was_appended (object, action, header))
+			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_CC);
+		else
+			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_CC);
 		break;
 	case HEADER_BCC:
-		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
+		if (header_was_appended (object, action, header))
+			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_BCC);
+		else
+			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -353,7 +402,7 @@ process_header (GMimeObject *object, GMimeHeader *header)
 static void
 message_header_added (GMimeObject *object, GMimeHeader *header)
 {
-	process_header (object, header);
+	process_header (object, GMIME_HEADER_LIST_CHANGED_ACTION_ADDED, header);
 	
 	GMIME_OBJECT_CLASS (parent_class)->header_added (object, header);
 }
@@ -361,7 +410,7 @@ message_header_added (GMimeObject *object, GMimeHeader *header)
 static void
 message_header_changed (GMimeObject *object, GMimeHeader *header)
 {
-	process_header (object, header);
+	process_header (object, GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED, header);
 	
 	GMIME_OBJECT_CLASS (parent_class)->header_changed (object, header);
 }
