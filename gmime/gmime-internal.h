@@ -93,6 +93,7 @@ G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *op
 
 /* InternetAddressList */
 G_GNUC_INTERNAL InternetAddressList *_internet_address_list_parse (GMimeParserOptions *options, const char *str, gint64 offset);
+G_GNUC_INTERNAL void _internet_address_list_append_parse (InternetAddressList *list, GMimeParserOptions *options, const char *str, gint64 offset);
 
 G_END_DECLS
 

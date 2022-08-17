@@ -2160,3 +2160,33 @@ _internet_address_list_parse (GMimeParserOptions *options, const char *str, gint
 	
 	return list;
 }
+
+void
+_internet_address_list_append_parse (InternetAddressList *list, GMimeParserOptions *options, const char *str, gint64 offset)
+{
+	const char *inptr = str;
+
+	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
+	g_return_if_fail (str != NULL);
+
+	address_list_parse (list, options, &inptr, FALSE, offset);
+
+	g_mime_event_emit (list->changed, NULL);
+}
+
+
+/**
+ * internet_address_list_append_parse:
+ * @list: a #InternetAddressList
+ * @str: a string containing internet addresses
+ *
+ * Adds all of the addresses in @str to @list.
+ **/
+void
+internet_address_list_append_parse (InternetAddressList *list, GMimeParserOptions *options, const char *str)
+{
+	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
+	g_return_if_fail (str != NULL);
+
+	_internet_address_list_append_parse (list, options, str, -1);
+}

@@ -263,7 +263,7 @@ static void
 message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GMimeAddressType type)
 {
 	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
-	InternetAddressList *addrlist, *list;
+	InternetAddressList *addrlist;
 	const char *name, *value;
 	GMimeHeader *header;
 	int count, i;
@@ -282,12 +282,8 @@ message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GM
 		if (g_ascii_strcasecmp (address_types[type].name, name) != 0)
 			continue;
 		
-		if ((value = g_mime_header_get_raw_value (header))) {
-			if ((list = _internet_address_list_parse (options, value, header->offset))) {
-				internet_address_list_append (addrlist, list);
-				g_object_unref (list);
-			}
-		}
+		if ((value = g_mime_header_get_raw_value (header)))
+			_internet_address_list_append_parse (addrlist, options, value, header->offset);
 	}
 	
 	unblock_changed_event (message, type);
