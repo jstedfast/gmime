@@ -1,3 +1,7 @@
+### GMime 3.2.13
+
+* Optimized parsing of messages with lots of address headers. (issue #126)
+
 ### GMime 3.2.12
 
 * Fixed a memory leak in g_mime_gpgme_get_decrypt_result().

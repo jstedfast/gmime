@@ -1596,7 +1596,7 @@ domain_literal_parse (GString *str, const char **in)
 		const char *start = inptr;
 
 		while (*inptr && is_dtext (*inptr))
-			*inptr++;
+			inptr++;
 
 		g_string_append_len (str, start, (size_t) (inptr - start));
 
