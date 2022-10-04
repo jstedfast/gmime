@@ -269,8 +269,6 @@ message_add_addresses (GMimeMessage *message, GMimeParserOptions *options, GMime
 	
 	addrlist = message->addrlists[type];
 	
-	internet_address_list_clear (addrlist);
-	
 	if ((value = g_mime_header_get_raw_value (header)))
 		_internet_address_list_append_parse (addrlist, options, value, header->offset);
 	
