@@ -214,6 +214,7 @@ char *internet_address_list_to_string (InternetAddressList *list, GMimeFormatOpt
 void internet_address_list_encode (InternetAddressList *list, GMimeFormatOptions *options, GString *str);
 
 InternetAddressList *internet_address_list_parse (GMimeParserOptions *options, const char *str);
+void internet_address_list_append_parse (InternetAddressList *list, GMimeParserOptions *options, const char *str);
 
 G_END_DECLS
 
