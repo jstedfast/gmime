@@ -481,7 +481,7 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 		try {
 			dec = g_mime_utils_header_decode_text (options, rfc2047_text[i].input);
 			if (strcmp (rfc2047_text[i].decoded, dec) != 0)
-				throw (exception_new ("decoded text does not match: %s", dec));
+				throw (exception_new ("decoded text does not match: actual=\"%s\", expected=\"%s\"", dec, rfc2047_text[i].decoded));
 			
 			enc = g_mime_utils_header_encode_text (format, dec, NULL);
 			if (strcmp (rfc2047_text[i].encoded, enc) != 0)
