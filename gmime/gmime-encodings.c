@@ -573,6 +573,7 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
 				*outptr++ = saved >> 8;
 		}
 
+		/* Note: If the 'eof' state value changes, be sure to update logic in gmime-utils.c:rfc2047_token_decode() */
 		n = -1;
 	}
 
