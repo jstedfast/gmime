@@ -136,7 +136,7 @@ static unsigned char gmime_datetok_table[256] = {
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 };
 
-/* Timezone values defined in rfc5322 */
+/* Timezone values defined in rfc822 */
 static struct {
 	const char *name;
 	int offset;
@@ -203,11 +203,34 @@ static char *tm_days[] = {
 char *
 g_mime_utils_header_format_date (GDateTime *date)
 {
-	int wday, year, month, day, hour, min, sec, tz_offset, sign;
+	int wday, year, month, day, hour, min, sec, tz_offset;
+	GDateTime *utc = NULL;
 	GTimeSpan tz;
+	char sign;
 	
 	g_return_val_if_fail (date != NULL, NULL);
-	
+
+	tz = g_date_time_get_utc_offset (date);
+	if (tz % G_TIME_SPAN_MINUTE == 0) {
+		if (tz < 0) {
+			sign = '-';
+			tz *= -1;
+		} else {
+			sign = '+';
+		}
+
+		tz_offset = 100 * (tz / G_TIME_SPAN_HOUR);
+		tz_offset += (tz % G_TIME_SPAN_HOUR) / G_TIME_SPAN_MINUTE;
+	} else {
+		// Note: RFC822 Date headers can only make use of timezones that can be represented by
+		// +/-HHMM and cannot represent any timezone that makes use of seconds. Therefore, the
+		// only solution is to convert the date being formatted into its UTC representation and
+		// use "-0000" as the timezone (as opposed to the normal "+0000" used for actual UTC).
+		date = utc = g_date_time_to_utc (date);
+		tz_offset = 0;
+		sign = '-';
+	}
+
 	wday = g_date_time_get_day_of_week (date);
 	year = g_date_time_get_year (date);
 	month = g_date_time_get_month (date);
@@ -215,18 +238,13 @@ g_mime_utils_header_format_date (GDateTime *date)
 	hour = g_date_time_get_hour (date);
 	min = g_date_time_get_minute (date);
 	sec = g_date_time_get_second (date);
-	tz = g_date_time_get_utc_offset (date);
+
+	if (utc != NULL)
+		g_date_time_unref (utc);
 	
-	sign = tz < 0 ? -1 : 1;
-	tz *= sign;
-	
-	tz_offset = 100 * (tz / G_TIME_SPAN_HOUR);
-	tz_offset += (tz % G_TIME_SPAN_HOUR) / G_TIME_SPAN_MINUTE;
-	tz_offset *= sign;
-	
-	return g_strdup_printf ("%s, %02d %s %04d %02d:%02d:%02d %+05d",
+	return g_strdup_printf ("%s, %02d %s %04d %02d:%02d:%02d %c%04d",
 				tm_days[wday % 7], day, tm_months[month - 1],
-				year, hour, min, sec, tz_offset);
+				year, hour, min, sec, sign, tz_offset);
 }
 
 /* This is where it gets ugly... */
@@ -445,16 +463,9 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 }
 
 static int
-format_timezone_identifier (char *identifier, int len, int tz_offset)
+format_timezone_identifier (char *identifier, int len, char sign, int tz_offset)
 {
-	int minutes, hours, sign;
-
-	if (tz_offset < 0) {
-		tz_offset *= -1;
-		sign = -1;
-	} else {
-		sign = 1;
-	}
+	int minutes, hours;
 
 	hours = tz_offset / 100;
 	minutes = tz_offset % 100;
@@ -462,7 +473,7 @@ format_timezone_identifier (char *identifier, int len, int tz_offset)
 	if (hours >= 24)
 		return -1;
 
-	return snprintf (identifier, len, "%c%02d:%02d:00", (sign > 0) ? '+' : '-', hours, minutes);
+	return snprintf (identifier, len, "%c%02d:%02d:00", sign, hours, minutes);
 }
 
 static GTimeZone *
@@ -486,10 +497,7 @@ get_tzone (date_token **token)
 			if ((tz_offset = decode_int (inptr + 1, len - 1)) == -1)
 				return NULL;
 
-			if (*inptr == '-')
-				tz_offset *= -1;
-
-			if (format_timezone_identifier (identifier, sizeof (identifier), tz_offset) < 0)
+			if (format_timezone_identifier (identifier, sizeof (identifier), *inptr, tz_offset) < 0)
 				return NULL;
 			
 			return g_time_zone_new_identifier (identifier);
@@ -510,7 +518,10 @@ get_tzone (date_token **token)
 				continue;
 			
 			// TODO: modify the struct to have an `identifier` field instead of `offset` that is a pre-formatted string?
-			if (format_timezone_identifier (identifier, sizeof (identifier), tz_offsets[t].offset) < 0)
+			char sign = tz_offsets[t].offset < 0 ? '-' : '+';
+			tz_offset = ABS(tz_offsets[t].offset);
+
+			if (format_timezone_identifier (identifier, sizeof (identifier), sign, tz_offset) < 0)
 				return NULL;
 			
 			return g_time_zone_new_identifier (identifier);
