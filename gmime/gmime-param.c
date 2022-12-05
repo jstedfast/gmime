@@ -720,7 +720,7 @@ g_string_append_len_quoted (GString *str, const char *text, size_t len)
  * @list: a #GMimeParamList
  * @options: a #GMimeFormatOptions or %NULL
  * @fold: %TRUE if the parameter list should be folded; otherwise, %FALSE
- * @str: the output string buffer
+ * @str: (out): the output string buffer
  *
  * Encodes the parameter list into @str, folding lines if required.
  **/
