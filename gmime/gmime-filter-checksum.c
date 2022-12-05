@@ -174,7 +174,7 @@ g_mime_filter_checksum_new (GChecksumType type)
 /**
  * g_mime_filter_checksum_get_digest:
  * @checksum: checksum filter object
- * @digest: the digest buffer
+ * @digest: (array length=len): the digest buffer
  * @len: the length of the digest buffer
  *
  * Outputs the checksum digest into @digest.
