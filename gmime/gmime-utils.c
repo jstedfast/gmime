@@ -948,7 +948,7 @@ need_quotes (const char *string)
 			inptr++;
 	}
 	
-	return FALSE;
+	return quoted;
 }
 
 /**
