@@ -162,6 +162,10 @@ static struct {
 	{ "A Group(Some people):Chris Jones <c@(Chris's host.)public.example>, joe@example.org, John <jdoe@one.test> (my dear friend); (the end of the group)", NULL,
 	  "A Group: Chris Jones <c@public.example>, joe@example.org, John <jdoe@one.test>;",
 	  "A Group: Chris Jones <c@public.example>, joe@example.org, John <jdoe@one.test>;" },
+	/* odd number of double quotes in rfc-2047 encoded display-name */
+	{ "=?UTF-8?Q?foo=20=22=20bar?= <test@mail.net>", "utf-8",
+	  "\"foo \\\" bar\" <test@mail.net>",
+	  "\"foo \\\" bar\" <test@mail.net>"},
 	/* The following tests cases are meant to test forgivingness
 	 * of the parser when it encounters unquoted specials in the
 	 * name component */
