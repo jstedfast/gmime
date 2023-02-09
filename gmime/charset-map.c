@@ -91,7 +91,7 @@ static guint
 block_hash (gconstpointer v)
 {
 	const signed char *p = v;
-	guint32 h = *p++;
+	guint32 h = 0;
 	int i;
 	
 	for (i = 0; i < 256; i++)
