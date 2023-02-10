@@ -1,0 +1,172 @@
+/* Define if GMime should enable GpgME PGP and S/MIME support. */
+#mesondefine ENABLE_CRYPTO
+
+/* Define if GMime should enable warning output. */
+/* #undef ENABLE_WARNINGS */
+#mesondefine ENABLE_WARNINGS
+
+/* Define to the GMime version */
+#define GMIME_VERSION @GMIME_VERSION@
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#mesondefine HAVE_DLFCN_H
+
+/* Define to 1 if you have the `fsync` function. */
+#mesondefine HAVE_FSYNC
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#mesondefine HAVE_GETADDRINFO
+
+/* Define to 1 if you have the `getdomainname' function. */
+#mesondefine HAVE_GETDOMAINNAME
+
+/* Define to 1 if you have the `gethostname' function. */
+#mesondefine HAVE_GETHOSTNAME
+
+/* Define to 1 if you have the <getopt.h> header with the GNU `getopt_long`
+   function. */
+#mesondefine HAVE_GETOPT_H
+
+/* Define to 1 if you have the `getpagesize' function. */
+#mesondefine HAVE_GETPAGESIZE
+
+/* Define to 1 to use auto-detected iconv-friendly charset names. */
+#mesondefine HAVE_ICONV_DETECT_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#mesondefine HAVE_INTTYPES_H
+
+/* Define to 1 if you have a working `mmap' system call. */
+#mesondefine HAVE_MMAP
+
+/* Define to 1 if you have the `msync' function. */
+#mesondefine HAVE_MSYNC
+
+/* Define to 1 if you have the `munmap' function. */
+#mesondefine HAVE_MUNMAP
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#mesondefine HAVE_NETDB_H
+
+/* Define to 1 if you have the `poll' function. */
+#mesondefine HAVE_POLL
+
+/* Define to 1 if you have the <poll.h> header file. */
+#mesondefine HAVE_POLL_H
+
+/* Define to 1 if you have the `select' function. */
+#mesondefine HAVE_SELECT
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#mesondefine HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#mesondefine HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#mesondefine HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#mesondefine HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#mesondefine HAVE_STRING_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#mesondefine HAVE_SYS_MMAN_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#mesondefine HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#mesondefine HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#mesondefine HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <time.h> header file. */
+#mesondefine HAVE_TIME_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#mesondefine HAVE_UNISTD_H
+
+/* Define if struct utsname has a domainname member */
+#mesondefine HAVE_UTSNAME_DOMAINNAME
+
+/* Define to 1 if you have the <winsock2.h> header file. */
+#mesondefine HAVE_WINSOCK2_H
+
+/* Define to 1 if GNU libidn2 should be used. */
+#mesondefine LIBIDN
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+
+/* Define with a value if your <sys/param.h> does not define MAXHOSTNAMELEN */
+#mesondefine MAXHOSTNAMELEN
+/* #undef MAXHOSTNAMELEN */
+
+/* Define to 0 if your system does not have the O_LARGEFILE flag */
+/* #undef O_LARGEFILE */
+#mesondefine O_LARGEFILE
+
+/* Define to the address where bug reports for this package should be sent. */
+// #define PACKAGE_BUGREPORT "https://github.com/jstedfast/gmime/issues"
+
+/* Define to the full name of this package. */
+// #define PACKAGE_NAME "gmime"
+
+/* Define to the full name and version of this package. */
+// #define PACKAGE_STRING "gmime 3.2.13"
+
+/* Define to the one symbol short name of this package. */
+// #define PACKAGE_TARNAME "gmime"
+
+/* Define to the home page for this package. */
+// #define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+// #define PACKAGE_VERSION "3.2.13"
+
+/* The size of `off_t', as computed by sizeof. */
+// #define SIZEOF_OFF_T 8
+
+/* The size of `size_t', as computed by sizeof. */
+// #define SIZEOF_SIZE_T 8
+
+/* The size of `ssize_t', as computed by sizeof. */
+// #define SIZEOF_SSIZE_T 8
+
+/* The size of `time_t', as computed by sizeof. */
+// #define SIZEOF_TIME_T 8
+
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
+// #define STDC_HEADERS 1
+
+/* Using GNU libiconv */
+/* #undef USE_LIBICONV_GNU */
+
+/* Using a native implementation of iconv in a separate library */
+/* #undef USE_LIBICONV_NATIVE */
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _FILE_OFFSET_BITS */
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _LARGE_FILES */
+
+/* Define to `int' if <sys/types.h> does not define. */
+/* #undef mode_t */
+
+/* Define to `unsigned long int` if <poll.h> does not define. */
+/* #undef nfds_t */
+
+/* Define to `long int' if <sys/types.h> does not define. */
+/* #undef off_t */
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+/* #undef size_t */
+
+/* Define to `int' if <sys/types.h> does not define. */
+/* #undef ssize_t */
