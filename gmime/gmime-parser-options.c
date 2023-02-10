@@ -421,7 +421,7 @@ g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const 
 
 
 /**
- * g_mime_parser_options_get_warning_callback:
+ * g_mime_parser_options_get_warning_callback: (skip)
  * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Gets callback function which is called if the parser detects any issues.
@@ -436,7 +436,7 @@ g_mime_parser_options_get_warning_callback (GMimeParserOptions *options)
 
 
 /**
- * g_mime_parser_options_set_warning_callback:
+ * g_mime_parser_options_set_warning_callback: (skip)
  * @options: a #GMimeParserOptions
  * @warning_cb: a #GMimeParserWarningFunc or %NULL to clear the callback
  * @user_data: data passed to the warning callback function

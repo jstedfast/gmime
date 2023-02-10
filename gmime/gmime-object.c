@@ -1129,7 +1129,47 @@ g_mime_object_type_registry_init (void)
 }
 
 
-
+/**
+ * g_mime_object_get_autocrypt_headers:
+ * @mime_part: a #GMimeObject
+ * @effective_date: a #GDateTime object
+ * @matchheader: the header we want to match
+ * @addresses: a #InternetAddressList
+ * @keep_incomplete: %TRUE if the we should include incompletes
+ *
+ * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
+ * given type based on the @addresses of an @mime_part.
+ * 
+ * Each header in the returned list will:
+ *
+ *  - have a valid address
+ *  - be of the type requested
+ *  - be complete
+ *
+ * If no Autocrypt header is found for an address, no
+ * #GMimeAutocryptHeader will be in the list associated with that e-mail address.
+ *
+ * Note that the following types of Autocrypt headers will not be
+ * returned by this function:
+ *
+ *  - headers of an unrequested type
+ *  - headers that do not match an address in "From:"
+ *  - unparseable headers
+ *  - headers with unknown critical attributes
+ *  - duplicate valid headers for a given address
+ * 
+ * On error (e.g. if this version of GMime cannot handle the requested
+ * Autocrypt type, or if a parameter is missing or malformed), returns
+ * %NULL
+ *
+ * The returned Autocrypt headers will have it effective_date set to
+ * @effective_date
+ *
+ * if @keep_incomplete isn't set, incompletes are removed
+ *
+ * Returns: (nullable) (transfer full): a new #GMimeAutocryptHeaderList object,
+ * or %NULL on error.
+ **/
 GMimeAutocryptHeaderList *
 g_mime_object_get_autocrypt_headers (GMimeObject *mime_part, GDateTime *effective_date,
 				     const char *matchheader, InternetAddressList *addresses,
