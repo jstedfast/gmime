@@ -62,9 +62,22 @@ if libidn2.found()
   EXTRA_LIBS += 'libidn2'
 endif
 
-if iconv.found()
+
+iconv_detect = '''
+#define CONFIGURE_IN
+#include "iconv-detect.c"
+'''
+
+if get_option('have_iconv_detect_h')
   conf_data.set('HAVE_ICONV_DETECT_H', 1)
-  # EXTRA_LIBS += 'iconv'
+else
+  # not cross-compiler secure
+  root = include_directories('.')
+  has_detect = cc.run(iconv_detect, name: 'iconv-detect', 
+    include_directories: root).returncode() == 0
+  if has_detect
+    conf_data.set('HAVE_ICONV_DETECT_H', 1)
+  endif
 endif
 
 foreach hd : [
