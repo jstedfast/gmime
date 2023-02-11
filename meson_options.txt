@@ -6,3 +6,4 @@ option('iconv', type : 'combo', choices : ['auto', 'builtin', 'system'], value :
 option('crypto', type : 'feature', value : 'enabled')
 option('introspection', type : 'boolean', value : true)
 option('vala', type : 'boolean', value : true)
+option('have_iconv_detect_h', type : 'boolean', value : false)
