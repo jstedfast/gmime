@@ -19,36 +19,32 @@ gmime_package = 'gmime-@0@.0'.format(GMIME_MAJOR_VERSION)
 
 add_global_arguments('-DHAVE_CONFIG_H=1', language : 'c')
 
-iconv = dependency('iconv', required : false, method: get_option('iconv'))
+iconv = dependency('iconv', method: get_option('iconv'))
 libidn2 = dependency('libidn2', version: '>=2.0.0', required : false)
 gpgme = dependency('gpgme', version: '>=1.6.0', required: get_option('crypto'))
 glib =  dependency('glib-2.0', version: '>=2.68')
 gobject = dependency('gobject-2.0')
+gio = dependency('gio-2.0')
 deps = [
   dependency('zlib', version: '>=1.2.5.2'),
   glib,
   gpgme,
   gobject,
-  dependency('gio-2.0'),
+  gio,
   libidn2,
   iconv,
 ]
-
-gmime_prefix = get_option('prefix')
-gmime_datadir = join_paths(gmime_prefix, get_option('datadir'))
 
 cc = meson.get_compiler('c')
 
 conf_data = configuration_data()
 conf_data.set_quoted('GMIME_VERSION', meson.project_version())
 
-LIBS = ['glib-2.0', 'gio-2.0', 'gobject-2.0' ]
+LIBS = [glib, gio, gobject]
 EXTRA_LIBS = ['zlib']
 
-if cc.has_header('getopt.h')
-  if cc.has_function('getopt_long')
-    conf_data.set('HAVE_GETOPT_H', 1)
-  endif
+if cc.has_header_symbol('getopt.h', 'getopt_long')
+  conf_data.set('HAVE_GETOPT_H', 1)
 endif
 
 if gpgme.found()
@@ -71,7 +67,9 @@ iconv_detect = '''
 if get_option('have_iconv_detect_h')
   conf_data.set('HAVE_ICONV_DETECT_H', 1)
 else
-  # not cross-compiler secure
+  if not meson.can_run_host_binaries()
+    error('Can\'t run the iconv-detect binary. Set the have_iconv_detect_h flag or use an exe_wrapper')
+  endif
   root = include_directories('.')
   has_detect = cc.run(iconv_detect, name: 'iconv-detect', 
     include_directories: root).returncode() == 0
@@ -80,17 +78,29 @@ else
   endif
 endif
 
-foreach hd : [
-    { 'm': 'HAVE_DLFCN_H',            'v': 'dlfcn.h', },
-    { 'm': 'HAVE_INTTYPES_H',         'v': 'inttypes.h', },
-    { 'm': 'HAVE_NETDB_H',            'v': 'netdb.h', },
-    { 'm': 'HAVE_STDINT_H',           'v': 'stdint.h', },
-    { 'm': 'HAVE_WINDOWS_H',          'v': 'windows.h'},
-    { 'm': 'HAVE_SYS_MMAN_H',         'v': 'sys/mman.h', },
-    { 'm': 'HAVE_SYS_PARAM_H',        'v': 'sys/param.h', },
-  ]
-  if cc.has_header(hd['v'])
-    conf_data.set10(hd['m'], true)
+check_headers = [
+  'dlfcn.h',
+  'getopt.h',
+  'inttypes.h',
+  'netdb.h',
+  'poll.h',
+  'stdint.h',
+  'stdio.h',
+  'stdlib.h',
+  'strings.h',
+  'string.h',
+  'sys/mman.h',
+  'sys/param.h',
+  'sys/stat.h',
+  'sys/types.h',
+  'time.h',
+  'unistd.h',
+  'winsock2.h',
+]
+
+foreach h : check_headers
+  if cc.has_header(h)
+    conf_data.set('HAVE_' + h.underscorify().to_upper(), 1)
   endif
 endforeach
 
@@ -107,25 +117,27 @@ endif
 # if cc.has_header_symbol('fcntl.h', 'O_LARGEFILE')
 #   conf_data.set10('O_LARGEFILE', true)
 # endif
+#
+check_functions = [
+  ['HAVE_FSYNC', 'fsync', '#include<unistd.h>'],
+  ['HAVE_GETADDRINFO', 'getaddrinfo', '#include<netdb.h>'],
+  ['HAVE_GETDOMAINNAME', 'getdomainname', '#include <unistd.h>'],
+  ['HAVE_GETHOSTNAME', 'gethostname', '#include <unistd.h>'],
+  ['HAVE_GETPAGESIZE', 'getpagesize', '#include<unistd.h>'],
+  ['HAVE_MMAP', 'mmap', '#include<sys/mman.h>'],
+  ['HAVE_MSYNC', 'msync', '#include <sys/mman.h>'],
+  ['HAVE_MUNMAP', 'munmap', '#include <sys/mman.h>'],
+  ['HAVE_POLL', 'poll', '#include<poll.h>'],
+  ['HAVE_SELECT', 'select', '#include<sys/select.h>'],
+]
 
-foreach fn : [
-    { 'm': 'HAVE_FSYNC',                    'v': 'fsync', },
-    { 'm': 'HAVE_GETADDRINFO',              'v': 'getaddrinfo', },
-    { 'm': 'HAVE_GETDOMAINNAME',            'v': 'getdomainname', },
-    { 'm': 'HAVE_GETHOSTNAME',              'v': 'gethostname', },
-    { 'm': 'HAVE_GETPAGESIZE',              'v': 'getpagesize', },
-    { 'm': 'HAVE_MMAP',                     'v': 'mmap', },
-    { 'm': 'HAVE_MSYNC',                    'v': 'msync', },
-    { 'm': 'HAVE_MUNMAP',                   'v': 'munmap', },
-    { 'm': 'HAVE_POLL',                     'v': 'poll', },
-    { 'm': 'HAVE_SELECT',                   'v': 'select', },
-  ]
-  if cc.has_function(fn['v'])
-    conf_data.set(fn['m'], 1)
+foreach f : check_functions
+  if cc.has_function(f.get(1), prefix : f.get(2))
+    conf_data.set(f.get(0), 1)
   endif
 endforeach
 
-configure_file(input: 'config_meson.h.in',
+configure_file(input: 'config.h.meson',
   output: 'config.h',
   configuration : conf_data
 )
