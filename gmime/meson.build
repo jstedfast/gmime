@@ -153,9 +153,9 @@ configure_file(input: 'gmime-version_meson.h.in',
   configuration : version_data
 )
 
-gen_table = executable('gen-table', 'gen-table.c')
+gen_table = executable('gen-table', 'gen-table.c', native: true)
 charset_map = executable('charset-map', 'charset-map.c', dependencies : deps, 
-  include_directories: inc_conf)
+  include_directories: inc_conf, native: true)
 
 # For the future, we can generate the source code at runtime instead of having
 # it in the filesystem

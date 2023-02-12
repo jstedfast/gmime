@@ -1,12 +1,13 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
 /* Define if GMime should enable GpgME PGP and S/MIME support. */
 #mesondefine ENABLE_CRYPTO
 
 /* Define if GMime should enable warning output. */
-/* #undef ENABLE_WARNINGS */
 #mesondefine ENABLE_WARNINGS
 
 /* Define to the GMime version */
-#define GMIME_VERSION @GMIME_VERSION@
+#mesondefine GMIME_VERSION
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #mesondefine HAVE_DLFCN_H
@@ -100,73 +101,72 @@
 #mesondefine LIBIDN
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
+#mesondefine LT_OBJDIR
 
 /* Define with a value if your <sys/param.h> does not define MAXHOSTNAMELEN */
 #mesondefine MAXHOSTNAMELEN
-/* #undef MAXHOSTNAMELEN */
 
 /* Define to 0 if your system does not have the O_LARGEFILE flag */
-/* #undef O_LARGEFILE */
 #mesondefine O_LARGEFILE
 
 /* Define to the address where bug reports for this package should be sent. */
-// #define PACKAGE_BUGREPORT "https://github.com/jstedfast/gmime/issues"
+#mesondefine PACKAGE_BUGREPORT
 
 /* Define to the full name of this package. */
-// #define PACKAGE_NAME "gmime"
+#mesondefine PACKAGE_NAME
 
 /* Define to the full name and version of this package. */
-// #define PACKAGE_STRING "gmime 3.2.13"
+#mesondefine PACKAGE_STRING
 
 /* Define to the one symbol short name of this package. */
-// #define PACKAGE_TARNAME "gmime"
+#mesondefine PACKAGE_TARNAME
 
 /* Define to the home page for this package. */
-// #define PACKAGE_URL ""
+#mesondefine PACKAGE_URL
 
 /* Define to the version of this package. */
-// #define PACKAGE_VERSION "3.2.13"
+#mesondefine PACKAGE_VERSION
 
 /* The size of `off_t', as computed by sizeof. */
-// #define SIZEOF_OFF_T 8
+#mesondefine SIZEOF_OFF_T
 
 /* The size of `size_t', as computed by sizeof. */
-// #define SIZEOF_SIZE_T 8
+#mesondefine SIZEOF_SIZE_T
 
 /* The size of `ssize_t', as computed by sizeof. */
-// #define SIZEOF_SSIZE_T 8
+#mesondefine SIZEOF_SSIZE_T
 
 /* The size of `time_t', as computed by sizeof. */
-// #define SIZEOF_TIME_T 8
+#mesondefine SIZEOF_TIME_T
 
 /* Define to 1 if all of the C90 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
-// #define STDC_HEADERS 1
+#mesondefine STDC_HEADERS
 
 /* Using GNU libiconv */
-/* #undef USE_LIBICONV_GNU */
+#mesondefine USE_LIBICONV_GNU
 
 /* Using a native implementation of iconv in a separate library */
-/* #undef USE_LIBICONV_NATIVE */
+#mesondefine USE_LIBICONV_NATIVE
 
 /* Number of bits in a file offset, on hosts where this is settable. */
-/* #undef _FILE_OFFSET_BITS */
+#mesondefine _FILE_OFFSET_BITS
 
 /* Define for large files, on AIX-style hosts. */
-/* #undef _LARGE_FILES */
+#mesondefine _LARGE_FILES
 
 /* Define to `int' if <sys/types.h> does not define. */
-/* #undef mode_t */
+#mesondefine mode_t
 
 /* Define to `unsigned long int` if <poll.h> does not define. */
-/* #undef nfds_t */
+#mesondefine nfds_t
 
 /* Define to `long int' if <sys/types.h> does not define. */
-/* #undef off_t */
+#mesondefine off_t
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
-/* #undef size_t */
+#mesondefine size_t
 
 /* Define to `int' if <sys/types.h> does not define. */
-/* #undef ssize_t */
+#mesondefine ssize_t
