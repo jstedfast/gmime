@@ -279,9 +279,8 @@ internet_address_to_string (InternetAddress *ia, GMimeFormatOptions *options, gb
 	
 	string = g_string_new ("");
 	INTERNET_ADDRESS_GET_CLASS (ia)->to_string (ia, options, flags, &linelen, string);
-	str = string->str;
 	
-	g_string_free (string, FALSE);
+	str = g_string_free (string, FALSE);
 	
 	return str;
 }

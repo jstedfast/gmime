@@ -985,8 +985,7 @@ g_mime_utils_quote_string (const char *str)
 	if (quote)
 		g_string_append_c (out, '"');
 	
-	qstring = out->str;
-	g_string_free (out, FALSE);
+	qstring = g_string_free (out, FALSE);
 	
 	return qstring;
 }
@@ -2471,8 +2470,7 @@ rfc2047_encode (GMimeFormatOptions *options, const char *in, gushort safemask, c
 	
 	rfc822_word_free (prev);
 	
-	outstr = out->str;
-	g_string_free (out, FALSE);
+	outstr = g_string_free (out, FALSE);
 	
 	return outstr;
 }

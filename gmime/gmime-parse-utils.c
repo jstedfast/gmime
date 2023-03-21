@@ -493,8 +493,7 @@ g_mime_decode_addrspec (const char **in)
 		goto exception;
 	}
 	
-	str = addrspec->str;
-	g_string_free (addrspec, FALSE);
+	str = g_string_free (addrspec, FALSE);
 	
 	*in = inptr;
 	
