@@ -75,6 +75,7 @@ static int crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 static int crypto_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			       GMimeStream *ostream, GError **err);
 
+GMimePasswordRequestFunc password_cb = NULL;
 
 static GHashTable *type_hash = NULL;
 
@@ -191,19 +192,18 @@ g_mime_crypto_context_new (const char *protocol)
 
 
 /**
- * g_mime_crypto_context_set_request_password: (skip)
- * @ctx: a #GMimeCryptoContext
+ * g_mime_crypto_context_set_request_password:
  * @request_passwd: a callback function for requesting a password
+ * @user_data: user-supplied callback data
  *
  * Sets the function used by the @ctx for requesting a password from
  * the user.
  **/
 void
-g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd)
+g_mime_crypto_context_set_request_password (GMimePasswordRequestFunc request_passwd,
+		void *user_data, GDestroyNotify notify)
 {
-	g_return_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx));
-	
-	ctx->request_passwd = request_passwd;
+	password_cb = request_passwd;
 }
 
 

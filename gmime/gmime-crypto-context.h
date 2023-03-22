@@ -65,6 +65,9 @@ typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
 typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt,
 					       gboolean reprompt, GMimeStream *response, GError **err);
 
+// typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt,
+// 					       gboolean reprompt, GMimeStream *response, void *data, GError **err);
+
 
 /**
  * GMimeCryptoContextNewFunc:
@@ -192,7 +195,8 @@ GType g_mime_crypto_context_get_type (void);
 void g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc callback);
 GMimeCryptoContext *g_mime_crypto_context_new (const char *protocol);
 
-void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd);
+void g_mime_crypto_context_set_request_password (GMimePasswordRequestFunc request_passwd,
+		void *user_data, GDestroyNotify notify);
 
 /* digest algo mapping */
 GMimeDigestAlgo g_mime_crypto_context_digest_id (GMimeCryptoContext *ctx, const char *name);
