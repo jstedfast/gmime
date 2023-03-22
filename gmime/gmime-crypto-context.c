@@ -76,8 +76,14 @@ static int crypto_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			       GMimeStream *ostream, GError **err);
 
 GMimePasswordRequestFunc password_cb = NULL;
+void *password_data = NULL;
+GDestroyNotify password_notify = NULL;
 
-static GHashTable *type_hash = NULL;
+GMimeCryptoContextNewFunc context_cb = NULL;
+void *context_data = NULL;
+GDestroyNotify context_notify = NULL;
+
+// static GHashTable *type_hash = NULL;
 
 static GObjectClass *parent_class = NULL;
 
@@ -102,7 +108,7 @@ g_mime_crypto_context_get_type (void)
 		
 		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCryptoContext", &info, 0);
 		
-		type_hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, g_free, NULL);
+		// type_hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, g_free, NULL);
 	}
 	
 	return type;
@@ -134,7 +140,6 @@ g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass)
 static void
 g_mime_crypto_context_init (GMimeCryptoContext *ctx, GMimeCryptoContextClass *klass)
 {
-	ctx->request_passwd = NULL;
 }
 
 static void
@@ -147,47 +152,116 @@ g_mime_crypto_context_finalize (GObject *object)
 void
 g_mime_crypto_context_shutdown (void)
 {
-	g_hash_table_destroy (type_hash);
-	type_hash = NULL;
+	// g_hash_table_destroy (type_hash);
+	// type_hash = NULL;
 }
 
+static char *pgp_identifier[] = {
+	"application/x-pgp-signature",
+	"application/pgp-signature",
+	"application/x-pgp-encrypted",
+	"application/pgp-encrypted",
+	"application/pgp-keys",
+};
+
+
+static char *pkcs7_identifier[] = {
+	"application/x-pkcs7-signature",
+	"application/pkcs7-signature",
+	"application/x-pkcs7-mime",
+	"application/pkcs7-mime",
+	"application/pkcs7-keys",
+};
 
 /**
- * g_mime_crypto_context_register: (skip)
- * @protocol: crypto protocol
+ * g_mime_crypto_context_is_pgp:
+ * @protocol: the crypto protocol
+ *
+ * Returns: %TRUE if the protocol is pgp
+ **/
+gboolean g_mime_crypto_context_is_pgp(const char *protocol) {
+	for (int i = 0; i < G_N_ELEMENTS(pgp_identifier); i++) {
+		if (!strcmp(pgp_identifier[i], protocol)) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+/**
+ * g_mime_crypto_context_is_pkcs7:
+ * @protocol: the crypto protocol
+ *
+ * Returns: %TRUE if the protocol is pkcs7
+ **/
+gboolean g_mime_crypto_context_is_pkcs7(const char *protocol) {
+	for (int i = 0; i < G_N_ELEMENTS(pkcs7_identifier); i++) {
+		if (!strcmp(pkcs7_identifier[i], protocol)) {
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+// /**
+//  * g_mime_crypto_context_default_context:
+//  *
+//  * Default function to create crypto context. Creates a gpg context.
+//  *
+//  * Returns: (nullable) (transfer full): Returns a #GMimeCryptoContext
+//  **/
+// GMimeCryptoContext *
+// g_mime_crypto_runtime_default_context(const char *str, GMimeCryptoContextKind kind) {
+// 	if (g_mime_crypto_runtime_is_pgp(str)) {
+// 		return g_mime_gpg_context_new();
+// 	}
+// 	if (g_mime_crypto_runtime_is_pkcs7(str)) {
+// 		return g_mime_pkcs7_context_new();
+// 	}
+//
+// 	return NULL;
+// }
+
+/**
+ * g_mime_crypto_context_register:
  * @callback: a #GMimeCryptoContextNewFunc
+ * @user_data: user-supplied callback data
+ * notify: A cleanup function.
  *
  * Registers the callback for the specified @protocol.
  **/
 void
-g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc callback)
+g_mime_crypto_context_register (GMimeCryptoContextNewFunc callback,
+		void *user_data, GDestroyNotify notify)
 {
-	g_return_if_fail (protocol != NULL);
 	g_return_if_fail (callback != NULL);
-	
-	g_hash_table_replace (type_hash, g_strdup (protocol), callback);
+
+	context_cb = callback;
+
+	if (context_notify) {
+		context_notify(context_data);
+	} 
+	context_notify = notify;
+	context_data = user_data;
 }
 
 
 /**
  * g_mime_crypto_context_new:
  * @protocol: the crypto protocol
+ * @trigger: what caused the cryptocontext to be created
  *
  * Creates a new crypto context for the specified @protocol.
  *
  * Returns: (nullable): a newly allocated #GMimeCryptoContext.
  **/
 GMimeCryptoContext *
-g_mime_crypto_context_new (const char *protocol)
+g_mime_crypto_context_new (const char *protocol, GMimeCryptoContextTrigger trigger)
 {
-	GMimeCryptoContextNewFunc func;
-	
-	g_return_val_if_fail (protocol != NULL, NULL);
-	
-	if (!(func = g_hash_table_lookup (type_hash, protocol)))
+	if (!context_cb)
 		return NULL;
-	
-	return func ();
+
+	return context_cb(protocol, trigger, context_cb);
 }
 
 
@@ -204,8 +278,23 @@ g_mime_crypto_context_set_request_password (GMimePasswordRequestFunc request_pas
 		void *user_data, GDestroyNotify notify)
 {
 	password_cb = request_passwd;
+
+	if (password_notify) {
+		password_notify(password_data);
+	}
+
+	password_notify = notify;
+	password_data = user_data;
 }
 
+/**
+ * g_mime_crypto_context_has_password_handler:
+ *
+ * Returns: %TRUE if a password_handler has been installed
+ **/
+gboolean g_mime_crypto_context_has_password_handler (void) {
+	return password_cb != NULL;
+}
 
 static GMimeDigestAlgo
 crypto_digest_id (GMimeCryptoContext *ctx, const char *name)
@@ -217,18 +306,26 @@ crypto_digest_id (GMimeCryptoContext *ctx, const char *name)
 /**
  * g_mime_crypto_context_get_request_password:
  * @ctx: a #GMimeCryptoContext
+ * @user_id: the user name for password
+ * @prompt: the hint for the password
+ * @reprompt: If we have asked for a password before
+ * @response: A stream to stream the password to.
+ * @err: a #GError
  *
  * Gets the function used by the @ctx for requesting a password from
  * the user.
  *
  * Returns: (nullable): a #GMimePasswordRequestFunc or %NULL if not set.
  **/
-GMimePasswordRequestFunc
-g_mime_crypto_context_get_request_password (GMimeCryptoContext *ctx)
+gboolean
+g_mime_crypto_context_request_password (GMimeCryptoContext *ctx,
+		const char *user_id, const char *prompt, gboolean reprompt,
+		GMimeStream *response, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (password_cb, FALSE);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
 	
-	return ctx->request_passwd;
+	return password_cb(ctx, user_id, prompt, reprompt, response, password_data, err);
 }
 
 

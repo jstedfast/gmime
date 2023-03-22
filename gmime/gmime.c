@@ -88,6 +88,24 @@ g_mime_check_version (guint major, guint minor, guint micro)
 	return FALSE;
 }
 
+/**
+ * g_mime_crypto_context_default_context:
+ *
+ * Default callback function to create crypto context.
+ *
+ * Returns: (nullable) (transfer full): Returns a #GMimeCryptoContext
+ **/
+GMimeCryptoContext *
+g_mime_crypto_context_default_context(const char *str, GMimeCryptoContextTrigger kind, void *user_data) {
+	if (g_mime_crypto_context_is_pgp(str)) {
+		return g_mime_gpg_context_new();
+	}
+	if (g_mime_crypto_context_is_pkcs7(str)) {
+		return g_mime_pkcs7_context_new();
+	}
+
+	return NULL;
+}
 
 /**
  * g_mime_init:
@@ -199,20 +217,21 @@ g_mime_init (void)
 	g_mime_object_register_type ("message", "global", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "news", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "partial", g_mime_message_partial_get_type ());
-	
-	g_mime_crypto_context_register ("application/x-pgp-signature", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-signature", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/x-pgp-encrypted", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-encrypted", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-keys", g_mime_gpg_context_new);
-	
-	g_mime_crypto_context_register ("application/x-pkcs7-signature", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-signature", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/x-pkcs7-mime", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-mime", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-keys", g_mime_pkcs7_context_new);
-}
 
+	g_mime_crypto_context_register (g_mime_crypto_context_default_context, NULL, NULL);
+	
+	// g_mime_crypto_context_register ("application/x-pgp-signature", g_mime_gpg_context_new);
+	// g_mime_crypto_context_register ("application/pgp-signature", g_mime_gpg_context_new);
+	// g_mime_crypto_context_register ("application/x-pgp-encrypted", g_mime_gpg_context_new);
+	// g_mime_crypto_context_register ("application/pgp-encrypted", g_mime_gpg_context_new);
+	// g_mime_crypto_context_register ("application/pgp-keys", g_mime_gpg_context_new);
+	// 
+	// g_mime_crypto_context_register ("application/x-pkcs7-signature", g_mime_pkcs7_context_new);
+	// g_mime_crypto_context_register ("application/pkcs7-signature", g_mime_pkcs7_context_new);
+	// g_mime_crypto_context_register ("application/x-pkcs7-mime", g_mime_pkcs7_context_new);
+	// g_mime_crypto_context_register ("application/pkcs7-mime", g_mime_pkcs7_context_new);
+	// g_mime_crypto_context_register ("application/pkcs7-keys", g_mime_pkcs7_context_new);
+}
 
 /**
  * g_mime_shutdown:

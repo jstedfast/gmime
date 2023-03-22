@@ -39,7 +39,7 @@ extern int verbose;
 #define v(x) if (verbose > 3) x
 
 static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, void *user_data, GError **err)
 {
 	g_mime_stream_write_string (response, "no.secret\n");
 	
@@ -473,7 +473,7 @@ int main (int argc, char **argv)
 	testsuite_start ("GnuPG crypto context");
 	
 	ctx = g_mime_gpg_context_new ();
-	g_mime_crypto_context_set_request_password (ctx, request_passwd);
+	g_mime_crypto_context_set_request_password (request_passwd, NULL, NULL);
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {
@@ -490,7 +490,7 @@ int main (int argc, char **argv)
 		testsuite_check_failed ("GMimeGpgContext::import failed: %s", ex->message);
 		return EXIT_FAILURE;
 	} finally;
-	
+
 	key = g_build_filename (datadir, "gmime.gpg.pub", NULL);
 	testsuite_check ("GMimeGpgContext::export");
 	try {
@@ -499,15 +499,15 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("GMimeGpgContext::export failed: %s", ex->message);
 	} finally;
-	
+
 	g_free (key);
-	
+
 	istream = g_mime_stream_mem_new ();
 	ostream = g_mime_stream_mem_new ();
-	
+
 	g_mime_stream_write_string (istream, "this is some cleartext\r\n");
 	g_mime_stream_reset (istream);
-	
+
 	what = "GMimeGpgContext::sign";
 	testsuite_check ("%s", what);
 	try {
@@ -523,11 +523,11 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_object_unref (ostream);
 	g_mime_stream_reset (istream);
 	ostream = g_mime_stream_mem_new ();
-	
+
 	what = "GMimeGpgContext::sign (detached)";
 	testsuite_check ("%s", what);
 	try {
@@ -543,11 +543,11 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_object_unref (ostream);
 	g_mime_stream_reset (istream);
 	ostream = g_mime_stream_mem_new ();
-	
+
 	what = "GMimeGpgContext::encrypt";
 	testsuite_check ("%s", what);
 	try {
@@ -563,11 +563,11 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_object_unref (ostream);
 	g_mime_stream_reset (istream);
 	ostream = g_mime_stream_mem_new ();
-	
+
 	what = "GMimeGpgContext::encrypt+sign";
 	testsuite_check ("%s", what);
 	try {
@@ -583,13 +583,13 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_object_unref (istream);
 	g_object_unref (ostream);
 	g_object_unref (ctx);
 
 	filter = (GMimeFilterOpenPGP *) g_mime_filter_openpgp_new ();
-	
+
 	what = "GMimeFilterOpenPGP::public key block";
 	testsuite_check ("%s", what);
 	try {
@@ -601,9 +601,9 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_mime_filter_reset ((GMimeFilter *) filter);
-	
+
 	what = "GMimeFilterOpenPGP::private key block";
 	testsuite_check ("%s", what);
 	try {
@@ -615,9 +615,9 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_mime_filter_reset ((GMimeFilter *) filter);
-	
+
 	what = "GMimeFilterOpenPGP::signed message block";
 	testsuite_check ("%s", what);
 	try {
@@ -629,9 +629,9 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_mime_filter_reset ((GMimeFilter *) filter);
-	
+
 	what = "GMimeFilterOpenPGP::encrypted message block";
 	testsuite_check ("%s", what);
 	try {
@@ -643,13 +643,13 @@ int main (int argc, char **argv)
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
-	
+
 	g_object_unref (filter);
-	
+
 	testsuite_end ();
-	
+
 	g_mime_shutdown ();
-	
+
 	if (testsuite_destroy_gpghome () != 0)
 		return EXIT_FAILURE;
 	

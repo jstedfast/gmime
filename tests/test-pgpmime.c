@@ -41,7 +41,7 @@ extern int verbose;
 #define v(x) if (verbose > 3) x
 
 static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, void *user_data, GError **err)
 {
 	g_mime_stream_write_string (response, "no.secret\n");
 	
@@ -601,7 +601,7 @@ create_gpg_context (void)
 	GMimeCryptoContext *ctx;
 	
 	ctx = g_mime_gpg_context_new ();
-	g_mime_crypto_context_set_request_password (ctx, request_passwd);
+	// g_mime_crypto_context_set_request_password (ctx, request_passwd);
 	
 	return ctx;
 }
@@ -640,9 +640,10 @@ int main (int argc, char *argv[])
 	
 	testsuite_start ("PGP/MIME implementation");
 	
-	g_mime_crypto_context_register ("application/pgp-encrypted", create_gpg_context);
-	g_mime_crypto_context_register ("application/pgp-signature", create_gpg_context);
-	g_mime_crypto_context_register ("application/pgp-keys", create_gpg_context);
+	// g_mime_crypto_context_register ("application/pgp-encrypted", create_gpg_context);
+	// g_mime_crypto_context_register ("application/pgp-signature", create_gpg_context);
+	// g_mime_crypto_context_register ("application/pgp-keys", create_gpg_context);
+	g_mime_crypto_context_set_request_password (request_passwd, NULL, NULL);
 	ctx = create_gpg_context ();
 	
 	testsuite_check ("GMimeGpgContext::import");
