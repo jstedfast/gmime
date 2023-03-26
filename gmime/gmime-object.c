@@ -833,7 +833,7 @@ g_mime_object_get_content_id (GMimeObject *object)
  * @object: a #GMimeObject
  * @header: header name
  * @value: header value
- * @charset: a charset
+ * @charset: (nullable): a charset
  *
  * Prepends a new header to the header list.
  **/
@@ -860,7 +860,7 @@ _g_mime_object_append_header (GMimeObject *object, const char *header, const cha
  * @object: a #GMimeObject
  * @header: header name
  * @value: header value
- * @charset: a charset
+ * @charset: (nullable): a charset
  *
  * Appends a new header to the header list.
  **/
@@ -879,7 +879,7 @@ g_mime_object_append_header (GMimeObject *object, const char *header, const char
  * @object: a #GMimeObject
  * @header: header name
  * @value: header value
- * @charset: a charset
+ * @charset: (nullable): a charset
  *
  * Sets a header to the specified value.
  **/

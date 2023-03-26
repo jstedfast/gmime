@@ -2177,6 +2177,7 @@ _internet_address_list_append_parse (InternetAddressList *list, GMimeParserOptio
 /**
  * internet_address_list_append_parse:
  * @list: a #InternetAddressList
+ * @options: (nullable): a #GMimeParserOptions or %NULL
  * @str: a string containing internet addresses
  *
  * Adds all of the addresses in @str to @list.

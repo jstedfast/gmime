@@ -244,7 +244,7 @@ g_mime_header_get_value (GMimeHeader *header)
  * @header: a #GMimeHeader
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @value: the new header value
- * @charset: a charset
+ * @charset: (nullable): a charset
  *
  * Sets the header's decoded value.
  **/
@@ -1129,7 +1129,7 @@ g_mime_header_list_contains (GMimeHeaderList *headers, const char *name)
  * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
- * @charset: a charset
+ * @charset: (nullable): a charset
  *
  * Prepends a header. If @value is %NULL, a space will be set aside
  * for it (useful for setting the order of headers before values can
@@ -1197,7 +1197,7 @@ _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const ch
  * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
- * @charset: a charset
+ * @charset: (nullable): a charset
  *
  * Appends a header. If @value is %NULL, a space will be set aside for it
  * (useful for setting the order of headers before values can be
@@ -1287,7 +1287,7 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
  * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
- * @charset: a charset
+ * @charset: (nullable): a charset
  *
  * Set the value of the specified header. If @value is %NULL and the
  * header, @name, had not been previously set, a space will be set
