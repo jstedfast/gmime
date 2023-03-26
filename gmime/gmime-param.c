@@ -718,7 +718,7 @@ g_string_append_len_quoted (GString *str, const char *text, size_t len)
 /**
  * g_mime_param_list_encode:
  * @list: a #GMimeParamList
- * @options: a #GMimeFormatOptions or %NULL
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
  * @fold: %TRUE if the parameter list should be folded; otherwise, %FALSE
  * @str: (out): the output string buffer
  *

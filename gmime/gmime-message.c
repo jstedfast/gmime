@@ -860,7 +860,7 @@ bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *messag
  * g_mime_message_add_mailbox:
  * @message: A #GMimeMessage
  * @type: A #GMimeAddressType
- * @name: The name of the mailbox (or %NULL)
+ * @name: (nullable): The name of the mailbox (or %NULL)
  * @addr: The address of the mailbox
  *
  * Add a mailbox of a chosen type to the MIME message.
@@ -942,7 +942,7 @@ g_mime_message_get_all_recipients (GMimeMessage *message)
  * g_mime_message_set_subject:
  * @message: A #GMimeMessage
  * @subject: Subject string
- * @charset: The charset to use for encoding the subject or %NULL to use the default
+ * @charset: (nullable): The charset to use for encoding the subject or %NULL to use the default
  *
  * Set the subject of a @message.
  *
@@ -1224,7 +1224,7 @@ g_mime_message_get_body (GMimeMessage *message)
 /**
  * g_mime_message_get_autocrypt_header:
  * @message: a #GMimeMessage object.
- * @now: a #GDateTime object, or %NULL
+ * @now: (nullable): a #GDateTime object, or %NULL
  *
  * Creates a new #GMimeAutocryptHeader based on the relevant Autocrypt
  * header associated with the sender of an e-mail message.
@@ -1291,7 +1291,7 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
 /**
  * g_mime_message_get_autocrypt_gossip_headers_from_inner_part:
  * @message: a #GMimeMessage object.
- * @now: a #GDateTime object, or %NULL
+ * @now: (nullable): a #GDateTime object, or %NULL
  * @inner_part: a #GMimeObject which is the cleartext part of the inner message
  *
  * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
@@ -1364,9 +1364,9 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
 /**
  * g_mime_message_get_autocrypt_gossip_headers:
  * @message: a #GMimeMessage object, which is expected to be encrypted.
- * @now: a #GDateTime object, or %NULL
+ * @now: (nullable): a #GDateTime object, or %NULL
  * @flags: a #GMimeDecryptFlags, to be used during decryption
- * @session_key: session key to use or %NULL
+ * @session_key: (nullable): session key to use or %NULL
  * @err: a #GError (can be %NULL)
  *
  * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
