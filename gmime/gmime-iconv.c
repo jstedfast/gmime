@@ -54,7 +54,7 @@
  *
  * See the manual page for iconv_open(3) for further details.
  *
- * Returns: a new conversion descriptor for use with g_mime_iconv() on
+ * Returns: (type gpointer): a new conversion descriptor for use with g_mime_iconv() on
  * success or (iconv_t) %-1 on fail as well as setting an appropriate
  * errno value.
  **/
@@ -78,7 +78,7 @@ g_mime_iconv_open (const char *to, const char *from)
 
 /**
  * g_mime_iconv_close: (skip)
- * @cd: iconv conversion descriptor
+ * @cd: (type gpointer): iconv conversion descriptor
  *
  * Closes the iconv descriptor @cd.
  *
