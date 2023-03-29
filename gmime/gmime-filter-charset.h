@@ -42,7 +42,7 @@ typedef struct _GMimeFilterCharsetClass GMimeFilterCharsetClass;
  * @parent_object: parent #GMimeFilter
  * @from_charset: charset that the filter is converting from
  * @to_charset: charset the filter is converting to
- * @cd: charset conversion state
+ * @cd: (type gpointer): charset conversion state
  *
  * A filter to convert between charsets.
  **/
