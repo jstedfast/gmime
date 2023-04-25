@@ -160,7 +160,9 @@ typedef enum {
 struct _GMimeCryptoContext {
 	GObject parent_object;
 	
-	// GMimePasswordRequestFunc request_passwd;
+	GMimePasswordRequestFunc request_passwd;
+	void *password_data;
+	GDestroyNotify password_notify;
 };
 
 struct _GMimeCryptoContextClass {
@@ -211,24 +213,13 @@ gboolean g_mime_crypto_context_is_pgp(const char *protocol);
 
 gboolean g_mime_crypto_context_is_pkcs7(const char *protocol);
 
-// GMimeCryptoContext*
-// g_mime_crypto_context_default_constructor(const char *str, GMimeCryptoContextTrigger trigger,
-// 		void *user_data);
-
 void g_mime_crypto_context_register (GMimeCryptoContextNewFunc callback,
 		void *user_data, GDestroyNotify notify);
 
 GMimeCryptoContext *g_mime_crypto_context_new (const char *protocol, GMimeCryptoContextTrigger trigger);
 
-void g_mime_crypto_context_set_request_password (GMimePasswordRequestFunc request_passwd,
+void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd,
 		void *user_data, GDestroyNotify notify);
-
-gboolean g_mime_crypto_context_has_password_handler (void);
-
-gboolean
-g_mime_crypto_context_request_password (GMimeCryptoContext *ctx,
-		const char *user_id, const char *prompt, gboolean reprompt,
-		GMimeStream *response, GError **err);
 
 /* digest algo mapping */
 GMimeDigestAlgo g_mime_crypto_context_digest_id (GMimeCryptoContext *ctx, const char *name);

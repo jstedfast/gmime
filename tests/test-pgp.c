@@ -473,7 +473,7 @@ int main (int argc, char **argv)
 	testsuite_start ("GnuPG crypto context");
 	
 	ctx = g_mime_gpg_context_new ();
-	g_mime_crypto_context_set_request_password (request_passwd, NULL, NULL);
+	g_mime_crypto_context_set_request_password (ctx, request_passwd, NULL, NULL);
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {

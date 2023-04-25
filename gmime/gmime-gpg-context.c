@@ -269,7 +269,7 @@ set_passphrase_callback (GMimeCryptoContext *context)
 {
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
 	
-	if (g_mime_crypto_context_has_password_handler())
+	if (context->request_passwd)
 		gpgme_set_passphrase_cb (gpg->ctx, g_mime_gpgme_passphrase_callback, gpg);
 	else
 		gpgme_set_passphrase_cb (gpg->ctx, NULL, NULL);
