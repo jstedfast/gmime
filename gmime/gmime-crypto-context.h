@@ -53,8 +53,6 @@ typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
  * @GMIME_VERIFY_TRIGGER: Create a cryptocontext for verification.
  * @GMIME_ENCRYPT_TRIGGER: Create a cryptocontext for encryption.
  * @GMIME_SIGN_TRIGGER: Create a cryptocontext for signing.
- * @GMIME_AUTOCRYPT_TRIGGER: Create a cryptocontext for autocrypt.
- * @GMIME_PEP_TRIGGER: Create a cryptocontext for PEP.
  *
  * Context trigger flags.
  **/
@@ -63,8 +61,6 @@ typedef enum {
 	GMIME_VERIFY_TRIGGER,
 	GMIME_ENCRYPT_TRIGGER,
 	GMIME_SIGN_TRIGGER,
-	GMIME_AUTOCRYPT_TRIGGER,
-	GMIME_PEP_TRIGGER,
 } GMimeCryptoContextTrigger;
 
 /**
