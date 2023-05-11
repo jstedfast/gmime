@@ -100,8 +100,6 @@ g_mime_crypto_context_get_type (void)
 		};
 		
 		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCryptoContext", &info, 0);
-		
-		// type_hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, g_free, NULL);
 	}
 	
 	return type;
@@ -148,8 +146,11 @@ g_mime_crypto_context_finalize (GObject *object)
 void
 g_mime_crypto_context_shutdown (void)
 {
-	// g_hash_table_destroy (type_hash);
-	// type_hash = NULL;
+	if (context_notify) {
+		context_notify(context_data);
+	}
+	context_data = NULL;
+	context_notify = NULL;
 }
 
 static char *pgp_identifier[] = {
