@@ -503,6 +503,7 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 			
 			/* we have a '/' so there could be a path - fall through */
 		case '/': /* we've detected a path component to our url */
+		case '?': /* we've detected params component to our url */
 			inptr++;
 			
 			while (inptr < inend && is_urlsafe (*inptr) && *inptr != close_brace)
