@@ -334,6 +334,7 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 	if (is_digit (*inptr)) {
 		goto ip_literal2;
 	} else if (is_atom (*inptr)) {
+		atom:
 		/* might be a domain or user@domain */
 		save = inptr;
 		while (inptr < inend) {
@@ -372,10 +373,18 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 		ip_literal2:
 			/* could be IPv4 or IPv6 */
 			if ((val = strtol (inptr, &end, 10)) < 0)
-				return FALSE;
+				if (is_atom (*inptr)) {
+					goto atom;
+				} else {
+					return FALSE;
+				}
 			if ((*end >= 'A' && *end <= 'F') || (*end >= 'a' && *end <= 'f')) {
 				if ((val = strtol (inptr, &end, 16)) < 0)
-					return FALSE;
+					if (is_atom (*inptr)) {
+						goto atom;
+					} else {
+						return FALSE;
+					}
 			}
 		} else if ((*inptr >= 'A' && *inptr <= 'F') || (*inptr >= 'a' && *inptr <= 'f')) {
 			/* IPv6 address literals are in hex */
@@ -599,3 +608,4 @@ int main (int argc, char **argv)
 }
 
 #endif /* BUILD_TABLE */
+
