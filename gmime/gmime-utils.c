@@ -1799,16 +1799,10 @@ rfc2047_token_decode (rfc2047_token *token, unsigned char *outbuf, int *state, g
 	const unsigned char *inbuf = (const unsigned char *) token->text;
 	size_t len = token->length;
 	
-	if (token->encoding == 'B') {
-		/* Note: A state of -1 means that a previous rfc2047 encoded-word token ended with an '=' (aka 'eof'),
-		 * so we need to reset the state. */
-		if (*state == -1)
-			*state = 0;
-
+	if (token->encoding == 'B')
 		return g_mime_encoding_base64_decode_step (inbuf, len, outbuf, state, save);
-	}
-
-	return quoted_decode (inbuf, len, outbuf, state, save);
+	else
+		return quoted_decode (inbuf, len, outbuf, state, save);
 }
 
 static char *
