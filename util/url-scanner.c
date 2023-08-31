@@ -333,21 +333,25 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 	/* find the end of the domain */
 	if (is_digit (*inptr)) {
 		/* this is either an IP literal or it could be a subdomain that begins with a numeric character(s) */
-		end = inptr;
-		while (end < inend && is_digit (*end))
-			end++;
+		save = inptr;
+		while (inptr < inend && is_digit (*inptr))
+			inptr++;
 		
-		if (end < inend && *end == '.')
+		if (inptr < inend && *inptr == '.') {
+			inptr = save;
 			goto ip_literal2;
+		}
 		
-		if (is_atom (*end))
+		if (is_atom (*inptr)) {
+			inptr = save;
 			goto atom;
+		}
 
 		return FALSE;
 	} else if (is_atom (*inptr)) {
-	atom:
 		/* might be a domain or user@domain */
 		save = inptr;
+	atom:
 		while (inptr < inend) {
 			if (!is_atom (*inptr))
 				break;
