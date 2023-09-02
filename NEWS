@@ -1,3 +1,17 @@
+### GMime 3.2.14
+
+* Avoid clearing the header list of a GMimeMessage when adding addresses to an address header. (issue #129)
+* Added the internet_address_list_append_parse() prototype definition to internet-address.h. (issue #128)
+* Use gtk-doc ulink syntax in doc comments instead of `<a href=...>`. (issue #131)
+* Fixed rfc2047 token decoding logic for base64 encodings. (issue #133)
+* Properly handle GDateTime UTC offsets with non-zero seconds. (issue #134)
+* Improved introspection data for bindings such as Vala.
+* Improved address name quoting.
+* Added a GNotifyDestroy to the GMimeParserOptions callback.
+* Fixed the URL linkifier logic to properly handle links without a '/' before the query string.
+* Fixed the URL linkifier logic to handle domains that start with numbers. (issue #152)
+* Reverted base64 decoder optimizations from 3.2.10 and 3.2.11 to support chunked base64. (issue #150)
+
 ### GMime 3.2.13
 
 * Optimized parsing of messages with lots of address headers. (issue #126)

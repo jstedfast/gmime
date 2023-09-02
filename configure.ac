@@ -12,7 +12,7 @@ AC_PREREQ([2.71])
 #
 m4_define([gmime_major_version], [3])
 m4_define([gmime_minor_version], [2])
-m4_define([gmime_micro_version], [13])
+m4_define([gmime_micro_version], [14])
 m4_define([gmime_interface_age], [0])
 m4_define([gmime_binary_age],
           [m4_eval(100 * gmime_minor_version + gmime_micro_version)])
@@ -191,7 +191,7 @@ dnl ************************************
 GTK_DOC_CHECK([1.8])
 
 AC_PATH_PROGS([DB2HTML], [db2html docbook2html])
-AM_CONDITIONAL(HAVE_DOCBOOK, [test -n "$DB2HTML"])
+AM_CONDITIONAL(HAVE_DOCBOOK, [test -n "$DB2HTML"], "true", "false")
 
 dnl NOTE: We need to use a separate automake conditional for this
 dnl       to make this work with the tarballs.
@@ -580,6 +580,7 @@ AC_SUBST(GMIME_INCLUDEDIR)
 AC_SUBST(GMIME_LIBS_PRIVATE)
 AC_SUBST(GMIME_CFLAGS)
 AC_SUBST(GMIME_LIBS)
+AC_SUBST(HAVE_DOCBOOK)
 
 AC_CONFIG_FILES([
 Makefile
