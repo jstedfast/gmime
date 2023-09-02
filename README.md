@@ -810,12 +810,10 @@ You can find online developer documentation at
 https://developer-old.gnome.org/gmime/stable/
 
 
-## Mailing Lists
+## Discussion Forums
 
-For discussion of GMime development (either of GMime itself or using
-GMime in your own application), you may find the GMime-Devel
-mailing-list helpful. To subscribe, please see
-[http://mail.gnome.org/mailman/listinfo/gmime-devel-list](http://mail.gnome.org/mailman/listinfo/gmime-devel-list)
+For discussion of GMime development (either of GMime itself or using GMime in your own application),
+you may find the [GMime Discussion](https://github.com/jstedfast/gmime/discussions) forum helpful.
 
 
 ## Bindings
