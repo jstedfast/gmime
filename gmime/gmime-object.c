@@ -900,7 +900,7 @@ g_mime_object_set_header (GMimeObject *object, const char *header, const char *v
  *
  * Gets the value of the first header with the specified name.
  *
- * Returns: the value of the requested header if it
+ * Returns: (nullable): the value of the requested header if it
  * exists or %NULL otherwise.
  **/
 const char *
