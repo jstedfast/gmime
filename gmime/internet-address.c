@@ -1892,8 +1892,10 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		if (*inptr == '(') {
 			const char *comment = inptr;
 			
-			if (!skip_comment (&inptr))
+			if (!skip_comment (&inptr)) {
+				g_free (addrspec);
 				goto error;
+			}
 			
 			comment++;
 			
@@ -1903,8 +1905,10 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		}
 		
 		if (*inptr == '>') {
-			if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
+			if (mode != GMIME_RFC_COMPLIANCE_LOOSE) {
+				g_free (addrspec);
 				goto error;
+			}
 			
 			inptr++;
 		}
@@ -1968,8 +1972,10 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		if (*inptr == '(') {
 			const char *comment = inptr;
 			
-			if (!skip_comment (&inptr))
+			if (!skip_comment (&inptr)) {
+				g_free (addrspec);
 				goto error;
+			}
 			
 			comment++;
 			
@@ -1998,8 +2004,11 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			 * is an unquoted string with an '@'. */
 			const char *end;
 			
-			if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
+			if (mode != GMIME_RFC_COMPLIANCE_LOOSE) {
+				g_free (addrspec);
+				g_free (name);
 				goto error;
+			}
 			
 			end = inptr;
 			while (end > start && is_lwsp (*(end - 1)))
@@ -2015,8 +2024,11 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			 * anyway in order to deal with the second Unbalanced Angle Brackets example in
 			 * section 7.1.3: second@example.org> */
 			if (*inptr == '>') {
-				if (mode != GMIME_RFC_COMPLIANCE_LOOSE)
+				if (mode != GMIME_RFC_COMPLIANCE_LOOSE) {
+					g_free (addrspec);
+					g_free (name);
 					goto error;
+				}
 				
 				inptr++;
 			}
