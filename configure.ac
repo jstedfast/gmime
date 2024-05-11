@@ -157,6 +157,7 @@ AC_CHECK_HEADERS(inttypes.h)
 AC_CHECK_HEADERS(langinfo.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
+AC_CHECK_HEADERS(stdint.h)
 AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(time.h)
@@ -460,7 +461,7 @@ if test "x$enable_largefile" != "xno"; then
         enable_largefile="yes"
     fi
     
-    if test "x$ac_cv_sys_file_offset_bits" != "xno"; then
+    if test "x$ac_cv_sys_file_offset_bits" != "x"; then
         LFS_CFLAGS="$LFS_CFLAGS -D_FILE_OFFSET_BITS=$ac_cv_sys_file_offset_bits"
         enable_largefile="yes"
     fi
