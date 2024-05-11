@@ -151,17 +151,25 @@ m4_ifdef([LT_OUTPUT], [LT_OUTPUT])
 dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/param.h)
+AC_CHECK_HEADERS(sys/time.h)
 AC_CHECK_HEADERS(winsock2.h)
+AC_CHECK_HEADERS(inttypes.h)
+AC_CHECK_HEADERS(langinfo.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
+AC_CHECK_HEADERS(fcntl.h)
 AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(time.h)
 AC_CHECK_HEADERS(poll.h)
 
+AC_C_INLINE
+AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
-AC_TYPE_MODE_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+AC_TYPE_UINT8_T
 
 dnl Check for nfds_t - used by poll()
 AC_MSG_CHECKING(for nfds_t)
@@ -177,12 +185,33 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 	AC_MSG_RESULT(no)
 ])
 
+dnl Check for some common string/char functions
+AC_CHECK_FUNCS(isascii strchr strerror strrchr strstr strtol strtoul)
+
 dnl Check for working mmap
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(munmap msync)
 
 dnl Check for select() and poll()
 AC_CHECK_FUNCS(select poll)
+
+dnl Check for some memory functions
+AC_CHECK_FUNCS(memchr memmove memset)
+
+dnl Check for some network functions
+AC_CHECK_FUNCS(gethostname getdomainname getaddrinfo)
+
+dnl Check for some date/time functions
+AC_CHECK_FUNCS(gettimeofday tzset)
+
+dnl Check for some globalization functions
+AC_CHECK_FUNCS(nl_langinfo)
+
+dnl Check for some file system functions
+AC_CHECK_FUNCS(mkdir rmdir)
+
+dnl Check for the uname function
+AC_CHECK_FUNCS(uname)
 
 dnl ************************************
 dnl Checks for gtk-doc and docbook-tools
@@ -439,9 +468,6 @@ else
     LFS_CFLAGS=""
 fi
 AM_CONDITIONAL(ENABLE_LARGEFILE, test "x$enable_largefile" = "xyes")
-
-dnl Check for some network functions
-AC_CHECK_FUNCS(gethostname getdomainname getaddrinfo)
 
 AX_LIB_SOCKET_NSL
 
