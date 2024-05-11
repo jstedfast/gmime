@@ -70,6 +70,7 @@ char *g_mime_header_format_message_id (GMimeHeader *header, GMimeFormatOptions *
 char *g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 char *g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 char *g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
+char *g_mime_header_format_newsgroups (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 char *g_mime_header_format_default (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 
 

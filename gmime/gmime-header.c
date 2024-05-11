@@ -75,6 +75,7 @@ static struct {
 	{ "Content-Disposition",         g_mime_header_format_content_disposition },
 	{ "Content-Id",                  g_mime_header_format_message_id          },
 	{ "Disposition-Notification-To", g_mime_header_format_addrlist            },
+	{ "Newsgroups",                  g_mime_header_format_newsgroups          },
 };
 
 
@@ -902,6 +903,50 @@ g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options,
 	memmove (str->str, str->str + n, (str->len - n) + 1);
 	
 	return g_string_free (str, FALSE);
+}
+
+
+/**
+ * g_mime_header_format_newsgroups:
+ * @header: a #GMimeHeader
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
+ * @value: a Newsgroups header value
+ * @charset: a charset (note: unused)
+ *
+ * Parses the @value and then re-formats it to conform to the formatting options,
+ * folding the value if necessary.
+ *
+ * Returns: a newly allocated string containing the reformatted value.
+ **/
+char *
+g_mime_header_format_newsgroups (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
+{
+	/* https://www.rfc-editor.org/rfc/rfc5536#section-3.1.4
+	 *
+	 * The Newsgroups header field specifies the newsgroup(s) to which the
+	 * article is posted.
+	 *
+	 * newsgroups      =  "Newsgroups:" SP newsgroup-list CRLF
+	 *
+	 * newsgroup-list  =  *WSP newsgroup-name
+	 *                    *( [FWS] "," [FWS] newsgroup-name ) *WSP
+	 *
+	 * newsgroup-name  =  component *( "." component )
+	 *
+	 * component       =  1*component-char
+	 *
+	 * component-char  =  ALPHA / DIGIT / "+" / "-" / "_"
+	 *
+	 * Not all servers support optional FWS in the list of newsgroups.  In
+	 * particular, folding the Newsgroups header field over several lines
+	 * has been shown to harm propagation significantly.  Optional FWS in
+	 * the <newsgroup-list> SHOULD NOT be generated, but MUST be accepted.
+	 *
+	 * Based on this, it seems better to avoid reformatting the value at all.
+	 */
+	const char *newline = g_mime_format_options_get_newline (options);
+	
+	return g_strdup_printf (" %s%s", value, newline);
 }
 
 
