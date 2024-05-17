@@ -806,9 +806,6 @@ of GMime.
 |TODO           |Description of planned GMime development|
 |PORTING        |Guide for developers porting their application from an older version of GMime|
 
-You can find online developer documentation at
-https://developer-old.gnome.org/gmime/stable/
-
 
 ## Discussion Forums
 
