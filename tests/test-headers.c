@@ -597,6 +597,66 @@ test_header_formatting (void)
 	g_object_unref (list);
 }
 
+static struct {
+	const char *value;
+	const char *rfc2047_encoded;
+	const char *rfc2231_encoded;
+} parameter_lists[] = {
+	{ "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK=\"ќ\"",
+	  ";\n\tKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK=\"=?iso-8859-5?b?/A==?=\"\n",
+	  ";\n\tKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK*0*=iso;\n\tKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK*1*=-88;\n\tKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK*2*=59-;\n\tKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK*3*=5'';\n\tKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK*4*=%FC\n" },
+};
+
+static void
+test_parameter_lists (void)
+{
+	GMimeFormatOptions *rfc2047, *rfc2231;
+	GMimeParamList *list;
+	GString *str;
+	size_t len;
+	guint i;
+
+	str = g_string_new ("Content-Type: text/plain");
+	len = str->len;
+
+	rfc2047 = g_mime_format_options_new ();
+	g_mime_format_options_set_newline_format (rfc2047, GMIME_NEWLINE_FORMAT_UNIX);
+	g_mime_format_options_set_param_encoding_method (rfc2047, GMIME_PARAM_ENCODING_METHOD_RFC2047);
+
+	rfc2231 = g_mime_format_options_clone (rfc2047);
+	g_mime_format_options_set_param_encoding_method (rfc2231, GMIME_PARAM_ENCODING_METHOD_RFC2231);
+
+	for (i = 0; i < G_N_ELEMENTS (parameter_lists); i++) {
+		testsuite_check ("parameter_lists[%u]", i);
+
+		list = g_mime_param_list_parse (NULL, parameter_lists[i].value);
+
+		try {
+			g_mime_param_list_encode (list, rfc2047, TRUE, str);
+			
+			if (strcmp (parameter_lists[i].rfc2047_encoded, str->str + len) != 0)
+				throw (exception_new ("rfc2047 encoded values do not match: %s", str->str + len));
+
+			g_string_truncate (str, len);
+			g_mime_param_list_encode (list, rfc2231, TRUE, str);
+			
+			if (strcmp (parameter_lists[i].rfc2231_encoded, str->str + len) != 0)
+				throw (exception_new ("rfc2231 encoded values do not match: %s", str->str + len));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("parameter_lists[%u] failed: %s", i, ex->message);
+		} finally;
+
+		g_string_truncate (str, len);
+		g_object_unref (list);
+	}
+
+	g_mime_format_options_free (rfc2047);
+	g_mime_format_options_free (rfc2231);
+	g_string_free (str, TRUE);
+}
+
 int main (int argc, char **argv)
 {
 	g_mime_init ();
@@ -623,6 +683,10 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("header formatting");
 	test_header_formatting ();
+	testsuite_end ();
+
+	testsuite_start ("parameter lists");
+	test_parameter_lists ();
 	testsuite_end ();
 	
 	g_mime_shutdown ();

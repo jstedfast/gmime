@@ -792,7 +792,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 		
 		if (toolong && method == GMIME_PARAM_ENCODING_METHOD_RFC2231) {
 			/* we need to do special rfc2184 parameter wrapping */
-			size_t maxlen = GMIME_FOLD_LEN - (nlen + 6);
+			size_t maxlen = MAX (GMIME_FOLD_LEN - (nlen + 6), 3);
 			char *inend;
 			int n = 0;
 			
