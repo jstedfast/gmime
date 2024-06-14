@@ -147,7 +147,7 @@ version_data.set('GMIME_MINOR_VERSION', GMIME_MINOR_VERSION)
 version_data.set('GMIME_MICRO_VERSION', GMIME_MICRO_VERSION)
 version_data.set('GMIME_BINARY_AGE', GMIME_BINARY_AGE)
 version_data.set('GMIME_INTERFACE_AGE', GMIME_INTERFACE_AGE)
-configure_file(input: 'gmime-version_meson.h.in',
+configure_file(input: 'gmime-version.h.in',
   output: 'gmime-version.h',
   configuration : version_data
 )
