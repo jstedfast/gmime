@@ -71,8 +71,8 @@ else
     error('Can\'t run the iconv-detect binary. Set the have_iconv_detect_h flag or use an exe_wrapper')
   endif
   root = include_directories('.')
-  has_detect = cc.run(iconv_detect, name: 'iconv-detect', 
-    include_directories: root).returncode() == 0
+  has_detect = cc.run(iconv_detect, name: 'iconv-detect',
+    include_directories: root, dependencies: iconv).returncode() == 0
   if has_detect
     conf_data.set('HAVE_ICONV_DETECT_H', 1)
   endif
