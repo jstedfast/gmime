@@ -393,7 +393,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 		return NULL;
 	}
 	
-	if (!(ctx = g_mime_crypto_context_new (protocol))) {
+	if (!(ctx = g_mime_crypto_context_new (protocol, GMIME_VERIFY_TRIGGER))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 			     _("Cannot verify multipart/signed part: unregistered signature protocol '%s'."),
 			     protocol);
