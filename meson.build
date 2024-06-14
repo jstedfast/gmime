@@ -1,7 +1,7 @@
 project('GMime',
 	['c'],
 	license: 'GPLv2',
-    version: '3.2.13',
+    version: '3.2.14',
     meson_version: '>=1.0.0',
     default_options : [
     ])
