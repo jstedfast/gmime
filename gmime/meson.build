@@ -136,7 +136,6 @@ libgmime_headers = [
   'gmime-stream-pipe.h',
   'gmime-text-part.h',
   'gmime-utils.h',
-  'gmime-version.h',
   'internet-address.h',
 ]
 
