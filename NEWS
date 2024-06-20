@@ -1,3 +1,12 @@
+### GMime 3.2.15
+
+* Fixed the g_mime_object_get_header API definition to note that it can return null
+* Fixed a memory leak in address_parse() (issue #159)
+* Added custom header folding logic for the Newsgroups: header (issue #162)
+* Fixed a configure issue regarding ac_cv_sys_file_offset_bits (issue #158)
+* Fixed an infinite loop in the Content-Type and Content-Disposition parameter
+  serialization logic (issue #165)
+
 ### GMime 3.2.14
 
 * Avoid clearing the header list of a GMimeMessage when adding addresses to an address header. (issue #129)
