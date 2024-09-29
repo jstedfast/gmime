@@ -348,7 +348,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
 	g_return_val_if_fail (recipients != NULL, NULL);
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime", GMIME_ENCRYPT_TRIGGER))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 			     _("Cannot encrypt application/pkcs7-mime part: no crypto context registered for this type."));
 		
@@ -432,7 +432,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	if (result)
 		*result = NULL;
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime", GMIME_DECRYPT_TRIGGER))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 			     _("Cannot decrypt application/pkcs7-mime part: no crypto context registered for this type."));
 		
@@ -517,7 +517,7 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
 	g_return_val_if_fail (userid != NULL, NULL);
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime", GMIME_SIGN_TRIGGER))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 			     _("Cannot sign application/pkcs7-mime part: no crypto context registered for this type."));
 		
@@ -589,7 +589,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	
 	*entity = NULL;
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime", GMIME_VERIFY_TRIGGER))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 			     _("Cannot verify application/pkcs7-mime part: no crypto context registered for this type."));
 		
