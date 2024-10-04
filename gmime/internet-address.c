@@ -45,7 +45,7 @@
 
 
 #ifdef ENABLE_WARNINGS
-#define w(x) x
+#define w(x) (x)
 #else
 #define w(x)
 #endif /* ENABLE_WARNINGS */
@@ -1437,7 +1437,7 @@ decode_route (const char **in)
 	skip_cfws (&inptr);
 	
 	if (*inptr != ':') {
-		w(g_warning ("Invalid route domain-list, missing ':': %.*s", inptr - start, start));
+		w(g_warning ("Invalid route domain-list, missing ':': %.*s", inptr - *in, *in));
 		goto error;
 	}
 	
