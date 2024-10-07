@@ -823,7 +823,7 @@ The current list of known bindings are:
 |Go         |https://github.com/sendgrid/go-gmime    |
 |Perl       |http://search.cpan.org/dist/MIME-Fast   |
 |C#         |https://github.com/jstedfast/MimeKit    |
-
+|Julia      |https://github.com/bhftbootcamp/GMime.jl|
 
 ## Reporting Bugs
 
