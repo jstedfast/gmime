@@ -28,7 +28,7 @@ have_libtool=false
 if ${LIBTOOLIZE} --version < /dev/null > /dev/null 2>&1 ; then
 	libtool_version=`${LIBTOOLIZE} --version | sed '/^$/d;s/([^)]*)//g;s/^[^0-9]*//;s/[- ].*//g;q'`
 	case $libtool_version in
-	    1.4*|1.5*|2.2*|2.4*)
+	    1.4*|1.5*|2.2*|2.4*|2.5*)
 		have_libtool=true
 		;;
 	esac
