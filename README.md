@@ -47,14 +47,12 @@ The GMime library is Copyright (C) 2000-2024 Jeffrey Stedfast and is licensed un
 
 ## Getting the Source Code
 
-You can download official public release tarballs of GMime at
-[https://download.gnome.org/sources/gmime/](https://download.gnome.org/sources/gmime/)
-or
-[ftp://ftp.gnome.org/pub/GNOME/sources/gmime/](ftp://ftp.gnome.org/pub/GNOME/sources/gmime/).
+You can download official public release tarballs of GMime from the
+[GitHub release page](https://github.com/jstedfast/gmime/releases) of this repository.
 
 If you would like to contribute to the GMime project, it is recommended that you grab the
 source code from the official GitHub repository at
-[http://github.com/jstedfast/gmime](https://github.com/jstedfast/gmime). Cloning this repository
+[https://github.com/jstedfast/gmime](https://github.com/jstedfast/gmime). Cloning this repository
 can be done using the following command:
 
     git clone https://github.com/jstedfast/gmime.git
