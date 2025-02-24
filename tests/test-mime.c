@@ -441,6 +441,15 @@ static struct {
 	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=",
 	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
 	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsana?= =?us-ascii?q?lytiker?=" },
+	{ "=?UTF-8?B?0J/RgNC40LLQtdGCINC40Lcg0KDQvtGB0YHQuNC4IChIZWxsbyBmcm9tIFJ1c3NpYSkK?=",
+	  "Привет из России (Hello from Russia)",
+	  "Привет из России (Hello from Russia)" },
+	{ "=?UTF-8?B?16nXnNeV150g15HXoteR16jXmdeqIChIZWxsbyBpbiBIZWJyZXcpIA==?=",
+	  "שלום בעברית (Hello in Hebrew)",
+	  "שלום בעברית (Hello in Hebrew)" },
+{ "=?UTF-8?B?2YXYsdit2KjYpyDYqNin2YTZhNi62Kkg2KfZhNi52LHYqNmK2KkgKEg=?= =?UTF-8?B?ZWxsbyBpbiBBcmFiaWMpCg==?=",
+	  "مرحبا باللغة العربية (Hello in Arabic)",
+	  "مرحبا باللغة العربية (Hello in Arabic)" },
 };
 
 static struct {
