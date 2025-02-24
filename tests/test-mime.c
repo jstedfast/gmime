@@ -441,15 +441,15 @@ static struct {
 	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=",
 	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
 	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsana?= =?us-ascii?q?lytiker?=" },
-	{ "=?UTF-8?B?0J/RgNC40LLQtdGCINC40Lcg0KDQvtGB0YHQuNC4IChIZWxsbyBmcm9tIFJ1c3NpYSkK?=",
+	{ "=?UTF-8?B?0J/RgNC40LLQtdGCINC40Lcg0KDQvtGB0YHQuNC4?= =?UTF-8?B?IChIZWxsbyBmcm9tIFJ1c3NpYSk=?=",
 	  "Привет из России (Hello from Russia)",
-	  "Привет из России (Hello from Russia)" },
-	{ "=?UTF-8?B?16nXnNeV150g15HXoteR16jXmdeqIChIZWxsbyBpbiBIZWJyZXcpIA==?=",
+	  "=?iso-8859-5?b?v+DY0tXiINjXIMDe4eHY2A==?= (Hello from Russia)" },
+	{ "=?UTF-8?B?16nXnNeV150g15HXoteR16jXmdeqIChIZWxsbyBpbiBIZWJyZXcp?=",
 	  "שלום בעברית (Hello in Hebrew)",
-	  "שלום בעברית (Hello in Hebrew)" },
-{ "=?UTF-8?B?2YXYsdit2KjYpyDYqNin2YTZhNi62Kkg2KfZhNi52LHYqNmK2KkgKEg=?= =?UTF-8?B?ZWxsbyBpbiBBcmFiaWMpCg==?=",
+	  "=?iso-8859-8?b?+ezl7SDh8uH46fo=?= (Hello in Hebrew)" },
+{ "=?UTF-8?B?2YXYsdit2KjYpyDYqNin2YTZhNi62Kkg2KfZhNi52LHYqNmK2KkgKEhlbGxvIGluIEFyYWJpYyk=?=",
 	  "مرحبا باللغة العربية (Hello in Arabic)",
-	  "مرحبا باللغة العربية (Hello in Arabic)" },
+	  "=?iso-8859-6?b?5dHNyMcgyMfk5NrJIMfk2dHI6sk=?= (Hello in Arabic)" },
 };
 
 static struct {
