@@ -128,8 +128,8 @@ const char **g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *op
 void g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const char **charsets);
 
 GMimeParserWarningFunc g_mime_parser_options_get_warning_callback (GMimeParserOptions *options);
-void g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, 
-		GMimeParserWarningFunc warning_cb, gpointer user_data, GDestroyNotify notify);
+void g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data);
+void g_mime_parser_options_set_warning_callback_full (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data, GDestroyNotify notify);
 
 G_END_DECLS
 
