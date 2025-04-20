@@ -47,6 +47,21 @@ typedef struct _GMimeCryptoContextClass GMimeCryptoContextClass;
 typedef struct _GMimeDecryptResult GMimeDecryptResult;
 typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
 
+/**
+ * GMimeCryptoContextTrigger:
+ * @GMIME_DECRYPT_TRIGGER: Create a cryptocontext for decryption.
+ * @GMIME_VERIFY_TRIGGER: Create a cryptocontext for verification.
+ * @GMIME_ENCRYPT_TRIGGER: Create a cryptocontext for encryption.
+ * @GMIME_SIGN_TRIGGER: Create a cryptocontext for signing.
+ *
+ * Context trigger flags.
+ **/
+typedef enum {
+	GMIME_DECRYPT_TRIGGER,
+	GMIME_VERIFY_TRIGGER,
+	GMIME_ENCRYPT_TRIGGER,
+	GMIME_SIGN_TRIGGER,
+} GMimeCryptoContextTrigger;
 
 /**
  * GMimePasswordRequestFunc:
@@ -55,6 +70,7 @@ typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
  * @prompt: a string containing some helpful context for the prompt
  * @reprompt: %TRUE if this password request is a reprompt due to a previously bad password response
  * @response: a stream for the application to write the password to (followed by a newline '\n' character)
+ * @user_data: user-supplied callback data
  * @err: a #GError for the callback to set if an error occurs
  *
  * A password request callback allowing a #GMimeCryptoContext to
@@ -62,18 +78,21 @@ typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
  *
  * Returns: %TRUE on success or %FALSE on error.
  **/
-typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt,
-					       gboolean reprompt, GMimeStream *response, GError **err);
-
+typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id,
+		const char *prompt, gboolean reprompt, GMimeStream *response, void *user_data, GError **err);
 
 /**
  * GMimeCryptoContextNewFunc:
+ * @protocol: a string describing protocol
+ * @trigger: what function triggered this callback
+ * @user_data: user-supplied callback data
  *
  * A callback used to create a new instance of a #GMimeCryptoContext subclass.
  *
  * Returns: a new #GMimeCryptoContext instance.
  **/
-typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) (void);
+typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) 
+	(const char *protocol, GMimeCryptoContextTrigger trigger, void *user_data);
 
 
 /**
@@ -142,6 +161,8 @@ struct _GMimeCryptoContext {
 	GObject parent_object;
 	
 	GMimePasswordRequestFunc request_passwd;
+	void *password_data;
+	GDestroyNotify password_notify;
 };
 
 struct _GMimeCryptoContextClass {
@@ -186,13 +207,19 @@ struct _GMimeCryptoContextClass {
 #endif
 };
 
-
 GType g_mime_crypto_context_get_type (void);
 
-void g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc callback);
-GMimeCryptoContext *g_mime_crypto_context_new (const char *protocol);
+gboolean g_mime_crypto_context_is_pgp(const char *protocol);
 
-void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd);
+gboolean g_mime_crypto_context_is_pkcs7(const char *protocol);
+
+void g_mime_crypto_context_register (GMimeCryptoContextNewFunc callback,
+		void *user_data, GDestroyNotify notify);
+
+GMimeCryptoContext *g_mime_crypto_context_new (const char *protocol, GMimeCryptoContextTrigger trigger);
+
+void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd,
+		void *user_data, GDestroyNotify notify);
 
 /* digest algo mapping */
 GMimeDigestAlgo g_mime_crypto_context_digest_id (GMimeCryptoContext *ctx, const char *name);

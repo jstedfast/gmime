@@ -122,6 +122,9 @@ extern const guint gmime_binary_age;
 
 gboolean g_mime_check_version (guint major, guint minor, guint micro);
 
+GMimeCryptoContext *
+g_mime_crypto_context_default_context(const char *str, GMimeCryptoContextTrigger kind, void *user_data);
+
 void g_mime_init (void);
 void g_mime_shutdown (void);
 

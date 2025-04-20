@@ -83,7 +83,10 @@ g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *
 	
 	stream = g_mime_stream_pipe_new (fd);
 	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
-	rv = context->request_passwd (context, uid_hint, passphrase_info, prev_was_bad, stream, &err);
+
+	rv = context->request_passwd (context, uid_hint, passphrase_info, 
+			prev_was_bad, stream, context->password_data,  &err);
+
 	g_object_unref (stream);
 	
 	if (!rv) {
