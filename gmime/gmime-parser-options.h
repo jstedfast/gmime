@@ -27,7 +27,7 @@
 
 G_BEGIN_DECLS
 
-#define GMIME_TYPE_PARSER_OPTIONS (gmime_parser_options_get_type ())
+#define GMIME_TYPE_PARSER_OPTIONS (g_mime_parser_options_get_type ())
 
 /**
  * GMimeRfcComplianceMode:
