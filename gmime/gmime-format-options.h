@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define GMIME_TYPE_FORMAT_OPTIONS (gmime_format_options_get_type ())
+#define GMIME_TYPE_FORMAT_OPTIONS (g_mime_format_options_get_type ())
 
 /**
  * GMimeNewLineFormat:
