@@ -26,7 +26,7 @@
 
 G_BEGIN_DECLS
 
-#define GMIME_TYPE_REFERENCES (gmime_references_get_type ())
+#define GMIME_TYPE_REFERENCES (g_mime_references_get_type ())
 
 typedef struct _GMimeReferences GMimeReferences;
 
