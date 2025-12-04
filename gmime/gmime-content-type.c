@@ -212,8 +212,10 @@ _g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64
 	
 	/* skip past any remaining junk that shouldn't be here... */
 	skip_cfws (&inptr);
-	while (*inptr && *inptr != ';')
+	while (*inptr && *inptr != ';') {
+		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_CONTENT_TYPE, str);
 		inptr++;
+	}
 	
 	if (*inptr++ == ';' && *inptr && (params = _g_mime_param_list_parse (options, inptr, offset))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
