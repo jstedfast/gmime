@@ -189,7 +189,7 @@ g_mime_iconv_locale_to_utf8 (const char *str)
 	locale = g_mime_charset_iconv_name (locale);
 	utf8 = g_mime_charset_iconv_name ("UTF-8");
 	
-	cd = iconv_open (locale, utf8);
+	cd = iconv_open (utf8, locale);
 	buf = g_mime_iconv_strdup (cd, str);
 	iconv_close (cd);
 	
@@ -221,7 +221,7 @@ g_mime_iconv_locale_to_utf8_length (const char *str, size_t n)
 	locale = g_mime_charset_iconv_name (locale);
 	utf8 = g_mime_charset_iconv_name ("UTF-8");
 	
-	cd = iconv_open (locale, utf8);
+	cd = iconv_open (utf8, locale);
 	buf = g_mime_iconv_strndup (cd, str, n);
 	iconv_close (cd);
 	
@@ -252,7 +252,7 @@ g_mime_iconv_utf8_to_locale (const char *str)
 	locale = g_mime_charset_iconv_name (locale);
 	utf8 = g_mime_charset_iconv_name ("UTF-8");
 	
-	if ((cd = iconv_open (utf8, locale)) == (iconv_t) -1)
+	if ((cd = iconv_open (locale, utf8)) == (iconv_t) -1)
 		return g_strdup (str);
 	
 	buf = g_mime_iconv_strdup (cd, str);
@@ -286,7 +286,7 @@ g_mime_iconv_utf8_to_locale_length (const char *str, size_t n)
 	locale = g_mime_charset_iconv_name (locale);
 	utf8 = g_mime_charset_iconv_name ("UTF-8");
 	
-	if ((cd = iconv_open (utf8, locale)) == (iconv_t) -1)
+	if ((cd = iconv_open (locale, utf8)) == (iconv_t) -1)
 		return g_strndup (str, n);
 	
 	buf = g_mime_iconv_strndup (cd, str, n);
