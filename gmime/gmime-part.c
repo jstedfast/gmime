@@ -1052,7 +1052,7 @@ g_mime_part_openpgp_encrypt (GMimePart *mime_part, gboolean sign, const char *us
 		return FALSE;
 	}
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pgp-encrypted"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-encrypted", GMIME_ENCRYPT_TRIGGER))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 				     _("No crypto context registered for application/pgp-encrypted."));
 		return FALSE;
@@ -1111,7 +1111,7 @@ g_mime_part_openpgp_decrypt (GMimePart *mime_part, GMimeDecryptFlags flags, cons
 		return NULL;
 	}
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pgp-encrypted"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-encrypted", GMIME_DECRYPT_TRIGGER))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 				     _("No crypto context registered for application/pgp-encrypted."));
 		return NULL;
@@ -1168,7 +1168,7 @@ g_mime_part_openpgp_sign (GMimePart *mime_part, const char *userid, GError **err
 		return FALSE;
 	}
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pgp-signature"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-signature", GMIME_SIGN_TRIGGER))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 				     _("No crypto context registered for application/pgp-signature."));
 		return FALSE;
@@ -1226,7 +1226,7 @@ g_mime_part_openpgp_verify (GMimePart *mime_part, GMimeVerifyFlags flags, GError
 		return NULL;
 	}
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pgp-signature"))) {
+	if (!(ctx = g_mime_crypto_context_new ("application/pgp-signature", GMIME_VERIFY_TRIGGER))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 				     _("No crypto context registered for application/pgp-signature."));
 		return NULL;
