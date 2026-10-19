@@ -22,7 +22,7 @@
 #ifndef __GMIME_PART_ITER_H__
 #define __GMIME_PART_ITER_H__
 
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 
 G_BEGIN_DECLS
 
@@ -37,7 +37,7 @@ typedef struct _GMimePartIter GMimePartIter;
 
 GType g_mime_part_iter_get_type (void) G_GNUC_CONST;
 
-GMimePartIter *g_mime_part_iter_new (GMimeObject *toplevel);
+GMimePartIter *g_mime_part_iter_new (GMimeEntity *toplevel);
 void g_mime_part_iter_free (GMimePartIter *iter);
 
 GMimePartIter *g_mime_part_iter_clone (GMimePartIter *iter);
@@ -51,12 +51,12 @@ gboolean g_mime_part_iter_is_valid (GMimePartIter *iter);
 gboolean g_mime_part_iter_next (GMimePartIter *iter);
 gboolean g_mime_part_iter_prev (GMimePartIter *iter);
 
-GMimeObject *g_mime_part_iter_get_toplevel (GMimePartIter *iter);
-GMimeObject *g_mime_part_iter_get_current (GMimePartIter *iter);
-GMimeObject *g_mime_part_iter_get_parent (GMimePartIter *iter);
+GMimeEntity *g_mime_part_iter_get_toplevel (GMimePartIter *iter);
+GMimeEntity *g_mime_part_iter_get_current (GMimePartIter *iter);
+GMimeEntity *g_mime_part_iter_get_parent (GMimePartIter *iter);
 char *g_mime_part_iter_get_path (GMimePartIter *iter);
 
-gboolean g_mime_part_iter_replace (GMimePartIter *iter, GMimeObject *replacement);
+gboolean g_mime_part_iter_replace (GMimePartIter *iter, GMimeEntity *replacement);
 gboolean g_mime_part_iter_remove (GMimePartIter *iter);
 
 G_END_DECLS

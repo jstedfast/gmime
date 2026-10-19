@@ -81,8 +81,10 @@ url="http://library.gnome.org/devel/glib/stable/">http://library.gnome.org/devel
     <para>The first thing you need to do, of course, is download the
 GMime source and install it. You can always get the latest version
 from <ulink url="http://download.gnome.org/pub/GNOME/sources/gmime/">http://download.gnome.org/pub/GNOME/sources/gmime/</ulink>. GMime
-uses GNU autoconf for configuration. Once untar'd, type
-<literal>./configure --help</literal> to see a list of options.</para>
+uses Meson for configuration. Run <literal>meson setup _build</literal>,
+<literal>meson compile -C _build</literal>, and
+<literal>meson test -C _build</literal>. Use
+<literal>meson configure _build</literal> to see the build options.</para>
     
     <para>More information about building GMime is available in either the
 source distribution under <filename>docs/reference/</filename> or via
@@ -108,7 +110,7 @@ url="http://library.gnome.org/devel/gmime/stable/gmime-building.html">http://lib
 
       <para>
         <literallayout>
-          <literal>gcc -g -Wall -o simple simple.c `pkg-config --cflags --libs gmime-3.0`</literal>
+          <literal>gcc -g -Wall -o simple simple.c `pkg-config --cflags --libs gmime-4.0`</literal>
         </literallayout>
       </para>
     </sect1>
@@ -574,8 +576,10 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       which will convert text/plain into text/html with options to
       wrap strings that appear to be hyperlinks with appropriate &lt;a
       href=...&gt; tags; GMimeFilterStrip (again, likely this won't
-      concern you), and finally GMimeFilterYenc which will encode or
-      decode the YEncode encoding.</para>
+      concern you). To encode or decode yEnc, use GMimeFilterBasic with a
+      GMimeYencEncoder or GMimeYencDecoder supplied to
+      <function>g_mime_filter_basic_new_with_encoder()</function> or
+      <function>g_mime_filter_basic_new_with_decoder()</function>.</para>
       
       <para>For an example on how to use filters, please see the end
       of the previous chapter where it talks about GMimeStreamFilter
@@ -615,7 +619,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
 static void
 save_attachment (GMimePart *part)
 {
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	const char *filename;
 	GMimeStream *stream;
 	int fd;
@@ -649,8 +653,8 @@ save_attachment (GMimePart *part)
 	
 	stream = g_mime_stream_fs_new (fd);
 	
-	content = g_mime_part_get_content_object (part);
-	g_mime_data_wrapper_write_to_stream (content, stream);
+	content = g_mime_part_get_content (part);
+	g_mime_content_decode_to_stream (content, stream);
 	g_mime_stream_flush (stream);
 	g_object_unref (stream);
 }
@@ -658,14 +662,14 @@ save_attachment (GMimePart *part)
       
       <para>In order to get the content of a MIME part (eg. the body
       of a part, not including the headers), you'll want to use
-      <literal>g_mime_part_get_content_object()</literal>. To write
-      the content object to a stream, you can use
-      <literal>g_mime_data_wrapper_write_to_stream()</literal>. On
-      fail, this function will return <literal>-1</literal>, otherwise
-      it will return some positive value which will usually equate to
-      the number of bytes written (but not always, due to filter
-      transformations); generally it's a good idea to not rely on the
-      returned value for anything other than error-checking.</para>
+      <literal>g_mime_part_get_content()</literal>. To decode
+      the content into a stream, use
+      <literal>g_mime_content_decode_to_stream()</literal>. On failure,
+      this function returns <literal>-1</literal> with errno set;
+      otherwise it returns the number of decoded bytes written, including
+      zero for empty content. To copy the original encoded bytes without
+      decoding them, use <literal>g_mime_content_write_to_stream()</literal>.
+      Neither method closes the streams or flushes the output stream.</para>
       
     </sect1>
     

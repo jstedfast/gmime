@@ -24,8 +24,10 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-stream-filter.h"
+#include "gmime-internal.h"
 
 
 /**
@@ -64,6 +66,7 @@ struct _GMimeStreamFilterPrivate {
 	
 	char *filtered;		/* the filtered data */
 	size_t filteredlen;
+	ssize_t written;
 	
 	int last_was_read:1;	/* was the last op read or write? */
 	int flushed:1;          /* have the filters been flushed? */
@@ -148,6 +151,7 @@ g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *kl
 	stream->priv->last_was_read = TRUE;
 	stream->priv->filteredlen = 0;
 	stream->priv->flushed = FALSE;
+	stream->priv->written = 0;
 }
 
 static void
@@ -185,12 +189,13 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 	
 	priv->last_was_read = TRUE;
 	
-	if (priv->filteredlen <= 0) {
+	while (priv->filteredlen == 0) {
 		size_t presize = READ_PAD;
 		
 		nread = g_mime_stream_read (filter->source, priv->buffer, READ_SIZE);
-		if (nread <= 0) {
-			/* this is somewhat untested */
+		if (nread < 0)
+			return -1;
+		if (nread == 0) {
 			if (g_mime_stream_eos (filter->source) && !priv->flushed) {
 				priv->filtered = priv->buffer;
 				priv->filteredlen = 0;
@@ -232,6 +237,27 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 	return nread;
 }
 
+static int
+write_filtered (GMimeStreamFilter *filter, const char *buffer, size_t len)
+{
+	if (len > (size_t) (G_MAXSSIZE - filter->priv->written)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	if (_g_mime_stream_write_all (filter->source, buffer, len) == -1)
+		return -1;
+	filter->priv->written += len;
+
+	return 0;
+}
+
+ssize_t
+_g_mime_stream_filter_get_written (GMimeStreamFilter *stream)
+{
+	return stream->priv->written;
+}
+
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t n)
 {
@@ -253,7 +279,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t n)
 		f = f->next;
 	}
 	
-	if (g_mime_stream_write (filter->source, buffer, n) == -1)
+	if (write_filtered (filter, buffer, n) == -1)
 		return -1;
 	
 	/* return original input len because that's what our caller expects */
@@ -285,7 +311,7 @@ stream_flush (GMimeStream *stream)
 		f = f->next;
 	}
 	
-	if (len > 0 && g_mime_stream_write (filter->source, buffer, len) == -1)
+	if (write_filtered (filter, buffer, len) == -1)
 		return -1;
 	
 	return 0;
@@ -333,6 +359,7 @@ stream_reset (GMimeStream *stream)
 	
 	priv->filteredlen = 0;
 	priv->flushed = FALSE;
+	priv->written = 0;
 	
 	/* and reset filters */
 	f = priv->filters;

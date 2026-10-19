@@ -25,8 +25,6 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include <time.h>
-
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_CERTIFICATE                  (g_mime_certificate_get_type ())
@@ -190,15 +188,17 @@ typedef enum {
  * @issuer_serial: The issuer of the certificate, if known.
  * @issuer_name: The issuer of the certificate, if known.
  * @fingerprint: A hex string representing the certificate's fingerprint.
- * @created: The creation date of the certificate.
- * @expires: The expiration date of the certificate.
+ * @created: (nullable): The creation date of the certificate, or %NULL if unknown.
+ * @expires: (nullable): The expiration date of the certificate, or %NULL if unknown.
  * @keyid: The certificate's key id.
  * @email: The email address of the person or entity.
  * @name: The name of the person or entity.
  * @user_id: The full User ID of the certificate.
  * @id_validity: the validity of the email address, name, and User ID.
  *
- * An object containing useful information about a certificate.
+ * An object containing useful information about a certificate. Dates are owned
+ * by the certificate; use the setters to replace them. An expiration date of
+ * 9999-12-31 23:59:59.999999 UTC means the certificate never expires.
  **/
 struct _GMimeCertificate {
 	GObject parent_object;
@@ -209,8 +209,8 @@ struct _GMimeCertificate {
 	char *issuer_serial;
 	char *issuer_name;
 	char *fingerprint;
-	time_t created;
-	time_t expires;
+	GDateTime *created;
+	GDateTime *expires;
 	char *keyid;
 	char *email;
 	char *name;
@@ -261,13 +261,11 @@ const char *g_mime_certificate_get_user_id (GMimeCertificate *cert);
 void g_mime_certificate_set_id_validity (GMimeCertificate *cert, GMimeValidity validity);
 GMimeValidity g_mime_certificate_get_id_validity (GMimeCertificate *cert);
 
-void g_mime_certificate_set_created (GMimeCertificate *cert, time_t created);
-time_t g_mime_certificate_get_created (GMimeCertificate *cert);
-gint64 g_mime_certificate_get_created64 (GMimeCertificate *cert);
+void g_mime_certificate_set_created (GMimeCertificate *cert, GDateTime *created);
+GDateTime *g_mime_certificate_get_created (GMimeCertificate *cert);
 
-void g_mime_certificate_set_expires (GMimeCertificate *cert, time_t expires);
-time_t g_mime_certificate_get_expires (GMimeCertificate *cert);
-gint64 g_mime_certificate_get_expires64 (GMimeCertificate *cert);
+void g_mime_certificate_set_expires (GMimeCertificate *cert, GDateTime *expires);
+GDateTime *g_mime_certificate_get_expires (GMimeCertificate *cert);
 
 
 /**

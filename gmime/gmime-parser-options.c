@@ -24,11 +24,11 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-parser-options.h"
-
-
-static char *default_charsets[3] = { "utf-8", "iso-8859-1", NULL };
+#include "gmime-error.h"
+#include "gmime-iconv.h"
 
 
 /**
@@ -47,7 +47,12 @@ struct _GMimeParserOptions {
 	GMimeRfcComplianceMode parameters;
 	GMimeRfcComplianceMode rfc2047;
 	gboolean allow_no_domain;
-	char **charsets;
+	gboolean allow_unquoted_commas;
+	gboolean respect_content_length;
+	int max_address_group_depth;
+	int max_mime_depth;
+	int max_header_length;
+	char *charset_encoding;
 	GMimeParserWarningFunc warning_cb;
 	gpointer warning_user_data;
 	GDestroyNotify notify;
@@ -73,7 +78,7 @@ g_mime_parser_options_shutdown (void)
 	if (default_options->notify)
 		default_options->notify (default_options->warning_user_data);
 	
-	g_strfreev (default_options->charsets);
+	g_free (default_options->charset_encoding);
 	g_slice_free (GMimeParserOptions, default_options);
 	default_options = NULL;
 }
@@ -126,12 +131,14 @@ g_mime_parser_options_new (void)
 	options->addresses = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->parameters = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
-	options->allow_no_domain = FALSE;
+	options->allow_no_domain = TRUE;
+	options->allow_unquoted_commas = TRUE;
+	options->respect_content_length = FALSE;
+	options->max_address_group_depth = 3;
+	options->max_mime_depth = 1024;
+	options->max_header_length = 16 * 1024 * 1024;
 	
-	options->charsets = g_malloc (sizeof (char *) * 3);
-	options->charsets[0] = g_strdup ("utf-8");
-	options->charsets[1] = g_strdup ("iso-8859-1");
-	options->charsets[2] = NULL;
+	options->charset_encoding = g_strdup ("utf-8");
 	
 	options->warning_cb = NULL;
 	options->warning_user_data = NULL;
@@ -153,24 +160,22 @@ GMimeParserOptions *
 g_mime_parser_options_clone (GMimeParserOptions *options)
 {
 	GMimeParserOptions *clone;
-	guint i, n = 0;
 	
 	if (options == NULL)
 		options = default_options;
 	
 	clone = g_slice_new (GMimeParserOptions);
 	clone->allow_no_domain = options->allow_no_domain;
+	clone->allow_unquoted_commas = options->allow_unquoted_commas;
+	clone->respect_content_length = options->respect_content_length;
+	clone->max_address_group_depth = options->max_address_group_depth;
+	clone->max_mime_depth = options->max_mime_depth;
+	clone->max_header_length = options->max_header_length;
 	clone->addresses = options->addresses;
 	clone->parameters = options->parameters;
 	clone->rfc2047 = options->rfc2047;
 	
-	while (options->charsets[n])
-		n++;
-	
-	clone->charsets = g_malloc (sizeof (char *) * (n + 1));
-	for (i = 0; i < n; i++)
-		clone->charsets[i] = g_strdup (options->charsets[i]);
-	clone->charsets[i] = NULL;
+	clone->charset_encoding = g_strdup (options->charset_encoding);
 	
 	clone->warning_cb = options->warning_cb;
 	clone->warning_user_data = options->warning_user_data;
@@ -196,7 +201,7 @@ g_mime_parser_options_free (GMimeParserOptions *options)
 		if (options->notify)
 			options->notify (options->warning_user_data);
 		
-		g_strfreev (options->charsets);
+		g_free (options->charset_encoding);
 		g_slice_free (GMimeParserOptions, options);
 	}
 }
@@ -211,6 +216,8 @@ g_mime_parser_options_free (GMimeParserOptions *options)
  * Note: Even in #GMIME_RFC_COMPLIANCE_STRICT mode, the address parser is fairly liberal in
  * what it accepts. Setting it to #GMIME_RFC_COMPLIANCE_LOOSE just makes it try harder to
  * deal with garbage input.
+ * #GMIME_RFC_COMPLIANCE_LOOSER additionally accepts consecutive or trailing
+ * dots and escaped at-signs in local parts.
  *
  * Returns: the compliance mode that is currently set.
  **/
@@ -240,6 +247,8 @@ void
 g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode)
 {
 	g_return_if_fail (options != NULL);
+	g_return_if_fail (mode == GMIME_RFC_COMPLIANCE_STRICT || mode == GMIME_RFC_COMPLIANCE_LOOSE ||
+			  mode == GMIME_RFC_COMPLIANCE_LOOSER);
 	
 	options->addresses = mode;
 }
@@ -251,10 +260,7 @@ g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, 
  *
  * Gets whether or not the rfc822 address parser should allow addresses without a domain.
  *
- * In general, you'll probably want this value to be %FALSE (the default) as it allows 
- * maximum interoperability with existing (broken) mail clients and other mail software
- * such as sloppily written perl scripts (aka spambots) that do not properly quote the
- * name when it contains a comma.
+ * The default is %TRUE, allowing local UNIX mailbox addresses.
  *
  * This option exists in order to allow parsing of mailbox addresses that do not have a
  * domain component. These types of addresses are rare and were typically only used when
@@ -276,10 +282,7 @@ g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *op
  *
  * Sets whether the rfc822 address parser should allow addresses without a domain.
  *
- * In general, you'll probably want this value to be %FALSE (the default) as it allows 
- * maximum interoperability with existing (broken) mail clients and other mail software
- * such as sloppily written perl scripts (aka spambots) that do not properly quote the
- * name when it contains a comma.
+ * The default is %TRUE, allowing local UNIX mailbox addresses.
  *
  * This option exists in order to allow parsing of mailbox addresses that do not have a
  * domain component. These types of addresses are rare and were typically only used when
@@ -291,6 +294,183 @@ g_mime_parser_options_set_allow_addresses_without_domain (GMimeParserOptions *op
 	g_return_if_fail (options != NULL);
 	
 	options->allow_no_domain = allow;
+}
+
+/**
+ * g_mime_parser_options_get_allow_unquoted_commas_in_addresses:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets whether unquoted commas are allowed in address display names.
+ * The default is %TRUE, matching MimeKit's address recovery behavior.
+ *
+ * Returns: %TRUE if unquoted commas are allowed.
+ **/
+gboolean
+g_mime_parser_options_get_allow_unquoted_commas_in_addresses (GMimeParserOptions *options)
+{
+	return options ? options->allow_unquoted_commas : default_options->allow_unquoted_commas;
+}
+
+
+/**
+ * g_mime_parser_options_set_allow_unquoted_commas_in_addresses:
+ * @options: a #GMimeParserOptions
+ * @allow: whether to allow unquoted commas in address display names
+ *
+ * Sets whether unquoted commas are allowed in address display names.
+ * A comma following a quoted word is still treated as an address separator.
+ * This option is independent of whether domainless addresses are allowed.
+ **/
+void
+g_mime_parser_options_set_allow_unquoted_commas_in_addresses (GMimeParserOptions *options, gboolean allow)
+{
+	g_return_if_fail (options != NULL);
+
+	options->allow_unquoted_commas = allow;
+}
+
+
+/**
+ * g_mime_parser_options_get_respect_content_length:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets whether Content-Length headers postpone recognition of mbox
+ * From-lines until the declared body length has been consumed.
+ * The default is %FALSE. Other input formats ignore this option.
+ *
+ * Returns: %TRUE if mbox parsing respects Content-Length.
+ **/
+gboolean
+g_mime_parser_options_get_respect_content_length (GMimeParserOptions *options)
+{
+	return options ? options->respect_content_length : default_options->respect_content_length;
+}
+
+
+/**
+ * g_mime_parser_options_set_respect_content_length:
+ * @options: a #GMimeParserOptions
+ * @respect: whether mbox parsing should respect Content-Length
+ *
+ * Enables Content-Length handling for mbox input. The first header with
+ * a valid nonnegative 32-bit numeric prefix is used; invalid values are
+ * ignored. The raw value must start with whitespace followed by decimal
+ * digits. This does not truncate content at the declared length: the
+ * parser resumes looking for a From-line there.
+ **/
+void
+g_mime_parser_options_set_respect_content_length (GMimeParserOptions *options, gboolean respect)
+{
+	g_return_if_fail (options != NULL);
+
+	options->respect_content_length = respect;
+}
+
+
+/**
+ * g_mime_parser_options_get_max_address_group_depth:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets the maximum number of nested address groups. The default is 3.
+ * A value of 0 prevents the parser from accepting group addresses.
+ *
+ * Returns: the maximum address group depth.
+ **/
+int
+g_mime_parser_options_get_max_address_group_depth (GMimeParserOptions *options)
+{
+	return options ? options->max_address_group_depth : default_options->max_address_group_depth;
+}
+
+
+/**
+ * g_mime_parser_options_set_max_address_group_depth:
+ * @options: a #GMimeParserOptions
+ * @max_depth: the maximum address group depth, greater than or equal to 0
+ *
+ * Sets the maximum number of nested address groups. Groups beyond this
+ * limit are rejected and reported through the parser warning callback.
+ **/
+void
+g_mime_parser_options_set_max_address_group_depth (GMimeParserOptions *options, int max_depth)
+{
+	g_return_if_fail (options != NULL);
+	g_return_if_fail (max_depth >= 0);
+
+	options->max_address_group_depth = max_depth;
+}
+
+
+/**
+ * g_mime_parser_options_get_max_mime_depth:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets the maximum MIME nesting depth. The default is 1024.
+ * A value of 0 treats all multipart and embedded-message entities as leaves.
+ *
+ * Returns: the maximum MIME nesting depth.
+ **/
+int
+g_mime_parser_options_get_max_mime_depth (GMimeParserOptions *options)
+{
+	return options ? options->max_mime_depth : default_options->max_mime_depth;
+}
+
+
+/**
+ * g_mime_parser_options_set_max_mime_depth:
+ * @options: a #GMimeParserOptions
+ * @max_depth: the maximum MIME nesting depth, greater than or equal to 0
+ *
+ * Sets the maximum MIME nesting depth. Containers at this depth are parsed
+ * as #GMimePart objects, preserving their content without parsing it.
+ * Exceeding the limit is reported through the parser warning callback.
+ *
+ * The parser currently uses recursion. Increasing the limit above its
+ * default may exhaust the call stack.
+ **/
+void
+g_mime_parser_options_set_max_mime_depth (GMimeParserOptions *options, int max_depth)
+{
+	g_return_if_fail (options != NULL);
+	g_return_if_fail (max_depth >= 0);
+
+	options->max_mime_depth = max_depth;
+}
+
+/**
+ * g_mime_parser_options_get_max_header_length:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets the maximum raw length of a single header, in bytes.
+ * The default is 16777216 (16 MiB).
+ *
+ * Returns: the maximum header length.
+ **/
+int
+g_mime_parser_options_get_max_header_length (GMimeParserOptions *options)
+{
+	return options ? options->max_header_length : default_options->max_header_length;
+}
+
+
+/**
+ * g_mime_parser_options_set_max_header_length:
+ * @options: a #GMimeParserOptions
+ * @max_length: the maximum raw header length, greater than 0
+ *
+ * Sets the maximum length of a single header. The length includes the field
+ * name, colon, raw value, folding whitespace and terminating newline sequence.
+ * #GMimeParser fails with %GMIME_ERROR_HEADER_TOO_LONG before buffering data
+ * beyond this limit.
+ **/
+void
+g_mime_parser_options_set_max_header_length (GMimeParserOptions *options, int max_length)
+{
+	g_return_if_fail (options != NULL);
+	g_return_if_fail (max_length > 0);
+
+	options->max_header_length = max_length;
 }
 
 
@@ -383,50 +563,66 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
 
 
 /**
- * g_mime_parser_options_get_fallback_charsets:
+ * g_mime_parser_options_get_charset_encoding:
  * @options: (nullable): a #GMimeParserOptions or %NULL
  *
- * Gets the fallback charsets to try when decoding 8-bit headers.
+ * Gets the fallback charset encoding used when decoding undeclared 8-bit
+ * header text. The default is "utf-8". UTF-8 is always attempted first,
+ * followed by this charset, and finally ISO-8859-1.
  *
- * Returns: (transfer none): a %NULL-terminated list of charsets to try when
- * decoding 8-bit headers.
+ * Returns: (transfer none): the charset name, owned by @options or the defaults.
  **/
-const char **
-g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options)
+const char *
+g_mime_parser_options_get_charset_encoding (GMimeParserOptions *options)
 {
-	return (const char **) (options ? options->charsets : default_options->charsets);
+	return options ? options->charset_encoding : default_options->charset_encoding;
 }
 
 
 /**
- * g_mime_parser_options_set_fallback_charsets:
+ * g_mime_parser_options_set_charset_encoding:
  * @options: a #GMimeParserOptions
- * @charsets: a %NULL-terminated list of charsets or %NULL for the default list
+ * @charset: (nullable): charset encoding name, or %NULL to reset to UTF-8
+ * @error: return location for a #GError, or %NULL
  *
- * Sets the fallback charsets to try when decoding 8-bit headers.
+ * Sets the fallback charset encoding for undeclared 8-bit header text,
+ * following MimeKit's CharsetEncoding option. The name is copied and
+ * must be supported by the platform's iconv implementation.
  *
- * Note: It is recommended that the list of charsets start with utf-8
- * and end with iso-8859-1.
+ * UTF-8 is always attempted first and ISO-8859-1 last. An unsupported
+ * or empty name fails without changing the option.
+ *
+ * Returns: %TRUE on success or %FALSE with @error set on failure.
  **/
-void
-g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const char **charsets)
+gboolean
+g_mime_parser_options_set_charset_encoding (GMimeParserOptions *options, const char *charset, GError **error)
 {
-	guint i, n = 0;
-	
-	g_return_if_fail (options != NULL);
-	
-	g_strfreev (options->charsets);
-	
-	if (charsets == NULL || *charsets == NULL)
-		charsets = (const char **) default_charsets;
-	
-	while (charsets[n] != NULL)
-		n++;
-	
-	options->charsets = g_malloc (sizeof (char *) * (n + 1));
-	for (i = 0; i < n; i++)
-		options->charsets[i] = g_strdup (charsets[i]);
-	options->charsets[n] = NULL;
+	char *copy;
+	iconv_t cd;
+	int code;
+
+	g_return_val_if_fail (options != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if (charset == NULL)
+		charset = "utf-8";
+	if (*charset == '\0') {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     "Charset encoding name must not be empty");
+		return FALSE;
+	}
+	if ((cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
+		code = errno;
+		g_set_error (error, GMIME_ERROR, code == EINVAL ? GMIME_ERROR_NOT_SUPPORTED : code,
+			     "Cannot decode charset '%s': %s", charset, g_strerror (code));
+		return FALSE;
+	}
+	g_mime_iconv_close (cd);
+
+	copy = g_strdup (charset);
+	g_free (options->charset_encoding);
+	options->charset_encoding = copy;
+	return TRUE;
 }
 
 

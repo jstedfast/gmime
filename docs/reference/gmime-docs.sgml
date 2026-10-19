@@ -6,32 +6,49 @@
 <!ENTITY GMimeAutocrypt SYSTEM "xml/gmime-autocrypt.xml">
 <!ENTITY GMimeParam SYSTEM "xml/gmime-param.xml">
 <!ENTITY GMimeHeader SYSTEM "xml/gmime-header.xml">
+<!ENTITY GMimeHeaderListCollection SYSTEM "xml/gmime-header-list-collection.xml">
 <!ENTITY GMimeContentType SYSTEM "xml/gmime-content-type.xml">
 <!ENTITY GMimeDisposition SYSTEM "xml/gmime-disposition.xml">
-<!ENTITY GMimeObject SYSTEM "xml/gmime-object.xml">
-<!ENTITY GMimeDataWrapper SYSTEM "xml/gmime-data-wrapper.xml">
+<!ENTITY GMimeEntity SYSTEM "xml/gmime-entity.xml">
+<!ENTITY GMimeAttachmentCollection SYSTEM "xml/gmime-attachment-collection.xml">
+<!ENTITY GMimeBodyBuilder SYSTEM "xml/gmime-body-builder.xml">
+<!ENTITY GMimeContent SYSTEM "xml/gmime-content.xml">
 <!ENTITY GMimeMultipart SYSTEM "xml/gmime-multipart.xml">
+<!ENTITY GMimeMultipartAlternative SYSTEM "xml/gmime-multipart-alternative.xml">
+<!ENTITY GMimeMultipartRelated SYSTEM "xml/gmime-multipart-related.xml">
+<!ENTITY GMimeMultipartReport SYSTEM "xml/gmime-multipart-report.xml">
 <!ENTITY GMimeMultipartEncrypted SYSTEM "xml/gmime-multipart-encrypted.xml">
 <!ENTITY GMimeMultipartSigned SYSTEM "xml/gmime-multipart-signed.xml">
 <!ENTITY GMimePart SYSTEM "xml/gmime-part.xml">
 <!ENTITY GMimeTextPart SYSTEM "xml/gmime-text-part.xml">
 <!ENTITY GMimePartIter SYSTEM "xml/gmime-part-iter.xml">
+<!ENTITY GMimeIterator SYSTEM "xml/gmime-iterator.xml">
+<!ENTITY GMimeVisitor SYSTEM "xml/gmime-visitor.xml">
 <!ENTITY GMimeMessage SYSTEM "xml/gmime-message.xml">
+<!ENTITY GMimeMessageDeliveryStatus SYSTEM "xml/gmime-message-delivery-status.xml">
+<!ENTITY GMimeMessageDispositionNotification SYSTEM "xml/gmime-message-disposition-notification.xml">
+<!ENTITY GMimeMessageFeedbackReport SYSTEM "xml/gmime-message-feedback-report.xml">
 <!ENTITY GMimeMessagePart SYSTEM "xml/gmime-message-part.xml">
+<!ENTITY GMimeTextRfc822Headers SYSTEM "xml/gmime-text-rfc822-headers.xml">
 <!ENTITY GMimeMessagePartial SYSTEM "xml/gmime-message-partial.xml">
 <!ENTITY gmime-utils SYSTEM "xml/gmime-utils.xml">
+<!ENTITY gmime-types SYSTEM "xml/gmime-types.xml">
 <!ENTITY gmime-encodings SYSTEM "xml/gmime-encodings.xml">
-<!ENTITY InternetAddress SYSTEM "xml/internet-address.xml">
-<!ENTITY InternetAddressGroup SYSTEM "xml/internet-address-group.xml">
-<!ENTITY InternetAddressMailbox SYSTEM "xml/internet-address-mailbox.xml">
-<!ENTITY InternetAddressList SYSTEM "xml/internet-address-list.xml">
+<!ENTITY GMimeEncoder SYSTEM "xml/gmime-encoder.xml">
+<!ENTITY GMimeDecoder SYSTEM "xml/gmime-decoder.xml">
+<!ENTITY gmime-codecs SYSTEM "xml/gmime-codecs.xml">
+<!ENTITY GMimeInternetAddress SYSTEM "xml/gmime-internet-address.xml">
+<!ENTITY GMimeDomainList SYSTEM "xml/gmime-domain-list.xml">
+<!ENTITY GMimeGroupAddress SYSTEM "xml/gmime-group-address.xml">
+<!ENTITY GMimeMailboxAddress SYSTEM "xml/gmime-mailbox-address.xml">
+<!ENTITY GMimeInternetAddressList SYSTEM "xml/gmime-internet-address-list.xml">
 <!ENTITY GMimeFormatOptions SYSTEM "xml/gmime-format-options.xml">
 <!ENTITY GMimeParserOptions SYSTEM "xml/gmime-parser-options.xml">
 <!ENTITY GMimeParser SYSTEM "xml/gmime-parser.xml">
 <!ENTITY gmime-charset SYSTEM "xml/gmime-charset.xml">
 <!ENTITY gmime-iconv SYSTEM "xml/gmime-iconv.xml">
 <!ENTITY gmime-iconv-utils SYSTEM "xml/gmime-iconv-utils.xml">
-<!ENTITY GMimeReferences SYSTEM "xml/gmime-references.xml">
+<!ENTITY GMimeMessageIdList SYSTEM "xml/gmime-message-id-list.xml">
 <!ENTITY GMimeStream SYSTEM "xml/gmime-stream.xml">
 <!ENTITY GMimeStreamBuffer SYSTEM "xml/gmime-stream-buffer.xml">
 <!ENTITY GMimeStreamCat SYSTEM "xml/gmime-stream-cat.xml">
@@ -58,7 +75,6 @@
 <!ENTITY GMimeFilterStrip SYSTEM "xml/gmime-filter-strip.xml">
 <!ENTITY GMimeFilterUnix2Dos SYSTEM "xml/gmime-filter-unix2dos.xml">
 <!ENTITY GMimeFilterWindows SYSTEM "xml/gmime-filter-windows.xml">
-<!ENTITY GMimeFilterYenc SYSTEM "xml/gmime-filter-yenc.xml">
 <!ENTITY GMimeCertificate SYSTEM "xml/gmime-certificate.xml">
 <!ENTITY GMimeSignature SYSTEM "xml/gmime-signature.xml">
 <!ENTITY GMimeCryptoContext SYSTEM "xml/gmime-crypto-context.xml">
@@ -72,20 +88,15 @@
 <!ENTITY gmime-Compiling SYSTEM "compiling.sgml">
 <!ENTITY gmime-Resources SYSTEM "resources.sgml">
 <!ENTITY gmime-Questions SYSTEM "question_index.sgml">
-<!ENTITY gmime-Changes-2-0 SYSTEM "changes-2.0.sgml">
-<!ENTITY gmime-Changes-2-2 SYSTEM "changes-2.2.sgml">
-<!ENTITY gmime-Changes-2-4 SYSTEM "changes-2.4.sgml">
-<!ENTITY gmime-Changes-2-6 SYSTEM "changes-2.6.sgml">
-<!ENTITY gmime-Changes-3-0 SYSTEM "changes-3.0.sgml">
 
 <!ENTITY gmime-Streams SYSTEM "streams.sgml">
 <!ENTITY gmime-Filters SYSTEM "filters.sgml">
-<!ENTITY gmime-DataWrappers SYSTEM "data-wrappers.sgml">
+<!ENTITY gmime-DataWrappers SYSTEM "content.sgml">
 ]>
 
 <book id="index">
   <bookinfo>
-    <title>GMime 3.0 Reference Manual</title>
+    <title>GMime 4.0 Reference Manual</title>
     <authorgroup>
       <author>
         <firstname>Jeffrey</firstname>
@@ -158,11 +169,6 @@ string utilities, file utilities, a main loop abstraction, and so on.
     </partintro>
     &gmime-Building;
     &gmime-Compiling;
-    &gmime-Changes-2-0;
-    &gmime-Changes-2-2;
-    &gmime-Changes-2-4;
-    &gmime-Changes-2-6;
-    &gmime-Changes-3-0;
     &gmime-Resources;
     &gmime-Questions;
   </part>
@@ -181,8 +187,12 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-iconv;
     &gmime-iconv-utils;
     &gmime-encodings;
+    &GMimeEncoder;
+    &GMimeDecoder;
+    &gmime-codecs;
     &gmime-utils;
-    &GMimeReferences;
+    &gmime-types;
+    &GMimeMessageIdList;
     &GMimeFormatOptions;
     &GMimeAutocrypt;
   </part>
@@ -226,43 +236,55 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterStrip;
       &GMimeFilterUnix2Dos;
       &GMimeFilterWindows;
-      &GMimeFilterYenc;
     </chapter>
 
     <chapter id="DataWrappers">
       <title>Data Wrappers</title>
-      &GMimeDataWrapper;
+      &GMimeContent;
     </chapter>
 
     <chapter id="Headers">
       <title>Message and MIME Headers</title>
       &GMimeHeader;
+      &GMimeHeaderListCollection;
       &GMimeContentType;
       &GMimeDisposition;
       &GMimeParam;
     </chapter>
 
-    <chapter id="InternetAddresses">
+    <chapter id="GMimeInternetAddresses">
       <title>Internet Addresses</title>
-      &InternetAddress;
-      &InternetAddressGroup;
-      &InternetAddressMailbox;
-      &InternetAddressList;
+      &GMimeInternetAddress;
+      &GMimeGroupAddress;
+      &GMimeMailboxAddress;
+      &GMimeInternetAddressList;
+      &GMimeDomainList;
     </chapter>
 
     <chapter id="MimeParts">
       <title>MIME Messages and Parts</title>
-      &GMimeObject;
+      &GMimeEntity;
+      &GMimeAttachmentCollection;
+      &GMimeBodyBuilder;
       &GMimeMessage;
       &GMimePart;
       &GMimeTextPart;
       &GMimeMultipart;
+      &GMimeMultipartAlternative;
+      &GMimeMultipartRelated;
+      &GMimeMultipartReport;
       &GMimeMultipartEncrypted;
       &GMimeMultipartSigned;
       &GMimeApplicationPkcs7Mime;
       &GMimeMessagePart;
+      &GMimeTextRfc822Headers;
+      &GMimeMessageDispositionNotification;
+      &GMimeMessageDeliveryStatus;
+      &GMimeMessageFeedbackReport;
       &GMimeMessagePartial;
       &GMimePartIter;
+      &GMimeIterator;
+      &GMimeVisitor;
     </chapter>
 
     <chapter id="Parsers">

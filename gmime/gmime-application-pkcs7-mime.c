@@ -50,8 +50,8 @@ static void g_mime_application_pkcs7_mime_class_init (GMimeApplicationPkcs7MimeC
 static void g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *catpart, GMimeApplicationPkcs7MimeClass *klass);
 static void g_mime_application_pkcs7_mime_finalize (GObject *object);
 
-/* GMimeObject class methods */
-static void application_pkcs7_mime_set_content_type (GMimeObject *object, GMimeContentType *content_type);
+/* GMimeEntity class methods */
+static void application_pkcs7_mime_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
 
 
 static GMimePartClass *parent_class = NULL;
@@ -85,7 +85,7 @@ g_mime_application_pkcs7_mime_get_type (void)
 static void
 g_mime_application_pkcs7_mime_class_init (GMimeApplicationPkcs7MimeClass *klass)
 {
-	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
+	GMimeEntityClass *object_class = GMIME_ENTITY_CLASS (klass);
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_PART);
@@ -109,7 +109,7 @@ g_mime_application_pkcs7_mime_finalize (GObject *object)
 
 
 static void
-application_pkcs7_mime_set_content_type (GMimeObject *object, GMimeContentType *content_type)
+application_pkcs7_mime_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime = (GMimeApplicationPkcs7Mime *) object;
 	const char *value;
@@ -129,7 +129,7 @@ application_pkcs7_mime_set_content_type (GMimeObject *object, GMimeContentType *
 		pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
 	}
 	
-	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
+	GMIME_ENTITY_CLASS (parent_class)->set_content_type (object, content_type);
 }
 
 /**
@@ -174,7 +174,7 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 		break;
 	}
 	
-	g_mime_object_set_content_type ((GMimeObject *) pkcs7_mime, content_type);
+	g_mime_entity_set_content_type ((GMimeEntity *) pkcs7_mime, content_type);
 	g_object_unref (content_type);
 	
 	g_mime_part_set_filename ((GMimePart *) pkcs7_mime, name);
@@ -203,15 +203,15 @@ g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_m
 
 #if 0
 GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_compress (GMimeObject *entity, GError **err)
+g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err)
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeStream *compressed, *stream;
 	GMimeFormatOptions *options;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeCryptoContext *ctx;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
+	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
 	
 	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
@@ -225,7 +225,7 @@ g_mime_application_pkcs7_mime_compress (GMimeObject *entity, GError **err)
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (entity, options, stream);
+	g_mime_entity_write_to_stream (entity, options, stream);
 	g_mime_format_options_free (options);
 	
 	/* reset the content stream */
@@ -246,7 +246,7 @@ g_mime_application_pkcs7_mime_compress (GMimeObject *entity, GError **err)
 	
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA);
-	content = g_mime_data_wrapper_new_with_stream (compressed, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (compressed, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
 	g_object_unref (compressed);
 	g_object_unref (content);
@@ -255,12 +255,12 @@ g_mime_application_pkcs7_mime_compress (GMimeObject *entity, GError **err)
 }
 
 
-GMimeObject *
+GMimeEntity *
 g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
 {
 	GMimeStream *filtered, *compressed, *stream;
-	GMimeObject *decompressed;
-	GMimeDataWrapper *content;
+	GMimeEntity *decompressed;
+	GMimeContent *content;
 	GMimeCryptoContext *ctx;
 	GMimeDecryptResult *res;
 	GMimeFilter *filter;
@@ -278,7 +278,7 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
 	/* get the compressed stream */
 	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
 	compressed = g_mime_stream_mem_new ();
-	g_mime_data_wrapper_write_to_stream (content, compressed);
+	g_mime_content_decode_to_stream (content, compressed);
 	g_mime_stream_reset (compressed);
 	
 	stream = g_mime_stream_mem_new ();
@@ -307,12 +307,13 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	decompressed = g_mime_parser_construct_part (parser, NULL);
+	decompressed = g_mime_parser_construct_part (parser, NULL, err);
 	g_object_unref (parser);
 	
 	if (!decompressed) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Cannot decompress application/pkcs7-mime part: failed to parse decompressed content."));
+		if (err == NULL || *err == NULL)
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     _("Cannot decompress application/pkcs7-mime part: failed to parse decompressed content."));
 		
 		return NULL;
 	}
@@ -324,7 +325,7 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
 
 /**
  * g_mime_application_pkcs7_mime_encrypt:
- * @entity: a #GMimeObject to encrypt
+ * @entity: a #GMimeEntity to encrypt
  * @flags: a #GMimeEncryptFlags
  * @recipients: (element-type utf8): an array of recipients to encrypt to
  * @err: a #GError
@@ -337,15 +338,15 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
  * information as to why the failure occurred.
  **/
 GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
+g_mime_application_pkcs7_mime_encrypt (GMimeEntity *entity, GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeStream *ciphertext, *stream;
 	GMimeFormatOptions *options;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeCryptoContext *ctx;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
+	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
 	g_return_val_if_fail (recipients != NULL, NULL);
 	
 	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
@@ -360,7 +361,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (entity, options, stream);
+	g_mime_entity_write_to_stream (entity, options, stream);
 	g_mime_format_options_free (options);
 	
 	/* reset the content stream */
@@ -381,7 +382,7 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 	
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA);
-	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
@@ -414,16 +415,16 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
  * %NULL on fail. If the decryption fails, an exception will be set on
  * @err to provide information as to why the failure occurred.
  **/
-GMimeObject *
+GMimeEntity *
 g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 				       GMimeDecryptFlags flags, const char *session_key,
 				       GMimeDecryptResult **result, GError **err)
 {
 	GMimeStream *filtered, *ciphertext, *stream;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeCryptoContext *ctx;
 	GMimeDecryptResult *res;
-	GMimeObject *decrypted;
+	GMimeEntity *decrypted;
 	GMimeFilter *filter;
 	GMimeParser *parser;
 	
@@ -442,7 +443,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	/* get the ciphertext stream */
 	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
 	ciphertext = g_mime_stream_mem_new ();
-	g_mime_data_wrapper_write_to_stream (content, ciphertext);
+	g_mime_content_decode_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
 	
 	stream = g_mime_stream_mem_new ();
@@ -471,12 +472,13 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	decrypted = g_mime_parser_construct_part (parser, NULL);
+	decrypted = g_mime_parser_construct_part (parser, NULL, err);
 	g_object_unref (parser);
 	
 	if (!decrypted) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Cannot decrypt application/pkcs7-mime part: failed to parse decrypted content."));
+		if (err == NULL || *err == NULL)
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     _("Cannot decrypt application/pkcs7-mime part: failed to parse decrypted content."));
 		
 		g_object_unref (res);
 		
@@ -494,7 +496,7 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 
 /**
  * g_mime_application_pkcs7_mime_sign:
- * @entity: a #GMimeObject
+ * @entity: a #GMimeEntity
  * @userid: the user id to sign with
  * @err: a #GError
  *
@@ -506,15 +508,15 @@ g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
  * information as to why the failure occurred.
  **/
 GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GError **err)
+g_mime_application_pkcs7_mime_sign (GMimeEntity *entity, const char *userid, GError **err)
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeStream *ciphertext, *stream;
 	GMimeFormatOptions *options;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeCryptoContext *ctx;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
+	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
 	g_return_val_if_fail (userid != NULL, NULL);
 	
 	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
@@ -529,7 +531,7 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (entity, options, stream);
+	g_mime_entity_write_to_stream (entity, options, stream);
 	g_mime_format_options_free (options);
 	
 	/* reset the content stream */
@@ -550,7 +552,7 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 	
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
-	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
@@ -575,11 +577,11 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
  * occurred.
  **/
 GMimeSignatureList *
-g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags, GMimeObject **entity, GError **err)
+g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags, GMimeEntity **entity, GError **err)
 {
 	GMimeStream *filtered, *ciphertext, *stream;
 	GMimeSignatureList *signatures;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeCryptoContext *ctx;
 	GMimeFilter *filter;
 	GMimeParser *parser;
@@ -599,7 +601,7 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	/* get the ciphertext stream */
 	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
 	ciphertext = g_mime_stream_mem_new ();
-	g_mime_data_wrapper_write_to_stream (content, ciphertext);
+	g_mime_content_decode_to_stream (content, ciphertext);
 	g_mime_stream_reset (ciphertext);
 	
 	stream = g_mime_stream_mem_new ();
@@ -628,12 +630,13 @@ g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMi
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	*entity = g_mime_parser_construct_part (parser, NULL);
+	*entity = g_mime_parser_construct_part (parser, NULL, err);
 	g_object_unref (parser);
 	
 	if (*entity == NULL) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Cannot verify application/pkcs7-mime part: failed to parse extracted content."));
+		if (err == NULL || *err == NULL)
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     _("Cannot verify application/pkcs7-mime part: failed to parse extracted content."));
 		
 		g_object_unref (signatures);
 		

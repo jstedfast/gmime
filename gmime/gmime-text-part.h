@@ -37,6 +37,28 @@ typedef struct _GMimeTextPart GMimeTextPart;
 typedef struct _GMimeTextPartClass GMimeTextPartClass;
 
 /**
+ * GMimeTextFormat:
+ * @GMIME_TEXT_FORMAT_PLAIN: Plain text.
+ * @GMIME_TEXT_FORMAT_TEXT: An alias for plain text.
+ * @GMIME_TEXT_FORMAT_FLOWED: Flowed text.
+ * @GMIME_TEXT_FORMAT_HTML: HTML.
+ * @GMIME_TEXT_FORMAT_ENRICHED: Enriched text.
+ * @GMIME_TEXT_FORMAT_COMPRESSED_RICH_TEXT: Compressed rich text.
+ * @GMIME_TEXT_FORMAT_RICH_TEXT: Rich text (RTF).
+ *
+ * Text formats.
+ **/
+typedef enum {
+	GMIME_TEXT_FORMAT_PLAIN,
+	GMIME_TEXT_FORMAT_TEXT = GMIME_TEXT_FORMAT_PLAIN,
+	GMIME_TEXT_FORMAT_FLOWED,
+	GMIME_TEXT_FORMAT_HTML,
+	GMIME_TEXT_FORMAT_ENRICHED,
+	GMIME_TEXT_FORMAT_COMPRESSED_RICH_TEXT,
+	GMIME_TEXT_FORMAT_RICH_TEXT
+} GMimeTextFormat;
+
+/**
  * GMimeTextPart:
  * @parent_object: parent #GMimePart
  *
@@ -58,6 +80,14 @@ GType g_mime_text_part_get_type (void);
 /* constructors */
 GMimeTextPart *g_mime_text_part_new (void);
 GMimeTextPart *g_mime_text_part_new_with_subtype (const char *subtype);
+GMimeTextPart *g_mime_text_part_new_with_format (GMimeTextFormat format);
+
+GMimeTextFormat g_mime_text_part_get_format (GMimeTextPart *mime_part);
+gboolean g_mime_text_part_is_plain (GMimeTextPart *mime_part);
+gboolean g_mime_text_part_is_flowed (GMimeTextPart *mime_part);
+gboolean g_mime_text_part_is_html (GMimeTextPart *mime_part);
+gboolean g_mime_text_part_is_enriched (GMimeTextPart *mime_part);
+gboolean g_mime_text_part_is_rich_text (GMimeTextPart *mime_part);
 
 void g_mime_text_part_set_charset (GMimeTextPart *mime_part, const char *charset);
 const char *g_mime_text_part_get_charset (GMimeTextPart *mime_part);

@@ -25,7 +25,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <glib-object.h>
-#include <gmime/internet-address.h>
+#include <gmime/gmime-internet-address.h>
 
 G_BEGIN_DECLS
 
@@ -65,7 +65,7 @@ typedef enum {
 /**
  * GMimeAutocryptHeader:
  * @parent_object: parent #GObject
- * @address: the #InternetAddressMailbox associated with this Autocrypt header.
+ * @address: the #GMimeMailboxAddress associated with this Autocrypt header.
  * @prefer_encrypt: a #GMimeAutocryptPreferEncrypt value (defaults to @GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE).
  * @keydata: the raw binary form of the encoded key.
  * @effective_date: the date associated with the Autocrypt header in this message.
@@ -78,7 +78,7 @@ typedef enum {
 struct _GMimeAutocryptHeader {
 	GObject parent_object;
 
-	InternetAddressMailbox *address;
+	GMimeMailboxAddress *address;
 	GMimeAutocryptPreferEncrypt prefer_encrypt;
 	GBytes *keydata;
 	GDateTime *effective_date;
@@ -93,9 +93,9 @@ GType g_mime_autocrypt_header_get_type (void);
 GMimeAutocryptHeader *g_mime_autocrypt_header_new (void);
 GMimeAutocryptHeader *g_mime_autocrypt_header_new_from_string (const char *string);
 
-void g_mime_autocrypt_header_set_address (GMimeAutocryptHeader *ah, InternetAddressMailbox *address);
-InternetAddressMailbox *g_mime_autocrypt_header_get_address (GMimeAutocryptHeader *ah);
-void g_mime_autocrypt_header_set_address_from_string (GMimeAutocryptHeader *ah, const char *address);
+void g_mime_autocrypt_header_set_address (GMimeAutocryptHeader *ah, GMimeMailboxAddress *address);
+GMimeMailboxAddress *g_mime_autocrypt_header_get_address (GMimeAutocryptHeader *ah);
+gboolean g_mime_autocrypt_header_set_address_from_string (GMimeAutocryptHeader *ah, const char *address, GError **error);
 const char *g_mime_autocrypt_header_get_address_as_string (GMimeAutocryptHeader *ah);
 
 void g_mime_autocrypt_header_set_prefer_encrypt (GMimeAutocryptHeader *ah, GMimeAutocryptPreferEncrypt pref);
@@ -136,12 +136,12 @@ struct _GMimeAutocryptHeaderListClass {
 GType g_mime_autocrypt_header_list_get_type (void);
 
 GMimeAutocryptHeaderList *g_mime_autocrypt_header_list_new (void);
-guint g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *list, InternetAddressList *addresses);
+guint g_mime_autocrypt_header_list_add_missing_addresses (GMimeAutocryptHeaderList *list, GMimeInternetAddressList *addresses);
 void g_mime_autocrypt_header_list_add (GMimeAutocryptHeaderList *list, GMimeAutocryptHeader *header);
 
 guint g_mime_autocrypt_header_list_get_count (GMimeAutocryptHeaderList *list);
 GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_at (GMimeAutocryptHeaderList *list, guint index);
-GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_for_address (GMimeAutocryptHeaderList *list, InternetAddressMailbox *mailbox);
+GMimeAutocryptHeader *g_mime_autocrypt_header_list_get_header_for_address (GMimeAutocryptHeaderList *list, GMimeMailboxAddress *mailbox);
 void g_mime_autocrypt_header_list_remove_incomplete (GMimeAutocryptHeaderList *list);
 
 

@@ -122,3 +122,41 @@ g_mime_strdup_trim (const char *str)
 	
 	return g_strndup (start, (size_t) (end - start));
 }
+
+gboolean
+_g_mime_is_unicode_whitespace (gunichar c)
+{
+	/* Unlike .NET, GLib does not classify VT and NEL as whitespace. */
+	return c == '\v' || c == 0x85 || g_unichar_isspace (c);
+}
+
+gboolean
+_g_mime_strcase_equal_trimmed (const char *value, const char *token)
+{
+	size_t length = strlen (token);
+
+	if (!value)
+		return FALSE;
+	while (*value && _g_mime_is_unicode_whitespace (g_utf8_get_char (value)))
+		value = g_utf8_next_char (value);
+	if (g_ascii_strncasecmp (value, token, length))
+		return FALSE;
+	value += length;
+	while (*value && _g_mime_is_unicode_whitespace (g_utf8_get_char (value)))
+		value = g_utf8_next_char (value);
+
+	return *value == '\0';
+}
+
+size_t
+_g_mime_count_utf16_units (const char *start, const char *end)
+{
+	size_t length = 0;
+
+	while (start < end) {
+		length += g_utf8_get_char (start) >= 0x10000 ? 2 : 1;
+		start = g_utf8_next_char (start);
+	}
+
+	return length;
+}

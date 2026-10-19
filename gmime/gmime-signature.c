@@ -84,8 +84,8 @@ static void
 g_mime_signature_init (GMimeSignature *sig, GMimeSignatureClass *klass)
 {
 	sig->cert = g_mime_certificate_new ();
-	sig->created = (time_t) -1;
-	sig->expires = (time_t) -1;
+	sig->created = NULL;
+	sig->expires = NULL;
 	sig->status = 0;
 }
 
@@ -93,6 +93,9 @@ static void
 g_mime_signature_finalize (GObject *object)
 {
 	GMimeSignature *sig = (GMimeSignature *) object;
+
+	g_clear_pointer (&sig->created, g_date_time_unref);
+	g_clear_pointer (&sig->expires, g_date_time_unref);
 	
 	if (sig->cert)
 		g_object_unref (sig->cert);
@@ -194,15 +197,19 @@ g_mime_signature_get_certificate (GMimeSignature *sig)
 /**
  * g_mime_signature_set_created:
  * @sig: a #GMimeSignature
- * @created: creation date
+ * @created: (nullable) (transfer none): creation date, or %NULL if unknown
  *
- * Set the creation date of the signature.
+ * Set the creation date of the signature. The signature references @created
+ * without changing its timezone or precision.
  **/
 void
-g_mime_signature_set_created (GMimeSignature *sig, time_t created)
+g_mime_signature_set_created (GMimeSignature *sig, GDateTime *created)
 {
 	g_return_if_fail (GMIME_IS_SIGNATURE (sig));
 	
+	if (created)
+		g_date_time_ref (created);
+	g_clear_pointer (&sig->created, g_date_time_unref);
 	sig->created = created;
 }
 
@@ -213,50 +220,35 @@ g_mime_signature_set_created (GMimeSignature *sig, time_t created)
  *
  * Get the creation date of the signature.
  *
- * Returns: the creation date of the signature or %-1 if unknown.
+ * Returns: (nullable) (transfer none): the creation date of the signature,
+ * or %NULL if unknown.
  **/
-time_t
+GDateTime *
 g_mime_signature_get_created (GMimeSignature *sig)
 {
-	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), (time_t) -1);
+	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), NULL);
 	
 	return sig->created;
 }
 
 
 /**
- * g_mime_signature_get_created64:
- * @sig: a #GMimeSignature
- *
- * Get the creation date of the signature in seconds since the UNIX
- * epoch, represented as a 64-bit signed integer.
- *
- * Returns: the creation date of the signature or %-1 if unknown.
- **/
-gint64
-g_mime_signature_get_created64 (GMimeSignature *sig)
-{
-	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), -1);
-	
-	if (sig->created == (time_t) -1)
-		return -1;
-	
-	return (gint64) ((unsigned long) sig->created);
-}
-
-
-/**
  * g_mime_signature_set_expires:
  * @sig: a #GMimeSignature
- * @expires: expiration date
+ * @expires: (nullable) (transfer none): expiration date, or %NULL if unknown
  *
- * Set the expiration date of the signature. A value of %0 means the signature never expires.
+ * Set the expiration date of the signature. The signature references @expires
+ * without changing its timezone or precision. Use
+ * 9999-12-31 23:59:59.999999 UTC for a signature that never expires.
  **/
 void
-g_mime_signature_set_expires (GMimeSignature *sig, time_t expires)
+g_mime_signature_set_expires (GMimeSignature *sig, GDateTime *expires)
 {
 	g_return_if_fail (GMIME_IS_SIGNATURE (sig));
 	
+	if (expires)
+		g_date_time_ref (expires);
+	g_clear_pointer (&sig->expires, g_date_time_unref);
 	sig->expires = expires;
 }
 
@@ -265,38 +257,18 @@ g_mime_signature_set_expires (GMimeSignature *sig, time_t expires)
  * g_mime_signature_get_expires:
  * @sig: a #GMimeSignature
  *
- * Get the expiration date of the signature. A value of %0 means the signature never expires.
+ * Get the expiration date of the signature.
+ * 9999-12-31 23:59:59.999999 UTC means the signature never expires.
  *
- * Returns: the expiration date of the signature or %-1 if unknown.
+ * Returns: (nullable) (transfer none): the expiration date of the signature,
+ * or %NULL if unknown.
  **/
-time_t
+GDateTime *
 g_mime_signature_get_expires (GMimeSignature *sig)
 {
-	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), (time_t) -1);
+	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), NULL);
 	
 	return sig->expires;
-}
-
-
-/**
- * g_mime_signature_get_expires64:
- * @sig: a #GMimeSignature
- *
- * Get the expiration date of the signature in seconds since the UNIX
- * epoch, represented as a 64-bit signed integer. A value of %0 means
- * the signature never expires.
- *
- * Returns: the expiration date of the signature or %-1 if unknown.
- **/
-gint64
-g_mime_signature_get_expires64 (GMimeSignature *sig)
-{
-	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), -1);
-	
-	if (sig->expires == (time_t) -1)
-		return -1;
-	
-	return (gint64) ((unsigned long) sig->expires);
 }
 
 

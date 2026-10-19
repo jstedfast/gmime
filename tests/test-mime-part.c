@@ -188,6 +188,131 @@ test_content_md5 (GMimePart *mime_part, const char *md5sum)
 	testsuite_check_passed ();
 }
 
+static void
+test_content_md5_vectors (void)
+{
+	static const struct {
+		gboolean text;
+		const char *input;
+		size_t length;
+		GMimeContentEncoding encoding;
+		const char *md5;
+	} cases[] = {
+		{ FALSE, "", 0, GMIME_CONTENT_ENCODING_UNSPECIFIED, "1B2M2Y8AsgTpgAmY7PhCfg==" },
+		{ FALSE, "abc", 3, GMIME_CONTENT_ENCODING_UNSPECIFIED, "kAFQmDzST7DWlj99KOF/cg==" },
+		{ FALSE, "\0\xff" "ABC\n", 6, GMIME_CONTENT_ENCODING_UNSPECIFIED, "ZCeOppyvk3dBJtrxlivHRg==" },
+		{ TRUE, "Hello\nworld\n", 12, GMIME_CONTENT_ENCODING_UNSPECIFIED, "0D25laZp7CmXkep2HGh5kg==" },
+		{ TRUE, "Hello\r\nworld\r\n", 14, GMIME_CONTENT_ENCODING_UNSPECIFIED, "0D25laZp7CmXkep2HGh5kg==" },
+		{ TRUE, "SGVsbG8Kd29ybGQK", 16, GMIME_CONTENT_ENCODING_BASE64, "0D25laZp7CmXkep2HGh5kg==" },
+		{ TRUE, "Hello=0Aworld=0A", 16, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, "0D25laZp7CmXkep2HGh5kg==" }
+	};
+	GMimeContent *content;
+	GMimeStream *stream;
+	GMimePart *part;
+	const char *header;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		part = g_mime_part_new_with_type (cases[i].text ? "text" : "application",
+						 cases[i].text ? "plain" : "octet-stream");
+		stream = g_mime_stream_mem_new_with_buffer (cases[i].input, cases[i].length);
+		content = g_mime_content_new_with_stream (stream, cases[i].encoding);
+		g_mime_part_set_content (part, content);
+		g_object_unref (content);
+		g_object_unref (stream);
+
+		g_mime_part_set_content_md5 (part, NULL);
+		test_content_md5 (part, cases[i].md5);
+
+		testsuite_check ("Content-Md5 header matches the unwrapped digest (%u)", i);
+		header = g_mime_entity_get_header ((GMimeEntity *) part, "Content-Md5");
+		if (!g_strcmp0 (header, cases[i].md5))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("Content-Md5 header does not match the digest");
+
+		g_mime_part_set_content_md5 (part, "AAAAAAAAAAAAAAAAAAAAAA==");
+		testsuite_check ("Content-Md5 rejects an incorrect digest (%u)", i);
+		if (!g_mime_part_verify_content_md5 (part))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("Incorrect Content-Md5 verified");
+
+		g_mime_part_set_content_md5 (part, NULL);
+		test_content_md5 (part, cases[i].md5);
+		g_object_unref (part);
+	}
+}
+
+static void
+test_generated_boundaries (void)
+{
+	GMimeMultipart *multipart = g_mime_multipart_new ();
+	GMimeTextPart *part = g_mime_text_part_new ();
+	GMimeEntity *parsed;
+	GMimeParser *parser;
+	GMimeStream *stream;
+	GError *error = NULL;
+	const char *boundary;
+	guchar *decoded;
+	char *encoded, *text;
+	gsize length;
+	guint i;
+
+	for (i = 0; i < 16; i++) {
+		if (i)
+			g_mime_multipart_set_boundary (multipart, NULL);
+		boundary = g_mime_multipart_get_boundary (multipart);
+
+		testsuite_check ("Generated multipart boundary includes a complete Base64 block (%u)", i);
+		if (!boundary || strlen (boundary) != 26 || strncmp (boundary, "=-", 2) ||
+		    strcmp (boundary + 24, "==")) {
+			testsuite_check_failed ("Expected =- followed by 24 padded Base64 characters");
+			continue;
+		}
+
+		decoded = g_base64_decode (boundary + 2, &length);
+		encoded = g_base64_encode (decoded, length);
+		if (length == 16 && !strcmp (encoded, boundary + 2))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("Boundary is not a canonical encoding of 16 bytes");
+		g_free (encoded);
+		g_free (decoded);
+	}
+
+	g_mime_text_part_set_text (part, "boundary payload\n");
+	g_mime_multipart_add (multipart, (GMimeEntity *) part);
+	g_object_unref (part);
+	text = g_mime_entity_to_string ((GMimeEntity *) multipart, NULL);
+	stream = g_mime_stream_mem_new_with_buffer (text, strlen (text));
+	parser = g_mime_parser_new_with_stream (stream);
+	parsed = g_mime_parser_construct_part (parser, NULL, &error);
+
+	testsuite_check ("Generated boundary survives multipart serialization and parsing");
+	if (parsed && !error && GMIME_IS_MULTIPART (parsed) &&
+	    g_mime_multipart_get_count ((GMimeMultipart *) parsed) == 1 &&
+	    !g_strcmp0 (g_mime_multipart_get_boundary ((GMimeMultipart *) parsed),
+			g_mime_multipart_get_boundary (multipart)))
+		testsuite_check_passed ();
+	else
+		testsuite_check_failed ("Generated boundary did not round-trip");
+
+	g_clear_error (&error);
+	g_clear_object (&parsed);
+	g_object_unref (parser);
+	g_object_unref (stream);
+	g_free (text);
+
+	g_mime_multipart_set_boundary (multipart, "explicit-boundary");
+	testsuite_check ("Explicit multipart boundaries remain unchanged");
+	if (!strcmp (g_mime_multipart_get_boundary (multipart), "explicit-boundary"))
+		testsuite_check_passed ();
+	else
+		testsuite_check_failed ("Explicit boundary was changed");
+	g_object_unref (multipart);
+}
+
 static const char *constraints[] = {
 	"7bit", "8bit", "binary"
 };
@@ -223,14 +348,14 @@ test_content_transfer_encoding (GMimePart *mime_part, GMimeEncodingConstraint co
 static GMimePart *
 create_mime_part (const char *type, const char *subtype, const char *datadir, const char *filename)
 {
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimePart *mime_part;
 	GMimeStream *stream;
 	char *path;
 	
 	path = g_build_filename (datadir, filename, NULL);
 	stream = g_mime_stream_fs_open (path, O_RDONLY, 0644, NULL);
-	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_object_unref (stream);
 	g_free (path);
 	
@@ -249,10 +374,10 @@ test_clearing_headers (GMimePart *mime_part)
 	
 	testsuite_check ("%s", what);
 	
-	list = g_mime_object_get_header_list ((GMimeObject *) mime_part);
+	list = g_mime_entity_get_header_list ((GMimeEntity *) mime_part);
 	g_mime_header_list_clear (list);
 	
-	if (g_mime_object_get_content_disposition ((GMimeObject *) mime_part) != NULL) {
+	if (g_mime_entity_get_content_disposition ((GMimeEntity *) mime_part) != NULL) {
 		testsuite_check_failed ("%s: failed: Content-Disposition still set", what);
 		return;
 	}
@@ -277,7 +402,7 @@ test_clearing_headers (GMimePart *mime_part)
 		return;
 	}
 	
-	if (g_mime_part_get_content_encoding (mime_part) != GMIME_CONTENT_ENCODING_DEFAULT) {
+	if (g_mime_part_get_content_encoding (mime_part) != GMIME_CONTENT_ENCODING_UNSPECIFIED) {
 		testsuite_check_failed ("%s failed: Content-Transfer-Encoding still set", what);
 		return;
 	}
@@ -294,7 +419,7 @@ test_removing_headers (GMimePart *mime_part, const char *filename)
 	
 	testsuite_check ("%s", what);
 	
-	list = g_mime_object_get_header_list ((GMimeObject *) mime_part);
+	list = g_mime_entity_get_header_list ((GMimeEntity *) mime_part);
 	
 	if (!g_mime_header_list_remove (list, "Content-Disposition")) {
 		testsuite_check_failed ("%s failed: could not remove Content-Disposition header", what);
@@ -356,7 +481,7 @@ test_removing_headers (GMimePart *mime_part, const char *filename)
 		return;
 	}
 	
-	if (g_mime_part_get_content_encoding (mime_part) != GMIME_CONTENT_ENCODING_DEFAULT) {
+	if (g_mime_part_get_content_encoding (mime_part) != GMIME_CONTENT_ENCODING_UNSPECIFIED) {
 		testsuite_check_failed ("%s failed: Content-Transfer-Encoding still set", what);
 		return;
 	}
@@ -441,15 +566,15 @@ test_write_to_stream (const char *datadir, const char *output, GMimeContentEncod
 	g_mime_part_set_content_id (mime_part, id);
 	g_mime_part_set_content_md5 (mime_part, md5);
 	
-	if (encoding == GMIME_CONTENT_ENCODING_DEFAULT)
-		g_mime_object_encode ((GMimeObject *) mime_part, GMIME_ENCODING_CONSTRAINT_7BIT);
+	if (encoding == GMIME_CONTENT_ENCODING_UNSPECIFIED)
+		g_mime_entity_encode ((GMimeEntity *) mime_part, GMIME_ENCODING_CONSTRAINT_7BIT);
 	else
 		g_mime_part_set_content_encoding (mime_part, encoding);
 	
 	actual = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array ((GMimeStreamMem *) stream, actual);
-	g_mime_object_write_to_stream ((GMimeObject *) mime_part, options, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) mime_part, options, stream);
 	g_object_unref (mime_part);
 	g_object_unref (stream);
 	
@@ -585,8 +710,9 @@ int main (int argc, char **argv)
 	testsuite_start ("GMimePart");
 	
 	test_content_headers (datadir);
+	test_content_md5_vectors ();
 	
-	test_write_to_stream (datadir, "raptors.b64.txt", GMIME_CONTENT_ENCODING_DEFAULT);
+	test_write_to_stream (datadir, "raptors.b64.txt", GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	test_write_to_stream (datadir, "raptors.uu.txt", GMIME_CONTENT_ENCODING_UUENCODE);
 	
 	test_openpgp_data (datadir, "raptors.png", GMIME_OPENPGP_DATA_NONE);
@@ -597,6 +723,10 @@ int main (int argc, char **argv)
 	
 	test_text_part (datadir, "french-fable.txt", "iso-8859-1");
 	
+	testsuite_end ();
+
+	testsuite_start ("GMimeMultipart boundaries");
+	test_generated_boundaries ();
 	testsuite_end ();
 	
 	g_mime_shutdown ();

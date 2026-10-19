@@ -28,6 +28,14 @@ G_BEGIN_DECLS
 
 G_GNUC_INTERNAL gboolean g_mime_parse_content_type (const char **in, char **type, char **subtype);
 
+G_GNUC_INTERNAL char *_g_mime_parse_text (const char *str, gssize length, GError **error);
+G_GNUC_INTERNAL gboolean _g_mime_parse_error (GError **error, const char *text, const char *inptr, const char *reason);
+G_GNUC_INTERNAL gboolean _g_mime_parse_int32 (const char **in, gint32 *value);
+G_GNUC_INTERNAL gboolean _g_mime_parse_cfws (const char *text, const char **in, GError **error);
+G_GNUC_INTERNAL gboolean _g_mime_parse_domain (GString *domain, const char **in, const char *sentinels);
+G_GNUC_INTERNAL char *_g_mime_parse_message_id_value (const char *value);
+G_GNUC_INTERNAL char *_g_mime_parse_reference (const char **in);
+
 G_GNUC_INTERNAL gboolean g_mime_skip_comment (const char **in);
 #define skip_comment(in) g_mime_skip_comment (in)
 
@@ -46,16 +54,6 @@ G_GNUC_INTERNAL gboolean g_mime_skip_atom (const char **in);
 G_GNUC_INTERNAL gboolean g_mime_skip_word (const char **in);
 #define skip_word(in) g_mime_skip_word (in)
 
-
-G_GNUC_INTERNAL const char *g_mime_decode_word (const char **in);
-#define decode_word(in) g_mime_decode_word (in)
-
-G_GNUC_INTERNAL gboolean g_mime_decode_domain (const char **in, GString *domain);
-#define decode_domain(in, domain) g_mime_decode_domain (in, domain)
-
-
-G_GNUC_INTERNAL char *g_mime_decode_addrspec (const char **in);
-#define decode_addrspec(in) g_mime_decode_addrspec (in)
 
 G_GNUC_INTERNAL char *g_mime_decode_msgid (const char **in);
 #define decode_msgid(in) g_mime_decode_msgid (in)

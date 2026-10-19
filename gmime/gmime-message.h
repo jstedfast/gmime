@@ -25,10 +25,11 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include <gmime/internet-address.h>
+#include <gmime/gmime-internet-address.h>
 #include <gmime/gmime-encodings.h>
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-header.h>
+#include <gmime/gmime-message-id-list.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-autocrypt.h>
 #include <gmime/gmime-crypto-context.h>
@@ -54,6 +55,12 @@ typedef struct _GMimeMessageClass GMimeMessageClass;
  * @GMIME_ADDRESS_TYPE_TO: Represents the recipients in the To header.
  * @GMIME_ADDRESS_TYPE_CC: Represents the recipients in the Cc header.
  * @GMIME_ADDRESS_TYPE_BCC: Represents the recipients in the Bcc header.
+ * @GMIME_ADDRESS_TYPE_RESENT_FROM: Represents the authors in Resent-From headers.
+ * @GMIME_ADDRESS_TYPE_RESENT_REPLY_TO: Represents the addresses in Resent-Reply-To headers.
+ * @GMIME_ADDRESS_TYPE_RESENT_TO: Represents the recipients in Resent-To headers.
+ * @GMIME_ADDRESS_TYPE_RESENT_CC: Represents the recipients in Resent-Cc headers.
+ * @GMIME_ADDRESS_TYPE_RESENT_BCC: Represents the recipients in Resent-Bcc headers.
+ * @GMIME_ADDRESS_TYPE_RESENT_SENDER: Represents the addresses in Resent-Sender headers.
  *
  * An address type.
  **/
@@ -64,12 +71,64 @@ typedef enum _GMimeAddressType {
 	GMIME_ADDRESS_TYPE_TO,
 	GMIME_ADDRESS_TYPE_CC,
 	GMIME_ADDRESS_TYPE_BCC,
+	GMIME_ADDRESS_TYPE_RESENT_FROM,
+	GMIME_ADDRESS_TYPE_RESENT_REPLY_TO,
+	GMIME_ADDRESS_TYPE_RESENT_TO,
+	GMIME_ADDRESS_TYPE_RESENT_CC,
+	GMIME_ADDRESS_TYPE_RESENT_BCC,
+	GMIME_ADDRESS_TYPE_RESENT_SENDER,
 } GMimeAddressType;
+
+/**
+ * GMimeMessageImportance:
+ * @GMIME_MESSAGE_IMPORTANCE_LOW: Low importance.
+ * @GMIME_MESSAGE_IMPORTANCE_NORMAL: Normal importance.
+ * @GMIME_MESSAGE_IMPORTANCE_HIGH: High importance.
+ *
+ * Values of the Importance header.
+ **/
+typedef enum {
+	GMIME_MESSAGE_IMPORTANCE_LOW,
+	GMIME_MESSAGE_IMPORTANCE_NORMAL,
+	GMIME_MESSAGE_IMPORTANCE_HIGH
+} GMimeMessageImportance;
+
+/**
+ * GMimeMessagePriority:
+ * @GMIME_MESSAGE_PRIORITY_NON_URGENT: Non-urgent priority.
+ * @GMIME_MESSAGE_PRIORITY_NORMAL: Normal priority.
+ * @GMIME_MESSAGE_PRIORITY_URGENT: Urgent priority.
+ *
+ * Values of the Priority header.
+ **/
+typedef enum {
+	GMIME_MESSAGE_PRIORITY_NON_URGENT,
+	GMIME_MESSAGE_PRIORITY_NORMAL,
+	GMIME_MESSAGE_PRIORITY_URGENT
+} GMimeMessagePriority;
+
+/**
+ * GMimeXMessagePriority:
+ * @GMIME_X_MESSAGE_PRIORITY_HIGHEST: Highest priority.
+ * @GMIME_X_MESSAGE_PRIORITY_HIGH: High priority.
+ * @GMIME_X_MESSAGE_PRIORITY_NORMAL: Normal priority.
+ * @GMIME_X_MESSAGE_PRIORITY_LOW: Low priority.
+ * @GMIME_X_MESSAGE_PRIORITY_LOWEST: Lowest priority.
+ *
+ * Numeric values of the X-Priority header.
+ **/
+typedef enum {
+	GMIME_X_MESSAGE_PRIORITY_HIGHEST = 1,
+	GMIME_X_MESSAGE_PRIORITY_HIGH,
+	GMIME_X_MESSAGE_PRIORITY_NORMAL,
+	GMIME_X_MESSAGE_PRIORITY_LOW,
+	GMIME_X_MESSAGE_PRIORITY_LOWEST
+} GMimeXMessagePriority;
 
 
 /**
  * GMimeMessage:
- * @parent_object: parent #GMimeObject
+ * @parent_object: parent #GMimeEntity
  * @addrlists: a table of address lists
  * @mime_part: toplevel MIME part
  * @message_id: Message-Id string
@@ -79,20 +138,27 @@ typedef enum _GMimeAddressType {
  * A MIME Message object.
  **/
 struct _GMimeMessage {
-	GMimeObject parent_object;
+	GMimeEntity parent_object;
 	
-	InternetAddressList **addrlists;
-	GMimeObject *mime_part;
+	GMimeInternetAddressList **addrlists;
+	GMimeEntity *mime_part;
 	char *message_id;
 	GDateTime *date;
 	char *subject;
 	
 	/* <private> */
 	char *marker;
+	char *in_reply_to;
+	char *resent_message_id;
+	GMimeMessageIdList *references;
+	GMimeMessageImportance importance;
+	GMimeMessagePriority priority;
+	GMimeXMessagePriority x_priority;
+	GDateTime *resent_date;
 };
 
 struct _GMimeMessageClass {
-	GMimeObjectClass parent_class;
+	GMimeEntityClass parent_class;
 	
 };
 
@@ -101,16 +167,32 @@ GType g_mime_message_get_type (void);
 
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
 
-InternetAddressList *g_mime_message_get_from (GMimeMessage *message);
-InternetAddressList *g_mime_message_get_sender (GMimeMessage *message);
-InternetAddressList *g_mime_message_get_reply_to (GMimeMessage *message);
-InternetAddressList *g_mime_message_get_to (GMimeMessage *message);
-InternetAddressList *g_mime_message_get_cc (GMimeMessage *message);
-InternetAddressList *g_mime_message_get_bcc (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_from (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_sender (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_reply_to (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_to (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_cc (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_bcc (GMimeMessage *message);
 
-void g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, const char *name, const char *addr);
-InternetAddressList *g_mime_message_get_addresses (GMimeMessage *message, GMimeAddressType type);
-InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_resent_from (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_resent_reply_to (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_resent_to (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_resent_cc (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_resent_bcc (GMimeMessage *message);
+
+GMimeInternetAddressList *g_mime_message_get_resent_sender (GMimeMessage *message);
+
+gboolean g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, const char *name, const char *addr, GError **error);
+GMimeInternetAddressList *g_mime_message_get_addresses (GMimeMessage *message, GMimeAddressType type);
+GMimeInternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
+GMimeInternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, gboolean only_unique);
+
+void g_mime_message_set_importance (GMimeMessage *message, GMimeMessageImportance importance);
+GMimeMessageImportance g_mime_message_get_importance (GMimeMessage *message);
+void g_mime_message_set_priority (GMimeMessage *message, GMimeMessagePriority priority);
+GMimeMessagePriority g_mime_message_get_priority (GMimeMessage *message);
+void g_mime_message_set_x_priority (GMimeMessage *message, GMimeXMessagePriority priority);
+GMimeXMessagePriority g_mime_message_get_x_priority (GMimeMessage *message);
 
 void g_mime_message_set_subject (GMimeMessage *message, const char *subject, const char *charset);
 const char *g_mime_message_get_subject (GMimeMessage *message);
@@ -118,22 +200,38 @@ const char *g_mime_message_get_subject (GMimeMessage *message);
 void g_mime_message_set_date (GMimeMessage *message, GDateTime *date);
 GDateTime *g_mime_message_get_date (GMimeMessage *message);
 
+void g_mime_message_set_resent_date (GMimeMessage *message, GDateTime *date);
+GDateTime *g_mime_message_get_resent_date (GMimeMessage *message);
+
 void g_mime_message_set_message_id (GMimeMessage *message, const char *message_id);
 const char *g_mime_message_get_message_id (GMimeMessage *message);
 
-GMimeObject *g_mime_message_get_mime_part (GMimeMessage *message);
-void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
+void g_mime_message_set_in_reply_to (GMimeMessage *message, const char *message_id);
+const char *g_mime_message_get_in_reply_to (GMimeMessage *message);
+
+void g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message_id);
+const char *g_mime_message_get_resent_message_id (GMimeMessage *message);
+
+GMimeMessageIdList *g_mime_message_get_references (GMimeMessage *message);
+
+GMimeEntity *g_mime_message_get_mime_part (GMimeMessage *message);
+void g_mime_message_set_mime_part (GMimeMessage *message, GMimeEntity *mime_part);
+
+GPtrArray *g_mime_message_get_body_parts (GMimeMessage *message);
+GPtrArray *g_mime_message_get_attachments (GMimeMessage *message);
+
+gboolean g_mime_message_try_get_entity (GMimeMessage *message, const char *path_specifier, GMimeEntity **entity);
 
 GMimeAutocryptHeader *g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now);
 GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message, GDateTime *now, GMimeDecryptFlags flags, const char *session_key, GError **err);
-GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeObject *inner_part);
+GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeEntity *inner_part);
 
 /* convenience functions */
 
-void g_mime_message_foreach (GMimeMessage *message, GMimeObjectForeachFunc callback,
+void g_mime_message_foreach (GMimeMessage *message, GMimeEntityForeachFunc callback,
 			     gpointer user_data);
 
-GMimeObject *g_mime_message_get_body (GMimeMessage *message);
+GMimeEntity *g_mime_message_get_body (GMimeMessage *message);
 
 G_END_DECLS
 

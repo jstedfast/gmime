@@ -30,6 +30,7 @@
 #include "gmime-common.h"
 #include "gmime-content-type.h"
 #include "gmime-parse-utils.h"
+#include "gmime-table-private.h"
 #include "gmime-internal.h"
 #include "gmime-events.h"
 
@@ -115,6 +116,7 @@ g_mime_content_type_finalize (GObject *object)
 {
 	GMimeContentType *content_type = (GMimeContentType *) object;
 	
+	g_mime_event_remove (content_type->params->changed, (GMimeEventCallback) param_list_changed, content_type);
 	g_mime_event_free (content_type->changed);
 	g_object_unref (content_type->params);
 	g_free (content_type->subtype);
@@ -181,7 +183,9 @@ g_mime_content_type_new (const char *type, const char *subtype)
  * @options: (nullable): a #GMimeParserOptions or %NULL
  * @str: input string containing a content-type (and params)
  *
- * Parses the input string into a #GMimeContentType object.
+ * Parses the input string using best-effort recovery, substituting a
+ * default content type on invalid input and retaining partial parameters.
+ * Use g_mime_content_type_parse_full() for all-or-nothing parsing.
  *
  * Returns: (transfer full): a new #GMimeContentType object.
  **/
@@ -189,6 +193,103 @@ GMimeContentType *
 g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 {
 	return _g_mime_content_type_parse (options, str, -1);
+}
+
+/**
+ * g_mime_content_type_parse_full:
+ * @options: (nullable): parser options, or %NULL for the defaults
+ * @str: Content-Type field value
+ * @length: byte length, or -1 for a NUL-terminated string
+ * @error: (nullable): return location for a #GError
+ *
+ * Parses the complete input without substituting a default content type
+ * or ignoring malformed parameters. Syntax errors return %NULL with
+ * GMIME_ERROR_PARSE_ERROR and a byte offset relative to @str.
+ * Explicitly bounded input need not be NUL-terminated but cannot contain
+ * embedded NUL bytes.
+ *
+ * Comments and whitespace are accepted between tokens. The media type is
+ * an ASCII atom excluding '/', and the subtype is an ASCII MIME token
+ * that may also contain '/'. Parameters use the compliance and duplicate
+ * precedence rules of g_mime_param_list_parse_full().
+ *
+ * Returns: (nullable) (transfer full): the parsed content type, or %NULL on error.
+ **/
+GMimeContentType *
+g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error)
+{
+	GMimeContentType *content_type = NULL;
+	const char *inptr, *type, *type_end, *subtype, *subtype_end;
+	GMimeParamList *params;
+	char *text;
+
+	g_return_val_if_fail (str != NULL, NULL);
+	g_return_val_if_fail (length >= -1, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (!(text = _g_mime_parse_text (str, length, error)))
+		return NULL;
+
+	inptr = text;
+	if (!_g_mime_parse_cfws (text, &inptr, error))
+		goto done;
+
+	type = inptr;
+	while ((guchar) *inptr < 128 && is_atom (*inptr) && *inptr != '/')
+		inptr++;
+
+	if (inptr == type) {
+		_g_mime_parse_error (error, text, inptr, "Invalid media type");
+		goto done;
+	}
+
+	type_end = inptr;
+	if (!_g_mime_parse_cfws (text, &inptr, error))
+		goto done;
+
+	if (*inptr != '/') {
+		_g_mime_parse_error (error, text, inptr, "Expected media type slash");
+		goto done;
+	}
+
+	inptr++;
+	if (!_g_mime_parse_cfws (text, &inptr, error))
+		goto done;
+
+	subtype = inptr;
+	while ((guchar) *inptr < 127 && (is_ttoken (*inptr) || *inptr == '/'))
+		inptr++;
+
+	if (inptr == subtype) {
+		_g_mime_parse_error (error, text, inptr, "Invalid media subtype");
+		goto done;
+	}
+
+	subtype_end = inptr;
+	if (!_g_mime_parse_cfws (text, &inptr, error))
+		goto done;
+
+	if (*inptr && *inptr != ';') {
+		_g_mime_parse_error (error, text, inptr, "Expected parameter list separator");
+		goto done;
+	}
+
+	if (*inptr)
+		inptr++;
+
+	if (!(params = _g_mime_param_list_parse_full (options, text, inptr, error)))
+		goto done;
+
+	content_type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
+	content_type->type = g_strndup (type, type_end - type);
+	content_type->subtype = g_strndup (subtype, subtype_end - subtype);
+	g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
+	g_object_unref (content_type->params);
+	content_type->params = params;
+
+done:
+	g_free (text);
+	return content_type;
 }
 
 GMimeContentType *
@@ -229,6 +330,34 @@ _g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64
 
 
 /**
+ * g_mime_content_type_clone:
+ * @content_type: a #GMimeContentType
+ *
+ * Copies the media type, subtype, and all parameters, including their
+ * charset, language, encoding method, and quoting preference. Parameters
+ * are copied independently in their original order, retaining spelling
+ * and any duplicate names recovered by legacy parsing.
+ *
+ * Returns: (transfer full): an independent copy of @content_type.
+ **/
+GMimeContentType *
+g_mime_content_type_clone (GMimeContentType *content_type)
+{
+	GMimeContentType *clone;
+
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
+
+	clone = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
+	clone->type = g_strdup (content_type->type);
+	clone->subtype = g_strdup (content_type->subtype);
+	g_object_unref (clone->params);
+	clone->params = _g_mime_param_list_clone (content_type->params);
+	g_mime_event_add (clone->params->changed, (GMimeEventCallback) param_list_changed, clone);
+
+	return clone;
+}
+
+/**
  * g_mime_content_type_get_mime_type:
  * @content_type: a #GMimeContentType
  *
@@ -254,11 +383,39 @@ g_mime_content_type_get_mime_type (GMimeContentType *content_type)
 
 
 /**
+ * g_mime_content_type_to_string:
+ * @content_type: a #GMimeContentType
+ *
+ * Formats a display string beginning with "Content-Type: ". Parameter
+ * values are always quoted and escaped, without transport encoding,
+ * folding, or an appended newline. This is not a transport-safe header;
+ * use g_mime_content_type_encode() when serializing a MIME message.
+ *
+ * Returns: (transfer full): the unencoded display string.
+ **/
+char *
+g_mime_content_type_to_string (GMimeContentType *content_type)
+{
+	char *params, *str;
+
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
+
+	params = g_mime_param_list_to_string (content_type->params);
+	str = g_strdup_printf ("Content-Type: %s/%s%s",
+			       content_type->type ? content_type->type : "text",
+			       content_type->subtype ? content_type->subtype : "plain", params);
+	g_free (params);
+
+	return str;
+}
+
+/**
  * g_mime_content_type_encode:
  * @content_type: a #GMimeContentType
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
- * Encodes the Content-Disposition header.
+ * Encodes the Content-Type field value, including leading whitespace and
+ * a terminating newline. The field name is not included.
  *
  * Returns: a new string containing the encoded header value.
  **/
@@ -341,6 +498,9 @@ g_mime_content_type_set_media_type (GMimeContentType *content_type, const char *
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 	g_return_if_fail (type != NULL);
 	
+	if (!g_strcmp0 (content_type->type, type))
+		return;
+
 	buf = g_strdup (type);
 	g_free (content_type->type);
 	content_type->type = buf;
@@ -381,6 +541,9 @@ g_mime_content_type_set_media_subtype (GMimeContentType *content_type, const cha
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 	g_return_if_fail (subtype != NULL);
 	
+	if (!g_strcmp0 (content_type->subtype, subtype))
+		return;
+
 	buf = g_strdup (subtype);
 	g_free (content_type->subtype);
 	content_type->subtype = buf;
@@ -405,6 +568,138 @@ g_mime_content_type_get_media_subtype (GMimeContentType *content_type)
 	return content_type->subtype;
 }
 
+
+/**
+ * g_mime_content_type_set_boundary:
+ * @content_type: a #GMimeContentType
+ * @boundary: (nullable): the UTF-8 boundary, or %NULL to remove the parameter
+ *
+ * Sets the boundary parameter. An empty string remains an explicit empty
+ * value. Unlike g_mime_multipart_set_boundary(), %NULL removes the parameter
+ * rather than generating a boundary.
+ **/
+void
+g_mime_content_type_set_boundary (GMimeContentType *content_type, const char *boundary)
+{
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
+
+	if (boundary)
+		g_mime_param_list_set_parameter (content_type->params, "boundary", boundary);
+	else
+		g_mime_param_list_remove (content_type->params, "boundary");
+}
+
+/**
+ * g_mime_content_type_get_boundary:
+ * @content_type: a #GMimeContentType
+ *
+ * Gets the boundary parameter without generating a value.
+ *
+ * Returns: (nullable): the borrowed boundary, or %NULL if absent.
+ **/
+const char *
+g_mime_content_type_get_boundary (GMimeContentType *content_type)
+{
+	return g_mime_content_type_get_parameter (content_type, "boundary");
+}
+
+/**
+ * g_mime_content_type_set_charset:
+ * @content_type: a #GMimeContentType
+ * @charset: (nullable): the UTF-8 charset name, or %NULL to remove the parameter
+ *
+ * Sets the charset parameter without resolving or normalizing its name.
+ * An empty string remains an explicit empty value.
+ **/
+void
+g_mime_content_type_set_charset (GMimeContentType *content_type, const char *charset)
+{
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
+
+	if (charset)
+		g_mime_param_list_set_parameter (content_type->params, "charset", charset);
+	else
+		g_mime_param_list_remove (content_type->params, "charset");
+}
+
+/**
+ * g_mime_content_type_get_charset:
+ * @content_type: a #GMimeContentType
+ *
+ * Gets the charset parameter without resolving or normalizing its name.
+ *
+ * Returns: (nullable): the borrowed charset name, or %NULL if absent.
+ **/
+const char *
+g_mime_content_type_get_charset (GMimeContentType *content_type)
+{
+	return g_mime_content_type_get_parameter (content_type, "charset");
+}
+
+/**
+ * g_mime_content_type_set_format:
+ * @content_type: a #GMimeContentType
+ * @format: (nullable): the UTF-8 format, or %NULL to remove the parameter
+ *
+ * Sets the format parameter, typically "fixed" or "flowed" for text/plain.
+ * Other values and explicit empty strings are preserved.
+ **/
+void
+g_mime_content_type_set_format (GMimeContentType *content_type, const char *format)
+{
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
+
+	if (format)
+		g_mime_param_list_set_parameter (content_type->params, "format", format);
+	else
+		g_mime_param_list_remove (content_type->params, "format");
+}
+
+/**
+ * g_mime_content_type_get_format:
+ * @content_type: a #GMimeContentType
+ *
+ * Gets the format parameter.
+ *
+ * Returns: (nullable): the borrowed format, or %NULL if absent.
+ **/
+const char *
+g_mime_content_type_get_format (GMimeContentType *content_type)
+{
+	return g_mime_content_type_get_parameter (content_type, "format");
+}
+
+/**
+ * g_mime_content_type_set_name:
+ * @content_type: a #GMimeContentType
+ * @name: (nullable): the UTF-8 display name, or %NULL to remove the parameter
+ *
+ * Sets the name parameter. Empty strings and whitespace are preserved.
+ **/
+void
+g_mime_content_type_set_name (GMimeContentType *content_type, const char *name)
+{
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
+
+	if (name)
+		g_mime_param_list_set_parameter (content_type->params, "name", name);
+	else
+		g_mime_param_list_remove (content_type->params, "name");
+}
+
+/**
+ * g_mime_content_type_get_name:
+ * @content_type: a #GMimeContentType
+ *
+ * Gets the name parameter.
+ *
+ * Returns: (nullable): the borrowed UTF-8 display name, or %NULL if absent.
+ **/
+const char *
+g_mime_content_type_get_name (GMimeContentType *content_type)
+{
+	return g_mime_content_type_get_parameter (content_type, "name");
+}
 
 /**
  * g_mime_content_type_get_parameters:

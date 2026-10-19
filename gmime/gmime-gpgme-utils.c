@@ -22,7 +22,9 @@
 #include <config.h>
 #endif
 
+#include <limits.h>
 #include <string.h>
+#include <time.h>
 
 #include "gmime-gpgme-utils.h"
 #include "gmime-stream-pipe.h"
@@ -322,8 +324,28 @@ _gpgv_lt(gpgme_validity_t a, gpgme_validity_t b) {
 }
 
 
-static GMimeSignatureList *
-g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
+static gboolean
+g_mime_gpgme_get_date (guint64 timestamp, gboolean expiration, GDateTime **date, GError **err)
+{
+	*date = NULL;
+
+	/* GPGME reserves -1 for invalid creation times; GLib ends at year 9999. */
+	if ((!expiration && timestamp == ULONG_MAX) || timestamp > G_GUINT64_CONSTANT (253402300799)) {
+		g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_INV_TIME,
+			     _("GPGME timestamp %" G_GUINT64_FORMAT " is outside the supported date range."), timestamp);
+		return FALSE;
+	}
+
+	if (timestamp != 0)
+		*date = g_date_time_new_from_unix_utc (timestamp);
+	else if (expiration)
+		*date = g_date_time_new_utc (9999, 12, 31, 23, 59, 59.999999);
+
+	return TRUE;
+}
+
+static gboolean
+g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify, GMimeSignatureList **out, GError **err)
 {
 	GMimeSignatureList *signatures;
 	GMimeSignature *signature;
@@ -332,10 +354,14 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 	gpgme_subkey_t subkey;
 	gpgme_user_id_t uid;
 	gpgme_key_t key;
+
+	*out = NULL;
 	
 	/* get the signature verification results from GpgMe */
-	if (!(result = gpgme_op_verify_result (ctx)) || !result->signatures)
-		return verify ? g_mime_signature_list_new () : NULL;
+	if (!(result = gpgme_op_verify_result (ctx)) || !result->signatures) {
+		*out = verify ? g_mime_signature_list_new () : NULL;
+		return TRUE;
+	}
 	
 	/* create a new signature list to return */
 	signatures = g_mime_signature_list_new ();
@@ -348,8 +374,11 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 		g_object_unref (signature);
 		
 		g_mime_signature_set_status (signature, (GMimeSignatureStatus) sig->summary);
-		g_mime_signature_set_expires (signature, sig->exp_timestamp);
-		g_mime_signature_set_created (signature, sig->timestamp);
+		if (!g_mime_gpgme_get_date (sig->timestamp, FALSE, &signature->created, err) ||
+		    !g_mime_gpgme_get_date (sig->exp_timestamp, TRUE, &signature->expires, err)) {
+			g_object_unref (signatures);
+			return FALSE;
+		}
 		
 		g_mime_certificate_set_pubkey_algo (signature->cert, (GMimePubKeyAlgo) sig->pubkey_algo);
 		g_mime_certificate_set_digest_algo (signature->cert, (GMimeDigestAlgo) sig->hash_algo);
@@ -403,8 +432,12 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 				subkey = subkey->next;
 			
 			if (subkey) {
-				g_mime_certificate_set_created (signature->cert, subkey->timestamp);
-				g_mime_certificate_set_expires (signature->cert, subkey->expires);
+				if (!g_mime_gpgme_get_date (subkey->timestamp, FALSE, &signature->cert->created, err) ||
+				    !g_mime_gpgme_get_date (subkey->expires, TRUE, &signature->cert->expires, err)) {
+					gpgme_key_unref (key);
+					g_object_unref (signatures);
+					return FALSE;
+				}
 			}
 			
 			gpgme_key_unref (key);
@@ -418,13 +451,15 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify)
 		sig = sig->next;
 	}
 	
-	return signatures;
+	*out = signatures;
+	return TRUE;
 }
 
 GMimeSignatureList *
 g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeVerifyFlags flags, GMimeStream *istream, GMimeStream *sigstream,
 		     GMimeStream *ostream, GError **err)
 {
+	GMimeSignatureList *signatures;
 	gpgme_data_t sig, signed_text, plain;
 	gpgme_error_t error;
 	
@@ -481,7 +516,10 @@ g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeVerifyFlags flags, GMimeStream *istre
 	}
 	
 	/* get/return the signatures */
-	return g_mime_gpgme_get_signatures (ctx, TRUE);
+	if (!g_mime_gpgme_get_signatures (ctx, TRUE, &signatures, err))
+		return NULL;
+
+	return signatures;
 }
 
 static void
@@ -565,7 +603,7 @@ g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, const char *userid,
 }
 
 static GMimeDecryptResult *
-g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx)
+g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx, GError **err)
 {
 	GMimeDecryptResult *result;
 	gpgme_decrypt_result_t res;
@@ -574,7 +612,10 @@ g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx)
 	
 	result = g_mime_decrypt_result_new ();
 	result->recipients = g_mime_certificate_list_new ();
-	result->signatures = g_mime_gpgme_get_signatures (ctx, FALSE);
+	if (!g_mime_gpgme_get_signatures (ctx, FALSE, &result->signatures, err)) {
+		g_object_unref (result);
+		return NULL;
+	}
 	
 	// TODO: ciper, mdc
 	
@@ -654,7 +695,7 @@ g_mime_gpgme_decrypt (gpgme_ctx_t ctx, GMimeDecryptFlags flags, const char *sess
 		return NULL;
 	}
 	
-	return g_mime_gpgme_get_decrypt_result (ctx);
+	return g_mime_gpgme_get_decrypt_result (ctx, err);
 }
 
 int

@@ -82,20 +82,20 @@ GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_new (GMimeSecureMimeTyp
 
 GMimeSecureMimeType g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_mime);
 
-/*GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_compress (GMimeObject *entity, GError **err);*/
-/*GMimeObject *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime);*/
+/*GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err);*/
+/*GMimeEntity *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime);*/
 
-GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags flags,
+GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_encrypt (GMimeEntity *entity, GMimeEncryptFlags flags,
 								  GPtrArray *recipients, GError **err);
 
-GMimeObject *g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
+GMimeEntity *g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
 						    GMimeDecryptFlags flags, const char *session_key,
 						    GMimeDecryptResult **result, GError **err);
 
-GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GError **err);
+GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_sign (GMimeEntity *entity, const char *userid, GError **err);
 
 GMimeSignatureList *g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags,
-							  GMimeObject **entity, GError **err);
+							  GMimeEntity **entity, GError **err);
 
 G_END_DECLS
 

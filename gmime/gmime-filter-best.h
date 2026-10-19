@@ -62,13 +62,12 @@ typedef enum {
  * @count0: count of nul-bytes passed through the filter
  * @count8: count of 8bit bytes passed through the filter
  * @total: total number of bytes passed through the filter
- * @maxline: the length of the longest line passed through the filter
+ * @maxline: longest completed line length, excluding CRLF
  * @linelen: current line length
  * @frombuf: buffer for checking From_ lines
  * @fromlen: length of bytes in @frombuf
- * @hadfrom: %TRUE if any line started with "From "
- * @startline: start line state
- * @midline: mid-line state
+ * @hadfrom: %TRUE if a newline-terminated line started with "From "
+ * @previous: previous byte, for CRLF split across input buffers
  *
  * A filter for calculating the best encoding and/or charset to encode
  * the data passed through it.
@@ -82,19 +81,18 @@ struct _GMimeFilterBest {
 	GMimeCharset charset;
 	
 	/* for best encoding detection */
-	unsigned int count0;      /* count of null bytes */
-	unsigned int count8;      /* count of 8bit bytes */
-	unsigned int total;       /* total octets */
+	guint64 count0;           /* count of null bytes */
+	guint64 count8;           /* count of 8bit bytes */
+	guint64 total;            /* total octets */
 	
-	unsigned int maxline;     /* longest line length */
-	unsigned int linelen;     /* current line length */
+	guint64 maxline;          /* longest line length */
+	guint64 linelen;          /* current line length */
 	
 	unsigned char frombuf[6];
 	unsigned int fromlen : 4;
 	unsigned int hadfrom : 1;
 	
-	unsigned int startline : 1;
-	unsigned int midline : 1;
+	unsigned char previous;
 };
 
 struct _GMimeFilterBestClass {
@@ -110,6 +108,9 @@ GMimeFilter *g_mime_filter_best_new (GMimeFilterBestFlags flags);
 const char *g_mime_filter_best_charset (GMimeFilterBest *best);
 
 GMimeContentEncoding g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeEncodingConstraint constraint);
+GMimeContentEncoding g_mime_filter_best_encoding_with_max_line_length (GMimeFilterBest *best,
+								    GMimeEncodingConstraint constraint,
+								    guint max_line_length);
 
 G_END_DECLS
 

@@ -4,6 +4,10 @@
 
 ## What is GMime?
 
+This development tree is migrating GMime 4 to MimeKit.Core's parsing and
+serialization behavior. The port is incremental and is not yet feature-complete.
+See [PORTING.md](PORTING.md) for the API renames, scope, and compatibility contract.
+
 GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose
 Internet Mail Extension (MIME) as defined by [numerous IETF specifications](https://github.com/jstedfast/gmime/blob/master/RFCs.md).
 
@@ -60,15 +64,21 @@ can be done using the following command:
 
 ## Requirements
 
+Building GMime requires a C compiler, Meson >= 1.3.0, Ninja, and pkg-config.
+
 For proper compilation and functionality of GMime, the following packages
 are REQUIRED:
 
-  - Glib version >= 2.68.0
+  - GLib version >= 2.88.0
 
     Glib provides a number of portability-enhancing functions and types.
     Glib is included in most GMime-supported operating system
     distributions.  Glib sources may be obtained from:
       ftp://ftp.gtk.org/pub/glib
+
+  - zlib
+
+  - iconv (provided by the C library on some platforms, or GNU libiconv)
 
 The following packages are RECOMMENDED:
 
@@ -85,6 +95,38 @@ The following packages are RECOMMENDED:
     OpenPGP and S/MIME. GPGME sources may be obtained from:
       https://www.gnupg.org/download/index.html#gpgme
 
+## Building
+
+GMime 4 uses Meson instead of Autotools. Builds must use a separate build
+directory:
+
+```sh
+meson setup _build
+meson compile -C _build
+meson test -C _build --print-errorlogs
+meson install -C _build
+```
+
+Use `--prefix` when setting up the build to choose the installation prefix.
+Packagers can stage installation with `meson install -C _build --destdir DESTDIR`.
+
+Crypto, libidn2, introspection, and Vala bindings are detected automatically.
+Use `-Dcrypto=enabled`, `-Dlibidn=enabled`, `-Dintrospection=enabled`, or
+`-Dvapi=enabled` to require them, or `disabled` to omit them. Without libidn2,
+IDN conversion uses GLib. Vala bindings require introspection, and introspection
+requires a shared library.
+
+The API reference is optional: configure with `-Dgtk_doc=true` and build the
+`gmime-doc` target. This requires gtk-doc and DocBook tools. Tests and examples
+are built by default; disable them with `-Dtests=false` or `-Dexamples=false`.
+Crypto tests additionally require GnuPG and the supplied test keys.
+Test fixtures should retain their repository line endings.
+
+Meson's standard options provide static libraries (`-Ddefault_library=static`),
+coverage (`-Db_coverage=true`), and sanitizers (`-Db_sanitize=address,undefined`).
+When cross-compiling without an executable wrapper, GMime uses its built-in
+platform charset aliases instead of running the iconv alias detector.
+
 ## Using GMime
 
 ### Parsing Messages
@@ -97,6 +139,7 @@ To do this, you will need to use a `GMimeParser`:
 GMimeMessage *message;
 GMimeStream *stream;
 GMimeParser *parser;
+GError *error = NULL;
 
 stream = g_mime_stream_fs_open ("message.eml", O_RDONLY, 0644, NULL);
 parser = g_mime_parser_new_with_stream (stream);
@@ -104,7 +147,11 @@ parser = g_mime_parser_new_with_stream (stream);
 /* Note: we can unref the stream now since the GMimeParser has a reference to it... */
 g_object_unref (stream);
 
-message = g_mime_parser_construct_message (parser, NULL);
+message = g_mime_parser_construct_message (parser, NULL, &error);
+if (error != NULL) {
+    g_warning ("Failed to parse message: %s", error->message);
+    g_error_free (error);
+}
 
 /* unref the parser since we no longer need it */
 g_object_unref (parser);
@@ -116,6 +163,7 @@ If you are planning to parse messages from an mbox stream, you can do something 
 GMimeMessage *message;
 GMimeStream *stream;
 GMimeParser *parser;
+GError *error = NULL;
 gint64 offset;
 char *marker;
 
@@ -130,8 +178,13 @@ g_object_unref (stream);
 
 while (!g_mime_parser_eos (parser)) {
     /* load the next message from the mbox */
-    if ((message = g_mime_parser_construct_message (parser, NULL)) != NULL)
+    if ((message = g_mime_parser_construct_message (parser, NULL, &error)) != NULL)
         g_object_unref (message);
+    if (error != NULL) {
+        g_warning ("Failed to parse mbox message: %s", error->message);
+        g_error_free (error);
+        break;
+    }
 
     /* get information about the mbox "From " marker... */
     offset = g_mime_parser_get_mbox_marker_offset (parser);
@@ -222,8 +275,8 @@ GPtrArray *multiparts = g_ptr_array_new ();
 
 /* collect our list of attachments and their parent multiparts */
 while (g_mime_part_iter_next (iter)) {
-    GMimeObject *current = g_mime_part_iter_get_current (iter);
-    GMimeObject *parent = g_mime_part_iter_get_parent (iter);
+    GMimeEntity *current = g_mime_part_iter_get_current (iter);
+    GMimeEntity *parent = g_mime_part_iter_get_parent (iter);
 
     if (GMIME_IS_MULTIPART (parent) && GMIME_IS_PART (current)) {
         GMimePart *part = (GMimePart *) current;
@@ -239,7 +292,7 @@ while (g_mime_part_iter_next (iter)) {
 /* now remove each attachment its parent multipart... */
 for (int i = 0; i < attachments->len; i++) {
     GMimeMultipart *multipart = (GMimeMultipart *) multiparts->pdata[i];
-    GMimeObject *attachment = (GMimeObject *) attachments->pdata[i];
+    GMimeEntity *attachment = (GMimeEntity *) attachments->pdata[i];
 
     g_mime_multipart_remove (multipart, attachment);
 }
@@ -255,8 +308,8 @@ GMimeTextPart *body;
 
 message = g_mime_message_new (TRUE);
 
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 body = g_mime_text_part_new_with_subtype ("plain");
@@ -266,7 +319,7 @@ g_mime_text_part_set_text (body, "Hey Alice,\n\n"
     "Will you be my +1?\n\n"
     "-- Joey\n");
 
-g_mime_message_set_mime_part (message, (GMimeObject *) body);
+g_mime_message_set_mime_part (message, (GMimeEntity *) body);
 g_object_unref (body);
 ```
 
@@ -283,15 +336,15 @@ Here's how you can do that with GMime:
 
 ```c
 GMimeMultipart *multipart;
-GMimeDataWrapper *content;
+GMimeContent *content;
 GMimeMessage *message;
 GMimePart *attachment;
 GMimeTextPart *body;
 GMimeStream *stream;
 
 message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 /* create our message text, just like before... */
@@ -308,7 +361,7 @@ g_mime_part_set_filename (attachment, basename (path));
 
 /* create the content for the image attachment */
 stream = g_mime_stream_fs_open (path, O_RDONLY, 0644, NULL);
-content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
+content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 g_object_unref (stream);
 
 /* set the content of the attachment */
@@ -322,15 +375,15 @@ g_mime_part_set_content_encoding (attachment, GMIME_CONTENT_ENCODING_BASE64);
 multipart = g_mime_multipart_new_with_subtype ("mixed");
 
 /* add the text body first */
-g_mime_multipart_add (multipart, (GMimeObject *) body);
+g_mime_multipart_add (multipart, (GMimeEntity *) body);
 g_object_unref (body);
 
 /* now add the attachment(s) */
-g_mime_multipart_add (multipart, (GMimeObject *) attachment);
+g_mime_multipart_add (multipart, (GMimeEntity *) attachment);
 g_object_unref (attachment);
 
 /* set the multipart/mixed as the message body */
-g_mime_message_set_mime_part (message, (GMimeObject *) multipart);
+g_mime_message_set_mime_part (message, (GMimeEntity *) multipart);
 g_object_unref (multipart);
 ```
 
@@ -354,24 +407,24 @@ html = CreateTextHtmlPart ();
  * editor. */
 alternative = g_mime_multipart_new_with_subtype ("alternative");
 
-g_mime_multipart_add (alternative, (GMimeObject *) plain);
+g_mime_multipart_add (alternative, (GMimeEntity *) plain);
 g_object_unref (plain);
 
-g_mime_multipart_add (alternative, (GMimeObject *) html);
+g_mime_multipart_add (alternative, (GMimeEntity *) html);
 g_object_unref (html);
 
 /* now create the multipart/mixed container to hold the multipart/alternative
  * and the image attachment */
 mixed = g_mime_multipart_new_with_subtype ("mixed");
 
-g_mime_multipart_add (mixed, (GMimeObject *) alternative);
+g_mime_multipart_add (mixed, (GMimeEntity *) alternative);
 g_object_unref (alternative);
 
-g_mime_multipart_add (mixed, (GMimeObject *) attachment);
+g_mime_multipart_add (mixed, (GMimeEntity *) attachment);
 g_object_unref (attachment);
 
 /* now set the multipart/mixed as the message body */
-g_mime_message_set_mime_part (message, (GMimeObject *) mixed);
+g_mime_message_set_mime_part (message, (GMimeEntity *) mixed);
 g_object_unref (mixed);
 ```
 
@@ -383,12 +436,12 @@ S/MIME uses an `application/pkcs7-mime` MIME part to encapsulate encrypted conte
 GMimeApplicationPkcs7Mime *encrypted;
 GMimeMessage *message;
 GError *err = NULL;
-GMimeObject *body;
+GMimeEntity *body;
 GPtrArray *rcpts;
 
 message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 /* create our message body (perhaps a multipart/mixed with the message text and some
@@ -441,12 +494,12 @@ GMimeMultipartEncrypted *encrypted;
 GMimeCryptoContext *ctx;
 GMimeMessage *message;
 GError *err = NULL;
-GMimeObject *body;
+GMimeEntity *body;
 GPtrArray *rcpts;
 
 message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 /* create our message body (perhaps a multipart/mixed with the message text and some
@@ -471,7 +524,7 @@ if (encrypted == NULL) {
     return;
 }
 
-g_mime_message_set_mime_part (message, (GMimeObject *) encrypted);
+g_mime_message_set_mime_part (message, (GMimeEntity *) encrypted);
 g_object_unref (encrypted);
 ```
 
@@ -479,8 +532,8 @@ g_object_unref (encrypted);
 
 As mentioned earlier, PGP/MIME uses a `multipart/encrypted` part to encapsulate the encrypted content.
 
-A `multipart/encrypted` contains exactly 2 parts: the first `GMimeObject` is the version information while the
-second `GMimeObject` is the actual encrypted content and will typically be an `application/octet-stream`.
+A `multipart/encrypted` contains exactly 2 parts: the first `GMimeEntity` is the version information while the
+second `GMimeEntity` is the actual encrypted content and will typically be an `application/octet-stream`.
 
 The first thing you must do is find the `GMimeMultipartEncrypted` part (see the section on traversing MIME parts).
 
@@ -504,11 +557,11 @@ Here's how you might digitally sign a message using S/MIME:
 GMimeApplicationPkcs7Mime *pkcs7;
 GMimeMessage *message;
 GError *err = NULL;
-GMimeObject *body;
+GMimeEntity *body;
 
 message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 /* create our message body (perhaps a multipart/mixed with the message text and some
@@ -525,7 +578,7 @@ if (!(pkcs7 = g_mime_application_pkcs7_mime_sign (body, "joey@friends.com", &err
 
 g_object_unref (body);
 
-g_mime_message_set_mime_part (message, (GMimeObject *) pkcs7);
+g_mime_message_set_mime_part (message, (GMimeEntity *) pkcs7);
 g_object_unref (pkcs7);
 ```
 
@@ -536,11 +589,11 @@ GMimeMultipartSigned *ms;
 GMimeCryptoContext *ctx;
 GMimeMessage *message;
 GError *err = NULL;
-GMimeObject *body;
+GMimeEntity *body;
 
 message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 /* create our message body (perhaps a multipart/mixed with the message text and some
@@ -562,7 +615,7 @@ if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", &err))) 
 g_object_unref (body);
 g_object_unref (ctx);
 
-g_mime_message_set_mime_part (message, (GMimeObject *) ms);
+g_mime_message_set_mime_part (message, (GMimeEntity *) ms);
 g_object_unref (ms);
 ```
 
@@ -574,11 +627,11 @@ GMimeMultipartSigned *ms;
 GMimeCryptoContext *ctx;
 GMimeMessage *message;
 GError *err = NULL;
-GMimeObject *body;
+GMimeEntity *body;
 
 message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com");
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com");
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
+g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
 g_mime_message_set_subject (message, "How you doin?", NULL);
 
 /* create our message body (perhaps a multipart/mixed with the message text and some
@@ -600,7 +653,7 @@ if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", &err))) 
 g_object_unref (body);
 g_object_unref (ctx);
 
-g_mime_message_set_mime_part (message, (GMimeObject *) ms);
+g_mime_message_set_mime_part (message, (GMimeEntity *) ms);
 g_object_unref (ms);
 ```
 
@@ -609,8 +662,8 @@ g_object_unref (ms);
 As mentioned earlier, both S/MIME and PGP/MIME typically use a `multipart/signed` part to contain the
 signed content and the detached signature data.
 
-A `multipart/signed` contains exactly 2 parts: the first `GMimeObject` is the signed content while the second
-`GMimeObject` is the detached signature and, by default, will either be a `GMimeApplicationPgpSignature` part
+A `multipart/signed` contains exactly 2 parts: the first `GMimeEntity` is the signed content while the second
+`GMimeEntity` is the detached signature and, by default, will either be a `GMimeApplicationPgpSignature` part
 or a `GMimeApplicationPkcs7Signature` part (depending on whether the sending client signed using OpenPGP or
 S/MIME).
 
@@ -713,7 +766,7 @@ if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
     if (smime_type == GMIME_SECURE_MIME_TYPE_SIGNED_DATA) {
         /* extract the original content and get a list of signatures */
         GMimeSignatureList *signatures;
-        GMimeObject *extracted;
+        GMimeEntity *extracted;
         GError *err = NULL;
         int i, count;
 
@@ -756,10 +809,10 @@ GMimeStream *stream = g_mime_stream_mem_new ();
 ```
 
 The next example shows a function that returns a reference to an *existing* `GMimeStream` object that is stored on
-(and therefor managed by) the `GMimeDataWrapper` object:
+(and therefor managed by) the `GMimeContent` object:
 
 ```c
-GMimeStream *stream = g_mime_data_wrapper_get_stream (wrapper);
+GMimeStream *stream = g_mime_content_get_stream (wrapper);
 ```
 
 In the above example, the `stream` *should not* be unreffed because the `stream` object's memory is managed by the
@@ -771,18 +824,18 @@ For example:
 
 ```c
 GMimeStream *stream = g_mime_stream_mem_new ();
-GMimeDataWrapper *wrapper = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
+GMimeContent *wrapper = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 g_object_unref (stream);
 ```
 
 Even in this situation, it is necessary to unref the allocated object because all GMime functions that add an
 object to another object will ref that object themselves.
 
-In other words, in the above example, the `GMimeStream` is being added to the `GMimeDataWrapper`. The
-`GMimeDataWrapper` calls `g_object_ref()` on the `stream` which means that the `stream` object now has
+In other words, in the above example, the `GMimeStream` is being added to the `GMimeContent`. The
+`GMimeContent` calls `g_object_ref()` on the `stream` which means that the `stream` object now has
 a ref count of 2.
 
-When `g_object_unref()` is called on the stream after adding it to the `GMimeDataWrapper`, the ref count drops
+When `g_object_unref()` is called on the stream after adding it to the `GMimeContent`, the ref count drops
 down to 1.
 
 And when the `wrapper` object is eventually finalized after calling `g_object_unref()` on it, the ref count
@@ -802,7 +855,7 @@ of GMime.
 |COPYING        |The GNU Lesser General Public License, version 2|
 |INSTALL        |In-depth installation instructions|
 |TODO           |Description of planned GMime development|
-|PORTING        |Guide for developers porting their application from an older version of GMime|
+|[PORTING.md](PORTING.md)|Migration from GMime 3.0 to 4.0 and the MimeKit porting contract|
 
 
 ## Discussion Forums

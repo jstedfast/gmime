@@ -67,9 +67,12 @@ GType g_mime_content_type_get_type (void);
 
 GMimeContentType *g_mime_content_type_new (const char *type, const char *subtype);
 GMimeContentType *g_mime_content_type_parse (GMimeParserOptions *options, const char *str);
+GMimeContentType *g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error);
+GMimeContentType *g_mime_content_type_clone (GMimeContentType *content_type);
 
 char *g_mime_content_type_get_mime_type (GMimeContentType *content_type);
 
+char *g_mime_content_type_to_string (GMimeContentType *content_type);
 char *g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *options);
 
 gboolean g_mime_content_type_is_type (GMimeContentType *content_type, const char *type, const char *subtype);
@@ -79,6 +82,18 @@ const char *g_mime_content_type_get_media_type (GMimeContentType *content_type);
 
 void g_mime_content_type_set_media_subtype (GMimeContentType *content_type, const char *subtype);
 const char *g_mime_content_type_get_media_subtype (GMimeContentType *content_type);
+
+void g_mime_content_type_set_boundary (GMimeContentType *content_type, const char *boundary);
+const char *g_mime_content_type_get_boundary (GMimeContentType *content_type);
+
+void g_mime_content_type_set_charset (GMimeContentType *content_type, const char *charset);
+const char *g_mime_content_type_get_charset (GMimeContentType *content_type);
+
+void g_mime_content_type_set_format (GMimeContentType *content_type, const char *format);
+const char *g_mime_content_type_get_format (GMimeContentType *content_type);
+
+void g_mime_content_type_set_name (GMimeContentType *content_type, const char *name);
+const char *g_mime_content_type_get_name (GMimeContentType *content_type);
 
 GMimeParamList *g_mime_content_type_get_parameters (GMimeContentType *content_type);
 

@@ -26,9 +26,11 @@
 #include <string.h>
 
 #include "gmime-multipart.h"
+#include "gmime-visitor.h"
 #include "gmime-internal.h"
 #include "gmime-common.h"
 #include "gmime-utils.h"
+#include "gmime-rfc2047-private.h"
 
 
 #define d(x)
@@ -48,26 +50,33 @@ static void g_mime_multipart_class_init (GMimeMultipartClass *klass);
 static void g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass);
 static void g_mime_multipart_finalize (GObject *object);
 
-/* GMimeObject class methods */
-static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options,
+/* GMimeEntity class methods */
+static ssize_t multipart_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					  gboolean content_only, GMimeStream *stream);
-static void multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
+static void multipart_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
 
 /* GMimeMultipart class methods */
 static void multipart_clear (GMimeMultipart *multipart);
-static void multipart_add (GMimeMultipart *multipart, GMimeObject *part);
-static void multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part);
-static gboolean multipart_remove (GMimeMultipart *multipart, GMimeObject *part);
-static GMimeObject *multipart_remove_at (GMimeMultipart *multipart, int index);
-static GMimeObject *multipart_get_part (GMimeMultipart *multipart, int index);
-static gboolean multipart_contains (GMimeMultipart *multipart, GMimeObject *part);
-static int multipart_index_of (GMimeMultipart *multipart, GMimeObject *part);
+static void multipart_add (GMimeMultipart *multipart, GMimeEntity *part);
+static void multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part);
+static gboolean multipart_remove (GMimeMultipart *multipart, GMimeEntity *part);
+static GMimeEntity *multipart_remove_at (GMimeMultipart *multipart, int index);
+static GMimeEntity *multipart_get_part (GMimeMultipart *multipart, int index);
+static gboolean multipart_contains (GMimeMultipart *multipart, GMimeEntity *part);
+static int multipart_index_of (GMimeMultipart *multipart, GMimeEntity *part);
 static int multipart_get_count (GMimeMultipart *multipart);
 static void multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
 static const char *multipart_get_boundary (GMimeMultipart *multipart);
+static gboolean multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
 
 
-static GMimeObjectClass *parent_class = NULL;
+static GMimeEntityClass *parent_class = NULL;
+
+static void
+multipart_accept (GMimeEntity *object, GMimeVisitor *visitor)
+{
+	g_mime_visitor_visit_multipart (visitor, (GMimeMultipart *) object);
+}
 
 
 GType
@@ -88,7 +97,7 @@ g_mime_multipart_get_type (void)
 			(GInstanceInitFunc) g_mime_multipart_init,
 		};
 		
-		type = g_type_register_static (GMIME_TYPE_OBJECT, "GMimeMultipart", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_ENTITY, "GMimeMultipart", &info, 0);
 	}
 	
 	return type;
@@ -98,15 +107,16 @@ g_mime_multipart_get_type (void)
 static void
 g_mime_multipart_class_init (GMimeMultipartClass *klass)
 {
-	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
+	GMimeEntityClass *object_class = GMIME_ENTITY_CLASS (klass);
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	
-	parent_class = g_type_class_ref (GMIME_TYPE_OBJECT);
+	parent_class = g_type_class_ref (GMIME_TYPE_ENTITY);
 	
 	gobject_class->finalize = g_mime_multipart_finalize;
 	
 	object_class->write_to_stream = multipart_write_to_stream;
 	object_class->encode = multipart_encode;
+	object_class->accept = multipart_accept;
 	
 	klass->add = multipart_add;
 	klass->clear = multipart_clear;
@@ -119,6 +129,7 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	klass->get_count = multipart_get_count;
 	klass->set_boundary = multipart_set_boundary;
 	klass->get_boundary = multipart_get_boundary;
+	klass->try_get_value = multipart_try_get_value;
 }
 
 static void
@@ -148,17 +159,17 @@ g_mime_multipart_finalize (GObject *object)
 }
 
 static ssize_t
-multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
+multipart_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	const char *boundary, *newline;
 	ssize_t nwritten, total = 0;
 	GMimeFormatOptions *format;
 	gboolean is_signed;
-	GMimeObject *part;
+	GMimeEntity *part;
 	guint i;
 	
-	boundary = g_mime_object_get_content_type_parameter (object, "boundary");
+	boundary = g_mime_entity_get_content_type_parameter (object, "boundary");
 	newline = g_mime_format_options_get_newline (options);
 	
 	if (!content_only) {
@@ -168,11 +179,6 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		
 		total += nwritten;
 		
-		/* terminate the headers */
-		if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
-			return -1;
-		
-		total += nwritten;
 	}
 	
 	/* write the prologue */
@@ -209,7 +215,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 		total += nwritten;
 		
 		/* write this part out */
-		if ((nwritten = g_mime_object_write_to_stream (part, format, stream)) == -1) {
+		if ((nwritten = g_mime_entity_write_to_stream (part, format, stream)) == -1) {
 			if (is_signed)
 				g_mime_format_options_free (format);
 			return -1;
@@ -251,15 +257,15 @@ multipart_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gbo
 }
 
 static void
-multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
+multipart_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
-	GMimeObject *subpart;
+	GMimeEntity *subpart;
 	int i;
 	
 	for (i = 0; i < g_mime_multipart_get_count (multipart); i++) {
 		subpart = g_mime_multipart_get_part (multipart, i);
-		g_mime_object_encode (subpart, constraint);
+		g_mime_entity_encode (subpart, constraint);
 	}
 }
 
@@ -299,7 +305,7 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL);
 	
 	content_type = g_mime_content_type_new ("multipart", subtype ? subtype : "mixed");
-	g_mime_object_set_content_type ((GMimeObject *) multipart, content_type);
+	g_mime_entity_set_content_type ((GMimeEntity *) multipart, content_type);
 	g_object_unref (content_type);
 	
 	g_mime_multipart_set_boundary (multipart, NULL);
@@ -376,6 +382,66 @@ g_mime_multipart_get_epilogue (GMimeMultipart *multipart)
 }
 
 
+static gboolean
+multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body)
+{
+	GMimeEntity *part;
+	int i, count;
+
+	count = g_mime_multipart_get_count (multipart);
+	for (i = 0; i < count; i++) {
+		part = g_mime_multipart_get_part (multipart, i);
+		/* The text body should not follow a multipart; do not search later siblings. */
+		if (GMIME_IS_MULTIPART (part))
+			return g_mime_multipart_try_get_value ((GMimeMultipart *) part, format, body);
+
+		if (GMIME_IS_TEXT_PART (part) && !g_mime_entity_is_attachment (part)) {
+			/* The first non-attachment text part is the body, even if its format differs. */
+			if (!_g_mime_text_part_is_format ((GMimeTextPart *) part, format))
+				return FALSE;
+			*body = (GMimeTextPart *) part;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+
+/**
+ * g_mime_multipart_try_get_value:
+ * @multipart: a #GMimeMultipart
+ * @format: the requested text format
+ * @body: (out) (nullable) (transfer none): the selected original text part
+ *
+ * Finds a body part in @format without decoding or copying its content.
+ * The default implementation scans forwards, skipping non-text parts and
+ * attached text parts. It stops after the first nested multipart, even if
+ * that multipart has no match, or the first non-attachment text part, even
+ * if it has the wrong format. Embedded messages are not entered.
+ *
+ * Subclasses may override selection. #GMimeMultipartAlternative searches
+ * backwards and considers attached text parts. Selection follows the
+ * object's class, not changes to its Content-Type subtype.
+ *
+ * Plain format also matches flowed text. Compressed rich text and unknown
+ * formats do not match any text part. No match returns %FALSE and sets
+ * @body to %NULL.
+ *
+ * Returns: %TRUE if a text part was found, otherwise %FALSE.
+ **/
+gboolean
+g_mime_multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body)
+{
+	g_return_val_if_fail (body != NULL, FALSE);
+
+	*body = NULL;
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), FALSE);
+
+	return GMIME_MULTIPART_GET_CLASS (multipart)->try_get_value (multipart, format, body);
+}
+
+
 static void
 multipart_clear (GMimeMultipart *multipart)
 {
@@ -404,7 +470,7 @@ g_mime_multipart_clear (GMimeMultipart *multipart)
 
 
 static void
-multipart_add (GMimeMultipart *multipart, GMimeObject *part)
+multipart_add (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	g_ptr_array_add (multipart->children, part);
 	g_object_ref (part);
@@ -414,15 +480,15 @@ multipart_add (GMimeMultipart *multipart, GMimeObject *part)
 /**
  * g_mime_multipart_add:
  * @multipart: a #GMimeMultipart object
- * @part: a #GMimeObject
+ * @part: a #GMimeEntity
  *
  * Appends a mime part to @multipart.
  **/
 void
-g_mime_multipart_add (GMimeMultipart *multipart, GMimeObject *part)
+g_mime_multipart_add (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
-	g_return_if_fail (GMIME_IS_OBJECT (part));
+	g_return_if_fail (GMIME_IS_ENTITY (part));
 	
 	GMIME_MULTIPART_GET_CLASS (multipart)->add (multipart, part);
 }
@@ -451,7 +517,7 @@ ptr_array_insert (GPtrArray *array, guint index, gpointer object)
 }
 
 static void
-multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part)
+multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
 {
 	ptr_array_insert (multipart->children, index, part);
 	g_object_ref (part);
@@ -461,16 +527,16 @@ multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part)
 /**
  * g_mime_multipart_insert:
  * @multipart: a #GMimeMultipart object
- * @part: a #GMimeObject
+ * @part: a #GMimeEntity
  * @index: the 0-based index to insert the part
  *
  * Inserts @part into @multipart at the specified @index.
  **/
 void
-g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part)
+g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
-	g_return_if_fail (GMIME_IS_OBJECT (part));
+	g_return_if_fail (GMIME_IS_ENTITY (part));
 	g_return_if_fail (index >= 0);
 	
 	GMIME_MULTIPART_GET_CLASS (multipart)->insert (multipart, index, part);
@@ -478,7 +544,7 @@ g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part
 
 
 static gboolean
-multipart_remove (GMimeMultipart *multipart, GMimeObject *part)
+multipart_remove (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	if (!g_ptr_array_remove (multipart->children, part))
 		return FALSE;
@@ -492,26 +558,26 @@ multipart_remove (GMimeMultipart *multipart, GMimeObject *part)
 /**
  * g_mime_multipart_remove:
  * @multipart: a #GMimeMultipart object
- * @part: a #GMimeObject
+ * @part: a #GMimeEntity
  *
  * Removes the specified @part from @multipart.
  *
  * Returns: %TRUE if the part was removed or %FALSE otherwise.
  **/
 gboolean
-g_mime_multipart_remove (GMimeMultipart *multipart, GMimeObject *part)
+g_mime_multipart_remove (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), FALSE);
-	g_return_val_if_fail (GMIME_IS_OBJECT (part), FALSE);
+	g_return_val_if_fail (GMIME_IS_ENTITY (part), FALSE);
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->remove (multipart, part);
 }
 
 
-static GMimeObject *
+static GMimeEntity *
 multipart_remove_at (GMimeMultipart *multipart, int index)
 {
-	GMimeObject *part;
+	GMimeEntity *part;
 	
 	if ((guint) index >= multipart->children->len)
 		return NULL;
@@ -534,7 +600,7 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
  * Returns: (transfer full): the mime part that was removed or %NULL
  * if the part was not contained within the multipart.
  **/
-GMimeObject *
+GMimeEntity *
 g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
@@ -548,7 +614,7 @@ g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
  * g_mime_multipart_replace:
  * @multipart: a #GMimeMultipart object
  * @index: the 0-based index of the part to replace
- * @replacement: a #GMimeObject to use as the replacement
+ * @replacement: a #GMimeEntity to use as the replacement
  *
  * Replaces the part at the specified @index within @multipart with
  * @replacement.
@@ -556,13 +622,13 @@ g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
  * Returns: (transfer full): the part that was replaced or %NULL
  * if the part was not contained within the multipart.
  **/
-GMimeObject *
-g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeObject *replacement)
+GMimeEntity *
+g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *replacement)
 {
-	GMimeObject *replaced;
+	GMimeEntity *replaced;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
-	g_return_val_if_fail (GMIME_IS_OBJECT (replacement), NULL);
+	g_return_val_if_fail (GMIME_IS_ENTITY (replacement), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
 	
 	if ((guint) index >= multipart->children->len)
@@ -576,10 +642,10 @@ g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeObject *rep
 }
 
 
-static GMimeObject *
+static GMimeEntity *
 multipart_get_part (GMimeMultipart *multipart, int index)
 {
-	GMimeObject *part;
+	GMimeEntity *part;
 	
 	if ((guint) index >= multipart->children->len)
 		return NULL;
@@ -599,7 +665,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
  *
  * Returns: (transfer none): the part at position @index.
  **/
-GMimeObject *
+GMimeEntity *
 g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
@@ -610,12 +676,12 @@ g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 
 
 static gboolean
-multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
+multipart_contains (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	guint i;
 	
 	for (i = 0; i < multipart->children->len; i++) {
-		if (part == (GMimeObject *) multipart->children->pdata[i])
+		if (part == (GMimeEntity *) multipart->children->pdata[i])
 			return TRUE;
 	}
 	
@@ -626,7 +692,7 @@ multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
 /**
  * g_mime_multipart_contains:
  * @multipart: a #GMimeMultipart object
- * @part: a #GMimeObject
+ * @part: a #GMimeEntity
  *
  * Checks if @part is contained within @multipart.
  *
@@ -634,22 +700,22 @@ multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
  * otherwise.
  **/
 gboolean
-g_mime_multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
+g_mime_multipart_contains (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), FALSE);
-	g_return_val_if_fail (GMIME_IS_OBJECT (part), FALSE);
+	g_return_val_if_fail (GMIME_IS_ENTITY (part), FALSE);
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->contains (multipart, part);
 }
 
 
 static int
-multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
+multipart_index_of (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	guint i;
 	
 	for (i = 0; i < multipart->children->len; i++) {
-		if (part == (GMimeObject *) multipart->children->pdata[i])
+		if (part == (GMimeEntity *) multipart->children->pdata[i])
 			return i;
 	}
 	
@@ -660,17 +726,17 @@ multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
 /**
  * g_mime_multipart_index_of:
  * @multipart: a #GMimeMultipart object
- * @part: a #GMimeObject
+ * @part: a #GMimeEntity
  *
  * Gets the 0-based index of @part within @multipart.
  *
  * Returns: the 0-based index of @part within @multipart or %-1 if not found.
  **/
 int
-g_mime_multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
+g_mime_multipart_index_of (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), -1);
-	g_return_val_if_fail (GMIME_IS_OBJECT (part), -1);
+	g_return_val_if_fail (GMIME_IS_ENTITY (part), -1);
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->index_of (multipart, part);
 }
@@ -703,25 +769,27 @@ g_mime_multipart_get_count (GMimeMultipart *multipart)
 static void
 multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 {
-	char bbuf[35];
+	char bbuf[27];
 	
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
-		unsigned char digest[16], *p;
-		guint32 save = 0;
-		int state = 0;
+		GMimeRfc2047Encoder *encoder;
+		unsigned char digest[16];
+		size_t len;
 		
 		g_mime_read_random_pool (digest, 16);
 		
 		strcpy (bbuf, "=-");
-		p = (unsigned char *) bbuf + 2;
-		p += g_mime_encoding_base64_encode_step (digest, 16, p, &state, &save);
-		*p = '\0';
+		encoder = _g_mime_rfc2047_base64_encoder_new ();
+		len = _g_mime_rfc2047_encoder_encode (encoder, digest, sizeof digest,
+						     (unsigned char *) bbuf + 2, sizeof bbuf - 3);
+		g_object_unref (encoder);
+		bbuf[len + 2] = '\0';
 		
 		boundary = bbuf;
 	}
 	
-	g_mime_object_set_content_type_parameter ((GMimeObject *) multipart, "boundary", boundary);
+	g_mime_entity_set_content_type_parameter ((GMimeEntity *) multipart, "boundary", boundary);
 }
 
 
@@ -745,15 +813,15 @@ g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 static const char *
 multipart_get_boundary (GMimeMultipart *multipart)
 {
-	GMimeObject *object = (GMimeObject *) multipart;
+	GMimeEntity *object = (GMimeEntity *) multipart;
 	const char *boundary;
 	
-	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary")))
+	if ((boundary = g_mime_entity_get_content_type_parameter (object, "boundary")))
 		return boundary;
 	
 	multipart_set_boundary (multipart, NULL);
 	
-	return g_mime_object_get_content_type_parameter (object, "boundary");
+	return g_mime_entity_get_content_type_parameter (object, "boundary");
 }
 
 
@@ -776,8 +844,8 @@ g_mime_multipart_get_boundary (GMimeMultipart *multipart)
 }
 
 typedef struct _GMimeForeachData {
-	GMimeObject *parent;
-	GMimeObject *part;
+	GMimeEntity *parent;
+	GMimeEntity *part;
 } GMimeForeachData;
 
 /**
@@ -790,7 +858,7 @@ typedef struct _GMimeForeachData {
  * Recursively calls @callback on each of @multipart's subparts.
  **/
 void
-g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc callback, gpointer user_data)
+g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeEntityForeachFunc callback, gpointer user_data)
 {
 	GMimeForeachData *tmp;
 	GQueue *queue;
@@ -802,14 +870,14 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc call
 	tmp = g_malloc (sizeof (GMimeForeachData));
 	queue = g_queue_new ();
 	
-	tmp->parent = (GMimeObject *) multipart;
-	tmp->part = (GMimeObject *) multipart;
+	tmp->parent = (GMimeEntity *) multipart;
+	tmp->part = (GMimeEntity *) multipart;
 	
 	g_queue_push_tail (queue, tmp);
 	
 	while ((tmp = (GMimeForeachData *) g_queue_pop_head (queue))) {
-		GMimeObject *parent = tmp->parent;
-		GMimeObject *part = tmp->part;
+		GMimeEntity *parent = tmp->parent;
+		GMimeEntity *part = tmp->part;
 		
 		g_free (tmp);
 		
@@ -822,7 +890,7 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc call
 			
 			while (i > 0) {
 				tmp = g_malloc (sizeof (GMimeForeachData));
-				tmp->part = (GMimeObject *) multipart->children->pdata[--i];
+				tmp->part = (GMimeEntity *) multipart->children->pdata[--i];
 				tmp->parent = part;
 				
 				g_queue_push_head (queue, tmp);
@@ -842,14 +910,14 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc call
  * Gets the mime part with the content-id @content_id from the
  * multipart @multipart.
  *
- * Returns: (transfer none): the #GMimeObject whose content-id matches
+ * Returns: (transfer none): the #GMimeEntity whose content-id matches
  * the search string, or %NULL if a match cannot be found.
  **/
-GMimeObject *
+GMimeEntity *
 g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const char *content_id)
 {
-	GMimeObject *object = (GMimeObject *) multipart;
-	GMimeObject *subpart, *part;
+	GMimeEntity *object = (GMimeEntity *) multipart;
+	GMimeEntity *subpart, *part;
 	GMimeMultipart *mpart;
 	guint i;
 	

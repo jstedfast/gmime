@@ -89,8 +89,8 @@ g_mime_certificate_init (GMimeCertificate *cert, GMimeCertificateClass *klass)
 	cert->issuer_serial = NULL;
 	cert->issuer_name = NULL;
 	cert->fingerprint = NULL;
-	cert->created = (time_t) -1;
-	cert->expires = (time_t) -1;
+	cert->created = NULL;
+	cert->expires = NULL;
 	cert->keyid = NULL;
 	cert->email = NULL;
 	cert->name = NULL;
@@ -102,6 +102,9 @@ static void
 g_mime_certificate_finalize (GObject *object)
 {
 	GMimeCertificate *cert = (GMimeCertificate *) object;
+
+	g_clear_pointer (&cert->created, g_date_time_unref);
+	g_clear_pointer (&cert->expires, g_date_time_unref);
 	
 	g_free (cert->issuer_serial);
 	g_free (cert->issuer_name);
@@ -526,15 +529,19 @@ g_mime_certificate_get_id_validity (GMimeCertificate *cert)
 /**
  * g_mime_certificate_set_created:
  * @cert: a #GMimeCertificate
- * @created: creation date
+ * @created: (nullable) (transfer none): creation date, or %NULL if unknown
  *
- * Set the creation date of the certificate's key.
+ * Set the creation date of the certificate's key. The certificate references
+ * @created without changing its timezone or precision.
  **/
 void
-g_mime_certificate_set_created (GMimeCertificate *cert, time_t created)
+g_mime_certificate_set_created (GMimeCertificate *cert, GDateTime *created)
 {
 	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
 	
+	if (created)
+		g_date_time_ref (created);
+	g_clear_pointer (&cert->created, g_date_time_unref);
 	cert->created = created;
 }
 
@@ -545,50 +552,35 @@ g_mime_certificate_set_created (GMimeCertificate *cert, time_t created)
  *
  * Get the creation date of the certificate's key.
  *
- * Returns: the creation date of the certificate's key or %-1 if unknown.
+ * Returns: (nullable) (transfer none): the creation date of the certificate's
+ * key, or %NULL if unknown.
  **/
-time_t
+GDateTime *
 g_mime_certificate_get_created (GMimeCertificate *cert)
 {
-	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), (time_t) -1);
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
 	
 	return cert->created;
 }
 
 
 /**
- * g_mime_certificate_get_created64:
- * @cert: a #GMimeCertificate
- *
- * Get the creation date of the certificate's key in seconds since the
- * UNIX epoch, represented as a 64-bit signed integer.
- *
- * Returns: the creation date of the certificate's key or %-1 if unknown.
- **/
-gint64
-g_mime_certificate_get_created64 (GMimeCertificate *cert)
-{
-	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), -1);
-	
-	if (cert->created == (time_t) -1)
-		return -1;
-	
-	return (gint64) ((unsigned long) cert->created);
-}
-
-
-/**
  * g_mime_certificate_set_expires:
  * @cert: a #GMimeCertificate
- * @expires: expiration date
+ * @expires: (nullable) (transfer none): expiration date, or %NULL if unknown
  *
- * Set the expiration date of the certificate's key. A value of %0 means the certificate never expires.
+ * Set the expiration date of the certificate's key. The certificate references
+ * @expires without changing its timezone or precision. Use
+ * 9999-12-31 23:59:59.999999 UTC for a certificate that never expires.
  **/
 void
-g_mime_certificate_set_expires (GMimeCertificate *cert, time_t expires)
+g_mime_certificate_set_expires (GMimeCertificate *cert, GDateTime *expires)
 {
 	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
 	
+	if (expires)
+		g_date_time_ref (expires);
+	g_clear_pointer (&cert->expires, g_date_time_unref);
 	cert->expires = expires;
 }
 
@@ -597,38 +589,18 @@ g_mime_certificate_set_expires (GMimeCertificate *cert, time_t expires)
  * g_mime_certificate_get_expires:
  * @cert: a #GMimeCertificate
  *
- * Get the expiration date of the certificate's key. A value of %0 means the certificate never expires.
+ * Get the expiration date of the certificate's key.
+ * 9999-12-31 23:59:59.999999 UTC means the certificate never expires.
  *
- * Returns: the expiration date of the certificate's key or %-1 if unknown.
+ * Returns: (nullable) (transfer none): the expiration date of the certificate's
+ * key, or %NULL if unknown.
  **/
-time_t
+GDateTime *
 g_mime_certificate_get_expires (GMimeCertificate *cert)
 {
-	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), (time_t) -1);
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
 	
 	return cert->expires;
-}
-
-
-/**
- * g_mime_certificate_get_expires64:
- * @cert: a #GMimeCertificate
- *
- * Get the expiration date of the certificate's key in seconds since
- * the UNIX epoch, represented as a 64-bit signed integer. A value of
- * %0 means the certificate never expires.
- *
- * Returns: the expiration date of the certificate's key or %-1 if unknown.
- **/
-gint64
-g_mime_certificate_get_expires64 (GMimeCertificate *cert)
-{
-	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), -1);
-	
-	if (cert->expires == (time_t) -1)
-		return -1;
-	
-	return (gint64) ((unsigned long) cert->expires);
 }
 
 

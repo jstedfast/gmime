@@ -40,6 +40,7 @@ parse_message (int fd)
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
+	GError *error = NULL;
 	
 	/* create a stream to read from the file descriptor */
 	stream = g_mime_stream_fs_new (fd);
@@ -51,7 +52,11 @@ parse_message (int fd)
 	g_object_unref (stream);
 	
 	/* parse the message from the stream */
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
+	if (error != NULL) {
+		fprintf (stderr, "Failed to parse message: %s\n", error->message);
+		g_error_free (error);
+	}
 	
 	/* free the parser (and the stream) */
 	g_object_unref (parser);
@@ -61,7 +66,7 @@ parse_message (int fd)
 
 
 static void
-count_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
+count_foreach_callback (GMimeEntity *parent, GMimeEntity *part, gpointer user_data)
 {
 	int *count = user_data;
 	
@@ -121,7 +126,7 @@ count_parts_in_message (GMimeMessage *message)
 #ifndef G_OS_WIN32
 #ifdef ENABLE_CRYPTOGRAPHY
 static void
-verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
+verify_foreach_callback (GMimeEntity *parent, GMimeEntity *part, gpointer user_data)
 {
 	if (GMIME_IS_MULTIPART_SIGNED (part)) {
 		/* this is a multipart/signed part, so we can verify the pgp signature */
@@ -178,7 +183,7 @@ write_message_to_screen (GMimeMessage *message)
 	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
 	
 	/* write the message to the stream */
-	g_mime_object_write_to_stream ((GMimeObject *) message, NULL, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) message, NULL, stream);
 	
 	/* flush the stream (kinda like fflush() in libc's stdio) */
 	g_mime_stream_flush (stream);
@@ -213,14 +218,14 @@ add_a_mime_part (GMimeMessage *message)
 	multipart = g_mime_multipart_new_with_subtype ("mixed");
 	
 	/* add our new text part to it */
-	g_mime_multipart_add (multipart, (GMimeObject *) mime_part);
+	g_mime_multipart_add (multipart, (GMimeEntity *) mime_part);
 	g_object_unref (mime_part);
 	
 	/* now append the message's toplevel part to our multipart */
 	g_mime_multipart_add (multipart, message->mime_part);
 	
 	/* now replace the message's toplevel mime part with our new multipart */
-	g_mime_message_set_mime_part (message, (GMimeObject *) multipart);
+	g_mime_message_set_mime_part (message, (GMimeEntity *) multipart);
 	g_object_unref (multipart);
 }
 

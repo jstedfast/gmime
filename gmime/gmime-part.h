@@ -25,11 +25,11 @@
 #include <glib.h>
 #include <stdio.h>
 
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-filter-best.h>
 #include <gmime/gmime-filter-openpgp.h>
-#include <gmime/gmime-data-wrapper.h>
+#include <gmime/gmime-content.h>
 #include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
@@ -46,32 +46,34 @@ typedef struct _GMimePartClass GMimePartClass;
 
 /**
  * GMimePart:
- * @parent_object: parent #GMimeObject
+ * @parent_object: parent #GMimeEntity
  * @encoding: a #GMimeContentEncoding
  * @openpgp: a #GMimeOpenPGPData
  * @content_description: Content-Description string
- * @content_location: Content-Location string
  * @content_md5: Content-MD5 string
- * @content: a #GMimeDataWrapper representing the MIME part's content
+ * @content: a #GMimeContent representing the MIME part's content
  *
  * A leaf-node MIME part object.
  **/
 struct _GMimePart {
-	GMimeObject parent_object;
+	GMimeEntity parent_object;
 	
 	GMimeContentEncoding encoding;
 	GMimeOpenPGPData openpgp;
 	char *content_description;
-	char *content_location;
 	char *content_md5;
 	
-	GMimeDataWrapper *content;
+	GMimeContent *content;
+
+	/* < private > */
+	int content_duration;
+	gboolean content_duration_loaded;
 };
 
 struct _GMimePartClass {
-	GMimeObjectClass parent_class;
+	GMimeEntityClass parent_class;
 	
-	void (* set_content) (GMimePart *mime_part, GMimeDataWrapper *content);
+	void (* set_content) (GMimePart *mime_part, GMimeContent *content);
 };
 
 
@@ -84,6 +86,9 @@ GMimePart *g_mime_part_new_with_type (const char *type, const char *subtype);
 /* accessor functions */
 void g_mime_part_set_content_description (GMimePart *mime_part, const char *description);
 const char *g_mime_part_get_content_description (GMimePart *mime_part);
+
+void g_mime_part_set_content_duration (GMimePart *mime_part, int duration);
+int g_mime_part_get_content_duration (GMimePart *mime_part);
 
 void g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id);
 const char *g_mime_part_get_content_id (GMimePart *mime_part);
@@ -105,8 +110,8 @@ gboolean g_mime_part_is_attachment (GMimePart *mime_part);
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (GMimePart *mime_part);
 
-void g_mime_part_set_content (GMimePart *mime_part, GMimeDataWrapper *content);
-GMimeDataWrapper *g_mime_part_get_content (GMimePart *mime_part);
+void g_mime_part_set_content (GMimePart *mime_part, GMimeContent *content);
+GMimeContent *g_mime_part_get_content (GMimePart *mime_part);
 
 void g_mime_part_set_openpgp_data (GMimePart *mime_part, GMimeOpenPGPData data);
 GMimeOpenPGPData g_mime_part_get_openpgp_data (GMimePart *mime_part);

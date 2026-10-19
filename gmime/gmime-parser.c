@@ -28,6 +28,7 @@
 #include <sys/types.h>
 
 #include "gmime-parser.h"
+#include "gmime-error.h"
 
 #include "gmime-table-private.h"
 #include "gmime-message-part.h"
@@ -47,8 +48,6 @@
 
 #define d(x)
 
-#define MAX_LEVEL 1024
-
 /**
  * SECTION: gmime-parser
  * @title: GMimeParser
@@ -56,7 +55,7 @@
  * @see_also:
  *
  * A #GMimeParser parses a stream into a #GMimeMessage or other
- * #GMimeObject and can also handle parsing MBox formatted streams
+ * #GMimeEntity and can also handle parsing MBox formatted streams
  * into multiple #GMimeMessage objects.
  **/
 
@@ -97,9 +96,9 @@ static void g_mime_parser_finalize (GObject *object);
 static void parser_init (GMimeParser *parser, GMimeStream *stream);
 static void parser_close (GMimeParser *parser);
 
-static GMimeObject *parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
+static GMimeEntity *parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
 						gboolean toplevel, int depth);
-static GMimeObject *parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
+static GMimeEntity *parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type,
 						gboolean toplevel, int depth);
 
 static GObjectClass *parent_class = NULL;
@@ -128,6 +127,7 @@ typedef enum {
 
 struct _GMimeParserPrivate {
 	GMimeStream *stream;
+	GError *error;
 	GMimeFormat format;
 	
 	gint64 content_end;
@@ -176,8 +176,7 @@ struct _GMimeParserPrivate {
 	unsigned short int seekable:1;
 	unsigned short int have_regex:1;
 	unsigned short int persist_stream:1;
-	unsigned short int respect_content_length:1;
-	unsigned short int unused:11;
+	unsigned short int unused:12;
 };
 
 static const char MBOX_BOUNDARY[6] = "From ";
@@ -317,7 +316,6 @@ static void
 g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 {
 	parser->priv = g_new (struct _GMimeParserPrivate, 1);
-	parser->priv->respect_content_length = FALSE;
 	parser->priv->format = GMIME_FORMAT_MESSAGE;
 	parser->priv->persist_stream = TRUE;
 	parser->priv->have_regex = FALSE;
@@ -356,6 +354,7 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->state = GMIME_PARSER_STATE_INIT;
 	
 	priv->stream = stream;
+	priv->error = NULL;
 	
 	priv->content_end = 0;
 	priv->offset = offset;
@@ -399,6 +398,8 @@ parser_close (GMimeParser *parser)
 	
 	if (priv->stream)
 		g_object_unref (priv->stream);
+
+	g_clear_error (&priv->error);
 	
 	g_byte_array_free (priv->marker, TRUE);
 	
@@ -559,48 +560,6 @@ g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format)
 
 
 /**
- * g_mime_parser_get_respect_content_length:
- * @parser: a #GMimeParser context
- *
- * Gets whether or not @parser is set to use Content-Length for
- * determining the offset of the end of the message.
- *
- * Returns: whether or not @parser is set to use Content-Length for
- * determining the offset of the end of the message.
- **/
-gboolean
-g_mime_parser_get_respect_content_length (GMimeParser *parser)
-{
-	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
-	
-	return parser->priv->respect_content_length;
-}
-
-
-/**
- * g_mime_parser_set_respect_content_length:
- * @parser: a #GMimeParser context
- * @respect_content_length: %TRUE if the parser should use Content-Length headers or %FALSE otherwise.
- *
- * Sets whether or not @parser should respect Content-Length headers
- * when deciding where to look for the start of the next message. Only
- * used when the parser is also set to scan for From-lines.
- *
- * Most notably useful when parsing broken Solaris mbox files (See
- * http://www.jwz.org/doc/content-length.html for details).
- *
- * By default, this feature is disabled.
- **/
-void
-g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_content_length)
-{
-	g_return_if_fail (GMIME_IS_PARSER (parser));
-	
-	parser->priv->respect_content_length = respect_content_length ? 1 : 0;
-}
-
-
-/**
  * g_mime_parser_set_header_regex: (skip)
  * @parser: a #GMimeParser context
  * @regex: regular expression
@@ -646,6 +605,9 @@ parser_fill (GMimeParser *parser, size_t atleast)
 	char *inbuf, *inptr, *inend;
 	ssize_t nread;
 	size_t inlen;
+
+	if (priv->error != NULL)
+		return -1;
 	
 	inbuf = priv->inbuf;
 	inptr = priv->inptr;
@@ -679,7 +641,22 @@ parser_fill (GMimeParser *parser, size_t atleast)
 	priv->inend = inbuf;
 	inend = priv->realbuf + SCAN_HEAD + SCAN_BUF;
 	
-	if ((nread = g_mime_stream_read (priv->stream, inbuf, inend - inbuf)) > 0) {
+	if (priv->stream->bound_end != -1 &&
+	    (priv->seekable ? priv->offset : priv->stream->position) >= priv->stream->bound_end)
+		nread = 0;
+	else
+		nread = g_mime_stream_read (priv->stream, inbuf, inend - inbuf);
+
+	if (nread < 0) {
+		int code = errno;
+
+		g_set_error (&priv->error, GMIME_ERROR, code,
+			     "Failed to read MIME input: %s", g_strerror (code));
+		priv->state = GMIME_PARSER_STATE_ERROR;
+		return -1;
+	}
+
+	if (nread > 0) {
 		priv->offset += nread;
 		priv->inend += nread;
 	}
@@ -687,6 +664,40 @@ parser_fill (GMimeParser *parser, size_t atleast)
 	return (ssize_t) (priv->inend - priv->inptr);
 }
 
+
+GMimeStream *
+_g_mime_parser_read_to_eos (GMimeParser *parser, GError **error)
+{
+	struct _GMimeParserPrivate *priv = parser->priv;
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	ssize_t available;
+	int errsv;
+
+	/* The Office365 delivery-status workaround needs the remainder of the input.
+	 * Drain read-ahead bytes as well as the backing stream: decoded streams may
+	 * not be seekable, so rewinding to the logical parser offset is not an option. */
+	while ((available = parser_fill (parser, 0)) > 0) {
+		if (_g_mime_stream_write_all (stream, priv->inptr, available) == -1)
+			goto fail;
+		priv->inptr = priv->inend;
+	}
+	if (available == -1) {
+		g_propagate_error (error, g_error_copy (priv->error));
+		g_object_unref (stream);
+		return NULL;
+	}
+	if (g_mime_stream_reset (stream) == -1)
+		goto fail;
+	return stream;
+
+ fail:
+	errsv = errno;
+	g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+		     "Failed to buffer remaining MIME input: %s",
+		     errsv ? g_strerror (errsv) : "unknown I/O error");
+	g_object_unref (stream);
+	return NULL;
+}
 
 static gint64
 parser_offset (struct _GMimeParserPrivate *priv, const char *inptr)
@@ -958,9 +969,20 @@ header_buffer_reset (struct _GMimeParserPrivate *priv)
 	priv->headerptr = priv->headerbuf;
 }
 
-static void
-header_buffer_append (struct _GMimeParserPrivate *priv, const char *start, size_t len)
+static gboolean
+header_buffer_append (struct _GMimeParserPrivate *priv, GMimeParserOptions *options, const char *start, size_t len)
 {
+	size_t used = priv->headerptr - priv->headerbuf;
+	size_t limit = g_mime_parser_options_get_max_header_length (options);
+
+	if (used > limit || len > limit - used) {
+		g_set_error (&priv->error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG,
+			     "Header at offset %" G_GINT64_FORMAT " exceeds the maximum header length of %" G_GSIZE_FORMAT " bytes.",
+			     priv->header_offset, limit);
+		priv->state = GMIME_PARSER_STATE_ERROR;
+		return FALSE;
+	}
+
 	if (priv->headerleft <= len) {
 		size_t hlen, hoff;
 		
@@ -975,6 +997,8 @@ header_buffer_append (struct _GMimeParserPrivate *priv, const char *start, size_
 	memcpy (priv->headerptr, start, len);
 	priv->headerptr += len;
 	priv->headerleft -= len;
+
+	return TRUE;
 }
 
 static void
@@ -1145,6 +1169,8 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 		
 		eoln = inptr[0] == '\n' || (inptr[0] == '\r' && inptr[1] == '\n');
 		if (state->scanning_field_name && !eoln) {
+			gboolean blank = state->blank;
+
 			/* scan and validate the field name */
 			if (*inptr != ':') {
 				*inend = ':';
@@ -1164,15 +1190,24 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 				}
 				
 				if (inptr == inend) {
-					/* we don't have enough input data; restore state back to the beginning of the line */
-					state->left = (size_t) (inend - start);
-					priv->inptr = start;
+					if (priv->headerptr == priv->headerbuf && inend - start < SCAN_BUF) {
+						/* Retain short prefixes to recognize From-lines and boundaries. */
+						state->blank = blank;
+						state->left = inend - start;
+						priv->inptr = start;
+					} else {
+						if (!header_buffer_append (priv, options, start, inend - start))
+							return FALSE;
+						state->midline = TRUE;
+						state->left = 0;
+						priv->inptr = inend;
+					}
 					need_input = TRUE;
 					break;
 				}
 				
 				*inend = '\n';
-			} else {
+			} else if (priv->headerptr == priv->headerbuf) {
 				state->valid = FALSE;
 			}
 			
@@ -1198,6 +1233,8 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 							if (can_warn)
 								warn_invalid_header (parser, options, start, inptr, inend);
 							priv->state = GMIME_PARSER_STATE_ERROR;
+							g_set_error (&priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+								     "Invalid header at offset %" G_GINT64_FORMAT ".", priv->header_offset);
 							header_buffer_reset (priv);
 							priv->inptr = start;
 							return FALSE;
@@ -1206,6 +1243,8 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 						if (can_warn)
 							warn_invalid_header (parser, options, start, inptr, inend);
 						priv->state = GMIME_PARSER_STATE_ERROR;
+						g_set_error (&priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+							     "Invalid header at offset %" G_GINT64_FORMAT ".", priv->header_offset);
 						header_buffer_reset (priv);
 						priv->inptr = start;
 						return FALSE;
@@ -1232,7 +1271,8 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 			}
 			
 			if (len > 0) {
-				header_buffer_append (priv, start, len);
+				if (!header_buffer_append (priv, options, start, len))
+					return FALSE;
 				state->midline = TRUE;
 			}
 			
@@ -1273,15 +1313,19 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 					len--;
 				len--;
 				
-				priv->preheader = g_strndup (start, len);
+				if (!header_buffer_append (priv, options, start, len))
+					return FALSE;
+				priv->preheader = g_strndup (priv->headerbuf, priv->headerptr - priv->headerbuf);
 			}
+			header_buffer_reset (priv);
 			
 			state->scanning_field_name = TRUE;
 			state->check_folded = FALSE;
 			state->blank = FALSE;
 			state->valid = TRUE;
 		} else {
-			header_buffer_append (priv, start, len);
+			if (!header_buffer_append (priv, options, start, len))
+				return FALSE;
 			state->check_folded = TRUE;
 		}
 		
@@ -1298,7 +1342,7 @@ step_headers (GMimeParser *parser, struct _StepHeadersState *state, GMimeParserO
 }
 
 static void
-parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
+parser_step_headers (GMimeParser *parser, GMimeParserOptions *options, gboolean allow_empty)
 {
 	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	struct _GMimeParserPrivate *priv = parser->priv;
@@ -1314,11 +1358,13 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 	
 	parser_free_headers (priv);
 	priv->headers_begin = parser_offset (priv, NULL);
+	priv->headers_end = -1;
 	priv->header_offset = priv->headers_begin;
 	priv->boundary = BOUNDARY_NONE;
 	
 	if (parser_fill (parser, SCAN_HEAD) <= 0) {
-		priv->state = GMIME_PARSER_STATE_ERROR;
+		priv->state = allow_empty && priv->error == NULL ?
+			GMIME_PARSER_STATE_COMPLETE : GMIME_PARSER_STATE_ERROR;
 		return;
 	}
 	
@@ -1327,16 +1373,21 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 			return;
 		
 		available = parser_fill (parser, state.left + 1);
+
+		if (available < 0)
+			return;
 		
 		if (available == state.left) {
 			/* EOF reached before we reached the end of the headers... */
-			if (state.scanning_field_name && state.left > 0) {
+			if (state.scanning_field_name && (state.left > 0 || priv->headerptr != priv->headerbuf)) {
 				/* EOF reached right in the middle of a header field name. Throw an error.
 				 *
 				 * See private email from Feb 8, 2018 which contained a sample message w/o
 				 * any breaks between the header and message body. The file also did not
 				 * end with a newline sequence. */
 				priv->state = GMIME_PARSER_STATE_ERROR;
+				g_set_error (&priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     "Incomplete header field at offset %" G_GINT64_FORMAT ".", priv->header_offset);
 			} else {
 				/* EOF reached somewhere in the middle of the value.
 				 *
@@ -1346,7 +1397,8 @@ parser_step_headers (GMimeParser *parser, GMimeParserOptions *options)
 				 * For more details, see https://github.com/jstedfast/MimeKit/pull/51
 				 * and https://github.com/jstedfast/MimeKit/issues/348 */
 				if (state.left > 0) {
-					header_buffer_append (priv, priv->inptr, state.left);
+					if (!header_buffer_append (priv, options, priv->inptr, state.left))
+						return;
 					priv->inptr = priv->inend;
 				}
 				
@@ -1475,7 +1527,7 @@ parser_step (GMimeParser *parser, GMimeParserOptions *options)
 		break;
 	case GMIME_PARSER_STATE_MESSAGE_HEADERS:
 	case GMIME_PARSER_STATE_HEADERS:
-		parser_step_headers (parser, options);
+		parser_step_headers (parser, options, FALSE);
 		priv->toplevel = FALSE;
 		
 		if (priv->message_headers_begin == -1) {
@@ -1642,7 +1694,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeContentEncoding encoding;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeStream *stream;
 	GByteArray *buffer;
 	gint64 start, len;
@@ -1672,7 +1724,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part)
 	}
 	
 	encoding = g_mime_part_get_content_encoding (mime_part);
-	content = g_mime_data_wrapper_new_with_stream (stream, encoding);
+	content = g_mime_content_new_with_stream (stream, encoding);
 	g_object_unref (stream);
 	
 	g_mime_part_set_content (mime_part, content);
@@ -1702,7 +1754,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part)
 }
 
 static void
-check_header_conflict (GMimeParserOptions *options, GMimeObject *object, const Header *header)
+check_header_conflict (GMimeParserOptions *options, GMimeEntity *object, const Header *header)
 {
 	const GMimeHeader *existing;
 
@@ -1726,7 +1778,7 @@ static const char *rfc5322_single_hdr[] = {
 };
 
 static void
-check_repeated_header (GMimeParserOptions *options, GMimeObject *object, const Header *header)
+check_repeated_header (GMimeParserOptions *options, GMimeEntity *object, const Header *header)
 {
 	if (bsearch (header->name, rfc5322_single_hdr, G_N_ELEMENTS (rfc5322_single_hdr), sizeof (char *), compare_header))
 		check_header_conflict (options, object, header);
@@ -1738,7 +1790,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
 	GMimeMessage *message;
-	GMimeObject *object;
+	GMimeEntity *object;
 	gboolean can_warn;
 	Header *header;
 	guint i;
@@ -1786,14 +1838,23 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 	
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
-	if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR) {
+	if (g_mime_content_type_is_type (g_mime_entity_get_content_type ((GMimeEntity *) mpart), "text", "rfc822-headers")) {
+		/* An empty header block still represents an empty embedded message. */
+		parser_step_headers (parser, options, TRUE);
+		priv->toplevel = FALSE;
+		if (priv->state == GMIME_PARSER_STATE_COMPLETE)
+			priv->state = GMIME_PARSER_STATE_CONTENT;
+	} else {
+		parser_step (parser, options);
+	}
+	if (priv->state == GMIME_PARSER_STATE_ERROR) {
 		priv->boundary = BOUNDARY_EOS;
 		return;
 	}
 	
 	message = g_mime_message_new (FALSE);
-	((GMimeObject *) message)->ensure_newline = FALSE;
-	_g_mime_header_list_set_options (((GMimeObject *) message)->headers, options);
+	((GMimeEntity *) message)->ensure_newline = FALSE;
+	_g_mime_header_list_set_options (((GMimeEntity *) message)->headers, options);
 	message->marker = priv->preheader;
 	priv->preheader = NULL;
 	
@@ -1803,8 +1864,8 @@ parser_scan_message_part (GMimeParser *parser, GMimeParserOptions *options, GMim
 		
 		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
 			if (can_warn)
-				check_repeated_header (options, (GMimeObject *) message, header);
-			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->raw_name,
+				check_repeated_header (options, (GMimeEntity *) message, header);
+			_g_mime_entity_append_header ((GMimeEntity *) message, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
 	}
@@ -1836,30 +1897,37 @@ is_rfc822 (const char *subtype)
 	return FALSE;
 }
 
-static GMimeObject *
+static GMimeEntity *
 parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, int depth)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	const char *subtype = content_type->subtype;
 	const char *type = content_type->type;
-	GMimeObject *object;
+	gboolean rfc822_headers = content_type_is_type (content_type, "text", "rfc822-headers");
+	gboolean force_leaf = FALSE;
+	GMimeEntity *object;
 	Header *header;
 	guint i;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
-	if (!g_ascii_strcasecmp (type, "message") && is_rfc822 (subtype)) {
+	if (rfc822_headers || (!g_ascii_strcasecmp (type, "message") && is_rfc822 (subtype))) {
 		gboolean is_encoded = FALSE;
 		
-		if (depth >= MAX_LEVEL) {
-			/* The maximum MIME nesting level has been exceeded. Treat this message/rfc822
+		if (depth >= g_mime_parser_options_get_max_mime_depth (options)) {
+			/* The maximum MIME nesting level has been exceeded. Treat this embedded-message
 			 * part as if it was a leaf-node MIME part (i.e. don't recursively parse the
 			 * message content). */
 			_g_mime_parser_options_warn (options, priv->headers_begin, GMIME_CRIT_NESTING_OVERFLOW, NULL);
 			w(g_warning ("maximum nesting level exceeded"));
+			force_leaf = TRUE;
 			is_encoded = TRUE;
 		}
 		
+		/* RFC 2046 forbids Base64/quoted-printable for message/rfc822. Treat encoded
+		 * messages as opaque leaves rather than parsing encoded bytes as headers.
+		 * Encoded text/rfc822-headers is handled the same way; disposition
+		 * notifications are already leaves and can decode their fields lazily. */
 		for (i = 0; i < priv->headers->len && !is_encoded; i++) {
 			header = priv->headers->pdata[i];
 			
@@ -1880,18 +1948,33 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 		}
 		
 		if (is_encoded) {
+			if (rfc822_headers)
+				force_leaf = TRUE;
 			subtype = "octet-stream";
 			type = "application";
 		}
 	}
 	
-	object = g_mime_object_new_type (options, type, subtype);
+	if (depth >= g_mime_parser_options_get_max_mime_depth (options) &&
+	    content_type_is_type (content_type, "multipart", "*")) {
+		_g_mime_parser_options_warn (options, priv->headers_begin, GMIME_CRIT_NESTING_OVERFLOW, NULL);
+		force_leaf = TRUE;
+	}
+
+	if (force_leaf) {
+		if (rfc822_headers)
+			object = g_object_new (GMIME_TYPE_TEXT_PART, NULL);
+		else
+			object = (GMimeEntity *) g_mime_part_new_with_type (content_type->type, content_type->subtype);
+	} else {
+		object = g_mime_entity_new_type (options, type, subtype);
+	}
 	
-	if (!content_type->exists) {
+	if (!content_type->exists || (force_leaf && rfc822_headers)) {
 		GMimeContentType *mime_type;
 		
 		mime_type = g_mime_content_type_new (content_type->type, content_type->subtype);
-		_g_mime_object_set_content_type (object, mime_type);
+		_g_mime_entity_set_content_type (object, mime_type);
 		g_object_unref (mime_type);
 	}
 	
@@ -1900,11 +1983,12 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 		
 		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8)) {
 			check_header_conflict (options, object, header);
-			_g_mime_object_append_header (object, header->name, header->raw_name,
+			_g_mime_entity_append_header (object, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
 	}
 	
+	object->headers->has_body_separator = priv->state == GMIME_PARSER_STATE_CONTENT && priv->headers_end >= 0;
 	parser_free_headers (priv);
 	
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
@@ -1917,7 +2001,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	
 	if (priv->state == GMIME_PARSER_STATE_CONTENT) {
 		if (GMIME_IS_MESSAGE_PART (object))
-			parser_scan_message_part (parser, options, (GMimeMessagePart *) object, depth + 1);
+			parser_scan_message_part (parser, options, (GMimeMessagePart *) object, depth);
 		else
 			parser_scan_mime_part_content (parser, (GMimePart *) object);
 	}
@@ -1987,7 +2071,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
-	GMimeObject *subpart;
+	GMimeEntity *subpart;
 	
 	do {
 		/* skip over the boundary marker */
@@ -2019,7 +2103,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 			break;
 		}
 		
-		content_type = parser_content_type (parser, ((GMimeObject *) multipart)->content_type);
+		content_type = parser_content_type (parser, ((GMimeEntity *) multipart)->content_type);
 		if (content_type_is_type (content_type, "multipart", "*"))
 			subpart = parser_construct_multipart (parser, options, content_type, FALSE, depth + 1);
 		else
@@ -2033,20 +2117,23 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeParserOptions *options
 	return priv->boundary;
 }
 
-static GMimeObject *
+static GMimeEntity *
 parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, ContentType *content_type, gboolean toplevel, int depth)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeMultipart *multipart;
 	gint64 ctype_offset = -1;
 	const char *boundary;
-	GMimeObject *object;
+	GMimeEntity *object;
 	Header *header;
 	guint i;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
-	
-	object = g_mime_object_new_type (options, content_type->type, content_type->subtype);
+
+	if (depth >= g_mime_parser_options_get_max_mime_depth (options))
+		return parser_construct_leaf_part (parser, options, content_type, toplevel, depth);
+
+	object = g_mime_entity_new_type (options, content_type->type, content_type->subtype);
 	
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
@@ -2057,11 +2144,12 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 			if (!g_ascii_strcasecmp (header->name, "Content-Type"))
 				ctype_offset = header->offset;
 			
-			_g_mime_object_append_header (object, header->name, header->raw_name,
+			_g_mime_entity_append_header (object, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
 	}
 	
+	object->headers->has_body_separator = priv->state == GMIME_PARSER_STATE_CONTENT && priv->headers_end >= 0;
 	parser_free_headers (priv);
 	
 	multipart = (GMimeMultipart *) object;
@@ -2074,7 +2162,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		}
 	}
 	
-	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary")) && depth < MAX_LEVEL) {
+	if ((boundary = g_mime_entity_get_content_type_parameter (object, "boundary"))) {
 		parser_push_boundary (parser, boundary);
 		
 		parser_scan_multipart_prologue (parser, multipart);
@@ -2105,13 +2193,8 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 		else if (priv->boundary == BOUNDARY_PARENT && found_immediate_boundary (priv, FALSE))
 			priv->boundary = BOUNDARY_IMMEDIATE;
 	} else {
-		if (depth >= MAX_LEVEL) {
-			_g_mime_parser_options_warn (options, priv->headers_begin, GMIME_CRIT_NESTING_OVERFLOW, NULL);
-			w(g_warning ("maximum nesting level exceeded @ boundary = %s", boundary));
-		} else {
-			_g_mime_parser_options_warn (options, ctype_offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, content_type->subtype);
-			w(g_warning ("multipart without boundary encountered"));
-		}
+		_g_mime_parser_options_warn (options, ctype_offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, content_type->subtype);
+		w(g_warning ("multipart without boundary encountered"));
 		
 		/* this will scan everything into the prologue */
 		parser_scan_multipart_prologue (parser, multipart);
@@ -2120,12 +2203,91 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	return object;
 }
 
-static GMimeObject *
+static GMimeHeaderList *
+parser_construct_headers (GMimeParser *parser, GMimeParserOptions *options)
+{
+	struct _GMimeParserPrivate *priv = parser->priv;
+	GMimeHeaderList *headers;
+	Header *header;
+	gboolean has_body_separator;
+	guint i;
+
+	priv->message_headers_begin = -1;
+	priv->message_headers_end = -1;
+	priv->state = GMIME_PARSER_STATE_HEADERS;
+	priv->toplevel = TRUE;
+	priv->headers_end = -1;
+
+	parser_step_headers (parser, options, TRUE);
+	priv->toplevel = FALSE;
+	if (priv->state == GMIME_PARSER_STATE_ERROR)
+		return NULL;
+
+	has_body_separator = priv->state == GMIME_PARSER_STATE_CONTENT && priv->headers_end >= 0;
+	priv->state = GMIME_PARSER_STATE_COMPLETE;
+	priv->message_headers_begin = priv->headers_begin;
+	priv->message_headers_end = priv->headers_end;
+
+	headers = g_mime_header_list_new (options);
+	for (i = 0; i < priv->headers->len; i++) {
+		header = priv->headers->pdata[i];
+		_g_mime_header_list_append (headers, header->name, header->raw_name,
+					    header->raw_value, header->offset);
+	}
+	headers->has_body_separator = has_body_separator;
+
+	return headers;
+}
+
+
+/**
+ * g_mime_parser_construct_headers:
+ * @parser: a #GMimeParser context
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ * @error: return location for a #GError, or %NULL
+ *
+ * Parses a header block at the current parser position without constructing
+ * a MIME entity or parsing its content. Both message and content headers are
+ * retained, including their original field names, raw values, and offsets.
+ * A terminating blank line is consumed, but is not included in the list.
+ *
+ * Like g_mime_parser_construct_part(), this reads headers directly rather
+ * than searching for a mailbox marker. Input may be read ahead into the
+ * parser's buffer; use g_mime_parser_tell() for the logical input position.
+ *
+ * Empty input returns an empty list. Header length violations, invalid initial
+ * headers, and input I/O failures return %NULL and set @error. A failed parser
+ * must be reinitialized with a stream before it can be reused.
+ *
+ * Returns: (nullable) (transfer full): the parsed headers, or %NULL on failure.
+ **/
+GMimeHeaderList *
+g_mime_parser_construct_headers (GMimeParser *parser, GMimeParserOptions *options, GError **error)
+{
+	GMimeHeaderList *headers;
+
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (parser->priv->stream), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (parser->priv->error == NULL) {
+		headers = parser_construct_headers (parser, options);
+		if (parser->priv->error == NULL)
+			return headers;
+		g_clear_object (&headers);
+	}
+
+	g_propagate_error (error, g_error_copy (parser->priv->error));
+	return NULL;
+}
+
+
+static GMimeEntity *
 parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	ContentType *content_type;
-	GMimeObject *object;
+	GMimeEntity *object;
 	
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
@@ -2152,18 +2314,51 @@ parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
  * g_mime_parser_construct_part:
  * @parser: a #GMimeParser context
  * @options: (nullable): a #GMimeParserOptions or %NULL
+ * @error: return location for a #GError, or %NULL
  *
  * Constructs a MIME part from @parser.
  *
- * Returns: (nullable) (transfer full): a MIME part based on @parser or %NULL on
- * fail.
+ * Header length violations and input I/O failures discard the partially parsed
+ * entity and set @error. A failed parser must be reinitialized with a stream
+ * before it can be reused. Recoverable MIME defects use the warning callback.
+ *
+ * Returns: (nullable) (transfer full): a MIME part, or %NULL on failure or
+ * end of input. End of input does not set @error.
  **/
-GMimeObject *
-g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options)
+GMimeEntity *
+g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options, GError **error)
 {
+	GMimeEntity *entity;
+
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	
-	return parser_construct_part (parser, options);
+	g_return_val_if_fail (GMIME_IS_STREAM (parser->priv->stream), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (parser->priv->error == NULL) {
+		entity = parser_construct_part (parser, options);
+		if (parser->priv->error == NULL)
+			return entity;
+		g_clear_object (&entity);
+	}
+
+	g_propagate_error (error, g_error_copy (parser->priv->error));
+	return NULL;
+}
+
+
+static int
+parser_content_length (const char *raw_value)
+{
+	const char *inptr = raw_value;
+	gint32 length;
+
+	/* Match MimeKit's raw whitespace requirement and numeric-prefix parsing. */
+	while (is_lwsp (*inptr))
+		inptr++;
+	if (inptr == raw_value || !_g_mime_parse_int32 (&inptr, &length))
+		return -1;
+
+	return length;
 }
 
 
@@ -2171,18 +2366,18 @@ static GMimeMessage *
 parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	unsigned long content_length = ULONG_MAX;
+	int content_length = -1;
 	ContentType *content_type;
 	GMimeMessage *message;
-	GMimeObject *object;
-	const char *inptr;
-	gboolean can_warn;
+	GMimeEntity *object;
+	gboolean can_warn, respect_content_length;
 	Header *header;
-	char *endptr;
 	guint i;
 	
 	/* scan the from-line if we are parsing an mbox */
 	while (priv->state != GMIME_PARSER_STATE_MESSAGE_HEADERS) {
+		if (priv->state >= GMIME_PARSER_STATE_HEADERS_END)
+			return NULL;
 		if (parser_step (parser, options) == GMIME_PARSER_STATE_ERROR)
 			return NULL;
 	}
@@ -2195,37 +2390,43 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
 	}
 	
 	message = g_mime_message_new (FALSE);
-	((GMimeObject *) message)->ensure_newline = FALSE;
-	_g_mime_header_list_set_options (((GMimeObject *) message)->headers, options);
+	((GMimeEntity *) message)->ensure_newline = FALSE;
+	_g_mime_header_list_set_options (((GMimeEntity *) message)->headers, options);
 	
 	can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
+	respect_content_length = priv->format == GMIME_FORMAT_MBOX &&
+		g_mime_parser_options_get_respect_content_length (options);
 	for (i = 0; i < priv->headers->len; i++) {
 		header = priv->headers->pdata[i];
 		
-		if (priv->respect_content_length && !g_ascii_strcasecmp (header->name, "Content-Length")) {
-			inptr = header->raw_value;
-			while (is_lwsp (*inptr))
-				inptr++;
-			
-			content_length = strtoul (inptr, &endptr, 10);
-			if (endptr == inptr)
-				content_length = ULONG_MAX;
-		}
+		if (respect_content_length && content_length < 0 &&
+		    !g_ascii_strcasecmp (header->name, "Content-Length"))
+			content_length = parser_content_length (header->raw_value);
 		
 		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0) {
 			if (can_warn)
-				check_repeated_header (options, (GMimeObject *) message, header);
-			_g_mime_object_append_header ((GMimeObject *) message, header->name, header->raw_name,
+				check_repeated_header (options, (GMimeEntity *) message, header);
+			_g_mime_entity_append_header ((GMimeEntity *) message, header->name, header->raw_name,
 						      header->raw_value, header->offset);
 		}
 	}
 	
+	priv->content_end = 0;
 	if (priv->format == GMIME_FORMAT_MBOX) {
+		if (content_length >= 0) {
+			gint64 offset = parser_offset (priv, NULL);
+
+			if (offset > G_MAXINT64 - content_length) {
+				g_set_error (&priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     "Content-Length exceeds the stream offset range at offset %" G_GINT64_FORMAT,
+					     offset);
+				priv->state = GMIME_PARSER_STATE_ERROR;
+				g_object_unref (message);
+				return NULL;
+			}
+			priv->content_end = offset + content_length;
+		}
 		parser_push_boundary (parser, MBOX_BOUNDARY);
-		priv->content_end = 0;
-		
-		if (priv->respect_content_length && content_length < ULONG_MAX)
-			priv->content_end = parser_offset (priv, NULL) + content_length;
 	} else if (priv->format == GMIME_FORMAT_MMDF) {
 		parser_push_boundary (parser, MMDF_BOUNDARY);
 	}
@@ -2255,17 +2456,35 @@ parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
  * g_mime_parser_construct_message:
  * @parser: a #GMimeParser context
  * @options: (nullable): a #GMimeParserOptions or %NULL
+ * @error: return location for a #GError, or %NULL
  *
  * Constructs a MIME message from @parser.
  *
- * Returns: (nullable) (transfer full): a MIME message or %NULL on fail.
+ * Header length violations and input I/O failures discard the partially parsed
+ * message and set @error. A failed parser must be reinitialized with a stream
+ * before it can be reused. Recoverable MIME defects use the warning callback.
+ *
+ * Returns: (nullable) (transfer full): a MIME message, or %NULL on failure or
+ * end of input. End of input does not set @error.
  **/
 GMimeMessage *
-g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options)
+g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options, GError **error)
 {
+	GMimeMessage *message;
+
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	
-	return parser_construct_message (parser, options);
+	g_return_val_if_fail (GMIME_IS_STREAM (parser->priv->stream), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (parser->priv->error == NULL) {
+		message = parser_construct_message (parser, options);
+		if (parser->priv->error == NULL)
+			return message;
+		g_clear_object (&message);
+	}
+
+	g_propagate_error (error, g_error_copy (parser->priv->error));
+	return NULL;
 }
 
 
@@ -2327,10 +2546,10 @@ g_mime_parser_get_mbox_marker_offset (GMimeParser *parser)
  * @parser: a #GMimeParser context
  *
  * Gets the stream offset of the beginning of the headers of the most
- * recently parsed message.
+ * recently parsed message or standalone header block.
  *
  * Returns: the offset of the beginning of the headers of the most
- * recently parsed message or %-1 on error.
+ * recently parsed message or standalone header block, or %-1 on error.
  **/
 gint64
 g_mime_parser_get_headers_begin (GMimeParser *parser)
@@ -2346,10 +2565,11 @@ g_mime_parser_get_headers_begin (GMimeParser *parser)
  * @parser: a #GMimeParser context
  *
  * Gets the stream offset of the end of the headers of the most
- * recently parsed message.
+ * recently parsed message or standalone header block. A header block that
+ * ends at EOF without a blank separator has no end offset.
  *
  * Returns: the offset of the end of the headers of the most recently
- * parsed message or %-1 on error.
+ * parsed message or standalone header block, or %-1 if unavailable.
  **/
 gint64
 g_mime_parser_get_headers_end (GMimeParser *parser)

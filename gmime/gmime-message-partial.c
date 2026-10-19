@@ -27,6 +27,7 @@
 #include <string.h>
 
 #include "gmime-message-partial.h"
+#include "gmime-visitor.h"
 #include "gmime-stream-cat.h"
 #include "gmime-stream-mem.h"
 #include "gmime-internal.h"
@@ -47,11 +48,17 @@ static void g_mime_message_partial_class_init (GMimeMessagePartialClass *klass);
 static void g_mime_message_partial_init (GMimeMessagePartial *catpart, GMimeMessagePartialClass *klass);
 static void g_mime_message_partial_finalize (GObject *object);
 
-/* GMimeObject class methods */
-static void message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type);
+/* GMimeEntity class methods */
+static void message_partial_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
 
 
 static GMimePartClass *parent_class = NULL;
+
+static void
+message_partial_accept (GMimeEntity *object, GMimeVisitor *visitor)
+{
+	g_mime_visitor_visit_message_partial (visitor, (GMimeMessagePartial *) object);
+}
 
 
 GType
@@ -82,7 +89,7 @@ g_mime_message_partial_get_type (void)
 static void
 g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 {
-	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
+	GMimeEntityClass *object_class = GMIME_ENTITY_CLASS (klass);
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_PART);
@@ -90,6 +97,7 @@ g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 	gobject_class->finalize = g_mime_message_partial_finalize;
 	
 	object_class->set_content_type = message_partial_set_content_type;
+	object_class->accept = message_partial_accept;
 }
 
 static void
@@ -112,7 +120,7 @@ g_mime_message_partial_finalize (GObject *object)
 
 
 static void
-message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type)
+message_partial_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
 {
 	GMimeMessagePartial *partial = (GMimeMessagePartial *) object;
 	const char *value;
@@ -127,7 +135,7 @@ message_partial_set_content_type (GMimeObject *object, GMimeContentType *content
 	value = g_mime_content_type_get_parameter (content_type, "total");
 	partial->total = value ? strtol (value, NULL, 10) : -1;
 	
-	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
+	GMIME_ENTITY_CLASS (parent_class)->set_content_type (object, content_type);
 }
 
 
@@ -165,7 +173,7 @@ g_mime_message_partial_new (const char *id, int number, int total)
 	g_mime_content_type_set_parameter (content_type, "total", num);
 	g_free (num);
 	
-	g_mime_object_set_content_type ((GMimeObject *) partial, content_type);
+	g_mime_entity_set_content_type ((GMimeEntity *) partial, content_type);
 	g_object_unref (content_type);
 	
 	return partial;
@@ -254,7 +262,7 @@ GMimeMessage *
 g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num)
 {
 	GMimeMessagePartial *partial;
-	GMimeDataWrapper *wrapper;
+	GMimeContent *wrapper;
 	GMimeStream *cat, *stream;
 	GMimeMessage *message;
 	GMimeParser *parser;
@@ -295,7 +303,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 			goto exception;
 		
 		wrapper = g_mime_part_get_content ((GMimePart *) partial);
-		stream = g_mime_data_wrapper_get_stream (wrapper);
+		stream = g_mime_content_get_stream (wrapper);
 		
 		g_mime_stream_reset (stream);
 		g_mime_stream_cat_add_source ((GMimeStreamCat *) cat, stream);
@@ -305,7 +313,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 	g_mime_parser_init_with_stream (parser, cat);
 	g_object_unref (cat);
 	
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	g_object_unref (parser);
 	
 	return message;
@@ -330,7 +338,7 @@ message_partial_message_new (GMimeMessage *base)
 	
 	message = g_mime_message_new (FALSE);
 	
-	headers = ((GMimeObject *) base)->headers;
+	headers = ((GMimeEntity *) base)->headers;
 	
 	count = g_mime_header_list_get_count (headers);
 	
@@ -341,7 +349,7 @@ message_partial_message_new (GMimeMessage *base)
 		offset = g_mime_header_get_offset (header);
 		name = g_mime_header_get_name (header);
 		
-		_g_mime_object_append_header ((GMimeObject *) message, name, raw_name, raw_value, offset);
+		_g_mime_entity_append_header ((GMimeEntity *) message, name, raw_name, raw_value, offset);
 	}
 	
 	return message;
@@ -369,7 +377,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	GMimeMessagePartial *partial;
 	GMimeStream *stream, *substream;
 	GMimeFormatOptions *options;
-	GMimeDataWrapper *wrapper;
+	GMimeContent *wrapper;
 	const unsigned char *buf;
 	GPtrArray *parts;
 	gint64 len, end;
@@ -384,7 +392,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	options = g_mime_format_options_get_default ();
 	stream = g_mime_stream_mem_new ();
 	
-	if (g_mime_object_write_to_stream ((GMimeObject *) message, options, stream) == -1) {
+	if (g_mime_entity_write_to_stream ((GMimeEntity *) message, options, stream) == -1) {
 		g_object_unref (stream);
 		return NULL;
 	}
@@ -432,14 +440,14 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	
 	for (i = 0; i < parts->len; i++) {
 		partial = g_mime_message_partial_new (id, i + 1, parts->len);
-		wrapper = g_mime_data_wrapper_new_with_stream ((GMimeStream *) parts->pdata[i],
-							       GMIME_CONTENT_ENCODING_DEFAULT);
+		wrapper = g_mime_content_new_with_stream ((GMimeStream *) parts->pdata[i],
+							       GMIME_CONTENT_ENCODING_UNSPECIFIED);
 		g_object_unref (parts->pdata[i]);
 		g_mime_part_set_content ((GMimePart *) partial, wrapper);
 		g_object_unref (wrapper);
 		
 		parts->pdata[i] = message_partial_message_new (message);
-		g_mime_message_set_mime_part ((GMimeMessage *) parts->pdata[i], (GMimeObject *) partial);
+		g_mime_message_set_mime_part ((GMimeMessage *) parts->pdata[i], (GMimeEntity *) partial);
 		g_object_unref (partial);
 	}
 	

@@ -80,8 +80,14 @@ void g_mime_format_options_free (GMimeFormatOptions *options);
 
 GMimeFormatOptions *g_mime_format_options_clone (GMimeFormatOptions *options);
 
+guint g_mime_format_options_get_max_line_length (GMimeFormatOptions *options);
+void g_mime_format_options_set_max_line_length (GMimeFormatOptions *options, guint max_line_length);
+
 GMimeParamEncodingMethod g_mime_format_options_get_param_encoding_method (GMimeFormatOptions *options);
 void g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GMimeParamEncodingMethod method);
+
+gboolean g_mime_format_options_get_always_quote_param_values (GMimeFormatOptions *options);
+void g_mime_format_options_set_always_quote_param_values (GMimeFormatOptions *options, gboolean always_quote);
 
 GMimeNewLineFormat g_mime_format_options_get_newline_format (GMimeFormatOptions *options);
 void g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline);
@@ -89,14 +95,11 @@ void g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMim
 const char *g_mime_format_options_get_newline (GMimeFormatOptions *options);
 GMimeFilter *g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboolean ensure_newline);
 
-/*gboolean g_mime_format_options_get_allow_mixed_charsets (GMimeFormatOptions *options);*/
-/*void g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gboolean allow);*/
+gboolean g_mime_format_options_get_allow_mixed_charsets (GMimeFormatOptions *options);
+void g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gboolean allow);
 
-/*gboolean g_mime_format_options_get_allow_international (GMimeFormatOptions *options);*/
-/*void g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboolean allow);*/
-
-/*gboolean g_mime_format_options_get_max_line (GMimeFormatOptions *options);*/
-/*void g_mime_format_options_set_max_line (GMimeFormatOptions *options, gboolean maxline);*/
+gboolean g_mime_format_options_get_allow_international (GMimeFormatOptions *options);
+void g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboolean allow);
 
 gboolean g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char *header);
 void g_mime_format_options_add_hidden_header (GMimeFormatOptions *options, const char *header);

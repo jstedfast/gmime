@@ -37,9 +37,9 @@
  * SECTION: gmime-part-iter
  * @title: GMimePartIter
  * @short_description: MIME part iterators
- * @see_also: #GMimeObject
+ * @see_also: #GMimeEntity
  *
- * #GMimePartIter is an iterator for traversing a #GMimeObject tree in
+ * #GMimePartIter is an iterator for traversing a #GMimeEntity tree in
  * Depth-First order.
  **/
 
@@ -47,31 +47,31 @@
 G_DEFINE_BOXED_TYPE (GMimePartIter, g_mime_part_iter, g_mime_part_iter_clone, g_mime_part_iter_free);
 
 
-typedef struct _GMimeObjectStack GMimeObjectStack;
+typedef struct _GMimeEntityStack GMimeEntityStack;
 
-struct _GMimeObjectStack {
-	GMimeObjectStack *parent;
-	GMimeObject *object;
+struct _GMimeEntityStack {
+	GMimeEntityStack *parent;
+	GMimeEntity *object;
 	gboolean indexed;
 };
 
 struct _GMimePartIter {
-	GMimeObjectStack *parent;
-	GMimeObject *toplevel;
-	GMimeObject *current;
+	GMimeEntityStack *parent;
+	GMimeEntity *toplevel;
+	GMimeEntity *current;
 	GArray *path;
 	int index;
 };
 
 static void
-g_mime_part_iter_push (GMimePartIter *iter, GMimeObject *object, int index)
+g_mime_part_iter_push (GMimePartIter *iter, GMimeEntity *object, int index)
 {
-	GMimeObjectStack *node;
+	GMimeEntityStack *node;
 	
 	if (index != -1)
 		g_array_append_val (iter->path, index);
 	
-	node = g_slice_new (GMimeObjectStack);
+	node = g_slice_new (GMimeEntityStack);
 	node->indexed = index != -1;
 	node->parent = iter->parent;
 	node->object = object;
@@ -81,7 +81,7 @@ g_mime_part_iter_push (GMimePartIter *iter, GMimeObject *object, int index)
 static gboolean
 g_mime_part_iter_pop (GMimePartIter *iter)
 {
-	GMimeObjectStack *node;
+	GMimeEntityStack *node;
 	
 	if (!iter->parent || !iter->parent->parent)
 		return FALSE;
@@ -95,7 +95,7 @@ g_mime_part_iter_pop (GMimePartIter *iter)
 	
 	node = iter->parent;
 	iter->parent = node->parent;
-	g_slice_free (GMimeObjectStack, node);
+	g_slice_free (GMimeEntityStack, node);
 	
 	return TRUE;
 }
@@ -103,7 +103,7 @@ g_mime_part_iter_pop (GMimePartIter *iter)
 
 /**
  * g_mime_part_iter_new:
- * @toplevel: a #GMimeObject to use as the toplevel
+ * @toplevel: a #GMimeEntity to use as the toplevel
  *
  * Creates a new #GMimePartIter for iterating over @toplevel's subparts.
  *
@@ -111,11 +111,11 @@ g_mime_part_iter_pop (GMimePartIter *iter)
  * using g_mime_part_iter_free() when finished with it.
  **/
 GMimePartIter *
-g_mime_part_iter_new (GMimeObject *toplevel)
+g_mime_part_iter_new (GMimeEntity *toplevel)
 {
 	GMimePartIter *iter;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (toplevel), NULL);
+	g_return_val_if_fail (GMIME_IS_ENTITY (toplevel), NULL);
 	
 	iter = g_slice_new (GMimePartIter);
 	iter->path = g_array_new (FALSE, FALSE, sizeof (int));
@@ -144,7 +144,7 @@ g_mime_part_iter_free (GMimePartIter *iter)
 	g_object_unref (iter->toplevel);
 	g_array_free (iter->path, TRUE);
 	if (iter->parent != NULL)
-		g_slice_free_chain (GMimeObjectStack, iter->parent, parent);
+		g_slice_free_chain (GMimeEntityStack, iter->parent, parent);
 	g_slice_free (GMimePartIter, iter);
 }
 
@@ -191,7 +191,7 @@ g_mime_part_iter_reset (GMimePartIter *iter)
 	else
 		iter->current = iter->toplevel;
 	
-	g_slice_free_chain (GMimeObjectStack, iter->parent, parent);
+	g_slice_free_chain (GMimeEntityStack, iter->parent, parent);
 	g_array_set_size (iter->path, 0);
 	iter->parent = NULL;
 	iter->index = -1;
@@ -208,10 +208,10 @@ g_mime_part_iter_reset (GMimePartIter *iter)
  * @iter: a #GMimePartIter
  * @path: a string representing the path to jump to
  *
- * Updates the state of @iter to point to the #GMimeObject specified
+ * Updates the state of @iter to point to the #GMimeEntity specified
  * by @path.
  *
- * Returns: %TRUE if the #GMimeObject specified by @path exists or
+ * Returns: %TRUE if the #GMimeEntity specified by @path exists or
  * %FALSE otherwise.
  **/
 gboolean
@@ -220,8 +220,8 @@ g_mime_part_iter_jump_to (GMimePartIter *iter, const char *path)
 	GMimeMessagePart *message_part;
 	GMimeMultipart *multipart;
 	GMimeMessage *message;
-	GMimeObject *current;
-	GMimeObject *parent;
+	GMimeEntity *current;
+	GMimeEntity *parent;
 	const char *inptr;
 	int index;
 	char *dot;
@@ -333,7 +333,7 @@ g_mime_part_iter_next (GMimePartIter *iter)
 {
 	GMimeMessagePart *message_part;
 	GMimeMultipart *multipart;
-	GMimeObject *mime_part;
+	GMimeEntity *mime_part;
 	GMimeMessage *message;
 	
 	if (!g_mime_part_iter_is_valid (iter))
@@ -435,11 +435,11 @@ g_mime_part_iter_prev (GMimePartIter *iter)
  * g_mime_part_iter_get_toplevel:
  * @iter: a #GMimePartIter
  *
- * Gets the toplevel #GMimeObject used to initialize @iter.
+ * Gets the toplevel #GMimeEntity used to initialize @iter.
  *
- * Returns: (transfer none): the toplevel #GMimeObject.
+ * Returns: (transfer none): the toplevel #GMimeEntity.
  **/
-GMimeObject *
+GMimeEntity *
 g_mime_part_iter_get_toplevel (GMimePartIter *iter)
 {
 	g_return_val_if_fail (iter != NULL, NULL);
@@ -452,12 +452,12 @@ g_mime_part_iter_get_toplevel (GMimePartIter *iter)
  * g_mime_part_iter_get_current:
  * @iter: a #GMimePartIter
  *
- * Gets the #GMimeObject at the current #GMimePartIter position.
+ * Gets the #GMimeEntity at the current #GMimePartIter position.
  *
- * Returns: (transfer none): the current #GMimeObject or %NULL if the
+ * Returns: (transfer none): the current #GMimeEntity or %NULL if the
  * state of @iter is invalid.
  **/
-GMimeObject *
+GMimeEntity *
 g_mime_part_iter_get_current (GMimePartIter *iter)
 {
 	g_return_val_if_fail (iter != NULL, NULL);
@@ -470,13 +470,13 @@ g_mime_part_iter_get_current (GMimePartIter *iter)
  * g_mime_part_iter_get_parent:
  * @iter: a #GMimePartIter
  *
- * Gets the parent of the #GMimeObject at the current #GMimePartIter
+ * Gets the parent of the #GMimeEntity at the current #GMimePartIter
  * position.
  *
- * Returns: (transfer none): the parent #GMimeObject or %NULL if the
+ * Returns: (transfer none): the parent #GMimeEntity or %NULL if the
  * state of @iter is invalid.
  **/
-GMimeObject *
+GMimeEntity *
 g_mime_part_iter_get_parent (GMimePartIter *iter)
 {
 	g_return_val_if_fail (iter != NULL, NULL);
@@ -492,11 +492,11 @@ g_mime_part_iter_get_parent (GMimePartIter *iter)
  * g_mime_part_iter_get_path:
  * @iter: a #GMimePartIter
  *
- * Gets the path of the current #GMimeObject in the MIME structure
+ * Gets the path of the current #GMimeEntity in the MIME structure
  * used to initialize @iter.
  *
  * Returns: a newly allocated string representation of the path to the
- * #GMimeObject at the current #GMimePartIter position.
+ * #GMimeEntity at the current #GMimePartIter position.
  **/
 char *
 g_mime_part_iter_get_path (GMimePartIter *iter)
@@ -525,23 +525,23 @@ g_mime_part_iter_get_path (GMimePartIter *iter)
 /**
  * g_mime_part_iter_replace:
  * @iter: a #GMimePartIter
- * @replacement: a #GMimeObject
+ * @replacement: a #GMimeEntity
  *
- * Replaces the #GMimeObject at the current position with @replacement.
+ * Replaces the #GMimeEntity at the current position with @replacement.
  *
  * Returns: %TRUE if the part at the current position was replaced or
  * %FALSE otherwise.
  **/
 gboolean
-g_mime_part_iter_replace (GMimePartIter *iter, GMimeObject *replacement)
+g_mime_part_iter_replace (GMimePartIter *iter, GMimeEntity *replacement)
 {
 	GMimeMessagePart *message_part;
 	GMimeMessage *message;
-	GMimeObject *current;
-	GMimeObject *parent;
+	GMimeEntity *current;
+	GMimeEntity *parent;
 	int index;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (replacement), FALSE);
+	g_return_val_if_fail (GMIME_IS_ENTITY (replacement), FALSE);
 	
 	if (!g_mime_part_iter_is_valid (iter))
 		return FALSE;
@@ -587,7 +587,7 @@ g_mime_part_iter_replace (GMimePartIter *iter, GMimeObject *replacement)
  * g_mime_part_iter_remove:
  * @iter: a #GMimePartIter
  *
- * Removes the #GMimeObject at the current position from its
+ * Removes the #GMimeEntity at the current position from its
  * parent. If successful, @iter is advanced to the next position
  * (since the current position will become invalid).
  *
@@ -597,8 +597,8 @@ g_mime_part_iter_replace (GMimePartIter *iter, GMimeObject *replacement)
 gboolean
 g_mime_part_iter_remove (GMimePartIter *iter)
 {
-	GMimeObject *current;
-	GMimeObject *parent;
+	GMimeEntity *current;
+	GMimeEntity *parent;
 	int index;
 	
 	if (!g_mime_part_iter_is_valid (iter))

@@ -43,6 +43,7 @@
 #include "gmime-charset-map-private.h"
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
+#include "gmime-internal.h"
 #include "gmime-iconv.h"
 
 #ifdef HAVE_ICONV_DETECT_H
@@ -81,60 +82,75 @@
 static struct {
 	const char *charset;
 	const char *iconv_name;
+	const char *mime_name;
 } known_iconv_charsets[] = {
-	/* charset name, iconv-friendly name (sometimes case sensitive) */
-	{ "utf-8",           "UTF-8"      },
-	{ "utf8",            "UTF-8"      },
+	/* charset name, iconv-friendly name (sometimes case sensitive), MIME name */
+	{ "utf-8",           "UTF-8",      "utf-8" },
+	{ "utf8",            "UTF-8",      "utf-8" },
 	
 	/* ANSI_X3.4-1968 is used on some systems and should be
 	   treated the same as US-ASCII */
-	{ "ANSI_X3.4-1968",  NULL         },
+	{ "ANSI_X3.4-1968",  "US-ASCII",   "us-ascii" },
+	{ "ascii",          "US-ASCII",   "us-ascii" },
+	{ "iso-ir-6",       "US-ASCII",   "us-ascii" },
+	{ "csascii",        "US-ASCII",   "us-ascii" },
+
+	{ "latin1",         "ISO-8859-1", "iso-8859-1" },
+	{ "latin2",         "ISO-8859-2", "iso-8859-2" },
+	{ "latin3",         "ISO-8859-3", "iso-8859-3" },
+	{ "latin4",         "ISO-8859-4", "iso-8859-4" },
+	{ "latin5",         "ISO-8859-9", "iso-8859-9" },
+	{ "latin9",         "ISO-8859-15", "iso-8859-15" },
+	{ "ansi_x3.110-1983", "ISO-8859-1", "iso-8859-1" },
 	
 	/* 10646 is a special case, its usually UCS-2 big endian */
 	/* This might need some checking but should be ok for
            solaris/linux */
-	{ "iso-10646-1",     "UCS-2BE"    },
-	{ "iso_10646-1",     "UCS-2BE"    },
-	{ "iso10646-1",      "UCS-2BE"    },
-	{ "iso-10646",       "UCS-2BE"    },
-	{ "iso_10646",       "UCS-2BE"    },
-	{ "iso10646",        "UCS-2BE"    },
+	{ "iso-10646-1",     "UCS-2BE",    "ucs-2be" },
+	{ "iso_10646-1",     "UCS-2BE",    "ucs-2be" },
+	{ "iso10646-1",      "UCS-2BE",    "ucs-2be" },
+	{ "iso-10646",       "UCS-2BE",    "ucs-2be" },
+	{ "iso_10646",       "UCS-2BE",    "ucs-2be" },
+	{ "iso10646",        "UCS-2BE",    "ucs-2be" },
 	
 	/* Korean charsets */
 	/* Note: according to http://www.iana.org/assignments/character-sets,
 	 * ks_c_5601-1987 should really map to ISO-2022-KR, but the EUC-KR
 	 * mapping was given to me via a native Korean user, so I'm not sure
 	 * if I should change this... perhaps they are compatible? */
-	{ "ks_c_5601-1987",  "EUC-KR"     },
-	{ "5601",            "EUC-KR"     },
-	{ "ksc-5601",        "EUC-KR"     },
-	{ "ksc-5601-1987",   "EUC-KR"     },
-	{ "ksc-5601_1987",   "EUC-KR"     },
-	{ "ks_c_5861-1992",  "EUC-KR"     },
-	{ "euckr-0",         "EUC-KR"     },
+	{ "ks_c_5601-1987",  "EUC-KR",     "euc-kr" },
+	{ "5601",            "EUC-KR",     "euc-kr" },
+	{ "ksc-5601",        "EUC-KR",     "euc-kr" },
+	{ "ksc-5601-1987",   "EUC-KR",     "euc-kr" },
+	{ "ksc-5601_1987",   "EUC-KR",     "euc-kr" },
+	{ "ks_c_5861-1992",  "EUC-KR",     "euc-kr" },
+	{ "euckr-0",         "EUC-KR",     "euc-kr" },
 	
 	/* Chinese charsets */
-	{ "big5-0",          "BIG5"       },
-	{ "big5.eten-0",     "BIG5"       },
-	{ "big5hkscs-0",     "BIG5HKSCS"  },
+	{ "big5-0",          "BIG5",       "big5" },
+	{ "big5.eten-0",     "BIG5",       "big5" },
+	{ "big5hkscs-0",     "BIG5HKSCS",   "big5-hkscs" },
 	/* Note: GBK is a superset of gb2312 (see
 	 * http://en.wikipedia.org/wiki/GBK for details), so 'upgrade'
 	 * gb2312 to GBK so that we can completely convert GBK text
 	 * that is incorrectly tagged as gb2312 to UTF-8. */
-	{ "gb2312",          "GBK"        },
-	{ "gb-2312",         "GBK"        },
-	{ "gb2312-0",        "GBK"        },
-	{ "gb2312-80",       "GBK"        },
-	{ "gb2312.1980-0",   "GBK"        },
+	{ "gb2312",          "GBK",        "gb2312" },
+	{ "gb-2312",         "GBK",        "gb2312" },
+	{ "gb2312-0",        "GBK",        "gb2312" },
+	{ "gb2312-80",       "GBK",        "gb2312" },
+	{ "gb2312.1980-0",   "GBK",        "gb2312" },
 	/* euc-cn is an alias for gb2312 */
-	{ "euc-cn",          "GBK"        },
-	{ "gb18030-0",       "gb18030"    },
-	{ "gbk-0",           "GBK"        },
+	{ "euc-cn",          "GBK",        "euc-cn" },
+	{ "gb18030-0",       "gb18030",    "gb18030" },
+	{ "gbk-0",           "GBK",        "euc-cn" },
+	{ "gbk",             "GBK",        "euc-cn" },
 	
 	/* Japanese charsets */
-	{ "eucjp-0",         "eucJP"  	  },  /* should this map to "EUC-JP" instead? */
-	{ "ujis-0",          "ujis"  	  },  /* we might want to map this to EUC-JP */
-	{ NULL,              NULL         }
+	{ "eucjp-0",         "eucJP",      "euc-jp" },
+	{ "ujis-0",          "ujis",       "euc-jp" },
+	{ "ujis",            "ujis",       "euc-jp" },
+	{ "eucJP",           "eucJP",      "euc-jp" },
+	{ NULL,              NULL,         NULL }
 };
 
 static const char *shiftjis_aliases[] = {
@@ -167,6 +183,56 @@ static struct {
 };
 
 static GHashTable *iconv_charsets = NULL;
+static GHashTable *charset_codepages = NULL;
+static GHashTable *codepage_cache = NULL;
+static int next_codepage = -1;
+
+static const struct {
+	const char *name;
+	int codepage;
+} known_codepages[] = {
+	{ "us-ascii", 20127 },
+	{ "utf-8", 65001 },
+	{ "utf-7", 65000 },
+	{ "utf-16le", 1200 },
+	{ "utf-16be", 1201 },
+	{ "utf-32le", 12000 },
+	{ "utf-32be", 12001 },
+	{ "iso-8859-1", 28591 },
+	{ "iso-8859-2", 28592 },
+	{ "iso-8859-3", 28593 },
+	{ "iso-8859-4", 28594 },
+	{ "iso-8859-5", 28595 },
+	{ "iso-8859-6", 28596 },
+	{ "iso-8859-7", 28597 },
+	{ "iso-8859-8", 28598 },
+	{ "iso-8859-9", 28599 },
+	{ "iso-8859-13", 28603 },
+	{ "iso-8859-15", 28605 },
+	{ "windows-1250", 1250 },
+	{ "windows-1251", 1251 },
+	{ "windows-1252", 1252 },
+	{ "windows-1253", 1253 },
+	{ "windows-1254", 1254 },
+	{ "windows-1255", 1255 },
+	{ "windows-1256", 1256 },
+	{ "windows-1257", 1257 },
+	{ "windows-1258", 1258 },
+	{ "shift_jis", 932 },
+	{ "euc-jp", 51932 },
+	{ "euc-kr", 51949 },
+	{ "gb2312", 936 },
+	{ "gbk", 936 },
+	{ "euc-cn", 936 },
+	{ "big5", 950 },
+	{ "gb18030", 54936 },
+	{ "iso-2022-jp", 50220 },
+	{ "iso-2022-kr", 50225 },
+	{ "koi8-r", 20866 },
+	{ "koi8-u", 21866 },
+	{ "macintosh", 10000 }
+};
+
 static char *locale_charset = NULL;
 static char *locale_lang = NULL;
 static int initialized = 0;
@@ -203,6 +269,10 @@ g_mime_charset_map_shutdown (void)
 	}
 #endif
 	
+	g_hash_table_destroy (codepage_cache);
+	codepage_cache = NULL;
+	g_hash_table_destroy (charset_codepages);
+	charset_codepages = NULL;
 	g_hash_table_destroy (iconv_charsets);
 	iconv_charsets = NULL;
 	
@@ -281,6 +351,13 @@ g_mime_charset_map_init (void)
 #endif
 	
 	iconv_charsets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	charset_codepages = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	codepage_cache = g_hash_table_new (g_direct_hash, g_direct_equal);
+	next_codepage = -1;
+
+	for (i = 0; i < G_N_ELEMENTS (known_codepages); i++)
+		g_hash_table_insert (charset_codepages, g_strdup (known_codepages[i].name),
+				     GINT_TO_POINTER (known_codepages[i].codepage));
 	
 	for (i = 0; known_iconv_charsets[i].charset != NULL; i++) {
 		charset = g_ascii_strdown (known_iconv_charsets[i].charset, -1);
@@ -609,13 +686,74 @@ g_mime_charset_canon_name (const char *charset)
 			return charset;
 		
 		return iso_charsets[iso];
-	} else if (!strncmp (charset, "CP125", 5)) {
+	} else if (!g_ascii_strncasecmp (charset, "CP125", 5)) {
 		ptr = charset + 5;
-		if (*ptr >= '0' && *ptr <= '9')
+		if (*ptr >= '0' && *ptr <= '9' && ptr[1] == '\0')
 			return windows_charsets[*ptr - '0'];
 	}
 	
 	return charset;
+}
+
+char *
+_g_mime_charset_get_mime_name (const char *charset)
+{
+	const char *name;
+	guint i;
+
+	if (strstr (charset, "//"))
+		return g_strdup (charset);
+
+	for (i = 0; known_iconv_charsets[i].charset; i++) {
+		if (!g_ascii_strcasecmp (charset, known_iconv_charsets[i].charset))
+			return g_strdup (known_iconv_charsets[i].mime_name);
+	}
+
+	name = g_mime_charset_canon_name (charset);
+	if (!g_ascii_strcasecmp (name, ICONV_SHIFT_JIS))
+		return g_strdup ("shift_jis");
+	if (g_str_has_prefix (name, "windows-cp"))
+		return g_strconcat ("windows-", name + 10, NULL);
+
+	return g_ascii_strdown (name, -1);
+}
+
+/* Positive identities are codepages; negative identities keep unmapped native
+ * charsets distinct. Both are valid only until the charset maps shut down. */
+int
+_g_mime_charset_get_codepage (const char *charset)
+{
+	gpointer value;
+	char *name;
+
+	g_return_val_if_fail (charset != NULL, 0);
+
+	CHARSET_LOCK ();
+	value = g_hash_table_lookup (codepage_cache, charset);
+	CHARSET_UNLOCK ();
+	if (value)
+		return GPOINTER_TO_INT (value);
+
+	charset = g_mime_charset_iconv_name (charset);
+	CHARSET_LOCK ();
+	value = g_hash_table_lookup (codepage_cache, charset);
+	CHARSET_UNLOCK ();
+	if (value)
+		return GPOINTER_TO_INT (value);
+
+	name = _g_mime_charset_get_mime_name (charset);
+	CHARSET_LOCK ();
+	if (!(value = g_hash_table_lookup (charset_codepages, name))) {
+		g_assert (next_codepage > G_MININT);
+		value = GINT_TO_POINTER (next_codepage--);
+		g_hash_table_insert (charset_codepages, name, value);
+		name = NULL;
+	}
+	g_hash_table_insert (codepage_cache, (gpointer) charset, value);
+	CHARSET_UNLOCK ();
+	g_free (name);
+
+	return GPOINTER_TO_INT (value);
 }
 
 

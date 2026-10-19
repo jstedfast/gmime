@@ -26,9 +26,10 @@
 #include <glib-object.h>
 #include <errno.h>
 
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-message.h>
 #include <gmime/gmime-content-type.h>
+#include <gmime/gmime-header.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-stream.h>
 
@@ -108,15 +109,13 @@ void g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist);
 GMimeFormat g_mime_parser_get_format (GMimeParser *parser);
 void g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format);
 
-gboolean g_mime_parser_get_respect_content_length (GMimeParser *parser);
-void g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_content_length);
-
 void g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 				     GMimeParserHeaderRegexFunc header_cb,
 				     gpointer user_data);
 
-GMimeObject *g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options);
-GMimeMessage *g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options);
+GMimeHeaderList *g_mime_parser_construct_headers (GMimeParser *parser, GMimeParserOptions *options, GError **error);
+GMimeEntity *g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options, GError **error);
+GMimeMessage *g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options, GError **error);
 
 gint64 g_mime_parser_tell (GMimeParser *parser);
 

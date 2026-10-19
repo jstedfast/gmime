@@ -71,6 +71,7 @@ print_verify_results (GMimeSignatureList *signatures)
 {
 	GMimeSignatureStatus status;
 	GMimeSignature *sig;
+	char *date;
 	int count, i;
 	
 	status = get_sig_status (signatures);
@@ -127,11 +128,18 @@ print_verify_results (GMimeSignatureList *signatures)
 		else
 			fputs ("UNKNOWN\n", stdout);
 		
-		fprintf (stdout, "\tSignature made on %s", ctime (&sig->created));
-		if (sig->expires != (time_t) 0)
-			fprintf (stdout, "\tSignature expires on %s", ctime (&sig->expires));
-		else
+		date = sig->created ? g_date_time_format_iso8601 (sig->created) : NULL;
+		fprintf (stdout, "\tSignature made on %s\n", date ? date : "(unknown)");
+		g_free (date);
+		if (!sig->expires) {
+			fprintf (stdout, "\tSignature expiration unknown\n");
+		} else if (g_date_time_to_unix_usec (sig->expires) == G_GINT64_CONSTANT (253402300799999999)) {
 			fprintf (stdout, "\tSignature never expires\n");
+		} else {
+			date = g_date_time_format_iso8601 (sig->expires);
+			fprintf (stdout, "\tSignature expires on %s\n", date);
+			g_free (date);
+		}
 		
 		fprintf (stdout, "\tErrors: ");
 		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
@@ -162,38 +170,38 @@ print_verify_results (GMimeSignatureList *signatures)
 }
 
 static GMimeMessage *
-create_message (GMimeObject *body)
+create_message (GMimeEntity *body)
 {
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
-	InternetAddressList *list;
-	InternetAddress *mailbox;
+	GMimeInternetAddressList *list;
+	GMimeInternetAddress *mailbox;
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
 	
 	message = g_mime_message_new (TRUE);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_from (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_reply_to (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Federico Mena-Quintero", "federico@helixcode.com", NULL);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
 	g_mime_message_set_subject (message, "This is a test message", NULL);
-	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c", NULL);
+	g_mime_entity_set_header ((GMimeEntity *) message, "X-Mailer", "main.c", NULL);
 	g_mime_message_set_mime_part (message, body);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) message, format, stream);
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	
@@ -205,7 +213,7 @@ create_message (GMimeObject *body)
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	g_object_unref (parser);
 	
 	return message;
@@ -233,7 +241,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
 	
 	/* sign the part */
-	mps = g_mime_multipart_signed_sign (ctx, (GMimeObject *) part, "no.user@no.domain", &err);
+	mps = g_mime_multipart_signed_sign (ctx, (GMimeEntity *) part, "no.user@no.domain", &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -242,7 +250,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 		throw (ex);
 	}
 	
-	message = create_message ((GMimeObject *) mps);
+	message = create_message ((GMimeEntity *) mps);
 	g_object_unref (mps);
 	
 	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
@@ -279,8 +287,8 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
-	InternetAddressList *list;
-	InternetAddress *mailbox;
+	GMimeInternetAddressList *list;
+	GMimeInternetAddress *mailbox;
 	GPtrArray *recipients;
 	GMimeMessage *message;
 	Exception *ex = NULL;
@@ -292,13 +300,13 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	
 	/* hold onto this for comparison later */
 	cleartext = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) part, format, cleartext);
+	g_mime_entity_write_to_stream ((GMimeEntity *) part, format, cleartext);
 	g_mime_stream_reset (cleartext);
 	
 	/* encrypt the part */
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
-	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeObject *) part, sign, "no.user@no.domain",
+	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeEntity *) part, sign, "no.user@no.domain",
 						  GMIME_ENCRYPT_ALWAYS_TRUST, recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
@@ -312,28 +320,28 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	
 	message = g_mime_message_new (TRUE);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_from (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_reply_to (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Federico Mena-Quintero", "federico@helixcode.com", NULL);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
 	g_mime_message_set_subject (message, "This is a test message", NULL);
-	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c", NULL);
-	g_mime_message_set_mime_part (message, (GMimeObject *) mpe);
+	g_mime_entity_set_header ((GMimeEntity *) message, "X-Mailer", "main.c", NULL);
+	g_mime_message_set_mime_part (message, (GMimeEntity *) mpe);
 	g_object_unref (mpe);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) message, format, stream);
 	g_object_unref (message);
 	
 	*stream_out = stream;
@@ -350,7 +358,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	GMimeStream *test_stream;
  	GMimeMultipartEncrypted *mpe;
 	GMimeDecryptResult *result;
-	GMimeObject *decrypted;
+	GMimeEntity *decrypted;
 	GMimeMessage *message;
 	Exception *ex = NULL;
 	GMimeParser *parser;
@@ -364,7 +372,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	g_object_unref (parser);
 	
 	if (!GMIME_IS_MULTIPART_ENCRYPTED (message->mime_part)) {
@@ -414,7 +422,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	}
 	
 	test_stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (decrypted, format, test_stream);
+	g_mime_entity_write_to_stream (decrypted, format, test_stream);
 	
 	buf[0] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) cleartext);
 	buf[1] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) test_stream);

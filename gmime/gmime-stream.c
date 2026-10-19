@@ -24,8 +24,10 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-stream.h"
+#include "gmime-internal.h"
 
 #define d(x)
 
@@ -209,6 +211,31 @@ g_mime_stream_write (GMimeStream *stream, const char *buf, size_t len)
 	return GMIME_STREAM_GET_CLASS (stream)->write (stream, buf, len);
 }
 
+
+ssize_t
+_g_mime_stream_write_all (GMimeStream *stream, const char *buffer, size_t len)
+{
+	ssize_t total = 0, nwritten;
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	while (len > 0) {
+		if ((nwritten = g_mime_stream_write (stream, buffer, len)) == -1)
+			return -1;
+		if (nwritten == 0) {
+			errno = EIO;
+			return -1;
+		}
+		buffer += nwritten;
+		len -= nwritten;
+		total += nwritten;
+	}
+
+	return total;
+}
 
 static int
 stream_flush (GMimeStream *stream)

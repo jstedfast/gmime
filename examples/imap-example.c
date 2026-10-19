@@ -71,7 +71,7 @@ escape_string (const char *string)
 }
 
 static void
-write_part_bodystructure (GMimeObject *part, FILE *fp)
+write_part_bodystructure (GMimeEntity *part, FILE *fp)
 {
 	GMimeContentType *content_type;
 	GMimeParamList *params;
@@ -81,7 +81,7 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 	
 	fputc ('(', fp);
 	
-	content_type = g_mime_object_get_content_type (part);
+	content_type = g_mime_entity_get_content_type (part);
 	
 	fprintf (fp, "\"%s\" ", g_mime_content_type_get_media_type (content_type));
 	
@@ -110,7 +110,7 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 	
 	if (GMIME_IS_MULTIPART (part)) {
 		GMimeMultipart *multipart = (GMimeMultipart *) part;
-		GMimeObject *subpart;
+		GMimeEntity *subpart;
 		
 		n = g_mime_multipart_get_count (multipart);
 		for (i = 0; i < n; i++) {
@@ -127,59 +127,59 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		/* print envelope */
 		fputc ('(', fp);
 		
-		str = g_mime_object_get_header ((GMimeObject *) message, "Date");
+		str = g_mime_entity_get_header ((GMimeEntity *) message, "Date");
 		fprintf (fp, "\"%s\" ", str);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Subject")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "Subject")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "From")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "From")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Sender")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "Sender")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Reply-To")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "Reply-To")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "To")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "To")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Cc")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "Cc")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Bcc")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "Bcc")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_object_get_header ((GMimeObject *) message, "In-Reply-To")))
+		if ((str = g_mime_entity_get_header ((GMimeEntity *) message, "In-Reply-To")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
@@ -196,11 +196,11 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		fputs (") ", fp);
 		
 		/* print body */
-		write_part_bodystructure ((GMimeObject *) message->mime_part, fp);
+		write_part_bodystructure ((GMimeEntity *) message->mime_part, fp);
 	} else if (GMIME_IS_PART (part)) {
 		GMimeContentDisposition *disposition;
 		
-		disposition = g_mime_object_get_content_disposition (part);
+		disposition = g_mime_entity_get_content_disposition (part);
 		
 		if (disposition) {
 			fprintf (fp, "\"%s\" ", g_mime_content_disposition_get_disposition (disposition));
@@ -277,7 +277,7 @@ write_header (GMimeMessage *message, const char *uid)
 	fp = fopen (buf, "wt");
 	g_free (buf);
 	
-	buf = g_mime_object_get_headers ((GMimeObject *) message, format);
+	buf = g_mime_entity_get_headers ((GMimeEntity *) message, format);
 	
 	fwrite (buf, 1, strlen (buf), fp);
 	g_free (buf);
@@ -286,14 +286,14 @@ write_header (GMimeMessage *message, const char *uid)
 }
 
 static void
-write_part (GMimeObject *part, const char *uid, const char *spec)
+write_part (GMimeEntity *part, const char *uid, const char *spec)
 {
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *istream, *ostream;
 	GMimeMultipart *multipart;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeMessage *message;
-	GMimeObject *subpart;
+	GMimeEntity *subpart;
 	char *buf, *id;
 	FILE *fp;
 	int i, n;
@@ -302,7 +302,7 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 	fp = fopen (buf, "wt");
 	g_free (buf);
 	
-	buf = g_mime_object_get_headers (part, format);
+	buf = g_mime_entity_get_headers (part, format);
 	fwrite (buf, 1, strlen (buf), fp);
 	g_free (buf);
 	
@@ -328,7 +328,7 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		message = g_mime_message_part_get_message ((GMimeMessagePart *) part);
 		
 		ostream = g_mime_stream_file_new (fp);
-		g_mime_object_write_to_stream ((GMimeObject *) message, format, ostream);
+		g_mime_entity_write_to_stream ((GMimeEntity *) message, format, ostream);
 		g_object_unref (ostream);
 	} else if (GMIME_IS_PART (part)) {
 		buf = g_strdup_printf ("%s/%s.TEXT", uid, spec);
@@ -337,7 +337,7 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		
 		ostream = g_mime_stream_file_new (fp);
 		content = g_mime_part_get_content ((GMimePart *) part);
-		istream = g_mime_data_wrapper_get_stream (content);
+		istream = g_mime_content_get_stream (content);
 		g_mime_stream_write_to_stream (istream, ostream);
 		g_object_unref (ostream);
 	}
@@ -749,7 +749,7 @@ bodystruct_free (struct _bodystruct *node)
 static void
 reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 {
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeStream *stream;
 	char *filename;
 	int fd;
@@ -764,7 +764,7 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 	
 	stream = g_mime_stream_fs_new (fd);
 	
-	content = g_mime_data_wrapper_new_with_stream (stream, part->encoding);
+	content = g_mime_content_new_with_stream (stream, part->encoding);
 	g_object_unref (stream);
 	
 	g_mime_part_set_content (part, content);
@@ -776,6 +776,7 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
+	GError *error = NULL;
 	char *filename;
 	int fd;
 	
@@ -792,8 +793,14 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 	parser = g_mime_parser_new_with_stream (stream);
 	g_object_unref (stream);
 	
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
 	g_object_unref (parser);
+
+	if (message == NULL) {
+		fprintf (stderr, "Failed to parse message part: %s\n", error ? error->message : "empty input");
+		g_clear_error (&error);
+		return;
+	}
 	
 	g_mime_message_part_set_message (msgpart, message);
 	g_object_unref (message);
@@ -804,9 +811,10 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		       const char *uid, const char *spec)
 {
 	struct _bodystruct *part;
-	GMimeObject *subpart;
+	GMimeEntity *subpart;
 	GMimeParser *parser;
 	GMimeStream *stream;
+	GError *error = NULL;
 	char *subspec, *id;
 	char *filename;
 	int fd, i = 1;
@@ -846,8 +854,14 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		parser = g_mime_parser_new_with_stream (stream);
 		g_object_unref (stream);
 		
-		subpart = g_mime_parser_construct_part (parser, NULL);
+		subpart = g_mime_parser_construct_part (parser, NULL, &error);
 		g_object_unref (parser);
+
+		if (subpart == NULL) {
+			fprintf (stderr, "Failed to parse MIME part: %s\n", error ? error->message : "empty input");
+			g_clear_error (&error);
+			return;
+		}
 		
 		if (GMIME_IS_MULTIPART (subpart)) {
 			reconstruct_multipart ((GMimeMultipart *) subpart, part, uid, subspec);
@@ -868,10 +882,11 @@ static void
 reconstruct_message (const char *uid)
 {
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
-	GMimeObject *mime_part;
+	GMimeEntity *mime_part;
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
+	GError *error = NULL;
 	char *filename;
 	int fd;
 	
@@ -889,8 +904,14 @@ reconstruct_message (const char *uid)
 	
 	/* constructs message object and toplevel mime part (although
 	   the toplevel mime part will not have any content... */
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
 	g_object_unref (parser);
+
+	if (message == NULL) {
+		fprintf (stderr, "Failed to parse message: %s\n", error ? error->message : "empty input");
+		g_clear_error (&error);
+		return;
+	}
 	
 	mime_part = g_mime_message_get_mime_part (message);
 	
@@ -933,7 +954,7 @@ reconstruct_message (const char *uid)
 	
 	g_free (filename);
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) message, format, stream);
 	g_object_unref (message);
 	g_object_unref (stream);
 }
@@ -945,6 +966,7 @@ int main (int argc, char **argv)
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
+	GError *error = NULL;
 	int fd, i = 1;
 	char *uid;
 	
@@ -967,8 +989,15 @@ int main (int argc, char **argv)
 	g_mime_parser_set_format (parser, format);
 	g_object_unref (stream);
 	
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
 	g_object_unref (parser);
+
+	if (error != NULL) {
+		fprintf (stderr, "Failed to parse message: %s\n", error->message);
+		g_error_free (error);
+		g_mime_shutdown ();
+		return 1;
+	}
 	
 	if (message) {
 		uid = g_strdup (message->message_id ? message->message_id : basename (argv[i]));

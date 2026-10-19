@@ -198,7 +198,7 @@ int main (int argc, char **argv)
 				g_mime_parser_init_with_stream (parser, stream);
 				g_object_unref (stream);
 				
-				if (!(message = g_mime_parser_construct_message (parser, NULL)))
+				if (!(message = g_mime_parser_construct_message (parser, NULL, NULL)))
 					throw (exception_new ("Failed to parse `%s'", path));
 				
 				if (!GMIME_IS_MESSAGE_PARTIAL (message->mime_part)) {
@@ -227,7 +227,7 @@ int main (int argc, char **argv)
 				g_object_unref (parts[i]);
 			
 			combined = g_mime_stream_mem_new ();
-			g_mime_object_write_to_stream (GMIME_OBJECT (message), format, combined);
+			g_mime_entity_write_to_stream (GMIME_ENTITY (message), format, combined);
 			g_mime_stream_reset (combined);
 			
 			if (!(expected = g_mime_stream_file_open (output->str, "r", NULL))) {
@@ -280,7 +280,7 @@ int main (int argc, char **argv)
 			}
 			
 			combined = g_mime_stream_mem_new ();
-			g_mime_object_write_to_stream (GMIME_OBJECT (message), format, combined);
+			g_mime_entity_write_to_stream (GMIME_ENTITY (message), format, combined);
 			g_mime_stream_reset (combined);
 			g_mime_stream_reset (expected);
 			g_object_unref (message);

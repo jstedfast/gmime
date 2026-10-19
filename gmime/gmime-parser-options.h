@@ -33,12 +33,14 @@ G_BEGIN_DECLS
  * GMimeRfcComplianceMode:
  * @GMIME_RFC_COMPLIANCE_LOOSE: Attempt to be much more liberal accepting broken and/or invalid formatting.
  * @GMIME_RFC_COMPLIANCE_STRICT: Do not attempt to be overly liberal in accepting broken and/or invalid formatting.
+ * @GMIME_RFC_COMPLIANCE_LOOSER: Also allow consecutive or trailing local-part dots and escaped '@' characters in addresses.
  *
  * An RFC compliance mode.
  **/
 typedef enum {
 	GMIME_RFC_COMPLIANCE_LOOSE,
-	GMIME_RFC_COMPLIANCE_STRICT
+	GMIME_RFC_COMPLIANCE_STRICT,
+	GMIME_RFC_COMPLIANCE_LOOSER
 } GMimeRfcComplianceMode;
 
 /**
@@ -118,14 +120,29 @@ void g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *opti
 gboolean g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *options);
 void g_mime_parser_options_set_allow_addresses_without_domain (GMimeParserOptions *options, gboolean allow);
 
+gboolean g_mime_parser_options_get_allow_unquoted_commas_in_addresses (GMimeParserOptions *options);
+void g_mime_parser_options_set_allow_unquoted_commas_in_addresses (GMimeParserOptions *options, gboolean allow);
+
+gboolean g_mime_parser_options_get_respect_content_length (GMimeParserOptions *options);
+void g_mime_parser_options_set_respect_content_length (GMimeParserOptions *options, gboolean respect);
+
+int g_mime_parser_options_get_max_address_group_depth (GMimeParserOptions *options);
+void g_mime_parser_options_set_max_address_group_depth (GMimeParserOptions *options, int max_depth);
+
+int g_mime_parser_options_get_max_mime_depth (GMimeParserOptions *options);
+void g_mime_parser_options_set_max_mime_depth (GMimeParserOptions *options, int max_depth);
+
+int g_mime_parser_options_get_max_header_length (GMimeParserOptions *options);
+void g_mime_parser_options_set_max_header_length (GMimeParserOptions *options, int max_length);
+
 GMimeRfcComplianceMode g_mime_parser_options_get_parameter_compliance_mode (GMimeParserOptions *options);
 void g_mime_parser_options_set_parameter_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);
 
 GMimeRfcComplianceMode g_mime_parser_options_get_rfc2047_compliance_mode (GMimeParserOptions *options);
 void g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);
 
-const char **g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options);
-void g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const char **charsets);
+const char *g_mime_parser_options_get_charset_encoding (GMimeParserOptions *options);
+gboolean g_mime_parser_options_set_charset_encoding (GMimeParserOptions *options, const char *charset, GError **error);
 
 GMimeParserWarningFunc g_mime_parser_options_get_warning_callback (GMimeParserOptions *options);
 void g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data);

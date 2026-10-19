@@ -41,7 +41,7 @@ GMime 4.0 Planning:
     - GMimeMessageIdHeader
     - GMimeReferencesHeader
 
-- Change GMimeCryptoContext API's to take InternetAddressMailbox's to specify
+- Change GMimeCryptoContext API's to take GMimeMailboxAddress's to specify
   identities to sign and/or encrypt to? Then we could have something like
   MimeKit's SecureMailboxAddress that has a GPGME Key ID or a fingerprint or
   something to make it easier for developers to specify a key.

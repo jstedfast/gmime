@@ -111,10 +111,15 @@ check_msg_file (const gchar *filename)
 		g_mime_parser_init_with_stream (parser, stream);
 		options = g_mime_parser_options_new ();
 		g_mime_parser_options_set_warning_callback (options, parser_issue, NULL);
-		message = g_mime_parser_construct_message (parser, options);
+		message = g_mime_parser_construct_message (parser, options, &error);
 		g_mime_parser_options_free (options);
 		g_object_unref (parser);
 		g_object_unref (stream);
+		if (error != NULL) {
+			g_warning ("failed to parse %s: %s", filename, error->message);
+			g_error_free (error);
+			return;
+		}
 		if (message != NULL) {
 			g_object_unref (message);
 		}

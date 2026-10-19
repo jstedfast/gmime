@@ -66,6 +66,9 @@ typedef char * (* GMimeHeaderRawValueFormatter) (GMimeHeader *header, GMimeForma
 
 char *g_mime_header_format_content_disposition (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 char *g_mime_header_format_content_type (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
+char *g_mime_header_format_disposition_notification_options (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
+char *g_mime_header_format_dkim_signature (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
+char *g_mime_header_format_mailing_list_command (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 char *g_mime_header_format_message_id (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 char *g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 char *g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
@@ -96,6 +99,8 @@ struct _GMimeHeader {
 	char *raw_name;
 	char *charset;
 	gint64 offset;
+	gboolean owns_options;
+	gboolean explicit_raw_value;
 };
 
 struct _GMimeHeaderClass {
@@ -105,6 +110,9 @@ struct _GMimeHeaderClass {
 
 
 GType g_mime_header_get_type (void);
+
+GMimeHeader *g_mime_header_new (const char *name, const char *value, const char *charset);
+GMimeHeader *g_mime_header_clone (GMimeHeader *header);
 
 const char *g_mime_header_get_name (GMimeHeader *header);
 const char *g_mime_header_get_raw_name (GMimeHeader *header);
@@ -118,6 +126,7 @@ void g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
 gint64 g_mime_header_get_offset (GMimeHeader *header);
 
 ssize_t g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options, GMimeStream *stream);
+char *g_mime_header_to_string (GMimeHeader *header);
 
 
 /**
@@ -133,6 +142,7 @@ struct _GMimeHeaderList {
 	gpointer changed;
 	GHashTable *hash;
 	GPtrArray *array;
+	gboolean has_body_separator;
 };
 
 struct _GMimeHeaderListClass {
@@ -144,16 +154,29 @@ struct _GMimeHeaderListClass {
 GType g_mime_header_list_get_type (void);
 
 GMimeHeaderList *g_mime_header_list_new (GMimeParserOptions *options);
+GMimeHeaderList *g_mime_header_list_load (GMimeParserOptions *options, GMimeStream *stream, GError **error);
+GMimeHeaderList *g_mime_header_list_load_file (GMimeParserOptions *options, const char *filename, GError **error);
 
 void g_mime_header_list_clear (GMimeHeaderList *headers);
 int g_mime_header_list_get_count (GMimeHeaderList *headers);
 gboolean g_mime_header_list_contains (GMimeHeaderList *headers, const char *name);
+gboolean g_mime_header_list_contains_header (GMimeHeaderList *headers, GMimeHeader *header);
+int g_mime_header_list_index_of (GMimeHeaderList *headers, const char *name);
+int g_mime_header_list_index_of_header (GMimeHeaderList *headers, GMimeHeader *header);
+int g_mime_header_list_last_index_of (GMimeHeaderList *headers, const char *name);
+int g_mime_header_list_add (GMimeHeaderList *headers, GMimeHeader *header);
+void g_mime_header_list_insert_header (GMimeHeaderList *headers, int index, GMimeHeader *header);
+void g_mime_header_list_insert (GMimeHeaderList *headers, int index, const char *name, const char *value, const char *charset);
 void g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *charset);
 void g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *charset);
 void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *charset);
+void g_mime_header_list_replace (GMimeHeaderList *headers, GMimeHeader *header);
 GMimeHeader *g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name);
 GMimeHeader *g_mime_header_list_get_header_at (GMimeHeaderList *headers, int index);
+void g_mime_header_list_set_header_at (GMimeHeaderList *headers, int index, GMimeHeader *header);
 gboolean g_mime_header_list_remove (GMimeHeaderList *headers, const char *name);
+gboolean g_mime_header_list_remove_header (GMimeHeaderList *headers, GMimeHeader *header);
+void g_mime_header_list_remove_all (GMimeHeaderList *headers, const char *name);
 void g_mime_header_list_remove_at (GMimeHeaderList *headers, int index);
 
 ssize_t g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions *options, GMimeStream *stream);

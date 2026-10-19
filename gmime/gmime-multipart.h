@@ -25,7 +25,8 @@
 #include <glib.h>
 
 #include <gmime/gmime-encodings.h>
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
+#include <gmime/gmime-text-part.h>
 
 G_BEGIN_DECLS
 
@@ -41,7 +42,7 @@ typedef struct _GMimeMultipartClass GMimeMultipartClass;
 
 /**
  * GMimeMultipart:
- * @parent_object: parent #GMimeObject
+ * @parent_object: parent #GMimeEntity
  * @children: array of MIME sub-parts
  * @boundary: MIME boundary
  * @prologue: multipart prologue
@@ -50,7 +51,7 @@ typedef struct _GMimeMultipartClass GMimeMultipartClass;
  * A base MIME multipart object.
  **/
 struct _GMimeMultipart {
-	GMimeObject parent_object;
+	GMimeEntity parent_object;
 	
 	GPtrArray *children;
 	char *boundary;
@@ -62,22 +63,24 @@ struct _GMimeMultipart {
 };
 
 struct _GMimeMultipartClass {
-	GMimeObjectClass parent_class;
+	GMimeEntityClass parent_class;
 	
 	void (* clear) (GMimeMultipart *multipart);
-	void (* add) (GMimeMultipart *multipart, GMimeObject *part);
-	void (* insert) (GMimeMultipart *multipart, int index, GMimeObject *part);
-	gboolean (* remove) (GMimeMultipart *multipart, GMimeObject *part);
-	GMimeObject * (* remove_at) (GMimeMultipart *multipart, int index);
-	GMimeObject * (* get_part) (GMimeMultipart *multipart, int index);
+	void (* add) (GMimeMultipart *multipart, GMimeEntity *part);
+	void (* insert) (GMimeMultipart *multipart, int index, GMimeEntity *part);
+	gboolean (* remove) (GMimeMultipart *multipart, GMimeEntity *part);
+	GMimeEntity * (* remove_at) (GMimeMultipart *multipart, int index);
+	GMimeEntity * (* get_part) (GMimeMultipart *multipart, int index);
 	
-	gboolean (* contains) (GMimeMultipart *multipart, GMimeObject *part);
-	int (* index_of) (GMimeMultipart *multipart, GMimeObject *part);
+	gboolean (* contains) (GMimeMultipart *multipart, GMimeEntity *part);
+	int (* index_of) (GMimeMultipart *multipart, GMimeEntity *part);
 	
 	int  (* get_count) (GMimeMultipart *multipart);
 	
 	void (* set_boundary) (GMimeMultipart *multipart, const char *boundary);
 	const char * (* get_boundary) (GMimeMultipart *multipart);
+
+	gboolean (* try_get_value) (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
 };
 
 
@@ -95,15 +98,15 @@ const char *g_mime_multipart_get_epilogue (GMimeMultipart *multipart);
 
 void g_mime_multipart_clear (GMimeMultipart *multipart);
 
-void g_mime_multipart_add (GMimeMultipart *multipart, GMimeObject *part);
-void g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part);
-gboolean g_mime_multipart_remove (GMimeMultipart *multipart, GMimeObject *part);
-GMimeObject *g_mime_multipart_remove_at (GMimeMultipart *multipart, int index);
-GMimeObject *g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeObject *replacement);
-GMimeObject *g_mime_multipart_get_part (GMimeMultipart *multipart, int index);
+void g_mime_multipart_add (GMimeMultipart *multipart, GMimeEntity *part);
+void g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part);
+gboolean g_mime_multipart_remove (GMimeMultipart *multipart, GMimeEntity *part);
+GMimeEntity *g_mime_multipart_remove_at (GMimeMultipart *multipart, int index);
+GMimeEntity *g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *replacement);
+GMimeEntity *g_mime_multipart_get_part (GMimeMultipart *multipart, int index);
 
-gboolean g_mime_multipart_contains (GMimeMultipart *multipart, GMimeObject *part);
-int g_mime_multipart_index_of (GMimeMultipart *multipart, GMimeObject *part);
+gboolean g_mime_multipart_contains (GMimeMultipart *multipart, GMimeEntity *part);
+int g_mime_multipart_index_of (GMimeMultipart *multipart, GMimeEntity *part);
 
 int g_mime_multipart_get_count (GMimeMultipart *multipart);
 
@@ -112,10 +115,12 @@ const char *g_mime_multipart_get_boundary (GMimeMultipart *multipart);
 
 /* convenience functions */
 
-void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc callback,
+gboolean g_mime_multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
+
+void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeEntityForeachFunc callback,
 			       gpointer user_data);
 
-GMimeObject *g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart,
+GMimeEntity *g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart,
 							   const char *content_id);
 
 G_END_DECLS

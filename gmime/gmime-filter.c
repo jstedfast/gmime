@@ -323,6 +323,9 @@ void
 g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep)
 {
 	g_return_if_fail (GMIME_IS_FILTER (filter));
+
+	if (G_UNLIKELY (size > G_MAXSIZE - PRE_HEAD * 4))
+		g_error ("GMimeFilter output buffer size overflow");
 	
 	if (!filter->outreal || filter->outsize < size) {
 		size_t offset = filter->outptr - filter->outreal;

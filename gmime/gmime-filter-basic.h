@@ -22,7 +22,7 @@
 #ifndef __GMIME_FILTER_BASIC_H__
 #define __GMIME_FILTER_BASIC_H__
 
-#include <gmime/gmime-encodings.h>
+#include <gmime/gmime-codecs.h>
 #include <gmime/gmime-filter.h>
 
 G_BEGIN_DECLS
@@ -40,13 +40,15 @@ typedef struct _GMimeFilterBasicClass GMimeFilterBasicClass;
 /**
  * GMimeFilterBasic:
  * @parent_object: parent #GMimeFilter
- * @encoder: #GMimeEncoding state
+ * @encoder: (nullable): encoder, or %NULL when decoding
+ * @decoder: (nullable): decoder, or %NULL when encoding
  *
  * A basic encoder/decoder filter for the MIME encodings.
  **/
 struct _GMimeFilterBasic {
 	GMimeFilter parent_object;
-	GMimeEncoding encoder;
+	GMimeEncoder *encoder;
+	GMimeDecoder *decoder;
 };
 
 struct _GMimeFilterBasicClass {
@@ -58,6 +60,8 @@ struct _GMimeFilterBasicClass {
 GType g_mime_filter_basic_get_type (void);
 
 GMimeFilter *g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode);
+GMimeFilter *g_mime_filter_basic_new_with_encoder (GMimeEncoder *encoder);
+GMimeFilter *g_mime_filter_basic_new_with_decoder (GMimeDecoder *decoder);
 
 G_END_DECLS
 

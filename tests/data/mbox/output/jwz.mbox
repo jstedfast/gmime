@@ -1,7 +1,7 @@
 message offsets: 0, 177076
 header offsets: 8, 516
 From - 
-From: nsb
+From: Nathaniel Borenstein <nsb>
 To: abel, bianchi, braun, cameron, carmen, jfp, jxr, kraut, lamb, lowery, lynn, mlittman, nancyg, sau, shoshi, slr, stornett@flash, tkl
 Subject: Star Trek Party!
 Date: Thu, 19 Sep 1991 12:41:43 -0400
@@ -90,7 +90,7 @@ From -
 From: Yutaka Sato 佐藤豊 <ysato@etl.go.jp>
 To: nsb@thumper.bellcore.com
 Subject: Re: [95:taka@fxis.fujix] MIME and Header encoding RFC.
-Date: Sat, 13 Jun 1992 11:23:08 +0000
+Date: Sat, 13 Jun 1992 11:23:08 +0900
 Content-Type: text/plain
 
 message offsets: 2110875, 2275729
@@ -171,7 +171,7 @@ From -
 From: Yutaka Sato 佐藤豊 <ysato@etl.go.jp>
 To: nsb@thumper.bellcore.com
 Subject: Re: transparent.el
-Date: Tue, 16 Jun 1992 17:34:08 +0000
+Date: Tue, 16 Jun 1992 17:34:08 +0900
 Content-Type: text/plain
 
 message offsets: 2749475, 2749996
@@ -310,7 +310,7 @@ From -
 From: Yutaka Sato 佐藤豊 <ysato@etl.go.jp>
 To: nsb@thumper.bellcore.com
 Subject: Re: How to see Japanese characters (Re: malformed message)
-Date: Tue, 09 Jun 1992 03:45:24 +0000
+Date: Tue, 09 Jun 1992 03:45:24 +0900
 Content-Type: multipart/mixed
    Content-Type: text/plain
    Content-Type: image/gif
@@ -526,7 +526,7 @@ From -
 From: Yutaka Sato 佐藤豊 <ysato@etl.go.jp>
 To: nsb@thumper.bellcore.com
 Subject: MIME example in VIN
-Date: Sat, 06 Jun 1992 06:21:22 +0000
+Date: Sat, 06 Jun 1992 06:21:22 +0900
 Content-Type: multipart/mixed
    Content-Type: text/richtext
    Content-Type: image/gif
@@ -631,7 +631,7 @@ Content-Type: multipart/alternative
 message offsets: 5299089, 5388899
 header offsets: 5299097, 5299488
 From - 
-From: nsb
+From: Nathaniel Borenstein <nsb>
 To: dnd
 Subject: Re: Happy New Year
 Date: Tue, 29 Sep 1992 10:19:23 -0400
@@ -840,7 +840,7 @@ Content-Type: multipart/mixed
 message offsets: 5668008, 5669108
 header offsets: 5668016, 5668538
 From - 
-From: devetzis
+From: "Taso N. Devetzis" <devetzis>
 To: nsb
 Subject: greek mail
 Date: Tue, 16 Jun 1992 20:33:31 -0400
@@ -1382,7 +1382,7 @@ Content-Type: MESSAGE/RFC822
 message offsets: 8825126, 8916964
 header offsets: 8825134, 8825578
 From - 
-From: nsb
+From: Nathaniel Borenstein <nsb>
 To: "David A. Braun" <braun>, John Lamb <lamb>, Michael Littman <mlittman>
 Subject: Singing today?
 Date: Thu, 12 Dec 1991 11:38:21 -0500
@@ -1405,7 +1405,7 @@ From -
 From: Yutaka Sato 佐藤豊 <ysato@etl.go.jp>
 To: nsb@thumper.bellcore.com
 Subject: Re: multi-bytes richtext
-Date: Thu, 18 Jun 1992 20:03:47 +0000
+Date: Thu, 18 Jun 1992 20:03:47 +0900
 Content-Type: multipart/mixed
    Content-Type: text/plain
    Content-Type: image/gif
@@ -1869,7 +1869,7 @@ From -
 From: Yutaka Sato 佐藤豊 <ysato@etl.go.jp>
 To: nsb@thumper.bellcore.com
 Subject: Re: MIME & int'l mail
-Date: Sat, 13 Jun 1992 08:53:19 +0000
+Date: Sat, 13 Jun 1992 08:53:19 +0900
 Content-Type: multipart/mixed
    Content-Type: text/plain
    Content-Type: image/gif

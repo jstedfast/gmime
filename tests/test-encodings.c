@@ -55,7 +55,7 @@ static struct _mapping {
 	{ "\"uuencode\"", "uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
 	{ "\"x-uuencode\"", "x-uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
 	{ "\"x-uue\"", "x-uue", GMIME_CONTENT_ENCODING_UUENCODE },
-	{ "\"garbage\"", "garbage", GMIME_CONTENT_ENCODING_DEFAULT },
+	{ "\"garbage\"", "garbage", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "\" 7bit \"", " 7bit ", GMIME_CONTENT_ENCODING_7BIT }
 };
 
@@ -65,6 +65,9 @@ test_content_encoding_mappings (void)
 	GMimeContentEncoding encoding;
 	guint i;
 	
+	g_assert_cmpint (GMIME_CONTENT_ENCODING_UNSPECIFIED, ==, 0);
+	g_assert_null (g_mime_content_encoding_to_string (GMIME_CONTENT_ENCODING_UNSPECIFIED));
+
 	for (i = 0; i < G_N_ELEMENTS (mappings); i++) {
 		testsuite_check ("%s", mappings[i].name);
 		encoding = g_mime_content_encoding_from_string (mappings[i].text);
@@ -123,12 +126,12 @@ static void
 test_base64_decode_patterns (void)
 {
 	const char *input, *expected;
-	GMimeEncoding decoder;
+	GMimeDecoder *decoder;
 	char output[4096];
 	size_t len, n;
 	guint i, j;
 	
-	g_mime_encoding_init_decode (&decoder, GMIME_CONTENT_ENCODING_BASE64);
+	decoder = GMIME_DECODER (g_mime_base64_decoder_new ());
 	
 	for (i = 0; i < G_N_ELEMENTS (base64_encoded_patterns); i++) {
 		testsuite_check ("base64_encoded_patterns[%u]", i);
@@ -137,7 +140,7 @@ test_base64_decode_patterns (void)
 		input = base64_encoded_patterns[i];
 		len = strlen (input);
 		
-		n = g_mime_encoding_step (&decoder, input, len, output);
+		n = g_mime_decoder_decode (decoder, (const guint8 *) input, len, (guint8 *) output, sizeof (output));
 		len = strlen (expected);
 		
 		if (n != len)
@@ -148,7 +151,7 @@ test_base64_decode_patterns (void)
 		} else
 			testsuite_check_passed ();
 		
-		g_mime_encoding_reset (&decoder);
+		g_mime_decoder_reset (decoder);
 	}
 	
 	for (i = 0; i < G_N_ELEMENTS (base64_encoded_long_patterns); i++) {
@@ -157,7 +160,7 @@ test_base64_decode_patterns (void)
 		input = base64_encoded_long_patterns[i];
 		len = strlen (input);
 		
-		n = g_mime_encoding_step (&decoder, input, len, output);
+		n = g_mime_decoder_decode (decoder, (const guint8 *) input, len, (guint8 *) output, sizeof (output));
 		len = strlen (expected);
 		
 		for (j = 0; j < n; j++) {
@@ -170,8 +173,9 @@ test_base64_decode_patterns (void)
 		else
 			testsuite_check_passed ();
 		
-		g_mime_encoding_reset (&decoder);
+		g_mime_decoder_reset (decoder);
 	}
+	g_object_unref (decoder);
 }
 
 static const char *qp_encoded_patterns[] = {
@@ -197,14 +201,14 @@ static void
 test_quoted_printable_decode_patterns (void)
 {
 	const char *input;
-	GMimeEncoding decoder;
+	GMimeDecoder *decoder;
 	char output[4096];
 	char *expected;
 	size_t len, n;
 	iconv_t cd;
 	guint i;
 	
-	g_mime_encoding_init_decode (&decoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	decoder = GMIME_DECODER (g_mime_quoted_printable_decoder_new (FALSE));
 	cd = g_mime_iconv_open ("iso-8859-1", "utf-8");
 	
 	for (i = 0; i < G_N_ELEMENTS (base64_encoded_patterns); i++) {
@@ -214,7 +218,7 @@ test_quoted_printable_decode_patterns (void)
 		input = qp_encoded_patterns[i];
 		len = strlen (input);
 		
-		n = g_mime_encoding_step (&decoder, input, len, output);
+		n = g_mime_decoder_decode (decoder, (const guint8 *) input, len, (guint8 *) output, sizeof (output));
 		len = strlen (expected);
 		
 		if (n != len)
@@ -224,27 +228,29 @@ test_quoted_printable_decode_patterns (void)
 		else
 			testsuite_check_passed ();
 		
-		g_mime_encoding_reset (&decoder);
+		g_mime_decoder_reset (decoder);
 		g_free (expected);
 	}
 	
 	g_mime_iconv_close (cd);
+	g_object_unref (decoder);
 }
 
 static void
 test_quoted_printable_encode_space_dos_linebreak (void)
 {
 	const char *input = "This line ends with a space \r\nbefore a line break.";
-	const char *expected = "This line ends with a space=20\nbefore a line break.";
-	GMimeEncoding encoder;
+	const char *expected = "This line ends with a space=20\nbefore a line break.=\n";
+	GMimeEncoder *encoder;
 	char output[4096];
 	size_t len, n;
 	
 	testsuite_check ("quoted-printable encode <SPACE><CR><LF>");
 	
-	g_mime_encoding_init_encode (&encoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	encoder = GMIME_ENCODER (g_mime_quoted_printable_encoder_new ());
 	
-	n = g_mime_encoding_flush (&encoder, input, strlen (input), output);
+	n = g_mime_encoder_flush (encoder, (const guint8 *) input, strlen (input), (guint8 *) output, sizeof (output));
+	g_object_unref (encoder);
 	len = strlen (expected);
 	
 	if (n != len)
@@ -259,16 +265,17 @@ static void
 test_quoted_printable_encode_space_unix_linebreak (void)
 {
 	const char *input = "This line ends with a space \nbefore a line break.";
-	const char *expected = "This line ends with a space=20\nbefore a line break.";
-	GMimeEncoding encoder;
+	const char *expected = "This line ends with a space=20\nbefore a line break.=\n";
+	GMimeEncoder *encoder;
 	char output[4096];
 	size_t len, n;
 	
 	testsuite_check ("quoted-printable encode <SPACE><LF>");
 	
-	g_mime_encoding_init_encode (&encoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	encoder = GMIME_ENCODER (g_mime_quoted_printable_encoder_new ());
 	
-	n = g_mime_encoding_flush (&encoder, input, strlen (input), output);
+	n = g_mime_encoder_flush (encoder, (const guint8 *) input, strlen (input), (guint8 *) output, sizeof (output));
+	g_object_unref (encoder);
 	len = strlen (expected);
 	
 	if (n != len)
@@ -284,15 +291,16 @@ test_quoted_printable_encode_ending_with_space (void)
 {
 	const char *input = "This line ends with a space ";
 	const char *expected = "This line ends with a space=20=\n";
-	GMimeEncoding encoder;
+	GMimeEncoder *encoder;
 	char output[4096];
 	size_t len, n;
 	
 	testsuite_check ("quoted-printable encode encoding with a space");
 	
-	g_mime_encoding_init_encode (&encoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	encoder = GMIME_ENCODER (g_mime_quoted_printable_encoder_new ());
 	
-	n = g_mime_encoding_flush (&encoder, input, strlen (input), output);
+	n = g_mime_encoder_flush (encoder, (const guint8 *) input, strlen (input), (guint8 *) output, sizeof (output));
+	g_object_unref (encoder);
 	len = strlen (expected);
 	
 	if (n != len)
@@ -308,15 +316,16 @@ test_quoted_printable_decode_invalid_soft_break (void)
 {
 	const char *input = "This is an invalid=\rsoft break.";
 	const char *expected = "This is an invalid=\rsoft break.";
-	GMimeEncoding decoder;
+	GMimeDecoder *decoder;
 	char output[4096];
 	size_t len, n;
 	
 	testsuite_check ("quoted-printable decode invalid soft break");
 	
-	g_mime_encoding_init_decode (&decoder, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	decoder = GMIME_DECODER (g_mime_quoted_printable_decoder_new (FALSE));
 	
-	n = g_mime_encoding_step (&decoder, input, strlen (input), output);
+	n = g_mime_decoder_decode (decoder, (const guint8 *) input, strlen (input), (guint8 *) output, sizeof (output));
+	g_object_unref (decoder);
 	len = strlen (expected);
 	
 	if (n != len)
@@ -504,6 +513,181 @@ error:
 	g_byte_array_free (actual, TRUE);
 }
 
+static void
+check_yenc_filter_input (GMimeFilter *filter, const char *text, const char *expected)
+{
+	GByteArray *actual = g_byte_array_new ();
+	char *input = g_strdup (text), *output;
+	size_t input_length = strlen (text), length, prespace, split, i;
+
+	for (split = 0; split <= input_length + 1; split++) {
+		g_mime_filter_reset (filter);
+		g_byte_array_set_size (actual, 0);
+		if (split <= input_length) {
+			g_mime_filter_filter (filter, input, split, 0, &output, &length, &prespace);
+			g_byte_array_append (actual, (guint8 *) output, length);
+			g_mime_filter_filter (filter, "", 0, 0, &output, &length, &prespace);
+			g_assert_cmpuint (length, ==, 0);
+			g_mime_filter_complete (filter, input + split, input_length - split, 0,
+						&output, &length, &prespace);
+		} else {
+			for (i = 0; i < input_length; i++) {
+				g_mime_filter_filter (filter, input + i, 1, 0, &output, &length, &prespace);
+				g_byte_array_append (actual, (guint8 *) output, length);
+			}
+			g_mime_filter_complete (filter, "", 0, 0, &output, &length, &prespace);
+		}
+		g_byte_array_append (actual, (guint8 *) output, length);
+		g_assert_cmpmem (actual->data, actual->len, expected, strlen (expected));
+		g_mime_filter_complete (filter, "", 0, 0, &output, &length, &prespace);
+		g_assert_cmpuint (length, ==, 0);
+	}
+	g_free (input);
+	g_byte_array_unref (actual);
+}
+
+static void
+test_yenc_filters (void)
+{
+	static const struct {
+		gboolean payload_only;
+		const char *input;
+		const char *expected;
+		guint32 checksum;
+	} cases[] = {
+		{ FALSE, "pretext\r\n=ybegin line=128 size=9 name=x\r\n"
+			"[\\]^_`abc\r\n=yend size=9 crc32=cbf43926\r\nignored",
+			"123456789", 0xcbf43926 },
+		{ FALSE, "=ybegin part=1 line=128 size=9 name=x\n"
+			"=ypart begin=1 end=9\n[\\]^_`abc\n=yend size=9\nignored",
+			"123456789", 0xcbf43926 },
+		{ FALSE, "not =ybegin line=128 size=9 name=x\n"
+			"=ybeginx\n=ybegin line=128 size=9 name=x\n[\\]^_`abc\n",
+			"123456789", 0xcbf43926 },
+		{ TRUE, "[\\]^_`abc\r\n=yend size=9\nignored", "123456789", 0xcbf43926 },
+		{ FALSE, "=ybegin line=128 size=0 name=x\n=yend size=0\nignored", "", 0 },
+		{ TRUE, "", "", 0 }
+	};
+	GMimeYencEncoder *encoder;
+	GMimeYencDecoder *decoder;
+	GMimeFilter *filter;
+	char *output;
+	size_t length, prespace;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		testsuite_check ("yEnc filter framing and checksum (%u)", i);
+		decoder = g_mime_yenc_decoder_new (cases[i].payload_only);
+		filter = g_mime_filter_basic_new_with_decoder (GMIME_DECODER (decoder));
+		check_yenc_filter_input (filter, cases[i].input, cases[i].expected);
+		g_assert_cmphex (~g_mime_yenc_decoder_get_checksum (decoder), ==, cases[i].checksum);
+		g_mime_filter_reset (filter);
+		g_assert_cmphex (g_mime_yenc_decoder_get_checksum (decoder), ==, G_MAXUINT32);
+		g_object_unref (filter);
+		g_object_unref (decoder);
+		testsuite_check_passed ();
+	}
+
+	testsuite_check ("yEnc filter escaping, completion, and checksum lifetime");
+	encoder = g_mime_yenc_encoder_new ();
+	filter = g_mime_filter_basic_new_with_encoder (GMIME_ENCODER (encoder));
+	check_yenc_filter_input (filter, "\004", "=n\n");
+	check_yenc_filter_input (filter, "123456789", "[\\]^_`abc\n");
+	g_assert_cmphex (~g_mime_yenc_encoder_get_checksum (encoder), ==, 0xcbf43926);
+	g_mime_filter_reset (filter);
+	g_assert_cmphex (g_mime_yenc_encoder_get_checksum (encoder), ==, G_MAXUINT32);
+	g_mime_filter_complete (filter, "1234", 4, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "[\\]^\n", 5);
+	g_mime_filter_complete (filter, "56789", 5, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "_`abc\n", 6);
+	g_assert_cmphex (~g_mime_yenc_encoder_get_checksum (encoder), ==, 0xcbf43926);
+	g_object_unref (filter);
+	g_object_unref (encoder);
+	testsuite_check_passed ();
+}
+
+static void
+test_codec_filter_copies (void)
+{
+	GMimeEncoder *encoder;
+	GMimeDecoder *decoder;
+	GMimeFilter *filter, *copy;
+	guint8 scratch[128];
+	char input[49], *output;
+	size_t length, prespace;
+
+	testsuite_check ("codec filter ownership, state, configuration, and reset copies");
+	encoder = GMIME_ENCODER (g_mime_base64_encoder_new_with_max_line_length (60));
+	g_mime_encoder_encode (encoder, (const guint8 *) "x", 1, scratch, sizeof (scratch));
+	filter = g_mime_filter_basic_new_with_encoder (encoder);
+	g_object_unref (encoder);
+	copy = g_mime_filter_copy (filter);
+	g_mime_filter_complete (filter, "yz", 2, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "eHl6\n", 5);
+	g_mime_filter_complete (copy, "yz", 2, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "eXo=\n", 5);
+	g_mime_filter_reset (filter);
+	g_mime_filter_complete (filter, "yz", 2, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "eXo=\n", 5);
+	memset (input, 'A', sizeof (input));
+	g_mime_filter_reset (copy);
+	g_mime_filter_complete (copy, input, sizeof (input), 0, &output, &length, &prespace);
+	g_assert_true (memchr (output, '\n', length) == output + 60);
+	g_object_unref (filter);
+	g_object_unref (copy);
+
+	decoder = GMIME_DECODER (g_mime_uu_decoder_new (TRUE));
+	g_mime_decoder_decode (decoder, (const guint8 *) "#0", 2, scratch, sizeof (scratch));
+	filter = g_mime_filter_basic_new_with_decoder (decoder);
+	g_object_unref (decoder);
+	copy = g_mime_filter_copy (filter);
+	g_mime_filter_complete (filter, "V%T\n`\n", 6, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "Cat", 3);
+	g_mime_filter_complete (copy, "#0V%T\n`\n", 8, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "Cat", 3);
+	g_mime_filter_reset (filter);
+	g_mime_filter_complete (filter, "#0V%T\n`\n", 8, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "Cat", 3);
+	g_object_unref (filter);
+	g_object_unref (copy);
+
+	encoder = GMIME_ENCODER (g_mime_yenc_encoder_new_with_max_line_length (60));
+	g_mime_encoder_encode (encoder, (const guint8 *) "1", 1, scratch, sizeof (scratch));
+	filter = g_mime_filter_basic_new_with_encoder (encoder);
+	copy = g_mime_filter_copy (filter);
+	g_mime_filter_complete (filter, "23456789", 8, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "\\]^_`abc\n", 9);
+	g_assert_cmphex (g_mime_yenc_encoder_get_checksum (GMIME_YENC_ENCODER (encoder)), ==, 0x340bc6d9);
+	g_mime_filter_complete (copy, "123456789", 9, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "[\\]^_`abc\n", 10);
+	g_mime_filter_reset (filter);
+	g_assert_cmphex (g_mime_yenc_encoder_get_checksum (GMIME_YENC_ENCODER (encoder)), ==, G_MAXUINT32);
+	g_object_unref (encoder);
+	memset (scratch, 23, 61);
+	g_mime_filter_reset (copy);
+	g_mime_filter_complete (copy, (char *) scratch, 61, 0, &output, &length, &prespace);
+	g_assert_cmpuint (length, ==, 63);
+	g_assert_true (memchr (output, '\n', length) == output + 60);
+	g_object_unref (filter);
+	g_object_unref (copy);
+
+	decoder = GMIME_DECODER (g_mime_yenc_decoder_new (TRUE));
+	g_mime_decoder_decode (decoder, (const guint8 *) "=", 1, scratch, sizeof (scratch));
+	filter = g_mime_filter_basic_new_with_decoder (decoder);
+	g_object_unref (decoder);
+	copy = g_mime_filter_copy (filter);
+	g_mime_filter_complete (filter, "nklm\n=yend\nklm\n", 15, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "\004ABC", 4);
+	g_mime_filter_complete (copy, "=nklm\n=yend\nklm\n", 16, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "\004ABC", 4);
+	g_mime_filter_reset (filter);
+	g_mime_filter_complete (filter, "klm\n", 4, 0, &output, &length, &prespace);
+	g_assert_cmpmem (output, length, "ABC", 3);
+	g_object_unref (filter);
+	g_object_unref (copy);
+	testsuite_check_passed ();
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/encodings";
@@ -549,6 +733,8 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("Content-Transfer-Encoding");
 	test_content_encoding_mappings ();
+	test_codec_filter_copies ();
+	test_yenc_filters ();
 	testsuite_end ();
 	
 	testsuite_start ("base64");

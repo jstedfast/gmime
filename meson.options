@@ -1,0 +1,8 @@
+option('crypto', type: 'feature', value: 'auto', description: 'OpenPGP and S/MIME support using GPGME')
+option('libidn', type: 'feature', value: 'auto', description: 'Use libidn2 instead of GLib for IDN conversion')
+option('introspection', type: 'feature', value: 'auto', description: 'Generate GObject introspection data')
+option('vapi', type: 'feature', value: 'auto', description: 'Generate Vala bindings (requires introspection)')
+option('gtk_doc', type: 'boolean', value: false, description: 'Build and install the API reference')
+option('tests', type: 'boolean', value: true, description: 'Build the test programs')
+option('examples', type: 'boolean', value: true, description: 'Build the example programs')
+option('mime_warnings', type: 'boolean', value: false, description: 'Log warnings for malformed MIME')

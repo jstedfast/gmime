@@ -46,7 +46,7 @@
     equivalent of /dev/null on Unix systems. The main difference is
     that GMimeStreamNull records the number of bytes written to it -
     you may find this useful if you need to know the number of bytes a
-    GMimeObject (for example) will require.</para>
+    GMimeEntity (for example) will require.</para>
 
     <para>GMimeStreamMmap is a memory-mapped stream. This isn't
     guaranteed to work on all systems since not all systems support

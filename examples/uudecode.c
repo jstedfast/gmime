@@ -61,8 +61,6 @@ uufopen (const char *filename, const char *rw, int flags, mode_t mode)
 	return fdopen (fd, rw);
 }
 
-typedef size_t (* Decoder) (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
-
 static int
 uudecode (const char *progname, int argc, char **argv)
 {
@@ -72,12 +70,10 @@ uudecode (const char *progname, int argc, char **argv)
 	char inbuf[4096], *q;
 	GString *str = NULL;
 	GError *err = NULL;
-	const char *infile;
+	const char *infile, *output_path;
 	char outbuf[4100];
 	FILE *fin, *fout;
-	guint32 save = 0;
-	Decoder decode;
-	int state = 0;
+	GMimeDecoder *decoder = NULL;
 	mode_t mode;
 	size_t n;
 #ifdef WIN32
@@ -109,6 +105,7 @@ uudecode (const char *progname, int argc, char **argv)
 	infile = argc > 1 ? argv[1] : DEFAULT_FILENAME;
 	
 	do {
+		base64 = midline = FALSE;
 		if ((fin = uufopen (infile, "rt", O_RDONLY, 0)) == NULL) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
 				 infile, g_strerror (errno));
@@ -118,13 +115,12 @@ uudecode (const char *progname, int argc, char **argv)
 		p = NULL;
 		while ((fgets (inbuf, sizeof (inbuf), fin)) != NULL) {
 			if (!strncmp (inbuf, "begin-base64 ", 13)) {
-				decode = g_mime_encoding_base64_decode_step;
+				decoder = GMIME_DECODER (g_mime_base64_decoder_new ());
 				p = inbuf + 13;
 				base64 = TRUE;
 				break;
 			} else if (!strncmp (inbuf, "begin ", 6)) {
-				decode = g_mime_encoding_uudecode_step;
-				state = GMIME_UUDECODE_STATE_BEGIN;
+				decoder = GMIME_DECODER (g_mime_uu_decoder_new (TRUE));
 				p = inbuf + 6;
 				break;
 			}
@@ -171,14 +167,14 @@ uudecode (const char *progname, int argc, char **argv)
 				goto nexti;
 		}
 		
-		if (!outfile)
-			outfile = g_strchomp (str->str);
+		output_path = outfile ? outfile : g_strchomp (str->str);
 		
-		if (!(fout = fopen (outfile, "wb"))) {
+		if (!(fout = fopen (output_path, "wb"))) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
-				 outfile, g_strerror (errno));
+				 output_path, g_strerror (errno));
 			g_string_free (str, TRUE);
 			fclose (fin);
+			g_clear_object (&decoder);
 			
 			return -1;
 		}
@@ -189,23 +185,20 @@ uudecode (const char *progname, int argc, char **argv)
 					if (!strncmp (inbuf, "====", 4) &&
 					    (inbuf[4] == '\r' || inbuf[4] == '\n'))
 						break;
-				} else {
-					if ((state & GMIME_UUDECODE_STATE_END) &&
-					    !strncmp (inbuf, "end", 3) &&
-					    (inbuf[3] == '\r' || inbuf[3] == '\n'))
-						break;
 				}
 			}
 			
 			n = strlen (inbuf);
 			midline = n > 0 && inbuf[n - 1] != '\n';
 			
-			n = decode ((const unsigned char *) inbuf, n, (unsigned char *) outbuf, &state, &save);
+			n = g_mime_decoder_decode (decoder, (const guint8 *) inbuf, n,
+						    (guint8 *) outbuf, sizeof (outbuf));
 			if (fwrite (outbuf, 1, n, fout) != n) {
-				fprintf (stderr, "%s: %s: %s\n", progname, outfile,
+				fprintf (stderr, "%s: %s: %s\n", progname, output_path,
 					 g_strerror (ferror (fout)));
 				fclose (fout);
 				fclose (fin);
+				g_clear_object (&decoder);
 				return -1;
 			}
 		}
@@ -215,6 +208,7 @@ uudecode (const char *progname, int argc, char **argv)
 		
 	nexti:
 		fclose (fin);
+		g_clear_object (&decoder);
 		
 		if (str) {
 			g_string_free (str, TRUE);

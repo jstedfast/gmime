@@ -60,7 +60,7 @@ _gen_header (const struct _ah_gen_test *t)
 			g_object_unref (ah);
 			return NULL;
 		}
-	g_mime_autocrypt_header_set_address_from_string (ah, t->addr);
+	g_mime_autocrypt_header_set_address_from_string (ah, t->addr, NULL);
 	g_mime_autocrypt_header_set_keydata (ah, keydata);
 	if (t->timestamp) {
 		GDateTime *ts = g_date_time_new_from_unix_utc (t->timestamp);
@@ -142,6 +142,47 @@ test_ah_generation (void)
 		g_free (str);
 		str = NULL;
 	}
+}
+
+
+static void
+test_ah_idn_addresses (void)
+{
+	const struct _ah_gen_test unicode = {
+		.addr = "user@m\303\274nich.example", .keydatacount = 1, .keybyte = 'x'
+	};
+	const struct _ah_gen_test ascii = { .addr = "user@xn--mnich-kva.example" };
+	GMimeAutocryptHeader *src = _gen_header (&unicode);
+	GMimeAutocryptHeader *dst = _gen_header (&ascii);
+	GMimeAutocryptHeaderList *list = g_mime_autocrypt_header_list_new ();
+	GMimeMailboxAddress *mailbox = g_mime_autocrypt_header_get_address (src);
+
+	g_mime_autocrypt_header_list_add (list, dst);
+	testsuite_check ("Autocrypt IDN address matching and cloning");
+	try {
+		if (g_mime_autocrypt_header_list_get_header_for_address (list, mailbox) != dst)
+			throw (exception_new ("Unicode address did not match its A-label header"));
+		g_mime_autocrypt_header_clone (dst, src);
+		if (g_mime_autocrypt_header_get_keydata (dst) != g_mime_autocrypt_header_get_keydata (src))
+			throw (exception_new ("matching IDN addresses did not clone keydata"));
+		if (strcmp (g_mime_mailbox_address_get_addrspec (mailbox), unicode.addr))
+			throw (exception_new ("IDN matching changed the stored address"));
+		if (!g_mime_mailbox_address_set_addrspec (mailbox, "other@example.com", NULL))
+			throw (exception_new ("failed to update the source mailbox"));
+		if (g_mime_autocrypt_header_list_get_header_for_address (list, mailbox) != NULL)
+			throw (exception_new ("unrelated address matched an Autocrypt header"));
+		g_mime_autocrypt_header_set_keydata (src, NULL);
+		g_mime_autocrypt_header_clone (dst, src);
+		if (!g_mime_autocrypt_header_get_keydata (dst))
+			throw (exception_new ("unrelated address overwrote destination keydata"));
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("Autocrypt IDN address matching failed: %s", ex->message);
+	} finally;
+
+	g_object_unref (list);
+	g_object_unref (dst);
+	g_object_unref (src);
 }
 
 
@@ -697,20 +738,20 @@ test_ah_injection (void)
 			parser = g_mime_parser_new_with_stream (stream);
 			g_object_unref (stream);
 			
-			before = g_mime_parser_construct_message (parser, NULL);
+			before = g_mime_parser_construct_message (parser, NULL, NULL);
 			g_object_unref (parser);
 			
 			if (test->acheader) {
 				GMimeAutocryptHeader *ah = _gen_header (test->acheader);
 				
-			        g_mime_object_set_header (GMIME_OBJECT (before), "Autocrypt",
+			        g_mime_entity_set_header (GMIME_ENTITY (before), "Autocrypt",
 						         g_mime_autocrypt_header_to_string (ah, FALSE), NULL);
 				g_object_unref (ah);
 			}
 			
 			if (test->encrypt_to) {
 				/* get_mime_part is "transfer none" so mainpart does not need to be cleaned up */
-				GMimeObject *mainpart = g_mime_message_get_mime_part (before);
+				GMimeEntity *mainpart = g_mime_message_get_mime_part (before);
 				
 				if (!mainpart)
 					throw (exception_new ("failed to find main part!\n"));
@@ -719,7 +760,7 @@ test_ah_injection (void)
 					GMimeAutocryptHeaderList *ahl = _gen_header_list (test->gossipheaders);
 					
 					for (ix = 0; ix < g_mime_autocrypt_header_list_get_count (ahl); ix++) {
-						g_mime_object_append_header (mainpart, "Autocrypt-Gossip",
+						g_mime_entity_append_header (mainpart, "Autocrypt-Gossip",
 									     g_mime_autocrypt_header_to_string (g_mime_autocrypt_header_list_get_header_at (ahl, ix), TRUE), NULL);
 					}
 					
@@ -741,13 +782,13 @@ test_ah_injection (void)
 				if (!encrypted)
 					throw (exception_new ("failed to encrypt: %s", err->message));
 				
-				g_mime_message_set_mime_part (before, GMIME_OBJECT (encrypted));
+				g_mime_message_set_mime_part (before, GMIME_ENTITY (encrypted));
 				g_object_unref (encrypted);
 			}
 			
 			if (test->after) {
 				stream = g_mime_stream_mem_new ();
-				g_mime_object_write_to_stream (GMIME_OBJECT (before), NULL, stream);
+				g_mime_entity_write_to_stream (GMIME_ENTITY (before), NULL, stream);
 				
 				GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
 				char *got = (char *) bytes->data;
@@ -766,14 +807,14 @@ test_ah_injection (void)
 				if (!encrypted)
 					throw (exception_new ("inner_after, but no encrypted part!\n"));
 				
-				GMimeObject *cleartext = g_mime_multipart_encrypted_decrypt (encrypted,
+				GMimeEntity *cleartext = g_mime_multipart_encrypted_decrypt (encrypted,
 											     GMIME_DECRYPT_NONE,
 											     NULL, NULL, &err);
 				if (!cleartext)
 					throw (exception_new ("decryption failed: %s!\n", err->message));
 				
 				stream = g_mime_stream_mem_new ();
-				g_mime_object_write_to_stream (cleartext, NULL, stream);
+				g_mime_entity_write_to_stream (cleartext, NULL, stream);
 				g_object_unref (cleartext);
 				
 				GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
@@ -820,9 +861,10 @@ _acheaderlists_compare (GMimeAutocryptHeaderList *expected, GMimeAutocryptHeader
 		if (cmp) {
 			char *e = g_mime_autocrypt_header_to_string (ahe, FALSE);
 			char *g = g_mime_autocrypt_header_to_string (ahg, FALSE);
+			char *addr = g_mime_mailbox_address_get_address (g_mime_autocrypt_header_get_address (ahe), TRUE);
 			char *ret = g_strdup_printf ("comparing <%s> got cmp = %d \nexpected: \n%s\n\ngot:\n%s\n",
-						     internet_address_mailbox_get_idn_addr (g_mime_autocrypt_header_get_address (ahe)),
-						     cmp, e, g);
+						     addr, cmp, e, g);
+			g_free (addr);
 			g_free(e);
 			g_free(g);
 			return ret;
@@ -841,7 +883,7 @@ test_ah_message_parse (void)
 		GMimeAutocryptHeaderList *gossip_expected = NULL;
 		GMimeAutocryptHeaderList *gossip_got = NULL;
 		GMimeMessage *message = NULL;
-		GMimeObject *innerpart = NULL;
+		GMimeEntity *innerpart = NULL;
 		const struct _ah_parse_test *test = parse_test_data + i;
 		try {
 			testsuite_check ("Autocrypt message[%u] (%s)", i, test->name);
@@ -849,14 +891,14 @@ test_ah_message_parse (void)
 			/* make GMimeMessage from test->msg */
 			GMimeStream *stream = g_mime_stream_mem_new_with_buffer (test->msg, strlen(test->msg));
 			GMimeParser *parser = g_mime_parser_new_with_stream (stream);
-			message = g_mime_parser_construct_message (parser, NULL);
+			message = g_mime_parser_construct_message (parser, NULL, NULL);
 			g_object_unref (parser);
 			g_object_unref (stream);
-			/* make GMimeObject from test->innerpart */
+			/* make GMimeEntity from test->innerpart */
 			if (test->innerpart) {
 				stream = g_mime_stream_mem_new_with_buffer (test->innerpart, strlen(test->innerpart));
 				parser = g_mime_parser_new_with_stream (stream);
-				innerpart = g_mime_parser_construct_part (parser, NULL);
+				innerpart = g_mime_parser_construct_part (parser, NULL, NULL);
 				g_object_unref (parser);
 				g_object_unref (stream);
 			}
@@ -880,7 +922,7 @@ test_ah_message_parse (void)
 			if (innerpart) {
 				gossip_got = g_mime_message_get_autocrypt_gossip_headers_from_inner_part (message, NULL, innerpart);
 			} else {
-				GMimeObject *obj = g_mime_message_get_mime_part (message);
+				GMimeEntity *obj = g_mime_message_get_mime_part (message);
 				if (GMIME_IS_MULTIPART_ENCRYPTED (obj)) {
 #ifdef ENABLE_CRYPTO
 					GError *err = NULL;
@@ -1060,6 +1102,7 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("Autocrypt: generate headers");
 	test_ah_generation ();
+	test_ah_idn_addresses ();
 	testsuite_end ();
 	
 #ifdef ENABLE_CRYPTO

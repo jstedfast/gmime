@@ -2,20 +2,30 @@ name: C/C++ CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "v4.0-dev" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "v4.0-dev" ]
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        features: [enabled, disabled]
     steps:
     - uses: actions/checkout@v3
     - name: apt-get install packages
-      run: sudo apt-get -y install autoconf gtk-doc-tools libglib2.0-dev libidn2-dev libgpgme-dev
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install meson ninja-build pkg-config gtk-doc-tools valac libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev gobject-introspection libgirepository1.0-dev gnupg gpgsm
     - name: configure
-      run: ./autogen.sh
-    - name: make
-      run: make
-    - name: make check
-      run: make check
+      run: meson setup _build -Dcrypto=${{ matrix.features }} -Dlibidn=${{ matrix.features }} -Dintrospection=enabled -Dvapi=enabled -Dgtk_doc=true
+    - name: build
+      run: meson compile -C _build
+    - name: test
+      run: meson test -C _build --print-errorlogs
+    - name: documentation
+      if: matrix.features == 'enabled'
+      run: meson compile -C _build gmime-doc
+    - name: install
+      run: meson install -C _build --destdir "${{ runner.temp }}/gmime-install"

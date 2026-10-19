@@ -37,8 +37,8 @@
  * A #GMimeStream which has no real backing storage at all. This
  * stream is useful for dry-runs and can also be useful for
  * determining statistics on source data which can be written to
- * streams but cannot be read as a stream itself (e.g. a #GMimeObject
- * via g_mime_object_write_to_stream()).
+ * streams but cannot be read as a stream itself (e.g. a #GMimeEntity
+ * via g_mime_entity_write_to_stream()).
  **/
 
 

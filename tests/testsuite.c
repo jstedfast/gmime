@@ -667,7 +667,8 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	TestStreamOneByte *test = (TestStreamOneByte *) stream;
 	
-	return g_mime_stream_substream (test->source, start, end);
+	/* The public wrapper attaches the returned substream to this stream. */
+	return GMIME_STREAM_GET_CLASS (test->source)->substream (test->source, start, end);
 }
 
 

@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "gmime-message-part.h"
+#include "gmime-visitor.h"
 
 #define d(x)
 
@@ -46,12 +47,18 @@ static void g_mime_message_part_class_init (GMimeMessagePartClass *klass);
 static void g_mime_message_part_init (GMimeMessagePart *message_part, GMimeMessagePartClass *klass);
 static void g_mime_message_part_finalize (GObject *object);
 
-/* GMimeObject class methods */
-static ssize_t message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options,
+/* GMimeEntity class methods */
+static ssize_t message_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					     gboolean content_only, GMimeStream *stream);
 
 
-static GMimeObjectClass *parent_class = NULL;
+static GMimeEntityClass *parent_class = NULL;
+
+static void
+message_part_accept (GMimeEntity *object, GMimeVisitor *visitor)
+{
+	g_mime_visitor_visit_message_part (visitor, (GMimeMessagePart *) object);
+}
 
 
 GType
@@ -72,7 +79,7 @@ g_mime_message_part_get_type (void)
 			(GInstanceInitFunc) g_mime_message_part_init,
 		};
 		
-		type = g_type_register_static (GMIME_TYPE_OBJECT, "GMimeMessagePart", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_ENTITY, "GMimeMessagePart", &info, 0);
 	}
 	
 	return type;
@@ -82,14 +89,15 @@ g_mime_message_part_get_type (void)
 static void
 g_mime_message_part_class_init (GMimeMessagePartClass *klass)
 {
-	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
+	GMimeEntityClass *object_class = GMIME_ENTITY_CLASS (klass);
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	
-	parent_class = g_type_class_ref (GMIME_TYPE_OBJECT);
+	parent_class = g_type_class_ref (GMIME_TYPE_ENTITY);
 	
 	gobject_class->finalize = g_mime_message_part_finalize;
 	
 	object_class->write_to_stream = message_part_write_to_stream;
+	object_class->accept = message_part_accept;
 }
 
 static void
@@ -110,7 +118,7 @@ g_mime_message_part_finalize (GObject *object)
 }
 
 static ssize_t
-message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
+message_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	GMimeMessagePart *part = (GMimeMessagePart *) object;
 	GMimeMessage *message = part->message;
@@ -128,11 +136,6 @@ message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, 
 		
 		total += nwritten;
 		
-		/* terminate the headers */
-		if ((nwritten = g_mime_stream_write_string (stream, newline)) == -1)
-			return -1;
-		
-		total += nwritten;
 	}
 	
 	/* write the message */
@@ -164,7 +167,7 @@ message_part_write_to_stream (GMimeObject *object, GMimeFormatOptions *options, 
 			}
 		}
 		
-		if ((nwritten = g_mime_object_write_to_stream ((GMimeObject *) message, options, stream)) == -1)
+		if ((nwritten = g_mime_entity_write_to_stream ((GMimeEntity *) message, options, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -193,7 +196,7 @@ g_mime_message_part_new (const char *subtype)
 	part = g_object_new (GMIME_TYPE_MESSAGE_PART, NULL);
 	
 	content_type = g_mime_content_type_new ("message", subtype ? subtype : "rfc822");
-	g_mime_object_set_content_type ((GMimeObject *) part, content_type);
+	g_mime_entity_set_content_type ((GMimeEntity *) part, content_type);
 	g_object_unref (content_type);
 	
 	return part;
@@ -227,7 +230,7 @@ g_mime_message_part_new_with_message (const char *subtype, GMimeMessage *message
 /**
  * g_mime_message_part_set_message:
  * @part: message part
- * @message: message
+ * @message: (nullable): message
  *
  * Sets the @message object on the message part object @part.
  **/
@@ -252,7 +255,7 @@ g_mime_message_part_set_message (GMimeMessagePart *part, GMimeMessage *message)
  *
  * Gets the message object on the message part object @part.
  *
- * Returns: (transfer none): the message part contained within @part.
+ * Returns: (transfer none) (nullable): the message contained within @part.
  **/
 GMimeMessage *
 g_mime_message_part_get_message (GMimeMessagePart *part)

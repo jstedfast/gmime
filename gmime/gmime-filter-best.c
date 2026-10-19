@@ -37,6 +37,11 @@
  * A #GMimeFilter which is meant to determine the best charset and/or
  * transfer encoding suitable for the stream which is filtered through
  * it.
+ *
+ * Encoding detection follows MimeKit's BestEncodingFilter. It preserves
+ * input bytes and tracks line lengths across buffers, excluding the CRLF
+ * terminator. The default maximum line length is 78; use
+ * g_mime_filter_best_encoding_with_max_line_length() to select another limit.
  **/
 
 
@@ -122,70 +127,43 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterBest *best = (GMimeFilterBest *) filter;
-	register unsigned char *inptr, *inend;
-	register unsigned char c;
-	size_t left;
+	size_t i;
 	
 	if (best->flags & GMIME_FILTER_BEST_CHARSET)
 		g_mime_charset_step (&best->charset, inbuf, inlen);
 	
 	if (best->flags & GMIME_FILTER_BEST_ENCODING) {
+		if (G_UNLIKELY (inlen > G_MAXUINT64 - best->total))
+			g_error ("GMimeFilterBest byte count overflow");
 		best->total += inlen;
-		
-		inptr = (unsigned char *) inbuf;
-		inend = inptr + inlen;
-		
-		while (inptr < inend) {
-			c = 0;
-			
-			if (best->midline) {
-				while (inptr < inend && (c = *inptr++) != '\n') {
-					if (c == 0)
-						best->count0++;
-					else if (c & 0x80)
-						best->count8++;
-					
-					if (best->fromlen > 0 && best->fromlen < 5)
-						best->frombuf[best->fromlen++] = c & 0xff;
-					
-					best->linelen++;
-				}
-				
-				if (c == '\n') {
-					best->maxline = MAX (best->maxline, best->linelen);
-					best->startline = TRUE;
-					best->midline = FALSE;
-					best->linelen = 0;
-				}
+
+		for (i = 0; i < inlen; i++) {
+			unsigned char c = (unsigned char) inbuf[i];
+
+			if (c != '\n') {
+				if (c == 0)
+					best->count0++;
+				else if (c > 127)
+					best->count8++;
+
+				if (!best->hadfrom && best->fromlen < 5)
+					best->frombuf[best->fromlen++] = c;
+
+				best->linelen++;
+			} else {
+				if (best->previous == '\r')
+					best->linelen--;
+
+				best->maxline = MAX (best->maxline, best->linelen);
+				best->linelen = 0;
+
+				/* Check our from-save buffer for "From ". */
+				if (!best->hadfrom && best->fromlen == 5 && !memcmp (best->frombuf, "From ", 5))
+					best->hadfrom = TRUE;
+
+				best->fromlen = 0;
 			}
-			
-			/* check our from-save buffer for "From " */
-			if (best->fromlen == 5 && !strcmp ((char *) best->frombuf, "From "))
-				best->hadfrom = TRUE;
-			
-			best->fromlen = 0;
-			
-			left = inend - inptr;
-			
-			/* if we have not yet found a from-line, check for one */
-			if (best->startline && !best->hadfrom && left > 0) {
-				if (left < 5) {
-					if (!strncmp ((char *) inptr, "From ", left)) {
-						memcpy (best->frombuf, inptr, left);
-						best->frombuf[left] = '\0';
-						best->fromlen = left;
-						break;
-					}
-				} else {
-					if (!strncmp ((char *) inptr, "From ", 5)) {
-						best->hadfrom = TRUE;
-						inptr += 5;
-					}
-				}
-			}
-			
-			best->startline = FALSE;
-			best->midline = TRUE;
+			best->previous = c;
 		}
 	}
 	
@@ -198,11 +176,7 @@ static void
 filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterBest *best = (GMimeFilterBest *) filter;
-	
 	filter_filter (filter, in, len, prespace, out, outlen, outprespace);
-	
-	best->maxline = MAX (best->maxline, best->linelen);
 }
 
 static void
@@ -218,8 +192,7 @@ filter_reset (GMimeFilter *filter)
 	best->linelen = 0;
 	best->fromlen = 0;
 	best->hadfrom = FALSE;
-	best->startline = TRUE;
-	best->midline = FALSE;
+	best->previous = 0;
 }
 
 
@@ -287,48 +260,99 @@ g_mime_filter_best_charset (GMimeFilterBest *best)
  *
  * Calculates the most efficient Content-Transfer-Encoding for the
  * content filtered through @best that fits within the encoding
- * @constraint.
+ * @constraint, using a maximum line length of 78 excluding CRLF.
+ *
+ * This is equivalent to calling
+ * g_mime_filter_best_encoding_with_max_line_length() with a limit of 78.
  *
  * Returns: the best encoding for the content filtered by @best.
  **/
 GMimeContentEncoding
 g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeEncodingConstraint constraint)
 {
-	GMimeContentEncoding encoding = GMIME_CONTENT_ENCODING_DEFAULT;
-	
-	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), GMIME_CONTENT_ENCODING_DEFAULT);
-	
+	return g_mime_filter_best_encoding_with_max_line_length (best, constraint, 78);
+}
+
+/**
+ * g_mime_filter_best_encoding_with_max_line_length:
+ * @best: a #GMimeFilterBest
+ * @constraint: a #GMimeEncodingConstraint
+ * @max_line_length: maximum line length, excluding CRLF, from 60 through 998
+ *
+ * Selects a transfer encoding using MimeKit's best-encoding rules. NUL bytes,
+ * high-bit byte density, long lines, and newline-terminated lines beginning
+ * with "From " affect the choice. The binary constraint permits binary data
+ * but still selects base64 or quoted-printable for long or From-lines.
+ *
+ * The current unterminated line is included without requiring completion.
+ * Calling this function does not change the filter state. ASCII content
+ * requiring no encoding returns %GMIME_CONTENT_ENCODING_7BIT. If encoding
+ * detection is disabled, returns %GMIME_CONTENT_ENCODING_UNSPECIFIED.
+ *
+ * Returns: the best encoding for the content filtered by @best.
+ **/
+GMimeContentEncoding
+g_mime_filter_best_encoding_with_max_line_length (GMimeFilterBest *best, GMimeEncodingConstraint constraint,
+					       guint max_line_length)
+{
+	guint64 longest, threshold;
+
+	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_return_val_if_fail (constraint >= GMIME_ENCODING_CONSTRAINT_7BIT &&
+			      constraint <= GMIME_ENCODING_CONSTRAINT_BINARY, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_return_val_if_fail (max_line_length >= 60 && max_line_length <= 998, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+
 	if (!(best->flags & GMIME_FILTER_BEST_ENCODING))
-		return GMIME_CONTENT_ENCODING_DEFAULT;
-	
+		return GMIME_CONTENT_ENCODING_UNSPECIFIED;
+
+	/* The final line may not be terminated by a newline. */
+	longest = MAX (best->maxline, best->linelen);
+	/* Calculate floor(total * 17 / 100) without overflowing the counters. */
+	threshold = (best->total / 100) * 17 + ((best->total % 100) * 17) / 100;
+
 	switch (constraint) {
 	case GMIME_ENCODING_CONSTRAINT_7BIT:
-		if (best->count0 > 0) {
-			encoding = GMIME_CONTENT_ENCODING_BASE64;
-		} else if (best->count8 > 0) {
-			if (best->count8 >= (unsigned int) (best->total * (17.0 / 100.0)))
-				encoding = GMIME_CONTENT_ENCODING_BASE64;
-			else
-				encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
-		} else if (best->maxline > 998) {
-			encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
+		if (best->count0 > 0)
+			return GMIME_CONTENT_ENCODING_BASE64;
+
+		if (best->count8 > 0) {
+			if (best->count8 >= threshold)
+				return GMIME_CONTENT_ENCODING_BASE64;
+
+			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		}
+
+		if (best->hadfrom || longest > max_line_length)
+			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
+
 		break;
 	case GMIME_ENCODING_CONSTRAINT_8BIT:
-		if (best->count0 > 0) {
-			encoding = GMIME_CONTENT_ENCODING_BASE64;
-		} else if (best->maxline > 998) {
-			encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
-		}
+		if (best->count0 > 0)
+			return GMIME_CONTENT_ENCODING_BASE64;
+
+		if (best->hadfrom || longest > max_line_length)
+			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
+
+		if (best->count8 > 0)
+			return GMIME_CONTENT_ENCODING_8BIT;
+
 		break;
 	case GMIME_ENCODING_CONSTRAINT_BINARY:
-		if (best->count0 + best->count8 > 0)
-			encoding = GMIME_CONTENT_ENCODING_BINARY;
+		if (best->hadfrom || longest > max_line_length) {
+			if (best->count0 > 0 || best->count8 > threshold)
+				return GMIME_CONTENT_ENCODING_BASE64;
+
+			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
+		}
+
+		if (best->count0 > 0)
+			return GMIME_CONTENT_ENCODING_BINARY;
+
+		if (best->count8 > 0)
+			return GMIME_CONTENT_ENCODING_8BIT;
+
 		break;
 	}
-	
-	if (encoding == GMIME_CONTENT_ENCODING_DEFAULT && best->hadfrom)
-		encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
-	
-	return encoding;
+
+	return GMIME_CONTENT_ENCODING_7BIT;
 }

@@ -83,9 +83,26 @@ GType g_mime_content_disposition_get_type (void);
 
 GMimeContentDisposition *g_mime_content_disposition_new (void);
 GMimeContentDisposition *g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str);
+GMimeContentDisposition *g_mime_content_disposition_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error);
+GMimeContentDisposition *g_mime_content_disposition_clone (GMimeContentDisposition *disposition);
 
 void g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value);
 const char *g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition);
+
+void g_mime_content_disposition_set_filename (GMimeContentDisposition *disposition, const char *filename);
+const char *g_mime_content_disposition_get_filename (GMimeContentDisposition *disposition);
+
+void g_mime_content_disposition_set_creation_date (GMimeContentDisposition *disposition, GDateTime *date);
+GDateTime *g_mime_content_disposition_get_creation_date (GMimeContentDisposition *disposition);
+
+void g_mime_content_disposition_set_modification_date (GMimeContentDisposition *disposition, GDateTime *date);
+GDateTime *g_mime_content_disposition_get_modification_date (GMimeContentDisposition *disposition);
+
+void g_mime_content_disposition_set_read_date (GMimeContentDisposition *disposition, GDateTime *date);
+GDateTime *g_mime_content_disposition_get_read_date (GMimeContentDisposition *disposition);
+
+void g_mime_content_disposition_set_size (GMimeContentDisposition *disposition, gint64 size);
+gint64 g_mime_content_disposition_get_size (GMimeContentDisposition *disposition);
 
 GMimeParamList *g_mime_content_disposition_get_parameters (GMimeContentDisposition *disposition);
 
@@ -95,7 +112,9 @@ const char *g_mime_content_disposition_get_parameter (GMimeContentDisposition *d
 						      const char *name);
 
 gboolean g_mime_content_disposition_is_attachment (GMimeContentDisposition *disposition);
+void g_mime_content_disposition_set_is_attachment (GMimeContentDisposition *disposition, gboolean attachment);
 
+char *g_mime_content_disposition_to_string (GMimeContentDisposition *disposition);
 char *g_mime_content_disposition_encode (GMimeContentDisposition *disposition, GMimeFormatOptions *options);
 
 G_END_DECLS

@@ -4,8 +4,8 @@
     <link linkend="GObject">GObject</link>
         <link linkend="GMimeContentDisposition">GMimeContentDisposition</link>
         <link linkend="GMimeContentType">GMimeContentType</link>
-        <link linkend="GMimeDataWrapper">GMimeDataWrapper</link>
-        <link linkend="GMimeObject">GMimeObject</link>
+        <link linkend="GMimeContent">GMimeContent</link>
+        <link linkend="GMimeEntity">GMimeEntity</link>
             <link linkend="GMimeMessage">GMimeMessage</link>
             <link linkend="GMimeMessagePart">GMimeMessagePart</link>
             <link linkend="GMimeMessagePartial">GMimeMessagePartial</link>
@@ -33,13 +33,12 @@
             <link linkend="GMimeFilterHTML">GMimeFilterHTML</link>
             <link linkend="GMimeFilterMd5">GMimeFilterMd5</link>
             <link linkend="GMimeFilterStrip">GMimeFilterStrip</link>
-            <link linkend="GMimeFilterYenc">GMimeFilterYenc</link>
         <link linkend="GMimeCipherContext">GMimeCipherContext</link>
             <link linkend="GMimeGpgContext">GMimeGpgContext</link>
         <link linkend="GMimeSession">GMimeSession</link>
             <link linkend="GMimeSessionSimple">GMimeSessionSimple</link>
-        <link linkend="InternetAddress">InternetAddress</link>
-            <link linkend="InternetAddressGroup">InternetAddressGroup</link>
-            <link linkend="InternetAddressMailbox">InternetAddressMailbox</link>
-        <link linkend="InternetAddressList">InternetAddressList</link>
+        <link linkend="GMimeInternetAddress">GMimeInternetAddress</link>
+            <link linkend="GMimeGroupAddress">GMimeGroupAddress</link>
+            <link linkend="GMimeMailboxAddress">GMimeMailboxAddress</link>
+        <link linkend="GMimeInternetAddressList">GMimeInternetAddressList</link>
 </screen>

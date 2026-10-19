@@ -22,7 +22,7 @@
 #ifndef __GMIME_MESSAGE_PART_H__
 #define __GMIME_MESSAGE_PART_H__
 
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-message.h>
 
 G_BEGIN_DECLS
@@ -39,19 +39,19 @@ typedef struct _GMimeMessagePartClass GMimeMessagePartClass;
 
 /**
  * GMimeMessagePart:
- * @parent_object: parent #GMimeObject
+ * @parent_object: parent #GMimeEntity
  * @message: child #GMimeMessage
  *
  * A message/rfc822 or message/news MIME part.
  **/
 struct _GMimeMessagePart {
-	GMimeObject parent_object;
+	GMimeEntity parent_object;
 	
 	GMimeMessage *message;
 };
 
 struct _GMimeMessagePartClass {
-	GMimeObjectClass parent_class;
+	GMimeEntityClass parent_class;
 	
 };
 

@@ -1,5 +1,5 @@
 GObject
-  GMimeObject
+  GMimeEntity
     GMimeMessage
     GMimePart
       GMimeApplicationPkcs7Mime
@@ -15,10 +15,10 @@ GObject
   GMimeContentDisposition
   GMimeHeader
   GMimeHeaderList
-  InternetAddress
-    InternetAddressGroup
-    InternetAddressMailbox
-  InternetAddressList
+  GMimeInternetAddress
+    GMimeGroupAddress
+    GMimeMailboxAddress
+  GMimeInternetAddressList
   GMimeCertificate
   GMimeCertificateList
   GMimeDecryptResult
@@ -27,7 +27,17 @@ GObject
   GMimeCryptoContext
     GMimeGpgContext
     GMimePkcs7Context
-  GMimeDataWrapper
+  GMimeContent
+  GMimeBase64Encoder
+  GMimeBase64Decoder
+  GMimeQuotedPrintableEncoder
+  GMimeQuotedPrintableDecoder
+  GMimeUUEncoder
+  GMimeUUDecoder
+  GMimePassThroughEncoder
+  GMimePassThroughDecoder
+  GMimeYencEncoder
+  GMimeYencDecoder
   GMimeFilter
     GMimeFilterBasic
     GMimeFilterBest
@@ -43,7 +53,6 @@ GObject
     GMimeFilterStrip
     GMimeFilterUnix2Dos
     GMimeFilterWindows
-    GMimeFilterYenc
   GMimeParser
   GMimeStream
     GMimeStreamBuffer
@@ -57,4 +66,6 @@ GObject
     GMimeStreamNull
     GMimeStreamPipe
 GInterface
+  GMimeEncoder
+  GMimeDecoder
   GTypePlugin

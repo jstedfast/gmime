@@ -54,18 +54,18 @@ print_depth (int depth)
 }
 
 static void
-print_mime_struct (GMimeObject *part, int depth)
+print_mime_struct (GMimeEntity *part, int depth)
 {
 	const GMimeContentType *type;
 	GMimeMultipart *multipart;
 	GMimeMessagePart *mpart;
-	GMimeObject *subpart;
+	GMimeEntity *subpart;
 	gboolean has_md5;
 	int i, n;
 	
 	print_depth (depth);
-	type = g_mime_object_get_content_type (part);
-	has_md5 = g_mime_object_get_header (part, "Content-Md5") != NULL;
+	type = g_mime_entity_get_content_type (part);
+	has_md5 = g_mime_entity_get_header (part, "Content-Md5") != NULL;
 	fprintf (stdout, "Content-Type: %s/%s%s", type->type, type->subtype,
 		 has_md5 ? "; md5sum=" : "\n");
 	
@@ -94,15 +94,15 @@ print_mime_struct (GMimeObject *part, int depth)
 
 #ifdef PRINT_MIME_STRUCT_ITER
 static void
-print_mime_part_info (const char *path, GMimeObject *object)
+print_mime_part_info (const char *path, GMimeEntity *object)
 {
 	const GMimeContentType *type;
 	gboolean has_md5;
 	
-	type = g_mime_object_get_content_type (object);
+	type = g_mime_entity_get_content_type (object);
 	
 	if (GMIME_IS_PART (object))
-		has_md5 = g_mime_object_get_header (object, "Content-Md5") != NULL;
+		has_md5 = g_mime_entity_get_header (object, "Content-Md5") != NULL;
 	else
 		has_md5 = FALSE;
 	
@@ -123,11 +123,11 @@ print_mime_struct_iter (GMimeMessage *message)
 {
 	//const char *jump_to = "4.2.2.2";
 	GMimePartIter *iter;
-	GMimeObject *parent;
-	GMimeObject *part;
+	GMimeEntity *parent;
+	GMimeEntity *part;
 	char *path;
 	
-	iter = g_mime_part_iter_new ((GMimeObject *) message);
+	iter = g_mime_part_iter_new ((GMimeEntity *) message);
 	if (g_mime_part_iter_is_valid (iter)) {
 		if ((parent = g_mime_part_iter_get_parent (iter)))
 			print_mime_part_info ("TEXT", parent);
@@ -170,14 +170,14 @@ test_parser (GMimeStream *stream)
 	g_mime_parser_init_with_stream (parser, stream);
 	
 	ZenTimerStart (NULL);
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	ZenTimerStop (NULL);
 	ZenTimerReport (NULL, "gmime::parser_construct_message");
 	
 	g_object_unref (parser);
 	
 	ZenTimerStart (NULL);
-	text = g_mime_object_to_string ((GMimeObject *) message, format);
+	text = g_mime_entity_to_string ((GMimeEntity *) message, format);
 	ZenTimerStop (NULL);
 	ZenTimerReport (NULL, "gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
@@ -187,7 +187,7 @@ test_parser (GMimeStream *stream)
 	{
 		char *raw;
 		
-		raw = g_mime_object_get_headers ((GMimeObject *) message, format);
+		raw = g_mime_entity_get_headers ((GMimeEntity *) message, format);
 		fprintf (stdout, "\nTesting raw headers...\n\n%s\n", raw);
 		g_free (raw);
 	}
@@ -200,7 +200,7 @@ test_parser (GMimeStream *stream)
 		fprintf (stdout, "\nTesting preservation of headers...\n\n");
 		output = g_mime_stream_file_new (stdout);
 		g_mime_stream_file_set_owner ((GMimeStreamFile *) output, FALSE);
-		g_mime_header_list_write_to_stream (GMIME_OBJECT (message)->headers, format, output);
+		g_mime_header_list_write_to_stream (GMIME_ENTITY (message)->headers, format, output);
 		g_mime_stream_flush (output);
 		g_object_unref (output);
 		fprintf (stdout, "\n");
@@ -210,7 +210,7 @@ test_parser (GMimeStream *stream)
 #ifdef TEST_WRITE_TO_STREAM
 	stream = g_mime_stream_pipe_new (2);
 	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
-	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) message, format, stream);
 	g_mime_stream_flush (stream);
 	g_object_unref (stream);
 #endif

@@ -95,18 +95,20 @@ typedef enum {
  * @parent_object: parent #GObject
  * @status: A bitfield of #GMimeSignatureStatus values.
  * @cert: The #GMimeCertificate used in the signature.
- * @created: The creation date of the signature.
- * @expires: The expiration date of the signature.
+ * @created: (nullable): The creation date of the signature, or %NULL if unknown.
+ * @expires: (nullable): The expiration date of the signature, or %NULL if unknown.
  *
- * An object containing useful information about a signature.
+ * An object containing useful information about a signature. Dates are owned
+ * by the signature; use the setters to replace them. An expiration date of
+ * 9999-12-31 23:59:59.999999 UTC means the signature never expires.
  **/
 struct _GMimeSignature {
 	GObject parent_object;
 	
 	GMimeSignatureStatus status;
 	GMimeCertificate *cert;
-	time_t created;
-	time_t expires;
+	GDateTime *created;
+	GDateTime *expires;
 };
 
 struct _GMimeSignatureClass {
@@ -125,13 +127,11 @@ GMimeCertificate *g_mime_signature_get_certificate (GMimeSignature *sig);
 void g_mime_signature_set_status (GMimeSignature *sig, GMimeSignatureStatus status);
 GMimeSignatureStatus g_mime_signature_get_status (GMimeSignature *sig);
 
-void g_mime_signature_set_created (GMimeSignature *sig, time_t created);
-time_t g_mime_signature_get_created (GMimeSignature *sig);
-gint64 g_mime_signature_get_created64 (GMimeSignature *sig);
+void g_mime_signature_set_created (GMimeSignature *sig, GDateTime *created);
+GDateTime *g_mime_signature_get_created (GMimeSignature *sig);
 
-void g_mime_signature_set_expires (GMimeSignature *sig, time_t expires);
-time_t g_mime_signature_get_expires (GMimeSignature *sig);
-gint64 g_mime_signature_get_expires64 (GMimeSignature *sig);
+void g_mime_signature_set_expires (GMimeSignature *sig, GDateTime *expires);
+GDateTime *g_mime_signature_get_expires (GMimeSignature *sig);
 
 
 /**

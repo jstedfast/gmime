@@ -28,10 +28,13 @@
 #include <string.h>
 
 #include "gmime-text-part.h"
+#include "gmime-visitor.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-charset.h"
 #include "gmime-charset.h"
+#include "gmime-common.h"
+#include "gmime-internal.h"
 
 #define d(x)
 
@@ -52,6 +55,12 @@ static void g_mime_text_part_finalize (GObject *object);
 
 
 static GMimePartClass *parent_class = NULL;
+
+static void
+text_part_accept (GMimeEntity *object, GMimeVisitor *visitor)
+{
+	g_mime_visitor_visit_text_part (visitor, (GMimeTextPart *) object);
+}
 
 
 GType
@@ -87,6 +96,7 @@ g_mime_text_part_class_init (GMimeTextPartClass *klass)
 	parent_class = g_type_class_ref (GMIME_TYPE_PART);
 	
 	gobject_class->finalize = g_mime_text_part_finalize;
+	GMIME_ENTITY_CLASS (klass)->accept = text_part_accept;
 }
 
 static void
@@ -134,10 +144,224 @@ g_mime_text_part_new_with_subtype (const char *subtype)
 	mime_part = g_object_new (GMIME_TYPE_TEXT_PART, NULL);
 	
 	content_type = g_mime_content_type_new ("text", subtype);
-	g_mime_object_set_content_type ((GMimeObject *) mime_part, content_type);
+	g_mime_entity_set_content_type ((GMimeEntity *) mime_part, content_type);
 	g_object_unref (content_type);
 	
 	return mime_part;
+}
+
+
+/**
+ * g_mime_text_part_new_with_format:
+ * @format: a #GMimeTextFormat
+ *
+ * Creates a text part for @format. Flowed text uses text/plain with a
+ * format=flowed parameter. Both rich-text formats use text/rtf; this
+ * constructor does not compress content.
+ *
+ * Returns: (transfer full): a new #GMimeTextPart.
+ **/
+GMimeTextPart *
+g_mime_text_part_new_with_format (GMimeTextFormat format)
+{
+	GMimeTextPart *mime_part;
+	const char *subtype;
+
+	switch (format) {
+	case GMIME_TEXT_FORMAT_PLAIN:
+	case GMIME_TEXT_FORMAT_FLOWED:
+		subtype = "plain";
+		break;
+	case GMIME_TEXT_FORMAT_HTML:
+		subtype = "html";
+		break;
+	case GMIME_TEXT_FORMAT_ENRICHED:
+		subtype = "enriched";
+		break;
+	case GMIME_TEXT_FORMAT_COMPRESSED_RICH_TEXT:
+	case GMIME_TEXT_FORMAT_RICH_TEXT:
+		subtype = "rtf";
+		break;
+	default:
+		g_return_val_if_reached (NULL);
+	}
+
+	mime_part = g_mime_text_part_new_with_subtype (subtype);
+	if (format == GMIME_TEXT_FORMAT_FLOWED)
+		g_mime_entity_set_content_type_parameter ((GMimeEntity *) mime_part, "format", "flowed");
+
+	return mime_part;
+}
+
+
+/**
+ * g_mime_text_part_get_format:
+ * @mime_part: a #GMimeTextPart
+ *
+ * Gets the format indicated by the Content-Type header. Unknown media
+ * types and subtypes return %GMIME_TEXT_FORMAT_PLAIN. Enriched text
+ * includes text/richtext; RTF includes application/rtf.
+ *
+ * Like MimeKit, flowed format detection here requires the exact lowercase
+ * subtype "plain", whereas g_mime_text_part_is_flowed() ignores its case.
+ * Compressed rich text is not inferred from the Content-Type header.
+ *
+ * Returns: the text format.
+ **/
+GMimeTextFormat
+g_mime_text_part_get_format (GMimeTextPart *mime_part)
+{
+	GMimeContentType *content_type;
+	const char *subtype;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), GMIME_TEXT_FORMAT_PLAIN);
+
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+	if (!g_ascii_strcasecmp (g_mime_content_type_get_media_type (content_type), "text")) {
+		subtype = g_mime_content_type_get_media_subtype (content_type);
+		if (!strcmp (subtype, "plain")) {
+			if (g_mime_text_part_is_flowed (mime_part))
+				return GMIME_TEXT_FORMAT_FLOWED;
+		} else if (g_mime_text_part_is_html (mime_part)) {
+			return GMIME_TEXT_FORMAT_HTML;
+		} else if (g_mime_text_part_is_rich_text (mime_part)) {
+			return GMIME_TEXT_FORMAT_RICH_TEXT;
+		} else if (g_mime_text_part_is_enriched (mime_part)) {
+			return GMIME_TEXT_FORMAT_ENRICHED;
+		}
+	} else if (g_mime_text_part_is_rich_text (mime_part)) {
+		return GMIME_TEXT_FORMAT_RICH_TEXT;
+	}
+
+	return GMIME_TEXT_FORMAT_PLAIN;
+}
+
+
+/**
+ * g_mime_text_part_is_plain:
+ * @mime_part: a #GMimeTextPart
+ *
+ * Tests whether the Content-Type is text/plain, ignoring ASCII case.
+ * This also matches flowed text.
+ *
+ * Returns: %TRUE for text/plain, otherwise %FALSE.
+ **/
+gboolean
+g_mime_text_part_is_plain (GMimeTextPart *mime_part)
+{
+	GMimeContentType *content_type;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
+
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+	return g_mime_content_type_is_type (content_type, "text", "plain");
+}
+
+
+/**
+ * g_mime_text_part_is_flowed:
+ * @mime_part: a #GMimeTextPart
+ *
+ * Tests for text/plain with a format parameter equal to "flowed",
+ * ignoring ASCII case and surrounding Unicode whitespace.
+ *
+ * Returns: %TRUE for flowed text, otherwise %FALSE.
+ **/
+gboolean
+g_mime_text_part_is_flowed (GMimeTextPart *mime_part)
+{
+	const char *format;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
+
+	if (!g_mime_text_part_is_plain (mime_part))
+		return FALSE;
+
+	format = g_mime_entity_get_content_type_parameter ((GMimeEntity *) mime_part, "format");
+	return _g_mime_strcase_equal_trimmed (format, "flowed");
+}
+
+
+/**
+ * g_mime_text_part_is_html:
+ * @mime_part: a #GMimeTextPart
+ *
+ * Tests whether the Content-Type is text/html, ignoring ASCII case.
+ *
+ * Returns: %TRUE for text/html, otherwise %FALSE.
+ **/
+gboolean
+g_mime_text_part_is_html (GMimeTextPart *mime_part)
+{
+	GMimeContentType *content_type;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
+
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+	return g_mime_content_type_is_type (content_type, "text", "html");
+}
+
+
+/**
+ * g_mime_text_part_is_enriched:
+ * @mime_part: a #GMimeTextPart
+ *
+ * Tests whether the Content-Type is text/enriched or text/richtext,
+ * ignoring ASCII case.
+ *
+ * Returns: %TRUE for enriched text, otherwise %FALSE.
+ **/
+gboolean
+g_mime_text_part_is_enriched (GMimeTextPart *mime_part)
+{
+	GMimeContentType *content_type;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
+
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+	return g_mime_content_type_is_type (content_type, "text", "enriched") ||
+		g_mime_content_type_is_type (content_type, "text", "richtext");
+}
+
+
+/**
+ * g_mime_text_part_is_rich_text:
+ * @mime_part: a #GMimeTextPart
+ *
+ * Tests whether the Content-Type is text/rtf or application/rtf,
+ * ignoring ASCII case.
+ *
+ * Returns: %TRUE for RTF, otherwise %FALSE.
+ **/
+gboolean
+g_mime_text_part_is_rich_text (GMimeTextPart *mime_part)
+{
+	GMimeContentType *content_type;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
+
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+	return g_mime_content_type_is_type (content_type, "text", "rtf") ||
+		g_mime_content_type_is_type (content_type, "application", "rtf");
+}
+
+gboolean
+_g_mime_text_part_is_format (GMimeTextPart *part, GMimeTextFormat format)
+{
+	switch (format) {
+	case GMIME_TEXT_FORMAT_PLAIN:
+		return g_mime_text_part_is_plain (part);
+	case GMIME_TEXT_FORMAT_FLOWED:
+		return g_mime_text_part_is_flowed (part);
+	case GMIME_TEXT_FORMAT_HTML:
+		return g_mime_text_part_is_html (part);
+	case GMIME_TEXT_FORMAT_ENRICHED:
+		return g_mime_text_part_is_enriched (part);
+	case GMIME_TEXT_FORMAT_RICH_TEXT:
+		return g_mime_text_part_is_rich_text (part);
+	default:
+		return FALSE;
+	}
 }
 
 
@@ -156,7 +380,7 @@ g_mime_text_part_set_charset (GMimeTextPart *mime_part, const char *charset)
 	g_return_if_fail (GMIME_IS_TEXT_PART (mime_part));
 	g_return_if_fail (charset != NULL);
 	
-	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
 	g_mime_content_type_set_parameter (content_type, "charset", charset);
 }
 
@@ -176,7 +400,7 @@ g_mime_text_part_get_charset (GMimeTextPart *mime_part)
 	
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), NULL);
 	
-	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
 	
 	return g_mime_content_type_get_parameter (content_type, "charset");
 }
@@ -195,7 +419,7 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 	GMimeContentType *content_type;
 	GMimeStream *filtered, *stream;
 	GMimeContentEncoding encoding;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeFilter *filter;
 	const char *charset;
 	GMimeCharset mask;
@@ -215,7 +439,7 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 	default: charset = "utf-8"; break;
 	}
 	
-	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
 	g_mime_content_type_set_parameter (content_type, "charset", charset);
 	
 	stream = g_mime_stream_mem_new_with_buffer (text, len);
@@ -231,7 +455,7 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 		stream = filtered;
 	}
 	
-	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_object_unref (stream);
 	
 	g_mime_part_set_content ((GMimePart *) mime_part, content);
@@ -264,7 +488,7 @@ g_mime_text_part_get_text (GMimeTextPart *mime_part)
 {
 	GMimeContentType *content_type;
 	GMimeStream *filtered, *stream;
-	GMimeDataWrapper *content;
+	GMimeContent *content;
 	GMimeFilter *filter;
 	const char *charset;
 	GByteArray *buf;
@@ -274,7 +498,7 @@ g_mime_text_part_get_text (GMimeTextPart *mime_part)
 	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part)))
 		return NULL;
 	
-	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
 	stream = g_mime_stream_mem_new ();
 	
 	if ((charset = g_mime_content_type_get_parameter (content_type, "charset")) != NULL &&
@@ -283,11 +507,11 @@ g_mime_text_part_get_text (GMimeTextPart *mime_part)
 		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 		g_object_unref (filter);
 		
-		g_mime_data_wrapper_write_to_stream (content, filtered);
+		g_mime_content_decode_to_stream (content, filtered);
 		g_mime_stream_flush (filtered);
 		g_object_unref (filtered);
 	} else {
-		g_mime_data_wrapper_write_to_stream (content, stream);
+		g_mime_content_decode_to_stream (content, stream);
 	}
 	
 	g_mime_stream_write (stream, "", 1);
