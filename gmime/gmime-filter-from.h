@@ -58,7 +58,9 @@ typedef enum {
  * @mode: #GMimeFilterFromMode
  * @midline: %TRUE if in the middle of a line
  *
- * A filter for armoring or escaping lines beginning with "From ".
+ * A filter for armoring or escaping exact "From " markers at the beginning
+ * of input or after LF. Incomplete prefixes span calls and are emitted
+ * unchanged on completion. Bare CR does not begin a new line.
  **/
 struct _GMimeFilterFrom {
 	GMimeFilter parent_object;

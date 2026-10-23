@@ -147,6 +147,21 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- `GMimeFilterFrom` now follows MimeKit's MboxFromFilter in ESCAPE mode
+  and ArmoredFromFilter in ARMOR mode, retaining the native type and mode
+  enum. Only exact, case-sensitive "From " markers at the beginning of
+  input or after LF are transformed; bare CR and existing ">From " lines
+  are not special. Escape inserts ">", while armor replaces only F with
+  "=46" and is not a complete quoted-printable encoder. Apply armor after
+  quoted-printable encoding and label the containing part accordingly.
+  Only exact incomplete prefixes are buffered; completion now emits them
+  unchanged instead of retaining and losing them. Match offsets use heap
+  storage instead of per-line stack allocations. Unchanged consumed input
+  is still returned without copying where native prespace permits it.
+  Reset discards buffered input and line state; native copy retains the
+  mode but starts fresh. DEFAULT remains an alias for ESCAPE, and invalid
+  constructor modes retain their existing fallback to ESCAPE.
+
 - `GMimeFilterDos2Unix` and `GMimeFilterUnix2Dos` now follow MimeKit's
   newline-filter completion rules, retaining the existing native names
   and constructor settings. CRLF pairs are recognized across chunks;

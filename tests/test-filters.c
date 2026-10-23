@@ -473,9 +473,14 @@ filter_chunk (GMimeFilter *filter, const guint8 *input, size_t length, gboolean 
 {
 	size_t outlen, outprespace;
 	char *buffer, *output;
+	guint8 preload[16];
 	gboolean passthrough;
+	size_t backedup = filter->backlen;
 	size_t i;
 
+	g_assert_cmpuint (backedup, <=, sizeof (preload));
+	if (backedup)
+		memcpy (preload, filter->backbuf, backedup);
 	buffer = g_malloc (length + 32);
 	memset (buffer, 'Z', length + 32);
 	if (length)
@@ -488,18 +493,22 @@ filter_chunk (GMimeFilter *filter, const guint8 *input, size_t length, gboolean 
 		g_byte_array_append (result, (const guint8 *) output, outlen);
 	if (length)
 		g_assert_cmpint (memcmp (buffer + 16, input, length), ==, 0);
-	passthrough = output == buffer + 16;
+	passthrough = output == buffer + 16 - backedup;
 	if (passthrough) {
-		g_assert_cmpuint (outlen, ==, length);
-		g_assert_cmpuint (outprespace, ==, 16);
+		g_assert_cmpuint (outlen, <=, length + backedup);
+		g_assert_cmpuint (outprespace, ==, 16 - backedup);
 	} else {
 		g_assert_true (output == filter->outbuf);
 		g_assert_cmpuint (outprespace, ==, filter->outpre);
 	}
 	for (i = 0; i < 16; i++) {
-		g_assert_cmpint (buffer[i], ==, 'Z');
+		if (i < 16 - backedup)
+			g_assert_cmpint (buffer[i], ==, 'Z');
 		g_assert_cmpint (buffer[length + 16 + i], ==, 'Z');
 	}
+	/* The filter framework may preload saved input into the caller's prespace. */
+	if (backedup)
+		g_assert_cmpint (memcmp (buffer + 16 - backedup, preload, backedup), ==, 0);
 	g_free (buffer);
 	return passthrough;
 }
@@ -965,6 +974,315 @@ test_newline_streams (void)
 	testsuite_check_passed ();
 }
 
+static GByteArray *
+from_expected (const guint8 *input, size_t length, GMimeFilterFromMode mode)
+{
+	GByteArray *expected = g_byte_array_new ();
+	size_t i;
+
+	for (i = 0; i < length; i++) {
+		if ((i == 0 || input[i - 1] == '\n') && length - i >= 5 &&
+		    memcmp (input + i, "From ", 5) == 0) {
+			if (mode == GMIME_FILTER_FROM_MODE_ARMOR) {
+				g_byte_array_append (expected, (const guint8 *) "=46", 3);
+				continue;
+			}
+			g_byte_array_append (expected, (const guint8 *) ">", 1);
+		}
+		g_byte_array_append (expected, input + i, 1);
+	}
+	return expected;
+}
+
+static void
+check_from_splits (const guint8 *input, size_t length)
+{
+	GByteArray *actual = g_byte_array_new (), *expected;
+	GMimeFilter *filter;
+	size_t split;
+	guint mode, final;
+
+	for (mode = 0; mode < 2; mode++) {
+		filter = g_mime_filter_from_new (mode);
+		expected = from_expected (input, length, mode);
+		for (split = 0; split <= length; split++) {
+			for (final = 0; final < 2; final++) {
+				g_mime_filter_reset (filter);
+				g_byte_array_set_size (actual, 0);
+				filter_chunk (filter, input, split, FALSE, actual);
+				filter_chunk (filter, input, 0, FALSE, actual);
+				filter_chunk (filter, input + split, length - split, final, actual);
+				if (!final)
+					filter_chunk (filter, input, 0, TRUE, actual);
+				check_filter_result (actual, expected);
+				filter_chunk (filter, input, 0, TRUE, actual);
+				check_filter_result (actual, expected);
+				g_assert_cmpuint (filter->backlen, ==, 0);
+			}
+		}
+		g_byte_array_unref (expected);
+		g_object_unref (filter);
+	}
+	g_byte_array_unref (actual);
+}
+
+static void
+test_from_streaming (void)
+{
+	static const guint8 alphabet[] = { 'F', 'r', 'o', 'm', ' ', '\n', 'x' };
+	static const char *cases[] = {
+		"From ", "From\n", "From\t", "From\r", "From \nFro",
+		"From From \nFrom \nFr", "xFrom \nFrom ", "\rFrom \nFrom ",
+		">From \n>>From ", "from \nfRom \nFROM ", "From \rFrom \r\nFrom "
+	};
+	static const guint8 binary[] = "From \0From \nF\0\nFrom \377\nFro";
+	guint8 input[256];
+	guint count = 1, code, value, length, i;
+
+	testsuite_check ("From filters partial prefixes, final buffers and byte classification");
+	for (length = 0; length <= 4; length++) {
+		for (code = 0; code < count; code++) {
+			value = code;
+			for (i = 0; i < length; i++) {
+				input[i] = alphabet[value % G_N_ELEMENTS (alphabet)];
+				value /= G_N_ELEMENTS (alphabet);
+			}
+			check_from_splits (input, length);
+		}
+		count *= G_N_ELEMENTS (alphabet);
+	}
+	for (i = 0; i < G_N_ELEMENTS (cases); i++)
+		check_from_splits ((const guint8 *) cases[i], strlen (cases[i]));
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i;
+	check_from_splits (input, sizeof (input));
+	check_from_splits (binary, sizeof (binary) - 1);
+	testsuite_check_passed ();
+}
+
+static void
+test_from_lifecycle (void)
+{
+	GByteArray *actual = g_byte_array_new (), *expected;
+	GMimeFilter *filter, *copy;
+	guint mode;
+
+	testsuite_check ("From filters immediate mismatches, fresh copies, reset and reuse");
+	for (mode = 0; mode < 2; mode++) {
+		filter = g_mime_filter_from_new (mode);
+		g_byte_array_set_size (actual, 0);
+		g_assert_true (filter_chunk (filter, (const guint8 *) "Fx", 2, FALSE, actual));
+		g_assert_cmpuint (actual->len, ==, 2);
+		g_assert_cmpint (memcmp (actual->data, "Fx", 2), ==, 0);
+		g_assert_cmpuint (filter->backlen, ==, 0);
+		g_mime_filter_reset (filter);
+		g_byte_array_set_size (actual, 0);
+		filter_chunk (filter, (const guint8 *) "Fr", 2, FALSE, actual);
+		g_assert_cmpuint (actual->len, ==, 0);
+		g_assert_cmpuint (filter->backlen, ==, 2);
+		copy = g_mime_filter_copy (filter);
+		g_assert_true (GMIME_IS_FILTER_FROM (copy));
+		filter_chunk (copy, (const guint8 *) "From ", 5, TRUE, actual);
+		expected = from_expected ((const guint8 *) "From ", 5, mode);
+		check_filter_result (actual, expected);
+		g_byte_array_set_size (actual, 0);
+		filter_chunk (filter, (const guint8 *) "om ", 3, TRUE, actual);
+		check_filter_result (actual, expected);
+		g_byte_array_unref (expected);
+		g_object_unref (copy);
+		g_byte_array_set_size (actual, 0);
+		filter_chunk (filter, (const guint8 *) "From ", 5, TRUE, actual);
+		g_assert_cmpuint (actual->len, ==, 5);
+		g_assert_cmpint (memcmp (actual->data, "From ", 5), ==, 0);
+		copy = g_mime_filter_copy (filter);
+		g_byte_array_set_size (actual, 0);
+		filter_chunk (copy, (const guint8 *) "From ", 5, TRUE, actual);
+		expected = from_expected ((const guint8 *) "From ", 5, mode);
+		check_filter_result (actual, expected);
+		g_byte_array_unref (expected);
+		g_object_unref (copy);
+		g_mime_filter_reset (filter);
+		g_byte_array_set_size (actual, 0);
+		filter_chunk (filter, (const guint8 *) "Fr", 2, FALSE, actual);
+		g_mime_filter_reset (filter);
+		filter_chunk (filter, (const guint8 *) "om ", 3, TRUE, actual);
+		g_assert_cmpuint (actual->len, ==, 3);
+		g_assert_cmpint (memcmp (actual->data, "om ", 3), ==, 0);
+		g_object_unref (filter);
+	}
+	filter = g_mime_filter_from_new ((GMimeFilterFromMode) -1);
+	g_assert_cmpint (GMIME_FILTER_FROM (filter)->mode, ==, GMIME_FILTER_FROM_MODE_ESCAPE);
+	g_byte_array_set_size (actual, 0);
+	filter_chunk (filter, (const guint8 *) "From ", 5, TRUE, actual);
+	expected = from_expected ((const guint8 *) "From ", 5, GMIME_FILTER_FROM_MODE_ESCAPE);
+	check_filter_result (actual, expected);
+	g_byte_array_unref (expected);
+	g_object_unref (filter);
+	g_byte_array_unref (actual);
+	testsuite_check_passed ();
+}
+
+static void
+test_from_prespace (void)
+{
+	static const char *suffixes[] = { "om ", "x", "" };
+	GByteArray *actual = g_byte_array_new (), *expected;
+	GMimeFilter *filter;
+	size_t i, length, outlen, outprespace;
+	char buffer[32], *output, combined[8];
+	guint mode, suffix;
+
+	testsuite_check ("From filters backed-up input without caller prespace");
+	for (mode = 0; mode < 2; mode++) {
+		filter = g_mime_filter_from_new (mode);
+		for (suffix = 0; suffix < G_N_ELEMENTS (suffixes); suffix++) {
+			g_mime_filter_reset (filter);
+			g_byte_array_set_size (actual, 0);
+			filter_chunk (filter, (const guint8 *) "Fr", 2, FALSE, actual);
+			length = strlen (suffixes[suffix]);
+			memset (buffer, 'Z', sizeof (buffer));
+			memcpy (buffer + 4, suffixes[suffix], length);
+			g_mime_filter_complete (filter, buffer + 4, length, 0, &output, &outlen, &outprespace);
+			g_assert_true (output != buffer + 4);
+			if (outlen)
+				g_byte_array_append (actual, (const guint8 *) output, outlen);
+			memcpy (combined, "Fr", 2);
+			memcpy (combined + 2, suffixes[suffix], length);
+			expected = from_expected ((const guint8 *) combined, length + 2, mode);
+			check_filter_result (actual, expected);
+			for (i = 0; i < sizeof (buffer); i++) {
+				if (i < 4 || i >= length + 4)
+					g_assert_cmpint (buffer[i], ==, 'Z');
+			}
+			if (length)
+				g_assert_cmpint (memcmp (buffer + 4, suffixes[suffix], length), ==, 0);
+			g_byte_array_unref (expected);
+		}
+		g_object_unref (filter);
+	}
+	g_byte_array_unref (actual);
+	testsuite_check_passed ();
+}
+
+static void
+test_from_many_lines (void)
+{
+	const guint count = 1024 * 1024;
+	guint8 *input = g_malloc ((size_t) count * 6 + 3);
+	GByteArray *actual = g_byte_array_new (), *expected;
+	GMimeFilter *filter;
+	const char *escaped;
+	guint i, mode;
+	size_t width;
+
+	testsuite_check ("From filters a million markers and a buffered final prefix");
+	for (i = 0; i < count; i++)
+		memcpy (input + (size_t) i * 6, "From \n", 6);
+	memcpy (input + (size_t) count * 6, "Fro", 3);
+	for (mode = 0; mode < 2; mode++) {
+		escaped = mode == GMIME_FILTER_FROM_MODE_ARMOR ? "=46rom \n" : ">From \n";
+		width = strlen (escaped);
+		expected = g_byte_array_sized_new (count * width + 3);
+		for (i = 0; i < count; i++)
+			g_byte_array_append (expected, (const guint8 *) escaped, width);
+		filter = g_mime_filter_from_new (mode);
+		g_byte_array_set_size (actual, 0);
+		filter_chunk (filter, input, (size_t) count * 6 + 3, FALSE, actual);
+		check_filter_result (actual, expected);
+		g_assert_cmpuint (filter->backlen, ==, 3);
+		filter_chunk (filter, input, 0, TRUE, actual);
+		g_byte_array_append (expected, (const guint8 *) "Fro", 3);
+		check_filter_result (actual, expected);
+		g_byte_array_unref (expected);
+		g_object_unref (filter);
+	}
+	g_byte_array_unref (actual);
+	g_free (input);
+	testsuite_check_passed ();
+}
+
+static void
+test_from_quoted_printable (void)
+{
+	static const char input[] = "From alpha\nFrom =beta\001\377\nFrom final";
+	GMimeStream *memory, *filtered;
+	GMimeFilter *filter;
+	GByteArray *encoded, *actual, *expected;
+
+	testsuite_check ("From armor after quoted-printable encoding decodes without double encoding");
+	memory = g_mime_stream_mem_new ();
+	filtered = g_mime_stream_filter_new (memory);
+	filter = g_mime_filter_basic_new (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, TRUE);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+	g_object_unref (filter);
+	filter = g_mime_filter_from_new (GMIME_FILTER_FROM_MODE_ARMOR);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+	g_object_unref (filter);
+	g_assert_cmpint (g_mime_stream_write (filtered, input, sizeof (input) - 1), ==, sizeof (input) - 1);
+	g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+	encoded = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory));
+	g_assert_cmpuint (encoded->len, >=, 8);
+	g_assert_cmpint (memcmp (encoded->data, "=46rom ", 7), ==, 0);
+	actual = g_byte_array_new ();
+	filter = g_mime_filter_basic_new (GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, FALSE);
+	filter_chunk (filter, encoded->data, encoded->len, TRUE, actual);
+	expected = g_byte_array_new ();
+	g_byte_array_append (expected, (const guint8 *) input, sizeof (input) - 1);
+	check_filter_result (actual, expected);
+	g_byte_array_unref (expected);
+	g_byte_array_unref (actual);
+	g_object_unref (filter);
+	g_object_unref (filtered);
+	g_object_unref (memory);
+	testsuite_check_passed ();
+}
+
+static void
+test_from_streams (void)
+{
+	static const char input[] = "From a\nFrom b\r\nxFrom \rFrom \n>From \n\0From \nFro";
+	GMimeStream *memory, *filtered;
+	GMimeFilter *filter;
+	GByteArray *actual, *expected;
+	char buffer[3];
+	size_t offset;
+	ssize_t n;
+	guint mode;
+
+	testsuite_check ("From filters binary stream reads, writes and final partial markers");
+	for (mode = 0; mode < 2; mode++) {
+		expected = from_expected ((const guint8 *) input, sizeof (input) - 1, mode);
+		memory = g_mime_stream_mem_new ();
+		filtered = g_mime_stream_filter_new (memory);
+		filter = g_mime_filter_from_new (mode);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+		g_object_unref (filter);
+		for (offset = 0; offset < sizeof (input) - 1; offset++)
+			g_assert_cmpint (g_mime_stream_write (filtered, input + offset, 1), ==, 1);
+		g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+		g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+		actual = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory));
+		check_filter_result (actual, expected);
+		g_object_unref (filtered);
+		g_object_unref (memory);
+		memory = g_mime_stream_mem_new_with_buffer (input, sizeof (input) - 1);
+		filtered = g_mime_stream_filter_new (memory);
+		filter = g_mime_filter_from_new (mode);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+		g_object_unref (filter);
+		actual = g_byte_array_new ();
+		while ((n = g_mime_stream_read (filtered, buffer, sizeof (buffer))) > 0)
+			g_byte_array_append (actual, (const guint8 *) buffer, n);
+		g_assert_cmpint (n, ==, 0);
+		check_filter_result (actual, expected);
+		g_byte_array_unref (actual);
+		g_byte_array_unref (expected);
+		g_object_unref (filtered);
+		g_object_unref (memory);
+	}
+	testsuite_check_passed ();
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/filters";
@@ -997,6 +1315,12 @@ int main (int argc, char **argv)
 	test_newline_long_runs ();
 	test_newline_lifecycle ();
 	test_newline_streams ();
+	test_from_streaming ();
+	test_from_lifecycle ();
+	test_from_prespace ();
+	test_from_many_lines ();
+	test_from_quoted_printable ();
+	test_from_streams ();
 	
 	//test_charset_conversion (datadir, "chinese", "utf-8", "big5"); // Note: utf-8 -> big5 drops characters
 	test_charset_conversion (datadir, "cyrillic", "utf-8", "cp1251");
