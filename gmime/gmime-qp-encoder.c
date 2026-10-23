@@ -24,6 +24,7 @@
 #include "gmime-codecs.h"
 
 typedef struct {
+	GMimeNewLineFormat newline_format;
 	guint max_line_length;
 	guint column;
 	gint saved;
@@ -59,6 +60,7 @@ g_mime_quoted_printable_encoder_class_init (GMimeQuotedPrintableEncoderClass *kl
 static void
 g_mime_quoted_printable_encoder_init (GMimeQuotedPrintableEncoder *self)
 {
+	self->state.newline_format = GMIME_NEWLINE_FORMAT_UNIX;
 	self->state.max_line_length = 76;
 	qp_encoder_reset (GMIME_ENCODER (self));
 }
@@ -83,14 +85,16 @@ qp_encoder_estimate (GMimeEncoder *encoder, gsize length)
 {
 	QPEncoderState *state = &GMIME_QUOTED_PRINTABLE_ENCODER (encoder)->state;
 	guint per_line = (state->max_line_length - 1) / 3;
+	guint soft_break_length = state->newline_format == GMIME_NEWLINE_FORMAT_DOS ? 3 : 2;
 	gsize estimate, tail;
 
 	/* Every input byte may become a triplet. Include saved input, an already
-	 * started line and the trailing soft break that flush may append. */
+	 * started line and the trailing soft break that flush may append.
+	 * Soft breaks include '=' and the entire configured newline. */
 	if (!g_size_checked_add (&length, length, (state->saved != -1) + state->saved_cr) ||
-	    !g_size_checked_mul (&estimate, length / per_line, per_line * 3 + 2))
+	    !g_size_checked_mul (&estimate, length / per_line, per_line * 3 + soft_break_length))
 		return G_MAXSIZE;
-	tail = (length % per_line) * 3 + 2 + (state->column ? 2 : 0);
+	tail = (length % per_line) * 3 + soft_break_length + (state->column ? soft_break_length : 0);
 	return g_size_checked_add (&estimate, estimate, tail) ? estimate : G_MAXSIZE;
 }
 
@@ -107,6 +111,8 @@ qp_write_saved (QPEncoderState *state, guint8 *output, gboolean end_of_line, gbo
 	 * must leave room for the '=' of a possible soft break. */
 	if (state->column + length + (end_of_line ? 0 : 1) > state->max_line_length) {
 		output[written++] = '=';
+		if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+			output[written++] = '\r';
 		output[written++] = '\n';
 		state->column = 0;
 	}
@@ -140,6 +146,8 @@ qp_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 				/* Spaces and tabs at the end of a line must be encoded. */
 				if (state->saved != -1)
 					written += qp_write_saved (state, output + written, TRUE, TRUE);
+				if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+					output[written++] = '\r';
 				output[written++] = '\n';
 				state->column = 0;
 				continue;
@@ -158,6 +166,8 @@ qp_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 			if (state->saved != -1)
 				written += qp_write_saved (state, output + written, TRUE, TRUE);
 
+			if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+				output[written++] = '\r';
 			output[written++] = '\n';
 			state->column = 0;
 		} else {
@@ -166,6 +176,8 @@ qp_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 
 				if (state->column + 1 >= state->max_line_length) {
 					output[written++] = '=';
+					if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+						output[written++] = '\r';
 					output[written++] = '\n';
 					state->column = 0;
 				}
@@ -195,6 +207,8 @@ qp_encoder_flush (GMimeEncoder *encoder, const guint8 *input, gsize length,
 		 * added newline does not become part of the decoded content. */
 		written += qp_write_saved (state, output + written, FALSE, TRUE);
 		output[written++] = '=';
+		if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+			output[written++] = '\r';
 		output[written++] = '\n';
 	}
 
@@ -217,6 +231,8 @@ qp_encoder_iface_init (GMimeEncoderInterface *iface)
 /**
  * g_mime_quoted_printable_encoder_new:
  *
+ * Uses LF line endings for compatibility with existing native callers.
+ *
  * Returns: (transfer full): a quoted-printable encoder using 76-character lines.
  **/
 GMimeQuotedPrintableEncoder *
@@ -229,18 +245,38 @@ g_mime_quoted_printable_encoder_new (void)
  * g_mime_quoted_printable_encoder_new_with_max_line_length:
  * @max_line_length: a line length between 60 and 998
  *
- * The effective length is capped at 76.
+ * The effective length is capped at 76. Uses LF line endings.
  *
  * Returns: (transfer full): a quoted-printable encoder.
  **/
 GMimeQuotedPrintableEncoder *
 g_mime_quoted_printable_encoder_new_with_max_line_length (guint max_line_length)
 {
+	return g_mime_quoted_printable_encoder_new_with_newline_format (GMIME_NEWLINE_FORMAT_UNIX, max_line_length);
+}
+
+/**
+ * g_mime_quoted_printable_encoder_new_with_newline_format:
+ * @newline_format: LF or CRLF line endings
+ * @max_line_length: a line length between 60 and 998
+ *
+ * Creates a quoted-printable encoder with the selected line endings for
+ * both hard and soft breaks. The line length excludes the terminator and
+ * is capped at 76. Bare CR is still encoded as content. Clone, reset and
+ * flush preserve the configuration.
+ *
+ * Returns: (transfer full): a quoted-printable encoder.
+ **/
+GMimeQuotedPrintableEncoder *
+g_mime_quoted_printable_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length)
+{
 	GMimeQuotedPrintableEncoder *encoder;
 
+	g_return_val_if_fail (newline_format == GMIME_NEWLINE_FORMAT_UNIX || newline_format == GMIME_NEWLINE_FORMAT_DOS, NULL);
 	g_return_val_if_fail (max_line_length >= 60 && max_line_length <= 998, NULL);
 
 	encoder = g_mime_quoted_printable_encoder_new ();
+	encoder->state.newline_format = newline_format;
 	/* RFC 2045 caps quoted-printable lines at 76 characters. */
 	encoder->state.max_line_length = MIN (max_line_length, 76);
 	return encoder;

@@ -26,6 +26,7 @@
 #include "gmime-codec-private.h"
 
 typedef struct {
+	GMimeNewLineFormat newline_format;
 	guint max_line_length;
 	guint column;
 	guint buffered;
@@ -59,6 +60,7 @@ g_mime_base64_encoder_class_init (GMimeBase64EncoderClass *klass)
 static void
 g_mime_base64_encoder_init (GMimeBase64Encoder *self)
 {
+	self->state.newline_format = GMIME_NEWLINE_FORMAT_UNIX;
 	self->state.max_line_length = 76;
 	base64_encoder_reset (GMIME_ENCODER (self));
 }
@@ -83,13 +85,16 @@ base64_encoder_estimate (GMimeEncoder *encoder, gsize length)
 {
 	Base64EncoderState *state = &GMIME_BASE64_ENCODER (encoder)->state;
 	guint per_line = state->max_line_length / 4;
+	guint newline_length = state->newline_format == GMIME_NEWLINE_FORMAT_DOS ? 2 : 1;
+	guint line_length = per_line * 4 + newline_length;
 	gsize groups, estimate;
 
 	/* Saved input can complete a nearly full line, and flushing can terminate
-	 * another. Reserve an extra newline beyond the input-only line count. */
+	 * another. Reserve an extra newline beyond the input-only line count,
+	 * including both bytes when using CRLF. */
 	if (!g_size_checked_add (&groups, length, 2) ||
-	    !g_size_checked_mul (&estimate, groups / (per_line * 3), per_line * 4 + 1) ||
-	    !g_size_checked_add (&estimate, estimate, per_line * 4 + 2))
+	    !g_size_checked_mul (&estimate, groups / (per_line * 3), line_length) ||
+	    !g_size_checked_add (&estimate, estimate, line_length + newline_length))
 		return G_MAXSIZE;
 	return estimate;
 }
@@ -111,6 +116,8 @@ base64_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 			written += n / 3 * 4;
 			state->column += n / 3;
 			if (state->column == per_line) {
+				if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+					output[written++] = '\r';
 				output[written++] = '\n';
 				state->column = 0;
 			}
@@ -125,6 +132,8 @@ base64_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 			written += 4;
 			state->buffered = 0;
 			if (++state->column == per_line) {
+				if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+					output[written++] = '\r';
 				output[written++] = '\n';
 				state->column = 0;
 			}
@@ -152,8 +161,11 @@ base64_encoder_flush (GMimeEncoder *encoder, const guint8 *input, gsize length,
 		state->column++;
 	}
 
-	if (state->column)
+	if (state->column) {
+		if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+			output[written++] = '\r';
 		output[written++] = '\n';
+	}
 
 	base64_encoder_reset (encoder);
 
@@ -174,6 +186,8 @@ base64_encoder_iface_init (GMimeEncoderInterface *iface)
 /**
  * g_mime_base64_encoder_new:
  *
+ * Uses LF line endings for compatibility with existing native callers.
+ *
  * Returns: (transfer full): a Base64 encoder using 76-character lines.
  **/
 GMimeBase64Encoder *
@@ -187,17 +201,37 @@ g_mime_base64_encoder_new (void)
  * @max_line_length: a line length between 60 and 998
  *
  * The effective length is capped at 76 and rounded down to a multiple of four.
+ * Uses LF line endings.
  *
  * Returns: (transfer full): a Base64 encoder.
  **/
 GMimeBase64Encoder *
 g_mime_base64_encoder_new_with_max_line_length (guint max_line_length)
 {
+	return g_mime_base64_encoder_new_with_newline_format (GMIME_NEWLINE_FORMAT_UNIX, max_line_length);
+}
+
+/**
+ * g_mime_base64_encoder_new_with_newline_format:
+ * @newline_format: LF or CRLF line endings
+ * @max_line_length: a line length between 60 and 998
+ *
+ * Creates a Base64 encoder with the selected line endings. The effective
+ * line length excludes the terminator, is capped at 76, and is rounded down
+ * to a multiple of four. Clone, reset and flush preserve the configuration.
+ *
+ * Returns: (transfer full): a Base64 encoder.
+ **/
+GMimeBase64Encoder *
+g_mime_base64_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length)
+{
 	GMimeBase64Encoder *encoder;
 
+	g_return_val_if_fail (newline_format == GMIME_NEWLINE_FORMAT_UNIX || newline_format == GMIME_NEWLINE_FORMAT_DOS, NULL);
 	g_return_val_if_fail (max_line_length >= 60 && max_line_length <= 998, NULL);
 
 	encoder = g_mime_base64_encoder_new ();
+	encoder->state.newline_format = newline_format;
 	/* RFC 2045 caps base64 lines at 76 characters, even with a larger format limit. */
 	encoder->state.max_line_length = MIN (max_line_length, 76);
 	return encoder;

@@ -1446,6 +1446,122 @@ test_pass_through_streams (void)
 	testsuite_check_passed ();
 }
 
+static GMimeFilter *
+new_configured_encoding_filter (guint kind, GMimeNewLineFormat newline_format)
+{
+	GMimeEncoder *encoder;
+	GMimeFilter *filter;
+
+	switch (kind) {
+	case 0: encoder = GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (newline_format, 60)); break;
+	case 1: encoder = GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (newline_format, 60)); break;
+	case 2: encoder = GMIME_ENCODER (g_mime_uu_encoder_new_with_newline_format (newline_format)); break;
+	default: g_assert_not_reached ();
+	}
+	filter = g_mime_filter_basic_new_with_encoder (encoder);
+	g_object_unref (encoder);
+	return filter;
+}
+
+static void
+test_encoding_newline_lifecycle (void)
+{
+	guint8 input[129];
+	GMimeFilter *filter, *copy;
+	GByteArray *expected = g_byte_array_new (), *actual = g_byte_array_new ();
+	GByteArray *copied = g_byte_array_new ();
+	guint kind, format, i;
+	size_t split;
+
+	testsuite_check ("Configured encoder filters preserve newlines and line limits through copy, reset and flush");
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i * 31;
+	for (kind = 0; kind < 3; kind++) {
+		for (format = 0; format < 2; format++) {
+			filter = new_configured_encoding_filter (kind, format);
+			g_byte_array_set_size (expected, 0);
+			filter_chunk (filter, input, sizeof (input), TRUE, expected);
+			for (split = 0; split <= sizeof (input); split++) {
+				g_byte_array_set_size (actual, 0);
+				g_byte_array_set_size (copied, 0);
+				filter_chunk (filter, input, split, FALSE, actual);
+				copy = g_mime_filter_copy (filter);
+				g_assert_true (GMIME_FILTER_BASIC (copy)->encoder != GMIME_FILTER_BASIC (filter)->encoder);
+				filter_chunk (filter, input + split, sizeof (input) - split, TRUE, actual);
+				check_filter_result (actual, expected);
+				filter_chunk (copy, input, sizeof (input), TRUE, copied);
+				check_filter_result (copied, expected);
+				g_object_unref (copy);
+
+				g_byte_array_set_size (actual, 0);
+				filter_chunk (filter, input, split, FALSE, actual);
+				g_mime_filter_reset (filter);
+				g_byte_array_set_size (actual, 0);
+				filter_chunk (filter, input, sizeof (input), TRUE, actual);
+				check_filter_result (actual, expected);
+			}
+			g_object_unref (filter);
+		}
+	}
+	g_byte_array_unref (copied);
+	g_byte_array_unref (actual);
+	g_byte_array_unref (expected);
+	testsuite_check_passed ();
+}
+
+static void
+test_encoding_newline_streams (void)
+{
+	guint8 input[1025];
+	GMimeStream *memory, *filtered;
+	GMimeFilter *filter;
+	GByteArray *expected = g_byte_array_new (), *actual;
+	char buffer[3];
+	guint kind, format, i, pass;
+	ssize_t n;
+
+	testsuite_check ("Configured encoder filter stream reads, writes and reset preserve LF/CRLF output");
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i * 31;
+	for (kind = 0; kind < 3; kind++) {
+		for (format = 0; format < 2; format++) {
+			filter = new_configured_encoding_filter (kind, format);
+			g_byte_array_set_size (expected, 0);
+			filter_chunk (filter, input, sizeof (input), TRUE, expected);
+			memory = g_mime_stream_mem_new ();
+			filtered = g_mime_stream_filter_new (memory);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+			for (i = 0; i < sizeof (input); i++)
+				g_assert_cmpint (g_mime_stream_write (filtered, (const char *) input + i, 1), ==, 1);
+			g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+			actual = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory));
+			check_filter_result (actual, expected);
+			g_object_unref (filtered);
+			g_object_unref (memory);
+
+			memory = g_mime_stream_mem_new_with_buffer ((const char *) input, sizeof (input));
+			filtered = g_mime_stream_filter_new (memory);
+			g_mime_filter_reset (filter);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+			g_object_unref (filter);
+			for (pass = 0; pass < 2; pass++) {
+				if (pass)
+					g_assert_cmpint (g_mime_stream_reset (filtered), ==, 0);
+				actual = g_byte_array_new ();
+				while ((n = g_mime_stream_read (filtered, buffer, sizeof (buffer))) > 0)
+					g_byte_array_append (actual, (const guint8 *) buffer, n);
+				g_assert_cmpint (n, ==, 0);
+				check_filter_result (actual, expected);
+				g_byte_array_unref (actual);
+			}
+			g_object_unref (filtered);
+			g_object_unref (memory);
+		}
+	}
+	g_byte_array_unref (expected);
+	testsuite_check_passed ();
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/filters";
@@ -1487,6 +1603,8 @@ int main (int argc, char **argv)
 	test_pass_through_identity ();
 	test_pass_through_lifecycle ();
 	test_pass_through_streams ();
+	test_encoding_newline_lifecycle ();
+	test_encoding_newline_streams ();
 	
 	//test_charset_conversion (datadir, "chinese", "utf-8", "big5"); // Note: utf-8 -> big5 drops characters
 	test_charset_conversion (datadir, "cyrillic", "utf-8", "cp1251");

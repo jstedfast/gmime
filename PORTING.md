@@ -147,6 +147,20 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- Base64, quoted-printable and uuencode encoders now expose
+  new_with_newline_format() constructors matching MimeKit's explicit
+  Unix/DOS selection, using the existing GMimeNewLineFormat enum.
+  All generated line endings use LF or CRLF, including quoted-printable
+  hard/soft breaks and the UU zero-length terminating line. Estimates
+  account for the entire selected terminator, including buffered input
+  and finalization. Clone, reset and flush preserve the configuration,
+  including through GMimeFilterBasic's direct-encoder constructor and copy.
+  Base64/quoted-printable retain their 60..998 argument range and 76-byte
+  effective cap (Base64 rounds down to complete quartets). Existing native
+  constructors and convenience filters deliberately retain LF defaults,
+  unlike current MimeKit's default CRLF constructors; choose DOS explicitly
+  for equivalent wire output. yEnc and serialization policy are unchanged.
+
 - `GMimeFilterPassThrough` ports MimeKit's public PassThroughFilter as
   a stateless GMimeFilter subclass. Filtering and completion return the
   original input pointer, length and prespace without copying, buffering

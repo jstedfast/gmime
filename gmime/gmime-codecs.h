@@ -23,6 +23,7 @@
 
 #include <gmime/gmime-encoder.h>
 #include <gmime/gmime-decoder.h>
+#include <gmime/gmime-format-options.h>
 
 G_BEGIN_DECLS
 
@@ -111,11 +112,14 @@ G_DECLARE_FINAL_TYPE (GMimeYencDecoder, g_mime_yenc_decoder, GMIME, YENC_DECODER
 
 GMimeBase64Encoder *g_mime_base64_encoder_new (void);
 GMimeBase64Encoder *g_mime_base64_encoder_new_with_max_line_length (guint max_line_length);
+GMimeBase64Encoder *g_mime_base64_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
 GMimeBase64Decoder *g_mime_base64_decoder_new (void);
 GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new (void);
 GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new_with_max_line_length (guint max_line_length);
+GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
 GMimeQuotedPrintableDecoder *g_mime_quoted_printable_decoder_new (gboolean rfc2047);
 GMimeUUEncoder *g_mime_uu_encoder_new (void);
+GMimeUUEncoder *g_mime_uu_encoder_new_with_newline_format (GMimeNewLineFormat newline_format);
 GMimeUUDecoder *g_mime_uu_decoder_new (gboolean payload_only);
 GMimePassThroughEncoder *g_mime_pass_through_encoder_new (GMimeContentEncoding encoding);
 GMimePassThroughDecoder *g_mime_pass_through_decoder_new (GMimeContentEncoding encoding);

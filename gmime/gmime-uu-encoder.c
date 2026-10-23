@@ -26,6 +26,7 @@
 #include "gmime-codec-private.h"
 
 typedef struct {
+	GMimeNewLineFormat newline_format;
 	guint buffered;
 	guint8 buffer[45];
 } UUEncoderState;
@@ -57,6 +58,7 @@ g_mime_uu_encoder_class_init (GMimeUUEncoderClass *klass)
 static void
 g_mime_uu_encoder_init (GMimeUUEncoder *self)
 {
+	self->state.newline_format = GMIME_NEWLINE_FORMAT_UNIX;
 	uu_encoder_reset (GMIME_ENCODER (self));
 }
 
@@ -78,13 +80,17 @@ uu_encoder_clone (GMimeEncoder *encoder)
 static gsize
 uu_encoder_estimate (GMimeEncoder *encoder, gsize length)
 {
+	UUEncoderState *state = &GMIME_UU_ENCODER (encoder)->state;
+	guint newline_length = state->newline_format == GMIME_NEWLINE_FORMAT_DOS ? 2 : 1;
+	guint line_length = 61 + newline_length;
 	gsize groups, estimate;
 
 	/* A previous call may have buffered up to 44 bytes; include the completed
-	 * lines and the final partial and terminating lines in the estimate. */
+	 * lines and the final partial and terminating lines in the estimate.
+	 * Every line, including the terminator, uses the configured newline. */
 	if (!g_size_checked_add (&groups, length, 44) ||
-	    !g_size_checked_mul (&estimate, groups / 45, 62) ||
-	    !g_size_checked_add (&estimate, estimate, 64))
+	    !g_size_checked_mul (&estimate, groups / 45, line_length) ||
+	    !g_size_checked_add (&estimate, estimate, line_length + 1 + newline_length))
 		return G_MAXSIZE;
 	return estimate;
 }
@@ -109,6 +115,8 @@ uu_write_line (UUEncoderState *state, guint8 *output)
 		codec_encode_triplet (padded, output + written, TRUE);
 		written += 4;
 	}
+	if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+		output[written++] = '\r';
 	output[written++] = '\n';
 	state->buffered = 0;
 	return written;
@@ -144,6 +152,8 @@ uu_encoder_flush (GMimeEncoder *encoder, const guint8 *input, gsize length,
 		written += uu_write_line (state, output + written);
 	/* A zero-length line terminates the payload; begin/end markers belong to the caller. */
 	output[written++] = '`';
+	if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+		output[written++] = '\r';
 	output[written++] = '\n';
 	uu_encoder_reset (encoder);
 	return written;
@@ -164,6 +174,7 @@ uu_encoder_iface_init (GMimeEncoderInterface *iface)
  * g_mime_uu_encoder_new:
  *
  * Emits payload lines and a zero-length terminating line, not begin/end markers.
+ * Uses LF line endings for compatibility with existing native callers.
  *
  * Returns: (transfer full): a uuencoder.
  **/
@@ -171,4 +182,26 @@ GMimeUUEncoder *
 g_mime_uu_encoder_new (void)
 {
 	return g_object_new (GMIME_TYPE_UU_ENCODER, NULL);
+}
+
+/**
+ * g_mime_uu_encoder_new_with_newline_format:
+ * @newline_format: LF or CRLF line endings
+ *
+ * Creates a uuencoder using the selected line endings for payload lines
+ * and the zero-length terminating line. It does not emit begin/end markers.
+ * Clone, reset and flush preserve the configuration.
+ *
+ * Returns: (transfer full): a uuencoder.
+ **/
+GMimeUUEncoder *
+g_mime_uu_encoder_new_with_newline_format (GMimeNewLineFormat newline_format)
+{
+	GMimeUUEncoder *encoder;
+
+	g_return_val_if_fail (newline_format == GMIME_NEWLINE_FORMAT_UNIX || newline_format == GMIME_NEWLINE_FORMAT_DOS, NULL);
+
+	encoder = g_mime_uu_encoder_new ();
+	encoder->state.newline_format = newline_format;
+	return encoder;
 }

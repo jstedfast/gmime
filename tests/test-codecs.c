@@ -58,6 +58,17 @@ new_decoder (guint kind)
 	}
 }
 
+static GMimeEncoder *
+new_encoder_with_newline_format (guint kind, GMimeNewLineFormat newline_format, guint max_line_length)
+{
+	switch (kind) {
+	case 0: return GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (newline_format, max_line_length));
+	case 1: return GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (newline_format, max_line_length));
+	case 2: return GMIME_ENCODER (g_mime_uu_encoder_new_with_newline_format (newline_format));
+	default: g_assert_not_reached ();
+	}
+}
+
 static void
 assert_padding (const guint8 *output, gsize written, gsize capacity)
 {
@@ -526,6 +537,181 @@ reference_crc32 (const guint8 *input, gsize length)
 	return crc;
 }
 
+static GByteArray *
+convert_encoded_newlines (GByteArray *input, GMimeNewLineFormat newline_format)
+{
+	GByteArray *result = g_byte_array_new ();
+	guint i;
+
+	for (i = 0; i < input->len; i++) {
+		g_assert_cmpuint (input->data[i], !=, '\r');
+		if (input->data[i] == '\n' && newline_format == GMIME_NEWLINE_FORMAT_DOS)
+			g_byte_array_append (result, (const guint8 *) "\r", 1);
+		g_byte_array_append (result, input->data + i, 1);
+	}
+	return result;
+}
+
+static void
+test_newline_vectors (void)
+{
+	static const char *expected[2][3] = {
+		{ "TWFu\n", "Man=\n", "#36%N\n`\n" },
+		{ "TWFu\r\n", "Man=\r\n", "#36%N\r\n`\r\n" }
+	};
+	static const char *qp_input[] = { "\r\n\n\r", "x \r\nx\t\n", "\r\r\n", " \t" };
+	static const char *qp_expected[2][4] = {
+		{ "\n\n=0D=\n", "x=20\nx=09\n", "=0D\n", " =09=\n" },
+		{ "\r\n\r\n=0D=\r\n", "x=20\r\nx=09\r\n", "=0D\r\n", " =09=\r\n" }
+	};
+	static const gsize estimates[2][3] = { { 78, 2, 64 }, { 80, 3, 66 } };
+	GMimeEncoder *encoder;
+	GByteArray *result;
+	guint kind, format, i;
+
+	for (format = 0; format < 2; format++) {
+		for (kind = 0; kind < 3; kind++) {
+			encoder = new_encoder_with_newline_format (kind, format, 76);
+			g_assert_cmpuint (g_mime_encoder_estimate_output_length (encoder, 0), ==, estimates[format][kind]);
+			g_assert_cmpuint (g_mime_encoder_estimate_output_length (encoder, G_MAXSIZE), ==, G_MAXSIZE);
+			result = encode_chunks (encoder, (const guint8 *) "Man", 3, 1);
+			g_assert_cmpmem (result->data, result->len, expected[format][kind], strlen (expected[format][kind]));
+			g_byte_array_unref (result);
+			g_object_unref (encoder);
+		}
+		encoder = new_encoder_with_newline_format (1, format, 76);
+		for (i = 0; i < G_N_ELEMENTS (qp_input); i++) {
+			result = encode_chunks (encoder, (const guint8 *) qp_input[i], strlen (qp_input[i]), 1);
+			g_assert_cmpmem (result->data, result->len, qp_expected[format][i], strlen (qp_expected[format][i]));
+			g_byte_array_unref (result);
+		}
+		g_object_unref (encoder);
+	}
+}
+
+static void
+test_newline_chunks (void)
+{
+	static const guint lengths[] = { 60, 61, 62, 63, 64, 73, 74, 75, 76, 77, 998 };
+	static const guint chunks[] = { 1, 2, 3, 4, 15, 16, 17, 31, 44, 45, 46, 56, 57, 58, 76, 129, 4096 };
+	guint8 input[2049];
+	GMimeEncoder *encoder, *unix_encoder;
+	GByteArray *unix_result, *expected, *result;
+	guint kind, format, i, j, k, column, limit;
+
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i * 31;
+	memcpy (input + 70, " \r\n\t\n\r\r\n", 8);
+	for (kind = 0; kind < 3; kind++) {
+		for (i = 0; i < G_N_ELEMENTS (lengths); i++) {
+			unix_encoder = new_encoder_with_newline_format (kind, GMIME_NEWLINE_FORMAT_UNIX, lengths[i]);
+			unix_result = encode_chunks (unix_encoder, input, sizeof (input), sizeof (input));
+			g_object_unref (unix_encoder);
+			if (lengths[i] == 76) {
+				encoder = new_encoder (kind);
+				result = encode_chunks (encoder, input, sizeof (input), sizeof (input));
+				g_assert_cmpmem (result->data, result->len, unix_result->data, unix_result->len);
+				g_byte_array_unref (result);
+				g_object_unref (encoder);
+			}
+			for (format = 0; format < 2; format++) {
+				expected = convert_encoded_newlines (unix_result, format);
+				encoder = new_encoder_with_newline_format (kind, format, lengths[i]);
+				limit = kind == 2 ? 61 : kind == 0 ? MIN (lengths[i], 76) / 4 * 4 : MIN (lengths[i], 76);
+				for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
+					result = encode_chunks (encoder, input, sizeof (input), chunks[j]);
+					g_assert_cmpmem (result->data, result->len, expected->data, expected->len);
+					column = 0;
+					for (k = 0; k < result->len; k++) {
+						if (result->data[k] == '\r') {
+							g_assert_cmpuint (format, ==, GMIME_NEWLINE_FORMAT_DOS);
+							g_assert_cmpuint (k + 1, <, result->len);
+							g_assert_cmpuint (result->data[k + 1], ==, '\n');
+						} else if (result->data[k] == '\n') {
+							g_assert_true (format == GMIME_NEWLINE_FORMAT_UNIX || (k && result->data[k - 1] == '\r'));
+							column = 0;
+						} else {
+							g_assert_cmpuint (++column, <=, limit);
+						}
+					}
+					g_byte_array_unref (result);
+				}
+				g_object_unref (encoder);
+				g_byte_array_unref (expected);
+			}
+			g_byte_array_unref (unix_result);
+		}
+	}
+}
+
+static void
+test_newline_clone_reset (void)
+{
+	guint8 input[129], scratch[1024], a[1024], b[1024];
+	GMimeEncoder *encoder, *copy;
+	GByteArray *expected;
+	guint kind, format, limit, i;
+	gsize prefix, n, m, capacity, written;
+
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i * 31;
+	for (kind = 0; kind < 3; kind++) {
+		for (format = 0; format < 2; format++) {
+			for (limit = 60; limit <= 76; limit += 16) {
+				encoder = new_encoder_with_newline_format (kind, format, limit);
+				expected = encode_chunks (encoder, input, sizeof (input), 1);
+				for (prefix = 0; prefix <= sizeof (input); prefix++) {
+					n = g_mime_encoder_encode (encoder, input, prefix, scratch, sizeof (scratch));
+					copy = g_mime_encoder_clone (encoder);
+					capacity = g_mime_encoder_estimate_output_length (encoder, sizeof (input) - prefix);
+					g_assert_cmpuint (capacity, ==, g_mime_encoder_estimate_output_length (copy, sizeof (input) - prefix));
+					memset (a, 0xa5, sizeof (a));
+					memset (b, 0xa5, sizeof (b));
+					written = g_mime_encoder_flush (encoder, input + prefix, sizeof (input) - prefix, a, capacity);
+					m = g_mime_encoder_flush (copy, input + prefix, sizeof (input) - prefix, b, capacity);
+					assert_padding (a, written, capacity);
+					assert_padding (b, m, capacity);
+					g_assert_cmpmem (a, written, b, m);
+					g_assert_cmpmem (scratch, n, expected->data, n);
+					g_assert_cmpmem (a, written, expected->data + n, expected->len - n);
+					g_mime_encoder_encode (copy, input, prefix, scratch, sizeof (scratch));
+					g_mime_encoder_reset (copy);
+					m = g_mime_encoder_flush (copy, input, sizeof (input), b, sizeof (b));
+					g_assert_cmpmem (b, m, expected->data, expected->len);
+					g_object_unref (copy);
+				}
+				g_byte_array_unref (expected);
+				g_object_unref (encoder);
+			}
+		}
+	}
+}
+
+static void
+test_newline_preconditions (void)
+{
+	static const guint lengths[] = { 0, 59, 999, G_MAXUINT };
+	static const GMimeNewLineFormat formats[] = { (GMimeNewLineFormat) -1, (GMimeNewLineFormat) 2 };
+	guint kind, format, i;
+
+	for (kind = 0; kind < 3; kind++) {
+		for (i = 0; i < G_N_ELEMENTS (formats); i++) {
+			g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*newline_format ==*");
+			g_assert_null (new_encoder_with_newline_format (kind, formats[i], 76));
+			g_test_assert_expected_messages ();
+		}
+		if (kind == 2)
+			continue;
+		for (format = 0; format < 2; format++) {
+			for (i = 0; i < G_N_ELEMENTS (lengths); i++) {
+				g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*max_line_length >= 60*");
+				g_assert_null (new_encoder_with_newline_format (kind, format, lengths[i]));
+				g_test_assert_expected_messages ();
+			}
+		}
+	}
+}
+
 static void
 test_yenc_checksum (void)
 {
@@ -776,6 +962,10 @@ main (int argc, char **argv)
 	g_test_add_func ("/codecs/recovery-modes", test_recovery_modes);
 	g_test_add_func ("/codecs/overlap", test_overlap);
 	g_test_add_func ("/codecs/line-lengths", test_line_lengths);
+	g_test_add_func ("/codecs/newline-vectors", test_newline_vectors);
+	g_test_add_func ("/codecs/newline-chunks", test_newline_chunks);
+	g_test_add_func ("/codecs/newline-clone-reset", test_newline_clone_reset);
+	g_test_add_func ("/codecs/newline-preconditions", test_newline_preconditions);
 	g_test_add_func ("/codecs/yenc-checksum", test_yenc_checksum);
 	g_test_add_func ("/codecs/yenc-markers", test_yenc_markers);
 	g_test_add_func ("/codecs/yenc-estimates", test_yenc_estimates);
