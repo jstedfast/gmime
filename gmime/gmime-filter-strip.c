@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) 2000-2026 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -17,7 +17,6 @@
  *  Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
  *  02110-1301, USA.
  */
-
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -37,8 +36,15 @@
  * @short_description: Strip trailing whitespace from the end of lines
  * @see_also: #GMimeFilter
  *
- * A #GMimeFilter used for stripping trailing whitespace from the end
- * of lines.
+ * Only ASCII spaces and tabs are stripped, immediately before either CR or
+ * LF and at the end of completed input. Newline bytes, nonblank bytes and
+ * internal whitespace are preserved without character-set conversion.
+ *
+ * Blanks are buffered across input chunks until subsequent input determines
+ * whether they are internal or trailing. Completion processes its final input
+ * before discarding any remaining blanks, including blanks buffered by earlier
+ * calls. Reset discards pending blanks; copying creates a fresh filter without
+ * copying buffered input.
  **/
 
 
@@ -146,9 +152,8 @@ convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	inend = in + len;
 	inptr = in;
 	
-	if (flush)
-		packed_byte_array_clear (strip->lwsp);
-	
+	/* Final-buffer text can make previously buffered blanks internal.
+	 * Process that input before discarding trailing blanks on flush. */
 	while (inptr < inend) {
 		if (is_blank (*inptr)) {
 			packed_byte_array_add (lwsp, *inptr);
@@ -205,10 +210,11 @@ filter_reset (GMimeFilter *filter)
 /**
  * g_mime_filter_strip_new:
  *
- * Creates a new #GMimeFilterStrip filter which will strip trailing
- * whitespace from every line of input passed through the filter.
+ * Creates a new #GMimeFilterStrip filter which strips trailing ASCII spaces
+ * and tabs before CR, LF and the end of completed input. Internal blanks
+ * are preserved, including those spanning input chunks.
  *
- * Returns: a new strip filter.
+ * Returns: (transfer full): a new strip filter.
  **/
 GMimeFilter *
 g_mime_filter_strip_new (void)

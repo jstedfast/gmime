@@ -147,6 +147,18 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- `GMimeFilterStrip` now follows MimeKit's TrailingWhitespaceFilter,
+  retaining its existing native name and packed whitespace buffer.
+  Only ASCII spaces and tabs are stripped before CR, LF and completed
+  end-of-input; all other bytes and newline spellings are preserved.
+  Pending blanks span filter calls, including empty nonfinal calls, and
+  remain available when completion supplies additional text. Previously,
+  native completion discarded those blanks before inspecting its final
+  nonempty buffer, losing internal whitespace. Completion now clears only
+  the blanks remaining after that buffer is processed. Reset discards
+  pending blanks; native copy continues to create a fresh filter rather
+  than copying buffered input.
+
 - GMimeFilterBest now uses MimeKit's BestEncodingFilter scanning and
   encoding decisions while retaining native charset detection. The default
   encoding query uses a 78-byte line limit; the new

@@ -40,7 +40,8 @@ typedef struct _GMimeFilterStripClass GMimeFilterStripClass;
  * GMimeFilterStrip:
  * @parent_object: parent #GMimeFilter
  *
- * A filter for stripping whitespace from the end of lines.
+ * A filter for stripping trailing ASCII spaces and tabs from lines and
+ * completed input, matching MimeKit's TrailingWhitespaceFilter.
  **/
 struct _GMimeFilterStrip {
 	GMimeFilter parent_object;
