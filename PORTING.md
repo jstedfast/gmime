@@ -147,6 +147,15 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- `GMimeFilterPassThrough` ports MimeKit's public PassThroughFilter as
+  a stateless GMimeFilter subclass. Filtering and completion return the
+  original input pointer, length and prespace without copying, buffering
+  or allocating output storage. Empty calls and reuse after completion
+  behave the same way; reset is a no-op for conversion state, and native
+  copy creates a fresh filter. Output is borrowed from the supplied input.
+  Existing GMimeFilterBasic constructors and pass-through codecs retain
+  their codec-backed, copying behavior; this is a separate zero-copy filter.
+
 - `GMimeFilterFrom` now follows MimeKit's MboxFromFilter in ESCAPE mode
   and ArmoredFromFilter in ARMOR mode, retaining the native type and mode
   enum. Only exact, case-sensitive "From " markers at the beginning of

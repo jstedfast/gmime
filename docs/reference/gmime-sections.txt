@@ -578,6 +578,24 @@ GMIME_FILTER_OPENPGP_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-pass-through</FILE>
+GMimeFilterPassThrough
+g_mime_filter_pass_through_new
+
+<SUBSECTION Private>
+g_mime_filter_pass_through_get_type
+
+<SUBSECTION Standard>
+GMimeFilterPassThroughClass
+GMIME_TYPE_FILTER_PASS_THROUGH
+GMIME_FILTER_PASS_THROUGH
+GMIME_IS_FILTER_PASS_THROUGH
+GMIME_FILTER_PASS_THROUGH_CLASS
+GMIME_IS_FILTER_PASS_THROUGH_CLASS
+GMIME_FILTER_PASS_THROUGH_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-strip</FILE>
 GMimeFilterStrip
 g_mime_filter_strip_new

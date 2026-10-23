@@ -24,6 +24,12 @@
     able to handle encoding and decoding of base64, quoted-printable
     and (x-)uuencode.</para>
 
+    <para>GMimeFilterPassThrough is a zero-copy identity filter. It
+    returns the caller's input buffer, length and prespace unchanged,
+    including on completion. Unlike a GMimeFilterBasic using a
+    pass-through codec, it does not allocate an output buffer. Use it
+    when an optional transformation should leave the stream untouched.</para>
+
     <para>For internationalization support, GMime also includes a
     filter for converting between any 2 charsets,
     GMimeFilterCharset. With this filter, mail user agents can allow

@@ -148,6 +148,7 @@ g_mime_init (void)
 	g_mime_filter_from_get_type ();
 	g_mime_filter_gzip_get_type ();
 	g_mime_filter_html_get_type ();
+	g_mime_filter_pass_through_get_type ();
 	g_mime_filter_smtp_data_get_type ();
 	g_mime_filter_strip_get_type ();
 	g_mime_filter_unix2dos_get_type ();

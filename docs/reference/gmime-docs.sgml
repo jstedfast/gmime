@@ -71,6 +71,7 @@
 <!ENTITY GMimeFilterGZip SYSTEM "xml/gmime-filter-gzip.xml">
 <!ENTITY GMimeFilterHTML SYSTEM "xml/gmime-filter-html.xml">
 <!ENTITY GMimeFilterOpenPGP SYSTEM "xml/gmime-filter-openpgp.xml">
+<!ENTITY GMimeFilterPassThrough SYSTEM "xml/gmime-filter-pass-through.xml">
 <!ENTITY GMimeFilterSmtpData SYSTEM "xml/gmime-filter-smtp-data.xml">
 <!ENTITY GMimeFilterStrip SYSTEM "xml/gmime-filter-strip.xml">
 <!ENTITY GMimeFilterUnix2Dos SYSTEM "xml/gmime-filter-unix2dos.xml">
@@ -232,6 +233,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterGZip;
       &GMimeFilterHTML;
       &GMimeFilterOpenPGP;
+      &GMimeFilterPassThrough;
       &GMimeFilterSmtpData;
       &GMimeFilterStrip;
       &GMimeFilterUnix2Dos;
