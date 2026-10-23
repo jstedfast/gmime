@@ -40,9 +40,10 @@ typedef struct _GMimeFilterUnix2DosClass GMimeFilterUnix2DosClass;
  * GMimeFilterUnix2Dos:
  * @parent_object: parent #GMimeFilter
  * @ensure_newline: %TRUE if the filter should ensure that the stream ends with a new line
- * @pc: the previous character encountered
+ * @pc: previous byte or completion state
  *
- * A filter to convert a stream from Windows/DOS line endings to Unix line endings.
+ * A filter converting bare LF bytes to CRLF while preserving existing CRLF
+ * pairs and other bytes.
  **/
 struct _GMimeFilterUnix2Dos {
 	GMimeFilter parent_object;

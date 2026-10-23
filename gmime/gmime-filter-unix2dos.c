@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) 2000-2026 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -31,7 +31,14 @@
  * @title: GMimeFilterUnix2Dos
  * @short_description: Convert line-endings from UNIX (LF) to Windows/DOS (CRLF).
  *
- * A #GMimeFilter for converting from UNIX to DOS line-endings.
+ * Converts bare LF bytes to CRLF, preserving existing CRLF pairs even when
+ * split across input buffers. All other bytes, including bare CR, are preserved.
+ * If ensure_newline is enabled, completion appends a missing CRLF, or only LF
+ * when the input already ends in CR.
+ *
+ * Repeated empty completion calls add no further output. Reset discards
+ * conversion state; copying preserves the ensure_newline setting but creates
+ * a fresh filter without buffered input.
  **/
 
 
@@ -137,6 +144,8 @@ convert (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		if (unix2dos->pc != '\r')
 			*outptr++ = '\r';
 		*outptr++ = '\n';
+		/* Remember the generated LF too, so completion is idempotent. */
+		unix2dos->pc = '\n';
 	}
 	
 	*outlen = outptr - filter->outbuf;
@@ -171,9 +180,11 @@ filter_reset (GMimeFilter *filter)
  * g_mime_filter_unix2dos_new:
  * @ensure_newline: %TRUE if the filter should ensure that the stream ends in a new line
  *
- * Creates a new #GMimeFilterUnix2Dos filter.
+ * Creates a new #GMimeFilterUnix2Dos filter. Bare LF bytes are converted to
+ * CRLF without duplicating existing CR bytes. With @ensure_newline, even
+ * empty input completes with CRLF.
  *
- * Returns: a new #GMimeFilterUnix2Dos filter.
+ * Returns: (transfer full): a new #GMimeFilterUnix2Dos filter.
  **/
 GMimeFilter *
 g_mime_filter_unix2dos_new (gboolean ensure_newline)

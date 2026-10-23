@@ -147,6 +147,19 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- `GMimeFilterDos2Unix` and `GMimeFilterUnix2Dos` now follow MimeKit's
+  newline-filter completion rules, retaining the existing native names
+  and constructor settings. CRLF pairs are recognized across chunks;
+  non-newline bytes are preserved without character-set conversion.
+  DOS-to-Unix completion now emits a held-back trailing bare CR instead
+  of dropping it. With ensure_newline enabled, that CR and the required
+  LF are treated as a CRLF pair and become one LF. Unix-to-DOS completion
+  records a generated LF, preventing duplicate output on repeated
+  completion and incorrect CRLF handling on subsequent input.
+  Empty input with ensure_newline completes with LF or CRLF respectively.
+  Reset discards conversion state without changing ensure_newline;
+  native copy retains the setting but starts without buffered state.
+
 - `GMimeFilterStrip` now follows MimeKit's TrailingWhitespaceFilter,
   retaining its existing native name and packed whitespace buffer.
   Only ASCII spaces and tabs are stripped before CR, LF and completed

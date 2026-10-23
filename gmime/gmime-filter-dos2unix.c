@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) 2000-2026 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -31,7 +31,14 @@
  * @title: GMimeFilterDos2Unix
  * @short_description: Convert line-endings from Windows/DOS (CRLF) to UNIX (LF).
  *
- * A #GMimeFilter for converting from DOS to UNIX line-endings.
+ * Converts CRLF pairs to LF, including pairs split across input buffers.
+ * All other bytes are preserved, including a trailing bare CR on completion.
+ * If ensure_newline is enabled, completion ensures a final LF instead;
+ * a trailing bare CR is combined with that newline and converted to LF.
+ *
+ * Repeated empty completion calls add no further output. Reset discards
+ * conversion state; copying preserves the ensure_newline setting but creates
+ * a fresh filter without buffered input.
  **/
 
 
@@ -136,6 +143,14 @@ convert (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		dos2unix->pc = *inptr++;
 	}
 	
+	if (flush && dos2unix->pc == '\r') {
+		/* A trailing CR is held back until we know whether it precedes LF.
+		 * When ensuring a newline, the CR and the appended LF form CRLF,
+		 * which must be converted to a single LF. */
+		*outptr++ = dos2unix->ensure_newline ? '\n' : '\r';
+		dos2unix->pc = dos2unix->ensure_newline ? '\n' : '\0';
+	}
+
 	if (flush && dos2unix->ensure_newline && dos2unix->pc != '\n')
 		dos2unix->pc = *outptr++ = '\n';
 	
@@ -171,9 +186,12 @@ filter_reset (GMimeFilter *filter)
  * g_mime_filter_dos2unix_new:
  * @ensure_newline: %TRUE if the filter should ensure that the stream ends in a new line
  *
- * Creates a new #GMimeFilterDos2Unix filter.
+ * Creates a new #GMimeFilterDos2Unix filter. CRLF pairs are converted to LF;
+ * bare CR bytes are preserved unless a trailing CR is combined with the
+ * newline requested by @ensure_newline. With @ensure_newline, even empty
+ * input completes with a single LF.
  *
- * Returns: a new #GMimeFilterDos2Unix filter.
+ * Returns: (transfer full): a new #GMimeFilterDos2Unix filter.
  **/
 GMimeFilter *
 g_mime_filter_dos2unix_new (gboolean ensure_newline)
