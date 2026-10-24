@@ -46,6 +46,14 @@
  * #GMimeStreamFile will typically buffer read and write operations at
  * the FILE level and so it may be wasteful to wrap one in a
  * #GMimeStreamBuffer stream.
+ *
+ * Substreams share the FILE pointer, not their logical positions or EOF
+ * state. Reads stop at finite bounds and retry the underlying file after
+ * observed EOF, so another writer can extend it. Native absolute SEEK_SET
+ * coordinates, partial writes and seek-without-growth behavior remain.
+ *
+ * Views borrow the FILE pointer. Finish using them before explicitly
+ * closing an owning parent, even though they retain the parent object.
  **/
 
 
@@ -120,6 +128,7 @@ g_mime_stream_file_init (GMimeStreamFile *stream, GMimeStreamFileClass *klass)
 {
 	stream->owner = TRUE;
 	stream->fp = NULL;
+	stream->cached_eos = FALSE;
 }
 
 static void
@@ -133,31 +142,100 @@ g_mime_stream_file_finalize (GObject *object)
 }
 
 
+static gboolean
+check_open (GMimeStream *stream)
+{
+	if (GMIME_STREAM_FILE (stream)->fp == NULL) {
+		errno = EBADF;
+		return FALSE;
+	}
+
+	if (stream->bound_start < 0 || stream->bound_end < -1 ||
+	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start) ||
+	    stream->position < stream->bound_start ||
+	    (stream->bound_end != -1 && stream->position > stream->bound_end)) {
+		errno = EINVAL;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static int
+stdio_error (void)
+{
+	/* ISO C reports failures through return values and ferror(), but does
+	 * not require every stdio implementation to supply an errno value. */
+	if (errno == 0)
+		errno = EIO;
+
+	return -1;
+}
+
+static int
+seek_file (GMimeStreamFile *fstream, gint64 offset, int whence)
+{
+	/* fseek takes long, which may be narrower than our logical position. */
+	if ((gint64) (long) offset != offset) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	errno = 0;
+	/* Any nonzero fseek result is a failure, not just -1. */
+	if (fseek (fstream->fp, (long) offset, whence) != 0)
+		return stdio_error ();
+
+	return 0;
+}
+
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	size_t nread;
 	
-	if (fstream->fp == NULL) {
-		errno = EBADF;
+	if (!check_open (stream))
+		return -1;
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
 		return -1;
 	}
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
-		errno = EINVAL;
-		return -1;
+	/* A finite end is EOF without moving the FILE pointer for a sibling. */
+	if (stream->bound_end != -1 && stream->position == stream->bound_end) {
+		fstream->cached_eos = TRUE;
+		return 0;
 	}
 	
 	if (stream->bound_end != -1)
 		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
-	/* make sure we are at the right position */
-	if ((fseek (fstream->fp, (long) stream->position, SEEK_SET)) == -1)
+	if (len > (guint64) (G_MAXINT64 - stream->position)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	/* Do not short-circuit local EOF: the file may have grown since then. */
+	if (seek_file (fstream, stream->position, SEEK_SET) == -1)
 		return -1;
 	
-	if ((nread = fread (buf, 1, len, fstream->fp)) > 0)
+	/* The shared FILE's indicators belong to its previous operation, which
+	 * may have been performed by another view. Observe this attempt alone. */
+	clearerr (fstream->fp);
+	errno = 0;
+	nread = fread (buf, 1, len, fstream->fp);
+	if (nread > 0)
 		stream->position += nread;
+
+	if (ferror (fstream->fp)) {
+		stdio_error ();
+		if (nread == 0)
+			return -1;
+	} else if (nread == 0) {
+		fstream->cached_eos = TRUE;
+	}
 	
 	return (ssize_t) nread;
 }
@@ -168,8 +246,11 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	size_t nwritten;
 	
-	if (fstream->fp == NULL) {
-		errno = EBADF;
+	if (!check_open (stream))
+		return -1;
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
 		return -1;
 	}
 	
@@ -181,12 +262,26 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	if (stream->bound_end != -1)
 		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
-	/* make sure we are at the right position */
-	if (fseek (fstream->fp, (long) stream->position, SEEK_SET) == -1)
+	/* Clip first so a fitting native partial write need not overflow. */
+	if (len > (guint64) (G_MAXINT64 - stream->position)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	if (seek_file (fstream, stream->position, SEEK_SET) == -1)
 		return -1;
 
-	if ((nwritten = fwrite (buf, 1, len, fstream->fp)) > 0)
+	clearerr (fstream->fp);
+	errno = 0;
+	nwritten = fwrite (buf, 1, len, fstream->fp);
+	if (nwritten > 0)
 		stream->position += nwritten;
+
+	if (ferror (fstream->fp)) {
+		stdio_error ();
+		if (nwritten == 0)
+			return -1;
+	}
 	
 	return (ssize_t) nwritten;
 }
@@ -196,27 +291,31 @@ stream_flush (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	
-	if (fstream->fp == NULL) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
-	return fflush (fstream->fp);
+	errno = 0;
+	return fflush (fstream->fp) == 0 ? 0 : stdio_error ();
 }
 
 static int
 stream_close (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	int rv = 0;
+	FILE *fp;
 	
 	if (fstream->fp == NULL)
 		return 0;
 	
-	if (!fstream->owner || (rv = fclose (fstream->fp)) == 0)
-		fstream->fp = NULL;
+	/* fclose invalidates the FILE even on failure. Detach before calling
+	 * it so a later close or finalizer cannot use the released pointer. */
+	fp = fstream->fp;
+	fstream->fp = NULL;
+	if (!fstream->owner)
+		return 0;
 	
-	return rv;
+	errno = 0;
+	return fclose (fp) == 0 ? 0 : stdio_error ();
 }
 
 static gboolean
@@ -227,10 +326,7 @@ stream_eos (GMimeStream *stream)
 	if (fstream->fp == NULL)
 		return TRUE;
 	
-	if (stream->bound_end == -1)
-		return feof (fstream->fp) ? TRUE : FALSE;
-	else
-		return stream->position >= stream->bound_end;
+	return fstream->cached_eos;
 }
 
 static int
@@ -238,16 +334,14 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	
-	if (fstream->fp == NULL) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
-	if (stream->position == stream->bound_start)
-		return 0;
-	
-	if (fseek (fstream->fp, (long) stream->bound_start, SEEK_SET) == -1)
+	if (stream->position != stream->bound_start &&
+	    seek_file (fstream, stream->bound_start, SEEK_SET) == -1)
 		return -1;
+
+	fstream->cached_eos = FALSE;
 	
 	return 0;
 }
@@ -256,53 +350,69 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	gint64 real = stream->position;
-	FILE *fp = fstream->fp;
+	gint64 origin, real;
 	
-	if (fstream->fp == NULL) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		real = offset;
+		origin = 0;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		real = stream->position + offset;
+		origin = stream->position;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		if (offset > 0 || (stream->bound_end == -1 && !feof (fp))) {
-			/* need to do an actual lseek() here because
-			 * we either don't know the offset of the end
-			 * of the stream and/or don't know if we can
-			 * seek past the end */
-			if (fseek (fp, (long) offset, SEEK_END) == -1 || (real = ftell (fp)) == -1)
+		if (offset > 0 || (stream->bound_end == -1 && !fstream->cached_eos)) {
+			/* Query physical EOF before checked addition. Other views'
+			 * stdio operations must not change our cached seek origin. */
+			if (seek_file (fstream, 0, SEEK_END) == -1)
 				return -1;
-		} else if (feof (fp) && stream->bound_end == -1) {
+			errno = 0;
+			if ((origin = ftell (fstream->fp)) == -1)
+				return stdio_error ();
+		} else if (stream->bound_end == -1) {
 			/* seeking backwards from eos (which happens
 			 * to be our current position) */
-			real = stream->position + offset;
+			origin = stream->position;
 		} else {
 			/* seeking backwards from a known position */
-			real = stream->bound_end + offset;
+			origin = stream->bound_end;
 		}
 		break;
+	default:
+		errno = EINVAL;
+		return -1;
 	}
+
+	if ((offset > 0 && origin > G_MAXINT64 - offset) ||
+	    (offset < 0 && origin < G_MININT64 - offset)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+	real = origin + offset;
 	
 	/* sanity check the resultant offset */
 	if (real < stream->bound_start) {
 		errno = EINVAL;
 		return -1;
 	}
+
+	/* Same-position seeks retain the view's observed EOF, like MimeKit. */
+	if (real == stream->position)
+		return real;
 	
 	if (stream->bound_end != -1 && real > stream->bound_end) {
 		errno = EINVAL;
 		return -1;
 	}
 	
-	if (fseek (fp, (long) real, SEEK_SET) == -1 || (real = ftell (fp)) == -1)
+	if (seek_file (fstream, real, SEEK_SET) == -1)
 		return -1;
+
+	if ((stream->bound_end != -1 && real < stream->bound_end) ||
+	    (fstream->cached_eos && real < stream->position))
+		fstream->cached_eos = FALSE;
 	
 	stream->position = real;
 	
@@ -312,6 +422,9 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
+	if (!check_open (stream))
+		return -1;
+
 	return stream->position;
 }
 
@@ -321,34 +434,33 @@ stream_length (GMimeStream *stream)
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	gint64 bound_end;
 	
-	if (fstream->fp == NULL) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
-	if (stream->bound_start != -1 && stream->bound_end != -1)
+	if (stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	if (fseek (fstream->fp, (long) 0, SEEK_END) == -1)
+	if (seek_file (fstream, 0, SEEK_END) == -1)
 		return -1;
 	
+	errno = 0;
 	bound_end = ftell (fstream->fp);
+	if (bound_end == -1)
+		return stdio_error ();
 	
-	if (fseek (fstream->fp, (long) stream->position, SEEK_SET) == -1)
+	if (seek_file (fstream, stream->position, SEEK_SET) == -1)
 		return -1;
 	
-	if (bound_end < stream->bound_start) {
-		errno = EINVAL;
-		return -1;
-	}
-	
-	return bound_end - stream->bound_start;
+	return MAX (0, bound_end - stream->bound_start);
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamFile *fstream;
+
+	if (!check_open (stream))
+		return NULL;
 	
 	fstream = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
 	g_mime_stream_construct ((GMimeStream *) fstream, start, end);

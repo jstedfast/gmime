@@ -41,7 +41,7 @@ typedef struct _GMimeStreamFileClass GMimeStreamFileClass;
 /**
  * GMimeStreamFile:
  * @parent_object: parent #GMimeStream
- * @owner: %TRUE if this stream owns @fd
+ * @owner: %TRUE if this stream owns @fp
  * @fp: standard-c FILE pointer
  *
  * A #GMimeStream wrapper around standard-c FILE pointers.
@@ -51,6 +51,9 @@ struct _GMimeStreamFile {
 	
 	gboolean owner;
 	FILE *fp;
+
+	/* <private> */
+	gboolean cached_eos;
 };
 
 struct _GMimeStreamFileClass {

@@ -188,7 +188,29 @@ This is an incremental migration, not yet a declaration of feature parity.
   end, while unbounded cached EOF supplies its observed seek origin.
   Descriptor ownership and explicit-close behavior are unchanged: views
   borrow the parent's handle, so an owning parent must not be explicitly
-  closed until its views are no longer needed. GMimeStreamFile is unchanged.
+  closed until its views are no longer needed.
+
+- GMimeStreamFile now applies the same bounded synchronous behavior to
+  buffered FILE views, with private per-view EOF state instead of the shared
+  feof indicator. Short positive reads do not cache EOF; a zero read does.
+  Other views' I/O and length queries no longer erase or invent that state,
+  and reads still retry the file after cached EOF. Same-position seeks
+  preserve it; reset clears it even at the start. Finite end reads return
+  zero without moving the FILE pointer. Unbounded lengths query actual
+  storage and clamp extents ending before the view's start to zero.
+  Preserve native partial writes, absolute SEEK_SET, seek-without-growth,
+  positive physical SEEK_END and zero/negative declared-end conventions.
+  Counts above G_MAXSSIZE, overflowing arithmetic and offsets not
+  representable as long fail with EOVERFLOW rather than truncating fseek
+  arguments. Invalid origins fail with EINVAL; closed queries fail with
+  EBADF. Every nonzero fseek result is an error. Zero-progress stdio errors
+  return -1 instead of EOF/success, preserving positive partial counts;
+  missing stdio errno values become EIO. Each I/O attempt clears stale
+  shared indicators before observing its own result. Buffered writes still
+  require flush or close to report delayed output failures.
+  fclose failure now detaches the invalidated pointer, preventing a second
+  close during finalization. Descriptor/FILE ownership remains unchanged:
+  finish all borrowed views before explicitly closing their owning parent.
 
 - GMimeStreamBlock ports MimeKit's MemoryBlockStream synchronous read/write,
   seek, SetLength and ToArray operations using 2048-byte non-contiguous blocks.

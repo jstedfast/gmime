@@ -72,6 +72,19 @@
     Finish using all views before explicitly closing an owning parent:
     object retention alone does not keep its descriptor open.</para>
 
+    <para>GMimeStreamFile uses the same bounded conventions for buffered FILE
+    views. Each view now retains its own observed EOF instead of consulting
+    shared feof state; a short positive read is not EOF until a later read
+    returns zero. Other views and length queries do not change that state.
+    Same-position seeks preserve it; reset clears it. Counts and arithmetic
+    are checked, and fseek offsets outside the range of long fail with
+    EOVERFLOW. Stdio errors return -1 when no bytes were transferred, retain
+    positive partial counts, and use EIO if stdio supplies no errno.
+    Buffered writes may report delayed failures only when flushed or closed.
+    Closing detaches the FILE even when fclose fails, so finalization cannot
+    close it twice. Views still borrow their parent's FILE pointer: finish
+    using them before explicitly closing an owning parent.</para>
+
     <para>GMimeStreamBlock stores memory content in separate 2048-byte blocks,
     avoiding repeated copies of existing bytes while growing. Unlike
     GMimeStreamMem, it does not allow seeking past the stored extent; extend it
