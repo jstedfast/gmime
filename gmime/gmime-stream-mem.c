@@ -36,7 +36,13 @@
  * @see_also: #GMimeStream
  *
  * A simple #GMimeStream implementation that uses a memory buffer for
- * storage.
+ * storage. Substreams retain the shared byte array independently of their
+ * parent. Closing or replacing a parent's buffer does not invalidate them.
+ * Logical positions and bounds remain independent.
+ *
+ * A finite length describes the declared range, even if the buffer is
+ * shorter. Reads stop at the actual allocation; writes grow it safely.
+ * Bounded writes retain native partial-write behavior at the end bound.
  **/
 
 
@@ -111,6 +117,7 @@ g_mime_stream_mem_init (GMimeStreamMem *stream, GMimeStreamMemClass *klass)
 {
 	stream->owner = TRUE;
 	stream->buffer = NULL;
+	stream->shared_buffer = NULL;
 }
 
 static void
@@ -129,57 +136,93 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	gint64 bound_end;
-	ssize_t n;
+	size_t n;
 	
 	if (mem->buffer == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
-	
-	n = (size_t) MIN (bound_end - stream->position, (gint64) len);
-	if (n > 0) {
-		memcpy (buf, mem->buffer->data + stream->position, n);
-		stream->position += n;
-	} else if (n < 0) {
+	if (stream->bound_start < 0 || stream->position < stream->bound_start ||
+	    stream->bound_end < -1 ||
+	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start)) {
 		errno = EINVAL;
-		n = -1;
+		return -1;
 	}
-	
-	return n;
+
+	/* The declared range may extend past the current allocation, including
+	 * after another view shrinks the shared byte array. Never read that tail. */
+	bound_end = mem->buffer->len;
+	if (stream->bound_end != -1)
+		bound_end = MIN (bound_end, stream->bound_end);
+	if (stream->position >= bound_end)
+		return 0;
+
+	n = (size_t) MIN ((gint64) MIN (len, (size_t) G_MAXSSIZE), bound_end - stream->position);
+	memcpy (buf, mem->buffer->data + (gsize) stream->position, n);
+	stream->position += n;
+
+	return (ssize_t) n;
+}
+
+static void
+grow_buffer (GByteArray *buffer, guint length)
+{
+	guint previous = buffer->len;
+
+	if (length > previous) {
+		g_byte_array_set_size (buffer, length);
+		/* Seeking or writing a view beyond existing data must not expose
+		 * uninitialized bytes in the gap. */
+		memset (buffer->data + previous, 0, length - previous);
+	}
 }
 
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	gint64 bound_end;
-	ssize_t n;
+	gint64 end;
 	
 	if (mem->buffer == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	if (stream->bound_end == -1) {
-		if (stream->position + len > mem->buffer->len)
-			g_byte_array_set_size (mem->buffer, (guint) stream->position + len);
-		
-		bound_end = mem->buffer->len;
-	} else
-		bound_end = stream->bound_end;
-	
-	n = (size_t) MIN (bound_end - stream->position, (gint64) len);
-	if (n > 0) {
-		memcpy (mem->buffer->data + stream->position, buf, n);
-		stream->position += n;
-	} else if (n < 0) {
+	if (stream->bound_start < 0 || stream->position < stream->bound_start ||
+	    stream->bound_end < -1 ||
+	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start)) {
 		errno = EINVAL;
-		n = -1;
+		return -1;
 	}
-	
-	return n;
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	if (stream->bound_end != -1) {
+		if (stream->position > stream->bound_end) {
+			errno = EINVAL;
+			return -1;
+		}
+		if (stream->position == stream->bound_end)
+			return 0;
+		len = (size_t) MIN ((gint64) len, stream->bound_end - stream->position);
+	}
+
+	/* Check the accepted count before narrowing it to GByteArray's guint. */
+	if (stream->position > G_MAXUINT || len > G_MAXUINT - (guint64) stream->position) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	end = stream->position + (gint64) len;
+	grow_buffer (mem->buffer, (guint) end);
+	memcpy (mem->buffer->data + (gsize) stream->position, buf, len);
+	stream->position = end;
+
+	return (ssize_t) len;
 }
 
 static int
@@ -200,9 +243,11 @@ stream_close (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	
-	if (mem->owner && mem->buffer)
-		g_byte_array_free (mem->buffer, TRUE);
-	
+	/* A substream's retained reference is separate from the public ownership
+	 * policy. Release it once, even if the caller also enables owner. */
+	if (mem->owner && mem->buffer && mem->buffer != mem->shared_buffer)
+		g_byte_array_unref (mem->buffer);
+	g_clear_pointer (&mem->shared_buffer, g_byte_array_unref);
 	mem->buffer = NULL;
 	
 	return 0;
@@ -217,7 +262,9 @@ stream_eos (GMimeStream *stream)
 	if (mem->buffer == NULL)
 		return TRUE;
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
+	bound_end = mem->buffer->len;
+	if (stream->bound_end != -1)
+		bound_end = MIN (bound_end, stream->bound_end);
 	
 	return stream->position >= bound_end;
 }
@@ -239,27 +286,43 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	gint64 bound_end, real = stream->position;
+	gint64 origin, bound_end, real;
 	
 	if (mem->buffer == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
+	if (stream->bound_start < 0 || stream->bound_end < -1 ||
+	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start)) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		real = offset;
+		origin = 0;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		real = offset + bound_end;
+		origin = bound_end;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		real = stream->position + offset;
+		origin = stream->position;
 		break;
+	default:
+		errno = EINVAL;
+		return -1;
 	}
-	
+
+	if ((offset > 0 && origin > G_MAXINT64 - offset) ||
+	    (offset < 0 && origin < G_MININT64 - offset)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+	real = origin + offset;
+
 	if (real < stream->bound_start) {
 		errno = EINVAL;
 		return -1;
@@ -270,13 +333,17 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		return -1;
 	}
 	
-	if (real > bound_end) {
+	/* Preserve no-op seeks when another view has shortened the storage. */
+	if (real == stream->position)
+		return real;
+
+	if (stream->bound_end == -1 && real > bound_end) {
 		if (real > G_MAXUINT) {
-			errno = ENOSPC;
+			errno = EOVERFLOW;
 			return -1;
 		}
-		
-		g_byte_array_set_size (mem->buffer, (guint) real);
+
+		grow_buffer (mem->buffer, (guint) real);
 	}
 	
 	stream->position = real;
@@ -307,20 +374,35 @@ stream_length (GMimeStream *stream)
 		errno = EBADF;
 		return -1;
 	}
-	
+
+	if (stream->bound_start < 0 || stream->bound_end < -1 ||
+	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start)) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
-	return bound_end - stream->bound_start;
+	return MAX (0, bound_end - stream->bound_start);
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
+	GMimeStreamMem *parent = GMIME_STREAM_MEM (stream);
 	GMimeStreamMem *mem;
-	
+
+	if (!parent->buffer) {
+		errno = EBADF;
+		return NULL;
+	}
+
 	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	g_mime_stream_construct ((GMimeStream *) mem, start, end);
-	mem->buffer = ((GMimeStreamMem *) stream)->buffer;
+	/* Retain the array, not just the parent object: close and replacement can
+	 * release the parent's own reference while a view is still alive. */
+	mem->buffer = g_byte_array_ref (parent->buffer);
+	mem->shared_buffer = mem->buffer;
 	mem->owner = FALSE;
 	
 	return (GMimeStream *) mem;
@@ -360,7 +442,9 @@ GMimeStream *
 g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 {
 	GMimeStreamMem *mem;
-	
+
+	g_return_val_if_fail (array != NULL, NULL);
+
 	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	g_mime_stream_construct ((GMimeStream *) mem, 0, -1);
 	mem->buffer = array;
@@ -378,7 +462,8 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
  * Creates a new #GMimeStreamMem object and initializes the stream
  * contents with the first @len bytes of @buffer.
  *
- * Returns: a new memory stream initialized with @buffer.
+ * Returns: (nullable): a new memory stream initialized with @buffer,
+ * or %NULL with errno set to EOVERFLOW if @len exceeds G_MAXUINT.
  **/
 GMimeStream *
 g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
@@ -386,7 +471,12 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 	GMimeStreamMem *mem;
 
 	g_return_val_if_fail (buffer != NULL, NULL);
-	
+
+	if (len > G_MAXUINT) {
+		errno = EOVERFLOW;
+		return NULL;
+	}
+
 	mem = (GMimeStreamMem *) g_mime_stream_mem_new ();
 	g_byte_array_append (mem->buffer, (unsigned char *) buffer, len);
 	
@@ -417,9 +507,12 @@ g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem)
  * @array: stream data
  *
  * Sets the byte array on the memory stream.
+ * Existing substreams continue to use the previous array. Reassigning the
+ * same array is safe and still resets the position and bounds.
  *
  * Note: The memory stream is not responsible for freeing the byte
  * array. Use g_mime_stream_mem_set_owner() to change this behavior.
+ * A substream retains its internal storage reference on self-assignment.
  **/
 void
 g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
@@ -429,8 +522,10 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 	g_return_if_fail (GMIME_IS_STREAM_MEM (mem));
 	g_return_if_fail (array != NULL);
 	
-	if (mem->owner && mem->buffer)
-		g_byte_array_free (mem->buffer, TRUE);
+	/* Self-assignment hands an owned array back to the caller without freeing
+	 * it. A substream still keeps its independent storage reference. */
+	if (mem->buffer != array)
+		stream_close (stream);
 	
 	mem->buffer = array;
 	mem->owner = FALSE;
@@ -467,7 +562,9 @@ g_mime_stream_mem_get_owner (GMimeStreamMem *mem)
  * Sets whether or not @mem owns the backend memory buffer.
  *
  * Note: @owner should be %TRUE if the stream should free the backend
- * memory buffer when destroyed or %FALSE otherwise.
+ * memory buffer when closed or destroyed or %FALSE otherwise. Substreams
+ * independently retain and release a reference to their shared array,
+ * regardless of this setting; enabling ownership does not release it twice.
  **/
 void
 g_mime_stream_mem_set_owner (GMimeStreamMem *mem, gboolean owner)

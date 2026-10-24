@@ -50,6 +50,9 @@ struct _GMimeStreamMem {
 	
 	GByteArray *buffer;
 	gboolean owner;
+
+	/* <private> */
+	GByteArray *shared_buffer;
 };
 
 struct _GMimeStreamMemClass {

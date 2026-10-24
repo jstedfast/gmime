@@ -363,8 +363,10 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
  * the argument @offset according to the
  * directive @whence as follows:
  *
- *     #GMIME_STREAM_SEEK_SET: Seek @offset bytes relative to
- *     the beginning (bound_start) of the stream.
+ *     #GMIME_STREAM_SEEK_SET: Seek to @offset using the backend's
+ *     coordinate convention. Memory, block and file-backed streams use
+ *     absolute backend coordinates, not offsets from bound_start.
+ *     GMimeStreamNull uses offsets relative to bound_start.
  *
  *     #GMIME_STREAM_SEEK_CUR: Seek @offset bytes relative to the
  *     current offset of the stream.
@@ -455,13 +457,20 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 /**
  * g_mime_stream_substream:
  * @stream: a #GMimeStream
- * @start: start boundary
- * @end: end boundary
+ * @start: absolute start boundary within @stream's bounds
+ * @end: absolute end boundary, or %-1 for the parent's end
  *
- * Creates a new substream of @stream with bounds @start and @end.
+ * Creates a new view of @stream without moving its logical position.
+ * Bounds use absolute backend coordinates, not offsets relative to the
+ * parent's start. An unbounded end inherits a finite parent end, so a nested
+ * view cannot escape its parent's range. Empty ranges are permitted.
  *
- * Returns: (transfer full): a substream of @stream with bounds @start
- * and @end.
+ * The view retains its parent. Backend-specific lifetime rules still apply;
+ * retaining the parent is not in itself protection against explicitly
+ * closing its backend.
+ *
+ * Returns: (transfer full) (nullable): a substream, or %NULL on failure.
+ * Invalid ranges fail with errno set to EINVAL before invoking the backend.
  **/
 GMimeStream *
 g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)
@@ -469,7 +478,23 @@ g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	GMimeStream *sub;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
-	
+
+	/* Validate the whole range before dispatching: no backend should see
+	 * negative starts, reversed bounds or a request escaping its parent. */
+	if (stream->bound_start < 0 || stream->bound_end < -1 ||
+	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start) ||
+	    start < stream->bound_start || end < -1 ||
+	    (end != -1 && end < start) ||
+	    (stream->bound_end != -1 &&
+	     (start > stream->bound_end || (end != -1 && end > stream->bound_end)))) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	/* An unbounded child must not reopen the tail of a finite parent. */
+	if (end == -1)
+		end = stream->bound_end;
+
 	if ((sub = GMIME_STREAM_GET_CLASS (stream)->substream (stream, start, end))) {
 		sub->super_stream = stream;
 		g_object_ref (stream);

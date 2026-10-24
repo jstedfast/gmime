@@ -38,6 +38,25 @@
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</para>
 
+    <para>Use g_mime_stream_substream() for bounded views rather than a
+    separate bounded-stream class. Start and end use absolute backend
+    coordinates, and ranges must fit inside their parent's bounds.
+    An end of -1 inherits a finite parent's end; empty ranges are valid.
+    Invalid ranges fail with EINVAL before backend dispatch. Each backend
+    still defines its own seek and explicit-close behavior.</para>
+
+    <para>GMimeStreamMem substreams retain their shared byte array, so
+    explicitly closing a parent or replacing its buffer does not invalidate
+    existing views. Positions and bounds are independent. Reads stop at the
+    actual allocation even if the declared finite range extends farther;
+    the finite length still reports that range. Writes can grow storage and
+    zero newly exposed gaps, stopping with a partial count or zero at a full
+    end bound. SEEK_SET is absolute, and finite SEEK_END uses the view's
+    end. Unbounded seeks can grow storage, but seeking to the current
+    position does not regrow externally truncated data. Invalid origins
+    fail with EINVAL; overflowing offsets, write counts or storage sizes
+    fail with EOVERFLOW.</para>
+
     <para>GMimeStreamBlock stores memory content in separate 2048-byte blocks,
     avoiding repeated copies of existing bytes while growing. Unlike
     GMimeStreamMem, it does not allow seeking past the stored extent; extend it

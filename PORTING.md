@@ -147,6 +147,30 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- MimeKit's BoundedStream maps to the existing g_mime_stream_substream()
+  abstraction, not a new wrapper class. Substream creation now rejects
+  negative starts, ends below -1, reversed ranges and ranges outside the
+  parent with EINVAL before dispatch. Bounds use absolute backend
+  coordinates; end=-1 inherits a finite parent's end. Empty ranges are valid.
+  Each backend still defines its own seek and explicit-close behavior.
+  This increment strengthens the contiguous memory backend; file/descriptor
+  lifetime handling has not been changed.
+  GMimeStreamMem views now retain their shared GByteArray, surviving explicit
+  parent close or buffer replacement while keeping independent positions
+  and bounds. Reads stop at actual storage even when a finite bound extends
+  farther; finite length still describes the declared range. Writes allocate
+  safely and zero newly exposed gaps, retaining partial writes and a zero
+  result at a full end bound rather than MimeKit's whole-request rejection.
+  Native zero-count I/O remains a no-op, without repositioning or caching EOF.
+  SEEK_SET remains absolute, finite SEEK_END uses the view's end, and
+  unbounded seeks retain native seek-to-grow behavior. Same-position seeks
+  do not regrow externally truncated storage. Invalid origins fail with
+  EINVAL; overflowing seeks/counts and sizes above G_MAXUINT fail with
+  EOVERFLOW (previous oversized memory seeks used ENOSPC).
+  Reassigning a memory stream's own byte array is safe, resets its bounds
+  and position, and hands ordinary ownership back to the caller; substreams
+  retain their internal storage reference until replacement or close.
+
 - GMimeStreamBlock ports MimeKit's MemoryBlockStream synchronous read/write,
   seek, SetLength and ToArray operations using 2048-byte non-contiguous blocks.
   Existing memory-stream consumers remain unchanged. Reads and writes span
