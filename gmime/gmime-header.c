@@ -18,7 +18,6 @@
  *  02110-1301, USA.
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -52,7 +51,6 @@
  * A #GMimeHeader is a collection of rfc822 header fields and their
  * values.
  **/
-
 
 static struct {
 	const char *name;
@@ -169,6 +167,8 @@ g_mime_header_finalize (GObject *object)
 	g_free (header->charset);
 	g_free (header->value);
 	g_free (header->name);
+	g_clear_pointer (&header->raw_field_bytes, g_bytes_unref);
+	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -220,6 +220,43 @@ header_new (GMimeParserOptions *options, const char *name, const char *value,
 	return header;
 }
 
+GMimeHeader *
+_g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffer, gsize length,
+			      gsize name_length, gsize field_length, gboolean invalid, gint64 offset)
+{
+	gsize value_offset = invalid ? length : field_length + 1;
+	GMimeHeader *header;
+	GString *name;
+	char *raw_name, *raw_value;
+	gsize i;
+
+	/* MimeKit keeps the original field and value as byte arrays. Keep them
+	 * separately from the C-string views so invalid fields and embedded NULs
+	 * survive serialization and cloning without acquiring a synthetic colon. */
+	name = g_string_sized_new (name_length);
+
+	for (i = 0; i < name_length; i++) {
+		if (buffer[i] == 0)
+			g_string_append (name, "\\0");
+		else
+			g_string_append_unichar (name, buffer[i]);
+	}
+
+	raw_name = g_strndup ((const char *) buffer, field_length);
+	raw_value = g_strndup ((const char *) buffer + value_offset, length - value_offset);
+	header = header_new (g_mime_parser_options_clone (options), name->str, NULL,
+			     raw_name, raw_value, NULL, offset);
+	header->owns_options = TRUE;
+	header->invalid = invalid;
+	header->raw_field_bytes = g_bytes_new (buffer, field_length);
+	header->raw_value_bytes = g_bytes_new (buffer + value_offset, length - value_offset);
+	g_string_free (name, TRUE);
+	g_free (raw_value);
+	g_free (raw_name);
+
+	return header;
+}
+
 
 /**
  * g_mime_header_new:
@@ -267,6 +304,7 @@ g_mime_header_new (const char *name, const char *value, const char *charset)
 	text = g_strndup (start, end - start);
 	unfolded = g_mime_utils_header_unfold (text);
 	g_free (text);
+
 	header = header_new (g_mime_parser_options_clone (NULL), name, unfolded,
 			     name, NULL, charset ? charset : "utf-8", -1);
 	header->owns_options = TRUE;
@@ -313,6 +351,13 @@ g_mime_header_clone (GMimeHeader *header)
 	clone->charset = g_strdup (header->charset);
 	clone->value = g_strdup (header->value);
 	clone->name = g_strdup (header->name);
+	clone->invalid = header->invalid;
+
+	if (header->raw_field_bytes)
+		clone->raw_field_bytes = g_bytes_ref (header->raw_field_bytes);
+
+	if (header->raw_value_bytes)
+		clone->raw_value_bytes = g_bytes_ref (header->raw_value_bytes);
 
 	return clone;
 }
@@ -322,7 +367,9 @@ g_mime_header_clone (GMimeHeader *header)
  * g_mime_header_get_name:
  * @header: a #GMimeHeader
  *
- * Gets the header's name.
+ * Gets the header's name. Embedded NUL bytes in an invalid field are
+ * represented as "\\0" in this display/lookup string; the original bytes
+ * are preserved when writing the header.
  *
  * Returns: the header name or %NULL if invalid.
  **/
@@ -357,6 +404,33 @@ g_mime_header_get_value (GMimeHeader *header)
 	}
 	
 	return header->value;
+}
+
+GMimeContentEncoding
+_g_mime_header_get_content_encoding (GMimeHeader *header)
+{
+	if (header->raw_value_bytes) {
+		gsize length;
+
+		const char *bytes = g_bytes_get_data (header->raw_value_bytes, &length);
+
+		if (length && memchr (bytes, 0, length)) {
+			GMimeContentEncoding encoding;
+			char *text;
+
+			/* A literal NUL is part of the first token unless whitespace
+			 * or a semicolon already ended it. Decode the prefix without
+			 * trimming, then include its NUL in the bounded parse rather
+			 * than mistaking it for the end of the header value. */
+			text = _g_mime_utils_header_decode_text (header->options, header->raw_value, NULL, header->offset);
+			encoding = _g_mime_content_encoding_parse (text, strlen (text) + 1);
+			g_free (text);
+
+			return encoding;
+		}
+	}
+
+	return g_mime_content_encoding_from_string (g_mime_header_get_value (header));
 }
 
 
@@ -398,6 +472,7 @@ g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const
 	header->reformat = TRUE;
 	header->explicit_raw_value = FALSE;
 	header->value = buf;
+	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
 	
 	g_mime_event_emit (header->changed, NULL);
 }
@@ -412,6 +487,8 @@ g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const
  * string may be different from the value returned by g_mime_header_get_name()
  * if the parsed message's header contained trailing whitespace after the header
  * name, such as: "Subject : this is the subject\r\n".
+ * This C-string view ends at any embedded NUL in an invalid field; transport
+ * serialization preserves the complete parsed bytes.
  *
  * Returns: the raw header name.
  **/
@@ -429,6 +506,8 @@ g_mime_header_get_raw_name (GMimeHeader *header)
  * @header: a #GMimeHeader
  *
  * Gets the header's raw (folded) value.
+ * This C-string view ends at any embedded NUL; transport serialization
+ * preserves the complete parsed bytes until the value is replaced.
  *
  * Returns: the header value or %NULL if invalid.
  **/
@@ -481,6 +560,7 @@ g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
 	header->explicit_raw_value = TRUE;
 	header->raw_value = buf;
 	header->value = NULL;
+	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
 	
 	g_mime_event_emit (header->changed, NULL);
 }
@@ -517,6 +597,8 @@ _g_mime_header_set_offset (GMimeHeader *header, gint64 offset)
  * Formats the header for display using its name and decoded value, separated
  * by a colon and a space. The raw name's trailing whitespace is not included,
  * and no encoding, folding, or terminating newline is added.
+ * Invalid parsed fields return their display name alone, without adding a
+ * colon or a value.
  *
  * This is not a transport serialization API. Use
  * g_mime_header_write_to_stream() to write the encoded header.
@@ -530,6 +612,9 @@ g_mime_header_to_string (GMimeHeader *header)
 
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	g_return_val_if_fail (header->name != NULL, NULL);
+
+	if (header->invalid)
+		return g_strdup (header->name);
 
 	value = g_mime_header_get_value (header);
 
@@ -557,15 +642,47 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options,
 	ssize_t nwritten, total = 0;
 	gboolean reformat;
 	char *raw_value, *buf;
+	const char *bytes;
+	gsize length;
 	
 	g_return_val_if_fail (GMIME_IS_HEADER (header), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
+
+	if (header->invalid) {
+		bytes = g_bytes_get_data (header->raw_field_bytes, &length);
+		return _g_mime_stream_write_all (stream, bytes, length);
+	}
 	
 	if (!header->raw_value)
 		return 0;
 
 	reformat = header->reformat || (!header->explicit_raw_value &&
 				       g_mime_format_options_get_allow_international (options));
+
+	if (header->raw_value_bytes) {
+		bytes = g_bytes_get_data (header->raw_value_bytes, &length);
+
+		/* The legacy decoded-value API is NUL-terminated. Never let an
+		 * International formatting request truncate a binary raw value. */
+		if (length && memchr (bytes, 0, length))
+			reformat = FALSE;
+
+		if (!reformat) {
+			const char *field;
+			gsize field_length;
+
+			field = g_bytes_get_data (header->raw_field_bytes, &field_length);
+			if ((nwritten = _g_mime_stream_write_all (stream, field, field_length)) < 0)
+				return -1;
+			total += nwritten;
+			if (_g_mime_stream_write_all (stream, ":", 1) < 0 ||
+			    (nwritten = _g_mime_stream_write_all (stream, bytes, length)) < 0)
+				return -1;
+
+			return total + 1 + nwritten;
+		}
+	}
+
 	if (reformat) {
 		if (header->reformat) {
 			formatter = header->formatter ? header->formatter : g_mime_header_format_default;

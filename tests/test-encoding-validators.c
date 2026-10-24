@@ -47,7 +47,7 @@ record_issue (const GMimeEncodingIssue *issue, gpointer user_data)
 }
 
 static GMimeEncodingValidator *
-new_validator (guint kind, IssueLog *log, gint64 offset, guint line)
+new_validator (guint kind, IssueLog *log, gint64 offset, guint64 line)
 {
 	if (kind == 0)
 		return _g_mime_base64_validator_new (record_issue, log, offset, line);
@@ -59,7 +59,7 @@ new_validator (guint kind, IssueLog *log, gint64 offset, guint line)
 
 static void
 assert_issue (const GMimeEncodingIssue *actual, const GMimeEncodingIssue *expected,
-	      gint64 initial_offset, guint initial_line)
+	      gint64 initial_offset, guint64 initial_line)
 {
 	g_assert_cmpint (actual->violation, ==, expected->violation);
 	g_assert_cmpint (actual->stream_offset, ==, expected->stream_offset + initial_offset);
@@ -326,7 +326,7 @@ test_flush (void)
 static void
 test_preconditions (void)
 {
-	static GMimeEncodingValidator *(*const constructors[]) (GMimeEncodingIssueFunc, gpointer, gint64, guint) = {
+	static GMimeEncodingValidator *(*const constructors[]) (GMimeEncodingIssueFunc, gpointer, gint64, guint64) = {
 		_g_mime_base64_validator_new, _g_mime_quoted_printable_validator_new, _g_mime_uu_validator_new
 	};
 	static const GMimeEncodingViolation violations[] = {
@@ -348,13 +348,13 @@ test_preconditions (void)
 	g_test_assert_expected_messages ();
 
 	for (kind = 0; kind < G_N_ELEMENTS (constructors); kind++) {
-		GMimeEncodingValidator *(*create) (GMimeEncodingIssueFunc, gpointer, gint64, guint) =
+		GMimeEncodingValidator *(*create) (GMimeEncodingIssueFunc, gpointer, gint64, guint64) =
 			constructors[kind];
 		IssueLog log = { 0 };
 		GMimeEncodingValidator *validator;
 		GMimeEncodingIssue expected = {
 			violations[kind],
-			G_MAXINT64, (guint64) G_MAXUINT + 1, 2
+			G_MAXINT64, (guint64) G_MAXUINT + 2, 2
 		};
 
 		g_test_expect_message (G_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*assertion*report != NULL*failed*");
@@ -366,7 +366,7 @@ test_preconditions (void)
 		g_test_expect_message (G_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*assertion*line_number > 0*failed*");
 		g_assert_null (create (record_issue, &log, 0, 0));
 		g_test_assert_expected_messages ();
-		validator = create (record_issue, &log, G_MAXINT64 - 2, G_MAXUINT);
+		validator = create (record_issue, &log, G_MAXINT64 - 2, (guint64) G_MAXUINT + 1);
 		g_test_expect_message (G_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*assertion*input != NULL*failed*");
 		_g_mime_encoding_validator_write (validator, NULL, 1);
 		g_test_assert_expected_messages ();

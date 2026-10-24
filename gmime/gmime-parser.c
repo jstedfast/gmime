@@ -176,7 +176,8 @@ struct _GMimeParserPrivate {
 	unsigned short int seekable:1;
 	unsigned short int have_regex:1;
 	unsigned short int persist_stream:1;
-	unsigned short int unused:12;
+	unsigned short int detect_openpgp:1;
+	unsigned short int unused:11;
 };
 
 static const char MBOX_BOUNDARY[6] = "From ";
@@ -922,7 +923,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 	
 	d(printf ("'%.*s' not a boundary\n", len, start));
 	
-	if (!strncmp (start, "--", 2)) {
+	if (priv->detect_openpgp && !strncmp (start, "--", 2)) {
 		start += 2;
 		len -= 2;
 		
@@ -1729,7 +1730,12 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part)
 	
 	g_mime_part_set_content (mime_part, content);
 	g_object_unref (content);
-	
+
+	/* With automatic detection disabled, leave the cache unknown. An
+	 * explicit get_openpgp_data() call may still inspect decoded content. */
+	if (!priv->detect_openpgp)
+		return;
+
 	switch (priv->openpgp) {
 	case GMIME_OPENPGP_END_PGP_SIGNATURE:
 		g_mime_part_set_openpgp_data (mime_part, GMIME_OPENPGP_DATA_SIGNED);
@@ -2335,6 +2341,7 @@ g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options, 
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	if (parser->priv->error == NULL) {
+		parser->priv->detect_openpgp = g_mime_parser_options_get_detect_openpgp (options);
 		entity = parser_construct_part (parser, options);
 		if (parser->priv->error == NULL)
 			return entity;
@@ -2477,6 +2484,7 @@ g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *option
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	if (parser->priv->error == NULL) {
+		parser->priv->detect_openpgp = g_mime_parser_options_get_detect_openpgp (options);
 		message = parser_construct_message (parser, options);
 		if (parser->priv->error == NULL)
 			return message;

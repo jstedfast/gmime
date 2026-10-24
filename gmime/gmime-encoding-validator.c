@@ -68,7 +68,7 @@ typedef struct {
 
 static void
 validator_context_init (ValidatorContext *context, GMimeEncodingIssueFunc report,
-			gpointer user_data, gint64 stream_offset, guint line_number)
+			gpointer user_data, gint64 stream_offset, guint64 line_number)
 {
 	context->report = report;
 	context->user_data = user_data;
@@ -240,7 +240,7 @@ _g_mime_base64_validator_init (GMimeBase64Validator *base64)
 
 GMimeEncodingValidator *
 _g_mime_base64_validator_new (GMimeEncodingIssueFunc report, gpointer user_data,
-			    gint64 stream_offset, guint line_number)
+			    gint64 stream_offset, guint64 line_number)
 {
 	GMimeBase64Validator *base64;
 
@@ -420,7 +420,7 @@ _g_mime_quoted_printable_validator_init (GMimeQuotedPrintableValidator *qp)
 
 GMimeEncodingValidator *
 _g_mime_quoted_printable_validator_new (GMimeEncodingIssueFunc report, gpointer user_data,
-				      gint64 stream_offset, guint line_number)
+				      gint64 stream_offset, guint64 line_number)
 {
 	GMimeQuotedPrintableValidator *qp;
 
@@ -729,7 +729,7 @@ _g_mime_uu_validator_init (GMimeUUValidator *uu)
 
 GMimeEncodingValidator *
 _g_mime_uu_validator_new (GMimeEncodingIssueFunc report, gpointer user_data,
-			gint64 stream_offset, guint line_number)
+			gint64 stream_offset, guint64 line_number)
 {
 	GMimeUUValidator *uu;
 

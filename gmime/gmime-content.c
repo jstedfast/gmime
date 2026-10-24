@@ -180,6 +180,7 @@ g_mime_content_set_stream (GMimeContent *content, GMimeStream *stream)
 		g_object_unref (content->stream);
 	
 	content->stream = stream;
+	content->has_newline_format = FALSE;
 }
 
 
@@ -233,6 +234,65 @@ g_mime_content_get_encoding (GMimeContent *content)
 }
 
 
+/**
+ * g_mime_content_get_newline_format:
+ * @content: a #GMimeContent
+ * @format: (out) (optional): the observed new-line format
+ *
+ * Gets the raw content's new-line format, if known. This is a hint for
+ * verifying digital signatures, not a request to convert the content.
+ * Mixed newlines are reported as %GMIME_NEWLINE_FORMAT_MIXED. Content
+ * without LF or CRLF has no known format.
+ *
+ * Returns: %TRUE if @format is known, or %FALSE otherwise, leaving @format
+ *   unchanged.
+ **/
+gboolean
+g_mime_content_get_newline_format (GMimeContent *content, GMimeNewLineFormat *format)
+{
+	g_return_val_if_fail (GMIME_IS_CONTENT (content), FALSE);
+
+	if (!content->has_newline_format)
+		return FALSE;
+
+	if (format)
+		*format = content->newline_format;
+
+	return TRUE;
+}
+
+/**
+ * g_mime_content_set_newline_format:
+ * @content: a #GMimeContent
+ * @format: the observed new-line format
+ *
+ * Sets the raw content's new-line format hint without modifying its bytes.
+ **/
+void
+g_mime_content_set_newline_format (GMimeContent *content, GMimeNewLineFormat format)
+{
+	g_return_if_fail (GMIME_IS_CONTENT (content));
+	g_return_if_fail (format >= GMIME_NEWLINE_FORMAT_UNIX && format <= GMIME_NEWLINE_FORMAT_MIXED);
+
+	content->newline_format = format;
+	content->has_newline_format = TRUE;
+}
+
+/**
+ * g_mime_content_clear_newline_format:
+ * @content: a #GMimeContent
+ *
+ * Clears the new-line format hint without modifying the content. Replacing
+ * the backing stream also clears this hint.
+ **/
+void
+g_mime_content_clear_newline_format (GMimeContent *content)
+{
+	g_return_if_fail (GMIME_IS_CONTENT (content));
+
+	content->has_newline_format = FALSE;
+}
+
 static GMimeStream *
 create_decoder_stream (GMimeContent *content, GMimeStream *stream)
 {
@@ -240,6 +300,7 @@ create_decoder_stream (GMimeContent *content, GMimeStream *stream)
 	GMimeFilter *filter;
 
 	filtered_stream = g_mime_stream_filter_new (stream);
+
 	switch (content->encoding) {
 	case GMIME_CONTENT_ENCODING_BASE64:
 	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
@@ -299,10 +360,13 @@ write_to_stream (GMimeContent *content, GMimeStream *stream)
 			errno = EOVERFLOW;
 			return -1;
 		}
+
 		if (_g_mime_stream_write_all (stream, buffer, nread) == -1)
 			return -1;
+
 		total += nread;
 	}
+
 	if (nread == -1 || g_mime_stream_reset (content->stream) == -1)
 		return -1;
 
@@ -318,14 +382,17 @@ decode_to_stream (GMimeContent *content, GMimeStream *stream)
 
 	filtered_stream = create_decoder_stream (content, stream);
 	written = g_mime_content_write_to_stream (content, filtered_stream);
+
 	if (written != -1) {
 		if (g_mime_stream_flush (filtered_stream) == -1)
 			written = -1;
 		else
 			written = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered_stream);
 	}
+
 	errsv = errno;
 	g_object_unref (filtered_stream);
+
 	if (written == -1)
 		errno = errsv;
 

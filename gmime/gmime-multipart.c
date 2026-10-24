@@ -31,6 +31,7 @@
 #include "gmime-common.h"
 #include "gmime-utils.h"
 #include "gmime-rfc2047-private.h"
+#include "gmime-message-part.h"
 
 
 #define d(x)
@@ -70,6 +71,8 @@ static int multipart_get_count (GMimeMultipart *multipart);
 static void multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
 static const char *multipart_get_boundary (GMimeMultipart *multipart);
 static gboolean multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
+static void multipart_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
+static void multipart_boundary_changed (GMimeContentType *content_type, gpointer args, GMimeMultipart *multipart);
 
 
 static GMimeEntityClass *parent_class = NULL;
@@ -120,6 +123,7 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	object_class->encode = multipart_encode;
 	object_class->accept = multipart_accept;
 	object_class->prepare_with_max_line_length = multipart_prepare;
+	object_class->set_content_type = multipart_set_content_type;
 	
 	klass->add = multipart_add;
 	klass->clear = multipart_clear;
@@ -152,6 +156,15 @@ g_mime_multipart_finalize (GObject *object)
 	
 	g_free (multipart->prologue);
 	g_free (multipart->epilogue);
+	g_free (multipart->boundary);
+	if (((GMimeEntity *) multipart)->content_type)
+		g_mime_event_remove (((GMimeEntity *) multipart)->content_type->changed,
+				     (GMimeEventCallback) multipart_boundary_changed, multipart);
+	g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
+	g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
+	g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
+	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+	g_clear_pointer (&multipart->raw_boundaries, g_ptr_array_unref);
 	
 	for (i = 0; i < multipart->children->len; i++)
 		g_object_unref (multipart->children->pdata[i]);
@@ -159,6 +172,262 @@ g_mime_multipart_finalize (GObject *object)
 	g_ptr_array_free (multipart->children, TRUE);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+static void
+multipart_boundary_changed (GMimeContentType *content_type, gpointer args, GMimeMultipart *multipart)
+{
+	const char *boundary = g_mime_content_type_get_parameter (content_type, "boundary");
+
+	if (!g_strcmp0 (multipart->boundary, boundary))
+		return;
+
+	/* Once the boundary changes, parsed child/end markers are obsolete.
+	 * Generate them on output instead, as MimeKit's BoundaryChanged does. */
+	g_clear_pointer (&multipart->raw_boundaries, g_ptr_array_unref);
+	g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
+	if (multipart->reader_model)
+		multipart->write_end_boundary = TRUE;
+	g_free (multipart->boundary);
+	multipart->boundary = g_strdup (boundary);
+}
+
+static void
+multipart_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
+{
+	GMimeMultipart *multipart = (GMimeMultipart *) object;
+
+	if (object->content_type)
+		g_mime_event_remove (object->content_type->changed, (GMimeEventCallback) multipart_boundary_changed, multipart);
+	parent_class->set_content_type (object, content_type);
+	g_mime_event_add (content_type->changed, (GMimeEventCallback) multipart_boundary_changed, multipart);
+	multipart_boundary_changed (content_type, NULL, multipart);
+}
+
+static void
+multipart_bytes_unref (gpointer bytes)
+{
+	if (bytes)
+		g_bytes_unref (bytes);
+}
+
+void
+_g_mime_multipart_initialize_from_reader (GMimeMultipart *multipart)
+{
+	multipart->reader_model = TRUE;
+	multipart->raw_boundaries = g_ptr_array_new_with_free_func (multipart_bytes_unref);
+	/* A parsed multipart starts truncated; the reader replaces this empty
+	 * marker if it encounters a real closing delimiter. NULL instead means
+	 * that serialization should generate the normal closing delimiter. */
+	multipart->raw_end_boundary = g_bytes_new (NULL, 0);
+	multipart->write_end_boundary = FALSE;
+}
+
+void
+_g_mime_multipart_add_with_boundary (GMimeMultipart *multipart, GMimeEntity *part, GBytes *boundary)
+{
+	g_mime_multipart_add (multipart, part);
+	if (multipart->raw_boundaries && boundary)
+		multipart->raw_boundaries->pdata[multipart->raw_boundaries->len - 1] = g_bytes_ref (boundary);
+}
+
+void
+_g_mime_multipart_set_raw_text (GMimeMultipart *multipart, GBytes *bytes, gboolean epilogue)
+{
+	gconstpointer data;
+	gsize length, skip = 0;
+	char *text;
+
+	data = g_bytes_get_data (bytes, &length);
+	/* The raw epilogue includes the closing delimiter's CRLF. Hide that
+	 * first newline from the public text view, but retain it on the wire. */
+	if (epilogue && length && ((const char *) data)[0] == '\n')
+		skip = 1;
+	else if (epilogue && length > 1 && !memcmp (data, "\r\n", 2))
+		skip = 2;
+	text = length > skip ? g_mime_utils_decode_8bit (_g_mime_header_list_get_options (
+		((GMimeEntity *) multipart)->headers), (const char *) data + skip, length - skip) : g_strdup ("");
+	if (epilogue) {
+		g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
+		multipart->raw_epilogue = g_bytes_ref (bytes);
+		g_free (multipart->epilogue);
+		multipart->epilogue = text;
+	} else {
+		g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
+		multipart->raw_preamble = g_bytes_ref (bytes);
+		g_free (multipart->prologue);
+		multipart->prologue = text;
+	}
+}
+
+static gboolean
+multipart_is_truncated (GMimeMultipart *multipart)
+{
+	return multipart->raw_end_boundary && !g_bytes_get_size (multipart->raw_end_boundary);
+}
+
+static gboolean
+entity_ends_with_delimiter_newline (GMimeEntity *entity)
+{
+	/* RFC 2046 assigns the newline before a delimiter to the delimiter,
+	 * not the preceding body. An absent body or a truncated multipart's
+	 * preamble can already supply it, so do not add another newline. */
+	while (entity) {
+		if (GMIME_IS_MULTIPART (entity)) {
+			GMimeMultipart *multipart = (GMimeMultipart *) entity;
+			gsize length;
+			const guint8 *data;
+
+			if (!multipart_is_truncated (multipart))
+				return FALSE;
+			if (multipart->raw_trailing_boundary) {
+				data = g_bytes_get_data (multipart->raw_trailing_boundary, &length);
+				return length && data[length - 1] == '\n';
+			}
+			if (!multipart->children->len)
+				return TRUE;
+			entity = multipart->children->pdata[multipart->children->len - 1];
+		} else if (GMIME_IS_MESSAGE_PART (entity)) {
+			GMimeMessage *message = g_mime_message_part_get_message ((GMimeMessagePart *) entity);
+
+			if (!message || !message->mime_part)
+				return TRUE;
+			entity = message->mime_part;
+		} else {
+			return GMIME_IS_PART (entity) && !g_mime_part_get_content ((GMimePart *) entity);
+		}
+	}
+	return FALSE;
+}
+
+static ssize_t
+multipart_write_bytes (GMimeStream *stream, GMimeFormatOptions *options, GBytes *bytes,
+		       gboolean convert_newlines, gboolean ensure_newline)
+{
+	GMimeStream *filtered;
+	GMimeFilter *filter;
+	gconstpointer data;
+	gsize length;
+	ssize_t written;
+
+	data = g_bytes_get_data (bytes, &length);
+	if (!convert_newlines)
+		return _g_mime_stream_write_all (stream, data, length);
+
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_format_options_create_newline_filter (options, ensure_newline);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
+	written = _g_mime_stream_write_all (filtered, data, length);
+	if (written >= 0 && g_mime_stream_flush (filtered) < 0)
+		written = -1;
+	if (written >= 0)
+		written = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered);
+	g_object_unref (filtered);
+	return written;
+}
+
+static ssize_t
+multipart_write_reader_model (GMimeMultipart *multipart, GMimeFormatOptions *options,
+			      gboolean content_only, GMimeStream *stream)
+{
+	GMimeEntity *object = (GMimeEntity *) multipart;
+	gboolean ensure = object->ensure_newline || _g_mime_format_options_get_ensure_newline (options);
+	GMimeFormatOptions *format = NULL;
+	const char *boundary, *newline = g_mime_format_options_get_newline (options);
+	ssize_t written, total = 0;
+	guint i;
+
+	if (!content_only) {
+		if ((written = g_mime_header_list_write_to_stream (object->headers, options, stream)) < 0)
+			return -1;
+		total += written;
+	}
+	if (multipart->raw_preamble && g_bytes_get_size (multipart->raw_preamble)) {
+		written = multipart_write_bytes (stream, options, multipart->raw_preamble, TRUE,
+						multipart->children->len > 0 || ensure);
+		if (written < 0)
+			return -1;
+		total += written;
+	}
+
+	boundary = g_mime_multipart_get_boundary (multipart);
+	/* Signed multipart children must not inherit hidden-header filtering. */
+	format = _g_mime_format_options_clone (options,
+		!g_mime_content_type_is_type (object->content_type, "multipart", "signed"));
+	_g_mime_format_options_set_ensure_newline (format, FALSE);
+	for (i = 0; i < multipart->children->len; i++) {
+		GMimeEntity *part = multipart->children->pdata[i];
+		GBytes *raw = multipart->raw_boundaries ? multipart->raw_boundaries->pdata[i] : NULL;
+
+		if (i && !entity_ends_with_delimiter_newline (multipart->children->pdata[i - 1])) {
+			if ((written = g_mime_stream_write_string (stream, newline)) < 0)
+				goto fail;
+			total += written;
+		}
+		/* A raw opening marker may contain double or triple boundaries;
+		 * preserve the whole run, not just the last delimiter. */
+		written = raw ? multipart_write_bytes (stream, options, raw, FALSE, FALSE) :
+			g_mime_stream_printf (stream, "--%s%s", boundary, newline);
+		if (written < 0)
+			goto fail;
+		total += written;
+
+		_g_mime_format_options_set_ensure_newline (format, ensure && i + 1 == multipart->children->len &&
+			multipart_is_truncated (multipart) && !multipart->raw_trailing_boundary);
+		if ((written = g_mime_entity_write_to_stream (part, format, stream)) < 0)
+			goto fail;
+		total += written;
+	}
+	if (multipart->children->len && !entity_ends_with_delimiter_newline (
+	    multipart->children->pdata[multipart->children->len - 1]) &&
+	    (!multipart_is_truncated (multipart) || multipart->raw_trailing_boundary)) {
+		if ((written = g_mime_stream_write_string (stream, newline)) < 0)
+			goto fail;
+		total += written;
+	}
+
+	if (multipart_is_truncated (multipart)) {
+		/* There is no closing delimiter or epilogue after truncation, but
+		 * an opening marker at EOF may not have acquired a child. */
+		if (multipart->raw_trailing_boundary) {
+			gsize length;
+			const guint8 *data = g_bytes_get_data (multipart->raw_trailing_boundary, &length);
+
+			if ((written = multipart_write_bytes (stream, options, multipart->raw_trailing_boundary, FALSE, FALSE)) < 0)
+				goto fail;
+			total += written;
+			if (ensure && (!length || data[length - 1] != '\n')) {
+				if ((written = g_mime_stream_write_string (stream, newline)) < 0)
+					goto fail;
+				total += written;
+			}
+		}
+	} else {
+		/* A generated closing marker owns its newline only when there
+		 * is no raw epilogue; parsed epilogues already retain that CRLF. */
+		written = multipart->raw_end_boundary ?
+			multipart_write_bytes (stream, options, multipart->raw_end_boundary, FALSE, FALSE) :
+			g_mime_stream_printf (stream, "--%s--%s", boundary, multipart->raw_epilogue ? "" : newline);
+		if (written < 0)
+			goto fail;
+		total += written;
+		if (multipart->raw_epilogue && g_bytes_get_size (multipart->raw_epilogue)) {
+			if ((written = multipart_write_bytes (stream, options, multipart->raw_epilogue, TRUE, ensure)) < 0)
+				goto fail;
+			total += written;
+		} else if (ensure && (multipart->raw_end_boundary || multipart->raw_epilogue)) {
+			if ((written = g_mime_stream_write_string (stream, newline)) < 0)
+				goto fail;
+			total += written;
+		}
+	}
+	g_mime_format_options_free (format);
+	return total;
+
+fail:
+	g_mime_format_options_free (format);
+	return -1;
 }
 
 static ssize_t
@@ -171,6 +440,9 @@ multipart_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gbo
 	gboolean is_signed;
 	GMimeEntity *part;
 	guint i;
+
+	if (multipart->reader_model)
+		return multipart_write_reader_model (multipart, options, content_only, stream);
 	
 	boundary = g_mime_entity_get_content_type_parameter (object, "boundary");
 	newline = g_mime_format_options_get_newline (options);
@@ -346,10 +618,21 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 void
 g_mime_multipart_set_prologue (GMimeMultipart *multipart, const char *prologue)
 {
+	char *copy;
+
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+
+	if (multipart->reader_model && !g_strcmp0 (multipart->prologue, prologue))
+		return;
+	copy = g_strdup (prologue);
+	if (multipart->reader_model) {
+		g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
+		if (copy)
+			multipart->raw_preamble = g_bytes_new (copy, strlen (copy));
+	}
 	
 	g_free (multipart->prologue);
-	multipart->prologue = g_strdup (prologue);
+	multipart->prologue = copy;
 }
 
 
@@ -380,10 +663,28 @@ g_mime_multipart_get_prologue (GMimeMultipart *multipart)
 void
 g_mime_multipart_set_epilogue (GMimeMultipart *multipart, const char *epilogue)
 {
+	char *copy;
+
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+
+	if (multipart->reader_model && !g_strcmp0 (multipart->epilogue, epilogue))
+		return;
+	copy = g_strdup (epilogue);
+	if (multipart->reader_model) {
+		g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
+		if (copy) {
+			char *raw = g_strconcat (g_mime_format_options_get_newline (NULL), copy, NULL);
+
+			multipart->raw_epilogue = g_bytes_new_take (raw, strlen (raw));
+			if (multipart_is_truncated (multipart)) {
+				g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
+				multipart->write_end_boundary = TRUE;
+			}
+		}
+	}
 	
 	g_free (multipart->epilogue);
-	multipart->epilogue = g_strdup (epilogue);
+	multipart->epilogue = copy;
 }
 
 
@@ -473,6 +774,11 @@ multipart_clear (GMimeMultipart *multipart)
 		g_object_unref (multipart->children->pdata[i]);
 	
 	g_ptr_array_set_size (multipart->children, 0);
+	g_clear_pointer (&multipart->raw_boundaries, g_ptr_array_unref);
+	g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
+	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+	if (multipart->reader_model)
+		multipart->write_end_boundary = TRUE;
 }
 
 
@@ -494,6 +800,9 @@ g_mime_multipart_clear (GMimeMultipart *multipart)
 static void
 multipart_add (GMimeMultipart *multipart, GMimeEntity *part)
 {
+	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+	if (multipart->raw_boundaries)
+		g_ptr_array_add (multipart->raw_boundaries, NULL);
 	g_ptr_array_add (multipart->children, part);
 	g_object_ref (part);
 }
@@ -541,6 +850,9 @@ ptr_array_insert (GPtrArray *array, guint index, gpointer object)
 static void
 multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
 {
+	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+	if (multipart->raw_boundaries)
+		ptr_array_insert (multipart->raw_boundaries, index, NULL);
 	ptr_array_insert (multipart->children, index, part);
 	g_object_ref (part);
 }
@@ -568,9 +880,11 @@ g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part
 static gboolean
 multipart_remove (GMimeMultipart *multipart, GMimeEntity *part)
 {
-	if (!g_ptr_array_remove (multipart->children, part))
+	int index = multipart_index_of (multipart, part);
+
+	if (index < 0)
 		return FALSE;
-	
+	multipart_remove_at (multipart, index);
 	g_object_unref (part);
 	
 	return TRUE;
@@ -605,6 +919,9 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 		return NULL;
 	
 	part = multipart->children->pdata[index];
+	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+	if (multipart->raw_boundaries)
+		g_ptr_array_remove_index (multipart->raw_boundaries, index);
 	
 	g_ptr_array_remove_index (multipart->children, index);
 	
@@ -657,6 +974,7 @@ g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *rep
 		return NULL;
 	
 	replaced = multipart->children->pdata[index];
+	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
 	multipart->children->pdata[index] = replacement;
 	g_object_ref (replacement);
 	

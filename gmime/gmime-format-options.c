@@ -46,6 +46,7 @@ struct _GMimeFormatOptions {
 	gboolean mixed_charsets;
 	gboolean international;
 	gboolean always_quote_param_values;
+	gboolean ensure_newline;
 	GPtrArray *hidden;
 	guint maxline;
 };
@@ -111,6 +112,7 @@ g_mime_format_options_new (void)
 	options->mixed_charsets = FALSE;
 	options->international = FALSE;
 	options->always_quote_param_values = FALSE;
+	options->ensure_newline = FALSE;
 	options->maxline = 78;
 	
 	return options;
@@ -141,6 +143,7 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 	clone->mixed_charsets = options->mixed_charsets;
 	clone->international = options->international;
 	clone->always_quote_param_values = options->always_quote_param_values;
+	clone->ensure_newline = options->ensure_newline;
 	clone->maxline = options->maxline;
 	
 	clone->hidden = g_ptr_array_new ();
@@ -151,6 +154,18 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 	}
 	
 	return clone;
+}
+
+gboolean
+_g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options)
+{
+	return (options ? options : default_options)->ensure_newline;
+}
+
+void
+_g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure)
+{
+	options->ensure_newline = ensure;
 }
 
 
@@ -335,6 +350,8 @@ g_mime_format_options_get_newline_format (GMimeFormatOptions *options)
  * @newline: a #GMimeNewLineFormat
  *
  * Sets the new-line format that should be used when writing headers and messages.
+ * Only %GMIME_NEWLINE_FORMAT_UNIX and %GMIME_NEWLINE_FORMAT_DOS are valid;
+ * %GMIME_NEWLINE_FORMAT_MIXED describes input, not an output format.
  **/
 void
 g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline)

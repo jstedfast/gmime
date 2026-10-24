@@ -59,6 +59,7 @@
 #include <gmime/gmime-domain-list.h>
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-codecs.h>
+#include <gmime/gmime-compliance.h>
 #include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-parser.h>
@@ -66,6 +67,7 @@
 #include <gmime/gmime-types.h>
 #include <gmime/gmime-message-id-list.h>
 #include <gmime/gmime-stream.h>
+#include <gmime/gmime-reader.h>
 #include <gmime/gmime-stream-block.h>
 #include <gmime/gmime-stream-buffer.h>
 #include <gmime/gmime-stream-cat.h>

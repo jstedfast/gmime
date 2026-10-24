@@ -60,6 +60,12 @@ struct _GMimeMultipart {
 	
 	/* < private > */
 	gboolean write_end_boundary;
+	gboolean reader_model;
+	GBytes *raw_preamble;
+	GBytes *raw_epilogue;
+	GBytes *raw_end_boundary;
+	GBytes *raw_trailing_boundary;
+	GPtrArray *raw_boundaries;
 };
 
 struct _GMimeMultipartClass {

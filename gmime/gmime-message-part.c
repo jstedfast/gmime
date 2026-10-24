@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "gmime-message-part.h"
+#include "gmime-internal.h"
 #include "gmime-visitor.h"
 
 #define d(x)
@@ -155,7 +156,16 @@ message_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, 
 	
 	/* write the message */
 	if (message) {
-		if (message->marker && (len = strlen (message->marker)) > 0) {
+		GMimeFormatOptions *format = options;
+
+		if (message->raw_marker) {
+			gsize length;
+			gconstpointer data = g_bytes_get_data (message->raw_marker, &length);
+
+			if ((nwritten = _g_mime_stream_write_all (stream, data, length)) < 0)
+				return -1;
+			total += nwritten;
+		} else if (message->marker && (len = strlen (message->marker)) > 0) {
 			if (*(eoln = message->marker + (len - 1)) == '\n') {
 				if (eoln > message->marker && eoln[-1] == '\r')
 					eoln--;
@@ -182,7 +192,16 @@ message_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, 
 			}
 		}
 		
-		if ((nwritten = g_mime_entity_write_to_stream ((GMimeEntity *) message, options, stream)) == -1)
+		/* An enclosing truncated multipart may require the embedded
+		 * message's final body to supply the terminating newline. */
+		if (object->ensure_newline) {
+			format = _g_mime_format_options_clone (options, TRUE);
+			_g_mime_format_options_set_ensure_newline (format, TRUE);
+		}
+		nwritten = g_mime_entity_write_to_stream ((GMimeEntity *) message, format, stream);
+		if (format != options)
+			g_mime_format_options_free (format);
+		if (nwritten == -1)
 			return -1;
 		
 		total += nwritten;

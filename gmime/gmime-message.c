@@ -256,6 +256,7 @@ g_mime_message_finalize (GObject *object)
 	g_free (message->resent_message_id);
 	g_free (message->subject);
 	g_free (message->marker);
+	g_clear_pointer (&message->raw_marker, g_bytes_unref);
 	g_mime_event_remove (message->references->changed, (GMimeEventCallback) references_changed, message);
 	g_object_unref (message->references);
 	

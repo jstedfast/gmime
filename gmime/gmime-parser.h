@@ -47,21 +47,6 @@ typedef struct _GMimeParserClass GMimeParserClass;
 
 
 /**
- * GMimeFormat:
- * @GMIME_FORMAT_MESSAGE: The stream contains a single message.
- * @GMIME_FORMAT_MBOX: The stream is in the UNIX mbox format.
- * @GMIME_FORMAT_MMDF: The stream is in the MMDF format.
- *
- * An enum of formats.
- **/
-typedef enum {
-	GMIME_FORMAT_MESSAGE,
-	GMIME_FORMAT_MBOX,
-	GMIME_FORMAT_MMDF
-} GMimeFormat;
-
-
-/**
  * GMimeParser:
  * @parent_object: parent #GObject
  * @priv: private parser state

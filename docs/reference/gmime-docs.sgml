@@ -45,6 +45,8 @@
 <!ENTITY GMimeFormatOptions SYSTEM "xml/gmime-format-options.xml">
 <!ENTITY GMimeParserOptions SYSTEM "xml/gmime-parser-options.xml">
 <!ENTITY GMimeParser SYSTEM "xml/gmime-parser.xml">
+<!ENTITY GMimeReader SYSTEM "xml/gmime-reader.xml">
+<!ENTITY gmime-compliance SYSTEM "xml/gmime-compliance.xml">
 <!ENTITY gmime-charset SYSTEM "xml/gmime-charset.xml">
 <!ENTITY gmime-iconv SYSTEM "xml/gmime-iconv.xml">
 <!ENTITY gmime-iconv-utils SYSTEM "xml/gmime-iconv-utils.xml">
@@ -297,6 +299,8 @@ string utilities, file utilities, a main loop abstraction, and so on.
       <title>Parsing Messages and MIME Parts</title>
       &GMimeParserOptions;
       &GMimeParser;
+      &GMimeReader;
+      &gmime-compliance;
     </chapter>
 
     <chapter id="CryptoContexts">

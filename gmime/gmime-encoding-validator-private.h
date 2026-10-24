@@ -73,11 +73,11 @@ G_GNUC_INTERNAL void _g_mime_encoding_validator_flush (GMimeEncodingValidator *v
 
 /* Nonnegative byte offsets; one-based line/column numbers start at this position. */
 G_GNUC_INTERNAL GMimeEncodingValidator *_g_mime_base64_validator_new (GMimeEncodingIssueFunc report,
-				gpointer user_data, gint64 stream_offset, guint line_number);
+				gpointer user_data, gint64 stream_offset, guint64 line_number);
 G_GNUC_INTERNAL GMimeEncodingValidator *_g_mime_quoted_printable_validator_new (GMimeEncodingIssueFunc report,
-				gpointer user_data, gint64 stream_offset, guint line_number);
+				gpointer user_data, gint64 stream_offset, guint64 line_number);
 G_GNUC_INTERNAL GMimeEncodingValidator *_g_mime_uu_validator_new (GMimeEncodingIssueFunc report,
-				gpointer user_data, gint64 stream_offset, guint line_number);
+				gpointer user_data, gint64 stream_offset, guint64 line_number);
 
 G_END_DECLS
 #endif

@@ -101,6 +101,9 @@ struct _GMimeHeader {
 	gint64 offset;
 	gboolean owns_options;
 	gboolean explicit_raw_value;
+	GBytes *raw_field_bytes;
+	GBytes *raw_value_bytes;
+	gboolean invalid;
 };
 
 struct _GMimeHeaderClass {

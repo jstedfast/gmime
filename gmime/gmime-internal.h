@@ -30,6 +30,7 @@
 #include <gmime/gmime-utils.h>
 #include <gmime/gmime-stream-filter.h>
 #include <gmime/gmime-text-part.h>
+#include <gmime/gmime-multipart.h>
 
 G_BEGIN_DECLS
 
@@ -50,6 +51,8 @@ typedef struct {
 G_GNUC_INTERNAL void g_mime_format_options_init (void);
 G_GNUC_INTERNAL void g_mime_format_options_shutdown (void);
 G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden);
+G_GNUC_INTERNAL gboolean _g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options);
+G_GNUC_INTERNAL void _g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure);
 
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
@@ -61,6 +64,10 @@ G_GNUC_INTERNAL void _g_mime_parser_options_warn (GMimeParserOptions *options, g
 G_GNUC_INTERNAL GMimeStream *_g_mime_parser_read_to_eos (GMimeParser *parser, GError **error);
 
 /* GMimeHeader */
+G_GNUC_INTERNAL GMimeContentEncoding _g_mime_header_get_content_encoding (GMimeHeader *header);
+G_GNUC_INTERNAL GMimeHeader *_g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffer,
+							  gsize length, gsize name_length, gsize field_length,
+							  gboolean invalid, gint64 offset);
 //G_GNUC_INTERNAL void _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
 G_GNUC_INTERNAL void _g_mime_header_set_offset (GMimeHeader *header, gint64 offset);
 
@@ -72,6 +79,9 @@ G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const
 G_GNUC_INTERNAL void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *raw_value);
 G_GNUC_INTERNAL ssize_t _g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions *options,
 							  GMimeStream *stream);
+
+/* GMimeContentEncoding */
+G_GNUC_INTERNAL GMimeContentEncoding _g_mime_content_encoding_parse (const char *text, gsize length);
 
 /* GMimeStream */
 G_GNUC_INTERNAL ssize_t _g_mime_stream_write_all (GMimeStream *stream, const char *buffer, size_t len);
@@ -89,6 +99,11 @@ G_GNUC_INTERNAL void _g_mime_entity_append_header (GMimeEntity *object, const ch
 
 /* GMimeTextPart */
 G_GNUC_INTERNAL gboolean _g_mime_text_part_is_format (GMimeTextPart *part, GMimeTextFormat format);
+
+/* GMimeMultipart */
+G_GNUC_INTERNAL void _g_mime_multipart_initialize_from_reader (GMimeMultipart *multipart);
+G_GNUC_INTERNAL void _g_mime_multipart_add_with_boundary (GMimeMultipart *multipart, GMimeEntity *part, GBytes *boundary);
+G_GNUC_INTERNAL void _g_mime_multipart_set_raw_text (GMimeMultipart *multipart, GBytes *bytes, gboolean epilogue);
 
 /* GMimePart */
 G_GNUC_INTERNAL GMimeHeaderList *_g_mime_part_load_fields (GMimePart *part, const char *name, GError **error);

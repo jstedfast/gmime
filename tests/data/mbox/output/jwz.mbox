@@ -407,10 +407,15 @@ Content-Type: Multipart/Mixed
    Content-Type: text/plain
    Content-Type: Multipart/MIXED
       Content-Type: Message/External-body
+         Content-Type: text/plain
       Content-Type: Message/External-body
+         Content-Type: text/plain
       Content-Type: message/external-body
+         Content-Type: TEXT/HTML
       Content-Type: message/external-body
+         Content-Type: image/gif
       Content-Type: message/external-body
+         Content-Type: image/gif
 
 message offsets: 4201647, 4206093
 header offsets: 4201655, 4202219
@@ -422,7 +427,9 @@ Content-Type: Multipart/Mixed
    Content-Type: text/plain
    Content-Type: Multipart/Alternative
       Content-Type: Message/External-body
+         Content-Type: text/plain
       Content-Type: Message/External-body
+         Content-Type: text/plain
 
 message offsets: 4206093, 4212327
 header offsets: 4206101, 4206568
@@ -559,8 +566,10 @@ Content-Type: multipart/mixed
    Content-Type: audio/basic
    Content-Type: text/enriched
    Content-Type: message/external-body
+      Content-Type: text/plain
    Content-Type: text/enriched
    Content-Type: message/external-body
+      Content-Type: text/plain
    Content-Type: text/enriched
 
 message offsets: 4702359, 4779012
@@ -1271,8 +1280,10 @@ Content-Type: multipart/alternative
    Content-Type: multipart/mixed
       Content-Type: text/richtext
       Content-Type: message/external-body
+         Content-Type: audio/basic
       Content-Type: text/plain
       Content-Type: message/external-body
+         Content-Type: image/gif
       Content-Type: text/richtext
 
 message offsets: 8523392, 8525601
@@ -1855,10 +1866,12 @@ Content-Type: multipart/alternative
    Content-Type: multipart/mixed
       Content-Type: text/richtext
       Content-Type: message/external-body
+         Content-Type: text/X-HTML
       Content-Type: text/richtext
       Content-Type: text/SGML
       Content-Type: text/richtext
       Content-Type: message/external-body
+         Content-Type: text/X-HTML
       Content-Type: text/richtext
       Content-Type: image/gif
       Content-Type: text/richtext

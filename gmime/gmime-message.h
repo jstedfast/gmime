@@ -148,6 +148,7 @@ struct _GMimeMessage {
 	
 	/* <private> */
 	char *marker;
+	GBytes *raw_marker;
 	char *in_reply_to;
 	char *resent_message_id;
 	GMimeMessageIdList *references;

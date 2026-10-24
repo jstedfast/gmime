@@ -27,6 +27,20 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GMimeFormat:
+ * @GMIME_FORMAT_MESSAGE: The stream contains a single message.
+ * @GMIME_FORMAT_MBOX: The stream is in the UNIX mbox format.
+ * @GMIME_FORMAT_MMDF: The stream is in the MMDF format.
+ *
+ * The input format used by a reader or parser.
+ **/
+typedef enum {
+	GMIME_FORMAT_MESSAGE,
+	GMIME_FORMAT_MBOX,
+	GMIME_FORMAT_MMDF
+} GMimeFormat;
+
 #define GMIME_TYPE_PARSER_OPTIONS (g_mime_parser_options_get_type ())
 
 /**
@@ -125,6 +139,9 @@ void g_mime_parser_options_set_allow_unquoted_commas_in_addresses (GMimeParserOp
 
 gboolean g_mime_parser_options_get_respect_content_length (GMimeParserOptions *options);
 void g_mime_parser_options_set_respect_content_length (GMimeParserOptions *options, gboolean respect);
+
+gboolean g_mime_parser_options_get_detect_openpgp (GMimeParserOptions *options);
+void g_mime_parser_options_set_detect_openpgp (GMimeParserOptions *options, gboolean detect);
 
 int g_mime_parser_options_get_max_address_group_depth (GMimeParserOptions *options);
 void g_mime_parser_options_set_max_address_group_depth (GMimeParserOptions *options, int max_depth);

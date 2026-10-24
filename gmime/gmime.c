@@ -193,6 +193,7 @@ g_mime_init (void)
 	g_mime_entity_register_type ("*", "*", g_mime_part_get_type ());
 	g_mime_entity_register_type ("text", "*", g_mime_text_part_get_type ());
 	g_mime_entity_register_type ("text", "rfc822-headers", g_mime_text_rfc822_headers_get_type ());
+	g_mime_entity_register_type ("application", "rtf", g_mime_text_part_get_type ());
 	g_mime_entity_register_type ("application", "x-pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
 	g_mime_entity_register_type ("application", "pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
 	g_mime_entity_register_type ("multipart", "*", g_mime_multipart_get_type ());
@@ -205,6 +206,8 @@ g_mime_init (void)
 	g_mime_entity_register_type ("message", "rfc2822", g_mime_message_part_get_type ());
 	g_mime_entity_register_type ("message", "global", g_mime_message_part_get_type ());
 	g_mime_entity_register_type ("message", "news", g_mime_message_part_get_type ());
+	g_mime_entity_register_type ("message", "external-body", g_mime_message_part_get_type ());
+	g_mime_entity_register_type ("message", "global-headers", g_mime_text_rfc822_headers_get_type ());
 	g_mime_entity_register_type ("message", "partial", g_mime_message_partial_get_type ());
 	g_mime_entity_register_type ("message", "delivery-status", g_mime_message_delivery_status_get_type ());
 	g_mime_entity_register_type ("message", "global-delivery-status", g_mime_message_delivery_status_get_type ());

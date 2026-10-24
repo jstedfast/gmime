@@ -27,6 +27,7 @@
 
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-encodings.h>
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-utils.h>
 
@@ -56,6 +57,10 @@ struct _GMimeContent {
 
 	GMimeContentEncoding encoding;
 	GMimeStream *stream;
+
+	/* <private> */
+	GMimeNewLineFormat newline_format;
+	gboolean has_newline_format;
 };
 
 struct _GMimeContentClass {
@@ -76,6 +81,10 @@ GMimeStream *g_mime_content_get_stream (GMimeContent *content);
 
 void g_mime_content_set_encoding (GMimeContent *content, GMimeContentEncoding encoding);
 GMimeContentEncoding g_mime_content_get_encoding (GMimeContent *content);
+
+gboolean g_mime_content_get_newline_format (GMimeContent *content, GMimeNewLineFormat *format);
+void g_mime_content_set_newline_format (GMimeContent *content, GMimeNewLineFormat format);
+void g_mime_content_clear_newline_format (GMimeContent *content);
 
 GMimeStream *g_mime_content_open (GMimeContent *content);
 

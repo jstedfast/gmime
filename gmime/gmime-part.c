@@ -385,13 +385,17 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 		}
 		
 		if (part->encoding != GMIME_CONTENT_ENCODING_BINARY) {
-			filter = g_mime_format_options_create_newline_filter (options, object->ensure_newline);
+			filter = g_mime_format_options_create_newline_filter (
+				options, object->ensure_newline || _g_mime_format_options_get_ensure_newline (options));
 			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 			g_object_unref (filter);
 		}
 		
 		nwritten = g_mime_content_decode_to_stream (part->content, filtered);
-		g_mime_stream_flush (filtered);
+		if (nwritten >= 0 && g_mime_stream_flush (filtered) < 0)
+			nwritten = -1;
+		if (nwritten >= 0)
+			nwritten = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered);
 		g_object_unref (filtered);
 		
 		if (nwritten == -1)
@@ -414,13 +418,17 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 		filtered = g_mime_stream_filter_new (stream);
 		
 		if (part->encoding != GMIME_CONTENT_ENCODING_BINARY) {
-			filter = g_mime_format_options_create_newline_filter (options, object->ensure_newline);
+			filter = g_mime_format_options_create_newline_filter (
+				options, object->ensure_newline || _g_mime_format_options_get_ensure_newline (options));
 			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 			g_object_unref (filter);
 		}
 		
 		nwritten = g_mime_stream_write_to_stream (content, filtered);
-		g_mime_stream_flush (filtered);
+		if (nwritten >= 0 && g_mime_stream_flush (filtered) < 0)
+			nwritten = -1;
+		if (nwritten >= 0)
+			nwritten = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered);
 		g_mime_stream_reset (content);
 		g_object_unref (filtered);
 		
@@ -1103,7 +1111,7 @@ g_mime_part_get_content_encoding (GMimePart *mime_part)
 		 * must not replace the first header's value in the cache. */
 		header = g_mime_header_list_get_header (((GMimeEntity *) mime_part)->headers, "Content-Transfer-Encoding");
 		if (header)
-			mime_part->encoding = g_mime_content_encoding_from_string (g_mime_header_get_value (header));
+			mime_part->encoding = _g_mime_header_get_content_encoding (header);
 		mime_part->encoding_loaded = TRUE;
 	}
 	

@@ -49,6 +49,7 @@ struct _GMimeParserOptions {
 	gboolean allow_no_domain;
 	gboolean allow_unquoted_commas;
 	gboolean respect_content_length;
+	gboolean detect_openpgp;
 	int max_address_group_depth;
 	int max_mime_depth;
 	int max_header_length;
@@ -134,6 +135,7 @@ g_mime_parser_options_new (void)
 	options->allow_no_domain = TRUE;
 	options->allow_unquoted_commas = TRUE;
 	options->respect_content_length = FALSE;
+	options->detect_openpgp = FALSE;
 	options->max_address_group_depth = 3;
 	options->max_mime_depth = 1024;
 	options->max_header_length = 16 * 1024 * 1024;
@@ -168,6 +170,7 @@ g_mime_parser_options_clone (GMimeParserOptions *options)
 	clone->allow_no_domain = options->allow_no_domain;
 	clone->allow_unquoted_commas = options->allow_unquoted_commas;
 	clone->respect_content_length = options->respect_content_length;
+	clone->detect_openpgp = options->detect_openpgp;
 	clone->max_address_group_depth = options->max_address_group_depth;
 	clone->max_mime_depth = options->max_mime_depth;
 	clone->max_header_length = options->max_header_length;
@@ -364,6 +367,42 @@ g_mime_parser_options_set_respect_content_length (GMimeParserOptions *options, g
 	g_return_if_fail (options != NULL);
 
 	options->respect_content_length = respect;
+}
+
+
+/**
+ * g_mime_parser_options_get_detect_openpgp:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ *
+ * Gets whether parsing scans leaf content for inline OpenPGP armor markers.
+ * The default is %FALSE. This does not affect explicit OpenPGP detection
+ * through g_mime_part_get_openpgp_data() or #GMimeFilterOpenPGP.
+ *
+ * Returns: %TRUE if parsing should detect inline OpenPGP data.
+ **/
+gboolean
+g_mime_parser_options_get_detect_openpgp (GMimeParserOptions *options)
+{
+	return options ? options->detect_openpgp : default_options->detect_openpgp;
+}
+
+
+/**
+ * g_mime_parser_options_set_detect_openpgp:
+ * @options: a #GMimeParserOptions
+ * @detect: whether to scan for inline OpenPGP armor markers while parsing
+ *
+ * Enables GMime's optional inline OpenPGP detection extension. This scans
+ * the original transfer-encoded content, not decoded Base64 or uuencoded
+ * bytes. g_mime_part_get_openpgp_data() can still detect decoded content
+ * on demand when parsing has not cached a result.
+ **/
+void
+g_mime_parser_options_set_detect_openpgp (GMimeParserOptions *options, gboolean detect)
+{
+	g_return_if_fail (options != NULL);
+
+	options->detect_openpgp = detect;
 }
 
 

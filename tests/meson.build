@@ -7,6 +7,7 @@ testsuite_lib = static_library(
 
 normal_tests = [
   'test-stream-block', 'test-substreams',
+  'test-reader', 'test-parser-model',
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',
   'test-encodings', 'test-codecs', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
   'test-mime-part', 'test-partial', 'test-mbox', 'test-autocrypt', 'test-mime', 'test-types',
@@ -34,6 +35,8 @@ foreach name : normal_tests
 endforeach
 
 standalone_sources = {
+  'address-validator': ['../gmime/gmime-address-validator.c'],
+  'reader-simd': ['../gmime/gmime-reader-simd.c'],
   'codecs': [
     '../gmime/gmime-encoder.c', '../gmime/gmime-decoder.c', '../gmime/gmime-codec-simd.c',
     '../gmime/gmime-base64-encoder.c', '../gmime/gmime-base64-decoder.c',

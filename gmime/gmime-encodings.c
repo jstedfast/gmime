@@ -25,6 +25,7 @@
 
 #include "gmime-common.h"
 #include "gmime-encodings.h"
+#include "gmime-internal.h"
 
 
 /**
@@ -66,39 +67,55 @@ is (const char *str, size_t length, const char *value)
 GMimeContentEncoding
 g_mime_content_encoding_from_string (const char *str)
 {
-	const char *start;
+	return _g_mime_content_encoding_parse (str, str ? strlen (str) : 0);
+}
+
+GMimeContentEncoding
+_g_mime_content_encoding_parse (const char *str, gsize count)
+{
+	const char *start, *end;
 	gunichar c;
 	size_t length;
 
 	if (!str)
 		return GMIME_CONTENT_ENCODING_UNSPECIFIED;
 
+	end = str + count;
+
 	/* MimeKit uses Char.IsWhiteSpace, not MIME linear whitespace. Validate
 	 * each code point before advancing so truncated UTF-8 stays in bounds. */
-	while (*str) {
-		c = g_utf8_get_char_validated (str, -1);
+	while (str < end) {
+		c = g_utf8_get_char_validated (str, end - str);
+
 		if (c == (gunichar) -1 || c == (gunichar) -2)
 			return GMIME_CONTENT_ENCODING_UNSPECIFIED;
+
 		if (!_g_mime_is_unicode_whitespace (c))
 			break;
+
 		str = g_utf8_next_char (str);
 	}
 
 	start = str;
+
 	/* Only the first token matters: delimiters allow arbitrary trailing
 	 * text, but an embedded comment or extra name byte rejects the token. */
-	while (*str && *str != ';') {
-		c = g_utf8_get_char_validated (str, -1);
+	while (str < end && *str != ';') {
+		c = g_utf8_get_char_validated (str, end - str);
+
 		if (c == (gunichar) -1 || c == (gunichar) -2)
 			return GMIME_CONTENT_ENCODING_UNSPECIFIED;
+
 		if (_g_mime_is_unicode_whitespace (c))
 			break;
+
 		str = g_utf8_next_char (str);
 	}
+
 	length = str - start;
 
-	/* Retain GMime's historical hyphenated aliases even though MimeKit
-	 * only recognizes the canonical 7bit and 8bit spellings. */
+	/* "7bit" and "8bit" are the official values,
+	   but we'll also support "7-bit" and "8-bit" */
 	if (is (start, length, "7bit") || is (start, length, "7-bit"))
 		return GMIME_CONTENT_ENCODING_7BIT;
 	else if (is (start, length, "8bit") || is (start, length, "8-bit"))

@@ -32,6 +32,8 @@ G_BEGIN_DECLS
  * GMimeNewLineFormat:
  * @GMIME_NEWLINE_FORMAT_UNIX: The Unix New-Line format ("\n").
  * @GMIME_NEWLINE_FORMAT_DOS: The DOS New-Line format ("\r\n").
+ * @GMIME_NEWLINE_FORMAT_MIXED: Both LF and CRLF occur in parsed content.
+ *   This input hint cannot be selected as an output or encoder format.
  *
  * There are two commonly used line-endings used by modern Operating Systems.
  * Unix-based systems such as Linux and Mac OS use a single character ('\n' aka LF)
@@ -41,7 +43,8 @@ G_BEGIN_DECLS
  **/
 typedef enum {
 	GMIME_NEWLINE_FORMAT_UNIX,
-	GMIME_NEWLINE_FORMAT_DOS
+	GMIME_NEWLINE_FORMAT_DOS,
+	GMIME_NEWLINE_FORMAT_MIXED
 } GMimeNewLineFormat;
 
 

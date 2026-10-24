@@ -100,7 +100,9 @@ This is an incremental migration, not yet a declaration of feature parity.
   their raw body content. The root entity has depth 0; each multipart
   child or embedded-message body adds one level. Existing warning callbacks
   report limit violations. The legacy recursive parser is still in use;
-  the explicit-stack reader and writer have not yet been ported.
+  an explicit-stack entity reader and private header/leaf model adapter
+  are available. Container/message model assembly, public parser integration
+  and the iterative writer remain separate work.
 
 - `GMimeMultipartReport` is a `GMimeMultipart` subclass for multipart/report.
   Its constructor requires a UTF-8 report type; get/set_report_type()
@@ -2207,6 +2209,527 @@ These primitives do not change the legacy TextPart.get_text() behavior.
 Automatic charset selection, HTML meta-charset detection and the checked
 TextPart.TryDetectEncoding()/GetText(out Encoding) APIs remain unported.
 
+### Reader header foundation and opt-in OpenPGP detection
+
+GMimeReader begins the direct port of MimeKit's synchronous MimeReader.
+Its header-only operation uses its own 128-byte read-ahead area and
+4096-byte block buffer, not the legacy recursive GMimeParser. It preserves
+folds, complete wire bytes, malformed trailing headers, stream offsets and
+1-based line numbers. It fills short reads when lookahead requires them,
+without seeking, resetting or closing the input stream.
+
+The GObject virtual callbacks are headers_begin(), header_read(),
+body_separator() and headers_end(). For C, header_read() exposes a borrowed
+byte array plus field-name/colon lengths and an invalid flag instead of
+allocating a managed Header. This also preserves embedded NULs without
+forcing wire data through GMimeHeader's NUL-terminated string interface.
+Callbacks must copy retained bytes, return a boolean and optionally set
+GError on failure. The reader retains itself during callbacks and makes
+failures sticky until set_stream(). Stream and options changes, reentrant
+reading and underlying stream manipulation are not allowed during callbacks.
+Options are cloned; warning callback user data remains borrowed.
+
+Header-only reads do not seek mailbox markers or strip a UTF-8 BOM.
+Empty input succeeds with headers_begin() only. A bare final CR is treated
+as a separator. An invalid leading From-line completes the empty
+headers_end() notification before failing, matching MimeReader's
+header-only operation. Header-length limits include folded lines and
+terminators and are checked before growing the header buffer.
+
+The entity, message and synchronous-completion increments below extend this
+foundation with mailbox traversal, compliance reporting and SIMD scanning.
+The reader-backed parser adapter, loading integration and async operations
+remain separate work.
+
+GMimeParserOptions.detect_openpgp defaults to FALSE, as selected for GMime 4.
+The legacy parser now scans leaf wire content for inline OpenPGP armor only
+when explicitly enabled, preserving its previous state-machine behavior.
+Disabling detection leaves the part's OpenPGP cache unknown rather than
+claiming no OpenPGP data exists. Explicit Part.get_openpgp_data() and the
+OpenPGP filter still inspect decoded content on demand, including Base64
+and uuencoded data. Enabling detection does not decode transfer encodings
+while parsing. The setting is cloned with parser options and captured for
+each part/message construction, including mailbox reuse.
+
+### Reader explicit-stack entity traversal
+
+GMimeReader.read_entity() ports the synchronous entity path from the actual
+MimeKit MimeReader.cs and MimeBoundary.cs, retaining their MIT attribution.
+It consumes an entity through end of input using the reader's own buffer,
+without invoking GMimeParser or building a MIME object tree. Heap-allocated
+frames replace recursive descent for multipart and unencoded embedded
+message containers. MaxMimeDepth uses the source's strict depth comparison:
+containers at the limit become opaque leaves. Transfer-encoded message
+parts also remain leaves; multipart encoding does not change its structure.
+
+The new entity_begin()/entity_end() virtuals use GMimeReaderEntityType to
+coalesce MimeKit's separate leaf, multipart and message-part callbacks.
+content_begin()/content_read()/content_end() use GMimeReaderContentType to
+distinguish leaf wire content, preamble and epilogue. Message envelopes
+inside message parts have message_begin()/message_end() callbacks around
+their root entities. Headers precede entity/message begin callbacks.
+Borrowed content types must not be modified during callbacks. Raw data
+chunks have unspecified sizes, preserve binary bytes, and are never
+transfer-decoded. The content end offset measures delivered bytes, while
+entity end offsets are clamped to the entity's start; entity line counts
+describe content rather than headers.
+
+Delimiter recognition checks the innermost active boundary first, then
+ancestors. An ancestor delimiter unwinds truncated descendants without
+consuming the ancestor's delimiter. Missing closing delimiters and missing
+body separators are tolerated in nested entities. Preambles keep their
+trailing newline. Leaf content and epilogues withhold a possible trailing
+CR/LF across refills, discarding it only when a delimiter is recognized.
+At EOF it is delivered as content. Opening delimiter callbacks include the
+delimiter's newline; closing delimiter callbacks leave that newline for
+the epilogue. Neither includes the preceding content newline.
+
+The scalar scanner uses bounded memchr() calls and fixed-size content
+staging, not unbounded line/body buffering. Possible incomplete delimiters
+are held for lookahead; incomplete lines of at least 1000 bytes are treated
+as body data, as in the reference. Boundary-like bytes in the middle of a
+long line are not recognized. Header-only behavior is unchanged. Callback
+and I/O errors remain sticky, stop notifications immediately, and release
+all active frame/type/boundary references. set_stream() discards the failed
+operation's state without resetting or closing either stream.
+
+Line positions and the last two consumed bytes are retained independently
+of buffer movement. In contrast to the source's short-read-sensitive
+lookbehind in malformed/empty nested header blocks, end offsets therefore
+consistently exclude the newline before a boundary even after a refill.
+An immediate embedded-message delimiter is fully probed before deciding
+that the message is absent; a short read does not synthesize an empty
+message/root pair. The inherited eos() contract still describes successful
+operations, including when an empty entity read fails.
+
+Validation covers native callback order, every callback-abort point, I/O
+failure at every byte, stream replacement after failure, binary/long-line
+streaming, 2048 embedded messages and 512 truncated multiparts unwound by
+an ancestor delimiter. The actual-source harness checks 25,776 entity
+cases and verifies delivered wire ranges and entity/message end geometry
+for every successful case. 25,248 have identical same-chunk traces. The
+remaining 528 are explicitly classified below, not unexplained allowances.
+Each of the 100 short-read exceptions must also match the full-buffer
+actual-source trace (with only the checked CRLF offset correction).
+
+The original 552 exceptions included a genuine porting bug in 24 cases
+using an invalid 1001-byte boundary. The native scanner refilled between
+already-buffered complete lines. This could establish EOF before checking
+an oversized incomplete delimiter and recognize it as a closing boundary.
+MimeReader.ScanContent() scans the buffered batch first, consuming that
+incomplete line as content under SmtpMaxLineLength before its next refill.
+The native scanner now does the same; all 24 cases have exact same-chunk
+trace parity. There is no oversized-delimiter exemption in the harness.
+test_entity_oversized_delimiter() checks EOF and newline-terminated variants
+at four large read sizes.
+
+The remaining deliberate behavioral differences are reference correctness
+fixes or the existing native operation contract, not C ownership changes:
+
+* 380 cases: only entity/message end and clamped header-end offsets differ.
+  MimeReader.GetEndOffset() consults input[index - 1/-2], while header reads
+  use ReadAhead(..., save: 0); a refill can discard that lookbehind. The
+  reference reports an end 1 or 2 bytes too far forward across the actual
+  preceding LF/CRLF. Native end offsets consistently exclude that newline.
+  Every other event field, including line counts and all bytes, is equal.
+* 80 cases: MessagePartBegin() performs one ReadAhead(), treats the buffer
+  sentinel as an end-of-line and misses an incomplete immediate delimiter.
+  Nested header parsing later finds it, but the reference has already
+  emitted an empty headers/message/root sequence. Native lookahead waits
+  for the actual line end or EOF and omits that nonexistent message.
+* 12 cases: the same sentinel probe mistakes an incomplete closing marker
+  for its opening prefix (e.g. "--b" from "--b--\n"). The reference emits
+  an opening delimiter, terminates early and leaves input unread; native
+  emits the closing delimiter and consumes its newline as epilogue.
+* 2 cases: the sentinel probe recognizes a closing marker ending at a
+  buffered CR. SkipBoundaryMarkerInternal() lacks the actual LF, consumes
+  the CR into the closing delimiter and leaves only LF for the epilogue.
+  Native boundary callbacks exclude both CR and LF, delivering CRLF to the
+  epilogue, matching the source method's own newline-ownership comment.
+* 4 cases: stale CR lookbehind in GetEndOffset() makes the reference end
+  one byte too early, excluding a non-newline byte from entity/message
+  metadata (not from raw callbacks). Native metadata follows actual
+  consumed bytes. These match the
+  full-buffer reference, not the broken short-read metadata.
+* 1 case: the same stale CR lookbehind removes an extra LF (not a CR),
+  shortening entity/message end metadata by one byte and reporting 2
+  enclosing message-part lines rather than the native/full-buffer 1.
+* 1 case: lost LF lookbehind makes an empty descendant's reference end one
+  byte too far forward; its enclosing message-part line count is 1 rather
+  than 0. Native reports the actual empty end and zero lines.
+* 48 failed-empty cases: both reads fail at the same position with the same
+  headers-begin callback and no entity. MimeReader.IsEndOfStream reflects
+  its internal Eos state and returns true; g_mime_reader_eos() retains the
+  header-reader contract of successful completion and returns false after
+  this sticky parse failure. set_stream() is required for recovery.
+
+validate-reader-entity.py now checks exact category counts, the specific
+short-read event mechanisms, all delivered byte ranges, and independent
+end/header-end geometry inferred from subsequent delimiter callbacks or
+EOF. It emits reader-entity-exceptions-{full,sanitized}.json with each case's
+input protocol, index, same-chunk reference, full-buffer reference and
+native trace. reader-entity-edge-audit.json retains the original 552
+before-fix differences; reader-entity-edge-resolution.json records their
+current outcomes. These persistent artifacts and the actual-source
+reader-reference project are in the session's files/gmime-port directory.
+Native test_entity_traversal() also checks short-read/chunk invariance for
+immediate absent messages, split CRLF and stale-lookbehind fixtures.
+All 54,768 existing header-only differential cases still pass. The entity
+and header checks also run under ASan/UBSan; generated GIR/typelib and
+compiled Vala callbacks cover the new enums and binary callback arrays.
+
+The following increments add top-level ReadMessage, BOM stripping,
+newline-format reporting, mailbox traversal, compliance and SIMD scanning.
+The private reader-backed header/leaf model foundation is described below.
+Async operations and full model loading remain separate work. The legacy
+parser remains in use for public model loading and opt-in OpenPGP armor
+detection.
+
+### Reader top-level message operation and newline reporting
+
+GMimeReader.read_message() ports MimeReader.ReadMessage() for the default,
+single-message input format. The existing explicit-stack traversal is shared
+with read_entity(); the legacy parser is not called. Headers are delivered
+once, then message_begin(), the root entity and descendants, and message_end().
+The same message callbacks describe embedded messages. A successful operation
+consumes through EOF; another message read fails without additional callbacks.
+
+Only the first operation after assigning a stream probes an optional UTF-8
+BOM. Header and entity operations do not strip one and disable the initial
+message probe. A complete BOM advances offsets by three bytes without changing
+line numbers or delivering callbacks. Truncated or mismatching BOM prefixes,
+empty input and BOM-only input fail rather than creating an empty message.
+set_stream() restores the probe and clears sticky errors without resetting,
+seeking or closing the stream.
+
+Default-format message headers tolerate leading From-lines and >From-lines,
+retaining them as invalid raw headers, as in the source's MessageHeaders state.
+A stream containing only such lines is not a message. Header-only and entity
+reads continue to reject these leading lines in the default input format.
+From-lines in default-format bodies are ordinary content. The mailbox
+extension below adds explicit mbox/MMDF framing.
+
+The content_end() callback now reports GMimeReaderNewLineFormat for leaf wire
+content: UNKNOWN, UNIX, DOS or MIXED. This is separate from serialization's
+GMimeNewLineFormat, which has no unknown value. The model adapter below adds
+an input-only MIXED value; output formatting still accepts only UNIX or DOS.
+Preambles
+and epilogues report UNKNOWN, matching their source callbacks' lack of a
+newline-format argument. Detection spans short reads, including a split CRLF,
+and counts the scanned newline preceding a boundary even when that newline is
+excluded from delivered leaf bytes. Bare CR alone does not establish a format;
+transfer encodings are not decoded.
+
+Native tests cover exact message callback order, BOM and origin offsets,
+nonseekable streams, every callback-abort point, every input-error position,
+sticky failures, stream replacement, EOF reuse and callback lifetime. The
+actual-source message harness also compares raw callback traces and newline
+formats across read sizes, nesting, depth limits, binary data and BOM prefixes.
+All 16,368 message cases match the source's callbacks, with complete position
+and EOF comparisons on success, in normal and ASan/UBSan builds. Existing
+header and entity differential suites retain their previous results. Python
+GI and compiled Vala subclasses also cover the new operation and enum.
+Mailbox handling, compliance and SIMD scanning are completed below. Async
+operations and full reader-backed public model loading remain separate work.
+
+### Synchronous reader completion: mailboxes, compliance and SIMD
+
+The synchronous MimeReader port now includes header, entity and message
+operations, mbox traversal, compliance reporting, optimized line scanning,
+and the private SkipBlankLines/ReadToEos helpers used by status parsing.
+The helpers consume only unread input, preserve nonseekable streams, and
+never seek, reset or close the source. ReadToEos returns a rewound block
+stream without interpreting the copied bytes as MIME or physical lines.
+Async/cancellation support and full GMimeParser model-building integration
+remain deferred; the legacy parser still performs public model loading.
+
+new_with_format()/set_stream_with_format() select default, mbox or MMDF
+input. Message reads stream separator bytes through marker_begin/read/end
+without their line terminators; even long From-lines use bounded chunks.
+Mbox framing follows MimeKit, including initial BOM handling, marker
+search, repeated messages and RespectContentLength. Content-Length protects
+From-lines inside the declared body only for mbox message reads; it does
+not turn header/entity operations into message operations. MMDF is an
+additional GMime format, with explicit opening/closing separator handling.
+Header/entity reads do not seek initial mailbox markers.
+
+The optional compliance logger receives boxed GMimeComplianceIssue values
+with original wire offsets, 64-bit physical line/column numbers, position
+kinds, contexts, severity and category metadata. All 90 diagnostic identities
+and the truncation marker retain MimeKit's descriptions and remarks.
+GMimeComplianceOptions selects transport/storage context, address/Base64/
+quoted-printable/UU validators, and per-violation budgets (zero is unlimited).
+Generic header/body/structure checks remain active whenever a logger is
+installed, independently of the specialized-validator flags. Without a
+logger all compliance checking is skipped.
+
+Each read snapshots the settings and logger. Replacing either from a
+callback affects the next operation, not the current one; the previous
+logger's data remains alive until the active snapshot is released. Budgets
+reset for each operation/message, limit each diagnostic identity separately,
+and emit one truncation marker on the first suppressed issue. Reporting
+never changes parsing policy or masks callback/I/O errors. Raw content is
+staged in bounded batches so generic diagnostics precede encoding-validator
+writes and raw callbacks, matching MimeReader's ordering.
+
+The strict address validator ports the actual AddressValidator grammar and
+recovery, including nested groups, obsolete syntax, contextual NUL/ISO-2022
+diagnostics and all 30 address violations. It does not substitute tolerant
+address-model parsing for compliance validation. Existing incremental
+encoding validators are now connected to reader wire content and flush at
+content completion. Validation includes the newline withheld before a
+boundary, even when that newline is not delivered as leaf content.
+
+Runtime-selected SSE2 scanning counts complete LF/CRLF lines and stops
+before possible MIME/mailbox delimiters. It has a portable scalar fallback
+and a GMIME_DISABLE_SIMD build, uses only bounded unaligned loads, and
+retains possible one-byte delimiter prefixes for lookahead. Bit-scan
+intrinsics enumerate newline masks without GLib's linear bit search.
+An optimized local benchmark measured 1.68x scalar throughput for short
+lines, 10.92x for 80-byte lines and 8.82x for an incomplete long line;
+these are workload/machine-specific measurements, not API guarantees.
+
+Native tests cover long markers, short reads, every callback-abort stage,
+mailbox input errors, logger replacement/lifetime, diagnostic budgets,
+specialized validation during failures, status helpers, deep traversal,
+scalar/SIMD equivalence and inaccessible guard-page bounds. Normal and
+ASan/UBSan builds pass. Fresh actual-source differential runs cover 54,768
+header, 25,776 entity, 16,368 message/newline, 7,392 mbox message, 756 mbox
+header/entity, and 21,024 compliance cases, with no unexplained differences.
+The separate strict-address corpus covers 81,737 actual-source cases.
+Python GI and compiled Vala consumers cover binary marker callbacks,
+options, boxed issues, notified logger lifetime and header/entity/message
+subclasses. GIR, typelib, VAPI and reference documentation build.
+
+The entity differences described above remain intentional. The mbox
+message corpus additionally classifies 24 physical-newline lookbehind
+corrections and 12 synthetic empty embedded-message corrections. Compliance
+classifies 21 lookbehind, five synthetic-child and three split closing-marker
+corrections. Every one of these mbox/compliance traces equals the actual
+source's full-buffer trace; per-case input/reference/canonical/native
+evidence is retained in session artifacts. The mbox header/entity corpus
+also classifies 24 newline-lookbehind corrections and 54 empty-entity cases
+where MimeKit reports -1 content/entity lines at an immediate initial marker;
+GMime reports zero without consuming the marker. This avoids unsigned
+line-count underflow.
+
+The full core suite passes 33 of 34 test programs. Its sole failure remains
+the two previously established test-core text-format assertions; no new
+core failures were introduced. Native Windows validation remains pending.
+OpenPGP marker detection remains the opt-in legacy-parser extension, not an
+always-on reader scan.
+
+### Reader-backed header and leaf model foundation
+
+A private GMimeReader subclass now ports MimeParser's header and root-leaf
+callbacks without invoking the legacy parser. It builds GMimeHeaderList,
+GMimePart and existing specialized leaf models, retains original offsets
+and header/body separator state, and preserves the first Content-Type,
+Content-Transfer-Encoding and metadata header rather than letting later
+duplicates replace the parsed model. Meaningful source implementation
+comments accompany the construction, buffering and persistence rules.
+
+Parsed headers retain length-delimited raw field/value bytes independently
+of their C-string views. Invalid fields serialize without an invented colon;
+binary values, invalid bytes and original field whitespace survive cloning
+and transport serialization. Mutating a value discards its old byte cache
+without affecting clones. C-string getters still end at embedded NULs;
+invalid field display/lookup names escape NUL as "\0". International
+formatting preserves NUL-containing raw values instead of truncating them.
+
+Content remains in its original transfer encoding. Nonpersistent input uses
+a rewound block stream; persistent input uses exact source substreams.
+Empty bodies retain MimeKit's null-content distinction. Before another read,
+the adapter restores the physical read-ahead position, not its logical
+position, so reading an earlier persistent body cannot replay buffered input.
+Inherited stream replacement updates the adapter's source and persistence
+decision. Unsupported substreams, restoration failures and input/callback
+failures report GError and clean up partial models.
+
+GMimeContent exposes get/set/clear_newline_format() for nullable input hints,
+including GMIME_NEWLINE_FORMAT_MIXED. Hints never convert bytes, and replacing
+the backing stream clears them. Mixed is not a valid output/encoder format.
+The default entity registry now selects GMimeTextPart for application/rtf.
+Encoded message/partial is an opaque GMimePart, while unencoded fragments
+retain GMimeMessagePartial. Registered leaf subclasses are retained;
+unsupported custom containers fail rather than silently changing type.
+
+Transfer-encoding tokens are parsed by length so a literal NUL cannot turn
+an invalid token such as "base64\0x" into valid Base64. A NUL after whitespace
+or a semicolon remains an ignored suffix, matching MimeKit's first-token
+policy. Both wire classification and lazy model encoding caches follow this
+rule, and explicit header assignments invalidate the retained binary cache.
+
+The 16,920-case actual-source header/leaf corpus compares raw headers and
+offsets, separator and EOF state, model type, transfer encoding, nullable
+content/newline hints, encoded/decoded bytes, and LF/CRLF serialization.
+Every case matches in normal and ASan/UBSan builds. Native tests additionally
+cover mutations, clone lifetimes, binary encoding tokens, persistent
+read-ahead restoration, stream replacement, custom types and failure cleanup.
+Python GI and compiled Vala consumers exercise the newline hint APIs; GIR,
+typelib, VAPI and reference documentation build successfully.
+
+The new model and reader tests pass with leak checking enabled. Existing
+test-headers and test-mime-part sanitizer leaks also reproduce on untouched
+HEAD (648 and 1,168 bytes respectively). The normal core suite still has
+only the established two test-core text-format assertion failures. Native
+Windows validation remains pending.
+
+### Reader-backed message model assembly
+
+The private adapter now ports MimeParser's explicit owning object stack,
+message begin/end and entity end callbacks. It builds top-level messages
+and nested message/rfc822, message/rfc2822, message/global, message/news and
+message/external-body models, plus text/rfc822-headers and
+message/global-headers containers. Parsed messages retain non-Content-*
+headers; their root bodies retain only Content-* headers. Ordinary nested
+entities keep every header. The first Subject and Message-ID remain the
+semantic values while repeated address fields are collected together.
+Meaningful source comments explain the header copying and opaque fallback.
+
+Parsed bodies are attached without the public body setter, preserving
+header offsets and avoiding an invented MIME-Version header. Nested models
+retain raw binary headers, separator state and buffered/persistent content
+after their reader and input are released. Encoded message/header containers
+and descendants at the nesting limit remain opaque leaves. Multipart
+assembly and raw delimiter storage are described in the following section.
+
+The default registry now maps message/external-body to GMimeMessagePart and
+message/global-headers to GMimeTextRfc822Headers, matching MimeKit. This also
+affects legacy parsing. The historical jwz.mbox summary now includes its 13
+external-body descendants; every added descendant was checked against the
+actual MimeKit parser, with all existing offsets and other output unchanged.
+
+A further 17,136-case actual-source corpus compares recursive message trees,
+raw headers and offsets, first-value metadata, repeated addresses, nullable
+content/newline hints, raw/decoded content and LF/CRLF serialization. Cases
+cover buffered/persistent requests, seekable/nonseekable input, short reads,
+empty/truncated messages, binary headers, encoded containers and depth
+limits. Every case matches in normal and ASan/UBSan builds, as does the
+original 16,920-case header/leaf corpus. Native tests also exercise nested
+read failures at every byte offset and EOF, missing errno, sticky errors,
+stream replacement recovery and retained body lifetimes with leak checking.
+Mailbox model construction and envelope preservation are described below.
+
+This adapter is not yet the public GMimeParser backend. The following
+multipart and mailbox increments remove the former container limitations, but
+public message/mailbox loading, optional OpenPGP model detection and
+async/cancellation integration remain deferred. The public parser and all
+public loading helpers continue to use the legacy engine: alternating two
+engines on one nonseekable stream would lose their independent read-ahead
+buffers. Native Windows validation remains pending.
+
+### Reader-backed multipart model assembly
+
+The private adapter now builds multipart trees, including multipart/digest
+default message children, nested messages and opaque depth-limit fallbacks.
+Preambles and epilogues are buffered even when leaf content uses persistent
+substreams. Length-aware immutable bytes retain binary text and exact
+per-child, closing and unmatched trailing delimiters. An empty closing
+marker means truncated input; a null marker requests a generated delimiter.
+Meaningful MimeKit comments accompany delimiter ownership, consecutive
+markers, truncation and the epilogue's initial delimiter-owned newline.
+
+Reader-built multipart serialization preserves raw delimiter bytes even
+when LF/CRLF output formatting differs. Preamble/epilogue newlines are
+normalized, while delimiter-owned newlines are added only where needed.
+Final-newline requests propagate through truncated final descendants and
+embedded messages without mutating shared child objects or caller options.
+Leaf writers now count completed filter output and propagate completion
+failures instead of hiding a failed final newline or encoded tail.
+Legacy-built multiparts retain their existing serialization path.
+
+Child edits keep raw delimiter slots aligned: replacement retains its slot,
+insertion/addition use generated markers, and removals discard matching
+slots. Clear restores generated closing markers. Boundary changes discard
+obsolete child/end markers, including direct parameter edits, Content-Type
+replacement and change-then-restore sequences; unrelated parameter edits
+preserve them. Reassigning an unchanged decoded prologue/epilogue retains
+its original binary bytes. Existing prologue/epilogue string-setter text
+semantics are retained rather than adding MimeKit's text-folding API here.
+
+The new corpus compares parsed multipart trees, raw text/markers, nullable
+content and LF/CRLF serialization against actual MimeKit sources, plus
+child/boundary/text mutations and final-newline propagation. Defaults are
+aligned to LF for cross-platform mutations. Only the edited Content-Type
+header's source offset is excluded from mutation comparisons: GMime's
+existing setters retain offsets while MimeKit clears them. Parsed offsets
+and the edited header's actual serialized bytes are still compared.
+
+This work also fixes read-ahead-dependent child counts at EOF: a complete
+opening marker introduces an empty child, whereas an unterminated marker
+remains trailing delimiter data. Leading invalid embedded-message headers
+are retained as binary pre-header marker bytes and written unchanged,
+matching MimeKit rather than treating them as ordinary message headers.
+Native tests cover these cases across read sizes, binary round trips,
+content-type event lifetimes, child mutations, output errors, and nested
+read failures at every byte offset and EOF with replacement recovery.
+
+All 33,600 multipart cases match in normal and ASan/UBSan builds. The
+earlier 17,136 message and 16,920 header/leaf cases also still match after
+the leaf output-completion changes. Focused reader/model/encoding tests
+pass with leak detection enabled. The full normal core suite passes 34 of
+35 programs; only test-core's two established text-format assertions fail.
+GIR, typelib, VAPI and GTK-doc builds pass with existing warnings. Native
+Windows validation remains pending.
+
+Public parser/loading integration, signature
+verification's special raw-marker CRLF canonicalization, optional OpenPGP
+model detection and async/cancellation remain separate work. Multipart
+serialization still uses GMime's recursive virtual writer dispatch rather
+than MimeKit's newer explicit writer-frame stack.
+
+### Reader-backed mailbox model construction
+
+The private adapter now constructs successive mbox and MMDF messages using
+one reader and its existing read-ahead buffer. MimeParser's envelope
+callbacks retain length-aware opening marker bytes, excluding CRLF, and
+their stream offsets. The envelope remains parser metadata, separate from
+invalid leading From-header bytes stored on a message. An ordinary message
+write does not insert its mailbox envelope.
+
+Markers are published only after the complete message operation succeeds.
+Every construction operation clears the previous marker, including failed
+reads and operations after stream replacement. MMDF closing callbacks do
+not overwrite the opening marker. MMDF support preserves GMime's existing
+extension; MimeKit only supports entity and mbox formats.
+
+The existing reader handles mailbox pretext, truncated input and optional
+mbox Content-Length suppression. Persistent models restore the physical
+source position before the next parse if reading earlier content moved it.
+Native regressions cover long binary envelopes, 64-bit source offsets,
+split CRLF, binary/nested bodies, Content-Length, buffered/persistent and
+seekable/nonseekable sources, retained model/marker lifetimes, and failures
+at every input byte and EOF with sticky errors and replacement recovery.
+The embedded-message boundary probe now fills its bounded lookahead across
+short reads without scanning an entire following envelope. A 10,000-byte
+next marker regression rejects reads beyond the message prefix plus 128
+bytes. Immediate sibling/closing multipart boundaries of lengths 1 and 140
+also check absent embedded messages and exact entity/header end offsets
+across LF/CRLF and eleven read sizes. The reader's separate previous-byte
+state preserves the preceding newline when refilling its input buffer.
+
+The actual-source differential corpus compares successive message trees,
+raw headers/offsets, envelope/pre-header bytes, logical positions, EOF,
+LF/CRLF serialization and re-reading earlier persistent messages. With
+MimeKit's updated short-read boundary and end-offset fixes, every case is
+compared directly against its corresponding source result. The former
+4096-byte canonical-result workaround is removed; an independent source
+read-size invariance check reports no discrepancies.
+
+All 12,816 mailbox cases match directly in normal and ASan/UBSan builds,
+including the added immediate-boundary and embedded-message EOF fixtures.
+The earlier 33,600 multipart, 17,136 message and 16,920
+header/leaf cases also still match in both builds. Focused model, reader
+and mbox tests pass with leak detection enabled. The full normal core
+suite remains at 34/35 programs, with only test-core's two established
+text-format assertions failing. GIR, typelib, VAPI and GTK-doc builds pass
+with existing warnings. Native Windows validation remains pending.
+
+The adapter remains private. Public parser/loading integration, optional
+OpenPGP model detection, signature-specific raw-marker canonicalization,
+iterative writing and async/cancellation remain separate work.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and
@@ -2409,9 +2932,9 @@ x86/x64 SSSE3 kernels with portable scalar fallbacks. Base64 scans count
 alphabet bytes and line feeds up to the next special byte; quoted-printable
 scans find the next equals sign or LF. Loads require sixteen readable bytes,
 and scalar tails preserve exact diagnostics and per-line latch resets.
-The public compliance framework and wiring validation into the new reader
-remain pending. This slice does not change the legacy parser's warning or
-decoding behavior.
+The public compliance framework and reader wiring are described in the
+synchronous reader-completion section above. The legacy parser's warning
+and decoding behavior is unchanged.
 
 Focused validator regressions cover diagnostic positions, every split in
 representative inputs, byte-at-a-time writes, empty writes, repeated flushes

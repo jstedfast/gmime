@@ -40,6 +40,13 @@ Encoder
 Decoder
   .decode.input ctype="const guint8*"
   .decode.output out=false
+Reader
+  .header_read.buffer ctype="const guint8*"
+  .content_read.buffer ctype="const guint8*"
+  .boundary_read.buffer ctype="const guint8*"
+  .marker_read.buffer ctype="const guint8*"
+ComplianceIssueFunc
+  .issue ctype="const GMimeComplianceIssue*"
 
 // Reparenting
 Stream
