@@ -22,17 +22,13 @@
 #include <config.h>
 #endif
 
-#include <errno.h>
 #include <string.h>
 
 #include "gmime-body-builder.h"
-#include "gmime-charset.h"
 #include "gmime-error.h"
 #include "gmime-internal.h"
 #include "gmime-multipart-alternative.h"
 #include "gmime-multipart-related.h"
-#include "gmime-stream-mem.h"
-#include "gmime-table-private.h"
 #include "gmime-text-part.h"
 
 /**
@@ -89,45 +85,15 @@ body_builder_finalize (GObject *object)
 	G_OBJECT_CLASS (g_mime_body_builder_parent_class)->finalize (object);
 }
 
-static const char *
-get_converter_name (const char *charset)
-{
-	/* Encoding.GetBytes does not emit the preamble that iconv's UTF-16/32
-	 * converters would add, so select explicit little-endian converters. */
-	if (!g_ascii_strcasecmp (charset, "utf-16"))
-		return "UTF-16LE";
-	if (!g_ascii_strcasecmp (charset, "utf-32"))
-		return "UTF-32LE";
-
-	return g_mime_charset_iconv_name (charset);
-}
-
 static GMimeEntity *
 create_text_part (GMimeBodyBuilder *builder, const char *subtype, const char *text, GError **error)
 {
-	GMimeTextPart *part;
-	GMimeContent *content;
-	GMimeStream *stream;
-	gsize length;
-	char *bytes;
+	GMimeTextPart *part = g_mime_text_part_new_with_subtype (subtype);
 
-	bytes = g_convert (text, -1, get_converter_name (builder->body_encoding), "UTF-8", NULL, &length, error);
-	if (!bytes)
-		return NULL;
-	if (length > G_MAXUINT) {
-		g_set_error_literal (error, GMIME_ERROR, EOVERFLOW, "Body text exceeds the native memory stream limit");
-		g_free (bytes);
+	if (!g_mime_text_part_set_text_with_charset (part, builder->body_encoding, text, error)) {
+		g_object_unref (part);
 		return NULL;
 	}
-
-	part = g_mime_text_part_new_with_subtype (subtype);
-	g_mime_text_part_set_charset (part, builder->body_encoding);
-	stream = g_mime_stream_mem_new_with_buffer (bytes, length);
-	g_free (bytes);
-	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
-	g_object_unref (stream);
-	g_mime_part_set_content ((GMimePart *) part, content);
-	g_object_unref (content);
 
 	return (GMimeEntity *) part;
 }
@@ -276,36 +242,17 @@ g_mime_body_builder_get_body_encoding (GMimeBodyBuilder *builder)
 gboolean
 g_mime_body_builder_set_body_encoding (GMimeBodyBuilder *builder, const char *charset, GError **error)
 {
-	const char *p;
 	char *name, *converted;
 
 	g_return_val_if_fail (GMIME_IS_BODY_BUILDER (builder), FALSE);
 	g_return_val_if_fail (charset != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	for (p = charset; *p; p++) {
-		if ((guchar) *p >= 127 || !is_ttoken (*p))
-			break;
-	}
-	if (!*charset || *p) {
-		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_CONVERSION,
-				     "Body charset name must be a nonempty MIME token");
+	/* Probe the same encoder used by text parts without changing the
+	 * selected charset until validation and converter setup succeed. */
+	converted = _g_mime_charset_encode_text (charset, "", NULL, &name, error);
+	if (!converted)
 		return FALSE;
-	}
-
-	/* Generic Unicode aliases can select BOM-emitting iconv converters too. */
-	if (!g_ascii_strcasecmp (charset, "utf16") || !g_ascii_strcasecmp (charset, "unicode") ||
-	    !g_ascii_strcasecmp (charset, "csunicode"))
-		charset = "utf-16";
-	else if (!g_ascii_strcasecmp (charset, "utf32"))
-		charset = "utf-32";
-
-	name = _g_mime_charset_get_mime_name (charset);
-	converted = g_convert ("", 0, get_converter_name (name), "UTF-8", NULL, NULL, error);
-	if (!converted) {
-		g_free (name);
-		return FALSE;
-	}
 	g_free (converted);
 	g_free (builder->body_encoding);
 	builder->body_encoding = name;

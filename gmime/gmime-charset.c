@@ -718,6 +718,47 @@ _g_mime_charset_get_mime_name (const char *charset)
 	return g_ascii_strdown (name, -1);
 }
 
+char *
+_g_mime_charset_encode_text (const char *charset, const char *text, gsize *length, char **mime_name, GError **error)
+{
+	const char *p, *converter;
+	char *name, *bytes;
+
+	for (p = charset; *p; p++) {
+		if ((guchar) *p >= 127 || !is_ttoken (*p))
+			break;
+	}
+	if (!*charset || *p) {
+		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_CONVERSION,
+				     "Text charset name must be a nonempty MIME token");
+		return NULL;
+	}
+
+	/* Encoding.GetBytes omits a preamble. Resolve generic Unicode aliases
+	 * before selecting explicit-endian converters that do not emit a BOM. */
+	if (!g_ascii_strcasecmp (charset, "utf16") || !g_ascii_strcasecmp (charset, "unicode") ||
+	    !g_ascii_strcasecmp (charset, "csunicode"))
+		charset = "utf-16";
+	else if (!g_ascii_strcasecmp (charset, "utf32"))
+		charset = "utf-32";
+
+	name = _g_mime_charset_get_mime_name (charset);
+	if (!g_ascii_strcasecmp (name, "utf-16"))
+		converter = "UTF-16LE";
+	else if (!g_ascii_strcasecmp (name, "utf-32"))
+		converter = "UTF-32LE";
+	else
+		converter = g_mime_charset_iconv_name (name);
+
+	bytes = g_convert (text, -1, converter, "UTF-8", NULL, length, error);
+	if (bytes)
+		*mime_name = name;
+	else
+		g_free (name);
+
+	return bytes;
+}
+
 /* Positive identities are codepages; negative identities keep unmapped native
  * charsets distinct. Both are valid only until the charset maps shut down. */
 int

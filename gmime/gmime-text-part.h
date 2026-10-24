@@ -93,6 +93,8 @@ void g_mime_text_part_set_charset (GMimeTextPart *mime_part, const char *charset
 const char *g_mime_text_part_get_charset (GMimeTextPart *mime_part);
 
 void g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text);
+gboolean g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *charset,
+					       const char *text, GError **error);
 char *g_mime_text_part_get_text (GMimeTextPart *mime_part);
 
 G_END_DECLS

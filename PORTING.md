@@ -2094,6 +2094,26 @@ assignment replaces duplicates even when the first value is already equal.
 Comparison occurs before trimming, matching MimeKit. Borrowed values,
 including substrings of the getter's value, can safely be assigned back.
 
+### Explicit text charset assignment
+
+GMimeTextPart now exposes set_text_with_charset(), porting MimeKit's
+TextPart.SetText(charset, text) overload. It encodes UTF-8 input into the
+requested charset, updates the Content-Type charset to its MIME name,
+and stores unencoded content bytes without selecting or changing the
+Content-Transfer-Encoding. Empty text creates present, empty content.
+Newlines are preserved and Unicode encoders do not add a BOM; generic
+UTF-16/32 aliases produce little-endian bytes.
+
+The checked native API reports unsupported or invalid charset names,
+invalid UTF-8, and unrepresentable text through G_CONVERT_ERROR, leaving
+the part unchanged. Charset names must be MIME tokens; iconv modifiers
+are rejected. Managed replacement fallbacks and custom encoders are not
+supported, consistent with BodyBuilder's existing checked conversion
+policy. BodyBuilder now uses the same setter and charset normalization.
+Charset repertoires follow the platform's iconv implementation and can
+differ from managed code-page mappings. The legacy automatic-charset
+set_text() behavior remains unchanged.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and

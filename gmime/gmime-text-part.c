@@ -24,10 +24,12 @@
 #endif
 
 #include <stdio.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <string.h>
 
 #include "gmime-text-part.h"
+#include "gmime-error.h"
 #include "gmime-visitor.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-filter.h"
@@ -472,6 +474,67 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
 		g_mime_part_set_content_encoding ((GMimePart *) mime_part, GMIME_CONTENT_ENCODING_8BIT);
 	else
 		g_mime_part_set_content_encoding ((GMimePart *) mime_part, GMIME_CONTENT_ENCODING_7BIT);
+}
+
+
+/**
+ * g_mime_text_part_set_text_with_charset:
+ * @mime_part: a #GMimeTextPart
+ * @charset: a nonempty MIME charset name
+ * @text: the text in UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Encodes @text using @charset and replaces the content and Content-Type
+ * charset parameter. Charset aliases are normalized to MIME names. Generic
+ * UTF-16 and UTF-32 use little-endian bytes without a byte-order mark.
+ * No newline normalization or Content-Transfer-Encoding selection occurs.
+ * An existing transfer encoding is preserved.
+ *
+ * Unlike the legacy g_mime_text_part_set_text(), this function uses exactly
+ * the requested charset. Unsupported charsets, invalid UTF-8, and text that
+ * cannot be represented return a %G_CONVERT_ERROR without changing the part.
+ * Managed custom encoders and replacement fallbacks are not supported.
+ * Converted content exceeding the #GMimeStreamMem limit reports %GMIME_ERROR
+ * with EOVERFLOW.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *charset,
+				      const char *text, GError **error)
+{
+	GMimeStream *stream;
+	GMimeContent *content;
+	char *bytes, *name;
+	gsize length;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
+	g_return_val_if_fail (charset != NULL, FALSE);
+	g_return_val_if_fail (text != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	bytes = _g_mime_charset_encode_text (charset, text, &length, &name, error);
+	if (!bytes)
+		return FALSE;
+	if (length > G_MAXUINT) {
+		g_set_error_literal (error, GMIME_ERROR, EOVERFLOW, "Text content exceeds the native memory stream limit");
+		g_free (bytes);
+		g_free (name);
+		return FALSE;
+	}
+
+	/* Prepare owned bytes before publishing either change: inputs may be
+	 * borrowed from the part, and conversion failures must leave it intact. */
+	stream = g_mime_stream_mem_new_with_buffer (bytes, length);
+	g_free (bytes);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_object_unref (stream);
+	g_mime_text_part_set_charset (mime_part, name);
+	g_free (name);
+	g_mime_part_set_content ((GMimePart *) mime_part, content);
+	g_object_unref (content);
+
+	return TRUE;
 }
 
 
