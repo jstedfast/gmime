@@ -50,6 +50,8 @@ static void g_mime_message_part_finalize (GObject *object);
 /* GMimeEntity class methods */
 static ssize_t message_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					     gboolean content_only, GMimeStream *stream);
+static gboolean message_part_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
+				      guint max_line_length, GError **error);
 
 
 static GMimeEntityClass *parent_class = NULL;
@@ -98,6 +100,7 @@ g_mime_message_part_class_init (GMimeMessagePartClass *klass)
 	
 	object_class->write_to_stream = message_part_write_to_stream;
 	object_class->accept = message_part_accept;
+	object_class->prepare_with_max_line_length = message_part_prepare;
 }
 
 static void
@@ -116,6 +119,18 @@ g_mime_message_part_finalize (GObject *object)
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
+
+static gboolean
+message_part_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)
+{
+	GMimeMessagePart *part = (GMimeMessagePart *) object;
+
+	/* An absent encapsulated message is an empty container, not leaf data
+	 * to analyze or an outer Content-Transfer-Encoding to rewrite. */
+	return !part->message ||
+		g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (part->message), constraint, max_line_length, error);
+}
+
 
 static ssize_t
 message_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)

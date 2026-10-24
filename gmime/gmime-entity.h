@@ -91,6 +91,9 @@ struct _GMimeEntityClass {
 	void         (* encode) (GMimeEntity *object, GMimeEncodingConstraint constraint);
 
 	void         (* accept) (GMimeEntity *object, GMimeVisitor *visitor);
+
+	gboolean     (* prepare_with_max_line_length) (GMimeEntity *object, GMimeEncodingConstraint constraint,
+						      guint max_line_length, GError **error);
 };
 
 
@@ -154,6 +157,10 @@ ssize_t g_mime_entity_write_content_to_stream (GMimeEntity *object, GMimeFormatO
 char *g_mime_entity_to_string (GMimeEntity *object, GMimeFormatOptions *options);
 
 void g_mime_entity_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
+
+gboolean g_mime_entity_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, GError **error);
+gboolean g_mime_entity_prepare_with_max_line_length (GMimeEntity *object, GMimeEncodingConstraint constraint,
+						   guint max_line_length, GError **error);
 
 void g_mime_entity_accept (GMimeEntity *object, GMimeVisitor *visitor);
 

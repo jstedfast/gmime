@@ -67,6 +67,8 @@ static char *message_get_headers (GMimeEntity *object, GMimeFormatOptions *optio
 static ssize_t message_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					gboolean content_only, GMimeStream *stream);
 static void message_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
+static gboolean message_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
+				 guint max_line_length, GError **error);
 
 static void sender_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
 static void from_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
@@ -166,6 +168,7 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	object_class->write_to_stream = message_write_to_stream;
 	object_class->encode = message_encode;
 	object_class->accept = message_accept;
+	object_class->prepare_with_max_line_length = message_prepare;
 }
 
 static void
@@ -904,6 +907,53 @@ message_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
 		g_mime_entity_encode (message->mime_part, constraint);
 }
 
+
+
+static gboolean
+message_has_mime_version (GMimeMessage *message)
+{
+	GMimeHeader *header;
+	const char *inptr;
+	gint32 value;
+	guint count = 0;
+
+	header = g_mime_header_list_get_header (GMIME_ENTITY (message)->headers, "MIME-Version");
+	if (!header)
+		return FALSE;
+
+	/* MimeKit parses the first raw header as two to four Int32 components,
+	 * allowing comments and whitespace without normalizing a valid value. */
+	inptr = g_mime_header_get_raw_value (header);
+	do {
+		if (!skip_cfws (&inptr) || !_g_mime_parse_int32 (&inptr, &value) || ++count > 4)
+			return FALSE;
+		if (!skip_cfws (&inptr))
+			return FALSE;
+		if (!*inptr)
+			break;
+		if (*inptr++ != '.')
+			return FALSE;
+	} while (*inptr);
+
+	return count >= 2;
+}
+
+
+static gboolean
+message_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)
+{
+	GMimeMessage *message = (GMimeMessage *) object;
+
+	if (!message->mime_part)
+		return TRUE;
+
+	/* Publish MIME-Version before preparing the body, even if preparation
+	 * later fails. Existing valid versions and duplicates remain untouched. */
+	if (g_mime_header_list_get_count (message->mime_part->headers) > 0 && !message_has_mime_version (message))
+		g_mime_header_list_set (object->headers, "MIME-Version", "1.0", NULL);
+
+	return g_mime_entity_prepare_with_max_line_length (message->mime_part, constraint, max_line_length, error);
+}
 
 
 /**

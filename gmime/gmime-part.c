@@ -70,6 +70,8 @@ static void mime_part_headers_cleared (GMimeEntity *object);
 static ssize_t mime_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					  gboolean content_only, GMimeStream *stream);
 static void mime_part_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
+static gboolean mime_part_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
+				   guint max_line_length, GError **error);
 
 /* GMimePart class methods */
 static void set_content (GMimePart *mime_part, GMimeContent *content);
@@ -126,6 +128,7 @@ g_mime_part_class_init (GMimePartClass *klass)
 	object_class->write_to_stream = mime_part_write_to_stream;
 	object_class->encode = mime_part_encode;
 	object_class->accept = mime_part_accept;
+	object_class->prepare_with_max_line_length = mime_part_prepare;
 	
 	klass->set_content = set_content;
 }
@@ -1272,17 +1275,17 @@ gboolean
 g_mime_part_prepare_with_max_line_length (GMimePart *mime_part, GMimeEncodingConstraint constraint,
 					guint max_line_length, GError **error)
 {
-	GMimeContentEncoding current, best;
-
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
-	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	/* Prepare validates the line limit even when an existing safe encoding
-	 * avoids the best-encoding scanner and all content I/O. */
-	if (max_line_length < 60 || max_line_length > 998) {
-		g_set_error_literal (error, GMIME_ERROR, EINVAL, "Maximum line length must be between 60 and 998");
-		return FALSE;
-	}
+	return g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (mime_part), constraint, max_line_length, error);
+}
+
+
+static gboolean
+mime_part_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)
+{
+	GMimePart *mime_part = (GMimePart *) object;
+	GMimeContentEncoding current, best;
 
 	current = g_mime_part_get_content_encoding (mime_part);
 	switch (current) {

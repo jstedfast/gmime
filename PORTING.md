@@ -2132,9 +2132,36 @@ the previous limit. Source bytes, stored content encoding and unrelated headers
 are unchanged. Conversion-analysis failures report GError and preserve both
 the transfer headers and previous encoder limit.
 
-This increment covers leaf parts, including TextPart subclasses; recursive
-entity/message preparation is not yet ported. The legacy entity encode()
+This leaf policy also covers TextPart subclasses. The legacy entity encode()
 policy and encoder defaults for unprepared parts remain unchanged.
+
+### Recursive transport preparation
+
+GMimeEntity now exposes prepare() and prepare_with_max_line_length(), with
+a prepare_with_max_line_length virtual shared by parts, multiparts, messages and
+encapsulated message parts. The existing part convenience APIs dispatch
+through this virtual too. Multipart children are prepared in order, and
+message parts delegate to their encapsulated message without rewriting
+the outer part's transfer headers.
+
+Messages add MIME-Version: 1.0 before preparing a body that has headers if
+the first MIME-Version is absent or invalid. Valid raw versions, including
+comments and duplicate headers, remain untouched. Parsing follows MimeKit's
+two-to-four-component, nonnegative Int32 version grammar. Signed multipart
+children are not visited: changing already-signed headers or encodings
+would invalidate the signature.
+
+Line-limit validation precedes virtual dispatch, header updates and child
+I/O, including for empty and signed containers. Constraint validation stays
+with the leaf policy rather than rejecting empty containers or safe
+encodings early. Errors stop traversal immediately, retaining earlier
+child changes and MIME-Version updates, as in MimeKit; whole-tree
+preparation is not transactional. A failing leaf still preserves its
+transfer headers and previous encoder limit. Subclasses without a prepare
+implementation report NOT_SUPPORTED instead of silently succeeding.
+
+The added Entity class virtual changes class layout; rebuild subclasses
+and consumers against the updated headers.
 
 ### Explicit text charset decoding
 

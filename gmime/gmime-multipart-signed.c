@@ -65,6 +65,8 @@ static void g_mime_multipart_signed_finalize (GObject *object);
 
 /* GMimeEntity class methods */
 static void multipart_signed_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
+static gboolean multipart_signed_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
+					  guint max_line_length, GError **error);
 
 
 static GMimeMultipartClass *parent_class = NULL;
@@ -106,6 +108,7 @@ g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass)
 	gobject_class->finalize = g_mime_multipart_signed_finalize;
 	
 	object_class->encode = multipart_signed_encode;
+	object_class->prepare_with_max_line_length = multipart_signed_prepare;
 }
 
 static void
@@ -125,6 +128,15 @@ multipart_signed_encode (GMimeEntity *object, GMimeEncodingConstraint constraint
 {
 	/* Do NOT encode subparts of a multipart/signed */
 	return;
+}
+
+
+static gboolean
+multipart_signed_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)
+{
+	/* Do not visit children that have already been signed: changing their
+	 * encoding or headers would invalidate the existing signature. */
+	return TRUE;
 }
 
 

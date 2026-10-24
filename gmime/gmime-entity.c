@@ -24,10 +24,12 @@
 #endif
 
 #include <ctype.h>
+#include <errno.h>
 #include <string.h>
 
 #include "gmime-common.h"
 #include "gmime-entity.h"
+#include "gmime-error.h"
 #include "gmime-visitor.h"
 #include "gmime-stream-mem.h"
 #include "gmime-internal.h"
@@ -156,6 +158,7 @@ g_mime_entity_class_init (GMimeEntityClass *klass)
 	klass->write_to_stream = object_write_to_stream;
 	klass->encode = object_encode;
 	klass->accept = object_accept;
+	klass->prepare_with_max_line_length = NULL;
 }
 
 static void
@@ -1308,6 +1311,89 @@ g_mime_entity_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	
 	GMIME_ENTITY_GET_CLASS (object)->encode (object, constraint);
+}
+
+
+/**
+ * g_mime_entity_prepare:
+ * @object: a #GMimeEntity
+ * @constraint: a #GMimeEncodingConstraint
+ * @error: return location for a #GError, or %NULL
+ *
+ * Prepares this entity and its children for transport using a maximum line
+ * length of 78. Equivalent to g_mime_entity_prepare_with_max_line_length()
+ * with that limit.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_entity_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, GError **error)
+{
+	return g_mime_entity_prepare_with_max_line_length (object, constraint, 78, error);
+}
+
+
+/**
+ * g_mime_entity_prepare_with_max_line_length:
+ * @object: a #GMimeEntity
+ * @constraint: a #GMimeEncodingConstraint
+ * @max_line_length: maximum line length, excluding CRLF, from 60 through 998
+ * @error: return location for a #GError, or %NULL
+ *
+ * Prepares an entity tree for transport using each entity's
+ * prepare_with_max_line_length virtual method. Parts use
+ * g_mime_part_prepare_with_max_line_length(); multiparts prepare their children
+ * in order; message parts prepare their encapsulated messages. Signed
+ * multiparts do not modify or analyze their children.
+ *
+ * Messages add MIME-Version: 1.0 when their body has headers but their first
+ * MIME-Version header is absent or invalid, then prepare the body.
+ *
+ * An invalid line limit reports %GMIME_ERROR with %EINVAL before virtual
+ * dispatch or any header changes. Constraint validation otherwise follows
+ * the leaf-part policy, including its safe-encoding fast paths. A subclass
+ * without a prepare implementation reports %GMIME_ERROR_NOT_SUPPORTED.
+ *
+ * Preparation stops at the first failure. Earlier child changes and message
+ * MIME-Version updates are retained, matching MimeKit's preparation order;
+ * this is not an atomic operation on the entire tree. The failing leaf
+ * preserves its transfer headers and previous encoder limit.
+ *
+ * Unlike g_mime_entity_encode(), this checked API reports analysis failures
+ * and carries the requested encoder line limit into serialization.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_entity_prepare_with_max_line_length (GMimeEntity *object, GMimeEncodingConstraint constraint,
+					  guint max_line_length, GError **error)
+{
+	GMimeEntityClass *klass;
+	gboolean prepared;
+
+	g_return_val_if_fail (GMIME_IS_ENTITY (object), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* Validate even for empty containers and signed entities whose prepare
+	 * implementation deliberately avoids inspecting their children. */
+	if (max_line_length < 60 || max_line_length > 998) {
+		g_set_error_literal (error, GMIME_ERROR, EINVAL, "Maximum line length must be between 60 and 998");
+		return FALSE;
+	}
+
+	klass = GMIME_ENTITY_GET_CLASS (object);
+	if (!klass->prepare_with_max_line_length) {
+		g_set_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "%s does not implement transport preparation", G_OBJECT_TYPE_NAME (object));
+		return FALSE;
+	}
+
+	/* Header callbacks may detach the entity from the tree that owns it. */
+	g_object_ref (object);
+	prepared = klass->prepare_with_max_line_length (object, constraint, max_line_length, error);
+	g_object_unref (object);
+
+	return prepared;
 }
 
 

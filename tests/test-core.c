@@ -203,6 +203,55 @@ test_content_init (TestContent *content)
 {
 }
 
+typedef struct {
+	GMimePart parent_object;
+	guint calls;
+	guint max_line_length;
+	GMimeEncodingConstraint constraint;
+} TestPreparePart;
+
+typedef GMimePartClass TestPreparePartClass;
+
+G_DEFINE_TYPE (TestPreparePart, test_prepare_part, GMIME_TYPE_PART)
+
+static gboolean
+test_prepare_part_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)
+{
+	TestPreparePart *part = (TestPreparePart *) object;
+
+	part->calls++;
+	part->max_line_length = max_line_length;
+	part->constraint = constraint;
+	return GMIME_ENTITY_CLASS (test_prepare_part_parent_class)->prepare_with_max_line_length (
+		object, constraint, max_line_length, error);
+}
+
+static void
+test_prepare_part_class_init (TestPreparePartClass *klass)
+{
+	GMIME_ENTITY_CLASS (klass)->prepare_with_max_line_length = test_prepare_part_prepare;
+}
+
+static void
+test_prepare_part_init (TestPreparePart *part)
+{
+}
+
+typedef GMimeEntity TestUnpreparedEntity;
+typedef GMimeEntityClass TestUnpreparedEntityClass;
+
+G_DEFINE_TYPE (TestUnpreparedEntity, test_unprepared_entity, GMIME_TYPE_ENTITY)
+
+static void
+test_unprepared_entity_class_init (TestUnpreparedEntityClass *klass)
+{
+}
+
+static void
+test_unprepared_entity_init (TestUnpreparedEntity *entity)
+{
+}
+
 static void
 check (gboolean condition, const char *description)
 {
@@ -6667,6 +6716,188 @@ test_part_prepare_errors (void)
 }
 
 static void
+test_entity_prepare (void)
+{
+	GMimeMessage *message = g_mime_message_new (FALSE), *inner = g_mime_message_new (FALSE);
+	GMimeMultipart *root = g_mime_multipart_new (), *nested = g_mime_multipart_new ();
+	GMimeMultipartSigned *signed_part = g_mime_multipart_signed_new ();
+	GMimeMessagePart *attached = g_mime_message_part_new_with_message ("rfc822", inner);
+	GMimePart *first = g_mime_part_new_with_type ("application", "octet-stream");
+	GMimePart *failing = g_mime_part_new_with_type ("text", "plain");
+	GMimePart *body = g_mime_part_new_with_type ("text", "plain");
+	TestPreparePart *last = g_object_new (test_prepare_part_get_type (), NULL);
+	TestPreparePart *protected = g_object_new (test_prepare_part_get_type (), NULL);
+	TestStreamFailure *source = g_object_new (test_stream_failure_get_type (), NULL);
+	GMimeContent *content;
+	GMimeContentType *content_type;
+	GMimeStream *memory;
+	GMimeEntity *unsupported;
+	GError *error = NULL;
+
+	content_type = g_mime_content_type_new ("application", "octet-stream");
+	g_mime_entity_set_content_type (GMIME_ENTITY (last), content_type);
+	g_object_unref (content_type);
+	content_type = g_mime_content_type_new ("text", "plain");
+	g_mime_entity_set_content_type (GMIME_ENTITY (protected), content_type);
+	g_object_unref (content_type);
+	memory = g_mime_stream_mem_new_with_buffer ("From text\n", 10);
+	content = g_mime_content_new_with_stream (memory, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_mime_part_set_content (first, content);
+	g_mime_part_set_content (body, content);
+	g_object_unref (content);
+	g_object_unref (memory);
+	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+	content = g_mime_content_new_with_stream (GMIME_STREAM (source), GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_mime_part_set_content (failing, content);
+	g_mime_part_set_content_encoding (failing, GMIME_CONTENT_ENCODING_7BIT);
+	g_object_unref (content);
+	content = g_mime_content_new ();
+	g_mime_part_set_content (GMIME_PART (protected), content);
+	g_mime_part_set_content_encoding (GMIME_PART (protected), GMIME_CONTENT_ENCODING_8BIT);
+	g_object_unref (content);
+	g_mime_multipart_add (GMIME_MULTIPART (signed_part), GMIME_ENTITY (protected));
+	g_mime_multipart_add (root, GMIME_ENTITY (signed_part));
+	g_mime_multipart_add (root, GMIME_ENTITY (first));
+	g_mime_multipart_add (root, GMIME_ENTITY (nested));
+	g_mime_multipart_add (nested, GMIME_ENTITY (failing));
+	g_mime_multipart_add (nested, GMIME_ENTITY (last));
+	g_mime_multipart_add (root, GMIME_ENTITY (attached));
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (root));
+	g_mime_message_set_mime_part (inner, GMIME_ENTITY (body));
+	g_mime_entity_remove_header (GMIME_ENTITY (message), "MIME-Version");
+	g_mime_entity_set_header (GMIME_ENTITY (inner), "MIME-Version", "invalid", NULL);
+	g_mime_entity_set_header (GMIME_ENTITY (attached), "Content-Transfer-Encoding", "binary", NULL);
+
+	check (!g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, 59, &error) &&
+	       g_error_matches (error, GMIME_ERROR, EINVAL) &&
+	       g_mime_entity_get_header (GMIME_ENTITY (message), "MIME-Version") == NULL &&
+	       source->read_calls == 0 && source->reset_calls == 0,
+	       "invalid tree line limit fails before MIME-Version changes or child analysis");
+	g_clear_error (&error);
+	check (!g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, 60, &error) &&
+	       g_error_matches (error, GMIME_ERROR, EIO),
+	       "recursive preparation reports the first failing child's I/O error");
+	g_clear_error (&error);
+	check (g_mime_part_get_content_encoding (first) == GMIME_CONTENT_ENCODING_BASE64 &&
+	       first->encoder_max_line_length == 60 && failing->encoder_max_line_length == 0 &&
+	       g_mime_part_get_content_encoding (failing) == GMIME_CONTENT_ENCODING_7BIT &&
+	       last->calls == 0 && protected->calls == 0 &&
+	       g_mime_part_get_content_encoding (GMIME_PART (protected)) == GMIME_CONTENT_ENCODING_8BIT &&
+	       g_mime_part_get_content_encoding (body) == GMIME_CONTENT_ENCODING_UNSPECIFIED,
+	       "ordered tree preparation retains earlier changes, skips signed content and stops before later siblings");
+	g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (message), "MIME-Version"), ==, "1.0");
+	g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (inner), "MIME-Version"), ==, "invalid");
+	g_assert_false (g_mime_entity_prepare (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, NULL));
+
+	source->fail_after = G_MAXSIZE;
+	g_assert_true (g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, 61, &error));
+	g_assert_no_error (error);
+	check (first->encoder_max_line_length == 60 && failing->encoder_max_line_length == 61 &&
+	       last->calls == 1 && last->max_line_length == 61 && last->constraint == GMIME_ENCODING_CONSTRAINT_7BIT &&
+	       protected->calls == 0 && g_mime_part_get_content_encoding (body) == GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE &&
+	       body->encoder_max_line_length == 61,
+	       "successful retry delegates through nested multipart, message and subclass prepare implementations");
+	g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (inner), "MIME-Version"), ==, "1.0");
+	g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (attached), "Content-Transfer-Encoding"), ==, "binary");
+	g_assert_true (g_mime_part_prepare (GMIME_PART (last), GMIME_ENCODING_CONSTRAINT_BINARY, &error));
+	g_assert_no_error (error);
+	check (last->calls == 2 && last->max_line_length == 78 && last->constraint == GMIME_ENCODING_CONSTRAINT_BINARY,
+	       "the existing leaf-part convenience API dispatches the prepare virtual with its default limit");
+	g_assert_true (g_mime_entity_prepare (GMIME_ENTITY (signed_part), -1, &error));
+	g_assert_no_error (error);
+	g_assert_cmpuint (protected->calls, ==, 0);
+	g_assert_false (g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (signed_part), -1, 999, &error));
+	g_assert_error (error, GMIME_ERROR, EINVAL);
+	g_clear_error (&error);
+	unsupported = g_object_new (test_unprepared_entity_get_type (), NULL);
+	g_assert_false (g_mime_entity_prepare (unsupported, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED);
+	g_clear_error (&error);
+	g_object_unref (unsupported);
+
+	g_object_unref (message);
+	g_object_unref (inner);
+	g_object_unref (root);
+	g_object_unref (nested);
+	g_object_unref (signed_part);
+	g_object_unref (attached);
+	g_object_unref (first);
+	g_object_unref (failing);
+	g_object_unref (body);
+	g_object_unref (last);
+	g_object_unref (protected);
+	g_object_unref (source);
+}
+
+static void
+test_message_prepare_versions (void)
+{
+	static const struct {
+		const char *raw;
+		gboolean valid;
+	} cases[] = {
+		{ NULL, FALSE }, { " invalid\n", FALSE }, { " 1.0\n", TRUE },
+		{ " (old) 2 (a) . (b) 3 (end)\n", TRUE }, { " 1.2.3.4\n", TRUE },
+		{ " 1.0 (incomplete\n", FALSE }, { " 2147483648.0\n", FALSE },
+		{ " 1.2.3.4.5\n", FALSE }, { " 1.0.", TRUE }, { " 1.0.\n", FALSE }
+	};
+	GMimeMessage *message;
+	GMimePart *body;
+	GMimeHeaderList *headers;
+	GMimeHeader *header;
+	GMimeEntity *empty[] = {
+		GMIME_ENTITY (g_mime_multipart_new ()),
+		GMIME_ENTITY (g_mime_message_new (FALSE)),
+		GMIME_ENTITY (g_mime_message_part_new ("rfc822"))
+	};
+	GError *error = NULL;
+	guint i, clear;
+
+	for (i = 0; i < G_N_ELEMENTS (empty); i++) {
+		g_assert_true (g_mime_entity_prepare (empty[i], -1, &error));
+		g_assert_no_error (error);
+		g_assert_false (g_mime_entity_prepare_with_max_line_length (empty[i], -1, 59, &error));
+		g_assert_error (error, GMIME_ERROR, EINVAL);
+		g_clear_error (&error);
+		g_object_unref (empty[i]);
+	}
+
+	for (clear = 0; clear < 2; clear++) {
+		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+			message = g_mime_message_new (FALSE);
+			body = g_mime_part_new_with_type ("text", "plain");
+			g_mime_message_set_mime_part (message, GMIME_ENTITY (body));
+			if (clear)
+				g_mime_header_list_clear (g_mime_entity_get_header_list (GMIME_ENTITY (body)));
+			headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+			g_mime_header_list_clear (headers);
+			if (cases[i].raw) {
+				g_mime_header_list_append (headers, "MIME-Version", "placeholder", NULL);
+				header = g_mime_header_list_get_header (headers, "MIME-Version");
+				g_mime_header_set_raw_value (header, cases[i].raw);
+				g_mime_header_list_append (headers, "MIME-Version", "9.9", NULL);
+			}
+			g_assert_true (g_mime_entity_prepare (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+			g_assert_no_error (error);
+			header = g_mime_header_list_get_header (headers, "MIME-Version");
+			if (clear && !cases[i].raw) {
+				g_assert_null (header);
+			} else if (clear || cases[i].valid) {
+				g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, cases[i].raw);
+				g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 2);
+			} else {
+				g_assert_cmpstr (g_mime_header_get_value (header), ==, "1.0");
+				g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
+			}
+			g_object_unref (body);
+			g_object_unref (message);
+		}
+	}
+	check (TRUE, "message preparation preserves valid raw MIME versions and duplicates, replacing invalid versions only when the body has headers");
+}
+
+static void
 test_content_copy (void)
 {
 	GMimeStream *source, *output, *reader;
@@ -9997,6 +10228,11 @@ main (int argc, char **argv)
 
 	testsuite_start ("checked part transport preparation");
 	test_part_prepare_errors ();
+	testsuite_end ();
+
+	testsuite_start ("checked recursive transport preparation");
+	test_entity_prepare ();
+	test_message_prepare_versions ();
 	testsuite_end ();
 
 	testsuite_start ("raw and decoded content copying");
