@@ -525,7 +525,7 @@ g_mime_part_new (void)
  * @type: content-type string
  * @subtype: content-subtype string
  *
- * Creates a new MIME Part with a sepcified type.
+ * Creates a new MIME Part with the specified type.
  *
  * Returns: an empty MIME Part object with the specified content-type.
  **/
@@ -535,12 +535,76 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 	GMimeContentType *content_type;
 	GMimePart *mime_part;
 	
-	mime_part = g_object_new (GMIME_TYPE_PART, NULL);
-	
 	content_type = g_mime_content_type_new (type, subtype);
-	g_mime_entity_set_content_type ((GMimeEntity *) mime_part, content_type);
+	mime_part = g_mime_part_new_with_content_type (content_type);
 	g_object_unref (content_type);
 	
+	return mime_part;
+}
+
+
+/**
+ * g_mime_part_new_with_content_type:
+ * @content_type: (transfer none): the content-type model
+ *
+ * Creates an empty #GMimePart retaining @content_type, not a clone.
+ * Changes to the shared model update the part's Content-Type header.
+ * Parameters and their formatting metadata are preserved.
+ *
+ * This always creates a #GMimePart, even for text, multipart, or message
+ * media types; it does not select a specialized entity subclass.
+ *
+ * Returns: (transfer full): a new #GMimePart.
+ **/
+GMimePart *
+g_mime_part_new_with_content_type (GMimeContentType *content_type)
+{
+	GMimePart *mime_part;
+
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
+
+	/* Use the ordinary entity setter to retain the supplied model, subscribe
+	 * to its changes, and serialize its parameters without reparsing them. */
+	mime_part = g_object_new (GMIME_TYPE_PART, NULL);
+	g_mime_entity_set_content_type ((GMimeEntity *) mime_part, content_type);
+
+	return mime_part;
+}
+
+
+/**
+ * g_mime_part_new_with_content_type_string:
+ * @options: (nullable): parser options, or %NULL for the defaults
+ * @content_type: a NUL-terminated Content-Type field value
+ * @error: (nullable): return location for a #GError
+ *
+ * Creates an empty #GMimePart by parsing a complete Content-Type value.
+ * Uses g_mime_content_type_parse_full() rather than best-effort recovery:
+ * malformed input returns %NULL with %GMIME_ERROR_PARSE_ERROR instead of
+ * creating a part with a default type or partial parameter list.
+ *
+ * Like g_mime_part_new_with_content_type(), this does not select a
+ * specialized entity subclass.
+ *
+ * Returns: (nullable) (transfer full): a new #GMimePart, or %NULL on error.
+ **/
+GMimePart *
+g_mime_part_new_with_content_type_string (GMimeParserOptions *options, const char *content_type, GError **error)
+{
+	GMimeContentType *parsed;
+	GMimePart *mime_part;
+
+	g_return_val_if_fail (content_type != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* Parse before allocating the part so invalid input cannot publish a
+	 * partially initialized entity or silently substitute a default type. */
+	if (!(parsed = g_mime_content_type_parse_full (options, content_type, -1, error)))
+		return NULL;
+
+	mime_part = g_mime_part_new_with_content_type (parsed);
+	g_object_unref (parsed);
+
 	return mime_part;
 }
 

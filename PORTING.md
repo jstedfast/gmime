@@ -2085,6 +2085,24 @@ assignment replaces duplicates even when the first value is already equal.
 Comparison occurs before trimming, matching MimeKit. Borrowed values,
 including substrings of the getter's value, can safely be assigned back.
 
+### Part content-type constructors
+
+GMimePart now exposes new_with_content_type() and
+new_with_content_type_string(), porting MimeKit's ContentType and string
+constructor overloads. The model constructor retains the supplied object
+without cloning or reparsing it, preserving parameter identity and
+formatting metadata. Shared models notify all owning parts; releasing one
+part disconnects only that owner's notifications. Callers can release
+their model reference immediately after construction.
+
+The string constructor uses the existing all-or-nothing Content-Type
+parser with optional parser options and GError reporting. Malformed input
+returns NULL with GMIME_ERROR_PARSE_ERROR rather than substituting a
+default type or retaining partial parameters. Neither constructor selects
+an entity subclass: even text, multipart, and message media types produce
+an empty GMimePart, as in MimeKit. The default and type/subtype constructors
+retain their existing behavior.
+
 ### Part filename property
 
 GMimePart's get_filename()/set_filename() now follow MimeKit's FileName

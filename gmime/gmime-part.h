@@ -86,6 +86,8 @@ GType g_mime_part_get_type (void);
 /* constructors */
 GMimePart *g_mime_part_new (void);
 GMimePart *g_mime_part_new_with_type (const char *type, const char *subtype);
+GMimePart *g_mime_part_new_with_content_type (GMimeContentType *content_type);
+GMimePart *g_mime_part_new_with_content_type_string (GMimeParserOptions *options, const char *content_type, GError **error);
 
 /* accessor functions */
 void g_mime_part_set_content_description (GMimePart *mime_part, const char *description);

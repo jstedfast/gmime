@@ -100,6 +100,113 @@ test_content_disposition (GMimePart *mime_part, const char *filename)
 }
 
 static void
+test_content_type_constructors (void)
+{
+	static const char *types[] = { "application", "text", "multipart", "message" };
+	static const char *subtypes[] = { "octet-stream", "plain", "mixed", "rfc822" };
+	static const char *invalid[] = { "", "text", "/plain", "text/", "text/plain junk",
+		"text/plain; charset", "text/plain; name=\"unterminated" };
+	GMimeContentType *type, *parsed;
+	GMimeParserOptions *options;
+	GMimeParam *param;
+	GMimePart *first, *second;
+	GMimeEntity *entity;
+	GMimeHeaderList *headers;
+	GObject *alive;
+	GError *error = NULL;
+	guint i;
+
+	testsuite_check ("Content-type constructors retain shared models and parameter metadata");
+	for (i = 0; i < G_N_ELEMENTS (types); i++) {
+		type = g_mime_content_type_new (types[i], subtypes[i]);
+		g_mime_content_type_set_name (type, " caf\303\251.txt ");
+		param = g_mime_param_list_get_parameter (g_mime_content_type_get_parameters (type), "name");
+		g_mime_param_set_charset (param, "iso-8859-1");
+		g_mime_param_set_lang (param, "fr");
+		g_mime_param_set_encoding_method (param, GMIME_PARAM_ENCODING_METHOD_RFC2231);
+		g_mime_param_set_always_quote (param, TRUE);
+		alive = G_OBJECT (type);
+		g_object_add_weak_pointer (alive, (gpointer *) &alive);
+		first = g_mime_part_new_with_content_type (type);
+		second = g_mime_part_new_with_content_type (type);
+		entity = GMIME_ENTITY (first);
+		g_assert_true (G_OBJECT_TYPE (first) == GMIME_TYPE_PART);
+		g_assert_true (g_mime_entity_get_content_type (entity) == type);
+		g_assert_true (g_mime_entity_get_content_type (GMIME_ENTITY (second)) == type);
+		g_assert_null (g_mime_part_get_content (first));
+		g_assert_null (g_mime_entity_get_content_disposition (entity));
+		g_assert_cmpint (g_mime_part_get_content_encoding (first), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+		g_assert_cmpstr (g_mime_part_get_filename (first), ==, "caf\303\251.txt");
+		headers = g_mime_entity_get_header_list (entity);
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
+		g_assert_true (g_mime_param_list_get_parameter (g_mime_content_type_get_parameters (type), "name") == param);
+		g_assert_cmpstr (g_mime_param_get_charset (param), ==, "iso-8859-1");
+		g_assert_cmpstr (g_mime_param_get_lang (param), ==, "fr");
+		g_assert_cmpint (g_mime_param_get_encoding_method (param), ==, GMIME_PARAM_ENCODING_METHOD_RFC2231);
+		g_assert_true (g_mime_param_get_always_quote (param));
+		g_object_unref (type);
+		g_assert_nonnull (alive);
+		g_mime_content_type_set_name (type, "changed.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (first), ==, "changed.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (second), ==, "changed.txt");
+		parsed = g_mime_content_type_parse_full (NULL, g_mime_entity_get_header (entity, "Content-Type"), -1, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (parsed);
+		g_assert_cmpstr (g_mime_content_type_get_name (parsed), ==, "changed.txt");
+		g_object_unref (parsed);
+		g_object_unref (first);
+		g_assert_nonnull (alive);
+		g_mime_content_type_set_name (type, "survivor.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (second), ==, "survivor.txt");
+		g_object_unref (second);
+		g_assert_null (alive);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("String constructors parse complete content types without subclass dispatch");
+	first = g_mime_part_new_with_content_type_string (NULL,
+		"TEXT/PLAIN; charset=utf-8; name*=utf-8'fr'caf%C3%A9.txt", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (first);
+	g_assert_true (G_OBJECT_TYPE (first) == GMIME_TYPE_PART);
+	entity = GMIME_ENTITY (first);
+	type = g_mime_entity_get_content_type (entity);
+	g_assert_true (g_mime_content_type_is_type (type, "text", "plain"));
+	g_assert_cmpstr (g_mime_content_type_get_charset (type), ==, "utf-8");
+	g_assert_cmpstr (g_mime_part_get_filename (first), ==, "caf\303\251.txt");
+	param = g_mime_param_list_get_parameter (g_mime_content_type_get_parameters (type), "name");
+	g_assert_cmpstr (g_mime_param_get_charset (param), ==, "UTF-8");
+	g_assert_cmpstr (g_mime_param_get_lang (param), ==, "fr");
+	g_assert_null (g_mime_part_get_content (first));
+	g_assert_null (g_mime_entity_get_content_disposition (entity));
+	g_object_unref (first);
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		first = g_mime_part_new_with_content_type_string (NULL, invalid[i], &error);
+		g_assert_null (first);
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		g_assert_null (g_mime_part_new_with_content_type_string (NULL, invalid[i], NULL));
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("String constructors honor parameter compliance options");
+	options = g_mime_parser_options_new ();
+	g_mime_parser_options_set_parameter_compliance_mode (options, GMIME_RFC_COMPLIANCE_LOOSE);
+	first = g_mime_part_new_with_content_type_string (options, "text/plain; name=two words.txt", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (first);
+	g_assert_cmpstr (g_mime_part_get_filename (first), ==, "two words.txt");
+	g_object_unref (first);
+	g_mime_parser_options_set_parameter_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT);
+	first = g_mime_part_new_with_content_type_string (options, "text/plain; name=two words.txt", &error);
+	g_assert_null (first);
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_mime_parser_options_free (options);
+	testsuite_check_passed ();
+}
+
+static void
 test_filename_property (void)
 {
 	static const char filename[] = " \302\205caf\303\251.txt\343\200\200 ";
@@ -1286,6 +1393,7 @@ int main (int argc, char **argv)
 	testsuite_start ("GMimePart");
 	
 	test_content_headers (datadir);
+	test_content_type_constructors ();
 	test_filename_property ();
 	test_filename_assignment_aliases ();
 	test_content_md5_vectors ();
