@@ -25,6 +25,7 @@
             <link linkend="GMimeStreamMmap">GMimeStreamMmap</link>
             <link linkend="GMimeStreamNull">GMimeStreamNull</link>
         <link linkend="GMimeFilter">GMimeFilter</link>
+            <link linkend="GMimeFilterAnonymize">GMimeFilterAnonymize</link>
             <link linkend="GMimeFilterBasic">GMimeFilterBasic</link>
             <link linkend="GMimeFilterBest">GMimeFilterBest</link>
             <link linkend="GMimeFilterCharset">GMimeFilterCharset</link>

@@ -139,6 +139,7 @@ g_mime_init (void)
 #endif
 	
 	g_mime_filter_get_type ();
+	g_mime_filter_anonymize_get_type ();
 	g_mime_filter_basic_get_type ();
 	g_mime_filter_best_get_type ();
 	g_mime_filter_charset_get_type ();

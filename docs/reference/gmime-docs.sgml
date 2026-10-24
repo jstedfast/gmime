@@ -62,6 +62,7 @@
 <!ENTITY GMimeStreamPipe SYSTEM "xml/gmime-stream-pipe.xml">
 <!ENTITY GMimeStreamFilter SYSTEM "xml/gmime-stream-filter.xml">
 <!ENTITY GMimeFilter SYSTEM "xml/gmime-filter.xml">
+<!ENTITY GMimeFilterAnonymize SYSTEM "xml/gmime-filter-anonymize.xml">
 <!ENTITY GMimeFilterBasic SYSTEM "xml/gmime-filter-basic.xml">
 <!ENTITY GMimeFilterBest SYSTEM "xml/gmime-filter-best.xml">
 <!ENTITY GMimeFilterCharset SYSTEM "xml/gmime-filter-charset.xml">
@@ -225,6 +226,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     <chapter id="Filters">
       <title>Stream Filters</title>
       &GMimeFilter;
+      &GMimeFilterAnonymize;
       &GMimeFilterBasic;
       &GMimeFilterBest;
       &GMimeFilterCharset;

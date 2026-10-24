@@ -37,6 +37,14 @@
     pass-through codec, it does not allocate an output buffer. Use it
     when an optional transformation should leave the stream untouched.</para>
 
+    <para>GMimeFilterAnonymize replaces every byte except ASCII space,
+    tab, CR and LF with lowercase ASCII 'x'. It preserves byte counts and
+    newline spellings, including when input is split across calls.
+    Input is never modified: output uses filter-owned storage. Completion
+    adds no bytes and the filter can be reused without resetting it.
+    This byte transformation alone does not anonymize message headers or
+    MIME structure; original lengths and whitespace patterns remain.</para>
+
     <para>For internationalization support, GMime also includes a
     filter for converting between any 2 charsets,
     GMimeFilterCharset. With this filter, mail user agents can allow

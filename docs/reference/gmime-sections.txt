@@ -371,6 +371,24 @@ GMIME_FILTER_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-anonymize</FILE>
+GMimeFilterAnonymize
+g_mime_filter_anonymize_new
+
+<SUBSECTION Private>
+g_mime_filter_anonymize_get_type
+
+<SUBSECTION Standard>
+GMimeFilterAnonymizeClass
+GMIME_TYPE_FILTER_ANONYMIZE
+GMIME_FILTER_ANONYMIZE
+GMIME_IS_FILTER_ANONYMIZE
+GMIME_FILTER_ANONYMIZE_CLASS
+GMIME_IS_FILTER_ANONYMIZE_CLASS
+GMIME_FILTER_ANONYMIZE_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-basic</FILE>
 GMimeFilterBasic
 g_mime_filter_basic_new

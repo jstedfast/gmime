@@ -78,6 +78,7 @@
 #include <gmime/gmime-stream-null.h>
 #include <gmime/gmime-stream-pipe.h>
 #include <gmime/gmime-filter.h>
+#include <gmime/gmime-filter-anonymize.h>
 #include <gmime/gmime-filter-basic.h>
 #include <gmime/gmime-filter-best.h>
 #include <gmime/gmime-filter-charset.h>

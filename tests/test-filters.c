@@ -1283,6 +1283,187 @@ test_from_streams (void)
 	testsuite_check_passed ();
 }
 
+static GByteArray *
+anonymize_expected (const guint8 *input, size_t length)
+{
+	GByteArray *expected = g_byte_array_sized_new (length);
+	guint8 c;
+	size_t i;
+
+	for (i = 0; i < length; i++) {
+		c = input[i];
+		if (c != ' ' && c != '\t' && c != '\r' && c != '\n')
+			c = 'x';
+		g_byte_array_append (expected, &c, 1);
+	}
+
+	return expected;
+}
+
+static void
+test_anonymize_bytes (void)
+{
+	static const size_t prespaces[] = { 0, 1, 16 };
+	GMimeFilter *filter;
+	GByteArray *expected;
+	char input[288], saved[288], *output;
+	size_t offset, length, outlen, outprespace, i;
+	guint complete, p;
+
+	testsuite_check ("Anonymization filter byte classification, ranges and independent output");
+	g_assert_cmpuint (g_type_from_name ("GMimeFilterAnonymize"), ==, GMIME_TYPE_FILTER_ANONYMIZE);
+	filter = g_mime_filter_anonymize_new ();
+	g_assert_true (GMIME_IS_FILTER_ANONYMIZE (filter));
+	g_assert_true (g_type_is_a (G_OBJECT_TYPE (filter), GMIME_TYPE_FILTER));
+	memset (input, 'Z', sizeof (input));
+	for (i = 0; i < 256; i++)
+		input[16 + i] = (guint8) i;
+	memcpy (saved, input, sizeof (input));
+	expected = anonymize_expected ((const guint8 *) input + 16, 256);
+
+	for (complete = 0; complete < 2; complete++) {
+		for (p = 0; p < G_N_ELEMENTS (prespaces); p++) {
+			for (offset = 0; offset <= 256; offset++) {
+				for (length = 0; length <= 256 - offset; length++) {
+					output = NULL;
+					outlen = outprespace = G_MAXSIZE;
+					if (complete)
+						g_mime_filter_complete (filter, input + 16 + offset, length, prespaces[p],
+									&output, &outlen, &outprespace);
+					else
+						g_mime_filter_filter (filter, input + 16 + offset, length, prespaces[p],
+								      &output, &outlen, &outprespace);
+					g_assert_true (output == filter->outbuf);
+					g_assert_nonnull (output);
+					g_assert_cmpuint (outlen, ==, length);
+					g_assert_cmpuint (outprespace, ==, filter->outpre);
+					g_assert_cmpmem (output, outlen, expected->data + offset, length);
+				}
+			}
+		}
+	}
+	g_assert_cmpmem (input, sizeof (input), saved, sizeof (saved));
+	g_assert_null (filter->backbuf);
+	g_assert_cmpuint (filter->backlen, ==, 0);
+	g_byte_array_unref (expected);
+	g_object_unref (filter);
+	testsuite_check_passed ();
+}
+
+static void
+test_anonymize_lifecycle (void)
+{
+	static const guint8 whitespace[] = " \t\r\n";
+	GMimeFilter *filter = g_mime_filter_anonymize_new (), *copy;
+	GByteArray *actual = g_byte_array_new (), *expected;
+	guint8 input[256], *large;
+	size_t i, split;
+
+	testsuite_check ("Anonymization filter binary splits, completion, copy, reset and output growth");
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i;
+	expected = anonymize_expected (input, sizeof (input));
+	for (split = 0; split <= sizeof (input); split++) {
+		g_mime_filter_reset (filter);
+		g_byte_array_set_size (actual, 0);
+		g_assert_false (filter_chunk (filter, input, split, FALSE, actual));
+		g_assert_cmpuint (actual->len, ==, split);
+		g_assert_false (filter_chunk (filter, input, 0, FALSE, actual));
+		g_assert_false (filter_chunk (filter, input + split, sizeof (input) - split, TRUE, actual));
+		check_filter_result (actual, expected);
+		g_assert_false (filter_chunk (filter, input, 0, TRUE, actual));
+		g_assert_false (filter_chunk (filter, input, 0, TRUE, actual));
+		check_filter_result (actual, expected);
+	}
+	copy = g_mime_filter_copy (filter);
+	g_assert_true (GMIME_IS_FILTER_ANONYMIZE (copy));
+	g_assert_true (copy != filter);
+	g_assert_null (copy->outbuf);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (copy, whitespace, sizeof (whitespace) - 1, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, whitespace, sizeof (whitespace) - 1);
+	g_assert_true (copy->outbuf != filter->outbuf);
+	g_object_unref (filter);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (copy, input, sizeof (input), FALSE, actual));
+	check_filter_result (actual, expected);
+	g_mime_filter_reset (copy);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (copy, input, sizeof (input), TRUE, actual));
+	check_filter_result (actual, expected);
+	g_byte_array_unref (expected);
+	large = g_malloc (65537);
+	for (i = 0; i < 65537; i++)
+		large[i] = (guint8) i;
+	expected = anonymize_expected (large, 65537);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (copy, large, 65537, FALSE, actual));
+	check_filter_result (actual, expected);
+	g_free (large);
+	g_byte_array_unref (expected);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (copy, whitespace, sizeof (whitespace) - 1, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, whitespace, sizeof (whitespace) - 1);
+	g_object_unref (copy);
+	g_byte_array_unref (actual);
+	testsuite_check_passed ();
+}
+
+static void
+test_anonymize_streams (void)
+{
+	GMimeStream *memory, *filtered;
+	GMimeFilter *filter;
+	GByteArray *actual, *expected;
+	char input[256], buffer[5];
+	size_t offset;
+	ssize_t n;
+	guint mode, pass;
+
+	testsuite_check ("Anonymization filter streamed bytewise writes and split reads");
+	for (offset = 0; offset < sizeof (input); offset++)
+		input[offset] = (guint8) offset;
+	expected = anonymize_expected ((const guint8 *) input, sizeof (input));
+	for (mode = 0; mode < 2; mode++) {
+		memory = mode ? g_mime_stream_mem_new_with_buffer (input, sizeof (input)) :
+			g_mime_stream_mem_new ();
+		filtered = g_mime_stream_filter_new (memory);
+		filter = g_mime_filter_anonymize_new ();
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+		g_object_unref (filter);
+		filter = g_mime_filter_pass_through_new ();
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+		g_object_unref (filter);
+		if (mode == 0) {
+			for (offset = 0; offset < sizeof (input); offset++)
+				g_assert_cmpint (g_mime_stream_write (filtered, input + offset, 1), ==, 1);
+			g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+			g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+			actual = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory));
+			check_filter_result (actual, expected);
+		} else {
+			for (pass = 0; pass < 2; pass++) {
+				if (pass)
+					g_assert_cmpint (g_mime_stream_reset (filtered), ==, 0);
+				actual = g_byte_array_new ();
+				memset (buffer, 'Z', sizeof (buffer));
+				while ((n = g_mime_stream_read (filtered, buffer + 1, 3)) > 0) {
+					g_assert_cmpint (buffer[0], ==, 'Z');
+					g_assert_cmpint (buffer[4], ==, 'Z');
+					g_byte_array_append (actual, (const guint8 *) buffer + 1, n);
+				}
+				g_assert_cmpint (n, ==, 0);
+				check_filter_result (actual, expected);
+				g_byte_array_unref (actual);
+			}
+		}
+		g_object_unref (filtered);
+		g_object_unref (memory);
+	}
+	g_byte_array_unref (expected);
+	testsuite_check_passed ();
+}
+
 static void
 test_pass_through_identity (void)
 {
@@ -1852,6 +2033,9 @@ int main (int argc, char **argv)
 	test_from_quoted_printable ();
 	test_from_streams ();
 	test_pass_through_identity ();
+	test_anonymize_bytes ();
+	test_anonymize_lifecycle ();
+	test_anonymize_streams ();
 	test_pass_through_lifecycle ();
 	test_pass_through_streams ();
 	test_encoding_newline_lifecycle ();

@@ -401,6 +401,18 @@ This is an incremental migration, not yet a declaration of feature parity.
   Existing GMimeFilterBasic constructors and pass-through codecs retain
   their codec-backed, copying behavior; this is a separate zero-copy filter.
 
+- `GMimeFilterAnonymize` ports MimeKit's internal AnonymizeFilter as an
+  ordinary native GMimeFilter subclass. Only ASCII space, tab, CR and LF
+  are preserved; every other byte becomes lowercase ASCII 'x', including
+  NUL, vertical tab, form feed and high-bit bytes. The transformation is
+  byte-oriented, not Unicode/locale-aware, and never normalizes newlines.
+  Output has exactly the input length and uses filter-owned storage even
+  for all-whitespace or empty input, leaving caller input/prespace intact.
+  All output is immediate; completion adds no bytes, reset has no conversion
+  state to discard and native copy creates independent output storage.
+  This does not port the higher-level MimeAnonymizer or automatically
+  rewrite headers/MIME structure. Byte counts and whitespace remain visible.
+
 - `GMimeFilterFrom` now follows MimeKit's MboxFromFilter in ESCAPE mode
   and ArmoredFromFilter in ARMOR mode, retaining the native type and mode
   enum. Only exact, case-sensitive "From " markers at the beginning of
