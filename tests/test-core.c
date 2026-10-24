@@ -37,6 +37,9 @@ typedef struct {
 	guint reset_calls;
 	guint fail_reset_on;
 	guint flush_calls;
+	guint close_calls;
+	gboolean fail_close;
+	gboolean zero_read;
 } TestStreamFailure;
 
 typedef TestStreamOneByteClass TestStreamFailureClass;
@@ -50,6 +53,10 @@ failure_stream_read (GMimeStream *stream, char *buf, size_t len)
 	ssize_t nread;
 
 	test->read_calls++;
+	if (test->zero_read) {
+		test->zero_read = FALSE;
+		return 0;
+	}
 	if (test->bytes_read == test->fail_after) {
 		errno = EIO;
 		return -1;
@@ -120,6 +127,20 @@ failure_stream_flush (GMimeStream *stream)
 	return -1;
 }
 
+static int
+failure_stream_close (GMimeStream *stream)
+{
+	TestStreamFailure *test = (TestStreamFailure *) stream;
+
+	test->close_calls++;
+	if (test->fail_close) {
+		errno = EBADF;
+		return -1;
+	}
+
+	return g_mime_stream_close (test->parent_object.source);
+}
+
 static void
 test_stream_failure_class_init (TestStreamFailureClass *klass)
 {
@@ -130,6 +151,7 @@ test_stream_failure_class_init (TestStreamFailureClass *klass)
 	stream_class->tell = failure_stream_tell;
 	stream_class->reset = failure_stream_reset;
 	stream_class->flush = failure_stream_flush;
+	stream_class->close = failure_stream_close;
 }
 
 static void
@@ -8958,6 +8980,324 @@ test_header_list_collection (void)
 	check (weak == NULL, "retained groups are released without a collection ownership cycle");
 }
 
+typedef struct {
+	GMimeFilter parent_object;
+	guint complete_calls;
+	guint reset_calls;
+	char marker;
+} TestCompletionFilter;
+
+typedef GMimeFilterClass TestCompletionFilterClass;
+
+G_DEFINE_TYPE (TestCompletionFilter, test_completion_filter, GMIME_TYPE_FILTER)
+
+static void
+completion_filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+			  char **outbuf, size_t *outlen, size_t *outprespace)
+{
+	*outbuf = inbuf;
+	*outlen = inlen;
+	*outprespace = prespace;
+}
+
+static void
+completion_filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+			    char **outbuf, size_t *outlen, size_t *outprespace)
+{
+	TestCompletionFilter *test = (TestCompletionFilter *) filter;
+
+	test->complete_calls++;
+	g_mime_filter_set_size (filter, inlen + 1, FALSE);
+	memcpy (filter->outbuf, inbuf, inlen);
+	filter->outbuf[inlen] = test->marker;
+	*outbuf = filter->outbuf;
+	*outlen = inlen + 1;
+	*outprespace = filter->outpre;
+}
+
+static void
+completion_filter_reset (GMimeFilter *filter)
+{
+	((TestCompletionFilter *) filter)->reset_calls++;
+}
+
+static void
+test_completion_filter_class_init (TestCompletionFilterClass *klass)
+{
+	klass->filter = completion_filter_filter;
+	klass->complete = completion_filter_complete;
+	klass->reset = completion_filter_reset;
+}
+
+static void
+test_completion_filter_init (TestCompletionFilter *filter)
+{
+	filter->marker = '!';
+}
+
+static void
+test_filtered_stream_completion (void)
+{
+	GMimeStream *stream, *memory;
+	TestCompletionFilter *first, *second;
+	TestStreamFailure *source;
+	GByteArray *bytes;
+	guint owner, partial, zero, retry;
+
+	for (owner = 0; owner < 2; owner++) {
+		for (partial = 0; partial < 2; partial++) {
+			for (zero = 0; zero < 2; zero++) {
+				for (retry = 0; retry < 3; retry++) {
+					bytes = g_byte_array_new ();
+					memory = g_mime_stream_mem_new_with_byte_array (bytes);
+					g_mime_stream_mem_set_owner (GMIME_STREAM_MEM (memory), FALSE);
+					source = g_object_new (test_stream_failure_get_type (), NULL);
+					source->parent_object.source = memory;
+					source->onebyte = TRUE;
+					source->fail_after = 3 + partial;
+					source->zero_write = zero;
+					g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+					stream = g_mime_stream_filter_new (GMIME_STREAM (source));
+					g_mime_stream_filter_set_owner (GMIME_STREAM_FILTER (stream), owner);
+					first = g_object_new (test_completion_filter_get_type (), NULL);
+					second = g_object_new (test_completion_filter_get_type (), NULL);
+					first->marker = 'A';
+					second->marker = 'B';
+					g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), GMIME_FILTER (first));
+					g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), GMIME_FILTER (second));
+					g_assert_cmpint (g_mime_stream_write (stream, "abc", 3), ==, 3);
+					errno = 0;
+					g_assert_cmpint (g_mime_stream_flush (stream), ==, -1);
+					g_assert_cmpint (errno, ==, zero ? EIO : ENOSPC);
+					g_assert_cmpmem (bytes->data, bytes->len, "abcA", 3 + partial);
+					g_assert_cmpuint (first->complete_calls, ==, 1);
+					g_assert_cmpuint (second->complete_calls, ==, 1);
+					errno = 0;
+					g_assert_cmpint (g_mime_stream_close (stream), ==, -1);
+					g_assert_cmpint (errno, ==, zero ? EIO : ENOSPC);
+					g_assert_cmpuint (source->close_calls, ==, 0);
+					g_assert_cmpuint (first->complete_calls, ==, 1);
+					/* A failed retry must not accept the next input or
+					 * overwrite completion bytes still in a filter. */
+					g_assert_cmpint (g_mime_stream_write (stream, "z", 1), ==, -1);
+					g_assert_cmpmem (bytes->data, bytes->len, "abcA", 3 + partial);
+					source->fail_after = G_MAXSIZE;
+					if (retry == 2) {
+						g_assert_cmpint (g_mime_stream_write (stream, "z", 1), ==, 1);
+						g_assert_cmpmem (bytes->data, bytes->len, "abcABz", 6);
+					}
+					if (retry != 1) {
+						g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+						g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+					}
+					g_assert_cmpint (g_mime_stream_close (stream), ==, 0);
+					g_assert_cmpmem (bytes->data, bytes->len, retry == 2 ? "abcABzAB" : "abcAB", retry == 2 ? 8 : 5);
+					g_assert_cmpuint (first->complete_calls, ==, retry == 2 ? 2 : 1);
+					g_assert_cmpuint (second->complete_calls, ==, first->complete_calls);
+					g_assert_cmpuint (source->close_calls, ==, owner);
+					g_assert_cmpuint (source->flush_calls, ==, 0);
+					g_object_unref (first);
+					g_object_unref (second);
+					g_object_unref (stream);
+					g_object_unref (source);
+					g_byte_array_unref (bytes);
+				}
+			}
+		}
+	}
+	check (TRUE, "completion retries preserve short-write progress, filter order, errors and source ownership");
+}
+
+static void
+test_filtered_stream_lifecycle (void)
+{
+	GMimeStream *stream;
+	TestCompletionFilter *filter;
+	TestStreamFailure *source;
+	GByteArray *bytes;
+	guint writes, pending;
+
+	source = g_object_new (test_stream_failure_get_type (), NULL);
+	source->parent_object.source = g_mime_stream_mem_new ();
+	source->fail_after = G_MAXSIZE;
+	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+	stream = g_mime_stream_filter_new (GMIME_STREAM (source));
+	filter = g_object_new (test_completion_filter_get_type (), NULL);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), GMIME_FILTER (filter));
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpuint (filter->complete_calls, ==, 1);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_write (stream, "", 0), ==, 0);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpuint (filter->complete_calls, ==, 1);
+	g_assert_cmpint (g_mime_stream_write (stream, "\000\377", 2), ==, 2);
+	g_assert_cmpint (g_mime_stream_close (stream), ==, 0);
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_object.source));
+	g_assert_cmpmem (bytes->data, bytes->len, "!\000\377!", 4);
+	g_assert_cmpuint (filter->complete_calls, ==, 2);
+	g_assert_cmpuint (source->close_calls, ==, 0);
+	g_assert_cmpuint (source->flush_calls, ==, 0);
+	writes = source->write_calls;
+	g_object_unref (stream);
+	g_assert_cmpuint (source->write_calls, ==, writes);
+
+	stream = g_mime_stream_filter_new (GMIME_STREAM (source));
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), GMIME_FILTER (filter));
+	g_mime_stream_filter_set_owner (GMIME_STREAM_FILTER (stream), TRUE);
+	source->fail_close = TRUE;
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_close (stream), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	g_assert_cmpuint (filter->complete_calls, ==, 3);
+	source->fail_close = FALSE;
+	g_assert_cmpint (g_mime_stream_close (stream), ==, 0);
+	g_assert_cmpuint (filter->complete_calls, ==, 3);
+	g_assert_cmpuint (source->close_calls, ==, 2);
+	g_object_unref (stream);
+	g_object_unref (filter);
+	g_object_unref (source);
+	check (TRUE, "fresh and repeated flushes, binary reuse, zero-length writes and close errors preserve completion state");
+
+	source = g_object_new (test_stream_failure_get_type (), NULL);
+	source->parent_object.source = g_mime_stream_mem_new ();
+	source->fail_after = 1;
+	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+	stream = g_mime_stream_filter_new (GMIME_STREAM (source));
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (stream, "abc", 3), ==, -1);
+	g_assert_cmpint (errno, ==, ENOSPC);
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_object.source));
+	g_assert_cmpmem (bytes->data, bytes->len, "a", 1);
+	g_object_unref (stream);
+	g_object_unref (source);
+	check (TRUE, "ordinary failed writes report errors after accepting a prefix");
+
+	source = g_object_new (test_stream_failure_get_type (), NULL);
+	source->parent_object.source = g_mime_stream_mem_new ();
+	source->fail_after = 0;
+	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+	stream = g_mime_stream_filter_new (GMIME_STREAM (source));
+	filter = g_object_new (test_completion_filter_get_type (), NULL);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), GMIME_FILTER (filter));
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, -1);
+	source->fail_reset_on = 1;
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, -1);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, -1);
+	g_assert_cmpuint (filter->complete_calls, ==, 1);
+	g_assert_cmpuint (filter->reset_calls, ==, 0);
+	source->fail_after = G_MAXSIZE;
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+	g_assert_cmpuint (filter->reset_calls, ==, 1);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_object.source));
+	g_assert_cmpmem (bytes->data, bytes->len, "!", 1);
+	g_assert_cmpuint (filter->complete_calls, ==, 2);
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, 1);
+	g_mime_stream_filter_set_owner (GMIME_STREAM_FILTER (stream), TRUE);
+	g_object_unref (stream);
+	g_assert_cmpuint (filter->complete_calls, ==, 2);
+	g_assert_cmpuint (source->close_calls, ==, 0);
+	g_assert_cmpmem (bytes->data, bytes->len, "!x", 2);
+	g_object_unref (filter);
+	g_object_unref (source);
+	check (TRUE, "reset failures preserve pending completion, successful reset discards it, and destruction does not complete writes");
+
+	for (pending = 0; pending < 2; pending++) {
+		source = g_object_new (test_stream_failure_get_type (), NULL);
+		source->parent_object.source = g_mime_stream_mem_new ();
+		g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+		stream = g_mime_stream_filter_new (GMIME_STREAM (source));
+		g_mime_stream_filter_set_owner (GMIME_STREAM_FILTER (stream), TRUE);
+		filter = g_object_new (test_completion_filter_get_type (), NULL);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), GMIME_FILTER (filter));
+		if (pending)
+			g_assert_cmpint (g_mime_stream_flush (stream), ==, -1);
+		writes = source->write_calls;
+		g_object_unref (stream);
+		g_assert_cmpuint (filter->complete_calls, ==, pending);
+		g_assert_cmpuint (source->write_calls, ==, writes);
+		g_assert_cmpuint (source->close_calls, ==, 0);
+		g_object_unref (filter);
+		g_object_unref (source);
+	}
+	check (TRUE, "destruction neither completes fresh filters nor retries failed completion writes");
+}
+
+static void
+test_filtered_stream_reads (void)
+{
+	static const char expected[] = "ab\r!";
+	TestCompletionFilter *tail;
+	TestStreamFailure *source;
+	GMimeStream *stream;
+	GMimeFilter *dos;
+	char buffer[sizeof (expected)];
+	guint calls, mode, i;
+
+	for (mode = 0; mode < 4; mode++) {
+		source = g_object_new (test_stream_failure_get_type (), NULL);
+		source->parent_object.source = g_mime_stream_mem_new_with_buffer ("ab\r", 3);
+		source->onebyte = mode != 0;
+		source->fail_after = mode == 2 ? 1 : G_MAXSIZE;
+		source->zero_read = mode == 3;
+		g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+		stream = g_mime_stream_filter_new (GMIME_STREAM (source));
+		dos = g_mime_filter_dos2unix_new (FALSE);
+		tail = g_object_new (test_completion_filter_get_type (), NULL);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), dos);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (stream), GMIME_FILTER (tail));
+		g_object_unref (dos);
+		g_assert_cmpint (g_mime_stream_read (stream, buffer, 0), ==, 0);
+		g_assert_cmpuint (source->read_calls, ==, 0);
+		if (mode == 3) {
+			g_assert_cmpint (g_mime_stream_read (stream, buffer, 1), ==, 0);
+			g_assert_false (g_mime_stream_eos (stream));
+			g_assert_cmpuint (tail->complete_calls, ==, 0);
+		}
+		for (i = 0; i < 4; i++) {
+			if (mode == 2 && i == 1) {
+				errno = 0;
+				g_assert_cmpint (g_mime_stream_read (stream, buffer + i, 1), ==, -1);
+				g_assert_cmpint (errno, ==, EIO);
+				g_assert_cmpuint (tail->complete_calls, ==, 0);
+				g_assert_false (g_mime_stream_eos (stream));
+				source->fail_after = G_MAXSIZE;
+			}
+			g_assert_cmpint (g_mime_stream_read (stream, buffer + i, 1), ==, 1);
+			g_assert_cmpint (g_mime_stream_eos (stream), ==, i == 3);
+		}
+		g_assert_cmpmem (buffer, 4, expected, 4);
+		g_assert_cmpuint (tail->complete_calls, ==, 1);
+		calls = source->read_calls;
+		source->fail_after = source->bytes_read;
+		g_assert_cmpint (g_mime_stream_read (stream, buffer, sizeof (buffer)), ==, 0);
+		g_assert_cmpint (g_mime_stream_read (stream, buffer, sizeof (buffer)), ==, 0);
+		g_assert_cmpuint (source->read_calls, ==, calls);
+		g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+		g_assert_cmpuint (tail->complete_calls, ==, 1);
+
+		source->fail_reset_on = 1;
+		errno = 0;
+		g_assert_cmpint (g_mime_stream_reset (stream), ==, -1);
+		g_assert_cmpint (errno, ==, ESPIPE);
+		g_assert_cmpuint (tail->reset_calls, ==, 0);
+		g_assert_cmpint (g_mime_stream_read (stream, buffer, 1), ==, 0);
+		g_assert_cmpuint (source->read_calls, ==, calls);
+		source->fail_after = G_MAXSIZE;
+		g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+		g_assert_false (g_mime_stream_eos (stream));
+		g_assert_cmpuint (tail->reset_calls, ==, 1);
+		for (i = 0; i < 4; i++)
+			g_assert_cmpint (g_mime_stream_read (stream, buffer + i, 1), ==, 1);
+		g_assert_cmpmem (buffer, 4, expected, 4);
+		g_assert_cmpuint (tail->complete_calls, ==, 2);
+		g_object_unref (stream);
+		g_object_unref (tail);
+		g_object_unref (source);
+	}
+	check (TRUE, "read completion drains buffered CR and trailers once, caches EOF, and preserves native error/reset semantics");
+}
+
 int
 main (int argc, char **argv)
 {
@@ -8965,6 +9305,12 @@ main (int argc, char **argv)
 
 	g_mime_init ();
 	testsuite_init (argc, argv);
+
+	testsuite_start ("filtered stream completion lifecycle");
+	test_filtered_stream_completion ();
+	test_filtered_stream_lifecycle ();
+	test_filtered_stream_reads ();
+	testsuite_end ();
 
 	testsuite_start ("core type names and content");
 	test_type_names ();

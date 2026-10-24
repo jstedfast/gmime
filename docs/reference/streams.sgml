@@ -75,5 +75,16 @@
     could write a compression filter and apply it to a
     GMimeStreamFilter and any further reads or writes would be
     (un)compressed.</para>
+
+    <para>Flushing GMimeStreamFilter completes its write-side filters
+    once until more data is written. Failed completion writes can be
+    retried with flush or close without duplicating accepted output.
+    Close reports completion failures before closing an owned source.
+    Read-side completion occurs once at source EOF, and its output is
+    drained before EOF is reported. Reset discards buffered output and
+    resets both the source and the filters. Flush does not flush the
+    underlying source itself; flush that stream separately when needed.
+    Explicitly flush or close to finish writes before releasing the
+    stream.</para>
   </refsect1>
 </refentry>

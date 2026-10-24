@@ -43,6 +43,17 @@
  *
  * When data passes through a #GMimeStreamFilter, it will pass through
  * #GMimeFilter filters in the order they were added.
+ *
+ * Flushing completes the write-side filters once until more input is
+ * written. Unwritten completion output is retained if the source fails,
+ * so flushing or closing again can retry it without completing the filters
+ * twice. Closing reports these errors before closing an owned source.
+ * Flush does not flush the source stream itself.
+ *
+ * Reading completes the filters once at end-of-stream and drains their
+ * final output before reporting EOF. Reset discards buffered output and
+ * filter state and starts a fresh conversion at the source's reset position.
+ * Do not manipulate filters or the source while output is buffered.
  **/
 
 
@@ -69,7 +80,8 @@ struct _GMimeStreamFilterPrivate {
 	ssize_t written;
 	
 	int last_was_read:1;	/* was the last op read or write? */
-	int flushed:1;          /* have the filters been flushed? */
+	int flushed:1;		/* have the write-side filters been flushed? */
+	int eos:1;		/* have the read-side filters reached EOF? */
 };
 
 static void g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass);
@@ -148,9 +160,10 @@ g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *kl
 	stream->priv->filterid = 0;
 	stream->priv->realbuffer = g_malloc (READ_SIZE + READ_PAD);
 	stream->priv->buffer = stream->priv->realbuffer + READ_PAD;
-	stream->priv->last_was_read = TRUE;
+	stream->priv->last_was_read = FALSE;
 	stream->priv->filteredlen = 0;
 	stream->priv->flushed = FALSE;
+	stream->priv->eos = FALSE;
 	stream->priv->written = 0;
 }
 
@@ -189,14 +202,20 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 	
 	priv->last_was_read = TRUE;
 	
+	/* Filters may consume input without producing output (for example, a
+	 * trailing CR), so keep reading until output or completed EOF. */
 	while (priv->filteredlen == 0) {
 		size_t presize = READ_PAD;
 		
+		if (priv->eos)
+			return 0;
+
 		nread = g_mime_stream_read (filter->source, priv->buffer, READ_SIZE);
 		if (nread < 0)
 			return -1;
 		if (nread == 0) {
-			if (g_mime_stream_eos (filter->source) && !priv->flushed) {
+			if (g_mime_stream_eos (filter->source)) {
+				/* At EOF, flush any data buffered by the filters once. */
 				priv->filtered = priv->buffer;
 				priv->filteredlen = 0;
 				f = priv->filters;
@@ -209,7 +228,7 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 				}
 				
 				nread = priv->filteredlen;
-				priv->flushed = TRUE;
+				priv->eos = TRUE;
 			}
 			
 			if (nread <= 0)
@@ -217,7 +236,6 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 		} else {
 			priv->filtered = priv->buffer;
 			priv->filteredlen = nread;
-			priv->flushed = FALSE;
 			f = priv->filters;
 			
 			while (f != NULL) {
@@ -238,16 +256,28 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 }
 
 static int
-write_filtered (GMimeStreamFilter *filter, const char *buffer, size_t len)
+write_filtered (GMimeStreamFilter *filter, char **buffer, size_t *len)
 {
-	if (len > (size_t) (G_MAXSSIZE - filter->priv->written)) {
+	ssize_t nwritten;
+
+	if (*len > (size_t) (G_MAXSSIZE - filter->priv->written)) {
 		errno = EOVERFLOW;
 		return -1;
 	}
 
-	if (_g_mime_stream_write_all (filter->source, buffer, len) == -1)
-		return -1;
-	filter->priv->written += len;
+	/* Native writes can be short. Retain the unwritten suffix on failure,
+	 * rather than replaying bytes already accepted by the source. */
+	while (*len > 0) {
+		if ((nwritten = g_mime_stream_write (filter->source, *buffer, *len)) == -1)
+			return -1;
+		if (nwritten == 0) {
+			errno = EIO;
+			return -1;
+		}
+		filter->priv->written += nwritten;
+		*buffer += nwritten;
+		*len -= nwritten;
+	}
 
 	return 0;
 }
@@ -268,6 +298,11 @@ stream_write (GMimeStream *stream, const char *buf, size_t n)
 	struct _filter *f;
 	size_t presize;
 	
+	/* Do not overwrite a filter's retained completion buffer with new input
+	 * until a previous failed flush has finished writing it. */
+	if (!priv->last_was_read && priv->flushed && priv->filteredlen > 0 && stream_flush (stream) == -1)
+		return -1;
+
 	priv->last_was_read = FALSE;
 	priv->flushed = FALSE;
 	
@@ -279,7 +314,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t n)
 		f = f->next;
 	}
 	
-	if (write_filtered (filter, buffer, n) == -1)
+	if (write_filtered (filter, &buffer, &n) == -1)
 		return -1;
 	
 	/* return original input len because that's what our caller expects */
@@ -291,30 +326,32 @@ stream_flush (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	struct _GMimeStreamFilterPrivate *priv = filter->priv;
-	size_t presize, len;
+	size_t presize;
 	struct _filter *f;
-	char *buffer;
 	
 	if (priv->last_was_read) {
 		/* no-op */
 		return 0;
 	}
 	
-	buffer = "";
-	len = 0;
-	presize = 0;
-	f = priv->filters;
-	
-	while (f != NULL) {
-		g_mime_filter_complete (f->filter, buffer, len, presize, &buffer, &len, &presize);
-		
-		f = f->next;
+	if (!priv->flushed) {
+		priv->filtered = "";
+		priv->filteredlen = 0;
+		presize = 0;
+		f = priv->filters;
+
+		while (f != NULL) {
+			g_mime_filter_complete (f->filter, priv->filtered, priv->filteredlen, presize,
+						&priv->filtered, &priv->filteredlen, &presize);
+			f = f->next;
+		}
+
+		/* Completion changes filter state. Keep its output for retries
+		 * instead of completing again after a source write failure. */
+		priv->flushed = TRUE;
 	}
 	
-	if (write_filtered (filter, buffer, len) == -1)
-		return -1;
-	
-	return 0;
+	return write_filtered (filter, &priv->filtered, &priv->filteredlen);
 }
 
 static int
@@ -323,8 +360,8 @@ stream_close (GMimeStream *stream)
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	
-	if (!priv->last_was_read)
-		stream_flush (stream);
+	if (!priv->last_was_read && stream_flush (stream) == -1)
+		return -1;
 	
 	if (filter->owner)
 		return g_mime_stream_close (filter->source);
@@ -341,10 +378,7 @@ stream_eos (GMimeStream *stream)
 	if (priv->filteredlen > 0)
 		return FALSE;
 	
-	if (!priv->flushed)
-		return FALSE;
-	
-	return g_mime_stream_eos (filter->source);
+	return priv->eos != 0;
 }
 
 static int
@@ -359,6 +393,8 @@ stream_reset (GMimeStream *stream)
 	
 	priv->filteredlen = 0;
 	priv->flushed = FALSE;
+	priv->eos = FALSE;
+	priv->last_was_read = FALSE;
 	priv->written = 0;
 	
 	/* and reset filters */
@@ -537,8 +573,9 @@ g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id)
  *
  * Sets whether or not @stream owns the source stream..
  *
- * Note: @owner should be %TRUE if the stream should close() the
- * backend source stream when destroyed or %FALSE otherwise.
+ * Note: @owner should be %TRUE if explicitly closing the stream should
+ * close its source, or %FALSE to leave the source open. Finalization
+ * does not complete the filters or explicitly close the source.
  **/
 void
 g_mime_stream_filter_set_owner (GMimeStreamFilter *stream, gboolean owner)

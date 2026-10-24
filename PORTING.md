@@ -147,6 +147,25 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- GMimeStreamFilter now follows MimeKit's FilteredStream completion
+  lifecycle. Flush completes the write-side chain once until another
+  nonempty write; flushing a fresh stream also completes empty input.
+  Completion output survives source write errors, including short writes,
+  so repeated flush/close retries only the unwritten suffix. A new write
+  first drains a previously failed completion. Zero-progress writes report
+  EIO. Close propagates completion errors before closing an owned source.
+  Read-side filters complete once at confirmed source EOF; final output is
+  drained before EOF is reported, and subsequent reads do not poll the
+  source again. Reset resets the source and filters and discards pending
+  output. Do not manipulate the filters or source while output is buffered.
+  Native differences remain: explicit close completes writes, destruction
+  does not; ownership is configurable and defaults to leaving the source
+  open. Flush does not flush the underlying source, matching MimeKit's
+  implementation rather than its Flush documentation. Zero-length native
+  reads/writes remain no-ops, and native transient zero reads without an
+  EOF indication do not complete the filters. Cancellation, asynchronous
+  operations and managed disposal state are not added.
+
 - GMimeFilterBasic's create_encoder()/create_decoder() factory families
   port MimeKit's EncoderFilter.Create/DecoderFilter.Create without adding
   duplicate public wrapper types. Enum and by_name forms select Base64,
