@@ -50,6 +50,9 @@ struct _GMimeStreamCat {
 	
 	struct _cat_node *sources;
 	struct _cat_node *current;
+
+	/* <private> */
+	gboolean read_eof;
 };
 
 struct _GMimeStreamCatClass {

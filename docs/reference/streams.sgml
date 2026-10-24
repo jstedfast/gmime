@@ -38,6 +38,45 @@
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</para>
 
+    <para>GMimeStreamCat concatenates child streams in insertion order.
+    Reads fill the requested buffer across child boundaries, starting at
+    each child's current position without seeking or resetting it. This
+    permits reading nonseekable sources; explicitly seeking or resetting
+    the concatenation still requires repositionable children. Empty or
+    exhausted concatenations return zero, and adding a source after EOF
+    resumes reading. A transient zero read without a child EOF indication
+    does not skip that child. On an error after partial progress, the bytes
+    already read are returned and the failing child remains current for
+    the next read. Sources are retained by reference and are not explicitly
+    closed when the concatenation releases them.</para>
+
+    <para>Concatenated writes also use each child's current position.
+    Earlier children retain their existing lengths and must support length
+    and position queries; the last child may grow and can be a pipe or
+    filtered destination. A full child is flushed before spilling into the
+    next child, but not when a write merely fills it exactly. Short writes
+    are retried on the same child. Write or boundary-flush errors preserve
+    accepted bytes and leave the failing child current for retry. Explicit
+    flush affects only the current child and does nothing when there is no
+    current child; writing after read-side EOF resumes at the last child.
+    Read EOF stays cached across writes until a child is added or the
+    concatenation is reset or repositioned, without losing the current flush
+    destination. Native child and concatenation bounds still apply, and
+    zero-progress writes fail
+    with EIO rather than skipping destinations.</para>
+
+    <para>Forward concatenation seeks physically position traversed children
+    and leave a child selected when the target lands exactly at its end.
+    This permits seeking to the chain's end while retaining the final flush
+    destination. Backward seeks reposition only the selected child and the
+    children up to the previous current child; they seek rather than reset
+    those children. Seeking to the current position leaves cached EOF
+    unchanged. Child seek errors preserve already completed positioning;
+    an explicit reset rewinds all children even at the logical beginning,
+    recovering their positions after a partial backward seek.
+    Native bounds still apply, and overflowing length sums or seek offsets
+    fail with EOVERFLOW.</para>
+
     <para>The five (5) advanced stream types are GMimeStreamMmap,
     GMimeStreamNull, GMimeStreamPipe, GMimeStreamBuffer and
     GMimeStreamFilter.</para>

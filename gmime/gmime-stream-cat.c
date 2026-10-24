@@ -37,6 +37,11 @@
  * @see_also: #GMimeStream
  *
  * A #GMimeStream which chains together any number of other streams.
+ *
+ * Reads fill the requested buffer across child-stream boundaries without
+ * seeking or resetting the children. Sources are read from their current
+ * positions and are retained by reference. Explicit seek and reset operations
+ * still require the affected children to support repositioning.
  **/
 
 
@@ -118,6 +123,7 @@ g_mime_stream_cat_init (GMimeStreamCat *stream, GMimeStreamCatClass *klass)
 {
 	stream->sources = NULL;
 	stream->current = NULL;
+	stream->read_eof = FALSE;
 }
 
 static void
@@ -135,42 +141,65 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current;
-	ssize_t nread = 0;
-	gint64 offset;
+	size_t count, nread = 0;
+	gint64 available;
+	ssize_t n;
+	int errsv;
+
+	if (cat->read_eof)
+		return 0;
 	
 	/* check for end-of-stream */
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
-		return -1;
+		return 0;
 	
+	/* The result must fit in ssize_t even when several children contribute. */
+	len = MIN (len, (size_t) G_MAXSSIZE);
+
 	/* don't allow our caller to read past the end of the stream */
 	if (stream->bound_end != -1)
 		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
-	if (!(current = cat->current))
-		return -1;
-	
-	/* make sure our stream position is where it should be */
-	offset = current->stream->bound_start + current->position;
-	if (g_mime_stream_seek (current->stream, offset, GMIME_STREAM_SEEK_SET) == -1)
-		return -1;
-	
-	do {
-		if ((nread = g_mime_stream_read (current->stream, buf, len)) <= 0) {
-			cat->current = current = current->next;
-			if (current != NULL) {
-				if (g_mime_stream_reset (current->stream) == -1)
-					return -1;
-				current->position = 0;
-			}
-			nread = 0;
-		} else if (nread > 0) {
-			current->position += nread;
+	current = cat->current;
+	while (nread < len && current != NULL) {
+		available = MIN (G_MAXINT64 - stream->position, G_MAXINT64 - current->position);
+		count = (size_t) MIN ((guint64) (len - nread), (guint64) available);
+		if (count == 0) {
+			errno = EOVERFLOW;
+			return nread > 0 ? (ssize_t) nread : -1;
 		}
-	} while (nread == 0 && current != NULL);
+
+		/* Read before consulting EOS: filters may still have completion output. */
+		n = g_mime_stream_read (current->stream, buf + nread, count);
+		if (n < 0) {
+			errsv = errno;
+			/* Native bounded streams use EINVAL at EOF. Other errors must
+			 * preserve accepted bytes and leave this child for retry. */
+			if (errsv != EINVAL || !g_mime_stream_eos (current->stream)) {
+				errno = errsv;
+				return nread > 0 ? (ssize_t) nread : -1;
+			}
+		}
+
+		if (n <= 0) {
+			/* A transient zero read is not evidence that this child is finished. */
+			if (n == 0 && !g_mime_stream_eos (current->stream))
+				break;
+
+			cat->current = current = current->next;
+			continue;
+		}
+
+		/* Account for progress before another read can fail. */
+		current->position += n;
+		stream->position += n;
+		nread += n;
+	}
 	
-	if (nread > 0)
-		stream->position += nread;
-	
+	/* Writes can select the tail again without reopening an exhausted reader. */
+	if (nread == 0 && cat->current == NULL)
+		cat->read_eof = TRUE;
+
 	return nread;
 }
  
@@ -179,57 +208,81 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current;
-	size_t nwritten = 0;
-	ssize_t n = -1;
-	gint64 offset;
+	size_t count, nwritten = 0;
+	gint64 available, length, position;
+	ssize_t n;
 	
 	/* check for end-of-stream */
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
 		return -1;
+	}
 	
+	len = MIN (len, (size_t) G_MAXSSIZE);
+
 	/* don't allow our caller to write past the end of the stream */
 	if (stream->bound_end != -1)
 		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
-	if (!(current = cat->current))
-		return -1;
-	
-	/* make sure our stream position is where it should be */
-	offset = current->stream->bound_start + current->position;
-	if (g_mime_stream_seek (current->stream, offset, GMIME_STREAM_SEEK_SET) == -1)
-		return -1;
-	
-	do {
-		n = -1;
-		while (!g_mime_stream_eos (current->stream) && nwritten < len) {
-			if ((n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten)) <= 0)
-				break;
-			
-			current->position += n;
-			
-			nwritten += n;
-		}
-		
-		if (nwritten < len) {
-			/* try spilling over into the next stream */
+	current = cat->current;
+	if (current == NULL) {
+		/* After read-side EOF, writes resume at the final child's position. */
+		current = cat->sources;
+		while (current != NULL && current->next != NULL)
 			current = current->next;
-			if (current) {
-				current->position = 0;
-				if (g_mime_stream_reset (current->stream) == -1)
-					break;
-			} else {
-				break;
+		if (current == NULL) {
+			errno = EBADF;
+			return -1;
+		}
+		cat->current = current;
+	}
+
+	while (nwritten < len) {
+		available = MIN (G_MAXINT64 - stream->position, G_MAXINT64 - current->position);
+		count = (size_t) MIN ((guint64) (len - nwritten), (guint64) available);
+		if (count == 0) {
+			errno = EOVERFLOW;
+			return nwritten > 0 ? (ssize_t) nwritten : -1;
+		}
+
+		/* Earlier children keep their existing lengths; the final child may grow.
+		 * Do not require Length, Position or seeking from a write-only tail. */
+		if (current->next != NULL) {
+			if ((length = g_mime_stream_length (current->stream)) < 0 ||
+			    (position = g_mime_stream_tell (current->stream)) < 0)
+				return nwritten > 0 ? (ssize_t) nwritten : -1;
+
+			if (position < current->stream->bound_start ||
+			    position - current->stream->bound_start > length) {
+				errno = EINVAL;
+				return nwritten > 0 ? (ssize_t) nwritten : -1;
+			}
+
+			available = length - (position - current->stream->bound_start);
+			count = (size_t) MIN ((guint64) count, (guint64) available);
+			if (count == 0) {
+				/* Keep this child current until its flush succeeds, so a retry
+				 * cannot skip completion output or replay accepted bytes. */
+				if (g_mime_stream_flush (current->stream) == -1)
+					return nwritten > 0 ? (ssize_t) nwritten : -1;
+				cat->current = current = current->next;
+				continue;
 			}
 		}
-	} while (nwritten < len);
-	
-	stream->position += nwritten;
-	
-	cat->current = current;
-	
-	if (n == -1 && nwritten == 0)
-		return -1;
-	
+
+		n = g_mime_stream_write (current->stream, buf + nwritten, count);
+		if (n <= 0) {
+			if (n == 0)
+				errno = EIO;
+			return nwritten > 0 ? (ssize_t) nwritten : -1;
+		}
+
+		/* Native writes may be short. Account for progress before retrying. */
+		current->position += n;
+		stream->position += n;
+		nwritten += n;
+	}
+
 	return nwritten;
 }
 
@@ -237,27 +290,12 @@ static int
 stream_flush (GMimeStream *stream)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
-	struct _cat_node *node;
-	int errnosav = 0;
-	int rv = 0;
-	
-	/* flush all streams up to and including the current stream */
-	
-	node = cat->sources;
-	while (node) {
-		if (g_mime_stream_flush (node->stream) == -1) {
-			if (errnosav == 0)
-				errnosav = errno;
-			rv = -1;
-		}
-		
-		if (node == cat->current)
-			break;
-		
-		node = node->next;
-	}
-	
-	return rv;
+
+	/* Earlier write destinations were flushed when advancing past them. */
+	if (cat->current != NULL)
+		return g_mime_stream_flush (cat->current->stream);
+
+	return 0;
 }
 
 static int
@@ -285,7 +323,7 @@ stream_eos (GMimeStream *stream)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	
-	if (cat->current == NULL)
+	if (cat->read_eof || cat->current == NULL)
 		return TRUE;
 	
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
@@ -300,9 +338,8 @@ stream_reset (GMimeStream *stream)
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *n;
 	
-	if (stream->position == stream->bound_start)
-		return 0;
-	
+	/* A failed backward seek can leave later children displaced even when
+	 * the concatenation is already positioned at its beginning. */
 	n = cat->sources;
 	while (n != NULL) {
 		if (g_mime_stream_reset (n->stream) == -1)
@@ -313,6 +350,7 @@ stream_reset (GMimeStream *stream)
 	}
 	
 	cat->current = cat->sources;
+	cat->read_eof = FALSE;
 	
 	return 0;
 }
@@ -321,197 +359,124 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
-	struct _cat_node *current, *n;
-	gint64 real, off, len;
-	
-	d(fprintf (stderr, "GMimeStreamCat::stream_seek (%p, %ld, %d)\n",
-		   stream, offset, whence));
-	
-	if (cat->sources == NULL)
+	struct _cat_node *current, *stop, *node;
+	gint64 origin, real, length = -1, position, left, n;
+
+	if (cat->sources == NULL) {
+		errno = EBADF;
 		return -1;
+	}
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-	seek_set:
-		/* sanity check our seek - make sure we don't under/over-seek our bounds */
-		if (offset < 0) {
-			d(fprintf (stderr, "offset %ld < 0, fail\n", offset));
-			return -1;
-		}
-		
-		/* sanity check our seek */
-		if (stream->bound_end != -1 && offset > stream->bound_end) {
-			d(fprintf (stderr, "offset %ld > bound_end %ld, fail\n",
-				   offset, stream->bound_end));
-			return -1;
-		}
-		
-		/* short-cut if we are seeking to our current position */
-		if (offset == stream->position) {
-			d(fprintf (stderr, "offset %ld == stream->position %ld, no need to seek\n",
-				   offset, stream->position));
-			return offset;
-		}
-		
-		real = 0;
-		n = cat->sources;
-		current = cat->current;
-		
-		while (n != current) {
-			if (real + n->position > offset)
-				break;
-			real += n->position;
-			n = n->next;
-		}
-		
-		if (n == NULL) {
-			/* offset not within our grasp... */
-			return -1;
-		}
-		
-		if (n != current) {
-			/* seeking to a previous stream (n->stream) */
-			if ((offset - real) != n->position) {
-				/* FIXME: could probably skip these seek checks... */
-				off = n->stream->bound_start + (offset - real);
-				if (g_mime_stream_seek (n->stream, off, GMIME_STREAM_SEEK_SET) == -1)
-					return -1;
-			}
-			
-			d(fprintf (stderr, "setting current stream to %i and updating cur->position to %ld\n",
-				   n->id, offset - real));
-			
-			current = n;
-			current->position = offset - real;
-			
-			break;
-		} else {
-			/* seeking to someplace in our current (or next) stream */
-			d(fprintf (stderr, "seek offset %ld in current stream[%d] or after\n",
-				   offset, current->id));
-			if ((offset - real) == current->position) {
-				/* exactly at our current position */
-				d(fprintf (stderr, "seek offset at cur position of stream[%d]\n",
-					   current->id));
-				stream->position = offset;
-				return offset;
-			}
-			
-			if ((offset - real) < current->position) {
-				/* in current stream, but before current position */
-				d(fprintf (stderr, "seeking backwards in cur stream[%d]\n",
-					   current->id));
-				/* FIXME: again, could probably skip seek checks... */
-				off = current->stream->bound_start + (offset - real);
-				if (g_mime_stream_seek (current->stream, off, GMIME_STREAM_SEEK_SET) == -1)
-					return -1;
-				
-				d(fprintf (stderr, "setting cur stream[%d] position to %ld\n",
-					   current->id, offset - real));
-				current->position = offset - real;
-				
-				break;
-			}
-			
-			/* after our current position */
-			d(fprintf (stderr, "after cur position in stream[%d] or in a later stream\n",
-				   current->id));
-			do {
-				if (current->stream->bound_end != -1) {
-					len = current->stream->bound_end - current->stream->bound_start;
-				} else {
-					if ((len = g_mime_stream_length (current->stream)) == -1)
-						return -1;
-				}
-				
-				d(fprintf (stderr, "real = %lld, stream[%d] len = %lld\n",
-					   real, current->id, len));
-				
-				if ((real + len) > offset) {
-					/* within the bounds of the current stream */
-					d(fprintf (stderr, "offset within bounds of stream[%d]\n",
-						   current->id));
-					break;
-				} else {
-					d(fprintf (stderr, "not within bounds of stream[%d]\n",
-						   current->id));
-					current->position = len;
-					real += len;
-					
-					current = current->next;
-					if (current == NULL) {
-						d(fprintf (stderr, "ran out of streams, failed\n"));
-						return -1;
-					}
-					
-					d(fprintf (stderr, "advanced to stream[%d]...\n", current->id));
-					
-					if (g_mime_stream_reset (current->stream) == -1)
-						return -1;
-					
-					current->position = 0;
-				}
-			} while (1);
-			
-			/* FIXME: another seek check... probably can skip this */
-			off = current->stream->bound_start + (offset - real);
-			if (g_mime_stream_seek (current->stream, off, GMIME_STREAM_SEEK_SET) == -1)
-				return -1;
-			
-			d(fprintf (stderr, "setting cur position of stream[%d] to %ld\n",
-				   current->id, offset - real));
-			current->position = offset - real;
-		}
-		
+		origin = 0;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		if (offset == 0)
-			return stream->position;
-		
-		/* calculate offset relative to the beginning of the stream */
-		offset = stream->position + offset;
-		goto seek_set;
+		origin = stream->position;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		if (offset > 0)
+		if ((length = stream_length (stream)) < 0)
 			return -1;
-		
-		/* calculate the offset of the end of the stream */
-		n = cat->sources;
-		real = stream->bound_start;
-		while (n != NULL) {
-			if ((len = g_mime_stream_length (n->stream)) == -1)
-				return -1;
-			
-			real += len;
-			n = n->next;
+		if (length > G_MAXINT64 - stream->bound_start) {
+			errno = EOVERFLOW;
+			return -1;
 		}
-		
-		/* calculate offset relative to the beginning of the stream */
-		offset = real + offset;
-		goto seek_set;
+		origin = stream->bound_start + length;
 		break;
 	default:
-		g_assert_not_reached ();
+		errno = EINVAL;
 		return -1;
 	}
-	
-	d(fprintf (stderr, "setting stream->offset to %ld and current stream to %d\n",
-		   offset, current->id));
-	
-	stream->position = offset;
-	cat->current = current;
-	
-	/* reset all following streams */
-	n = current->next;
-	while (n != NULL) {
-		if (g_mime_stream_reset (n->stream) == -1)
-			return -1;
-		n->position = 0;
-		n = n->next;
+
+	/* Origins are nonnegative; only a positive offset can overflow the sum. */
+	if (offset > 0 && origin > G_MAXINT64 - offset) {
+		errno = EOVERFLOW;
+		return -1;
 	}
-	
-	return offset;
+	real = origin + offset;
+	if (real < stream->bound_start) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* Short-cut if we are seeking to our current position, including EOF. */
+	if (real == stream->position)
+		return real;
+	if (length < 0 && (length = stream_length (stream)) < 0)
+		return -1;
+	if (real - stream->bound_start > length) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (real > stream->position) {
+		current = cat->current;
+		while (current != NULL && stream->position < real) {
+			if ((length = g_mime_stream_length (current->stream)) < 0 ||
+			    (position = g_mime_stream_tell (current->stream)) < 0)
+				return -1;
+			if (position < current->stream->bound_start ||
+			    position - current->stream->bound_start > length) {
+				errno = EINVAL;
+				return -1;
+			}
+			left = length - (position - current->stream->bound_start);
+			n = MIN (left, real - stream->position);
+			if (n > G_MAXINT64 - position || n > G_MAXINT64 - current->position) {
+				errno = EOVERFLOW;
+				return -1;
+			}
+
+			/* Move every skipped child physically, retaining a full child
+			 * as current when the requested offset lands exactly at its end. */
+			if (g_mime_stream_seek (current->stream, n, GMIME_STREAM_SEEK_CUR) < 0)
+				return -1;
+			current->position += n;
+			stream->position += n;
+			if (stream->position < real)
+				cat->current = current = current->next;
+		}
+		cat->read_eof = current == NULL;
+	} else {
+		/* Find the child which encompasses our seek offset. Only children
+		 * between it and the old current child need to be repositioned. */
+		stop = cat->current != NULL ? cat->current->next : NULL;
+		current = cat->sources;
+		stream->position = stream->bound_start;
+		while (current != stop) {
+			if ((length = g_mime_stream_length (current->stream)) < 0)
+				return -1;
+			n = real - stream->position;
+			if (n < length) {
+				if (n > G_MAXINT64 - current->stream->bound_start) {
+					errno = EOVERFLOW;
+					return -1;
+				}
+				position = current->stream->bound_start + n;
+				if (g_mime_stream_seek (current->stream, position, GMIME_STREAM_SEEK_SET) < 0)
+					return -1;
+				current->position = n;
+				stream->position = real;
+				break;
+			}
+			current->position = length;
+			stream->position += length;
+			current = current->next;
+		}
+		cat->current = current;
+
+		/* Seek rather than reset: repositioning must not reset child state. */
+		node = current != stop ? current->next : stop;
+		while (node != stop) {
+			if (g_mime_stream_seek (node->stream, node->stream->bound_start, GMIME_STREAM_SEEK_SET) < 0)
+				return -1;
+			node->position = 0;
+			node = node->next;
+		}
+		cat->read_eof = FALSE;
+	}
+
+	return stream->position;
 }
 
 static gint64
@@ -532,9 +497,12 @@ stream_length (GMimeStream *stream)
 	
 	n = cat->sources;
 	while (n != NULL) {
-		if ((len = g_mime_stream_length (n->stream)) == -1)
+		if ((len = g_mime_stream_length (n->stream)) < 0)
 			return -1;
-		
+		if (len > G_MAXINT64 - total) {
+			errno = EOVERFLOW;
+			return -1;
+		}
 		total += len;
 		n = n->next;
 	}
@@ -692,7 +660,9 @@ g_mime_stream_cat_new (void)
  * @cat: a #GMimeStreamCat
  * @source: a source stream
  *
- * Adds the @source stream to the @cat.
+ * Adds a reference to @source to the @cat without seeking or resetting it.
+ * Reading starts at the source's current position. Adding a source after
+ * end-of-stream makes that source available to subsequent reads.
  *
  * Returns: %0 on success or %-1 on fail.
  **/
@@ -724,6 +694,7 @@ g_mime_stream_cat_add_source (GMimeStreamCat *cat, GMimeStream *source)
 	
 	if (!cat->current)
 		cat->current = node;
+	cat->read_eof = FALSE;
 	
 	return 0;
 }

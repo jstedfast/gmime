@@ -147,6 +147,61 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- GMimeStreamCat now ports MimeKit's ChainedStream synchronous read loop.
+  Reads fill the requested buffer across short reads and child boundaries,
+  without seeking or resetting children, so nonseekable and prepositioned
+  sources are supported. Empty and exhausted chains and finite read bounds
+  return zero. Exhausted children are not polled again; adding another
+  source resumes reading. Native EINVAL read errors at confirmed EOF are
+  treated as exhausted boundaries; other errors remain failures even if
+  the child reports EOS. A transient zero read without EOS does not advance
+  to another child. Source errors are not
+  swallowed: bytes already read are returned first, positions retain that
+  progress, and the failing child remains current for retry. Signed position
+  overflow reports EOVERFLOW without consuming unrepresentable bytes.
+  Sources remain retained by reference without being explicitly closed;
+  the native substream API remains unchanged.
+  Explicit repositioning still requires the affected child
+  streams to support it. Asynchronous operations, managed capability checks,
+  per-source leaveOpen and disposal state remain unported.
+
+- GMimeStreamCat also ports ChainedStream's synchronous write and flush
+  behavior. Writes use each child's current position without seeking or
+  resetting it. Non-final children require a usable length and position and
+  retain their existing extents; the final child may grow if its own bounds
+  permit it, and need not support length, tell or seeking. A full child is
+  flushed only when more output needs to spill into the next child. Failed
+  boundary flushes retain the current child for retry. Explicit flush affects
+  only the current child and is a no-op with no current child; a subsequent
+  write resumes at the final child. Read EOF remains cached across such
+  writes, without discarding the selected flush destination. Adding a child,
+  resetting or seeking to a different position reopens reading.
+  Native short writes are retried without
+  skipping destinations. Errors return accepted bytes first, retaining errno
+  and position; zero-progress writes report EIO. Empty-chain writes report
+  EBADF, exhausted outer write bounds report EINVAL, and signed position
+  overflow reports EOVERFLOW. Native zero-length writes remain no-ops.
+  Child bounds and write failures still prevent a fixed-capacity tail from
+  growing; asynchronous writes and flushes remain unported.
+
+- GMimeStreamCat now also follows ChainedStream's synchronous seek traversal.
+  Forward seeks physically move each traversed child and leave the previous
+  child selected when landing exactly at its end, including the end of the
+  entire chain. Backward seeks reposition the selected child and seek only
+  the intervening children back to their starts, without resetting filters
+  or touching later, unvisited children. Seeking to the current position is
+  a no-op, including cached EOF. Successful repositioning updates cached EOF.
+  Child positions, length and seek errors remain observable; failed seeks
+  return -1 without rolling back already completed child operations. An
+  explicit reset rewinds all children even at the logical start, recovering
+  displaced children after a partial backward seek.
+  Child bounds retain native absolute coordinates, while concatenation
+  offsets respect its own start and end bounds. Length sums and seek-origin
+  arithmetic report EOVERFLOW rather than wrapping; invalid targets and
+  origins report EINVAL, and seeking an empty chain reports EBADF.
+  The native substream API and the lack of managed capability prechecks
+  remain unchanged.
+
 - GMimeStreamFilter now follows MimeKit's FilteredStream completion
   lifecycle. Flush completes the write-side chain once until another
   nonempty write; flushing a fresh stream also completes empty input.
