@@ -70,6 +70,7 @@ struct _GMimePart {
 	gboolean content_duration_loaded;
 	gboolean content_description_loaded;
 	gboolean encoding_loaded;
+	gboolean content_md5_loaded;
 };
 
 struct _GMimePartClass {

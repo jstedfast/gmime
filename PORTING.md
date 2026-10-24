@@ -2085,6 +2085,29 @@ assignment replaces duplicates even when the first value is already equal.
 Comparison occurs before trimming, matching MimeKit. Borrowed values,
 including substrings of the getter's value, can safely be assigned back.
 
+### Content-MD5 property
+
+GMimePart's get_content_md5()/set_content_md5() now follow MimeKit's
+ContentMd5 property's lazy first-header lookup and assignment semantics.
+Reads trim surrounding Unicode whitespace without rewriting raw headers.
+Matching header additions, edits, removals and clearing invalidate the
+cache; later duplicates never override the first value. An absent header
+returns NULL, while an empty or all-whitespace first header returns "".
+
+Assignments compare against the loaded cache before trimming. Equal
+assignments preserve raw headers and duplicates; assignment before a read
+replaces duplicates even when the first header already has the same value.
+NULL removes all matching headers unless the loaded cache is already NULL.
+Borrowed getter values and substrings remain safe to assign back. The same
+behavior applies to GMimeTextPart.
+
+Verification resolves the lazy property before checking for a digest,
+preserving GMime's ability to verify parsed or edited headers without a
+preceding getter call. Empty first headers still short-circuit without
+reading content, even if a later duplicate contains a valid digest.
+Digest computation, error propagation and source-stream behavior are
+unchanged; property assignment does not compute or validate a checksum.
+
 ### Transfer-encoding names
 
 g_mime_content_encoding_from_string() now ports MimeUtils.TryParse() for

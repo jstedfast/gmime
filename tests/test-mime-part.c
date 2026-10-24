@@ -332,6 +332,127 @@ test_content_md5_assignment (void)
 }
 
 static void
+test_content_md5_lazy_property (void)
+{
+	static const char digest[] = "kAFQmDzST7DWlj99KOF/cg==";
+	GMimePart *part;
+	GMimeHeaderList *headers;
+	GMimeHeader *header, *duplicate;
+	char *raw, *value;
+	guint text, loaded;
+	int count;
+
+	testsuite_check ("Content-MD5 lazy reads, cached assignment and duplicate invalidation");
+	for (text = 0; text < 2; text++) {
+		for (loaded = 0; loaded < 2; loaded++) {
+			part = text ? GMIME_PART (g_mime_text_part_new ()) : g_mime_part_new ();
+			headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
+			count = g_mime_header_list_get_count (headers);
+			g_assert_null (g_mime_part_get_content_md5 (part));
+			g_mime_header_list_append (headers, "Content-Md5", digest, NULL);
+			header = g_mime_header_list_get_header (headers, "Content-Md5");
+			raw = g_strdup_printf (" \302\205%s\343\200\200\t\n", digest);
+			g_mime_header_set_raw_value (header, raw);
+			g_mime_header_list_append (headers, "Content-Md5", "second", NULL);
+			if (loaded)
+				g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, digest);
+			g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+			g_mime_part_set_content_md5 (part, digest);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + (loaded ? 2 : 1));
+			if (loaded)
+				g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+			g_free (raw);
+
+			g_mime_header_list_append (headers, "Content-Md5", "second", NULL);
+			duplicate = g_mime_header_list_get_header_at (headers, g_mime_header_list_get_count (headers) - 1);
+			g_mime_header_set_value (duplicate, NULL, "changed duplicate", NULL);
+			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, digest);
+			value = g_strconcat (" ", digest, " ", NULL);
+			g_mime_part_set_content_md5 (part, value);
+			g_free (value);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 1);
+			g_mime_header_list_append (headers, "Content-Md5", "next", NULL);
+			g_mime_header_list_remove_at (headers, count);
+			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "next");
+			header = g_mime_header_list_get_header (headers, "Content-Md5");
+			g_mime_header_set_raw_value (header, " \302\240raw value\342\200\257\n");
+			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "raw value");
+			g_mime_header_list_prepend (headers, "Content-Md5", "", NULL);
+			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "");
+			header = g_mime_header_list_get_header (headers, "Content-Md5");
+			raw = g_strdup (g_mime_header_get_raw_value (header));
+			g_mime_header_list_set (headers, "X-Unrelated", "unchanged cache", NULL);
+			g_mime_part_set_content_md5 (part, "");
+			g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 3);
+			g_free (raw);
+			g_mime_part_set_content_md5 (part, NULL);
+			g_assert_null (g_mime_part_get_content_md5 (part));
+			g_assert_false (g_mime_header_list_contains (headers, "Content-Md5"));
+			g_mime_header_list_append (headers, "Content-Md5", "after removal", NULL);
+			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "after removal");
+			g_mime_header_list_clear (headers);
+			g_assert_null (g_mime_part_get_content_md5 (part));
+			g_mime_part_set_content_md5 (part, NULL);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 0);
+			g_object_unref (part);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_content_md5_lazy_verification (void)
+{
+	static const char digest[] = "kAFQmDzST7DWlj99KOF/cg==";
+	GMimePart *part = g_mime_part_new ();
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
+	GMimeStream *source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	GMimeContent *content = g_mime_content_new_with_stream (source, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	GMimeHeader *header, *duplicate;
+	GError *error = NULL;
+	char *raw;
+
+	testsuite_check ("Content-MD5 verification resolves the first header without a preceding getter");
+	g_mime_part_set_content (part, content);
+	g_mime_header_list_append (headers, "Content-Md5", digest, NULL);
+	g_mime_header_list_append (headers, "Content-Md5", "incorrect", NULL);
+	header = g_mime_header_list_get_header (headers, "Content-Md5");
+	raw = g_strdup (g_mime_header_get_raw_value (header));
+	g_assert_true (g_mime_part_verify_content_md5 (part, &error));
+	g_assert_no_error (error);
+	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+	g_free (raw);
+	duplicate = g_mime_header_list_get_header_at (headers, 2);
+	g_mime_header_set_value (duplicate, NULL, "changed duplicate", NULL);
+	g_assert_true (g_mime_part_verify_content_md5 (part, &error));
+	g_assert_no_error (error);
+	g_mime_header_list_remove_at (headers, 1);
+	g_assert_false (g_mime_part_verify_content_md5 (part, &error));
+	g_assert_no_error (error);
+	g_mime_header_list_prepend (headers, "Content-Md5", "", NULL);
+	g_assert_cmpint (g_mime_stream_seek (source, 1, GMIME_STREAM_SEEK_SET), ==, 1);
+	g_assert_false (g_mime_part_verify_content_md5 (part, &error));
+	g_assert_no_error (error);
+	g_assert_cmpint (g_mime_stream_tell (source), ==, 1);
+	header = g_mime_header_list_get_header (headers, "Content-Md5");
+	g_mime_header_set_raw_value (header, " \302\205\343\200\200\n");
+	g_assert_false (g_mime_part_verify_content_md5 (part, &error));
+	g_assert_no_error (error);
+	g_assert_cmpint (g_mime_stream_tell (source), ==, 1);
+	g_mime_header_set_value (header, NULL, digest, NULL);
+	g_assert_true (g_mime_part_verify_content_md5 (part, &error));
+	g_assert_no_error (error);
+	g_assert_true (g_mime_part_get_content (part) == content);
+	g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_object_unref (content);
+	g_object_unref (source);
+	g_object_unref (part);
+	testsuite_check_passed ();
+}
+
+static void
 test_content_description_assignment (void)
 {
 	static const char *whitespace[] = {
@@ -1005,6 +1126,8 @@ int main (int argc, char **argv)
 	test_content_headers (datadir);
 	test_content_md5_vectors ();
 	test_content_md5_assignment ();
+	test_content_md5_lazy_property ();
+	test_content_md5_lazy_verification ();
 	test_content_description_assignment ();
 	test_content_encoding_assignment ();
 	test_content_encoding_invalid_assignment ();

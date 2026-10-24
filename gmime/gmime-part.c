@@ -138,6 +138,7 @@ g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 	mime_part->content_description = NULL;
 	mime_part->content_description_loaded = FALSE;
 	mime_part->content_md5 = NULL;
+	mime_part->content_md5_loaded = FALSE;
 	mime_part->content = NULL;
 	mime_part->content_duration = -1;
 	mime_part->content_duration_loaded = FALSE;
@@ -202,7 +203,7 @@ static gboolean
 process_header (GMimeEntity *object, GMimeHeader *header)
 {
 	GMimePart *mime_part = (GMimePart *) object;
-	const char *name, *value;
+	const char *name;
 	guint i;
 	
 	name = g_mime_header_get_name (header);
@@ -226,9 +227,9 @@ process_header (GMimeEntity *object, GMimeHeader *header)
 		mime_part->content_description_loaded = FALSE;
 		break;
 	case HEADER_CONTENT_MD5:
-		value = g_mime_header_get_value (header);
 		g_free (mime_part->content_md5);
-		mime_part->content_md5 = trim_part_header_value (value);
+		mime_part->content_md5 = NULL;
+		mime_part->content_md5_loaded = FALSE;
 		break;
 	case HEADER_CONTENT_DURATION:
 		mime_part->content_duration = -1;
@@ -287,6 +288,7 @@ mime_part_header_removed (GMimeEntity *object, GMimeHeader *header)
 		case HEADER_CONTENT_MD5:
 			g_free (mime_part->content_md5);
 			mime_part->content_md5 = NULL;
+			mime_part->content_md5_loaded = FALSE;
 			break;
 		case HEADER_CONTENT_DURATION:
 			mime_part->content_duration = -1;
@@ -312,6 +314,7 @@ mime_part_headers_cleared (GMimeEntity *object)
 	mime_part->content_description_loaded = FALSE;
 	g_free (mime_part->content_md5);
 	mime_part->content_md5 = NULL;
+	mime_part->content_md5_loaded = FALSE;
 	mime_part->content_duration = -1;
 	mime_part->content_duration_loaded = FALSE;
 	
@@ -731,7 +734,9 @@ g_mime_part_get_content_id (GMimePart *mime_part)
  * Sets the Content-MD5 header, trimming leading and trailing Unicode
  * whitespace. Empty values are allowed. This does not read the content
  * or compute a digest; use g_mime_part_compute_content_md5() separately.
- * Assigning the current value preserves the existing raw header.
+ * Assigning the current cached value preserves raw headers and duplicates.
+ * Before the first read, assignment replaces matching duplicates even if
+ * the first header already has the same value. Comparison precedes trimming.
  **/
 void
 g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
@@ -742,14 +747,15 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (content_md5 == NULL || g_utf8_validate (content_md5, -1, NULL));
 
-	if (content_md5 && !g_strcmp0 (mime_part->content_md5, content_md5))
+	if (mime_part->content_md5_loaded && !g_strcmp0 (mime_part->content_md5, content_md5))
 		return;
 
-	/* Copy before releasing the old value: callers may pass the getter's
-	 * borrowed pointer back to this setter. NULL only removes the header. */
+	/* Compare before trimming, but copy before freeing: callers may pass
+	 * the getter's borrowed value or a substring back to this setter. */
 	value = trim_part_header_value (content_md5);
 	g_free (mime_part->content_md5);
 	mime_part->content_md5 = value;
+	mime_part->content_md5_loaded = TRUE;
 
 	_g_mime_entity_block_header_list_changed (object);
 	if (value)
@@ -878,6 +884,9 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part, GError **error)
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
+	/* Verification may precede any property read after parsing or editing.
+	 * Resolve the first header before deciding whether there is a digest. */
+	g_mime_part_get_content_md5 (mime_part);
 	if (!mime_part->content_md5 || !*mime_part->content_md5 || !mime_part->content)
 		return FALSE;
 	if (!(digest = g_mime_part_compute_content_md5 (mime_part, error)))
@@ -893,15 +902,28 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part, GError **error)
  * g_mime_part_get_content_md5:
  * @mime_part: a #GMimePart object
  *
- * Gets the md5sum contained in the Content-Md5 header of the
- * specified mime part if it exists, or %NULL otherwise.
+ * Gets the first Content-MD5 value, trimming surrounding Unicode whitespace
+ * without changing raw headers. Matching header changes invalidate the
+ * cached value; later duplicates do not override the first header.
+ * Missing headers return %NULL; empty or all-whitespace values return "".
  *
  * Returns: (nullable) (transfer none): the borrowed, trimmed digest value.
  **/
 const char *
 g_mime_part_get_content_md5 (GMimePart *mime_part)
 {
+	GMimeHeader *header;
+
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
+
+	if (!mime_part->content_md5_loaded) {
+		/* Header events only invalidate: edits to a later duplicate must
+		 * not make it the property's selected value. */
+		header = g_mime_header_list_get_header (((GMimeEntity *) mime_part)->headers, "Content-Md5");
+		if (header)
+			mime_part->content_md5 = trim_part_header_value (g_mime_header_get_value (header));
+		mime_part->content_md5_loaded = TRUE;
+	}
 	
 	return mime_part->content_md5;
 }
