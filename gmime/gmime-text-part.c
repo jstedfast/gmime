@@ -487,6 +487,7 @@ g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text)
  * Encodes @text using @charset and replaces the content and Content-Type
  * charset parameter. Charset aliases are normalized to MIME names. Generic
  * UTF-16 and UTF-32 use little-endian bytes without a byte-order mark.
+ * The historical MimeKit alias "unicode" selects UTF-8, not UTF-16.
  * No newline normalization or Content-Transfer-Encoding selection occurs.
  * An existing transfer encoding is preserved.
  *
@@ -535,6 +536,106 @@ g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *ch
 	g_object_unref (content);
 
 	return TRUE;
+}
+
+
+/**
+ * g_mime_text_part_get_text_with_charset:
+ * @mime_part: a #GMimeTextPart
+ * @charset: a nonempty MIME charset name
+ * @error: return location for an error, or %NULL
+ *
+ * Decodes the content using @charset, overriding the Content-Type charset.
+ * Normalizes newlines using the default #GMimeFormatOptions, without adding
+ * a final newline. Bare carriage returns and explicit Unicode byte-order
+ * marks are preserved. Generic UTF-16/32 aliases use little-endian bytes.
+ * The historical MimeKit alias "unicode" selects UTF-8, not UTF-16.
+ * Missing content returns an empty string after validating @charset.
+ *
+ * Unsupported charsets and malformed input report %G_CONVERT_ERROR instead
+ * of replacing or dropping bytes. Embedded NUL characters cannot be returned
+ * by this native string API and report %G_CONVERT_ERROR_EMBEDDED_NUL.
+ * Missing backing streams report %GMIME_ERROR_INVALID_OPERATION; I/O failures
+ * report %GMIME_ERROR with the stream's errno or %GMIME_ERROR_GENERAL.
+ * No failure returns partial text.
+ *
+ * Headers and content are unchanged. Decoding honors content stream-copy
+ * overrides and rewinds the source before copying and again on success;
+ * an I/O failure leaves the source at its current position.
+ *
+ * Returns: (nullable) (transfer full): UTF-8 text, or %NULL on failure.
+ **/
+char *
+g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *charset, GError **error)
+{
+	GMimeContent *content;
+	GMimeStream *stream;
+	GMimeFilter *filter;
+	GByteArray *buffer;
+	GIConv decoder;
+	char *text, *output, *normalized;
+	size_t outlen, prespace;
+	gsize length;
+	int errsv;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), NULL);
+	g_return_val_if_fail (charset != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* Resolve the override even for absent content, before reading any
+	 * bytes. A bad charset must not become an empty success or an I/O error. */
+	if ((decoder = _g_mime_charset_open_text_decoder (charset, error)) == (GIConv) -1)
+		return NULL;
+	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part))) {
+		g_iconv_close (decoder);
+		return g_strdup ("");
+	}
+	if (!g_mime_content_get_stream (content)) {
+		g_iconv_close (decoder);
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     "Cannot decode text content without a backing stream");
+		return NULL;
+	}
+
+	stream = g_mime_stream_mem_new ();
+	errno = 0;
+	if (g_mime_content_decode_to_stream (content, stream) == -1) {
+		errsv = errno;
+		g_object_unref (stream);
+		g_iconv_close (decoder);
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to decode text content: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return NULL;
+	}
+
+	/* The legacy charset filter skips malformed bytes. Use checked
+	 * conversion here so a valid prefix cannot hide an invalid suffix. */
+	buffer = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
+	text = g_convert_with_iconv (buffer->len ? (const char *) buffer->data : "", buffer->len,
+				     decoder, NULL, &length, error);
+	g_iconv_close (decoder);
+	g_object_unref (stream);
+	if (!text)
+		return NULL;
+	if (memchr (text, '\0', length)) {
+		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
+				     "Decoded text contains an embedded NUL character");
+		g_free (text);
+		return NULL;
+	}
+	if (!length)
+		return text;
+
+	/* Newline conversion belongs after charset decoding: CR/LF byte values
+	 * inside UTF-16/32 characters must never be treated as line endings. */
+	filter = g_mime_format_options_create_newline_filter (NULL, FALSE);
+	g_mime_filter_complete (filter, text, length, 0, &output, &outlen, &prespace);
+	normalized = g_strndup (output, outlen);
+	g_object_unref (filter);
+	g_free (text);
+
+	return normalized;
 }
 
 

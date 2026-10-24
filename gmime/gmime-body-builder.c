@@ -231,6 +231,8 @@ g_mime_body_builder_get_body_encoding (GMimeBodyBuilder *builder)
  * tokens; iconv modifiers such as //IGNORE and //TRANSLIT are not accepted.
  * Generic UTF-16/32 aliases are normalized before conversion, so generated
  * content does not include a Unicode byte-order mark.
+ * The "unicode" alias selects UTF-16, describing a managed Encoding object,
+ * unlike the MIME charset alias accepted by #GMimeTextPart.
  *
  * Unlike a managed Encoding object, this API does not support custom encoders
  * or replacement fallbacks. Unrepresentable body text causes a conversion
@@ -247,6 +249,11 @@ g_mime_body_builder_set_body_encoding (GMimeBodyBuilder *builder, const char *ch
 	g_return_val_if_fail (GMIME_IS_BODY_BUILDER (builder), FALSE);
 	g_return_val_if_fail (charset != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* BodyEncoding describes an Encoding object, not TextPart's MIME
+	 * charset overload: preserve the managed "unicode" name for UTF-16. */
+	if (!g_ascii_strcasecmp (charset, "unicode"))
+		charset = "utf-16";
 
 	/* Probe the same encoder used by text parts without changing the
 	 * selected charset until validation and converter setup succeed. */

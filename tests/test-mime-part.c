@@ -1329,7 +1329,7 @@ test_text_with_charset (void)
 		{ "us-ascii", "us-ascii", "a\r\nb\nc\rd", "a\r\nb\nc\rd", 8 },
 		{ "UTF-16", "utf-16", "caf\303\251", "c\0a\0f\0\351\0", 8 },
 		{ "utf16", "utf-16", "caf\303\251", "c\0a\0f\0\351\0", 8 },
-		{ "Unicode", "utf-16", "caf\303\251", "c\0a\0f\0\351\0", 8 },
+		{ "Unicode", "utf-8", "caf\303\251", "caf\303\251", 5 },
 		{ "csUnicode", "utf-16", "caf\303\251", "c\0a\0f\0\351\0", 8 },
 		{ "utf-16le", "utf-16le", "\360\237\230\200", "\075\330\0\336", 4 },
 		{ "utf-16be", "utf-16be", "caf\303\251", "\0c\0a\0f\0\351", 8 },
@@ -1436,6 +1436,147 @@ test_text_with_charset (void)
 }
 
 static void
+test_text_decode_with_charset (void)
+{
+	static const struct {
+		const char *charset, *bytes, *expected;
+		gsize length;
+	} cases[] = {
+		{ "utf8", "caf\303\251\r\nlast\r", "caf\303\251\nlast\r", 12 },
+		{ "latin1", "caf\351", "caf\303\251", 4 },
+		{ "CP1252", "\200", "\342\202\254", 1 },
+		{ "us-ascii", "a\r\nb\nc\rd", "a\nb\nc\rd", 8 },
+		{ "utf-16", "c\0a\0f\0\351\0", "caf\303\251", 8 },
+		{ "Unicode", "caf\303\251", "caf\303\251", 5 },
+		{ "csUnicode", "c\0a\0f\0\351\0", "caf\303\251", 8 },
+		{ "utf16", "\r\1\n\1", "\304\215\304\212", 4 },
+		{ "utf-16le", "\075\330\0\336", "\360\237\230\200", 4 },
+		{ "utf-16be", "\0c\0a\0f\0\351", "caf\303\251", 8 },
+		{ "utf-32", "c\0\0\0a\0\0\0f\0\0\0\351\0\0\0", "caf\303\251", 16 },
+		{ "utf32", "\r\1\0\0\n\1\0\0", "\304\215\304\212", 8 },
+		{ "utf-32be", "\0\1\366\0", "\360\237\230\200", 4 },
+		{ "utf-8", "\357\273\277text", "\357\273\277text", 7 },
+		{ "utf-16", "\377\376A\0", "\357\273\277A", 4 },
+		{ "iso-2022-jp", "\033$BF|K\\8l\033(B", "\346\227\245\346\234\254\350\252\236", 12 },
+		{ "utf-8", "", "", 0 },
+		{ "utf-16", "", "", 0 },
+	};
+	static const struct {
+		const char *charset, *bytes, *expected;
+		GMimeContentEncoding encoding;
+	} encoded_cases[] = {
+		{ "utf-16", "=41=00=0D=00=0A=00=0D=01=0A=01", "A\n\304\215\304\212",
+		  GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE },
+		{ "utf-8", "begin 644 text.txt\r\n#0V%T\r\n`\r\nend\r\n", "Cat",
+		  GMIME_CONTENT_ENCODING_UUENCODE },
+	};
+	static const char *invalid_charsets[] = {
+		"not-a-text-charset", "", "utf-8//IGNORE", "utf-8//TRANSLIT", "utf 8"
+	};
+	static const struct {
+		const char *charset, *bytes;
+		gsize length;
+		int code;
+	} invalid[] = {
+		{ "utf-8", "valid\377", 6, G_CONVERT_ERROR_ILLEGAL_SEQUENCE },
+		{ "utf-8", "valid\303", 6, G_CONVERT_ERROR_PARTIAL_INPUT },
+		{ "us-ascii", "\377", 1, G_CONVERT_ERROR_ILLEGAL_SEQUENCE },
+		{ "utf-16", "a", 1, G_CONVERT_ERROR_PARTIAL_INPUT },
+		{ "utf-8", "a\0b", 3, G_CONVERT_ERROR_EMBEDDED_NUL },
+		{ "utf-16", "A\0\0\0B\0", 6, G_CONVERT_ERROR_EMBEDDED_NUL },
+	};
+	GMimeTextPart *part = g_mime_text_part_new ();
+	GMimeEntity *entity = GMIME_ENTITY (part);
+	GMimeContent *content;
+	GMimeStream *stream;
+	GError *error = NULL;
+	char *text, *encoded, *headers, *after;
+	guint i, encoding;
+
+	testsuite_check ("Explicit text decoding validates charsets even without content");
+	text = g_mime_text_part_get_text_with_charset (part, "utf-16", &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (text, ==, "");
+	g_free (text);
+	for (i = 0; i < G_N_ELEMENTS (invalid_charsets); i++) {
+		g_assert_null (g_mime_text_part_get_text_with_charset (part, invalid_charsets[i], &error));
+		g_assert_nonnull (error);
+		g_assert_cmpuint (error->domain, ==, G_CONVERT_ERROR);
+		g_clear_error (&error);
+	}
+	g_assert_null (g_mime_part_get_content (GMIME_PART (part)));
+	testsuite_check_passed ();
+
+	testsuite_check ("Explicit text decoding overrides headers and normalizes only decoded newlines");
+	g_mime_text_part_set_charset (part, "not-the-source-charset");
+	g_mime_part_set_content_encoding (GMIME_PART (part), GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	headers = g_mime_entity_get_headers (entity, NULL);
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED; encoding <= GMIME_CONTENT_ENCODING_BASE64; encoding++) {
+			if (encoding == GMIME_CONTENT_ENCODING_BASE64) {
+				encoded = g_base64_encode ((const guchar *) cases[i].bytes, cases[i].length);
+				stream = g_mime_stream_mem_new_with_buffer (encoded, strlen (encoded));
+				g_free (encoded);
+			} else {
+				stream = g_mime_stream_mem_new_with_buffer (cases[i].bytes, cases[i].length);
+			}
+			content = g_mime_content_new_with_stream (stream, encoding);
+			g_mime_part_set_content (GMIME_PART (part), content);
+			g_object_unref (content);
+			text = g_mime_text_part_get_text_with_charset (part, cases[i].charset, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (text, ==, cases[i].expected);
+			g_free (text);
+			g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+			text = g_mime_text_part_get_text_with_charset (part, cases[i].charset, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (text, ==, cases[i].expected);
+			g_free (text);
+			g_object_unref (stream);
+			after = g_mime_entity_get_headers (entity, NULL);
+			g_assert_cmpstr (after, ==, headers);
+			g_free (after);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Explicit text decoding handles quoted-printable binary bytes and uuencoded content");
+	for (i = 0; i < G_N_ELEMENTS (encoded_cases); i++) {
+		stream = g_mime_stream_mem_new_with_buffer (encoded_cases[i].bytes, strlen (encoded_cases[i].bytes));
+		content = g_mime_content_new_with_stream (stream, encoded_cases[i].encoding);
+		g_mime_part_set_content (GMIME_PART (part), content);
+		g_object_unref (content);
+		text = g_mime_text_part_get_text_with_charset (part, encoded_cases[i].charset, &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (text, ==, encoded_cases[i].expected);
+		g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+		g_free (text);
+		g_object_unref (stream);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Explicit text decoding rejects malformed or NUL-containing text without partial results");
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		stream = g_mime_stream_mem_new_with_buffer (invalid[i].bytes, invalid[i].length);
+		content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+		g_mime_part_set_content (GMIME_PART (part), content);
+		g_object_unref (stream);
+		g_assert_null (g_mime_text_part_get_text_with_charset (part, invalid[i].charset, &error));
+		g_assert_error (error, G_CONVERT_ERROR, invalid[i].code);
+		g_clear_error (&error);
+		g_assert_null (g_mime_text_part_get_text_with_charset (part, invalid[i].charset, NULL));
+		g_assert_true (g_mime_part_get_content (GMIME_PART (part)) == content);
+		after = g_mime_entity_get_headers (entity, NULL);
+		g_assert_cmpstr (after, ==, headers);
+		g_free (after);
+		g_object_unref (content);
+	}
+	testsuite_check_passed ();
+	g_free (headers);
+	g_object_unref (part);
+}
+
+static void
 test_text_part (const char *datadir, const char *filename, const char *expected_charset)
 {
 	const char *what = "GMimeTextPart";
@@ -1535,6 +1676,7 @@ int main (int argc, char **argv)
 	
 	test_text_part (datadir, "french-fable.txt", "iso-8859-1");
 	test_text_with_charset ();
+	test_text_decode_with_charset ();
 	
 	testsuite_end ();
 

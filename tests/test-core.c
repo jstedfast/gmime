@@ -3061,6 +3061,88 @@ test_part_content_duration (void)
 }
 
 static void
+test_text_part_charset_errors (void)
+{
+	GMimeTextPart *part = g_mime_text_part_new ();
+	GMimeContent *content;
+	GMimeStream *stream;
+	TestStreamFailure *failure;
+	TestContent *custom;
+	GError *error = NULL;
+	char *text;
+	guint i, j, offset;
+
+	content = g_mime_content_new ();
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	check (!g_mime_text_part_get_text_with_charset (part, "utf-8", &error),
+	       "explicit text decoding rejects content without a backing stream");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < 2; j++) {
+			for (offset = 0; offset <= 8; offset++) {
+				failure = g_object_new (test_stream_failure_get_type (), NULL);
+				failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
+				failure->fail_after = offset;
+				failure->onebyte = i;
+				failure->unset_error = j;
+				g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+				content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BASE64);
+				g_mime_part_set_content (GMIME_PART (part), content);
+				g_object_unref (content);
+				check (!g_mime_text_part_get_text_with_charset (part, "utf-8", &error),
+				       "explicit text decoding never returns a prefix after a read failure");
+				g_assert_error (error, GMIME_ERROR, (j ? GMIME_ERROR_GENERAL : EIO));
+				g_clear_error (&error);
+				g_assert_cmpuint (failure->bytes_read, ==, offset);
+				g_assert_cmpuint (failure->reset_calls, ==, 1);
+				g_assert_cmpuint (failure->close_calls, ==, 0);
+				failure->fail_after = G_MAXSIZE;
+				failure->fail_reset_on = failure->reset_calls + 1;
+				check (!g_mime_text_part_get_text_with_charset (part, "utf-8", &error),
+				       "explicit text decoding reports rewind failures");
+				g_assert_error (error, GMIME_ERROR, (j ? GMIME_ERROR_GENERAL : ESPIPE));
+				g_clear_error (&error);
+				failure->bytes_read = 0;
+				text = g_mime_text_part_get_text_with_charset (part, "utf-8", &error);
+				g_assert_no_error (error);
+				check (text && !strcmp (text, "Hello"), "explicit text decoding can retry after an I/O failure");
+				g_free (text);
+
+				failure->bytes_read = 0;
+				failure->fail_reset_on = failure->reset_calls + 2;
+				check (!g_mime_text_part_get_text_with_charset (part, "utf-8", &error),
+				       "explicit text decoding propagates the final rewind error after complete input");
+				g_assert_error (error, GMIME_ERROR, (j ? GMIME_ERROR_GENERAL : ESPIPE));
+				g_clear_error (&error);
+				g_object_unref (failure);
+			}
+		}
+	}
+
+	stream = g_mime_stream_mem_new_with_buffer ("ignored", 7);
+	custom = g_object_new (test_content_get_type (), NULL);
+	g_mime_content_set_stream (GMIME_CONTENT (custom), stream);
+	g_object_unref (stream);
+	g_mime_content_set_encoding (GMIME_CONTENT (custom), GMIME_CONTENT_ENCODING_BASE64);
+	g_mime_part_set_content (GMIME_PART (part), GMIME_CONTENT (custom));
+	text = g_mime_text_part_get_text_with_charset (part, "utf-8", &error);
+	g_assert_no_error (error);
+	check (text && !strcmp (text, "Cat") && custom->decode_calls == 1 && custom->write_calls == 1,
+	       "explicit text decoding honors content decode and stream-copy overrides");
+	g_free (text);
+	custom->fail_decode = TRUE;
+	check (!g_mime_text_part_get_text_with_charset (part, "utf-8", &error),
+	       "explicit text decoding reports override failures without errno");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL);
+	g_clear_error (&error);
+	g_object_unref (custom);
+	g_object_unref (part);
+}
+
+static void
 test_text_part_formats (void)
 {
 	enum { PLAIN = 1, FLOWED = 2, HTML = 4, ENRICHED = 8, RTF = 16 };
@@ -9838,6 +9920,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("part content duration");
 	test_part_content_duration ();
+	testsuite_end ();
+
+	testsuite_start ("explicit text charset I/O");
+	test_text_part_charset_errors ();
 	testsuite_end ();
 
 	testsuite_start ("text-part formats");

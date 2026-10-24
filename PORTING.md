@@ -2103,16 +2103,41 @@ and stores unencoded content bytes without selecting or changing the
 Content-Transfer-Encoding. Empty text creates present, empty content.
 Newlines are preserved and Unicode encoders do not add a BOM; generic
 UTF-16/32 aliases produce little-endian bytes.
+The historical MimeKit alias `unicode` selects UTF-8, not UTF-16.
 
 The checked native API reports unsupported or invalid charset names,
 invalid UTF-8, and unrepresentable text through G_CONVERT_ERROR, leaving
 the part unchanged. Charset names must be MIME tokens; iconv modifiers
 are rejected. Managed replacement fallbacks and custom encoders are not
 supported, consistent with BodyBuilder's existing checked conversion
-policy. BodyBuilder now uses the same setter and charset normalization.
+policy. BodyBuilder now uses the same setter and charset normalization,
+but preserves `unicode` as UTF-16 when resolving its Encoding-object name.
 Charset repertoires follow the platform's iconv implementation and can
 differ from managed code-page mappings. The legacy automatic-charset
 set_text() behavior remains unchanged.
+
+### Explicit text charset decoding
+
+GMimeTextPart now exposes get_text_with_charset(), porting MimeKit's
+TextPart.GetText(charset) overload. The supplied charset overrides the
+Content-Type parameter without modifying headers or content. Decoded UTF-8
+text uses the default formatting newline convention without adding a
+final newline. Bare CR characters and explicit Unicode BOM characters
+are preserved; generic UTF-16/32 aliases decode as little-endian.
+As with assignment, the MimeKit alias `unicode` selects UTF-8.
+Absent content returns an empty string, but unsupported charsets still
+fail before content is read.
+
+This checked native API rejects malformed byte sequences and embedded
+NUL characters with G_CONVERT_ERROR rather than returning replaced,
+truncated, or partial text. Managed decoder fallbacks are not supported;
+charset repertoires follow native iconv. Missing backing streams and
+stream failures produce explicit GMIME_ERROR errors. Successful content
+copying rewinds the source, while I/O failures leave its current position
+intact. Content decoding/copy overrides are honored.
+
+The legacy get_text() API retains its existing charset fallback, newline,
+missing-content, and error behavior.
 
 ### Part content-type constructors
 

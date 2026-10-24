@@ -718,11 +718,10 @@ _g_mime_charset_get_mime_name (const char *charset)
 	return g_ascii_strdown (name, -1);
 }
 
-char *
-_g_mime_charset_encode_text (const char *charset, const char *text, gsize *length, char **mime_name, GError **error)
+static char *
+get_text_charset (const char *charset, GError **error)
 {
-	const char *p, *converter;
-	char *name, *bytes;
+	const char *p;
 
 	for (p = charset; *p; p++) {
 		if ((guchar) *p >= 127 || !is_ttoken (*p))
@@ -734,29 +733,69 @@ _g_mime_charset_encode_text (const char *charset, const char *text, gsize *lengt
 		return NULL;
 	}
 
-	/* Encoding.GetBytes omits a preamble. Resolve generic Unicode aliases
-	 * before selecting explicit-endian converters that do not emit a BOM. */
-	if (!g_ascii_strcasecmp (charset, "utf16") || !g_ascii_strcasecmp (charset, "unicode") ||
-	    !g_ascii_strcasecmp (charset, "csunicode"))
+	/* MimeKit's historical "unicode" alias means UTF-8, unlike .NET's
+	 * Encoding.GetEncoding alias. Resolve it before native charset lookup. */
+	if (!g_ascii_strcasecmp (charset, "unicode"))
+		charset = "utf-8";
+	/* Managed UTF-16/32 encodings use little-endian bytes, not BOM sniffing. */
+	else if (!g_ascii_strcasecmp (charset, "utf16") || !g_ascii_strcasecmp (charset, "csunicode"))
 		charset = "utf-16";
 	else if (!g_ascii_strcasecmp (charset, "utf32"))
 		charset = "utf-32";
 
-	name = _g_mime_charset_get_mime_name (charset);
-	if (!g_ascii_strcasecmp (name, "utf-16"))
-		converter = "UTF-16LE";
-	else if (!g_ascii_strcasecmp (name, "utf-32"))
-		converter = "UTF-32LE";
-	else
-		converter = g_mime_charset_iconv_name (name);
+	return _g_mime_charset_get_mime_name (charset);
+}
 
-	bytes = g_convert (text, -1, converter, "UTF-8", NULL, length, error);
+static const char *
+get_text_converter (const char *name)
+{
+	if (!g_ascii_strcasecmp (name, "utf-16"))
+		return "UTF-16LE";
+	if (!g_ascii_strcasecmp (name, "utf-32"))
+		return "UTF-32LE";
+
+	return g_mime_charset_iconv_name (name);
+}
+
+char *
+_g_mime_charset_encode_text (const char *charset, const char *text, gsize *length, char **mime_name, GError **error)
+{
+	char *name, *bytes;
+
+	if (!(name = get_text_charset (charset, error)))
+		return NULL;
+
+	/* Explicit-endian encoders omit the preamble, like Encoding.GetBytes. */
+	bytes = g_convert (text, -1, get_text_converter (name), "UTF-8", NULL, length, error);
 	if (bytes)
 		*mime_name = name;
 	else
 		g_free (name);
 
 	return bytes;
+}
+
+GIConv
+_g_mime_charset_open_text_decoder (const char *charset, GError **error)
+{
+	GIConv decoder;
+	char *name;
+	int errsv;
+
+	if (!(name = get_text_charset (charset, error)))
+		return (GIConv) -1;
+
+	errno = 0;
+	decoder = g_iconv_open ("UTF-8", get_text_converter (name));
+	errsv = errno;
+	g_free (name);
+	if (decoder == (GIConv) -1) {
+		g_set_error (error, G_CONVERT_ERROR, errsv == EINVAL ? G_CONVERT_ERROR_NO_CONVERSION : G_CONVERT_ERROR_FAILED,
+			     "Cannot decode text using charset '%s': %s",
+			     charset, errsv ? g_strerror (errsv) : "unknown conversion error");
+	}
+
+	return decoder;
 }
 
 /* Positive identities are codepages; negative identities keep unmapped native
