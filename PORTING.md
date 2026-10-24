@@ -147,6 +147,22 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- GMimeFilterBasic's create_encoder()/create_decoder() factory families
+  port MimeKit's EncoderFilter.Create/DecoderFilter.Create without adding
+  duplicate public wrapper types. Enum and by_name forms select Base64,
+  quoted-printable or uuencode codecs; all other values, including unknown
+  enum values and names, return GMimeFilterPassThrough. Encoder factories
+  default to CRLF with a 78-byte requested line limit; explicit newline
+  variants accept the existing Unix/DOS enum and a maximum line length.
+  Only Base64/quoted-printable validate the 60..998 range and cap it at 76;
+  uuencode and pass-through ignore the length. Newline format is always
+  validated, including for pass-through. Names use Unicode whitespace and
+  stop at whitespace or semicolon, retaining MimeKit's Google Docs header
+  workaround. Name arguments must be non-NULL valid UTF-8 C strings.
+  Invalid arguments report native programming-error criticals and return
+  NULL. The decoder UU factory searches for begin-lines, not payload-only
+  input. Direct-codec constructors and existing new() behavior are unchanged.
+
 - Base64, quoted-printable and uuencode encoders now expose
   new_with_newline_format() constructors matching MimeKit's explicit
   Unix/DOS selection, using the existing GMimeNewLineFormat enum.

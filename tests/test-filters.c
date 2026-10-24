@@ -1447,14 +1447,14 @@ test_pass_through_streams (void)
 }
 
 static GMimeFilter *
-new_configured_encoding_filter (guint kind, GMimeNewLineFormat newline_format)
+new_configured_encoding_filter (guint kind, GMimeNewLineFormat newline_format, guint max_line_length)
 {
 	GMimeEncoder *encoder;
 	GMimeFilter *filter;
 
 	switch (kind) {
-	case 0: encoder = GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (newline_format, 60)); break;
-	case 1: encoder = GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (newline_format, 60)); break;
+	case 0: encoder = GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (newline_format, max_line_length)); break;
+	case 1: encoder = GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (newline_format, max_line_length)); break;
 	case 2: encoder = GMIME_ENCODER (g_mime_uu_encoder_new_with_newline_format (newline_format)); break;
 	default: g_assert_not_reached ();
 	}
@@ -1478,7 +1478,7 @@ test_encoding_newline_lifecycle (void)
 		input[i] = i * 31;
 	for (kind = 0; kind < 3; kind++) {
 		for (format = 0; format < 2; format++) {
-			filter = new_configured_encoding_filter (kind, format);
+			filter = new_configured_encoding_filter (kind, format, 60);
 			g_byte_array_set_size (expected, 0);
 			filter_chunk (filter, input, sizeof (input), TRUE, expected);
 			for (split = 0; split <= sizeof (input); split++) {
@@ -1512,6 +1512,9 @@ test_encoding_newline_lifecycle (void)
 static void
 test_encoding_newline_streams (void)
 {
+	static const GMimeContentEncoding encodings[] = {
+		GMIME_CONTENT_ENCODING_BASE64, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, GMIME_CONTENT_ENCODING_UUENCODE
+	};
 	guint8 input[1025];
 	GMimeStream *memory, *filtered;
 	GMimeFilter *filter;
@@ -1520,12 +1523,12 @@ test_encoding_newline_streams (void)
 	guint kind, format, i, pass;
 	ssize_t n;
 
-	testsuite_check ("Configured encoder filter stream reads, writes and reset preserve LF/CRLF output");
+	testsuite_check ("Factory-created encoder filter stream reads, writes and reset preserve LF/CRLF output");
 	for (i = 0; i < sizeof (input); i++)
 		input[i] = i * 31;
 	for (kind = 0; kind < 3; kind++) {
 		for (format = 0; format < 2; format++) {
-			filter = new_configured_encoding_filter (kind, format);
+			filter = g_mime_filter_basic_create_encoder_with_newline_format (encodings[kind], format, 60);
 			g_byte_array_set_size (expected, 0);
 			filter_chunk (filter, input, sizeof (input), TRUE, expected);
 			memory = g_mime_stream_mem_new ();
@@ -1559,6 +1562,254 @@ test_encoding_newline_streams (void)
 		}
 	}
 	g_byte_array_unref (expected);
+	testsuite_check_passed ();
+}
+
+static void
+check_factory_selection (GMimeFilter *filter, GMimeContentEncoding encoding, gboolean encode)
+{
+	GMimeFilterBasic *basic;
+
+	g_assert_nonnull (filter);
+	if (encoding < GMIME_CONTENT_ENCODING_BASE64 || encoding > GMIME_CONTENT_ENCODING_UUENCODE) {
+		g_assert_true (GMIME_IS_FILTER_PASS_THROUGH (filter));
+		g_assert_null (filter->outbuf);
+		return;
+	}
+	g_assert_true (GMIME_IS_FILTER_BASIC (filter));
+	basic = GMIME_FILTER_BASIC (filter);
+	if (encode) {
+		g_assert_nonnull (basic->encoder);
+		g_assert_null (basic->decoder);
+		g_assert_cmpint (g_mime_encoder_get_encoding (basic->encoder), ==, encoding);
+	} else {
+		g_assert_nonnull (basic->decoder);
+		g_assert_null (basic->encoder);
+		g_assert_cmpint (g_mime_decoder_get_encoding (basic->decoder), ==, encoding);
+	}
+}
+
+static void
+check_factory_vector (GMimeFilter *filter, GMimeContentEncoding encoding, gboolean encode)
+{
+	const char *input = "Man", *text = "Man";
+	GByteArray *expected = g_byte_array_new (), *actual = g_byte_array_new ();
+	GByteArray *copied = g_byte_array_new ();
+	GMimeFilter *copy;
+	gboolean identity = encoding < GMIME_CONTENT_ENCODING_BASE64 || encoding > GMIME_CONTENT_ENCODING_UUENCODE;
+	size_t split, length;
+
+	check_factory_selection (filter, encoding, encode);
+	switch (encoding) {
+	case GMIME_CONTENT_ENCODING_BASE64: text = "TWFu\r\n"; break;
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE: text = "Man=\r\n"; break;
+	case GMIME_CONTENT_ENCODING_UUENCODE: text = "#36%N\r\n`\r\n"; break;
+	default: break;
+	}
+	if (!encode) {
+		input = encoding == GMIME_CONTENT_ENCODING_UUENCODE ? "begin 644 x\r\n#36%N\r\n`\r\nend\r\n" : text;
+		text = "Man";
+	}
+	length = strlen (input);
+	g_byte_array_append (expected, (const guint8 *) text, strlen (text));
+	for (split = 0; split <= length; split++) {
+		g_mime_filter_reset (filter);
+		g_byte_array_set_size (actual, 0);
+		g_byte_array_set_size (copied, 0);
+		g_assert_cmpint (filter_chunk (filter, (const guint8 *) input, split, FALSE, actual), ==, identity);
+		copy = g_mime_filter_copy (filter);
+		check_factory_selection (copy, encoding, encode);
+		g_assert_cmpint (filter_chunk (filter, (const guint8 *) input + split, length - split, TRUE, actual), ==, identity);
+		check_filter_result (actual, expected);
+		filter_chunk (copy, (const guint8 *) input, length, TRUE, copied);
+		check_filter_result (copied, expected);
+		g_object_unref (copy);
+	}
+	g_byte_array_unref (copied);
+	g_byte_array_unref (actual);
+	g_byte_array_unref (expected);
+	g_object_unref (filter);
+}
+
+static void
+test_factory_selection (void)
+{
+	static const GMimeContentEncoding encodings[] = {
+		(GMimeContentEncoding) -1, GMIME_CONTENT_ENCODING_UNSPECIFIED,
+		GMIME_CONTENT_ENCODING_7BIT, GMIME_CONTENT_ENCODING_8BIT, GMIME_CONTENT_ENCODING_BINARY,
+		GMIME_CONTENT_ENCODING_BASE64, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE,
+		GMIME_CONTENT_ENCODING_UUENCODE, (GMimeContentEncoding) 7, (GMimeContentEncoding) G_MAXINT
+	};
+	static const struct {
+		const char *name;
+		GMimeContentEncoding encoding;
+	} names[] = {
+		{ "base64", GMIME_CONTENT_ENCODING_BASE64 },
+		{ "\tBaSe64;ignored", GMIME_CONTENT_ENCODING_BASE64 },
+		{ "base64 junk", GMIME_CONTENT_ENCODING_BASE64 },
+		{ "quoted-printable", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE },
+		{ " QUOTED-PRINTABLE;\t", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE },
+		{ "x-uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
+		{ "UuEnCoDe;foo", GMIME_CONTENT_ENCODING_UUENCODE },
+		{ "X-UUE ", GMIME_CONTENT_ENCODING_UUENCODE },
+		{ "", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ " \t\r\n", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ ";base64", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ "base64extra", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ "base64(comment)", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ "(comment) base64", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ "x-invalid", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ "7bit", GMIME_CONTENT_ENCODING_7BIT },
+		{ "8bit", GMIME_CONTENT_ENCODING_8BIT },
+		{ "binary", GMIME_CONTENT_ENCODING_BINARY }
+	};
+	guint i;
+
+	testsuite_check ("Encoding filter factories select codecs, aliases, fresh copies and zero-copy identities");
+	for (i = 0; i < G_N_ELEMENTS (encodings); i++) {
+		check_factory_vector (g_mime_filter_basic_create_encoder (encodings[i]), encodings[i], TRUE);
+		check_factory_vector (g_mime_filter_basic_create_decoder (encodings[i]), encodings[i], FALSE);
+	}
+	for (i = 0; i < G_N_ELEMENTS (names); i++) {
+		check_factory_vector (g_mime_filter_basic_create_encoder_by_name (names[i].name), names[i].encoding, TRUE);
+		check_factory_vector (g_mime_filter_basic_create_decoder_by_name (names[i].name), names[i].encoding, FALSE);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_factory_names (void)
+{
+	static const gunichar whitespace[] = {
+		9, 10, 11, 12, 13, 32, 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
+	char space[7], *name;
+	guint i;
+
+	testsuite_check ("Encoding name factories recognize Unicode whitespace and semicolon delimiters");
+	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		space[g_unichar_to_utf8 (whitespace[i], space)] = '\0';
+		name = g_strdup_printf ("%sBaSe64%signored", space, space);
+		check_factory_vector (g_mime_filter_basic_create_encoder_by_name (name), GMIME_CONTENT_ENCODING_BASE64, TRUE);
+		check_factory_vector (g_mime_filter_basic_create_decoder_by_name (name), GMIME_CONTENT_ENCODING_BASE64, FALSE);
+		g_free (name);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_factory_newlines (void)
+{
+	static const GMimeContentEncoding encodings[] = {
+		GMIME_CONTENT_ENCODING_BASE64, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, GMIME_CONTENT_ENCODING_UUENCODE
+	};
+	static const char *names[] = { "base64;", "quoted-printable ", "x-uue;" };
+	static const guint limits[] = { 60, 61, 63, 75, 76, 78, 998 };
+	guint8 input[1025];
+	GMimeFilter *direct, *filter;
+	GByteArray *expected = g_byte_array_new (), *actual = g_byte_array_new ();
+	guint kind, format, i, j, by_name;
+
+	testsuite_check ("Encoding factories preserve requested line endings and limits without changing legacy constructors");
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i * 31;
+	for (kind = 0; kind < 3; kind++) {
+		for (format = 0; format < 2; format++) {
+			for (i = 0; i < G_N_ELEMENTS (limits); i++) {
+				direct = new_configured_encoding_filter (kind, format, limits[i]);
+				g_byte_array_set_size (expected, 0);
+				filter_chunk (direct, input, sizeof (input), TRUE, expected);
+				g_object_unref (direct);
+				for (by_name = 0; by_name < 2; by_name++) {
+					filter = by_name ?
+						g_mime_filter_basic_create_encoder_by_name_with_newline_format (names[kind], format, limits[i]) :
+						g_mime_filter_basic_create_encoder_with_newline_format (encodings[kind], format, limits[i]);
+					g_byte_array_set_size (actual, 0);
+					for (j = 0; j < sizeof (input); j++)
+						filter_chunk (filter, input + j, 1, FALSE, actual);
+					filter_chunk (filter, input, 0, TRUE, actual);
+					check_filter_result (actual, expected);
+					g_object_unref (filter);
+				}
+			}
+		}
+		direct = new_configured_encoding_filter (kind, GMIME_NEWLINE_FORMAT_UNIX, 76);
+		g_byte_array_set_size (expected, 0);
+		filter_chunk (direct, input, sizeof (input), TRUE, expected);
+		g_object_unref (direct);
+		filter = g_mime_filter_basic_new (encodings[kind], TRUE);
+		g_byte_array_set_size (actual, 0);
+		filter_chunk (filter, input, sizeof (input), TRUE, actual);
+		check_filter_result (actual, expected);
+		g_object_unref (filter);
+	}
+	for (i = GMIME_CONTENT_ENCODING_UNSPECIFIED; i <= GMIME_CONTENT_ENCODING_BINARY; i++) {
+		for (j = 0; j < 2; j++) {
+			filter = g_mime_filter_basic_new (i, j);
+			g_assert_true (GMIME_IS_FILTER_BASIC (filter));
+			g_byte_array_set_size (actual, 0);
+			g_assert_false (filter_chunk (filter, input, sizeof (input), TRUE, actual));
+			g_assert_cmpmem (actual->data, actual->len, input, sizeof (input));
+			g_object_unref (filter);
+		}
+	}
+	g_byte_array_unref (actual);
+	g_byte_array_unref (expected);
+	testsuite_check_passed ();
+}
+
+static void
+test_factory_preconditions (void)
+{
+	static const guint lengths[] = { 0, 59, 999, G_MAXUINT };
+	static const char *names[] = { "base64;", "quoted-printable " };
+	static const GMimeContentEncoding encodings[] = {
+		GMIME_CONTENT_ENCODING_BASE64, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE
+	};
+	GMimeFilter *filter;
+	guint kind, i, format;
+
+	testsuite_check ("Filter factory argument validation follows the selected codec and preserves pass-through semantics");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*name != NULL*");
+	g_assert_null (g_mime_filter_basic_create_encoder_by_name (NULL));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*name != NULL*");
+	g_assert_null (g_mime_filter_basic_create_decoder_by_name (NULL));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+	g_assert_null (g_mime_filter_basic_create_encoder_by_name ("\xff"));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+	g_assert_null (g_mime_filter_basic_create_decoder_by_name ("\xff"));
+	g_test_assert_expected_messages ();
+	for (kind = 0; kind < 2; kind++) {
+		for (format = 0; format < 2; format++) {
+			for (i = 0; i < G_N_ELEMENTS (lengths); i++) {
+				g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*max_line_length >= 60*");
+				g_assert_null (g_mime_filter_basic_create_encoder_with_newline_format (encodings[kind], format, lengths[i]));
+				g_test_assert_expected_messages ();
+				g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*max_line_length >= 60*");
+				g_assert_null (g_mime_filter_basic_create_encoder_by_name_with_newline_format (names[kind], format, lengths[i]));
+				g_test_assert_expected_messages ();
+			}
+		}
+	}
+	for (i = 0; i < G_N_ELEMENTS (lengths); i++) {
+		filter = g_mime_filter_basic_create_encoder_with_newline_format (GMIME_CONTENT_ENCODING_UUENCODE, GMIME_NEWLINE_FORMAT_DOS, lengths[i]);
+		check_factory_vector (filter, GMIME_CONTENT_ENCODING_UUENCODE, TRUE);
+		filter = g_mime_filter_basic_create_encoder_by_name_with_newline_format ("unknown", GMIME_NEWLINE_FORMAT_DOS, lengths[i]);
+		check_factory_vector (filter, GMIME_CONTENT_ENCODING_UNSPECIFIED, TRUE);
+	}
+	for (kind = 0; kind <= GMIME_CONTENT_ENCODING_UUENCODE; kind++) {
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*newline_format ==*");
+		g_assert_null (g_mime_filter_basic_create_encoder_with_newline_format (kind, (GMimeNewLineFormat) -1, 0));
+		g_test_assert_expected_messages ();
+	}
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*newline_format ==*");
+	g_assert_null (g_mime_filter_basic_create_encoder_by_name_with_newline_format ("unknown", (GMimeNewLineFormat) 2, 0));
+	g_test_assert_expected_messages ();
 	testsuite_check_passed ();
 }
 
@@ -1605,6 +1856,10 @@ int main (int argc, char **argv)
 	test_pass_through_streams ();
 	test_encoding_newline_lifecycle ();
 	test_encoding_newline_streams ();
+	test_factory_selection ();
+	test_factory_names ();
+	test_factory_newlines ();
+	test_factory_preconditions ();
 	
 	//test_charset_conversion (datadir, "chinese", "utf-8", "big5"); // Note: utf-8 -> big5 drops characters
 	test_charset_conversion (datadir, "cyrillic", "utf-8", "cp1251");

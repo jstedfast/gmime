@@ -63,6 +63,17 @@ GMimeFilter *g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean en
 GMimeFilter *g_mime_filter_basic_new_with_encoder (GMimeEncoder *encoder);
 GMimeFilter *g_mime_filter_basic_new_with_decoder (GMimeDecoder *decoder);
 
+GMimeFilter *g_mime_filter_basic_create_encoder (GMimeContentEncoding encoding);
+GMimeFilter *g_mime_filter_basic_create_encoder_with_newline_format (GMimeContentEncoding encoding,
+								  GMimeNewLineFormat newline_format,
+								  guint max_line_length);
+GMimeFilter *g_mime_filter_basic_create_encoder_by_name (const char *name);
+GMimeFilter *g_mime_filter_basic_create_encoder_by_name_with_newline_format (const char *name,
+									  GMimeNewLineFormat newline_format,
+									  guint max_line_length);
+GMimeFilter *g_mime_filter_basic_create_decoder (GMimeContentEncoding encoding);
+GMimeFilter *g_mime_filter_basic_create_decoder_by_name (const char *name);
+
 G_END_DECLS
 
 #endif /* __GMIME_FILTER_BASIC_H__ */

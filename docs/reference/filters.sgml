@@ -24,6 +24,13 @@
     able to handle encoding and decoding of base64, quoted-printable
     and (x-)uuencode.</para>
 
+    <para>GMimeFilterBasic's create_encoder() and create_decoder()
+    factories accept a content encoding enum or name and return a
+    GMimeFilterPassThrough for unhandled encodings. Encoder factories use
+    CRLF by default; the explicit newline variants also accept a maximum
+    line length. The existing new() constructor retains LF defaults and
+    copying pass-through codecs.</para>
+
     <para>GMimeFilterPassThrough is a zero-copy identity filter. It
     returns the caller's input buffer, length and prespace unchanged,
     including on completion. Unlike a GMimeFilterBasic using a

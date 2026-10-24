@@ -26,6 +26,8 @@
 #include <string.h>
 
 #include "gmime-filter-basic.h"
+#include "gmime-filter-pass-through.h"
+#include "gmime-common.h"
 #include "gmime-utils.h"
 
 
@@ -38,6 +40,12 @@
  * A #GMimeFilter which can encode or decode basic MIME encodings such
  * as Quoted-Printable, Base64 and UUEncode, or use an explicitly supplied
  * #GMimeYencEncoder or #GMimeYencDecoder for yEnc.
+ *
+ * The g_mime_filter_basic_create_encoder() and
+ * g_mime_filter_basic_create_decoder() factory families follow MimeKit's
+ * encoding selection, returning #GMimeFilterPassThrough for unhandled
+ * encodings. Encoder factories default to CRLF, unlike the existing
+ * LF-based g_mime_filter_basic_new() constructor.
  **/
 
 
@@ -197,6 +205,10 @@ filter_reset (GMimeFilter *filter)
  * @encode: %TRUE to encode or %FALSE to decode
  *
  * Creates a new basic filter for @encoding.
+ * Encoders use LF line endings. Unspecified, 7bit, 8bit and binary encodings
+ * use copying pass-through codecs, unlike
+ * g_mime_filter_basic_create_encoder() and
+ * g_mime_filter_basic_create_decoder(), which return #GMimeFilterPassThrough.
  *
  * Returns: a new basic encoder filter.
  **/
@@ -283,4 +295,173 @@ g_mime_filter_basic_new_with_decoder (GMimeDecoder *decoder)
 	basic = g_object_new (GMIME_TYPE_FILTER_BASIC, NULL);
 	basic->decoder = g_object_ref (decoder);
 	return GMIME_FILTER (basic);
+}
+
+/**
+ * g_mime_filter_basic_create_encoder:
+ * @encoding: a content encoding, including unrecognized enum values
+ *
+ * Creates an encoding filter using CRLF line endings and a maximum line
+ * length of 78, capped by the selected encoder's MIME limits.
+ * Encodings other than Base64, quoted-printable and uuencode pass through
+ * unchanged without copying or allocating an output buffer.
+ *
+ * Returns: (transfer full): a new encoding or pass-through filter.
+ **/
+GMimeFilter *
+g_mime_filter_basic_create_encoder (GMimeContentEncoding encoding)
+{
+	return g_mime_filter_basic_create_encoder_with_newline_format (encoding, GMIME_NEWLINE_FORMAT_DOS, 78);
+}
+
+/**
+ * g_mime_filter_basic_create_encoder_with_newline_format:
+ * @encoding: a content encoding, including unrecognized enum values
+ * @newline_format: LF or CRLF line endings
+ * @max_line_length: a maximum line length, excluding the terminator
+ *
+ * Creates a Base64, quoted-printable or uuencode filter with the selected
+ * line endings. Base64 and quoted-printable require a line length between
+ * 60 and 998 and cap it at 76. uuencode and unhandled encodings ignore the
+ * line-length argument. Unhandled encodings return #GMimeFilterPassThrough.
+ * The newline format must be valid even for pass-through filters.
+ *
+ * Returns: (transfer full): a new encoding or pass-through filter.
+ **/
+GMimeFilter *
+g_mime_filter_basic_create_encoder_with_newline_format (GMimeContentEncoding encoding,
+						      GMimeNewLineFormat newline_format, guint max_line_length)
+{
+	GMimeEncoder *encoder;
+	GMimeFilter *filter;
+
+	g_return_val_if_fail (newline_format == GMIME_NEWLINE_FORMAT_UNIX || newline_format == GMIME_NEWLINE_FORMAT_DOS, NULL);
+
+	/* Match the selected codec's argument checks, rather than imposing a
+	 * line-length limit on uuencode or on unchanged content. */
+	switch (encoding) {
+	case GMIME_CONTENT_ENCODING_BASE64:
+		encoder = GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (newline_format, max_line_length));
+		break;
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+		encoder = GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (newline_format, max_line_length));
+		break;
+	case GMIME_CONTENT_ENCODING_UUENCODE:
+		encoder = GMIME_ENCODER (g_mime_uu_encoder_new_with_newline_format (newline_format));
+		break;
+	default:
+		return g_mime_filter_pass_through_new ();
+	}
+	if (!encoder)
+		return NULL;
+
+	filter = g_mime_filter_basic_new_with_encoder (encoder);
+	g_object_unref (encoder);
+	return filter;
+}
+
+static GMimeContentEncoding
+filter_encoding_from_name (const char *name)
+{
+	const char *start, *end;
+	GMimeContentEncoding encoding;
+	char *token;
+
+	/* Trim leading Unicode whitespace, not just MIME linear whitespace. */
+	while (*name && _g_mime_is_unicode_whitespace (g_utf8_get_char (name)))
+		name = g_utf8_next_char (name);
+
+	start = end = name;
+	/* Google Docs appends a semicolon to Content-Transfer-Encoding values.
+	 * Like MimeKit, recognize the first token and ignore this suffix. */
+	while (*end && *end != ';' && !_g_mime_is_unicode_whitespace (g_utf8_get_char (end)))
+		end = g_utf8_next_char (end);
+
+	token = g_strndup (start, end - start);
+	encoding = g_mime_content_encoding_from_string (token);
+	g_free (token);
+	return encoding;
+}
+
+/**
+ * g_mime_filter_basic_create_encoder_by_name:
+ * @name: a non-%NULL UTF-8 content-transfer-encoding name
+ *
+ * Creates an encoding filter using CRLF and a maximum line length of 78.
+ * Matching is case-insensitive, skips leading Unicode whitespace, and
+ * stops at the first whitespace or semicolon. Unknown names pass through
+ * unchanged without copying.
+ *
+ * Returns: (transfer full): a new encoding or pass-through filter.
+ **/
+GMimeFilter *
+g_mime_filter_basic_create_encoder_by_name (const char *name)
+{
+	return g_mime_filter_basic_create_encoder_by_name_with_newline_format (name, GMIME_NEWLINE_FORMAT_DOS, 78);
+}
+
+/**
+ * g_mime_filter_basic_create_encoder_by_name_with_newline_format:
+ * @name: a non-%NULL UTF-8 content-transfer-encoding name
+ * @newline_format: LF or CRLF line endings
+ * @max_line_length: a maximum line length, excluding the terminator
+ *
+ * Resolves @name as in g_mime_filter_basic_create_encoder_by_name() and
+ * selects a filter as in
+ * g_mime_filter_basic_create_encoder_with_newline_format().
+ * Base64 and quoted-printable validate @max_line_length; other encodings
+ * ignore it. The newline format is always validated.
+ *
+ * Returns: (transfer full): a new encoding or pass-through filter.
+ **/
+GMimeFilter *
+g_mime_filter_basic_create_encoder_by_name_with_newline_format (const char *name,
+							      GMimeNewLineFormat newline_format, guint max_line_length)
+{
+	g_return_val_if_fail (name != NULL, NULL);
+	g_return_val_if_fail (g_utf8_validate (name, -1, NULL), NULL);
+
+	return g_mime_filter_basic_create_encoder_with_newline_format (filter_encoding_from_name (name),
+								     newline_format, max_line_length);
+}
+
+/**
+ * g_mime_filter_basic_create_decoder:
+ * @encoding: a content encoding, including unrecognized enum values
+ *
+ * Creates a Base64, quoted-printable or uuencode decoder filter. The UU
+ * decoder looks for a begin-line before decoding the payload. Other
+ * encodings pass through unchanged without copying.
+ *
+ * Returns: (transfer full): a new decoding or pass-through filter.
+ **/
+GMimeFilter *
+g_mime_filter_basic_create_decoder (GMimeContentEncoding encoding)
+{
+	switch (encoding) {
+	case GMIME_CONTENT_ENCODING_BASE64:
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+	case GMIME_CONTENT_ENCODING_UUENCODE:
+		return g_mime_filter_basic_new (encoding, FALSE);
+	default:
+		return g_mime_filter_pass_through_new ();
+	}
+}
+
+/**
+ * g_mime_filter_basic_create_decoder_by_name:
+ * @name: a non-%NULL UTF-8 content-transfer-encoding name
+ *
+ * Resolves @name as in g_mime_filter_basic_create_encoder_by_name() and
+ * selects a filter as in g_mime_filter_basic_create_decoder().
+ *
+ * Returns: (transfer full): a new decoding or pass-through filter.
+ **/
+GMimeFilter *
+g_mime_filter_basic_create_decoder_by_name (const char *name)
+{
+	g_return_val_if_fail (name != NULL, NULL);
+	g_return_val_if_fail (g_utf8_validate (name, -1, NULL), NULL);
+
+	return g_mime_filter_basic_create_decoder (filter_encoding_from_name (name));
 }
