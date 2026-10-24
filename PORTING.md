@@ -171,6 +171,25 @@ This is an incremental migration, not yet a declaration of feature parity.
   and position, and hands ordinary ownership back to the caller; substreams
   retain their internal storage reference until replacement or close.
 
+- GMimeStreamFs now applies bounded read/seek behavior to descriptor-backed
+  views. Reads at a finite end return zero instead of EINVAL, without
+  repositioning the shared descriptor. Cached EOF does not prevent later
+  reads from seeing file growth, and backward seeks clear it as appropriate.
+  Unbounded length queries use the actual file size, clamping an extent
+  before the view's start to zero rather than failing with EINVAL.
+  Counts above G_MAXSSIZE, overflowing seek/position arithmetic and offsets
+  not representable as off_t fail with EOVERFLOW. Windows additionally
+  limits counts to G_MAXINT for the narrower CRT I/O API. Invalid seek
+  origins fail with EINVAL instead of asserting. Closed tell and substream
+  creation now fail with EBADF, like other closed operations.
+  Preserve native partial writes, EINVAL for a write at a full finite bound,
+  absolute SEEK_SET and seek-without-growth semantics. Positive SEEK_END
+  offsets consult physical EOF; zero/negative finite offsets use the view's
+  end, while unbounded cached EOF supplies its observed seek origin.
+  Descriptor ownership and explicit-close behavior are unchanged: views
+  borrow the parent's handle, so an owning parent must not be explicitly
+  closed until its views are no longer needed. GMimeStreamFile is unchanged.
+
 - GMimeStreamBlock ports MimeKit's MemoryBlockStream synchronous read/write,
   seek, SetLength and ToArray operations using 2048-byte non-contiguous blocks.
   Existing memory-stream consumers remain unchanged. Reads and writes span

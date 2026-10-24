@@ -57,6 +57,21 @@
     fail with EINVAL; overflowing offsets, write counts or storage sizes
     fail with EOVERFLOW.</para>
 
+    <para>GMimeStreamFs views also retain independent logical positions and
+    EOF state, but borrow the same descriptor. Reads reposition it for the
+    current view and return zero at a finite end. Cached EOF does not
+    suppress subsequent reads after another writer extends the file.
+    Unbounded length queries use the actual file extent, reporting zero
+    when it ends before the view's start. Writes retain partial counts and
+    fail with EINVAL at a full finite bound. Seeks do not extend the file;
+    positive SEEK_END offsets use physical EOF, zero and negative finite
+    offsets use the declared end, and unbounded cached EOF supplies the
+    observed end for nonpositive offsets. Invalid origins fail with EINVAL;
+    overflowing counts, arithmetic or off_t conversions fail with EOVERFLOW.
+    Windows I/O counts are additionally limited to G_MAXINT for the CRT API.
+    Finish using all views before explicitly closing an owning parent:
+    object retention alone does not keep its descriptor open.</para>
+
     <para>GMimeStreamBlock stores memory content in separate 2048-byte blocks,
     avoiding repeated copies of existing bytes while growing. Unlike
     GMimeStreamMem, it does not allow seeking past the stored extent; extend it
