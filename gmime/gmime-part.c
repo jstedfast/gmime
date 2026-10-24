@@ -143,6 +143,7 @@ g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 	mime_part->content = NULL;
 	mime_part->content_duration = -1;
 	mime_part->content_duration_loaded = FALSE;
+	mime_part->encoder_max_line_length = 0;
 	mime_part->openpgp = (GMimeOpenPGPData) -1;
 }
 
@@ -364,7 +365,15 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 			/* fall thru... */
 		case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 		case GMIME_CONTENT_ENCODING_BASE64:
-			filter = g_mime_filter_basic_new (part->encoding, TRUE);
+			/* Prepare records the encoder's line limit, not a header-folding
+			 * option. Unprepared parts retain their legacy encoder defaults. */
+			if (part->encoder_max_line_length) {
+				filter = g_mime_filter_basic_create_encoder_with_newline_format (
+					part->encoding, g_mime_format_options_get_newline_format (options),
+					part->encoder_max_line_length);
+			} else {
+				filter = g_mime_filter_basic_new (part->encoding, TRUE);
+			}
 			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 			g_object_unref (filter);
 			break;
@@ -1209,6 +1218,100 @@ g_mime_part_get_best_content_encoding_with_max_line_length (GMimePart *mime_part
 	g_object_unref (filter);
 
 	return encoding;
+}
+
+
+/**
+ * g_mime_part_prepare:
+ * @mime_part: a #GMimePart object
+ * @constraint: a #GMimeEncodingConstraint
+ * @error: return location for a #GError, or %NULL
+ *
+ * Prepares this leaf part for transport with a maximum line length of 78.
+ * Equivalent to g_mime_part_prepare_with_max_line_length() with that limit.
+ * This does not recursively prepare multipart or encapsulated message trees.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_part_prepare (GMimePart *mime_part, GMimeEncodingConstraint constraint, GError **error)
+{
+	return g_mime_part_prepare_with_max_line_length (mime_part, constraint, 78, error);
+}
+
+
+/**
+ * g_mime_part_prepare_with_max_line_length:
+ * @mime_part: a #GMimePart object
+ * @constraint: a #GMimeEncodingConstraint
+ * @max_line_length: maximum line length, excluding CRLF, from 60 through 998
+ * @error: return location for a #GError, or %NULL
+ *
+ * Prepares this leaf part for transport. Existing base64, quoted-printable
+ * and uuencode encodings are preserved without reading content. Binary is
+ * also preserved for the binary constraint. Otherwise, decoded content is
+ * analyzed using g_mime_part_get_best_content_encoding_with_max_line_length().
+ * An unspecified encoding remains unspecified if 7bit is sufficient.
+ *
+ * When an encoding is selected, subsequent transcoding uses @max_line_length,
+ * capped by the codec's MIME limits. Safe-encoding fast paths leave any
+ * previous encoder limit unchanged. Content, its stored encoding, and
+ * unrelated headers are not modified.
+ *
+ * An invalid line limit reports %GMIME_ERROR with %EINVAL before reading
+ * content, including on fast paths. Constraint validation and I/O errors
+ * otherwise follow the best-encoding API. Failure leaves transfer encoding
+ * headers and the previous encoder limit unchanged.
+ *
+ * Unlike g_mime_entity_encode(), this checked API reports analysis failures
+ * and ports MimeKit's leaf-part preparation policy.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_part_prepare_with_max_line_length (GMimePart *mime_part, GMimeEncodingConstraint constraint,
+					guint max_line_length, GError **error)
+{
+	GMimeContentEncoding current, best;
+
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* Prepare validates the line limit even when an existing safe encoding
+	 * avoids the best-encoding scanner and all content I/O. */
+	if (max_line_length < 60 || max_line_length > 998) {
+		g_set_error_literal (error, GMIME_ERROR, EINVAL, "Maximum line length must be between 60 and 998");
+		return FALSE;
+	}
+
+	current = g_mime_part_get_content_encoding (mime_part);
+	switch (current) {
+	case GMIME_CONTENT_ENCODING_BASE64:
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+	case GMIME_CONTENT_ENCODING_UUENCODE:
+		/* These encodings are safe regardless of the transport constraint. */
+		return TRUE;
+	case GMIME_CONTENT_ENCODING_BINARY:
+		if (constraint == GMIME_ENCODING_CONSTRAINT_BINARY)
+			return TRUE;
+		break;
+	default:
+		break;
+	}
+
+	best = g_mime_part_get_best_content_encoding_with_max_line_length (mime_part, constraint, max_line_length, error);
+	if (best == GMIME_CONTENT_ENCODING_UNSPECIFIED)
+		return FALSE;
+
+	/* Preserve absent or unknown transfer headers when 7bit needs no
+	 * explicit declaration. Do not publish a new limit after failed I/O. */
+	if (current == GMIME_CONTENT_ENCODING_UNSPECIFIED && best == GMIME_CONTENT_ENCODING_7BIT)
+		return TRUE;
+
+	mime_part->encoder_max_line_length = max_line_length;
+	g_mime_part_set_content_encoding (mime_part, best);
+
+	return TRUE;
 }
 
 

@@ -1577,6 +1577,95 @@ test_text_decode_with_charset (void)
 }
 
 static void
+test_part_prepare (void)
+{
+	static const guint limits[] = { 60, 61, 76, 78, 998 };
+	GMimePart *part;
+	GMimeStream *source, *output;
+	GMimeContent *content;
+	GMimeHeaderList *headers;
+	GMimeHeader *header;
+	GByteArray *buffer;
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GError *error = NULL;
+	char text[1202], *before, *after;
+	guint i, j, kind, newline, length, cap;
+
+	memset (text, 'a', sizeof (text) - 2);
+	text[sizeof (text) - 2] = '\n';
+	text[sizeof (text) - 1] = '\0';
+
+	testsuite_check ("Preparing unspecified 7bit content preserves raw transfer headers and duplicates");
+	part = g_mime_part_new_with_type ("text", "plain");
+	source = g_mime_stream_mem_new_with_buffer ("ASCII\n", 6);
+	content = g_mime_content_new_with_stream (source, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_mime_part_set_content (part, content);
+	g_object_unref (content);
+	g_object_unref (source);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
+	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "unknown", NULL);
+	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "base64", NULL);
+	header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
+	g_mime_header_set_raw_value (header, " x-unrecognized \t\n");
+	before = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+	g_assert_true (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+	g_assert_no_error (error);
+	after = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+	g_assert_cmpstr (after, ==, before);
+	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_free (before);
+	g_free (after);
+	g_object_unref (part);
+	testsuite_check_passed ();
+
+	testsuite_check ("Prepared encoders honor line limits, newline options and safe-encoding retries");
+	for (kind = 0; kind < 2; kind++) {
+		for (i = 0; i < G_N_ELEMENTS (limits); i++) {
+			for (newline = GMIME_NEWLINE_FORMAT_UNIX; newline <= GMIME_NEWLINE_FORMAT_DOS; newline++) {
+				part = g_mime_part_new_with_type (kind ? "application" : "text", kind ? "octet-stream" : "plain");
+				source = g_mime_stream_mem_new_with_buffer (text, strlen (text));
+				content = g_mime_content_new_with_stream (source, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+				g_mime_part_set_content (part, content);
+				g_assert_true (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT,
+										      limits[i], &error));
+				g_assert_no_error (error);
+				g_assert_cmpint (g_mime_part_get_content_encoding (part), ==,
+						kind ? GMIME_CONTENT_ENCODING_BASE64 : GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+				g_assert_true (g_mime_part_get_content (part) == content);
+				g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+				g_mime_format_options_set_newline_format (options, newline);
+				output = g_mime_stream_mem_new ();
+				g_assert_cmpint (g_mime_entity_write_content_to_stream (GMIME_ENTITY (part), options, output), >=, 0);
+				buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+				cap = MIN (limits[i], 76);
+				length = 0;
+				for (j = 0; j < buffer->len; j++) {
+					if (buffer->data[j] == '\n') {
+						g_assert_cmpuint (length, <=, cap);
+						if (newline == GMIME_NEWLINE_FORMAT_DOS)
+							g_assert_true (j > 0 && buffer->data[j - 1] == '\r');
+						length = 0;
+					} else if (buffer->data[j] != '\r') {
+						length++;
+					}
+				}
+				g_assert_cmpuint (length, ==, 0);
+				g_assert_true (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT,
+										      998, &error));
+				g_assert_no_error (error);
+				g_assert_cmpuint (part->encoder_max_line_length, ==, limits[i]);
+				g_object_unref (output);
+				g_object_unref (content);
+				g_object_unref (source);
+				g_object_unref (part);
+			}
+		}
+	}
+	g_mime_format_options_free (options);
+	testsuite_check_passed ();
+}
+
+static void
 test_text_part (const char *datadir, const char *filename, const char *expected_charset)
 {
 	const char *what = "GMimeTextPart";
@@ -1664,6 +1753,7 @@ int main (int argc, char **argv)
 	test_content_encoding_assignment ();
 	test_content_encoding_invalid_assignment ();
 	test_content_encoding_consumers ();
+	test_part_prepare ();
 	
 	test_write_to_stream (datadir, "raptors.b64.txt", GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	test_write_to_stream (datadir, "raptors.uu.txt", GMIME_CONTENT_ENCODING_UUENCODE);

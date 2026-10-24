@@ -2116,6 +2116,26 @@ Charset repertoires follow the platform's iconv implementation and can
 differ from managed code-page mappings. The legacy automatic-charset
 set_text() behavior remains unchanged.
 
+### Checked leaf-part transport preparation
+
+GMimePart now exposes prepare() and prepare_with_max_line_length(), porting
+MimeKit's MimePart.Prepare() methods. Existing base64, quoted-printable and
+uuencode encodings are retained without reading content; binary is retained
+when the constraint permits it. Other cases use the existing checked
+best-encoding analysis. Unspecified transfer encoding stays unspecified when
+7bit is sufficient, preserving absent or unknown raw headers and duplicates.
+
+The line limit defaults to 78 and must be between 60 and 998, including on
+fast paths. A selected encoding records that limit for subsequent transcoding,
+capped at the codec's MIME maximum. A later safe-encoding fast path preserves
+the previous limit. Source bytes, stored content encoding and unrelated headers
+are unchanged. Conversion-analysis failures report GError and preserve both
+the transfer headers and previous encoder limit.
+
+This increment covers leaf parts, including TextPart subclasses; recursive
+entity/message preparation is not yet ported. The legacy entity encode()
+policy and encoder defaults for unprepared parts remain unchanged.
+
 ### Explicit text charset decoding
 
 GMimeTextPart now exposes get_text_with_charset(), porting MimeKit's

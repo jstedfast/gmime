@@ -71,6 +71,7 @@ struct _GMimePart {
 	unsigned int content_description_loaded : 1;
 	unsigned int encoding_loaded : 1;
 	unsigned int content_md5_loaded : 1;
+	unsigned int encoder_max_line_length : 10;
 };
 
 struct _GMimePartClass {
@@ -114,6 +115,10 @@ GMimeContentEncoding g_mime_part_get_best_content_encoding (GMimePart *mime_part
 GMimeContentEncoding g_mime_part_get_best_content_encoding_with_max_line_length (GMimePart *mime_part,
 									      GMimeEncodingConstraint constraint,
 									      guint max_line_length, GError **error);
+
+gboolean g_mime_part_prepare (GMimePart *mime_part, GMimeEncodingConstraint constraint, GError **error);
+gboolean g_mime_part_prepare_with_max_line_length (GMimePart *mime_part, GMimeEncodingConstraint constraint,
+						 guint max_line_length, GError **error);
 
 gboolean g_mime_part_is_attachment (GMimePart *mime_part);
 

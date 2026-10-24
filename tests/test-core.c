@@ -6561,6 +6561,112 @@ test_part_best_encoding_errors (void)
 }
 
 static void
+test_part_prepare_errors (void)
+{
+	GMimePart *part = g_mime_part_new_with_type ("text", "plain");
+	GMimeContent *content = g_mime_content_new ();
+	TestStreamFailure *source = g_object_new (test_stream_failure_get_type (), NULL);
+	TestContent *custom;
+	GError *error = NULL;
+	char *before, *after;
+	guint i, reads, resets;
+
+	check (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error) &&
+	       error == NULL && g_mime_part_get_content_encoding (part) == GMIME_CONTENT_ENCODING_UNSPECIFIED,
+	       "preparing an empty text part preserves an unspecified transfer encoding");
+	g_mime_part_set_content (part, content);
+	for (i = GMIME_CONTENT_ENCODING_BINARY; i <= GMIME_CONTENT_ENCODING_UUENCODE; i++) {
+		g_mime_part_set_content_encoding (part, i);
+		g_assert_true (g_mime_part_prepare (part, i == GMIME_CONTENT_ENCODING_BINARY ?
+						 GMIME_ENCODING_CONSTRAINT_BINARY : GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+		g_assert_no_error (error);
+		g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, i);
+		if (i != GMIME_CONTENT_ENCODING_BINARY) {
+			g_assert_true (g_mime_part_prepare (part, -1, &error));
+			g_assert_no_error (error);
+		}
+		g_assert_false (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 59, &error));
+		g_assert_error (error, GMIME_ERROR, EINVAL);
+		g_clear_error (&error);
+	}
+	g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_7BIT);
+	g_assert_false (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+
+	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	source->onebyte = TRUE;
+	source->fail_after = G_MAXSIZE;
+	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+	g_mime_content_set_stream (content, GMIME_STREAM (source));
+	g_assert_true (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 60, &error));
+	g_assert_no_error (error);
+	g_assert_cmpuint (part->encoder_max_line_length, ==, 60);
+	before = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+
+	for (i = 0; i < 6; i++) {
+		source->bytes_read = 0;
+		source->fail_after = i % 3 == 1 ? 1 : G_MAXSIZE;
+		source->fail_reset_on = i % 3 == 0 ? source->reset_calls + 1 :
+			(i % 3 == 2 ? source->reset_calls + 2 : 0);
+		source->unset_error = i >= 3;
+		g_assert_false (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 70, &error));
+		g_assert_error (error, GMIME_ERROR, (i >= 3 ? GMIME_ERROR_GENERAL : (i % 3 == 1 ? EIO : ESPIPE)));
+		g_clear_error (&error);
+		g_assert_cmpuint (part->encoder_max_line_length, ==, 60);
+		after = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+		g_assert_cmpstr (after, ==, before);
+		g_free (after);
+		g_assert_cmpuint (source->close_calls, ==, 0);
+	}
+
+	source->bytes_read = 0;
+	source->fail_after = 0;
+	reads = source->read_calls;
+	resets = source->reset_calls;
+	g_assert_false (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 999, &error));
+	g_assert_error (error, GMIME_ERROR, EINVAL);
+	g_clear_error (&error);
+	g_assert_cmpuint (source->bytes_read, ==, 0);
+	g_assert_cmpuint (source->read_calls, ==, reads);
+	g_assert_cmpuint (source->reset_calls, ==, resets);
+	source->fail_after = G_MAXSIZE;
+	source->fail_reset_on = 0;
+	source->unset_error = FALSE;
+	g_assert_true (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 70, &error));
+	g_assert_no_error (error);
+	g_assert_cmpuint (part->encoder_max_line_length, ==, 70);
+	g_assert_cmpint (g_mime_stream_tell (GMIME_STREAM (source)), ==, 0);
+	resets = source->reset_calls;
+	g_assert_false (g_mime_part_prepare (part, -1, &error));
+	g_assert_error (error, GMIME_ERROR, EINVAL);
+	g_clear_error (&error);
+	g_assert_cmpuint (source->reset_calls, ==, resets + 2);
+	g_assert_cmpuint (part->encoder_max_line_length, ==, 70);
+
+	custom = g_object_new (test_content_get_type (), NULL);
+	g_mime_content_set_stream (GMIME_CONTENT (custom), GMIME_STREAM (source));
+	g_mime_content_set_encoding (GMIME_CONTENT (custom), GMIME_CONTENT_ENCODING_BASE64);
+	g_mime_part_set_content (part, GMIME_CONTENT (custom));
+	g_assert_true (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+	g_assert_no_error (error);
+	g_assert_cmpuint (custom->decode_calls, ==, 1);
+	g_assert_cmpuint (custom->write_calls, ==, 1);
+	check (part->encoder_max_line_length == 78,
+	       "successful preparation honors content overrides and records the default encoder limit");
+	custom->fail_decode = TRUE;
+	g_assert_false (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL);
+	g_clear_error (&error);
+	g_assert_cmpuint (part->encoder_max_line_length, ==, 78);
+	g_free (before);
+	g_object_unref (custom);
+	g_object_unref (source);
+	g_object_unref (content);
+	g_object_unref (part);
+}
+
+static void
 test_content_copy (void)
 {
 	GMimeStream *source, *output, *reader;
@@ -9887,6 +9993,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("checked part encoding selection");
 	test_part_best_encoding_errors ();
+	testsuite_end ();
+
+	testsuite_start ("checked part transport preparation");
+	test_part_prepare_errors ();
 	testsuite_end ();
 
 	testsuite_start ("raw and decoded content copying");
