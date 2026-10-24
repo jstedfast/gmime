@@ -166,6 +166,15 @@ This is an incremental migration, not yet a declaration of feature parity.
   EOF indication do not complete the filters. Cancellation, asynchronous
   operations and managed disposal state are not added.
 
+- GMimeStreamFilter now provides contains() and remove_filter() for
+  MimeKit's filter-instance collection operations. Filters are compared
+  by identity; duplicate entries retain independent references, and
+  remove_filter() removes only the first occurrence without resetting
+  filters or completing output. Existing add() IDs and remove(id) remain
+  supported and identify individual occurrences. get_source() returns
+  the borrowed source, matching FilteredStream.Source. Do not modify the
+  chain or manipulate the source while filtered output is buffered.
+
 - GMimeFilterBasic's create_encoder()/create_decoder() factory families
   port MimeKit's EncoderFilter.Create/DecoderFilter.Create without adding
   duplicate public wrapper types. Enum and by_name forms select Base64,

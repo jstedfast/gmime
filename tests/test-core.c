@@ -9036,6 +9036,227 @@ test_completion_filter_init (TestCompletionFilter *filter)
 }
 
 static void
+test_filtered_stream_collection (void)
+{
+	GMimeStream *memory = g_mime_stream_mem_new ();
+	GMimeStream *stream = g_mime_stream_filter_new (memory);
+	GMimeStreamFilter *filtered = GMIME_STREAM_FILTER (stream);
+	TestCompletionFilter *first = g_object_new (test_completion_filter_get_type (), NULL);
+	TestCompletionFilter *second = g_object_new (test_completion_filter_get_type (), NULL);
+	TestCompletionFilter *third = g_object_new (test_completion_filter_get_type (), NULL);
+	TestCompletionFilter *other = g_object_new (test_completion_filter_get_type (), NULL);
+	GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory));
+	int ids[4], id;
+	guint i;
+
+	first->marker = other->marker = 'A';
+	second->marker = 'B';
+	third->marker = 'C';
+	g_assert_true (g_mime_stream_filter_get_source (filtered) == memory);
+	g_assert_false (g_mime_stream_filter_contains (filtered, GMIME_FILTER (first)));
+	g_assert_false (g_mime_stream_filter_remove_filter (filtered, GMIME_FILTER (first)));
+	ids[0] = g_mime_stream_filter_add (filtered, GMIME_FILTER (first));
+	ids[1] = g_mime_stream_filter_add (filtered, GMIME_FILTER (second));
+	ids[2] = g_mime_stream_filter_add (filtered, GMIME_FILTER (first));
+	ids[3] = g_mime_stream_filter_add (filtered, GMIME_FILTER (third));
+	for (i = 0; i < G_N_ELEMENTS (ids); i++) {
+		g_assert_cmpint (ids[i], >=, 0);
+		if (i)
+			g_assert_cmpint (ids[i], >, ids[i - 1]);
+	}
+	g_assert_true (g_mime_stream_filter_contains (filtered, GMIME_FILTER (first)));
+	g_assert_true (g_mime_stream_filter_contains (filtered, GMIME_FILTER (second)));
+	g_assert_true (g_mime_stream_filter_contains (filtered, GMIME_FILTER (third)));
+	g_assert_false (g_mime_stream_filter_contains (filtered, GMIME_FILTER (other)));
+	g_assert_false (g_mime_stream_filter_remove_filter (filtered, GMIME_FILTER (other)));
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpmem (bytes->data, bytes->len, "ABAC", 4);
+
+	g_assert_true (g_mime_stream_filter_remove_filter (filtered, GMIME_FILTER (first)));
+	g_assert_true (g_mime_stream_filter_contains (filtered, GMIME_FILTER (first)));
+	g_assert_cmpuint (first->complete_calls, ==, 2);
+	g_assert_cmpuint (first->reset_calls, ==, 0);
+	g_mime_stream_filter_remove (filtered, ids[0]);
+	g_mime_stream_filter_remove (filtered, -1);
+	g_mime_stream_filter_remove (filtered, G_MININT);
+	g_mime_stream_filter_remove (filtered, G_MAXINT);
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, 1);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpmem (bytes->data, bytes->len, "ABACxBAC", 8);
+
+	g_mime_stream_filter_remove (filtered, ids[2]);
+	g_assert_false (g_mime_stream_filter_contains (filtered, GMIME_FILTER (first)));
+	g_assert_false (g_mime_stream_filter_remove_filter (filtered, GMIME_FILTER (first)));
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, 1);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpmem (bytes->data, bytes->len, "ABACxBACxBC", 11);
+
+	g_assert_true (g_mime_stream_filter_remove_filter (filtered, GMIME_FILTER (third)));
+	g_assert_true (g_mime_stream_filter_remove_filter (filtered, GMIME_FILTER (second)));
+	g_mime_stream_filter_remove (filtered, ids[3]);
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, 1);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpmem (bytes->data, bytes->len, "ABACxBACxBCx", 12);
+
+	id = g_mime_stream_filter_add (filtered, GMIME_FILTER (first));
+	g_assert_cmpint (id, >, ids[3]);
+	g_mime_stream_filter_remove (filtered, ids[0]);
+	g_mime_stream_filter_remove (filtered, ids[2]);
+	g_assert_true (g_mime_stream_filter_contains (filtered, GMIME_FILTER (first)));
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, 1);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+	g_assert_cmpmem (bytes->data, bytes->len, "ABACxBACxBCxxA", 14);
+	g_assert_cmpuint (first->complete_calls, ==, 4);
+	g_assert_cmpuint (second->complete_calls, ==, 3);
+	g_assert_cmpuint (third->complete_calls, ==, 3);
+	g_assert_cmpuint (first->reset_calls, ==, 0);
+	g_assert_cmpuint (second->reset_calls, ==, 0);
+	g_assert_cmpuint (third->reset_calls, ==, 0);
+	g_object_unref (first);
+	g_object_unref (second);
+	g_object_unref (third);
+	g_object_unref (other);
+	g_object_unref (stream);
+	g_object_unref (memory);
+	check (TRUE, "filter membership uses identity and first-instance removal preserves order, state and independent IDs");
+}
+
+static void
+test_filtered_stream_collection_ownership (void)
+{
+	GMimeStream *memory = g_mime_stream_mem_new ();
+	GMimeStream *stream = g_mime_stream_filter_new (memory);
+	GMimeStreamFilter *filtered = GMIME_STREAM_FILTER (stream);
+	GMimeFilter *filter = g_mime_filter_pass_through_new ();
+	gpointer weak_filter = filter, weak_source = memory;
+	int first, second;
+
+	g_object_add_weak_pointer (G_OBJECT (filter), &weak_filter);
+	g_object_add_weak_pointer (G_OBJECT (memory), &weak_source);
+	first = g_mime_stream_filter_add (filtered, filter);
+	second = g_mime_stream_filter_add (filtered, filter);
+	g_object_unref (filter);
+	g_assert_true (g_mime_stream_filter_remove_filter (filtered, weak_filter));
+	g_assert_nonnull (weak_filter);
+	g_assert_true (g_mime_stream_filter_contains (filtered, weak_filter));
+	g_mime_stream_filter_remove (filtered, first);
+	g_assert_nonnull (weak_filter);
+	g_mime_stream_filter_remove (filtered, second);
+	g_assert_null (weak_filter);
+	g_object_unref (memory);
+	g_assert_nonnull (weak_source);
+	g_assert_true (g_mime_stream_filter_get_source (filtered) == weak_source);
+	g_object_unref (stream);
+	g_assert_null (weak_source);
+	check (TRUE, "duplicate filters own separate references and the source getter returns a borrowed reference");
+
+	memory = g_mime_stream_mem_new ();
+	weak_source = memory;
+	g_object_add_weak_pointer (G_OBJECT (memory), &weak_source);
+	stream = g_mime_stream_filter_new (memory);
+	g_object_unref (memory);
+	memory = g_object_ref (g_mime_stream_filter_get_source (GMIME_STREAM_FILTER (stream)));
+	g_object_unref (stream);
+	g_assert_true (weak_source == memory);
+	g_assert_cmpint (g_mime_stream_write (memory, "x", 1), ==, 1);
+	g_object_unref (memory);
+	g_assert_null (weak_source);
+	check (TRUE, "callers can retain the borrowed source independently without closing it with the filter stream");
+}
+
+typedef struct {
+	GMimeStreamFilter *stream;
+	GMimeFilter *remaining;
+	guint calls;
+} FilterRemovalNotify;
+
+static void
+filter_removal_notify (gpointer user_data, GObject *where_object_was)
+{
+	FilterRemovalNotify *notify = user_data;
+
+	notify->calls++;
+	g_assert_true (g_mime_stream_filter_contains (notify->stream, notify->remaining));
+	g_assert_true (g_mime_stream_filter_remove_filter (notify->stream, notify->remaining));
+}
+
+static void
+test_filtered_stream_collection_finalization (void)
+{
+	guint by_id;
+
+	for (by_id = 0; by_id < 2; by_id++) {
+		GMimeStream *memory = g_mime_stream_mem_new ();
+		GMimeStream *stream = g_mime_stream_filter_new (memory);
+		GMimeStreamFilter *filtered = GMIME_STREAM_FILTER (stream);
+		GMimeFilter *remaining = g_mime_filter_pass_through_new ();
+		GMimeFilter *filter = g_mime_filter_pass_through_new ();
+		FilterRemovalNotify notify = { filtered, remaining, 0 };
+		int id;
+
+		g_mime_stream_filter_add (filtered, remaining);
+		id = g_mime_stream_filter_add (filtered, filter);
+		g_object_weak_ref (G_OBJECT (filter), filter_removal_notify, &notify);
+		g_object_unref (filter);
+		/* Releasing the last reference may also remove the preceding entry. */
+		if (by_id)
+			g_mime_stream_filter_remove (filtered, id);
+		else
+			g_assert_true (g_mime_stream_filter_remove_filter (filtered, filter));
+		g_assert_cmpuint (notify.calls, ==, 1);
+		g_assert_false (g_mime_stream_filter_contains (filtered, remaining));
+		g_object_unref (remaining);
+		g_object_unref (stream);
+		g_object_unref (memory);
+	}
+	check (TRUE, "both removal APIs unlink before releasing filters and tolerate finalization removing a preceding entry");
+}
+
+static void
+test_filtered_stream_collection_arguments (void)
+{
+	GMimeStream *memory = g_mime_stream_mem_new ();
+	GMimeStream *stream = g_mime_stream_filter_new (memory);
+	GMimeStreamFilter *filtered = GMIME_STREAM_FILTER (stream);
+	GMimeFilter *filter = g_mime_filter_pass_through_new ();
+
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM_FILTER*");
+	g_assert_null (g_mime_stream_filter_get_source (NULL));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM_FILTER*");
+	g_assert_false (g_mime_stream_filter_contains (NULL, filter));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM_FILTER*");
+	g_assert_false (g_mime_stream_filter_remove_filter (NULL, filter));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM_FILTER*");
+	g_assert_null (g_mime_stream_filter_get_source ((GMimeStreamFilter *) memory));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM_FILTER*");
+	g_assert_false (g_mime_stream_filter_contains ((GMimeStreamFilter *) memory, filter));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM_FILTER*");
+	g_assert_false (g_mime_stream_filter_remove_filter ((GMimeStreamFilter *) memory, filter));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_FILTER*");
+	g_assert_false (g_mime_stream_filter_contains (filtered, NULL));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_FILTER*");
+	g_assert_false (g_mime_stream_filter_remove_filter (filtered, NULL));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_FILTER*");
+	g_assert_false (g_mime_stream_filter_contains (filtered, (GMimeFilter *) memory));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_FILTER*");
+	g_assert_false (g_mime_stream_filter_remove_filter (filtered, (GMimeFilter *) memory));
+	g_test_assert_expected_messages ();
+	g_object_unref (filter);
+	g_object_unref (stream);
+	g_object_unref (memory);
+	check (TRUE, "filter collection operations reject invalid objects with native programming-error diagnostics");
+}
+
+static void
 test_filtered_stream_completion (void)
 {
 	GMimeStream *stream, *memory;
@@ -9310,6 +9531,13 @@ main (int argc, char **argv)
 	test_filtered_stream_completion ();
 	test_filtered_stream_lifecycle ();
 	test_filtered_stream_reads ();
+	testsuite_end ();
+
+	testsuite_start ("filtered stream collection operations");
+	test_filtered_stream_collection ();
+	test_filtered_stream_collection_ownership ();
+	test_filtered_stream_collection_finalization ();
+	test_filtered_stream_collection_arguments ();
 	testsuite_end ();
 
 	testsuite_start ("core type names and content");

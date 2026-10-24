@@ -76,6 +76,13 @@
     GMimeStreamFilter and any further reads or writes would be
     (un)compressed.</para>
 
+    <para>Filter membership is checked by instance identity. Removing
+    a filter instance removes its first occurrence; the existing ID-based
+    removal identifies a particular occurrence. Duplicate entries each
+    retain a reference. The source accessor returns a borrowed stream.
+    Avoid changing the chain or manipulating the source while filtered
+    output is buffered.</para>
+
     <para>Flushing GMimeStreamFilter completes its write-side filters
     once until more data is written. Failed completion writes can be
     retried with flush or close without duplicating accepted output.

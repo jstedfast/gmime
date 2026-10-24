@@ -64,7 +64,11 @@ GType g_mime_stream_filter_get_type (void);
 
 GMimeStream *g_mime_stream_filter_new (GMimeStream *stream);
 
+GMimeStream *g_mime_stream_filter_get_source (GMimeStreamFilter *stream);
+
 int g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter);
+gboolean g_mime_stream_filter_contains (GMimeStreamFilter *stream, GMimeFilter *filter);
+gboolean g_mime_stream_filter_remove_filter (GMimeStreamFilter *stream, GMimeFilter *filter);
 void g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id);
 
 void g_mime_stream_filter_set_owner (GMimeStreamFilter *stream, gboolean owner);

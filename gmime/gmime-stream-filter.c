@@ -494,12 +494,32 @@ g_mime_stream_filter_new (GMimeStream *stream)
 
 
 /**
+ * g_mime_stream_filter_get_source:
+ * @stream: a #GMimeStreamFilter
+ *
+ * Gets the underlying source stream. Manipulating the source directly is
+ * generally unsafe because filters retain state about previous input and
+ * may have buffered output.
+ *
+ * Returns: (transfer none): the source stream.
+ **/
+GMimeStream *
+g_mime_stream_filter_get_source (GMimeStreamFilter *stream)
+{
+	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (stream), NULL);
+
+	return stream->source;
+}
+
+
+/**
  * g_mime_stream_filter_add:
  * @stream: a #GMimeStreamFilter
  * @filter: a #GMimeFilter
  *
  * Adds @filter to @stream. Filters are applied in the same order in
- * which they are added.
+ * which they are added. The same filter can be added more than once;
+ * each occurrence retains its own reference.
  *
  * Returns: an id for the filter.
  **/
@@ -507,7 +527,7 @@ int
 g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter)
 {
 	struct _GMimeStreamFilterPrivate *priv;
-	struct _filter *f, *fn;
+	struct _filter **link, *fn;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (stream), -1);
 	g_return_val_if_fail (GMIME_IS_FILTER (filter), -1);
@@ -521,14 +541,82 @@ g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter)
 	fn->filter = filter;
 	fn->id = priv->filterid++;
 	
-	f = (struct _filter *) &priv->filters;
-	while (f->next)
-		f = f->next;
-	
-	f->next = fn;
-	fn->next = NULL;
+	link = &priv->filters;
+	while (*link)
+		link = &(*link)->next;
+
+	*link = fn;
 	
 	return fn->id;
+}
+
+
+/**
+ * g_mime_stream_filter_contains:
+ * @stream: a #GMimeStreamFilter
+ * @filter: a #GMimeFilter
+ *
+ * Checks whether @stream contains @filter, comparing filters by identity.
+ *
+ * Returns: %TRUE if @filter is present or %FALSE otherwise.
+ **/
+gboolean
+g_mime_stream_filter_contains (GMimeStreamFilter *stream, GMimeFilter *filter)
+{
+	struct _filter *f;
+
+	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (stream), FALSE);
+	g_return_val_if_fail (GMIME_IS_FILTER (filter), FALSE);
+
+	for (f = stream->priv->filters; f; f = f->next) {
+		if (f->filter == filter)
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static void
+remove_filter (struct _filter **link)
+{
+	struct _filter *f = *link;
+
+	/* Unlink before releasing the reference so finalizers see the updated chain. */
+	*link = f->next;
+	g_object_unref (f->filter);
+	g_free (f);
+}
+
+/**
+ * g_mime_stream_filter_remove_filter:
+ * @stream: a #GMimeStreamFilter
+ * @filter: a #GMimeFilter
+ *
+ * Removes the first occurrence of @filter, comparing filters by identity.
+ * Remaining filters keep their order and state. Removing a filter releases
+ * only the reference belonging to that occurrence.
+ *
+ * Do not modify the chain while filtered output is buffered.
+ *
+ * Returns: %TRUE if an occurrence was removed or %FALSE if not found.
+ **/
+gboolean
+g_mime_stream_filter_remove_filter (GMimeStreamFilter *stream, GMimeFilter *filter)
+{
+	struct _filter **link;
+
+	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (stream), FALSE);
+	g_return_val_if_fail (GMIME_IS_FILTER (filter), FALSE);
+
+	for (link = &stream->priv->filters; *link; link = &(*link)->next) {
+		if ((*link)->filter == filter) {
+			/* Duplicates are independent entries; remove only the first one. */
+			remove_filter (link);
+			return TRUE;
+		}
+	}
+
+	return FALSE;
 }
 
 
@@ -537,31 +625,27 @@ g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter)
  * @stream: a #GMimeStreamFilter
  * @id: filter id
  *
- * Removed a filter from the stream based on the id (as returned from
- * filter_add).
+ * Removes a filter from the stream based on the id returned from
+ * g_mime_stream_filter_add(). Other occurrences of the same filter are
+ * unaffected. An unknown id does nothing.
+ *
+ * Do not modify the chain while filtered output is buffered.
  **/
 void
 g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id)
 {
-	struct _GMimeStreamFilterPrivate *priv;
-	struct _filter *f, *fn;
+	struct _filter **link;
 	
 	g_return_if_fail (GMIME_IS_STREAM_FILTER (stream));
-	
-	priv = stream->priv;
 	
 	if (id == -1)
 		return;
 	
-	f = (struct _filter *) &priv->filters;
-	while (f && f->next) {
-		fn = f->next;
-		if (fn->id == id) {
-			f->next = fn->next;
-			g_object_unref (fn->filter);
-			g_free (fn);
+	for (link = &stream->priv->filters; *link; link = &(*link)->next) {
+		if ((*link)->id == id) {
+			remove_filter (link);
+			return;
 		}
-		f = f->next;
 	}
 }
 
