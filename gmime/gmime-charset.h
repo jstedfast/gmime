@@ -25,6 +25,8 @@
 #include <glib.h>
 #include <sys/types.h>
 
+#include <gmime/gmime-stream.h>
+
 G_BEGIN_DECLS
 
 void        g_mime_charset_map_init (void);
@@ -44,6 +46,9 @@ const char *g_mime_charset_locale_name (void);
 #endif
 
 const char *g_mime_charset_iso_to_windows (const char *isocharset);
+
+gboolean g_mime_charset_try_get_bom_encoding (const guint8 *buffer, gsize length, const char **charset);
+gboolean g_mime_charset_try_get_bom_encoding_from_stream (GMimeStream *stream, const char **charset, GError **error);
 
 typedef struct _GMimeCharset GMimeCharset;
 

@@ -51,7 +51,8 @@ standalone_sources = {
 test_programs += {'test-charsets': executable(
   'test-charsets', ['test-charsets.c', '../gmime/gmime-charset.c', '../gmime/gmime-iconv.c'],
   include_directories: gmime_inc,
-  dependencies: public_deps + [gthread_dep, iconv_dep],
+  # Compile the private charset helpers locally, but resolve their stream API in GMime.
+  dependencies: gmime_dep,
   c_args: ['-DG_LOG_DOMAIN="gmime-tests"'],
 )}
 foreach name, sources : standalone_sources

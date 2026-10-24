@@ -1978,6 +1978,8 @@ g_mime_charset_iconv_name
 g_mime_charset_name
 g_mime_charset_locale_name
 g_mime_charset_iso_to_windows
+g_mime_charset_try_get_bom_encoding
+g_mime_charset_try_get_bom_encoding_from_stream
 g_mime_charset_init
 g_mime_charset_step
 g_mime_charset_best_name

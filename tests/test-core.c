@@ -3192,6 +3192,149 @@ test_text_part_charset_errors (void)
 }
 
 static void
+test_charset_bom_detection (void)
+{
+	static const struct {
+		guint8 bytes[6];
+		gsize length;
+		const char *charset;
+	} cases[] = {
+		{ { 0 }, 0, NULL },
+		{ { 0xff }, 1, NULL },
+		{ { 0xfe }, 1, NULL },
+		{ { 0xff, 0xfe }, 2, "utf-16le" },
+		{ { 0xfe, 0xff }, 2, "utf-16be" },
+		{ { 0xef }, 1, NULL },
+		{ { 0xef, 0xbb }, 2, NULL },
+		{ { 0xef, 0xbb, 0xbf }, 3, "utf-8" },
+		{ { 0xef, 0xbb, 0xbe }, 3, NULL },
+		{ { 0xff, 0xfe, 0, 0 }, 4, "utf-16le" },
+		{ { 0, 0, 0xfe, 0xff }, 4, NULL },
+		{ { 0xff, 0xfe, 0x41, 0, 0xff, 0xfe }, 6, "utf-16le" },
+		{ { 0xfe, 0xff, 0, 0x41 }, 4, "utf-16be" },
+		{ { 0xef, 0xbb, 0xbf, 0x41 }, 4, "utf-8" },
+		{ { 0x41, 0xff, 0xfe }, 3, NULL },
+		{ { 0, 0xef, 0xbb, 0xbf }, 4, NULL }
+	};
+	const char *charset, *expected;
+	TestStreamFailure *failure;
+	GMimeStream *source;
+	GError *error = NULL;
+	guint8 bytes[3], payload[7], *exact;
+	gsize available;
+	gboolean found;
+	guint i, first, second, mode;
+	int unset;
+
+	charset = "stale";
+	check (!g_mime_charset_try_get_bom_encoding (NULL, 0, &charset) && charset == NULL,
+	       "empty BOM buffers clear the output without accessing NULL");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		charset = "stale";
+		exact = g_memdup2 (cases[i].bytes, cases[i].length);
+		found = g_mime_charset_try_get_bom_encoding (exact, cases[i].length, &charset);
+		g_free (exact);
+		check (found == (cases[i].charset != NULL) && !g_strcmp0 (charset, cases[i].charset),
+		       "BOM detection matches initial complete marks without interpreting UTF-32");
+
+		payload[0] = 'x';
+		memcpy (payload + 1, cases[i].bytes, cases[i].length);
+		for (mode = 0; mode < 4; mode++) {
+			source = g_mime_stream_mem_new_with_buffer ((const char *) payload, cases[i].length + 1);
+			g_assert_cmpint (g_mime_stream_seek (source, 1, GMIME_STREAM_SEEK_SET), ==, 1);
+			failure = g_object_new (test_stream_failure_get_type (), NULL);
+			failure->parent_object.source = g_object_ref (source);
+			failure->fail_after = mode == 2 ? 2 : G_MAXSIZE;
+			failure->onebyte = mode == 1;
+			failure->zero_read = mode == 3;
+			failure->nonseekable = TRUE;
+			g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+			available = MIN (cases[i].length, mode == 3 ? 0 : mode == 2 ? 2 : mode == 1 ? 1 : 3);
+			g_mime_charset_try_get_bom_encoding (cases[i].bytes, available, &expected);
+			charset = "stale";
+			errno = ENOENT;
+			found = g_mime_charset_try_get_bom_encoding_from_stream (GMIME_STREAM (failure), &charset, &error);
+			g_assert_no_error (error);
+			check (found == (expected != NULL) && !g_strcmp0 (charset, expected) &&
+			       failure->read_calls == 1 && failure->bytes_read == available &&
+			       g_mime_stream_tell (source) == (gint64) (1 + available),
+			       "stream BOM detection makes one read at the current position and never fills short reads");
+			check (failure->reset_calls == 0 && failure->close_calls == 0 &&
+			       g_mime_stream_read (source, (char *) bytes, 1) == (available < cases[i].length ? 1 : 0),
+			       "stream BOM detection does not rewind, close or consume the remaining content");
+			g_object_unref (failure);
+			g_object_unref (source);
+		}
+	}
+
+	for (first = 0; first < 256; first++) {
+		for (second = 0; second < 256; second++) {
+			bytes[0] = first;
+			bytes[1] = second;
+			expected = first == 0xff && second == 0xfe ? "utf-16le" :
+				first == 0xfe && second == 0xff ? "utf-16be" : NULL;
+			found = g_mime_charset_try_get_bom_encoding (bytes, 2, &charset);
+			g_assert_cmpint (found, ==, expected != NULL);
+			g_assert_cmpstr (charset, ==, expected);
+			bytes[2] = 0xbf;
+			if (first == 0xef && second == 0xbb)
+				expected = "utf-8";
+			found = g_mime_charset_try_get_bom_encoding (bytes, 3, &charset);
+			g_assert_cmpint (found, ==, expected != NULL);
+			g_assert_cmpstr (charset, ==, expected);
+		}
+	}
+	check (TRUE, "every two-byte prefix and every three-byte prefix ending in BF is classified correctly");
+
+	for (unset = 0; unset < 2; unset++) {
+		failure = g_object_new (test_stream_failure_get_type (), NULL);
+		failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("\357\273\277tail", 7);
+		failure->unset_error = unset;
+		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+		charset = "stale";
+		check (!g_mime_charset_try_get_bom_encoding_from_stream (GMIME_STREAM (failure), &charset, &error) &&
+		       charset == NULL && failure->read_calls == 1 && failure->bytes_read == 0 &&
+		       failure->reset_calls == 0 && failure->close_calls == 0,
+		       "BOM read failures clear the charset without seeking, retrying or closing");
+		g_assert_error (error, GMIME_ERROR, (unset ? GMIME_ERROR_GENERAL : EIO));
+		g_clear_error (&error);
+		check (!g_mime_charset_try_get_bom_encoding_from_stream (GMIME_STREAM (failure), &charset, NULL),
+		       "BOM read failures can omit the error location");
+		failure->fail_after = G_MAXSIZE;
+		check (g_mime_charset_try_get_bom_encoding_from_stream (GMIME_STREAM (failure), &charset, &error) &&
+		       !g_strcmp0 (charset, "utf-8"), "BOM reads can be retried after a non-consuming read failure");
+		g_assert_no_error (error);
+		g_object_unref (failure);
+	}
+
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*buffer != NULL || length == 0*");
+	check (!g_mime_charset_try_get_bom_encoding (NULL, 1, &charset) && charset == NULL,
+	       "nonempty NULL BOM buffers fail explicitly and clear the output");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*charset != NULL*");
+	g_mime_charset_try_get_bom_encoding (bytes, sizeof (bytes), NULL);
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+	check (!g_mime_charset_try_get_bom_encoding_from_stream (NULL, &charset, &error) &&
+	       charset == NULL && error == NULL, "BOM detection rejects invalid streams before I/O");
+	g_test_assert_expected_messages ();
+
+	failure = g_object_new (test_stream_failure_get_type (), NULL);
+	error = g_error_new_literal (GMIME_ERROR, EIO, "existing error");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+	check (!g_mime_charset_try_get_bom_encoding_from_stream (GMIME_STREAM (failure), &charset, &error) &&
+	       charset == NULL && failure->read_calls == 0 && !strcmp (error->message, "existing error"),
+	       "BOM detection preserves an existing error and performs no read");
+	g_test_assert_expected_messages ();
+	g_clear_error (&error);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*charset != NULL*");
+	check (!g_mime_charset_try_get_bom_encoding_from_stream (GMIME_STREAM (failure), NULL, &error) &&
+	       failure->read_calls == 0 && error == NULL, "BOM detection requires an output location before I/O");
+	g_test_assert_expected_messages ();
+	g_object_unref (failure);
+}
+
+static void
 test_text_part_formats (void)
 {
 	enum { PLAIN = 1, FLOWED = 2, HTML = 4, ENRICHED = 8, RTF = 16 };
@@ -10270,6 +10413,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("explicit text charset I/O");
 	test_text_part_charset_errors ();
+	testsuite_end ();
+
+	testsuite_start ("BOM charset detection");
+	test_charset_bom_detection ();
 	testsuite_end ();
 
 	testsuite_start ("text-part formats");

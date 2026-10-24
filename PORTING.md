@@ -2186,6 +2186,27 @@ intact. Content decoding/copy overrides are honored.
 The legacy get_text() API retains its existing charset fallback, newline,
 missing-content, and error behavior.
 
+### Byte-order-mark charset detection
+
+g_mime_charset_try_get_bom_encoding() and its _from_stream() variant port
+MimeKit's CharsetUtils.TryGetBomEncoding() helpers. They recognize only
+initial UTF-16LE, UTF-16BE and UTF-8 marks, returning static, explicit-endian
+charset names rather than managed Encoding objects. Incomplete marks do
+not match. UTF-32BE is not recognized, and UTF-32LE's FF FE prefix selects
+UTF-16LE, matching the reference's two-byte-first policy. These helpers
+neither remove the mark nor decode or normalize text.
+
+The stream overload makes exactly one read of up to three bytes at the
+current position, without seeking, resetting or closing the stream. Short
+reads are not filled; a one-byte read cannot identify even a UTF-16 mark.
+Both matches and nonmatches consume the returned bytes. Zero-byte reads
+mean no match, while read failures return a GError rather than masquerading
+as missing marks. Detection works on nonseekable streams.
+
+These primitives do not change the legacy TextPart.get_text() behavior.
+Automatic charset selection, HTML meta-charset detection and the checked
+TextPart.TryDetectEncoding()/GetText(out Encoding) APIs remain unported.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and

@@ -43,6 +43,7 @@
 #include "gmime-charset-map-private.h"
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
+#include "gmime-error.h"
 #include "gmime-internal.h"
 #include "gmime-iconv.h"
 
@@ -694,6 +695,90 @@ g_mime_charset_canon_name (const char *charset)
 	
 	return charset;
 }
+
+/**
+ * g_mime_charset_try_get_bom_encoding:
+ * @buffer: (array length=length) (element-type guint8) (nullable): bytes to inspect
+ * @length: the number of available bytes
+ * @charset: (out) (nullable) (transfer none): a static charset name, or %NULL
+ *
+ * Detects an initial UTF-16LE, UTF-16BE, or UTF-8 byte-order mark, returning
+ * "utf-16le", "utf-16be", or "utf-8", respectively. At most three bytes are
+ * inspected; incomplete marks do not match. @buffer may be %NULL only when
+ * @length is zero.
+ *
+ * This follows MimeKit's BOM policy, not general Unicode encoding detection:
+ * UTF-32 is not detected, and its FF FE prefix matches UTF-16LE. No bytes are
+ * removed or decoded, and a detected mark remains part of the content.
+ *
+ * Returns: %TRUE if a supported mark was found, otherwise %FALSE.
+ **/
+gboolean
+g_mime_charset_try_get_bom_encoding (const guint8 *buffer, gsize length, const char **charset)
+{
+	g_return_val_if_fail (charset != NULL, FALSE);
+
+	*charset = NULL;
+	g_return_val_if_fail (buffer != NULL || length == 0, FALSE);
+
+	/* Match the two-byte UTF-16 marks first, just as MimeKit does. In
+	 * particular, do not reinterpret FF FE 00 00 as a UTF-32 mark. */
+	if (length >= 2 && buffer[0] == 0xff && buffer[1] == 0xfe)
+		*charset = "utf-16le";
+	else if (length >= 2 && buffer[0] == 0xfe && buffer[1] == 0xff)
+		*charset = "utf-16be";
+	else if (length >= 3 && buffer[0] == 0xef && buffer[1] == 0xbb && buffer[2] == 0xbf)
+		*charset = "utf-8";
+
+	return *charset != NULL;
+}
+
+
+/**
+ * g_mime_charset_try_get_bom_encoding_from_stream:
+ * @stream: a #GMimeStream
+ * @charset: (out) (nullable) (transfer none): a static charset name, or %NULL
+ * @error: return location for an error, or %NULL
+ *
+ * Reads up to three bytes at the stream's current position and applies
+ * g_mime_charset_try_get_bom_encoding(). Exactly one read is attempted,
+ * including on streams that return short reads. The stream is not rewound,
+ * sought, or closed, and the inspected bytes remain consumed on either a
+ * match or a nonmatch. A zero-byte read returns %FALSE without an error.
+ *
+ * A read failure returns %FALSE with %GMIME_ERROR using the stream's errno,
+ * or %GMIME_ERROR_GENERAL if the stream did not set errno. No charset is
+ * returned on failure.
+ *
+ * Returns: %TRUE if a supported mark was found, otherwise %FALSE.
+ **/
+gboolean
+g_mime_charset_try_get_bom_encoding_from_stream (GMimeStream *stream, const char **charset, GError **error)
+{
+	guint8 buffer[3];
+	ssize_t nread;
+	int errsv;
+
+	g_return_val_if_fail (charset != NULL, FALSE);
+
+	*charset = NULL;
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* A short read is not filled by further reads: detection must consume
+	 * exactly what the single managed Stream.Read would have returned. */
+	errno = 0;
+	if ((nread = g_mime_stream_read (stream, (char *) buffer, sizeof (buffer))) == -1) {
+		errsv = errno;
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to read a text byte-order mark: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return FALSE;
+	}
+
+	return g_mime_charset_try_get_bom_encoding (buffer, (gsize) nread, charset);
+}
+
 
 char *
 _g_mime_charset_get_mime_name (const char *charset)
