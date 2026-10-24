@@ -15,6 +15,7 @@
             <link linkend="GMimePart">GMimePart</link>
         <link linkend="GMimeParser">GMimeParser</link>
         <link linkend="GMimeStream">GMimeStream</link>
+            <link linkend="GMimeStreamBlock">GMimeStreamBlock</link>
             <link linkend="GMimeStreamBuffer">GMimeStreamBuffer</link>
             <link linkend="GMimeStreamCat">GMimeStreamCat</link>
             <link linkend="GMimeStreamFile">GMimeStreamFile</link>

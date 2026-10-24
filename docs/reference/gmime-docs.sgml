@@ -50,6 +50,7 @@
 <!ENTITY gmime-iconv-utils SYSTEM "xml/gmime-iconv-utils.xml">
 <!ENTITY GMimeMessageIdList SYSTEM "xml/gmime-message-id-list.xml">
 <!ENTITY GMimeStream SYSTEM "xml/gmime-stream.xml">
+<!ENTITY GMimeStreamBlock SYSTEM "xml/gmime-stream-block.xml">
 <!ENTITY GMimeStreamBuffer SYSTEM "xml/gmime-stream-buffer.xml">
 <!ENTITY GMimeStreamCat SYSTEM "xml/gmime-stream-cat.xml">
 <!ENTITY GMimeStreamFile SYSTEM "xml/gmime-stream-file.xml">
@@ -216,6 +217,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeStreamNull;
       &GMimeStreamFilter;
       &GMimeStreamBuffer;
+      &GMimeStreamBlock;
       &GMimeStreamPipe;
       &GMimeStreamCat;
     </chapter>

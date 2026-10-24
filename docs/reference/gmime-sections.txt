@@ -136,6 +136,26 @@ GMIME_STREAM_BUFFER_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-stream-block</FILE>
+GMimeStreamBlock
+g_mime_stream_block_new
+g_mime_stream_block_set_length
+g_mime_stream_block_to_byte_array
+
+<SUBSECTION Private>
+g_mime_stream_block_get_type
+
+<SUBSECTION Standard>
+GMimeStreamBlockClass
+GMIME_TYPE_STREAM_BLOCK
+GMIME_STREAM_BLOCK
+GMIME_STREAM_BLOCK_CLASS
+GMIME_STREAM_BLOCK_GET_CLASS
+GMIME_IS_STREAM_BLOCK
+GMIME_IS_STREAM_BLOCK_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream-cat</FILE>
 GMimeStreamCat
 g_mime_stream_cat_new

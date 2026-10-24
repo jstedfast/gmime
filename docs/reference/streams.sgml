@@ -38,6 +38,17 @@
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</para>
 
+    <para>GMimeStreamBlock stores memory content in separate 2048-byte blocks,
+    avoiding repeated copies of existing bytes while growing. Unlike
+    GMimeStreamMem, it does not allow seeking past the stored extent; extend it
+    first with g_mime_stream_block_set_length(). Growth exposes zeros, and
+    shrinking clears the discarded tail. Use
+    g_mime_stream_block_to_byte_array() for an independent contiguous copy
+    without moving the position. Native substreams share storage and length,
+    but retain independent positions and bounds. Closing one view does not
+    invalidate the others. Reset only rewinds. Native bounds and SEEK_SET
+    positions are absolute.</para>
+
     <para>GMimeStreamCat concatenates child streams in insertion order.
     Reads fill the requested buffer across child boundaries, starting at
     each child's current position without seeking or resetting it. This

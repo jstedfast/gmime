@@ -147,6 +147,30 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- GMimeStreamBlock ports MimeKit's MemoryBlockStream synchronous read/write,
+  seek, SetLength and ToArray operations using 2048-byte non-contiguous blocks.
+  Existing memory-stream consumers remain unchanged. Reads and writes span
+  blocks without copying old content when growing. Seeking beyond the current
+  extent is rejected, overwrites preserve length, and shrinking clamps the
+  caller's position, sheds unused blocks and clears the discarded tail.
+  New blocks are zero-initialized and freed directly rather than pooled;
+  extension never exposes content retained from another managed stream.
+  The backing capacity is G_MAXINT * 2048 bytes. Matching MimeKit, SetLength
+  accepts that limit, but writes ending at it are rejected with EOVERFLOW.
+  Native zero-length I/O remains a no-op, including after close.
+  Native bounds and SEEK_SET use absolute coordinates. Length and contiguous
+  copies cover the bounded visible extent. SetLength is relative to the start
+  bound, resizes shared storage and updates a finite end bound. Substreams
+  share content and backing length without sharing positions or bounds;
+  resizing one leaves other views' positions unchanged. Closing a view releases
+  its storage reference without invalidating other views; nonempty operations
+  on the closed view fail with EBADF. Reset rewinds without clearing data.
+  Contiguous copies are independent GByteArrays and fail with EOVERFLOW above
+  G_MAXUINT bytes. Copy failures also report an optional GMIME_ERROR using
+  errno codes, so language bindings do not mistake NULL for an empty array.
+  Memory allocation follows GLib's normal allocation policy.
+  Managed capabilities, timeouts and asynchronous methods remain unported.
+
 - GMimeStreamNull now follows MimeKit's MeasuringStream synchronous
   write, seek and length behavior. Logical length is the highest written
   position, not the cumulative byte count; overwrites do not inflate it.

@@ -66,6 +66,7 @@
 #include <gmime/gmime-types.h>
 #include <gmime/gmime-message-id-list.h>
 #include <gmime/gmime-stream.h>
+#include <gmime/gmime-stream-block.h>
 #include <gmime/gmime-stream-buffer.h>
 #include <gmime/gmime-stream-cat.h>
 #include <gmime/gmime-stream-file.h>

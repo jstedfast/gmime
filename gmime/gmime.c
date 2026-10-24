@@ -155,6 +155,7 @@ g_mime_init (void)
 	g_mime_filter_windows_get_type ();
 	
 	g_mime_stream_get_type ();
+	g_mime_stream_block_get_type ();
 	g_mime_stream_buffer_get_type ();
 	g_mime_stream_cat_get_type ();
 	g_mime_stream_file_get_type ();
