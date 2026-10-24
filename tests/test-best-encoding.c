@@ -237,7 +237,7 @@ test_part_integration (void)
 	char *encoded;
 	char data[79];
 
-	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT), ==,
+	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, NULL), ==,
 			 GMIME_CONTENT_ENCODING_7BIT);
 	memset (data, 'x', sizeof (data));
 	encoded = g_base64_encode ((const guchar *) data, sizeof (data));
@@ -248,21 +248,75 @@ test_part_integration (void)
 	g_object_unref (stream);
 	g_free (encoded);
 
-	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT), ==,
+	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, NULL), ==,
 			 GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
 	content_type = g_mime_content_type_new ("message", "rfc822");
 	g_mime_entity_set_content_type (GMIME_ENTITY (part), content_type);
 	g_object_unref (content_type);
-	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_BINARY), ==,
+	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_BINARY, NULL), ==,
 			 GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
 	content_type = g_mime_content_type_new ("application", "octet-stream");
 	g_mime_entity_set_content_type (GMIME_ENTITY (part), content_type);
 	g_object_unref (content_type);
-	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT), ==,
+	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, NULL), ==,
 			 GMIME_CONTENT_ENCODING_BASE64);
-	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_BINARY), ==,
+	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_BINARY, NULL), ==,
 			 GMIME_CONTENT_ENCODING_BINARY);
 	g_object_unref (part);
+}
+
+static void
+test_part_line_limits (void)
+{
+	static const guint limits[] = { 60, 78, 79, 998 };
+	static const char *types[] = { "text", "message" };
+	GMimePart *part;
+	GMimeContent *content;
+	GMimeStream *stream, *input;
+	GMimeContentEncoding expected;
+	GError *error = NULL;
+	char data[79], *encoded, *raw;
+	guint type, onebyte, limit, constraint;
+
+	memset (data, 'x', sizeof (data));
+	encoded = g_base64_encode ((const guchar *) data, sizeof (data));
+	for (type = 0; type < G_N_ELEMENTS (types); type++) {
+		for (onebyte = 0; onebyte < 2; onebyte++) {
+			part = g_mime_part_new_with_type (types[type], type ? "global" : "plain");
+			stream = g_mime_stream_mem_new_with_buffer (encoded, strlen (encoded));
+			input = onebyte ? test_stream_onebyte_new (stream) : g_object_ref (stream);
+			content = g_mime_content_new_with_stream (input, GMIME_CONTENT_ENCODING_BASE64);
+			g_mime_part_set_content (part, content);
+			g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+			raw = g_strdup (g_mime_entity_get_header (GMIME_ENTITY (part), "Content-Transfer-Encoding"));
+
+			for (limit = 0; limit < G_N_ELEMENTS (limits); limit++) {
+				expected = limits[limit] < sizeof (data) ?
+					GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE : GMIME_CONTENT_ENCODING_7BIT;
+				for (constraint = 0; constraint < 3; constraint++) {
+					g_assert_cmpint (g_mime_part_get_best_content_encoding_with_max_line_length (
+						part, constraint, limits[limit], &error), ==, expected);
+					g_assert_no_error (error);
+					g_assert_cmpint (g_mime_stream_tell (input), ==, 0);
+					g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+				}
+			}
+
+			g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT,
+									     &error), ==, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+			g_assert_no_error (error);
+			g_assert_true (g_mime_part_get_content (part) == content);
+			g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_BASE64);
+			g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+			g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (part), "Content-Transfer-Encoding"), ==, raw);
+			g_free (raw);
+			g_object_unref (content);
+			g_object_unref (input);
+			g_object_unref (stream);
+			g_object_unref (part);
+		}
+	}
+	g_free (encoded);
 }
 
 static void
@@ -302,6 +356,7 @@ main (int argc, char **argv)
 	test_reset_copy_and_charset ();
 	test_large_counters ();
 	test_part_integration ();
+	test_part_line_limits ();
 	test_preconditions ();
 	testsuite_end ();
 	g_mime_shutdown ();

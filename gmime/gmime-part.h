@@ -104,7 +104,11 @@ const char *g_mime_part_get_content_location (GMimePart *mime_part);
 void g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding encoding);
 GMimeContentEncoding g_mime_part_get_content_encoding (GMimePart *mime_part);
 
-GMimeContentEncoding g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstraint constraint);
+GMimeContentEncoding g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstraint constraint,
+							 GError **error);
+GMimeContentEncoding g_mime_part_get_best_content_encoding_with_max_line_length (GMimePart *mime_part,
+									      GMimeEncodingConstraint constraint,
+									      guint max_line_length, GError **error);
 
 gboolean g_mime_part_is_attachment (GMimePart *mime_part);
 

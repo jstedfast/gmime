@@ -409,10 +409,12 @@ test_content_transfer_encoding (GMimePart *mime_part, GMimeEncodingConstraint co
 {
 	const char *what = "Content-Transfer-Encoding";
 	GMimeContentEncoding value;
+	GError *error = NULL;
 	
 	testsuite_check ("%s (constraint: %s)", what, constraints[constraint]);
 	
-	value = g_mime_part_get_best_content_encoding (mime_part, constraint);
+	value = g_mime_part_get_best_content_encoding (mime_part, constraint, &error);
+	g_assert_no_error (error);
 	
 	if (value != encoding) {
 		testsuite_check_failed ("%s failed: g_mime_part_get_best_encoding() returned %s",

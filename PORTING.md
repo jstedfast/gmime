@@ -508,7 +508,23 @@ This is an incremental migration, not yet a declaration of feature parity.
   or multiplication overflow. g_mime_part_get_best_content_encoding()
   analyzes text/message content, returns 7bit for missing text/message
   content, and uses base64 (or binary under the binary constraint) for
-  other media types. Other legacy part preparation and I/O handling remain
+  other media types.
+
+- `g_mime_part_get_best_content_encoding()` now takes a final GError ** and
+  delegates to g_mime_part_get_best_content_encoding_with_max_line_length()
+  using the default limit of 78. The new query accepts 60 through 998 bytes,
+  excluding CRLF. Both return GMIME_CONTENT_ENCODING_UNSPECIFIED on error,
+  with GMIME_ERROR and errno (or GMIME_ERROR_GENERAL when errno is unset).
+  Rewind, read, final rewind and analysis-flush failures no longer return an
+  encoding chosen from partial data. Text/message content is analyzed through
+  decode_to_stream, including content subclass overrides, without changing
+  headers or encodings. Default content rewinds before and after a successful
+  copy, preserves its failure position, and never closes the source.
+  A missing backing stream reports GMIME_ERROR_INVALID_OPERATION.
+  Following MimeKit, absent text/message content returns 7bit and other
+  media types return base64 or binary without I/O or argument validation.
+  For analyzed content, invalid limits or constraints report EINVAL only
+  after successful decoding and flushing. Legacy part preparation remains
   unchanged.
 
 - MimeKit's static `MimeTypes` registry is exposed through gmime-types.h:

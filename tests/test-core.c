@@ -164,6 +164,7 @@ typedef struct {
 	GMimeContent parent_object;
 	guint write_calls;
 	guint decode_calls;
+	gboolean fail_decode;
 } TestContent;
 
 typedef GMimeContentClass TestContentClass;
@@ -180,7 +181,13 @@ test_content_write_to_stream (GMimeContent *content, GMimeStream *stream)
 static ssize_t
 test_content_decode_to_stream (GMimeContent *content, GMimeStream *stream)
 {
-	((TestContent *) content)->decode_calls++;
+	TestContent *custom = (TestContent *) content;
+
+	custom->decode_calls++;
+	if (custom->fail_decode) {
+		errno = 0;
+		return -1;
+	}
 	return GMIME_CONTENT_CLASS (test_content_parent_class)->decode_to_stream (content, stream);
 }
 
@@ -6352,6 +6359,126 @@ test_content_md5_errors (void)
 }
 
 static void
+test_part_best_encoding_errors (void)
+{
+	GMimePart *part = g_mime_part_new_with_type ("text", "plain");
+	GMimeContent *content = g_mime_content_new ();
+	TestStreamFailure *source = g_object_new (test_stream_failure_get_type (), NULL);
+	GMimeContentType *content_type;
+	TestContent *custom;
+	GError *error = NULL;
+	GMimeContentEncoding encoding;
+	guint i, resets, reads;
+	gint64 position;
+
+	check (g_mime_part_get_best_content_encoding_with_max_line_length (part, -1, 0, &error) ==
+	       GMIME_CONTENT_ENCODING_7BIT && error == NULL,
+	       "missing text content skips argument validation and analysis");
+	g_mime_part_set_content (part, content);
+	check (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error) ==
+	       GMIME_CONTENT_ENCODING_UNSPECIFIED &&
+	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION),
+	       "encoding analysis without a backing stream reports an invalid operation");
+	g_clear_error (&error);
+	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
+	source->onebyte = TRUE;
+	g_mime_content_set_stream (content, GMIME_STREAM (source));
+
+	/* Cover failures both before and after useful bytes have been scanned,
+	 * including the final rewind that otherwise hides behind a valid choice. */
+	for (i = 0; i < 6; i++) {
+		source->bytes_read = 0;
+		source->fail_after = i % 3 == 1 ? 1 : G_MAXSIZE;
+		source->fail_reset_on = i % 3 == 0 ? source->reset_calls + 1 :
+			(i % 3 == 2 ? source->reset_calls + 2 : 0);
+		source->unset_error = i >= 3;
+		errno = EACCES;
+		encoding = g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error);
+		position = i % 3 == 0 ? 0 : (i % 3 == 1 ? 1 : 3);
+		check (encoding == GMIME_CONTENT_ENCODING_UNSPECIFIED &&
+		       g_error_matches (error, GMIME_ERROR, i >= 3 ? GMIME_ERROR_GENERAL :
+					(i % 3 == 1 ? EIO : ESPIPE)) &&
+		       g_mime_stream_tell (GMIME_STREAM (source)) == position,
+		       "initial rewind, partial read and final rewind failures never return a partial encoding");
+		g_clear_error (&error);
+		source->fail_after = G_MAXSIZE;
+		source->fail_reset_on = 0;
+		source->bytes_read = 0;
+		source->unset_error = FALSE;
+		resets = source->reset_calls;
+		check (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error) ==
+		       GMIME_CONTENT_ENCODING_7BIT && error == NULL &&
+		       source->reset_calls == resets + 2 && g_mime_stream_tell (GMIME_STREAM (source)) == 0 &&
+		       source->close_calls == 0 && source->flush_calls == 0,
+		       "analysis retries rewind before and after reading without closing or flushing the source");
+	}
+
+	for (i = 0; i < 4; i++) {
+		source->bytes_read = 0;
+		resets = source->reset_calls;
+		encoding = g_mime_part_get_best_content_encoding_with_max_line_length (
+			part, i < 2 ? GMIME_ENCODING_CONSTRAINT_7BIT : (i == 2 ? -1 : 3),
+			i < 2 ? (i == 0 ? 59 : 999) : 78, &error);
+		check (encoding == GMIME_CONTENT_ENCODING_UNSPECIFIED && g_error_matches (error, GMIME_ERROR, EINVAL) &&
+		       source->reset_calls == resets + 2 && g_mime_stream_tell (GMIME_STREAM (source)) == 0,
+		       "invalid analysis arguments are reported after a successful decoded copy");
+		g_clear_error (&error);
+	}
+
+	source->bytes_read = 0;
+	source->fail_after = 1;
+	check (g_mime_part_get_best_content_encoding_with_max_line_length (part, -1, 59, &error) ==
+	       GMIME_CONTENT_ENCODING_UNSPECIFIED && g_error_matches (error, GMIME_ERROR, EIO),
+	       "content I/O failures take precedence over invalid analysis arguments");
+	g_clear_error (&error);
+	resets = source->reset_calls;
+	reads = source->read_calls;
+	content_type = g_mime_content_type_new ("application", "octet-stream");
+	g_mime_entity_set_content_type (GMIME_ENTITY (part), content_type);
+	g_object_unref (content_type);
+	check (g_mime_part_get_best_content_encoding_with_max_line_length (part, -1, 0, &error) ==
+	       GMIME_CONTENT_ENCODING_BASE64 && error == NULL &&
+	       g_mime_part_get_best_content_encoding_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_BINARY,
+									  G_MAXUINT, &error) ==
+	       GMIME_CONTENT_ENCODING_BINARY && error == NULL &&
+	       source->reset_calls == resets && source->read_calls == reads,
+	       "nontext attachments bypass content I/O and analysis argument validation");
+	g_object_unref (part);
+	part = g_mime_part_new_with_type ("application", "octet-stream");
+	check (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error) ==
+	       GMIME_CONTENT_ENCODING_BASE64 && error == NULL,
+	       "missing nontext content still selects base64 rather than the text fast path");
+	g_object_unref (part);
+	g_object_unref (content);
+	g_object_unref (source);
+
+	custom = g_object_new (test_content_get_type (), NULL);
+	source = g_object_new (test_stream_failure_get_type (), NULL);
+	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("AA==", 4);
+	source->fail_after = 0;
+	source->fail_reset_on = 1;
+	g_mime_content_set_stream (GMIME_CONTENT (custom), GMIME_STREAM (source));
+	g_mime_content_set_encoding (GMIME_CONTENT (custom), GMIME_CONTENT_ENCODING_BASE64);
+	part = g_mime_part_new_with_type ("message", "rfc822");
+	g_mime_part_set_content (part, GMIME_CONTENT (custom));
+	check (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error) ==
+	       GMIME_CONTENT_ENCODING_7BIT && error == NULL &&
+	       custom->decode_calls == 1 && custom->write_calls == 1 &&
+	       source->reset_calls == 0 && source->read_calls == 0,
+	       "analysis uses decoded writer overrides, not a reader of the backing stream");
+	custom->fail_decode = TRUE;
+	errno = EACCES;
+	check (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error) ==
+	       GMIME_CONTENT_ENCODING_UNSPECIFIED && g_error_matches (error, GMIME_ERROR, GMIME_ERROR_GENERAL),
+	       "decode override failures without errno report a general error, not stale errno");
+	g_clear_error (&error);
+	g_object_unref (part);
+	g_object_unref (custom);
+	g_object_unref (source);
+}
+
+static void
 test_content_copy (void)
 {
 	GMimeStream *source, *output, *reader;
@@ -9674,6 +9801,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("checked Content-MD5 computation");
 	test_content_md5_errors ();
+	testsuite_end ();
+
+	testsuite_start ("checked part encoding selection");
+	test_part_best_encoding_errors ();
 	testsuite_end ();
 
 	testsuite_start ("raw and decoded content copying");
