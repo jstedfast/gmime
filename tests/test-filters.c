@@ -1283,6 +1283,238 @@ test_from_streams (void)
 	testsuite_check_passed ();
 }
 
+static void
+test_charset_incremental (void)
+{
+	static const guint8 utf8[] = "A\302\243\342\202\254\360\237\230\200\0Z\r\n";
+	static const guint8 utf16[] = {
+		0x41, 0, 0xa3, 0, 0xac, 0x20, 0x3d, 0xd8, 0, 0xde, 0, 0, 0x5a, 0, 13, 0, 10, 0
+	};
+	static const guint8 utf32[] = {
+		0, 0, 0, 0x41, 0, 0, 0, 0xa3, 0, 0, 0x20, 0xac, 0, 1, 0xf6, 0,
+		0, 0, 0, 0, 0, 0, 0, 0x5a, 0, 0, 0, 13, 0, 0, 0, 10
+	};
+	static const guint8 latin1[] = "A\243\351\0\r\n";
+	static const guint8 latin_utf8[] = "A\302\243\303\251\0\r\n";
+	static const struct {
+		const char *from, *to;
+		const guint8 *input, *output;
+		size_t inlen, outlen;
+	} cases[] = {
+		{ "UTF-8", "UTF-16LE", utf8, utf16, sizeof (utf8) - 1, sizeof (utf16) },
+		{ "UTF-16LE", "UTF-8", utf16, utf8, sizeof (utf16), sizeof (utf8) - 1 },
+		{ "UTF-8", "UTF-32BE", utf8, utf32, sizeof (utf8) - 1, sizeof (utf32) },
+		{ "UTF-32BE", "UTF-8", utf32, utf8, sizeof (utf32), sizeof (utf8) - 1 },
+		{ "ISO-8859-1", "UTF-8", latin1, latin_utf8, sizeof (latin1) - 1, sizeof (latin_utf8) - 1 },
+		{ "UTF-8", "ISO-8859-1", latin_utf8, latin1, sizeof (latin_utf8) - 1, sizeof (latin1) - 1 }
+	};
+	GByteArray *actual = g_byte_array_new ();
+	GMimeFilter *filter;
+	size_t i, split;
+	guint final;
+
+	testsuite_check ("Charset filter multibyte splits, empty input and completion");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		filter = g_mime_filter_charset_new (cases[i].from, cases[i].to);
+		g_assert_nonnull (filter);
+		for (split = 0; split <= cases[i].inlen; split++) {
+			for (final = 0; final < 2; final++) {
+				g_mime_filter_reset (filter);
+				g_byte_array_set_size (actual, 0);
+				g_assert_false (filter_chunk (filter, cases[i].input, split, FALSE, actual));
+				g_assert_cmpuint (filter->backlen, <=, 3);
+				g_assert_false (filter_chunk (filter, cases[i].input, 0, FALSE, actual));
+				g_assert_false (filter_chunk (filter, cases[i].input + split,
+							     cases[i].inlen - split, final, actual));
+				g_assert_cmpmem (actual->data, actual->len, cases[i].output, cases[i].outlen);
+				g_assert_cmpuint (filter->backlen, ==, 0);
+				g_assert_false (filter_chunk (filter, cases[i].input, 0, TRUE, actual));
+				g_assert_false (filter_chunk (filter, cases[i].input, 0, TRUE, actual));
+				g_assert_cmpmem (actual->data, actual->len, cases[i].output, cases[i].outlen);
+			}
+		}
+		g_object_unref (filter);
+	}
+	g_byte_array_unref (actual);
+	testsuite_check_passed ();
+}
+
+static void
+test_charset_growth (void)
+{
+	GByteArray *actual = g_byte_array_new (), *expected = g_byte_array_sized_new (65537 * 4);
+	GMimeFilter *filter;
+	guint8 *input = g_malloc (65537);
+	size_t i;
+	guint final;
+
+	testsuite_check ("Charset filter immediately drains expanding output and preserves its prefix");
+	g_byte_array_set_size (expected, 65537 * 4);
+	memset (expected->data, 0, expected->len);
+	for (i = 0; i < 65537; i++) {
+		input[i] = i % 128;
+		expected->data[i * 4] = input[i];
+	}
+	for (final = 0; final < 2; final++) {
+		filter = g_mime_filter_charset_new ("UTF-8", "UTF-32LE");
+		g_assert_nonnull (filter);
+		g_byte_array_set_size (actual, 0);
+		g_assert_false (filter_chunk (filter, input, 65537, final, actual));
+		check_filter_result (actual, expected);
+		g_assert_cmpuint (filter->backlen, ==, 0);
+		g_assert_cmpuint (filter->outsize, >=, expected->len);
+		g_assert_false (filter_chunk (filter, input, 0, FALSE, actual));
+		g_assert_false (filter_chunk (filter, input, 0, TRUE, actual));
+		check_filter_result (actual, expected);
+		g_object_unref (filter);
+	}
+	g_free (input);
+	g_byte_array_unref (actual);
+	g_byte_array_unref (expected);
+	testsuite_check_passed ();
+}
+
+static void
+test_charset_lifecycle (void)
+{
+	static const guint8 japanese[] = "\343\201\202\343\201\204";
+	static const guint8 shifted[] = { 0x1b, '$', 'B', '$', '"', '$', '$', 0x1b, '(', 'B' };
+	static const guint8 incomplete[] = { 0xe2, 0x82 };
+	static const guint8 malformed[] = { 'A', 0xff, 'B', 0xe2, 0x82 };
+	GByteArray *actual = g_byte_array_new ();
+	GMimeFilter *filter, *copy;
+	char *from = g_strdup ("uTf-8"), *to = g_strdup ("UTF-16LE");
+
+	testsuite_check ("Charset filter names, fresh copies, stateful completion, reset and native recovery");
+	filter = g_mime_filter_charset_new (from, to);
+	g_assert_nonnull (filter);
+	g_free (from);
+	g_free (to);
+	g_assert_cmpstr (g_mime_filter_charset_get_from_charset (GMIME_FILTER_CHARSET (filter)), ==, "uTf-8");
+	g_assert_cmpstr (g_mime_filter_charset_get_to_charset (GMIME_FILTER_CHARSET (filter)), ==, "UTF-16LE");
+	g_assert_false (filter_chunk (filter, incomplete, sizeof (incomplete), FALSE, actual));
+	g_assert_cmpuint (actual->len, ==, 0);
+	g_assert_cmpuint (filter->backlen, ==, sizeof (incomplete));
+	copy = g_mime_filter_copy (filter);
+	g_assert_true (GMIME_IS_FILTER_CHARSET (copy));
+	g_assert_cmpuint (copy->backlen, ==, 0);
+	g_assert_true (GMIME_FILTER_CHARSET (copy)->cd != GMIME_FILTER_CHARSET (filter)->cd);
+	g_assert_cmpstr (g_mime_filter_charset_get_from_charset (GMIME_FILTER_CHARSET (copy)), ==, "uTf-8");
+	g_assert_cmpstr (g_mime_filter_charset_get_to_charset (GMIME_FILTER_CHARSET (copy)), ==, "UTF-16LE");
+	g_object_unref (filter);
+	g_assert_false (filter_chunk (copy, (const guint8 *) "A", 1, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, "A\0", 2);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (copy, incomplete, sizeof (incomplete), FALSE, actual));
+	g_mime_filter_reset (copy);
+	g_assert_cmpuint (copy->backlen, ==, 0);
+	g_assert_false (filter_chunk (copy, (const guint8 *) "B", 1, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, "B\0", 2);
+	g_object_unref (copy);
+
+	filter = g_mime_filter_charset_new ("UTF-8", "ISO-2022-JP");
+	g_assert_nonnull (filter);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (filter, japanese, sizeof (japanese) - 1, FALSE, actual));
+	g_assert_cmpmem (actual->data, actual->len, shifted, sizeof (shifted) - 3);
+	g_assert_false (filter_chunk (filter, japanese, 0, FALSE, actual));
+	g_assert_cmpuint (actual->len, ==, sizeof (shifted) - 3);
+	g_assert_false (filter_chunk (filter, japanese, 0, TRUE, actual));
+	g_assert_false (filter_chunk (filter, japanese, 0, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, shifted, sizeof (shifted));
+	g_mime_filter_reset (filter);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (filter, japanese, sizeof (japanese) - 1, FALSE, actual));
+	g_mime_filter_reset (filter);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (filter, (const guint8 *) "A", 1, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, "A", 1);
+	g_object_unref (filter);
+
+	filter = g_mime_filter_charset_new ("ISO-2022-JP", "UTF-8");
+	g_assert_nonnull (filter);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (filter, shifted, 3, FALSE, actual));
+	g_assert_cmpuint (actual->len, ==, 0);
+	g_mime_filter_reset (filter);
+	g_assert_false (filter_chunk (filter, (const guint8 *) "A", 1, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, "A", 1);
+	g_object_unref (filter);
+
+	filter = g_mime_filter_charset_new ("UTF-8", "US-ASCII");
+	g_assert_nonnull (filter);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (filter, malformed, sizeof (malformed), FALSE, actual));
+	g_assert_cmpmem (actual->data, actual->len, "AB", 2);
+	g_assert_cmpuint (filter->backlen, ==, 2);
+	g_assert_false (filter_chunk (filter, malformed, 0, TRUE, actual));
+	g_assert_cmpuint (filter->backlen, ==, 0);
+	g_assert_cmpmem (actual->data, actual->len, "AB", 2);
+	g_byte_array_set_size (actual, 0);
+	g_assert_false (filter_chunk (filter, (const guint8 *) "A\302\243B", 4, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, "AB", 2);
+	g_object_unref (filter);
+	g_byte_array_unref (actual);
+	errno = 0;
+	g_assert_null (g_mime_filter_charset_new ("x-gmime-unsupported-charset", "UTF-8"));
+	g_assert_cmpint (errno, ==, EINVAL);
+	testsuite_check_passed ();
+}
+
+static void
+test_charset_streams (void)
+{
+	GMimeStream *memory, *filtered;
+	GMimeFilter *filter;
+	GByteArray *actual, *expected = g_byte_array_sized_new (8193 * 4);
+	guint8 *input = g_malloc (8193);
+	char buffer[3];
+	size_t i;
+	ssize_t n;
+	guint mode, pass;
+
+	testsuite_check ("Charset filter streamed bytewise writes, short reads, reset and flush");
+	g_byte_array_set_size (expected, 8193 * 4);
+	memset (expected->data, 0, expected->len);
+	for (i = 0; i < 8193; i++) {
+		input[i] = i % 128;
+		expected->data[i * 4] = input[i];
+	}
+	for (mode = 0; mode < 2; mode++) {
+		memory = mode ? g_mime_stream_mem_new_with_buffer ((const char *) input, 8193) :
+			g_mime_stream_mem_new ();
+		filtered = g_mime_stream_filter_new (memory);
+		filter = g_mime_filter_charset_new ("UTF-8", "UTF-32LE");
+		g_assert_nonnull (filter);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+		g_object_unref (filter);
+		if (mode == 0) {
+			for (i = 0; i < 8193; i++)
+				g_assert_cmpint (g_mime_stream_write (filtered, (const char *) input + i, 1), ==, 1);
+			g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+			g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+			actual = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory));
+			check_filter_result (actual, expected);
+		} else {
+			for (pass = 0; pass < 2; pass++) {
+				if (pass)
+					g_assert_cmpint (g_mime_stream_reset (filtered), ==, 0);
+				actual = g_byte_array_new ();
+				while ((n = g_mime_stream_read (filtered, buffer, sizeof (buffer))) > 0)
+					g_byte_array_append (actual, (const guint8 *) buffer, n);
+				g_assert_cmpint (n, ==, 0);
+				check_filter_result (actual, expected);
+				g_byte_array_unref (actual);
+			}
+		}
+		g_object_unref (filtered);
+		g_object_unref (memory);
+	}
+	g_free (input);
+	g_byte_array_unref (expected);
+	testsuite_check_passed ();
+}
+
 static GByteArray *
 anonymize_expected (const guint8 *input, size_t length)
 {
@@ -2036,6 +2268,10 @@ int main (int argc, char **argv)
 	test_anonymize_bytes ();
 	test_anonymize_lifecycle ();
 	test_anonymize_streams ();
+	test_charset_incremental ();
+	test_charset_growth ();
+	test_charset_lifecycle ();
+	test_charset_streams ();
 	test_pass_through_lifecycle ();
 	test_pass_through_streams ();
 	test_encoding_newline_lifecycle ();

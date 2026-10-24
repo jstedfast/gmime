@@ -64,6 +64,9 @@ GType g_mime_filter_charset_get_type (void);
 
 GMimeFilter *g_mime_filter_charset_new (const char *from_charset, const char *to_charset);
 
+const char *g_mime_filter_charset_get_from_charset (GMimeFilterCharset *filter);
+const char *g_mime_filter_charset_get_to_charset (GMimeFilterCharset *filter);
+
 G_END_DECLS
 
 #endif /* __GMIME_FILTER_CHARSET_H__ */

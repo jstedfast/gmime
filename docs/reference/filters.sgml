@@ -37,6 +37,16 @@
     pass-through codec, it does not allocate an output buffer. Use it
     when an optional transformation should leave the stream untouched.</para>
 
+    <para>GMimeFilterCharset converts complete input characters immediately
+    with the native iconv backend, growing its output buffer as necessary.
+    Incomplete input is retained until another call; completion discards an
+    incomplete final character and emits any final target shift sequence.
+    Reset discards both pending input and shift state. Copying creates a
+    fresh converter with the same original source/target charset names,
+    available through get_from_charset() and get_to_charset(). Native
+    invalid/unrepresentable-byte skipping and iconv byte-order-mark policy
+    are retained, rather than managed Encoding replacement fallbacks.</para>
+
     <para>GMimeFilterAnonymize replaces every byte except ASCII space,
     tab, CR and LF with lowercase ASCII 'x'. It preserves byte counts and
     newline spellings, including when input is split across calls.

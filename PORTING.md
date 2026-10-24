@@ -413,6 +413,24 @@ This is an incremental migration, not yet a declaration of feature parity.
   This does not port the higher-level MimeAnonymizer or automatically
   rewrite headers/MIME structure. Byte counts and whitespace remain visible.
 
+- `GMimeFilterCharset` now follows MimeKit CharsetFilter's incremental
+  conversion loop for valid, representable input while retaining iconv.
+  Complete characters are drained in the current call, growing output
+  storage without losing its prefix; only incomplete input is backed up.
+  Completion also drains target shift sequences, including empty input.
+  Reset discards pending bytes and shift state, while copy creates a fresh
+  converter rather than cloning a partial character. New get_from_charset()
+  and get_to_charset() accessors return filter-owned copies of the original
+  constructor names, not managed Encoding objects or canonicalized names.
+  Buffer estimates and growth check arithmetic before allocating. Unexpected
+  iconv failures are fatal rather than silently returning unconverted input;
+  this void filter API cannot return conversion errors.
+  Native recovery remains byte-skipping for invalid/unrepresentable input
+  (including old GnuWin32 ERANGE reports) and discards incomplete final bytes.
+  Managed replacement fallbacks, custom Encoding objects and code-page
+  constructors are not ported. Generic UTF-16/UTF-32 BOM and endian behavior
+  remain iconv-defined; use explicit endian names for equivalent wire bytes.
+
 - `GMimeFilterFrom` now follows MimeKit's MboxFromFilter in ESCAPE mode
   and ArmoredFromFilter in ARMOR mode, retaining the native type and mode
   enum. Only exact, case-sensitive "From " markers at the beginning of
