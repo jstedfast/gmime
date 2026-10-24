@@ -32,7 +32,6 @@
 #include "gmime-visitor.h"
 #include "gmime-error.h"
 #include "gmime-utils.h"
-#include "gmime-rfc2047-private.h"
 #include "gmime-common.h"
 #include "gmime-internal.h"
 #include "gmime-parse-utils.h"
@@ -41,9 +40,7 @@
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
 #include "gmime-filter-best.h"
-#include "gmime-filter-checksum.h"
 #include "gmime-filter-unix2dos.h"
-#include "gmime-table-private.h"
 
 #define _(x) x
 #define d(x)
@@ -176,6 +173,29 @@ static const char *content_headers[] = {
 };
 
 
+static char *
+trim_content_md5 (const char *value)
+{
+	const char *start, *end, *previous;
+
+	if (!value)
+		return NULL;
+
+	start = value;
+	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
+		start = g_utf8_next_char (start);
+	end = start + strlen (start);
+	while (end > start) {
+		previous = g_utf8_prev_char (end);
+		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
+			break;
+		end = previous;
+	}
+
+	return g_strndup (start, end - start);
+}
+
+
 static gboolean
 process_header (GMimeEntity *object, GMimeHeader *header)
 {
@@ -206,7 +226,7 @@ process_header (GMimeEntity *object, GMimeHeader *header)
 	case HEADER_CONTENT_MD5:
 		value = g_mime_header_get_value (header);
 		g_free (mime_part->content_md5);
-		mime_part->content_md5 = g_strdup (value);
+		mime_part->content_md5 = trim_content_md5 (value);
 		break;
 	case HEADER_CONTENT_DURATION:
 		mime_part->content_duration = -1;
@@ -669,118 +689,166 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 /**
  * g_mime_part_set_content_md5:
  * @mime_part: a #GMimePart object
- * @content_md5: content md5 or %NULL to generate the md5 digest.
+ * @content_md5: (nullable): the UTF-8 digest value, or %NULL to remove it
  *
- * Set the content md5 for the specified mime part.
+ * Sets the Content-MD5 header, trimming leading and trailing Unicode
+ * whitespace. Empty values are allowed. This does not read the content
+ * or compute a digest; use g_mime_part_compute_content_md5() separately.
+ * Assigning the current value preserves the existing raw header.
  **/
 void
 g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 {
 	GMimeEntity *object = (GMimeEntity *) mime_part;
-	unsigned char digest[16], b64digest[32];
-	GMimeRfc2047Encoder *encoder;
-	GMimeContentType *content_type;
-	GMimeStream *filtered, *stream;
-	GMimeFilter *filter;
-	size_t len;
+	char *value;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
+	g_return_if_fail (content_md5 == NULL || g_utf8_validate (content_md5, -1, NULL));
+
+	if (content_md5 && !g_strcmp0 (mime_part->content_md5, content_md5))
+		return;
+
+	/* Copy before releasing the old value: callers may pass the getter's
+	 * borrowed pointer back to this setter. NULL only removes the header. */
+	value = trim_content_md5 (content_md5);
 	g_free (mime_part->content_md5);
-	
-	if (!content_md5) {
-		/* compute a md5sum */
-		stream = g_mime_stream_null_new ();
+	mime_part->content_md5 = value;
+
+	_g_mime_entity_block_header_list_changed (object);
+	if (value)
+		g_mime_header_list_set (object->headers, "Content-Md5", value, NULL);
+	else
+		g_mime_header_list_remove_all (object->headers, "Content-Md5");
+	_g_mime_entity_unblock_header_list_changed (object);
+}
+
+
+/**
+ * g_mime_part_compute_content_md5:
+ * @mime_part: a #GMimePart object
+ * @error: return location for a #GError, or %NULL
+ *
+ * Computes the base64-encoded MD5 of the decoded content in canonical
+ * form. For text parts, bare LF bytes become CRLF without adding a final
+ * newline or converting the charset. Other media types are hashed verbatim.
+ * No headers, content objects or transfer encodings are changed.
+ *
+ * The backing stream is rewound before reading and left at EOF on success,
+ * without being closed. On failure, it is left at its current position.
+ * A new computation rewinds again; concurrent use of the shared source
+ * can interfere with reading, as described in g_mime_content_open().
+ *
+ * Missing content or a missing backing stream reports
+ * %GMIME_ERROR_INVALID_OPERATION. Rewind and read failures report a
+ * %GMIME_ERROR using errno, or %GMIME_ERROR_GENERAL if errno is unset.
+ * A zero-byte read without EOF reports %EIO instead of a partial digest.
+ *
+ * Returns: (nullable) (transfer full): the digest, or %NULL on error.
+ **/
+char *
+g_mime_part_compute_content_md5 (GMimePart *mime_part, GError **error)
+{
+	unsigned char digest[16];
+	gsize digest_len = sizeof (digest);
+	GMimeContentType *content_type;
+	GMimeStream *filtered, *stream;
+	GChecksum *checksum;
+	GMimeFilter *filter;
+	char buffer[4096];
+	ssize_t nread;
+	int errsv;
+
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (!mime_part->content || !g_mime_content_get_stream (mime_part->content)) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     "Cannot compute Content-MD5 without content and a backing stream");
+		return NULL;
+	}
+
+	/* Hash a decoded reader, like MimeKit's Content.Open(), rather than a
+	 * write override or the transfer-encoded bytes stored in the source. */
+	errno = 0;
+	if (!(stream = g_mime_content_open (mime_part->content))) {
+		errsv = errno;
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to rewind Content-MD5 content: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return NULL;
+	}
+
+	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+	if (g_mime_content_type_is_type (content_type, "text", "*")) {
+		/* Canonicalize only newlines; an unterminated line, bare CR and
+		 * binary/non-ASCII bytes must not gain or lose any other data. */
 		filtered = g_mime_stream_filter_new (stream);
 		g_object_unref (stream);
-		
-		content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
-		if (g_mime_content_type_is_type (content_type, "text", "*")) {
-			filter = g_mime_filter_unix2dos_new (FALSE);
-			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-			g_object_unref (filter);
-		}
-		
-	        filter = g_mime_filter_checksum_new (G_CHECKSUM_MD5);
+		filter = g_mime_filter_unix2dos_new (FALSE);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-		
-		g_mime_content_decode_to_stream (mime_part->content, filtered);
-		g_object_unref (filtered);
-		
-		memset (digest, 0, 16);
-		g_mime_filter_checksum_get_digest ((GMimeFilterChecksum *) filter, digest, 16);
 		g_object_unref (filter);
-		
-		encoder = _g_mime_rfc2047_base64_encoder_new ();
-		len = _g_mime_rfc2047_encoder_encode (encoder, digest, sizeof digest,
-						     b64digest, sizeof b64digest - 1);
-		g_object_unref (encoder);
-		b64digest[len] = '\0';
-		
-		content_md5 = (const char *) b64digest;
+		stream = filtered;
 	}
-	
-	mime_part->content_md5 = g_strdup (content_md5);
-	
-	_g_mime_entity_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Md5", content_md5, NULL);
-	_g_mime_entity_unblock_header_list_changed (object);
+
+	checksum = g_checksum_new (G_CHECKSUM_MD5);
+	do {
+		errno = 0;
+		nread = g_mime_stream_read (stream, buffer, sizeof (buffer));
+		if (nread > 0)
+			g_checksum_update (checksum, (const guchar *) buffer, nread);
+	} while (nread > 0);
+	errsv = errno;
+	if (nread == 0 && !g_mime_stream_eos (stream)) {
+		nread = -1;
+		errsv = EIO;
+	}
+	g_object_unref (stream);
+
+	if (nread == -1) {
+		/* Never return a checksum of the prefix consumed before an I/O
+		 * failure, and do not mask that failure with a cleanup rewind. */
+		g_checksum_free (checksum);
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to read Content-MD5 content: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return NULL;
+	}
+
+	g_checksum_get_digest (checksum, digest, &digest_len);
+	g_checksum_free (checksum);
+	return g_base64_encode (digest, digest_len);
 }
 
 
 /**
  * g_mime_part_verify_content_md5:
  * @mime_part: a #GMimePart object
+ * @error: return location for a #GError, or %NULL
  *
- * Verify the content md5 for the specified mime part.
+ * Compares the Content-MD5 value with an independently computed digest
+ * using exact, case-sensitive equality. Missing or blank values and
+ * missing content return %FALSE without reading the source or setting
+ * an error. Other failures follow g_mime_part_compute_content_md5().
  *
- * Returns: %TRUE if the md5 is valid or %FALSE otherwise. Note: will
- * return %FALSE if the mime part does not contain a Content-MD5.
+ * Returns: %TRUE if the digest matches; %FALSE for a mismatch or error.
  **/
 gboolean
-g_mime_part_verify_content_md5 (GMimePart *mime_part)
+g_mime_part_verify_content_md5 (GMimePart *mime_part, GError **error)
 {
-	unsigned char digest[16], b64digest[32];
-	GMimeRfc2047Encoder *encoder;
-	GMimeContentType *content_type;
-	GMimeStream *filtered, *stream;
-	GMimeFilter *filter;
-	size_t len;
-	
+	gboolean matches;
+	char *digest;
+
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
-	g_return_val_if_fail (GMIME_IS_CONTENT (mime_part->content), FALSE);
-	
-	if (!mime_part->content_md5)
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if (!mime_part->content_md5 || !*mime_part->content_md5 || !mime_part->content)
 		return FALSE;
-	
-	stream = g_mime_stream_null_new ();
-	filtered = g_mime_stream_filter_new (stream);
-	g_object_unref (stream);
-	
-	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
-	if (g_mime_content_type_is_type (content_type, "text", "*")) {
-		filter = g_mime_filter_unix2dos_new (FALSE);
-		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-		g_object_unref (filter);
-	}
-	
-	filter = g_mime_filter_checksum_new (G_CHECKSUM_MD5);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	
-	g_mime_content_decode_to_stream (mime_part->content, filtered);
-	g_object_unref (filtered);
-	
-	memset (digest, 0, 16);
-	g_mime_filter_checksum_get_digest ((GMimeFilterChecksum *) filter, digest, 16);
-	g_object_unref (filter);
-	
-	encoder = _g_mime_rfc2047_base64_encoder_new ();
-	len = _g_mime_rfc2047_encoder_encode (encoder, digest, sizeof digest,
-					     b64digest, sizeof b64digest - 1);
-	g_object_unref (encoder);
-	b64digest[len] = '\0';
-	
-	return !strcmp ((char *) b64digest, mime_part->content_md5);
+	if (!(digest = g_mime_part_compute_content_md5 (mime_part, error)))
+		return FALSE;
+
+	matches = !strcmp (digest, mime_part->content_md5);
+	g_free (digest);
+	return matches;
 }
 
 
@@ -791,7 +859,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
  * Gets the md5sum contained in the Content-Md5 header of the
  * specified mime part if it exists, or %NULL otherwise.
  *
- * Returns: the content md5 for the specified mime part.
+ * Returns: (nullable) (transfer none): the borrowed, trimmed digest value.
  **/
 const char *
 g_mime_part_get_content_md5 (GMimePart *mime_part)

@@ -166,6 +166,7 @@ static void
 test_content_md5 (GMimePart *mime_part, const char *md5sum)
 {
 	const char *what = "Content-Md5";
+	GError *error = NULL;
 	const char *value;
 	
 	testsuite_check ("%s", what);
@@ -180,12 +181,25 @@ test_content_md5 (GMimePart *mime_part, const char *md5sum)
 		return;
 	}
 	
-	if (!g_mime_part_verify_content_md5 (mime_part)) {
+	if (!g_mime_part_verify_content_md5 (mime_part, &error)) {
+		g_assert_no_error (error);
 		testsuite_check_failed ("%s failed: md5sum did not verify", what);
 		return;
 	}
 	
 	testsuite_check_passed ();
+}
+
+static void
+set_computed_content_md5 (GMimePart *part)
+{
+	GError *error = NULL;
+	char *digest = g_mime_part_compute_content_md5 (part, &error);
+
+	g_assert_no_error (error);
+	g_assert_nonnull (digest);
+	g_mime_part_set_content_md5 (part, digest);
+	g_free (digest);
 }
 
 static void
@@ -200,48 +214,121 @@ test_content_md5_vectors (void)
 	} cases[] = {
 		{ FALSE, "", 0, GMIME_CONTENT_ENCODING_UNSPECIFIED, "1B2M2Y8AsgTpgAmY7PhCfg==" },
 		{ FALSE, "abc", 3, GMIME_CONTENT_ENCODING_UNSPECIFIED, "kAFQmDzST7DWlj99KOF/cg==" },
+		{ FALSE, "a\n", 2, GMIME_CONTENT_ENCODING_BINARY, "YLcl8QychccNl4gN/oGRsw==" },
 		{ FALSE, "\0\xff" "ABC\n", 6, GMIME_CONTENT_ENCODING_UNSPECIFIED, "ZCeOppyvk3dBJtrxlivHRg==" },
 		{ TRUE, "Hello\nworld\n", 12, GMIME_CONTENT_ENCODING_UNSPECIFIED, "0D25laZp7CmXkep2HGh5kg==" },
 		{ TRUE, "Hello\r\nworld\r\n", 14, GMIME_CONTENT_ENCODING_UNSPECIFIED, "0D25laZp7CmXkep2HGh5kg==" },
 		{ TRUE, "SGVsbG8Kd29ybGQK", 16, GMIME_CONTENT_ENCODING_BASE64, "0D25laZp7CmXkep2HGh5kg==" },
-		{ TRUE, "Hello=0Aworld=0A", 16, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, "0D25laZp7CmXkep2HGh5kg==" }
+		{ TRUE, "Hello=0Aworld=0A", 16, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, "0D25laZp7CmXkep2HGh5kg==" },
+		{ TRUE, "\r", 1, GMIME_CONTENT_ENCODING_UNSPECIFIED, "3Lm+L2BOXfkd65ZZvtR0jQ==" },
+		{ TRUE, "\n", 1, GMIME_CONTENT_ENCODING_UNSPECIFIED, "gQUbzCzxvt83giSwqT4odw==" },
+		{ TRUE, "a\r\r\nb\rc\nd", 9, GMIME_CONTENT_ENCODING_UNSPECIFIED, "UKY+TF6AtMG9Xqw4mHNwDw==" },
+		{ TRUE, "=0D", 3, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, "3Lm+L2BOXfkd65ZZvtR0jQ==" },
+		{ TRUE, "DQ==", 4, GMIME_CONTENT_ENCODING_BASE64, "3Lm+L2BOXfkd65ZZvtR0jQ==" }
 	};
 	GMimeContent *content;
-	GMimeStream *stream;
+	GMimeStream *stream, *input;
 	GMimePart *part;
+	GError *error = NULL;
 	const char *header;
-	guint i;
+	char *digest;
+	guint i, onebyte;
 
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
-		part = g_mime_part_new_with_type (cases[i].text ? "text" : "application",
-						 cases[i].text ? "plain" : "octet-stream");
-		stream = g_mime_stream_mem_new_with_buffer (cases[i].input, cases[i].length);
-		content = g_mime_content_new_with_stream (stream, cases[i].encoding);
-		g_mime_part_set_content (part, content);
-		g_object_unref (content);
-		g_object_unref (stream);
+		for (onebyte = 0; onebyte < 2; onebyte++) {
+			part = g_mime_part_new_with_type (cases[i].text ? "text" : "application",
+							 cases[i].text ? "plain" : "octet-stream");
+			stream = g_mime_stream_mem_new_with_buffer (cases[i].input, cases[i].length);
+			input = onebyte ? test_stream_onebyte_new (stream) : g_object_ref (stream);
+			content = g_mime_content_new_with_stream (input, cases[i].encoding);
+			g_mime_part_set_content (part, content);
+			g_object_unref (content);
+			g_object_unref (input);
+			g_object_unref (stream);
 
-		g_mime_part_set_content_md5 (part, NULL);
-		test_content_md5 (part, cases[i].md5);
+			digest = g_mime_part_compute_content_md5 (part, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (digest, ==, cases[i].md5);
+			g_assert_null (g_mime_part_get_content_md5 (part));
+			g_assert_null (g_mime_entity_get_header (GMIME_ENTITY (part), "Content-Md5"));
+			g_assert_true (g_mime_part_get_content (part) == content);
+			g_assert_cmpint (g_mime_content_get_encoding (content), ==, cases[i].encoding);
+			g_assert_cmpint (g_mime_stream_tell (stream), ==, cases[i].length);
+			g_mime_part_set_content_md5 (part, digest);
+			g_free (digest);
+			test_content_md5 (part, cases[i].md5);
 
-		testsuite_check ("Content-Md5 header matches the unwrapped digest (%u)", i);
-		header = g_mime_entity_get_header ((GMimeEntity *) part, "Content-Md5");
-		if (!g_strcmp0 (header, cases[i].md5))
-			testsuite_check_passed ();
-		else
-			testsuite_check_failed ("Content-Md5 header does not match the digest");
+			testsuite_check ("Content-Md5 header matches the unwrapped digest (%u)", i);
+			header = g_mime_entity_get_header ((GMimeEntity *) part, "Content-Md5");
+			if (!g_strcmp0 (header, cases[i].md5))
+				testsuite_check_passed ();
+			else
+				testsuite_check_failed ("Content-Md5 header does not match the digest");
 
-		g_mime_part_set_content_md5 (part, "AAAAAAAAAAAAAAAAAAAAAA==");
-		testsuite_check ("Content-Md5 rejects an incorrect digest (%u)", i);
-		if (!g_mime_part_verify_content_md5 (part))
-			testsuite_check_passed ();
-		else
-			testsuite_check_failed ("Incorrect Content-Md5 verified");
+			g_mime_part_set_content_md5 (part, "AAAAAAAAAAAAAAAAAAAAAA==");
+			testsuite_check ("Content-Md5 rejects an incorrect digest (%u)", i);
+			if (!g_mime_part_verify_content_md5 (part, &error))
+				testsuite_check_passed ();
+			else
+				testsuite_check_failed ("Incorrect Content-Md5 verified");
+			g_assert_no_error (error);
 
-		g_mime_part_set_content_md5 (part, NULL);
-		test_content_md5 (part, cases[i].md5);
-		g_object_unref (part);
+			set_computed_content_md5 (part);
+			test_content_md5 (part, cases[i].md5);
+			g_mime_part_set_content_md5 (part, NULL);
+			g_assert_null (g_mime_part_get_content_md5 (part));
+			g_assert_null (g_mime_entity_get_header (GMIME_ENTITY (part), "Content-Md5"));
+			g_assert_false (g_mime_part_verify_content_md5 (part, &error));
+			g_assert_no_error (error);
+			g_object_unref (part);
+		}
 	}
+}
+
+static void
+test_content_md5_assignment (void)
+{
+	static const char digest[] = "kAFQmDzST7DWlj99KOF/cg==";
+	GMimePart *part = g_mime_part_new ();
+	GMimeEntity *entity = GMIME_ENTITY (part);
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (entity);
+	GMimeHeader *header;
+	GError *error = NULL;
+	char *value, *raw;
+
+	testsuite_check ("Content-Md5 assignment, Unicode trimming, aliasing and duplicate removal");
+	value = g_strconcat ("\302\205\t\v ", digest, "\r\n\343\200\200", NULL);
+	g_mime_part_set_content_md5 (part, value);
+	g_free (value);
+	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, digest);
+	g_assert_cmpstr (g_mime_entity_get_header (entity, "Content-Md5"), ==, digest);
+	g_assert_false (g_mime_part_verify_content_md5 (part, &error));
+	g_assert_no_error (error);
+	header = g_mime_header_list_get_header (headers, "Content-Md5");
+	raw = g_strdup (g_mime_header_get_raw_value (header));
+	g_mime_part_set_content_md5 (part, g_mime_part_get_content_md5 (part));
+	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_free (raw);
+	value = g_strconcat ("x", digest, NULL);
+	g_mime_part_set_content_md5 (part, value);
+	g_free (value);
+	g_mime_part_set_content_md5 (part, g_mime_part_get_content_md5 (part) + 1);
+	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, digest);
+
+	g_mime_entity_set_header (entity, "Content-Md5", "\302\240 arbitrary digest \342\200\257", NULL);
+	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "arbitrary digest");
+	g_mime_header_list_append (headers, "Content-Md5", digest, NULL);
+	g_mime_part_set_content_md5 (part, NULL);
+	g_assert_null (g_mime_part_get_content_md5 (part));
+	g_assert_false (g_mime_header_list_contains (headers, "Content-Md5"));
+	g_mime_part_set_content_md5 (part, "\v\302\205\343\200\200");
+	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "");
+	g_assert_nonnull (g_mime_entity_get_header (entity, "Content-Md5"));
+	g_mime_part_set_content_md5 (part, NULL);
+	g_mime_part_set_content_md5 (part, NULL);
+	g_assert_null (g_mime_part_get_content_md5 (part));
+	g_object_unref (part);
+	testsuite_check_passed ();
 }
 
 static void
@@ -513,7 +600,7 @@ test_content_headers (const char *datadir)
 	g_mime_part_set_content_id (mime_part, id);
 	test_content_id (mime_part, id);
 	
-	g_mime_part_set_content_md5 (mime_part, NULL);
+	set_computed_content_md5 (mime_part);
 	test_content_md5 (mime_part, md5);
 	
 	test_content_transfer_encoding (mime_part, GMIME_ENCODING_CONSTRAINT_BINARY, GMIME_CONTENT_ENCODING_BINARY);
@@ -711,6 +798,7 @@ int main (int argc, char **argv)
 	
 	test_content_headers (datadir);
 	test_content_md5_vectors ();
+	test_content_md5_assignment ();
 	
 	test_write_to_stream (datadir, "raptors.b64.txt", GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	test_write_to_stream (datadir, "raptors.uu.txt", GMIME_CONTENT_ENCODING_UUENCODE);

@@ -64,6 +64,28 @@ This is an incremental migration, not yet a declaration of feature parity.
   Subclasses must move decoded-output overrides to decode_to_stream; the
   write_to_stream virtual now supplies raw data to the default decoder.
 
+- `GMimePart` now separates Content-MD5 computation from header assignment,
+  following MimeKit's ComputeContentMd5(), VerifyContentMd5() and ContentMd5.
+  Use g_mime_part_compute_content_md5(part, error) to obtain an owned,
+  unwrapped base64 digest without changing headers or content.
+  g_mime_part_set_content_md5(part, NULL) now removes every matching header
+  instead of generating a digest; compute and assign explicitly when needed.
+  Assigned and parsed values are trimmed of Unicode whitespace. Empty values
+  are retained, and unchanged assignments preserve existing raw headers.
+  g_mime_part_verify_content_md5() now takes a final GError ** argument:
+  absent/blank values, missing content and mismatches return FALSE without
+  an error, while rewind/read failures propagate instead of comparing a
+  partial digest. Computing without content or a backing stream reports
+  GMIME_ERROR_INVALID_OPERATION. The helpers read decoded content, not
+  overridden content-write methods; text media types normalize LF to CRLF
+  without charset conversion or an added final newline. Other media types
+  retain their bytes. Each computation rewinds the source, leaves it open at
+  EOF on success, and preserves its failure position on error. Shared-source
+  concurrency restrictions from g_mime_content_open() still apply.
+  Native zero-byte reads without EOF report EIO, and failures without errno
+  report GMIME_ERROR_GENERAL. Existing native header-cache and duplicate
+  precedence rules remain unchanged.
+
 - GMimeReferences is replaced by the GObject GMimeMessageIdList. Include
   gmime/gmime-message-id-list.h, use g_mime_message_id_list_* functions,
   clone() instead of copy(), add() instead of append(), and g_object_unref()

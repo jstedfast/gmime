@@ -1005,6 +1005,7 @@ g_mime_part_set_content_id
 g_mime_part_get_content_id
 g_mime_part_set_content_md5
 g_mime_part_get_content_md5
+g_mime_part_compute_content_md5
 g_mime_part_verify_content_md5
 g_mime_part_set_content_location
 g_mime_part_get_content_location

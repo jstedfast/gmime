@@ -84,7 +84,7 @@ print_mime_struct (GMimeEntity *part, int depth)
 			print_mime_struct (mpart->message->mime_part, depth + 1);
 	} else if (has_md5) {
 		/* validate the Md5 sum */
-		if (g_mime_part_verify_content_md5 ((GMimePart *) part))
+		if (g_mime_part_verify_content_md5 ((GMimePart *) part, NULL))
 			fprintf (stdout, "GOOD\n");
 		else
 			fprintf (stdout, "BAD\n");
@@ -111,7 +111,7 @@ print_mime_part_info (const char *path, GMimeEntity *object)
 	
 	if (has_md5) {
 		/* validate the Md5 sum */
-		if (g_mime_part_verify_content_md5 ((GMimePart *) object))
+		if (g_mime_part_verify_content_md5 ((GMimePart *) object, NULL))
 			fprintf (stdout, "GOOD\n");
 		else
 			fprintf (stdout, "BAD\n");
