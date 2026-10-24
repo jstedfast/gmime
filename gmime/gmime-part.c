@@ -134,6 +134,7 @@ static void
 g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 {
 	mime_part->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
+	mime_part->encoding_loaded = FALSE;
 	mime_part->content_description = NULL;
 	mime_part->content_description_loaded = FALSE;
 	mime_part->content_md5 = NULL;
@@ -216,8 +217,8 @@ process_header (GMimeEntity *object, GMimeHeader *header)
 	
 	switch (i) {
 	case HEADER_CONTENT_TRANSFER_ENCODING:
-		value = g_mime_header_get_value (header);
-		mime_part->encoding = g_mime_content_encoding_from_string (value);
+		mime_part->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
+		mime_part->encoding_loaded = FALSE;
 		break;
 	case HEADER_CONTENT_DESCRIPTION:
 		g_free (mime_part->content_description);
@@ -276,6 +277,7 @@ mime_part_header_removed (GMimeEntity *object, GMimeHeader *header)
 		switch (i) {
 		case HEADER_CONTENT_TRANSFER_ENCODING:
 			mime_part->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
+			mime_part->encoding_loaded = FALSE;
 			break;
 		case HEADER_CONTENT_DESCRIPTION:
 			g_free (mime_part->content_description);
@@ -304,6 +306,7 @@ mime_part_headers_cleared (GMimeEntity *object)
 	GMimePart *mime_part = (GMimePart *) object;
 	
 	mime_part->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
+	mime_part->encoding_loaded = FALSE;
 	g_free (mime_part->content_description);
 	mime_part->content_description = NULL;
 	mime_part->content_description_loaded = FALSE;
@@ -326,6 +329,10 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 	
 	if (!part->content)
 		return 0;
+
+	/* Serialization can be the first consumer after a raw header edit.
+	 * Resolve the lazy value before selecting a transcoder or pass-through. */
+	g_mime_part_get_content_encoding (part);
 	
 	/* Evil Genius's "slight" optimization: Since GMimeContent::write_to_stream()
 	 * decodes its content stream to the raw format, we can cheat by requesting its
@@ -440,6 +447,8 @@ mime_part_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
 	GMimeStream *stream, *null;
 	GMimeFilter *filter;
 	
+	g_mime_part_get_content_encoding (part);
+
 	switch (part->encoding) {
 	case GMIME_CONTENT_ENCODING_BINARY:
 		/* This encoding is only safe if the constraint is binary. */
@@ -938,7 +947,12 @@ g_mime_part_get_content_location (GMimePart *mime_part)
  * @mime_part: a #GMimePart object
  * @encoding: a #GMimeContentEncoding
  *
- * Set the content encoding for the specified mime part.
+ * Sets the desired transfer encoding using its canonical header name.
+ * %GMIME_CONTENT_ENCODING_UNSPECIFIED removes all matching headers.
+ * Assigning the current cached value preserves raw headers and duplicates;
+ * before the first read, assignment replaces or removes matching headers.
+ * Values outside #GMimeContentEncoding are programming errors and leave
+ * the part unchanged. This does not change the backing content's encoding.
  **/
 void
 g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding encoding)
@@ -947,15 +961,20 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
 	const char *value;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (encoding >= GMIME_CONTENT_ENCODING_UNSPECIFIED && encoding <= GMIME_CONTENT_ENCODING_UUENCODE);
+
+	if (mime_part->encoding_loaded && mime_part->encoding == encoding)
+		return;
 	
 	value = g_mime_content_encoding_to_string (encoding);
 	mime_part->encoding = encoding;
+	mime_part->encoding_loaded = TRUE;
 	
 	_g_mime_entity_block_header_list_changed (object);
 	if (value != NULL)
 		g_mime_header_list_set (object->headers, "Content-Transfer-Encoding", value, NULL);
 	else
-		g_mime_header_list_remove (object->headers, "Content-Transfer-Encoding");
+		g_mime_header_list_remove_all (object->headers, "Content-Transfer-Encoding");
 	_g_mime_entity_unblock_header_list_changed (object);
 }
 
@@ -964,14 +983,29 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
  * g_mime_part_get_content_encoding:
  * @mime_part: a #GMimePart object
  *
- * Gets the content encoding of the mime part.
+ * Gets the desired transfer encoding from the first matching header,
+ * without rewriting raw headers. A missing or unrecognized first value
+ * returns %GMIME_CONTENT_ENCODING_UNSPECIFIED, without falling back to
+ * later duplicates. Matching header edits invalidate the lazy cache.
+ * The legacy 7-bit and 8-bit aliases remain supported.
  *
  * Returns: the content encoding for the specified mime part.
  **/
 GMimeContentEncoding
 g_mime_part_get_content_encoding (GMimePart *mime_part)
 {
+	GMimeHeader *header;
+
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_CONTENT_ENCODING_UNSPECIFIED);
+
+	if (!mime_part->encoding_loaded) {
+		/* Header events invalidate rather than parse: a later duplicate
+		 * must not replace the first header's value in the cache. */
+		header = g_mime_header_list_get_header (((GMimeEntity *) mime_part)->headers, "Content-Transfer-Encoding");
+		if (header)
+			mime_part->encoding = g_mime_content_encoding_from_string (g_mime_header_get_value (header));
+		mime_part->encoding_loaded = TRUE;
+	}
 	
 	return mime_part->encoding;
 }
@@ -1376,6 +1410,7 @@ g_mime_part_openpgp_encrypt (GMimePart *mime_part, gboolean sign, const char *us
 	g_mime_content_set_encoding (mime_part->content, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_content_set_stream (mime_part->content, encrypted);
 	mime_part->encoding = GMIME_CONTENT_ENCODING_7BIT;
+	mime_part->encoding_loaded = TRUE;
 	mime_part->openpgp = GMIME_OPENPGP_DATA_ENCRYPTED;
 	g_object_unref (encrypted);
 	
@@ -1492,6 +1527,7 @@ g_mime_part_openpgp_sign (GMimePart *mime_part, const char *userid, GError **err
 	g_mime_content_set_encoding (mime_part->content, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_content_set_stream (mime_part->content, ostream);
 	mime_part->encoding = GMIME_CONTENT_ENCODING_7BIT;
+	mime_part->encoding_loaded = TRUE;
 	mime_part->openpgp = GMIME_OPENPGP_DATA_SIGNED;
 	g_object_unref (ostream);
 	

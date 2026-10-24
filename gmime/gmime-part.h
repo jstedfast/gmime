@@ -69,6 +69,7 @@ struct _GMimePart {
 	int content_duration;
 	gboolean content_duration_loaded;
 	gboolean content_description_loaded;
+	gboolean encoding_loaded;
 };
 
 struct _GMimePartClass {

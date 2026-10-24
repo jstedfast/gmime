@@ -202,8 +202,8 @@ g_mime_text_part_new_with_format (GMimeTextFormat format)
  * types and subtypes return %GMIME_TEXT_FORMAT_PLAIN. Enriched text
  * includes text/richtext; RTF includes application/rtf.
  *
- * Like MimeKit, flowed format detection here requires the exact lowercase
- * subtype "plain", whereas g_mime_text_part_is_flowed() ignores its case.
+ * Flowed text is text/plain with a format parameter equal to "flowed",
+ * ignoring ASCII case and surrounding Unicode whitespace in the parameter.
  * Compressed rich text is not inferred from the Content-Type header.
  *
  * Returns: the text format.
@@ -219,7 +219,7 @@ g_mime_text_part_get_format (GMimeTextPart *mime_part)
 	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
 	if (!g_ascii_strcasecmp (g_mime_content_type_get_media_type (content_type), "text")) {
 		subtype = g_mime_content_type_get_media_subtype (content_type);
-		if (!strcmp (subtype, "plain")) {
+		if (!g_ascii_strcasecmp (subtype, "plain")) {
 			if (g_mime_text_part_is_flowed (mime_part))
 				return GMIME_TEXT_FORMAT_FLOWED;
 		} else if (g_mime_text_part_is_html (mime_part)) {

@@ -2105,8 +2105,29 @@ UNSPECIFIED. As a native safety extension, malformed UTF-8 encountered
 before a delimiter returns UNSPECIFIED without advancing past its NUL
 terminator. Named encoder/decoder filter factories now reuse this shared
 helper instead of allocating and parsing a temporary token.
-This applies to legacy parser consumers of the shared helper;
-it does not yet port the part property's lazy-cache/assignment semantics.
+This applies to legacy parser consumers of the shared helper.
+
+### Part transfer-encoding property
+
+GMimePart's get_content_encoding()/set_content_encoding() now follow
+MimeKit's ContentTransferEncoding property semantics. The getter lazily
+selects only the first matching header; an unrecognized first value does
+not fall back to later duplicates. Matching header events invalidate the
+cache, while reads preserve raw headers. The 7-bit and 8-bit compatibility
+aliases described above remain supported.
+
+Assignments use canonical names and replace later duplicate headers.
+UNSPECIFIED removes all matching headers. Assigning the cached value
+preserves raw headers and duplicates, including malformed headers after
+a getter returned UNSPECIFIED. Before a read, even an UNSPECIFIED assignment
+removes matching malformed headers. Invalid enum values are GLib
+precondition failures and leave both headers and lazy state unchanged.
+The backing content's source encoding is never changed by assignment.
+
+Serialization and legacy encode() resolve lazy state before using the
+selected encoding. Existing OpenPGP operations retain their explicit
+cached encoding overrides. This increment does not replace legacy
+preparation or serialization policy with MimeKit's Prepare()/WriteContent().
 
 ### Decoded content streams
 

@@ -409,6 +409,133 @@ test_content_description_assignment (void)
 }
 
 static void
+test_content_encoding_assignment (void)
+{
+	GMimePart *part = g_mime_part_new ();
+	GMimeEntity *entity = GMIME_ENTITY (part);
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (entity);
+	GMimeHeader *header, *duplicate;
+	GMimeContentEncoding encoding;
+	char *raw;
+	const char *value;
+	int count = g_mime_header_list_get_count (headers);
+
+	testsuite_check ("Transfer-encoding cached assignments preserve raw values and duplicates");
+	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	for (encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED; encoding <= GMIME_CONTENT_ENCODING_UUENCODE; encoding++) {
+		value = g_mime_content_encoding_to_string (encoding);
+		g_mime_header_list_remove_all (headers, "Content-Transfer-Encoding");
+		g_mime_header_list_append (headers, "Content-Transfer-Encoding", value ? value : "unknown", NULL);
+		header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
+		raw = g_strdup_printf (" %s\t \n", value ? value : "unknown");
+		g_mime_header_set_raw_value (header, raw);
+		g_mime_header_list_append (headers, "Content-Transfer-Encoding", "binary", NULL);
+		g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, encoding);
+		g_mime_part_set_content_encoding (part, encoding);
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 2);
+		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+		g_free (raw);
+
+		g_mime_header_list_append (headers, "Content-Transfer-Encoding", "7bit", NULL);
+		g_mime_part_set_content_encoding (part, encoding);
+		g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, encoding);
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + (value ? 1 : 0));
+		g_assert_cmpstr (g_mime_entity_get_header (entity, "Content-Transfer-Encoding"), ==, value);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Transfer-encoding first-header selection and matching event invalidation");
+	g_mime_header_list_set (headers, "Content-Transfer-Encoding", "7-bit", NULL);
+	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "8bit", NULL);
+	duplicate = g_mime_header_list_get_header_at (headers, count + 1);
+	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_7BIT);
+	g_mime_header_set_value (duplicate, NULL, "base64", NULL);
+	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_7BIT);
+	g_mime_header_list_remove_at (headers, count);
+	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_BASE64);
+	g_mime_header_set_raw_value (duplicate, " 8-BIT;suffix\n");
+	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_8BIT);
+	g_mime_header_list_clear (headers);
+	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_object_unref (part);
+	testsuite_check_passed ();
+}
+
+static void
+test_content_encoding_invalid_assignment (void)
+{
+	static const int invalid[] = { -1, GMIME_CONTENT_ENCODING_UUENCODE + 1, G_MAXINT };
+	GMimePart *part;
+	GMimeHeaderList *headers;
+	GMimeHeader *header;
+	char *raw;
+	guint loaded, i;
+
+	testsuite_check ("Invalid transfer encodings leave raw headers and cache state unchanged");
+	for (loaded = 0; loaded < 2; loaded++) {
+		for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+			part = g_mime_part_new ();
+			headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
+			g_mime_header_list_append (headers, "Content-Transfer-Encoding", "BASE64", NULL);
+			g_mime_header_list_append (headers, "Content-Transfer-Encoding", "8bit", NULL);
+			header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
+			raw = g_strdup (g_mime_header_get_raw_value (header));
+			if (loaded)
+				g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_BASE64);
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*encoding >=*encoding <=*");
+			g_mime_part_set_content_encoding (part, (GMimeContentEncoding) invalid[i]);
+			g_test_assert_expected_messages ();
+			g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+			g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_BASE64);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, loaded ? 3 : 2);
+			g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_BASE64);
+			g_free (raw);
+			g_object_unref (part);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_content_encoding_consumers (void)
+{
+	GMimePart *part = g_mime_part_new_with_type ("text", "plain");
+	GMimeEntity *entity = GMIME_ENTITY (part);
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (entity);
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeStream *source = g_mime_stream_mem_new_with_buffer ("Hello", 5);
+	GMimeContent *content = g_mime_content_new_with_stream (source, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	GMimeStream *output = g_mime_stream_mem_new ();
+	GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+	GMimeHeader *header;
+	char *raw;
+
+	testsuite_check ("Serialization and legacy encoding resolve the first raw transfer-encoding header");
+	g_mime_part_set_content (part, content);
+	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "BASE64", NULL);
+	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "binary", NULL);
+	header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
+	raw = g_strdup (g_mime_header_get_raw_value (header));
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	g_assert_cmpint (g_mime_entity_write_content_to_stream (entity, options, output), >=, 0);
+	g_assert_cmpmem (bytes->data, bytes->len, "SGVsbG8=\n", 9);
+	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_mime_header_set_raw_value (header, raw);
+	g_mime_entity_encode (entity, GMIME_ENCODING_CONSTRAINT_7BIT);
+	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_free (raw);
+	g_mime_format_options_free (options);
+	g_object_unref (output);
+	g_object_unref (content);
+	g_object_unref (source);
+	g_object_unref (part);
+	testsuite_check_passed ();
+}
+
+static void
 test_generated_boundaries (void)
 {
 	GMimeMultipart *multipart = g_mime_multipart_new ();
@@ -879,6 +1006,9 @@ int main (int argc, char **argv)
 	test_content_md5_vectors ();
 	test_content_md5_assignment ();
 	test_content_description_assignment ();
+	test_content_encoding_assignment ();
+	test_content_encoding_invalid_assignment ();
+	test_content_encoding_consumers ();
 	
 	test_write_to_stream (datadir, "raptors.b64.txt", GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	test_write_to_stream (datadir, "raptors.uu.txt", GMIME_CONTENT_ENCODING_UUENCODE);
