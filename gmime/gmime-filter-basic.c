@@ -360,29 +360,6 @@ g_mime_filter_basic_create_encoder_with_newline_format (GMimeContentEncoding enc
 	return filter;
 }
 
-static GMimeContentEncoding
-filter_encoding_from_name (const char *name)
-{
-	const char *start, *end;
-	GMimeContentEncoding encoding;
-	char *token;
-
-	/* Trim leading Unicode whitespace, not just MIME linear whitespace. */
-	while (*name && _g_mime_is_unicode_whitespace (g_utf8_get_char (name)))
-		name = g_utf8_next_char (name);
-
-	start = end = name;
-	/* Google Docs appends a semicolon to Content-Transfer-Encoding values.
-	 * Like MimeKit, recognize the first token and ignore this suffix. */
-	while (*end && *end != ';' && !_g_mime_is_unicode_whitespace (g_utf8_get_char (end)))
-		end = g_utf8_next_char (end);
-
-	token = g_strndup (start, end - start);
-	encoding = g_mime_content_encoding_from_string (token);
-	g_free (token);
-	return encoding;
-}
-
 /**
  * g_mime_filter_basic_create_encoder_by_name:
  * @name: a non-%NULL UTF-8 content-transfer-encoding name
@@ -421,7 +398,7 @@ g_mime_filter_basic_create_encoder_by_name_with_newline_format (const char *name
 	g_return_val_if_fail (name != NULL, NULL);
 	g_return_val_if_fail (g_utf8_validate (name, -1, NULL), NULL);
 
-	return g_mime_filter_basic_create_encoder_with_newline_format (filter_encoding_from_name (name),
+	return g_mime_filter_basic_create_encoder_with_newline_format (g_mime_content_encoding_from_string (name),
 								     newline_format, max_line_length);
 }
 
@@ -463,5 +440,5 @@ g_mime_filter_basic_create_decoder_by_name (const char *name)
 	g_return_val_if_fail (name != NULL, NULL);
 	g_return_val_if_fail (g_utf8_validate (name, -1, NULL), NULL);
 
-	return g_mime_filter_basic_create_decoder (filter_encoding_from_name (name));
+	return g_mime_filter_basic_create_decoder (g_mime_content_encoding_from_string (name));
 }

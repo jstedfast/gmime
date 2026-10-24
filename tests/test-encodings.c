@@ -32,6 +32,9 @@
 #include <errno.h>
 
 #include <gmime/gmime.h>
+#ifdef G_OS_UNIX
+#include <sys/mman.h>
+#endif
 
 #include "testsuite.h"
 
@@ -56,7 +59,27 @@ static struct _mapping {
 	{ "\"x-uuencode\"", "x-uuencode", GMIME_CONTENT_ENCODING_UUENCODE },
 	{ "\"x-uue\"", "x-uue", GMIME_CONTENT_ENCODING_UUENCODE },
 	{ "\"garbage\"", "garbage", GMIME_CONTENT_ENCODING_UNSPECIFIED },
-	{ "\" 7bit \"", " 7bit ", GMIME_CONTENT_ENCODING_7BIT }
+	{ "\" 7bit \"", " 7bit ", GMIME_CONTENT_ENCODING_7BIT },
+	{ "NULL", NULL, GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "empty", "", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "semicolon suffix", "bAsE64;anything", GMIME_CONTENT_ENCODING_BASE64 },
+	{ "whitespace suffix", "7bit garbage", GMIME_CONTENT_ENCODING_7BIT },
+	{ "hyphenated semicolon suffix", "7-BiT;anything", GMIME_CONTENT_ENCODING_7BIT },
+	{ "hyphenated Unicode whitespace", "\302\2058-bIt\343\200\200suffix", GMIME_CONTENT_ENCODING_8BIT },
+	{ "longer hyphenated token", "7-bitx", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "hyphenated embedded comment", "8-bit(comment)", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "empty token", ";base64", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "leading comment", "(comment) base64", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "embedded comment", "base64(comment)", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "separated comment", "base64 (comment)", GMIME_CONTENT_ENCODING_BASE64 },
+	{ "longer token", "base64x", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "shorter token", "base6", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "Unicode whitespace", "\302\205\342\200\257X-UUE\343\200\200suffix", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "non-whitespace separator", "base64\342\200\213", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "truncated UTF-8 prefix", "\302", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "truncated UTF-8 name", "base64\342\200", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "invalid UTF-8 name", "base64\377", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "ignored invalid suffix", "base64;\377", GMIME_CONTENT_ENCODING_BASE64 }
 };
 
 static void
@@ -67,6 +90,8 @@ test_content_encoding_mappings (void)
 	
 	g_assert_cmpint (GMIME_CONTENT_ENCODING_UNSPECIFIED, ==, 0);
 	g_assert_null (g_mime_content_encoding_to_string (GMIME_CONTENT_ENCODING_UNSPECIFIED));
+	g_assert_cmpstr (g_mime_content_encoding_to_string (g_mime_content_encoding_from_string ("7-bit")), ==, "7bit");
+	g_assert_cmpstr (g_mime_content_encoding_to_string (g_mime_content_encoding_from_string ("8-bit")), ==, "8bit");
 
 	for (i = 0; i < G_N_ELEMENTS (mappings); i++) {
 		testsuite_check ("%s", mappings[i].name);
@@ -78,6 +103,87 @@ test_content_encoding_mappings (void)
 		else
 			testsuite_check_passed ();
 	}
+}
+
+static void
+test_content_encoding_bounds (void)
+{
+#ifdef G_OS_UNIX
+	gsize page = sysconf (_SC_PAGESIZE), length, n;
+	guint i;
+	char *map, *input, *copy;
+	GMimeContentEncoding expected;
+
+	testsuite_check ("Content-Transfer-Encoding names at a read-only guard-page boundary");
+	map = mmap (NULL, page * 3, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+	g_assert_true (map != MAP_FAILED);
+	for (i = 0; i < G_N_ELEMENTS (mappings); i++) {
+		if (!mappings[i].text)
+			continue;
+		length = strlen (mappings[i].text);
+		for (n = 0; n <= length; n++) {
+			copy = g_strndup (mappings[i].text, n);
+			expected = g_mime_content_encoding_from_string (copy);
+			input = map + 2 * page - n - 1;
+			g_assert_cmpint (mprotect (map + page, page, PROT_READ | PROT_WRITE), ==, 0);
+			memcpy (input, copy, n + 1);
+			g_assert_cmpint (mprotect (map + page, page, PROT_READ), ==, 0);
+			g_assert_cmpint (g_mime_content_encoding_from_string (input), ==, expected);
+			g_free (copy);
+		}
+	}
+	g_assert_cmpint (munmap (map, page * 3), ==, 0);
+	testsuite_check_passed ();
+#endif
+}
+
+static void
+test_content_encoding_parser (void)
+{
+	static const struct {
+		const char *name;
+		GMimeContentEncoding encoding;
+		const char *decoded;
+	} cases[] = {
+		{ "base64;", GMIME_CONTENT_ENCODING_BASE64, "Hello" },
+		{ "\302\240BaSe64\343\200\200suffix", GMIME_CONTENT_ENCODING_BASE64, "Hello" },
+		{ "base64 (comment)", GMIME_CONTENT_ENCODING_BASE64, "Hello" },
+		{ "7-bit", GMIME_CONTENT_ENCODING_7BIT, "SGVsbG8=" },
+		{ "8-bit", GMIME_CONTENT_ENCODING_8BIT, "SGVsbG8=" },
+		{ "7-BiT;suffix", GMIME_CONTENT_ENCODING_7BIT, "SGVsbG8=" },
+		{ "\302\2408-bIt\343\200\200suffix", GMIME_CONTENT_ENCODING_8BIT, "SGVsbG8=" }
+	};
+	GMimeStream *source, *decoded;
+	GMimeParser *parser;
+	GMimeEntity *entity;
+	GMimeContent *content;
+	GByteArray *bytes;
+	GError *error = NULL;
+	char *text;
+	guint i;
+
+	testsuite_check ("Parsed content uses encoding-name delimiters and legacy hyphenated aliases");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		text = g_strdup_printf ("Content-Type: text/plain\nContent-Transfer-Encoding: %s\n\nSGVsbG8=", cases[i].name);
+		source = g_mime_stream_mem_new_with_buffer (text, strlen (text));
+		parser = g_mime_parser_new_with_stream (source);
+		entity = g_mime_parser_construct_part (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_true (GMIME_IS_PART (entity));
+		g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, cases[i].encoding);
+		content = g_mime_part_get_content (GMIME_PART (entity));
+		g_assert_cmpint (g_mime_content_get_encoding (content), ==, cases[i].encoding);
+		decoded = g_mime_stream_mem_new ();
+		g_assert_cmpint (g_mime_content_decode_to_stream (content, decoded), ==, strlen (cases[i].decoded));
+		bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (decoded));
+		g_assert_cmpmem (bytes->data, bytes->len, cases[i].decoded, strlen (cases[i].decoded));
+		g_object_unref (decoded);
+		g_object_unref (entity);
+		g_object_unref (parser);
+		g_object_unref (source);
+		g_free (text);
+	}
+	testsuite_check_passed ();
 }
 
 static const char *base64_encoded_patterns[] = {
@@ -733,6 +839,8 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("Content-Transfer-Encoding");
 	test_content_encoding_mappings ();
+	test_content_encoding_bounds ();
+	test_content_encoding_parser ();
 	test_codec_filter_copies ();
 	test_yenc_filters ();
 	testsuite_end ();

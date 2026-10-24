@@ -23,7 +23,7 @@
 #include <config.h>
 #endif
 
-#include "gmime-table-private.h"
+#include "gmime-common.h"
 #include "gmime-encodings.h"
 
 
@@ -38,19 +38,27 @@
 
 
 static gboolean
-is (const char *str, const char *value, size_t n)
+is (const char *str, size_t length, const char *value)
 {
-	return g_ascii_strncasecmp (str, value, n) == 0 &&
-		(str[n] == '\0' || is_lwsp (str[n]));
+	return length == strlen (value) && g_ascii_strncasecmp (str, value, length) == 0;
 }
 
 
 /**
  * g_mime_content_encoding_from_string:
- * @str: a string representing a Content-Transfer-Encoding value
+ * @str: (nullable): a UTF-8 Content-Transfer-Encoding value
  *
  * Gets the appropriate #GMimeContentEncoding enumeration value based
- * on the input string.
+ * on the input string. Leading Unicode whitespace is skipped; the first
+ * whitespace or semicolon terminates the case-insensitive encoding name.
+ * Any suffix after that delimiter is ignored, matching MimeKit's tolerance
+ * for semicolons added by Google Docs. Comments are not skipped.
+ *
+ * Recognizes 7bit, 8bit, binary, base64, quoted-printable, uuencode,
+ * x-uuencode and x-uue. The legacy 7-bit and 8-bit aliases remain supported
+ * as a GMime compatibility extension to MimeKit.
+ * %NULL, an empty name, or malformed UTF-8 within the name returns
+ * #GMIME_CONTENT_ENCODING_UNSPECIFIED.
  *
  * Returns: the #GMimeContentEncoding specified by @str or
  * #GMIME_CONTENT_ENCODING_UNSPECIFIED on error.
@@ -58,28 +66,54 @@ is (const char *str, const char *value, size_t n)
 GMimeContentEncoding
 g_mime_content_encoding_from_string (const char *str)
 {
-	while (is_lwsp (*str))
-		str++;
+	const char *start;
+	gunichar c;
+	size_t length;
 
-	if (is (str, "7bit", 4))
+	if (!str)
+		return GMIME_CONTENT_ENCODING_UNSPECIFIED;
+
+	/* MimeKit uses Char.IsWhiteSpace, not MIME linear whitespace. Validate
+	 * each code point before advancing so truncated UTF-8 stays in bounds. */
+	while (*str) {
+		c = g_utf8_get_char_validated (str, -1);
+		if (c == (gunichar) -1 || c == (gunichar) -2)
+			return GMIME_CONTENT_ENCODING_UNSPECIFIED;
+		if (!_g_mime_is_unicode_whitespace (c))
+			break;
+		str = g_utf8_next_char (str);
+	}
+
+	start = str;
+	/* Only the first token matters: delimiters allow arbitrary trailing
+	 * text, but an embedded comment or extra name byte rejects the token. */
+	while (*str && *str != ';') {
+		c = g_utf8_get_char_validated (str, -1);
+		if (c == (gunichar) -1 || c == (gunichar) -2)
+			return GMIME_CONTENT_ENCODING_UNSPECIFIED;
+		if (_g_mime_is_unicode_whitespace (c))
+			break;
+		str = g_utf8_next_char (str);
+	}
+	length = str - start;
+
+	/* Retain GMime's historical hyphenated aliases even though MimeKit
+	 * only recognizes the canonical 7bit and 8bit spellings. */
+	if (is (start, length, "7bit") || is (start, length, "7-bit"))
 		return GMIME_CONTENT_ENCODING_7BIT;
-	else if (is (str, "8bit", 4))
+	else if (is (start, length, "8bit") || is (start, length, "8-bit"))
 		return GMIME_CONTENT_ENCODING_8BIT;
-	else if (is (str, "7-bit", 5))
-		return GMIME_CONTENT_ENCODING_7BIT;
-	else if (is (str, "8-bit", 5))
-		return GMIME_CONTENT_ENCODING_8BIT;
-	else if (is (str, "binary", 6))
+	else if (is (start, length, "binary"))
 		return GMIME_CONTENT_ENCODING_BINARY;
-	else if (is (str, "base64", 6))
+	else if (is (start, length, "base64"))
 		return GMIME_CONTENT_ENCODING_BASE64;
-	else if (is (str, "quoted-printable", 16))
+	else if (is (start, length, "quoted-printable"))
 		return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
-	else if (is (str, "uuencode", 8))
+	else if (is (start, length, "uuencode"))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
-	else if (is (str, "x-uuencode", 10))
+	else if (is (start, length, "x-uuencode"))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
-	else if (is (str, "x-uue", 5))
+	else if (is (start, length, "x-uue"))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
 	else
 		return GMIME_CONTENT_ENCODING_UNSPECIFIED;

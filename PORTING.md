@@ -2085,6 +2085,29 @@ assignment replaces duplicates even when the first value is already equal.
 Comparison occurs before trimming, matching MimeKit. Borrowed values,
 including substrings of the getter's value, can safely be assigned back.
 
+### Transfer-encoding names
+
+g_mime_content_encoding_from_string() now ports MimeUtils.TryParse() for
+Content-Transfer-Encoding names. It skips leading Unicode whitespace and
+matches the first token case-insensitively, stopping at any Unicode
+whitespace or a semicolon. Trailing text after either delimiter is ignored,
+including the semicolon suffix sometimes added by Google Docs. Comments
+are not skipped; "base64 (comment)" is recognized, but "base64(comment)"
+and "(comment) base64" are not.
+
+The uuencode, x-uuencode and x-uue spellings remain supported. GMime also
+retains its historical 7-bit and 8-bit aliases as a deliberate compatibility
+extension to MimeKit. They use the same case-insensitive matching and
+Unicode whitespace/semicolon delimiters as the canonical 7bit and 8bit
+spellings; emitted encoding names remain canonical.
+NULL, empty names and unrecognized tokens return
+UNSPECIFIED. As a native safety extension, malformed UTF-8 encountered
+before a delimiter returns UNSPECIFIED without advancing past its NUL
+terminator. Named encoder/decoder filter factories now reuse this shared
+helper instead of allocating and parsing a temporary token.
+This applies to legacy parser consumers of the shared helper;
+it does not yet port the part property's lazy-cache/assignment semantics.
+
 ### Decoded content streams
 
 g_mime_content_open() ports MimeContent.Open(), returning an owned
