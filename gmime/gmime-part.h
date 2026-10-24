@@ -68,6 +68,7 @@ struct _GMimePart {
 	/* < private > */
 	int content_duration;
 	gboolean content_duration_loaded;
+	gboolean content_description_loaded;
 };
 
 struct _GMimePartClass {

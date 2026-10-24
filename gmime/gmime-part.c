@@ -135,6 +135,7 @@ g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 {
 	mime_part->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
 	mime_part->content_description = NULL;
+	mime_part->content_description_loaded = FALSE;
 	mime_part->content_md5 = NULL;
 	mime_part->content = NULL;
 	mime_part->content_duration = -1;
@@ -174,7 +175,7 @@ static const char *content_headers[] = {
 
 
 static char *
-trim_content_md5 (const char *value)
+trim_part_header_value (const char *value)
 {
 	const char *start, *end, *previous;
 
@@ -219,14 +220,14 @@ process_header (GMimeEntity *object, GMimeHeader *header)
 		mime_part->encoding = g_mime_content_encoding_from_string (value);
 		break;
 	case HEADER_CONTENT_DESCRIPTION:
-		value = g_mime_header_get_value (header);
 		g_free (mime_part->content_description);
-		mime_part->content_description = g_strdup (value);
+		mime_part->content_description = NULL;
+		mime_part->content_description_loaded = FALSE;
 		break;
 	case HEADER_CONTENT_MD5:
 		value = g_mime_header_get_value (header);
 		g_free (mime_part->content_md5);
-		mime_part->content_md5 = trim_content_md5 (value);
+		mime_part->content_md5 = trim_part_header_value (value);
 		break;
 	case HEADER_CONTENT_DURATION:
 		mime_part->content_duration = -1;
@@ -279,6 +280,7 @@ mime_part_header_removed (GMimeEntity *object, GMimeHeader *header)
 		case HEADER_CONTENT_DESCRIPTION:
 			g_free (mime_part->content_description);
 			mime_part->content_description = NULL;
+			mime_part->content_description_loaded = FALSE;
 			break;
 		case HEADER_CONTENT_MD5:
 			g_free (mime_part->content_md5);
@@ -304,6 +306,7 @@ mime_part_headers_cleared (GMimeEntity *object)
 	mime_part->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
 	g_free (mime_part->content_description);
 	mime_part->content_description = NULL;
+	mime_part->content_description_loaded = FALSE;
 	g_free (mime_part->content_md5);
 	mime_part->content_md5 = NULL;
 	mime_part->content_duration = -1;
@@ -531,25 +534,38 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 /**
  * g_mime_part_set_content_description:
  * @mime_part: a #GMimePart object
- * @description: content description
+ * @description: (nullable): a UTF-8 description, or %NULL to remove it
  *
- * Set the content description for the specified mime part.
+ * Sets Content-Description, trimming surrounding Unicode whitespace.
+ * Empty descriptions are allowed; %NULL removes all matching headers.
+ * Assigning the current cached value preserves raw headers and duplicates.
+ * Assignment before the first read replaces matching duplicates even if
+ * the first header already has the same value.
  **/
 void
 g_mime_part_set_content_description (GMimePart *mime_part, const char *description)
 {
 	GMimeEntity *object = (GMimeEntity *) mime_part;
+	char *value;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (description == NULL || g_utf8_validate (description, -1, NULL));
 	
-	if (mime_part->content_description == description)
+	if (mime_part->content_description_loaded && !g_strcmp0 (mime_part->content_description, description))
 		return;
 	
+	/* Compare before trimming, as MimeKit does, but copy before freeing:
+	 * description may point into the getter's borrowed cached value. */
+	value = trim_part_header_value (description);
 	g_free (mime_part->content_description);
-	mime_part->content_description = g_strdup (description);
+	mime_part->content_description = value;
+	mime_part->content_description_loaded = TRUE;
 	
 	_g_mime_entity_block_header_list_changed (object);
-	g_mime_header_list_set (object->headers, "Content-Description", description, NULL);
+	if (value)
+		g_mime_header_list_set (object->headers, "Content-Description", value, NULL);
+	else
+		g_mime_header_list_remove_all (object->headers, "Content-Description");
 	_g_mime_entity_unblock_header_list_changed (object);
 }
 
@@ -558,15 +574,27 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
  * g_mime_part_get_content_description:
  * @mime_part: a #GMimePart object
  *
- * Gets the value of the Content-Description for the specified mime
- * part if it exists or %NULL otherwise.
+ * Gets the first Content-Description value, trimming surrounding Unicode
+ * whitespace without changing the header. Matching header changes
+ * invalidate the cached value; duplicate headers do not override the first.
  *
- * Returns: the content description for the specified mime part.
+ * Returns: (nullable): the borrowed content description, or %NULL if absent.
  **/
 const char *
 g_mime_part_get_content_description (GMimePart *mime_part)
 {
+	GMimeHeader *header;
+
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
+
+	if (!mime_part->content_description_loaded) {
+		/* Header events only invalidate the cache, so reads always select
+		 * the first matching header, not the last event's header. */
+		header = g_mime_header_list_get_header (((GMimeEntity *) mime_part)->headers, "Content-Description");
+		if (header)
+			mime_part->content_description = trim_part_header_value (g_mime_header_get_value (header));
+		mime_part->content_description_loaded = TRUE;
+	}
 	
 	return mime_part->content_description;
 }
@@ -710,7 +738,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 
 	/* Copy before releasing the old value: callers may pass the getter's
 	 * borrowed pointer back to this setter. NULL only removes the header. */
-	value = trim_content_md5 (content_md5);
+	value = trim_part_header_value (content_md5);
 	g_free (mime_part->content_md5);
 	mime_part->content_md5 = value;
 

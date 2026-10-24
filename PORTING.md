@@ -2069,6 +2069,22 @@ duplicates, matching MimeKit. Assigning -1 before the first read removes
 malformed headers; assigning it after a getter returned -1 is a no-op
 until matching headers change. Header clearing resets the lazy cache.
 
+### Content description
+
+GMimePart's Content-Description property now follows MimeKit's lazy
+first-header lookup and Unicode whitespace trimming. Reads preserve raw
+headers, and matching header edits, removals, additions, or clearing
+invalidate the cache. Later duplicates do not override the first header.
+The getter returns a borrowed UTF-8 string, or NULL for an absent header;
+an empty or all-whitespace header returns an empty string.
+
+The setter accepts NULL to remove all matching headers and trims Unicode
+whitespace from non-NULL assignments. An assignment equal to the current
+cached value preserves raw headers and duplicates; before the first read,
+assignment replaces duplicates even when the first value is already equal.
+Comparison occurs before trimming, matching MimeKit. Borrowed values,
+including substrings of the getter's value, can safely be assigned back.
+
 ### Decoded content streams
 
 g_mime_content_open() ports MimeContent.Open(), returning an owned

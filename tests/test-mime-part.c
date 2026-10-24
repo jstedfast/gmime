@@ -332,6 +332,83 @@ test_content_md5_assignment (void)
 }
 
 static void
+test_content_description_assignment (void)
+{
+	static const char *whitespace[] = {
+		"\t", "\n", "\v", "\f", "\r", " ", "\302\205", "\302\240",
+		"\341\232\200", "\342\200\200", "\342\200\201", "\342\200\202",
+		"\342\200\203", "\342\200\204", "\342\200\205", "\342\200\206",
+		"\342\200\207", "\342\200\210", "\342\200\211", "\342\200\212",
+		"\342\200\250", "\342\200\251", "\342\200\257", "\342\201\237", "\343\200\200"
+	};
+	GMimePart *part = g_mime_part_new ();
+	GMimeEntity *entity = GMIME_ENTITY (part);
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (entity);
+	GMimeHeader *header, *duplicate;
+	char *raw, *value;
+	int count = g_mime_header_list_get_count (headers);
+	guint i;
+
+	testsuite_check ("Content-Description Unicode trimming, nullable assignment and aliasing");
+	g_assert_null (g_mime_part_get_content_description (part));
+	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		value = g_strconcat (whitespace[i], "r\303\251sum\303\251", whitespace[i], NULL);
+		g_mime_part_set_content_description (part, value);
+		g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "r\303\251sum\303\251");
+		g_free (value);
+	}
+	g_mime_part_set_content_description (part, "\342\200\213 kept \357\273\277");
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "\342\200\213 kept \357\273\277");
+	g_mime_part_set_content_description (part, "xdescription");
+	g_mime_part_set_content_description (part, g_mime_part_get_content_description (part) + 1);
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "description");
+	g_mime_part_set_content_description (part, "\v\302\205\343\200\200");
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "");
+	g_assert_nonnull (g_mime_entity_get_header (entity, "Content-Description"));
+	g_mime_part_set_content_description (part, NULL);
+	g_mime_part_set_content_description (part, NULL);
+	g_assert_null (g_mime_part_get_content_description (part));
+	g_assert_false (g_mime_header_list_contains (headers, "Content-Description"));
+	testsuite_check_passed ();
+
+	testsuite_check ("Content-Description lazy first-header reads and unchanged raw assignments");
+	g_mime_header_list_append (headers, "Content-Description", "first", NULL);
+	header = g_mime_header_list_get_header (headers, "Content-Description");
+	g_mime_header_set_raw_value (header, " first\t \n");
+	g_mime_header_list_append (headers, "Content-Description", "second", NULL);
+	duplicate = g_mime_header_list_get_header_at (headers, count + 1);
+	raw = g_strdup (g_mime_header_get_raw_value (header));
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "first");
+	g_mime_part_set_content_description (part, g_mime_part_get_content_description (part));
+	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 2);
+	g_mime_header_set_value (duplicate, NULL, "changed duplicate", NULL);
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "first");
+	g_mime_header_list_remove_at (headers, count);
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "changed duplicate");
+	g_free (raw);
+	testsuite_check_passed ();
+
+	testsuite_check ("Content-Description uncached assignment, duplicate removal and cache invalidation");
+	g_mime_header_list_append (headers, "Content-Description", "third", NULL);
+	g_mime_part_set_content_description (part, "changed duplicate");
+	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 1);
+	g_mime_header_list_append (headers, "Content-Description", "fourth", NULL);
+	g_mime_part_set_content_description (part, NULL);
+	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count);
+	g_mime_header_list_append (headers, "Content-Description", " \302\240header value\342\200\257 ", NULL);
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "header value");
+	g_mime_header_list_set (headers, "X-Unrelated", "unchanged cache", NULL);
+	g_mime_part_set_content_description (part, "header value");
+	g_mime_header_list_clear (headers);
+	g_assert_null (g_mime_part_get_content_description (part));
+	g_mime_header_list_append (headers, "Content-Description", "", NULL);
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "");
+	g_object_unref (part);
+	testsuite_check_passed ();
+}
+
+static void
 test_generated_boundaries (void)
 {
 	GMimeMultipart *multipart = g_mime_multipart_new ();
@@ -801,6 +878,7 @@ int main (int argc, char **argv)
 	test_content_headers (datadir);
 	test_content_md5_vectors ();
 	test_content_md5_assignment ();
+	test_content_description_assignment ();
 	
 	test_write_to_stream (datadir, "raptors.b64.txt", GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	test_write_to_stream (datadir, "raptors.uu.txt", GMIME_CONTENT_ENCODING_UUENCODE);
