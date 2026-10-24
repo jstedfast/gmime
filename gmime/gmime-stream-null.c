@@ -23,7 +23,7 @@
 #include <config.h>
 #endif
 
-#include <string.h>
+#include <errno.h>
 
 #include "gmime-stream-null.h"
 
@@ -39,6 +39,9 @@
  * determining statistics on source data which can be written to
  * streams but cannot be read as a stream itself (e.g. a #GMimeEntity
  * via g_mime_entity_write_to_stream()).
+ *
+ * Logical length tracks the highest written position, independently of
+ * cumulative byte and newline statistics. Reading is not supported.
  **/
 
 
@@ -114,6 +117,7 @@ g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass)
 	stream->written = 0;
 	stream->newlines = 0;
 	stream->count_newlines = FALSE;
+	stream->measured_end = 0;
 }
 
 static void
@@ -126,31 +130,53 @@ g_mime_stream_null_finalize (GObject *object)
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
-	memset (buf, 0, len);
-	
-	stream->position += len;
-	
-	return len;
+	errno = EBADF;
+	return -1;
 }
 
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
-	register const char *inptr = buf;
-	const char *inend = buf + len;
-	
+	size_t i, newlines = null->newlines;
+
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+	if (stream->bound_end != -1)
+		len = (size_t) MIN ((gint64) len, stream->bound_end - stream->position);
+	if ((guint64) len > (guint64) (G_MAXINT64 - stream->position) ||
+	    len > G_MAXSIZE - null->written) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	/* Statistics count accepted bytes, including overwrites. Check them
+	 * before committing the position or logical length of the stream. */
 	if (null->count_newlines) {
-		while (inptr < inend) {
-			if (*inptr == '\n')
-				null->newlines++;
-			inptr++;
+		for (i = 0; i < len; i++) {
+			if (buf[i] == '\n') {
+				if (newlines == G_MAXSIZE) {
+					errno = EOVERFLOW;
+					return -1;
+				}
+				newlines++;
+			}
 		}
 	}
-	
+
+	null->newlines = newlines;
 	null->written += len;
 	stream->position += len;
-	
+
+	/* Seeking backwards and overwriting must not inflate the measured size. */
+	null->measured_end = MAX (null->measured_end, stream->position);
+
 	return len;
 }
 
@@ -179,6 +205,7 @@ stream_reset (GMimeStream *stream)
 	
 	null->written = 0;
 	null->newlines = 0;
+	null->measured_end = stream->bound_start;
 	
 	return 0;
 }
@@ -187,26 +214,40 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
-	gint64 bound_end;
-	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : null->written;
-	
+	gint64 bound_end, origin, real;
+
+	bound_end = stream->bound_end != -1 ? stream->bound_end :
+		MAX (null->measured_end, stream->bound_start);
+
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		stream->position = MIN (offset + stream->bound_start, bound_end);
+		origin = stream->bound_start;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		stream->position = MAX (offset + bound_end, 0);
+		origin = bound_end;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		stream->position += offset;
-		if (stream->position < stream->bound_start)
-			stream->position = stream->bound_start;
-		else if (stream->position > bound_end)
-			stream->position = bound_end;
+		origin = stream->position;
+		break;
+	default:
+		errno = EINVAL;
+		return -1;
 	}
-	
-	return stream->position;
+
+	/* Origins are nonnegative; negative offsets cannot underflow gint64. */
+	if (offset > 0 && origin > G_MAXINT64 - offset) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+	real = origin + offset;
+
+	/* Sanity check the resultant offset rather than silently clamping it. */
+	if (real < stream->bound_start || real > bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return stream->position = real;
 }
 
 static gint64
@@ -221,7 +262,8 @@ stream_length (GMimeStream *stream)
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
 	gint64 bound_end;
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : null->written;
+	bound_end = stream->bound_end != -1 ? stream->bound_end :
+		MAX (null->measured_end, stream->bound_start);
 	
 	return bound_end - stream->bound_start;
 }
@@ -233,7 +275,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	
 	null = g_object_new (GMIME_TYPE_STREAM_NULL, NULL);
 	g_mime_stream_construct (null, start, end);
-	
+	GMIME_STREAM_NULL (null)->measured_end = stream->bound_end != -1 ?
+		stream->bound_end : GMIME_STREAM_NULL (stream)->measured_end;
+
 	return null;
 }
 
@@ -254,6 +298,47 @@ g_mime_stream_null_new (void)
 	g_mime_stream_construct (null, 0, -1);
 	
 	return null;
+}
+
+
+/**
+ * g_mime_stream_null_set_length:
+ * @stream: a #GMimeStreamNull
+ * @length: the desired measured length, in bytes
+ *
+ * Sets the logical length without writing bytes. The position is moved to
+ * the new end only if it was beyond that end. Cumulative byte and newline
+ * statistics are unchanged. For a bounded stream, the end bound is updated
+ * to the new length relative to its start bound.
+ *
+ * Returns: %0 on success or %-1 on failure, with errno set to EINVAL for
+ * a negative length or EOVERFLOW if the new end is not representable.
+ **/
+int
+g_mime_stream_null_set_length (GMimeStreamNull *stream, gint64 length)
+{
+	GMimeStream *base;
+	gint64 end;
+
+	g_return_val_if_fail (GMIME_IS_STREAM_NULL (stream), -1);
+
+	base = (GMimeStream *) stream;
+	if (length < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (length > G_MAXINT64 - base->bound_start) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	end = base->bound_start + length;
+	base->position = MIN (base->position, end);
+	stream->measured_end = end;
+	if (base->bound_end != -1)
+		base->bound_end = end;
+
+	return 0;
 }
 
 

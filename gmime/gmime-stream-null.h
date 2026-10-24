@@ -40,8 +40,8 @@ typedef struct _GMimeStreamNullClass GMimeStreamNullClass;
 /**
  * GMimeStreamNull:
  * @parent_object: parent #GMimeStream
- * @written: number of bytes written to this stream
- * @newlines: the number of newlines written to this stream
+ * @written: cumulative number of bytes written, including overwrites
+ * @newlines: cumulative newlines counted, including overwrites
  * @count_newlines: whether or not the stream should count newlines
  *
  * A #GMimeStream which has no backing store.
@@ -53,6 +53,9 @@ struct _GMimeStreamNull {
 	size_t newlines;
 	
 	gboolean count_newlines;
+
+	/* <private> */
+	gint64 measured_end;
 };
 
 struct _GMimeStreamNullClass {
@@ -64,6 +67,8 @@ struct _GMimeStreamNullClass {
 GType g_mime_stream_null_get_type (void);
 
 GMimeStream *g_mime_stream_null_new (void);
+
+int g_mime_stream_null_set_length (GMimeStreamNull *stream, gint64 length);
 
 void g_mime_stream_null_set_count_newlines (GMimeStreamNull *stream, gboolean count);
 gboolean g_mime_stream_null_get_count_newlines (GMimeStreamNull *stream);

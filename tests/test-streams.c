@@ -708,6 +708,319 @@ gen_test_data (const char *datadir, char **stream_name)
 	return 0;
 }
 
+static void
+test_null_measure_write (void)
+{
+	GMimeStream *stream = g_mime_stream_null_new ();
+	GMimeStreamNull *null = GMIME_STREAM_NULL (stream);
+	char buf[4];
+
+	testsuite_check ("Measuring writes retain a high-water length and cumulative statistics");
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 0);
+	g_assert_false (g_mime_stream_null_get_count_newlines (null));
+	g_mime_stream_null_set_count_newlines (null, TRUE);
+	g_assert_cmpint (g_mime_stream_write (stream, "a\nbc", 4), ==, 4);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 4);
+	g_assert_cmpint (g_mime_stream_seek (stream, 1, GMIME_STREAM_SEEK_SET), ==, 1);
+	g_assert_cmpint (g_mime_stream_write (stream, "Z\n", 2), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 3);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 4);
+	g_assert_cmpuint (null->written, ==, 6);
+	g_assert_cmpuint (null->newlines, ==, 2);
+	g_assert_cmpint (g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_END), ==, 4);
+	g_assert_cmpint (g_mime_stream_write (stream, "\0X", 2), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 6);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 6);
+	g_assert_cmpuint (null->written, ==, 8);
+	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
+
+	memset (buf, 0x5a, sizeof (buf));
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_read (stream, buf, sizeof (buf)), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	g_assert_cmpmem (buf, sizeof (buf), "ZZZZ", 4);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 6);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 6);
+	g_assert_cmpint (g_mime_stream_read (stream, buf, 0), ==, 0);
+	g_assert_cmpint (g_mime_stream_write (stream, "", 0), ==, 0);
+	g_mime_stream_null_set_count_newlines (null, FALSE);
+	g_assert_cmpint (g_mime_stream_write (stream, "\n", 1), ==, 1);
+	g_assert_cmpuint (null->newlines, ==, 2);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 7);
+	g_object_unref (stream);
+	testsuite_check_passed ();
+}
+
+static void
+test_null_measure_seek (void)
+{
+	GMimeStream *stream = g_mime_stream_null_new ();
+	guint32 random = 1024;
+	gint64 offset, position;
+	guint i;
+
+	testsuite_check ("Measuring seeks validate all origins without changing length or statistics");
+	g_assert_cmpint (g_mime_stream_null_set_length (GMIME_STREAM_NULL (stream), 1024), ==, 0);
+	for (i = 0; i < 128; i++) {
+		random = random * 1664525 + 1013904223;
+		position = random % 1025;
+		g_assert_cmpint (g_mime_stream_seek (stream, position, GMIME_STREAM_SEEK_SET), ==, position);
+		offset = -(position / 2);
+		position += offset;
+		g_assert_cmpint (g_mime_stream_seek (stream, offset, GMIME_STREAM_SEEK_CUR), ==, position);
+		offset = (1024 - position) / 2;
+		position += offset;
+		g_assert_cmpint (g_mime_stream_seek (stream, offset, GMIME_STREAM_SEEK_CUR), ==, position);
+		g_assert_cmpint (g_mime_stream_seek (stream, position - 1024, GMIME_STREAM_SEEK_END), ==, position);
+		g_assert_cmpint (g_mime_stream_length (stream), ==, 1024);
+	}
+	position = g_mime_stream_tell (stream);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, -1, GMIME_STREAM_SEEK_SET), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, 1025, GMIME_STREAM_SEEK_SET), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, 1, GMIME_STREAM_SEEK_END), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, -1025, GMIME_STREAM_SEEK_END), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, -1025, GMIME_STREAM_SEEK_CUR), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, 0, (GMimeSeekWhence) 99), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, position);
+	g_assert_cmpuint (GMIME_STREAM_NULL (stream)->written, ==, 0);
+	g_object_unref (stream);
+	testsuite_check_passed ();
+}
+
+static void
+test_null_measure_length (void)
+{
+	GMimeStream *stream = g_mime_stream_null_new ();
+	GMimeStreamNull *null = GMIME_STREAM_NULL (stream);
+
+	testsuite_check ("Setting measured length clamps position without recording output");
+	g_mime_stream_null_set_count_newlines (null, TRUE);
+	g_assert_cmpint (g_mime_stream_write (stream, "1234\n", 5), ==, 5);
+	g_assert_cmpint (g_mime_stream_seek (stream, 2, GMIME_STREAM_SEEK_SET), ==, 2);
+	g_assert_cmpint (g_mime_stream_null_set_length (null, 10), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 2);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 10);
+	g_assert_cmpint (g_mime_stream_seek (stream, 9, GMIME_STREAM_SEEK_SET), ==, 9);
+	g_assert_cmpint (g_mime_stream_null_set_length (null, 3), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 3);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 3);
+	g_assert_cmpuint (null->written, ==, 5);
+	g_assert_cmpuint (null->newlines, ==, 1);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_null_set_length (null, -1), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 3);
+	g_assert_cmpint (g_mime_stream_null_set_length (null, 0), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+	g_assert_cmpuint (null->written, ==, 5);
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 0);
+	g_assert_cmpuint (null->written, ==, 0);
+	g_assert_cmpuint (null->newlines, ==, 0);
+	g_assert_true (g_mime_stream_null_get_count_newlines (null));
+	/* Native close remains a no-op rather than managed disposal. */
+	g_assert_cmpint (g_mime_stream_close (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_write (stream, "\n", 1), ==, 1);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 1);
+	g_object_unref (stream);
+	testsuite_check_passed ();
+}
+
+static void
+test_null_measure_bounds (void)
+{
+	GMimeStream *stream = g_mime_stream_null_new (), *sub;
+	GMimeStreamNull *null = GMIME_STREAM_NULL (stream);
+
+	testsuite_check ("Measuring streams retain native bounds and independent substream statistics");
+	g_mime_stream_construct (stream, 10, 14);
+	g_mime_stream_null_set_count_newlines (null, TRUE);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 4);
+	sub = g_mime_stream_substream (stream, 11, -1);
+	g_assert_nonnull (sub);
+	g_assert_cmpint (g_mime_stream_length (sub), ==, 3);
+	g_object_unref (sub);
+	g_assert_cmpint (g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_SET), ==, 10);
+	g_assert_cmpint (g_mime_stream_write (stream, "a\nb\n\n", 5), ==, 4);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 14);
+	g_assert_cmpuint (null->written, ==, 4);
+	g_assert_cmpuint (null->newlines, ==, 2);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, -1, GMIME_STREAM_SEEK_SET), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_assert_cmpint (g_mime_stream_null_set_length (null, 2), ==, 0);
+	g_assert_cmpint (stream->bound_end, ==, 12);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 12);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 2);
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 10);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 2);
+	g_assert_cmpuint (null->written, ==, 0);
+	g_assert_cmpint (g_mime_stream_null_set_length (null, 6), ==, 0);
+	g_assert_cmpint (stream->bound_end, ==, 16);
+	sub = g_mime_stream_substream (stream, 11, -1);
+	g_assert_nonnull (sub);
+	g_assert_cmpint (g_mime_stream_length (sub), ==, 5);
+	g_assert_cmpint (g_mime_stream_write (sub, "abc", 3), ==, 3);
+	g_assert_cmpuint (GMIME_STREAM_NULL (sub)->written, ==, 3);
+	g_assert_cmpuint (null->written, ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 10);
+	g_object_unref (sub);
+	sub = g_mime_stream_substream (stream, 11, 13);
+	g_assert_nonnull (sub);
+	g_assert_cmpint (g_mime_stream_length (sub), ==, 2);
+	g_assert_cmpint (g_mime_stream_write (sub, "abcd", 4), ==, 2);
+	g_object_unref (sub);
+	g_object_unref (stream);
+
+	stream = g_mime_stream_null_new ();
+	g_mime_stream_construct (stream, 10, -1);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_SET), ==, 10);
+	g_assert_cmpint (g_mime_stream_write (stream, "abcd", 4), ==, 4);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 4);
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 10);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 0);
+	g_object_unref (stream);
+	testsuite_check_passed ();
+}
+
+static void
+test_null_measure_integration (void)
+{
+	const char input[] = "a\nb\0cdefghijklmnopqrstuvwxyz0123456789";
+	GMimeStream *outputs[2], *filtered, *cat, *tail;
+	GMimeFilter *filter;
+	GByteArray *bytes;
+	guint i, newlines = 0;
+	char buf[4];
+
+	testsuite_check ("Measuring sinks match encoded output and support chained write extents");
+	outputs[0] = g_mime_stream_null_new ();
+	outputs[1] = g_mime_stream_mem_new ();
+	g_mime_stream_null_set_count_newlines (GMIME_STREAM_NULL (outputs[0]), TRUE);
+	for (i = 0; i < G_N_ELEMENTS (outputs); i++) {
+		filtered = g_mime_stream_filter_new (outputs[i]);
+		filter = g_mime_filter_basic_new (GMIME_CONTENT_ENCODING_BASE64, TRUE);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+		g_object_unref (filter);
+		g_assert_cmpint (g_mime_stream_write (filtered, input, sizeof (input) - 1), ==, sizeof (input) - 1);
+		/* Include encoder completion output in the measured size. */
+		g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+		g_object_unref (filtered);
+	}
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (outputs[1]));
+	for (i = 0; i < bytes->len; i++)
+		newlines += bytes->data[i] == '\n';
+	g_assert_cmpint (g_mime_stream_length (outputs[0]), ==, bytes->len);
+	g_assert_cmpuint (GMIME_STREAM_NULL (outputs[0])->written, ==, bytes->len);
+	g_assert_cmpuint (GMIME_STREAM_NULL (outputs[0])->newlines, ==, newlines);
+	g_object_unref (outputs[1]);
+
+	g_assert_cmpint (g_mime_stream_reset (outputs[0]), ==, 0);
+	g_assert_cmpint (g_mime_stream_null_set_length (GMIME_STREAM_NULL (outputs[0]), 2), ==, 0);
+	tail = g_mime_stream_null_new ();
+	cat = g_mime_stream_cat_new ();
+	g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), outputs[0]);
+	g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), tail);
+	g_assert_cmpint (g_mime_stream_write (cat, "abcde", 5), ==, 5);
+	g_assert_cmpint (g_mime_stream_length (outputs[0]), ==, 2);
+	g_assert_cmpint (g_mime_stream_length (tail), ==, 3);
+	g_assert_cmpuint (GMIME_STREAM_NULL (outputs[0])->written, ==, 2);
+	g_assert_cmpuint (GMIME_STREAM_NULL (tail)->written, ==, 3);
+	g_assert_cmpint (g_mime_stream_flush (cat), ==, 0);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_read (cat, buf, sizeof (buf)), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	g_assert_cmpint (g_mime_stream_tell (cat), ==, 5);
+	g_object_unref (cat);
+	g_object_unref (tail);
+	g_object_unref (outputs[0]);
+	testsuite_check_passed ();
+}
+
+static void
+test_null_measure_overflow (void)
+{
+	GMimeStream *stream = g_mime_stream_null_new ();
+	GMimeStreamNull *null = GMIME_STREAM_NULL (stream);
+
+	testsuite_check ("Measuring position and counter overflow fail without changing state");
+	g_assert_cmpint (g_mime_stream_null_set_length (null, G_MAXINT64), ==, 0);
+	g_assert_cmpint (g_mime_stream_seek (stream, -1, GMIME_STREAM_SEEK_END), ==, G_MAXINT64 - 1);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (stream, "xy", 2), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, G_MAXINT64 - 1);
+	g_assert_cmpuint (null->written, ==, 0);
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, 1);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (stream, "\n", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, G_MAXINT64);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, G_MAXINT64);
+	g_assert_cmpuint (null->written, ==, 1);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, 1, GMIME_STREAM_SEEK_CUR), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, 1, GMIME_STREAM_SEEK_END), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, G_MININT64, GMIME_STREAM_SEEK_END), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+	null->written = G_MAXSIZE;
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 0);
+	g_assert_cmpuint (null->written, ==, G_MAXSIZE);
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (stream, "", (size_t) G_MAXSSIZE + 1), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 0);
+	null->newlines = G_MAXSIZE;
+	g_mime_stream_null_set_count_newlines (null, TRUE);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (stream, "\n", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_assert_cmpuint (null->written, ==, 0);
+	g_assert_cmpuint (null->newlines, ==, G_MAXSIZE);
+	g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+	g_mime_stream_construct (stream, G_MAXINT64 - 1, -1);
+	g_assert_cmpint (g_mime_stream_null_set_length (null, 1), ==, 0);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_null_set_length (null, 2), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_assert_cmpint (g_mime_stream_length (stream), ==, 1);
+	g_assert_cmpint (g_mime_stream_seek (stream, 1, GMIME_STREAM_SEEK_SET), ==, G_MAXINT64);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (stream, 2, GMIME_STREAM_SEEK_SET), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_object_unref (stream);
+	testsuite_check_passed ();
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/streams";
@@ -721,6 +1034,15 @@ int main (int argc, char **argv)
 	g_mime_init ();
 	
 	testsuite_init (argc, argv);
+
+	testsuite_start ("MeasuringStream port");
+	test_null_measure_write ();
+	test_null_measure_seek ();
+	test_null_measure_length ();
+	test_null_measure_bounds ();
+	test_null_measure_integration ();
+	test_null_measure_overflow ();
+	testsuite_end ();
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {

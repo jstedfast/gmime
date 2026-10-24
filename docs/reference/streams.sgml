@@ -83,9 +83,17 @@
 
     <para>Our most simple stream, GMimeStreamNull, is the stream
     equivalent of /dev/null on Unix systems. The main difference is
-    that GMimeStreamNull records the number of bytes written to it -
-    you may find this useful if you need to know the number of bytes a
-    GMimeEntity (for example) will require.</para>
+    that GMimeStreamNull records the number of bytes written to it.
+    Its logical length tracks the highest written position, so overwrites
+    do not inflate the measured size. The written and optional newlines
+    counters remain cumulative, including overwrites. Use
+    g_mime_stream_null_set_length() to resize the measurement without
+    recording output. Seeks outside the measured extent fail rather than
+    clamping, and nonempty reads fail with EBADF. Native bounds limit writes;
+    setting length updates a finite end bound relative to its start.
+    Reset clears measurement and statistics while retaining bounds and the
+    newline-counting option. This is useful for measuring how many bytes a
+    GMimeEntity (for example) will require without storing its output.</para>
 
     <para>GMimeStreamMmap is a memory-mapped stream. This isn't
     guaranteed to work on all systems since not all systems support

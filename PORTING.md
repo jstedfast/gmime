@@ -147,6 +147,25 @@ This is an incremental migration, not yet a declaration of feature parity.
   matching MimeKit; add appends. Indexed access replaces managed enumeration
   and CopyTo. Cancellation and asynchronous overloads remain unported.
 
+- GMimeStreamNull now follows MimeKit's MeasuringStream synchronous
+  write, seek and length behavior. Logical length is the highest written
+  position, not the cumulative byte count; overwrites do not inflate it.
+  g_mime_stream_null_set_length() changes the measured size without recording
+  output, clamping the position only when shrinking past it. Invalid seeks
+  fail with EINVAL instead of clamping, and nonempty reads fail with EBADF
+  instead of returning synthetic zero bytes. Length, position and native
+  statistics overflow report EOVERFLOW without changing state.
+  The existing written/newlines fields remain cumulative statistics,
+  including overwrites, and newline counting remains optional.
+  Native bounds still limit writes and define a finite stream's length;
+  set_length updates a finite end bound relative to its start. SEEK_SET
+  retains this stream's existing start-relative convention. Reset clears
+  logical measurement and statistics but retains bounds and the counting
+  option. Substreams retain independent measurement/statistics, initialized
+  from the parent's measured extent. Native zero-length I/O and close remain
+  no-ops; managed capabilities, disposal checks and asynchronous methods
+  are not ported.
+
 - GMimeStreamCat now ports MimeKit's ChainedStream synchronous read loop.
   Reads fill the requested buffer across short reads and child boundaries,
   without seeking or resetting children, so nonseekable and prepositioned
