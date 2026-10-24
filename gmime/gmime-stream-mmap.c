@@ -46,6 +46,14 @@
  * store. This may be faster than #GMimeStreamFs or #GMimeStreamFile
  * but you'll have to do your own performance checking to be sure for
  * your particular application/platform.
+ *
+ * Substreams retain independent positions and EOF state over a fixed-size
+ * mapping. Reads and partial writes stop at both the view's end and the
+ * mapped extent; seeking does not grow the file or the mapping.
+ *
+ * Views borrow the mapping and descriptor. Finish using them before
+ * explicitly closing an owning parent, and do not truncate the underlying
+ * file while any mapped view is active.
  **/
 
 
@@ -123,6 +131,7 @@ g_mime_stream_mmap_init (GMimeStreamMmap *stream, GMimeStreamMmapClass *klass)
 	stream->fd = -1;
 	stream->map = NULL;
 	stream->maplen = 0;
+	stream->prot = 0;
 }
 
 static void
@@ -136,82 +145,122 @@ g_mime_stream_mmap_finalize (GObject *object)
 }
 
 
+static gboolean
+check_open (GMimeStream *stream)
+{
+	GMimeStreamMmap *mm = GMIME_STREAM_MMAP (stream);
+
+	if (mm->fd < 0) {
+		errno = EBADF;
+		return FALSE;
+	}
+
+	if (stream->bound_start < 0 || stream->bound_end < -1 ||
+	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start) ||
+	    stream->position < stream->bound_start ||
+	    (stream->bound_end != -1 && stream->position > stream->bound_end) ||
+	    mm->maplen > (guint64) G_MAXINT64) {
+		errno = EINVAL;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static size_t
+bounded_count (GMimeStream *stream, size_t len)
+{
+	GMimeStreamMmap *mm = GMIME_STREAM_MMAP (stream);
+	guint64 end = mm->maplen;
+
+	if (stream->bound_end != -1)
+		end = MIN (end, (guint64) stream->bound_end);
+
+	/* Validate integer offsets before forming a pointer: a view may start
+	 * beyond storage or declare an end farther than the actual mapping. */
+	if ((guint64) stream->position >= end)
+		return 0;
+
+	return (size_t) MIN ((guint64) len, end - (guint64) stream->position);
+}
+
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
-	register char *mapptr;
-	ssize_t nread;
+	size_t nread;
 	
-	if (mm->fd == -1) {
-		errno = EBADF;
+	if (!check_open (stream))
+		return -1;
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
 		return -1;
 	}
-	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
-		errno = EINVAL;
+
+#ifdef HAVE_MMAP
+	if (!(mm->prot & PROT_READ)) {
+		errno = EACCES;
 		return -1;
 	}
-	
-	/* make sure we are at the right position */
-	mapptr = mm->map + stream->position;
-	
-	if (stream->bound_end == -1)
-		nread = MIN ((gint64) ((mm->map + mm->maplen) - mapptr), (gint64) len);
-	else
-		nread = MIN (stream->bound_end - stream->position, (gint64) len);
+#endif
+
+	nread = bounded_count (stream, len);
 	
 	if (nread > 0) {
-		memcpy (buf, mapptr, nread);
+		memcpy (buf, mm->map + (size_t) stream->position, nread);
 		stream->position += nread;
 	} else
 		mm->eos = TRUE;
 	
-	return nread;
+	return (ssize_t) nread;
 }
 
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
-	register char *mapptr;
-	ssize_t nwritten;
+	size_t nwritten;
 	
-	if (mm->fd == -1) {
-		errno = EBADF;
+	if (!check_open (stream))
+		return -1;
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
 		return -1;
 	}
+
+#ifdef HAVE_MMAP
+	if (!(mm->prot & PROT_WRITE)) {
+		errno = EACCES;
+		return -1;
+	}
+#endif
 	
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
 		errno = EINVAL;
 		return -1;
 	}
 	
-	/* make sure we are at the right position */
-	mapptr = mm->map + stream->position;
-	
-	if (stream->bound_end == -1)
-		nwritten = MIN ((gint64) ((mm->map + mm->maplen) - mapptr), (gint64) len);
-	else
-		nwritten = MIN (stream->bound_end - stream->position, (gint64) len);
+	nwritten = bounded_count (stream, len);
 	
 	if (nwritten > 0) {
-		memcpy (mapptr, buf, nwritten);
+		memcpy (mm->map + (size_t) stream->position, buf, nwritten);
 		stream->position += nwritten;
 	}
 	
-	return nwritten;
+	return (ssize_t) nwritten;
 }
 
 static int
 stream_flush (GMimeStream *stream)
 {
+#ifdef HAVE_MSYNC
 	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
+#endif
 	
-	if (mm->fd == -1) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
 #ifdef HAVE_MSYNC
 	return msync (mm->map, mm->maplen, MS_SYNC /* | MS_INVALIDATE */);
@@ -240,6 +289,7 @@ stream_close (GMimeStream *stream)
 	}
 	
 	mm->map = NULL;
+	mm->maplen = 0;
 	mm->fd = -1;
 	
 	return rv;
@@ -261,10 +311,8 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	
-	if (mm->fd == -1) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
 	mm->eos = FALSE;
 	
@@ -275,34 +323,46 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
-	gint64 real = stream->position;
+	gint64 origin, real;
 	
-	if (mm->fd == -1) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		real = offset;
+		origin = 0;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		real = stream->position + offset;
+		origin = stream->position;
 		break;
 	case GMIME_STREAM_SEEK_END:
 		if (stream->bound_end == -1) {
-			real = offset <= 0 ? stream->bound_start + (gint64) mm->maplen + offset : -1;
-			if (real != -1) {
-				if (real < stream->bound_start)
-					real = stream->bound_start;
-				stream->position = real;
+			/* Keep native fixed-map END behavior: positive offsets fail,
+			 * and negative targets before the view clamp to its start.
+			 * maplen is already an absolute extent, not a view length. */
+			if (offset > 0) {
+				errno = EINVAL;
+				return -1;
 			}
-			
-			return real;
+			origin = (gint64) mm->maplen;
+		} else {
+			origin = stream->bound_end;
 		}
-		real = stream->bound_end + offset;
 		break;
+	default:
+		errno = EINVAL;
+		return -1;
 	}
+
+	if ((offset > 0 && origin > G_MAXINT64 - offset) ||
+	    (offset < 0 && origin < G_MININT64 - offset)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+	real = origin + offset;
+
+	if (whence == GMIME_STREAM_SEEK_END && stream->bound_end == -1)
+		real = MAX (real, stream->bound_start);
 	
 	/* sanity check the resultant offset */
 	if (real < stream->bound_start) {
@@ -314,6 +374,9 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		errno = EINVAL;
 		return -1;
 	}
+
+	if (real == stream->position)
+		return real;
 	
 	/* reset eos if appropriate */
 	if ((stream->bound_end != -1 && real < stream->bound_end) ||
@@ -328,12 +391,8 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
-	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
-	
-	if (mm->fd == -1) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
 	return stream->position;
 }
@@ -343,21 +402,22 @@ stream_length (GMimeStream *stream)
 {
 	GMimeStreamMmap *mm = (GMimeStreamMmap *) stream;
 	
-	if (mm->fd == -1) {
-		errno = EBADF;
+	if (!check_open (stream))
 		return -1;
-	}
 	
-	if (stream->bound_start != -1 && stream->bound_end != -1)
+	if (stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	return mm->maplen - stream->bound_start;
+	return MAX (0, (gint64) mm->maplen - stream->bound_start);
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamMmap *mm;
+
+	if (!check_open (stream))
+		return NULL;
 	
 	mm = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
 	g_mime_stream_construct ((GMimeStream *) mm, start, end);
@@ -365,6 +425,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	mm->map = ((GMimeStreamMmap *) stream)->map;
 	mm->fd = ((GMimeStreamMmap *) stream)->fd;
 	mm->owner = FALSE;
+	mm->prot = ((GMimeStreamMmap *) stream)->prot;
 	
 	return (GMimeStream *) mm;
 }
@@ -378,7 +439,8 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new #GMimeStreamMmap object around @fd.
  *
- * Returns: a stream using @fd.
+ * Returns: (nullable): a stream using @fd, or %NULL on error with errno set.
+ * Empty files cannot be mapped. On failure, @fd remains owned by the caller.
  **/
 GMimeStream *
 g_mime_stream_mmap_new (int fd, int prot, int flags)
@@ -391,6 +453,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
 	
 	return g_mime_stream_mmap_new_with_bounds (fd, prot, flags, start, -1);
 #else
+	errno = ENOSYS;
 	return NULL;
 #endif /* HAVE_MMAP */
 }
@@ -406,8 +469,14 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
  *
  * Creates a new #GMimeStreamMmap object around @fd with bounds @start
  * and @end.
+ * The mapping stops at the actual file extent even when @end extends
+ * farther; finite length still reports the declared range. Nonempty reads
+ * require PROT_READ and writes require PROT_WRITE in @prot.
  *
- * Returns: a stream using @fd with bounds @start and @end.
+ * Returns: (nullable): a stream using @fd with bounds @start and @end,
+ * or %NULL on error with errno set. Empty mappings fail with EINVAL;
+ * unsupported platforms fail with ENOSYS. On failure, @fd remains owned
+ * by the caller.
  **/
 GMimeStream *
 g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, gint64 end)
@@ -415,16 +484,40 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 #ifdef HAVE_MMAP
 	GMimeStreamMmap *mm;
 	struct stat st;
+	guint64 extent;
 	size_t len;
 	char *map;
 	
-	if (end == -1) {
-		if (fstat (fd, &st) == -1)
-			return NULL;
-		
-		len = st.st_size;
-	} else
-		len = (size_t) end;
+	if (start < 0 || end < -1 || (end != -1 && end < start)) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	if (fstat (fd, &st) == -1)
+		return NULL;
+
+	if (st.st_size < 0 || (guint64) st.st_size > G_MAXINT64) {
+		errno = EOVERFLOW;
+		return NULL;
+	}
+
+	/* A declared view end is not permission to access bytes beyond EOF.
+	 * Retain the declared range, but map only actual file storage. */
+	extent = (guint64) st.st_size;
+	if (end != -1)
+		extent = MIN (extent, (guint64) end);
+	if (extent > G_MAXSIZE) {
+		errno = EOVERFLOW;
+		return NULL;
+	}
+	len = (size_t) extent;
+
+	/* Preserve mmap's rejection of an empty root mapping. Empty substreams
+	 * of a nonempty mapping remain valid and never form a data pointer. */
+	if (len == 0) {
+		errno = EINVAL;
+		return NULL;
+	}
 	
 	if ((map = mmap (NULL, len, prot, flags, fd, 0)) == MAP_FAILED)
 		return NULL;
@@ -436,9 +529,11 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 	mm->fd = fd;
 	mm->map = map;
 	mm->maplen = len;
+	mm->prot = prot;
 	
 	return (GMimeStream *) mm;
 #else
+	errno = ENOSYS;
 	return NULL;
 #endif /* HAVE_MMAP */
 }
@@ -446,7 +541,7 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 
 /**
  * g_mime_stream_mmap_get_owner:
- * @stream: a #GMimeStreamFs
+ * @stream: a #GMimeStreamMmap
  *
  * Gets whether or not @stream owns the backend file descriptor.
  *

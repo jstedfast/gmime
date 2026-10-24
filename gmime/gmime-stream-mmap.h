@@ -56,6 +56,9 @@ struct _GMimeStreamMmap {
 	
 	char *map;
 	size_t maplen;
+
+	/* <private> */
+	int prot;
 };
 
 struct _GMimeStreamMmapClass {

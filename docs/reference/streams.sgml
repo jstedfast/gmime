@@ -85,6 +85,22 @@
     close it twice. Views still borrow their parent's FILE pointer: finish
     using them before explicitly closing an owning parent.</para>
 
+    <para>GMimeStreamMmap retains a fixed mapping with independent view
+    positions and EOF state. Reads return zero at the finite end; reads and
+    partial writes also stop at mapped storage even when declared bounds
+    extend farther. Constructors limit mappings to actual file storage,
+    while finite length still describes the declared range. Nonempty reads
+    require PROT_READ and writes require PROT_WRITE; missing protection
+    fails with EACCES. Counts and seek arithmetic are checked for overflow.
+    Seeking never extends storage. Finite SEEK_END uses the declared end;
+    unbounded SEEK_END uses the fixed absolute mapping extent, rejects
+    positive offsets and clamps negative targets before the view's start.
+    Same-position seeks preserve cached EOF; reset clears it. Empty root
+    mappings fail with EINVAL, but empty substreams remain valid.
+    Views borrow the mapping and descriptor: finish them before explicitly
+    closing an owning parent. Do not truncate the underlying file while any
+    mapping remains active.</para>
+
     <para>GMimeStreamBlock stores memory content in separate 2048-byte blocks,
     avoiding repeated copies of existing bytes while growing. Unlike
     GMimeStreamMem, it does not allow seeking past the stored extent; extend it

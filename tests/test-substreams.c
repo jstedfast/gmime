@@ -26,6 +26,9 @@
 #include <fcntl.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef HAVE_MMAP
+#include <sys/mman.h>
+#endif
 #include <unistd.h>
 #include <glib/gstdio.h>
 #include <gmime/gmime.h>
@@ -944,6 +947,292 @@ test_file_substream_errors (void)
 	testsuite_check_passed ();
 }
 
+#ifdef HAVE_MMAP
+static GMimeStream *
+new_mmap_stream (const char *data, size_t length, char **path)
+{
+	GMimeStream *source, *stream;
+	int fd;
+
+	source = new_fs_stream (data, length, path);
+	fd = GMIME_STREAM_FS (source)->fd;
+	g_mime_stream_fs_set_owner (GMIME_STREAM_FS (source), FALSE);
+	g_object_unref (source);
+	stream = g_mime_stream_mmap_new (fd, PROT_READ | PROT_WRITE, MAP_SHARED);
+	g_assert_nonnull (stream);
+
+	return stream;
+}
+
+static void
+test_mmap_substream_reads (void)
+{
+	GMimeStream *parent, *child, *nested, *tail, *empty;
+	char *path, buffer[16];
+
+	testsuite_check ("Mapped views clip reads to both declared bounds and actual storage");
+	parent = new_mmap_stream ("0123456789", 10, &path);
+	child = g_mime_stream_substream (parent, 2, 6);
+	nested = g_mime_stream_substream (child, 3, -1);
+	g_assert_cmpint (nested->bound_end, ==, 6);
+	errno = 0;
+	g_assert_null (g_mime_stream_substream (child, 1, 4));
+	g_assert_cmpint (errno, ==, EINVAL);
+	memset (buffer, 0x5a, sizeof (buffer));
+	g_assert_cmpint (g_mime_stream_read (child, buffer + 1, 14), ==, 4);
+	g_assert_cmpmem (buffer + 1, 4, "2345", 4);
+	g_assert_cmpint (buffer[0], ==, 0x5a);
+	g_assert_cmpint (buffer[5], ==, 0x5a);
+	g_assert_cmpint (g_mime_stream_read (child, buffer, 1), ==, 0);
+	g_assert_cmpint (g_mime_stream_read (child, buffer, 1), ==, 0);
+	g_assert_cmpint (g_mime_stream_read (nested, buffer, sizeof (buffer)), ==, 3);
+	g_assert_cmpmem (buffer, 3, "345", 3);
+	empty = g_mime_stream_substream (child, 6, -1);
+	g_assert_cmpint (g_mime_stream_read (empty, buffer, 1), ==, 0);
+	g_assert_cmpint (g_mime_stream_length (empty), ==, 0);
+	tail = g_mime_stream_substream (parent, 8, G_MAXINT64);
+	memset (buffer, 0x5a, sizeof (buffer));
+	g_assert_cmpint (g_mime_stream_read (tail, buffer + 1, 14), ==, 2);
+	g_assert_cmpmem (buffer + 1, 2, "89", 2);
+	g_assert_cmpint (buffer[0], ==, 0x5a);
+	g_assert_cmpint (buffer[3], ==, 0x5a);
+	g_assert_false (g_mime_stream_eos (tail));
+	g_assert_cmpint (g_mime_stream_read (tail, buffer, 1), ==, 0);
+	g_assert_true (g_mime_stream_eos (tail));
+	g_assert_false (g_mime_stream_eos (parent));
+	g_assert_cmpint (g_mime_stream_length (tail), ==, G_MAXINT64 - 8);
+	g_object_unref (tail);
+	tail = g_mime_stream_substream (parent, G_MAXINT64, -1);
+	g_assert_cmpint (g_mime_stream_length (tail), ==, 0);
+	g_assert_cmpint (g_mime_stream_read (tail, buffer, 1), ==, 0);
+	g_assert_true (g_mime_stream_eos (tail));
+	g_assert_cmpint (g_mime_stream_reset (tail), ==, 0);
+	g_assert_false (g_mime_stream_eos (tail));
+	g_assert_cmpint (g_mime_stream_tell (tail), ==, G_MAXINT64);
+	g_assert_cmpint (g_mime_stream_tell (parent), ==, 0);
+	g_assert_cmpint (lseek (GMIME_STREAM_MMAP (parent)->fd, 0, SEEK_CUR), ==, 0);
+	g_object_unref (tail);
+	g_object_unref (empty);
+	g_object_unref (nested);
+	g_object_unref (child);
+	free_temporary_stream (parent, path);
+	testsuite_check_passed ();
+}
+
+static void
+test_mmap_substream_writes_seeks (void)
+{
+	GMimeStream *parent, *child, *tail;
+	char *path, buffer[16];
+
+	testsuite_check ("Mapped views preserve partial fixed-size writes and checked native seeks");
+	parent = new_mmap_stream ("0123456789", 10, &path);
+	child = g_mime_stream_substream (parent, 2, 6);
+	g_assert_cmpint (g_mime_stream_write (child, "ABCDEFGH", 8), ==, 4);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (child, "!", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	tail = g_mime_stream_substream (parent, 8, 100);
+	g_assert_cmpint (g_mime_stream_write (tail, "XYZ", 3), ==, 2);
+	g_assert_cmpint (g_mime_stream_write (tail, "!", 1), ==, 0);
+	g_assert_cmpint (g_mime_stream_read (tail, buffer, 1), ==, 0);
+	g_assert_true (g_mime_stream_eos (tail));
+	g_assert_cmpint (g_mime_stream_seek (tail, 10, GMIME_STREAM_SEEK_SET), ==, 10);
+	g_assert_true (g_mime_stream_eos (tail));
+	g_assert_cmpint (g_mime_stream_reset (tail), ==, 0);
+	g_assert_false (g_mime_stream_eos (tail));
+	g_assert_cmpint (g_mime_stream_tell (tail), ==, 8);
+	g_assert_cmpint (g_mime_stream_read (tail, buffer, 2), ==, 2);
+	g_assert_cmpmem (buffer, 2, "XY", 2);
+	g_assert_cmpint (g_mime_stream_length (parent), ==, 10);
+	g_assert_cmpint (g_mime_stream_read (parent, buffer, sizeof (buffer)), ==, 10);
+	g_assert_cmpmem (buffer, 10, "01ABCD67XY", 10);
+	g_assert_cmpint (g_mime_stream_flush (tail), ==, 0);
+	g_assert_cmpint (g_mime_stream_seek (child, 0, GMIME_STREAM_SEEK_END), ==, 6);
+	g_assert_cmpint (g_mime_stream_seek (child, -1, GMIME_STREAM_SEEK_END), ==, 5);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (child, 1, GMIME_STREAM_SEEK_END), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (child, G_MAXINT64, GMIME_STREAM_SEEK_CUR), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (child, G_MAXINT64, GMIME_STREAM_SEEK_END), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (child, 0, (GMimeSeekWhence) 77), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_assert_cmpint (g_mime_stream_tell (child), ==, 5);
+	g_object_unref (tail);
+	tail = g_mime_stream_substream (parent, 2, -1);
+	g_assert_cmpint (g_mime_stream_seek (tail, 0, GMIME_STREAM_SEEK_END), ==, 10);
+	g_assert_cmpint (g_mime_stream_seek (tail, G_MAXINT64, GMIME_STREAM_SEEK_SET), ==, G_MAXINT64);
+	g_assert_cmpint (g_mime_stream_read (tail, buffer, 1), ==, 0);
+	g_assert_cmpint (g_mime_stream_write (tail, "!", 1), ==, 0);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (tail, 1, GMIME_STREAM_SEEK_CUR), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	/* Unlike growable file streams, mapped END always uses its fixed extent,
+	 * even after EOF was observed at a position beyond that extent. */
+	g_assert_cmpint (g_mime_stream_seek (tail, -1, GMIME_STREAM_SEEK_END), ==, 9);
+	g_assert_false (g_mime_stream_eos (tail));
+	g_assert_cmpint (g_mime_stream_seek (tail, G_MININT64, GMIME_STREAM_SEEK_END), ==, 2);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (tail, 1, GMIME_STREAM_SEEK_END), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_assert_cmpint (g_mime_stream_seek (tail, 3, GMIME_STREAM_SEEK_CUR), ==, 5);
+	g_assert_cmpint (g_mime_stream_tell (parent), ==, 10);
+	g_assert_cmpint (lseek (GMIME_STREAM_MMAP (parent)->fd, 0, SEEK_END), ==, 10);
+	g_assert_cmpint (write (GMIME_STREAM_MMAP (parent)->fd, "Z", 1), ==, 1);
+	g_assert_cmpint (g_mime_stream_length (parent), ==, 10);
+	g_assert_cmpint (g_mime_stream_read (parent, buffer, 1), ==, 0);
+	g_assert_cmpint (g_mime_stream_seek (tail, 0, GMIME_STREAM_SEEK_END), ==, 10);
+	g_object_unref (tail);
+	g_object_unref (child);
+	free_temporary_stream (parent, path);
+	testsuite_check_passed ();
+}
+
+static void
+test_mmap_substream_protections (void)
+{
+	const gint64 invalid[][2] = { { -1, 8 }, { 0, -2 }, { 8, 2 } };
+	GMimeStream *parent, *mapped, *child;
+	char *path, buffer[16];
+	guint i;
+	int fd;
+
+	testsuite_check ("Mapped constructors respect physical extent, protections and descriptor ownership");
+	parent = new_mmap_stream ("0123456789", 10, &path);
+	fd = GMIME_STREAM_MMAP (parent)->fd;
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		errno = 0;
+		g_assert_null (g_mime_stream_mmap_new_with_bounds (fd, PROT_READ, MAP_PRIVATE,
+								 invalid[i][0], invalid[i][1]));
+		g_assert_cmpint (errno, ==, EINVAL);
+		g_assert_cmpint (fcntl (fd, F_GETFD), >=, 0);
+	}
+	mapped = g_mime_stream_mmap_new_with_bounds (dup (fd), PROT_READ, MAP_PRIVATE, 8, 8192);
+	g_assert_nonnull (mapped);
+	g_assert_cmpuint (GMIME_STREAM_MMAP (mapped)->maplen, ==, 10);
+	g_assert_cmpint (g_mime_stream_length (mapped), ==, 8184);
+	child = g_mime_stream_substream (mapped, 8, -1);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (child, "!", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EACCES);
+	g_assert_cmpint (g_mime_stream_tell (child), ==, 8);
+	g_assert_cmpint (g_mime_stream_read (child, buffer, sizeof (buffer)), ==, 2);
+	g_assert_cmpint (g_mime_stream_read (child, buffer, 1), ==, 0);
+	g_object_unref (mapped);
+	g_assert_cmpint (g_mime_stream_reset (child), ==, 0);
+	g_assert_cmpint (g_mime_stream_read (child, buffer, sizeof (buffer)), ==, 2);
+	g_object_unref (child);
+	g_assert_cmpint (lseek (fd, 8, SEEK_SET), ==, 8);
+	mapped = g_mime_stream_mmap_new (dup (fd), PROT_READ, MAP_PRIVATE);
+	g_assert_nonnull (mapped);
+	g_assert_cmpint (mapped->bound_start, ==, 8);
+	g_assert_cmpint (g_mime_stream_length (mapped), ==, 2);
+	g_assert_cmpint (g_mime_stream_seek (mapped, 0, GMIME_STREAM_SEEK_END), ==, 10);
+	g_object_unref (mapped);
+	g_assert_cmpint (lseek (fd, 0, SEEK_SET), ==, 0);
+	mapped = g_mime_stream_mmap_new_with_bounds (dup (fd), PROT_READ, MAP_PRIVATE, 0, 4);
+	g_assert_nonnull (mapped);
+	g_assert_cmpuint (GMIME_STREAM_MMAP (mapped)->maplen, ==, 4);
+	g_assert_cmpint (g_mime_stream_read (mapped, buffer, sizeof (buffer)), ==, 4);
+	g_assert_cmpmem (buffer, 4, "0123", 4);
+	g_object_unref (mapped);
+	mapped = g_mime_stream_mmap_new (dup (fd), PROT_WRITE, MAP_SHARED);
+	g_assert_nonnull (mapped);
+	child = g_mime_stream_substream (mapped, 0, 2);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_read (child, buffer, 1), ==, -1);
+	g_assert_cmpint (errno, ==, EACCES);
+	g_assert_false (g_mime_stream_eos (child));
+	g_assert_cmpint (g_mime_stream_write (child, "AB", 2), ==, 2);
+	g_assert_cmpint (g_mime_stream_read (parent, buffer, 2), ==, 2);
+	g_assert_cmpmem (buffer, 2, "AB", 2);
+	g_object_unref (child);
+	g_object_unref (mapped);
+	mapped = g_mime_stream_mmap_new (dup (fd), PROT_NONE, MAP_PRIVATE);
+	g_assert_nonnull (mapped);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_read (mapped, buffer, 1), ==, -1);
+	g_assert_cmpint (errno, ==, EACCES);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (mapped, "!", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EACCES);
+	g_assert_cmpint (g_mime_stream_read (mapped, buffer, 0), ==, 0);
+	g_assert_cmpint (g_mime_stream_write (mapped, "!", 0), ==, 0);
+	g_object_unref (mapped);
+	free_temporary_stream (parent, path);
+	parent = new_fs_stream ("", 0, &path);
+	fd = GMIME_STREAM_FS (parent)->fd;
+	errno = 0;
+	g_assert_null (g_mime_stream_mmap_new (fd, PROT_READ, MAP_PRIVATE));
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_assert_cmpint (fcntl (fd, F_GETFD), >=, 0);
+	free_temporary_stream (parent, path);
+	testsuite_check_passed ();
+}
+
+static void
+test_mmap_substream_errors (void)
+{
+	GMimeStream *parent, *child;
+	char *path, buffer[2];
+
+	testsuite_check ("Mapped views reject excessive counts and closed or malformed operations");
+	parent = new_mmap_stream ("0123456789", 10, &path);
+	child = g_mime_stream_substream (parent, 2, 6);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_read (child, buffer, (size_t) G_MAXSSIZE + 1), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (child, "!", (size_t) G_MAXSSIZE + 1), ==, -1);
+	g_assert_cmpint (errno, ==, EOVERFLOW);
+	g_assert_cmpint (g_mime_stream_tell (child), ==, 2);
+	g_mime_stream_set_bounds (child, 6, 2);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_read (child, buffer, 1), ==, -1);
+	g_assert_cmpint (errno, ==, EINVAL);
+	g_mime_stream_set_bounds (child, 2, 6);
+	g_assert_cmpint (g_mime_stream_close (child), ==, 0);
+	g_assert_cmpint (g_mime_stream_read (parent, buffer, 1), ==, 1);
+	g_assert_cmpint (buffer[0], ==, '0');
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_read (child, buffer, 1), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_write (child, "!", 1), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_seek (child, 2, GMIME_STREAM_SEEK_SET), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_tell (child), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_length (child), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_reset (child), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	errno = 0;
+	g_assert_cmpint (g_mime_stream_flush (child), ==, -1);
+	g_assert_cmpint (errno, ==, EBADF);
+	errno = 0;
+	g_assert_null (g_mime_stream_substream (child, 2, 4));
+	g_assert_cmpint (errno, ==, EBADF);
+	g_assert_true (g_mime_stream_eos (child));
+	g_assert_cmpint (g_mime_stream_read (child, buffer, 0), ==, 0);
+	g_assert_cmpint (g_mime_stream_write (child, "!", 0), ==, 0);
+	g_assert_cmpint (g_mime_stream_close (child), ==, 0);
+	g_object_unref (child);
+	free_temporary_stream (parent, path);
+	testsuite_check_passed ();
+}
+#endif
+
 int
 main (int argc, char **argv)
 {
@@ -967,6 +1256,12 @@ main (int argc, char **argv)
 	test_file_substream_writes_seeks ();
 	test_file_substream_eof_growth ();
 	test_file_substream_errors ();
+#ifdef HAVE_MMAP
+	test_mmap_substream_reads ();
+	test_mmap_substream_writes_seeks ();
+	test_mmap_substream_protections ();
+	test_mmap_substream_errors ();
+#endif
 	testsuite_end ();
 	errors = testsuite_exit ();
 	g_mime_shutdown ();

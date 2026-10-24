@@ -212,6 +212,30 @@ This is an incremental migration, not yet a declaration of feature parity.
   close during finalization. Descriptor/FILE ownership remains unchanged:
   finish all borrowed views before explicitly closing their owning parent.
 
+- GMimeStreamMmap now applies bounded synchronous read/seek behavior to
+  fixed-size mapped storage. Finite end reads return zero, and both reads
+  and partial writes stop at the actual mapping even when declared bounds
+  extend farther. Constructors cap mappings to actual file storage rather
+  than mapping pages past EOF; finite length still reports the declared
+  range. Unbounded lengths clamp an extent before the view's start to zero.
+  Pointer arithmetic occurs only after validating the available byte range.
+  Nonempty reads require PROT_READ and writes require PROT_WRITE; attempts
+  without the requested protection fail with EACCES instead of faulting.
+  Counts above G_MAXSSIZE and overflowing seek arithmetic fail with
+  EOVERFLOW; invalid origins/ranges fail with EINVAL, and closed operations
+  consistently fail with EBADF. Same-position seeks preserve cached EOF;
+  reset clears it, and backward seeks clear it as appropriate.
+  Preserve native absolute SEEK_SET, fixed-size partial writes, zero writes
+  beyond physical storage, and EINVAL at a full finite end. Finite SEEK_END
+  uses the declared end; unbounded SEEK_END uses the fixed absolute mapping
+  extent, correcting the old extra start offset. Positive unbounded END
+  offsets still fail, and negative targets before the start still clamp.
+  Empty root mappings remain unsupported with EINVAL; empty substreams
+  remain valid. Platforms without mmap fail construction with ENOSYS.
+  Ownership is unchanged: views borrow the descriptor and mapping. Finish
+  them before explicitly closing an owning parent, and never truncate an
+  underlying file while a mapping remains active.
+
 - GMimeStreamBlock ports MimeKit's MemoryBlockStream synchronous read/write,
   seek, SetLength and ToArray operations using 2048-byte non-contiguous blocks.
   Existing memory-stream consumers remain unchanged. Reads and writes span
