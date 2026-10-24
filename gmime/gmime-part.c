@@ -139,6 +139,7 @@ g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 	mime_part->content_description_loaded = FALSE;
 	mime_part->content_md5 = NULL;
 	mime_part->content_md5_loaded = FALSE;
+	mime_part->filename = NULL;
 	mime_part->content = NULL;
 	mime_part->content_duration = -1;
 	mime_part->content_duration_loaded = FALSE;
@@ -152,6 +153,7 @@ g_mime_part_finalize (GObject *object)
 	
 	g_free (mime_part->content_description);
 	g_free (mime_part->content_md5);
+	g_free (mime_part->filename);
 	
 	if (mime_part->content)
 		g_object_unref (mime_part->content);
@@ -1167,22 +1169,43 @@ g_mime_part_is_attachment (GMimePart *mime_part)
 /**
  * g_mime_part_set_filename:
  * @mime_part: a #GMimePart object
- * @filename: the file name
+ * @filename: (nullable): the UTF-8 filename, or %NULL to remove it
  *
- * Sets the "filename" parameter on the Content-Disposition and also sets the
- * "name" parameter on the Content-Type.
+ * Sets both the Content-Disposition filename and Content-Type name
+ * parameters without trimming their values. A non-%NULL value creates an
+ * attachment disposition if absent; existing dispositions are preserved.
+ * An empty string is an explicit filename. %NULL removes both parameters
+ * without creating or removing a disposition.
  *
- * Note: The @filename string should be in UTF-8.
+ * Existing parameter objects and formatting metadata are preserved.
+ * Invalid UTF-8 is a programming error and leaves the part unchanged.
  **/
 void
 g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 {
 	GMimeEntity *object = (GMimeEntity *) mime_part;
+	GMimeContentDisposition *disposition;
+	char *value;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
-	g_mime_entity_set_content_disposition_parameter (object, "filename", filename);
-	g_mime_entity_set_content_type_parameter (object, "name", filename);
+	g_return_if_fail (filename == NULL || g_utf8_validate (filename, -1, NULL));
+
+	/* The first update may free a parameter value borrowed by the caller.
+	 * Own a copy until both headers have consumed it, including substrings. */
+	value = g_strdup (filename);
+	disposition = g_mime_entity_get_content_disposition (object);
+	if (disposition) {
+		g_mime_content_disposition_set_filename (disposition, value);
+	} else if (value) {
+		/* Clearing a filename must not create a disposition. Populate a
+		 * new attachment before publishing it to the owning header list. */
+		disposition = g_mime_content_disposition_new ();
+		g_mime_content_disposition_set_filename (disposition, value);
+		g_mime_entity_set_content_disposition (object, disposition);
+		g_object_unref (disposition);
+	}
+	g_mime_content_type_set_name (g_mime_entity_get_content_type (object), value);
+	g_free (value);
 }
 
 
@@ -1190,26 +1213,41 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
  * g_mime_part_get_filename:
  * @mime_part: a #GMimePart object
  *
- * Gets the filename of the specificed mime part, or %NULL if the
- * @mime_part does not have the filename or name parameter set.
+ * Gets the Content-Disposition filename, falling back to the Content-Type
+ * name only if the filename parameter is absent. Trims surrounding Unicode
+ * whitespace without changing either parameter or the raw headers. Empty
+ * and all-whitespace filenames do not trigger the fallback.
  *
- * Returns: the filename of the specified @mime_part or %NULL if
- * neither of the parameters is set. If a file name is set, the
- * returned string will be in UTF-8.
+ * The returned filename is untrusted and is not sanitized for filesystem use.
+ *
+ * Returns: (nullable) (transfer none): the borrowed UTF-8 filename, or %NULL
+ * if neither parameter exists. The value is valid until a subsequent call
+ * returns a different filename or the part is finalized.
  **/
 const char *
 g_mime_part_get_filename (GMimePart *mime_part)
 {
 	GMimeEntity *object = (GMimeEntity *) mime_part;
-	const char *filename = NULL;
+	const char *filename;
+	char *value;
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	if ((filename = g_mime_entity_get_content_disposition_parameter (object, "filename")))
-		return filename;
-	
-	/* check the "name" param in the content-type */
-	return g_mime_entity_get_content_type_parameter (object, "name");
+	filename = g_mime_entity_get_content_disposition_parameter (object, "filename");
+	if (!filename)
+		filename = g_mime_entity_get_content_type_parameter (object, "name");
+
+	/* Re-read the live models on every lookup, including direct parameter
+	 * edits. Keep a trimmed copy to preserve the native borrowed-string API. */
+	value = trim_part_header_value (filename);
+	if (g_strcmp0 (mime_part->filename, value)) {
+		g_free (mime_part->filename);
+		mime_part->filename = value;
+	} else {
+		g_free (value);
+	}
+
+	return mime_part->filename;
 }
 
 

@@ -1270,9 +1270,9 @@ test_disposition_properties (void)
 	check (!strcmp (g_mime_content_disposition_get_filename (disposition), "file.txt"), "filename assignment safely copies aliased substrings");
 	g_mime_content_disposition_set_filename (disposition, "  caf\303\251.txt  ");
 	check (!strcmp (g_mime_content_disposition_get_filename (disposition), "  caf\303\251.txt  ") &&
-	       !strcmp (g_mime_part_get_filename (part), "  caf\303\251.txt  ") &&
+	       !strcmp (g_mime_part_get_filename (part), "caf\303\251.txt") &&
 	       !strcmp (g_mime_content_type_get_name (type), "type-fallback.txt"),
-	       "disposition filenames preserve whitespace and do not synchronize the Content-Type name");
+	       "disposition filenames preserve whitespace while part lookup trims without synchronizing the Content-Type name");
 	g_mime_content_disposition_set_filename (disposition, "");
 	check (g_mime_content_disposition_get_filename (disposition) && !*g_mime_content_disposition_get_filename (disposition) &&
 	       !*g_mime_part_get_filename (part), "an empty disposition filename does not trigger the part-level fallback");

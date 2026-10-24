@@ -71,6 +71,7 @@ struct _GMimePart {
 	gboolean content_description_loaded;
 	gboolean encoding_loaded;
 	gboolean content_md5_loaded;
+	char *filename;
 };
 
 struct _GMimePartClass {

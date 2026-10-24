@@ -100,6 +100,168 @@ test_content_disposition (GMimePart *mime_part, const char *filename)
 }
 
 static void
+test_filename_property (void)
+{
+	static const char filename[] = " \302\205caf\303\251.txt\343\200\200 ";
+	GMimePart *part;
+	GMimeEntity *entity;
+	GMimeContentType *type, *replacement;
+	GMimeContentDisposition *disposition;
+	GMimeHeaderList *headers;
+	GMimeHeader *header;
+	GMimeParam *param;
+	const char *stored;
+	char *type_raw, *disposition_raw;
+	guint text;
+
+	testsuite_check ("Filename lookup trims live parameters without changing raw headers");
+	for (text = 0; text < 2; text++) {
+		part = text ? GMIME_PART (g_mime_text_part_new ()) : g_mime_part_new ();
+		entity = GMIME_ENTITY (part);
+		headers = g_mime_entity_get_header_list (entity);
+		type = g_mime_entity_get_content_type (entity);
+		header = g_mime_header_list_get_header (headers, "Content-Type");
+		type_raw = g_strdup (g_mime_header_get_raw_value (header));
+		g_mime_part_set_filename (part, NULL);
+		g_assert_null (g_mime_part_get_filename (part));
+		g_assert_null (g_mime_entity_get_content_disposition (entity));
+		g_assert_false (g_mime_header_list_contains (headers, "Content-Disposition"));
+		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, type_raw);
+		g_free (type_raw);
+
+		g_mime_content_type_set_name (type, " \302\240fallback.txt\342\200\257 ");
+		type_raw = g_strdup (g_mime_header_get_raw_value (header));
+		stored = g_mime_part_get_filename (part);
+		g_assert_cmpstr (stored, ==, "fallback.txt");
+		g_assert_true (g_mime_part_get_filename (part) == stored);
+		g_assert_cmpstr (g_mime_content_type_get_name (type), ==, " \302\240fallback.txt\342\200\257 ");
+		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, type_raw);
+		g_assert_null (g_mime_entity_get_content_disposition (entity));
+		g_free (type_raw);
+
+		g_mime_part_set_filename (part, filename);
+		disposition = g_mime_entity_get_content_disposition (entity);
+		g_assert_true (g_mime_part_is_attachment (part));
+		g_assert_cmpstr (g_mime_content_type_get_name (type), ==, filename);
+		g_assert_cmpstr (g_mime_content_disposition_get_filename (disposition), ==, filename);
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "caf\303\251.txt");
+		g_mime_entity_set_disposition (entity, "inline");
+		g_mime_content_disposition_set_parameter (disposition, "keep", "stable");
+		param = g_mime_param_list_get_parameter (g_mime_content_disposition_get_parameters (disposition), "filename");
+		g_mime_param_set_charset (param, "iso-8859-1");
+		g_mime_param_set_lang (param, "fr");
+		g_mime_param_set_encoding_method (param, GMIME_PARAM_ENCODING_METHOD_RFC2231);
+		g_mime_param_set_always_quote (param, TRUE);
+		type_raw = g_strdup (g_mime_header_get_raw_value (header));
+		header = g_mime_header_list_get_header (headers, "Content-Disposition");
+		disposition_raw = g_strdup (g_mime_header_get_raw_value (header));
+		g_mime_part_set_filename (part, filename);
+		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, disposition_raw);
+		g_assert_cmpstr (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Type")), ==, type_raw);
+		g_free (type_raw);
+		g_free (disposition_raw);
+		g_mime_part_set_filename (part, "changed.txt");
+		g_assert_true (g_mime_entity_get_content_disposition (entity) == disposition);
+		g_assert_cmpstr (g_mime_entity_get_disposition (entity), ==, "inline");
+		g_assert_true (g_mime_param_list_get_parameter (g_mime_content_disposition_get_parameters (disposition), "filename") == param);
+		g_assert_cmpstr (g_mime_param_get_charset (param), ==, "iso-8859-1");
+		g_assert_cmpstr (g_mime_param_get_lang (param), ==, "fr");
+		g_assert_cmpint (g_mime_param_get_encoding_method (param), ==, GMIME_PARAM_ENCODING_METHOD_RFC2231);
+		g_assert_true (g_mime_param_get_always_quote (param));
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "changed.txt");
+		g_mime_part_set_filename (part, NULL);
+		g_assert_null (g_mime_part_get_filename (part));
+		g_assert_null (g_mime_content_type_get_name (type));
+		g_assert_null (g_mime_content_disposition_get_filename (disposition));
+		g_assert_cmpstr (g_mime_entity_get_disposition (entity), ==, "inline");
+		g_assert_cmpstr (g_mime_content_disposition_get_parameter (disposition, "keep"), ==, "stable");
+		disposition_raw = g_strdup (g_mime_header_get_raw_value (header));
+		g_mime_part_set_filename (part, NULL);
+		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, disposition_raw);
+		g_free (disposition_raw);
+
+		g_mime_part_set_filename (part, "\v\302\205\343\200\200");
+		g_mime_content_type_set_name (type, "fallback.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "");
+		g_mime_content_disposition_set_filename (disposition, "");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "");
+		g_mime_content_disposition_set_filename (disposition, NULL);
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "fallback.txt");
+		replacement = g_mime_content_type_new ("text", "plain");
+		g_mime_content_type_set_name (replacement, " replacement.txt ");
+		g_mime_entity_set_content_type (entity, replacement);
+		g_object_unref (replacement);
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "replacement.txt");
+		header = g_mime_header_list_get_header (headers, "Content-Type");
+		g_mime_header_set_raw_value (header, " text/plain; name=\" raw fallback.txt \"\n");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw fallback.txt");
+		header = g_mime_header_list_get_header (headers, "Content-Disposition");
+		g_mime_header_set_raw_value (header, " attachment; filename=\" raw primary.txt \"\n");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw primary.txt");
+		g_mime_header_list_remove (headers, "Content-Disposition");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw fallback.txt");
+		g_object_unref (part);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_filename_assignment_aliases (void)
+{
+	GMimePart *part = g_mime_part_new ();
+	GMimeEntity *entity = GMIME_ENTITY (part);
+	GMimeContentType *type = g_mime_entity_get_content_type (entity);
+	GMimeContentDisposition *disposition;
+	GMimeHeaderList *headers;
+	char *type_raw, *disposition_raw;
+	guint existing;
+
+	testsuite_check ("Filename assignments safely copy borrowed values and substrings");
+	g_mime_part_set_filename (part, "prefix-borrowed.txt");
+	disposition = g_mime_entity_get_content_disposition (entity);
+	g_mime_part_set_filename (part, g_mime_content_disposition_get_filename (disposition) + 7);
+	g_assert_cmpstr (g_mime_content_disposition_get_filename (disposition), ==, "borrowed.txt");
+	g_assert_cmpstr (g_mime_content_type_get_name (type), ==, "borrowed.txt");
+	g_mime_part_set_filename (part, "xgetter.txt");
+	g_mime_part_set_filename (part, g_mime_part_get_filename (part) + 1);
+	g_assert_cmpstr (g_mime_part_get_filename (part), ==, "getter.txt");
+	g_assert_cmpstr (g_mime_content_type_get_name (type), ==, "getter.txt");
+	g_mime_content_type_set_name (type, "xtype.txt");
+	g_mime_part_set_filename (part, g_mime_content_type_get_name (type) + 1);
+	g_assert_cmpstr (g_mime_part_get_filename (part), ==, "type.txt");
+	g_assert_cmpstr (g_mime_content_type_get_name (type), ==, "type.txt");
+	g_mime_part_set_filename (part, g_mime_part_get_filename (part));
+	g_assert_cmpstr (g_mime_part_get_filename (part), ==, "type.txt");
+	g_object_unref (part);
+	testsuite_check_passed ();
+
+	testsuite_check ("Invalid UTF-8 filenames leave models, headers and cached lookup unchanged");
+	for (existing = 0; existing < 2; existing++) {
+		part = g_mime_part_new ();
+		entity = GMIME_ENTITY (part);
+		headers = g_mime_entity_get_header_list (entity);
+		if (existing)
+			g_mime_part_set_filename (part, "stable.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, existing ? "stable.txt" : NULL);
+		type_raw = g_strdup (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Type")));
+		disposition_raw = existing ? g_strdup (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Disposition"))) : NULL;
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+		g_mime_part_set_filename (part, "\377");
+		g_test_assert_expected_messages ();
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, existing ? "stable.txt" : NULL);
+		g_assert_cmpstr (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Type")), ==, type_raw);
+		if (existing)
+			g_assert_cmpstr (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Disposition")), ==, disposition_raw);
+		else
+			g_assert_null (g_mime_entity_get_content_disposition (entity));
+		g_free (type_raw);
+		g_free (disposition_raw);
+		g_object_unref (part);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_content_description (GMimePart *mime_part, const char *description)
 {
 	const char *what = "Content-Description";
@@ -1124,6 +1286,8 @@ int main (int argc, char **argv)
 	testsuite_start ("GMimePart");
 	
 	test_content_headers (datadir);
+	test_filename_property ();
+	test_filename_assignment_aliases ();
 	test_content_md5_vectors ();
 	test_content_md5_assignment ();
 	test_content_md5_lazy_property ();

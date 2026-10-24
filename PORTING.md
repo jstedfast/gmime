@@ -2085,6 +2085,31 @@ assignment replaces duplicates even when the first value is already equal.
 Comparison occurs before trimming, matching MimeKit. Borrowed values,
 including substrings of the getter's value, can safely be assigned back.
 
+### Part filename property
+
+GMimePart's get_filename()/set_filename() now follow MimeKit's FileName
+property semantics. The getter selects Content-Disposition's filename
+parameter before Content-Type's name, falling back only when filename is
+absent. It trims surrounding Unicode whitespace without modifying the
+parameters or raw headers. Empty and all-whitespace filenames return ""
+and do not trigger the fallback. Filenames remain untrusted and are not
+sanitized for filesystem use.
+
+The native getter still returns a borrowed UTF-8 string. It refreshes an
+owned trimmed copy from the live models on each lookup, including direct
+parameter edits and model/header replacements. Equal results preserve the
+borrowed pointer; a different result or part finalization invalidates it.
+
+The setter preserves the supplied text in both filename and name parameters.
+A non-NULL value creates an attachment disposition if necessary; existing
+dispositions and parameter metadata are preserved. NULL removes both
+parameters without creating a disposition or removing an existing one.
+Empty strings remain explicit parameter values. Invalid UTF-8 leaves the
+part unchanged and reports a GLib precondition failure. Borrowed getter
+values and parameter substrings are safe to assign back, including when
+the first parameter update releases the source of the second update.
+These semantics apply to GMimeTextPart as well as GMimePart.
+
 ### Content-MD5 property
 
 GMimePart's get_content_md5()/set_content_md5() now follow MimeKit's
