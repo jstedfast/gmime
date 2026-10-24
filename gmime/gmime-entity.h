@@ -52,7 +52,6 @@ typedef struct _GMimeVisitor GMimeVisitor;
  * @parent_object: parent #GObject
  * @disposition: a #GMimeContentDisposition
  * @content_type: a #GMimeContentType
- * @content_id: a Content-Id
  * @headers: a #GMimeHeaderList
  *
  * Base class for all MIME parts.
@@ -63,14 +62,15 @@ struct _GMimeEntity {
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
 	GMimeHeaderList *headers;
-	char *content_id;
 
 	/* < private > */
-	gboolean ensure_newline;
+	char *content_id;
 	char *content_base;
 	char *content_location;
-	gboolean content_base_loaded;
-	gboolean content_location_loaded;
+
+	unsigned int ensure_newline : 1;
+	unsigned int content_base_loaded : 1;
+	unsigned int content_location_loaded : 1;
 };
 
 struct _GMimeEntityClass {

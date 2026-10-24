@@ -49,8 +49,6 @@ typedef struct _GMimePartClass GMimePartClass;
  * @parent_object: parent #GMimeEntity
  * @encoding: a #GMimeContentEncoding
  * @openpgp: a #GMimeOpenPGPData
- * @content_description: Content-Description string
- * @content_md5: Content-MD5 string
  * @content: a #GMimeContent representing the MIME part's content
  *
  * A leaf-node MIME part object.
@@ -60,18 +58,19 @@ struct _GMimePart {
 	
 	GMimeContentEncoding encoding;
 	GMimeOpenPGPData openpgp;
-	char *content_description;
-	char *content_md5;
-	
 	GMimeContent *content;
 
 	/* < private > */
-	int content_duration;
-	gboolean content_duration_loaded;
-	gboolean content_description_loaded;
-	gboolean encoding_loaded;
-	gboolean content_md5_loaded;
+	char *content_description;
+	char *content_md5;
 	char *filename;
+
+	int content_duration;
+
+	unsigned int content_duration_loaded : 1;
+	unsigned int content_description_loaded : 1;
+	unsigned int encoding_loaded : 1;
+	unsigned int content_md5_loaded : 1;
 };
 
 struct _GMimePartClass {

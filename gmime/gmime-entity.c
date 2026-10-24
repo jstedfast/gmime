@@ -959,50 +959,42 @@ _g_mime_is_content_uri (const char *uri, gboolean absolute)
 	return g_uri_split (uri, G_URI_FLAGS_ENCODED, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
-static const char *
-get_content_uri (GMimeEntity *object, const char *name, char **cache, gboolean *loaded, gboolean absolute)
+/* Loaded-state bookkeeping stays in the accessors because bitfields cannot
+ * be addressed. These helpers only load or replace the cached URI strings. */
+static void
+load_content_uri (GMimeEntity *object, const char *name, char **cache, gboolean absolute)
 {
 	GMimeHeader *header;
 	const char *value, *end, *previous;
 	char *uri;
 
-	if (!*loaded) {
-		header = g_mime_header_list_get_header (object->headers, name);
-		if (header && (value = g_mime_header_get_value (header)) && g_utf8_validate (value, -1, NULL)) {
-			while (*value && _g_mime_is_unicode_whitespace (g_utf8_get_char (value)))
-				value = g_utf8_next_char (value);
-			end = value + strlen (value);
-			while (end > value) {
-				previous = g_utf8_find_prev_char (value, end);
-				if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
-					break;
-				end = previous;
-			}
-			uri = g_strndup (value, end - value);
-			if (_g_mime_is_content_uri (uri, absolute))
-				*cache = uri;
-			else
-				g_free (uri);
+	header = g_mime_header_list_get_header (object->headers, name);
+	if (header && (value = g_mime_header_get_value (header)) && g_utf8_validate (value, -1, NULL)) {
+		while (*value && _g_mime_is_unicode_whitespace (g_utf8_get_char (value)))
+			value = g_utf8_next_char (value);
+		end = value + strlen (value);
+		while (end > value) {
+			previous = g_utf8_find_prev_char (value, end);
+			if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
+				break;
+			end = previous;
 		}
-		*loaded = TRUE;
+		uri = g_strndup (value, end - value);
+		if (_g_mime_is_content_uri (uri, absolute))
+			*cache = uri;
+		else
+			g_free (uri);
 	}
-	return *cache;
 }
 
 static void
-set_content_uri (GMimeEntity *object, const char *name, const char *uri, char **cache, gboolean *loaded, gboolean absolute)
+set_content_uri (GMimeEntity *object, const char *name, const char *uri, char **cache)
 {
 	char *copy;
-
-	g_return_if_fail (uri == NULL || _g_mime_is_content_uri (uri, absolute));
-
-	if (*loaded && !g_strcmp0 (*cache, uri))
-		return;
 
 	copy = g_strdup (uri);
 	g_free (*cache);
 	*cache = copy;
-	*loaded = TRUE;
 
 	_g_mime_entity_block_header_list_changed (object);
 	if (copy)
@@ -1030,8 +1022,13 @@ void
 g_mime_entity_set_content_base (GMimeEntity *object, const char *uri)
 {
 	g_return_if_fail (GMIME_IS_ENTITY (object));
+	g_return_if_fail (uri == NULL || _g_mime_is_content_uri (uri, TRUE));
 
-	set_content_uri (object, "Content-Base", uri, &object->content_base, &object->content_base_loaded, TRUE);
+	if (object->content_base_loaded && !g_strcmp0 (object->content_base, uri))
+		return;
+
+	object->content_base_loaded = TRUE;
+	set_content_uri (object, "Content-Base", uri, &object->content_base);
 }
 
 /**
@@ -1050,7 +1047,12 @@ g_mime_entity_get_content_base (GMimeEntity *object)
 {
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 
-	return get_content_uri (object, "Content-Base", &object->content_base, &object->content_base_loaded, TRUE);
+	if (!object->content_base_loaded) {
+		load_content_uri (object, "Content-Base", &object->content_base, TRUE);
+		object->content_base_loaded = TRUE;
+	}
+
+	return object->content_base;
 }
 
 /**
@@ -1067,8 +1069,13 @@ void
 g_mime_entity_set_content_location (GMimeEntity *object, const char *uri)
 {
 	g_return_if_fail (GMIME_IS_ENTITY (object));
+	g_return_if_fail (uri == NULL || _g_mime_is_content_uri (uri, FALSE));
 
-	set_content_uri (object, "Content-Location", uri, &object->content_location, &object->content_location_loaded, FALSE);
+	if (object->content_location_loaded && !g_strcmp0 (object->content_location, uri))
+		return;
+
+	object->content_location_loaded = TRUE;
+	set_content_uri (object, "Content-Location", uri, &object->content_location);
 }
 
 /**
@@ -1087,7 +1094,12 @@ g_mime_entity_get_content_location (GMimeEntity *object)
 {
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 
-	return get_content_uri (object, "Content-Location", &object->content_location, &object->content_location_loaded, FALSE);
+	if (!object->content_location_loaded) {
+		load_content_uri (object, "Content-Location", &object->content_location, FALSE);
+		object->content_location_loaded = TRUE;
+	}
+
+	return object->content_location;
 }
 
 

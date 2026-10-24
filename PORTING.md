@@ -2047,6 +2047,15 @@ Components accept ASCII digits and leading zeros, without signs or
 whitespace, and reject values above 2147483647. Navigation is iterative.
 The legacy GMimePartIter API and its path conventions are unchanged.
 
+### Packed entity state
+
+The private loaded-state flags in GMimeEntity and GMimePart use unsigned
+one-bit fields. GMimeEntity groups its newline flag with the loaded flags
+after its pointers to avoid wasting space on alignment padding. Lazy cache
+loading, invalidation, and no-op assignments retain their existing behavior.
+These instance layout changes require rebuilding the library and all
+consumers, including subclasses and generated bindings.
+
 ### Content duration
 
 GMimePart now exposes get_content_duration() and set_content_duration(),
