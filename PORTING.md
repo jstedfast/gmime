@@ -99,10 +99,9 @@ This is an incremental migration, not yet a declaration of feature parity.
   containers at the configured limit become GMimePart leaves retaining
   their raw body content. The root entity has depth 0; each multipart
   child or embedded-message body adds one level. Existing warning callbacks
-  report limit violations. The legacy recursive parser is still in use;
-  an explicit-stack entity reader and private header/leaf model adapter
-  are available. Container/message model assembly, public parser integration
-  and the iterative writer remain separate work.
+  report limit violations. Public parsing now uses the explicit-stack
+  reader and reader-backed model adapter. Synchronous entity/message
+  serialization uses the private iterative writer described below.
 
 - `GMimeMultipartReport` is a `GMimeMultipart` subclass for multipart/report.
   Its constructor requires a UTF-8 report type; get/set_report_type()
@@ -2673,9 +2672,9 @@ Windows validation remains pending.
 
 Public parser/loading integration and optional OpenPGP model detection are
 completed below, as is signature verification's special raw-marker CRLF
-canonicalization. Async/cancellation remains separate work. Multipart
-serialization still uses GMime's recursive virtual writer dispatch rather
-than MimeKit's newer explicit writer-frame stack.
+canonicalization. Synchronous serialization now uses MimeKit's explicit
+writer-frame stack, as described below. Async/cancellation remains separate
+work.
 
 ### Reader-backed mailbox model construction
 
@@ -2781,19 +2780,19 @@ with existing warnings. Native Windows validation remains pending.
 
 ### Signature-verification serialization
 
-Multipart/signed verification now sets MimeKit's private VerifyingSignature
-formatting state, which survives nested formatting-option clones without
-changing public or default options. Preserved opening, closing and trailing
+Multipart/signed verification now selects the private writer's
+VerifyingSignature state rather than storing it in formatting options,
+matching MimeKit's updated ownership. Preserved opening, closing and trailing
 multipart delimiters convert bare LF to CRLF only in this mode. Existing
 CRLF, lone CR, binary bytes, whitespace and unterminated marker tails remain
 intact, including double/triple boundary runs. Ordinary serialization still
 preserves raw markers byte-for-byte, even with DOS output selected.
 
-The same mode ports MimePart's mixed-newline compatibility rule: retain
+The same mode ports MimeWriter's mixed-newline compatibility rule: retain
 original parsed body bytes when the stored newline hint is Mixed and no
 transfer-encoding conversion is needed. Binary bodies remain unchanged;
 transcoding still takes precedence over pass-through. MimeWriter's raw-marker
-explanation and MimePart's mixed-newline explanation and issue reference are
+explanation and its mixed-newline explanation and issue reference are
 retained as adapted inline comments.
 
 Verification rejects signatures without leaf content and propagates
@@ -2815,6 +2814,51 @@ normal core suite remains at 34/35 programs, with only test-core's two
 established text-format assertions failing. Full build, GIR, typelib, VAPI
 and GTK-doc generation pass with existing warnings. Native Windows
 validation remains pending.
+
+### Synchronous iterative MIME writing
+
+The four built-in entity/message serializers now delegate to a private
+GMimeWriter, porting MimeKit's synchronous MimeWriter traversal. Multipart
+frames retain their options, next child, cached opening marker and final
+newline requirement. Embedded messages and message bodies are tail
+continuations rather than recursive calls. Frames and temporary formatting
+options are released on success and failure, with checked byte counts and
+preservation of the original I/O error.
+
+Newline requirements are passed explicitly to leaf content writing;
+serializing a message no longer changes or clears its body's
+ensure_newline flag. Embedded-message options can both enable and disable
+newline completion. Signed children clear hidden-header filtering and
+disable international header reformatting without changing caller options.
+Raw markers, binary bodies, truncated multiparts and mixed-newline
+verification retain their existing reader-backed behavior. Constructed
+legacy multiparts retain their prologue/epilogue and delimiter conventions,
+including suppression of the closing delimiter when no boundary is set.
+
+GMime deliberately retains GObject write_to_stream overrides, unlike
+MimeKit's direct built-in descendant dispatch. Custom writers still receive
+whole-entity/content-only calls and can chain to their parent writer. A
+callback-scoped, thread-local context carries verification and explicit
+newline requirements through parent chaining, without putting verification
+state back into formatting options. Built-in traversal remains iterative;
+recursion introduced by a custom override is the override's responsibility.
+MimeKit's explanatory inline comments are adapted alongside these paths.
+
+Native regressions compare exact full/content-only output through 8,192
+levels of multipart, embedded-message and mixed nesting with both newline
+formats. They also exercise deep output failures, model-state preservation,
+custom dispatch, signed option scoping, reentrant writes and parent chaining.
+Model destruction remains recursive; depth fixtures retain descendants
+while releasing parents so teardown does not obscure writer behavior.
+The same regressions pass with a 512 KiB process stack.
+
+All 80,472 ordinary public parser/model cases and 17,568 signature-output
+cases match the current actual MimeKit source in normal and ASan/UBSan
+builds. Focused reader/model/mbox tests pass with leak checking enabled.
+The full normal core suite remains at 34/35 programs, with only test-core's
+two established text-format assertions failing. Full build, GIR, typelib,
+VAPI and GTK-doc generation pass with existing warnings.
+Async/cancellation and native Windows validation remain separate work.
 
 ### Part content-type constructors
 
@@ -3127,6 +3171,6 @@ clean-build, bindings, and cross-platform validation remain pending.
   dispatch, scalar fallbacks, differential coverage, and benchmarks.
 - Replace recursive MIME parsing with an explicit-stack GMimeReader and
   construct the message model on top of it.
-- Port iterative serialization and missing formatting controls.
+- Complete remaining formatting controls and async/cancellation support.
 - Add the missing specialized multipart, report, notification, and
   header-only entity types and message-model helpers.

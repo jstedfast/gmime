@@ -735,8 +735,8 @@ message_headers_cleared (GMimeEntity *object)
 }
 
 
-static ssize_t
-write_headers_to_stream (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream)
+ssize_t
+_g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	GMimeEntity *mime_part = message->mime_part;
@@ -839,7 +839,7 @@ message_get_headers (GMimeEntity *object, GMimeFormatOptions *options)
 	ba = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array ((GMimeStreamMem *) stream, ba);
-	if (write_headers_to_stream (object, options, stream) == -1) {
+	if (_g_mime_message_write_headers (object, options, stream) == -1) {
 		int errsv = errno;
 
 		g_object_unref (stream);
@@ -858,45 +858,7 @@ message_get_headers (GMimeEntity *object, GMimeFormatOptions *options)
 static ssize_t
 message_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
-	GMimeMessage *message = (GMimeMessage *) object;
-	GMimeEntity *mime_part = message->mime_part;
-	ssize_t nwritten, total = 0;
-	const char *newline;
-	GMimeHeaderList *headers;
-	
-	if (!content_only) {
-		if ((nwritten = write_headers_to_stream (object, options, stream)) == -1)
-			return -1;
-		
-		total += nwritten;
-		
-		headers = mime_part != NULL ? mime_part->headers : object->headers;
-		if (headers->has_body_separator) {
-			newline = g_mime_format_options_get_newline (options);
-			if (strlen (newline) > (size_t) (G_MAXSSIZE - total)) {
-				errno = EOVERFLOW;
-				return -1;
-			}
-			if ((nwritten = _g_mime_stream_write_all (stream, newline, strlen (newline))) == -1)
-				return -1;
-			total += nwritten;
-		}
-	}
-	
-	if (mime_part) {
-		GMimeEntityClass *klass = GMIME_ENTITY_GET_CLASS (mime_part);
-		
-		mime_part->ensure_newline = ((GMimeEntity *) message)->ensure_newline;
-		nwritten = klass->write_to_stream (mime_part, options, TRUE, stream);
-		mime_part->ensure_newline = FALSE;
-		
-		if (nwritten == -1)
-			return -1;
-		
-		total += nwritten;
-	}
-	
-	return total;
+	return _g_mime_writer_write (object, options, content_only, stream);
 }
 
 static void

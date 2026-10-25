@@ -103,6 +103,7 @@ gmime_sources = files(
   'gmime-types.c',
   'gmime-utils.c',
   'gmime-visitor.c',
+  'gmime-writer.c',
   'gmime-internet-address.c',
   'gmime-mailbox-address.c',
   'gmime-group-address.c',

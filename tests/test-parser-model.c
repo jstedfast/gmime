@@ -2013,6 +2013,263 @@ test_signature_markers (void)
 	g_clear_pointer (&verify_signature_bytes, g_byte_array_unref);
 }
 
+static GByteArray *
+serialize_writer (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only)
+{
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	GByteArray *bytes;
+	ssize_t written;
+
+	written = content_only ? g_mime_entity_write_content_to_stream (entity, options, stream) :
+		g_mime_entity_write_to_stream (entity, options, stream);
+	bytes = g_byte_array_ref (g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream));
+	g_assert_cmpint (written, ==, bytes->len);
+	g_object_unref (stream);
+	return bytes;
+}
+
+static void
+test_writer_depth (void)
+{
+	const guint depth = 8192;
+	guint kind, dos, i;
+
+	testsuite_check ("Iterative writers preserve exact bytes through deep multipart, message and mixed graphs");
+	for (kind = 0; kind < 3; kind++) {
+		for (dos = 0; dos < 2; dos++) {
+			GMimeFormatOptions *options = g_mime_format_options_new ();
+			GMimePart *leaf = g_mime_part_new_with_type ("application", "octet-stream");
+			GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("A\0B\nC\rD", 7);
+			GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+			GPtrArray *entities = g_ptr_array_new ();
+			GByteArray *flags = g_byte_array_new ();
+			GByteArray *leaf_bytes, *bytes;
+			GMimeEntity *root = (GMimeEntity *) leaf;
+			ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+			const char *newline = dos ? "\r\n" : "\n";
+			char *multipart_prefix, *message_prefix, *ending;
+			GString *expected = g_string_new (NULL);
+			gsize header_length;
+
+			g_mime_format_options_set_newline_format (options, dos ? GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			g_mime_part_set_content (leaf, content);
+			g_mime_part_set_content_encoding (leaf, GMIME_CONTENT_ENCODING_BINARY);
+			g_object_unref (content);
+			g_object_unref (stream);
+			g_ptr_array_add (entities, leaf);
+			leaf_bytes = serialize_writer (root, options, FALSE);
+			multipart_prefix = g_strdup_printf ("Content-Type: multipart/mixed; boundary=deep%s%s--deep%s",
+							  newline, newline, newline);
+			message_prefix = g_strdup_printf ("Content-Type: message/rfc822%s%sMIME-Version: 1.0%s",
+							newline, newline, newline);
+			ending = g_strdup_printf ("%s--deep--%s", newline, newline);
+			for (i = 0; i < depth; i++) {
+				if (kind == 0 || (kind == 2 && (i & 1))) {
+					GMimeMultipart *multipart = g_mime_multipart_new ();
+
+					g_mime_multipart_set_boundary (multipart, "deep");
+					g_mime_multipart_add (multipart, root);
+					root = (GMimeEntity *) multipart;
+				} else {
+					GMimeMessage *message = g_mime_message_new (FALSE);
+
+					g_mime_message_set_mime_part (message, root);
+					g_ptr_array_add (entities, message);
+					root = (GMimeEntity *) g_mime_message_part_new_with_message ("rfc822", message);
+				}
+				g_ptr_array_add (entities, root);
+			}
+			for (i = 0; i < entities->len; i++) {
+				guint8 ensure = ((GMimeEntity *) entities->pdata[i])->ensure_newline;
+
+				g_byte_array_append (flags, &ensure, 1);
+			}
+			for (i = depth; i > 0; i--)
+				g_string_append (expected, kind == 0 || (kind == 2 && ((i - 1) & 1)) ?
+						 multipart_prefix : message_prefix);
+			g_string_append_len (expected, (const char *) leaf_bytes->data, leaf_bytes->len);
+			for (i = 0; i < depth; i++)
+				if (kind == 0 || (kind == 2 && (i & 1)))
+					g_string_append (expected, ending);
+			bytes = serialize_writer (root, options, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
+			g_byte_array_unref (bytes);
+			header_length = strlen (GMIME_IS_MULTIPART (root) ?
+				"Content-Type: multipart/mixed; boundary=deep" : "Content-Type: message/rfc822") + 2 * strlen (newline);
+			bytes = serialize_writer (root, options, TRUE);
+			g_assert_cmpmem (bytes->data, bytes->len, expected->str + header_length, expected->len - header_length);
+			g_byte_array_unref (bytes);
+			output->limit = expected->len / 2;
+			errno = 0;
+			g_assert_cmpint (g_mime_entity_write_to_stream (root, options, (GMimeStream *) output), ==, -1);
+			g_assert_cmpint (errno, ==, EIO);
+			for (i = 0; i < entities->len; i++)
+				g_assert_cmpint (((GMimeEntity *) entities->pdata[i])->ensure_newline, ==, flags->data[i]);
+
+			/* Keep each descendant alive until its parent has been released:
+			 * model finalizers, unlike the writer, still recurse. */
+			for (i = entities->len; i > 0; i--)
+				g_object_unref (entities->pdata[i - 1]);
+			g_ptr_array_unref (entities);
+			g_byte_array_unref (flags);
+			g_byte_array_unref (leaf_bytes);
+			g_object_unref (output);
+			g_mime_format_options_free (options);
+			g_string_free (expected, TRUE);
+			g_free (multipart_prefix);
+			g_free (message_prefix);
+			g_free (ending);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMimePart parent_object;
+	GMimeEntity *nested;
+	guint calls;
+	gboolean content_only, international, hidden, fail;
+} ModelWriterPart;
+
+typedef GMimePartClass ModelWriterPartClass;
+
+G_DEFINE_TYPE (ModelWriterPart, model_writer_part, GMIME_TYPE_PART)
+
+static ssize_t
+model_writer_part_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
+{
+	ModelWriterPart *part = (ModelWriterPart *) entity;
+
+	part->calls++;
+	part->content_only = content_only;
+	part->international = g_mime_format_options_get_allow_international (options);
+	part->hidden = g_mime_format_options_is_hidden_header (options, "X-Test");
+	if (part->fail) {
+		errno = EACCES;
+		return -1;
+	}
+	if (part->nested) {
+		GByteArray *bytes = serialize_writer (part->nested, options, FALSE);
+
+		g_byte_array_unref (bytes);
+	}
+	return GMIME_ENTITY_CLASS (model_writer_part_parent_class)->write_to_stream (entity, options, content_only, stream);
+}
+
+static void
+model_writer_part_class_init (ModelWriterPartClass *klass)
+{
+	GMIME_ENTITY_CLASS (klass)->write_to_stream = model_writer_part_write;
+}
+
+static void
+model_writer_part_init (ModelWriterPart *part)
+{
+}
+
+static void
+test_writer_dispatch (void)
+{
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeMultipart *multipart = g_mime_multipart_new_with_subtype ("signed");
+	ModelWriterPart *part = g_object_new (model_writer_part_get_type (), NULL);
+	ModelWriterPart *nested = g_object_new (model_writer_part_get_type (), NULL);
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("body", 4);
+	GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	GMimeContentType *type = g_mime_content_type_new ("text", "plain");
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GByteArray *bytes;
+	ModelOutput *output;
+	guint calls;
+
+	testsuite_check ("Custom writers retain dispatch, parent chaining, formatting scope and reentrant writes");
+	g_mime_entity_set_content_type ((GMimeEntity *) part, type);
+	g_mime_entity_set_content_type ((GMimeEntity *) nested, type);
+	g_mime_part_set_content ((GMimePart *) part, content);
+	g_mime_part_set_content ((GMimePart *) nested, content);
+	g_mime_multipart_set_boundary (multipart, "signed");
+	g_mime_multipart_add (multipart, (GMimeEntity *) part);
+	g_mime_format_options_set_allow_international (options, TRUE);
+	g_mime_format_options_add_hidden_header (options, "X-Test");
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	part->nested = (GMimeEntity *) nested;
+
+	bytes = serialize_writer ((GMimeEntity *) part, options, FALSE);
+	g_assert_cmpuint (part->calls, ==, 1);
+	g_assert_cmpuint (nested->calls, ==, 1);
+	g_assert_true (part->international);
+	g_assert_true (part->hidden);
+	g_assert_false (part->content_only);
+	g_byte_array_unref (bytes);
+	bytes = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+	g_assert_cmpuint (part->calls, ==, 2);
+	g_assert_cmpuint (nested->calls, ==, 2);
+	g_assert_false (part->international);
+	g_assert_false (part->hidden);
+	g_assert_false (nested->international);
+	g_assert_false (nested->hidden);
+	g_assert_true (g_mime_format_options_get_allow_international (options));
+	g_assert_true (g_mime_format_options_is_hidden_header (options, "X-Test"));
+	g_byte_array_unref (bytes);
+
+	output = g_object_new (model_output_get_type (), NULL);
+	part->fail = TRUE;
+	errno = 0;
+	g_assert_cmpint (g_mime_entity_write_to_stream ((GMimeEntity *) multipart, options, (GMimeStream *) output), ==, -1);
+	g_assert_cmpint (errno, ==, EACCES);
+	part->fail = FALSE;
+	bytes = serialize_writer ((GMimeEntity *) part, options, FALSE);
+	g_assert_true (part->international);
+	g_assert_true (part->hidden);
+	g_byte_array_unref (bytes);
+	testsuite_check_passed ();
+
+	testsuite_check ("Message writing passes newline requirements without mutating its body");
+	g_mime_message_set_mime_part (message, (GMimeEntity *) part);
+	((GMimeEntity *) message)->ensure_newline = FALSE;
+	((GMimeEntity *) part)->ensure_newline = TRUE;
+	calls = part->calls;
+	bytes = serialize_writer ((GMimeEntity *) message, options, TRUE);
+	g_assert_cmpmem (bytes->data, bytes->len, "body", 4);
+	g_assert_cmpuint (part->calls, ==, calls + 1);
+	g_assert_true (part->content_only);
+	g_assert_true (((GMimeEntity *) part)->ensure_newline);
+	g_byte_array_unref (bytes);
+	bytes = serialize_writer ((GMimeEntity *) part, options, TRUE);
+	g_assert_cmpmem (bytes->data, bytes->len, "body\n", 5);
+	g_byte_array_unref (bytes);
+	output->written = 0;
+	output->limit = 0;
+	errno = 0;
+	g_assert_cmpint (g_mime_entity_write_content_to_stream ((GMimeEntity *) message, options, (GMimeStream *) output), ==, -1);
+	g_assert_cmpint (errno, ==, EIO);
+	g_assert_true (((GMimeEntity *) part)->ensure_newline);
+	g_assert_false (((GMimeEntity *) message)->ensure_newline);
+	testsuite_check_passed ();
+
+	testsuite_check ("Legacy multipart writing retains text and does not invent a removed boundary");
+	g_mime_multipart_clear (multipart);
+	g_assert_true (g_mime_param_list_remove (g_mime_content_type_get_parameters (
+		((GMimeEntity *) multipart)->content_type), "boundary"));
+	g_mime_multipart_set_prologue (multipart, "pre");
+	g_mime_multipart_set_epilogue (multipart, "post");
+	bytes = serialize_writer ((GMimeEntity *) multipart, options, TRUE);
+	g_assert_cmpmem (bytes->data, bytes->len, "pre\npost", 8);
+	g_assert_null (g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary"));
+	g_byte_array_unref (bytes);
+	testsuite_check_passed ();
+
+	g_object_unref (output);
+	g_object_unref (message);
+	g_object_unref (multipart);
+	g_object_unref (part);
+	g_object_unref (nested);
+	g_object_unref (type);
+	g_object_unref (content);
+	g_object_unref (stream);
+	g_mime_format_options_free (options);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -2039,6 +2296,8 @@ main (int argc, char **argv)
 	test_public_parser_warnings ();
 	test_public_long_header_names ();
 	test_signature_markers ();
+	test_writer_depth ();
+	test_writer_dispatch ();
 	testsuite_end ();
 	g_mime_shutdown ();
 

@@ -332,14 +332,12 @@ mime_part_headers_cleared (GMimeEntity *object)
 }
 
 
-static ssize_t
-write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream)
+ssize_t
+_g_mime_part_write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream, gboolean ensure_newline)
 {
-	GMimeEntity *object = (GMimeEntity *) part;
 	ssize_t nwritten, total = 0;
 	GMimeStream *filtered;
 	GMimeFilter *filter;
-	GMimeNewLineFormat newline_format;
 	
 	if (!part->content)
 		return 0;
@@ -391,7 +389,7 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 		
 		if (part->encoding != GMIME_CONTENT_ENCODING_BINARY) {
 			filter = g_mime_format_options_create_newline_filter (
-				options, object->ensure_newline || _g_mime_format_options_get_ensure_newline (options));
+				options, ensure_newline);
 			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 			g_object_unref (filter);
 		}
@@ -414,15 +412,6 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 			
 			total += nwritten;
 		}
-	} else if (_g_mime_format_options_get_verifying_signature (options) &&
-		   g_mime_content_get_newline_format (part->content, &newline_format) &&
-		   newline_format == GMIME_NEWLINE_FORMAT_MIXED) {
-		/* Allow the original parsed content to pass through without
-		 * canonicalization when verifying a signature if it contains
-		 * a mix of line endings.
-		 *
-		 * See https://github.com/jstedfast/MimeKit/issues/569 for details. */
-		return g_mime_content_write_to_stream (part->content, stream);
 	} else {
 		GMimeStream *content;
 		int errsv;
@@ -435,7 +424,7 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 		
 		if (part->encoding != GMIME_CONTENT_ENCODING_BINARY) {
 			filter = g_mime_format_options_create_newline_filter (
-				options, object->ensure_newline || _g_mime_format_options_get_ensure_newline (options));
+				options, ensure_newline);
 			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 			g_object_unref (filter);
 		}
@@ -466,24 +455,7 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 static ssize_t
 mime_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
-	GMimePart *mime_part = (GMimePart *) object;
-	ssize_t nwritten, total = 0;
-	
-	if (!content_only) {
-		/* write the content headers */
-		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, options, stream)) == -1)
-			return -1;
-		
-		total += nwritten;
-		
-	}
-	
-	if ((nwritten = write_content (mime_part, options, stream)) == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	return total;
+	return _g_mime_writer_write (object, options, content_only, stream);
 }
 
 static void

@@ -464,10 +464,9 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	options = _g_mime_format_options_clone (NULL, FALSE);
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
-	_g_mime_format_options_set_verifying_signature (options, TRUE);
 	
 	errno = 0;
-	written = g_mime_entity_write_to_stream (content, options, stream);
+	written = _g_mime_writer_write_for_signature (content, options, stream);
 	g_mime_format_options_free (options);
 	if (written < 0)
 		goto io_error;

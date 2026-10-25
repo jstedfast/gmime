@@ -53,8 +53,16 @@ G_GNUC_INTERNAL void g_mime_format_options_shutdown (void);
 G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden);
 G_GNUC_INTERNAL gboolean _g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options);
 G_GNUC_INTERNAL void _g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure);
-G_GNUC_INTERNAL gboolean _g_mime_format_options_get_verifying_signature (GMimeFormatOptions *options);
-G_GNUC_INTERNAL void _g_mime_format_options_set_verifying_signature (GMimeFormatOptions *options, gboolean verifying);
+
+/* GMimeWriter */
+G_GNUC_INTERNAL ssize_t _g_mime_writer_write (GMimeEntity *entity, GMimeFormatOptions *options,
+					    gboolean content_only, GMimeStream *stream);
+G_GNUC_INTERNAL ssize_t _g_mime_writer_write_for_signature (GMimeEntity *entity, GMimeFormatOptions *options,
+							  GMimeStream *stream);
+G_GNUC_INTERNAL ssize_t _g_mime_part_write_content (GMimePart *part, GMimeFormatOptions *options,
+						  GMimeStream *stream, gboolean ensure_newline);
+G_GNUC_INTERNAL ssize_t _g_mime_message_write_headers (GMimeEntity *message, GMimeFormatOptions *options,
+						    GMimeStream *stream);
 
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
