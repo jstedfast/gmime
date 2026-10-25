@@ -4794,6 +4794,236 @@ test_header_construction (void)
 }
 
 static void
+count_checked_header_changes (gpointer sender, gpointer args, gpointer user_data)
+{
+	(*(guint *) user_data)++;
+}
+
+static char *
+fail_checked_header_format (GMimeHeader *header, GMimeFormatOptions *options,
+			    const char *value, const char *charset)
+{
+	errno = !strcmp (value, "errno") ? EIO : 0;
+	return NULL;
+}
+
+static void
+test_checked_header_assignment (void)
+{
+	static const struct {
+		const char *name, *value, *normalized, *raw;
+	} cases[] = {
+		{ "sUbJeCt", "\302\240 one\r\n\ttwo \342\200\203", "one\ttwo", " one\ttwo\n" },
+		{ "X-Empty", "\342\200\205\r\n", "", " \n" },
+		{ "Content-Type", " text/plain; charset=utf-8 ", "text/plain; charset=utf-8",
+		  " text/plain; charset=utf-8\n" },
+		{ "Content-Disposition", " attachment; filename=\"file.txt\" ",
+		  "attachment; filename=\"file.txt\"", " attachment; filename=file.txt\n" }
+	};
+	static const struct {
+		const char *name, *value;
+	} invalid[] = {
+		{ "Content-Type", "" }, { "Content-Type", "plain" },
+		{ "Content-Type", "text/" }, { "Content-Type", "text/plain garbage" },
+		{ "Content-Type", "text/plain; name=\"unfinished" },
+		{ "Content-Disposition", "" }, { "Content-Disposition", "\"attachment\"" },
+		{ "Content-Disposition", "attachment garbage" },
+		{ "Content-Disposition", "attachment; filename=\"unfinished" }
+	};
+	static const char *bad_names[] = { "", "X Test", "X:Test", "X\177Test", "X-\303\251" };
+	static const char binary[] = "Subject: one\0two\r\n\r\n";
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeHeaderRawValueFormatter formatter;
+	GMimeHeader *header, *copy;
+	GMimeHeaderList *headers;
+	GMimePart *part;
+	GMimeStream *source;
+	GError *error = NULL;
+	GBytes *raw_bytes;
+	const char *value, *raw, *charset;
+	char *wire, *expected;
+	guint i, changes;
+
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		header = g_mime_header_new_full (cases[i].name, cases[i].value, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (header);
+		check (!strcmp (g_mime_header_get_name (header), cases[i].name) &&
+		       !strcmp (g_mime_header_get_value (header), cases[i].normalized),
+		       "checked header construction preserves names and normalizes values");
+		check (header->owns_options && header->offset == -1, "checked headers own options and have no offset");
+		check (g_mime_header_set_value_full (header, options, cases[i].value, NULL, &error),
+		       "checked header assignment succeeds");
+		g_assert_no_error (error);
+		check (!strcmp (g_mime_header_get_raw_value (header), cases[i].raw),
+		       "checked header assignment caches the requested formatting");
+		check (!header->reformat && !header->explicit_raw_value,
+		       "checked header assignment is cached but is not an explicit raw assignment");
+		copy = g_mime_header_clone (header);
+		g_object_unref (header);
+		check (!strcmp (g_mime_header_get_value (copy), cases[i].normalized) &&
+		       !strcmp (g_mime_header_get_raw_value (copy), cases[i].raw),
+		       "checked assignments survive independent cloning");
+		g_object_unref (copy);
+	}
+
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		header = g_mime_header_new_full (invalid[i].name, invalid[i].value, NULL, &error);
+		check (header == NULL && g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR),
+		       "checked construction rejects malformed structured headers");
+		g_clear_error (&error);
+		header = g_mime_header_new (invalid[i].name,
+					   !strcmp (invalid[i].name, "Content-Type") ? "text/plain" : "attachment", NULL);
+		g_mime_header_set_raw_value (header, " explicit raw\r\n");
+		value = g_mime_header_get_value (header);
+		raw = header->raw_value;
+		charset = header->charset;
+		changes = 0;
+		g_mime_event_add (header->changed, count_checked_header_changes, &changes);
+		check (!g_mime_header_set_value_full (header, options, invalid[i].value, NULL, &error) &&
+		       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR),
+		       "checked assignment reports malformed structured headers");
+		check (header->value == value && header->raw_value == raw && header->charset == charset &&
+		       header->explicit_raw_value && !header->reformat && changes == 0,
+		       "failed checked assignment retains all existing state and emits no event");
+		g_clear_error (&error);
+		check (!g_mime_header_set_value_full (header, options, invalid[i].value, NULL, NULL),
+		       "checked parse failures also work without an error destination");
+		g_object_unref (header);
+	}
+
+	header = g_mime_header_new_full ("Subject", "original", NULL, &error);
+	g_assert_nonnull (header);
+	changes = 0;
+	g_mime_event_add (header->changed, count_checked_header_changes, &changes);
+	value = header->value;
+	raw = header->raw_value;
+	charset = header->charset;
+	check (!g_mime_header_set_value_full (header, options, "\377", NULL, &error) &&
+	       g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE),
+	       "checked assignment rejects malformed UTF-8 with an error");
+	g_clear_error (&error);
+	check (!g_mime_header_set_value_full (header, options, "changed", "x-no-such-charset", &error) &&
+	       error != NULL && error->domain == G_CONVERT_ERROR, "checked assignment rejects unsupported charsets");
+	g_clear_error (&error);
+	check (!g_mime_header_set_value_full (header, options, "changed", "", &error) &&
+	       g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_CONVERSION),
+	       "checked assignment rejects empty charset names");
+	g_clear_error (&error);
+	check (header->value == value && header->raw_value == raw && header->charset == charset && changes == 0,
+	       "encoding failures retain header state and emit no event");
+	formatter = header->formatter;
+	header->formatter = fail_checked_header_format;
+	check (!g_mime_header_set_value_full (header, options, "errno", NULL, &error) &&
+	       g_error_matches (error, GMIME_ERROR, EIO), "checked assignment reports formatter errno");
+	g_clear_error (&error);
+	check (!g_mime_header_set_value_full (header, options, "no errno", NULL, &error) &&
+	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_GENERAL),
+	       "checked assignment reports a formatter failure even without errno");
+	g_clear_error (&error);
+	check (header->value == value && header->raw_value == raw && header->charset == charset && changes == 0,
+	       "formatter failures retain header state and emit no event");
+	header->formatter = formatter;
+	check (g_mime_header_set_value_full (header, options, "caf\303\251", "latin1", &error) &&
+	       changes == 1 && !strcmp (header->charset, "iso-8859-1"),
+	       "successful checked assignment normalizes charset aliases and emits one event");
+	g_assert_no_error (error);
+	g_mime_format_options_set_allow_international (options, TRUE);
+	wire = header_wire_string (header, options);
+	check (!strcmp (wire, "Subject: caf\303\251\n"), "checked assignments support International reformatting");
+	g_free (wire);
+	g_mime_format_options_set_allow_international (options, FALSE);
+	check (g_mime_header_set_value_full (header, options, header->value, header->charset, &error) && changes == 2,
+	       "checked assignment accepts values and charsets borrowed from itself");
+	g_assert_no_error (error);
+	check (g_mime_header_set_value_full (header, options, "\346\227\245\346\234\254", "us-ascii", &error),
+	       "supported charsets retain the existing lossless UTF-8 fallback");
+	g_assert_no_error (error);
+	check (strstr (header->raw_value, "=?utf-8?") != NULL, "unrepresentable header text uses UTF-8");
+	g_object_unref (header);
+
+	source = g_mime_stream_mem_new_with_buffer (binary, sizeof (binary) - 1);
+	headers = g_mime_header_list_load (NULL, source, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_object_unref (source);
+	header = g_mime_header_list_get_header_at (headers, 0);
+	raw_bytes = header->raw_value_bytes;
+	check (!g_mime_header_set_value_full (header, options, "changed", "x-no-such-charset", &error) &&
+	       error != NULL && header->raw_value_bytes == raw_bytes && header->offset == 0,
+	       "failed checked assignment retains binary raw bytes and parsed offsets");
+	g_clear_error (&error);
+	check (g_mime_header_set_value_full (header, options, "changed", NULL, &error) &&
+	       header->raw_value_bytes == NULL && header->offset == 0,
+	       "successful checked assignment replaces binary raw bytes without changing the offset");
+	g_assert_no_error (error);
+	wire = header_wire_string (header, options);
+	check (!strcmp (wire, "Subject: changed\n"), "replaced binary headers serialize the new value");
+	g_free (wire);
+	g_object_unref (headers);
+
+	part = g_mime_part_new ();
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
+	header = g_mime_header_list_get_header (headers, "Content-Type");
+	check (g_mime_header_set_value_full (header, options, "text/html; charset=utf-8", NULL, &error) &&
+	       g_mime_content_type_is_type (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "text", "html"),
+	       "checked assignment updates the containing entity's structured properties");
+	g_assert_no_error (error);
+	check (!g_mime_header_set_value_full (header, options, "invalid", NULL, &error) &&
+	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) &&
+	       g_mime_content_type_is_type (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "text", "html"),
+	       "failed checked assignment preserves containing entity properties");
+	g_clear_error (&error);
+	g_object_unref (part);
+
+	for (i = 0; i < G_N_ELEMENTS (bad_names); i++) {
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*assertion*failed*");
+		check (g_mime_header_new_full (bad_names[i], "value", NULL, &error) == NULL && error == NULL,
+		       "checked construction rejects invalid field names as programming errors");
+		g_test_assert_expected_messages ();
+	}
+	check (g_mime_header_new_full ("Subject", "\377", NULL, &error) == NULL &&
+	       g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE),
+	       "checked construction reports malformed UTF-8");
+	g_clear_error (&error);
+	check (g_mime_header_new_full ("Subject", "value", "x-no-such-charset", &error) == NULL &&
+	       error != NULL && error->domain == G_CONVERT_ERROR, "checked construction reports unsupported charsets");
+	g_clear_error (&error);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*name != NULL*");
+	check (g_mime_header_new_full (NULL, "value", NULL, &error) == NULL && error == NULL,
+	       "checked construction requires a field name");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*value != NULL*");
+	check (g_mime_header_new_full ("Subject", NULL, NULL, &error) == NULL && error == NULL,
+	       "checked construction requires a value");
+	g_test_assert_expected_messages ();
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	header = g_mime_header_new_full ("Subject", "value", NULL, &error);
+	g_assert_nonnull (header);
+	check (g_mime_header_set_value_full (header, options, "one\r\n\ttwo", NULL, &error) &&
+	       !strcmp (header->raw_value, " one\ttwo\r\n"), "checked assignment honors DOS newline formatting");
+	g_assert_no_error (error);
+	expected = g_strdup (header->raw_value);
+	wire = header_wire_string (header, NULL);
+	check (g_str_has_suffix (wire, expected), "checked assignments cache their chosen formatting until reassigned");
+	g_free (expected);
+	g_free (wire);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*value != NULL*");
+	check (!g_mime_header_set_value_full (header, options, NULL, NULL, &error) && error == NULL,
+	       "checked assignment requires a value");
+	g_test_assert_expected_messages ();
+	error = g_error_new_literal (GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+	check (!g_mime_header_set_value_full (header, options, "value", NULL, &error) &&
+	       !strcmp (error->message, "existing error"), "checked assignment requires a clear error destination");
+	g_test_assert_expected_messages ();
+	g_clear_error (&error);
+	g_object_unref (header);
+	g_mime_format_options_free (options);
+}
+
+static void
 test_header_cloning (void)
 {
 	static const char text[] = "X-First: first\r\nX-SuBjEcT \t: \317\360\350\342\345\362\r\n\tworld\r\n\r\n";
@@ -10464,6 +10694,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("standalone header construction");
 	test_header_construction ();
+	testsuite_end ();
+
+	testsuite_start ("checked header assignment");
+	test_checked_header_assignment ();
 	testsuite_end ();
 
 	testsuite_start ("mixed header charset policy");

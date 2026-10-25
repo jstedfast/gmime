@@ -1432,8 +1432,9 @@ serialization, and cloning APIs. This does not change the legacy list
 append/prepend/insert normalization or the handling of parsed raw headers.
 Field-specific formatting still uses GMime's existing implementations,
 including their malformed structured-value recovery and the RFC 2047
-formatting differences noted below; strict structured-value constructor
-rejection has not yet been ported.
+formatting differences noted below. The checked constructor and assignment
+APIs below provide structured-value rejection without changing these legacy
+entry points.
 
 `g_mime_header_clone()` copies a header's current raw name and value,
 cached decoded value, charset, and formatter without parsing or formatting
@@ -1452,6 +1453,55 @@ continue to emit no transport header until a value is assigned.
 It does not replace the encoded transport output of
 `g_mime_header_write_to_stream()` or `g_mime_header_list_to_string()`.
 The existing header decoder and value normalization remain unchanged.
+
+### Checked header construction and assignment
+
+`g_mime_header_new_full()` and `g_mime_header_set_value_full()` port MimeKit's
+checked field/value construction and `Header.SetValue()` formatting behavior.
+Both validate decoded UTF-8 and the selected encoding before publishing state;
+a NULL charset selects UTF-8. Charset aliases use the existing native charset
+mapping. Unsupported or empty charset names and malformed UTF-8 produce
+`G_CONVERT_ERROR`. A supported charset that cannot represent the actual text
+still permits the existing header encoder's lossless UTF-8 fallback.
+
+Values are Unicode-trimmed and unfolded before field-specific formatting.
+Content-Type and Content-Disposition use the existing checked parsers,
+including their configured recovery rules, rather than the legacy fallback
+parsers. Parse failures produce `GMIME_ERROR_PARSE_ERROR`. Parsed parameter
+charsets take precedence over the requested header charset; parameters without
+an explicit charset use the requested encoding, subject to the existing
+parameter encoder's ASCII/Latin-1 selection. Other fields retain their existing
+formatters. Formatter failures report errno through `GMIME_ERROR`, or
+`GMIME_ERROR_GENERAL` if the formatter supplies no errno. Invalid field names,
+NULL values, and an occupied error destination are GLib programming errors.
+
+Failed assignment preserves the decoded cache, raw strings/bytes, charset,
+formatting flags, source offset, and containing entity properties, and emits
+no change event. This is deliberately stronger than MimeKit's exception path,
+which can replace its decoded cache before structured formatting throws.
+Successful assignment replaces the raw bytes and emits one change event
+without changing the parsed source offset or repairing an invalid field name.
+The formatted value is cached with the requested formatting options, rather
+than being reformatted on every write. It is not an explicit raw assignment:
+International output may still reformat it as UTF-8. Independent clones retain
+this behavior. The source setter's formatting-cache comment is adapted to
+the native cache; its disabled option assignments are not copied.
+
+The actual-source differential covers 9,878 construction/assignment cases in
+each normal and ASan/UBSan/leak build, with zero unexpected differences.
+It includes Unicode normalization, invalid structured values, charset aliases
+and failures, Cyrillic parameter encodings, formatting widths/newlines,
+International output, and deterministic malformed-input fixtures. There are
+326 constructor platform-newline differences and 273 inherited formatter
+differences, each checked against an independent existing native header or
+standalone content-header encoding path. These include RFC 2047 word selection,
+parameter charset/language spelling, and address recovery/folding; this slice
+does not change those formatters.
+
+GIR/typelib, VAPI, GTK-doc and live GI/Python checks pass. The full core suite
+remains at 34/35 passing programs: test-core retains its two existing
+text-format assertions, while checked header assignment passes. Native
+Windows validation remains pending.
 
 ### Positional header-list operations
 

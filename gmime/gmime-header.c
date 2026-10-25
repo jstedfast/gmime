@@ -39,6 +39,7 @@
 #include "gmime-header.h"
 #include "gmime-parser.h"
 #include "gmime-events.h"
+#include "gmime-error.h"
 #include "gmime-utils.h"
 
 
@@ -258,6 +259,32 @@ _g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffe
 }
 
 
+static char *
+header_normalize_value (const char *value)
+{
+	const char *inptr, *start, *end;
+	char *text, *unfolded;
+
+	start = value;
+	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
+		start = g_utf8_next_char (start);
+
+	end = start + strlen (start);
+	while (end > start) {
+		inptr = g_utf8_find_prev_char (start, end);
+		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (inptr)))
+			break;
+		end = inptr;
+	}
+
+	text = g_strndup (start, end - start);
+	unfolded = g_mime_utils_header_unfold (text);
+	g_free (text);
+
+	return unfolded;
+}
+
+
 /**
  * g_mime_header_new:
  * @name: a nonempty ASCII header field name without whitespace or a colon
@@ -277,9 +304,9 @@ _g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffe
 GMimeHeader *
 g_mime_header_new (const char *name, const char *value, const char *charset)
 {
-	const char *inptr, *start, *end;
+	const char *inptr;
 	GMimeHeader *header;
-	char *text, *unfolded;
+	char *unfolded;
 
 	g_return_val_if_fail (name != NULL, NULL);
 	g_return_val_if_fail (*name != '\0', NULL);
@@ -289,28 +316,54 @@ g_mime_header_new (const char *name, const char *value, const char *charset)
 	for (inptr = name; *inptr; inptr++)
 		g_return_val_if_fail (*inptr >= 33 && *inptr <= 126 && *inptr != ':', NULL);
 
-	start = value;
-	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
-		start = g_utf8_next_char (start);
-
-	end = start + strlen (start);
-	while (end > start) {
-		inptr = g_utf8_find_prev_char (start, end);
-		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (inptr)))
-			break;
-		end = inptr;
-	}
-
-	text = g_strndup (start, end - start);
-	unfolded = g_mime_utils_header_unfold (text);
-	g_free (text);
-
+	unfolded = header_normalize_value (value);
 	header = header_new (g_mime_parser_options_clone (NULL), name, unfolded,
 			     name, NULL, charset ? charset : "utf-8", -1);
 	header->owns_options = TRUE;
 	g_free (unfolded);
 
 	if (!header->raw_value) {
+		g_object_unref (header);
+		return NULL;
+	}
+
+	return header;
+}
+
+
+/**
+ * g_mime_header_new_full:
+ * @name: a nonempty ASCII header field name without whitespace or a colon
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Creates a standalone header using g_mime_header_set_value_full().
+ * Invalid UTF-8 and unsupported charsets produce %G_CONVERT_ERROR.
+ * Invalid Content-Type and Content-Disposition values produce a
+ * %GMIME_ERROR parse error instead of using legacy fallback values.
+ * Invalid names and %NULL values are programming errors.
+ *
+ * Returns: (transfer full) (nullable): a new header, or %NULL on failure.
+ **/
+GMimeHeader *
+g_mime_header_new_full (const char *name, const char *value, const char *charset, GError **error)
+{
+	GMimeHeader *header;
+	const char *inptr;
+
+	g_return_val_if_fail (name != NULL, NULL);
+	g_return_val_if_fail (*name != '\0', NULL);
+	g_return_val_if_fail (value != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	for (inptr = name; *inptr; inptr++)
+		g_return_val_if_fail (*inptr >= 33 && *inptr <= 126 && *inptr != ':', NULL);
+
+	header = header_new (g_mime_parser_options_clone (NULL), name, NULL, name, NULL, NULL, -1);
+	header->owns_options = TRUE;
+
+	if (!g_mime_header_set_value_full (header, NULL, value, charset, error)) {
 		g_object_unref (header);
 		return NULL;
 	}
@@ -478,6 +531,130 @@ g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const
 }
 
 
+static char *
+header_format_value_full (GMimeHeader *header, GMimeFormatOptions *options, const char *value,
+			  const char *charset, GError **error)
+{
+	GMimeHeaderRawValueFormatter formatter = header->formatter;
+	GMimeContentDisposition *disposition = NULL;
+	GMimeContentType *content_type = NULL;
+	GMimeParamList *parameters;
+	GMimeParam *parameter;
+	char *raw_value;
+	int i, errsv;
+
+	if (formatter == g_mime_header_format_content_type) {
+		content_type = g_mime_content_type_parse_full (header->options, value, -1, error);
+		if (!content_type)
+			return NULL;
+		parameters = g_mime_content_type_get_parameters (content_type);
+	} else if (formatter == g_mime_header_format_content_disposition) {
+		disposition = g_mime_content_disposition_parse_full (header->options, value, -1, error);
+		if (!disposition)
+			return NULL;
+		parameters = g_mime_content_disposition_get_parameters (disposition);
+	} else {
+		if (!formatter)
+			formatter = g_mime_header_format_default;
+		errno = 0;
+		raw_value = formatter (header, options, value, charset);
+		errsv = errno;
+		if (!raw_value)
+			g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+				     "Cannot format header '%s': %s", header->name,
+				     errsv ? g_strerror (errsv) : "formatter returned no value");
+		return raw_value;
+	}
+
+	for (i = 0; i < g_mime_param_list_length (parameters); i++) {
+		parameter = g_mime_param_list_get_parameter_at (parameters, i);
+		if (!g_mime_param_get_charset (parameter))
+			g_mime_param_set_charset (parameter, charset);
+	}
+
+	if (content_type) {
+		raw_value = g_mime_content_type_encode (content_type, options);
+		g_object_unref (content_type);
+	} else {
+		raw_value = g_mime_content_disposition_encode (disposition, options);
+		g_object_unref (disposition);
+	}
+
+	return raw_value;
+}
+
+
+/**
+ * g_mime_header_set_value_full:
+ * @header: a #GMimeHeader
+ * @options: (nullable): formatting options, or %NULL for the defaults
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Trims leading and trailing Unicode whitespace, removes CR/LF characters,
+ * and formats @value before replacing the header's state. Invalid UTF-8
+ * and unsupported charsets produce %G_CONVERT_ERROR. Content-Type and
+ * Content-Disposition use the checked parsers and report %GMIME_ERROR
+ * parse errors, retaining those parsers' configured recovery behavior.
+ * Other fields use the existing formatters, including UTF-8 fallback for
+ * text that cannot be represented in a supported charset.
+ *
+ * On failure no header state is changed and no change event is emitted.
+ * On success the formatted raw value is cached using @options, rather than
+ * being reformatted on every write. International output can still reformat
+ * it as UTF-8; this is not an explicit raw-value assignment.
+ * Invalid parsed field names are not repaired by assigning a value.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, const char *value,
+			    const char *charset, GError **error)
+{
+	char *probe, *encoding, *text, *raw_value;
+	gsize length;
+
+	g_return_val_if_fail (GMIME_IS_HEADER (header), FALSE);
+	g_return_val_if_fail (value != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if (!g_utf8_validate (value, -1, NULL)) {
+		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE,
+				     "Header value is not valid UTF-8");
+		return FALSE;
+	}
+
+	probe = _g_mime_charset_encode_text (charset ? charset : "utf-8", "", &length, &encoding, error);
+	if (!probe)
+		return FALSE;
+	g_free (probe);
+
+	text = header_normalize_value (value);
+	raw_value = header_format_value_full (header, options, text, encoding, error);
+	if (!raw_value) {
+		g_free (encoding);
+		g_free (text);
+		return FALSE;
+	}
+
+	g_free (header->raw_value);
+	g_free (header->charset);
+	g_free (header->value);
+	header->raw_value = raw_value;
+	header->charset = encoding;
+	header->value = text;
+	/* Cache the formatting until reassignment, except for International output. */
+	header->reformat = FALSE;
+	header->explicit_raw_value = FALSE;
+	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
+
+	g_mime_event_emit (header->changed, NULL);
+
+	return TRUE;
+}
+
+
 /**
  * g_mime_header_get_raw_name:
  * @header: a #GMimeHeader
@@ -542,7 +719,7 @@ _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
  *
  * Sets the header's raw value. This explicit assignment is preserved when
  * writing with International formatting, until g_mime_header_set_value()
- * assigns a decoded value.
+ * or g_mime_header_set_value_full() assigns a decoded value.
  **/
 void
 g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)

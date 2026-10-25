@@ -115,6 +115,7 @@ struct _GMimeHeaderClass {
 GType g_mime_header_get_type (void);
 
 GMimeHeader *g_mime_header_new (const char *name, const char *value, const char *charset);
+GMimeHeader *g_mime_header_new_full (const char *name, const char *value, const char *charset, GError **error);
 GMimeHeader *g_mime_header_clone (GMimeHeader *header);
 
 const char *g_mime_header_get_name (GMimeHeader *header);
@@ -122,6 +123,8 @@ const char *g_mime_header_get_raw_name (GMimeHeader *header);
 
 const char *g_mime_header_get_value (GMimeHeader *header);
 void g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
+gboolean g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, const char *value,
+				     const char *charset, GError **error);
 
 const char *g_mime_header_get_raw_value (GMimeHeader *header);
 void g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
