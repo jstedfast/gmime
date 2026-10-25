@@ -1359,6 +1359,7 @@ GMimeMessagePriority
 GMimeXMessagePriority
 GMimeMessage
 g_mime_message_new
+g_mime_message_write_headers_to_stream
 g_mime_message_get_sender
 g_mime_message_get_from
 g_mime_message_get_reply_to

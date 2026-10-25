@@ -168,6 +168,8 @@ GType g_mime_message_get_type (void);
 
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
 
+ssize_t g_mime_message_write_headers_to_stream (GMimeMessage *message, GMimeFormatOptions *options, GMimeStream *stream);
+
 GMimeInternetAddressList *g_mime_message_get_from (GMimeMessage *message);
 GMimeInternetAddressList *g_mime_message_get_sender (GMimeMessage *message);
 GMimeInternetAddressList *g_mime_message_get_reply_to (GMimeMessage *message);

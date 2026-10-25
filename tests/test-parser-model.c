@@ -179,7 +179,8 @@ typedef struct {
 	GMimeStream parent_object;
 	gsize written, limit, chunk;
 	gsize short_start, short_end;
-	gboolean zero_write;
+	guint flushes, closes;
+	gboolean zero_write, unset_errno, fail_flush;
 } ModelOutput;
 
 typedef GMimeStreamClass ModelOutputClass;
@@ -196,17 +197,39 @@ model_output_write (GMimeStream *stream, const char *buffer, size_t length)
 	if (length > output->limit - output->written) {
 		if (output->zero_write)
 			return 0;
-		errno = EIO;
+		errno = output->unset_errno ? 0 : EIO;
 		return -1;
 	}
 	output->written += length;
 	return length;
 }
 
+static int
+model_output_flush (GMimeStream *stream)
+{
+	ModelOutput *output = (ModelOutput *) stream;
+
+	output->flushes++;
+	if (output->fail_flush) {
+		errno = output->unset_errno ? 0 : ENOSPC;
+		return -1;
+	}
+	return 0;
+}
+
+static int
+model_output_close (GMimeStream *stream)
+{
+	((ModelOutput *) stream)->closes++;
+	return 0;
+}
+
 static void
 model_output_class_init (ModelOutputClass *klass)
 {
 	klass->write = model_output_write;
+	klass->flush = model_output_flush;
+	klass->close = model_output_close;
 }
 
 static void
@@ -2274,6 +2297,238 @@ test_writer_dispatch (void)
 	g_mime_format_options_free (options);
 }
 
+static void
+test_message_header_writing (void)
+{
+	static const struct {
+		const char *wire, *headers;
+	} cases[] = {
+		{ "\n", "\n" },
+		{ "Subject: empty\n\n", "Subject: empty\n\n" },
+		{ "Subject: no separator\n", "Subject: no separator\n" },
+		{ "Subject: no content\nContent-Type: text/plain\n", "Subject: no content\nContent-Type: text/plain\n" },
+		{ "Content-Type: text/plain\nX-Message: after\n\nbody",
+		  "Content-Type: text/plain\nX-Message: after\n\n" },
+		{ "X-Before: a\nContent-Type: text/plain\nContent-Transfer-Encoding: base64\nX-After: b\n\nYm9keQ==",
+		  "X-Before: a\nContent-Type: text/plain\nContent-Transfer-Encoding: base64\nX-After: b\n\n" },
+		{ "Bcc: hidden@example.com\nX: one\nX: two\nContent-Type: multipart/mixed; boundary=b\n\n--b\n"
+		  "Content-Type: text/plain\n\nbody\n--b--\n",
+		  "Bcc: hidden@example.com\nX: one\nX: two\nContent-Type: multipart/mixed; boundary=b\n\n" },
+		{ "Content-Type: message/rfc822\n\nSubject: embedded\n\nbody", "Content-Type: message/rfc822\n\n" },
+		{ "X \t: first\nbroken line\n\tfold\nContent-Type: text/plain\n\nbody",
+		  "X \t: first\nbroken line\n\tfold\nContent-Type: text/plain\n\n" },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n", "Content-Type: multipart/mixed; boundary=b\n\n" }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GError *error = NULL;
+	guint i, format, hidden, ensure, prepend, append, separator;
+
+	testsuite_check ("Headers-only message output preserves merged order, raw fields and parsed separators");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GMimeStream *input = g_mime_stream_mem_new_with_buffer (cases[i].wire, strlen (cases[i].wire));
+		GMimeParser *parser = g_mime_parser_new ();
+		GMimeMessage *message;
+
+		g_mime_parser_set_persist_stream (parser, FALSE);
+		g_mime_parser_init_with_stream (parser, input);
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		for (format = 0; format < 3; format++) {
+			GMimeFormatOptions *selected = format ? options : NULL;
+			const char *newline;
+
+			g_mime_format_options_set_newline_format (options, format == 2 ?
+				GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			newline = g_mime_format_options_get_newline (selected);
+			for (hidden = 0; hidden < (format ? 4 : 1); hidden++) {
+				GString *expected = g_string_new (NULL);
+				const char *line = cases[i].headers;
+
+				g_mime_format_options_clear_hidden_headers (options);
+				if (hidden & 1)
+					g_mime_format_options_add_hidden_header (options, "Bcc");
+				if (hidden & 2)
+					g_mime_format_options_add_hidden_header (options, "Content-Type");
+				while (*line) {
+					const char *end = strchr (line, '\n');
+					size_t length = end ? (size_t) (end - line) : strlen (line);
+
+					if (!((hidden & 1) && g_str_has_prefix (line, "Bcc:")) &&
+					    !((hidden & 2) && g_str_has_prefix (line, "Content-Type:"))) {
+						g_string_append_len (expected, line, length);
+						if (end)
+							g_string_append (expected, newline);
+					}
+					line += length + (end ? 1 : 0);
+				}
+				for (ensure = 0; ensure < 2; ensure++) {
+					GMimeStream *output = g_mime_stream_mem_new ();
+					GByteArray *bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) output);
+					GByteArray *full;
+					ssize_t written;
+					gsize offset;
+
+					g_mime_format_options_set_ensure_newline (options, ensure);
+					written = g_mime_message_write_headers_to_stream (message, selected, output);
+					g_assert_cmpint (written, ==, expected->len);
+					g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
+					full = serialize_writer ((GMimeEntity *) message, selected, FALSE);
+					g_assert_cmpuint (full->len, >=, bytes->len);
+					g_assert_cmpmem (full->data, bytes->len, bytes->data, bytes->len);
+					g_byte_array_unref (full);
+					g_assert_cmpint (g_mime_message_write_headers_to_stream (message, selected, output), ==, written);
+					g_assert_cmpmem (bytes->data + written, written, expected->str, expected->len);
+					g_assert_cmpint (g_mime_stream_write (output, "!", 1), ==, 1);
+					g_object_unref (output);
+					for (offset = 0; offset <= expected->len; offset++) {
+						ModelOutput *limited = g_object_new (model_output_get_type (), NULL);
+
+						limited->limit = offset;
+						limited->chunk = 1;
+						limited->fail_flush = TRUE;
+						errno = 0;
+						written = g_mime_message_write_headers_to_stream (message, selected, (GMimeStream *) limited);
+						g_assert_cmpint (written, ==, offset < expected->len ? -1 : (ssize_t) expected->len);
+						g_assert_cmpint (errno, ==, offset < expected->len ? EIO : 0);
+						g_assert_cmpuint (limited->written, ==, offset);
+						g_assert_cmpuint (limited->flushes, ==, 0);
+						g_assert_cmpuint (limited->closes, ==, 0);
+						g_object_unref (limited);
+					}
+				}
+				g_string_free (expected, TRUE);
+			}
+		}
+		g_object_unref (message);
+		g_object_unref (parser);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Merged message headers retain raw order around prepended and appended fields");
+	for (prepend = 0; prepend < 2; prepend++) {
+		for (append = 0; append < 2; append++) {
+			for (separator = 0; separator < 2; separator++) {
+				char *wire = g_strconcat ("X: first\nContent-Type: text/plain\n", separator ? "\nbody" : "", NULL);
+				GMimeStream *input = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+				GMimeParser *parser = g_mime_parser_new ();
+				GMimeMessage *message;
+				GMimeStream *output = g_mime_stream_mem_new ();
+				GByteArray *bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) output);
+				GByteArray *full;
+				char *expected, *headers;
+
+				g_mime_parser_set_persist_stream (parser, FALSE);
+				g_mime_parser_init_with_stream (parser, input);
+				message = g_mime_parser_construct_message (parser, NULL, &error);
+				g_assert_no_error (error);
+				if (prepend)
+					g_mime_header_list_prepend (((GMimeEntity *) message)->headers, "X-Prepended", "first", NULL);
+				if (append)
+					g_mime_message_set_subject (message, "appended", NULL);
+				expected = g_strconcat (prepend ? "X-Prepended: first\n" : "",
+					"X: first\nContent-Type: text/plain\n", append ? "Subject: appended\n" : "",
+					separator ? "\n" : "", NULL);
+				g_mime_format_options_clear_hidden_headers (options);
+				g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+				g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, output), ==, strlen (expected));
+				g_assert_cmpmem (bytes->data, bytes->len, expected, strlen (expected));
+				headers = g_mime_entity_get_headers ((GMimeEntity *) message, options);
+				g_assert_cmpuint (strlen (headers), ==, strlen (expected) - separator);
+				g_assert_cmpmem (headers, strlen (headers), expected, strlen (headers));
+				g_free (headers);
+				full = serialize_writer ((GMimeEntity *) message, options, FALSE);
+				g_assert_cmpuint (full->len, >=, bytes->len);
+				g_assert_cmpmem (full->data, bytes->len, bytes->data, bytes->len);
+				g_byte_array_unref (full);
+				g_object_unref (output);
+				g_object_unref (message);
+				g_object_unref (parser);
+				g_object_unref (input);
+				g_free (expected);
+				g_free (wire);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Headers-only writing leaves body writers, content, flags and caller streams untouched");
+	{
+		ModelWriterPart *body = g_object_new (model_writer_part_get_type (), NULL);
+		GMimeMessage *message = g_mime_message_new (FALSE);
+		ModelInput *input = new_input ("body", 4, 1);
+		GMimeContent *content = g_mime_content_new_with_stream ((GMimeStream *) input, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+		GMimeContentType *type = g_mime_content_type_new ("text", "plain");
+		GMimeStream *output = g_mime_stream_mem_new ();
+		GByteArray *bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) output);
+		static const char expected[] = "Subject: scope\nMIME-Version: 1.0\nContent-Type: text/plain\n\n";
+		guint reads, seeks, resets, mode;
+
+		g_mime_entity_set_content_type ((GMimeEntity *) body, type);
+		g_mime_part_set_content ((GMimePart *) body, content);
+		g_mime_message_set_subject (message, "scope", NULL);
+		g_mime_message_set_mime_part (message, (GMimeEntity *) body);
+		g_mime_format_options_clear_hidden_headers (options);
+		g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+		g_mime_format_options_set_ensure_newline (options, TRUE);
+		body->fail = TRUE;
+		input->fail_after = 0;
+		input->fail_seek = TRUE;
+		input->fail_reset_after = 0;
+		reads = input->reads;
+		seeks = input->seeks;
+		resets = input->resets;
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, output), ==, sizeof (expected) - 1);
+		g_assert_cmpmem (bytes->data, bytes->len, expected, sizeof (expected) - 1);
+		g_assert_cmpuint (body->calls, ==, 0);
+		g_assert_cmpuint (input->reads, ==, reads);
+		g_assert_cmpuint (input->seeks, ==, seeks);
+		g_assert_cmpuint (input->resets, ==, resets);
+		g_assert_true (((GMimeEntity *) message)->ensure_newline);
+		g_assert_false (((GMimeEntity *) body)->ensure_newline);
+		g_assert_true (g_mime_format_options_get_ensure_newline (options));
+		for (mode = 0; mode < 2; mode++) {
+			ModelOutput *limited = g_object_new (model_output_get_type (), NULL);
+
+			limited->limit = 0;
+			limited->zero_write = mode == 0;
+			limited->unset_errno = mode == 1;
+			errno = EBUSY;
+			g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, (GMimeStream *) limited), ==, -1);
+			g_assert_cmpint (errno, ==, mode == 0 ? EIO : 0);
+			g_assert_cmpuint (body->calls, ==, 0);
+			g_assert_cmpuint (limited->closes, ==, 0);
+			g_object_unref (limited);
+		}
+		errno = 0;
+		g_assert_cmpint (g_mime_entity_write_to_stream ((GMimeEntity *) message, options, output), ==, -1);
+		g_assert_cmpint (errno, ==, EACCES);
+		g_assert_cmpuint (body->calls, ==, 1);
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, output), ==, sizeof (expected) - 1);
+		g_assert_cmpuint (body->calls, ==, 1);
+		g_assert_cmpuint (input->reads, ==, reads);
+		g_assert_cmpuint (input->seeks, ==, seeks);
+		g_assert_cmpuint (input->resets, ==, resets);
+		g_assert_true (((GMimeEntity *) message)->ensure_newline);
+		g_assert_false (((GMimeEntity *) body)->ensure_newline);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE (message)*");
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (NULL, options, output), ==, -1);
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, NULL), ==, -1);
+		g_test_assert_expected_messages ();
+		g_object_unref (output);
+		g_object_unref (type);
+		g_object_unref (content);
+		g_object_unref (input);
+		g_object_unref (message);
+		g_object_unref (body);
+	}
+	testsuite_check_passed ();
+	g_mime_format_options_free (options);
+}
+
 typedef struct {
 	GMimePart parent_object;
 	GMimeStream *stream;
@@ -2822,6 +3077,7 @@ main (int argc, char **argv)
 	test_signature_markers ();
 	test_writer_depth ();
 	test_writer_dispatch ();
+	test_message_header_writing ();
 	test_file_writing ();
 	test_content_type_load ();
 	test_ensure_newline ();

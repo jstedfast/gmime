@@ -405,11 +405,9 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 					goto fail;
 			} else if (GMIME_IS_MESSAGE (entity)) {
 				GMimeMessage *message = (GMimeMessage *) entity;
-				GMimeHeaderList *headers = message->mime_part ? message->mime_part->headers : entity->headers;
 
 				if (!content_only) {
-					if (!writer_add (&writer, _g_mime_message_write_headers (entity, options, stream)) ||
-					    (headers->has_body_separator && !writer_string (&writer, g_mime_format_options_get_newline (options))))
+					if (!writer_add (&writer, g_mime_message_write_headers_to_stream (message, options, stream)))
 						goto fail;
 				}
 

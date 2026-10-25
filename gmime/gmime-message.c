@@ -735,6 +735,7 @@ message_headers_cleared (GMimeEntity *object)
 }
 
 
+/* Write the message headers (merged with the headers of the body, if any). */
 ssize_t
 _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream)
 {
@@ -757,6 +758,22 @@ _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options,
 		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 		g_object_unref (filter);
 		
+		/* write all the prepended message headers first */
+		while (index < count) {
+			header = g_mime_header_list_get_header_at (object->headers, index);
+			if (g_mime_header_get_offset (header) >= 0)
+				break;
+
+			if (!g_mime_format_options_is_hidden_header (options, header->name) &&
+			    g_mime_header_write_to_stream (header, options, filtered) == -1) {
+				g_object_unref (filtered);
+				return -1;
+			}
+
+			index++;
+		}
+
+		/* now merge the message and body headers as they appeared in the raw message */
 		while (index < count && body_index < body_count) {
 			body_header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
 			if ((body_offset = g_mime_header_get_offset (body_header)) < 0)
@@ -765,7 +782,7 @@ _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options,
 			header = g_mime_header_list_get_header_at (object->headers, index);
 			offset = g_mime_header_get_offset (header);
 			
-			if (offset < body_offset) {
+			if (offset >= 0 && offset < body_offset) {
 				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
 					if (g_mime_header_write_to_stream (header, options, filtered) == -1) {
 						g_object_unref (filtered);
@@ -819,6 +836,7 @@ _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options,
 			errno = errsv;
 			return -1;
 		}
+
 		total = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered);
 		g_object_unref (filtered);
 		
@@ -826,6 +844,59 @@ _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options,
 	}
 	
 	return _g_mime_header_list_write_to_stream (object->headers, options, stream);
+}
+
+
+/**
+ * g_mime_message_write_headers_to_stream:
+ * @message: a #GMimeMessage
+ * @options: (nullable): formatting options, or %NULL for defaults
+ * @stream: the output stream
+ *
+ * Writes the message headers, merged with the body's headers when present,
+ * and the blank line separating headers from content. A parsed message
+ * without a separator retains that state, as in full-message output.
+ *
+ * Unlike g_mime_entity_get_headers(), this includes the header/body
+ * separator when present. It does not read or serialize the body, invoke
+ * its virtual writer, or apply body newline completion. The caller's
+ * output stream remains open.
+ *
+ * Returns: the number of bytes written, or %-1 on failure.
+ **/
+ssize_t
+g_mime_message_write_headers_to_stream (GMimeMessage *message, GMimeFormatOptions *options, GMimeStream *stream)
+{
+	GMimeEntity *object = (GMimeEntity *) message;
+	GMimeHeaderList *headers;
+	const char *newline;
+	ssize_t total, nwritten;
+	size_t length;
+
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
+
+	if ((total = _g_mime_message_write_headers (object, options, stream)) < 0)
+		return -1;
+
+	headers = message->mime_part ? message->mime_part->headers : object->headers;
+
+	if (headers->has_body_separator) {
+		newline = g_mime_format_options_get_newline (options);
+		length = strlen (newline);
+
+		if (length > (size_t) (G_MAXSSIZE - total)) {
+			errno = EOVERFLOW;
+			return -1;
+		}
+
+		if ((nwritten = _g_mime_stream_write_all (stream, newline, length)) < 0)
+			return -1;
+
+		total += nwritten;
+	}
+
+	return total;
 }
 
 

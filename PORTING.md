@@ -2974,6 +2974,57 @@ VAPI and GTK-doc generation pass with existing warnings; both new APIs
 are exposed in the generated bindings and reference documentation.
 Native Windows validation and async/cancellation remain pending.
 
+### Headers-only message writing
+
+g_mime_message_write_headers_to_stream() ports the synchronous headers-only
+MimeMessage.WriteTo() overload. It merges message and body headers, applies
+hidden-header and international formatting, and includes the header/body
+separator only when present in the parsed model. NULL formatting options
+select native defaults. Full-message serialization shares this path;
+g_mime_entity_get_headers() continues to return fields without a separator.
+
+The operation does not read, seek or reset content, invoke the body's
+virtual writer, or apply body newline completion. Repeated writes preserve
+bytes, source positions and newline settings. The caller's output stream
+is neither flushed nor closed; only the internal newline filter is
+completed. Short writes are completed, zero writes fail with EIO, and
+other write failures return -1 with the destination's errno.
+
+The shared merge now follows MimeKit's offset-aware ordering for edited
+headers. Leading headers without source offsets are emitted first;
+appended message headers no longer move ahead of parsed body headers.
+The upstream merged-header and ordering comments are retained. This
+correction also applies to full-message output and get_headers().
+
+All 33,280 actual-source headers-only differential cases match in normal
+and ASan/UBSan builds. They cover memory/source-backed content, one-byte
+and buffered reads, nonzero input positions, Unix/DOS newlines, newline
+completion settings, hidden and international formatting, malformed raw
+fields, missing separators, nested/specialized entities, truncated
+multiparts, and prepended, appended or replaced headers. Each case writes
+twice with content access blocked after parsing.
+
+Native regressions additionally verify exact full-message prefixes and
+fields-only output, defaults, failure at every output byte, short writes,
+errors without errno, untouched body overrides and newline flags, and
+caller stream ownership. Existing malformed UTF-8 encoded-word decoding
+differences remain outside this increment: international output can use
+question marks where MimeKit emits Unicode replacement characters.
+
+The shared full-message path also retains all 80,472 model/writer,
+17,568 signature-marker and 21,600 newline-completion reference matches
+in both builds. All 2,112 native stream/file comparisons pass with the
+16 documented standalone hidden-header differences unchanged.
+Focused reader/model/mbox tests pass with sanitizer leak checking.
+Full core testing remains at 34/35 programs with the two established
+text-format assertions failing.
+
+Full build, GIR, typelib, VAPI and GTK-doc generation pass with existing
+warnings. The new method's return type and nullable formatting options
+are verified in generated bindings and its reference entry is present.
+GI/Python calls with NULL options and repeated writes also pass.
+Native Windows validation and async/cancellation remain pending.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and
