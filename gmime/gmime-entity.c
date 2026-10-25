@@ -33,6 +33,7 @@
 #include "gmime-visitor.h"
 #include "gmime-parser.h"
 #include "gmime-stream-cat.h"
+#include "gmime-stream-file.h"
 #include "gmime-stream-mem.h"
 #include "gmime-internal.h"
 #include "gmime-events.h"
@@ -1359,6 +1360,106 @@ g_mime_entity_write_content_to_stream (GMimeEntity *object, GMimeFormatOptions *
 	
 	return GMIME_ENTITY_GET_CLASS (object)->write_to_stream (object, options, TRUE, stream);
 }
+
+static gboolean
+entity_write_to_file (GMimeEntity *object, GMimeFormatOptions *options, const char *filename,
+		      gboolean content_only, GError **error)
+{
+	const char *operation = NULL;
+	GMimeStream *stream;
+	ssize_t nwritten;
+	int errsv = 0;
+
+	g_return_val_if_fail (GMIME_IS_ENTITY (object), FALSE);
+	g_return_val_if_fail (filename != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if (!(stream = g_mime_stream_file_open (filename, "wb", error)))
+		return FALSE;
+
+	errno = 0;
+	nwritten = content_only ? g_mime_entity_write_content_to_stream (object, options, stream) :
+		g_mime_entity_write_to_stream (object, options, stream);
+	if (nwritten < 0) {
+		operation = "write";
+		errsv = errno;
+	} else if (g_mime_stream_flush (stream) < 0) {
+		operation = "flush";
+		errsv = errno;
+	}
+
+	/* Closing must not replace an earlier write or flush failure. */
+	errno = 0;
+	if (g_mime_stream_close (stream) < 0 && !operation) {
+		operation = "close";
+		errsv = errno;
+	}
+	g_object_unref (stream);
+
+	if (operation) {
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to %s `%s': %s", operation, filename,
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		errno = errsv;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+/**
+ * g_mime_entity_write_to_file:
+ * @object: a #GMimeEntity
+ * @options: (nullable): formatting options, or %NULL for defaults
+ * @filename: (type filename): the output file path
+ * @error: return location for a #GError, or %NULL
+ *
+ * Writes the entity's headers and content to @filename using the same
+ * virtual writer as g_mime_entity_write_to_stream(). Also accepts a
+ * #GMimeMessage to write a complete message.
+ *
+ * Creates the file or truncates an existing file before serialization,
+ * then flushes and closes it. Failures leave the created or partially
+ * written file in place; the operation is not atomic. Do not use the
+ * file backing the entity's source content as the destination.
+ *
+ * Open, write, flush and close failures report %GMIME_ERROR with the
+ * corresponding errno code, or %GMIME_ERROR_GENERAL if none is supplied.
+ * Cleanup preserves the first failure. The destination is closed on both
+ * success and failure, even if a custom writer retains the stream.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_entity_write_to_file (GMimeEntity *object, GMimeFormatOptions *options,
+			   const char *filename, GError **error)
+{
+	return entity_write_to_file (object, options, filename, FALSE, error);
+}
+
+
+/**
+ * g_mime_entity_write_content_to_file:
+ * @object: a #GMimeEntity
+ * @options: (nullable): formatting options, or %NULL for defaults
+ * @filename: (type filename): the output file path
+ * @error: return location for a #GError, or %NULL
+ *
+ * Writes only the entity's content to @filename, without its headers.
+ * Uses g_mime_entity_write_content_to_stream() semantics and the same
+ * create/truncate, flush, close and error handling as
+ * g_mime_entity_write_to_file().
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_entity_write_content_to_file (GMimeEntity *object, GMimeFormatOptions *options,
+				   const char *filename, GError **error)
+{
+	return entity_write_to_file (object, options, filename, TRUE, error);
+}
+
 
 static void
 object_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)

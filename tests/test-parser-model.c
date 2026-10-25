@@ -23,7 +23,11 @@
 #endif
 
 #include <errno.h>
+#include <glib/gstdio.h>
 #include <string.h>
+#ifdef __linux__
+#include <unistd.h>
+#endif
 #include <gmime/gmime.h>
 #include <gmime/gmime-parser-reader-private.h>
 #include <gmime/gmime-reader-private.h>
@@ -2270,6 +2274,261 @@ test_writer_dispatch (void)
 	g_mime_format_options_free (options);
 }
 
+typedef struct {
+	GMimePart parent_object;
+	GMimeStream *stream;
+	GMimeFormatOptions *options;
+	guint calls, failure;
+	gboolean content_only;
+#ifdef __linux__
+	char buffer[128];
+#endif
+} ModelFilePart;
+
+typedef GMimePartClass ModelFilePartClass;
+
+G_DEFINE_TYPE (ModelFilePart, model_file_part, GMIME_TYPE_PART)
+
+static ssize_t
+model_file_part_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
+{
+	ModelFilePart *part = (ModelFilePart *) entity;
+
+	g_set_object (&part->stream, stream);
+	part->options = options;
+	part->content_only = content_only;
+	part->calls++;
+	if (part->failure == 1 || part->failure == 2) {
+		g_assert_cmpint (g_mime_stream_write (stream, "prefix", 6), ==, 6);
+		errno = part->failure == 1 ? EACCES : 0;
+		return -1;
+	}
+#ifdef __linux__
+	if (part->failure == 3) {
+		GMimeStreamFile *file = (GMimeStreamFile *) stream;
+
+		g_assert_cmpint (fclose (file->fp), ==, 0);
+		file->fp = g_fopen ("/dev/full", "wb");
+		g_assert_nonnull (file->fp);
+		g_assert_cmpint (setvbuf (file->fp, part->buffer, _IOFBF, sizeof (part->buffer)), ==, 0);
+		g_assert_cmpint (fputc ('x', file->fp), ==, 'x');
+		return 0;
+	}
+	if (part->failure >= 4) {
+		g_assert_cmpint (close (fileno (GMIME_STREAM_FILE (stream)->fp)), ==, 0);
+		errno = part->failure == 5 ? EACCES : 0;
+		return part->failure == 4 ? 0 : -1;
+	}
+#endif
+	return GMIME_ENTITY_CLASS (model_file_part_parent_class)->write_to_stream (entity, options, content_only, stream);
+}
+
+static void
+model_file_part_finalize (GObject *object)
+{
+	g_clear_object (&((ModelFilePart *) object)->stream);
+	G_OBJECT_CLASS (model_file_part_parent_class)->finalize (object);
+}
+
+static void
+model_file_part_class_init (ModelFilePartClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_file_part_finalize;
+	GMIME_ENTITY_CLASS (klass)->write_to_stream = model_file_part_write;
+}
+
+static void
+model_file_part_init (ModelFilePart *part)
+{
+}
+
+static void
+test_file_writing (void)
+{
+	static const char binary[] = "Content-Type: application/octet-stream\nContent-Transfer-Encoding: binary\n\nA\0B\nC\rD";
+	static const char *cases[] = {
+		binary,
+		"Subject: empty\n\n",
+		"Content-Type: text/plain; charset=utf-8\r\n\r\nbody\r\nnext",
+		"Content-Type: text/plain\nContent-Transfer-Encoding: quoted-printable\n\none=3Dtwo\n",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\nContent-Type: text/plain\n\nbody\n--b--\npost",
+		"Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\ntruncated"
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GError *error = NULL;
+	ModelFilePart *custom = g_object_new (model_file_part_get_type (), NULL);
+	GMimeStream *content_stream = g_mime_stream_mem_new_with_buffer ("body", 4);
+	GMimeContent *content = g_mime_content_new_with_stream (content_stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	char *directory, *filename, *missing, *actual;
+	gsize length;
+	guint i, message, format, ensure, content_only, repeat;
+	guint failures = 2;
+
+	testsuite_check ("File writers preserve exact full and content-only entity and message bytes");
+	directory = g_dir_make_tmp ("gmime-file-writing-XXXXXX", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (directory);
+	filename = g_build_filename (directory, "message-\303\251 file.eml", NULL);
+	missing = g_build_filename (directory, "absent", "message.eml", NULL);
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (message = 0; message < 2; message++) {
+			GMimeStream *input = g_mime_stream_mem_new_with_buffer (cases[i],
+				i == 0 ? sizeof (binary) - 1 : strlen (cases[i]));
+			GMimeParser *parser = g_mime_parser_new ();
+			GMimeEntity *entity;
+
+			g_mime_parser_set_persist_stream (parser, FALSE);
+			g_mime_parser_init_with_stream (parser, input);
+			entity = message ? (GMimeEntity *) g_mime_parser_construct_message (parser, NULL, &error) :
+				g_mime_parser_construct_part (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			g_object_unref (parser);
+			g_object_unref (input);
+			for (format = 0; format < 3; format++) {
+				GMimeFormatOptions *selected = format ? options : NULL;
+
+				g_mime_format_options_set_newline_format (options, format == 2 ?
+					GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+				for (ensure = 0; ensure < 2; ensure++) {
+					g_mime_format_options_set_ensure_newline (options, ensure);
+					for (content_only = 0; content_only < 2; content_only++) {
+						GByteArray *expected = serialize_writer (entity, selected, content_only);
+
+						for (repeat = 0; repeat < 2; repeat++) {
+							g_assert_true (g_file_set_contents (filename, "stale data", 10, &error));
+							if (content_only)
+								g_assert_true (g_mime_entity_write_content_to_file (entity, selected, filename, &error));
+							else
+								g_assert_true (g_mime_entity_write_to_file (entity, selected, filename, &error));
+							g_assert_no_error (error);
+							g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+							g_assert_cmpmem (actual, length, expected->data, expected->len);
+							g_free (actual);
+							g_assert_cmpint (g_unlink (filename), ==, 0);
+						}
+						g_byte_array_unref (expected);
+					}
+				}
+			}
+			g_object_unref (entity);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("File writers validate arguments before truncation and report open errors");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_ENTITY (object)*");
+	g_assert_false (g_mime_entity_write_to_file (NULL, NULL, filename, &error));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*filename != NULL*");
+	g_assert_false (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, NULL, NULL, &error));
+	g_test_assert_expected_messages ();
+	g_assert_null (error);
+	g_assert_true (g_file_set_contents (filename, "untouched", 9, &error));
+	g_set_error_literal (&error, GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, NULL, filename, &error));
+	g_test_assert_expected_messages ();
+	g_clear_error (&error);
+	g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+	g_assert_cmpmem (actual, length, "untouched", 9);
+	g_free (actual);
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, NULL, missing, &error));
+	g_assert_error (error, GMIME_ERROR, ENOENT);
+	g_assert_nonnull (strstr (error->message, missing));
+	g_clear_error (&error);
+	g_assert_false (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, NULL, directory, &error));
+	g_assert_nonnull (error);
+	g_assert_cmpuint (error->domain, ==, GMIME_ERROR);
+	g_assert_cmpint (error->code, >, 0);
+	g_clear_error (&error);
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, NULL, missing, NULL));
+	g_assert_cmpuint (custom->calls, ==, 0);
+	testsuite_check_passed ();
+
+	testsuite_check ("File writers retain virtual dispatch and close retained streams on success and failure");
+	g_mime_part_set_content ((GMimePart *) custom, content);
+	g_mime_entity_set_header ((GMimeEntity *) custom, "Bcc", "Hidden <a@example.com>", NULL);
+	g_mime_format_options_add_hidden_header (options, "Bcc");
+	for (format = 0; format < 2; format++) {
+		GMimeFormatOptions *selected = format ? options : NULL;
+
+		for (content_only = 0; content_only < 2; content_only++) {
+			GByteArray *expected = serialize_writer ((GMimeEntity *) custom, selected, content_only);
+			guint calls = custom->calls;
+
+			if (content_only)
+				g_assert_true (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, selected, filename, &error));
+			else
+				g_assert_true (g_mime_entity_write_to_file ((GMimeEntity *) custom, selected, filename, &error));
+			g_assert_no_error (error);
+			g_assert_cmpuint (custom->calls, ==, calls + 1);
+			g_assert_true (custom->options == selected);
+			g_assert_cmpint (custom->content_only, ==, content_only);
+			g_assert_null (GMIME_STREAM_FILE (custom->stream)->fp);
+			g_assert_cmpint (g_mime_stream_close (custom->stream), ==, 0);
+			g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+			g_assert_cmpmem (actual, length, expected->data, expected->len);
+			if (format || content_only)
+				g_assert_null (g_strstr_len (actual, length, "Bcc:"));
+			else
+				g_assert_nonnull (g_strstr_len (actual, length, "Bcc:"));
+			g_free (actual);
+			g_byte_array_unref (expected);
+		}
+	}
+#ifdef __linux__
+	failures = 6;
+#endif
+	for (i = 1; i <= failures; i++) {
+		int code = i == 3 ? ENOSPC : i == 4 ? EBADF :
+			i == 1 || i == 5 ? EACCES : GMIME_ERROR_GENERAL;
+		const char *operation = i == 3 ? "flush" : i == 4 ? "close" : "write";
+
+		custom->failure = i;
+		for (content_only = 0; content_only < 2; content_only++) {
+			errno = EBUSY;
+			if (content_only)
+				g_assert_false (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, options, filename, &error));
+			else
+				g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, filename, &error));
+			g_assert_cmpint (errno, ==, code == GMIME_ERROR_GENERAL ? 0 : code);
+			g_assert_error (error, GMIME_ERROR, code);
+			g_assert_nonnull (strstr (error->message, operation));
+			g_assert_nonnull (strstr (error->message, filename));
+			g_clear_error (&error);
+			g_assert_null (GMIME_STREAM_FILE (custom->stream)->fp);
+			g_assert_cmpint (g_mime_stream_close (custom->stream), ==, 0);
+			g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+			g_assert_cmpmem (actual, length, "prefix", i < 3 ? 6 : 0);
+			g_free (actual);
+		}
+	}
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, filename, NULL));
+	custom->failure = 0;
+	g_assert_true (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, filename, &error));
+	g_assert_no_error (error);
+#ifdef __linux__
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, "/dev/full", &error));
+	g_assert_error (error, GMIME_ERROR, ENOSPC);
+	g_clear_error (&error);
+	g_assert_true (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, "/dev/null", &error));
+	g_assert_no_error (error);
+#endif
+	testsuite_check_passed ();
+
+	g_assert_cmpint (g_unlink (filename), ==, 0);
+	g_assert_cmpint (g_rmdir (directory), ==, 0);
+	g_free (missing);
+	g_free (filename);
+	g_free (directory);
+	g_object_unref (content);
+	g_object_unref (content_stream);
+	g_object_unref (custom);
+	g_mime_format_options_free (options);
+}
+
 static void
 test_content_type_load (void)
 {
@@ -2563,6 +2822,7 @@ main (int argc, char **argv)
 	test_signature_markers ();
 	test_writer_depth ();
 	test_writer_dispatch ();
+	test_file_writing ();
 	test_content_type_load ();
 	test_ensure_newline ();
 	testsuite_end ();

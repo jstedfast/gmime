@@ -157,6 +157,10 @@ char *g_mime_entity_get_headers (GMimeEntity *object, GMimeFormatOptions *option
 
 ssize_t g_mime_entity_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream);
 ssize_t g_mime_entity_write_content_to_stream (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream);
+gboolean g_mime_entity_write_to_file (GMimeEntity *object, GMimeFormatOptions *options,
+				    const char *filename, GError **error);
+gboolean g_mime_entity_write_content_to_file (GMimeEntity *object, GMimeFormatOptions *options,
+					    const char *filename, GError **error);
 char *g_mime_entity_to_string (GMimeEntity *object, GMimeFormatOptions *options);
 
 void g_mime_entity_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);

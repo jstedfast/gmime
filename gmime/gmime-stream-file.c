@@ -24,6 +24,7 @@
 #endif
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #ifdef G_OS_WIN32
 #include <fcntl.h>
@@ -553,7 +554,7 @@ g_mime_stream_file_open (const char *path, const char *mode, GError **err)
 	g_return_val_if_fail (path != NULL, NULL);
 	g_return_val_if_fail (mode != NULL, NULL);
 	
-	if (!(fp = fopen (path, mode))) {
+	if (!(fp = g_fopen (path, mode))) {
 		g_set_error (err, GMIME_ERROR, errno, "Failed to open `%s': %s", path, g_strerror (errno));
 		return NULL;
 	}

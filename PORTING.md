@@ -2926,6 +2926,54 @@ GTK-doc generation pass with existing warnings; the loader is exposed in
 the generated bindings and reference documentation. Native Windows and
 async/cancellation validation remain pending.
 
+### Synchronous entity and message file writing
+
+g_mime_entity_write_to_file() and
+g_mime_entity_write_content_to_file() port MimeKit's synchronous filename
+WriteTo overloads through the existing public virtual stream writers.
+The full writer accepts GMimeMessage as well as other entities; the
+content-only writer retains native stream serialization semantics.
+NULL formatting options select native defaults.
+
+Files are created or truncated before writing, explicitly flushed, and
+closed on success and failure, including when an overriding writer keeps
+a reference to the output stream. Partial files are not removed and
+replacement is not atomic. Source-backed content must not use the same
+file as its destination. The stdio backend drains buffered output without
+requesting fsync-style durability; file access and sharing follow native
+stdio conventions. Its opener now uses g_fopen() for UTF-8 Windows paths.
+
+Open, write, flush and close failures return FALSE with GMIME_ERROR and
+the native errno code, or GMIME_ERROR_GENERAL when a custom writer supplies
+none. Cleanup preserves the first failure and its errno rather than
+replacing it with a secondary close failure. Native tests cover defaults,
+Unicode paths, missing parents, directory destinations, validation before
+truncation, repeated writes, binary bytes, full/content-only entities and
+messages, custom dispatch, retained-stream closure, partial files,
+no-errno failures and combined write/close failures. Linux tests also
+inject buffered flush and close-only failures and exercise /dev/full and
+/dev/null. The corresponding MimeKit file wrappers contain no inline
+implementation comments.
+
+All 2,112 differential cases match native stream output byte-for-byte in
+normal and ASan/UBSan builds, with each case written twice. They cover
+memory/source-backed models, create/overwrite paths, newline controls,
+international and hidden-header formatting, binary/encoded leaves,
+specialized entities, nested messages and truncated multiparts.
+Of these, 2,096 also match actual current MimeKit file output exactly.
+The remaining 16 expose an existing standalone-entity difference:
+native header-list writing suppresses configured hidden headers, whereas
+MimeKit retains them outside message boundaries. This file-I/O port
+deliberately preserves the existing native stream behavior rather than
+changing header filtering. No other differential mismatches remain.
+
+Focused reader/model/mbox/substream tests pass with sanitizer leak checking
+enabled. Full core testing remains at 34/35 programs with the two
+established text-format assertions failing. Full build, GIR, typelib,
+VAPI and GTK-doc generation pass with existing warnings; both new APIs
+are exposed in the generated bindings and reference documentation.
+Native Windows validation and async/cancellation remain pending.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and
