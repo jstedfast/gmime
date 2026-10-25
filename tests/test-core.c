@@ -8196,7 +8196,9 @@ test_parser_errors (void)
 		{ "Subject: ok\nbroken header\n\nBody", TRUE, 0, 0 },
 		{ "Subject: ok\n", TRUE, 0, 0 },
 		{ "\nBody", TRUE, 0, 0 },
-		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\n--b\n\nSecond\n--b--\n", TRUE, 0, 1 },
+		/* MimeKit retains the empty child rather than discarding its
+		 * opening delimiter and changing the parsed MIME tree. */
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\n--b\n\nSecond\n--b--\n", TRUE, 0, 2 },
 		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nX: First\n--b\n\nSecond\n--b--\n", TRUE, 0, 2 }
 	};
 	const char *marker = "From sender@example.com Sat Jan 01 00:00:00 2022\n";
@@ -8908,7 +8910,8 @@ test_disposition_notification (void)
 		fields = g_mime_message_disposition_notification_get_fields (GMIME_MESSAGE_DISPOSITION_NOTIFICATION (entity), &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (fields);
-		check (g_mime_header_list_get_count (fields) == (i < 2 ? 0 : 1), "notification fields load only the first header block, including empty blocks");
+		check (g_mime_header_list_get_count (fields) == (i < 2 ? 0 : i == 5 ? 2 : 1),
+		       "notification fields retain invalid wire headers in the first block");
 		output = g_mime_stream_mem_new ();
 		g_mime_content_decode_to_stream (g_mime_part_get_content (GMIME_PART (entity)), output);
 		bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
@@ -8931,7 +8934,8 @@ test_disposition_notification (void)
 		g_free (serialized);
 		fields = g_mime_message_disposition_notification_get_fields (GMIME_MESSAGE_DISPOSITION_NOTIFICATION (parsed), &error);
 		g_assert_no_error (error);
-		check (fields && g_mime_header_list_get_count (fields) == (i < 2 ? 1 : 2), "empty and unterminated notification blocks round-trip after changes");
+		check (fields && g_mime_header_list_get_count (fields) == (i < 2 ? 1 : i == 5 ? 3 : 2),
+		       "empty, unterminated and invalid notification fields round-trip after changes");
 		g_object_unref (parsed);
 		g_object_unref (entity);
 	}
@@ -9576,7 +9580,8 @@ test_feedback_report (void)
 		fields = g_mime_message_feedback_report_get_fields (GMIME_MESSAGE_FEEDBACK_REPORT (entity), &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (fields);
-		check (g_mime_header_list_get_count (fields) == (i < 2 ? 0 : 1), "feedback reports load only the first header block");
+		check (g_mime_header_list_get_count (fields) == (i < 2 ? 0 : i == 5 ? 2 : 1),
+		       "feedback reports retain invalid wire headers in the first block");
 		g_mime_header_list_append (fields, "Feedback-Type", "abuse", NULL);
 		serialized = g_mime_entity_to_string (entity, NULL);
 		check (!strstr (serialized, "ignored: body"), "feedback edits discard trailing content after the field block");

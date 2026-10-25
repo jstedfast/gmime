@@ -213,7 +213,7 @@ test_header_models (void)
 
 		input->origin = ((gint64) 1 << 34);
 		reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
-		headers = _g_mime_parser_reader_construct_headers (reader, &error);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (headers);
 		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 4);
@@ -496,7 +496,7 @@ test_persistent_resume (void)
 		g_string_append_c (wire, 'a' + i % 26);
 	input = new_input (wire->str, wire->len, 83);
 	reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, TRUE);
-	headers = _g_mime_parser_reader_construct_headers (reader, &error);
+	headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
 	g_assert_no_error (error);
 	g_assert_cmpint (g_mime_reader_tell (reader), ==, 10);
 	g_assert_cmpint (g_mime_stream_tell ((GMimeStream *) input), >, 10);
@@ -528,7 +528,7 @@ test_model_stream_replacement (void)
 	guint i;
 
 	testsuite_check ("Model stream replacement references the new source and rechecks persistence");
-	headers = _g_mime_parser_reader_construct_headers (reader, &error);
+	headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
 	g_assert_no_error (error);
 	g_object_unref (headers);
 	g_object_unref (first);
@@ -582,7 +582,7 @@ test_model_type_registration (void)
 
 	g_assert_cmpint (g_mime_stream_seek ((GMimeStream *) input, 0, GMIME_STREAM_SEEK_SET), ==, 0);
 	g_mime_reader_set_stream (reader, (GMimeStream *) input);
-	headers = _g_mime_parser_reader_construct_headers (reader, &error);
+	headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
 	g_assert_no_error (error);
 	g_assert_nonnull (headers);
 	g_assert_cmpstr (g_mime_header_get_value (g_mime_header_list_get_header (headers, "Content-Type")), ==,
@@ -870,8 +870,7 @@ test_mailbox_models (void)
 				g_assert_null (next->raw_marker);
 				g_assert_true (g_mime_reader_eos (reader));
 				g_assert_null (_g_mime_parser_reader_construct_message (reader, &error));
-				g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
-				g_clear_error (&error);
+				g_assert_no_error (error);
 				g_assert_null (_g_mime_parser_reader_get_mbox_marker (reader));
 				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, -1);
 				g_object_unref (reader);
@@ -1325,7 +1324,7 @@ test_model_errors (void)
 		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED);
 		g_clear_error (&error);
 		reads = input->reads;
-		g_assert_null (_g_mime_parser_reader_construct_headers (reader, &error));
+		g_assert_null (_g_mime_parser_reader_construct_headers (reader, FALSE, &error));
 		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED);
 		g_assert_cmpuint (input->reads, ==, reads);
 		g_clear_error (&error);
@@ -1357,7 +1356,7 @@ test_model_errors (void)
 			input->unset_errno = unset;
 			input->fail_substream = i == 0;
 			if (i == 1) {
-				GMimeHeaderList *headers = _g_mime_parser_reader_construct_headers (reader, &error);
+				GMimeHeaderList *headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
 
 				g_assert_no_error (error);
 				g_object_unref (headers);
@@ -1388,18 +1387,255 @@ test_empty_headers (void)
 		ModelInput *input = new_input (cases[i], strlen (cases[i]), 1);
 		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
 		GError *error = NULL;
-		GMimeHeaderList *headers = _g_mime_parser_reader_construct_headers (reader, &error);
+		GMimeHeaderList *headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
 
 		g_assert_no_error (error);
 		g_assert_nonnull (headers);
 		g_assert_cmpint (headers->has_body_separator, ==, i == 1 || i == 2 || i == 5);
 		g_object_unref (headers);
-		headers = _g_mime_parser_reader_construct_headers (reader, &error);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
 		g_assert_no_error (error);
 		g_assert_false (headers->has_body_separator);
 		g_object_unref (headers);
 		g_object_unref (reader);
 		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+release_public_parser (GMimeParser *parser, const char *name, const char *value, gint64 offset, gpointer user_data)
+{
+	guint *calls = user_data;
+
+	(*calls)++;
+	g_assert_cmpstr (name, ==, "Subject");
+	g_assert_cmpstr (value, ==, " retained\n");
+	g_assert_cmpint (offset, ==, 0);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
+	g_assert_null (g_mime_parser_construct_part (parser, NULL, NULL));
+	g_test_assert_expected_messages ();
+	g_mime_parser_set_header_regex (parser, NULL, NULL, NULL);
+	g_object_unref (parser);
+}
+
+static void
+test_public_parser_models (void)
+{
+	static const char wire[] = "X-Skip: first\n\n"
+		"From sender\0binary\nSubject: first\nContent-Type: text/plain\n\none\0tail\n"
+		"From next\nSubject: second\n\nlast";
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint mode, chunk;
+
+	testsuite_check ("Public parser retains one buffer across headers, formats, persistence and mailbox reads");
+	for (mode = 0; mode < 4; mode++) {
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+			GMimeParser *parser;
+			GMimeHeaderList *headers;
+			GMimeMessage *first, *second;
+			GMimeContent *saved;
+			GByteArray *bytes;
+			GError *error = NULL;
+			char *marker;
+
+			input->nonseekable = (mode & 1) != 0;
+			parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+			g_mime_parser_set_persist_stream (parser, (mode & 2) != 0);
+			headers = g_mime_parser_construct_headers (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
+			g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, 0);
+			g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, 14);
+			g_assert_cmpint (g_mime_parser_tell (parser), ==, 15);
+			g_object_unref (headers);
+			g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
+			first = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (first);
+			g_assert_cmpstr (g_mime_message_get_subject (first), ==, "first");
+			g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, 15);
+			marker = g_mime_parser_get_mbox_marker (parser);
+			g_assert_cmpstr (marker, ==, "From sender");
+			g_free (marker);
+			saved = g_mime_part_get_content (GMIME_PART (first->mime_part));
+			bytes = read_content (saved, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, "one\0tail", 8);
+			g_byte_array_unref (bytes);
+			if ((mode & 2) && !(mode & 1))
+				g_assert_cmpint (g_mime_stream_seek ((GMimeStream *) input, 0, GMIME_STREAM_SEEK_SET), ==, 0);
+			g_mime_parser_set_persist_stream (parser, FALSE);
+			second = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (second);
+			g_assert_cmpstr (g_mime_message_get_subject (second), ==, "second");
+			g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, 84);
+			g_assert_null (g_mime_parser_construct_message (parser, NULL, &error));
+			g_assert_no_error (error);
+			g_assert_true (g_mime_parser_eos (parser));
+			g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
+			g_object_unref (parser);
+			g_object_unref (input);
+			bytes = read_content (saved, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, "one\0tail", 8);
+			g_byte_array_unref (bytes);
+			g_object_unref (second);
+			g_object_unref (first);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Public parsing retains incomplete embedded-message pre-header bytes at EOF");
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		static const char incomplete[] = "Content-Type: message/rfc822\n\nSubject: outer\n"
+			"Content-Type: multipart/digest; boundary=b\n\n--b\n\nx";
+		ModelInput *input = new_input (incomplete, sizeof (incomplete) - 1, chunks[chunk]);
+		GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+		GMimeEntity *entity, *child;
+		GMimeMessage *outer, *inner;
+		GError *error = NULL;
+		gconstpointer bytes;
+		gsize length;
+
+		entity = g_mime_parser_construct_part (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_true (GMIME_IS_MESSAGE_PART (entity));
+		outer = g_mime_message_part_get_message (GMIME_MESSAGE_PART (entity));
+		g_assert_true (GMIME_IS_MULTIPART (outer->mime_part));
+		child = g_mime_multipart_get_part (GMIME_MULTIPART (outer->mime_part), 0);
+		g_assert_true (GMIME_IS_MESSAGE_PART (child));
+		inner = g_mime_message_part_get_message (GMIME_MESSAGE_PART (child));
+		g_assert_nonnull (inner);
+		g_assert_nonnull (inner->raw_marker);
+		bytes = g_bytes_get_data (inner->raw_marker, &length);
+		g_assert_cmpmem (bytes, length, "x", 1);
+		g_object_unref (entity);
+		g_object_unref (parser);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Public header callbacks may unregister and release the parser without reentrant reads");
+	{
+		ModelInput *input = new_input ("Subject: retained\nX: ignored\n\nbody", 34, 1);
+		GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+		GMimeParser *weak = parser;
+		GMimeMessage *message;
+		GError *error = NULL;
+		guint calls = 0;
+
+		g_object_add_weak_pointer (G_OBJECT (parser), (gpointer *) &weak);
+		g_mime_parser_set_header_regex (parser, "^subject$", release_public_parser, &calls);
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		g_assert_cmpuint (calls, ==, 1);
+		g_assert_null (weak);
+		g_assert_cmpstr (g_mime_message_get_subject (message), ==, "retained");
+		g_object_unref (message);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+count_public_warning (gint64 offset, GMimeParserWarning warning, const char *item, gpointer user_data)
+{
+	guint *counts = user_data;
+
+	g_assert_cmpuint (warning, <=, GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT);
+	counts[warning]++;
+}
+
+static void
+test_public_long_header_names (void)
+{
+	const gsize lengths[] = { 4095, 4096, 4097, 4223, 4224, 4225, 8192, 8448 };
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint i, j, blank;
+
+	testsuite_check ("Public header names spanning the reader buffer retain their names and wire bytes");
+	for (i = 0; i < G_N_ELEMENTS (lengths); i++) {
+		for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			for (blank = 0; blank < 2; blank++) {
+				char *name = g_strnfill (lengths[i], 'X');
+				char *wire = g_strconcat (name, blank ? " \t: value\n\n" : ": value\n\n", NULL);
+				ModelInput *input = new_input (wire, strlen (wire), chunks[j]);
+				GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+				GError *error = NULL;
+				GMimeHeaderList *headers = g_mime_parser_construct_headers (parser, NULL, &error);
+				GMimeHeader *header;
+
+				if (error)
+					testsuite_printf (stderr, 1, "Long header: length=%" G_GSIZE_FORMAT
+							  ", chunk=%" G_GSIZE_FORMAT ", blanks=%u: %s\n",
+							  lengths[i], chunks[j], blank, error->message);
+				g_assert_no_error (error);
+				g_assert_nonnull (headers);
+				g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
+				header = g_mime_header_list_get_header_at (headers, 0);
+				g_assert_false (header->invalid);
+				g_assert_cmpstr (header->name, ==, name);
+				g_assert_cmpstr (header->raw_value, ==, " value\n");
+				g_assert_cmpuint (g_bytes_get_size (header->raw_field_bytes), ==, lengths[i] + blank * 2);
+				g_assert_cmpint (g_mime_parser_tell (parser), ==, strlen (wire));
+				g_object_unref (headers);
+				g_object_unref (parser);
+				g_object_unref (input);
+				g_free (wire);
+				g_free (name);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_public_parser_warnings (void)
+{
+	static const struct {
+		const char *wire;
+		GMimeParserWarning warning;
+	} cases[] = {
+		{ "Subject: same\nSubject: same\n\n", GMIME_WARN_DUPLICATED_HEADER },
+		{ "Subject: one\nSubject: two\n\n", GMIME_CRIT_CONFLICTING_HEADER },
+		{ "Subject: \xc3\xa9\n\n", GMIME_WARN_UNENCODED_8BIT_HEADER },
+		{ "Content-Type: multipart/mixed\n\nbody", GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY },
+		{ "Content-Type: multipart/mixed; boundary=b\n\nbody", GMIME_WARN_TRUNCATED_MESSAGE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\n"
+		  "Content-Type: multipart/mixed; boundary=c\n\n--c\n\nbody\n--b--\n",
+		  GMIME_WARN_MALFORMED_MULTIPART },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nX: value\n--b--\n",
+		  GMIME_WARN_PART_WITHOUT_CONTENT },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\n--b--\n",
+		  GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT }
+	};
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint i, j;
+
+	testsuite_check ("Public parser warnings distinguish malformed ancestors from actual EOF truncation");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			ModelInput *input = new_input (cases[i].wire, strlen (cases[i].wire), chunks[j]);
+			GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			guint counts[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+			GMimeMessage *message;
+			GError *error = NULL;
+
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts);
+			message = g_mime_parser_construct_message (parser, options, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_assert_cmpuint (counts[cases[i].warning], ==, 1);
+			g_assert_cmpuint (counts[GMIME_WARN_TRUNCATED_MESSAGE], ==,
+					  cases[i].warning == GMIME_WARN_TRUNCATED_MESSAGE);
+			g_object_unref (message);
+			g_mime_parser_options_free (options);
+			g_object_unref (parser);
+			g_object_unref (input);
+		}
 	}
 	testsuite_check_passed ();
 }
@@ -1426,6 +1662,9 @@ main (int argc, char **argv)
 	test_multipart_models ();
 	test_multipart_output ();
 	test_model_errors ();
+	test_public_parser_models ();
+	test_public_parser_warnings ();
+	test_public_long_header_names ();
 	testsuite_end ();
 	g_mime_shutdown ();
 

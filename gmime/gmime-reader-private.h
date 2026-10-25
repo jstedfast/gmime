@@ -26,6 +26,11 @@
 G_BEGIN_DECLS
 
 GMimeStream *_g_mime_reader_get_stream (GMimeReader *reader);
+void _g_mime_reader_set_format (GMimeReader *reader, GMimeFormat format);
+gboolean _g_mime_reader_has_input (GMimeReader *reader, GError **error);
+gboolean _g_mime_reader_header_limit_exceeded (GMimeReader *reader);
+gboolean _g_mime_reader_input_eos (GMimeReader *reader);
+gboolean _g_mime_reader_read_headers_to_separator (GMimeReader *reader, GError **error);
 gboolean _g_mime_reader_skip_blank_lines (GMimeReader *reader, GError **error);
 gboolean _g_mime_reader_restore_stream_position (GMimeReader *reader, GError **error);
 GMimeStream *_g_mime_reader_read_to_eos (GMimeReader *reader, GError **error);

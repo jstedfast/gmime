@@ -34,7 +34,7 @@
  * A #GMimeFilter for detecting OpenPGP markers and filtering out any content outside the bounds of said markers.
  **/
 
-/* Note: if you add/remove markers, update GMimeParser as well */
+/* Shared by explicit decoded inspection and opt-in parser detection. */
 const GMimeOpenPGPMarker g_mime_openpgp_markers[9] = {
 	{ "-----BEGIN PGP MESSAGE-----",           27, GMIME_OPENPGP_NONE,                        GMIME_OPENPGP_BEGIN_PGP_MESSAGE,           FALSE },
 	{ "-----END PGP MESSAGE-----",             25, GMIME_OPENPGP_BEGIN_PGP_MESSAGE,           GMIME_OPENPGP_END_PGP_MESSAGE,             TRUE  },

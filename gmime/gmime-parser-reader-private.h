@@ -28,12 +28,15 @@
 
 G_BEGIN_DECLS
 
-/* Private model-building foundation. Do not mix this reader's buffered
- * operations with a legacy parser on the same input stream. Header lists,
- * MIME trees and sequential message/mailbox models are supported. Stream
- * replacement uses the inherited reader setters. */
+/* Shared model builder for GMimeParser. All operations retain one reader's
+ * buffered input. Stream replacement uses the inherited reader setters. */
 GMimeReader *_g_mime_parser_reader_new (GMimeParserOptions *options, GMimeStream *stream, gboolean persist);
-GMimeHeaderList *_g_mime_parser_reader_construct_headers (GMimeReader *reader, GError **error);
+void _g_mime_parser_reader_set_persist (GMimeReader *reader, gboolean persist);
+void _g_mime_parser_reader_set_header_callback (GMimeReader *reader,
+					      gboolean (*callback) (GMimeHeader *, gboolean, gpointer, GError **), gpointer user_data);
+gint64 _g_mime_parser_reader_get_headers_begin (GMimeReader *reader);
+gint64 _g_mime_parser_reader_get_headers_end (GMimeReader *reader);
+GMimeHeaderList *_g_mime_parser_reader_construct_headers (GMimeReader *reader, gboolean stop_at_separator, GError **error);
 GMimeEntity *_g_mime_parser_reader_construct_part (GMimeReader *reader, GError **error);
 GMimeMessage *_g_mime_parser_reader_construct_message (GMimeReader *reader, GError **error);
 /* Borrowed opening envelope bytes, excluding CRLF, from the last successful

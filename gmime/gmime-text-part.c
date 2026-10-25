@@ -660,7 +660,7 @@ g_mime_text_part_get_text (GMimeTextPart *mime_part)
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), NULL);
 	
 	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part)))
-		return NULL;
+		return g_strdup ("");
 	
 	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
 	stream = g_mime_stream_mem_new ();

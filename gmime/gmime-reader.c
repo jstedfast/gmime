@@ -45,8 +45,8 @@
  * subclass callbacks. It does not use #GMimeParser or construct entities.
  * Header blocks, messages, explicit-stack MIME traversal and mbox/MMDF
  * mailboxes are supported. Optional compliance reporting never changes
- * tolerant parsing. Async operations and the reader-backed model adapter
- * are not yet implemented.
+ * tolerant parsing. #GMimeParser uses a reader-backed model adapter.
+ * Async operations are not yet implemented.
  **/
 
 #define READ_AHEAD_SIZE 128
@@ -111,6 +111,8 @@ struct _GMimeReaderPrivate {
 	GMimeEncodingValidator *validator;
 	GMimeFormat format;
 	gint64 content_length, content_end;
+	gboolean header_limit_exceeded;
+	gboolean stop_at_separator;
 	gboolean mailbox_boundary;
 	gboolean seen_encoding, final_boundary, boundary_eos;
 	gboolean entity_read, toplevel, headers_complete;
@@ -364,6 +366,7 @@ g_mime_reader_set_stream_with_format (GMimeReader *reader, GMimeStream *stream, 
 	priv->mailbox_boundary = FALSE;
 	priv->content_length = -1;
 	priv->content_end = 0;
+	priv->header_limit_exceeded = FALSE;
 	g_clear_object (&priv->content_type);
 	priv->input_eos = FALSE;
 	priv->complete_eos = FALSE;
@@ -634,6 +637,7 @@ append_header (GMimeReader *reader, const guint8 *buffer, gsize length, gint64 o
 	/* Check before allocating, including folds and line terminators in the
 	 * budget. A single unterminated header must not grow without bounds. */
 	if (length > limit - priv->header->len) {
+		priv->header_limit_exceeded = TRUE;
 		g_set_error (&priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 			     "Header at offset %" G_GINT64_FORMAT " exceeds the maximum header length of %"
 			     G_GSIZE_FORMAT " bytes.", offset, limit);
@@ -997,7 +1001,7 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 		while (i < length && g_ascii_isspace (value[i]))
 			i++;
 
-		if (i == length || !g_ascii_isdigit (value[i]))
+		if (i == 0 || i == length || !g_ascii_isdigit (value[i]))
 			return;
 
 		do {
@@ -1011,14 +1015,13 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 }
 
 static gboolean
-detect_invalid_header (GMimeReader *reader, gboolean *invalid, gssize *invalid_index,
+detect_invalid_header (GMimeReader *reader, gboolean blanks, gboolean *invalid, gssize *invalid_index,
 		       gsize *name_length, gsize *field_length)
 {
 	struct _GMimeReaderPrivate *priv = reader->priv;
 	const guint8 *start = priv->input + priv->input_index;
 	const guint8 *end = priv->input + priv->input_end;
 	const guint8 *inptr = start;
-	gboolean blanks = FALSE;
 
 	*name_length = 0;
 	*invalid_index = -1;
@@ -1161,7 +1164,7 @@ step_headers (GMimeReader *reader, gboolean message)
 	if (!callback_result (reader, klass->headers_begin (reader, begin_offset, begin_line_number, &priv->error)))
 		return FALSE;
 
-	read_ahead (reader, READ_AHEAD_SIZE);
+	read_ahead (reader, priv->stop_at_separator ? 1 : READ_AHEAD_SIZE);
 
 	if (priv->error)
 		return FALSE;
@@ -1172,15 +1175,17 @@ step_headers (GMimeReader *reader, gboolean message)
 		gint64 offset = g_mime_reader_tell (reader);
 		gsize left = priv->input_end - priv->input_index;
 		gsize field_length, name_length;
+		gsize field_prefix = 0;
 		gssize invalid_index;
 		gboolean invalid, midline = TRUE;
+		gboolean name_blanks = FALSE;
 		const guint8 *start;
 
 		last_offset = offset;
 		last_line = line_number;
 		g_byte_array_set_size (priv->header, 0);
 
-		if (left < 2)
+		if (left < 2 && (!priv->stop_at_separator || !left || priv->input[priv->input_index] == '\r'))
 			left = read_ahead_at_least (reader, 2);
 
 		if (priv->error)
@@ -1220,10 +1225,24 @@ step_headers (GMimeReader *reader, gboolean message)
 			break;
 		}
 
-		while (!detect_invalid_header (reader, &invalid, &invalid_index, &name_length, &field_length)) {
+		while (!detect_invalid_header (reader, name_blanks, &invalid, &invalid_index, &name_length, &field_length)) {
 			gsize atleast = priv->input_end - priv->input_index + 1;
 
 			if (read_ahead (reader, atleast) < atleast) {
+				/* A valid field name can exceed the fixed read-ahead
+				 * buffer. Spill validated bytes into the header budget,
+				 * retaining whether whitespace before the colon began. */
+				if (!priv->error && !priv->input_eos &&
+				    atleast > sizeof (priv->input) - PAD_SIZE) {
+					gsize count = priv->input_end - priv->input_index;
+
+					if (!append_header (reader, priv->input + priv->input_index, count, offset))
+						return FALSE;
+					name_blanks = is_blank (priv->input[priv->input_end - 1]);
+					consume_input (reader, count);
+					field_prefix += count;
+					continue;
+				}
 				invalid = TRUE;
 				invalid_index = -1;
 				break;
@@ -1233,11 +1252,16 @@ step_headers (GMimeReader *reader, gboolean message)
 		if (priv->error)
 			return FALSE;
 
+		if (invalid_index >= 0)
+			invalid_index += field_prefix;
 		start = priv->input + priv->input_index;
 		left = priv->input_end - priv->input_index;
 
 		if (invalid) {
-			if (boundary_in_headers (reader, FALSE)) {
+			if (!field_prefix && boundary_in_headers (reader, FALSE)) {
+				_g_mime_parser_options_warn (priv->options, offset,
+							    have_headers ? GMIME_WARN_PART_WITHOUT_CONTENT :
+							    GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT, NULL);
 				report_at (reader, GMIME_COMPLIANCE_MISSING_BODY_SEPARATOR, offset, line_number, 1,
 					   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 				break;
@@ -1252,7 +1276,7 @@ step_headers (GMimeReader *reader, gboolean message)
 			/* Message headers tolerate leading (munged) From-lines, but
 			 * header/entity reads reject them. They remain invalid wire
 			 * headers, not mailbox delimiters in this input format. */
-			if (*start == 'F' || *start == '>') {
+			if (!field_prefix && (*start == 'F' || *start == '>')) {
 				gsize need = *start == '>' ? 6 : 5;
 
 				if (left < need)
@@ -1369,6 +1393,12 @@ step_headers (GMimeReader *reader, gboolean message)
 			_g_mime_parser_options_warn (priv->options, offset, GMIME_CRIT_INVALID_HEADER_NAME, NULL);
 		} else {
 			have_valid_headers = TRUE;
+			if (field_prefix) {
+				name_length = field_prefix + field_length;
+				while (name_length && is_blank (priv->header->data[name_length - 1]))
+					name_length--;
+			}
+			field_length += field_prefix;
 			check_header_semantics (reader, name_length, field_length, FALSE, offset, line_number);
 			update_header_state (reader, name_length, field_length, offset, line_number);
 		}
@@ -1451,6 +1481,21 @@ g_mime_reader_read_headers (GMimeReader *reader, GError **error)
 	priv->reading = FALSE;
 	g_object_unref (reader);
 
+	return result;
+}
+
+/* The public parser's header-loading contract must not probe for a body
+ * byte merely to distinguish a final LF separator from EOF. */
+gboolean
+_g_mime_reader_read_headers_to_separator (GMimeReader *reader, GError **error)
+{
+	gboolean result;
+
+	g_return_val_if_fail (!reader->priv->reading, FALSE);
+
+	reader->priv->stop_at_separator = TRUE;
+	result = g_mime_reader_read_headers (reader, error);
+	reader->priv->stop_at_separator = FALSE;
 	return result;
 }
 
@@ -1895,15 +1940,17 @@ push_entity (GMimeReader *reader, EntityFrame *parent, gint64 begin, guint64 lin
 			report_at (reader, GMIME_COMPLIANCE_ILLEGAL_MESSAGE_RFC822_CONTENT_TRANSFER_ENCODING,
 				   priv->encoding_offset, priv->encoding_line, priv->encoding_column,
 				   GMIME_COMPLIANCE_POSITION_EXACT);
-		if (!priv->reported_depth && priv->frames->len >= (guint) max_depth &&
-		    (g_mime_content_type_is_type (frame->content_type, "multipart", "*") ||
-		     (!encoded && is_message_type (frame->content_type)))) {
-			priv->reported_depth = TRUE;
-			report_at (reader, GMIME_COMPLIANCE_MIME_DEPTH_LIMIT_EXCEEDED,
-				   priv->type_offset < 0 ? priv->header_begin : priv->type_offset,
-				   priv->type_offset < 0 ? priv->header_line : priv->type_line, 1,
-				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
-		}
+	}
+
+	if (!priv->reported_depth && priv->frames->len >= (guint) max_depth &&
+	    (g_mime_content_type_is_type (frame->content_type, "multipart", "*") ||
+	     (!encoded && is_message_type (frame->content_type)))) {
+		priv->reported_depth = TRUE;
+		_g_mime_parser_options_warn (priv->options, priv->header_begin, GMIME_CRIT_NESTING_OVERFLOW, NULL);
+		report_at (reader, GMIME_COMPLIANCE_MIME_DEPTH_LIMIT_EXCEEDED,
+			   priv->type_offset < 0 ? priv->header_begin : priv->type_offset,
+			   priv->type_offset < 0 ? priv->header_line : priv->type_line, 1,
+			   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 	}
 
 	if (priv->frames->len < (guint) max_depth) {
@@ -2124,6 +2171,12 @@ step_entity (GMimeReader *reader, gboolean message)
 					if (!scan_content (reader, GMIME_READER_CONTENT_EPILOGUE))
 						return FALSE;
 				} else {
+					if (priv->boundary || priv->mailbox_boundary)
+						_g_mime_parser_options_warn (priv->options, frame->type_offset,
+									    GMIME_WARN_MALFORMED_MULTIPART,
+									    g_mime_content_type_get_media_subtype (frame->content_type));
+					else if (priv->boundary_eos)
+						_g_mime_parser_options_warn (priv->options, -1, GMIME_WARN_TRUNCATED_MESSAGE, NULL);
 					report_at (reader, GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY,
 						   g_mime_reader_tell (reader), priv->line_number,
 						   (guint64) (g_mime_reader_tell (reader) - priv->line_begin) + 1,
@@ -2410,6 +2463,53 @@ _g_mime_reader_get_stream (GMimeReader *reader)
 	g_return_val_if_fail (GMIME_IS_READER (reader), NULL);
 
 	return reader->priv->stream;
+}
+
+/* GMimeParser's format setter must retain unread bytes, not reassign the
+ * stream at its physical read-ahead position. */
+void
+_g_mime_reader_set_format (GMimeReader *reader, GMimeFormat format)
+{
+	g_return_if_fail (GMIME_IS_READER (reader));
+	g_return_if_fail (format >= GMIME_FORMAT_MESSAGE && format <= GMIME_FORMAT_MMDF);
+	g_return_if_fail (!reader->priv->reading);
+
+	reader->priv->format = format;
+}
+
+/* Public model construction returns NULL without an error at EOF, unlike
+ * MimeReader's lower-level traversal API. Do not consume a BOM or a byte. */
+gboolean
+_g_mime_reader_has_input (GMimeReader *reader, GError **error)
+{
+	GMimeReaderPrivate *priv = reader->priv;
+	gboolean more;
+
+	g_return_val_if_fail (!priv->reading, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	more = !priv->error && read_ahead (reader, 1) > 0;
+	if (priv->error)
+		g_propagate_error (error, g_error_copy (priv->error));
+	else if (!more)
+		priv->complete_eos = TRUE;
+
+	return more;
+}
+
+gboolean
+_g_mime_reader_header_limit_exceeded (GMimeReader *reader)
+{
+	return reader->priv->header_limit_exceeded;
+}
+
+gboolean
+_g_mime_reader_input_eos (GMimeReader *reader)
+{
+	GMimeReaderPrivate *priv = reader->priv;
+
+	return priv->input_index == priv->input_end &&
+		(priv->input_eos || g_mime_stream_eos (priv->stream));
 }
 
 /* Reading a persistent part can move the underlying stream. Restore the

@@ -2429,8 +2429,8 @@ All 16,368 message cases match the source's callbacks, with complete position
 and EOF comparisons on success, in normal and ASan/UBSan builds. Existing
 header and entity differential suites retain their previous results. Python
 GI and compiled Vala subclasses also cover the new operation and enum.
-Mailbox handling, compliance and SIMD scanning are completed below. Async
-operations and full reader-backed public model loading remain separate work.
+Mailbox handling, compliance, SIMD scanning and public reader-backed model
+loading are completed below. Async operations remain separate work.
 
 ### Synchronous reader completion: mailboxes, compliance and SIMD
 
@@ -2440,8 +2440,8 @@ and the private SkipBlankLines/ReadToEos helpers used by status parsing.
 The helpers consume only unread input, preserve nonseekable streams, and
 never seek, reset or close the source. ReadToEos returns a rewound block
 stream without interpreting the copied bytes as MIME or physical lines.
-Async/cancellation support and full GMimeParser model-building integration
-remain deferred; the legacy parser still performs public model loading.
+Public GMimeParser model-building integration is described below.
+Async/cancellation support remains deferred.
 
 new_with_format()/set_stream_with_format() select default, mbox or MMDF
 input. Message reads stream separator bytes through marker_begin/read/end
@@ -2611,13 +2611,11 @@ read failures at every byte offset and EOF, missing errno, sticky errors,
 stream replacement recovery and retained body lifetimes with leak checking.
 Mailbox model construction and envelope preservation are described below.
 
-This adapter is not yet the public GMimeParser backend. The following
-multipart and mailbox increments remove the former container limitations, but
-public message/mailbox loading, optional OpenPGP model detection and
-async/cancellation integration remain deferred. The public parser and all
-public loading helpers continue to use the legacy engine: alternating two
-engines on one nonseekable stream would lose their independent read-ahead
-buffers. Native Windows validation remains pending.
+The following multipart, mailbox and public-integration increments complete
+the synchronous model-loading backend, including optional OpenPGP detection.
+Public operations share one reader: alternating independent engines on a
+nonseekable stream would lose their read-ahead buffers. Async/cancellation
+integration and native Windows validation remain pending.
 
 ### Reader-backed multipart model assembly
 
@@ -2673,9 +2671,9 @@ pass with leak detection enabled. The full normal core suite passes 34 of
 GIR, typelib, VAPI and GTK-doc builds pass with existing warnings. Native
 Windows validation remains pending.
 
-Public parser/loading integration, signature
-verification's special raw-marker CRLF canonicalization, optional OpenPGP
-model detection and async/cancellation remain separate work. Multipart
+Public parser/loading integration and optional OpenPGP model detection are
+completed below. Signature verification's special raw-marker CRLF
+canonicalization and async/cancellation remain separate work. Multipart
 serialization still uses GMime's recursive virtual writer dispatch rather
 than MimeKit's newer explicit writer-frame stack.
 
@@ -2726,9 +2724,60 @@ suite remains at 34/35 programs, with only test-core's two established
 text-format assertions failing. GIR, typelib, VAPI and GTK-doc builds pass
 with existing warnings. Native Windows validation remains pending.
 
-The adapter remains private. Public parser/loading integration, optional
-OpenPGP model detection, signature-specific raw-marker canonicalization,
-iterative writing and async/cancellation remain separate work.
+Public parser/loading integration and optional OpenPGP model detection are
+completed below. Signature-specific raw-marker canonicalization, iterative
+writing and async/cancellation remain separate work.
+
+### Public reader-backed parser integration
+
+GMimeParser now delegates header, entity and message construction to the
+reader-backed model builder instead of maintaining a second parsing engine.
+Its public loading helpers therefore use the same MimeKit-derived model
+construction, with the adapted inline implementation comments retained.
+Successive header/entity/message operations, format changes and persistence
+changes keep one reader and its buffered input. Stream replacement discards
+buffered data, errors and metadata without resetting or closing either input.
+
+The compatibility wrapper retains per-operation option snapshots, header
+regex callbacks, sticky errors, header byte-limit error codes, root header
+offsets and mbox marker metadata. Header callbacks can unregister themselves
+or release their parser reference; reentrant reads and stream/settings
+replacement during parsing are rejected. Public header-only loading stops
+at the separator without an additional body/EOF probe, while the raw reader
+retains MimeKit's original read-ahead behavior. Clean entity/message EOF
+returns NULL without an error. Nonseekable logical positions start at zero.
+Previously returned persistent content remains usable after subsequent reads,
+including when persistence is disabled after that content moves the source.
+
+Optional OpenPGP detection feeds wire callbacks into the existing incremental
+armor filter without decoding or replaying the input. Encoded content retains
+the lazy decoded-inspection fallback. Parser warnings retain duplicate and
+conflicting headers, raw 8-bit headers, missing multipart boundaries,
+interrupted part headers and nesting overflow. Ancestor-boundary recovery is
+reported separately from actual EOF truncation.
+
+Public models now retain empty multipart children and malformed wire header
+rows instead of discarding them, matching MimeKit. Text parts without Content
+return an empty string. Content-Length requires the leading whitespace used
+by MimeKit's SkipWhiteSpace check. Valid field names extending beyond the
+reader's fixed lookahead are spilled into the bounded header buffer, including
+whitespace before the colon; header limits still apply before each append.
+
+The four actual-source corpora cover 80,472 cases per normal and ASan/UBSan
+build, both through the private adapter and through the public parser. Public
+comparisons account explicitly for standalone header EOF-observation
+differences and the C-string mbox marker getter's inability to expose bytes
+after NUL. Private comparisons retain exact raw EOF and binary marker checks.
+Trees, raw headers/offsets, content, mutations, LF/CRLF serialization and
+retained persistent models otherwise match directly.
+
+Native reader/model/mbox tests pass with leak checking enabled. New public
+regressions cover buffer retention across operation/format changes, binary
+markers/content, persistence changes, callback lifetime/reentrancy, warnings
+and long field names around buffer boundaries. The full normal core suite
+passes 34 of 35 programs; only test-core's two established text-format
+assertions fail. Full build, GIR, typelib, VAPI and GTK-doc generation pass
+with existing warnings. Native Windows validation remains pending.
 
 ### Part content-type constructors
 
@@ -2933,8 +2982,8 @@ alphabet bytes and line feeds up to the next special byte; quoted-printable
 scans find the next equals sign or LF. Loads require sixteen readable bytes,
 and scalar tails preserve exact diagnostics and per-line latch resets.
 The public compliance framework and reader wiring are described in the
-synchronous reader-completion section above. The legacy parser's warning
-and decoding behavior is unchanged.
+synchronous reader-completion section above. Public parser integration and
+its warning compatibility are described separately above.
 
 Focused validator regressions cover diagnostic positions, every split in
 representative inputs, byte-at-a-time writes, empty writes, repeated flushes

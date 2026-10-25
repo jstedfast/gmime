@@ -36,6 +36,8 @@
 #include "gmime-multipart.h"
 #include "gmime-text-rfc822-headers.h"
 #include "gmime-stream-block.h"
+#include "gmime-filter-openpgp.h"
+#include "gmime-utils.h"
 
 typedef struct {
 	GMimeReader parent_object;
@@ -48,6 +50,11 @@ typedef struct {
 	GByteArray *pending_marker;
 	GBytes *marker;
 	gint64 marker_offset;
+	gint64 headers_begin;
+	gint64 headers_end;
+	gboolean (*header_callback) (GMimeHeader *, gboolean, gpointer, GError **);
+	gpointer header_data;
+	GMimeFilter *openpgp;
 	gboolean persist;
 	gboolean persistent;
 	gboolean has_body_separator;
@@ -66,6 +73,7 @@ parser_reader_reset (GMimeParserReader *reader)
 	g_clear_pointer (&reader->boundary, g_byte_array_unref);
 	g_clear_pointer (&reader->end_boundary, g_byte_array_unref);
 	g_clear_pointer (&reader->pending_marker, g_byte_array_unref);
+	g_clear_object (&reader->openpgp);
 }
 
 static void
@@ -89,6 +97,8 @@ parser_reader_headers_begin (GMimeReader *base, gint64 offset, guint64 line, GEr
 	reader->headers = g_mime_header_list_new (g_mime_reader_get_options (base));
 	reader->headers->has_body_separator = FALSE;
 	reader->has_body_separator = FALSE;
+	if (!reader->stack->len)
+		reader->headers_begin = offset;
 
 	return TRUE;
 }
@@ -105,12 +115,26 @@ parser_reader_header_read (GMimeReader *base, const guint8 *buffer, gsize length
 	header = _g_mime_header_new_from_reader (g_mime_reader_get_options (base), buffer, length,
 					       name_length, field_length, invalid, offset);
 	index = g_mime_header_list_add (reader->headers, header);
-	g_object_unref (header);
 
 	if (index < 0) {
+		g_object_unref (header);
 		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_GENERAL, "Failed to add parsed MIME header.");
 		return FALSE;
 	}
+
+	if (reader->header_callback &&
+	    !reader->header_callback (header, reader->stack->len == 0, reader->header_data, error)) {
+		g_object_unref (header);
+		return FALSE;
+	}
+
+	if (!invalid) {
+		if (g_mime_utils_text_is_8bit (buffer, length))
+			_g_mime_parser_options_warn (g_mime_reader_get_options (base), offset,
+						    GMIME_WARN_UNENCODED_8BIT_HEADER, header->name);
+	}
+
+	g_object_unref (header);
 
 	return TRUE;
 }
@@ -118,7 +142,12 @@ parser_reader_header_read (GMimeReader *base, const guint8 *buffer, gsize length
 static gboolean
 parser_reader_body_separator (GMimeReader *base, gint64 offset, guint64 line, gint64 end, GError **error)
 {
-	((GMimeParserReader *) base)->has_body_separator = TRUE;
+	GMimeParserReader *reader = (GMimeParserReader *) base;
+
+	reader->has_body_separator = TRUE;
+	if (!reader->stack->len)
+		reader->headers_end = offset;
+
 	return TRUE;
 }
 
@@ -130,6 +159,35 @@ parser_reader_headers_end (GMimeReader *base, gint64 begin, guint64 begin_line,
 
 	reader->headers->has_body_separator = reader->has_body_separator;
 	return TRUE;
+}
+
+static void
+parser_reader_check_repeated_header (GMimeParserOptions *options, GMimeEntity *entity, GMimeHeader *header)
+{
+	static const char *singletons[] = {
+		"bcc", "cc", "date", "from", "in-reply-to", "message-id",
+		"references", "reply-to", "sender", "subject", "to"
+	};
+	GMimeHeader *existing;
+	guint i;
+
+	if (header->invalid || !g_mime_parser_options_get_warning_callback (options))
+		return;
+
+	if (GMIME_IS_MESSAGE (entity)) {
+		for (i = 0; i < G_N_ELEMENTS (singletons); i++) {
+			if (!g_ascii_strcasecmp (header->name, singletons[i]))
+				break;
+		}
+		if (i == G_N_ELEMENTS (singletons))
+			return;
+	}
+
+	if ((existing = g_mime_header_list_get_header (entity->headers, header->name)))
+		_g_mime_parser_options_warn (options, header->offset,
+					    strcmp (existing->raw_value, header->raw_value) ?
+					    GMIME_CRIT_CONFLICTING_HEADER : GMIME_WARN_DUPLICATED_HEADER,
+					    header->name);
 }
 
 static void
@@ -156,7 +214,12 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 		if ((message && content) || (!message && toplevel && !content))
 			continue;
 
+		parser_reader_check_repeated_header (entity->headers->options, entity, header);
 		g_mime_header_list_add (entity->headers, header);
+		if (header->owns_options)
+			g_mime_parser_options_free (header->options);
+		header->options = entity->headers->options;
+		header->owns_options = FALSE;
 	}
 
 	_g_mime_entity_unblock_header_list_changed (entity);
@@ -254,6 +317,7 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 		g_object_unref (entity);
 		return FALSE;
 	}
+
 	if (type == GMIME_READER_ENTITY_MULTIPART && !GMIME_IS_MULTIPART (entity)) {
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 			     "Registered %s cannot hold parsed multipart children.", G_OBJECT_TYPE_NAME (entity));
@@ -265,8 +329,12 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 	copy = g_mime_content_type_clone (content_type);
 	_g_mime_entity_set_content_type (entity, copy);
 	g_object_unref (copy);
+
 	if (type == GMIME_READER_ENTITY_MULTIPART)
 		_g_mime_multipart_initialize_from_reader ((GMimeMultipart *) entity);
+
+	if (type == GMIME_READER_ENTITY_MULTIPART && !g_mime_content_type_get_boundary (content_type))
+		_g_mime_parser_options_warn (options, offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, subtype);
 
 	if (parent && GMIME_IS_MULTIPART (parent)) {
 		GBytes *boundary = reader->boundary ?
@@ -302,6 +370,7 @@ parser_reader_entity_end (GMimeReader *base, GMimeReaderEntityType type, GMimeCo
 				g_steal_pointer (&reader->boundary));
 		g_clear_pointer (&reader->boundary, g_byte_array_unref);
 	}
+
 	if (reader->stack->len > 1)
 		g_ptr_array_remove_index (reader->stack, reader->stack->len - 1);
 
@@ -326,14 +395,18 @@ parser_reader_message_begin (GMimeReader *base, gint64 begin, guint64 line, GErr
 
 		if (!header->invalid)
 			break;
+
 		if (!marker)
 			marker = g_byte_array_new ();
+
 		data = g_bytes_get_data (header->raw_field_bytes, &length);
 		g_byte_array_append (marker, data, length);
 		g_mime_header_list_remove_at (reader->headers, 0);
 	}
+
 	if (marker)
 		message->raw_marker = g_byte_array_free_to_bytes (marker);
+
 	parser_reader_copy_headers (reader, (GMimeEntity *) message, FALSE);
 
 	if (parent)
@@ -368,6 +441,7 @@ parser_reader_marker_begin (GMimeReader *base, gint64 begin, guint64 line, GErro
 		reader->marker_offset = begin;
 		reader->pending_marker = g_byte_array_new ();
 	}
+
 	return TRUE;
 }
 
@@ -378,6 +452,7 @@ parser_reader_marker_read (GMimeReader *base, const guint8 *buffer, gsize length
 
 	if (!reader->stack->len)
 		g_byte_array_append (reader->pending_marker, buffer, length);
+
 	return TRUE;
 }
 
@@ -390,6 +465,7 @@ parser_reader_boundary_begin (GMimeReader *base, gboolean final, gint64 begin, g
 		g_clear_pointer (&reader->end_boundary, g_byte_array_unref);
 		reader->end_boundary = g_byte_array_new ();
 	}
+
 	return TRUE;
 }
 
@@ -408,6 +484,7 @@ parser_reader_boundary_read (GMimeReader *base, gboolean final, const guint8 *bu
 			reader->boundary = g_byte_array_new ();
 		g_byte_array_append (reader->boundary, buffer, length);
 	}
+
 	return TRUE;
 }
 
@@ -424,6 +501,7 @@ parser_reader_boundary_end (GMimeReader *base, gboolean final, gint64 begin, gui
 		multipart->raw_end_boundary = g_byte_array_free_to_bytes (g_steal_pointer (&reader->end_boundary));
 		multipart->write_end_boundary = TRUE;
 	}
+
 	return TRUE;
 }
 
@@ -434,6 +512,11 @@ parser_reader_content_begin (GMimeReader *base, GMimeReaderContentType type,
 	GMimeParserReader *reader = (GMimeParserReader *) base;
 
 	reader->content = reader->persistent && type == GMIME_READER_CONTENT_PART ? NULL : g_mime_stream_block_new ();
+
+	if (type == GMIME_READER_CONTENT_PART &&
+	    g_mime_parser_options_get_detect_openpgp (g_mime_reader_get_options (base)))
+		reader->openpgp = g_mime_filter_openpgp_new ();
+
 	return TRUE;
 }
 
@@ -453,6 +536,12 @@ parser_reader_content_read (GMimeReader *base, GMimeReaderContentType type,
 			    const guint8 *buffer, gsize length, GError **error)
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
+	char *output;
+	size_t output_length, prespace;
+
+	if (reader->openpgp)
+		g_mime_filter_filter (reader->openpgp, (char *) buffer, length, 0,
+				     &output, &output_length, &prespace);
 
 	errno = 0;
 	if (reader->content && _g_mime_stream_write_all (reader->content, (const char *) buffer, length) < 0)
@@ -461,14 +550,37 @@ parser_reader_content_read (GMimeReader *base, GMimeReaderContentType type,
 	return TRUE;
 }
 
+static void
+parser_reader_finish_openpgp (GMimeParserReader *reader, GMimePart *part)
+{
+	GMimeContentEncoding encoding = g_mime_part_get_content_encoding (part);
+	size_t length, prespace;
+	GMimeOpenPGPData type;
+	char *output;
+
+	/* Detection remains opt-in and examines raw wire bytes. Encoded parts
+	 * without recognizable armor keep their lazy decoded-content cache. */
+	if (!reader->openpgp)
+		return;
+
+	g_mime_filter_complete (reader->openpgp, "\n", 1, 0, &output, &length, &prespace);
+	type = g_mime_filter_openpgp_get_data_type ((GMimeFilterOpenPGP *) reader->openpgp);
+
+	if (type != GMIME_OPENPGP_DATA_NONE ||
+	    (encoding != GMIME_CONTENT_ENCODING_BASE64 && encoding != GMIME_CONTENT_ENCODING_UUENCODE))
+		g_mime_part_set_openpgp_data (part, type);
+
+	g_clear_object (&reader->openpgp);
+}
+
 static gboolean
 parser_reader_content_end (GMimeReader *base, GMimeReaderContentType type,
 			   gint64 begin, guint64 begin_line, gint64 end, guint64 lines,
 			   GMimeReaderNewLineFormat newline, GError **error)
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
-	GMimePart *part;
 	GMimeContent *content;
+	GMimePart *part;
 
 	if (type != GMIME_READER_CONTENT_PART) {
 		GByteArray *buffer;
@@ -479,14 +591,17 @@ parser_reader_content_end (GMimeReader *base, GMimeReaderContentType type,
 		errno = 0;
 		if (g_mime_stream_block_set_length ((GMimeStreamBlock *) reader->content, end - begin) < 0)
 			return parser_reader_io_error (error, "size multipart");
+
 		buffer = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) reader->content, error);
 		if (!buffer)
 			return FALSE;
+
 		bytes = g_byte_array_free_to_bytes (buffer);
 		_g_mime_multipart_set_raw_text ((GMimeMultipart *) parser_reader_peek (reader), bytes,
 					       type == GMIME_READER_CONTENT_EPILOGUE);
 		g_bytes_unref (bytes);
 		g_clear_object (&reader->content);
+
 		return TRUE;
 	}
 
@@ -496,6 +611,7 @@ parser_reader_content_end (GMimeReader *base, GMimeReaderContentType type,
 		 * with its header block, whose newline can double as the newline
 		 * preceding the next multipart boundary marker. */
 		g_clear_object (&reader->content);
+		parser_reader_finish_openpgp (reader, part);
 		return TRUE;
 	}
 
@@ -525,6 +641,7 @@ parser_reader_content_end (GMimeReader *base, GMimeReaderContentType type,
 		g_mime_content_set_newline_format (content, GMIME_NEWLINE_FORMAT_MIXED);
 
 	g_mime_part_set_content (part, content);
+	parser_reader_finish_openpgp (reader, part);
 	g_object_unref (content);
 	g_clear_object (&reader->content);
 
@@ -558,6 +675,7 @@ g_mime_parser_reader_init (GMimeParserReader *reader)
 {
 	reader->stack = g_ptr_array_new_with_free_func (g_object_unref);
 	reader->marker_offset = -1;
+	reader->headers_begin = reader->headers_end = -1;
 }
 
 GMimeReader *
@@ -577,6 +695,37 @@ _g_mime_parser_reader_new (GMimeParserOptions *options, GMimeStream *stream, gbo
 	return (GMimeReader *) reader;
 }
 
+void
+_g_mime_parser_reader_set_persist (GMimeReader *base, gboolean persist)
+{
+	GMimeParserReader *reader = (GMimeParserReader *) base;
+
+	reader->persist = persist;
+	reader->persistent = persist && g_mime_stream_tell (reader->stream) >= 0;
+}
+
+void
+_g_mime_parser_reader_set_header_callback (GMimeReader *base,
+					  gboolean (*callback) (GMimeHeader *, gboolean, gpointer, GError **), gpointer user_data)
+{
+	GMimeParserReader *reader = (GMimeParserReader *) base;
+
+	reader->header_callback = callback;
+	reader->header_data = user_data;
+}
+
+gint64
+_g_mime_parser_reader_get_headers_begin (GMimeReader *base)
+{
+	return ((GMimeParserReader *) base)->headers_begin;
+}
+
+gint64
+_g_mime_parser_reader_get_headers_end (GMimeReader *base)
+{
+	return ((GMimeParserReader *) base)->headers_end;
+}
+
 static gboolean
 parser_reader_initialize (GMimeReader *base, GError **error)
 {
@@ -586,6 +735,8 @@ parser_reader_initialize (GMimeReader *base, GError **error)
 	parser_reader_reset (reader);
 	g_clear_pointer (&reader->marker, g_bytes_unref);
 	reader->marker_offset = -1;
+	reader->headers_begin = reader->headers_end = -1;
+
 	if (stream != reader->stream) {
 		g_set_object (&reader->stream, stream);
 		reader->persistent = reader->persist && g_mime_stream_tell (stream) >= 0;
@@ -593,19 +744,22 @@ parser_reader_initialize (GMimeReader *base, GError **error)
 
 	/* If a previously parsed part's content has been read, the source
 	 * position may have moved and must be restored before parsing again. */
-	return !reader->persistent || _g_mime_reader_restore_stream_position (base, error);
+	return g_mime_stream_tell (stream) < 0 || _g_mime_reader_restore_stream_position (base, error);
 }
 
 GMimeHeaderList *
-_g_mime_parser_reader_construct_headers (GMimeReader *base, GError **error)
+_g_mime_parser_reader_construct_headers (GMimeReader *base, gboolean stop_at_separator, GError **error)
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
 
 	g_return_val_if_fail (G_TYPE_CHECK_INSTANCE_TYPE (base, g_mime_parser_reader_get_type ()), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if (!parser_reader_initialize (base, error) || !g_mime_reader_read_headers (base, error)) {
+	if (!parser_reader_initialize (base, error) ||
+	    !(stop_at_separator ? _g_mime_reader_read_headers_to_separator (base, error) :
+	      g_mime_reader_read_headers (base, error))) {
 		parser_reader_reset (reader);
+		reader->headers_begin = reader->headers_end = -1;
 		return NULL;
 	}
 
@@ -621,7 +775,8 @@ _g_mime_parser_reader_construct_part (GMimeReader *base, GError **error)
 	g_return_val_if_fail (G_TYPE_CHECK_INSTANCE_TYPE (base, g_mime_parser_reader_get_type ()), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if (!parser_reader_initialize (base, error) || !g_mime_reader_read_entity (base, error)) {
+	if (!parser_reader_initialize (base, error) || !_g_mime_reader_has_input (base, error) ||
+	    !g_mime_reader_read_entity (base, error)) {
 		parser_reader_reset (reader);
 		return NULL;
 	}
@@ -640,7 +795,8 @@ _g_mime_parser_reader_construct_message (GMimeReader *base, GError **error)
 	g_return_val_if_fail (G_TYPE_CHECK_INSTANCE_TYPE (base, g_mime_parser_reader_get_type ()), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if (!parser_reader_initialize (base, error) || !g_mime_reader_read_message (base, error)) {
+	if (!parser_reader_initialize (base, error) || !_g_mime_reader_has_input (base, error) ||
+	    !g_mime_reader_read_message (base, error)) {
 		parser_reader_reset (reader);
 		return NULL;
 	}
@@ -649,6 +805,7 @@ _g_mime_parser_reader_construct_message (GMimeReader *base, GError **error)
 	if (reader->pending_marker)
 		reader->marker = g_byte_array_free_to_bytes (g_steal_pointer (&reader->pending_marker));
 	parser_reader_reset (reader);
+
 	return message;
 }
 
