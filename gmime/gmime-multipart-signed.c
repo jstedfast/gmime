@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-multipart-signed.h"
 #include "gmime-multipart-encrypted.h"
@@ -391,12 +392,14 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 {
 	const char *supported, *protocol;
 	GMimeEntity *content, *signature;
-	GMimeStream *stream, *sigstream;
-	GMimeSignatureList *signatures;
+	GMimeStream *stream = NULL, *sigstream = NULL;
+	GMimeSignatureList *signatures = NULL;
 	GMimeFormatOptions *options;
 	GMimeContent *wrapper;
 	GMimeCryptoContext *ctx;
 	char *mime_type;
+	ssize_t written;
+	int errsv;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);
 	
@@ -434,6 +437,12 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	}
 	
 	signature = g_mime_multipart_get_part ((GMimeMultipart *) mps, GMIME_MULTIPART_SIGNED_SIGNATURE);
+	if (!GMIME_IS_PART (signature) || !(wrapper = g_mime_part_get_content ((GMimePart *) signature))) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot verify multipart/signed part: signature content is missing."));
+		g_object_unref (ctx);
+		return NULL;
+	}
 	
 	/* make sure the protocol matches the signature content-type */
 	mime_type = g_mime_content_type_get_mime_type (signature->content_type);
@@ -455,17 +464,27 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	options = _g_mime_format_options_clone (NULL, FALSE);
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	_g_mime_format_options_set_verifying_signature (options, TRUE);
 	
-	g_mime_entity_write_to_stream (content, options, stream);
+	errno = 0;
+	written = g_mime_entity_write_to_stream (content, options, stream);
 	g_mime_format_options_free (options);
-	g_mime_stream_reset (stream);
+	if (written < 0)
+		goto io_error;
+
+	errno = 0;
+	if (g_mime_stream_reset (stream) < 0)
+		goto io_error;
 	
 	/* get the signature stream */
-	wrapper = g_mime_part_get_content ((GMimePart *) signature);
-	
 	sigstream = g_mime_stream_mem_new ();
-	g_mime_content_decode_to_stream (wrapper, sigstream);
-	g_mime_stream_reset (sigstream);
+	errno = 0;
+	if (g_mime_content_decode_to_stream (wrapper, sigstream) < 0)
+		goto io_error;
+
+	errno = 0;
+	if (g_mime_stream_reset (sigstream) < 0)
+		goto io_error;
 	
 	/* verify the signature */
 	signatures = g_mime_crypto_context_verify (ctx, flags, stream, sigstream, NULL, err);
@@ -473,8 +492,16 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
-	g_object_unref (sigstream);
-	g_object_unref (stream);
+	goto done;
+
+io_error:
+	errsv = errno;
+	g_set_error (err, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+		     _("Cannot read MIME data for signature verification: %s."),
+		     errsv ? g_strerror (errsv) : _("Unknown error"));
+done:
+	g_clear_object (&sigstream);
+	g_clear_object (&stream);
 	g_object_unref (ctx);
 	
 	return signatures;

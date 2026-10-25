@@ -2672,8 +2672,8 @@ GIR, typelib, VAPI and GTK-doc builds pass with existing warnings. Native
 Windows validation remains pending.
 
 Public parser/loading integration and optional OpenPGP model detection are
-completed below. Signature verification's special raw-marker CRLF
-canonicalization and async/cancellation remain separate work. Multipart
+completed below, as is signature verification's special raw-marker CRLF
+canonicalization. Async/cancellation remains separate work. Multipart
 serialization still uses GMime's recursive virtual writer dispatch rather
 than MimeKit's newer explicit writer-frame stack.
 
@@ -2725,8 +2725,8 @@ text-format assertions failing. GIR, typelib, VAPI and GTK-doc builds pass
 with existing warnings. Native Windows validation remains pending.
 
 Public parser/loading integration and optional OpenPGP model detection are
-completed below. Signature-specific raw-marker canonicalization, iterative
-writing and async/cancellation remain separate work.
+completed below, as is signature-specific raw-marker canonicalization.
+Iterative writing and async/cancellation remain separate work.
 
 ### Public reader-backed parser integration
 
@@ -2778,6 +2778,43 @@ and long field names around buffer boundaries. The full normal core suite
 passes 34 of 35 programs; only test-core's two established text-format
 assertions fail. Full build, GIR, typelib, VAPI and GTK-doc generation pass
 with existing warnings. Native Windows validation remains pending.
+
+### Signature-verification serialization
+
+Multipart/signed verification now sets MimeKit's private VerifyingSignature
+formatting state, which survives nested formatting-option clones without
+changing public or default options. Preserved opening, closing and trailing
+multipart delimiters convert bare LF to CRLF only in this mode. Existing
+CRLF, lone CR, binary bytes, whitespace and unterminated marker tails remain
+intact, including double/triple boundary runs. Ordinary serialization still
+preserves raw markers byte-for-byte, even with DOS output selected.
+
+The same mode ports MimePart's mixed-newline compatibility rule: retain
+original parsed body bytes when the stored newline hint is Mixed and no
+transfer-encoding conversion is needed. Binary bodies remain unchanged;
+transcoding still takes precedence over pass-through. MimeWriter's raw-marker
+explanation and MimePart's mixed-newline explanation and issue reference are
+retained as adapted inline comments.
+
+Verification rejects signatures without leaf content and propagates
+serialization, decoding and rewind failures before calling the crypto
+backend. The leaf serialization fast path now checks both source rewinds
+and preserves the original output error if cleanup also fails.
+
+All 17,568 new actual-source verification-output cases match MimeKit in
+normal and ASan/UBSan builds. The existing 80,472 public parser/model cases
+also still match in both builds. Native regressions exercise all three raw
+marker slots, empty/binary markers, persistence, nested signed multiparts,
+mixed-newline hints, transcoding, decoded signature bytes, short/zero writes
+and read/rewind failures with and without errno. A test crypto context
+captures exact backend inputs and checks that failures prevent invocation;
+these tests do not perform real cryptographic verification.
+
+Focused reader/model/mbox tests pass with leak checking enabled. The full
+normal core suite remains at 34/35 programs, with only test-core's two
+established text-format assertions failing. Full build, GIR, typelib, VAPI
+and GTK-doc generation pass with existing warnings. Native Windows
+validation remains pending.
 
 ### Part content-type constructors
 

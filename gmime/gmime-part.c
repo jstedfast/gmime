@@ -191,13 +191,17 @@ trim_part_header_value (const char *value)
 		return NULL;
 
 	start = value;
+
 	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
 		start = g_utf8_next_char (start);
+
 	end = start + strlen (start);
+
 	while (end > start) {
 		previous = g_utf8_prev_char (end);
 		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
 			break;
+
 		end = previous;
 	}
 
@@ -335,6 +339,7 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 	ssize_t nwritten, total = 0;
 	GMimeStream *filtered;
 	GMimeFilter *filter;
+	GMimeNewLineFormat newline_format;
 	
 	if (!part->content)
 		return 0;
@@ -409,11 +414,22 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 			
 			total += nwritten;
 		}
+	} else if (_g_mime_format_options_get_verifying_signature (options) &&
+		   g_mime_content_get_newline_format (part->content, &newline_format) &&
+		   newline_format == GMIME_NEWLINE_FORMAT_MIXED) {
+		/* Allow the original parsed content to pass through without
+		 * canonicalization when verifying a signature if it contains
+		 * a mix of line endings.
+		 *
+		 * See https://github.com/jstedfast/MimeKit/issues/569 for details. */
+		return g_mime_content_write_to_stream (part->content, stream);
 	} else {
 		GMimeStream *content;
+		int errsv;
 		
 		content = g_mime_content_get_stream (part->content);
-		g_mime_stream_reset (content);
+		if (g_mime_stream_reset (content) < 0)
+			return -1;
 		
 		filtered = g_mime_stream_filter_new (stream);
 		
@@ -429,8 +445,14 @@ write_content (GMimePart *part, GMimeFormatOptions *options, GMimeStream *stream
 			nwritten = -1;
 		if (nwritten >= 0)
 			nwritten = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered);
-		g_mime_stream_reset (content);
+		errsv = errno;
+		if (g_mime_stream_reset (content) < 0 && nwritten >= 0) {
+			errsv = errno;
+			nwritten = -1;
+		}
 		g_object_unref (filtered);
+		if (nwritten < 0)
+			errno = errsv;
 		
 		if (nwritten == -1)
 			return -1;

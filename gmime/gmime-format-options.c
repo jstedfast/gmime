@@ -47,6 +47,7 @@ struct _GMimeFormatOptions {
 	gboolean international;
 	gboolean always_quote_param_values;
 	gboolean ensure_newline;
+	gboolean verifying_signature;
 	GPtrArray *hidden;
 	guint maxline;
 };
@@ -113,6 +114,7 @@ g_mime_format_options_new (void)
 	options->international = FALSE;
 	options->always_quote_param_values = FALSE;
 	options->ensure_newline = FALSE;
+	options->verifying_signature = FALSE;
 	options->maxline = 78;
 	
 	return options;
@@ -144,6 +146,7 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 	clone->international = options->international;
 	clone->always_quote_param_values = options->always_quote_param_values;
 	clone->ensure_newline = options->ensure_newline;
+	clone->verifying_signature = options->verifying_signature;
 	clone->maxline = options->maxline;
 	
 	clone->hidden = g_ptr_array_new ();
@@ -166,6 +169,18 @@ void
 _g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure)
 {
 	options->ensure_newline = ensure;
+}
+
+gboolean
+_g_mime_format_options_get_verifying_signature (GMimeFormatOptions *options)
+{
+	return (options ? options : default_options)->verifying_signature;
+}
+
+void
+_g_mime_format_options_set_verifying_signature (GMimeFormatOptions *options, gboolean verifying)
+{
+	options->verifying_signature = verifying;
 }
 
 

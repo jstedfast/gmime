@@ -328,6 +328,47 @@ multipart_write_bytes (GMimeStream *stream, GMimeFormatOptions *options, GBytes 
 }
 
 static ssize_t
+multipart_write_raw_boundary (GMimeStream *stream, GMimeFormatOptions *options, GBytes *bytes)
+{
+	const guint8 *data, *lf;
+	gsize length, start = 0, index = 0;
+	ssize_t written, total = 0;
+	const char *newline = g_mime_format_options_get_newline (options);
+
+	data = g_bytes_get_data (bytes, &length);
+
+	/* A raw boundary marker may contain several lines for double boundaries.
+	 * Normally it is written byte-for-byte as parsed. When verifying a
+	 * signature, content must be canonicalized to CRLF (the newline format
+	 * is always DOS), so convert bare LF while retaining existing CRLF runs. */
+	if (_g_mime_format_options_get_verifying_signature (options)) {
+		while (index < length && (lf = memchr (data + index, '\n', length - index))) {
+			index = lf - data;
+
+			if (!index || data[index - 1] != '\r') {
+				if ((written = _g_mime_stream_write_all (stream, (const char *) data + start, index - start)) < 0)
+					return -1;
+				total += written;
+				if ((written = _g_mime_stream_write_all (stream, newline, strlen (newline))) < 0)
+					return -1;
+				total += written;
+				start = index + 1;
+			}
+
+			index++;
+		}
+	}
+
+	if (start < length) {
+		if ((written = _g_mime_stream_write_all (stream, (const char *) data + start, length - start)) < 0)
+			return -1;
+		total += written;
+	}
+
+	return total;
+}
+
+static ssize_t
 multipart_write_reader_model (GMimeMultipart *multipart, GMimeFormatOptions *options,
 			      gboolean content_only, GMimeStream *stream)
 {
@@ -367,7 +408,7 @@ multipart_write_reader_model (GMimeMultipart *multipart, GMimeFormatOptions *opt
 		}
 		/* A raw opening marker may contain double or triple boundaries;
 		 * preserve the whole run, not just the last delimiter. */
-		written = raw ? multipart_write_bytes (stream, options, raw, FALSE, FALSE) :
+		written = raw ? multipart_write_raw_boundary (stream, options, raw) :
 			g_mime_stream_printf (stream, "--%s%s", boundary, newline);
 		if (written < 0)
 			goto fail;
@@ -394,7 +435,7 @@ multipart_write_reader_model (GMimeMultipart *multipart, GMimeFormatOptions *opt
 			gsize length;
 			const guint8 *data = g_bytes_get_data (multipart->raw_trailing_boundary, &length);
 
-			if ((written = multipart_write_bytes (stream, options, multipart->raw_trailing_boundary, FALSE, FALSE)) < 0)
+			if ((written = multipart_write_raw_boundary (stream, options, multipart->raw_trailing_boundary)) < 0)
 				goto fail;
 			total += written;
 			if (ensure && (!length || data[length - 1] != '\n')) {
@@ -407,7 +448,7 @@ multipart_write_reader_model (GMimeMultipart *multipart, GMimeFormatOptions *opt
 		/* A generated closing marker owns its newline only when there
 		 * is no raw epilogue; parsed epilogues already retain that CRLF. */
 		written = multipart->raw_end_boundary ?
-			multipart_write_bytes (stream, options, multipart->raw_end_boundary, FALSE, FALSE) :
+			multipart_write_raw_boundary (stream, options, multipart->raw_end_boundary) :
 			g_mime_stream_printf (stream, "--%s--%s", boundary, multipart->raw_epilogue ? "" : newline);
 		if (written < 0)
 			goto fail;
