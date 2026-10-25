@@ -3130,6 +3130,63 @@ checks cover both modes, lifetime, caller ownership, binary content,
 empty-input errors and nonseekable pipe rejection.
 Native Windows validation and async/cancellation remain pending.
 
+### Explicit parser storage and checked stream replacement
+
+g_mime_parser_new_with_stream_and_storage() and
+g_mime_parser_init_with_stream_and_storage() port MimeKit's explicit
+MimeContentStorage constructors and SetStream() overloads. Both take an
+explicit format and storage mode. Parser options retain the native
+per-operation convention. Message/entity, mbox and the existing native
+MMDF format are supported. The legacy constructors, boolean persistence
+setting and stream replacement API retain their existing behavior.
+
+The checked APIs share source-capability validation with entity/message
+loading. Memory mode never probes seeking; Source mode requires working
+tell and a zero-offset current-position seek before accepting input.
+Substream failures are reported while parsing content. Stream replacement
+validates before discarding anything: failure preserves the old input,
+buffered bytes, sticky error, positions, mailbox metadata, format and
+storage. Success replaces the input, format and storage, clears parsing
+state and retains header-regex settings. Neither stream is reset or closed.
+
+Previously parsed models retain their original content across parser
+replacement or destruction. Source-backed content retains its old input,
+which must remain open and unchanged while used. Memory-backed models
+do not retain input after the parser releases it. Empty input remains
+valid parser input: constructing an entity/message returns NULL without
+an error at EOF, unlike the convenience Load() helpers.
+
+The corresponding upstream constructors, SetStream() wrappers and
+OnSetStream() helper contain no inline implementation comments.
+The existing native capability-probe comment is retained in the shared
+validator rather than duplicating that logic in each API.
+
+Each normal and ASan/UBSan run checks 98,304 actual-source parser cases:
+97,728 match exactly and 576 exercise the established header-limit default
+difference. Those 576 also match with an explicit native limit. There are
+no unexpected differences. Both constructor and replacement paths cover
+the two storage modes, parser limits, nonseekable rejection, nonzero
+positions, short reads, binary and encoded content, specialized entities,
+nesting, truncated input and repeated serialization. Replacement cases
+first trigger a parsing failure to verify recovery. The reference's EOF
+exception is normalized for comparison without changing native EOF.
+The earlier 49,152 explicit-storage and 15,360 default stream/file cases
+also retain their documented matches and default-limit differences in
+both builds.
+
+Native tests cover sequential mbox/MMDF parsing, all storage transitions,
+retained old models, failed replacement with buffered mailbox input,
+sticky-error preservation/recovery, metadata reset, callback retention,
+reentrant replacement rejection and argument validation before I/O.
+Focused reader/model/mbox tests pass with ASan/UBSan leak checking.
+The full core baseline remains 34/35 programs, with the same two
+text-format assertions failing. Full build, GIR, typelib, VAPI and
+GTK-doc generation pass with existing warnings. Both new APIs' signatures,
+ownership, errors and reference entries are verified, including live
+GI/Python mailbox iteration, pipe rejection, replacement and lifetime
+checks. Existing loader bindings also pass their live checks.
+Native Windows validation and async/cancellation remain pending.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and

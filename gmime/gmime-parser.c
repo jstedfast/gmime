@@ -113,6 +113,27 @@ parser_propagate_error (GMimeParser *parser, GError *failure, GError **error)
 	g_propagate_error (error, failure);
 }
 
+static gboolean
+parser_check_source (GMimeStream *stream, GError **error)
+{
+	gint64 position;
+	int errsv;
+
+	/* Native streams expose no CanSeek property. Probe without moving
+	 * the input before parsing, rather than silently copying content. */
+	errno = 0;
+	position = g_mime_stream_tell (stream);
+	if (position >= 0 && g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_CUR) == position)
+		return TRUE;
+
+	errsv = errno;
+	g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_NOT_SUPPORTED,
+		     "Source content storage requires a seekable stream: %s",
+		     errsv ? g_strerror (errsv) : "seeking is not supported");
+	errno = errsv;
+	return FALSE;
+}
+
 /**
  * g_mime_parser_new:
  *
@@ -148,6 +169,45 @@ g_mime_parser_new_with_stream (GMimeStream *stream)
 }
 
 /**
+ * g_mime_parser_new_with_stream_and_storage:
+ * @stream: input at the start of the entity, message or mailbox
+ * @format: the input format
+ * @storage: storage for parsed MIME part content
+ * @error: return location for a #GError, or %NULL
+ *
+ * Creates a parser at the current position of @stream with explicit format
+ * and content storage. Memory storage copies content; source storage
+ * references leaf content through substreams. Source storage requires
+ * working tell, seek and substream operations. Seekability is checked with
+ * a zero-offset current-position seek before reading. Unsupported seeking
+ * reports an error rather than falling back to memory; substream errors
+ * are reported when parsing content.
+ *
+ * The caller owns @stream in both modes. Neither the parser nor returned
+ * models close a stream still owned by the caller. With source storage,
+ * keep the backing input open and unchanged while parsed content is used;
+ * content views retain it after the parser is released or reinitialized.
+ *
+ * Returns: (nullable) (transfer full): a new parser, or %NULL on failure.
+ **/
+GMimeParser *
+g_mime_parser_new_with_stream_and_storage (GMimeStream *stream, GMimeFormat format,
+					  GMimeContentStorage storage, GError **error)
+{
+	GMimeParser *parser = g_mime_parser_new ();
+
+	if (!g_mime_parser_init_with_stream_and_storage (parser, stream, format, storage, error)) {
+		int errsv = errno;
+
+		g_object_unref (parser);
+		errno = errsv;
+		return NULL;
+	}
+
+	return parser;
+}
+
+/**
  * g_mime_parser_init_with_stream:
  * @parser: a #GMimeParser context
  * @stream: raw message or part stream
@@ -176,6 +236,51 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
 	_g_mime_parser_reader_set_header_callback (reader, parser_header_read, parser);
 	g_clear_object (&parser->priv->reader);
 	parser->priv->reader = reader;
+}
+
+/**
+ * g_mime_parser_init_with_stream_and_storage:
+ * @parser: a #GMimeParser context
+ * @stream: replacement input at its current position
+ * @format: the input format
+ * @storage: storage for parsed MIME part content
+ * @error: return location for a #GError, or %NULL
+ *
+ * Replaces the input, format and storage, discarding buffered data, metadata
+ * and any previous parsing error. Header-regex settings are retained.
+ * Neither stream is reset or closed. Previously returned models retain
+ * their content and are unaffected by stream replacement.
+ *
+ * Source storage has the capability and lifetime requirements described
+ * in g_mime_parser_new_with_stream_and_storage(). Validation occurs before
+ * replacing the input: failure leaves the parser's input, buffered data,
+ * metadata, format and storage unchanged.
+ *
+ * Use g_mime_parser_tell() for logical positions. Do not manipulate @stream
+ * while parsing; source-backed content may be read between operations.
+ * Must not be called from a parsing callback.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_parser_init_with_stream_and_storage (GMimeParser *parser, GMimeStream *stream,
+					   GMimeFormat format, GMimeContentStorage storage, GError **error)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), FALSE);
+	g_return_val_if_fail (format >= GMIME_FORMAT_MESSAGE && format <= GMIME_FORMAT_MMDF, FALSE);
+	g_return_val_if_fail (storage == GMIME_CONTENT_STORAGE_MEMORY || storage == GMIME_CONTENT_STORAGE_SOURCE, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (!parser->priv->reading, FALSE);
+
+	if (storage == GMIME_CONTENT_STORAGE_SOURCE && !parser_check_source (stream, error))
+		return FALSE;
+
+	parser->priv->format = format;
+	parser->priv->persist_stream = storage == GMIME_CONTENT_STORAGE_SOURCE;
+	g_mime_parser_init_with_stream (parser, stream);
+
+	return TRUE;
 }
 
 /**
@@ -417,30 +522,8 @@ _g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream, GMimeCont
 	GError *failure = NULL;
 	int errsv;
 
-	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
-	g_return_val_if_fail (storage == GMIME_CONTENT_STORAGE_MEMORY || storage == GMIME_CONTENT_STORAGE_SOURCE, NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
-
-	if (storage == GMIME_CONTENT_STORAGE_SOURCE) {
-		gint64 position;
-
-		/* Native streams expose no CanSeek property. Probe without moving
-		 * the input before parsing, rather than silently copying content. */
-		errno = 0;
-		position = g_mime_stream_tell (stream);
-		if (position < 0 || g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_CUR) != position) {
-			errsv = errno;
-			g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_NOT_SUPPORTED,
-				     "Source content storage requires a seekable stream: %s",
-				     errsv ? g_strerror (errsv) : "seeking is not supported");
-			errno = errsv;
-			return NULL;
-		}
-	}
-
-	parser = g_mime_parser_new ();
-	g_mime_parser_set_persist_stream (parser, storage == GMIME_CONTENT_STORAGE_SOURCE);
-	g_mime_parser_init_with_stream (parser, stream);
+	if (!(parser = g_mime_parser_new_with_stream_and_storage (stream, GMIME_FORMAT_MESSAGE, storage, error)))
+		return NULL;
 
 	errno = 0;
 	entity = message ? (GMimeEntity *) g_mime_parser_construct_message (parser, options, &failure) :
