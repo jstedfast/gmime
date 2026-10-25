@@ -1503,6 +1503,49 @@ remains at 34/35 passing programs: test-core retains its two existing
 text-format assertions, while checked header assignment passes. Native
 Windows validation remains pending.
 
+### Checked header-list field/value operations
+
+`g_mime_header_list_append_full()`, `prepend_full()`, and `insert_full()`
+port MimeKit's checked field/value `HeaderList.Add()` and `Insert()`
+overloads. `g_mime_header_list_replace_value_full()` ports its field/value
+`Replace()` overloads. Each constructs a checked header before invoking the
+existing instance-based insertion or replacement path. The applicable source
+lookup-table comment is retained and adapted in that shared insertion path.
+
+These APIs accept decoded UTF-8, Unicode-trim and unfold it, validate the
+selected charset, and propagate the checked constructor's errors, including
+Content-Type/Disposition parse failures. NULL charset selects UTF-8. NULL
+values and invalid names/indexes are programming errors, not unset-header
+reservations. Empty values remain valid. Failures preserve all existing
+objects, order, raw values, lookups and body-separator state without notifying
+owners or collapsing duplicates.
+
+New headers own independent default parser-options snapshots, matching
+MimeKit's use of standalone Header constructors, rather than borrowing the
+list's options. Their source offset is unknown (-1). Unrelated parsed headers
+keep their raw folding and offsets. Replacement creates a new object at the
+first case-insensitive match and removes all later matches, or appends when
+absent. Retained references and other lists sharing removed headers are not
+mutated. This is distinct from the legacy `g_mime_header_list_set()` operation
+that changes the first object's value. Successful operations reuse the normal
+owner notifications and the existing single-notification replacement policy.
+Legacy field/value APIs, including placeholder support, remain unchanged.
+
+An actual-source differential covers 12,400 cases per normal and
+ASan/UBSan/leak build with zero unexpected differences. It compares accepted
+values, error categories, field case, object identity, order, first/last
+indexes and raw output across empty, matching-duplicate and absent-name lists.
+Platform default newlines are normalized for comparison; 1,120 inherited
+new-header formatter differences are independently checked against standalone
+checked construction. Focused regressions also cover failure notifications
+and separator state, borrowed arguments, repeated/shared instances, detached
+header lifetimes, and message/recipient/content-model updates.
+
+GIR/typelib, VAPI, GTK-doc and live GI/Python checks pass for all four APIs.
+The full core suite remains at 34/35 passing programs, with only test-core's
+two established text-format assertions. Native Windows validation remains
+pending.
+
 ### Positional header-list operations
 
 `g_mime_header_list_index_of()` and

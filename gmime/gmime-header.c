@@ -2271,6 +2271,7 @@ g_mime_header_list_insert_header (GMimeHeaderList *headers, int index, GMimeHead
 	g_object_ref (header);
 	g_mime_event_add (header->changed, (GMimeEventCallback) header_changed, headers);
 	g_ptr_array_insert (headers->array, index, header);
+	/* Update the lookup table to keep the first matching header. */
 	if (first == -1 || index <= first)
 		g_hash_table_replace (headers->hash, header->name, header);
 
@@ -2324,6 +2325,97 @@ g_mime_header_list_insert (GMimeHeaderList *headers, int index, const char *name
 	args.header = header;
 	headers->has_body_separator = TRUE;
 	g_mime_event_emit (headers->changed, &args);
+}
+
+
+/**
+ * g_mime_header_list_insert_full:
+ * @headers: a #GMimeHeaderList
+ * @index: the 0-based insertion index, from zero through the current count
+ * @name: a nonempty ASCII header field name without whitespace or a colon
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Constructs a header using g_mime_header_new_full() before inserting it.
+ * The header owns an independent snapshot of the default parser options.
+ * Existing headers retain their identity, values, offsets and relative order.
+ * Name lookup continues to return the first matching header.
+ *
+ * Failure leaves the list, its body-separator state and notifications
+ * unchanged. Invalid indexes, field names and %NULL values are programming
+ * errors. Unlike g_mime_header_list_insert(), this does not reserve unset
+ * headers or use legacy structured-value fallbacks.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_insert_full (GMimeHeaderList *headers, int index, const char *name, const char *value,
+				const char *charset, GError **error)
+{
+	GMimeHeader *header;
+
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), FALSE);
+	g_return_val_if_fail (name != NULL, FALSE);
+	g_return_val_if_fail (value != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (index >= 0, FALSE);
+	g_return_val_if_fail ((guint) index <= headers->array->len, FALSE);
+	g_return_val_if_fail (headers->array->len < G_MAXINT, FALSE);
+
+	if (!(header = g_mime_header_new_full (name, value, charset, error)))
+		return FALSE;
+
+	g_mime_header_list_insert_header (headers, index, header);
+	g_object_unref (header);
+
+	return TRUE;
+}
+
+
+/**
+ * g_mime_header_list_prepend_full:
+ * @headers: a #GMimeHeaderList
+ * @name: a nonempty ASCII header field name without whitespace or a colon
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Constructs and prepends a checked header. This is equivalent to
+ * g_mime_header_list_insert_full() with an index of zero, including its
+ * validation, ownership and failure behavior.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_prepend_full (GMimeHeaderList *headers, const char *name, const char *value,
+				 const char *charset, GError **error)
+{
+	return g_mime_header_list_insert_full (headers, 0, name, value, charset, error);
+}
+
+
+/**
+ * g_mime_header_list_append_full:
+ * @headers: a #GMimeHeaderList
+ * @name: a nonempty ASCII header field name without whitespace or a colon
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Constructs and appends a checked header. This is equivalent to
+ * g_mime_header_list_insert_full() at the current count, including its
+ * validation, ownership and failure behavior.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_append_full (GMimeHeaderList *headers, const char *name, const char *value,
+				const char *charset, GError **error)
+{
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), FALSE);
+
+	return g_mime_header_list_insert_full (headers, headers->array->len, name, value, charset, error);
 }
 
 
@@ -2596,6 +2688,50 @@ g_mime_header_list_replace (GMimeHeaderList *headers, GMimeHeader *header)
 	args.header = header;
 	g_mime_event_emit (headers->changed, &args);
 	g_object_unref (original);
+}
+
+
+/**
+ * g_mime_header_list_replace_value_full:
+ * @headers: a #GMimeHeaderList
+ * @name: a nonempty ASCII header field name without whitespace or a colon
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Constructs a header using g_mime_header_new_full() and replaces all
+ * case-insensitive matches using g_mime_header_list_replace(). If no match
+ * exists, the header is appended. The new header owns an independent
+ * snapshot of the default parser options.
+ *
+ * Unlike g_mime_header_list_set(), this replaces the first matching object
+ * instead of changing its value. Retained references and other lists sharing
+ * removed headers are unaffected. All validation precedes mutation; failure
+ * leaves the list, its body-separator state and notifications unchanged.
+ * Successful replacement uses the existing single change notification,
+ * after the final list and name lookup are established.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_replace_value_full (GMimeHeaderList *headers, const char *name, const char *value,
+				       const char *charset, GError **error)
+{
+	GMimeHeader *header;
+
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), FALSE);
+	g_return_val_if_fail (name != NULL, FALSE);
+	g_return_val_if_fail (value != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+	g_return_val_if_fail (headers->array->len < G_MAXINT || g_mime_header_list_contains (headers, name), FALSE);
+
+	if (!(header = g_mime_header_new_full (name, value, charset, error)))
+		return FALSE;
+
+	g_mime_header_list_replace (headers, header);
+	g_object_unref (header);
+
+	return TRUE;
 }
 
 

@@ -30,6 +30,7 @@
 
 #include <gmime/gmime.h>
 #include <gmime/gmime-events.h>
+#include <gmime/gmime-internal.h>
 
 #include "testsuite.h"
 
@@ -5021,6 +5022,229 @@ test_checked_header_assignment (void)
 	g_clear_error (&error);
 	g_object_unref (header);
 	g_mime_format_options_free (options);
+}
+
+static void
+checked_header_list_changed (gpointer sender, gpointer args, gpointer user_data)
+{
+	GMimeHeaderList *headers = sender;
+	GMimeHeaderListChangedEventArgs *change = args;
+	guint *count = user_data;
+	GMimeHeader *header;
+	guint i;
+
+	(*count)++;
+	check (headers->has_body_separator, "checked list notifications see the final body-separator state");
+	check (change->header != NULL, "checked list changes identify the affected header");
+	for (i = 0; i < headers->array->len; i++) {
+		header = headers->array->pdata[i];
+		if (g_mime_header_list_index_of (headers, header->name) == (int) i)
+			check (g_mime_header_list_get_header (headers, header->name) == header,
+			       "checked list notifications see the final first-name lookup");
+	}
+}
+
+static gboolean
+change_checked_header_list (GMimeHeaderList *headers, guint operation, int index, const char *name,
+			    const char *value, const char *charset, GError **error)
+{
+	switch (operation) {
+	case 0:
+		return g_mime_header_list_append_full (headers, name, value, charset, error);
+	case 1:
+		return g_mime_header_list_prepend_full (headers, name, value, charset, error);
+	case 2:
+		return g_mime_header_list_insert_full (headers, index, name, value, charset, error);
+	default:
+		return g_mime_header_list_replace_value_full (headers, name, value, charset, error);
+	}
+}
+
+static void
+test_checked_header_list_values (void)
+{
+	static const char text[] = "X-Before: one\r\nSubject: first\r\nX-Middle: preserved\r\n\tfold\r\n"
+		"sUbJeCt: second\r\nX-After: last\r\n";
+	static const struct {
+		const char *name, *value, *charset;
+	} invalid[] = {
+		{ "Content-Type", "invalid", NULL },
+		{ "Content-Type", "text/plain; name=\"unfinished", NULL },
+		{ "Content-Disposition", "\"attachment\"", NULL },
+		{ "Subject", "\377", NULL },
+		{ "Subject", "value", "" },
+		{ "Subject", "value", "x-no-such-charset" }
+	};
+	GMimeHeaderList *headers, *shared;
+	GMimeHeader *original[5], *header;
+	GMimeMessage *message;
+	GMimePart *part;
+	GMimeStream *stream;
+	GError *error = NULL;
+	const char *raw[5];
+	char *before, *after;
+	guint operation, i, j, changes, shared_changes, empty;
+	int index, next;
+
+	for (operation = 0; operation < 4; operation++) {
+		for (index = 0; index <= 5; index++) {
+			stream = g_mime_stream_mem_new_with_buffer (text, sizeof (text) - 1);
+			headers = g_mime_header_list_load (NULL, stream, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_object_unref (stream);
+			check (!headers->has_body_separator, "checked list success starts with an unterminated header block");
+			for (i = 0; i < 5; i++) {
+				original[i] = g_object_ref (g_mime_header_list_get_header_at (headers, i));
+				raw[i] = original[i]->raw_value;
+			}
+			changes = 0;
+			g_mime_event_add (headers->changed, checked_header_list_changed, &changes);
+			check (change_checked_header_list (headers, operation, index, "sUbJeCt",
+							  "\302\240 replacement\r\n\tvalue \342\200\203", NULL, &error),
+			       "checked field/value list operation succeeds");
+			g_assert_no_error (error);
+			next = operation == 0 ? 5 : operation == 1 ? 0 : operation == 2 ? index : 1;
+			header = g_mime_header_list_get_header_at (headers, next);
+			check (!strcmp (header->name, "sUbJeCt") && !strcmp (header->value, "replacement\tvalue"),
+			       "checked list operations preserve new field case and normalize values");
+			check (header->owns_options && header->options != headers->options && header->offset == -1 &&
+			       !header->reformat && !header->explicit_raw_value,
+			       "checked list values own default options and retain checked-constructor formatting");
+			check (changes == 1, "checked list success emits exactly one notification");
+			check (g_mime_header_list_get_count (headers) == (operation == 3 ? 4 : 6),
+			       "only checked replacement collapses duplicate fields");
+			for (i = j = 0; i < 5; i++) {
+				check (original[i]->raw_value == raw[i] && original[i]->offset >= 0,
+				       "checked list changes leave retained originals and source offsets untouched");
+				if (operation == 3 && (i == 1 || i == 3))
+					continue;
+				if ((int) j == next)
+					j++;
+				check (g_mime_header_list_get_header_at (headers, j++) == original[i],
+				       "checked list changes preserve unrelated identity and relative order");
+			}
+			header = g_object_ref (header);
+			g_object_unref (headers);
+			check (g_mime_header_set_value_full (header, NULL, header->value, header->charset, &error),
+			       "checked list-created headers remain usable after the list is destroyed");
+			g_assert_no_error (error);
+			g_object_unref (header);
+			for (i = 0; i < 5; i++)
+				g_object_unref (original[i]);
+		}
+		for (empty = 0; empty < 2; empty++) {
+			stream = g_mime_stream_mem_new_with_buffer (text, empty ? 0 : sizeof (text) - 1);
+			headers = g_mime_header_list_load (NULL, stream, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_object_unref (stream);
+			changes = 0;
+			g_mime_event_add (headers->changed, checked_header_list_changed, &changes);
+			before = g_mime_header_list_to_string (headers, NULL);
+			for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+				header = g_mime_header_list_get_header (headers, "Subject");
+				check (!change_checked_header_list (headers, operation, 0, invalid[i].name,
+								   invalid[i].value, invalid[i].charset, &error) && error != NULL,
+				       "checked list failures report an error");
+				check (error->domain == (i < 3 ? GMIME_ERROR : G_CONVERT_ERROR),
+				       "checked list operations propagate constructor error domains");
+				g_clear_error (&error);
+				check (!change_checked_header_list (headers, operation, 0, invalid[i].name,
+								   invalid[i].value, invalid[i].charset, NULL),
+				       "checked list failures work without an error destination");
+				after = g_mime_header_list_to_string (headers, NULL);
+				check (!strcmp (before, after) && changes == 0 && !headers->has_body_separator &&
+				       g_mime_header_list_get_header (headers, "Subject") == header &&
+				       g_mime_header_list_get_count (headers) == (empty ? 0 : 5),
+				       "checked failure preserves raw output, lookup, count, separator state and notifications");
+				g_free (after);
+			}
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*value != NULL*");
+			check (!change_checked_header_list (headers, operation, 0, "Subject", NULL, NULL, &error),
+			       "checked list operations reject NULL values rather than creating placeholders");
+			g_test_assert_expected_messages ();
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*name != NULL*");
+			check (!change_checked_header_list (headers, operation, 0, NULL, "value", NULL, &error),
+			       "checked list operations require field names");
+			g_test_assert_expected_messages ();
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*assertion*failed*");
+			check (!change_checked_header_list (headers, operation, 0, "Bad Name", "value", NULL, &error),
+			       "checked list operations reject invalid field names");
+			g_test_assert_expected_messages ();
+			error = g_error_new_literal (GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+			check (!change_checked_header_list (headers, operation, 0, "Subject", "value", NULL, &error) &&
+			       !strcmp (error->message, "existing error"), "checked list operations require a clear error destination");
+			g_test_assert_expected_messages ();
+			g_clear_error (&error);
+			check (changes == 0 && !headers->has_body_separator, "invalid checked arguments do not notify or add a separator");
+			g_free (before);
+			g_object_unref (headers);
+		}
+	}
+
+	headers = g_mime_header_list_new (NULL);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index >= 0*");
+	check (!g_mime_header_list_insert_full (headers, -1, "Subject", "value", NULL, &error),
+	       "checked insertion rejects negative indexes");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index*headers->array->len*");
+	check (!g_mime_header_list_insert_full (headers, 1, "Subject", "value", NULL, &error),
+	       "checked insertion rejects indexes beyond the count");
+	g_test_assert_expected_messages ();
+	for (operation = 0; operation < 4; operation++)
+		check (change_checked_header_list (headers, operation, 0, "X-Empty", "", NULL, &error),
+		       "checked list operations accept empty values and absent-name replacement");
+	g_assert_no_error (error);
+	check (g_mime_header_list_get_count (headers) == 1, "checked replacement collapses empty-valued duplicates");
+	header = g_object_ref (g_mime_header_list_get_header_at (headers, 0));
+	g_mime_header_list_add (headers, header);
+	shared = g_mime_header_list_new (NULL);
+	g_mime_header_list_add (shared, header);
+	changes = shared_changes = 0;
+	g_mime_event_add (headers->changed, checked_header_list_changed, &changes);
+	g_mime_event_add (shared->changed, checked_header_list_changed, &shared_changes);
+	check (g_mime_header_list_replace_value_full (headers, header->name, header->value, header->charset, &error) &&
+	       changes == 1 && shared_changes == 0 && g_mime_header_list_get_count (headers) == 1 &&
+	       g_mime_header_list_get_header_at (headers, 0) != header,
+	       "checked replacement safely accepts borrowed arguments and replaces repeated instances");
+	g_assert_no_error (error);
+	check (g_mime_header_set_value_full (header, NULL, "shared-only", NULL, &error) &&
+	       changes == 1 && shared_changes == 1,
+	       "checked replacement detaches removed listeners only from the receiving list");
+	g_assert_no_error (error);
+	g_object_unref (header);
+	g_object_unref (headers);
+	g_object_unref (shared);
+
+	message = g_mime_message_new (FALSE);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	check (g_mime_header_list_append_full (headers, "Subject", "original", NULL, &error) &&
+	       !g_strcmp0 (g_mime_message_get_subject (message), "original"), "checked append updates the owning message");
+	check (g_mime_header_list_replace_value_full (headers, "sUbJeCt", "replacement", NULL, &error) &&
+	       !g_strcmp0 (g_mime_message_get_subject (message), "replacement"), "checked replacement updates the owning message");
+	check (g_mime_header_list_append_full (headers, "To", "one@example.com", NULL, &error) &&
+	       g_mime_header_list_prepend_full (headers, "To", "two@example.com", NULL, &error) &&
+	       g_mime_header_list_insert_full (headers, 1, "To", "three@example.com", NULL, &error) &&
+	       g_mime_internet_address_list_length (g_mime_message_get_to (message)) == 3,
+	       "checked insertion operations update the recipient model exactly once");
+	check (g_mime_header_list_replace_value_full (headers, "To", "new@example.com", NULL, &error) &&
+	       g_mime_internet_address_list_length (g_mime_message_get_to (message)) == 1,
+	       "checked replacement collapses the recipient model without double-appending");
+	g_assert_no_error (error);
+	g_object_unref (message);
+	part = g_mime_part_new ();
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
+	check (!g_mime_header_list_replace_value_full (headers, "Content-Type", "invalid", NULL, &error) &&
+	       g_mime_content_type_is_type (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "application", "octet-stream"),
+	       "checked replacement failures preserve the owning content model");
+	g_clear_error (&error);
+	check (g_mime_header_list_replace_value_full (headers, "Content-Type", "text/html; charset=utf-8", NULL, &error) &&
+	       g_mime_content_type_is_type (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "text", "html"),
+	       "checked replacement updates the owning content model");
+	g_assert_no_error (error);
+	g_object_unref (part);
 }
 
 static void
@@ -10698,6 +10922,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("checked header assignment");
 	test_checked_header_assignment ();
+	testsuite_end ();
+
+	testsuite_start ("checked header-list values");
+	test_checked_header_list_values ();
 	testsuite_end ();
 
 	testsuite_start ("mixed header charset policy");
