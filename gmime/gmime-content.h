@@ -43,6 +43,21 @@ G_BEGIN_DECLS
 typedef struct _GMimeContent GMimeContent;
 typedef struct _GMimeContentClass GMimeContentClass;
 
+/**
+ * GMimeContentStorage:
+ * @GMIME_CONTENT_STORAGE_MEMORY: Copy MIME part content into memory.
+ * @GMIME_CONTENT_STORAGE_SOURCE: Reference content in the seekable input.
+ *
+ * Storage for parsed MIME part content. The caller owns the input stream
+ * in both modes. Memory storage allows it to be closed or modified after
+ * parsing. Source storage requires it to remain open and unchanged while
+ * the parsed content is in use.
+ **/
+typedef enum {
+	GMIME_CONTENT_STORAGE_MEMORY,
+	GMIME_CONTENT_STORAGE_SOURCE
+} GMimeContentStorage;
+
 
 /**
  * GMimeContent:

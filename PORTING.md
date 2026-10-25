@@ -3032,7 +3032,7 @@ g_mime_message_load()/load_from_file() port the synchronous MimeKit Load()
 overloads with default memory storage. They share the reader-backed public
 parser with persistence disabled. NULL parser options select native
 defaults; supplied options, warnings and depth/header limits are forwarded.
-Explicit Source-storage convenience overloads remain deferred.
+Explicit storage selection is described below.
 
 Borrowed input is read from its current position without seeking,
 resetting or closing it, and need not be seekable. Returned models do not
@@ -3077,6 +3077,57 @@ Full core testing remains at 34/35 programs with the two established
 text-format assertions failing. Full build, GIR, typelib, VAPI and GTK-doc
 generation pass with existing warnings. All four APIs' annotations and
 reference entries, plus live GI/Python loading and errors, are verified.
+Native Windows validation and async/cancellation remain pending.
+
+### Explicit content storage for stream loading
+
+GMimeContentStorage and g_mime_entity_load_with_storage()/
+g_mime_message_load_with_storage() port MimeKit's synchronous
+MimeContentStorage loading overloads. MEMORY (0) copies content and
+SOURCE (1) references encoded leaf content in the original stream.
+The existing stream and filename loaders still select MEMORY.
+
+Both modes borrow input at its current position without resetting or
+closing it. Memory content is independent of input after parsing.
+Source content retains its input through substreams, so callers may
+release their stream reference, but must keep the underlying input open
+and unchanged while content is used. Releasing a parsed model does not
+close a stream still held by its caller.
+
+Source mode rejects unsupported input instead of silently copying.
+Native streams have no CanSeek property, so validation requires a working
+tell and zero-offset current-position seek before parsing. The seek must
+preserve the reported position. Referenced leaf content also requires
+working substreams; errors propagate without a memory fallback.
+The existing parser API's boolean persistence setting and its historical
+fallback for nonseekable input are unchanged. The upstream storage
+wrappers and validation routine contain no inline implementation comments;
+the native capability-probe adaptation is documented inline.
+
+Each normal and ASan/UBSan run checks 49,152 actual-source storage cases:
+48,864 match exactly and 288 exercise the established default-header-limit
+difference. Those 288 also match exactly with an explicit native limit.
+There are no unexpected differences. Coverage includes entity/message
+loading, both storage modes, nonseekable rejection, nonzero positions,
+one-byte and buffered reads, depth/header limits, binary and encoded
+content, specialized entities, nested messages, truncated multiparts,
+Unix/DOS output and newline completion. Controlled byte-mutation probes
+distinguish copying from source references; normal Source use still
+requires unchanged input. The earlier 15,360 default stream/file cases
+also retain their exact matches and 120 established limit differences
+in both builds.
+
+Native regressions check retained-source lifetime, caller ownership,
+descriptor-backed source loading, read failures at every byte with and
+without errno, seek/substream failures, parser options and warnings,
+argument validation and repeated serialization. Focused reader/model/
+mbox tests pass with sanitizer leak checking. Full core testing remains
+at 34/35 programs with the two established text-format assertions failing.
+Full build, GIR, typelib, VAPI and GTK-doc generation pass with existing
+warnings. The enum values, both loading methods and their annotations
+are verified in generated bindings and reference entries. Live GI/Python
+checks cover both modes, lifetime, caller ownership, binary content,
+empty-input errors and nonseekable pipe rejection.
 Native Windows validation and async/cancellation remain pending.
 
 ### Part content-type constructors

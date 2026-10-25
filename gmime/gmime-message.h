@@ -169,6 +169,8 @@ GType g_mime_message_get_type (void);
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
 
 GMimeMessage *g_mime_message_load (GMimeParserOptions *options, GMimeStream *stream, GError **error);
+GMimeMessage *g_mime_message_load_with_storage (GMimeParserOptions *options, GMimeStream *stream,
+					      GMimeContentStorage storage, GError **error);
 GMimeMessage *g_mime_message_load_from_file (GMimeParserOptions *options, const char *filename, GError **error);
 
 ssize_t g_mime_message_write_headers_to_stream (GMimeMessage *message, GMimeFormatOptions *options, GMimeStream *stream);

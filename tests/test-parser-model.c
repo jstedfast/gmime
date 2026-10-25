@@ -23,6 +23,7 @@
 #endif
 
 #include <errno.h>
+#include <fcntl.h>
 #include <glib/gstdio.h>
 #include <string.h>
 #ifdef __linux__
@@ -3067,6 +3068,277 @@ test_loading (void)
 }
 
 static void
+test_loading_storage (void)
+{
+	static const char *cases[] = {
+		"Content-Type: text/plain\n\nbody",
+		"Content-Type: text/plain\nContent-Transfer-Encoding: base64\n\nYm9keQ==",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\nContent-Type: text/plain\n\nbody\n--b--\npost",
+		"Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\ntruncated"
+	};
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	GError *error = NULL;
+	guint i, message, storage, chunk, unset;
+
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_UNIX);
+	g_mime_format_options_set_ensure_newline (format, FALSE);
+	testsuite_check ("Explicit storage selects copied or source-backed content and preserves borrowed input ownership");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (message = 0; message < 2; message++) {
+			for (storage = GMIME_CONTENT_STORAGE_MEMORY; storage <= GMIME_CONTENT_STORAGE_SOURCE; storage++) {
+				for (chunk = 1; chunk <= 4096; chunk *= 4096) {
+					GString *wire = g_string_new ("skip");
+					ModelInput *input;
+					GMimeEntity *entity;
+					GByteArray *expected, *actual;
+					gpointer alive;
+
+					g_string_append (wire, cases[i]);
+					input = new_input (wire->str, wire->len, chunk);
+					g_assert_cmpint (g_mime_stream_seek (input->parent_object.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+					input->fail_seek = storage == GMIME_CONTENT_STORAGE_MEMORY;
+					alive = input;
+					g_object_add_weak_pointer (G_OBJECT (input), &alive);
+					entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+						(GMimeStream *) input, storage, &error) :
+						g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, storage, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (entity);
+					g_assert_cmpuint (input->bytes_read, ==, strlen (cases[i]));
+					g_assert_cmpuint (input->resets, ==, 0);
+					g_assert_cmpuint (input->seeks, ==, storage == GMIME_CONTENT_STORAGE_SOURCE ? 1 : 0);
+					if (storage == GMIME_CONTENT_STORAGE_SOURCE)
+						g_assert_cmpuint (input->views, >, 0);
+					else
+						g_assert_cmpuint (input->views, ==, 0);
+					expected = serialize_writer (entity, format, FALSE);
+					actual = serialize_writer (entity, format, FALSE);
+					g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+					g_byte_array_unref (actual);
+					g_assert_cmpint (g_mime_stream_reset ((GMimeStream *) input), ==, 0);
+					g_object_unref (input);
+					if (storage == GMIME_CONTENT_STORAGE_SOURCE)
+						g_assert_nonnull (alive);
+					else
+						g_assert_null (alive);
+					actual = serialize_writer (entity, format, FALSE);
+					g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+					g_byte_array_unref (actual);
+					g_byte_array_unref (expected);
+					g_object_unref (entity);
+					g_assert_null (alive);
+					g_string_free (wire, TRUE);
+				}
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Memory storage copies bytes while source storage references the original encoded content");
+	for (message = 0; message < 2; message++) {
+		for (storage = GMIME_CONTENT_STORAGE_MEMORY; storage <= GMIME_CONTENT_STORAGE_SOURCE; storage++) {
+			ModelInput *input = new_input (cases[0], strlen (cases[0]), 1);
+			GByteArray *source = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) input->parent_object.source);
+			GMimeEntity *entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (
+				NULL, (GMimeStream *) input, storage, &error) :
+				g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, storage, &error);
+			GMimeEntity *body;
+			GByteArray *actual;
+
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			body = message ? g_mime_message_get_mime_part ((GMimeMessage *) entity) : entity;
+			memcpy (source->data + source->len - 4, "edit", 4);
+			actual = read_content (g_mime_part_get_content ((GMimePart *) body), FALSE);
+			if (storage == GMIME_CONTENT_STORAGE_SOURCE)
+				g_assert_cmpmem (actual->data, actual->len, "edit", 4);
+			else
+				g_assert_cmpmem (actual->data, actual->len, "body", 4);
+			g_byte_array_unref (actual);
+			g_object_unref (entity);
+			g_assert_cmpint (g_mime_stream_reset ((GMimeStream *) input), ==, 0);
+			g_object_unref (input);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Source storage rejects nonseekable input and exposes seek and substream errors without copying");
+	for (message = 0; message < 2; message++) {
+		for (unset = 0; unset < 2; unset++) {
+			for (i = 0; i < 3; i++) {
+				ModelInput *input = new_input (cases[0], strlen (cases[0]), 1);
+				gpointer alive = input;
+				int code = i == 0 ? ESPIPE : unset ?
+					(i == 1 ? GMIME_ERROR_NOT_SUPPORTED : GMIME_ERROR_GENERAL) : EIO;
+
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				input->nonseekable = i == 0;
+				input->fail_seek = i == 1;
+				input->fail_substream = i == 2;
+				input->unset_errno = unset;
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+					(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error) :
+					g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_assert_cmpint (errno, ==, i == 0 ? ESPIPE : unset ? 0 : EIO);
+				g_clear_error (&error);
+				if (i < 2) {
+					g_assert_cmpuint (input->reads, ==, 0);
+					g_assert_cmpuint (input->views, ==, 0);
+					g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+						(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, NULL) :
+						g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, NULL));
+				} else {
+					g_assert_cmpuint (input->views, ==, 1);
+				}
+				g_assert_cmpuint (input->resets, ==, 0);
+				g_object_unref (input);
+				g_assert_null (alive);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Source loading propagates read failures and options without retaining failed inputs");
+	for (message = 0; message < 2; message++) {
+		for (unset = 0; unset < 2; unset++) {
+			int code = unset ? GMIME_ERROR_GENERAL : EIO;
+
+			for (i = 0; i <= strlen (cases[2]); i++) {
+				ModelInput *input = new_input (cases[2], strlen (cases[2]), 1);
+				gpointer alive = input;
+
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				input->fail_after = i;
+				input->unset_errno = unset;
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+					(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error) :
+					g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_assert_cmpint (errno, ==, unset ? 0 : EIO);
+				g_clear_error (&error);
+				g_object_unref (input);
+				g_assert_null (alive);
+			}
+		}
+		for (i = 0; i < 2; i++) {
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			GMimeStream *input = g_mime_stream_mem_new_with_buffer (cases[2], strlen (cases[2]));
+			GMimeEntity *entity;
+			guint warnings[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+			if (i == 0)
+				g_mime_parser_options_set_max_header_length (options, 1);
+			else
+				g_mime_parser_options_set_max_mime_depth (options, 0);
+			entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (options, input,
+				GMIME_CONTENT_STORAGE_SOURCE, &error) :
+				g_mime_entity_load_with_storage (options, input, GMIME_CONTENT_STORAGE_SOURCE, &error);
+			if (i == 0) {
+				g_assert_null (entity);
+				g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+				g_clear_error (&error);
+			} else {
+				g_assert_no_error (error);
+				g_assert_nonnull (entity);
+				g_assert_true (GMIME_IS_PART (message ?
+					g_mime_message_get_mime_part ((GMimeMessage *) entity) : entity));
+				g_assert_cmpuint (warnings[GMIME_CRIT_NESTING_OVERFLOW], >, 0);
+				g_object_unref (entity);
+			}
+			g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
+			g_object_unref (input);
+			g_mime_parser_options_free (options);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Explicit storage validates streams, enum values and error destinations before accessing input");
+	for (message = 0; message < 2; message++) {
+		ModelInput *input = new_input (cases[0], strlen (cases[0]), 1);
+		int invalid[] = { -1, 2 };
+
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL, NULL,
+			GMIME_CONTENT_STORAGE_MEMORY, &error) :
+			g_mime_entity_load_with_storage (NULL, NULL, GMIME_CONTENT_STORAGE_MEMORY, &error));
+		g_test_assert_expected_messages ();
+		for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*storage == GMIME_CONTENT_STORAGE_MEMORY*");
+			g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+				(GMimeStream *) input, invalid[i], &error) :
+				g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, invalid[i], &error));
+			g_test_assert_expected_messages ();
+		}
+		g_set_error_literal (&error, GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+			(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error) :
+			g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error));
+		g_test_assert_expected_messages ();
+		g_assert_cmpstr (error->message, ==, "existing error");
+		g_clear_error (&error);
+		g_assert_cmpuint (input->reads, ==, 0);
+		g_assert_cmpuint (input->seeks, ==, 0);
+		g_assert_cmpuint (input->views, ==, 0);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Source-backed files stay open across model disposal and retained views keep their source alive");
+	for (message = 0; message < 2; message++) {
+		for (i = 0; i < 2; i++) {
+			char *directory = g_dir_make_tmp ("gmime-storage-XXXXXX", &error);
+			char *filename;
+			GMimeStream *input;
+			GMimeEntity *entity;
+			GByteArray *actual;
+			gpointer alive;
+
+			g_assert_no_error (error);
+			filename = g_build_filename (directory, "source.eml", NULL);
+			g_assert_true (g_file_set_contents (filename, cases[0], -1, &error));
+			input = g_mime_stream_fs_open (filename, O_RDONLY, 0, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (input);
+			alive = input;
+			g_object_add_weak_pointer (G_OBJECT (input), &alive);
+			entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL, input,
+				GMIME_CONTENT_STORAGE_SOURCE, &error) :
+				g_mime_entity_load_with_storage (NULL, input, GMIME_CONTENT_STORAGE_SOURCE, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			if (i == 0) {
+				g_object_unref (entity);
+				g_assert_nonnull (alive);
+				g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
+				g_assert_cmpint (g_mime_stream_close (input), ==, 0);
+				g_object_unref (input);
+			} else {
+				g_object_unref (input);
+				g_assert_nonnull (alive);
+				actual = serialize_writer (entity, format, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, cases[0], strlen (cases[0]));
+				g_byte_array_unref (actual);
+				g_object_unref (entity);
+			}
+			g_assert_null (alive);
+#ifdef __linux__
+			g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+#endif
+			g_assert_cmpint (g_unlink (filename), ==, 0);
+			g_assert_cmpint (g_rmdir (directory), ==, 0);
+			g_free (filename);
+			g_free (directory);
+		}
+	}
+	testsuite_check_passed ();
+	g_mime_format_options_free (format);
+}
+
+static void
 test_content_type_load (void)
 {
 	static const char multipart[] = "--b\nContent-Type: text/plain\n\nbody\n--b--\n";
@@ -3362,6 +3634,7 @@ main (int argc, char **argv)
 	test_message_header_writing ();
 	test_file_writing ();
 	test_loading ();
+	test_loading_storage ();
 	test_content_type_load ();
 	test_ensure_newline ();
 	testsuite_end ();

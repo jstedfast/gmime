@@ -409,7 +409,8 @@ g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *option
 }
 
 GMimeEntity *
-_g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream, gboolean message, GError **error)
+_g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream, GMimeContentStorage storage,
+		     gboolean message, GError **error)
 {
 	GMimeParser *parser;
 	GMimeEntity *entity;
@@ -417,10 +418,28 @@ _g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream, gboolean 
 	int errsv;
 
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
+	g_return_val_if_fail (storage == GMIME_CONTENT_STORAGE_MEMORY || storage == GMIME_CONTENT_STORAGE_SOURCE, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
+	if (storage == GMIME_CONTENT_STORAGE_SOURCE) {
+		gint64 position;
+
+		/* Native streams expose no CanSeek property. Probe without moving
+		 * the input before parsing, rather than silently copying content. */
+		errno = 0;
+		position = g_mime_stream_tell (stream);
+		if (position < 0 || g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_CUR) != position) {
+			errsv = errno;
+			g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_NOT_SUPPORTED,
+				     "Source content storage requires a seekable stream: %s",
+				     errsv ? g_strerror (errsv) : "seeking is not supported");
+			errno = errsv;
+			return NULL;
+		}
+	}
+
 	parser = g_mime_parser_new ();
-	g_mime_parser_set_persist_stream (parser, FALSE);
+	g_mime_parser_set_persist_stream (parser, storage == GMIME_CONTENT_STORAGE_SOURCE);
 	g_mime_parser_init_with_stream (parser, stream);
 
 	errno = 0;
@@ -455,7 +474,7 @@ _g_mime_parser_load_from_file (GMimeParserOptions *options, const char *filename
 	if (!(stream = g_mime_stream_fs_open (filename, O_RDONLY, 0, error)))
 		return NULL;
 
-	entity = _g_mime_parser_load (options, stream, message, &failure);
+	entity = _g_mime_parser_load (options, stream, GMIME_CONTENT_STORAGE_MEMORY, message, &failure);
 	errsv = errno;
 
 	/* Closing must not replace an earlier parsing or read failure. */

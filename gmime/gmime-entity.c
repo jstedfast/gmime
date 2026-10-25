@@ -586,7 +586,36 @@ g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const cha
 GMimeEntity *
 g_mime_entity_load (GMimeParserOptions *options, GMimeStream *stream, GError **error)
 {
-	return _g_mime_parser_load (options, stream, FALSE, error);
+	return g_mime_entity_load_with_storage (options, stream, GMIME_CONTENT_STORAGE_MEMORY, error);
+}
+
+
+/**
+ * g_mime_entity_load_with_storage:
+ * @options: (nullable): parser options, or %NULL for defaults
+ * @stream: input positioned at the start of the entity
+ * @storage: storage for parsed MIME part content
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads an entity using the requested content storage. Memory storage
+ * behaves like g_mime_entity_load(). Source storage references leaf content
+ * through substreams instead of copying it, and requires working tell,
+ * seek and substream operations. Seekability is checked with a zero-offset
+ * seek from the current position before reading. Unsupported operations
+ * and I/O failures report %GMIME_ERROR rather than falling back to memory.
+ *
+ * The caller owns @stream in both modes. With source storage, keep it open
+ * and unchanged while parsed content is in use. Content views retain it;
+ * releasing the entity does not close a stream still owned by the caller.
+ * Empty input is a parse error. The stream is neither reset nor closed.
+ *
+ * Returns: (nullable) (transfer full): the entity, or %NULL on failure.
+ **/
+GMimeEntity *
+g_mime_entity_load_with_storage (GMimeParserOptions *options, GMimeStream *stream,
+				GMimeContentStorage storage, GError **error)
+{
+	return _g_mime_parser_load (options, stream, storage, FALSE, error);
 }
 
 

@@ -27,6 +27,7 @@
 
 #include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
+#include <gmime/gmime-content.h>
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-disposition.h>
 #include <gmime/gmime-encodings.h>
@@ -117,6 +118,8 @@ GMimeEntity *g_mime_entity_new (GMimeParserOptions *options, GMimeContentType *c
 GMimeEntity *g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const char *subtype);
 
 GMimeEntity *g_mime_entity_load (GMimeParserOptions *options, GMimeStream *stream, GError **error);
+GMimeEntity *g_mime_entity_load_with_storage (GMimeParserOptions *options, GMimeStream *stream,
+					    GMimeContentStorage storage, GError **error);
 GMimeEntity *g_mime_entity_load_from_file (GMimeParserOptions *options, const char *filename, GError **error);
 GMimeEntity *g_mime_entity_load_with_content_type (GMimeParserOptions *options, GMimeContentType *content_type,
 						 GMimeStream *content, GError **error);

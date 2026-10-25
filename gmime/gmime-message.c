@@ -754,7 +754,37 @@ message_headers_cleared (GMimeEntity *object)
 GMimeMessage *
 g_mime_message_load (GMimeParserOptions *options, GMimeStream *stream, GError **error)
 {
-	return (GMimeMessage *) _g_mime_parser_load (options, stream, TRUE, error);
+	return g_mime_message_load_with_storage (options, stream, GMIME_CONTENT_STORAGE_MEMORY, error);
+}
+
+
+/**
+ * g_mime_message_load_with_storage:
+ * @options: (nullable): parser options, or %NULL for defaults
+ * @stream: input positioned at the start of the message
+ * @storage: storage for parsed MIME part content
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads a message using the requested content storage. Memory storage
+ * behaves like g_mime_message_load(). Source storage references leaf
+ * content through substreams and requires working tell, seek and substream
+ * operations. Seekability is checked with a zero-offset seek from the
+ * current position before reading. Unsupported operations and I/O failures
+ * report %GMIME_ERROR rather than falling back to memory.
+ *
+ * The caller owns @stream in both modes. With source storage, keep it open
+ * and unchanged while parsed content is in use. Content views retain it;
+ * releasing the message does not close a stream still owned by the caller.
+ * An optional leading UTF-8 byte-order mark is consumed. Empty input is a
+ * parse error. The stream is neither reset nor closed.
+ *
+ * Returns: (nullable) (transfer full): the message, or %NULL on failure.
+ **/
+GMimeMessage *
+g_mime_message_load_with_storage (GMimeParserOptions *options, GMimeStream *stream,
+				 GMimeContentStorage storage, GError **error)
+{
+	return (GMimeMessage *) _g_mime_parser_load (options, stream, storage, TRUE, error);
 }
 
 
