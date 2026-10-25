@@ -22,8 +22,11 @@
 #include <config.h>
 #endif
 
+#include <fcntl.h>
+
 #include "gmime-parser.h"
 #include "gmime-error.h"
+#include "gmime-stream-fs.h"
 #include "gmime-parser-reader-private.h"
 #include "gmime-reader-private.h"
 #include "gmime-internal.h"
@@ -403,6 +406,76 @@ g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *option
 	g_object_unref (parser);
 
 	return message;
+}
+
+GMimeEntity *
+_g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream, gboolean message, GError **error)
+{
+	GMimeParser *parser;
+	GMimeEntity *entity;
+	GError *failure = NULL;
+	int errsv;
+
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	parser = g_mime_parser_new ();
+	g_mime_parser_set_persist_stream (parser, FALSE);
+	g_mime_parser_init_with_stream (parser, stream);
+
+	errno = 0;
+	entity = message ? (GMimeEntity *) g_mime_parser_construct_message (parser, options, &failure) :
+		g_mime_parser_construct_part (parser, options, &failure);
+	errsv = errno;
+
+	g_object_unref (parser);
+
+	if (!entity && !failure)
+		g_set_error_literal (&failure, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR, "End of stream.");
+
+	if (failure)
+		g_propagate_error (error, failure);
+
+	errno = errsv;
+
+	return entity;
+}
+
+GMimeEntity *
+_g_mime_parser_load_from_file (GMimeParserOptions *options, const char *filename, gboolean message, GError **error)
+{
+	GMimeStream *stream;
+	GMimeEntity *entity;
+	GError *failure = NULL;
+	int errsv;
+
+	g_return_val_if_fail (filename != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (!(stream = g_mime_stream_fs_open (filename, O_RDONLY, 0, error)))
+		return NULL;
+
+	entity = _g_mime_parser_load (options, stream, message, &failure);
+	errsv = errno;
+
+	/* Closing must not replace an earlier parsing or read failure. */
+	errno = 0;
+
+	if (g_mime_stream_close (stream) < 0 && !failure) {
+		errsv = errno;
+		g_set_error (&failure, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to close `%s': %s", filename, errsv ? g_strerror (errsv) : "unknown I/O error");
+		g_clear_object (&entity);
+	}
+
+	g_object_unref (stream);
+
+	if (failure)
+		g_propagate_error (error, failure);
+
+	errno = errsv;
+
+	return entity;
 }
 
 GMimeStream *

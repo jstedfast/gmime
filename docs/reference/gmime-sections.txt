@@ -951,6 +951,8 @@ g_mime_entity_register_type
 g_mime_entity_new
 g_mime_entity_new_type
 g_mime_entity_load_with_content_type
+g_mime_entity_load
+g_mime_entity_load_from_file
 g_mime_entity_set_content_type
 g_mime_entity_get_content_type
 g_mime_entity_set_content_type_parameter
@@ -1359,6 +1361,8 @@ GMimeMessagePriority
 GMimeXMessagePriority
 GMimeMessage
 g_mime_message_new
+g_mime_message_load
+g_mime_message_load_from_file
 g_mime_message_write_headers_to_stream
 g_mime_message_get_sender
 g_mime_message_get_from

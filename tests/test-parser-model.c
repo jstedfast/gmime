@@ -2784,6 +2784,288 @@ test_file_writing (void)
 	g_mime_format_options_free (options);
 }
 
+#ifdef __linux__
+typedef struct {
+	const char *filename;
+	gboolean closed;
+} LoadFileFailure;
+
+static int
+find_loaded_file_descriptor (const char *filename)
+{
+	GDir *directory = g_dir_open ("/proc/self/fd", 0, NULL);
+	const char *name;
+	int fd = -1;
+
+	g_assert_nonnull (directory);
+	while ((name = g_dir_read_name (directory))) {
+		char *path = g_build_filename ("/proc/self/fd", name, NULL);
+		char *target = g_file_read_link (path, NULL);
+
+		if (!g_strcmp0 (target, filename))
+			fd = (int) g_ascii_strtoll (name, NULL, 10);
+		g_free (target);
+		g_free (path);
+		if (fd >= 0)
+			break;
+	}
+	g_dir_close (directory);
+	return fd;
+}
+
+static void
+close_loaded_file_on_warning (gint64 offset, GMimeParserWarning warning, const char *item, gpointer user_data)
+{
+	LoadFileFailure *failure = user_data;
+	int fd;
+
+	if (warning != GMIME_WARN_TRUNCATED_MESSAGE && warning != GMIME_CRIT_INVALID_HEADER_NAME)
+		return;
+	fd = find_loaded_file_descriptor (failure->filename);
+	if (fd >= 0) {
+		g_assert_cmpint (close (fd), ==, 0);
+		failure->closed = TRUE;
+	}
+}
+#endif
+
+static void
+test_loading (void)
+{
+	static const char binary[] = "Content-Type: application/octet-stream\nContent-Transfer-Encoding: binary\n\nA\0B\nC\rD";
+	static const char *cases[] = {
+		binary, "\n", "Subject: headers only\n",
+		"Subject: x\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nbody",
+		"Content-Type: text/plain\nContent-Transfer-Encoding: base64\n\nYm9keQ==",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\nContent-Type: text/plain\n\nbody\n--b--\npost",
+		"Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody",
+		"\357\273\277Subject: bom\r\nContent-Type: text/plain\r\n\r\nbody",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\ntruncated"
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	GError *error = NULL;
+	char *directory = g_dir_make_tmp ("gmime-loading-XXXXXX", &error);
+	char *filename, *missing;
+	guint i, message, nonseekable, unset, from_file;
+
+	g_assert_no_error (error);
+	filename = g_build_filename (directory, "message-\303\251 file.eml", NULL);
+	missing = g_build_filename (directory, "absent", "message.eml", NULL);
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_UNIX);
+
+	testsuite_check ("Stream and filename loaders copy content without retaining or closing borrowed input");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		gsize length = i == 0 ? sizeof (binary) - 1 : strlen (cases[i]);
+
+		for (message = 0; message < 2; message++) {
+			if (!message && g_str_has_prefix (cases[i], "\357\273\277"))
+				continue;
+			for (nonseekable = 0; nonseekable < 2; nonseekable++) {
+				GString *wire = g_string_new ("skip");
+				ModelInput *input;
+				GMimeEntity *entity, *file_entity;
+				GByteArray *expected, *actual;
+				gpointer alive;
+				guint warnings[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+
+				g_string_append_len (wire, cases[i], length);
+				input = new_input (wire->str, wire->len, 1);
+				g_assert_cmpint (g_mime_stream_seek (input->parent_object.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+				input->nonseekable = nonseekable;
+				input->fail_seek = TRUE;
+				alive = input;
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+				entity = message ? (GMimeEntity *) g_mime_message_load (options, (GMimeStream *) input, &error) :
+					g_mime_entity_load (options, (GMimeStream *) input, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (entity);
+				g_assert_cmpuint (input->seeks, ==, 0);
+				g_assert_cmpuint (input->resets, ==, 0);
+				g_assert_cmpuint (input->views, ==, 0);
+				g_assert_cmpuint (input->bytes_read, ==, length);
+				if (i == G_N_ELEMENTS (cases) - 1)
+					g_assert_cmpuint (warnings[GMIME_WARN_TRUNCATED_MESSAGE], >, 0);
+				expected = serialize_writer (entity, format, FALSE);
+				g_byte_array_set_size (g_mime_stream_mem_get_byte_array (
+					(GMimeStreamMem *) input->parent_object.source), 0);
+				g_assert_cmpint (g_mime_stream_close ((GMimeStream *) input), ==, 0);
+				g_object_unref (input);
+				g_assert_null (alive);
+				actual = serialize_writer (entity, format, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+				g_byte_array_unref (actual);
+
+				g_assert_true (g_file_set_contents (filename, cases[i], length, &error));
+				file_entity = message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, filename, &error) :
+					g_mime_entity_load_from_file (NULL, filename, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (file_entity);
+#ifdef __linux__
+				g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+#endif
+				g_assert_true (g_file_set_contents (filename, "overwritten", 11, &error));
+				g_assert_cmpint (g_unlink (filename), ==, 0);
+				actual = serialize_writer (file_entity, format, FALSE);
+				g_assert_cmpstr (G_OBJECT_TYPE_NAME (file_entity), ==, G_OBJECT_TYPE_NAME (entity));
+				g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+				g_byte_array_unref (actual);
+				g_byte_array_unref (expected);
+				g_object_unref (file_entity);
+				g_object_unref (entity);
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+	testsuite_check_passed ();
+
+	testsuite_check ("Loaders reject empty and malformed input, honor header limits and propagate open/read errors");
+	for (message = 0; message < 2; message++) {
+		for (i = 0; i < 3; i++) {
+			const char *wire = i == 0 ? "" : i == 1 ? "invalid" : "Subject: too long\n\nbody";
+			int code = i == 2 ? GMIME_ERROR_HEADER_TOO_LONG : GMIME_ERROR_PARSE_ERROR;
+
+			g_mime_parser_options_set_max_header_length (options, i == 2 ? 1 :
+				g_mime_parser_options_get_max_header_length (NULL));
+			for (from_file = 0; from_file < 2; from_file++) {
+				GMimeStream *input = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+				GMimeEntity *entity;
+
+				g_assert_true (g_file_set_contents (filename, wire, strlen (wire), &error));
+				if (from_file)
+					entity = message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
+						g_mime_entity_load_from_file (options, filename, &error);
+				else
+					entity = message ? (GMimeEntity *) g_mime_message_load (options, input, &error) :
+						g_mime_entity_load (options, input, &error);
+				g_assert_null (entity);
+				g_assert_error (error, GMIME_ERROR, code);
+				g_clear_error (&error);
+#ifdef __linux__
+				g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+#endif
+				g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
+				g_object_unref (input);
+				g_assert_cmpint (g_unlink (filename), ==, 0);
+			}
+		}
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, missing, &error) :
+			g_mime_entity_load_from_file (NULL, missing, &error));
+		g_assert_error (error, GMIME_ERROR, ENOENT);
+		g_assert_cmpint (errno, ==, ENOENT);
+		g_clear_error (&error);
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, directory, &error) :
+			g_mime_entity_load_from_file (NULL, directory, &error));
+		g_assert_nonnull (error);
+		g_assert_cmpuint (error->domain, ==, GMIME_ERROR);
+		g_clear_error (&error);
+		for (unset = 0; unset < 2; unset++) {
+			static const char wire[] = "Subject: x\n\nbody";
+			int code = unset ? GMIME_ERROR_GENERAL : EIO;
+
+			for (i = 0; i < sizeof (wire); i++) {
+				ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+				gpointer alive = input;
+
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				input->nonseekable = TRUE;
+				input->fail_after = i;
+				input->unset_errno = unset;
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, (GMimeStream *) input, &error) :
+					g_mime_entity_load (NULL, (GMimeStream *) input, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_assert_cmpint (errno, ==, unset ? 0 : EIO);
+				g_clear_error (&error);
+				g_assert_cmpuint (input->seeks, ==, 0);
+				g_assert_cmpuint (input->resets, ==, 0);
+				g_object_unref (input);
+				g_assert_null (alive);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Loaders validate arguments, support omitted errors and preserve primary failures over close errors");
+	for (message = 0; message < 2; message++) {
+		GMimeStream *input = g_mime_stream_mem_new ();
+#ifdef __linux__
+		LoadFileFailure failure = { filename, FALSE };
+#endif
+
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, NULL, &error) :
+			g_mime_entity_load (NULL, NULL, &error));
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*filename != NULL*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, NULL, &error) :
+			g_mime_entity_load_from_file (NULL, NULL, &error));
+		g_test_assert_expected_messages ();
+		g_set_error_literal (&error, GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+		for (from_file = 0; from_file < 2; from_file++) {
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+			if (from_file)
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, missing, &error) :
+					g_mime_entity_load_from_file (NULL, missing, &error));
+			else
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, input, &error) :
+					g_mime_entity_load (NULL, input, &error));
+			g_test_assert_expected_messages ();
+			g_assert_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL);
+		}
+		g_clear_error (&error);
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, input, NULL) :
+			g_mime_entity_load (NULL, input, NULL));
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, missing, NULL) :
+			g_mime_entity_load_from_file (NULL, missing, NULL));
+		g_object_unref (input);
+#ifdef __linux__
+		g_mime_parser_options_set_max_header_length (options, g_mime_parser_options_get_max_header_length (NULL));
+		g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure);
+		g_assert_true (g_file_set_contents (filename, cases[G_N_ELEMENTS (cases) - 1], -1, &error));
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
+			g_mime_entity_load_from_file (options, filename, &error));
+		g_assert_error (error, GMIME_ERROR, EBADF);
+		g_assert_nonnull (strstr (error->message, "close"));
+		g_assert_cmpint (errno, ==, EBADF);
+		g_assert_true (failure.closed);
+		g_clear_error (&error);
+		g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+		g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+		g_assert_cmpint (g_unlink (filename), ==, 0);
+		{
+			GString *wire = g_string_new ("Subject: x\ninvalid\nX-Test: ");
+
+			while (wire->len < 256)
+				g_string_append_c (wire, 'x');
+			g_string_append (wire, "\n\nbody");
+			g_mime_parser_options_set_max_header_length (options, 64);
+			failure.closed = FALSE;
+			g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure);
+			g_assert_true (g_file_set_contents (filename, wire->str, wire->len, &error));
+			g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
+				g_mime_entity_load_from_file (options, filename, &error));
+			g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+			g_assert_null (strstr (error->message, "close"));
+			g_assert_true (failure.closed);
+			g_clear_error (&error);
+			g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+			g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+			g_assert_cmpint (g_unlink (filename), ==, 0);
+			g_string_free (wire, TRUE);
+		}
+#endif
+	}
+	testsuite_check_passed ();
+	g_assert_cmpint (g_rmdir (directory), ==, 0);
+	g_free (filename);
+	g_free (missing);
+	g_free (directory);
+	g_mime_format_options_free (format);
+	g_mime_parser_options_free (options);
+}
+
 static void
 test_content_type_load (void)
 {
@@ -3079,6 +3361,7 @@ main (int argc, char **argv)
 	test_writer_dispatch ();
 	test_message_header_writing ();
 	test_file_writing ();
+	test_loading ();
 	test_content_type_load ();
 	test_ensure_newline ();
 	testsuite_end ();

@@ -3025,6 +3025,60 @@ are verified in generated bindings and its reference entry is present.
 GI/Python calls with NULL options and repeated writes also pass.
 Native Windows validation and async/cancellation remain pending.
 
+### Memory-backed stream and filename loading
+
+g_mime_entity_load()/load_from_file() and
+g_mime_message_load()/load_from_file() port the synchronous MimeKit Load()
+overloads with default memory storage. They share the reader-backed public
+parser with persistence disabled. NULL parser options select native
+defaults; supplied options, warnings and depth/header limits are forwarded.
+Explicit Source-storage convenience overloads remain deferred.
+
+Borrowed input is read from its current position without seeking,
+resetting or closing it, and need not be seekable. Returned models do not
+retain the input and remain usable after it is closed, modified or released.
+Message loading consumes an optional leading UTF-8 byte-order mark;
+entity loading retains the existing entity-header parsing rules.
+These helpers parse a single entity/message, not an mbox or MMDF mailbox.
+
+Filename input uses GMimeStreamFs because GMimeReader already buffers I/O;
+it does not add stdio buffering. The existing descriptor opener handles
+UTF-8 Windows filenames and selects binary mode on Windows. Owned input
+is explicitly closed on success and failure before the helper returns.
+Close-only failures discard the parsed model and report the close error;
+an earlier parse/read error takes precedence over a later close error.
+Existing output helpers retain their separate stdio-based implementation.
+
+The loaders map empty input to GMIME_ERROR_PARSE_ERROR ("End of stream."),
+matching MimeKit's Load() failure without changing the parser APIs'
+non-error EOF contract. Open, read, parse and close failures return NULL,
+with a GError when an error destination is supplied.
+The upstream convenience wrappers contain no inline implementation
+comments; the shared native cleanup documents first-error precedence.
+
+Each normal and ASan/UBSan run checks 15,360 actual-source loading cases:
+15,240 match exactly and 120 exercise the pre-existing default-header-limit
+difference (native 16 MiB versus current MimeKit's 16 KiB). Those 120 also
+match exactly when the reference uses the explicit native limit. No
+unexpected differences remain. Coverage includes stream/file input,
+one-byte and buffered reads, nonseekable and nonzero-position input,
+parser limits, Unix/DOS output, newline completion, binary/encoded content,
+specialized entities, nested messages and truncated multiparts. Repeated
+serialization verifies content independence after the source is blocked,
+truncated, overwritten or removed.
+
+Native regressions cover caller ownership, released source references,
+warning forwarding, UTF-8 paths, missing/directory inputs, header limits,
+read failures at every byte (with and without errno), invalid arguments
+and omitted error destinations. Linux checks verify descriptor release,
+close-only errors and preservation of a parse error over a close failure.
+Focused reader/model/mbox tests pass with sanitizer leak checking.
+Full core testing remains at 34/35 programs with the two established
+text-format assertions failing. Full build, GIR, typelib, VAPI and GTK-doc
+generation pass with existing warnings. All four APIs' annotations and
+reference entries, plus live GI/Python loading and errors, are verified.
+Native Windows validation and async/cancellation remain pending.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and

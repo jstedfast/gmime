@@ -568,6 +568,49 @@ g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const cha
 
 
 /**
+ * g_mime_entity_load:
+ * @options: (nullable): parser options, or %NULL for defaults
+ * @stream: the input stream at the start of the entity
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads a MIME entity, copying its content into memory. The input need
+ * not support seeking and is neither reset nor closed. The returned
+ * entity remains usable after @stream is closed, modified or released.
+ *
+ * Unlike g_mime_parser_construct_part(), empty input is a parse error.
+ * The input must start with entity headers; message-specific byte-order
+ * mark handling is provided by g_mime_message_load().
+ *
+ * Returns: (nullable) (transfer full): the entity, or %NULL on failure.
+ **/
+GMimeEntity *
+g_mime_entity_load (GMimeParserOptions *options, GMimeStream *stream, GError **error)
+{
+	return _g_mime_parser_load (options, stream, FALSE, error);
+}
+
+
+/**
+ * g_mime_entity_load_from_file:
+ * @options: (nullable): parser options, or %NULL for defaults
+ * @filename: (type filename): the input file path
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads a MIME entity from @filename using g_mime_entity_load(). The file
+ * is opened for reading and closed before returning, on success or
+ * failure. Content is copied into memory and does not retain the file.
+ * Open, read, parse and close failures return %NULL with @error set.
+ *
+ * Returns: (nullable) (transfer full): the entity, or %NULL on failure.
+ **/
+GMimeEntity *
+g_mime_entity_load_from_file (GMimeParserOptions *options, const char *filename, GError **error)
+{
+	return _g_mime_parser_load_from_file (options, filename, FALSE, error);
+}
+
+
+/**
  * g_mime_entity_load_with_content_type:
  * @options: (nullable): parser options, or %NULL for defaults
  * @content_type: the Content-Type of @content

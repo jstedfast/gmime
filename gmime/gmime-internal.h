@@ -70,6 +70,10 @@ G_GNUC_INTERNAL void _g_mime_parser_options_warn (GMimeParserOptions *options, g
 
 /* GMimeParser */
 G_GNUC_INTERNAL GMimeStream *_g_mime_parser_read_to_eos (GMimeParser *parser, GError **error);
+G_GNUC_INTERNAL GMimeEntity *_g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream,
+						gboolean message, GError **error);
+G_GNUC_INTERNAL GMimeEntity *_g_mime_parser_load_from_file (GMimeParserOptions *options, const char *filename,
+							  gboolean message, GError **error);
 
 /* GMimeHeader */
 G_GNUC_INTERNAL GMimeContentEncoding _g_mime_header_get_content_encoding (GMimeHeader *header);

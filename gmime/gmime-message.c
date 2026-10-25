@@ -735,6 +735,49 @@ message_headers_cleared (GMimeEntity *object)
 }
 
 
+/**
+ * g_mime_message_load:
+ * @options: (nullable): parser options, or %NULL for defaults
+ * @stream: the input stream at the start of the message
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads a message, copying its content into memory. An optional leading
+ * UTF-8 byte-order mark is consumed. The input need not support seeking
+ * and is neither reset nor closed. The returned message remains usable
+ * after @stream is closed, modified or released.
+ *
+ * Empty input is a parse error. This loads a single MIME message, not an
+ * mbox or MMDF mailbox; use #GMimeParser for mailbox input.
+ *
+ * Returns: (nullable) (transfer full): the message, or %NULL on failure.
+ **/
+GMimeMessage *
+g_mime_message_load (GMimeParserOptions *options, GMimeStream *stream, GError **error)
+{
+	return (GMimeMessage *) _g_mime_parser_load (options, stream, TRUE, error);
+}
+
+
+/**
+ * g_mime_message_load_from_file:
+ * @options: (nullable): parser options, or %NULL for defaults
+ * @filename: (type filename): the input file path
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads a message from @filename using g_mime_message_load(). The file
+ * is opened for reading and closed before returning, on success or
+ * failure. Content is copied into memory and does not retain the file.
+ * Open, read, parse and close failures return %NULL with @error set.
+ *
+ * Returns: (nullable) (transfer full): the message, or %NULL on failure.
+ **/
+GMimeMessage *
+g_mime_message_load_from_file (GMimeParserOptions *options, const char *filename, GError **error)
+{
+	return (GMimeMessage *) _g_mime_parser_load_from_file (options, filename, TRUE, error);
+}
+
+
 /* Write the message headers (merged with the headers of the body, if any). */
 ssize_t
 _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream)
