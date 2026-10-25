@@ -31,6 +31,8 @@
 #include "gmime-entity.h"
 #include "gmime-error.h"
 #include "gmime-visitor.h"
+#include "gmime-parser.h"
+#include "gmime-stream-cat.h"
 #include "gmime-stream-mem.h"
 #include "gmime-internal.h"
 #include "gmime-events.h"
@@ -561,6 +563,75 @@ g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const cha
 	_g_mime_header_list_set_options (object->headers, options);
 	
 	return object;
+}
+
+
+/**
+ * g_mime_entity_load_with_content_type:
+ * @options: (nullable): parser options, or %NULL for defaults
+ * @content_type: the Content-Type of @content
+ * @content: the body stream, positioned at the start of the content to load
+ * @error: return location for a #GError, or %NULL
+ *
+ * Loads an entity from a body stream whose Content-Type was supplied
+ * separately, such as an HTTP response body. A serialized Content-Type
+ * header is prepended before parsing; @content_type is not retained or
+ * modified. The parser selects the entity subclass from that header.
+ *
+ * Content is copied into memory. The returned entity remains usable after
+ * @content is closed, modified or released. The input is read from its
+ * current position without seeking, resetting or closing it, and need not
+ * support seeking. Parser options and errors have the same semantics as
+ * g_mime_parser_construct_part().
+ *
+ * Returns: (nullable) (transfer full): the loaded entity, or %NULL on failure.
+ **/
+GMimeEntity *
+g_mime_entity_load_with_content_type (GMimeParserOptions *options, GMimeContentType *content_type,
+				    GMimeStream *content, GError **error)
+{
+	GMimeFormatOptions *format;
+	GMimeStream *chained, *stream;
+	GMimeParser *parser;
+	GMimeEntity *entity;
+	char *encoded, *header;
+	int errsv;
+
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (content), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	format = g_mime_format_options_clone (NULL);
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_DOS);
+	encoded = g_mime_content_type_encode (content_type, format);
+	header = g_strdup_printf ("Content-Type:%s\r\n", encoded);
+	stream = g_mime_stream_mem_new_with_buffer (header, strlen (header));
+	errsv = errno;
+	g_mime_format_options_free (format);
+	g_free (encoded);
+	g_free (header);
+
+	if (!stream) {
+		g_set_error_literal (error, GMIME_ERROR, errsv, "Encoded Content-Type header is too large.");
+		errno = errsv;
+		return NULL;
+	}
+
+	chained = g_mime_stream_cat_new ();
+	g_mime_stream_cat_add_source ((GMimeStreamCat *) chained, stream);
+	g_mime_stream_cat_add_source ((GMimeStreamCat *) chained, content);
+	g_object_unref (stream);
+
+	parser = g_mime_parser_new ();
+	g_mime_parser_set_persist_stream (parser, FALSE);
+	g_mime_parser_init_with_stream (parser, chained);
+	entity = g_mime_parser_construct_part (parser, options, error);
+	errsv = errno;
+	g_object_unref (parser);
+	g_object_unref (chained);
+	errno = errsv;
+
+	return entity;
 }
 
 

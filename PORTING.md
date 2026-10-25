@@ -2891,6 +2891,41 @@ pass with existing warnings; the new accessors are exposed in the bindings
 and reference documentation. Native Windows and async/cancellation
 remain pending.
 
+### Content-type-aware entity loading
+
+g_mime_entity_load_with_content_type() ports MimeKit's synchronous
+MimeEntity.Load(options, contentType, content) overload for body streams
+whose Content-Type is supplied separately. It encodes a synthetic
+Content-Type header with DOS newlines, chains it before the content, and
+uses the ordinary entity parser with memory-backed content storage.
+The parser selects the registered entity subclass rather than assigning
+the supplied model directly.
+
+The content stream is consumed from its current position without seeking,
+resetting or closing it, including for nonseekable inputs. Parsed content
+survives source modification, close and release. The Content-Type model is
+not modified or retained; its parameters are serialized and reparsed.
+NULL parser options select the native defaults. Depth and header-length
+controls, malformed-input recovery and explicit I/O errors remain those of
+the public parser. Header offsets refer to the synthetic header followed
+by the body, not to positions in the original body-only stream.
+
+All 15,552 actual-source cases match MimeKit's entity type and exact
+full/content-only output in normal and ASan/UBSan builds. Cases cover
+empty/binary bodies, Unicode and quoted parameters, nested messages,
+truncated multiparts, specialized subclasses, parser depth limits,
+newline controls, chunked and nonseekable inputs, and nonzero source
+positions. Native regressions additionally check argument validation,
+model/source independence, header limits and read failures at every
+body offset, including errors without errno. Focused reader/model/mbox
+tests pass with sanitizer leak checking enabled.
+
+Full core testing remains at 34/35 programs with only the two established
+text-format assertions failing. Full build, GIR, typelib, VAPI and
+GTK-doc generation pass with existing warnings; the loader is exposed in
+the generated bindings and reference documentation. Native Windows and
+async/cancellation validation remain pending.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and

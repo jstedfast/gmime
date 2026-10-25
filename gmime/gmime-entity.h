@@ -116,6 +116,9 @@ void g_mime_entity_register_type (const char *type, const char *subtype, GType o
 GMimeEntity *g_mime_entity_new (GMimeParserOptions *options, GMimeContentType *content_type);
 GMimeEntity *g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const char *subtype);
 
+GMimeEntity *g_mime_entity_load_with_content_type (GMimeParserOptions *options, GMimeContentType *content_type,
+						 GMimeStream *content, GError **error);
+
 void g_mime_entity_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
 GMimeContentType *g_mime_entity_get_content_type (GMimeEntity *object);
 void g_mime_entity_set_content_type_parameter (GMimeEntity *object, const char *name, const char *value);
