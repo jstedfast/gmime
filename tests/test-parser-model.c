@@ -2270,6 +2270,112 @@ test_writer_dispatch (void)
 	g_mime_format_options_free (options);
 }
 
+static void
+test_ensure_newline (void)
+{
+	static const struct {
+		const char *wire;
+		gboolean message, append;
+	} cases[] = {
+		{ "Subject: x\nContent-Type: text/plain\n\nbody", TRUE, TRUE },
+		{ "Subject: x\nContent-Type: text/plain\n\nbody\n", TRUE, FALSE },
+		{ "Subject: x\nContent-Type: text/plain\nContent-Transfer-Encoding: binary\n\nbody", TRUE, FALSE },
+		{ "Content-Type: text/plain\n\nbody", FALSE, FALSE },
+		{ "Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody", FALSE, FALSE },
+		{ "Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody", TRUE, TRUE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody", TRUE, TRUE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody", FALSE, FALSE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody\n--b--", TRUE, TRUE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody\n--b--\n", TRUE, FALSE }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new (), *clone;
+	guint i, dos, ensure, persist;
+
+	testsuite_check ("Public newline completion options clone independently and protect the defaults");
+	g_assert_false (g_mime_format_options_get_ensure_newline (NULL));
+	g_assert_false (g_mime_format_options_get_ensure_newline (options));
+	g_mime_format_options_set_ensure_newline (options, TRUE);
+	clone = g_mime_format_options_clone (options);
+	g_mime_format_options_set_ensure_newline (options, FALSE);
+	g_assert_true (g_mime_format_options_get_ensure_newline (clone));
+	g_assert_false (g_mime_format_options_get_ensure_newline (options));
+	g_mime_format_options_free (clone);
+	clone = g_mime_format_options_clone (NULL);
+	g_assert_false (g_mime_format_options_get_ensure_newline (clone));
+	g_mime_format_options_free (clone);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*options != NULL*");
+	g_mime_format_options_set_ensure_newline (NULL, TRUE);
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*options != default_options*");
+	g_mime_format_options_set_ensure_newline (g_mime_format_options_get_default (), TRUE);
+	g_test_assert_expected_messages ();
+	g_assert_false (g_mime_format_options_get_ensure_newline (NULL));
+	testsuite_check_passed ();
+
+	testsuite_check ("Message newline completion matches MimeKit without affecting standalone or binary entities");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (dos = 0; dos < 2; dos++) {
+			for (persist = 0; persist < 2; persist++) {
+				ModelInput *input = new_input (cases[i].wire, strlen (cases[i].wire), 1);
+				GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+				GMimeEntity *entity, *body;
+				GError *error = NULL;
+				gboolean body_ensure;
+
+				g_mime_parser_set_persist_stream (parser, persist);
+				entity = cases[i].message ? (GMimeEntity *) g_mime_parser_construct_message (parser, NULL, &error) :
+					g_mime_parser_construct_part (parser, NULL, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (entity);
+				body = cases[i].message ? ((GMimeMessage *) entity)->mime_part : entity;
+				g_assert_nonnull (body);
+				body_ensure = body->ensure_newline;
+				g_mime_format_options_set_newline_format (options, dos ? GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+				for (ensure = 0; ensure < 2; ensure++) {
+					GString *expected = g_string_new (NULL);
+					const char *p, *line = cases[i].wire, *newline = dos ? "\r\n" : "\n";
+					GByteArray *bytes, *again;
+					ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+
+					for (p = cases[i].wire; *p; p++) {
+						if (*p == '\n') {
+							/* Raw opening markers retain their original newlines. */
+							g_string_append (expected, strncmp (line, "--b\n", 4) ? newline : "\n");
+							line = p + 1;
+						} else
+							g_string_append_c (expected, *p);
+					}
+					if (ensure && cases[i].append)
+						g_string_append (expected, newline);
+					g_mime_format_options_set_ensure_newline (options, ensure);
+					bytes = serialize_writer (entity, options, FALSE);
+					g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
+					g_assert_cmpint (body->ensure_newline, ==, body_ensure);
+					g_assert_cmpint (g_mime_format_options_get_ensure_newline (options), ==, ensure);
+					if (ensure && cases[i].append) {
+						output->limit = bytes->len - strlen (newline);
+						errno = 0;
+						g_assert_cmpint (g_mime_entity_write_to_stream (entity, options, (GMimeStream *) output), ==, -1);
+						g_assert_cmpint (errno, ==, EIO);
+						g_assert_cmpint (body->ensure_newline, ==, body_ensure);
+					}
+					again = serialize_writer (entity, options, FALSE);
+					g_assert_cmpmem (again->data, again->len, bytes->data, bytes->len);
+					g_byte_array_unref (again);
+					g_byte_array_unref (bytes);
+					g_string_free (expected, TRUE);
+					g_object_unref (output);
+				}
+				g_object_unref (entity);
+				g_object_unref (parser);
+				g_object_unref (input);
+			}
+		}
+	}
+	testsuite_check_passed ();
+	g_mime_format_options_free (options);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -2298,6 +2404,7 @@ main (int argc, char **argv)
 	test_signature_markers ();
 	test_writer_depth ();
 	test_writer_dispatch ();
+	test_ensure_newline ();
 	testsuite_end ();
 	g_mime_shutdown ();
 

@@ -51,8 +51,6 @@ typedef struct {
 G_GNUC_INTERNAL void g_mime_format_options_init (void);
 G_GNUC_INTERNAL void g_mime_format_options_shutdown (void);
 G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden);
-G_GNUC_INTERNAL gboolean _g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options);
-G_GNUC_INTERNAL void _g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure);
 
 /* GMimeWriter */
 G_GNUC_INTERNAL ssize_t _g_mime_writer_write (GMimeEntity *entity, GMimeFormatOptions *options,

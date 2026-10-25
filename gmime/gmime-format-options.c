@@ -156,18 +156,6 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 	return clone;
 }
 
-gboolean
-_g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options)
-{
-	return (options ? options : default_options)->ensure_newline;
-}
-
-void
-_g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure)
-{
-	options->ensure_newline = ensure;
-}
-
 /**
  * g_mime_format_options_clone:
  * @options: (nullable): a #GMimeFormatOptions or %NULL
@@ -359,6 +347,48 @@ g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewL
 	g_return_if_fail (newline == GMIME_NEWLINE_FORMAT_UNIX || newline == GMIME_NEWLINE_FORMAT_DOS);
 	
 	options->newline = newline;
+}
+
+
+/**
+ * g_mime_format_options_get_ensure_newline:
+ * @options: (nullable): a #GMimeFormatOptions or %NULL for the defaults
+ *
+ * Gets whether message serialization should complete the final newline.
+ * The default is %FALSE.
+ *
+ * Returns: %TRUE if final newline completion is requested for messages.
+ **/
+gboolean
+g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options)
+{
+	return (options ? options : default_options)->ensure_newline;
+}
+
+
+/**
+ * g_mime_format_options_set_ensure_newline:
+ * @options: a mutable #GMimeFormatOptions
+ * @ensure: whether messages should end with a newline
+ *
+ * Parsed messages normally retain an unterminated final body. Set this
+ * option to %TRUE to request a final newline when writing a message.
+ * The selected newline format determines the sequence to append.
+ *
+ * This option applies at message boundaries, including embedded messages;
+ * it does not force standalone entities or binary content to end with a
+ * newline. It does not add a body to a message without one.
+ *
+ * The global defaults cannot be changed with this setter; use
+ * g_mime_format_options_new() or g_mime_format_options_clone().
+ **/
+void
+g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure)
+{
+	g_return_if_fail (options != NULL);
+	g_return_if_fail (options != default_options);
+
+	options->ensure_newline = !!ensure;
 }
 
 

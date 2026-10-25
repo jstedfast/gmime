@@ -95,6 +95,9 @@ void g_mime_format_options_set_always_quote_param_values (GMimeFormatOptions *op
 GMimeNewLineFormat g_mime_format_options_get_newline_format (GMimeFormatOptions *options);
 void g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline);
 
+gboolean g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options);
+void g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure);
+
 const char *g_mime_format_options_get_newline (GMimeFormatOptions *options);
 GMimeFilter *g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboolean ensure_newline);
 

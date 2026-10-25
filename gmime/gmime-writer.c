@@ -362,7 +362,7 @@ writer_custom (GMimeWriter *writer, GMimeEntity *entity, GMimeFormatOptions *opt
 	ssize_t written;
 	int errsv;
 
-	_g_mime_format_options_set_ensure_newline (format, ensure);
+	g_mime_format_options_set_ensure_newline (format, ensure);
 	g_private_set (&dispatch_writer, &context);
 
 	written = GMIME_ENTITY_GET_CLASS (entity)->write_to_stream (entity, format, content_only, writer->stream);
@@ -413,7 +413,8 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 						goto fail;
 				}
 
-				ensure = entity->ensure_newline || _g_mime_format_options_get_ensure_newline (options);
+				/* Get the message body and whether it must end with a newline. */
+				ensure = entity->ensure_newline || g_mime_format_options_get_ensure_newline (options);
 
 				if (message->mime_part)
 					next = g_object_ref (message->mime_part);
@@ -447,10 +448,10 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 
 						/* Only ensure an embedded message ends in a newline
 						 * when its enclosing message part must end in one. */
-						if (_g_mime_format_options_get_ensure_newline (options) != ensure) {
+						if (g_mime_format_options_get_ensure_newline (options) != ensure) {
 							GMimeFormatOptions *format = _g_mime_format_options_clone (options, TRUE);
 
-							_g_mime_format_options_set_ensure_newline (format, ensure);
+							g_mime_format_options_set_ensure_newline (format, ensure);
 							g_clear_pointer (&temporary, g_mime_format_options_free);
 							options = temporary = format;
 						}
@@ -541,7 +542,7 @@ _g_mime_writer_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolean
 {
 	WriterDispatch *parent = g_private_get (&dispatch_writer);
 	gboolean ensure = parent && parent->entity == entity ? parent->ensure_newline :
-		entity->ensure_newline || _g_mime_format_options_get_ensure_newline (options);
+		entity->ensure_newline;
 
 	return writer_run (entity, options, content_only, stream, parent && parent->writer->verifying_signature, FALSE, ensure);
 }
@@ -550,5 +551,5 @@ ssize_t
 _g_mime_writer_write_for_signature (GMimeEntity *entity, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	return writer_run (entity, options, FALSE, stream, TRUE, TRUE,
-			   entity->ensure_newline || _g_mime_format_options_get_ensure_newline (options));
+			   entity->ensure_newline);
 }

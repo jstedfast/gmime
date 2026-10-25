@@ -2860,6 +2860,37 @@ two established text-format assertions failing. Full build, GIR, typelib,
 VAPI and GTK-doc generation pass with existing warnings.
 Async/cancellation and native Windows validation remain separate work.
 
+### Public message newline completion
+
+GMimeFormatOptions now exposes get_ensure_newline()/set_ensure_newline(),
+porting MimeKit's public EnsureNewLine property. The default is FALSE;
+clones retain independent values, and the setter rejects NULL and the
+shared defaults. Parsed messages can opt into a final newline using the
+selected newline format without changing their body's stored flags.
+
+The option applies at message boundaries, not indiscriminately to
+standalone entities or every multipart child. Embedded-message options
+follow the enclosing part's explicit requirement, including clearing an
+incoming TRUE value. Binary content remains unchanged, and no body is
+synthesized for bodyless messages. Raw opening markers retain their
+original newline bytes.
+
+All 21,600 new actual-source output cases match MimeKit in normal and
+ASan/UBSan builds, covering full/content-only entities, messages, nested
+messages, multipart endings, transfer encodings, both newline formats and
+both content storage modes. Native regressions also check default
+protection, clone independence, repeated writes, model-state preservation
+and final-newline output failures. Focused reader/model/mbox tests pass
+with sanitizer leak checking enabled.
+
+The existing 80,472 ordinary and 17,568 signature-output cases also match
+the current actual MimeKit source in both builds. Full core testing
+remains at 34/35 programs with only the two established text-format
+assertions failing. Full build, GIR, typelib, VAPI and GTK-doc generation
+pass with existing warnings; the new accessors are exposed in the bindings
+and reference documentation. Native Windows and async/cancellation
+remain pending.
+
 ### Part content-type constructors
 
 GMimePart now exposes new_with_content_type() and
