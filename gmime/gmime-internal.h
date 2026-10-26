@@ -138,7 +138,7 @@ G_GNUC_INTERNAL GMimeContentDisposition *_g_mime_content_disposition_parse (GMim
 G_GNUC_INTERNAL char *_g_mime_charset_get_mime_name (const char *charset);
 G_GNUC_INTERNAL char *_g_mime_charset_encode_text (const char *charset, const char *text, gsize *length,
 						 char **mime_name, GError **error);
-G_GNUC_INTERNAL GIConv _g_mime_charset_open_text_decoder (const char *charset, GError **error);
+G_GNUC_INTERNAL GIConv _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error);
 G_GNUC_INTERNAL int _g_mime_charset_get_codepage (const char *charset);
 
 /* utils */
@@ -150,6 +150,8 @@ G_GNUC_INTERNAL char *_g_mime_utils_structured_header_fold (GMimeParserOptions *
 							    const char *field, const char *value);
 G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset,
 							gint64 offset);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *text,
+							     gint64 offset, GError **error);
 G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *text, const char **charset,
 							  gint64 offset);
 

@@ -5472,6 +5472,148 @@ test_named_header_list_values (void)
 }
 
 static void
+test_header_charset_value (void)
+{
+	static const struct {
+		const char *raw, *charset, *expected;
+	} cases[] = {
+		{ " caf\351\r\n", "windows-1252", "caf\303\251" },
+		{ " caf\351\r\n", "windows-1251", "caf\320\271" },
+		{ " \317\360\350\342\345\362\r\n", "windows-1251", "\320\237\321\200\320\270\320\262\320\265\321\202" },
+		{ " \302\240 caf\303\251\r\n\tfin \342\200\203\r\n", "windows-1251", "caf\303\251\tfin" },
+		{ " =?iso-8859-1?q?caf=E9?=\r\n\tfin\r\n", "windows-1251", "caf\303\251\tfin" },
+		{ " =?x-unknown?q?caf=E9?=\r\n", "windows-1251", "caf\320\271" },
+		{ " caf\351\r\n", "utf-8", "caf\303\251" },
+		{ " caf\351\r\n", "unicode", "caf\303\251" },
+		{ " =?utf-16le?b?YwBhAGYA6QA=?=\r\n", "windows-1251", "caf\303\251" },
+		{ " \t\r\n", "utf-8", "" },
+		{ " =?utf-8?q?A=00B?=\r\n", "utf-8", NULL },
+		{ " =?iso-8859-1?q?A=00B?=\r\n", "utf-8", NULL },
+		{ " =?x-unknown?q?A=00B?=\r\n", "utf-8", NULL },
+		{ " =?utf-16le?b?QQAAAEIA?=\r\n", "utf-8", NULL }
+	};
+	static const char nul_wire[] = "Subject: before\0after\r\n\r\n";
+	GMimeParserOptions *options, *original_options;
+	GMimeHeaderList *headers;
+	GMimeHeader *header, *clone;
+	GMimeStream *stream;
+	GError *error = NULL;
+	GBytes *raw_field, *raw_value;
+	const char *cached, *raw, *charset;
+	char *source, *value, *again, *before, *after;
+	guint i, populated, changes;
+	gint64 offset;
+
+	options = g_mime_parser_options_new ();
+	check (g_mime_parser_options_set_charset_encoding (options, "windows-1252", &error),
+	       "explicit header decoding starts with a distinct configured fallback");
+	g_assert_no_error (error);
+	for (populated = 0; populated < 2; populated++) {
+		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+			source = g_strconcat ("sUbJeCt: ", cases[i].raw, NULL);
+			stream = g_mime_stream_mem_new_with_buffer (source, strlen (source));
+			headers = g_mime_header_list_load (options, stream, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_object_unref (stream);
+			g_free (source);
+			header = g_mime_header_list_get_header_at (headers, 0);
+			if (populated)
+				g_mime_header_get_value (header);
+			cached = header->value;
+			raw = header->raw_value;
+			charset = header->charset;
+			raw_field = header->raw_field_bytes;
+			raw_value = header->raw_value_bytes;
+			offset = header->offset;
+			original_options = header->options;
+			before = g_mime_header_list_to_string (headers, NULL);
+			changes = 0;
+			g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+			g_mime_event_add (header->changed, count_checked_header_changes, &changes);
+			value = g_mime_header_get_value_with_charset (header, cases[i].charset, &error);
+			if (cases[i].expected) {
+				g_assert_no_error (error);
+				check (!g_strcmp0 (value, cases[i].expected),
+				       "explicit header decoding applies fallback, declared charsets and Unicode unfolding");
+				again = g_mime_header_get_value_with_charset (header, cases[i].charset, &error);
+				check (again != value && again != cached && !g_strcmp0 (again, value),
+				       "explicit header decoding returns an independent owned string on every call");
+				g_free (again);
+			} else {
+				check (value == NULL && g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL),
+				       "explicit header decoding rejects NULs decoded from any encoded-word path");
+				g_clear_error (&error);
+				check (g_mime_header_get_value_with_charset (header, cases[i].charset, NULL) == NULL,
+				       "explicit header decoding reports NUL failure without an error destination");
+			}
+			g_free (value);
+			after = g_mime_header_list_to_string (headers, NULL);
+			check (header->value == cached && header->raw_value == raw && header->charset == charset &&
+			       header->raw_field_bytes == raw_field && header->raw_value_bytes == raw_value &&
+			       header->offset == offset && header->options == original_options &&
+			       !strcmp (g_mime_parser_options_get_charset_encoding (header->options), "windows-1252") &&
+			       !strcmp (before, after) && changes == 0 && !headers->has_body_separator,
+			       "explicit header decoding preserves lazy/cached state, raw bytes, parser options and events");
+			g_free (before);
+			g_free (after);
+			g_object_unref (headers);
+		}
+	}
+	stream = g_mime_stream_mem_new_with_buffer (nul_wire, sizeof (nul_wire) - 1);
+	headers = g_mime_header_list_load (options, stream, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_object_unref (stream);
+	header = g_mime_header_list_get_header_at (headers, 0);
+	value = g_mime_header_get_value_with_charset (header, "utf-8", &error);
+	check (value == NULL && g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL) &&
+	       header->value == NULL, "explicit header decoding rejects literal NUL bytes without caching a prefix");
+	g_clear_error (&error);
+	check (g_mime_header_get_value_with_charset (header, "x-no-such-charset", &error) == NULL &&
+	       error && error->domain == G_CONVERT_ERROR && error->code != G_CONVERT_ERROR_EMBEDDED_NUL,
+	       "explicit header decoding validates the charset before inspecting raw bytes");
+	g_clear_error (&error);
+	g_object_unref (headers);
+	headers = g_mime_header_list_new (options);
+	g_mime_header_list_append (headers, "Subject", NULL, NULL);
+	header = g_mime_header_list_get_header_at (headers, 0);
+	value = g_mime_header_get_value_with_charset (header, "utf-8", &error);
+	check (value != NULL && *value == '\0' && header->value == NULL,
+	       "explicit header decoding returns owned empty text for an unset legacy placeholder");
+	g_free (value);
+	for (i = 0; i < 3; i++) {
+		const char *invalid = i == 0 ? "" : i == 1 ? "x-no-such-charset" : "x-unknown";
+		check (g_mime_header_get_value_with_charset (header, invalid, &error) == NULL &&
+		       error && error->domain == G_CONVERT_ERROR,
+		       "explicit header decoding rejects empty or unsupported charsets even without a raw value");
+		g_clear_error (&error);
+		check (g_mime_header_get_value_with_charset (header, invalid, NULL) == NULL,
+		       "explicit header decoding supports an omitted error destination");
+	}
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*charset != NULL*");
+	check (g_mime_header_get_value_with_charset (header, NULL, &error) == NULL,
+	       "explicit header decoding requires a charset");
+	g_test_assert_expected_messages ();
+	error = g_error_new_literal (GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+	check (g_mime_header_get_value_with_charset (header, "utf-8", &error) == NULL &&
+	       !strcmp (error->message, "existing error"), "explicit header decoding requires a clear error destination");
+	g_test_assert_expected_messages ();
+	g_clear_error (&error);
+	g_mime_header_set_raw_value (header, " caf\351\r\n");
+	clone = g_mime_header_clone (header);
+	g_object_unref (headers);
+	g_mime_parser_options_free (options);
+	value = g_mime_header_get_value_with_charset (clone, "windows-1251", &error);
+	check (!g_strcmp0 (value, "caf\320\271") && clone->value == NULL,
+	       "explicit header decoding honors a clone's owned options after the source list is released");
+	g_assert_no_error (error);
+	g_free (value);
+	g_object_unref (clone);
+}
+
+static void
 test_header_cloning (void)
 {
 	static const char text[] = "X-First: first\r\nX-SuBjEcT \t: \317\360\350\342\345\362\r\n\tworld\r\n\r\n";
@@ -11154,6 +11296,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("named header-list values");
 	test_named_header_list_values ();
+	testsuite_end ();
+
+	testsuite_start ("explicit header charset decoding");
+	test_header_charset_value ();
 	testsuite_end ();
 
 	testsuite_start ("mixed header charset policy");

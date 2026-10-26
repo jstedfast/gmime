@@ -861,23 +861,29 @@ _g_mime_charset_encode_text (const char *charset, const char *text, gsize *lengt
 }
 
 GIConv
-_g_mime_charset_open_text_decoder (const char *charset, GError **error)
+_g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error)
 {
 	GIConv decoder;
+	const char *converter;
 	char *name;
 	int errsv;
 
+	if (encoding)
+		*encoding = NULL;
 	if (!(name = get_text_charset (charset, error)))
 		return (GIConv) -1;
 
+	converter = get_text_converter (name);
 	errno = 0;
-	decoder = g_iconv_open ("UTF-8", get_text_converter (name));
+	decoder = g_iconv_open ("UTF-8", converter);
 	errsv = errno;
 	g_free (name);
 	if (decoder == (GIConv) -1) {
 		g_set_error (error, G_CONVERT_ERROR, errsv == EINVAL ? G_CONVERT_ERROR_NO_CONVERSION : G_CONVERT_ERROR_FAILED,
 			     "Cannot decode text using charset '%s': %s",
 			     charset, errsv ? g_strerror (errsv) : "unknown conversion error");
+	} else if (encoding) {
+		*encoding = converter;
 	}
 
 	return decoder;

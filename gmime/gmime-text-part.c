@@ -584,7 +584,7 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
 
 	/* Resolve the override even for absent content, before reading any
 	 * bytes. A bad charset must not become an empty success or an I/O error. */
-	if ((decoder = _g_mime_charset_open_text_decoder (charset, error)) == (GIConv) -1)
+	if ((decoder = _g_mime_charset_open_text_decoder (charset, NULL, error)) == (GIConv) -1)
 		return NULL;
 	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part))) {
 		g_iconv_close (decoder);

@@ -122,6 +122,7 @@ const char *g_mime_header_get_name (GMimeHeader *header);
 const char *g_mime_header_get_raw_name (GMimeHeader *header);
 
 const char *g_mime_header_get_value (GMimeHeader *header);
+char *g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, GError **error);
 void g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset);
 gboolean g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, const char *value,
 				     const char *charset, GError **error);

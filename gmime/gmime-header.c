@@ -459,6 +459,77 @@ g_mime_header_get_value (GMimeHeader *header)
 	return header->value;
 }
 
+/**
+ * g_mime_header_get_value_with_charset:
+ * @header: a #GMimeHeader
+ * @charset: a nonempty fallback charset name
+ * @error: return location for an error, or %NULL
+ *
+ * Decodes and unfolds the stored raw value using a copy of the header's
+ * parser options with @charset as the fallback for undeclared 8-bit text.
+ * Valid UTF-8 takes priority, and supported RFC 2047 declarations are
+ * honored. Leading and trailing Unicode whitespace is removed.
+ *
+ * The result is newly allocated, even if the decoded value was already
+ * cached. The header's options, cache, raw bytes and formatting state are
+ * unchanged, and no change event is emitted. An unset legacy placeholder
+ * returns an empty string after validating @charset.
+ *
+ * Empty, invalid or unsupported charsets report %G_CONVERT_ERROR.
+ * Generic UTF-16/32 aliases use little-endian bytes. The historical
+ * MimeKit alias "unicode" selects UTF-8, not UTF-16.
+ * Literal NUL bytes in the stored raw value and embedded NUL characters in
+ * decoded text report %G_CONVERT_ERROR_EMBEDDED_NUL rather than returning
+ * truncated text. No failure returns partial text.
+ *
+ * Returns: (transfer full) (nullable): freshly decoded UTF-8 text, or %NULL
+ * on failure.
+ **/
+char *
+g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, GError **error)
+{
+	GMimeParserOptions *options;
+	const char *bytes, *encoding;
+	char *decoded, *value;
+	GIConv decoder;
+	gsize length;
+
+	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
+	g_return_val_if_fail (charset != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if ((decoder = _g_mime_charset_open_text_decoder (charset, &encoding, error)) == (GIConv) -1)
+		return NULL;
+	g_iconv_close (decoder);
+
+	options = g_mime_parser_options_clone (header->options);
+	if (!g_mime_parser_options_set_charset_encoding (options, encoding, error)) {
+		g_mime_parser_options_free (options);
+		return NULL;
+	}
+
+	if (header->raw_value_bytes) {
+		bytes = g_bytes_get_data (header->raw_value_bytes, &length);
+		if (length && memchr (bytes, 0, length)) {
+			g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
+					     "Raw header value contains an embedded NUL byte");
+			g_mime_parser_options_free (options);
+			return NULL;
+		}
+	}
+
+	decoded = _g_mime_utils_header_decode_text_full (options, header->raw_value, header->offset, error);
+	g_mime_parser_options_free (options);
+	if (!decoded)
+		return NULL;
+
+	value = header_normalize_value (decoded);
+	g_free (decoded);
+
+	return value;
+}
+
+
 GMimeContentEncoding
 _g_mime_header_get_content_encoding (GMimeHeader *header)
 {

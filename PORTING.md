@@ -1590,6 +1590,56 @@ Both APIs pass GIR/typelib, VAPI, GTK-doc and live GI/Python validation.
 The full core baseline remains unchanged: 34/35 programs pass, with only
 test-core's two established text-format assertions.
 
+### Explicit header decoding charset
+
+`g_mime_header_get_value_with_charset()` ports MimeKit's
+`Header.GetValue(Encoding)` and `Header.GetValue(string)` through a native
+charset-name API. It clones the header's parser options, overrides the
+fallback charset, decodes the stored raw value and unfolds it with Unicode
+whitespace trimming. Valid UTF-8 remains the first choice; supported
+encoded-word declarations take precedence over the fallback. Unknown
+declarations use the fallback rather than legacy native locale aliases.
+
+Every successful call returns owned UTF-8 text, independently of an existing
+decoded cache. Neither success nor failure changes raw bytes, caches,
+metadata, formatting state, parser options or owner notifications.
+An unset legacy placeholder returns owned empty text after validating the
+charset. Empty, invalid or unsupported charset names report G_CONVERT_ERROR.
+
+As with the checked text-part getter, literal raw NUL bytes and decoded
+Unicode NUL characters report G_CONVERT_ERROR_EMBEDDED_NUL rather than
+returning a truncated C string. Zero bytes in an encoded-word's transfer
+decoded payload are not themselves an error: a supported multibyte charset
+can legitimately decode them to ordinary text. The legacy header getter and
+public decoding helpers retain their existing behavior.
+
+Charset names reuse the checked text APIs' native aliases and iconv
+repertoire, rather than replacing them with .NET's registry. Existing native
+`utf16` and `utf32` aliases remain compatibility extensions; the historical
+MimeKit `unicode` alias selects UTF-8. UTF-16/32 handling is compatibility
+coverage, not a preferred email encoding.
+
+The getter overloads contain no inline implementation comments. The shared
+fallback decoder preserves its existing comments and includes MimeKit's
+UTF-8-first explanation from CharsetUtils.ConvertToUnicode.
+
+An actual-source differential covers 14,208 cases per normal and
+ASan/UBSan/leak build with zero unexpected differences. It independently
+checks 1,180 inherited decoder differences against the legacy native decoder
+and Unicode normalization, and accounts for 384 native NUL errors. The
+matrix includes 1,776 native-alias cases compared against the reference's
+canonical UTF-16/32 names; MimeKit rejects the abbreviated names themselves.
+Lazy and populated caches, both RFC 2047 compliance modes, raw 8-bit text,
+declared and unknown encoded words, invalid charset names and detached
+header lifetimes are covered.
+
+GIR/typelib, VAPI, GTK-doc and live GI/Python checks pass, including owned
+results, charset errors, NUL errors and preservation of raw serialized bytes.
+
+The full core baseline remains unchanged: 34/35 programs pass, with only
+test-core's two established text-format assertions. Native Windows
+validation remains pending.
+
 ### Positional header-list operations
 
 `g_mime_header_list_index_of()` and

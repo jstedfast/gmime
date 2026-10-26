@@ -1088,23 +1088,8 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 }
 
 
-/**
- * g_mime_utils_decode_8bit:
- * @options: (nullable): a #GMimeParserOptions or %NULL
- * @text: (array length=len) (element-type guint8): input text in
- *   unknown 8bit/multibyte character set
- * @len: input text length
- *
- * Attempts to convert text in an unknown 8bit/multibyte charset into
- * UTF-8 by finding the charset which will convert the most bytes into
- * valid UTF-8 characters as possible. If no exact match can be found,
- * it will choose the best match and convert invalid byte sequences
- * into question-marks (?) in the returned string buffer.
- *
- * Returns: a UTF-8 string representation of @text.
- **/
-char *
-g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t len)
+static char *
+decode_8bit (GMimeParserOptions *options, const char *text, size_t len, size_t *decoded_length)
 {
 	size_t outleft, outlen, min, ninval;
 	const char *charsets[4];
@@ -1113,9 +1098,8 @@ g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t 
 	char *out;
 	int i, n = 0;
 	
-	g_return_val_if_fail (text != NULL, NULL);
-	
 	charset = g_mime_parser_options_get_charset_encoding (options);
+	/* UTF-8 is always the first choice when no invalid sequences are present. */
 	charsets[n++] = "utf-8";
 	if (g_ascii_strcasecmp (charset, "utf-8") && g_ascii_strcasecmp (charset, "iso-8859-1"))
 		charsets[n++] = charset;
@@ -1135,8 +1119,11 @@ g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t 
 		
 		g_mime_iconv_close (cd);
 		
-		if (ninval == 0)
+		if (ninval == 0) {
+			if (decoded_length)
+				*decoded_length = outlen;
 			return g_realloc (out, outlen + 1);
+		}
 		
 		if (ninval < min) {
 			best = charsets[i];
@@ -1165,6 +1152,8 @@ g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t 
 			inptr++;
 		}
 		
+		if (decoded_length)
+			*decoded_length = outbuf - out;
 		*outbuf++ = '\0';
 		
 		return g_realloc (out, (size_t) (outbuf - out));
@@ -1173,8 +1162,34 @@ g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t 
 	outlen = charset_convert (cd, text, len, &out, &outleft, &ninval);
 	
 	g_mime_iconv_close (cd);
-	
+
+	if (decoded_length)
+		*decoded_length = outlen;
 	return g_realloc (out, outlen + 1);
+}
+
+
+/**
+ * g_mime_utils_decode_8bit:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ * @text: (array length=len) (element-type guint8): input text in
+ *   unknown 8bit/multibyte character set
+ * @len: input text length
+ *
+ * Attempts to convert text in an unknown 8bit/multibyte charset into
+ * UTF-8 by finding the charset which will convert the most bytes into
+ * valid UTF-8 characters as possible. If no exact match can be found,
+ * it will choose the best match and convert invalid byte sequences
+ * into question-marks (?) in the returned string buffer.
+ *
+ * Returns: a UTF-8 string representation of @text.
+ **/
+char *
+g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t len)
+{
+	g_return_val_if_fail (text != NULL, NULL);
+
+	return decode_8bit (options, text, len, NULL);
 }
 
 
@@ -1678,7 +1693,8 @@ rfc2047_get_most_common_charset (rfc2047_token *tokens)
 }
 
 static char *
-rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_t buflen, const char **charset_out)
+rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_t buflen,
+		      const char **charset_out, gboolean checked, gboolean *has_nul)
 {
 	GMimeDecoder *base64 = NULL, *qp = NULL, *decoder;
 	rfc2047_token *token, *next;
@@ -1753,6 +1769,8 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 			
 			/* convert the raw decoded text into UTF-8 */
 			if (codepage == 65001) {
+				if (has_nul && memchr (outptr, 0, outlen))
+					*has_nul = TRUE;
 				/* slight optimization over going through iconv */
 				str = (char *) outptr;
 				len = outlen;
@@ -1763,13 +1781,18 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 				}
 				
 				g_string_append_len (decoded, (char *) outptr, outlen);
-			} else if ((cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
+			} else if ((checked && codepage < 0) ||
+				   (cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
+				/* Unknown declarations use the fallback, not native locale aliases. */
 				w(g_warning ("Cannot convert from %s to UTF-8, header display may "
 					     "be corrupt: %s", charset[0] ? charset : "unspecified charset",
-					     g_strerror (errno)));
+					     g_strerror (checked && codepage < 0 ? EINVAL : errno)));
 				
-				str = g_mime_utils_decode_8bit (options, (char *) outptr, outlen);
-				g_string_append (decoded, str);
+				str = decode_8bit (options, (char *) outptr, outlen, &len);
+				if (has_nul)
+					g_string_append_len (decoded, str, len);
+				else
+					g_string_append (decoded, str);
 				g_free (str);
 			} else {
 				str = g_malloc (outlen + 1);
@@ -1790,8 +1813,11 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 			}
 		} else if (token->is_8bit) {
 			/* *sigh* I hate broken mailers... */
-			str = g_mime_utils_decode_8bit (options, token->text, token->length);
-			g_string_append (decoded, str);
+			str = decode_8bit (options, token->text, token->length, &len);
+			if (has_nul)
+				g_string_append_len (decoded, str, len);
+			else
+				g_string_append (decoded, str);
 			g_free (str);
 		} else {
 			g_string_append_len (decoded, token->text, token->length);
@@ -1803,8 +1829,41 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 	g_clear_object (&base64);
 	g_clear_object (&qp);
 	g_free (outbuf);
-	
+
+	if (has_nul && memchr (decoded->str, 0, decoded->len))
+		*has_nul = TRUE;
 	return g_string_free (decoded, FALSE);
+}
+
+
+static char *
+header_decode_text (GMimeParserOptions *options, const char *text, const char **charset, gint64 offset,
+		    gboolean checked, GError **error)
+{
+	rfc2047_token *tokens;
+	gboolean has_nul = FALSE;
+	char *decoded;
+	size_t len;
+
+	if (text == NULL) {
+		if (charset)
+			*charset = NULL;
+
+		return g_strdup ("");
+	}
+
+	tokens = tokenize_rfc2047_text (options, text, &len, offset, FALSE);
+	decoded = rfc2047_decode_tokens (options, tokens, len, charset, checked, checked ? &has_nul : NULL);
+	rfc2047_token_list_free (tokens);
+
+	if (has_nul) {
+		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
+				     "Decoded header value contains an embedded NUL character");
+		g_free (decoded);
+		return NULL;
+	}
+
+	return decoded;
 }
 
 
@@ -1823,22 +1882,13 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 char *
 _g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset, gint64 offset)
 {
-	rfc2047_token *tokens;
-	char *decoded;
-	size_t len;
-	
-	if (text == NULL) {
-		if (charset)
-			*charset = NULL;
-		
-		return g_strdup ("");
-	}
-	
-	tokens = tokenize_rfc2047_text (options, text, &len, offset, FALSE);
-	decoded = rfc2047_decode_tokens (options, tokens, len, charset);
-	rfc2047_token_list_free (tokens);
-	
-	return decoded;
+	return header_decode_text (options, text, charset, offset, FALSE, NULL);
+}
+
+char *
+_g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *text, gint64 offset, GError **error)
+{
+	return header_decode_text (options, text, NULL, offset, TRUE, error);
 }
 
 
@@ -1886,7 +1936,7 @@ _g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phr
 	}
 	
 	tokens = tokenize_rfc2047_phrase (options, phrase, &len, offset, FALSE);
-	decoded = rfc2047_decode_tokens (options, tokens, len, charset);
+	decoded = rfc2047_decode_tokens (options, tokens, len, charset, FALSE, NULL);
 	rfc2047_token_list_free (tokens);
 	
 	return decoded;
