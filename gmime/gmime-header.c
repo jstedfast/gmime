@@ -53,6 +53,188 @@
  * values.
  **/
 
+static const char * const header_names[] = {
+	"Accept-Language",
+	"Ad-Hoc",
+	"Alternate-Recipient",
+	"Apparently-To",
+	"Approved",
+	"ARC-Authentication-Results",
+	"ARC-Message-Signature",
+	"ARC-Seal",
+	"Archive",
+	"Archived-At",
+	"Article",
+	"Authentication-Results",
+	"Autocrypt",
+	"Autocrypt-Gossip",
+	"Autocrypt-Setup-Message",
+	"Autoforwarded",
+	"Auto-Submitted",
+	"Autosubmitted",
+	"Base",
+	"Bcc",
+	"Body",
+	"Bytes",
+	"Cc",
+	"Comments",
+	"Content-Alternative",
+	"Content-Base",
+	"Content-Class",
+	"Content-Description",
+	"Content-Disposition",
+	"Content-Duration",
+	"Content-Features",
+	"Content-Id",
+	"Content-Identifier",
+	"Content-Language",
+	"Content-Length",
+	"Content-Location",
+	"Content-Md5",
+	"Content-Return",
+	"Content-Transfer-Encoding",
+	"Content-Translation-Type",
+	"Content-Type",
+	"Control",
+	"Conversion",
+	"Conversion-With-Loss",
+	"Date",
+	"Date-Received",
+	"Deferred-Delivery",
+	"Delivery-Date",
+	"Disclose-Recipients",
+	"Disposition-Notification-Options",
+	"Disposition-Notification-To",
+	"Distribution",
+	"DKIM-Signature",
+	"DomainKey-Signature",
+	"Encoding",
+	"Encrypted",
+	"Expires",
+	"Expiry-Date",
+	"Followup-To",
+	"From",
+	"Generate-Delivery-Report",
+	"Importance",
+	"Injection-Date",
+	"Injection-Info",
+	"In-Reply-To",
+	"Keywords",
+	"Language",
+	"Latest-Delivery-Time",
+	"Lines",
+	"List-Archive",
+	"List-Help",
+	"List-Id",
+	"List-Owner",
+	"List-Post",
+	"List-Subscribe",
+	"List-Unsubscribe",
+	"List-Unsubscribe-Post",
+	"Message-Id",
+	"MIME-Version",
+	"Newsgroups",
+	"Nntp-Posting-Host",
+	"Organization",
+	"Original-From",
+	"Original-Message-Id",
+	"Original-Recipient",
+	"Original-Return-Address",
+	"Original-Subject",
+	"Path",
+	"Precedence",
+	"Prevent-NonDelivery-Report",
+	"Priority",
+	"Received",
+	"Received-SPF",
+	"References",
+	"Relay-Version",
+	"Reply-By",
+	"Reply-To",
+	"Require-Recipient-Valid-Since",
+	"Resent-Bcc",
+	"Resent-Cc",
+	"Resent-Date",
+	"Resent-From",
+	"Resent-Message-Id",
+	"Resent-Reply-To",
+	"Resent-Sender",
+	"Resent-To",
+	"Return-Path",
+	"Return-Receipt-To",
+	"See-Also",
+	"Sender",
+	"Sensitivity",
+	"Solicitation",
+	"Status",
+	"Subject",
+	"Summary",
+	"Supersedes",
+	"TLS-Required",
+	"To",
+	"User-Agent",
+	"X400-Content-Identifier",
+	"X400-Content-Return",
+	"X400-Content-Type",
+	"X400-MTS-Identifier",
+	"X400-Originator",
+	"X400-Received",
+	"X400-Recipients",
+	"X400-Trace",
+	"X-Mailer",
+	"X-MSMail-Priority",
+	"X-Priority",
+	"X-Status"
+};
+
+G_STATIC_ASSERT (G_N_ELEMENTS (header_names) == GMIME_HEADER_X_STATUS + 1);
+
+
+/**
+ * g_mime_header_id_to_name:
+ * @id: a #GMimeHeaderId
+ *
+ * Gets the canonical field name for @id. Like MimeKit's ToHeaderName(),
+ * unknown and out-of-range identifiers return "Unknown".
+ *
+ * Returns: (transfer none): the canonical field name.
+ **/
+const char *
+g_mime_header_id_to_name (GMimeHeaderId id)
+{
+	if (id >= 0 && (guint) id < G_N_ELEMENTS (header_names))
+		return header_names[id];
+
+	return "Unknown";
+}
+
+
+/**
+ * g_mime_header_id_from_name:
+ * @name: a header field name
+ *
+ * Looks up a common header field, ignoring ASCII case. The entire name
+ * must match; whitespace and colons are not removed. Unrecognized names,
+ * including extension fields, map to %GMIME_HEADER_UNKNOWN.
+ *
+ * Returns: the header identifier.
+ **/
+GMimeHeaderId
+g_mime_header_id_from_name (const char *name)
+{
+	guint i;
+
+	g_return_val_if_fail (name != NULL, GMIME_HEADER_UNKNOWN);
+
+	for (i = 0; i < G_N_ELEMENTS (header_names); i++) {
+		if (!g_ascii_strcasecmp (name, header_names[i]))
+			return (GMimeHeaderId) i;
+	}
+
+	return GMIME_HEADER_UNKNOWN;
+}
+
+
 static struct {
 	const char *name;
 	GMimeHeaderRawValueFormatter formatter;
@@ -153,6 +335,7 @@ g_mime_header_init (GMimeHeader *header, GMimeHeaderClass *klass)
 	header->value = NULL;
 	header->name = NULL;
 	header->offset = -1;
+	header->id = GMIME_HEADER_UNKNOWN;
 }
 
 static void
@@ -228,6 +411,7 @@ header_new (GMimeParserOptions *options, const char *name, const char *value,
 	header->value = value ? g_strdup (value) : NULL;
 	header->raw_name = g_bytes_new (raw_name, strlen (raw_name));
 	header->name = g_strdup (name);
+	header->id = g_mime_header_id_from_name (name);
 	header->reformat = !raw_value;
 	header->options = options;
 	header->offset = offset;
@@ -548,8 +732,29 @@ g_mime_header_clone (GMimeHeader *header)
 	clone->value = g_strdup (header->value);
 	clone->name = g_strdup (header->name);
 	clone->invalid = header->invalid;
+	clone->id = header->id;
 
 	return clone;
+}
+
+
+/**
+ * g_mime_header_get_id:
+ * @header: a #GMimeHeader
+ *
+ * Gets the header identifier, determined from its field name without
+ * changing the original spelling or raw bytes. Extension and unrecognized
+ * fields return %GMIME_HEADER_UNKNOWN. Changing the value does not change
+ * the identifier.
+ *
+ * Returns: the header identifier.
+ **/
+GMimeHeaderId
+g_mime_header_get_id (GMimeHeader *header)
+{
+	g_return_val_if_fail (GMIME_IS_HEADER (header), GMIME_HEADER_UNKNOWN);
+
+	return header->id;
 }
 
 

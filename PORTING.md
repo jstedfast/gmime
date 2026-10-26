@@ -1812,6 +1812,37 @@ Focused sanitizer checks are leak-clean. The complete core suite passes
 34 of 35 programs; test-core retains only its two existing text-format
 failures. Native Windows execution is unvalidated.
 
+### Common header identifiers
+
+GMimeHeaderId ports all 131 common fields from MimeKit's HeaderId, including
+its numeric values, canonical field-name spelling and UNKNOWN = -1.
+`g_mime_header_id_to_name()` matches ToHeaderName(), returning "Unknown" for
+unknown or out-of-range identifiers. `g_mime_header_id_from_name()` matches
+whole names ignoring ASCII case; it does not strip whitespace or colons.
+Extension and unrecognized fields return UNKNOWN. The source documentation
+warning distinguishing Auto-Submitted from legacy Autosubmitted is retained;
+the source conversion methods contain no inline implementation comments.
+
+`g_mime_header_get_id()` exposes the immutable identifier cached during
+construction or parsing. Cloning preserves it; reading it does not decode
+the value, change the original field spelling or alter raw GBytes. Existing
+field-specific formatting, parser options, serialization and value setters
+remain unchanged. The existing name-based APIs can use canonical names
+from the identifier helper; HeaderId-specific constructor/list overloads
+are not added in this increment.
+
+Persistent regressions cover every common field, case variants, stream
+and standalone parsing, cloning, binary values, raw trailing blanks,
+checked/ordinary construction, value mutation and unknown identifiers.
+Normal and ASan/UBSan/leak runs each compare 42,274 cases against actual
+MimeKit sources with zero differences. The comparison checks that identifier
+access preserves each implementation's existing decoded-value cache rather
+than requiring their stream parsers to populate caches identically.
+GIR, typelib, VAPI, GTK-doc and live GI/Python checks pass for every
+identifier. The complete core suite passes 34 of 35 programs; test-core
+retains only its two existing text-format failures. Focused sanitizer
+checks are leak-clean. Native Windows execution remains unvalidated.
+
 ### Positional header-list operations
 
 `g_mime_header_list_index_of()` and
@@ -3849,6 +3880,10 @@ clean-build, bindings, and cross-platform validation remain pending.
 
 - Continue aligning public APIs with MimeKit while retaining the GPGME
   backend.
+- Audit multipart raw preamble/epilogue storage and access as GBytes.
+  Display conversion to char* must replace embedded NULs with U+FFFD while
+  preserving the original raw bytes. Raw boundary-marker API changes
+  remain an open decision.
 - Build a shared-fixture differential harness against the reference
   MimeKit revision, recording intentional behavioral differences.
 - Port the remaining parser controls and header/address/parameter parsing

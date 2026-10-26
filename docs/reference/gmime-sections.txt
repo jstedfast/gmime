@@ -792,6 +792,9 @@ GMimeParamListClass
 <FILE>gmime-header</FILE>g
 GMimeHeader
 GMimeHeaderList
+GMimeHeaderId
+g_mime_header_id_to_name
+g_mime_header_id_from_name
 GMimeHeaderRawValueFormatter
 g_mime_header_format_addrlist
 g_mime_header_format_content_disposition
@@ -809,6 +812,7 @@ g_mime_header_parse
 g_mime_header_parse_text
 g_mime_header_clone
 g_mime_header_unfold
+g_mime_header_get_id
 g_mime_header_get_name
 g_mime_header_get_raw_name
 g_mime_header_get_offset

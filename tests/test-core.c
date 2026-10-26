@@ -4825,6 +4825,151 @@ test_header_construction (void)
 }
 
 static void
+test_header_identifiers (void)
+{
+	static const struct {
+		GMimeHeaderId id;
+		const char *name;
+	} cases[] = {
+		{ GMIME_HEADER_ACCEPT_LANGUAGE, "Accept-Language" },
+		{ GMIME_HEADER_ARC_AUTHENTICATION_RESULTS, "ARC-Authentication-Results" },
+		{ GMIME_HEADER_AUTO_SUBMITTED, "Auto-Submitted" },
+		{ GMIME_HEADER_AUTOSUBMITTED, "Autosubmitted" },
+		{ GMIME_HEADER_CONTENT_MD5, "Content-Md5" },
+		{ GMIME_HEADER_DKIM_SIGNATURE, "DKIM-Signature" },
+		{ GMIME_HEADER_DOMAIN_KEY_SIGNATURE, "DomainKey-Signature" },
+		{ GMIME_HEADER_MIME_VERSION, "MIME-Version" },
+		{ GMIME_HEADER_PREVENT_NON_DELIVERY_REPORT, "Prevent-NonDelivery-Report" },
+		{ GMIME_HEADER_RECEIVED_SPF, "Received-SPF" },
+		{ GMIME_HEADER_SUBJECT, "Subject" },
+		{ GMIME_HEADER_TLS_REQUIRED, "TLS-Required" },
+		{ GMIME_HEADER_X400_MTS_IDENTIFIER, "X400-MTS-Identifier" },
+		{ GMIME_HEADER_X_MSMAIL_PRIORITY, "X-MSMail-Priority" },
+		{ GMIME_HEADER_X_STATUS, "X-Status" }
+	};
+	static const char *unknown[] = {
+		"", "Unknown", "X-Custom", "Subject ", " Subject", "Subject:", "Subject\t",
+		"ContentType", "MIME_VERSION", "SUBJ\304\260CT", "Subject\377"
+	};
+	static const char binary_header[] = "sUbJeCt \t: before\0after\r\n";
+	GMimeHeaderList *headers = g_mime_header_list_new (NULL), *loaded;
+	GHashTable *names = g_hash_table_new (g_str_hash, g_str_equal);
+	GString *wire = g_string_new (NULL);
+	GMimeHeader *header, *clone;
+	GMimeStream *stream;
+	GByteArray *bytes;
+	GError *error = NULL;
+	const char *name;
+	char *lower, *upper, *text;
+	GBytes *raw;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		check (!strcmp (g_mime_header_id_to_name (cases[i].id), cases[i].name),
+		       "canonical header names retain MimeKit's acronym spelling");
+		check (g_mime_header_id_from_name (cases[i].name) == cases[i].id,
+		       "canonical field names map to the expected enum constants");
+	}
+
+	for (i = 0; i <= GMIME_HEADER_X_STATUS; i++) {
+		name = g_mime_header_id_to_name ((GMimeHeaderId) i);
+		check (strcmp (name, "Unknown") && g_hash_table_add (names, (gpointer) name),
+		       "each common header identifier has a unique canonical name");
+		lower = g_ascii_strdown (name, -1);
+		upper = g_ascii_strup (name, -1);
+		check (g_mime_header_id_from_name (name) == (GMimeHeaderId) i &&
+		       g_mime_header_id_from_name (lower) == (GMimeHeaderId) i &&
+		       g_mime_header_id_from_name (upper) == (GMimeHeaderId) i,
+		       "header name matching ignores ASCII case");
+		text = g_strconcat (lower, " \t: value\r\n", NULL);
+		header = g_mime_header_parse_text (NULL, text, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (header);
+		check (g_mime_header_get_id (header) == (GMimeHeaderId) i && header->value == NULL,
+		       "standalone parsing identifies headers without decoding their values");
+		check (!strcmp (g_mime_header_get_name (header), lower),
+		       "identifier lookup does not canonicalize parsed field spelling");
+		g_mime_header_list_add (headers, header);
+		clone = g_mime_header_clone (header);
+		g_object_unref (header);
+		check (g_mime_header_get_id (clone) == (GMimeHeaderId) i && clone->value == NULL,
+		       "cloning preserves identifier and lazy decoding");
+		raw = g_mime_header_get_raw_name (clone);
+		check (g_bytes_get_size (raw) == strlen (lower) + 2 &&
+		       !memcmp (g_bytes_get_data (raw, NULL), text, strlen (lower) + 2),
+		       "identifying and cloning headers preserves trailing raw field blanks");
+		g_bytes_unref (raw);
+		g_object_unref (clone);
+		g_string_append (wire, text);
+		g_free (text);
+		g_free (lower);
+		g_free (upper);
+	}
+	g_string_append (wire, "\r\n");
+	stream = g_mime_stream_mem_new_with_buffer (wire->str, wire->len);
+	loaded = g_mime_header_list_load (NULL, stream, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (loaded);
+	check (g_mime_header_list_get_count (loaded) == GMIME_HEADER_X_STATUS + 1,
+	       "stream parsing retains every common header");
+	for (i = 0; i <= GMIME_HEADER_X_STATUS; i++) {
+		header = g_mime_header_list_get_header_at (loaded, i);
+		check (g_mime_header_get_id (header) == (GMimeHeaderId) i && header->value == NULL,
+		       "stream parsing uses the same identifiers without forcing value decoding");
+		header = g_mime_header_list_get_header_at (headers, i);
+		check (g_mime_header_get_id (header) == (GMimeHeaderId) i,
+		       "adding an existing header preserves its identifier");
+	}
+	g_object_unref (loaded);
+	g_object_unref (stream);
+	g_string_free (wire, TRUE);
+	g_hash_table_unref (names);
+	g_object_unref (headers);
+
+	for (i = 0; i < G_N_ELEMENTS (unknown); i++)
+		check (g_mime_header_id_from_name (unknown[i]) == GMIME_HEADER_UNKNOWN,
+		       "unrecognized or decorated field names have no common identifier");
+	check (!strcmp (g_mime_header_id_to_name (GMIME_HEADER_UNKNOWN), "Unknown") &&
+	       !strcmp (g_mime_header_id_to_name ((GMimeHeaderId) -2), "Unknown") &&
+	       !strcmp (g_mime_header_id_to_name ((GMimeHeaderId) G_MININT), "Unknown") &&
+	       !strcmp (g_mime_header_id_to_name ((GMimeHeaderId) G_MAXINT), "Unknown") &&
+	       !strcmp (g_mime_header_id_to_name ((GMimeHeaderId) (GMIME_HEADER_X_STATUS + 1)), "Unknown"),
+	       "unknown and out-of-range identifiers have MimeKit's fallback name");
+
+	header = g_mime_header_new_full ("sUbJeCt", "value", NULL, &error);
+	g_assert_no_error (error);
+	check (g_mime_header_get_id (header) == GMIME_HEADER_SUBJECT, "checked construction identifies common headers");
+	g_object_unref (header);
+	header = g_mime_header_new ("X-Custom", "value", NULL);
+	check (g_mime_header_get_id (header) == GMIME_HEADER_UNKNOWN, "extension headers retain an unknown identifier");
+	g_object_unref (header);
+	header = g_mime_header_new ("sUbJeCt", "value", NULL);
+	check (g_mime_header_get_id (header) == GMIME_HEADER_SUBJECT, "standalone construction identifies common headers");
+	g_mime_header_set_value (header, NULL, "changed", NULL);
+	check (g_mime_header_get_id (header) == GMIME_HEADER_SUBJECT, "changing a value preserves the header identifier");
+	g_object_unref (header);
+	header = g_mime_header_parse (NULL, (const guint8 *) binary_header, sizeof (binary_header) - 1, &error);
+	g_assert_no_error (error);
+	clone = g_mime_header_clone (header);
+	g_object_unref (header);
+	check (g_mime_header_get_id (clone) == GMIME_HEADER_SUBJECT, "binary header clones retain their identifier");
+	stream = g_mime_stream_mem_new ();
+	check (g_mime_header_write_to_stream (clone, NULL, stream) >= 0, "serialize a binary header clone");
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+	check (bytes->len == sizeof (binary_header) - 1 &&
+	       !memcmp (bytes->data, binary_header, sizeof (binary_header) - 1),
+	       "header identification preserves binary raw serialization");
+	g_object_unref (stream);
+	g_object_unref (clone);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*name != NULL*");
+	check (g_mime_header_id_from_name (NULL) == GMIME_HEADER_UNKNOWN, "NULL field names are programming errors");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_HEADER*");
+	check (g_mime_header_get_id (NULL) == GMIME_HEADER_UNKNOWN, "NULL headers are programming errors");
+	g_test_assert_expected_messages ();
+}
+
+static void
 test_header_parsing (void)
 {
 	static const struct {
@@ -11792,6 +11937,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("standalone header parsing");
 	test_header_parsing ();
+	testsuite_end ();
+
+	testsuite_start ("header identifiers");
+	test_header_identifiers ();
 	testsuite_end ();
 
 	testsuite_start ("Unicode header unfolding");
