@@ -822,115 +822,91 @@ g_mime_message_load_from_file (GMimeParserOptions *options, const char *filename
 }
 
 
+GPtrArray *
+_g_mime_message_merge_headers (GMimeMessage *message)
+{
+	GMimeEntity *object = (GMimeEntity *) message;
+	GMimeEntity *mime_part = message->mime_part;
+	GPtrArray *headers = g_ptr_array_new_with_free_func (g_object_unref);
+	guint index = 0, body_index = 0;
+	GMimeHeader *header, *body_header;
+
+	if (mime_part != NULL) {
+		/* write all the prepended message headers first */
+		while (index < object->headers->array->len) {
+			header = object->headers->array->pdata[index];
+			if (header->offset >= 0)
+				break;
+			g_ptr_array_add (headers, g_object_ref (header));
+			index++;
+		}
+
+		/* now merge the message and body headers as they appeared in the raw message */
+		while (index < object->headers->array->len && body_index < mime_part->headers->array->len) {
+			body_header = mime_part->headers->array->pdata[body_index];
+			if (body_header->offset < 0)
+				break;
+			header = object->headers->array->pdata[index];
+			if (header->offset >= 0 && header->offset < body_header->offset) {
+				g_ptr_array_add (headers, g_object_ref (header));
+				index++;
+			} else {
+				g_ptr_array_add (headers, g_object_ref (body_header));
+				body_index++;
+			}
+		}
+	}
+	while (index < object->headers->array->len)
+		g_ptr_array_add (headers, g_object_ref (object->headers->array->pdata[index++]));
+	if (mime_part) {
+		while (body_index < mime_part->headers->array->len)
+			g_ptr_array_add (headers, g_object_ref (mime_part->headers->array->pdata[body_index++]));
+	}
+
+	return headers;
+}
+
+
 /* Write the message headers (merged with the headers of the body, if any). */
 ssize_t
 _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
-	GMimeEntity *mime_part = message->mime_part;
-	
-	if (mime_part != NULL) {
-		int body_count = g_mime_header_list_get_count (mime_part->headers);
-		int count = g_mime_header_list_get_count (object->headers);
-		GMimeHeader *header, *body_header;
-		ssize_t total;
-		gint64 body_offset, offset;
-		GMimeStream *filtered;
-		GMimeFilter *filter;
-		int body_index = 0;
-		int index = 0;
-		
-		filtered = g_mime_stream_filter_new (stream);
-		filter = g_mime_format_options_create_newline_filter (options, FALSE);
-		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-		g_object_unref (filter);
-		
-		/* write all the prepended message headers first */
-		while (index < count) {
-			header = g_mime_header_list_get_header_at (object->headers, index);
-			if (g_mime_header_get_offset (header) >= 0)
-				break;
+	GMimeStream *filtered;
+	GMimeFilter *filter;
+	GPtrArray *headers;
+	ssize_t total = -1;
+	int errsv;
+	guint i;
 
-			if (!g_mime_format_options_is_hidden_header (options, header->name) &&
-			    g_mime_header_write_to_stream (header, options, filtered) == -1) {
-				g_object_unref (filtered);
-				return -1;
-			}
+	if (!message->mime_part)
+		return _g_mime_header_list_write_to_stream (object->headers, options, stream);
 
-			index++;
-		}
+	headers = _g_mime_message_merge_headers (message);
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_format_options_create_newline_filter (options, FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
 
-		/* now merge the message and body headers as they appeared in the raw message */
-		while (index < count && body_index < body_count) {
-			body_header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
-			if ((body_offset = g_mime_header_get_offset (body_header)) < 0)
-				break;
-			
-			header = g_mime_header_list_get_header_at (object->headers, index);
-			offset = g_mime_header_get_offset (header);
-			
-			if (offset >= 0 && offset < body_offset) {
-				if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-					if (g_mime_header_write_to_stream (header, options, filtered) == -1) {
-						g_object_unref (filtered);
-						return -1;
-					}
-				}
-				
-				index++;
-			} else {
-				if (!g_mime_format_options_is_hidden_header (options, body_header->name)) {
-					if (g_mime_header_write_to_stream (body_header, options, filtered) == -1) {
-						g_object_unref (filtered);
-						return -1;
-					}
-				}
-				
-				body_index++;
-			}
-		}
-		
-		while (index < count) {
-			header = g_mime_header_list_get_header_at (object->headers, index);
-			
-			if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-				if (g_mime_header_write_to_stream (header, options, filtered) == -1) {
-					g_object_unref (filtered);
-					return -1;
-				}
-			}
-			
-			index++;
-		}
-		
-		while (body_index < body_count) {
-			header = g_mime_header_list_get_header_at (mime_part->headers, body_index);
-			
-			if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-				if (g_mime_header_write_to_stream (header, options, filtered) == -1) {
-					g_object_unref (filtered);
-					return -1;
-				}
-			}
-			
-			body_index++;
-		}
-		
-		if (g_mime_stream_flush (filtered) == -1) {
-			int errsv = errno;
+	for (i = 0; i < headers->len; i++) {
+		GMimeHeader *header = headers->pdata[i];
 
-			g_object_unref (filtered);
-			errno = errsv;
-			return -1;
-		}
-
-		total = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered);
-		g_object_unref (filtered);
-		
-		return total;
+		if (!g_mime_format_options_is_hidden_header (options, header->name) &&
+		    g_mime_header_write_to_stream (header, options, filtered) == -1)
+			goto done;
 	}
-	
-	return _g_mime_header_list_write_to_stream (object->headers, options, stream);
+
+	if (g_mime_stream_flush (filtered) != -1)
+		total = _g_mime_stream_filter_get_written ((GMimeStreamFilter *) filtered);
+
+done:
+
+	errsv = errno;
+	g_object_unref (filtered);
+	g_ptr_array_unref (headers);
+	errno = errsv;
+
+	return total;
 }
 
 
@@ -997,6 +973,7 @@ message_get_headers (GMimeEntity *object, GMimeFormatOptions *options)
 	ba = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array ((GMimeStreamMem *) stream, ba);
+
 	if (_g_mime_message_write_headers (object, options, stream) == -1) {
 		int errsv = errno;
 
@@ -1005,6 +982,7 @@ message_get_headers (GMimeEntity *object, GMimeFormatOptions *options)
 		errno = errsv;
 		return NULL;
 	}
+
 	g_object_unref (stream);
 	g_byte_array_append (ba, (unsigned char *) "", 1);
 	str = (char *) ba->data;
@@ -1047,21 +1025,28 @@ message_has_mime_version (GMimeMessage *message)
 	/* MimeKit parses the first raw header as two to four Int32 components,
 	 * allowing comments and whitespace without normalizing a valid value. */
 	inptr = raw = _g_mime_header_dup_raw_value (header);
+
 	if (!raw)
 		return FALSE;
+
 	do {
 		if (!skip_cfws (&inptr) || !_g_mime_parse_int32 (&inptr, &value) || ++count > 4)
 			goto done;
+
 		if (!skip_cfws (&inptr))
 			goto done;
+
 		if (!*inptr)
 			break;
+
 		if (*inptr++ != '.')
 			goto done;
 	} while (*inptr);
 
 	valid = count >= 2;
+
 done:
+
 	g_free (raw);
 	return valid;
 }
@@ -1109,8 +1094,10 @@ g_mime_message_new (gboolean pretty_headers)
 		headers = ((GMimeEntity *) message)->headers;
 		
 		_g_mime_entity_block_header_list_changed ((GMimeEntity *) message);
+
 		for (i = 0; i < G_N_ELEMENTS (rfc822_headers); i++) 
 			g_mime_header_list_set (headers, rfc822_headers[i], NULL, NULL);
+
 		_g_mime_entity_unblock_header_list_changed ((GMimeEntity *) message);
 	}
 	
@@ -1352,11 +1339,14 @@ references_changed (GMimeMessageIdList *list, gpointer args, GMimeMessage *messa
 	guint i;
 
 	_g_mime_entity_block_header_list_changed (object);
+
 	if (list->array->len) {
 		str = g_string_new (NULL);
+
 		for (i = 0; i < list->array->len; i++) {
 			id = list->array->pdata[i];
 			length = _g_mime_count_utf16_units (id, id + strlen (id));
+
 			if (i > 0 && line + length + 2 >= maxline) {
 				g_string_append (str, newline);
 				g_string_append_c (str, '\t');
@@ -1365,18 +1355,21 @@ references_changed (GMimeMessageIdList *list, gpointer args, GMimeMessage *messa
 				g_string_append_c (str, ' ');
 				line++;
 			}
+
 			/* Match MimeKit's running column count, excluding the brackets. */
 			line += length;
 			g_string_append_c (str, '<');
 			g_string_append (str, id);
 			g_string_append_c (str, '>');
 		}
+
 		g_string_append (str, newline);
 		_g_mime_header_list_set (object->headers, "References", str->str);
 		g_string_free (str, TRUE);
 	} else {
 		g_mime_header_list_remove_all (object->headers, "References");
 	}
+
 	_g_mime_entity_unblock_header_list_changed (object);
 }
 

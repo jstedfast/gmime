@@ -1280,39 +1280,14 @@ g_mime_header_to_string (GMimeHeader *header)
 }
 
 
-/**
- * g_mime_header_write_to_stream:
- * @header: a #GMimeHeader
- * @options: (nullable): a #GMimeFormatOptions or %NULL
- * @stream: a #GMimeStream
- *
- * Writes the header to the specified stream. International formatting
- * reformats parsed text, address, and content headers as UTF-8 without
- * changing their stored raw values. Explicit raw assignments and parsed
- * trace, identifier, authentication, and signature fields are preserved.
- *
- * Returns: the number of bytes written, or %-1 on fail.
- **/
-ssize_t
-g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options, GMimeStream *stream)
+GBytes *
+_g_mime_header_get_formatted_value (GMimeHeader *header, GMimeFormatOptions *options)
 {
 	GMimeHeaderRawValueFormatter formatter;
-	ssize_t nwritten, total;
 	gboolean reformat;
 	char *raw_value = NULL;
-	const char *bytes, *field;
-	gsize length, field_length;
-	
-	g_return_val_if_fail (GMIME_IS_HEADER (header), -1);
-	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
-
-	if (header->invalid) {
-		bytes = g_bytes_get_data (header->raw_name, &length);
-		return _g_mime_stream_write_all (stream, bytes, length);
-	}
-	
-	if (!header->raw_value)
-		return 0;
+	const char *bytes;
+	gsize length;
 
 	reformat = header->reformat || (!header->explicit_raw_value &&
 				       g_mime_format_options_get_allow_international (options));
@@ -1334,21 +1309,66 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options,
 
 		if (!raw_value) {
 			errno = EINVAL;
-			return -1;
+			return NULL;
 		}
-		bytes = raw_value;
-		length = strlen (raw_value);
+
+		return header_bytes_take_string (raw_value);
 	}
 
+	return g_bytes_ref (header->raw_value);
+}
+
+
+/**
+ * g_mime_header_write_to_stream:
+ * @header: a #GMimeHeader
+ * @options: (nullable): a #GMimeFormatOptions or %NULL
+ * @stream: a #GMimeStream
+ *
+ * Writes the header to the specified stream. International formatting
+ * reformats parsed text, address, and content headers as UTF-8 without
+ * changing their stored raw values. Explicit raw assignments and parsed
+ * trace, identifier, authentication, and signature fields are preserved.
+ *
+ * Returns: the number of bytes written, or %-1 on fail.
+ **/
+ssize_t
+g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options, GMimeStream *stream)
+{
+	ssize_t nwritten, total;
+	const char *bytes, *field;
+	gsize length, field_length;
+	GBytes *value;
+	int errsv;
+
+	g_return_val_if_fail (GMIME_IS_HEADER (header), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
+
+	if (header->invalid) {
+		bytes = g_bytes_get_data (header->raw_name, &length);
+		return _g_mime_stream_write_all (stream, bytes, length);
+	}
+
+	if (!header->raw_value)
+		return 0;
+
+	if (!(value = _g_mime_header_get_formatted_value (header, options)))
+		return -1;
+
+	bytes = g_bytes_get_data (value, &length);
 	field = g_bytes_get_data (header->raw_name, &field_length);
+
 	if ((total = _g_mime_stream_write_all (stream, field, field_length)) < 0 ||
 	    _g_mime_stream_write_all (stream, ":", 1) < 0 ||
 	    (nwritten = _g_mime_stream_write_all (stream, bytes, length)) < 0) {
-		g_free (raw_value);
+		errsv = errno;
+		g_bytes_unref (value);
+		errno = errsv;
 		return -1;
 	}
+
 	total += 1 + nwritten;
-	g_free (raw_value);
+	g_bytes_unref (value);
 
 	return total;
 }

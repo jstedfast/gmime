@@ -1897,6 +1897,32 @@ GMimeDomainListClass
 </SECTION>
 
 <SECTION>
+<FILE>gmime-anonymizer</FILE>
+GMimeAnonymizer
+g_mime_anonymizer_new
+g_mime_anonymizer_add_preserved_header
+g_mime_anonymizer_remove_preserved_header
+g_mime_anonymizer_contains_preserved_header
+g_mime_anonymizer_clear_preserved_headers
+g_mime_anonymizer_get_preserved_headers
+g_mime_anonymizer_write_headers
+g_mime_anonymizer_write_message
+g_mime_anonymizer_write_entity
+
+<SUBSECTION Private>
+g_mime_anonymizer_get_type
+
+<SUBSECTION Standard>
+GMimeAnonymizerClass
+GMIME_TYPE_ANONYMIZER
+GMIME_ANONYMIZER
+GMIME_ANONYMIZER_CLASS
+GMIME_ANONYMIZER_GET_CLASS
+GMIME_IS_ANONYMIZER
+GMIME_IS_ANONYMIZER_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-received-clause</FILE>
 GMimeReceivedClauseId
 GMimeReceivedClause

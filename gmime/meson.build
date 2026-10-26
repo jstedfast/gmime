@@ -2,6 +2,7 @@ gmime_sources = files(
   'gmime.c',
   'gmime-application-pkcs7-mime.c',
   'gmime-address-validator.c',
+  'gmime-anonymizer.c',
   'gmime-attachment-collection.c',
   'gmime-body-builder.c',
   'gmime-autocrypt.c',
@@ -114,6 +115,7 @@ gmime_sources = files(
 
 gmime_headers = files(
   'gmime.h',
+  'gmime-anonymizer.h',
   'gmime-application-pkcs7-mime.h',
   'gmime-attachment-collection.h',
   'gmime-body-builder.h',

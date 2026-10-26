@@ -61,6 +61,8 @@ G_GNUC_INTERNAL ssize_t _g_mime_part_write_content (GMimePart *part, GMimeFormat
 						  GMimeStream *stream, gboolean ensure_newline);
 G_GNUC_INTERNAL ssize_t _g_mime_message_write_headers (GMimeEntity *message, GMimeFormatOptions *options,
 						    GMimeStream *stream);
+G_GNUC_INTERNAL GPtrArray *_g_mime_message_merge_headers (GMimeMessage *message);
+G_GNUC_INTERNAL gboolean _g_mime_entity_ends_with_delimiter_newline (GMimeEntity *entity, gboolean anonymize);
 
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
@@ -77,6 +79,7 @@ G_GNUC_INTERNAL GMimeEntity *_g_mime_parser_load_from_file (GMimeParserOptions *
 
 /* GMimeHeader */
 G_GNUC_INTERNAL char *_g_mime_header_dup_raw_value (GMimeHeader *header);
+G_GNUC_INTERNAL GBytes *_g_mime_header_get_formatted_value (GMimeHeader *header, GMimeFormatOptions *options);
 G_GNUC_INTERNAL GMimeContentEncoding _g_mime_header_get_content_encoding (GMimeHeader *header);
 G_GNUC_INTERNAL GMimeHeader *_g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffer,
 							  gsize length, gsize name_length, gsize field_length,

@@ -433,8 +433,8 @@ This is an incremental migration, not yet a declaration of feature parity.
   for all-whitespace or empty input, leaving caller input/prespace intact.
   All output is immediate; completion adds no bytes, reset has no conversion
   state to discard and native copy creates independent output storage.
-  This does not port the higher-level MimeAnonymizer or automatically
-  rewrite headers/MIME structure. Byte counts and whitespace remain visible.
+  Higher-level header, message and entity APIs are provided by GMimeAnonymizer.
+  Byte counts and whitespace remain visible.
 
 - `GMimeFilterCharset` now follows MimeKit CharsetFilter's incremental
   conversion loop for valid, representable input while retaining iconv.
@@ -2129,6 +2129,130 @@ parser and mutation binding checks also pass. GTK-doc retains the environment's
 missing external GLib/GIO cross-reference warnings. The complete core suite
 passes 36 of 37 programs, with only test-core's two existing text-format
 failures. Native Windows execution remains unvalidated.
+
+### Header anonymization
+
+`GMimeAnonymizer` ports MimeKit's header masking and configurable preserved
+field set, retaining applicable inline state-machine comments and the source
+MIT attribution. Received fields retain keywords, comment structure and valid
+dates; addresses and identifiers retain delimiters and escapes; potential
+RFC 2047 words retain charset/encoding labels while masking payload bytes.
+Content-Type and Content-Disposition retain their initial token and the
+boundary, charset, delsp and format parameters. Malformed encoded-word and
+parameter transitions follow MimeKit, including its incomplete-name behavior.
+Date, MIME-Version and Content-Transfer-Encoding pass through by default;
+Resent-Date and authentication/signature fields do not.
+
+Preservation names are copied and matched without ASCII case sensitivity.
+Duplicate additions retain the first spelling; the getter returns an owned,
+independent, NULL-terminated snapshot in unspecified order. Native UTF-8
+string arguments replace MimeKit's managed strings.
+
+`g_mime_anonymizer_write_headers()` writes all fields in order, retaining
+duplicates and ignoring ordinary hidden-header suppression. It preserves
+binary raw values and field spelling, masks invalid fields with the existing
+GMimeFilterAnonymize, skips unset native placeholders and adds no body separator
+or missing final newline. Formatting uses the same private helper as ordinary
+header serialization, including International handling and binary-NUL
+protection. Configured newline conversion still applies to preserved fields.
+The source headers are not mutated. Short writes are drained; zero writes,
+formatting failures and destination write/flush errors propagate through
+GError without closing the destination or flushing after a failed write.
+Native filter completion additionally flushes the underlying destination to
+match MimeKit's FilteredStream behavior.
+
+This is a structure-preserving diagnostic transformation, not a guarantee
+that sensitive information is removed. Preserved fields, dates, syntax,
+escapes, whitespace and byte counts remain visible. Message/entity traversal
+and body anonymization are described below. Async and cancellation remain
+unported.
+
+Normal and ASan/UBSan/leak comparisons each cover 58,153 cases against actual
+MimeKit sources, including all 48 header NUnit fixtures, prefixes, every byte,
+malformed transitions, binary values, loaded headers, incomplete EOF states,
+preservation, International formatting and randomized input. There are no new
+masking differences. Forty malformed EOF cases fail in the existing native
+header loader before anonymization; an isolated committed-HEAD build reproduces
+all forty. Ten International cases inherit ordinary native address formatting's
+acceptance of malformed address text that MimeKit leaves unformatted. Masking
+those exact native-formatted bytes matches actual MimeKit. The standalone
+reference parser explicitly uses LF to match the established native default
+rather than MimeKit's default CRLF. MimeKit sources remain unchanged.
+
+Focused native tests and ASan/UBSan/leak checks for the anonymizer and parser
+model pass, including short/zero writes, partial failure, valid/invalid-field
+flush failures and source/destination ownership. GIR, typelib, VAPI, GTK-doc
+and live GI/Python checks pass. Existing external documentation-link warnings
+remain. The complete core suite passes 37 of 38 programs, with only test-core's
+two established text-format failures. The existing test-headers program passes
+with leak detection disabled; its 648-byte leak in 25 allocations from
+test_address_sync is reproduced at committed HEAD. Native Windows execution
+remains unvalidated.
+
+### Message and MIME-body anonymization
+
+`g_mime_anonymizer_write_message()` and
+`g_mime_anonymizer_write_entity()` port MimeKit's message and entity overloads,
+including applicable inline comments. An explicit stack retains multipart
+boundaries and epilogues while embedded messages and message bodies are visited
+as tails, avoiding recursive anonymization. Native GMimeMessage instances passed
+to the entity API use full message serialization.
+
+Message/body headers share ordinary serialization's offset-based merge, without
+header-list insertion or notification side effects. Parsed missing separators
+are preserved. As in MimeKit, constructed messages with body headers acquire a
+missing MIME-Version; native constructed/parsed newline state supplies the
+strict/loose distinction. Nested message newline options are scoped to their
+multipart frame and restored for siblings.
+
+Raw multipart delimiters, including trailing whitespace and original newlines,
+remain untouched. Preambles and epilogues are masked and newline-normalized.
+Truncated trees retain trailing delimiters without inventing closing markers.
+Missing boundaries are read without the native getter's boundary-generation
+side effects. Legacy constructed multipart text is adapted locally without
+changing its storage/setters; legacy closing-boundary suppression is treated
+as truncation for anonymization only. Ordinary writer behavior is unchanged.
+The pending raw-preamble/epilogue migration remains separate.
+
+Delivery-status groups and disposition-notification fields use header masking
+and the same preservation set. Malformed status fields fall back to raw body
+masking; native content I/O errors still propagate. Other leaf bodies,
+including attachments, use normal transfer serialization before byte masking,
+including base64 and quoted-printable transcoding. Destination
+short writes are drained, write/read/format/flush failures propagate through
+GError, and the destination remains open. Content is rewound by its ordinary
+writer; stored bytes are not rewritten. MIME-Version insertion and lazy status
+caches are the deliberate source-compatible mutations.
+
+Normal and ASan/UBSan/leak comparisons each cover 12,464 additional cases
+against actual MimeKit, including source fixtures, every prefix of truncated
+messages, all byte values, both newline modes, preservation, generated messages,
+constructed multipart text and transfer transcoding. Deep comparisons cover
+1,000 multipart layers and 2,000 embedded-message or mixed layers. Larger
+parser-driven stress runs were stopped after minutes without completing; those
+depths remain unvalidated.
+
+There are no new masking differences. Sixty-two malformed EOF inputs are
+rejected before anonymization; an isolated committed-HEAD build reproduces
+all sixty-two. Forty constructed-epilogue cases inherit the legacy native
+setter's lack of final-newline folding, unlike MimeKit's setter. Masking
+identical raw epilogue bytes matches actual MimeKit in all forty cases.
+MimeKit sources remain unchanged.
+
+Persistent native regressions cover a 2,000-layer mixed tree, raw/truncated and
+missing delimiters, binary content, constructed MIME-Version insertion, legacy
+multipart text, stream positioning, every destination failure offset through a
+multipart body, content read errors and body-phase flush errors. Anonymizer and
+parser-model tests pass with ASan/UBSan/leak detection. GIR, typelib, VAPI,
+GTK-doc and live GI/Python checks pass for both new methods, including borrowed
+inputs, nullable options and checked errors. Existing documentation-link
+warnings remain.
+
+The core suite remains at 37 of 38 programs passing, with only test-core's two
+existing text-format assertions failing. The unchanged test-partial program
+passes with leak detection disabled; its 357,418-byte leak in 2,643 allocations
+is reproduced at committed HEAD with the same fixtures. Native Windows
+execution remains unvalidated.
 
 ### Positional header-list operations
 

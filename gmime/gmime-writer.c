@@ -153,8 +153,8 @@ multipart_is_truncated (GMimeMultipart *multipart)
 /* RFC 2046 assigns the newline before a delimiter to the delimiter, not
  * the preceding content. Write it unless that child's serialized form
  * already ends with it. Follow tail containers without recursion. */
-static gboolean
-entity_ends_with_delimiter_newline (GMimeEntity *entity)
+gboolean
+_g_mime_entity_ends_with_delimiter_newline (GMimeEntity *entity, gboolean anonymize)
 {
 	while (entity) {
 		if (GMIME_IS_MULTIPART (entity)) {
@@ -162,7 +162,8 @@ entity_ends_with_delimiter_newline (GMimeEntity *entity)
 			gsize length;
 			const guint8 *data;
 
-			if (!multipart_is_truncated (multipart))
+			if (!multipart_is_truncated (multipart) &&
+			    !(anonymize && !multipart->reader_model && !multipart->write_end_boundary))
 				return FALSE;
 
 			if (multipart->raw_trailing_boundary) {
@@ -229,7 +230,7 @@ writer_boundary (GMimeWriter *writer, MultipartFrame *frame, guint index)
 	GBytes *raw;
 
 	if (multipart->reader_model && index &&
-	    !entity_ends_with_delimiter_newline (multipart->children->pdata[index - 1]) &&
+	    !_g_mime_entity_ends_with_delimiter_newline (multipart->children->pdata[index - 1], FALSE) &&
 	    !writer_string (writer, g_mime_format_options_get_newline (frame->options)))
 		return FALSE;
 
@@ -263,8 +264,8 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 		return !multipart->epilogue || writer_string (writer, multipart->epilogue);
 	}
 
-	if (multipart->children->len && !entity_ends_with_delimiter_newline (
-	    multipart->children->pdata[multipart->children->len - 1]) &&
+	if (multipart->children->len && !_g_mime_entity_ends_with_delimiter_newline (
+	    multipart->children->pdata[multipart->children->len - 1], FALSE) &&
 	    (!multipart_is_truncated (multipart) || multipart->raw_trailing_boundary) &&
 	    !writer_string (writer, newline))
 		return FALSE;
