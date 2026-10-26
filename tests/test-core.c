@@ -4984,6 +4984,130 @@ fail_checked_header_format (GMimeHeader *header, GMimeFormatOptions *options,
 }
 
 static void
+test_header_unfolding (void)
+{
+	static const struct {
+		const char *input, *expected;
+	} cases[] = {
+		{ NULL, "" }, { "", "" }, { "\r\n \t\v\f", "" },
+		{ " \t\r\none\r\n\ttwo\nthree\rfour \t", "one\ttwothreefour" },
+		{ "\302\240one\302\205two\342\200\203", "one\302\205two" },
+		{ "\357\273\277value\357\273\277", "\357\273\277value\357\273\277" },
+		{ "\342\200\213value\342\200\213", "\342\200\213value\342\200\213" },
+		{ "\034value\034", "\034value\034" },
+		{ "\vone\vtwo\v", "one\vtwo" },
+		{ " \360\237\230\200\r\nx ", "\360\237\230\200x" },
+		{ " =?utf-8?Q?caf=C3=A9?= ", "=?utf-8?Q?caf=C3=A9?=" }
+	};
+	static const gunichar whitespace[] = {
+		0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x20, 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f,
+		0x205f, 0x3000
+	};
+	static const char body[] = "one\302\240two\r\nthree";
+	static const char expected[] = "one\302\240twothree";
+	static const char binary[] = "Subject:\302\240before\0after\302\240\n";
+	GMimeHeader *header, *clone;
+	GError *error = NULL;
+	GBytes *raw;
+	GString *text;
+	char *unfolded, *decoded, *wire;
+	const char *cached;
+	guint i, j, changes;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		unfolded = g_mime_header_unfold (cases[i].input);
+		check (!strcmp (unfolded, cases[i].expected),
+		       "Unicode header unfolding trims edges, removes only CR/LF internally and does not decode words");
+		g_free (unfolded);
+	}
+
+	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		for (j = 0; j < G_N_ELEMENTS (whitespace); j++) {
+			text = g_string_new (NULL);
+			g_string_append_unichar (text, whitespace[i]);
+			g_string_append (text, body);
+			g_string_append_unichar (text, whitespace[j]);
+			unfolded = g_mime_header_unfold (text->str);
+			check (!strcmp (unfolded, expected), "all Unicode whitespace pairs trim without collapsing interior text");
+			g_free (unfolded);
+			wire = g_strconcat ("Subject:", text->str, NULL);
+			header = g_mime_header_parse_text (NULL, wire, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (header);
+			g_free (wire);
+			raw = g_mime_header_get_raw_value (header);
+			changes = 0;
+			g_mime_event_add (header->changed, count_checked_header_changes, &changes);
+			decoded = g_mime_header_get_value_with_charset (header, "utf-8", &error);
+			g_assert_no_error (error);
+			check (!strcmp (decoded, expected) && header->value == NULL,
+			       "explicit decoded getters unfold Unicode whitespace without populating the cache");
+			g_free (decoded);
+			cached = g_mime_header_get_value (header);
+			check (!strcmp (cached, expected) && cached == g_mime_header_get_value (header),
+			       "ordinary decoded getters cache the same Unicode unfolding result");
+			check (!changes && g_bytes_equal (header->raw_value, raw),
+			       "Unicode unfolding preserves original raw bytes and sends no change events");
+			clone = g_mime_header_clone (header);
+			g_object_unref (header);
+			check (!strcmp (g_mime_header_get_value (clone), expected),
+			       "cloning preserves unfolded Unicode values after the source is released");
+			g_object_unref (clone);
+			g_bytes_unref (raw);
+			header = g_mime_header_new_full ("Subject", text->str, "utf-8", &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (header);
+			check (!strcmp (g_mime_header_get_value (header), expected),
+			       "checked construction reuses Unicode header unfolding");
+			g_assert_true (g_mime_header_set_value_full (header, NULL, text->str, "utf-8", &error));
+			g_assert_no_error (error);
+			check (!strcmp (g_mime_header_get_value (header), expected),
+			       "checked assignment reuses Unicode header unfolding");
+			g_object_unref (header);
+			g_string_free (text, TRUE);
+		}
+	}
+
+	header = g_mime_header_parse_text (NULL, "Subject: =?utf-8?Q?=C2=A0one=C2=A0?=\r\n", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (header);
+	check (!strcmp (g_mime_header_get_value (header), "one"),
+	       "Unicode whitespace is trimmed after RFC 2047 transfer and charset decoding");
+	g_object_unref (header);
+	header = g_mime_header_parse_text (NULL, "Subject: =?utf-8?Q?=C2=A0=E2=80=83?=\n", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (header);
+	check (!strcmp (g_mime_header_get_value (header), ""), "decoded Unicode whitespace-only values become empty");
+	g_object_unref (header);
+	header = g_mime_header_parse (NULL, (const guint8 *) binary, sizeof (binary) - 1, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (header);
+	raw = g_mime_header_get_raw_value (header);
+	check (!strcmp (g_mime_header_get_value (header), "before\357\277\275after") &&
+	       g_bytes_equal (header->raw_value, raw),
+	       "Unicode unfolding follows NUL replacement without truncating or altering binary raw values");
+	g_bytes_unref (raw);
+	g_object_unref (header);
+
+	wire = g_strdup (" \302\240mutable\r\nvalue\342\200\203");
+	unfolded = g_mime_header_unfold (wire);
+	memset (wire, 'x', strlen (wire));
+	g_free (wire);
+	check (!strcmp (unfolded, "mutablevalue"), "public unfolding returns independently owned UTF-8 text");
+	g_free (unfolded);
+
+	unfolded = g_mime_utils_header_unfold ("\302\240legacy\302\240");
+	check (!strcmp (unfolded, "\302\240legacy\302\240"),
+	       "the legacy raw-byte unfolding utility retains its existing ASCII whitespace policy");
+	g_free (unfolded);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+	check (g_mime_header_unfold ("\377") == NULL, "decoded header unfolding requires valid UTF-8");
+	g_test_assert_expected_messages ();
+}
+
+static void
 test_checked_header_assignment (void)
 {
 	static const struct {
@@ -11668,6 +11792,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("standalone header parsing");
 	test_header_parsing ();
+	testsuite_end ();
+
+	testsuite_start ("Unicode header unfolding");
+	test_header_unfolding ();
 	testsuite_end ();
 
 	testsuite_start ("checked header assignment");

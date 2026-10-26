@@ -1776,6 +1776,42 @@ and parser-model tests pass; test-core retains only its two established
 text-format failures. Focused parsing sanitizer checks are leak-clean.
 Native Windows execution remains unvalidated.
 
+### Unicode header unfolding
+
+`g_mime_header_unfold()` ports MimeKit's public `Header.Unfold()` for
+NUL-terminated UTF-8 text. NULL and whitespace-only inputs return an owned
+empty string. Leading and trailing Unicode whitespace is removed, internal
+whitespace is retained, and CR/LF characters are removed everywhere.
+Encoded words are not decoded by this standalone display helper.
+Invalid UTF-8 is a GLib programming error.
+
+Standalone construction, checked assignment and explicit charset decoding
+reuse this implementation instead of their private normalization helper.
+The ordinary decoded-value getter now uses the same Unicode unfolding:
+unlike its previous ASCII-only edge trimming, NBSP, NEL and other Unicode
+whitespace are removed at decoded boundaries, including whitespace from
+encoded words. Interior Unicode whitespace and non-whitespace characters
+such as BOM and zero-width space remain intact. The existing shared
+whitespace classifier and its .NET/GLib rationale comment are retained.
+
+Raw GBytes, parser options and notification behavior are unchanged, and
+decoded NULs still become U+FFFD before unfolding. The legacy
+`g_mime_utils_header_unfold()` remains a raw-byte utility with its existing
+ASCII whitespace policy; it is not redirected through UTF-8 validation.
+
+Persistent regressions cover all 625 pairs of Unicode whitespace
+boundaries, getter caches, raw preservation, source/clone lifetimes,
+checked construction and assignment, encoded-word whitespace, binary
+values, NULL inputs and non-whitespace controls.
+Normal and ASan/UBSan/leak runs each compare 15,764 cases against actual
+MimeKit unfolding, ordinary/explicit getters, constructor values and raw
+storage with zero differences. Differential newline defaults are aligned
+with the Windows reference; normal LF behavior remains covered by native
+regressions. GIR, typelib, VAPI, GTK-doc and live GI/Python checks pass.
+Focused sanitizer checks are leak-clean. The complete core suite passes
+34 of 35 programs; test-core retains only its two existing text-format
+failures. Native Windows execution is unvalidated.
+
 ### Positional header-list operations
 
 `g_mime_header_list_index_of()` and

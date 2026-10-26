@@ -378,27 +378,50 @@ g_mime_header_parse_text (GMimeParserOptions *options, const char *text, GError 
 }
 
 
-static char *
-header_normalize_value (const char *value)
+/**
+ * g_mime_header_unfold:
+ * @text: (nullable): a NUL-terminated UTF-8 header value
+ *
+ * Unfolds decoded header text for display, following MimeKit's
+ * Header.Unfold(). Leading and trailing Unicode whitespace is removed;
+ * internal whitespace is preserved except that all CR and LF characters
+ * are removed. A %NULL input produces an empty string.
+ *
+ * This does not decode RFC 2047 encoded words. Use the header value getters
+ * to decode raw header bytes before unfolding.
+ *
+ * Returns: (transfer full): newly allocated unfolded UTF-8 text.
+ **/
+char *
+g_mime_header_unfold (const char *text)
 {
 	const char *inptr, *start, *end;
-	char *text, *unfolded;
+	char *outptr, *unfolded;
 
-	start = value;
-	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
-		start = g_utf8_next_char (start);
+	if (!text)
+		return g_strdup ("");
 
-	end = start + strlen (start);
-	while (end > start) {
-		inptr = g_utf8_find_prev_char (start, end);
-		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (inptr)))
-			break;
-		end = inptr;
+	g_return_val_if_fail (g_utf8_validate (text, -1, NULL), NULL);
+
+	inptr = text;
+	while (*inptr && _g_mime_is_unicode_whitespace (g_utf8_get_char (inptr)))
+		inptr = g_utf8_next_char (inptr);
+
+	start = end = inptr;
+	while (*inptr) {
+		gunichar c = g_utf8_get_char (inptr);
+
+		inptr = g_utf8_next_char (inptr);
+		if (!_g_mime_is_unicode_whitespace (c))
+			end = inptr;
 	}
 
-	text = g_strndup (start, end - start);
-	unfolded = g_mime_utils_header_unfold (text);
-	g_free (text);
+	outptr = unfolded = g_malloc (end - start + 1);
+	for (inptr = start; inptr < end; inptr++) {
+		if (*inptr != '\r' && *inptr != '\n')
+			*outptr++ = *inptr;
+	}
+	*outptr = '\0';
 
 	return unfolded;
 }
@@ -435,7 +458,7 @@ g_mime_header_new (const char *name, const char *value, const char *charset)
 	for (inptr = name; *inptr; inptr++)
 		g_return_val_if_fail (*inptr >= 33 && *inptr <= 126 && *inptr != ':', NULL);
 
-	unfolded = header_normalize_value (value);
+	unfolded = g_mime_header_unfold (value);
 	header = header_new (g_mime_parser_options_clone (NULL), name, unfolded,
 			     name, NULL, charset ? charset : "utf-8", -1);
 	header->owns_options = TRUE;
@@ -553,8 +576,9 @@ g_mime_header_get_name (GMimeHeader *header)
  * g_mime_header_get_value:
  * @header: a #GMimeHeader
  *
- * Gets the header's unfolded value. Literal and decoded NUL characters are
- * replaced with the Unicode replacement character U+FFFD.
+ * Gets the header's unfolded value, trimming leading and trailing Unicode
+ * whitespace as in g_mime_header_unfold(). Literal and decoded NUL characters
+ * are replaced with the Unicode replacement character U+FFFD.
  *
  * Returns: the header's decoded value or %NULL if invalid.
  **/
@@ -570,7 +594,7 @@ g_mime_header_get_value (GMimeHeader *header)
 	if (!header->value && header->raw_value) {
 		raw = g_bytes_get_data (header->raw_value, &length);
 		buf = _g_mime_utils_header_decode_text (header->options, raw, length, NULL, header->offset);
-		header->value = g_mime_utils_header_unfold (buf);
+		header->value = g_mime_header_unfold (buf);
 		g_free (buf);
 	}
 	
@@ -635,7 +659,7 @@ g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, 
 	if (!decoded)
 		return NULL;
 
-	value = header_normalize_value (decoded);
+	value = g_mime_header_unfold (decoded);
 	g_free (decoded);
 
 	return value;
@@ -813,7 +837,7 @@ g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, 
 		return FALSE;
 	g_free (probe);
 
-	text = header_normalize_value (value);
+	text = g_mime_header_unfold (value);
 	raw_value = header_format_value_full (header, options, text, encoding, error);
 	if (!raw_value) {
 		g_free (encoding);

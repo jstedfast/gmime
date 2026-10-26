@@ -118,6 +118,8 @@ GMimeHeader *g_mime_header_parse (GMimeParserOptions *options, const guint8 *buf
 GMimeHeader *g_mime_header_parse_text (GMimeParserOptions *options, const char *text, GError **error);
 GMimeHeader *g_mime_header_clone (GMimeHeader *header);
 
+char *g_mime_header_unfold (const char *text);
+
 const char *g_mime_header_get_name (GMimeHeader *header);
 GBytes *g_mime_header_get_raw_name (GMimeHeader *header);
 

@@ -808,6 +808,7 @@ g_mime_header_new_full
 g_mime_header_parse
 g_mime_header_parse_text
 g_mime_header_clone
+g_mime_header_unfold
 g_mime_header_get_name
 g_mime_header_get_raw_name
 g_mime_header_get_offset
