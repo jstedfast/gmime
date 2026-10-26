@@ -90,7 +90,7 @@ test_indexing (void)
 			    strcmp (initial[index].value, value) != 0)
 				throw (exception_new ("resulted in unexpected value"));
 			
-			if (!(raw_value = g_mime_header_get_raw_value (header)))
+			if (!(raw_value = testsuite_header_raw_text (header)))
 				throw (exception_new ("null raw value"));
 			
 			len = strlen (raw_value);
@@ -259,7 +259,7 @@ test_content_type_sync (void)
 		if (strcmp ("text/octet-stream", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after changing type"));
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-type raw_value was unexpectedly null after changing type"));
 		if (strcmp (" text/octet-stream\n", raw_value) != 0)
 			throw (exception_new ("content-type raw_value had unexpected value after changing type"));
@@ -271,7 +271,7 @@ test_content_type_sync (void)
 		if (strcmp ("text/plain", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after changing subtype"));
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-type raw_value was unexpectedly null after changing subtype"));
 		if (strcmp (" text/plain\n", raw_value) != 0)
 			throw (exception_new ("content-type raw_value had unexpected value after changing subtype"));
@@ -283,7 +283,7 @@ test_content_type_sync (void)
 		if (strcmp ("text/plain; format=flowed", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after setting a param"));
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-type raw_value was unexpectedly null after setting a param"));
 		if (strcmp (" text/plain; format=flowed\n", raw_value) != 0)
 			throw (exception_new ("content-type raw_value had unexpected value after setting a param"));
@@ -296,7 +296,7 @@ test_content_type_sync (void)
 		if (strcmp ("text/plain", value) != 0)
 			throw (exception_new ("content-type header had unexpected value after clearing params"));
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-type raw_value was unexpectedly null after clearing params"));
 		if (strcmp (" text/plain\n", raw_value) != 0)
 			throw (exception_new ("content-type raw_value had unexpected value after clearing params"));
@@ -308,7 +308,7 @@ test_content_type_sync (void)
 		if (!g_mime_content_type_is_type (type, "text", "html"))
 			throw (exception_new ("GMimeContentType object was not updated"));
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-type raw_value was unexpectedly null after setting value"));
 		if (strcmp (" text/html; charset=utf-8\n", raw_value) != 0)
 			throw (exception_new ("content-type raw_value had unexpected value after setting value"));
@@ -346,7 +346,7 @@ test_disposition_sync (void)
 		if (strcmp ("attachment", value) != 0)
 			throw (exception_new ("initial content-disposition header had unexpected value: %s", value));
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("initial content-disposition raw_value was unexpectedly null"));
 		if (strcmp (" attachment\n", raw_value) != 0)
 			throw (exception_new ("initial content-disposition raw_value had unexpected value: %s", raw_value));
@@ -359,7 +359,7 @@ test_disposition_sync (void)
 		if (strcmp ("inline", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after changing type"));
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-disposition raw_value was unexpectedly null after changing type"));
 		if (strcmp (" inline\n", raw_value) != 0)
 			throw (exception_new ("content-disposition raw_value had unexpected value after changing type: %s", raw_value));
@@ -371,7 +371,7 @@ test_disposition_sync (void)
 		if (strcmp ("inline; filename=hello.txt", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after setting a param"));
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-disposition raw_value was unexpectedly null after setting a param"));
 		if (strcmp (" inline; filename=hello.txt\n", raw_value) != 0)
 			throw (exception_new ("content-disposition raw_value had unexpected value after setting a param: %s", raw_value));
@@ -384,7 +384,7 @@ test_disposition_sync (void)
 		if (strcmp ("inline", value) != 0)
 			throw (exception_new ("content-disposition header had unexpected value after clearing params"));
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-disposition raw_value was unexpectedly null after clearing params"));
 		if (strcmp (" inline\n", raw_value) != 0)
 			throw (exception_new ("content-disposition raw_value had unexpected value after clearing params: %s", raw_value));
@@ -396,7 +396,7 @@ test_disposition_sync (void)
 		if (!g_mime_content_disposition_is_attachment (disposition))
 			throw (exception_new ("GMimeContentDisposition object was not updated"));
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("content-disposition raw_value was unexpectedly null after setting value"));
 		if (strcmp (" attachment; filename=xyz\n", raw_value) != 0)
 			throw (exception_new ("content-disposition raw_value had unexpected value after setting value: %s", raw_value));
@@ -436,7 +436,7 @@ test_address_sync (void)
 			throw (exception_new ("unexpected initial value"));
 		
 		header = g_mime_header_list_get_header (headers, "To");
-		if ((raw_value = g_mime_header_get_raw_value (header)) != NULL)
+		if ((raw_value = testsuite_header_raw_text (header)) != NULL)
 			throw (exception_new ("unexpected initial raw_value"));
 		
 		/* now try adding an address */
@@ -448,7 +448,7 @@ test_address_sync (void)
 		if (strcmp ("Tester <tester@localhost.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after adding recipient"));
 		header = g_mime_header_list_get_header (headers, "To");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("raw_value is null after adding recipient"));
 		if (strcmp (" Tester <tester@localhost.com>\n", raw_value) != 0)
 			throw (exception_new ("unexpected raw_value after adding recipient: %s", raw_value));
@@ -460,7 +460,7 @@ test_address_sync (void)
 		if (strcmp ("Eva Lucy-Ann Tester <tester@localhost.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after changing name: %s", value));
 		header = g_mime_header_list_get_header (headers, "To");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("raw_value is null after changing name"));
 		if (strcmp (" Eva Lucy-Ann Tester <tester@localhost.com>\n", raw_value) != 0)
 			throw (exception_new ("unexpected raw_value after changing name"));
@@ -472,7 +472,7 @@ test_address_sync (void)
 		if (strcmp ("Eva Lucy-Ann Tester <evalucyann@ximian.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after changing mailbox"));
 		header = g_mime_header_list_get_header (headers, "To");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("raw_value is null after changing mailbox"));
 		if (strcmp (" Eva Lucy-Ann Tester <evalucyann@ximian.com>\n", raw_value) != 0)
 			throw (exception_new ("unexpected raw_value after changing mailbox"));
@@ -487,7 +487,7 @@ test_address_sync (void)
 		if (strcmp ("Group: ;, Eva Lucy-Ann Tester <evalucyann@ximian.com>", value) != 0)
 			throw (exception_new ("unexpected address list header after inserting group"));
 		header = g_mime_header_list_get_header (headers, "To");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("raw_value is null after inserting group"));
 		if (strcmp (" Group: ;, Eva Lucy-Ann Tester <evalucyann@ximian.com>\n", raw_value) != 0)
 			throw (exception_new ("unexpected raw_value after inserting group"));
@@ -499,7 +499,7 @@ test_address_sync (void)
 		if (strcmp ("Group: ;", value) != 0)
 			throw (exception_new ("unexpected address list header after removing recipient"));
 		header = g_mime_header_list_get_header (headers, "To");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("raw_value is null after removing recipient"));
 		if (strcmp (" Group: ;\n", raw_value) != 0)
 			throw (exception_new ("unexpected raw_value after removing recipient"));
@@ -512,7 +512,7 @@ test_address_sync (void)
 		if (strcmp ("Group: Tester <tester@hotmail.com>;", value) != 0)
 			throw (exception_new ("unexpected address list header after adding addr to group"));
 		header = g_mime_header_list_get_header (headers, "To");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("raw_value is null after adding addr to group"));
 		if (strcmp (" Group: Tester <tester@hotmail.com>;\n", raw_value) != 0)
 			throw (exception_new ("unexpected raw_value after adding addr to group"));
@@ -529,7 +529,7 @@ test_address_sync (void)
 		if (strcmp ("fpons@mandrakesoft.com", value) != 0)
 			throw (exception_new ("unexpected addr after setting header value"));
 		header = g_mime_header_list_get_header (headers, "To");
-		if (!(raw_value = g_mime_header_get_raw_value (header)))
+		if (!(raw_value = testsuite_header_raw_text (header)))
 			throw (exception_new ("raw_value is null after setting header value"));
 		if (strcmp (" =?iso-8859-1?q?Fran=E7ois?= Pons <fpons@mandrakesoft.com>\n", raw_value) != 0)
 			throw (exception_new ("unexpected raw_value after setting header value: %s", raw_value));
@@ -583,7 +583,7 @@ test_header_formatting (void)
 		try {
 			g_mime_header_list_append (list, headers[i].name, headers[i].value, NULL);
 			header = g_mime_header_list_get_header_at (list, (int) i);
-			raw_value = g_mime_header_get_raw_value (header);
+			raw_value = testsuite_header_raw_text (header);
 			
 			if (strcmp (headers[i].raw_value, raw_value) != 0)
 				throw (exception_new ("raw values do not match: %s", raw_value));
@@ -623,7 +623,7 @@ test_address_format_case (GMimeFormatOptions *options, const char *value, const 
 		header = g_mime_header_list_get_header_at (headers, 0);
 		g_mime_header_set_value (header, options, value, NULL);
 		wire = g_mime_header_list_to_string (headers, options);
-		if (g_strcmp0 (g_mime_header_get_raw_value (header), expected) != 0 || strcmp (wire, full) != 0)
+		if (g_strcmp0 (testsuite_header_raw_text (header), expected) != 0 || strcmp (wire, full) != 0)
 			throw (exception_new ("address header formatter ignored the formatting options"));
 
 		encoded = g_mime_internet_address_list_to_string (addresses, options, TRUE);
@@ -776,7 +776,7 @@ test_address_name_sync (void)
 		message = g_mime_message_new (FALSE);
 		g_mime_entity_set_header (GMIME_ENTITY (message), "To", "", NULL);
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (message)), "To");
-		g_mime_header_set_raw_value (header, raw[nested]);
+		testsuite_header_set_raw_text (header, raw[nested]);
 		list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
 		address = g_mime_internet_address_list_get_address (list, 0);
 		group = nested ? address : NULL;
@@ -789,18 +789,18 @@ test_address_name_sync (void)
 			g_mime_internet_address_set_name (address, " \tOld\302\240 ");
 			if (group)
 				g_mime_internet_address_set_name (group, "\302\205Team\v");
-			if (g_strcmp0 (g_mime_header_get_raw_value (header), raw[nested]))
+			if (g_strcmp0 (testsuite_header_raw_text (header), raw[nested]))
 				throw (exception_new ("equivalent name regenerated the raw header"));
 			g_mime_internet_address_set_name (address, g_mime_internet_address_get_name (address));
-			if (g_strcmp0 (g_mime_header_get_raw_value (header), raw[nested]))
+			if (g_strcmp0 (testsuite_header_raw_text (header), raw[nested]))
 				throw (exception_new ("self-assignment regenerated the raw header"));
 			g_mime_internet_address_set_name (address, " \tNew\302\240 ");
-			if (g_strcmp0 (g_mime_header_get_raw_value (header), nested ?
+			if (g_strcmp0 (testsuite_header_raw_text (header), nested ?
 				       " Team: New <user@example.com>;\n" : " New <user@example.com>\n"))
 				throw (exception_new ("normalized name change did not update the raw header"));
 			if (group) {
 				g_mime_internet_address_set_name (group, " \t\302\240 ");
-				if (g_strcmp0 (g_mime_header_get_raw_value (header), " \"\": New <user@example.com>;\n"))
+				if (g_strcmp0 (testsuite_header_raw_text (header), " \"\": New <user@example.com>;\n"))
 					throw (exception_new ("whitespace-only group name did not update the raw header"));
 			}
 			testsuite_check_passed ();
@@ -1231,10 +1231,10 @@ test_address_line_lengths (void)
 			header = g_mime_header_list_get_header_at (headers, 0);
 			raw = g_strdup_printf (" First <a@example.com>,%s\tSecond <b@example.com>%s", newline, newline);
 			full = g_strconcat ("To:", raw, NULL);
-			g_mime_header_set_raw_value (header, raw);
+			testsuite_header_set_raw_text (header, raw);
 			wire = g_mime_header_list_to_string (headers, clone);
 			try {
-				if (g_strcmp0 (g_mime_header_get_raw_value (header), raw) != 0 || strcmp (wire, full) != 0)
+				if (g_strcmp0 (testsuite_header_raw_text (header), raw) != 0 || strcmp (wire, full) != 0)
 					throw (exception_new ("untouched raw address folding changed"));
 				testsuite_check_passed ();
 			} catch (ex) {
@@ -1416,7 +1416,7 @@ test_text_header_line_lengths (void)
 			wire = g_mime_header_list_to_string (headers, clone);
 			testsuite_check ("text header formatter[%u,%u]", widths[i], dos);
 			try {
-				if (g_strcmp0 (g_mime_header_get_raw_value (header), raw) != 0 || strcmp (wire, full) != 0)
+				if (g_strcmp0 (testsuite_header_raw_text (header), raw) != 0 || strcmp (wire, full) != 0)
 					throw (exception_new ("text header formatter ignored the formatting options: %s", wire));
 				testsuite_check_passed ();
 			} catch (ex) {
@@ -1430,11 +1430,11 @@ test_text_header_line_lengths (void)
 
 			raw = g_strdup_printf (" first%s\tsecond%s", newline, newline);
 			full = g_strconcat ("Subject:", raw, NULL);
-			g_mime_header_set_raw_value (header, raw);
+			testsuite_header_set_raw_text (header, raw);
 			wire = g_mime_header_list_to_string (headers, clone);
 			testsuite_check ("untouched raw text headers[%u,%u]", widths[i], dos);
 			try {
-				if (g_strcmp0 (g_mime_header_get_raw_value (header), raw) != 0 || strcmp (wire, full) != 0)
+				if (g_strcmp0 (testsuite_header_raw_text (header), raw) != 0 || strcmp (wire, full) != 0)
 					throw (exception_new ("untouched raw text folding changed"));
 				testsuite_check_passed ();
 			} catch (ex) {
@@ -1494,7 +1494,7 @@ test_address_header_whitespace (void)
 				wire = g_mime_header_list_to_string (headers, format);
 				testsuite_check ("address header name whitespace[%u,%u,%u]", dos, j, k);
 				try {
-					if (g_strcmp0 (g_mime_header_get_raw_value (header), raw) || strcmp (wire, expected))
+					if (g_strcmp0 (testsuite_header_raw_text (header), raw) || strcmp (wire, expected))
 						throw (exception_new ("address header did not normalize literal tabs: %s", wire));
 					if (g_strcmp0 (g_mime_header_get_value (header), cases[k].value))
 						throw (exception_new ("address parsing changed the cached header text"));
@@ -1507,12 +1507,12 @@ test_address_header_whitespace (void)
 				g_free (raw);
 
 				raw = g_strconcat (" ", cases[k].value, newline, NULL);
-				g_mime_header_set_raw_value (header, raw);
+				testsuite_header_set_raw_text (header, raw);
 				g_mime_header_get_value (header);
 				expected = g_strconcat (names[j], ":", raw, NULL);
 				wire = g_mime_header_list_to_string (headers, format);
 				testsuite_check ("untouched raw address name whitespace[%u,%u,%u]", dos, j, k);
-				if (g_strcmp0 (g_mime_header_get_raw_value (header), raw) || strcmp (wire, expected))
+				if (g_strcmp0 (testsuite_header_raw_text (header), raw) || strcmp (wire, expected))
 					testsuite_check_failed ("address normalization changed an untouched raw header");
 				else
 					testsuite_check_passed ();
@@ -1558,10 +1558,10 @@ test_literal_encoded_word_headers (void)
 				header = g_mime_header_list_get_header_at (headers, 0);
 				for (k = 0; k < G_N_ELEMENTS (values); k++) {
 					g_mime_header_set_value (header, format, values[k], "utf-8");
-					raw = g_strdup (g_mime_header_get_raw_value (header));
+					raw = g_strdup (testsuite_header_raw_text (header));
 					expected = g_strdup_printf ("%s:%s", names[j], raw);
 					wire = g_mime_header_list_to_string (headers, format);
-					g_mime_header_set_raw_value (header, raw);
+					testsuite_header_set_raw_text (header, raw);
 					testsuite_check ("literal encoded-word header[%u,%u,%u,%u]", widths[i], dos, j, k);
 					try {
 						if (strcmp (wire, expected))
@@ -1579,7 +1579,7 @@ test_literal_encoded_word_headers (void)
 				}
 
 				raw = g_strdup_printf (" =?UtF-8?q?hello?=%s", g_mime_format_options_get_newline (format));
-				g_mime_header_set_raw_value (header, raw);
+				testsuite_header_set_raw_text (header, raw);
 				expected = g_strdup_printf ("%s:%s", names[j], raw);
 				wire = NULL;
 				testsuite_check ("literal protection preserves raw headers[%u,%u,%u]", widths[i], dos, j);
@@ -1659,9 +1659,9 @@ test_structured_header_line_lengths (void)
 				g_mime_header_set_value (header, options, value, NULL);
 				wire = g_mime_header_list_to_string (list, options);
 				full = g_strconcat ("References:", expected, NULL);
-				refs = g_mime_message_id_list_parse (NULL, g_mime_header_get_raw_value (header));
+				refs = g_mime_message_id_list_parse (NULL, testsuite_header_raw_text (header));
 				try {
-					if (g_strcmp0 (g_mime_header_get_raw_value (header), expected) != 0 ||
+					if (g_strcmp0 (testsuite_header_raw_text (header), expected) != 0 ||
 					    g_strcmp0 (wire, full) != 0)
 						throw (exception_new ("reference folding did not respect the exact boundary"));
 					if (g_mime_message_id_list_length (refs) != 3 ||
@@ -1693,10 +1693,10 @@ test_structured_header_line_lengths (void)
 				wire = g_mime_header_list_to_string (list, options);
 				full = g_strconcat ("Received:", expected, NULL);
 				try {
-					if (g_strcmp0 (g_mime_header_get_raw_value (header), expected) != 0 ||
+					if (g_strcmp0 (testsuite_header_raw_text (header), expected) != 0 ||
 					    g_strcmp0 (wire, full) != 0)
 						throw (exception_new ("unexpected Received clause formatting: %s",
-								      g_mime_header_get_raw_value (header)));
+								      testsuite_header_raw_text (header)));
 					testsuite_check_passed ();
 				} catch (ex) {
 					testsuite_check_failed ("%s", ex->message);
@@ -1706,7 +1706,7 @@ test_structured_header_line_lengths (void)
 				g_free (wire);
 			}
 			testsuite_check ("Received raw value preservation[%u,%u]", widths[i], dos);
-			g_mime_header_set_raw_value (header, " from h\n\tby r; date\n");
+			testsuite_header_set_raw_text (header, " from h\n\tby r; date\n");
 			wire = g_mime_header_list_to_string (list, options);
 			full = g_strdup_printf ("Received: from h%s\tby r; date%s", newline, newline);
 			try {
@@ -1764,7 +1764,7 @@ test_message_id_formatting (void)
 				wire = g_mime_header_list_to_string (list, options);
 				full = g_strconcat (names[i], ":", expected, NULL);
 				try {
-					if (g_strcmp0 (g_mime_header_get_raw_value (header), expected) != 0 ||
+					if (g_strcmp0 (testsuite_header_raw_text (header), expected) != 0 ||
 					    g_strcmp0 (wire, full) != 0)
 						throw (exception_new ("message-id value was parsed or folded"));
 					testsuite_check_passed ();
@@ -1828,7 +1828,7 @@ test_notification_options_formatting (void)
 				full = g_strconcat (name, ":", expected, NULL);
 				try {
 					if (g_strcmp0 (direct, expected) != 0 ||
-					    g_strcmp0 (g_mime_header_get_raw_value (header), expected) != 0 ||
+					    g_strcmp0 (testsuite_header_raw_text (header), expected) != 0 ||
 					    g_strcmp0 (wire, full) != 0)
 						throw (exception_new ("unexpected notification options: %s", direct));
 					testsuite_check_passed ();
@@ -1849,7 +1849,7 @@ test_notification_options_formatting (void)
 					g_strdup_printf (" x=a; y=%s;%s\tz=q%s", padding, newline, newline);
 				g_mime_header_set_value (header, options, input, NULL);
 				try {
-					if (g_strcmp0 (g_mime_header_get_raw_value (header), expected) != 0)
+					if (g_strcmp0 (testsuite_header_raw_text (header), expected) != 0)
 						throw (exception_new ("notification parameter did not fit the exact line boundary"));
 					testsuite_check_passed ();
 				} catch (ex) {
@@ -1879,7 +1879,7 @@ test_notification_options_formatting (void)
 	g_free (direct);
 
 	testsuite_check ("raw notification options remain untouched");
-	g_mime_header_set_raw_value (header, " x = optional, one;\n\ty = required, two\n");
+	testsuite_header_set_raw_text (header, " x = optional, one;\n\ty = required, two\n");
 	wire = g_mime_header_list_to_string (list, options);
 	try {
 		if (g_strcmp0 (wire, "Disposition-Notification-Options: x = optional, one;\r\n\ty = required, two\r\n") != 0)
@@ -2303,25 +2303,25 @@ test_parameter_quoting (void)
 		list = g_mime_content_type_get_parameters (type);
 		param = g_mime_param_list_get_parameter (list, "format");
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (part)), "Content-Type");
-		g_mime_header_get_raw_value (header);
+		testsuite_header_raw_text (header);
 		g_mime_param_set_always_quote (param, TRUE);
-		raw = g_mime_header_get_raw_value (header);
+		raw = testsuite_header_raw_text (header);
 		if (g_strcmp0 (raw, " application/octet-stream; format=\"flowed\"\n") != 0)
 			throw (exception_new ("Content-Type did not update: %s", raw ? raw : "(null)"));
 		g_mime_param_set_always_quote (param, FALSE);
-		raw = g_mime_header_get_raw_value (header);
+		raw = testsuite_header_raw_text (header);
 		if (g_strcmp0 (raw, " application/octet-stream; format=flowed\n") != 0)
 			throw (exception_new ("Content-Type quoting did not reset"));
 		list = g_mime_content_disposition_get_parameters (disposition);
 		param = g_mime_param_list_get_parameter (list, "filename");
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (part)), "Content-Disposition");
-		g_mime_header_get_raw_value (header);
+		testsuite_header_raw_text (header);
 		g_mime_param_set_always_quote (param, TRUE);
-		raw = g_mime_header_get_raw_value (header);
+		raw = testsuite_header_raw_text (header);
 		if (g_strcmp0 (raw, " attachment; filename=\"file.txt\"\n") != 0)
 			throw (exception_new ("Content-Disposition did not update"));
 		g_mime_param_set_always_quote (param, FALSE);
-		raw = g_mime_header_get_raw_value (header);
+		raw = testsuite_header_raw_text (header);
 		if (g_strcmp0 (raw, " attachment; filename=file.txt\n") != 0)
 			throw (exception_new ("Content-Disposition quoting did not reset"));
 		testsuite_check_passed ();

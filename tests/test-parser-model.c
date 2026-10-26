@@ -259,6 +259,9 @@ test_header_models (void)
 		GMimeHeader *header, *clone;
 		GError *error = NULL;
 		GByteArray *bytes;
+		GBytes *raw_name, *raw_value;
+		gconstpointer data;
+		gsize length;
 		int j;
 
 		input->origin = ((gint64) 1 << 34);
@@ -271,7 +274,16 @@ test_header_models (void)
 		header = g_mime_header_list_get_header (headers, "X");
 		g_assert_true (header == g_mime_header_list_get_header_at (headers, 0));
 		g_assert_cmpint (g_mime_header_get_offset (header), ==, input->origin);
-		g_assert_cmpstr (g_mime_header_get_raw_name (header), ==, "X \t");
+		g_assert_cmpstr (testsuite_header_raw_name (header), ==, "X \t");
+		raw_value = g_mime_header_get_raw_value (header);
+		g_assert_true (raw_value == header->raw_value);
+		data = g_bytes_get_data (raw_value, &length);
+		g_assert_cmpmem (data, length, " a\0b\r\n", 6);
+		clone = g_mime_header_list_get_header_at (headers, 3);
+		raw_name = g_mime_header_get_raw_name (clone);
+		g_assert_true (raw_name == clone->raw_name);
+		data = g_bytes_get_data (raw_name, &length);
+		g_assert_cmpmem (data, length, "Content-Type\0not-a-field\r\n", 26);
 		g_assert_null (g_mime_header_list_get_header (headers, "Content-Type"));
 		bytes = serialize_headers (headers, FALSE);
 		g_assert_cmpmem (bytes->data, bytes->len, wire, header_length);
@@ -282,13 +294,16 @@ test_header_models (void)
 
 		copy = g_mime_header_list_new (NULL);
 		for (j = 0; j < g_mime_header_list_get_count (headers); j++) {
-			clone = g_mime_header_clone (g_mime_header_list_get_header_at (headers, j));
+			GMimeHeader *original = g_mime_header_list_get_header_at (headers, j);
+
+			clone = g_mime_header_clone (original);
 			g_assert_cmpint (g_mime_header_get_offset (clone), ==, -1);
+			g_assert_true (clone->raw_name == original->raw_name && clone->raw_value == original->raw_value);
 			g_mime_header_list_add (copy, clone);
 			g_object_unref (clone);
 		}
-		g_mime_header_set_raw_value (header, " changed\r\n");
-		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, " changed\r\n");
+		testsuite_header_set_raw_text (header, " changed\r\n");
+		g_assert_cmpstr (testsuite_header_raw_text (header), ==, " changed\r\n");
 		bytes = serialize_headers (headers, TRUE);
 		g_assert_cmpuint (bytes->len, ==, strlen ("X \t: changed\r\n") + header_length - (sizeof (first) - 1));
 		g_assert_cmpmem (bytes->data, strlen ("X \t: changed\r\n"), "X \t: changed\r\n", strlen ("X \t: changed\r\n"));
@@ -311,6 +326,12 @@ test_header_models (void)
 		g_assert_cmpmem (bytes->data, bytes->len, wire, header_length);
 		g_byte_array_unref (bytes);
 		g_object_unref (copy);
+		data = g_bytes_get_data (raw_name, &length);
+		g_assert_cmpmem (data, length, "Content-Type\0not-a-field\r\n", 26);
+		data = g_bytes_get_data (raw_value, &length);
+		g_assert_cmpmem (data, length, " a\0b\r\n", 6);
+		g_bytes_unref (raw_name);
+		g_bytes_unref (raw_value);
 	}
 	testsuite_check_passed ();
 }
@@ -428,6 +449,7 @@ test_binary_encoding_headers (void)
 		{ " base64\0x\n", sizeof (" base64\0x\n") - 1, GMIME_CONTENT_ENCODING_UNSPECIFIED },
 		{ "\0base64\n", sizeof ("\0base64\n") - 1, GMIME_CONTENT_ENCODING_UNSPECIFIED },
 		{ " base64 \0x\n", sizeof (" base64 \0x\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
+		{ " base64\r\0x\n", sizeof (" base64\r\0x\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
 		{ " base64;\0x\n", sizeof (" base64;\0x\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
 		{ " =?us-ascii?q?base64?=\0x\n", sizeof (" =?us-ascii?q?base64?=\0x\n") - 1,
 		  GMIME_CONTENT_ENCODING_UNSPECIFIED },
@@ -449,6 +471,7 @@ test_binary_encoding_headers (void)
 			GMimeEntity *entity = _g_mime_parser_reader_construct_part (reader, &error);
 			GMimeHeader *header;
 			GByteArray *bytes;
+			GBytes *raw;
 			const char *decoded = cases[i].encoding == GMIME_CONTENT_ENCODING_BASE64 ? "abc" : "YWJj\n";
 
 			g_assert_no_error (error);
@@ -464,11 +487,16 @@ test_binary_encoding_headers (void)
 			g_byte_array_unref (bytes);
 
 			header = g_mime_header_list_get_header (entity->headers, "Content-Transfer-Encoding");
-			g_mime_header_set_raw_value (header, " base64\n");
+			testsuite_header_set_raw_text (header, " base64\n");
 			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, GMIME_CONTENT_ENCODING_BASE64);
 			g_mime_header_set_value (header, NULL, "quoted-printable", NULL);
 			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==,
 					GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+			raw = g_bytes_new (cases[i].value, cases[i].length);
+			g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+			g_assert_no_error (error);
+			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, cases[i].encoding);
+			g_bytes_unref (raw);
 			g_object_unref (entity);
 			g_object_unref (reader);
 			g_object_unref (input);
@@ -1635,8 +1663,8 @@ test_public_long_header_names (void)
 				header = g_mime_header_list_get_header_at (headers, 0);
 				g_assert_false (header->invalid);
 				g_assert_cmpstr (header->name, ==, name);
-				g_assert_cmpstr (header->raw_value, ==, " value\n");
-				g_assert_cmpuint (g_bytes_get_size (header->raw_field_bytes), ==, lengths[i] + blank * 2);
+				g_assert_cmpstr (testsuite_header_raw_text (header), ==, " value\n");
+				g_assert_cmpuint (g_bytes_get_size (header->raw_name), ==, lengths[i] + blank * 2);
 				g_assert_cmpint (g_mime_parser_tell (parser), ==, strlen (wire));
 				g_object_unref (headers);
 				g_object_unref (parser);
@@ -1652,6 +1680,8 @@ test_public_long_header_names (void)
 static void
 test_public_parser_warnings (void)
 {
+	static const char same[] = "Subject: a\0one\nSubject: a\0one\n\n";
+	static const char different[] = "Subject: a\0one\nSubject: a\0two\n\n";
 	static const struct {
 		const char *wire;
 		GMimeParserWarning warning;
@@ -1689,6 +1719,30 @@ test_public_parser_warnings (void)
 			g_assert_cmpuint (counts[cases[i].warning], ==, 1);
 			g_assert_cmpuint (counts[GMIME_WARN_TRUNCATED_MESSAGE], ==,
 					  cases[i].warning == GMIME_WARN_TRUNCATED_MESSAGE);
+			g_object_unref (message);
+			g_mime_parser_options_free (options);
+			g_object_unref (parser);
+			g_object_unref (input);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Duplicate header warnings compare every byte after embedded NULs");
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			ModelInput *input = new_input (i ? different : same, sizeof (same) - 1, chunks[j]);
+			GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			guint counts[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+			GError *error = NULL;
+			GMimeMessage *message;
+
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts);
+			message = g_mime_parser_construct_message (parser, options, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_assert_cmpuint (counts[GMIME_WARN_DUPLICATED_HEADER], ==, !i);
+			g_assert_cmpuint (counts[GMIME_CRIT_CONFLICTING_HEADER], ==, i);
 			g_object_unref (message);
 			g_mime_parser_options_free (options);
 			g_object_unref (parser);

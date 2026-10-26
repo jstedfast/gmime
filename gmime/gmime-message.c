@@ -331,10 +331,11 @@ message_update_priority (GMimeMessage *message, guint type)
 	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
 	GMimeHeader *header = g_mime_header_list_get_header (headers, message_headers[type]);
 	const char *value = NULL;
+	char *raw = NULL;
 	gint32 number;
 
 	if (header) {
-		value = type == HEADER_X_PRIORITY ? g_mime_header_get_raw_value (header) :
+		value = type == HEADER_X_PRIORITY ? (raw = _g_mime_header_dup_raw_value (header)) :
 			g_mime_header_get_value (header);
 	}
 
@@ -364,6 +365,7 @@ message_update_priority (GMimeMessage *message, guint type)
 		}
 		break;
 	}
+	g_free (raw);
 }
 
 static void
@@ -371,11 +373,13 @@ message_update_date (GMimeMessage *message, const char *name, GDateTime **date)
 {
 	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
 	GMimeHeader *header = g_mime_header_list_get_header (headers, name);
-	const char *value;
+	char *value;
 
 	g_clear_pointer (date, g_date_time_unref);
-	if (header && (value = g_mime_header_get_raw_value (header)))
+	if (header && (value = _g_mime_header_dup_raw_value (header))) {
 		*date = g_mime_utils_header_decode_date (value);
+		g_free (value);
+	}
 }
 
 static void
@@ -385,14 +389,16 @@ message_update_references (GMimeMessage *message)
 	GMimeMessageIdList *list = message->references;
 	GMimeHeader *header;
 	const char *value;
-	char *id;
+	char *id, *raw;
 
 	g_mime_event_block (list->changed, (GMimeEventCallback) references_changed, message);
 	g_mime_message_id_list_clear (list);
 	header = g_mime_header_list_get_header (headers, "References");
-	if (header && (value = g_mime_header_get_raw_value (header))) {
+	if (header && (raw = _g_mime_header_dup_raw_value (header))) {
+		value = raw;
 		while ((id = _g_mime_parse_reference (&value)))
 			g_ptr_array_add (list->array, id);
+		g_free (raw);
 	}
 	g_mime_event_unblock (list->changed, (GMimeEventCallback) references_changed, message);
 }
@@ -402,15 +408,18 @@ message_update_reply_id (GMimeMessage *message, const char *name, char **id)
 {
 	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
 	const char *value;
+	char *raw;
 	GMimeHeader *header;
 
 	g_clear_pointer (id, g_free);
 	header = g_mime_header_list_get_header (headers, name);
-	if (header && (value = g_mime_header_get_raw_value (header))) {
+	if (header && (raw = _g_mime_header_dup_raw_value (header))) {
+		value = raw;
 		if (!g_ascii_strcasecmp (name, "In-Reply-To"))
 			*id = _g_mime_parse_reference (&value);
 		else
 			*id = g_mime_utils_decode_message_id (value);
+		g_free (raw);
 	}
 }
 
@@ -418,14 +427,16 @@ static void
 message_add_addresses (GMimeMessage *message, GMimeParserOptions *options, GMimeHeader *header, GMimeAddressType type)
 {
 	GMimeInternetAddressList *addrlist;
-	const char *value;
+	char *value;
 	
 	block_changed_event (message, type);
 	
 	addrlist = message->addrlists[type];
 	
-	if ((value = g_mime_header_get_raw_value (header)))
+	if ((value = _g_mime_header_dup_raw_value (header))) {
 		_g_mime_internet_address_list_append_parse (addrlist, options, value, header->offset);
+		g_free (value);
+	}
 	
 	unblock_changed_event (message, type);
 }
@@ -435,7 +446,8 @@ message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GM
 {
 	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
 	GMimeInternetAddressList *addrlist;
-	const char *name, *value;
+	const char *name;
+	char *value;
 	GMimeHeader *header;
 	int count, i;
 	
@@ -453,8 +465,10 @@ message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GM
 		if (g_ascii_strcasecmp (address_types[type].name, name) != 0)
 			continue;
 		
-		if ((value = g_mime_header_get_raw_value (header)))
+		if ((value = _g_mime_header_dup_raw_value (header))) {
 			_g_mime_internet_address_list_append_parse (addrlist, options, value, header->offset);
+			g_free (value);
+		}
 	}
 	
 	unblock_changed_event (message, type);
@@ -1021,6 +1035,8 @@ message_has_mime_version (GMimeMessage *message)
 {
 	GMimeHeader *header;
 	const char *inptr;
+	char *raw;
+	gboolean valid = FALSE;
 	gint32 value;
 	guint count = 0;
 
@@ -1030,19 +1046,24 @@ message_has_mime_version (GMimeMessage *message)
 
 	/* MimeKit parses the first raw header as two to four Int32 components,
 	 * allowing comments and whitespace without normalizing a valid value. */
-	inptr = g_mime_header_get_raw_value (header);
+	inptr = raw = _g_mime_header_dup_raw_value (header);
+	if (!raw)
+		return FALSE;
 	do {
 		if (!skip_cfws (&inptr) || !_g_mime_parse_int32 (&inptr, &value) || ++count > 4)
-			return FALSE;
+			goto done;
 		if (!skip_cfws (&inptr))
-			return FALSE;
+			goto done;
 		if (!*inptr)
 			break;
 		if (*inptr++ != '.')
-			return FALSE;
+			goto done;
 	} while (*inptr);
 
-	return count >= 2;
+	valid = count >= 2;
+done:
+	g_free (raw);
+	return valid;
 }
 
 

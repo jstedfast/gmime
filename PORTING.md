@@ -1606,12 +1606,13 @@ metadata, formatting state, parser options or owner notifications.
 An unset legacy placeholder returns owned empty text after validating the
 charset. Empty, invalid or unsupported charset names report G_CONVERT_ERROR.
 
-As with the checked text-part getter, literal raw NUL bytes and decoded
-Unicode NUL characters report G_CONVERT_ERROR_EMBEDDED_NUL rather than
-returning a truncated C string. Zero bytes in an encoded-word's transfer
-decoded payload are not themselves an error: a supported multibyte charset
-can legitimately decode them to ordinary text. The legacy header getter and
-public decoding helpers retain their existing behavior.
+Literal and decoded Unicode NUL characters are replaced with U+FFFD before
+unfolding or other C-string processing, preventing truncation. This policy
+is shared with the ordinary header getter and text/phrase decoding helpers;
+raw bytes remain unchanged. Replacement happens after charset conversion:
+zero bytes in a multibyte encoded-word payload can legitimately decode to
+ordinary non-NUL characters. The separate checked text-part getter retains
+its existing embedded-NUL error contract.
 
 Charset names reuse the checked text APIs' native aliases and iconv
 repertoire, rather than replacing them with .NET's registry. Existing native
@@ -1626,19 +1627,119 @@ UTF-8-first explanation from CharsetUtils.ConvertToUnicode.
 An actual-source differential covers 14,208 cases per normal and
 ASan/UBSan/leak build with zero unexpected differences. It independently
 checks 1,180 inherited decoder differences against the legacy native decoder
-and Unicode normalization, and accounts for 384 native NUL errors. The
-matrix includes 1,776 native-alias cases compared against the reference's
+and Unicode normalization, and accounts for 384 intentional U+FFFD
+replacement cases. The matrix includes 1,776 native-alias cases compared
+against the reference's
 canonical UTF-16/32 names; MimeKit rejects the abbreviated names themselves.
 Lazy and populated caches, both RFC 2047 compliance modes, raw 8-bit text,
 declared and unknown encoded words, invalid charset names and detached
 header lifetimes are covered.
 
 GIR/typelib, VAPI, GTK-doc and live GI/Python checks pass, including owned
-results, charset errors, NUL errors and preservation of raw serialized bytes.
+results, charset errors, NUL replacement and preservation of raw serialized
+bytes.
 
 The full core baseline remains unchanged: 34/35 programs pass, with only
 test-core's two established text-format assertions. Native Windows
 validation remains pending.
+
+### Raw header byte values
+
+`g_mime_header_get_raw_value()` and
+`g_mime_header_set_raw_value()` port MimeKit's byte-array RawValue
+property and SetRawValue method using immutable GBytes. Lookup returns an
+owned reference or snapshot with the complete raw value, including NULs and
+non-UTF-8 bytes. It does not decode, populate the cache or notify owners.
+An unset legacy placeholder returns NULL. Returned bytes remain valid after
+reassignment or destruction of the header.
+
+Assignment requires a nonempty value ending in LF, matching MimeKit's
+validation; both LF and CRLF endings are accepted. Missing final LF reports
+GMIME_ERROR_PARSE_ERROR before changing any state or notifying owners.
+No other syntax, charset, leading whitespace or line-injection validation
+is imposed by this low-level API. Valid assignments retain the immutable
+bytes, clear the decoded cache, disable reformatting and emit the existing
+change event, even when assigning the current bytes. Fields, offsets,
+parser options, charsets and body-separator state remain unchanged.
+
+Explicit raw values survive International formatting, including binary
+values assigned to newly constructed headers without parsed field bytes.
+Invalid parsed fields remain invalid and retain their original transport
+field bytes; assignment does not repair them. Clones and shared headers
+retain their existing lifetime and notification behavior.
+
+These replace the former raw-string getter and setter; no public raw-value
+accessor truncates at embedded NULs. Both decoded-value getters replace
+literal and decoded NULs with U+FFFD rather than returning partial values.
+The getter returns an owned GBytes reference; callers must unref it. The
+setter takes GBytes and a GError destination and returns gboolean. The
+temporary `_bytes`-suffixed names are not exposed alongside these APIs.
+GBytes sharing replaces MimeKit's mutable array aliasing with native
+immutable ownership. Neither source accessor contains inline implementation
+comments to copy.
+
+The header's `raw_name` and `raw_value` fields are the sole authoritative
+raw storage, both GBytes; no duplicate C-string backing is maintained.
+`g_mime_header_get_raw_name()` also returns an owned GBytes reference.
+Clones share immutable raw storage, and duplicate-header diagnostics compare
+the complete bytes rather than a prefix ending at the first NUL.
+
+Message/partial splitting clones headers rather than copying a raw C-string
+view, retaining binary values and raw field bytes in each resulting message.
+Text-only native fixtures check the complete GBytes representation before
+using test-only cached, terminated snapshots; binary fixtures use GBytes
+directly.
+
+An actual-source differential covers 11,832 cases per normal and
+ASan/UBSan/leak build with zero differences and no codec exemptions.
+It compares exact raw bytes, serialized bytes, cache invalidation, failures
+and notifications for standalone, parsed and invalid fields, lazy/populated
+caches, International formatting and both newline formats. Fixtures include
+all byte values, embedded NULs, empty/unterminated inputs and deterministic
+binary data. Native regressions additionally cover borrowed-byte
+reassignment, retained snapshots, clones, legacy placeholders, owning
+message caches and repeated/shared subscriptions.
+
+Both APIs pass GIR/typelib, VAPI, GTK-doc and live GI/Python validation.
+The full core baseline remains unchanged: 34/35 programs pass, with only
+test-core's two established text-format assertions. Native Windows
+validation remains pending.
+
+The binary message-splitting regression also passes ASan/UBSan/leak
+validation in isolation. The complete test-partial sanitizer run reports
+leaks from its existing fixture loop, which retains reconstructed partials;
+the normal complete test-partial run passes.
+
+### Bounded raw header decoding
+
+The private text and phrase decoders and their RFC 2047 tokenizers consume
+explicit byte lengths, including bounded lookahead at incomplete encoded
+words. Header getters pass GBytes spans directly without temporary C-string
+copies. Public string-based utility signatures remain unchanged. Relevant
+MimeKit tokenizer comments are preserved; warning callbacks receive a
+temporary terminated copy because that callback API remains string-based.
+
+After transfer decoding and charset conversion, Unicode NULs are replaced
+with U+FFFD across literal ASCII, raw 8-bit text and declared or fallback
+encoded-word charsets. Other existing malformed-byte replacement policies
+remain unchanged. Content-transfer-encoding model updates preserve token
+delimiters preceding literal NULs rather than unfolding them away.
+The shared 8-bit scan also honors its full supplied span rather than stopping
+at NUL or reading past the end of a nonterminated buffer.
+
+Exact-size, nonterminated text/phrase validation covers 16,124 spans per
+normal and ASan/UBSan/leak build with no differences from the prior native
+token-recovery baseline. The 196 inherited MimeKit/native charset and
+replacement differences remain unchanged. Additional regressions cover
+empty spans, every encoded-word truncation, terminated warning callbacks,
+literal and encoded NUL replacement, consecutive NULs, and preservation of
+raw storage and serialized bytes.
+
+Focused header, parser-model, address, parameter and binary-splitting
+sanitizer checks are leak-clean. The complete test-core sanitizer run also
+reports 435 bytes retained by its existing depth-test type registrations;
+with leak detection disabled it has only the two established text-format
+assertions and no ASan/UBSan diagnostics.
 
 ### Positional header-list operations
 

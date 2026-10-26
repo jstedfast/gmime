@@ -313,11 +313,11 @@ test_header_list_loading (void)
 		       "loaded duplicate fields retain order and first-name lookup");
 		header = g_mime_header_list_get_header_at (headers, 2);
 		check (!strcmp (g_mime_header_get_name (header), "sUbJeCt") &&
-		       !strcmp (g_mime_header_get_raw_name (header), "sUbJeCt \t") &&
-		       !strcmp (g_mime_header_get_raw_value (header), " second\r\n") &&
+		       !strcmp (testsuite_header_raw_name (header), "sUbJeCt \t") &&
+		       !strcmp (testsuite_header_raw_text (header), " second\r\n") &&
 		       g_mime_header_get_offset (header) == strstr (text, "sUbJeCt") - text &&
 		       header->value == NULL, "loaded headers preserve raw names, values, offsets and lazy decoding");
-		check (!strcmp (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "X-Folded")),
+		check (!strcmp (testsuite_header_raw_text (g_mime_header_list_get_header (headers, "X-Folded")),
 				" one\r\n\ttwo\r\n"), "standalone parsing preserves header folding");
 		g_mime_parser_options_set_charset_encoding (options, "windows-1252", NULL);
 		g_mime_parser_options_free (options);
@@ -538,8 +538,8 @@ test_header_list_file_loading (void)
 	g_assert_cmpint (g_unlink (filename), ==, 0);
 	if (headers) {
 		header = g_mime_header_list_get_header_at (headers, 1);
-		check (!strcmp (g_mime_header_get_raw_name (header), "sUbJeCt \t") &&
-		       !strcmp (g_mime_header_get_raw_value (header), " second\r\n") &&
+		check (!strcmp (testsuite_header_raw_name (header), "sUbJeCt \t") &&
+		       !strcmp (testsuite_header_raw_text (header), " second\r\n") &&
 		       g_mime_header_get_offset (header) == 16,
 		       "filename header loading preserves raw fields, duplicate order and file offsets");
 		header = g_mime_header_list_get_header (headers, "X-Raw");
@@ -662,7 +662,7 @@ test_header_list_separators (void)
 			replacement = g_mime_header_new ("X-One", "replacement", NULL);
 			switch (op) {
 			case 0: g_mime_header_set_value (header, NULL, "changed", NULL); break;
-			case 1: g_mime_header_set_raw_value (header, " changed\r\n"); break;
+			case 1: testsuite_header_set_raw_text (header, " changed\r\n"); break;
 			case 2: g_mime_header_list_set_header_at (headers, 0, header); break;
 			case 3: g_mime_header_list_remove (headers, "missing"); break;
 			case 4: g_mime_header_list_remove_all (headers, "missing"); break;
@@ -1021,7 +1021,7 @@ test_mixed_header_charsets (void)
 			header = g_mime_header_new (headers[i].name, headers[i].value, "utf-8");
 			g_mime_format_options_set_allow_international (options, FALSE);
 			g_mime_header_set_value (header, options, headers[i].value, "utf-8");
-			stored = g_mime_header_get_raw_value (header);
+			stored = testsuite_header_raw_text (header);
 			encoded = g_ascii_strdown (stored, -1);
 			check (strstr (encoded, mixed ? "=?iso-8859-1?" : "=?utf-8?") != NULL,
 			       "text, address and comment headers use the selected charset policy");
@@ -1030,10 +1030,10 @@ test_mixed_header_charsets (void)
 			wire = header_wire_string (header, options);
 			check (strstr (wire, "caf\303\251") != NULL && strstr (wire, "=?") == NULL,
 			       "International output bypasses mixed-charset selection");
-			check (g_mime_header_get_raw_value (header) == stored,
+			check (testsuite_header_raw_text (header) == stored,
 			       "International output leaves the assigned raw value unchanged");
 			g_free (wire);
-			g_mime_header_set_raw_value (header, " =?iso-8859-1?q?caf=E9?=\n");
+			testsuite_header_set_raw_text (header, " =?iso-8859-1?q?caf=E9?=\n");
 			copy = g_mime_header_clone (header);
 			g_object_unref (header);
 			wire = header_wire_string (copy, options);
@@ -1322,10 +1322,10 @@ test_rfc2047_charset_aliases (void)
 
 	header = g_mime_header_new ("Subject", "\320\226", "cp1251");
 	check (!strcmp (header->charset, "cp1251") &&
-	       strstr (g_mime_header_get_raw_value (header), "=?windows-1251?") != NULL,
+	       strstr (testsuite_header_raw_text (header), "=?windows-1251?") != NULL,
 	       "canonical emission does not replace a header's configured charset");
-	g_mime_header_set_raw_value (header, " =?CP1251?b?xg==?=\n");
-	check (!strcmp (g_mime_header_get_raw_value (header), " =?CP1251?b?xg==?=\n"),
+	testsuite_header_set_raw_text (header, " =?CP1251?b?xg==?=\n");
+	check (!strcmp (testsuite_header_raw_text (header), " =?CP1251?b?xg==?=\n"),
 	       "explicit raw headers retain their charset spelling");
 	g_object_unref (header);
 }
@@ -1346,6 +1346,13 @@ test_rfc2047_token_recovery (void)
 	static const struct {
 		const char *input, *loose, *strict;
 	} cases[] = {
+		{ "=?utf-8?Q?A=00B?=", "A\357\277\275B", "A\357\277\275B" },
+		{ "=?utf-8?B?QQBC?=", "A\357\277\275B", "A\357\277\275B" },
+		{ "=?iso-8859-1?Q?A=00B?=", "A\357\277\275B", "A\357\277\275B" },
+		{ "=?x-unknown?Q?A=00B?=", "A\357\277\275B", "A\357\277\275B" },
+		{ "=?utf-16le?B?QQAAAEIA?=", "A\357\277\275B", "A\357\277\275B" },
+		{ "=?utf-8?Q?=00=00?= =?utf-8?Q?B=00?=",
+		  "\357\277\275\357\277\275B\357\277\275", "\357\277\275\357\277\275B\357\277\275" },
 		{ "=?utf-8?Q?bad =?utf-8?Q?ok?=", "=?utf-8?Q?bad ok", "=?utf-8?Q?bad ok" },
 		{ "=?utf-8?Q?lost=?utf-8?B?QQ==?=", "=?utf-8?Q?lostA", "lost=?utf-8?B?QQ=" },
 		{ "=?utf-8?X?lost =?utf-8?Q?ok?=", "=?utf-8?X?lost ok", "=?utf-8?X?lost ok" },
@@ -1415,6 +1422,29 @@ test_rfc2047_token_recovery (void)
 					g_mime_utils_header_decode_text (options, input);
 				check (!strcmp (decoded, expected), "every encoded-word truncation stays within its buffer");
 				g_free (decoded);
+				if (!phrase) {
+					char *wire = g_strconcat ("Subject:", input, NULL);
+					GMimeStream *stream = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+					GError *error = NULL;
+					GMimeHeaderList *headers = g_mime_header_list_load (options, stream, &error);
+					GMimeHeader *header;
+
+					g_assert_no_error (error);
+					g_assert_nonnull (headers);
+					header = g_mime_header_list_get_header_at (headers, 0);
+					g_assert_nonnull (header);
+					check (g_bytes_get_size (header->raw_value) == n &&
+					       !strcmp (g_mime_header_get_value (header), expected),
+					       "parsed raw byte spans decode every truncation without a NUL terminator");
+					decoded = g_mime_header_get_value_with_charset (header, "utf-8", &error);
+					g_assert_no_error (error);
+					check (!g_strcmp0 (decoded, expected),
+					       "checked header decoding uses the same exact byte span");
+					g_free (decoded);
+					g_object_unref (headers);
+					g_object_unref (stream);
+					g_free (wire);
+				}
 				g_free (input);
 			}
 		}
@@ -1644,21 +1674,21 @@ test_message_id_parsing (void)
 	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 	g_mime_header_list_set (headers, "Message-Id", "initial@host", NULL);
 	header = g_mime_header_list_get_header (headers, "Message-Id");
-	g_mime_header_set_raw_value (header, " <local@@example.com>\n");
+	testsuite_header_set_raw_text (header, " <local@@example.com>\n");
 	check (!g_strcmp0 (g_mime_message_get_message_id (message), "local@example.com"),
 	       "message-id recovery updates the owning message");
-	check (!strcmp (g_mime_header_get_raw_value (header), " <local@@example.com>\n"),
+	check (!strcmp (testsuite_header_raw_text (header), " <local@@example.com>\n"),
 	       "message-id recovery preserves the original raw header");
-	g_mime_header_set_raw_value (header, " <incomplete\n");
+	testsuite_header_set_raw_text (header, " <incomplete\n");
 	check (g_mime_message_get_message_id (message) == NULL, "malformed message ids clear the cached message id");
 
 	headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
 	g_mime_header_list_set (headers, "Content-Id", "initial@host", NULL);
 	header = g_mime_header_list_get_header (headers, "Content-Id");
-	g_mime_header_set_raw_value (header, " <[local@example.com]>\n");
+	testsuite_header_set_raw_text (header, " <[local@example.com]>\n");
 	check (!g_strcmp0 (g_mime_entity_get_content_id (GMIME_ENTITY (part)), "[local@example.com]"),
 	       "content-id parsing preserves tolerated Exchange brackets");
-	g_mime_header_set_raw_value (header, " <incomplete\n");
+	testsuite_header_set_raw_text (header, " <incomplete\n");
 	check (g_mime_entity_get_content_id (GMIME_ENTITY (part)) == NULL,
 	       "malformed content ids clear the cached content id");
 	g_object_unref (part);
@@ -1777,16 +1807,16 @@ test_message_id_assignment (void)
 
 	headers = g_mime_entity_get_header_list (entity);
 	header = g_mime_header_list_get_header (headers, "Message-Id");
-	g_mime_header_set_raw_value (header, " <local@@host> (original)\n");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	testsuite_header_set_raw_text (header, " <local@@host> (original)\n");
+	raw = g_strdup (testsuite_header_raw_text (header));
 	g_mime_message_set_message_id (message, g_mime_message_get_message_id (message));
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "unchanged message id preserves raw header");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "unchanged message id preserves raw header");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id != NULL*");
 	g_mime_message_set_message_id (message, "<invalid");
 	g_test_assert_expected_messages ();
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "invalid message id preserves raw header");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "invalid message id preserves raw header");
 	g_free (raw);
-	g_mime_message_set_message_id (message, g_mime_header_get_raw_value (header));
+	g_mime_message_set_message_id (message, testsuite_header_raw_text (header));
 	check (!g_strcmp0 (g_mime_message_get_message_id (message), "local@host"),
 	       "message-id assignment safely consumes an aliased raw header");
 	g_mime_message_set_message_id (message, g_mime_message_get_message_id (message) + 1);
@@ -1800,16 +1830,16 @@ test_message_id_assignment (void)
 
 	headers = g_mime_entity_get_header_list (content);
 	header = g_mime_header_list_get_header (headers, "Content-Id");
-	g_mime_header_set_raw_value (header, " <local@@host> (original)\n");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	testsuite_header_set_raw_text (header, " <local@@host> (original)\n");
+	raw = g_strdup (testsuite_header_raw_text (header));
 	g_mime_entity_set_content_id (content, g_mime_entity_get_content_id (content));
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "unchanged content id preserves raw header");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "unchanged content id preserves raw header");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id != NULL*");
 	g_mime_entity_set_content_id (content, "<invalid");
 	g_test_assert_expected_messages ();
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "invalid content id preserves raw header");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "invalid content id preserves raw header");
 	g_free (raw);
-	g_mime_entity_set_content_id (content, g_mime_header_get_raw_value (header));
+	g_mime_entity_set_content_id (content, testsuite_header_raw_text (header));
 	check (!g_strcmp0 (g_mime_entity_get_content_id (content), "local@host"),
 	       "content-id assignment safely consumes an aliased raw header");
 	g_mime_entity_set_content_id (content, g_mime_entity_get_content_id (content) + 1);
@@ -1869,21 +1899,21 @@ test_message_reply_ids (void)
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		g_mime_header_list_set (headers, "In-Reply-To", "", NULL);
 		header = g_mime_header_list_get_header (headers, "In-Reply-To");
-		g_mime_header_set_raw_value (header, cases[i].raw);
+		testsuite_header_set_raw_text (header, cases[i].raw);
 		check (!g_strcmp0 (g_mime_message_get_in_reply_to (message), cases[i].reply),
 		       "in-reply-to recovers the first reference rather than a bare addr-spec");
-		check (!strcmp (g_mime_header_get_raw_value (header), cases[i].raw),
+		check (!strcmp (testsuite_header_raw_text (header), cases[i].raw),
 		       "in-reply-to recovery preserves raw header bytes");
 		g_mime_header_list_set (headers, "Resent-Message-Id", "", NULL);
 		header = g_mime_header_list_get_header (headers, "Resent-Message-Id");
-		g_mime_header_set_raw_value (header, cases[i].raw);
+		testsuite_header_set_raw_text (header, cases[i].raw);
 		testsuite_check ("resent-message-id uses tolerant single-ID parsing [%u]", i);
 		if (!g_strcmp0 (g_mime_message_get_resent_message_id (message), cases[i].resent))
 			testsuite_check_passed ();
 		else
 			testsuite_check_failed ("actual=\"%s\", expected=\"%s\"",
 					       g_mime_message_get_resent_message_id (message), cases[i].resent);
-		check (!strcmp (g_mime_header_get_raw_value (header), cases[i].raw),
+		check (!strcmp (testsuite_header_raw_text (header), cases[i].raw),
 		       "resent-message-id recovery preserves raw header bytes");
 	}
 
@@ -1892,19 +1922,19 @@ test_message_reply_ids (void)
 		check (properties[j].get (message) == NULL, "clearing headers resets message reply IDs");
 		properties[j].set (message, "<local@@host>");
 		header = g_mime_header_list_get_header (headers, properties[j].name);
-		g_mime_header_set_raw_value (header, " <local@@host> (original)\n");
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		testsuite_header_set_raw_text (header, " <local@@host> (original)\n");
+		raw = g_strdup (testsuite_header_raw_text (header));
 		properties[j].set (message, properties[j].get (message));
-		check (!strcmp (g_mime_header_get_raw_value (header), raw),
+		check (!strcmp (testsuite_header_raw_text (header), raw),
 		       "exact reply ID reassignment preserves the raw header");
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id != NULL*");
 		properties[j].set (message, "<incomplete");
 		g_test_assert_expected_messages ();
-		check (!strcmp (g_mime_header_get_raw_value (header), raw) &&
+		check (!strcmp (testsuite_header_raw_text (header), raw) &&
 		       !g_strcmp0 (properties[j].get (message), "local@host"),
 		       "invalid reply ID assignment preserves the cache and raw header");
 		g_free (raw);
-		properties[j].set (message, g_mime_header_get_raw_value (header));
+		properties[j].set (message, testsuite_header_raw_text (header));
 		check (!g_strcmp0 (properties[j].get (message), "local@host"),
 		       "reply ID assignment safely consumes an aliased raw header");
 		properties[j].set (message, properties[j].get (message) + 1);
@@ -1912,13 +1942,13 @@ test_message_reply_ids (void)
 		       "reply ID assignment safely consumes an aliased cached substring");
 		g_mime_header_list_append (headers, properties[j].name, "<duplicate@host>", NULL);
 		duplicate = g_mime_header_list_get_header_at (headers, 1);
-		g_mime_header_set_raw_value (duplicate, " <changed@host>\n");
+		testsuite_header_set_raw_text (duplicate, " <changed@host>\n");
 		check (!g_strcmp0 (properties[j].get (message), "ocal@host"),
 		       "appending or changing a duplicate does not override the first reply ID");
-		g_mime_header_set_raw_value (header, " <incomplete\n");
+		testsuite_header_set_raw_text (header, " <incomplete\n");
 		check (properties[j].get (message) == NULL,
 		       "a malformed first reply ID does not fall back to a later header");
-		g_mime_header_set_raw_value (header, " <ocal@host>\n");
+		testsuite_header_set_raw_text (header, " <ocal@host>\n");
 		g_mime_header_list_insert (headers, 0, properties[j].name, "<inserted@host>", NULL);
 		check (!g_strcmp0 (properties[j].get (message), "inserted@host"),
 		       "inserting an earlier header changes the cached reply ID");
@@ -1934,12 +1964,12 @@ test_message_reply_ids (void)
 		       "replacing a header updates the cached reply ID");
 		g_mime_header_list_add (headers, replacement);
 		g_mime_header_list_remove_at (headers, 0);
-		g_mime_header_set_raw_value (replacement, " <shared@host>\n");
+		testsuite_header_set_raw_text (replacement, " <shared@host>\n");
 		check (!g_strcmp0 (properties[j].get (message), "shared@host"),
 		       "a repeated header instance remains connected after removing its first occurrence");
 		g_mime_header_list_remove_all (headers, properties[j].name);
 		check (properties[j].get (message) == NULL, "removing all reply ID headers clears the cache");
-		g_mime_header_set_raw_value (replacement, " <detached@host>\n");
+		testsuite_header_set_raw_text (replacement, " <detached@host>\n");
 		check (properties[j].get (message) == NULL, "detached headers no longer change reply IDs");
 		g_object_unref (replacement);
 	}
@@ -2074,29 +2104,29 @@ test_message_references (void)
 
 	g_mime_header_list_append (headers, "References", "noise <> <first@@host> <second@host>", NULL);
 	header = g_mime_header_list_get_header (headers, "References");
-	g_mime_header_set_raw_value (header, " noise <> <first@@host> (original) <second@host>\n");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	testsuite_header_set_raw_text (header, " noise <> <first@@host> (original) <second@host>\n");
+	raw = g_strdup (testsuite_header_raw_text (header));
 	check (g_mime_message_get_references (message) == refs &&
 	       g_mime_message_id_list_length (refs) == 2 &&
 	       !g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "first@host"),
 	       "raw References edits populate the persistent list");
 	g_mime_message_id_list_set_message_id (refs, 0, "first@host");
 	g_mime_message_id_list_set_message_id (refs, 0, "<first@@host>");
-	check (!strcmp (g_mime_header_get_raw_value (header), raw),
+	check (!strcmp (testsuite_header_raw_text (header), raw),
 	       "exact and normalized reference reassignment preserve the raw header");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id != NULL*");
 	g_mime_message_id_list_add_range (refs, invalid, G_N_ELEMENTS (invalid));
 	g_test_assert_expected_messages ();
 	check (g_mime_message_id_list_length (refs) == 2 &&
-	       !strcmp (g_mime_header_get_raw_value (header), raw),
+	       !strcmp (testsuite_header_raw_text (header), raw),
 	       "failed bulk reference validation preserves both list and raw header");
 	g_free (raw);
 	g_mime_header_list_append (headers, "references", "<duplicate@host>", NULL);
 	duplicate = g_mime_header_list_get_header_at (headers, 1);
-	g_mime_header_set_raw_value (duplicate, " <edited@host>\n");
+	testsuite_header_set_raw_text (duplicate, " <edited@host>\n");
 	check (g_mime_message_id_list_length (refs) == 2,
 	       "later References headers do not override the first");
-	g_mime_header_set_raw_value (header, " <incomplete\n");
+	testsuite_header_set_raw_text (header, " <incomplete\n");
 	check (g_mime_message_id_list_length (refs) == 0,
 	       "a malformed first References header does not fall back to a duplicate");
 	g_mime_header_list_remove_at (headers, 0);
@@ -2112,7 +2142,7 @@ test_message_references (void)
 	       "replacing References refreshes the list");
 	g_mime_header_list_add (headers, replacement);
 	g_mime_header_list_remove_at (headers, 0);
-	g_mime_header_set_raw_value (replacement, " <shared@host>\n");
+	testsuite_header_set_raw_text (replacement, " <shared@host>\n");
 	check (!g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "shared@host"),
 	       "repeated References header instances retain owner notifications");
 	g_mime_header_list_append (headers, "References", "<duplicate@host>", NULL);
@@ -2128,7 +2158,7 @@ test_message_references (void)
 	g_object_unref (clone);
 	g_mime_message_id_list_clear (refs);
 	check (!g_mime_header_list_contains (headers, "References"), "clearing references removes all headers");
-	g_mime_header_set_raw_value (replacement, " <detached@host>\n");
+	testsuite_header_set_raw_text (replacement, " <detached@host>\n");
 	check (g_mime_message_id_list_length (refs) == 0, "detached References headers no longer update the list");
 	g_object_unref (replacement);
 	g_mime_header_list_append (headers, "References", "<incomplete", NULL);
@@ -2207,7 +2237,7 @@ test_message_references_folding (void)
 			expected = g_strdup_printf (" <%s>%s<%s> <%s>%s", ids[0], separator, ids[1], ids[2], newline);
 		else
 			expected = g_strdup_printf (" <%s>%s<%s>%s", ids[0], separator, ids[1], newline);
-		actual = g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "References"));
+		actual = testsuite_header_raw_text (g_mime_header_list_get_header (headers, "References"));
 		testsuite_check ("References mutation folding boundary [%u]", i);
 		if (!strcmp (actual, expected))
 			testsuite_check_passed ();
@@ -2321,7 +2351,7 @@ test_message_priorities (void)
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		for (type = 0; type < G_N_ELEMENTS (names); type++) {
 			header = g_mime_header_list_get_header (headers, names[type]);
-			g_mime_header_set_raw_value (header, cases[i].raw);
+			testsuite_header_set_raw_text (header, cases[i].raw);
 		}
 		testsuite_check ("message priority parsing [%u]", i);
 		if (g_mime_message_get_importance (message) == cases[i].importance &&
@@ -2346,7 +2376,7 @@ test_message_priorities (void)
 			       "priority setters write canonical tokens and numeric labels");
 		}
 		header = g_mime_header_list_get_header (headers, names[type]);
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		raw = g_strdup (testsuite_header_raw_text (header));
 		for (i = 0; i < 3; i++) {
 			int invalid = i == 0 ? -1 : (i == 1 ? last + 1 : G_MAXINT);
 			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*assertion*failed*");
@@ -2354,19 +2384,19 @@ test_message_priorities (void)
 			g_test_assert_expected_messages ();
 		}
 		check (message_priority_get (message, type) == last &&
-		       !strcmp (g_mime_header_get_raw_value (header), raw),
+		       !strcmp (testsuite_header_raw_text (header), raw),
 		       "invalid priority enum values preserve cache and raw header");
 		g_free (raw);
-		g_mime_header_set_raw_value (header, original[type]);
+		testsuite_header_set_raw_text (header, original[type]);
 		g_mime_header_list_append (headers, names[type], values[type][low[type] - first], NULL);
 		duplicate = g_mime_header_list_get_header_at (headers, 1);
 		check (message_priority_get (message, type) == high[type], "the first priority header wins");
-		g_mime_header_set_raw_value (duplicate, " unknown\n");
+		testsuite_header_set_raw_text (duplicate, " unknown\n");
 		message_priority_set (message, type, high[type]);
 		check (g_mime_header_list_get_count (headers) == 2 &&
-		       !strcmp (g_mime_header_get_raw_value (header), original[type]),
+		       !strcmp (testsuite_header_raw_text (header), original[type]),
 		       "equal priority assignments preserve raw headers and duplicates");
-		g_mime_header_set_raw_value (header, " unknown\n");
+		testsuite_header_set_raw_text (header, " unknown\n");
 		g_mime_header_set_value (duplicate, NULL, values[type][low[type] - first], NULL);
 		check (message_priority_get (message, type) == normal[type],
 		       "an unknown first priority header does not fall back to a duplicate");
@@ -2379,7 +2409,7 @@ test_message_priorities (void)
 		check (message_priority_get (message, type) == normal[type], "replacement refreshes priority caches");
 		g_mime_header_list_add (headers, replacement);
 		g_mime_header_list_remove_at (headers, 0);
-		g_mime_header_set_raw_value (replacement, original[type]);
+		testsuite_header_set_raw_text (replacement, original[type]);
 		check (message_priority_get (message, type) == high[type],
 		       "repeated priority header instances retain owner notifications");
 		g_mime_header_list_append (headers, names[type], "unknown", NULL);
@@ -2388,7 +2418,7 @@ test_message_priorities (void)
 		       g_mime_header_list_get_count (headers) == 1,
 		       "changed priorities replace the first header and remove duplicates");
 		g_mime_header_list_clear (headers);
-		g_mime_header_set_raw_value (replacement, original[type]);
+		testsuite_header_set_raw_text (replacement, original[type]);
 		check (message_priority_get (message, type) == normal[type], "detached priority headers no longer update the message");
 		g_object_unref (replacement);
 	}
@@ -2459,24 +2489,24 @@ test_message_dates (void)
 		g_mime_header_list_append (headers, properties[type].name, "", NULL);
 		header = g_mime_header_list_get_header (headers, properties[type].name);
 		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
-			g_mime_header_set_raw_value (header, cases[i].raw);
+			testsuite_header_set_raw_text (header, cases[i].raw);
 			date = properties[type].get (message);
 			expected = cases[i].expected ? g_date_time_new_from_iso8601 (cases[i].expected, NULL) : NULL;
 			check ((!expected && !date) ||
 			       (expected && date && g_date_time_equal (date, expected) &&
 				g_date_time_get_utc_offset (date) == g_date_time_get_utc_offset (expected)),
 			       "message dates parse raw bytes with shared date recovery and timezone semantics");
-			check (!strcmp (g_mime_header_get_raw_value (header), cases[i].raw),
+			check (!strcmp (testsuite_header_raw_text (header), cases[i].raw),
 			       "date getters do not rewrite raw headers");
 			g_clear_pointer (&expected, g_date_time_unref);
 		}
-		g_mime_header_set_raw_value (header, first);
+		testsuite_header_set_raw_text (header, first);
 		g_mime_header_list_append (headers, properties[type].name, second, NULL);
 		duplicate = g_mime_header_list_get_header_at (headers, 1);
 		date = properties[type].get (message);
 		retained = g_date_time_ref (date);
 		check (g_date_time_get_day_of_month (date) == 28, "the first date header wins over duplicates");
-		g_mime_header_set_raw_value (duplicate, " invalid\n");
+		testsuite_header_set_raw_text (duplicate, " invalid\n");
 		check (properties[type].get (message) != NULL &&
 		       g_date_time_equal (properties[type].get (message), retained),
 		       "later duplicate edits do not override the first date header");
@@ -2487,10 +2517,10 @@ test_message_dates (void)
 		properties[type].set (message, date);
 		properties[type].set (message, alias);
 		check (properties[type].get (message) == date && g_mime_header_list_get_count (headers) == 2 &&
-		       !strcmp (g_mime_header_get_raw_value (header), first),
+		       !strcmp (testsuite_header_raw_text (header), first),
 		       "equal instants and self-assignment preserve date timezone, raw bytes and duplicates");
 		g_date_time_unref (alias);
-		g_mime_header_set_raw_value (header, " invalid\n");
+		testsuite_header_set_raw_text (header, " invalid\n");
 		g_mime_header_set_value (duplicate, NULL, second, NULL);
 		check (properties[type].get (message) == NULL, "an invalid first date does not fall back to duplicates");
 		g_mime_header_list_remove_at (headers, 0);
@@ -2504,7 +2534,7 @@ test_message_dates (void)
 		       g_mime_header_list_get_count (headers) == 1, "date header replacement refreshes the cache");
 		g_mime_header_list_add (headers, replacement);
 		g_mime_header_list_remove_at (headers, 0);
-		g_mime_header_set_raw_value (replacement, first);
+		testsuite_header_set_raw_text (replacement, first);
 		check (g_date_time_get_day_of_month (properties[type].get (message)) == 28,
 		       "repeated date header instances retain owner notifications");
 		g_mime_header_list_append (headers, properties[type].name, second, NULL);
@@ -2520,10 +2550,10 @@ test_message_dates (void)
 		       "date assignments retain timezone and microseconds while writing canonical headers without duplicates");
 		g_free (formatted);
 		changed = g_date_time_add (date, 1);
-		raw = g_strdup (g_mime_header_get_raw_value (replacement));
+		raw = g_strdup (testsuite_header_raw_text (replacement));
 		properties[type].set (message, changed);
 		check (properties[type].get (message) == changed &&
-		       !strcmp (g_mime_header_get_raw_value (replacement), raw),
+		       !strcmp (testsuite_header_raw_text (replacement), raw),
 		       "subsecond date changes update the cache even when formatted seconds are unchanged");
 		g_free (raw);
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*date != NULL*");
@@ -2535,23 +2565,23 @@ test_message_dates (void)
 			date = i ? g_date_time_new (zone, 9999, 12, 31, 23, 59, 59) :
 				g_date_time_new (zone, 1, 1, 1, 0, 0, 0);
 			g_time_zone_unref (zone);
-			raw = g_strdup (g_mime_header_get_raw_value (replacement));
+			raw = g_strdup (testsuite_header_raw_text (replacement));
 			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*utc != NULL*");
 			properties[type].set (message, date);
 			g_test_assert_expected_messages ();
 			check (properties[type].get (message) == changed &&
-			       !strcmp (g_mime_header_get_raw_value (replacement), raw),
+			       !strcmp (testsuite_header_raw_text (replacement), raw),
 			       "unrepresentable UTC date formatting preserves the cache and raw header");
 			g_free (raw);
 			g_date_time_unref (date);
 		}
 		check (properties[1 - type].get (message) == NULL, "Date and Resent-Date assignments are independent");
-		g_mime_header_set_raw_value (replacement, first);
+		testsuite_header_set_raw_text (replacement, first);
 		check (g_date_time_get_microsecond (properties[type].get (message)) == 0,
 		       "raw date edits replace assigned precision with the parsed header value");
 		g_mime_header_list_clear (headers);
 		check (properties[type].get (message) == NULL, "clearing headers resets message dates");
-		g_mime_header_set_raw_value (replacement, second);
+		testsuite_header_set_raw_text (replacement, "Sat, 01 Mar 2025 10:00:00 +0000\n");
 		check (properties[type].get (message) == NULL, "detached date headers no longer update the message");
 		for (i = 0; i < 2; i++) {
 			date = i ? g_date_time_new_utc (9999, 12, 31, 23, 59, 59.999999) :
@@ -2645,25 +2675,25 @@ test_message_resent_addresses (void)
 		g_mime_internet_address_list_clear (list);
 		g_mime_header_list_append (headers, properties[type].name, "", NULL);
 		first = g_object_ref (g_mime_header_list_get_header_at (headers, 0));
-		g_mime_header_set_raw_value (first, original);
+		testsuite_header_set_raw_text (first, original);
 		name = g_ascii_strdown (properties[type].name, -1);
 		g_mime_header_list_append (headers, name, "Second <second@example.com>", NULL);
 		g_free (name);
 		text = g_mime_internet_address_list_to_string (list, NULL, FALSE);
 		check (g_mime_internet_address_list_length (list) == 2 &&
 		       !strcmp (text, "First <first@example.com>, Second <second@example.com>") &&
-		       !strcmp (g_mime_header_get_raw_value (first), original),
+		       !strcmp (testsuite_header_raw_text (first), original),
 		       "resent address parsing combines duplicate headers without rewriting their raw bytes");
 		g_free (text);
 		g_mime_header_list_insert (headers, 0, properties[type].name, "Before <before@example.com>", NULL);
-		g_mime_header_set_raw_value (first, " Updated <updated@example.com>\n");
+		testsuite_header_set_raw_text (first, " Updated <updated@example.com>\n");
 		text = g_mime_internet_address_list_to_string (list, NULL, FALSE);
 		check (properties[type].get (message) == list &&
 		       !strcmp (text, "Before <before@example.com>, Updated <updated@example.com>, Second <second@example.com>"),
 		       "earlier resent header insertion and editing refresh the same list in header order");
 		g_free (text);
 		g_mime_header_list_remove_header (headers, first);
-		g_mime_header_set_raw_value (first, " Detached <detached@example.com>\n");
+		testsuite_header_set_raw_text (first, " Detached <detached@example.com>\n");
 		text = g_mime_internet_address_list_to_string (list, NULL, FALSE);
 		check (!strcmp (text, "Before <before@example.com>, Second <second@example.com>"),
 		       "resent header removal refreshes the list and detaches removed instances");
@@ -2678,7 +2708,7 @@ test_message_resent_addresses (void)
 		unrelated = g_mime_header_new ("X-Unrelated", "preserved", NULL);
 		g_mime_header_list_set_header_at (headers, 0, unrelated);
 		g_object_unref (unrelated);
-		g_mime_header_set_raw_value (replacement, " Group: Member <member@example.com>;\n");
+		testsuite_header_set_raw_text (replacement, " Group: Member <member@example.com>;\n");
 		check (g_mime_internet_address_list_length (list) == 1,
 		       "indexed replacement and repeated-instance removal preserve resent header notifications");
 		g_mime_header_list_add (headers, replacement);
@@ -2739,7 +2769,7 @@ test_message_resent_addresses (void)
 		       "MIME parsing applies message parser options to each resent address header");
 		g_free (text);
 		headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
-		g_mime_header_set_raw_value (g_mime_header_list_get_header_at (headers, 0), " another-local\n");
+		testsuite_header_set_raw_text (g_mime_header_list_get_header_at (headers, 0), " another-local\n");
 		check (g_mime_internet_address_list_length (list) == 1,
 		       "resent raw-header edits retain message parser options");
 		g_mime_parser_options_free (options);
@@ -2989,8 +3019,8 @@ test_part_content_duration (void)
 		const char *raw;
 		int duration;
 	} cases[] = {
-		{ "", -1 },
-		{ " \r\n\t", -1 },
+		{ "\n", -1 },
+		{ " \r\n\t\n", -1 },
 		{ " 0\r\n", 0 },
 		{ " 000007 \t\r\n", 7 },
 		{ " \t\v\f42\r\n", 42 },
@@ -3032,19 +3062,19 @@ test_part_content_duration (void)
 		       "missing content duration returns -1 without creating headers");
 		g_mime_header_list_append (headers, "Content-Duration", "", NULL);
 		first = g_mime_header_list_get_header_at (headers, 0);
-		g_mime_header_set_raw_value (first, cases[i].raw);
+		testsuite_header_set_raw_text (first, cases[i].raw);
 		g_mime_header_list_append (headers, "content-duration", "99", NULL);
 		testsuite_check ("Content-Duration parsing [%u]", i);
 		if (g_mime_part_get_content_duration (part) == cases[i].duration &&
-		    !strcmp (g_mime_header_get_raw_value (first), cases[i].raw))
+		    !strcmp (testsuite_header_raw_text (first), cases[i].raw))
 			testsuite_check_passed ();
 		else
 			testsuite_check_failed ("unexpected duration or raw-header mutation");
 		g_mime_part_set_content_duration (part, cases[i].duration);
 		check (g_mime_header_list_get_count (headers) == 2 &&
-		       !strcmp (g_mime_header_get_raw_value (first), cases[i].raw),
+		       !strcmp (testsuite_header_raw_text (first), cases[i].raw),
 		       "same cached duration preserves raw spelling and duplicate headers, including invalid values");
-		g_mime_header_set_raw_value (g_mime_header_list_get_header_at (headers, 1), " 100\n");
+		testsuite_header_set_raw_text (g_mime_header_list_get_header_at (headers, 1), " 100\n");
 		g_mime_part_set_content_duration (part, cases[i].duration);
 		check (g_mime_header_list_get_count (headers) == (cases[i].duration < 0 ? 0 : 1) &&
 		       g_mime_part_get_content_duration (part) == cases[i].duration,
@@ -3081,12 +3111,12 @@ test_part_content_duration (void)
 	check (g_mime_part_get_content_duration (part) == 7, "duration getter uses the first duplicate");
 	g_mime_header_list_insert (headers, 0, "Content-Duration", "3", NULL);
 	check (g_mime_part_get_content_duration (part) == 3, "earlier insertion changes the selected duration");
-	g_mime_header_set_raw_value (first, " 8\n");
+	testsuite_header_set_raw_text (first, " 8\n");
 	check (g_mime_part_get_content_duration (part) == 3, "later header edits do not replace the first duration");
 	g_mime_header_list_remove_at (headers, 0);
 	check (g_mime_part_get_content_duration (part) == 8, "removal reparses the surviving first duration");
 	g_mime_header_list_remove_header (headers, first);
-	g_mime_header_set_raw_value (first, " 10\n");
+	testsuite_header_set_raw_text (first, " 10\n");
 	check (g_mime_part_get_content_duration (part) == 9, "removed duration headers detach from their former owner");
 	g_mime_header_list_insert_header (headers, 0, later);
 	check (g_mime_part_get_content_duration (part) == 9, "repeated header instances preserve duration parsing");
@@ -3409,7 +3439,7 @@ test_text_part_formats (void)
 		g_mime_entity_set_content_type (GMIME_ENTITY (part), content_type);
 		headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		raw = g_strdup (testsuite_header_raw_text (header));
 		flags = (g_mime_text_part_is_plain (part) ? PLAIN : 0) |
 			(g_mime_text_part_is_flowed (part) ? FLOWED : 0) |
 			(g_mime_text_part_is_html (part) ? HTML : 0) |
@@ -3418,7 +3448,7 @@ test_text_part_formats (void)
 		check (g_mime_text_part_get_format (part) == cases[i].format && flags == cases[i].flags,
 		       "text-part classification matches the current MIME type and format parameter");
 		check (g_mime_entity_get_content_type (GMIME_ENTITY (part)) == content_type &&
-		       !g_strcmp0 (raw, g_mime_header_get_raw_value (header)),
+		       !g_strcmp0 (raw, testsuite_header_raw_text (header)),
 		       "text-part classification does not modify Content-Type or raw headers");
 		g_free (raw);
 		g_object_unref (content_type);
@@ -3590,11 +3620,11 @@ test_multipart_text_selection (void)
 	g_assert_no_error (error);
 	g_assert_true (GMIME_IS_MULTIPART_ALTERNATIVE (entity));
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Type");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	body = GMIME_TEXT_PART (g_mime_multipart_get_part (GMIME_MULTIPART (entity), 1));
 	check_multipart_text_value (GMIME_MULTIPART (entity), GMIME_TEXT_FORMAT_PLAIN, body,
 				   "parser registers specialized alternatives case-insensitively");
-	check (!g_strcmp0 (raw, g_mime_header_get_raw_value (header)), "selection preserves parsed raw headers");
+	check (!g_strcmp0 (raw, testsuite_header_raw_text (header)), "selection preserves parsed raw headers");
 	g_free (raw);
 	weak = body;
 	g_object_add_weak_pointer (G_OBJECT (body), (gpointer *) &weak);
@@ -3690,12 +3720,12 @@ test_multipart_related (void)
 		if (cases[i].type)
 			g_mime_content_type_set_parameter (content_type, "type", cases[i].type);
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (related)), "Content-Type");
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		raw = g_strdup (testsuite_header_raw_text (header));
 		check (g_mime_multipart_related_get_root (related) == g_mime_multipart_get_part (multipart, cases[i].index),
 		       "related root selection follows start precedence, first references, exact IDs, type fallback and default first child");
 		check_multipart_text_value (multipart, GMIME_TEXT_FORMAT_HTML, cases[i].index == 1 ? html : NULL,
 					   "related text-body lookup examines only its root, not later sibling resources");
-		check (!g_strcmp0 (raw, g_mime_header_get_raw_value (header)), "root and text selection preserve raw Content-Type headers");
+		check (!g_strcmp0 (raw, testsuite_header_raw_text (header)), "root and text selection preserve raw Content-Type headers");
 		g_free (raw);
 	}
 	g_mime_entity_set_content_id (GMIME_ENTITY (html), "/root@host");
@@ -4009,13 +4039,13 @@ test_multipart_related_resources (void)
 		g_mime_part_set_content (part, content);
 		g_mime_multipart_add (GMIME_MULTIPART (related), entity);
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Type");
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		raw = g_strdup (testsuite_header_raw_text (header));
 		g_mime_stream_seek (source, 0, GMIME_STREAM_SEEK_END);
 		reader = g_mime_multipart_related_open (related, "cid:root@host", &mime_type, &charset, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (reader);
 		check (!strcmp (mime_type, "image/png") && !strcmp (charset, "utf-8") &&
-		       !strcmp (raw, g_mime_header_get_raw_value (header)), "resource opening returns allocated metadata without rewriting headers");
+		       !strcmp (raw, testsuite_header_raw_text (header)), "resource opening returns allocated metadata without rewriting headers");
 		g_free (raw);
 		g_object_unref (content);
 		g_object_unref (source);
@@ -4096,7 +4126,7 @@ test_entity_content_uris (void)
 				check (properties[j].get (entity) == NULL, "missing URI headers return NULL");
 				g_mime_header_list_append (headers, properties[j].name, cases[k].value, NULL);
 				first = g_mime_header_list_get_header_at (headers, 0);
-				raw = g_strdup (g_mime_header_get_raw_value (first));
+				raw = g_strdup (testsuite_header_raw_text (first));
 				expected = cases[k].valid && (!properties[j].absolute || cases[k].absolute) ? cases[k].value : NULL;
 				check (!g_strcmp0 (properties[j].get (entity), expected),
 				       "URI getters validate absolute/relative references on every entity class");
@@ -4105,31 +4135,31 @@ test_entity_content_uris (void)
 				properties[j].set (entity, cases[k].value);
 				if (!expected)
 					g_test_assert_expected_messages ();
-				check (!g_strcmp0 (g_mime_header_get_raw_value (first), raw),
+				check (!g_strcmp0 (testsuite_header_raw_text (first), raw),
 				       "URI reads, cached assignments, and rejected setters preserve raw header spelling");
 				g_free (raw);
 			}
 			g_mime_header_list_clear (headers);
 			g_mime_header_list_append (headers, properties[j].name, "https://host/first", NULL);
 			first = g_object_ref (g_mime_header_list_get_header_at (headers, 0));
-			g_mime_header_set_raw_value (first, " \thttps://host/a%2fb?q=x#fragment \t\n");
+			testsuite_header_set_raw_text (first, " \thttps://host/a%2fb?q=x#fragment \t\n");
 			g_mime_header_list_append (headers, properties[j].name, "https://host/later", NULL);
 			later = g_mime_header_list_get_header_at (headers, 1);
 			check (!g_strcmp0 (properties[j].get (entity), uri), "URI getter trims and selects the first duplicate");
-			raw = g_strdup (g_mime_header_get_raw_value (first));
+			raw = g_strdup (testsuite_header_raw_text (first));
 			properties[j].set (entity, uri);
 			check (g_mime_header_list_get_count (headers) == 2 &&
-			       !g_strcmp0 (g_mime_header_get_raw_value (first), raw),
+			       !g_strcmp0 (testsuite_header_raw_text (first), raw),
 			       "assigning the cached URI preserves raw headers and duplicates");
 			g_free (raw);
-			g_mime_header_set_raw_value (later, " https://host/changed\n");
+			testsuite_header_set_raw_text (later, " https://host/changed\n");
 			check (!g_strcmp0 (properties[j].get (entity), uri), "later duplicate edits still select the first URI");
 			g_mime_header_list_insert (headers, 0, properties[j].name, "https://host/inserted", NULL);
 			check (!g_strcmp0 (properties[j].get (entity), "https://host/inserted"), "earlier insertion invalidates URI caches");
 			g_mime_header_list_remove_at (headers, 0);
 			g_mime_header_list_remove_header (headers, first);
 			check (!g_strcmp0 (properties[j].get (entity), "https://host/changed"), "URI removal exposes the surviving duplicate");
-			g_mime_header_set_raw_value (first, " https://host/detached\n");
+			testsuite_header_set_raw_text (first, " https://host/detached\n");
 			check (!g_strcmp0 (properties[j].get (entity), "https://host/changed"), "detached headers no longer affect URI caches");
 			replacement = g_mime_header_new (properties[j].name, "https://host/replaced", NULL);
 			g_mime_header_list_set_header_at (headers, 0, replacement);
@@ -4247,11 +4277,11 @@ test_entity_attachments (void)
 		       !strcmp (g_mime_entity_get_content_disposition_parameter (entities[i], "filename"), "file.txt"),
 		       "changing attachment status retains the disposition instance and parameters");
 		first = g_mime_header_list_get_header (headers, "Content-Disposition");
-		g_mime_header_set_raw_value (first, raw);
+		testsuite_header_set_raw_text (first, raw);
 		g_mime_header_list_append (headers, "Content-Disposition", "attachment; filename=file.txt", NULL);
 		g_mime_entity_set_is_attachment (entities[i], TRUE);
 		check (g_mime_entity_is_attachment (entities[i]) &&
-		       !strcmp (g_mime_header_get_raw_value (first), raw) &&
+		       !strcmp (testsuite_header_raw_text (first), raw) &&
 		       g_mime_header_list_last_index_of (headers, "Content-Disposition") !=
 		       g_mime_header_list_index_of (headers, "Content-Disposition"),
 		       "already-attached entities preserve raw capitalization, comments and duplicate headers");
@@ -4712,7 +4742,7 @@ test_header_construction (void)
 		header = g_mime_header_new (cases[i].name, cases[i].value, NULL);
 		g_assert_nonnull (header);
 		check (!strcmp (g_mime_header_get_name (header), cases[i].name) &&
-		       !strcmp (g_mime_header_get_raw_name (header), cases[i].name),
+		       !strcmp (testsuite_header_raw_name (header), cases[i].name),
 		       "standalone construction preserves field-name case");
 		check (!strcmp (g_mime_header_get_value (header), cases[i].normalized),
 		       "standalone construction trims and unfolds the cached value");
@@ -4738,7 +4768,7 @@ test_header_construction (void)
 		g_free (text);
 		header = g_mime_header_new ("X-Test", whitespace[i], NULL);
 		check (!strcmp (g_mime_header_get_value (header), ""), "whitespace-only values construct an empty header");
-		check (g_mime_header_get_raw_value (header) != NULL, "empty headers have a formatted transport value");
+		check (testsuite_header_raw_text (header) != NULL, "empty headers have a formatted transport value");
 		g_object_unref (header);
 	}
 
@@ -4755,7 +4785,7 @@ test_header_construction (void)
 	       "customizing one standalone header does not change another header's options");
 	clone = g_mime_header_clone (header);
 	g_object_unref (header);
-	g_mime_header_set_raw_value (clone, " \317\360\350\342\345\362\r\n");
+	testsuite_header_set_raw_text (clone, " \317\360\350\342\345\362\r\n");
 	check (!strcmp (g_mime_header_get_value (clone), "\320\237\321\200\320\270\320\262\320\265\321\202"),
 	       "standalone clones retain parser options after their source is destroyed");
 	g_mime_header_set_value (other, NULL, "changed", NULL);
@@ -4767,11 +4797,11 @@ test_header_construction (void)
 	/* GLib can report FAILED on the first unknown-converter lookup and
 	 * NO_CONVERSION afterward. Verify fallback bytes, not that warning. */
 	other = g_mime_header_new ("Subject", "caf\303\251", "x-unknown-charset");
-	check (!strcmp (g_mime_header_get_raw_value (header), g_mime_header_get_raw_value (other)),
+	check (!strcmp (testsuite_header_raw_text (header), testsuite_header_raw_text (other)),
 	       "standalone construction falls back to UTF-8 for an unknown charset");
 	g_object_unref (other);
 	other = g_mime_header_new ("Subject", "caf\303\251", "us-ascii");
-	check (!strcmp (g_mime_header_get_raw_value (header), g_mime_header_get_raw_value (other)),
+	check (!strcmp (testsuite_header_raw_text (header), testsuite_header_raw_text (other)),
 	       "standalone construction falls back to UTF-8 for an unrepresentable charset");
 	g_object_unref (other);
 	g_object_unref (header);
@@ -4840,8 +4870,8 @@ test_checked_header_assignment (void)
 	GMimePart *part;
 	GMimeStream *source;
 	GError *error = NULL;
-	GBytes *raw_bytes;
-	const char *value, *raw, *charset;
+	GBytes *raw_bytes, *raw;
+	const char *value, *charset;
 	char *wire, *expected;
 	guint i, changes;
 
@@ -4857,14 +4887,14 @@ test_checked_header_assignment (void)
 		check (g_mime_header_set_value_full (header, options, cases[i].value, NULL, &error),
 		       "checked header assignment succeeds");
 		g_assert_no_error (error);
-		check (!strcmp (g_mime_header_get_raw_value (header), cases[i].raw),
+		check (!strcmp (testsuite_header_raw_text (header), cases[i].raw),
 		       "checked header assignment caches the requested formatting");
 		check (!header->reformat && !header->explicit_raw_value,
 		       "checked header assignment is cached but is not an explicit raw assignment");
 		copy = g_mime_header_clone (header);
 		g_object_unref (header);
 		check (!strcmp (g_mime_header_get_value (copy), cases[i].normalized) &&
-		       !strcmp (g_mime_header_get_raw_value (copy), cases[i].raw),
+		       !strcmp (testsuite_header_raw_text (copy), cases[i].raw),
 		       "checked assignments survive independent cloning");
 		g_object_unref (copy);
 	}
@@ -4876,7 +4906,7 @@ test_checked_header_assignment (void)
 		g_clear_error (&error);
 		header = g_mime_header_new (invalid[i].name,
 					   !strcmp (invalid[i].name, "Content-Type") ? "text/plain" : "attachment", NULL);
-		g_mime_header_set_raw_value (header, " explicit raw\r\n");
+		testsuite_header_set_raw_text (header, " explicit raw\r\n");
 		value = g_mime_header_get_value (header);
 		raw = header->raw_value;
 		charset = header->charset;
@@ -4941,7 +4971,7 @@ test_checked_header_assignment (void)
 	check (g_mime_header_set_value_full (header, options, "\346\227\245\346\234\254", "us-ascii", &error),
 	       "supported charsets retain the existing lossless UTF-8 fallback");
 	g_assert_no_error (error);
-	check (strstr (header->raw_value, "=?utf-8?") != NULL, "unrepresentable header text uses UTF-8");
+	check (strstr (testsuite_header_raw_text (header), "=?utf-8?") != NULL, "unrepresentable header text uses UTF-8");
 	g_object_unref (header);
 
 	source = g_mime_stream_mem_new_with_buffer (binary, sizeof (binary) - 1);
@@ -4950,13 +4980,13 @@ test_checked_header_assignment (void)
 	g_assert_nonnull (headers);
 	g_object_unref (source);
 	header = g_mime_header_list_get_header_at (headers, 0);
-	raw_bytes = header->raw_value_bytes;
+	raw_bytes = header->raw_value;
 	check (!g_mime_header_set_value_full (header, options, "changed", "x-no-such-charset", &error) &&
-	       error != NULL && header->raw_value_bytes == raw_bytes && header->offset == 0,
+	       error != NULL && header->raw_value == raw_bytes && header->offset == 0,
 	       "failed checked assignment retains binary raw bytes and parsed offsets");
 	g_clear_error (&error);
 	check (g_mime_header_set_value_full (header, options, "changed", NULL, &error) &&
-	       header->raw_value_bytes == NULL && header->offset == 0,
+	       header->raw_value != raw_bytes && header->raw_value != NULL && header->offset == 0,
 	       "successful checked assignment replaces binary raw bytes without changing the offset");
 	g_assert_no_error (error);
 	wire = header_wire_string (header, options);
@@ -5003,9 +5033,9 @@ test_checked_header_assignment (void)
 	header = g_mime_header_new_full ("Subject", "value", NULL, &error);
 	g_assert_nonnull (header);
 	check (g_mime_header_set_value_full (header, options, "one\r\n\ttwo", NULL, &error) &&
-	       !strcmp (header->raw_value, " one\ttwo\r\n"), "checked assignment honors DOS newline formatting");
+	       !strcmp (testsuite_header_raw_text (header), " one\ttwo\r\n"), "checked assignment honors DOS newline formatting");
 	g_assert_no_error (error);
-	expected = g_strdup (header->raw_value);
+	expected = g_strdup (testsuite_header_raw_text (header));
 	wire = header_wire_string (header, NULL);
 	check (g_str_has_suffix (wire, expected), "checked assignments cache their chosen formatting until reassigned");
 	g_free (expected);
@@ -5081,7 +5111,7 @@ test_checked_header_list_values (void)
 	GMimePart *part;
 	GMimeStream *stream;
 	GError *error = NULL;
-	const char *raw[5];
+	GBytes *raw[5];
 	char *before, *after;
 	guint operation, i, j, changes, shared_changes, empty;
 	int index, next;
@@ -5272,7 +5302,7 @@ test_named_header_list_values (void)
 	GMimeStream *stream;
 	GError *error = NULL;
 	GBytes *raw_field, *raw_value;
-	const char *name, *raw, *value, *charset;
+	const char *value, *charset;
 	char *before, *after, *source;
 	guint i, changes, shared_changes, missing;
 	gint64 offset;
@@ -5302,10 +5332,8 @@ test_named_header_list_values (void)
 	later = g_mime_header_list_get_header_at (headers, 1);
 	keep = g_mime_header_list_get_header_at (headers, 2);
 	check (header->value == NULL, "named lookup starts with a lazy decoded cache");
-	raw_field = header->raw_field_bytes;
-	raw_value = header->raw_value_bytes;
-	raw = header->raw_value;
-	name = header->raw_name;
+	raw_field = header->raw_name;
+	raw_value = header->raw_value;
 	offset = header->offset;
 	options = header->options;
 	changes = 0;
@@ -5314,8 +5342,8 @@ test_named_header_list_values (void)
 	check (!g_strcmp0 (value, "caf\303\251\tfirst") && value == header->value &&
 	       g_mime_header_list_get_value (headers, "subject") == value,
 	       "named lookup returns the first header's borrowed decoded cache");
-	check (header->raw_field_bytes == raw_field && header->raw_value_bytes == raw_value &&
-	       header->raw_value == raw && changes == 0 && !headers->has_body_separator,
+	check (header->raw_name == raw_field && header->raw_value == raw_value &&
+	       changes == 0 && !headers->has_body_separator,
 	       "named lookup preserves raw bytes, separator state and notifications");
 	check (g_mime_header_list_set_value_full (headers, later->name, "caf\303\251", "latin1", &error),
 	       "named assignment accepts a lookup name borrowed from a later duplicate");
@@ -5325,7 +5353,8 @@ test_named_header_list_values (void)
 	       g_mime_header_list_get_header_at (headers, 2) == keep &&
 	       g_mime_header_list_get_count (headers) == 3 && !strcmp (g_mime_header_get_value (later), "later"),
 	       "named assignment preserves every object, duplicate and list position");
-	check (header->raw_name == name && header->raw_field_bytes == raw_field && header->raw_value_bytes == NULL &&
+	check (header->raw_name == raw_field && header->raw_value != raw_value &&
+	       header->raw_value != NULL &&
 	       header->offset == offset && header->options == options && !header->reformat &&
 	       !header->explicit_raw_value && changes == 1 && !headers->has_body_separator,
 	       "named assignment preserves source identity and separator state while caching the new formatting");
@@ -5334,12 +5363,12 @@ test_named_header_list_values (void)
 	       "named assignment accepts its own borrowed value and charset");
 	g_assert_no_error (error);
 	formatter = header->formatter;
-	raw = header->raw_value;
+	raw_value = header->raw_value;
 	value = header->value;
 	charset = header->charset;
 	header->formatter = fail_checked_header_format;
 	check (!g_mime_header_list_set_value_full (headers, "Subject", "errno", NULL, &error) &&
-	       g_error_matches (error, GMIME_ERROR, EIO) && header->raw_value == raw &&
+	       g_error_matches (error, GMIME_ERROR, EIO) && header->raw_value == raw_value &&
 	       header->value == value && header->charset == charset && changes == 2,
 	       "named assignment propagates formatter failure without changing the first header or notifying");
 	g_clear_error (&error);
@@ -5375,7 +5404,7 @@ test_named_header_list_values (void)
 			g_object_unref (stream);
 			g_free (source);
 			header = g_mime_header_list_get_header_at (headers, 0);
-			raw_value = header->raw_value_bytes;
+			raw_value = header->raw_value;
 			changes = 0;
 			g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
 			before = g_mime_header_list_to_string (headers, NULL);
@@ -5389,7 +5418,7 @@ test_named_header_list_values (void)
 			after = g_mime_header_list_to_string (headers, NULL);
 			check (!strcmp (before, after) && g_mime_header_list_get_count (headers) == 3 &&
 			       g_mime_header_list_get_header_at (headers, 0) == header && header->value == NULL &&
-			       header->raw_value_bytes == raw_value && !headers->has_body_separator && changes == 0,
+			       header->raw_value == raw_value && !headers->has_body_separator && changes == 0,
 			       "failed named assignment preserves lazy/raw state, duplicates, order, separators and events");
 			g_free (before);
 			g_free (after);
@@ -5404,9 +5433,9 @@ test_named_header_list_values (void)
 	g_object_unref (stream);
 	header = g_mime_header_list_get_header_at (headers, 1);
 	g_assert_nonnull (header);
-	raw_field = header->raw_field_bytes;
+	raw_field = header->raw_name;
 	check (header->invalid && g_mime_header_list_set_value_full (headers, header->name, "new", NULL, &error) &&
-	       header->invalid && header->raw_field_bytes == raw_field,
+	       header->invalid && header->raw_name == raw_field,
 	       "named assignment updates an existing invalid parsed field without repairing its name");
 	g_assert_no_error (error);
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*assertion*failed*");
@@ -5487,10 +5516,10 @@ test_header_charset_value (void)
 		{ " caf\351\r\n", "unicode", "caf\303\251" },
 		{ " =?utf-16le?b?YwBhAGYA6QA=?=\r\n", "windows-1251", "caf\303\251" },
 		{ " \t\r\n", "utf-8", "" },
-		{ " =?utf-8?q?A=00B?=\r\n", "utf-8", NULL },
-		{ " =?iso-8859-1?q?A=00B?=\r\n", "utf-8", NULL },
-		{ " =?x-unknown?q?A=00B?=\r\n", "utf-8", NULL },
-		{ " =?utf-16le?b?QQAAAEIA?=\r\n", "utf-8", NULL }
+		{ " =?utf-8?q?A=00B?=\r\n", "utf-8", "A\357\277\275B" },
+		{ " =?iso-8859-1?q?A=00B?=\r\n", "utf-8", "A\357\277\275B" },
+		{ " =?x-unknown?q?A=00B?=\r\n", "utf-8", "A\357\277\275B" },
+		{ " =?utf-16le?b?QQAAAEIA?=\r\n", "utf-8", "A\357\277\275B" }
 	};
 	static const char nul_wire[] = "Subject: before\0after\r\n\r\n";
 	GMimeParserOptions *options, *original_options;
@@ -5499,7 +5528,7 @@ test_header_charset_value (void)
 	GMimeStream *stream;
 	GError *error = NULL;
 	GBytes *raw_field, *raw_value;
-	const char *cached, *raw, *charset;
+	const char *cached, *charset;
 	char *source, *value, *again, *before, *after;
 	guint i, populated, changes;
 	gint64 offset;
@@ -5521,10 +5550,9 @@ test_header_charset_value (void)
 			if (populated)
 				g_mime_header_get_value (header);
 			cached = header->value;
-			raw = header->raw_value;
 			charset = header->charset;
-			raw_field = header->raw_field_bytes;
-			raw_value = header->raw_value_bytes;
+			raw_field = header->raw_name;
+			raw_value = header->raw_value;
 			offset = header->offset;
 			original_options = header->options;
 			before = g_mime_header_list_to_string (headers, NULL);
@@ -5532,25 +5560,18 @@ test_header_charset_value (void)
 			g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
 			g_mime_event_add (header->changed, count_checked_header_changes, &changes);
 			value = g_mime_header_get_value_with_charset (header, cases[i].charset, &error);
-			if (cases[i].expected) {
-				g_assert_no_error (error);
-				check (!g_strcmp0 (value, cases[i].expected),
-				       "explicit header decoding applies fallback, declared charsets and Unicode unfolding");
-				again = g_mime_header_get_value_with_charset (header, cases[i].charset, &error);
-				check (again != value && again != cached && !g_strcmp0 (again, value),
-				       "explicit header decoding returns an independent owned string on every call");
-				g_free (again);
-			} else {
-				check (value == NULL && g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL),
-				       "explicit header decoding rejects NULs decoded from any encoded-word path");
-				g_clear_error (&error);
-				check (g_mime_header_get_value_with_charset (header, cases[i].charset, NULL) == NULL,
-				       "explicit header decoding reports NUL failure without an error destination");
-			}
+			g_assert_no_error (error);
+			check (!g_strcmp0 (value, cases[i].expected),
+			       "explicit header decoding applies fallback, declared charsets, NUL replacement and Unicode unfolding");
+			again = g_mime_header_get_value_with_charset (header, cases[i].charset, &error);
+			g_assert_no_error (error);
+			check (again != value && again != cached && !g_strcmp0 (again, value),
+			       "explicit header decoding returns an independent owned string on every call");
+			g_free (again);
 			g_free (value);
 			after = g_mime_header_list_to_string (headers, NULL);
-			check (header->value == cached && header->raw_value == raw && header->charset == charset &&
-			       header->raw_field_bytes == raw_field && header->raw_value_bytes == raw_value &&
+			check (header->value == cached && header->charset == charset &&
+			       header->raw_name == raw_field && header->raw_value == raw_value &&
 			       header->offset == offset && header->options == original_options &&
 			       !strcmp (g_mime_parser_options_get_charset_encoding (header->options), "windows-1252") &&
 			       !strcmp (before, after) && changes == 0 && !headers->has_body_separator,
@@ -5567,9 +5588,10 @@ test_header_charset_value (void)
 	g_object_unref (stream);
 	header = g_mime_header_list_get_header_at (headers, 0);
 	value = g_mime_header_get_value_with_charset (header, "utf-8", &error);
-	check (value == NULL && g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL) &&
-	       header->value == NULL, "explicit header decoding rejects literal NUL bytes without caching a prefix");
-	g_clear_error (&error);
+	g_assert_no_error (error);
+	check (!g_strcmp0 (value, "before\357\277\275after") && header->value == NULL,
+	       "explicit header decoding replaces literal NUL bytes without populating the cache");
+	g_free (value);
 	check (g_mime_header_get_value_with_charset (header, "x-no-such-charset", &error) == NULL &&
 	       error && error->domain == G_CONVERT_ERROR && error->code != G_CONVERT_ERROR_EMBEDDED_NUL,
 	       "explicit header decoding validates the charset before inspecting raw bytes");
@@ -5601,7 +5623,7 @@ test_header_charset_value (void)
 	       !strcmp (error->message, "existing error"), "explicit header decoding requires a clear error destination");
 	g_test_assert_expected_messages ();
 	g_clear_error (&error);
-	g_mime_header_set_raw_value (header, " caf\351\r\n");
+	testsuite_header_set_raw_text (header, " caf\351\r\n");
 	clone = g_mime_header_clone (header);
 	g_object_unref (headers);
 	g_mime_parser_options_free (options);
@@ -5611,6 +5633,199 @@ test_header_charset_value (void)
 	g_assert_no_error (error);
 	g_free (value);
 	g_object_unref (clone);
+}
+
+static void
+test_header_raw_bytes (void)
+{
+	static const char source[] = "X-First: first\r\nsUbJeCt \t: initial\r\n\r\n";
+	static const char binary[] = " before\0after\r\n";
+	static const char encoded[] = " =?utf-8?q?caf=C3=A9?=\r\n";
+	static const struct {
+		const char *text, *decoded;
+		gsize length;
+	} cases[] = {
+		{ "\n", "", 1 }, { "\r\n", "", 2 }, { "value\n", "value", 6 },
+		{ " caf\351\r\n", "caf\303\251", 7 },
+		{ binary, "before\357\277\275after", sizeof (binary) - 1 },
+		{ "\0\n", "\357\277\275", 2 },
+		{ " first\r\n\tsecond\n", "first\tsecond", 16 },
+		{ "\0\0A\0\n", "\357\277\275\357\277\275A\357\277\275", 5 },
+		{ " \303\251\0z\n", "\303\251\357\277\275z", 6 },
+		{ " \351\0z\n", "\303\251\357\277\275z", 5 },
+		{ " =?utf-8?q?A=00B?=\n", "A\357\277\275B", sizeof (" =?utf-8?q?A=00B?=\n") - 1 },
+		{ " =?utf-8?b?QQBC?=\n", "A\357\277\275B", sizeof (" =?utf-8?b?QQBC?=\n") - 1 },
+		{ " =?iso-8859-1?q?A=00B?=\n", "A\357\277\275B", sizeof (" =?iso-8859-1?q?A=00B?=\n") - 1 },
+		{ " =?x-unknown?q?A=00B?=\n", "A\357\277\275B", sizeof (" =?x-unknown?q?A=00B?=\n") - 1 },
+		{ " =?utf-16le?b?QQAAAEIA?=\n", "A\357\277\275B", sizeof (" =?utf-16le?b?QQAAAEIA?=\n") - 1 }
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new (), *original_options;
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	GMimeHeaderList *headers, *shared;
+	GMimeHeader *header, *clone;
+	GMimeMessage *message;
+	GMimeStream *stream;
+	GBytes *bytes, *before, *retained, *result, *raw, *name;
+	GError *error = NULL;
+	GByteArray *output;
+	const char *cached, *charset;
+	gboolean reformat, explicit_raw;
+	gint64 offset;
+	guint parsed, populated, i, international, changes;
+	unsigned char *span;
+	char *display;
+
+	span = g_memdup2 ("a\0\377", 3);
+	check (!g_mime_utils_text_is_8bit (span, 0) && !g_mime_utils_text_is_8bit (span, 2) &&
+	       g_mime_utils_text_is_8bit (span, 3),
+	       "8-bit checks honor the full byte span, including bytes after NULs");
+	span[2] = 'z';
+	check (!g_mime_utils_text_is_8bit (span, 3), "8-bit checks do not read beyond nonterminated byte spans");
+	g_free (span);
+
+	for (parsed = 0; parsed < 2; parsed++) {
+		for (populated = 0; populated < 2; populated++) {
+			for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+				if (parsed) {
+					stream = g_mime_stream_mem_new_with_buffer (source, sizeof (source) - 1);
+					headers = g_mime_header_list_load (options, stream, &error);
+					g_assert_no_error (error);
+					g_object_unref (stream);
+				} else {
+					headers = g_mime_header_list_new (options);
+					g_assert_true (g_mime_header_list_append_full (headers, "sUbJeCt", "initial", NULL, &error));
+				}
+				header = g_mime_header_list_get_header (headers, "Subject");
+				if (populated)
+					g_mime_header_get_value (header);
+				raw = header->raw_value;
+				cached = header->value;
+				charset = header->charset;
+				name = header->raw_name;
+				original_options = header->options;
+				offset = header->offset;
+				reformat = header->reformat;
+				explicit_raw = header->explicit_raw_value;
+				changes = 0;
+				g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+				g_mime_event_add (header->changed, count_checked_header_changes, &changes);
+				before = g_mime_header_get_raw_value (header);
+				check (header->raw_value == raw && header->value == cached && !changes &&
+				       header->reformat == reformat && header->explicit_raw_value == explicit_raw,
+				       "raw byte lookup does not populate caches, reformat or notify owners");
+				bytes = g_bytes_new_static (" missing newline", 16);
+				check (!g_mime_header_set_raw_value (header, bytes, &error) &&
+				       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) &&
+				       header->raw_value == raw && header->value == cached && !changes &&
+				       header->reformat == reformat && header->explicit_raw_value == explicit_raw,
+				       "raw byte assignment checks the final newline before changing header state");
+				g_clear_error (&error);
+				check (!g_mime_header_set_raw_value (header, bytes, NULL),
+				       "raw byte assignment reports failure without an error destination");
+				g_bytes_unref (bytes);
+				bytes = g_bytes_new (cases[i].text, cases[i].length);
+				check (g_mime_header_set_raw_value (header, bytes, &error),
+				       "raw byte assignment accepts complete LF/CRLF values without encoding or folding");
+				g_assert_no_error (error);
+				result = g_mime_header_get_raw_value (header);
+				check (g_bytes_equal (result, bytes) && header->value == NULL &&
+				       header->raw_name == name &&
+				       header->charset == charset && header->options == original_options &&
+				       header->offset == offset && !header->reformat && header->explicit_raw_value && changes == 2,
+				       "raw byte assignment retains all bytes, clears decoding and preserves metadata");
+				g_bytes_unref (bytes);
+				display = g_mime_header_get_value_with_charset (header, "utf-8", &error);
+				g_assert_no_error (error);
+				check (!g_strcmp0 (display, cases[i].decoded) && header->value == NULL,
+				       "explicit header decoding replaces NULs without caching or truncating the value");
+				g_free (display);
+				check (!g_strcmp0 (g_mime_header_get_value (header), cases[i].decoded) &&
+				       g_bytes_equal (header->raw_value, result) && changes == 2,
+				       "ordinary header decoding replaces NULs without changing raw bytes or notifying owners");
+				clone = g_mime_header_clone (header);
+				for (international = 0; international < 2; international++) {
+					g_mime_format_options_set_allow_international (format, international);
+					stream = g_mime_stream_mem_new ();
+					output = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+					check (g_mime_header_write_to_stream (header, format, stream) ==
+					       (ssize_t) (g_bytes_get_size (name) + 1 + cases[i].length) &&
+					       output->len == g_bytes_get_size (name) + 1 + cases[i].length &&
+					       !memcmp (output->data, g_bytes_get_data (name, NULL), g_bytes_get_size (name)) &&
+					       output->data[g_bytes_get_size (name)] == ':' &&
+					       !memcmp (output->data + g_bytes_get_size (name) + 1, cases[i].text, cases[i].length),
+					       "raw byte transport preserves embedded NULs and raw field names with International output");
+					g_object_unref (stream);
+				}
+				check (g_mime_header_set_raw_value (header, header->raw_value, &error) && changes == 4,
+				       "reassigning the current immutable bytes is alias-safe and still emits a change");
+				check (g_mime_header_set_raw_value (header, result, &error) && changes == 6,
+				       "reassigning a public raw-value snapshot retains all bytes and notifies owners");
+				retained = g_mime_header_get_raw_value (header);
+				check (g_bytes_equal (retained, result) && g_bytes_get_size (retained) == cases[i].length,
+				       "raw-value access never truncates embedded NUL bytes");
+				g_bytes_unref (retained);
+				g_object_unref (headers);
+				retained = g_mime_header_get_raw_value (clone);
+				check (g_bytes_equal (result, retained) && g_bytes_get_size (before) > 0,
+				       "raw byte snapshots and clones survive assignment and destruction of the source");
+				g_bytes_unref (retained);
+				g_bytes_unref (result);
+				g_bytes_unref (before);
+				g_object_unref (clone);
+			}
+		}
+	}
+	headers = g_mime_header_list_new (NULL);
+	g_mime_header_list_append (headers, "Subject", NULL, NULL);
+	header = g_mime_header_list_get_header_at (headers, 0);
+	check (g_mime_header_get_raw_value (header) == NULL && header->value == NULL,
+	       "unset legacy placeholders have no raw bytes");
+	bytes = g_bytes_new_static ("", 0);
+	check (!g_mime_header_set_raw_value (header, bytes, &error) &&
+	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) && header->raw_value == NULL,
+	       "empty raw byte assignment is rejected without changing an unset placeholder");
+	g_clear_error (&error);
+	g_bytes_unref (bytes);
+	bytes = g_bytes_new_static ("\r", 1);
+	check (!g_mime_header_set_raw_value (header, bytes, &error),
+	       "a lone carriage return is not a valid raw-value terminator");
+	g_clear_error (&error);
+	g_bytes_unref (bytes);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*raw_value != NULL*");
+	check (!g_mime_header_set_raw_value (header, NULL, &error), "raw byte assignment requires non-NULL bytes");
+	g_test_assert_expected_messages ();
+	bytes = g_bytes_new_static (" valid\n", 7);
+	error = g_error_new_literal (GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+	check (!g_mime_header_set_raw_value (header, bytes, &error) && header->raw_value == NULL &&
+	       !strcmp (error->message, "existing error"), "raw byte assignment requires a clear error destination");
+	g_test_assert_expected_messages ();
+	g_clear_error (&error);
+	g_bytes_unref (bytes);
+	g_object_unref (headers);
+
+	message = g_mime_message_new (FALSE);
+	g_mime_message_set_subject (message, "original", NULL);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	header = g_mime_header_list_get_header (headers, "Subject");
+	shared = g_mime_header_list_new (NULL);
+	g_mime_header_list_add (shared, header);
+	g_mime_header_list_add (shared, header);
+	changes = 0;
+	g_mime_event_add (shared->changed, count_checked_header_changes, &changes);
+	bytes = g_bytes_new_static (encoded, sizeof (encoded) - 1);
+	g_assert_true (g_mime_header_set_raw_value (header, bytes, &error));
+	display = g_strdup (g_mime_message_get_subject (message));
+	check (!g_strcmp0 (display, "caf\303\251") && changes == 2,
+	       "raw byte assignment updates owning message caches and repeated-instance subscriptions");
+	g_free (display);
+	g_object_unref (message);
+	g_assert_true (g_mime_header_set_raw_value (header, bytes, &error));
+	check (changes == 4, "raw byte assignment preserves sharing owners after another owner is destroyed");
+	g_bytes_unref (bytes);
+	g_object_unref (shared);
+	g_mime_format_options_free (format);
+	g_mime_parser_options_free (options);
 }
 
 static void
@@ -5644,19 +5859,18 @@ test_header_cloning (void)
 		if (cached)
 			check (!strcmp (g_mime_header_get_value (header), value), "cache parsed header value");
 		check ((header->value != NULL) == cached, "exercise both lazy and cached header cloning");
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		raw = g_strdup (testsuite_header_raw_text (header));
 		clone = g_mime_header_clone (header);
 		check (clone != header && (!header->value || clone->value != header->value),
 		       "clone has independent header storage");
 		check ((clone->value != NULL) == (header->value != NULL), "clone preserves decoded cache state");
 		check (clone->options != header->options, "clone owns independent parser options");
 		check (!strcmp (g_mime_header_get_name (clone), "X-SuBjEcT"), "clone preserves field-name case");
-		check (!strcmp (g_mime_header_get_raw_name (clone), "X-SuBjEcT \t"), "clone preserves raw field whitespace");
-		check (g_mime_header_get_raw_name (clone) != g_mime_header_get_raw_name (header) &&
-		       g_mime_header_get_raw_value (clone) != g_mime_header_get_raw_value (header),
-		       "clone copies raw strings");
+		check (!strcmp (testsuite_header_raw_name (clone), "X-SuBjEcT \t"), "clone preserves raw field whitespace");
+		check (clone->raw_name == header->raw_name && clone->raw_value == header->raw_value,
+		       "clone shares immutable raw bytes");
 		check (g_mime_header_get_offset (clone) == -1, "cloned header has no source offset");
-		check (!strcmp (g_mime_header_get_raw_value (clone), raw), "clone does not reformat parsed header");
+		check (!strcmp (testsuite_header_raw_text (clone), raw), "clone does not reformat parsed header");
 		check (g_mime_parser_options_set_charset_encoding (header->options, "windows-1252", NULL),
 		       "change source header parser options");
 		check (!strcmp (g_mime_parser_options_get_charset_encoding (clone->options), "windows-1251"),
@@ -5664,17 +5878,17 @@ test_header_cloning (void)
 
 		copy = g_mime_header_clone (clone);
 		g_mime_header_set_value (clone, NULL, "Changed", NULL);
-		check (!strcmp (g_mime_header_get_raw_value (header), raw), "clone edits leave owning header untouched");
+		check (!strcmp (testsuite_header_raw_text (header), raw), "clone edits leave owning header untouched");
 		g_object_unref (message);
 		g_object_unref (clone);
 		check (!strcmp (g_mime_header_get_value (copy), value), "clone decodes after all source owners are freed");
 		wire = header_wire_string (copy, NULL);
 		display = g_mime_header_to_string (copy);
 		check (g_str_has_prefix (wire, "X-SuBjEcT \t: "), "clone writes original raw field name");
-		check (!strcmp (g_mime_header_get_raw_value (copy), raw), "display and serialization preserve raw value");
+		check (!strcmp (testsuite_header_raw_text (copy), raw), "display and serialization preserve raw value");
 		check (g_str_has_prefix (display, "X-SuBjEcT: ") && !strcmp (display + strlen ("X-SuBjEcT: "), value),
 		       "header display uses decoded value without raw name whitespace or final newline");
-		g_mime_header_set_raw_value (copy, " =?iso-8859-1?q?caf=E9?=\r\n");
+		testsuite_header_set_raw_text (copy, " =?iso-8859-1?q?caf=E9?=\r\n");
 		g_free (display);
 		display = g_mime_header_to_string (copy);
 		check (!strcmp (display, "X-SuBjEcT: caf\303\251"), "clone raw setter clears cached decoded value");
@@ -5742,7 +5956,7 @@ test_header_clone_formatting (void)
 	g_mime_header_list_append (headers, "X-Placeholder", NULL, NULL);
 	clone = g_mime_header_clone (g_mime_header_list_get_header_at (headers, 0));
 	g_object_unref (headers);
-	check (g_mime_header_get_value (clone) == NULL && g_mime_header_get_raw_value (clone) == NULL,
+	check (g_mime_header_get_value (clone) == NULL && testsuite_header_raw_text (clone) == NULL,
 	       "clone preserves an unset placeholder without materializing a value");
 	display = g_mime_header_to_string (clone);
 	check (!strcmp (display, "X-Placeholder: "), "unset placeholder displays an empty value");
@@ -5772,9 +5986,9 @@ check_international_header (GMimeFormatOptions *options, const char *name, const
 	g_mime_header_list_append (headers, name, "initial", NULL);
 	header = g_mime_header_list_get_header_at (headers, 0);
 	g_mime_header_set_value (header, options, value, "utf-16be");
-	check (g_utf8_validate (g_mime_header_get_raw_value (header), -1, NULL),
+	check (g_utf8_validate (testsuite_header_raw_text (header), -1, NULL),
 	       "International header contains valid UTF-8");
-	check (!g_strcmp0 (g_mime_header_get_raw_value (header), expected),
+	check (!g_strcmp0 (testsuite_header_raw_text (header), expected),
 	       "International header has expected folding");
 	transport = g_strdup_printf ("%s:%s", name, expected);
 	wire = header_wire_string (header, options);
@@ -5889,22 +6103,22 @@ test_international_text_headers (void)
 	headers = g_mime_header_list_new (NULL);
 	g_mime_header_list_append (headers, "Subject", "original caf\303\251", "iso-8859-1");
 	header = g_mime_header_list_get_header_at (headers, 0);
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	check (strstr (raw, "=?") != NULL, "ordinary header still uses RFC 2047 encoding");
 	wire = header_wire_string (header, copy);
 	check (strstr (wire, "caf\303\251") && !strstr (wire, "=?"), "International write bypasses stored RFC 2047 encoding");
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "International write leaves stored raw value untouched");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "International write leaves stored raw value untouched");
 	g_free (wire);
 	g_free (raw);
 	g_mime_header_set_value (header, copy, "original caf\303\251", header->charset);
 	check (!strcmp (header->charset, "iso-8859-1"), "International setter preserves an aliased charset argument");
 
 	old_value = g_mime_header_get_value (header);
-	old_raw = g_mime_header_get_raw_value (header);
+	old_raw = testsuite_header_raw_text (header);
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
 	g_mime_header_set_value (header, copy, "\xff", "utf-8");
 	g_test_assert_expected_messages ();
-	check (g_mime_header_get_value (header) == old_value && g_mime_header_get_raw_value (header) == old_raw,
+	check (g_mime_header_get_value (header) == old_value && testsuite_header_raw_text (header) == old_raw,
 	       "invalid UTF-8 setter preserves the previous header state");
 	check (!strcmp (header->charset, "iso-8859-1"), "invalid UTF-8 setter preserves charset");
 	header->value[0] = (char) 0xff;
@@ -5917,7 +6131,7 @@ test_international_text_headers (void)
 	       "failed International formatting writes no partial header");
 	header->value[0] = 'o';
 	g_object_unref (stream);
-	g_mime_header_set_raw_value (header, " =?iso-8859-1?q?caf=E9?=\r\n\tuntouched\r\n");
+	testsuite_header_set_raw_text (header, " =?iso-8859-1?q?caf=E9?=\r\n\tuntouched\r\n");
 	wire = header_wire_string (header, copy);
 	check (!strcmp (wire, "Subject: =?iso-8859-1?q?caf=E9?=\r\n\tuntouched\r\n"),
 	       "International options preserve explicitly assigned raw header text");
@@ -5953,8 +6167,11 @@ check_parsed_international_header (const char *input, const char *expected, GMim
 	GMimeHeaderList *headers;
 	GMimeHeader *header, *clone;
 	GMimeStream *stream;
+	GBytes *bytes;
+	GError *error = NULL;
 	const char *stored;
 	char *raw, *wire;
+	gboolean terminated;
 	int cached;
 
 	g_mime_format_options_set_allow_international (format, TRUE);
@@ -5967,12 +6184,12 @@ check_parsed_international_header (const char *input, const char *expected, GMim
 		header = g_mime_header_list_get_header_at (headers, 0);
 		if (cached)
 			g_mime_header_get_value (header);
-		stored = g_mime_header_get_raw_value (header);
+		stored = testsuite_header_raw_text (header);
 		raw = g_strdup (stored);
 		wire = header_wire_string (header, format);
 		check (!strcmp (wire, expected), "parsed International header has expected UTF-8 formatting");
 		g_free (wire);
-		check (g_mime_header_get_raw_value (header) == stored && !strcmp (stored, raw),
+		check (testsuite_header_raw_text (header) == stored && !strcmp (stored, raw),
 		       "International formatting preserves the stored raw bytes and pointer");
 		wire = g_mime_header_list_to_string (headers, format);
 		check (!strcmp (wire, expected), "header-list strings use parsed International formatting");
@@ -5985,12 +6202,23 @@ check_parsed_international_header (const char *input, const char *expected, GMim
 		wire = header_wire_string (clone, format);
 		check (!strcmp (wire, expected), "a detached parsed clone retains International formatting");
 		g_free (wire);
-		g_mime_header_set_raw_value (clone, raw);
+		terminated = g_str_has_suffix (raw, "\n");
+		if (terminated) {
+			testsuite_header_set_raw_text (clone, raw);
+		} else {
+			bytes = g_bytes_new (raw, strlen (raw));
+			check (!g_mime_header_set_raw_value (clone, bytes, &error) &&
+			       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR),
+			       "explicit raw assignment rejects an unterminated parsed value");
+			g_clear_error (&error);
+			g_bytes_unref (bytes);
+		}
 		header = g_mime_header_clone (clone);
 		g_object_unref (clone);
-		check (header->explicit_raw_value, "clones retain explicit raw assignments");
+		check (header->explicit_raw_value == terminated, "clones retain explicit raw assignment state");
 		wire = header_wire_string (header, format);
-		check (!strcmp (wire, input), "explicit raw assignments bypass International reformatting");
+		check (!strcmp (wire, terminated ? input : expected),
+		       "only successful explicit raw assignments bypass International reformatting");
 		g_free (wire);
 		g_free (raw);
 		g_object_unref (header);
@@ -6049,7 +6277,7 @@ test_parsed_international_headers (void)
 	g_mime_format_options_set_allow_international (format, TRUE);
 	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_UNIX);
 	header = g_mime_header_new ("Subject", "original", NULL);
-	g_mime_header_set_raw_value (header, " =?utf-8?q?caf=C3=A9?=\n");
+	testsuite_header_set_raw_text (header, " =?utf-8?q?caf=C3=A9?=\n");
 	g_mime_header_set_value (header, NULL, "caf\303\251", "utf-8");
 	check (!header->explicit_raw_value, "assigning a decoded value clears explicit raw state");
 	wire = header_wire_string (header, format);
@@ -6062,7 +6290,7 @@ test_parsed_international_headers (void)
 	check (header->explicit_raw_value, "new entity-generated raw headers are marked before insertion notifications");
 	g_mime_entity_set_content_type_parameter (GMIME_ENTITY (part), "name", "caf\303\251.txt");
 	check (header->explicit_raw_value, "entity header updates retain explicit raw state");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	expected = g_strconcat ("Content-Type:", raw, NULL);
 	wire = header_wire_string (header, format);
 	check (!strcmp (wire, expected), "entity-generated raw parameter encoding remains explicit");
@@ -6082,11 +6310,11 @@ check_mailing_list_header (GMimeHeader *header, GMimeFormatOptions *options, con
 
 	g_strfreev (lines);
 	g_mime_header_set_value (header, options, value, "utf-8");
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "mailing-list assignment uses command formatting");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "mailing-list assignment uses command formatting");
 	formatted = g_mime_header_format_mailing_list_command (header, options, value, "utf-8");
 	check (!strcmp (formatted, raw), "the public mailing-list formatter uses the selected options");
 	g_free (formatted);
-	transport = g_strdup_printf ("%s:%s", g_mime_header_get_raw_name (header), raw);
+	transport = g_strdup_printf ("%s:%s", testsuite_header_raw_name (header), raw);
 	wire = header_wire_string (header, options);
 	check (!strcmp (wire, transport), "mailing-list serialization retains command formatting");
 	g_free (wire);
@@ -6158,11 +6386,11 @@ test_mailing_list_headers (void)
 				}
 			}
 		}
-		stored = g_mime_header_get_raw_value (header);
+		stored = testsuite_header_raw_text (header);
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
 		g_mime_header_set_value (header, options, "\xff", "utf-8");
 		g_test_assert_expected_messages ();
-		check (g_mime_header_get_raw_value (header) == stored, "invalid command UTF-8 preserves assigned state");
+		check (testsuite_header_raw_text (header) == stored, "invalid command UTF-8 preserves assigned state");
 		g_object_unref (header);
 	}
 
@@ -6241,8 +6469,8 @@ check_signature_header (GMimeHeader *header, GMimeFormatOptions *options, const 
 	char *wire, *transport;
 
 	g_mime_header_set_value (header, options, value, "utf-8");
-	check (!g_strcmp0 (g_mime_header_get_raw_value (header), expected), "signature header has expected tag folding");
-	transport = g_strdup_printf ("%s:%s", g_mime_header_get_raw_name (header), expected);
+	check (!g_strcmp0 (testsuite_header_raw_text (header), expected), "signature header has expected tag folding");
+	transport = g_strdup_printf ("%s:%s", testsuite_header_raw_name (header), expected);
 	wire = header_wire_string (header, options);
 	check (!strcmp (wire, transport), "signature serialization preserves selected folding and newline format");
 	g_free (transport);
@@ -6328,12 +6556,12 @@ test_signature_headers (void)
 			}
 		}
 
-		old_raw = g_mime_header_get_raw_value (header);
+		old_raw = testsuite_header_raw_text (header);
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
 		g_mime_header_set_value (header, options, "\xff", "utf-8");
 		g_test_assert_expected_messages ();
-		check (g_mime_header_get_raw_value (header) == old_raw, "invalid signature UTF-8 preserves assigned header state");
-		g_mime_header_set_raw_value (header, " v = 1;\r\n  b = preserved;\r\n");
+		check (testsuite_header_raw_text (header) == old_raw, "invalid signature UTF-8 preserves assigned header state");
+		testsuite_header_set_raw_text (header, " v = 1;\r\n  b = preserved;\r\n");
 		(void) g_mime_header_get_value (header);
 		clone = g_mime_header_clone (header);
 		wire = header_wire_string (clone, options);
@@ -6511,7 +6739,7 @@ test_header_list_remove_all (void)
 	g_mime_header_list_append (headers, "Subject", "one", NULL);
 	g_mime_header_list_append (headers, "X-Keep", "keep", NULL);
 	keep = g_mime_header_list_get_header (headers, "X-Keep");
-	g_mime_header_set_raw_value (keep, " one\r\n\t two\r\n");
+	testsuite_header_set_raw_text (keep, " one\r\n\t two\r\n");
 	g_mime_header_list_append (headers, "SUBJECT", NULL, NULL);
 	g_mime_header_list_append (headers, "X-After", "after", NULL);
 	g_mime_header_list_append (headers, "sUbJeCt", "two", NULL);
@@ -6616,15 +6844,15 @@ test_header_list_instances (void)
 	g_mime_header_list_append (headers, "Subject", "original", NULL);
 	original = g_mime_header_list_get_header (headers, "Subject");
 	g_mime_header_list_append (headers, "X-Last", "last", NULL);
-	raw_name = g_mime_header_get_raw_name (header);
-	raw_value = g_mime_header_get_raw_value (header);
+	raw_name = testsuite_header_raw_name (header);
+	raw_value = testsuite_header_raw_text (header);
 	cached_value = g_mime_header_get_value (header);
 	charset = header->charset;
 	g_mime_header_list_insert_header (headers, 1, header);
 	check (g_mime_header_list_get_header (headers, "subject") == header &&
 	       g_mime_header_list_get_header_at (headers, 1) == header,
 	       "instance insertion retains identity and updates first-name lookup");
-	check (g_mime_header_get_raw_name (header) == raw_name && g_mime_header_get_raw_value (header) == raw_value &&
+	check (testsuite_header_raw_name (header) == raw_name && testsuite_header_raw_text (header) == raw_value &&
 	       g_mime_header_get_value (header) == cached_value && header->charset == charset && header->formatter == formatter,
 	       "instance insertion preserves cached text, nondefault charset and formatter without copying raw text");
 	check (g_mime_header_list_add (headers, header) == 4, "adding an existing instance returns its appended index");
@@ -6684,8 +6912,8 @@ test_header_list_instances (void)
 	g_assert_nonnull (message);
 	source = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 	header = g_mime_header_list_get_header (source, "X-Raw");
-	raw_name = g_mime_header_get_raw_name (header);
-	raw_value = g_mime_header_get_raw_value (header);
+	raw_name = testsuite_header_raw_name (header);
+	raw_value = testsuite_header_raw_text (header);
 	offset = g_mime_header_get_offset (header);
 	check (!header->owns_options && header->value == NULL && offset > 0, "exercise a lazy parsed header borrowing source options");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index >= 0*");
@@ -6698,8 +6926,8 @@ test_header_list_instances (void)
 	       "invalid instance insertion does not mutate either the list or header");
 	g_mime_header_list_add (headers, header);
 	check (header->owns_options && header->options != source->options &&
-	       header->value == NULL && g_mime_header_get_raw_name (header) == raw_name &&
-	       g_mime_header_get_raw_value (header) == raw_value && g_mime_header_get_offset (header) == offset,
+	       header->value == NULL && testsuite_header_raw_name (header) == raw_name &&
+	       testsuite_header_raw_text (header) == raw_value && g_mime_header_get_offset (header) == offset,
 	       "instance insertion snapshots borrowed options without decoding, copying or reformatting raw state");
 	check (g_mime_parser_options_set_charset_encoding (source->options, "windows-1252", NULL),
 	       "change source list options after instance insertion");
@@ -6711,7 +6939,7 @@ test_header_list_instances (void)
 	g_object_unref (headers);
 	check (!strcmp (g_mime_header_get_value (header), "\320\237\321\200\320\270\320\262\320\265\321\202\tworld"),
 	       "shared parsed header decodes using its snapshot after all containing lists are destroyed");
-	g_mime_header_set_raw_value (header, " changed\r\n");
+	testsuite_header_set_raw_text (header, " changed\r\n");
 	check (!strcmp (g_mime_header_get_value (header), "changed"), "shared header has no stale listeners after list destruction");
 	g_object_unref (header);
 
@@ -6820,8 +7048,8 @@ test_header_list_replace (void)
 	g_mime_header_list_append (headers, "SUBJECT", "duplicate", NULL);
 	duplicate = g_mime_header_list_get_header_at (headers, 3);
 	g_weak_ref_init (&removed, duplicate);
-	raw_name = g_mime_header_get_raw_name (replacement);
-	raw_value = g_mime_header_get_raw_value (replacement);
+	raw_name = testsuite_header_raw_name (replacement);
+	raw_value = testsuite_header_raw_text (replacement);
 	value = g_mime_header_get_value (replacement);
 	charset = replacement->charset;
 	g_mime_header_list_replace (headers, replacement);
@@ -6832,7 +7060,7 @@ test_header_list_replace (void)
 	       "replacement preserves the first field position and unrelated order while collapsing duplicates");
 	check (!strcmp (g_mime_header_get_value (original), "original") &&
 	       !g_mime_header_list_contains_header (headers, original), "replacement does not mutate the detached original");
-	check (g_mime_header_get_raw_name (replacement) == raw_name && g_mime_header_get_raw_value (replacement) == raw_value &&
+	check (testsuite_header_raw_name (replacement) == raw_name && testsuite_header_raw_text (replacement) == raw_value &&
 	       g_mime_header_get_value (replacement) == value && replacement->charset == charset && replacement->formatter == formatter,
 	       "replacement preserves raw text, cached value, charset and formatter");
 	duplicate = g_weak_ref_get (&removed);
@@ -6874,14 +7102,14 @@ test_header_list_replace (void)
 	g_assert_nonnull (message);
 	shared = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 	replacement = g_mime_header_list_get_header (shared, "X-Raw");
-	raw_name = g_mime_header_get_raw_name (replacement);
-	raw_value = g_mime_header_get_raw_value (replacement);
+	raw_name = testsuite_header_raw_name (replacement);
+	raw_value = testsuite_header_raw_text (replacement);
 	offset = g_mime_header_get_offset (replacement);
 	headers = g_mime_header_list_new (NULL);
 	g_mime_header_list_append (headers, "X-Raw", NULL, NULL);
 	g_mime_header_list_replace (headers, replacement);
 	check (replacement->owns_options && replacement->value == NULL && offset > 0 &&
-	       g_mime_header_get_raw_name (replacement) == raw_name && g_mime_header_get_raw_value (replacement) == raw_value &&
+	       testsuite_header_raw_name (replacement) == raw_name && testsuite_header_raw_text (replacement) == raw_value &&
 	       g_mime_header_get_offset (replacement) == offset, "replacement preserves lazy parsed state and stream offset");
 	g_object_unref (message);
 	g_object_unref (parser);
@@ -6988,8 +7216,8 @@ test_header_list_set_header_at (void)
 	g_mime_header_list_append (headers, "X-One", "note", NULL);
 	g_mime_header_list_add (headers, original);
 	g_mime_header_list_append (headers, "X-Last", "last", NULL);
-	raw_name = g_mime_header_get_raw_name (replacement);
-	raw_value = g_mime_header_get_raw_value (replacement);
+	raw_name = testsuite_header_raw_name (replacement);
+	raw_value = testsuite_header_raw_text (replacement);
 	value = g_mime_header_get_value (replacement);
 	charset = replacement->charset;
 	g_mime_header_list_set_header_at (headers, 2, replacement);
@@ -6997,7 +7225,7 @@ test_header_list_set_header_at (void)
 	       g_mime_header_list_get_header_at (headers, 2) == replacement &&
 	       g_mime_header_list_get_header (headers, "Subject") == original,
 	       "indexed assignment changes one slot and preserves earlier lookup for a repeated original");
-	check (g_mime_header_get_raw_name (replacement) == raw_name && g_mime_header_get_raw_value (replacement) == raw_value &&
+	check (testsuite_header_raw_name (replacement) == raw_name && testsuite_header_raw_text (replacement) == raw_value &&
 	       g_mime_header_get_value (replacement) == value && replacement->charset == charset && replacement->formatter == formatter,
 	       "indexed assignment preserves raw text, cached value, charset and formatter");
 	g_weak_ref_init (&removed, original);
@@ -7035,8 +7263,8 @@ test_header_list_set_header_at (void)
 	g_assert_nonnull (message);
 	shared = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 	replacement = g_mime_header_list_get_header (shared, "X-Raw");
-	raw_name = g_mime_header_get_raw_name (replacement);
-	raw_value = g_mime_header_get_raw_value (replacement);
+	raw_name = testsuite_header_raw_name (replacement);
+	raw_value = testsuite_header_raw_text (replacement);
 	offset = g_mime_header_get_offset (replacement);
 	headers = g_mime_header_list_new (NULL);
 	g_mime_header_list_append (headers, "Subject", NULL, NULL);
@@ -7046,7 +7274,7 @@ test_header_list_set_header_at (void)
 	check (!replacement->owns_options, "out-of-range assignment does not snapshot the supplied header's options");
 	g_mime_header_list_set_header_at (headers, 0, replacement);
 	check (replacement->owns_options && replacement->value == NULL && offset > 0 &&
-	       g_mime_header_get_raw_name (replacement) == raw_name && g_mime_header_get_raw_value (replacement) == raw_value &&
+	       testsuite_header_raw_name (replacement) == raw_name && testsuite_header_raw_text (replacement) == raw_value &&
 	       g_mime_header_get_offset (replacement) == offset, "indexed assignment preserves lazy parsed state and stream offset");
 	g_object_unref (message);
 	g_object_unref (parser);
@@ -7385,7 +7613,7 @@ test_content_md5_errors (void)
 	}
 	g_mime_part_set_content_md5 (part, "kAFQmDzST7DWlj99KOF/cg==");
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Md5");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	source->fail_reset_on = 1;
 	check (g_mime_part_compute_content_md5 (part, &error) == NULL &&
 	       g_error_matches (error, GMIME_ERROR, ESPIPE) && source->read_calls == 0,
@@ -7432,7 +7660,7 @@ test_content_md5_errors (void)
 	check (error == NULL && !g_strcmp0 (digest, "kAFQmDzST7DWlj99KOF/cg==") &&
 	       g_mime_stream_tell (GMIME_STREAM (source)) == 3 &&
 	       source->close_calls == 0 && source->flush_calls == 0 &&
-	       !g_strcmp0 (raw, g_mime_header_get_raw_value (header)),
+	       !g_strcmp0 (raw, testsuite_header_raw_text (header)),
 	       "retry rewinds after failure, leaves the source open at EOF and preserves raw headers");
 	g_free (digest);
 	source->bytes_read = 0;
@@ -7846,9 +8074,16 @@ test_message_prepare_versions (void)
 			headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 			g_mime_header_list_clear (headers);
 			if (cases[i].raw) {
-				g_mime_header_list_append (headers, "MIME-Version", "placeholder", NULL);
-				header = g_mime_header_list_get_header (headers, "MIME-Version");
-				g_mime_header_set_raw_value (header, cases[i].raw);
+				char *wire = g_strdup_printf ("MIME-Version:%s", cases[i].raw);
+				GMimeStream *stream = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+				GMimeHeaderList *parsed = g_mime_header_list_load (NULL, stream, &error);
+
+				g_assert_no_error (error);
+				header = g_mime_header_list_get_header (parsed, "MIME-Version");
+				g_mime_header_list_add (headers, header);
+				g_object_unref (parsed);
+				g_object_unref (stream);
+				g_free (wire);
 				g_mime_header_list_append (headers, "MIME-Version", "9.9", NULL);
 			}
 			g_assert_true (g_mime_entity_prepare (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, &error));
@@ -7857,7 +8092,7 @@ test_message_prepare_versions (void)
 			if (clear && !cases[i].raw) {
 				g_assert_null (header);
 			} else if (clear || cases[i].valid) {
-				g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, cases[i].raw);
+				g_assert_cmpstr (testsuite_header_raw_text (header), ==, cases[i].raw);
 				g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 2);
 			} else {
 				g_assert_cmpstr (g_mime_header_get_value (header), ==, "1.0");
@@ -9504,11 +9739,11 @@ test_multipart_report (void)
 		entity = parse_core_entity (padded, 16, onebyte, NULL);
 		report = GMIME_MULTIPART_REPORT (entity);
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Type");
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		raw = g_strdup (testsuite_header_raw_text (header));
 		value = g_mime_multipart_report_get_report_type (report);
 		check (!strcmp (value, "  delivery-status  "), "report-type getters do not trim parsed values");
 		g_mime_multipart_report_set_report_type (report, value);
-		check (!strcmp (g_mime_header_get_raw_value (header), raw), "assigning the exact parsed report type preserves padding and raw headers");
+		check (!strcmp (testsuite_header_raw_text (header), raw), "assigning the exact parsed report type preserves padding and raw headers");
 		g_free (raw);
 		g_mime_multipart_report_set_report_type (report, "\tdelivery-status ");
 		parameters = g_mime_content_type_get_parameters (g_mime_entity_get_content_type (entity));
@@ -9516,9 +9751,9 @@ test_multipart_report (void)
 		g_mime_param_set_charset (param, "utf-8");
 		g_mime_param_set_lang (param, "en");
 		g_mime_param_set_encoding_method (param, GMIME_PARAM_ENCODING_METHOD_RFC2047);
-		raw = g_strdup (g_mime_header_get_raw_value (header));
+		raw = g_strdup (testsuite_header_raw_text (header));
 		g_mime_multipart_report_set_report_type (report, " delivery-status ");
-		check (!strcmp (g_mime_header_get_raw_value (header), raw), "trim-equivalent report types preserve the raw header");
+		check (!strcmp (testsuite_header_raw_text (header), raw), "trim-equivalent report types preserve the raw header");
 		g_free (raw);
 		g_mime_multipart_report_set_report_type (report, "disposition-notification");
 		check (param == g_mime_param_list_get_parameter (parameters, "report-type") &&
@@ -9685,14 +9920,14 @@ test_disposition_notification (void)
 					notification = GMIME_MESSAGE_DISPOSITION_NOTIFICATION (entity);
 					original = g_mime_part_get_content (GMIME_PART (entity));
 					header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Transfer-Encoding");
-					raw = g_strdup (g_mime_header_get_raw_value (header));
+					raw = g_strdup (testsuite_header_raw_text (header));
 					fields = g_mime_message_disposition_notification_get_fields (notification, &error);
 					g_assert_no_error (error);
 					g_assert_nonnull (fields);
 					check (g_mime_header_list_get_count (fields) == 2 &&
 					       !strcmp (g_mime_header_get_value (g_mime_header_list_get_header (fields, "Disposition")), "manual-action/MDN-sent-manually; displayed") &&
 					       g_mime_part_get_content (GMIME_PART (entity)) == original &&
-					       !strcmp (raw, g_mime_header_get_raw_value (header)),
+					       !strcmp (raw, testsuite_header_raw_text (header)),
 					       "lazy notification parsing decodes fields without rewriting content or transfer encoding, even at the depth limit");
 					output = g_mime_stream_mem_new ();
 					g_mime_content_write_to_stream (original, output);
@@ -9701,7 +9936,7 @@ test_disposition_notification (void)
 					g_object_unref (output);
 					g_mime_header_list_set (fields, "Disposition", "deleted", NULL);
 					g_mime_header_list_append (fields, "X-Notification", "updated", NULL);
-					check (!strcmp (raw, g_mime_header_get_raw_value (header)), "field edits preserve the transfer-encoding header");
+					check (!strcmp (raw, testsuite_header_raw_text (header)), "field edits preserve the transfer-encoding header");
 					check (g_mime_content_get_encoding (g_mime_part_get_content (GMIME_PART (entity))) == GMIME_CONTENT_ENCODING_UNSPECIFIED,
 					       "field edits replace encoded backing data with decoded content");
 					g_free (raw);
@@ -10018,13 +10253,13 @@ test_delivery_status (void)
 					status = GMIME_MESSAGE_DELIVERY_STATUS (entity);
 					original = g_mime_part_get_content (GMIME_PART (entity));
 					header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Transfer-Encoding");
-					raw = g_strdup (g_mime_header_get_raw_value (header));
+					raw = g_strdup (testsuite_header_raw_text (header));
 					groups = g_mime_message_delivery_status_get_status_groups (status, &error);
 					g_assert_no_error (error);
 					g_assert_nonnull (groups);
 					check (g_mime_header_list_collection_get_count (groups) == 3 &&
 					       g_mime_part_get_content (GMIME_PART (entity)) == original &&
-					       !strcmp (raw, g_mime_header_get_raw_value (header)),
+					       !strcmp (raw, testsuite_header_raw_text (header)),
 					       "lazy status parsing decodes all groups without rewriting content, even at the depth limit");
 					group = g_mime_header_list_collection_get_group (groups, 1);
 					check (g_mime_header_list_get_count (group) == 3 &&
@@ -10036,7 +10271,7 @@ test_delivery_status (void)
 					check (bytes->len == strlen (encoded) && !memcmp (bytes->data, encoded, bytes->len), "group reads preserve raw status bytes");
 					g_object_unref (output);
 					g_mime_header_list_set (group, "Action", "delivered", NULL);
-					check (!strcmp (raw, g_mime_header_get_raw_value (header)) &&
+					check (!strcmp (raw, testsuite_header_raw_text (header)) &&
 					       g_mime_content_get_encoding (g_mime_part_get_content (GMIME_PART (entity))) == GMIME_CONTENT_ENCODING_UNSPECIFIED,
 					       "status edits preserve the desired transfer encoding but store decoded content");
 					g_free (raw);
@@ -10360,7 +10595,7 @@ test_feedback_report (void)
 				report = GMIME_MESSAGE_FEEDBACK_REPORT (entity);
 				original = g_mime_part_get_content (GMIME_PART (report));
 				header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Transfer-Encoding");
-				raw = g_strdup (g_mime_header_get_raw_value (header));
+				raw = g_strdup (testsuite_header_raw_text (header));
 				fields = g_mime_message_feedback_report_get_fields (report, &error);
 				g_assert_no_error (error);
 				g_assert_nonnull (fields);
@@ -10375,7 +10610,7 @@ test_feedback_report (void)
 				       "feedback field reads preserve the original encoded bytes");
 				g_object_unref (output);
 				g_mime_header_list_set (fields, "Feedback-Type", "fraud", NULL);
-				check (!strcmp (raw, g_mime_header_get_raw_value (header)) &&
+				check (!strcmp (raw, testsuite_header_raw_text (header)) &&
 				       g_mime_content_get_encoding (g_mime_part_get_content (GMIME_PART (report))) == GMIME_CONTENT_ENCODING_UNSPECIFIED,
 				       "feedback edits replace decoded content while preserving the desired transfer encoding");
 				g_free (raw);
@@ -11300,6 +11535,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("explicit header charset decoding");
 	test_header_charset_value ();
+	testsuite_end ();
+
+	testsuite_start ("raw header byte access");
+	test_header_raw_bytes ();
 	testsuite_end ();
 
 	testsuite_start ("mixed header charset policy");

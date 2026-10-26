@@ -528,7 +528,7 @@ test_international_formatting (void)
 	header = g_mime_header_list_get_header_at (headers, 0);
 	g_mime_header_set_value (header, options,
 		"Name <@one.example,@two.example:a@b\303\274cher.example>, Next <b@example.com>", NULL);
-	check (!strcmp (g_mime_header_get_raw_value (header),
+	check (!strcmp (testsuite_header_raw_text (header),
 		" Name <@one.example,@two.example:a@b\303\274cher.example>, Next\n\t<b@example.com>\n"),
 	       "international folding counts Unicode columns rather than UTF-8 bytes");
 	g_object_unref (address);
@@ -549,24 +549,24 @@ test_notifications (void)
 
 	g_mime_entity_set_header (GMIME_ENTITY (message), "To", "", NULL);
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (message)), "To");
-	g_mime_header_set_raw_value (header, raw);
+	testsuite_header_set_raw_text (header, raw);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
 	address = g_mime_internet_address_list_get_address (list, 0);
 	route = g_mime_mailbox_address_get_route (GMIME_MAILBOX_ADDRESS (address));
 	g_mime_domain_list_set_domain (route, 0, "one.example");
 	g_mime_mailbox_address_set_addrspec (GMIME_MAILBOX_ADDRESS (address), "user@example.com", NULL);
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "equivalent route and mailbox assignments preserve raw headers");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "equivalent route and mailbox assignments preserve raw headers");
 	check (!g_mime_mailbox_address_set_addrspec (GMIME_MAILBOX_ADDRESS (address), "invalid address", &error),
 	       "invalid mailbox assignment reports failure");
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "invalid mailbox assignment preserves raw headers");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "invalid mailbox assignment preserves raw headers");
 	g_clear_error (&error);
 	g_mime_domain_list_set_domain (route, 0, "two.example");
-	check (!strcmp (g_mime_header_get_raw_value (header), " User <@two.example:user@example.com>\n"),
+	check (!strcmp (testsuite_header_raw_text (header), " User <@two.example:user@example.com>\n"),
 	       "route mutations update the owning header");
 	g_mime_internet_address_list_add (list, address);
 	g_mime_internet_address_list_remove_at (list, 0);
 	g_mime_domain_list_add (route, "three.example");
-	check (!strcmp (g_mime_header_get_raw_value (header), " User <@two.example,@three.example:user@example.com>\n"),
+	check (!strcmp (testsuite_header_raw_text (header), " User <@two.example,@three.example:user@example.com>\n"),
 	       "removing one duplicate preserves remaining change subscriptions");
 	check (!g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, NULL, "invalid address", &error) &&
 	       list->array->len == 1, "invalid message mailbox addition is atomic");
@@ -604,10 +604,10 @@ test_header_recovery (void)
 
 	g_mime_entity_append_header (GMIME_ENTITY (message), "To", "", NULL);
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (message)), "To");
-	g_mime_header_set_raw_value (header, raw);
+	testsuite_header_set_raw_text (header, raw);
 	list = g_mime_message_get_to (message);
 	check (g_mime_internet_address_list_length (list) == 0, "malformed header does not introduce partial recipients");
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "address recovery preserves the original raw header");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "address recovery preserves the original raw header");
 	g_mime_entity_append_header (GMIME_ENTITY (message), "To", "List recipients <list@example.com>", NULL);
 	check_string (g_mime_internet_address_list_to_string (list, NULL, FALSE), "List recipients <list@example.com>",
 		      "valid duplicate address header survives malformed header recovery");

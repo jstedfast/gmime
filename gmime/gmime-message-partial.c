@@ -329,11 +329,9 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 static GMimeMessage *
 message_partial_message_new (GMimeMessage *base)
 {
-	const char *name, *raw_name, *raw_value;
 	GMimeHeaderList *headers;
 	GMimeMessage *message;
-	GMimeHeader *header;
-	gint64 offset;
+	GMimeHeader *header, *copy;
 	int count, i;
 	
 	message = g_mime_message_new (FALSE);
@@ -344,12 +342,10 @@ message_partial_message_new (GMimeMessage *base)
 	
 	for (i = 0; i < count; i++) {
 		header = g_mime_header_list_get_header_at (headers, i);
-		raw_value = g_mime_header_get_raw_value (header);
-		raw_name = g_mime_header_get_raw_name (header);
-		offset = g_mime_header_get_offset (header);
-		name = g_mime_header_get_name (header);
-		
-		_g_mime_entity_append_header ((GMimeEntity *) message, name, raw_name, raw_value, offset);
+		copy = g_mime_header_clone (header);
+		copy->offset = header->offset;
+		g_mime_header_list_add (((GMimeEntity *) message)->headers, copy);
+		g_object_unref (copy);
 	}
 	
 	return message;

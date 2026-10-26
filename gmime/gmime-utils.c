@@ -948,7 +948,7 @@ g_mime_utils_text_is_8bit (const unsigned char *text, size_t len)
 	g_return_val_if_fail (text != NULL, FALSE);
 	
 	inend = text + len;
-	for (inptr = text; *inptr && inptr < inend; inptr++) {
+	for (inptr = text; inptr < inend; inptr++) {
 		if (*inptr > (unsigned char) 127)
 			return TRUE;
 	}
@@ -1349,16 +1349,25 @@ rfc2047_is_encoded_word_start (const char *inptr, const char *inend)
 		inptr++;
 
 	return inend - inptr >= 3 && inptr[0] == '?' &&
-		strchr ("BbQq", inptr[1]) != NULL && inptr[2] == '?';
+		inptr[1] != '\0' && strchr ("BbQq", inptr[1]) != NULL && inptr[2] == '?';
+}
+
+static void
+rfc2047_warn_invalid_value (GMimeParserOptions *options, const char *text, size_t length, gint64 offset)
+{
+	char *item = g_strndup (text, length);
+
+	_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_RFC2047_HEADER_VALUE, item);
+	g_free (item);
 }
 
 static rfc2047_token *
-tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *len, gint64 offset, gboolean preserve_lwsp)
+tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t length, gint64 offset, gboolean preserve_lwsp)
 {
 	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	rfc2047_token list, *lwsp, *token, *tail;
 	register const char *inptr = in;
-	const char *inend = in + strlen (in);
+	const char *inend = in + length;
 	gboolean has_specials = FALSE;
 	GMimeRfcComplianceMode mode;
 	gboolean encoded = FALSE;
@@ -1371,9 +1380,9 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 	list.next = NULL;
 	lwsp = NULL;
 	
-	while (*inptr != '\0') {
+	while (inptr < inend) {
 		text = inptr;
-		while (is_lwsp (*inptr))
+		while (inptr < inend && is_lwsp (*inptr))
 			inptr++;
 		
 		if (inptr > text)
@@ -1381,7 +1390,7 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 		else
 			lwsp = NULL;
 		
-		if (*inptr == '\0') {
+		if (inptr == inend) {
 			if (lwsp != NULL)
 				tail->next = lwsp;
 			break;
@@ -1398,11 +1407,11 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 				
 				has_specials = FALSE;
 				
-				if (!strncmp (inptr, "=?", 2)) {
+				if (inend - inptr >= 2 && !memcmp (inptr, "=?", 2)) {
 					inptr += 2;
 					
 					/* skip past the charset (if one is even declared, sigh) */
-					while (*inptr && *inptr != '?' && !is_lwsp (*inptr)) {
+					while (inptr < inend && *inptr != '?' && !is_lwsp (*inptr)) {
 						ascii = ascii && is_ascii (*inptr);
 						if (!is_atom (*inptr)) {
 							has_specials = TRUE;
@@ -1411,7 +1420,8 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 					}
 					
 					/* sanity check encoding type */
-					if (inend - inptr < 4 || inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?') {
+					if (inend - inptr < 4 || inptr[0] != '?' || !inptr[1] ||
+					    !strchr ("BbQq", inptr[1]) || inptr[2] != '?') {
 						has_specials = FALSE;
 						inptr = word + 2;
 						ascii = TRUE;
@@ -1420,9 +1430,9 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 					
 					inptr += 3;
 					
-					/* find the end of the rfc2047 encoded word token */
-					while (*inptr && strncmp (inptr, "?=", 2) != 0) {
-						/* Do not consume a later word's terminator for an unterminated word. */
+					/* Find the end of the encoded word, but stop at another encoded-word
+					 * start since that means this one was never terminated. */
+					while (inptr < inend && (inend - inptr < 2 || memcmp (inptr, "?=", 2))) {
 						if (*inptr == '=' && rfc2047_is_encoded_word_start (inptr, inend))
 							break;
 						ascii = ascii && is_ascii (*inptr);
@@ -1432,7 +1442,7 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 						inptr++;
 					}
 					
-					if (strncmp (inptr, "?=", 2) != 0) {
+					if (inend - inptr < 2 || memcmp (inptr, "?=", 2)) {
 						/* didn't find an end marker... */
 						has_specials = FALSE;
 						inptr = word + 2;
@@ -1446,13 +1456,15 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 				non_rfc2047:
 					/* stop if we encounter a possible rfc2047 encoded
 					 * token even if it's inside another word, sigh. */
-					while (is_atom (*inptr) && strncmp (inptr, "=?", 2) != 0) {
+					while (inptr < inend && is_atom (*inptr) &&
+					       (inend - inptr < 2 || memcmp (inptr, "=?", 2))) {
 						ascii = ascii && is_ascii (*inptr);
 						inptr++;
 					}
 				}
 			} else {
-				while (is_ascii (*inptr) && is_atom (*inptr)) {
+				/* Encoded-word tokens are atoms. */
+				while (inptr < inend && is_ascii (*inptr) && is_atom (*inptr)) {
 					inptr++;
 				}
 			}
@@ -1460,7 +1472,7 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 			n = (size_t) (inptr - word);
 			if ((token = rfc2047_token_new_encoded_word (word, n))) {
 				if (can_warn && has_specials)
-					_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_RFC2047_HEADER_VALUE, in);
+					rfc2047_warn_invalid_value (options, in, length, offset);
 				
 				/* Decoding ignores whitespace between encoded words; folding preserves it. */
 				if ((!encoded || preserve_lwsp) && lwsp != NULL) {
@@ -1496,7 +1508,8 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 			}
 			
 			ascii = TRUE;
-			while (*inptr && !is_lwsp (*inptr) && (!is_ascii (*inptr) || !is_atom (*inptr))) {
+			/* Append the non-ASCII atom token. */
+			while (inptr < inend && !is_lwsp (*inptr) && (!is_ascii (*inptr) || !is_atom (*inptr))) {
 				ascii = ascii && is_ascii (*inptr);
 				inptr++;
 			}
@@ -1512,18 +1525,16 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *le
 		}
 	}
 	
-	*len = (size_t) (inptr - in);
-	
 	return list.next;
 }
 
 static rfc2047_token *
-tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len, gint64 offset, gboolean preserve_lwsp)
+tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t length, gint64 offset, gboolean preserve_lwsp)
 {
 	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	rfc2047_token list, *lwsp, *token, *tail;
 	register const char *inptr = in;
-	const char *inend = in + strlen (in);
+	const char *inend = in + length;
 	gboolean has_specials = FALSE;
 	GMimeRfcComplianceMode mode;
 	gboolean encoded = FALSE;
@@ -1536,9 +1547,9 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len,
 	list.next = NULL;
 	lwsp = NULL;
 	
-	while (*inptr != '\0') {
+	while (inptr < inend) {
 		text = inptr;
-		while (is_lwsp (*inptr))
+		while (inptr < inend && is_lwsp (*inptr))
 			inptr++;
 		
 		if (inptr > text)
@@ -1546,24 +1557,27 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len,
 		else
 			lwsp = NULL;
 		
-		if (*inptr != '\0') {
+		if (inptr < inend) {
 			word = inptr;
 			ascii = TRUE;
 			
 			if (G_LIKELY (mode == GMIME_RFC_COMPLIANCE_LOOSE)) {
 				has_specials = FALSE;
 				
-				if (!strncmp (inptr, "=?", 2)) {
+				/* Make an extra effort to detect and separate encoded-word
+				 * tokens that have been merged with other words. */
+				if (inend - inptr >= 2 && !memcmp (inptr, "=?", 2)) {
 					inptr += 2;
 					
 					/* skip past the charset (if one is even declared, sigh) */
-					while (*inptr && *inptr != '?' && !is_lwsp (*inptr)) {
+					while (inptr < inend && *inptr != '?' && !is_lwsp (*inptr)) {
 						ascii = ascii && is_ascii (*inptr);
 						inptr++;
 					}
 					
 					/* sanity check encoding type */
-					if (inend - inptr < 4 || inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?') {
+					if (inend - inptr < 4 || inptr[0] != '?' || !inptr[1] ||
+					    !strchr ("BbQq", inptr[1]) || inptr[2] != '?') {
 						has_specials = FALSE;
 						inptr = word + 2;
 						ascii = TRUE;
@@ -1572,8 +1586,9 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len,
 					
 					inptr += 3;
 					
-					/* find the end of the rfc2047 encoded word token */
-					while (*inptr && strncmp (inptr, "?=", 2) != 0) {
+					/* Find the end of the encoded word, but stop at another encoded-word
+					 * start since that means this one was never terminated. */
+					while (inptr < inend && (inend - inptr < 2 || memcmp (inptr, "?=", 2))) {
 						if (*inptr == '=' && rfc2047_is_encoded_word_start (inptr, inend))
 							break;
 						ascii = ascii && is_ascii (*inptr);
@@ -1582,7 +1597,7 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len,
 						inptr++;
 					}
 					
-					if (strncmp (inptr, "?=", 2) != 0) {
+					if (inend - inptr < 2 || memcmp (inptr, "?=", 2)) {
 						/* didn't find an end marker... */
 						has_specials = FALSE;
 						inptr = word + 2;
@@ -1596,13 +1611,15 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len,
 				non_rfc2047:
 					/* stop if we encounter a possible rfc2047 encoded
 					 * token even if it's inside another word, sigh. */
-					while (*inptr && !is_lwsp (*inptr) && strncmp (inptr, "=?", 2) != 0) {
+					while (inptr < inend && !is_lwsp (*inptr) &&
+					       (inend - inptr < 2 || memcmp (inptr, "=?", 2))) {
 						ascii = ascii && is_ascii (*inptr);
 						inptr++;
 					}
 				}
 			} else {
-				while (*inptr && !is_lwsp (*inptr)) {
+				/* Find the end of a run of text. */
+				while (inptr < inend && !is_lwsp (*inptr)) {
 					ascii = ascii && is_ascii (*inptr);
 					inptr++;
 				}
@@ -1611,7 +1628,7 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len,
 			n = (size_t) (inptr - word);
 			if ((token = rfc2047_token_new_encoded_word (word, n))) {
 				if (can_warn && has_specials)
-					_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_RFC2047_HEADER_VALUE, in);
+					rfc2047_warn_invalid_value (options, in, length, offset);
 				
 				/* Decoding ignores whitespace between encoded words; folding preserves it. */
 				if ((!encoded || preserve_lwsp) && lwsp != NULL) {
@@ -1649,8 +1666,6 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len,
 			break;
 		}
 	}
-	
-	*len = (size_t) (inptr - in);
 	
 	return list.next;
 }
@@ -1694,14 +1709,14 @@ rfc2047_get_most_common_charset (rfc2047_token *tokens)
 
 static char *
 rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_t buflen,
-		      const char **charset_out, gboolean checked, gboolean *has_nul)
+		      const char **charset_out, gboolean checked)
 {
 	GMimeDecoder *base64 = NULL, *qp = NULL, *decoder;
 	rfc2047_token *token, *next;
 	size_t outcap = 76, capacity;
 	size_t outlen, ninval, len;
 	unsigned char *outbuf, *outptr;
-	const char *charset;
+	const char *charset, *nul;
 	GString *decoded;
 	char encoding;
 	int codepage;
@@ -1769,15 +1784,19 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 			
 			/* convert the raw decoded text into UTF-8 */
 			if (codepage == 65001) {
-				if (has_nul && memchr (outptr, 0, outlen))
-					*has_nul = TRUE;
 				/* slight optimization over going through iconv */
 				str = (char *) outptr;
 				len = outlen;
 				
 				while (!g_utf8_validate (str, len, (const char **) &str)) {
 					len = outlen - (str - (char *) outptr);
-					*str = '?';
+					if (*str) {
+						*str = '?';
+					} else {
+						/* Replace Unicode NULs after charset conversion, not as invalid UTF-8. */
+						str++;
+						len--;
+					}
 				}
 				
 				g_string_append_len (decoded, (char *) outptr, outlen);
@@ -1789,10 +1808,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 					     g_strerror (checked && codepage < 0 ? EINVAL : errno)));
 				
 				str = decode_8bit (options, (char *) outptr, outlen, &len);
-				if (has_nul)
-					g_string_append_len (decoded, str, len);
-				else
-					g_string_append (decoded, str);
+				g_string_append_len (decoded, str, len);
 				g_free (str);
 			} else {
 				str = g_malloc (outlen + 1);
@@ -1814,10 +1830,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 		} else if (token->is_8bit) {
 			/* *sigh* I hate broken mailers... */
 			str = decode_8bit (options, token->text, token->length, &len);
-			if (has_nul)
-				g_string_append_len (decoded, str, len);
-			else
-				g_string_append (decoded, str);
+			g_string_append_len (decoded, str, len);
 			g_free (str);
 		} else {
 			g_string_append_len (decoded, token->text, token->length);
@@ -1830,20 +1843,30 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 	g_clear_object (&qp);
 	g_free (outbuf);
 
-	if (has_nul && memchr (decoded->str, 0, decoded->len))
-		*has_nul = TRUE;
+	if ((nul = memchr (decoded->str, 0, decoded->len))) {
+		const char *start = decoded->str, *end = start + decoded->len;
+		GString *value = g_string_sized_new (decoded->len);
+
+		do {
+			g_string_append_len (value, start, nul - start);
+			g_string_append (value, "\357\277\275");
+			start = nul + 1;
+		} while ((nul = memchr (start, 0, end - start)));
+
+		g_string_append_len (value, start, end - start);
+		g_string_free (decoded, TRUE);
+		decoded = value;
+	}
 	return g_string_free (decoded, FALSE);
 }
 
 
 static char *
-header_decode_text (GMimeParserOptions *options, const char *text, const char **charset, gint64 offset,
-		    gboolean checked, GError **error)
+header_decode_text (GMimeParserOptions *options, const char *text, size_t length, const char **charset, gint64 offset,
+		    gboolean checked)
 {
 	rfc2047_token *tokens;
-	gboolean has_nul = FALSE;
 	char *decoded;
-	size_t len;
 
 	if (text == NULL) {
 		if (charset)
@@ -1852,16 +1875,9 @@ header_decode_text (GMimeParserOptions *options, const char *text, const char **
 		return g_strdup ("");
 	}
 
-	tokens = tokenize_rfc2047_text (options, text, &len, offset, FALSE);
-	decoded = rfc2047_decode_tokens (options, tokens, len, charset, checked, checked ? &has_nul : NULL);
+	tokens = tokenize_rfc2047_text (options, text, length, offset, FALSE);
+	decoded = rfc2047_decode_tokens (options, tokens, length, charset, checked);
 	rfc2047_token_list_free (tokens);
-
-	if (has_nul) {
-		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
-				     "Decoded header value contains an embedded NUL character");
-		g_free (decoded);
-		return NULL;
-	}
 
 	return decoded;
 }
@@ -1871,24 +1887,28 @@ header_decode_text (GMimeParserOptions *options, const char *text, const char **
  * _g_mime_utils_header_decode_text:
  * @text: header text to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
+ * @length: the number of input bytes, excluding any terminating NUL
  * @charset: (optional): if non-%NULL, receives the most frequent encoded-word charset, or %NULL if none
  * @offset: header offset, only used for reporting a #GMimeParserWarning
  *
- * Decodes an rfc2047 encoded 'text' header.
+ * Decodes an rfc2047 encoded 'text' header, replacing literal and decoded
+ * NUL characters with the Unicode replacement character U+FFFD.
  *
  * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
  **/
 char *
-_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset, gint64 offset)
+_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, size_t length,
+				  const char **charset, gint64 offset)
 {
-	return header_decode_text (options, text, charset, offset, FALSE, NULL);
+	return header_decode_text (options, text, length, charset, offset, FALSE);
 }
 
 char *
-_g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *text, gint64 offset, GError **error)
+_g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *text, size_t length,
+				     gint64 offset)
 {
-	return header_decode_text (options, text, NULL, offset, TRUE, error);
+	return header_decode_text (options, text, length, NULL, offset, TRUE);
 }
 
 
@@ -1897,7 +1917,8 @@ _g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *
  * @text: header text to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
  *
- * Decodes an rfc2047 encoded 'text' header.
+ * Decodes an rfc2047 encoded 'text' header, replacing decoded NUL characters
+ * with the Unicode replacement character U+FFFD.
  *
  * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
@@ -1905,7 +1926,7 @@ _g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *
 char *
 g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
 {
-	return _g_mime_utils_header_decode_text (options, text, NULL, -1);
+	return _g_mime_utils_header_decode_text (options, text, text ? strlen (text) : 0, NULL, -1);
 }
 
 
@@ -1913,20 +1934,22 @@ g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
  * _g_mime_utils_header_decode_phrase:
  * @phrase: header to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
+ * @length: the number of input bytes, excluding any terminating NUL
  * @charset: (optional): if non-%NULL, receives the most frequent encoded-word charset, or %NULL if none
  * @offset: header offset, only used for reporting a #GMimeParserWarning
  *
- * Decodes an rfc2047 encoded 'phrase' header.
+ * Decodes an rfc2047 encoded 'phrase' header, replacing literal and decoded
+ * NUL characters with the Unicode replacement character U+FFFD.
  *
  * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
  **/
 char *
-_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase, const char **charset, gint64 offset)
+_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase, size_t length,
+				    const char **charset, gint64 offset)
 {
 	rfc2047_token *tokens;
 	char *decoded;
-	size_t len;
 	
 	if (phrase == NULL) {
 		if (charset)
@@ -1935,8 +1958,8 @@ _g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phr
 		return g_strdup ("");
 	}
 	
-	tokens = tokenize_rfc2047_phrase (options, phrase, &len, offset, FALSE);
-	decoded = rfc2047_decode_tokens (options, tokens, len, charset, FALSE, NULL);
+	tokens = tokenize_rfc2047_phrase (options, phrase, length, offset, FALSE);
+	decoded = rfc2047_decode_tokens (options, tokens, length, charset, FALSE);
 	rfc2047_token_list_free (tokens);
 	
 	return decoded;
@@ -1948,7 +1971,8 @@ _g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phr
  * @phrase: header to decode
  * @options: (nullable): a #GMimeParserOptions or %NULL
  *
- * Decodes an rfc2047 encoded 'phrase' header.
+ * Decodes an rfc2047 encoded 'phrase' header, replacing decoded NUL characters
+ * with the Unicode replacement character U+FFFD.
  *
  * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
@@ -1956,7 +1980,7 @@ _g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phr
 char *
 g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase)
 {
-	return _g_mime_utils_header_decode_phrase (options, phrase, NULL, -1);
+	return _g_mime_utils_header_decode_phrase (options, phrase, phrase ? strlen (phrase) : 0, NULL, -1);
 }
 
 
@@ -2758,7 +2782,8 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
 	while (*value && is_lwsp (*value))
 		value++;
 	
-	tokens = tokenize_rfc2047_phrase (options, value, &len, -1, TRUE);
+	len = strlen (value);
+	tokens = tokenize_rfc2047_phrase (options, value, len, -1, TRUE);
 	folded = header_fold_tokens (format, field, value, len, tokens, TRUE, TRUE);
 	g_free (field);
 	
@@ -2790,7 +2815,8 @@ _g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOp
 	if (value == NULL)
 		return g_strdup (g_mime_format_options_get_newline (format));
 	
-	tokens = tokenize_rfc2047_phrase (options, value, &len, -1, TRUE);
+	len = strlen (value);
+	tokens = tokenize_rfc2047_phrase (options, value, len, -1, TRUE);
 	
 	return header_fold_tokens (format, field, value, len, tokens, TRUE, FALSE);
 }
@@ -2834,7 +2860,8 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
 	while (*value && is_lwsp (*value))
 		value++;
 	
-	tokens = tokenize_rfc2047_text (options, value, &len, -1, TRUE);
+	len = strlen (value);
+	tokens = tokenize_rfc2047_text (options, value, len, -1, TRUE);
 	folded = header_fold_tokens (format, field, value, len, tokens, FALSE, TRUE);
 	g_free (field);
 	
@@ -2865,7 +2892,8 @@ _g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormat
 	if (value == NULL)
 		return g_strdup (g_mime_format_options_get_newline (format));
 	
-	tokens = tokenize_rfc2047_text (options, value, &len, -1, TRUE);
+	len = strlen (value);
+	tokens = tokenize_rfc2047_text (options, value, len, -1, TRUE);
 	
 	return header_fold_tokens (format, field, value, len, tokens, FALSE, FALSE);
 }

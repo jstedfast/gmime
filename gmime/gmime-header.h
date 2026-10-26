@@ -95,14 +95,12 @@ struct _GMimeHeader {
 	GMimeParserOptions *options;
 	gboolean reformat;
 	gpointer changed;
-	char *raw_value;
-	char *raw_name;
+	GBytes *raw_value;
+	GBytes *raw_name;
 	char *charset;
 	gint64 offset;
 	gboolean owns_options;
 	gboolean explicit_raw_value;
-	GBytes *raw_field_bytes;
-	GBytes *raw_value_bytes;
 	gboolean invalid;
 };
 
@@ -119,7 +117,7 @@ GMimeHeader *g_mime_header_new_full (const char *name, const char *value, const 
 GMimeHeader *g_mime_header_clone (GMimeHeader *header);
 
 const char *g_mime_header_get_name (GMimeHeader *header);
-const char *g_mime_header_get_raw_name (GMimeHeader *header);
+GBytes *g_mime_header_get_raw_name (GMimeHeader *header);
 
 const char *g_mime_header_get_value (GMimeHeader *header);
 char *g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, GError **error);
@@ -127,8 +125,8 @@ void g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, 
 gboolean g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, const char *value,
 				     const char *charset, GError **error);
 
-const char *g_mime_header_get_raw_value (GMimeHeader *header);
-void g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
+GBytes *g_mime_header_get_raw_value (GMimeHeader *header);
+gboolean g_mime_header_set_raw_value (GMimeHeader *header, GBytes *raw_value, GError **error);
 
 gint64 g_mime_header_get_offset (GMimeHeader *header);
 

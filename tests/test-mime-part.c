@@ -228,21 +228,21 @@ test_filename_property (void)
 		headers = g_mime_entity_get_header_list (entity);
 		type = g_mime_entity_get_content_type (entity);
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		type_raw = g_strdup (g_mime_header_get_raw_value (header));
+		type_raw = g_strdup (testsuite_header_raw_text (header));
 		g_mime_part_set_filename (part, NULL);
 		g_assert_null (g_mime_part_get_filename (part));
 		g_assert_null (g_mime_entity_get_content_disposition (entity));
 		g_assert_false (g_mime_header_list_contains (headers, "Content-Disposition"));
-		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, type_raw);
+		g_assert_cmpstr (testsuite_header_raw_text (header), ==, type_raw);
 		g_free (type_raw);
 
 		g_mime_content_type_set_name (type, " \302\240fallback.txt\342\200\257 ");
-		type_raw = g_strdup (g_mime_header_get_raw_value (header));
+		type_raw = g_strdup (testsuite_header_raw_text (header));
 		stored = g_mime_part_get_filename (part);
 		g_assert_cmpstr (stored, ==, "fallback.txt");
 		g_assert_true (g_mime_part_get_filename (part) == stored);
 		g_assert_cmpstr (g_mime_content_type_get_name (type), ==, " \302\240fallback.txt\342\200\257 ");
-		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, type_raw);
+		g_assert_cmpstr (testsuite_header_raw_text (header), ==, type_raw);
 		g_assert_null (g_mime_entity_get_content_disposition (entity));
 		g_free (type_raw);
 
@@ -259,12 +259,12 @@ test_filename_property (void)
 		g_mime_param_set_lang (param, "fr");
 		g_mime_param_set_encoding_method (param, GMIME_PARAM_ENCODING_METHOD_RFC2231);
 		g_mime_param_set_always_quote (param, TRUE);
-		type_raw = g_strdup (g_mime_header_get_raw_value (header));
+		type_raw = g_strdup (testsuite_header_raw_text (header));
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
-		disposition_raw = g_strdup (g_mime_header_get_raw_value (header));
+		disposition_raw = g_strdup (testsuite_header_raw_text (header));
 		g_mime_part_set_filename (part, filename);
-		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, disposition_raw);
-		g_assert_cmpstr (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Type")), ==, type_raw);
+		g_assert_cmpstr (testsuite_header_raw_text (header), ==, disposition_raw);
+		g_assert_cmpstr (testsuite_header_raw_text (g_mime_header_list_get_header (headers, "Content-Type")), ==, type_raw);
 		g_free (type_raw);
 		g_free (disposition_raw);
 		g_mime_part_set_filename (part, "changed.txt");
@@ -282,9 +282,9 @@ test_filename_property (void)
 		g_assert_null (g_mime_content_disposition_get_filename (disposition));
 		g_assert_cmpstr (g_mime_entity_get_disposition (entity), ==, "inline");
 		g_assert_cmpstr (g_mime_content_disposition_get_parameter (disposition, "keep"), ==, "stable");
-		disposition_raw = g_strdup (g_mime_header_get_raw_value (header));
+		disposition_raw = g_strdup (testsuite_header_raw_text (header));
 		g_mime_part_set_filename (part, NULL);
-		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, disposition_raw);
+		g_assert_cmpstr (testsuite_header_raw_text (header), ==, disposition_raw);
 		g_free (disposition_raw);
 
 		g_mime_part_set_filename (part, "\v\302\205\343\200\200");
@@ -300,10 +300,10 @@ test_filename_property (void)
 		g_object_unref (replacement);
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "replacement.txt");
 		header = g_mime_header_list_get_header (headers, "Content-Type");
-		g_mime_header_set_raw_value (header, " text/plain; name=\" raw fallback.txt \"\n");
+		testsuite_header_set_raw_text (header, " text/plain; name=\" raw fallback.txt \"\n");
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw fallback.txt");
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
-		g_mime_header_set_raw_value (header, " attachment; filename=\" raw primary.txt \"\n");
+		testsuite_header_set_raw_text (header, " attachment; filename=\" raw primary.txt \"\n");
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw primary.txt");
 		g_mime_header_list_remove (headers, "Content-Disposition");
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw fallback.txt");
@@ -350,15 +350,15 @@ test_filename_assignment_aliases (void)
 		if (existing)
 			g_mime_part_set_filename (part, "stable.txt");
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, existing ? "stable.txt" : NULL);
-		type_raw = g_strdup (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Type")));
-		disposition_raw = existing ? g_strdup (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Disposition"))) : NULL;
+		type_raw = g_strdup (testsuite_header_raw_text (g_mime_header_list_get_header (headers, "Content-Type")));
+		disposition_raw = existing ? g_strdup (testsuite_header_raw_text (g_mime_header_list_get_header (headers, "Content-Disposition"))) : NULL;
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
 		g_mime_part_set_filename (part, "\377");
 		g_test_assert_expected_messages ();
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, existing ? "stable.txt" : NULL);
-		g_assert_cmpstr (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Type")), ==, type_raw);
+		g_assert_cmpstr (testsuite_header_raw_text (g_mime_header_list_get_header (headers, "Content-Type")), ==, type_raw);
 		if (existing)
-			g_assert_cmpstr (g_mime_header_get_raw_value (g_mime_header_list_get_header (headers, "Content-Disposition")), ==, disposition_raw);
+			g_assert_cmpstr (testsuite_header_raw_text (g_mime_header_list_get_header (headers, "Content-Disposition")), ==, disposition_raw);
 		else
 			g_assert_null (g_mime_entity_get_content_disposition (entity));
 		g_free (type_raw);
@@ -574,9 +574,9 @@ test_content_md5_assignment (void)
 	g_assert_false (g_mime_part_verify_content_md5 (part, &error));
 	g_assert_no_error (error);
 	header = g_mime_header_list_get_header (headers, "Content-Md5");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	g_mime_part_set_content_md5 (part, g_mime_part_get_content_md5 (part));
-	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 	g_free (raw);
 	value = g_strconcat ("x", digest, NULL);
 	g_mime_part_set_content_md5 (part, value);
@@ -621,15 +621,15 @@ test_content_md5_lazy_property (void)
 			g_mime_header_list_append (headers, "Content-Md5", digest, NULL);
 			header = g_mime_header_list_get_header (headers, "Content-Md5");
 			raw = g_strdup_printf (" \302\205%s\343\200\200\t\n", digest);
-			g_mime_header_set_raw_value (header, raw);
+			testsuite_header_set_raw_text (header, raw);
 			g_mime_header_list_append (headers, "Content-Md5", "second", NULL);
 			if (loaded)
 				g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, digest);
-			g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+			g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 			g_mime_part_set_content_md5 (part, digest);
 			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + (loaded ? 2 : 1));
 			if (loaded)
-				g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+				g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 			g_free (raw);
 
 			g_mime_header_list_append (headers, "Content-Md5", "second", NULL);
@@ -644,15 +644,15 @@ test_content_md5_lazy_property (void)
 			g_mime_header_list_remove_at (headers, count);
 			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "next");
 			header = g_mime_header_list_get_header (headers, "Content-Md5");
-			g_mime_header_set_raw_value (header, " \302\240raw value\342\200\257\n");
+			testsuite_header_set_raw_text (header, " \302\240raw value\342\200\257\n");
 			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "raw value");
 			g_mime_header_list_prepend (headers, "Content-Md5", "", NULL);
 			g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "");
 			header = g_mime_header_list_get_header (headers, "Content-Md5");
-			raw = g_strdup (g_mime_header_get_raw_value (header));
+			raw = g_strdup (testsuite_header_raw_text (header));
 			g_mime_header_list_set (headers, "X-Unrelated", "unchanged cache", NULL);
 			g_mime_part_set_content_md5 (part, "");
-			g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+			g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 3);
 			g_free (raw);
 			g_mime_part_set_content_md5 (part, NULL);
@@ -687,10 +687,10 @@ test_content_md5_lazy_verification (void)
 	g_mime_header_list_append (headers, "Content-Md5", digest, NULL);
 	g_mime_header_list_append (headers, "Content-Md5", "incorrect", NULL);
 	header = g_mime_header_list_get_header (headers, "Content-Md5");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	g_assert_true (g_mime_part_verify_content_md5 (part, &error));
 	g_assert_no_error (error);
-	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
 	g_free (raw);
 	duplicate = g_mime_header_list_get_header_at (headers, 2);
@@ -706,7 +706,7 @@ test_content_md5_lazy_verification (void)
 	g_assert_no_error (error);
 	g_assert_cmpint (g_mime_stream_tell (source), ==, 1);
 	header = g_mime_header_list_get_header (headers, "Content-Md5");
-	g_mime_header_set_raw_value (header, " \302\205\343\200\200\n");
+	testsuite_header_set_raw_text (header, " \302\205\343\200\200\n");
 	g_assert_false (g_mime_part_verify_content_md5 (part, &error));
 	g_assert_no_error (error);
 	g_assert_cmpint (g_mime_stream_tell (source), ==, 1);
@@ -764,13 +764,13 @@ test_content_description_assignment (void)
 	testsuite_check ("Content-Description lazy first-header reads and unchanged raw assignments");
 	g_mime_header_list_append (headers, "Content-Description", "first", NULL);
 	header = g_mime_header_list_get_header (headers, "Content-Description");
-	g_mime_header_set_raw_value (header, " first\t \n");
+	testsuite_header_set_raw_text (header, " first\t \n");
 	g_mime_header_list_append (headers, "Content-Description", "second", NULL);
 	duplicate = g_mime_header_list_get_header_at (headers, count + 1);
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "first");
 	g_mime_part_set_content_description (part, g_mime_part_get_content_description (part));
-	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 2);
 	g_mime_header_set_value (duplicate, NULL, "changed duplicate", NULL);
 	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "first");
@@ -818,12 +818,12 @@ test_content_encoding_assignment (void)
 		g_mime_header_list_append (headers, "Content-Transfer-Encoding", value ? value : "unknown", NULL);
 		header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
 		raw = g_strdup_printf (" %s\t \n", value ? value : "unknown");
-		g_mime_header_set_raw_value (header, raw);
+		testsuite_header_set_raw_text (header, raw);
 		g_mime_header_list_append (headers, "Content-Transfer-Encoding", "binary", NULL);
 		g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, encoding);
 		g_mime_part_set_content_encoding (part, encoding);
 		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, count + 2);
-		g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+		g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 		g_free (raw);
 
 		g_mime_header_list_append (headers, "Content-Transfer-Encoding", "7bit", NULL);
@@ -843,7 +843,7 @@ test_content_encoding_assignment (void)
 	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_7BIT);
 	g_mime_header_list_remove_at (headers, count);
 	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_BASE64);
-	g_mime_header_set_raw_value (duplicate, " 8-BIT;suffix\n");
+	testsuite_header_set_raw_text (duplicate, " 8-BIT;suffix\n");
 	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_8BIT);
 	g_mime_header_list_clear (headers);
 	g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
@@ -869,13 +869,13 @@ test_content_encoding_invalid_assignment (void)
 			g_mime_header_list_append (headers, "Content-Transfer-Encoding", "BASE64", NULL);
 			g_mime_header_list_append (headers, "Content-Transfer-Encoding", "8bit", NULL);
 			header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
-			raw = g_strdup (g_mime_header_get_raw_value (header));
+			raw = g_strdup (testsuite_header_raw_text (header));
 			if (loaded)
 				g_assert_cmpint (g_mime_part_get_content_encoding (part), ==, GMIME_CONTENT_ENCODING_BASE64);
 			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*encoding >=*encoding <=*");
 			g_mime_part_set_content_encoding (part, (GMimeContentEncoding) invalid[i]);
 			g_test_assert_expected_messages ();
-			g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+			g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
 			g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_BASE64);
 			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, loaded ? 3 : 2);
@@ -906,15 +906,15 @@ test_content_encoding_consumers (void)
 	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "BASE64", NULL);
 	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "binary", NULL);
 	header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
-	raw = g_strdup (g_mime_header_get_raw_value (header));
+	raw = g_strdup (testsuite_header_raw_text (header));
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
 	g_assert_cmpint (g_mime_entity_write_content_to_stream (entity, options, output), >=, 0);
 	g_assert_cmpmem (bytes->data, bytes->len, "SGVsbG8=\n", 9);
-	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
-	g_mime_header_set_raw_value (header, raw);
+	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
+	testsuite_header_set_raw_text (header, raw);
 	g_mime_entity_encode (entity, GMIME_ENCODING_CONSTRAINT_7BIT);
 	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
-	g_assert_cmpstr (g_mime_header_get_raw_value (header), ==, raw);
+	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 	g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_free (raw);
 	g_mime_format_options_free (options);
@@ -1606,7 +1606,7 @@ test_part_prepare (void)
 	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "unknown", NULL);
 	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "base64", NULL);
 	header = g_mime_header_list_get_header (headers, "Content-Transfer-Encoding");
-	g_mime_header_set_raw_value (header, " x-unrecognized \t\n");
+	testsuite_header_set_raw_text (header, " x-unrecognized \t\n");
 	before = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
 	g_assert_true (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
 	g_assert_no_error (error);

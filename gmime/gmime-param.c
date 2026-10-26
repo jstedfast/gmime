@@ -1731,7 +1731,7 @@ decode_param_text (GMimeParserOptions *options, char *value, const char **charse
 	char *decoded;
 
 	if (strstr (value, "=?") != NULL) {
-		decoded = _g_mime_utils_header_decode_text (options, value, charset, offset);
+		decoded = _g_mime_utils_header_decode_text (options, value, strlen (value), charset, offset);
 		g_free (value);
 		value = decoded;
 

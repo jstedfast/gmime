@@ -185,8 +185,8 @@ parser_reader_check_repeated_header (GMimeParserOptions *options, GMimeEntity *e
 
 	if ((existing = g_mime_header_list_get_header (entity->headers, header->name)))
 		_g_mime_parser_options_warn (options, header->offset,
-					    strcmp (existing->raw_value, header->raw_value) ?
-					    GMIME_CRIT_CONFLICTING_HEADER : GMIME_WARN_DUPLICATED_HEADER,
+					    g_bytes_equal (existing->raw_value, header->raw_value) ?
+					    GMIME_WARN_DUPLICATED_HEADER : GMIME_CRIT_CONFLICTING_HEADER,
 					    header->name);
 }
 
@@ -399,7 +399,7 @@ parser_reader_message_begin (GMimeReader *base, gint64 begin, guint64 line, GErr
 		if (!marker)
 			marker = g_byte_array_new ();
 
-		data = g_bytes_get_data (header->raw_field_bytes, &length);
+		data = g_bytes_get_data (header->raw_name, &length);
 		g_byte_array_append (marker, data, length);
 		g_mime_header_list_remove_at (reader->headers, 0);
 	}

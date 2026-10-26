@@ -46,6 +46,10 @@ void testsuite_check_passed (void);
 
 int testsuite_total_errors (void);
 
+const char *testsuite_header_raw_text (GMimeHeader *header);
+const char *testsuite_header_raw_name (GMimeHeader *header);
+void testsuite_header_set_raw_text (GMimeHeader *header, const char *text);
+
 /* GnuPG test suite utility functions */
 int testsuite_setup_gpghome (const char *gpg);
 int testsuite_destroy_gpghome (void);

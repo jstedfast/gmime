@@ -129,6 +129,47 @@ streams_match (GMimeStream *expected, GMimeStream *actual)
 	return FALSE;
 }
 
+static void
+test_split_raw_headers (void)
+{
+	static const char raw[] = " before\0after\r\n";
+	static const char wire[] = "X-Binary: before\0after\r\n";
+	GMimeMessage *message = g_mime_message_new (FALSE), **messages;
+	GMimeHeader *header = g_mime_header_new ("X-Binary", "initial", NULL);
+	GBytes *bytes = g_bytes_new_static (raw, sizeof (raw) - 1), *result;
+	GMimeStream *stream;
+	GByteArray *output;
+	GError *error = NULL;
+	size_t count, i;
+
+	testsuite_check ("splitting preserves complete binary raw headers");
+	g_assert_true (g_mime_header_set_raw_value (header, bytes, &error));
+	g_assert_no_error (error);
+	g_mime_header_list_add (g_mime_entity_get_header_list (GMIME_ENTITY (message)), header);
+	g_mime_message_set_message_id (message, "split@example.com");
+	messages = g_mime_message_partial_split_message (message, 32, &count);
+	g_assert_nonnull (messages);
+	g_assert_cmpuint (count, >, 1);
+	g_object_unref (header);
+	g_object_unref (message);
+
+	for (i = 0; i < count; i++) {
+		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (messages[i])), "X-Binary");
+		result = g_mime_header_get_raw_value (header);
+		g_assert_true (g_bytes_equal (result, bytes));
+		g_bytes_unref (result);
+		stream = g_mime_stream_mem_new ();
+		g_assert_cmpint (g_mime_header_write_to_stream (header, NULL, stream), ==, sizeof (wire) - 1);
+		output = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+		g_assert_cmpmem (output->data, output->len, wire, sizeof (wire) - 1);
+		g_object_unref (stream);
+		g_object_unref (messages[i]);
+	}
+	g_free (messages);
+	g_bytes_unref (bytes);
+	testsuite_check_passed ();
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/partial";
@@ -150,6 +191,7 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	testsuite_start ("message/partial");
+	test_split_raw_headers ();
 	
 	format = g_mime_format_options_get_default ();
 	

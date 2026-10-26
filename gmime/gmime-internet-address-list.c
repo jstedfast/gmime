@@ -723,7 +723,7 @@ decode_name (GMimeParserOptions *options, const char *name, size_t len, gboolean
 
 	/* Normalize literal tabs before decoding so encoded tabs are preserved. */
 	g_strdelimit (buf, "\t", ' ');
-	value = _g_mime_utils_header_decode_phrase (options, buf, charset, offset);
+	value = _g_mime_utils_header_decode_phrase (options, buf, strlen (buf), charset, offset);
 	g_strstrip (value);
 	g_free (buf);
 

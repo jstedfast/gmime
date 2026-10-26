@@ -85,7 +85,7 @@ parser_header_read (GMimeHeader *header, gboolean toplevel, gpointer user_data, 
 	gconstpointer field;
 	gsize length;
 
-	field = g_bytes_get_data (header->raw_field_bytes, &length);
+	field = g_bytes_get_data (header->raw_name, &length);
 
 	/* Embedded messages can retain an incomplete leading line as raw
 	 * pre-header bytes rather than treating it as a malformed root header. */
@@ -95,8 +95,12 @@ parser_header_read (GMimeHeader *header, gboolean toplevel, gpointer user_data, 
 		return FALSE;
 	}
 
-	if (!header->invalid && priv->regex && g_regex_match (priv->regex, header->name, 0, NULL))
-		priv->header_cb (parser, header->name, header->raw_value, header->offset, priv->user_data);
+	if (!header->invalid && priv->regex && g_regex_match (priv->regex, header->name, 0, NULL)) {
+		char *value = _g_mime_header_dup_raw_value (header);
+
+		priv->header_cb (parser, header->name, value, header->offset, priv->user_data);
+		g_free (value);
+	}
 
 	return TRUE;
 }

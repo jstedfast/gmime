@@ -42,6 +42,74 @@ static int total_errors = 0;
 static int total_tests = 0;
 int verbose = 0;
 
+typedef struct {
+	GBytes *bytes;
+	char *text;
+} HeaderText;
+
+static void
+header_text_free (gpointer data)
+{
+	HeaderText *cached = data;
+
+	g_bytes_unref (cached->bytes);
+	g_free (cached->text);
+	g_free (cached);
+}
+
+/* Text-only fixtures must not hide embedded NULs in byte-backed headers. */
+static const char *
+header_text (GMimeHeader *header, GBytes *bytes, const char *key)
+{
+	HeaderText *cached = g_object_get_data (G_OBJECT (header), key);
+	gsize length;
+	const char *data;
+
+	if (!bytes) {
+		g_object_set_data (G_OBJECT (header), key, NULL);
+		return NULL;
+	}
+
+	if (cached && cached->bytes == bytes) {
+		g_bytes_unref (bytes);
+		return cached->text;
+	}
+
+	data = g_bytes_get_data (bytes, &length);
+	g_assert_true (!length || !memchr (data, 0, length));
+	cached = g_new (HeaderText, 1);
+	cached->bytes = bytes;
+	cached->text = length ? g_strndup (data, length) : g_strdup ("");
+	g_object_set_data_full (G_OBJECT (header), key, cached, header_text_free);
+
+	return cached->text;
+}
+
+const char *
+testsuite_header_raw_text (GMimeHeader *header)
+{
+	return header_text (header, g_mime_header_get_raw_value (header), "gmime-test-raw-value");
+}
+
+const char *
+testsuite_header_raw_name (GMimeHeader *header)
+{
+	return header_text (header, g_mime_header_get_raw_name (header), "gmime-test-raw-name");
+}
+
+void
+testsuite_header_set_raw_text (GMimeHeader *header, const char *text)
+{
+	GBytes *bytes = g_bytes_new (text, strlen (text));
+	GError *error = NULL;
+	gboolean success;
+
+	success = g_mime_header_set_raw_value (header, bytes, &error);
+	g_assert_no_error (error);
+	g_assert_true (success);
+	g_bytes_unref (bytes);
+}
+
 enum {
 	TEST,
 	CHECK

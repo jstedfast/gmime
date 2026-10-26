@@ -163,15 +163,40 @@ g_mime_header_finalize (GObject *object)
 	g_mime_event_free (header->changed);
 	if (header->owns_options)
 		g_mime_parser_options_free (header->options);
-	g_free (header->raw_value);
-	g_free (header->raw_name);
+	g_clear_pointer (&header->raw_value, g_bytes_unref);
+	g_clear_pointer (&header->raw_name, g_bytes_unref);
 	g_free (header->charset);
 	g_free (header->value);
 	g_free (header->name);
-	g_clear_pointer (&header->raw_field_bytes, g_bytes_unref);
-	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+static GBytes *
+header_bytes_take_string (char *text)
+{
+	return text ? g_bytes_new_take (text, strlen (text)) : NULL;
+}
+
+static char *
+header_bytes_dup_text (GBytes *bytes)
+{
+	gsize length;
+	const char *data;
+
+	if (!bytes)
+		return NULL;
+
+	data = g_bytes_get_data (bytes, &length);
+	return length ? g_strndup (data, length) : g_strdup ("");
+}
+
+char *
+_g_mime_header_dup_raw_value (GMimeHeader *header)
+{
+	/* Legacy text parsers require a temporary NUL-terminated prefix. The
+	 * authoritative raw bytes are never changed by this conversion. */
+	return header_bytes_dup_text (header->raw_value);
 }
 
 
@@ -198,10 +223,10 @@ header_new (GMimeParserOptions *options, const char *name, const char *value,
 	guint i;
 	
 	header = g_object_new (GMIME_TYPE_HEADER, NULL);
-	header->raw_value = raw_value ? g_strdup (raw_value) : NULL;
+	header->raw_value = raw_value ? g_bytes_new (raw_value, strlen (raw_value)) : NULL;
 	header->charset = charset ? g_strdup (charset) : NULL;
 	header->value = value ? g_strdup (value) : NULL;
-	header->raw_name = g_strdup (raw_name);
+	header->raw_name = g_bytes_new (raw_name, strlen (raw_name));
 	header->name = g_strdup (name);
 	header->reformat = !raw_value;
 	header->options = options;
@@ -216,7 +241,7 @@ header_new (GMimeParserOptions *options, const char *name, const char *value,
 	}
 	
 	if (!raw_value && value)
-		header->raw_value = formatter (header, NULL, header->value, charset);
+		header->raw_value = header_bytes_take_string (formatter (header, NULL, header->value, charset));
 	
 	return header;
 }
@@ -228,12 +253,11 @@ _g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffe
 	gsize value_offset = invalid ? length : field_length + 1;
 	GMimeHeader *header;
 	GString *name;
-	char *raw_name, *raw_value;
 	gsize i;
 
-	/* MimeKit keeps the original field and value as byte arrays. Keep them
-	 * separately from the C-string views so invalid fields and embedded NULs
-	 * survive serialization and cloning without acquiring a synthetic colon. */
+	/* MimeKit keeps the original field and value as byte arrays so invalid
+	 * fields and embedded NULs survive serialization and cloning without
+	 * acquiring a synthetic colon. */
 	name = g_string_sized_new (name_length);
 
 	for (i = 0; i < name_length; i++) {
@@ -243,17 +267,15 @@ _g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffe
 			g_string_append_unichar (name, buffer[i]);
 	}
 
-	raw_name = g_strndup ((const char *) buffer, field_length);
-	raw_value = g_strndup ((const char *) buffer + value_offset, length - value_offset);
 	header = header_new (g_mime_parser_options_clone (options), name->str, NULL,
-			     raw_name, raw_value, NULL, offset);
+			     name->str, NULL, NULL, offset);
 	header->owns_options = TRUE;
 	header->invalid = invalid;
-	header->raw_field_bytes = g_bytes_new (buffer, field_length);
-	header->raw_value_bytes = g_bytes_new (buffer + value_offset, length - value_offset);
+	header->reformat = FALSE;
+	g_bytes_unref (header->raw_name);
+	header->raw_name = g_bytes_new (buffer, field_length);
+	header->raw_value = g_bytes_new (buffer + value_offset, length - value_offset);
 	g_string_free (name, TRUE);
-	g_free (raw_value);
-	g_free (raw_name);
 
 	return header;
 }
@@ -380,8 +402,9 @@ g_mime_header_new_full (const char *name, const char *value, const char *charset
  * value, charset, and formatting behavior without decoding or reformatting it.
  * The clone has no change listeners and its stream offset is unknown (-1).
  *
- * The clone owns copies of its strings and parser options and can outlive the
- * original header and its containing list. As with
+ * The clone shares immutable raw bytes and owns copies of its decoded strings
+ * and parser options. It can outlive the original header and its containing
+ * list. As with
  * g_mime_parser_options_clone(), warning callback user data remains borrowed.
  *
  * Returns: (transfer full): an independent copy of @header.
@@ -399,18 +422,12 @@ g_mime_header_clone (GMimeHeader *header)
 	clone->owns_options = TRUE;
 	clone->reformat = header->reformat;
 	clone->explicit_raw_value = header->explicit_raw_value;
-	clone->raw_value = g_strdup (header->raw_value);
-	clone->raw_name = g_strdup (header->raw_name);
+	clone->raw_value = header->raw_value ? g_bytes_ref (header->raw_value) : NULL;
+	clone->raw_name = g_bytes_ref (header->raw_name);
 	clone->charset = g_strdup (header->charset);
 	clone->value = g_strdup (header->value);
 	clone->name = g_strdup (header->name);
 	clone->invalid = header->invalid;
-
-	if (header->raw_field_bytes)
-		clone->raw_field_bytes = g_bytes_ref (header->raw_field_bytes);
-
-	if (header->raw_value_bytes)
-		clone->raw_value_bytes = g_bytes_ref (header->raw_value_bytes);
 
 	return clone;
 }
@@ -439,19 +456,23 @@ g_mime_header_get_name (GMimeHeader *header)
  * g_mime_header_get_value:
  * @header: a #GMimeHeader
  *
- * Gets the header's unfolded value.
+ * Gets the header's unfolded value. Literal and decoded NUL characters are
+ * replaced with the Unicode replacement character U+FFFD.
  *
  * Returns: the header's decoded value or %NULL if invalid.
  **/
 const char *
 g_mime_header_get_value (GMimeHeader *header)
 {
+	const char *raw;
+	gsize length;
 	char *buf;
 	
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
 	if (!header->value && header->raw_value) {
-		buf = _g_mime_utils_header_decode_text (header->options, header->raw_value, NULL, header->offset);
+		raw = g_bytes_get_data (header->raw_value, &length);
+		buf = _g_mime_utils_header_decode_text (header->options, raw, length, NULL, header->offset);
 		header->value = g_mime_utils_header_unfold (buf);
 		g_free (buf);
 	}
@@ -478,9 +499,9 @@ g_mime_header_get_value (GMimeHeader *header)
  * Empty, invalid or unsupported charsets report %G_CONVERT_ERROR.
  * Generic UTF-16/32 aliases use little-endian bytes. The historical
  * MimeKit alias "unicode" selects UTF-8, not UTF-16.
- * Literal NUL bytes in the stored raw value and embedded NUL characters in
- * decoded text report %G_CONVERT_ERROR_EMBEDDED_NUL rather than returning
- * truncated text. No failure returns partial text.
+ * Literal and decoded NUL characters are replaced with the Unicode
+ * replacement character U+FFFD. The stored raw bytes remain unchanged.
+ * No failure returns partial text.
  *
  * Returns: (transfer full) (nullable): freshly decoded UTF-8 text, or %NULL
  * on failure.
@@ -489,10 +510,10 @@ char *
 g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, GError **error)
 {
 	GMimeParserOptions *options;
-	const char *bytes, *encoding;
+	const char *bytes = NULL, *encoding;
 	char *decoded, *value;
 	GIConv decoder;
-	gsize length;
+	gsize length = 0;
 
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	g_return_val_if_fail (charset != NULL, NULL);
@@ -508,17 +529,11 @@ g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, 
 		return NULL;
 	}
 
-	if (header->raw_value_bytes) {
-		bytes = g_bytes_get_data (header->raw_value_bytes, &length);
-		if (length && memchr (bytes, 0, length)) {
-			g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
-					     "Raw header value contains an embedded NUL byte");
-			g_mime_parser_options_free (options);
-			return NULL;
-		}
+	if (header->raw_value) {
+		bytes = g_bytes_get_data (header->raw_value, &length);
 	}
 
-	decoded = _g_mime_utils_header_decode_text_full (options, header->raw_value, header->offset, error);
+	decoded = _g_mime_utils_header_decode_text_full (options, bytes, length, header->offset);
 	g_mime_parser_options_free (options);
 	if (!decoded)
 		return NULL;
@@ -533,21 +548,18 @@ g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, 
 GMimeContentEncoding
 _g_mime_header_get_content_encoding (GMimeHeader *header)
 {
-	if (header->raw_value_bytes) {
+	if (header->raw_value) {
 		gsize length;
-
-		const char *bytes = g_bytes_get_data (header->raw_value_bytes, &length);
+		const char *bytes = g_bytes_get_data (header->raw_value, &length);
 
 		if (length && memchr (bytes, 0, length)) {
 			GMimeContentEncoding encoding;
 			char *text;
 
-			/* A literal NUL is part of the first token unless whitespace
-			 * or a semicolon already ended it. Decode the prefix without
-			 * trimming, then include its NUL in the bounded parse rather
-			 * than mistaking it for the end of the header value. */
-			text = _g_mime_utils_header_decode_text (header->options, header->raw_value, NULL, header->offset);
-			encoding = _g_mime_content_encoding_parse (text, strlen (text) + 1);
+			/* Preserve token delimiters before literal NULs instead of
+			 * removing them when unfolding the decoded value. */
+			text = _g_mime_utils_header_decode_text (header->options, bytes, length, NULL, header->offset);
+			encoding = _g_mime_content_encoding_parse (text, strlen (text));
 			g_free (text);
 
 			return encoding;
@@ -571,6 +583,7 @@ void
 g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
 	GMimeHeaderRawValueFormatter formatter;
+	GBytes *previous;
 	char *buf, *raw_value, *encoding;
 	
 	g_return_if_fail (GMIME_IS_HEADER (header));
@@ -587,16 +600,17 @@ g_mime_header_set_value (GMimeHeader *header, GMimeFormatOptions *options, const
 
 	encoding = g_strdup (charset);
 
-	g_free (header->raw_value);
+	previous = header->raw_value;
 	g_free (header->charset);
 	g_free (header->value);
 	
-	header->raw_value = raw_value;
+	header->raw_value = header_bytes_take_string (raw_value);
 	header->charset = encoding;
 	header->reformat = TRUE;
 	header->explicit_raw_value = FALSE;
 	header->value = buf;
-	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
+	if (previous)
+		g_bytes_unref (previous);
 	
 	g_mime_event_emit (header->changed, NULL);
 }
@@ -684,6 +698,7 @@ g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, 
 			    const char *charset, GError **error)
 {
 	char *probe, *encoding, *text, *raw_value;
+	GBytes *previous;
 	gsize length;
 
 	g_return_val_if_fail (GMIME_IS_HEADER (header), FALSE);
@@ -709,16 +724,17 @@ g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, 
 		return FALSE;
 	}
 
-	g_free (header->raw_value);
+	previous = header->raw_value;
 	g_free (header->charset);
 	g_free (header->value);
-	header->raw_value = raw_value;
+	header->raw_value = header_bytes_take_string (raw_value);
 	header->charset = encoding;
 	header->value = text;
 	/* Cache the formatting until reassignment, except for International output. */
 	header->reformat = FALSE;
 	header->explicit_raw_value = FALSE;
-	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
+	if (previous)
+		g_bytes_unref (previous);
 
 	g_mime_event_emit (header->changed, NULL);
 
@@ -730,22 +746,22 @@ g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, 
  * g_mime_header_get_raw_name:
  * @header: a #GMimeHeader
  *
- * Gets the header's raw name. The raw header name is the complete string up to
+ * Gets the header's raw name. The raw header name is the complete byte sequence up to
  * (but not including) the ':' separating the header's name from its value. This
- * string may be different from the value returned by g_mime_header_get_name()
+ * byte sequence may be different from the value returned by g_mime_header_get_name()
  * if the parsed message's header contained trailing whitespace after the header
  * name, such as: "Subject : this is the subject\r\n".
- * This C-string view ends at any embedded NUL in an invalid field; transport
- * serialization preserves the complete parsed bytes.
+ * Embedded NULs in invalid fields are retained. The immutable bytes remain
+ * valid after the header is changed or destroyed.
  *
- * Returns: the raw header name.
+ * Returns: (transfer full): the complete raw header name.
  **/
-const char *
+GBytes *
 g_mime_header_get_raw_name (GMimeHeader *header)
 {
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	
-	return header->raw_name;
+	return g_bytes_ref (header->raw_name);
 }
 
 
@@ -753,64 +769,84 @@ g_mime_header_get_raw_name (GMimeHeader *header)
  * g_mime_header_get_raw_value:
  * @header: a #GMimeHeader
  *
- * Gets the header's raw (folded) value.
- * This C-string view ends at any embedded NUL; transport serialization
- * preserves the complete parsed bytes until the value is replaced.
+ * Gets the complete raw value before decoding or charset conversion,
+ * including any embedded NUL bytes. The returned immutable bytes remain
+ * valid after the header is changed or destroyed. An unset legacy
+ * placeholder returns %NULL.
  *
- * Returns: the header value or %NULL if invalid.
+ * Returns: (transfer full) (nullable): the raw bytes, or %NULL if unset.
  **/
-const char *
+GBytes *
 g_mime_header_get_raw_value (GMimeHeader *header)
 {
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
-	
-	return header->raw_value;
+
+	return header->raw_value ? g_bytes_ref (header->raw_value) : NULL;
 }
 
 
-#if 0
-void
-_g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
+static void
+header_set_raw_value (GMimeHeader *header, GBytes *raw_value)
 {
-	char *buf = g_strdup (raw_value);
-	
-	g_free (header->raw_value);
+	GBytes *previous = header->raw_value;
+
 	g_free (header->value);
-	
-	header->raw_value = buf;
+
+	header->reformat = FALSE;
+	header->explicit_raw_value = TRUE;
+	header->raw_value = raw_value;
 	header->value = NULL;
+
+	if (previous)
+		g_bytes_unref (previous);
+
+	g_mime_event_emit (header->changed, NULL);
 }
-#endif
 
 
 /**
  * g_mime_header_set_raw_value:
  * @header: a #GMimeHeader
- * @raw_value: the raw value
+ * @raw_value: the complete raw value, ending in LF
+ * @error: return location for an error, or %NULL
  *
- * Sets the header's raw value. This explicit assignment is preserved when
- * writing with International formatting, until g_mime_header_set_value()
- * or g_mime_header_set_value_full() assigns a decoded value.
+ * Sets the raw value without encoding, folding or charset validation.
+ * Empty values and values whose final byte is not LF report
+ * %GMIME_ERROR_PARSE_ERROR without changing the header or notifying owners.
+ * LF and CRLF endings are both accepted. No leading whitespace or other
+ * header syntax is required or added.
+ *
+ * The header retains a reference to the immutable bytes, clears its decoded
+ * cache and emits a change event, even when assigning the current bytes.
+ * Its field name, source offset, charset and parser options are preserved.
+ * Explicit raw values are preserved with International formatting until
+ * replaced by a decoded-value assignment.
+ *
+ * Embedded NUL bytes are retained for serialization and byte-based access. Use
+ * g_mime_header_get_value_with_charset() to reject NUL-containing text.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
  **/
-void
-g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value)
+gboolean
+g_mime_header_set_raw_value (GMimeHeader *header, GBytes *raw_value, GError **error)
 {
-	char *buf;
-	
-	g_return_if_fail (GMIME_IS_HEADER (header));
-	g_return_if_fail (raw_value != NULL);
-	
-	buf = g_strdup (raw_value);
-	g_free (header->raw_value);
-	g_free (header->value);
+	const char *bytes;
+	gsize length;
 
-	header->reformat = FALSE;
-	header->explicit_raw_value = TRUE;
-	header->raw_value = buf;
-	header->value = NULL;
-	g_clear_pointer (&header->raw_value_bytes, g_bytes_unref);
-	
-	g_mime_event_emit (header->changed, NULL);
+	g_return_val_if_fail (GMIME_IS_HEADER (header), FALSE);
+	g_return_val_if_fail (raw_value != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	bytes = g_bytes_get_data (raw_value, &length);
+	if (!length || bytes[length - 1] != '\n') {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     "Raw header value must end with a newline character");
+		return FALSE;
+	}
+
+	header_set_raw_value (header, g_bytes_ref (raw_value));
+
+	return TRUE;
 }
 
 
@@ -887,17 +923,17 @@ ssize_t
 g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options, GMimeStream *stream)
 {
 	GMimeHeaderRawValueFormatter formatter;
-	ssize_t nwritten, total = 0;
+	ssize_t nwritten, total;
 	gboolean reformat;
-	char *raw_value, *buf;
-	const char *bytes;
-	gsize length;
+	char *raw_value = NULL;
+	const char *bytes, *field;
+	gsize length, field_length;
 	
 	g_return_val_if_fail (GMIME_IS_HEADER (header), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 
 	if (header->invalid) {
-		bytes = g_bytes_get_data (header->raw_field_bytes, &length);
+		bytes = g_bytes_get_data (header->raw_name, &length);
 		return _g_mime_stream_write_all (stream, bytes, length);
 	}
 	
@@ -907,29 +943,12 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options,
 	reformat = header->reformat || (!header->explicit_raw_value &&
 				       g_mime_format_options_get_allow_international (options));
 
-	if (header->raw_value_bytes) {
-		bytes = g_bytes_get_data (header->raw_value_bytes, &length);
+	bytes = g_bytes_get_data (header->raw_value, &length);
 
-		/* The legacy decoded-value API is NUL-terminated. Never let an
-		 * International formatting request truncate a binary raw value. */
-		if (length && memchr (bytes, 0, length))
-			reformat = FALSE;
-
-		if (!reformat) {
-			const char *field;
-			gsize field_length;
-
-			field = g_bytes_get_data (header->raw_field_bytes, &field_length);
-			if ((nwritten = _g_mime_stream_write_all (stream, field, field_length)) < 0)
-				return -1;
-			total += nwritten;
-			if (_g_mime_stream_write_all (stream, ":", 1) < 0 ||
-			    (nwritten = _g_mime_stream_write_all (stream, bytes, length)) < 0)
-				return -1;
-
-			return total + 1 + nwritten;
-		}
-	}
+	/* The legacy decoded-value API is NUL-terminated. Never let an
+	 * International formatting request truncate a binary raw value. */
+	if (length && memchr (bytes, 0, length))
+		reformat = FALSE;
 
 	if (reformat) {
 		if (header->reformat) {
@@ -943,22 +962,20 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeFormatOptions *options,
 			errno = EINVAL;
 			return -1;
 		}
-	} else {
-		raw_value = header->raw_value;
+		bytes = raw_value;
+		length = strlen (raw_value);
 	}
-	
-	buf = g_strdup_printf ("%s:%s", header->raw_name, raw_value);
-	nwritten = g_mime_stream_write_string (stream, buf);
-	
-	if (reformat)
+
+	field = g_bytes_get_data (header->raw_name, &field_length);
+	if ((total = _g_mime_stream_write_all (stream, field, field_length)) < 0 ||
+	    _g_mime_stream_write_all (stream, ":", 1) < 0 ||
+	    (nwritten = _g_mime_stream_write_all (stream, bytes, length)) < 0) {
 		g_free (raw_value);
-	g_free (buf);
-	
-	if (nwritten == -1)
 		return -1;
-	
-	total += nwritten;
-	
+	}
+	total += 1 + nwritten;
+	g_free (raw_value);
+
 	return total;
 }
 
@@ -982,7 +999,7 @@ g_mime_header_format_content_disposition (GMimeHeader *header, GMimeFormatOption
 	GString *str;
 	guint n;
 	
-	str = g_string_new (header->raw_name);
+	str = g_string_new_len (g_bytes_get_data (header->raw_name, NULL), g_bytes_get_size (header->raw_name));
 	g_string_append_c (str, ':');
 	n = str->len;
 	
@@ -1019,7 +1036,7 @@ g_mime_header_format_content_type (GMimeHeader *header, GMimeFormatOptions *opti
 	GString *str;
 	guint n;
 	
-	str = g_string_new (header->raw_name);
+	str = g_string_new_len (g_bytes_get_data (header->raw_name, NULL), g_bytes_get_size (header->raw_name));
 	g_string_append_c (str, ':');
 	n = str->len;
 	
@@ -1093,7 +1110,7 @@ g_mime_header_format_references (GMimeHeader *header, GMimeFormatOptions *option
 	newline = g_mime_format_options_get_newline (options);
 	maxline = g_mime_format_options_get_max_line_length (options);
 	refs = g_mime_message_id_list_parse (header->options, value);
-	str = g_string_new (header->raw_name);
+	str = g_string_new_len (g_bytes_get_data (header->raw_name, NULL), g_bytes_get_size (header->raw_name));
 	g_string_append_c (str, ':');
 	cur = n = str->len;
 	
@@ -1163,11 +1180,13 @@ char *
 g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
 	GMimeInternetAddressList *addrlist = NULL;
-	char *raw_value;
+	char *raw_value, *field;
 
 	if (value)
 		addrlist = _g_mime_internet_address_list_parse (header->options, value, -1);
-	raw_value = format_address_list (header->raw_name, options, addrlist);
+	field = header_bytes_dup_text (header->raw_name);
+	raw_value = format_address_list (field, options, addrlist);
+	g_free (field);
 	g_clear_object (&addrlist);
 
 	return raw_value;
@@ -1181,29 +1200,32 @@ reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options)
 	GMimeContentDisposition *disposition;
 	GMimeInternetAddressList *addresses;
 	GMimeContentType *content_type;
-	char *raw_value;
+	char *raw_value, *text = _g_mime_header_dup_raw_value (header);
 
 	if (formatter == g_mime_header_format_addrlist) {
-		if (!(addresses = _g_mime_internet_address_list_parse (header->options, header->raw_value, -1)))
-			return g_strdup (header->raw_value);
+		if (!(addresses = _g_mime_internet_address_list_parse (header->options, text, -1)))
+			return text;
 		raw_value = format_address_list (header->name, options, addresses);
 		g_object_unref (addresses);
+		g_free (text);
 		return raw_value;
 	}
 
 	if (formatter == g_mime_header_format_content_type) {
-		if (!(content_type = g_mime_content_type_parse_full (header->options, header->raw_value, -1, NULL)))
-			return g_strdup (header->raw_value);
+		if (!(content_type = g_mime_content_type_parse_full (header->options, text, -1, NULL)))
+			return text;
 		raw_value = g_mime_content_type_encode (content_type, options);
 		g_object_unref (content_type);
+		g_free (text);
 		return raw_value;
 	}
 
 	if (formatter == g_mime_header_format_content_disposition) {
-		if (!(disposition = g_mime_content_disposition_parse_full (header->options, header->raw_value, -1, NULL)))
-			return g_strdup (header->raw_value);
+		if (!(disposition = g_mime_content_disposition_parse_full (header->options, text, -1, NULL)))
+			return text;
 		raw_value = g_mime_content_disposition_encode (disposition, options);
 		g_object_unref (disposition);
+		g_free (text);
 		return raw_value;
 	}
 
@@ -1216,7 +1238,9 @@ reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options)
 	    formatter == g_mime_header_format_dkim_signature ||
 	    !g_ascii_strcasecmp (header->name, "Authentication-Results") ||
 	    !g_ascii_strcasecmp (header->name, "ARC-Authentication-Results"))
-		return g_strdup (header->raw_value);
+		return text;
+
+	g_free (text);
 
 	if (formatter == g_mime_header_format_mailing_list_command)
 		return format_mailing_list_command (options, header->name, g_mime_header_get_value (header), "utf-8");
@@ -1289,7 +1313,7 @@ g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options,
 	
 	newline = g_mime_format_options_get_newline (options);
 	maxline = g_mime_format_options_get_max_line_length (options);
-	line = strlen (header->raw_name) + 1;
+	line = g_bytes_get_size (header->raw_name) + 1;
 	str = g_string_new (NULL);
 	inptr = unfolded = g_mime_utils_header_unfold (value);
 
@@ -1406,7 +1430,7 @@ g_mime_header_format_disposition_notification_options (GMimeHeader *header, GMim
 
 	newline = g_mime_format_options_get_newline (options);
 	maxline = g_mime_format_options_get_max_line_length (options);
-	line = strlen (header->raw_name) + 1;
+	line = g_bytes_get_size (header->raw_name) + 1;
 	str = g_string_new (NULL);
 	param = g_string_new (NULL);
 	inptr = unfolded = g_mime_utils_header_unfold (value);
@@ -1540,7 +1564,7 @@ g_mime_header_format_dkim_signature (GMimeHeader *header, GMimeFormatOptions *op
 
 	newline = g_mime_format_options_get_newline (options);
 	maxline = g_mime_format_options_get_max_line_length (options);
-	line = strlen (header->raw_name) + 1;
+	line = g_bytes_get_size (header->raw_name) + 1;
 	str = g_string_new (NULL);
 	token = g_string_new (NULL);
 	inptr = unfolded = g_mime_utils_header_unfold (value);
@@ -1772,7 +1796,11 @@ char *
 g_mime_header_format_mailing_list_command (GMimeHeader *header, GMimeFormatOptions *options,
 					 const char *value, const char *charset)
 {
-	return format_mailing_list_command (options, header->raw_name, value, charset);
+	char *field = header_bytes_dup_text (header->raw_name);
+	char *raw_value = format_mailing_list_command (options, field, value, charset);
+
+	g_free (field);
+	return raw_value;
 }
 
 
@@ -1890,14 +1918,19 @@ fold_international_text (GMimeFormatOptions *options, const char *field, const c
 char *
 g_mime_header_format_default (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
-	char *encoded, *raw_value;
+	char *encoded, *raw_value, *field;
 	
-	if (g_mime_format_options_get_allow_international (options))
-		return fold_international_text (options, header->raw_name, value);
+	field = header_bytes_dup_text (header->raw_name);
+	if (g_mime_format_options_get_allow_international (options)) {
+		raw_value = fold_international_text (options, field, value);
+		g_free (field);
+		return raw_value;
+	}
 
 	encoded = g_mime_utils_header_encode_text (options, value, charset);
-	raw_value = _g_mime_utils_unstructured_header_fold (header->options, options, header->raw_name, encoded);
+	raw_value = _g_mime_utils_unstructured_header_fold (header->options, options, field, encoded);
 	g_free (encoded);
+	g_free (field);
 	
 	return raw_value;
 }
@@ -2725,7 +2758,7 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
 	
 	if ((header = g_hash_table_lookup (headers->hash, name))) {
 		first = g_mime_header_list_index_of_header (headers, header);
-		g_mime_header_set_raw_value (header, raw_value);
+		header_set_raw_value (header, g_bytes_new (raw_value, strlen (raw_value)));
 		
 		header_list_remove_duplicates (headers, header, first);
 		

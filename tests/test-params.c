@@ -280,7 +280,7 @@ test_headers (void)
 	GMimeParamList *list, *other;
 	GMimeParam *param, *replacement;
 
-	g_mime_header_set_raw_value (header, raw);
+	testsuite_header_set_raw_text (header, raw);
 	list = g_mime_content_type_get_parameters (g_mime_entity_get_content_type (entity));
 	param = g_mime_param_list_get_parameter (list, "name");
 	g_mime_param_set_value (param, "original.txt");
@@ -290,27 +290,27 @@ test_headers (void)
 	g_mime_param_set_always_quote (param, g_mime_param_get_always_quote (param));
 	g_mime_param_list_set_parameter (list, "NAME", g_mime_param_get_value (param));
 	g_mime_param_list_set_parameter_at (list, 0, param);
-	check (!strcmp (g_mime_header_get_raw_value (header), raw), "equivalent assignments preserve untouched raw header folding");
+	check (!strcmp (testsuite_header_raw_text (header), raw), "equivalent assignments preserve untouched raw header folding");
 	g_object_ref (param);
 	other = g_mime_content_type_get_parameters (g_mime_entity_get_content_type (GMIME_ENTITY (second)));
 	g_mime_param_list_add (other, param);
 	g_mime_param_set_value (param, "shared.txt");
-	check (strstr (g_mime_header_get_raw_value (header), "shared.txt") != NULL &&
+	check (strstr (testsuite_header_raw_text (header), "shared.txt") != NULL &&
 	       strstr (g_mime_entity_get_header (GMIME_ENTITY (second), "Content-Type"), "shared.txt") != NULL,
 	       "shared parameter changes update both owning headers");
 	replacement = g_mime_param_clone (param);
 	g_mime_param_set_value (replacement, "replacement.txt");
 	g_mime_param_list_set_parameter_at (list, 0, replacement);
 	g_mime_param_set_value (param, "second.txt");
-	check (strstr (g_mime_header_get_raw_value (header), "replacement.txt") != NULL &&
+	check (strstr (testsuite_header_raw_text (header), "replacement.txt") != NULL &&
 	       strstr (g_mime_entity_get_header (GMIME_ENTITY (second), "Content-Type"), "second.txt") != NULL,
 	       "replacing a parameter transfers the owning header subscription");
 	check (g_mime_param_list_remove (list, "NAME") &&
-	       strstr (g_mime_header_get_raw_value (header), "name=") == NULL, "name removal updates the owning Content-Type header");
+	       strstr (testsuite_header_raw_text (header), "name=") == NULL, "name removal updates the owning Content-Type header");
 	g_mime_param_list_add (list, replacement);
-	check (strstr (g_mime_header_get_raw_value (header), "replacement.txt") != NULL, "object addition updates the owning header");
+	check (strstr (testsuite_header_raw_text (header), "replacement.txt") != NULL, "object addition updates the owning header");
 	check (g_mime_param_list_remove_at (list, 0) &&
-	       strstr (g_mime_header_get_raw_value (header), "name=") == NULL, "indexed removal updates the owning header");
+	       strstr (testsuite_header_raw_text (header), "name=") == NULL, "indexed removal updates the owning header");
 	g_mime_entity_set_disposition (entity, "attachment");
 	list = g_mime_content_disposition_get_parameters (g_mime_entity_get_content_disposition (entity));
 	g_mime_param_list_insert (list, 0, replacement);
@@ -319,13 +319,13 @@ test_headers (void)
 	       strstr (g_mime_entity_get_header (entity, "Content-Disposition"), "name=") == NULL,
 	       "object insertion and removal update Content-Disposition headers");
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Disposition");
-	g_mime_header_set_raw_value (header, disposition_raw);
+	testsuite_header_set_raw_text (header, disposition_raw);
 	list = g_mime_content_disposition_get_parameters (g_mime_entity_get_content_disposition (entity));
 	g_mime_param_list_set_parameter (list, "NAME", "replacement.txt");
-	check (!strcmp (g_mime_header_get_raw_value (header), disposition_raw),
+	check (!strcmp (testsuite_header_raw_text (header), disposition_raw),
 	       "equivalent disposition parameter assignments preserve raw header folding");
 	g_mime_param_list_clear (list);
-	check (strstr (g_mime_header_get_raw_value (header), "name=") == NULL,
+	check (strstr (testsuite_header_raw_text (header), "name=") == NULL,
 	       "clearing parameters updates the owning disposition header");
 	g_object_unref (first);
 	g_object_unref (second);
@@ -1066,10 +1066,10 @@ test_content_token_assignments (void)
 	const char *stored;
 	char *equal;
 
-	g_mime_header_set_raw_value (type_header, raw_type);
+	testsuite_header_set_raw_text (type_header, raw_type);
 	g_mime_entity_set_disposition (entity, "inline");
 	disposition_header = g_mime_header_list_get_header (headers, "Content-Disposition");
-	g_mime_header_set_raw_value (disposition_header, raw_disposition);
+	testsuite_header_set_raw_text (disposition_header, raw_disposition);
 	type = g_mime_entity_get_content_type (entity);
 	disposition = g_mime_entity_get_content_disposition (entity);
 	stored = g_mime_content_type_get_media_type (type);
@@ -1090,8 +1090,8 @@ test_content_token_assignments (void)
 	g_mime_content_disposition_set_disposition (disposition, equal);
 	check (g_mime_content_disposition_get_disposition (disposition) == stored, "equivalent disposition assignments retain their storage");
 	g_free (equal);
-	check (!strcmp (g_mime_header_get_raw_value (type_header), raw_type) &&
-	       !strcmp (g_mime_header_get_raw_value (disposition_header), raw_disposition),
+	check (!strcmp (testsuite_header_raw_text (type_header), raw_type) &&
+	       !strcmp (testsuite_header_raw_text (disposition_header), raw_disposition),
 	       "equivalent primary-token assignments preserve raw header comments and folding");
 	g_mime_content_type_set_media_type (type, "text");
 	g_mime_content_type_set_media_subtype (type, "plain");
@@ -1135,7 +1135,7 @@ test_content_type_properties (void)
 	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
 		upper = g_ascii_strup (properties[i].name, -1);
 		raw = g_strdup_printf (" TEXT/Plain;\r\n\t%s*=iso-8859-1'fr'%%E9;\r\n\tkeep=stable\r\n", upper);
-		g_mime_header_set_raw_value (header, raw);
+		testsuite_header_set_raw_text (header, raw);
 		type = g_mime_entity_get_content_type (entity);
 		params = g_mime_content_type_get_parameters (type);
 		param = g_mime_param_list_get_parameter (params, properties[i].name);
@@ -1148,13 +1148,13 @@ test_content_type_properties (void)
 		properties[i].set (type, same);
 		g_free (same);
 		check (properties[i].get (type) == stored &&
-		       !strcmp (g_mime_header_get_raw_value (header), raw),
+		       !strcmp (testsuite_header_raw_text (header), raw),
 		       "equivalent convenience assignments preserve parameter storage and raw folding");
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
 		properties[i].set (type, "\377");
 		g_test_assert_expected_messages ();
 		check (properties[i].get (type) == stored &&
-		       !strcmp (g_mime_header_get_raw_value (header), raw),
+		       !strcmp (testsuite_header_raw_text (header), raw),
 		       "invalid UTF-8 convenience assignments leave parameters and headers unchanged");
 		g_mime_param_set_always_quote (param, TRUE);
 		properties[i].set (type, "prefix-value");
@@ -1164,7 +1164,7 @@ test_content_type_properties (void)
 		       !strcmp (g_mime_param_get_lang (param), "fr") &&
 		       g_mime_param_get_encoding_method (param) == GMIME_PARAM_ENCODING_METHOD_RFC2231 &&
 		       g_mime_param_get_always_quote (param) &&
-		       strstr (g_mime_header_get_raw_value (header), "prefix-value"),
+		       strstr (testsuite_header_raw_text (header), "prefix-value"),
 		       "convenience assignments retain parameter identity, position, spelling, and metadata while updating headers");
 		properties[i].set (type, properties[i].get (type) + 7);
 		check (!strcmp (properties[i].get (type), "value"), "content type convenience assignments copy aliased substrings safely");
@@ -1175,11 +1175,11 @@ test_content_type_properties (void)
 		       g_mime_param_list_length (params) == 2, "empty convenience values remain explicit parameters");
 		properties[i].set (type, NULL);
 		check (properties[i].get (type) == NULL && g_mime_param_list_length (params) == 1 &&
-		       strstr (g_mime_header_get_raw_value (header), upper) == NULL,
+		       strstr (testsuite_header_raw_text (header), upper) == NULL,
 		       "NULL convenience assignments remove the matching parameter and update the owning header");
-		before = g_strdup (g_mime_header_get_raw_value (header));
+		before = g_strdup (testsuite_header_raw_text (header));
 		properties[i].set (type, NULL);
-		check (!strcmp (g_mime_header_get_raw_value (header), before), "removing an absent convenience parameter does not rewrite its header");
+		check (!strcmp (testsuite_header_raw_text (header), before), "removing an absent convenience parameter does not rewrite its header");
 		g_free (before);
 		clone = g_mime_content_type_clone (type);
 		properties[i].set (clone, "clone-only");
@@ -1195,7 +1195,7 @@ test_content_type_properties (void)
 		check (stored == NULL, "convenience getters reject invalid content type objects");
 		g_free (raw);
 		raw = g_strdup_printf (" text/plain; %s=first; %s=second\r\n", upper, properties[i].name);
-		g_mime_header_set_raw_value (header, raw);
+		testsuite_header_set_raw_text (header, raw);
 		type = g_mime_entity_get_content_type (entity);
 		params = g_mime_content_type_get_parameters (type);
 		param = g_mime_param_list_get_parameter_at (params, 1);
@@ -1238,7 +1238,7 @@ test_disposition_properties (void)
 	       !strcmp (g_mime_part_get_filename (part), "type-fallback.txt"),
 	       "disposition filename lookup has no Content-Type fallback while part-level lookup retains it");
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Disposition");
-	g_mime_header_set_raw_value (header, raw);
+	testsuite_header_set_raw_text (header, raw);
 	disposition = g_mime_entity_get_content_disposition (entity);
 	params = g_mime_content_disposition_get_parameters (disposition);
 	param = g_mime_param_list_get_parameter (params, "filename");
@@ -1250,12 +1250,12 @@ test_disposition_properties (void)
 	g_mime_content_disposition_set_filename (disposition, same);
 	g_free (same);
 	check (g_mime_content_disposition_get_filename (disposition) == stored &&
-	       !strcmp (g_mime_header_get_raw_value (header), raw), "equivalent filename assignments preserve stored values and raw folding");
+	       !strcmp (testsuite_header_raw_text (header), raw), "equivalent filename assignments preserve stored values and raw folding");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
 	g_mime_content_disposition_set_filename (disposition, "\377");
 	g_test_assert_expected_messages ();
 	check (g_mime_content_disposition_get_filename (disposition) == stored &&
-	       !strcmp (g_mime_header_get_raw_value (header), raw), "invalid UTF-8 filenames leave parameters and raw headers unchanged");
+	       !strcmp (testsuite_header_raw_text (header), raw), "invalid UTF-8 filenames leave parameters and raw headers unchanged");
 	g_mime_param_set_always_quote (param, TRUE);
 	g_mime_content_disposition_set_filename (disposition, "prefix-file.txt");
 	check (g_mime_param_list_get_parameter_at (params, 0) == param &&
@@ -1264,7 +1264,7 @@ test_disposition_properties (void)
 	       !strcmp (g_mime_param_get_lang (param), "fr") &&
 	       g_mime_param_get_encoding_method (param) == GMIME_PARAM_ENCODING_METHOD_RFC2231 &&
 	       g_mime_param_get_always_quote (param) &&
-	       strstr (g_mime_header_get_raw_value (header), "prefix-file.txt"),
+	       strstr (testsuite_header_raw_text (header), "prefix-file.txt"),
 	       "filename assignment preserves parameter identity and metadata and updates its owning header");
 	g_mime_content_disposition_set_filename (disposition, g_mime_content_disposition_get_filename (disposition) + 7);
 	check (!strcmp (g_mime_content_disposition_get_filename (disposition), "file.txt"), "filename assignment safely copies aliased substrings");
@@ -1279,11 +1279,11 @@ test_disposition_properties (void)
 	g_mime_content_disposition_set_filename (disposition, NULL);
 	check (g_mime_content_disposition_get_filename (disposition) == NULL &&
 	       !strcmp (g_mime_part_get_filename (part), "type-fallback.txt") &&
-	       g_mime_param_list_length (params) == 1 && strstr (g_mime_header_get_raw_value (header), "FILENAME") == NULL,
+	       g_mime_param_list_length (params) == 1 && strstr (testsuite_header_raw_text (header), "FILENAME") == NULL,
 	       "removing a disposition filename updates its header and restores the part-level fallback");
-	same = g_strdup (g_mime_header_get_raw_value (header));
+	same = g_strdup (testsuite_header_raw_text (header));
 	g_mime_content_disposition_set_filename (disposition, NULL);
-	check (!strcmp (g_mime_header_get_raw_value (header), same), "removing an absent filename leaves raw headers unchanged");
+	check (!strcmp (testsuite_header_raw_text (header), same), "removing an absent filename leaves raw headers unchanged");
 	g_free (same);
 	clone = g_mime_content_disposition_clone (disposition);
 	g_mime_content_disposition_set_filename (clone, "clone-only.txt");
@@ -1315,30 +1315,30 @@ test_attachment_assignment (void)
 
 	g_mime_entity_set_disposition (entity, "attachment");
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Disposition");
-	g_mime_header_set_raw_value (header, raw);
+	testsuite_header_set_raw_text (header, raw);
 	disposition = g_mime_entity_get_content_disposition (entity);
 	g_mime_content_disposition_set_is_attachment (disposition, TRUE);
 	check (g_mime_content_disposition_is_attachment (disposition) &&
-	       g_mime_part_is_attachment (part) && !strcmp (g_mime_header_get_raw_value (header), raw),
+	       g_mime_part_is_attachment (part) && !strcmp (testsuite_header_raw_text (header), raw),
 	       "equivalent attachment assignment preserves raw header folding");
 	g_mime_content_disposition_set_is_attachment (disposition, FALSE);
 	check (!g_mime_content_disposition_is_attachment (disposition) && !g_mime_part_is_attachment (part) &&
 	       !strcmp (g_mime_content_disposition_get_disposition (disposition), "inline") &&
-	       strstr (g_mime_header_get_raw_value (header), "inline") &&
+	       strstr (testsuite_header_raw_text (header), "inline") &&
 	       !strcmp (g_mime_content_disposition_get_filename (disposition), "stable.txt"),
 	       "attachment assignment selects inline and notifies header owners without changing parameters");
-	before = g_strdup (g_mime_header_get_raw_value (header));
+	before = g_strdup (testsuite_header_raw_text (header));
 	g_mime_content_disposition_set_is_attachment (disposition, FALSE);
-	check (!strcmp (g_mime_header_get_raw_value (header), before), "equivalent inline assignment does not rewrite its header");
+	check (!strcmp (testsuite_header_raw_text (header), before), "equivalent inline assignment does not rewrite its header");
 	g_free (before);
 	g_mime_content_disposition_set_is_attachment (disposition, TRUE);
 	check (g_mime_part_is_attachment (part) &&
-	       strstr (g_mime_header_get_raw_value (header), "attachment"), "changing back to attachment updates the owning header");
-	g_mime_header_set_raw_value (header, " AtTaChMeNt;\r\n\tfilename=stable.txt\r\n");
+	       strstr (testsuite_header_raw_text (header), "attachment"), "changing back to attachment updates the owning header");
+	testsuite_header_set_raw_text (header, " AtTaChMeNt;\r\n\tfilename=stable.txt\r\n");
 	disposition = g_mime_entity_get_content_disposition (entity);
 	g_mime_content_disposition_set_is_attachment (disposition, TRUE);
 	check (!strcmp (g_mime_content_disposition_get_disposition (disposition), "attachment") &&
-	       strstr (g_mime_header_get_raw_value (header), "attachment"),
+	       strstr (testsuite_header_raw_text (header), "attachment"),
 	       "attachment assignment canonicalizes token spelling and notifies header owners");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_CONTENT_DISPOSITION*");
 	g_mime_content_disposition_set_is_attachment (NULL, TRUE);
@@ -1378,13 +1378,13 @@ test_disposition_dates (void)
 		disposition = g_mime_entity_get_content_disposition (entity);
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Disposition");
 		check (properties[i].get (disposition) == NULL, "missing disposition date parameters return NULL");
-		before = g_strdup (g_mime_header_get_raw_value (header));
+		before = g_strdup (testsuite_header_raw_text (header));
 		properties[i].set (disposition, NULL);
-		check (!strcmp (g_mime_header_get_raw_value (header), before), "removing an absent date does not rewrite its owning header");
+		check (!strcmp (testsuite_header_raw_text (header), before), "removing an absent date does not rewrite its owning header");
 		g_free (before);
 		upper = g_ascii_strup (properties[i].name, -1);
 		raw = g_strdup_printf (" attachment;\r\n\t%s*=us-ascii'fr'Fri%%2C%%2028%%20Feb%%202025%%2009%%3A00%%3A00%%20-0500;\r\n\tfilename=stable.txt\r\n", upper);
-		g_mime_header_set_raw_value (header, raw);
+		testsuite_header_set_raw_text (header, raw);
 		disposition = g_mime_entity_get_content_disposition (entity);
 		params = g_mime_content_disposition_get_parameters (disposition);
 		param = g_mime_param_list_get_parameter (params, properties[i].name);
@@ -1395,10 +1395,10 @@ test_disposition_dates (void)
 		       g_date_time_get_utc_offset (date) == -5 * G_TIME_SPAN_HOUR &&
 		       g_date_time_get_hour (date) == 9 && g_date_time_get_day_of_month (date) == 28,
 		       "disposition date getters decode case-insensitively and return independent owned dates with their offset");
-		check (g_mime_param_get_value (param) == stored && !strcmp (g_mime_header_get_raw_value (header), raw),
+		check (g_mime_param_get_value (param) == stored && !strcmp (testsuite_header_raw_text (header), raw),
 		       "disposition date getters do not rewrite parameter text or raw headers");
 		properties[i].set (disposition, date);
-		check (g_mime_param_get_value (param) == stored && !strcmp (g_mime_header_get_raw_value (header), raw),
+		check (g_mime_param_get_value (param) == stored && !strcmp (testsuite_header_raw_text (header), raw),
 		       "equivalent formatted date assignments preserve stored text and raw folding");
 		g_date_time_unref (date);
 		g_mime_param_set_always_quote (param, TRUE);
@@ -1425,9 +1425,9 @@ test_disposition_dates (void)
 		g_date_time_unref (date);
 		g_object_unref (parsed);
 		stored = g_mime_param_get_value (param);
-		before = g_strdup (g_mime_header_get_raw_value (header));
+		before = g_strdup (testsuite_header_raw_text (header));
 		properties[i].set (disposition, input);
-		check (g_mime_param_get_value (param) == stored && !strcmp (g_mime_header_get_raw_value (header), before),
+		check (g_mime_param_get_value (param) == stored && !strcmp (testsuite_header_raw_text (header), before),
 		       "subsecond date input does not rewrite an identical whole-second parameter");
 		g_free (before);
 		utc = g_date_time_to_utc (input);
@@ -1457,12 +1457,12 @@ test_disposition_dates (void)
 				g_date_time_new (zone, 1, 1, 1, 0, 0, 0);
 			g_time_zone_unref (zone);
 			stored = g_mime_param_get_value (param);
-			before = g_strdup (g_mime_header_get_raw_value (header));
+			before = g_strdup (testsuite_header_raw_text (header));
 			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*utc != NULL*");
 			properties[i].set (disposition, input);
 			g_test_assert_expected_messages ();
 			check (g_mime_param_get_value (param) == stored &&
-			       !strcmp (g_mime_header_get_raw_value (header), before),
+			       !strcmp (testsuite_header_raw_text (header), before),
 			       "unrepresentable UTC conversions leave disposition dates and owning headers unchanged");
 			g_free (before);
 			g_date_time_unref (input);
@@ -1481,14 +1481,14 @@ test_disposition_dates (void)
 		g_date_time_unref (copy_date);
 		properties[i].set (disposition, NULL);
 		check (properties[i].get (disposition) == NULL && g_mime_param_list_length (params) == 1 &&
-		       strstr (g_mime_header_get_raw_value (header), upper) == NULL,
+		       strstr (testsuite_header_raw_text (header), upper) == NULL,
 		       "NULL date assignments remove the matching parameter and update owning headers");
 		for (j = 0; j < G_N_ELEMENTS (invalid); j++) {
 			g_mime_content_disposition_set_parameter (disposition, properties[i].name, invalid[j]);
-			before = g_strdup (g_mime_header_get_raw_value (header));
+			before = g_strdup (testsuite_header_raw_text (header));
 			check (properties[i].get (disposition) == NULL &&
 			       !strcmp (g_mime_content_disposition_get_parameter (disposition, properties[i].name), invalid[j]) &&
-			       !strcmp (g_mime_header_get_raw_value (header), before),
+			       !strcmp (testsuite_header_raw_text (header), before),
 			       "invalid stored dates return NULL without altering parameters or headers");
 			g_free (before);
 		}
@@ -1546,20 +1546,20 @@ test_disposition_size (void)
 	disposition = g_mime_entity_get_content_disposition (entity);
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Disposition");
 	check (g_mime_content_disposition_get_size (disposition) == -1, "missing disposition sizes return -1");
-	before = g_strdup (g_mime_header_get_raw_value (header));
+	before = g_strdup (testsuite_header_raw_text (header));
 	g_mime_content_disposition_set_size (disposition, -1);
-	check (!strcmp (g_mime_header_get_raw_value (header), before), "removing an absent size does not rewrite its owning header");
+	check (!strcmp (testsuite_header_raw_text (header), before), "removing an absent size does not rewrite its owning header");
 	g_free (before);
-	g_mime_header_set_raw_value (header, raw);
+	testsuite_header_set_raw_text (header, raw);
 	disposition = g_mime_entity_get_content_disposition (entity);
 	params = g_mime_content_disposition_get_parameters (disposition);
 	param = g_mime_param_list_get_parameter (params, "size");
 	stored = g_mime_param_get_value (param);
 	check (g_mime_content_disposition_get_size (disposition) == 42 &&
-	       g_mime_param_get_value (param) == stored && !strcmp (g_mime_header_get_raw_value (header), raw),
+	       g_mime_param_get_value (param) == stored && !strcmp (testsuite_header_raw_text (header), raw),
 	       "size lookup is case-insensitive and does not rewrite parameter text or raw folding");
 	g_mime_content_disposition_set_size (disposition, 42);
-	check (g_mime_param_get_value (param) == stored && !strcmp (g_mime_header_get_raw_value (header), raw),
+	check (g_mime_param_get_value (param) == stored && !strcmp (testsuite_header_raw_text (header), raw),
 	       "equivalent size assignment preserves storage and raw folding");
 	g_mime_param_set_always_quote (param, TRUE);
 	g_mime_content_disposition_set_size (disposition, G_MAXINT64);
@@ -1577,7 +1577,7 @@ test_disposition_size (void)
 	       !strcmp (g_mime_content_disposition_get_filename (parsed), "stable.txt"),
 	       "size changes update owning headers without changing unrelated parameters");
 	g_object_unref (parsed);
-	before = g_strdup (g_mime_header_get_raw_value (header));
+	before = g_strdup (testsuite_header_raw_text (header));
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*size >= -1*");
 	g_mime_content_disposition_set_size (disposition, -2);
 	g_test_assert_expected_messages ();
@@ -1585,14 +1585,14 @@ test_disposition_size (void)
 	g_mime_content_disposition_set_size (disposition, G_MININT64);
 	g_test_assert_expected_messages ();
 	check (g_mime_content_disposition_get_size (disposition) == G_MAXINT64 &&
-	       !strcmp (g_mime_header_get_raw_value (header), before), "invalid negative sizes leave existing parameters and headers unchanged");
+	       !strcmp (testsuite_header_raw_text (header), before), "invalid negative sizes leave existing parameters and headers unchanged");
 	g_free (before);
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		g_mime_content_disposition_set_parameter (disposition, "size", cases[i].value);
 		stored = g_mime_param_get_value (param);
-		before = g_strdup (g_mime_header_get_raw_value (header));
+		before = g_strdup (testsuite_header_raw_text (header));
 		check (g_mime_content_disposition_get_size (disposition) == cases[i].expected &&
-		       g_mime_param_get_value (param) == stored && !strcmp (g_mime_header_get_raw_value (header), before),
+		       g_mime_param_get_value (param) == stored && !strcmp (testsuite_header_raw_text (header), before),
 		       "size lookup accepts only nonempty ASCII decimal integers within the signed 64-bit range and never rewrites headers");
 		g_free (before);
 	}
@@ -1615,7 +1615,7 @@ test_disposition_size (void)
 	       "zero sizes remain explicitly stored rather than absent");
 	g_mime_content_disposition_set_size (disposition, -1);
 	check (g_mime_content_disposition_get_size (disposition) == -1 && g_mime_param_list_length (params) == 1 &&
-	       !strstr (g_mime_header_get_raw_value (header), "SIZE"),
+	       !strstr (testsuite_header_raw_text (header), "SIZE"),
 	       "the -1 sentinel removes the size parameter and updates owning headers");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_CONTENT_DISPOSITION*");
 	size = g_mime_content_disposition_get_size (NULL);
@@ -1863,10 +1863,10 @@ test_international_headers (void)
 	check (strstr (wire, "filename*=") != NULL && strstr (wire, value) == NULL,
 	       "disabling international formatting restores encoded parameter output");
 	g_free (wire);
-	check (strstr (g_mime_header_get_raw_value (header), value) != NULL,
+	check (strstr (testsuite_header_raw_text (header), value) != NULL,
 	       "serialization with different options does not alter stored raw headers");
 	g_mime_format_options_set_allow_international (options, TRUE);
-	g_mime_header_set_raw_value (header, " attachment;\r\n\tfilename*=utf-8''caf%C3%A9.doc\r\n");
+	testsuite_header_set_raw_text (header, " attachment;\r\n\tfilename*=utf-8''caf%C3%A9.doc\r\n");
 	check_string (g_mime_header_list_to_string (headers, options),
 		      "Content-Disposition: attachment;\r\n\tfilename*=utf-8''caf%C3%A9.doc\r\n",
 		      "untouched raw parameter headers retain their original encoding and folding");
