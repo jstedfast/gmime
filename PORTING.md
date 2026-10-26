@@ -2988,6 +2988,58 @@ intact. Content decoding/copy overrides are honored.
 The legacy get_text() API retains its existing charset fallback, newline,
 missing-content, and error behavior.
 
+### Content-Type charset encoding
+
+GMimeContentType now exposes get_charset_encoding() and the checked
+set_charset_encoding(), porting MimeKit's ContentType.CharsetEncoding
+property as an owned, resolved charset name rather than a managed Encoding
+object. The existing get/set_charset() accessors remain raw parameter
+operations: they do not require a supported charset or normalize its name.
+
+The encoding getter returns NULL without an error for absent, empty,
+invalid, or unsupported names. Other converter failures report
+G_CONVERT_ERROR, unlike the reference's catch-all resolution. The setter
+resolves and validates before changing the parameter or any owning headers;
+NULL removes the parameter. Failed assignments are atomic. Resolution
+does not rewrite original headers or parameter metadata, and returned names
+are independent of later edits. Matching canonical assignments retain raw
+headers, while changed assignments notify their owning entities normally.
+Borrowed parameter names may safely be assigned back.
+
+The implementation shares the existing text-charset name resolver, retaining
+its MimeKit alias and endian comments. "unicode" means UTF-8, and generic
+UTF-16/32 use the existing little-endian text policy. MIME-token validation,
+available encodings, alias recognition, and canonical spellings follow
+the established native charset helpers and iconv, not System.Text.Encoding.
+Custom managed encodings and their fallback policies are not represented.
+Native converter creation preserves errno so unsupported names remain
+distinguishable from operational converter failures.
+
+Validation compares 2,047 alias, case, whitespace, invalid-token, modifier,
+codepage, and unsupported-name cases against the actual MimeKit sources.
+Normal and ASan/UBSan runs agree: 1,903 match exactly, and 144 cases across
+23 case-insensitive names differ. All native results also reproduce the
+committed native text-name resolver and converter availability. The inherited
+differences comprise additional native UTF-16/32 aliases and ISO encodings,
+missing x-mac-icelandic/cp65001 support, and native codepage, endian, Thai,
+and Big5-HKSCS names. Distinct native repertoires are not collapsed merely
+to reproduce managed charset labels.
+
+Native regressions cover checked resolution, canonical assignment, independent
+ownership, borrowed-name assignment, raw-header/metadata preservation,
+atomic errors, NULL removal, and owning-entity header notifications.
+The new test-content-type, test-charsets, and test-anonymizer programs pass
+with fatal GLib criticals, ASan, UBSan, and leak detection. Fault injection
+checks ENOMEM, EMFILE, unsupported-conversion EINVAL, and failures without
+errno in both builds, including omitted GError outputs. GIR/typelib, VAPI,
+GTK-doc, and live Python introspection checks cover the new methods,
+nullable names, ownership, errors, and raw-header behavior.
+
+The normal core baseline is 38/39 programs passing, retaining the two known
+text-format assertions in test-core. test-mime-part passes normally; its
+1,168-byte, five-allocation sanitizer fixture leak reproduces in the prior
+baseline and is unchanged. Native Windows execution is not validated.
+
 ### Byte-order-mark charset detection
 
 g_mime_charset_try_get_bom_encoding() and its _from_stream() variant port

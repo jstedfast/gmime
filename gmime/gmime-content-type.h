@@ -89,6 +89,9 @@ const char *g_mime_content_type_get_boundary (GMimeContentType *content_type);
 void g_mime_content_type_set_charset (GMimeContentType *content_type, const char *charset);
 const char *g_mime_content_type_get_charset (GMimeContentType *content_type);
 
+gboolean g_mime_content_type_set_charset_encoding (GMimeContentType *content_type, const char *charset, GError **error);
+char *g_mime_content_type_get_charset_encoding (GMimeContentType *content_type, GError **error);
+
 void g_mime_content_type_set_format (GMimeContentType *content_type, const char *format);
 const char *g_mime_content_type_get_format (GMimeContentType *content_type);
 

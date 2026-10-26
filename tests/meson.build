@@ -9,6 +9,7 @@ normal_tests = [
   'test-stream-block', 'test-substreams',
   'test-received-clauses', 'test-received',
   'test-anonymizer',
+  'test-content-type',
   'test-reader', 'test-parser-model',
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',
   'test-encodings', 'test-codecs', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',

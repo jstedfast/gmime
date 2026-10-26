@@ -26,13 +26,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "gmime-common.h"
+#include "gmime-charset.h"
 #include "gmime-content-type.h"
 #include "gmime-parse-utils.h"
 #include "gmime-table-private.h"
 #include "gmime-internal.h"
 #include "gmime-events.h"
+#include "gmime-iconv.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -634,6 +637,118 @@ const char *
 g_mime_content_type_get_charset (GMimeContentType *content_type)
 {
 	return g_mime_content_type_get_parameter (content_type, "charset");
+}
+
+static char *
+resolve_charset_encoding (const char *charset, GError **error)
+{
+	iconv_t decoder;
+	char *name;
+	int errsv;
+
+	if (!(name = _g_mime_charset_get_text_name (charset, error)))
+		return NULL;
+
+	/* Preserve native errno values to distinguish unsupported names
+	 * from operational converter failures. */
+	errno = 0;
+	decoder = iconv_open ("UTF-8", g_mime_charset_iconv_name (name));
+
+	if (decoder == (iconv_t) -1) {
+		errsv = errno;
+		g_set_error (error, G_CONVERT_ERROR, errsv == EINVAL ? G_CONVERT_ERROR_NO_CONVERSION : G_CONVERT_ERROR_FAILED,
+			     "Cannot resolve charset '%s': %s", charset,
+			     errsv ? g_strerror (errsv) : "unknown conversion error");
+		g_free (name);
+
+		return NULL;
+	}
+
+	iconv_close (decoder);
+
+	return name;
+}
+
+/**
+ * g_mime_content_type_set_charset_encoding:
+ * @content_type: a #GMimeContentType
+ * @charset: (nullable): a supported MIME charset name, or %NULL to remove it
+ * @error: return location for an error, or %NULL
+ *
+ * Resolves @charset and assigns its canonical MIME name, following MimeKit's
+ * ContentType.CharsetEncoding property. Unlike g_mime_content_type_set_charset(),
+ * this validates the name before changing any parameters or their owning entity's headers.
+ * Unsupported, empty, or non-token names report %G_CONVERT_ERROR.
+ *
+ * Generic UTF-16/32 names select little-endian encodings. MimeKit's historical
+ * "unicode" alias selects UTF-8. Available encodings and aliases follow the
+ * platform's iconv implementation; custom managed encodings are not supported.
+ * Borrowed parameter values may safely be passed as @charset.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure without changing the object.
+ **/
+gboolean
+g_mime_content_type_set_charset_encoding (GMimeContentType *content_type, const char *charset, GError **error)
+{
+	char *name;
+
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if (!charset) {
+		g_mime_content_type_set_charset (content_type, NULL);
+		return TRUE;
+	}
+
+	if (!(name = resolve_charset_encoding (charset, error)))
+		return FALSE;
+
+	g_mime_content_type_set_charset (content_type, name);
+	g_free (name);
+
+	return TRUE;
+}
+
+/**
+ * g_mime_content_type_get_charset_encoding:
+ * @content_type: a #GMimeContentType
+ * @error: return location for an error, or %NULL
+ *
+ * Resolves the charset parameter to a supported canonical MIME charset name,
+ * following MimeKit's ContentType.CharsetEncoding property. Missing, empty,
+ * invalid, and unsupported names return %NULL without an error. Other converter
+ * failures report %G_CONVERT_ERROR rather than masquerading as an unknown
+ * charset. Resolution uses the same aliases as
+ * g_mime_content_type_set_charset_encoding().
+ *
+ * This method does not change the parameter, its metadata, or raw headers.
+ * The result is independent of later parameter changes.
+ *
+ * Returns: (nullable) (transfer full): the resolved charset name, or %NULL
+ * if unavailable or on failure.
+ **/
+char *
+g_mime_content_type_get_charset_encoding (GMimeContentType *content_type, GError **error)
+{
+	GError *local_error = NULL;
+	const char *charset;
+	char *name;
+
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (!(charset = g_mime_content_type_get_charset (content_type)))
+		return NULL;
+
+	if (!(name = resolve_charset_encoding (charset, &local_error))) {
+		if (g_error_matches (local_error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_CONVERSION))
+			g_error_free (local_error);
+		else
+			g_propagate_error (error, local_error);
+		return NULL;
+	}
+
+	return name;
 }
 
 /**

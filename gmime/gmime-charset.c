@@ -18,7 +18,6 @@
  *  02110-1301, USA.
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -797,14 +796,15 @@ _g_mime_charset_get_mime_name (const char *charset)
 	name = g_mime_charset_canon_name (charset);
 	if (!g_ascii_strcasecmp (name, ICONV_SHIFT_JIS))
 		return g_strdup ("shift_jis");
+
 	if (g_str_has_prefix (name, "windows-cp"))
 		return g_strconcat ("windows-", name + 10, NULL);
 
 	return g_ascii_strdown (name, -1);
 }
 
-static char *
-get_text_charset (const char *charset, GError **error)
+char *
+_g_mime_charset_get_text_name (const char *charset, GError **error)
 {
 	const char *p;
 
@@ -812,6 +812,7 @@ get_text_charset (const char *charset, GError **error)
 		if ((guchar) *p >= 127 || !is_ttoken (*p))
 			break;
 	}
+
 	if (!*charset || *p) {
 		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_CONVERSION,
 				     "Text charset name must be a nonempty MIME token");
@@ -836,6 +837,7 @@ get_text_converter (const char *name)
 {
 	if (!g_ascii_strcasecmp (name, "utf-16"))
 		return "UTF-16LE";
+
 	if (!g_ascii_strcasecmp (name, "utf-32"))
 		return "UTF-32LE";
 
@@ -847,7 +849,7 @@ _g_mime_charset_encode_text (const char *charset, const char *text, gsize *lengt
 {
 	char *name, *bytes;
 
-	if (!(name = get_text_charset (charset, error)))
+	if (!(name = _g_mime_charset_get_text_name (charset, error)))
 		return NULL;
 
 	/* Explicit-endian encoders omit the preamble, like Encoding.GetBytes. */
@@ -870,7 +872,7 @@ _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, G
 
 	if (encoding)
 		*encoding = NULL;
-	if (!(name = get_text_charset (charset, error)))
+	if (!(name = _g_mime_charset_get_text_name (charset, error)))
 		return (GIConv) -1;
 
 	converter = get_text_converter (name);
@@ -878,6 +880,7 @@ _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, G
 	decoder = g_iconv_open ("UTF-8", converter);
 	errsv = errno;
 	g_free (name);
+
 	if (decoder == (GIConv) -1) {
 		g_set_error (error, G_CONVERT_ERROR, errsv == EINVAL ? G_CONVERT_ERROR_NO_CONVERSION : G_CONVERT_ERROR_FAILED,
 			     "Cannot decode text using charset '%s': %s",
@@ -920,6 +923,7 @@ _g_mime_charset_get_codepage (const char *charset)
 		g_hash_table_insert (charset_codepages, name, value);
 		name = NULL;
 	}
+
 	g_hash_table_insert (codepage_cache, (gpointer) charset, value);
 	CHARSET_UNLOCK ();
 	g_free (name);
