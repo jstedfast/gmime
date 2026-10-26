@@ -222,6 +222,275 @@ test_bounded_input (void)
 }
 
 static void
+test_named_values (void)
+{
+	static const struct {
+		const char *(*get) (GMimeReceived *);
+		gboolean (*set) (GMimeReceived *, const char *, GError **);
+		const char *value;
+		const char *invalid;
+	} properties[] = {
+		{ g_mime_received_get_from, g_mime_received_set_from, "source.example", "-invalid" },
+		{ g_mime_received_get_by, g_mime_received_set_by, "[127.1]", "smtp..example" },
+		{ g_mime_received_get_via, g_mime_received_set_via, " Frontend Transport ", "a;b" },
+		{ g_mime_received_get_with, g_mime_received_set_with, "Microsoft SMTP Server", "a(b)" },
+		{ g_mime_received_get_id, g_mime_received_set_id, "<id@example.com> (comment)", "<>" },
+		{ g_mime_received_get_for, g_mime_received_set_for, "User <user@example.com>", "Group: a@b;" }
+	};
+	GMimeReceived *received = g_mime_received_new ();
+	GMimeReceivedClause *clause;
+	GError *error = NULL;
+	guint i;
+
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 0);
+	g_assert_null (g_mime_received_get_date_time (received));
+	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+		g_assert_null (properties[i].get (received));
+		g_assert_true (properties[i].set (received, NULL, &error));
+		g_assert_false (properties[i].set (received, "", &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 0);
+	}
+
+	for (i = G_N_ELEMENTS (properties); i > 0; i--)
+		g_assert_true (properties[i - 1].set (received, properties[i - 1].value, &error));
+	g_assert_no_error (error);
+	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+		clause = g_mime_received_get_clause (received, i);
+		g_assert_cmpint (g_mime_received_clause_get_id (clause), ==, i + 1);
+		g_assert_cmpstr (properties[i].get (received), ==, properties[i].value);
+		g_assert_false (properties[i].set (received, properties[i].invalid, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		g_assert_cmpstr (properties[i].get (received), ==, properties[i].value);
+		g_assert_true (properties[i].set (received, properties[i].get (received), &error));
+		g_assert_cmpstr (properties[i].get (received), ==, properties[i].value);
+	}
+	for (i = 0; i < G_N_ELEMENTS (properties); i++) {
+		g_assert_true (properties[i].set (received, NULL, &error));
+		g_assert_null (properties[i].get (received));
+	}
+	g_assert_no_error (error);
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 0);
+	g_object_unref (received);
+
+	received = parse ("with ESMTP From host (first) (second) by target", -1);
+	clause = g_mime_received_get_clause (received, 1);
+	g_assert_true (g_mime_received_set_from (received, "new.example", &error));
+	g_assert_true (g_mime_received_get_clause (received, 1) == clause);
+	g_assert_cmpstr (g_mime_received_clause_get_keyword (clause), ==, "From");
+	g_assert_cmpint (g_mime_received_clause_get_comment_count (clause), ==, 2);
+	g_assert_cmpint (g_mime_received_clause_get_id (g_mime_received_get_clause (received, 0)), ==,
+			 GMIME_RECEIVED_CLAUSE_WITH);
+	g_assert_false (g_mime_received_set_from (received, "", &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_assert_cmpstr (g_mime_received_get_from (received), ==, "new.example");
+	g_assert_true (g_mime_received_set_via (received, "TCP", &error));
+	g_assert_true (g_mime_received_get_clause (received, 0) == clause);
+	g_assert_cmpstr (g_mime_received_clause_get_keyword (clause), ==, "From");
+	g_assert_no_error (error);
+	g_object_unref (received);
+}
+
+static void
+test_tcp_info (void)
+{
+	GMimeReceived *received = g_mime_received_new ();
+	GMimeReceivedClause *clause;
+	const char *alias;
+	GError *error = NULL;
+
+	g_mime_received_set_from_tcp_info (received, NULL);
+	g_mime_received_set_by_tcp_info (received, NULL);
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 0);
+	g_assert_null (g_mime_received_get_from_tcp_info (received));
+	g_assert_null (g_mime_received_get_by_tcp_info (received));
+
+	g_mime_received_set_by_tcp_info (received, " \tHELO\r\n\v\f\302\240 ");
+	g_mime_received_set_from_tcp_info (received, "");
+	assert_clause (received, 0, GMIME_RECEIVED_CLAUSE_FROM, "from", "");
+	assert_clause (received, 1, GMIME_RECEIVED_CLAUSE_BY, "by", "");
+	g_assert_cmpstr (g_mime_received_get_from_tcp_info (received), ==, "");
+	g_assert_cmpstr (g_mime_received_get_by_tcp_info (received), ==, "  HELO\v\f\302\240 ");
+	g_assert_false (g_mime_received_set_by (received, "", &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_assert_cmpstr (g_mime_received_get_by_tcp_info (received), ==, "  HELO\v\f\302\240 ");
+	g_assert_true (g_mime_received_set_from (received, "source.example", &error));
+	g_assert_true (g_mime_received_set_by (received, "target.example", &error));
+
+	clause = g_mime_received_get_clause (received, 0);
+	g_mime_received_clause_add_comment (clause, "second\r\n\tcomment");
+	alias = g_mime_received_clause_get_comment (clause, 1);
+	g_mime_received_set_from_tcp_info (received, alias);
+	g_assert_cmpint (g_mime_received_clause_get_comment_count (clause), ==, 1);
+	g_assert_cmpstr (g_mime_received_get_from_tcp_info (received), ==, "second comment");
+	g_mime_received_set_from_tcp_info (received, g_mime_received_get_from_tcp_info (received));
+	g_assert_cmpstr (g_mime_received_get_from_tcp_info (received), ==, "second comment");
+	g_mime_received_set_from_tcp_info (received, NULL);
+	g_assert_null (g_mime_received_get_from_tcp_info (received));
+	g_assert_cmpstr (g_mime_received_get_from (received), ==, "source.example");
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 2);
+	g_mime_received_set_by_tcp_info (received, g_mime_received_get_by (received));
+	g_assert_cmpstr (g_mime_received_get_by_tcp_info (received), ==, "target.example");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+	g_mime_received_set_by_tcp_info (received, "\377");
+	g_test_assert_expected_messages ();
+	g_assert_cmpstr (g_mime_received_get_by_tcp_info (received), ==, "target.example");
+	g_assert_no_error (error);
+	g_object_unref (received);
+}
+
+static void
+test_stable_sorting (void)
+{
+	GMimeReceived *received = g_mime_received_new ();
+	GMimeReceivedClause *first = g_mime_received_clause_new_with_comment ("BY", "target.example", "first", NULL);
+	GMimeReceivedClause *second = g_mime_received_clause_new_with_comment ("by", "other.example", "second", NULL);
+	GError *error = NULL;
+
+	g_mime_received_add_clause (received, first);
+	g_mime_received_add_clause (received, second);
+	g_assert_true (g_mime_received_set_from (received, "sender.example", &error));
+	g_assert_true (g_mime_received_get_clause (received, 1) == first);
+	g_assert_true (g_mime_received_get_clause (received, 2) == second);
+	g_assert_cmpstr (g_mime_received_get_by (received), ==, "target.example");
+	g_assert_true (g_mime_received_set_by (received, "updated.example", &error));
+	g_assert_cmpstr (g_mime_received_clause_get_value (first), ==, "updated.example");
+	g_assert_cmpstr (g_mime_received_clause_get_value (second), ==, "other.example");
+	g_assert_true (g_mime_received_set_from (received, NULL, &error));
+	g_mime_received_set_from_tcp_info (received, "HELO sender.example");
+	g_assert_true (g_mime_received_get_clause (received, 1) == first);
+	g_assert_true (g_mime_received_get_clause (received, 2) == second);
+	g_assert_cmpstr (g_mime_received_get_by_tcp_info (received), ==, "first");
+	g_mime_received_set_by_tcp_info (received, "updated");
+	g_assert_cmpstr (g_mime_received_clause_get_comment (first, 0), ==, "updated");
+	g_assert_cmpstr (g_mime_received_clause_get_comment (second, 0), ==, "second");
+	g_assert_true (g_mime_received_set_by (received, NULL, &error));
+	g_assert_true (g_mime_received_get_clause (received, 1) == second);
+	g_assert_cmpstr (g_mime_received_get_by (received), ==, "other.example");
+	g_assert_no_error (error);
+	g_object_unref (first);
+	g_object_unref (second);
+	g_object_unref (received);
+}
+
+static void
+test_collection (void)
+{
+	GMimeReceived *received = g_mime_received_new ();
+	GMimeReceived *other = g_mime_received_new ();
+	GMimeReceivedClause *first = g_mime_received_clause_new ("FrOm", "first.example", NULL);
+	GMimeReceivedClause *second = g_mime_received_clause_new ("from", "second.example", NULL);
+	GMimeReceivedClause *extension = g_mime_received_clause_new ("x-trace", "same", NULL);
+	GMimeReceivedClause *equal = g_mime_received_clause_new ("x-trace", "same", NULL);
+	GMimeReceivedClause *weak = first;
+	GMimeReceivedClause *extensions[33];
+	GError *error = NULL;
+	int i;
+
+	g_object_add_weak_pointer (G_OBJECT (first), (gpointer *) &weak);
+	g_mime_received_add_clause (received, first);
+	g_mime_received_add_clause (received, first);
+	g_mime_received_insert_clause (received, 1, second);
+	g_mime_received_add_clause (other, first);
+	g_object_unref (first);
+	g_assert_cmpint (g_mime_received_index_of_clause (received, first), ==, 0);
+	g_assert_cmpint (g_mime_received_index_of_clause (received, second), ==, 1);
+	g_assert_cmpstr (g_mime_received_get_from (received), ==, "first.example");
+	g_assert_true (g_mime_received_set_from (received, "updated.example", &error));
+	g_assert_cmpstr (g_mime_received_get_from (other), ==, "updated.example");
+	g_assert_cmpstr (g_mime_received_clause_get_value (second), ==, "second.example");
+	g_assert_true (g_mime_received_set_from (received, NULL, &error));
+	g_assert_cmpint (g_mime_received_index_of_clause (received, first), ==, 1);
+	g_assert_cmpstr (g_mime_received_get_from (received), ==, "second.example");
+	g_mime_received_set_clause (received, 0, g_mime_received_get_clause (received, 0));
+	g_assert_true (g_mime_received_get_clause (received, 0) == second);
+	g_assert_true (g_mime_received_remove_clause (received, first));
+	g_assert_false (g_mime_received_remove_clause (received, first));
+	g_assert_nonnull (weak);
+	g_mime_received_set_clause (received, 0, g_mime_received_get_clause (other, 0));
+	g_mime_received_clear_clauses (other);
+	g_assert_nonnull (weak);
+	g_mime_received_remove_clause_at (received, 0);
+	g_assert_null (weak);
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 0);
+
+	g_mime_received_insert_clause (received, 0, extension);
+	g_assert_true (g_mime_received_contains_clause (received, extension));
+	g_assert_false (g_mime_received_contains_clause (received, equal));
+	g_assert_cmpint (g_mime_received_index_of_clause (received, equal), ==, -1);
+	g_assert_false (g_mime_received_remove_clause (received, equal));
+	extensions[0] = extension;
+	for (i = 0; i < 32; i++) {
+		GMimeReceivedClause *clause = g_mime_received_clause_new ("x-other", "value", NULL);
+		extensions[i + 1] = clause;
+		g_mime_received_add_clause (received, clause);
+		g_object_unref (clause);
+	}
+	g_assert_true (g_mime_received_set_via (received, "TCP", &error));
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 34);
+	g_assert_cmpint (g_mime_received_clause_get_id (g_mime_received_get_clause (received, 0)), ==,
+			 GMIME_RECEIVED_CLAUSE_VIA);
+	for (i = 0; i < 33; i++)
+		g_assert_true (g_mime_received_get_clause (received, i + 1) == extensions[i]);
+
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_RECEIVED_CLAUSE*");
+	g_mime_received_add_clause (received, NULL);
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index >= 0*");
+	g_mime_received_insert_clause (received, -1, extension);
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index >= 0*");
+	g_mime_received_set_clause (received, 34, extension);
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index >= 0*");
+	g_mime_received_remove_clause_at (received, 34);
+	g_test_assert_expected_messages ();
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 34);
+	g_mime_received_clear_clauses (received);
+	g_mime_received_clear_clauses (received);
+	g_assert_no_error (error);
+	g_object_unref (extension);
+	g_object_unref (equal);
+	g_object_unref (second);
+	g_object_unref (received);
+	g_object_unref (other);
+}
+
+static void
+test_date_assignment (void)
+{
+	GMimeReceived *received = parse ("From host; Fri, 29 Nov 91 07:13:33 EST", -1);
+	GDateTime *date = g_mime_received_get_date_time (received);
+	GDateTime *replacement = g_date_time_new_from_iso8601 ("2026-04-18T20:05:38.123456-04:00", NULL);
+
+	g_assert_nonnull (received->date_time_str);
+	g_assert_true (g_mime_received_set_from (received, "source.example", NULL));
+	g_assert_nonnull (received->date_time_str);
+	g_mime_received_set_date_time (received, date);
+	g_assert_true (g_mime_received_get_date_time (received) == date);
+	g_assert_null (received->date_time_str);
+	g_assert_cmpint (g_date_time_get_year (date), ==, 1991);
+	g_mime_received_set_date_time (received, replacement);
+	g_date_time_unref (replacement);
+	date = g_mime_received_get_date_time (received);
+	g_assert_cmpint (g_date_time_get_microsecond (date), ==, 123456);
+	g_assert_cmpint (g_date_time_get_utc_offset (date), ==, -4 * G_TIME_SPAN_HOUR);
+	g_mime_received_clear_clauses (received);
+	g_assert_true (g_mime_received_get_date_time (received) == date);
+	g_date_time_ref (date);
+	g_mime_received_set_date_time (received, NULL);
+	g_assert_null (g_mime_received_get_date_time (received));
+	g_mime_received_set_date_time (received, NULL);
+	g_assert_cmpint (g_date_time_get_year (date), ==, 2026);
+	g_date_time_unref (date);
+	g_object_unref (received);
+}
+
+static void
 test_errors (void)
 {
 	static const struct {
@@ -287,6 +556,21 @@ main (int argc, char **argv)
 	testsuite_check_passed ();
 	testsuite_check ("Bounded byte input, NULs and fallback charsets");
 	test_bounded_input ();
+	testsuite_check_passed ();
+	testsuite_check ("Named clause values, validation and sorting");
+	test_named_values ();
+	testsuite_check_passed ();
+	testsuite_check ("TCP comments, unfolding and aliased assignment");
+	test_tcp_info ();
+	testsuite_check_passed ();
+	testsuite_check ("Stable duplicate ordering and first-match mutation");
+	test_stable_sorting ();
+	testsuite_check_passed ();
+	testsuite_check ("Owning clause collection and shared instances");
+	test_collection ();
+	testsuite_check_passed ();
+	testsuite_check ("Date assignment, aliases and cached spelling");
+	test_date_assignment ();
 	testsuite_check_passed ();
 	testsuite_check ("Parse errors and programming-error guards");
 	test_errors ();

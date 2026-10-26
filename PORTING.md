@@ -2026,9 +2026,62 @@ Focused sanitizer checks are leak-clean. GIR, typelib, VAPI, GTK-doc and
 live GI/Python checks pass for all four APIs, including bounded byte-array
 input, errors and retained clause/date ownership. The complete core suite
 passes 36 of 37 programs; test-core retains only its two existing text-format
-failures. Native Windows execution remains unvalidated. Public Received
-construction, convenience mutation, clause collection mutation and
+failures. Native Windows execution remains unvalidated. Received construction
+and mutation are described below; the host/IP/date constructor and
 serialization remain unported.
+
+### Received construction and mutation
+
+`g_mime_received_new()` creates an empty Received value. Named From, By,
+Via, With, Id and For getters return the first matching clause value.
+Their checked setters update that instance without changing its keyword
+spelling, comments or position; NULL removes only the first match.
+Missing clauses use the validated public clause constructor, and invalid
+assignments report GMIME_ERROR_PARSE_ERROR without changing the model.
+Adding a missing named clause sorts the entire collection by identifier.
+
+Sorting is deliberately stable, unlike MimeKit's current List.Sort().
+Equal identifiers retain their previous order, including distinct extension
+keywords, which all have the UNKNOWN identifier. Adding a different clause
+therefore cannot change which duplicate is first or which instance subsequent
+named setters update. Persistent regressions cover the three-clause duplicate
+By case and all 33 equal-ID instances in a larger extension collection.
+
+FromTcpInfo and ByTcpInfo expose the first comment of the first matching
+clause. Setters replace all its comments with one unfolded copy, removing
+CR/LF and changing tabs to spaces without changing other whitespace.
+NULL clears comments without removing or creating clauses. Non-NULL comments,
+including empty strings, can create an empty-valued clause through the
+parser's internal constructor, retaining MimeKit's explanatory inline comment.
+Copies precede comment clearing, so aliases to existing comments are safe.
+
+Clause collection APIs append, insert, replace, locate, test membership,
+remove the first instance, remove by index and clear. Entries retain their
+exact GObject instance; duplicates and cross-model sharing are supported.
+These operations do not validate or sort, and lookup uses pointer identity.
+Replacement retains its incoming reference before releasing the old entry.
+NULL entries are rejected as programming errors, following native collection
+conventions rather than allowing MimeKit's nullable list state.
+
+`g_mime_received_set_date_time()` retains the date and timezone offset or
+clears it for NULL. Every assignment, including self-assignment, invalidates
+the cached parsed date spelling. Clause mutations leave dates unchanged,
+and date assignment leaves clauses unchanged.
+
+Normal and ASan/UBSan/leak runs each compare 8,853 scenarios and 88,413
+intermediate states against actual-source MimeKit mutations with only their
+sort result replaced by stable ordering. All states match. Running the same
+scenarios without this harness-only adaptation identifies 108 differing
+states from unstable equal-ID ordering and subsequent first-match mutations;
+the MimeKit source tree is unchanged. Checks cover validation failures,
+aliases, parsed spelling and date caches, duplicate/shared identities,
+all named properties and collection mutations.
+
+Focused native regressions and sanitizer checks pass. GIR, typelib, VAPI,
+GTK-doc and live GI/Python checks pass for all 26 construction/mutation APIs,
+including nullability, errors and retained clause/date ownership. The complete
+core suite passes 36 of 37 programs, with only test-core's two existing
+text-format failures. Native Windows execution remains unvalidated.
 
 ### Positional header-list operations
 

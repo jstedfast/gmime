@@ -40,7 +40,7 @@ typedef struct _GMimeReceivedClass GMimeReceivedClass;
  * GMimeReceived:
  * @parent_object: parent #GObject
  *
- * A parsed Received header value, containing ordered clauses and an optional date.
+ * A Received header value, containing ordered clauses and an optional date.
  **/
 struct _GMimeReceived {
 	GObject parent_object;
@@ -57,10 +57,39 @@ struct _GMimeReceivedClass {
 
 GType g_mime_received_get_type (void);
 
+GMimeReceived *g_mime_received_new (void);
 GMimeReceived *g_mime_received_parse (GMimeParserOptions *options, const char *text, gssize length, GError **error);
+
 int g_mime_received_get_clause_count (GMimeReceived *received);
 GMimeReceivedClause *g_mime_received_get_clause (GMimeReceived *received, int index);
+void g_mime_received_set_clause (GMimeReceived *received, int index, GMimeReceivedClause *clause);
+void g_mime_received_add_clause (GMimeReceived *received, GMimeReceivedClause *clause);
+void g_mime_received_insert_clause (GMimeReceived *received, int index, GMimeReceivedClause *clause);
+int g_mime_received_index_of_clause (GMimeReceived *received, GMimeReceivedClause *clause);
+gboolean g_mime_received_contains_clause (GMimeReceived *received, GMimeReceivedClause *clause);
+gboolean g_mime_received_remove_clause (GMimeReceived *received, GMimeReceivedClause *clause);
+void g_mime_received_remove_clause_at (GMimeReceived *received, int index);
+void g_mime_received_clear_clauses (GMimeReceived *received);
+
 GDateTime *g_mime_received_get_date_time (GMimeReceived *received);
+void g_mime_received_set_date_time (GMimeReceived *received, GDateTime *date_time);
+
+const char *g_mime_received_get_from (GMimeReceived *received);
+gboolean g_mime_received_set_from (GMimeReceived *received, const char *value, GError **error);
+const char *g_mime_received_get_from_tcp_info (GMimeReceived *received);
+void g_mime_received_set_from_tcp_info (GMimeReceived *received, const char *comment);
+const char *g_mime_received_get_by (GMimeReceived *received);
+gboolean g_mime_received_set_by (GMimeReceived *received, const char *value, GError **error);
+const char *g_mime_received_get_by_tcp_info (GMimeReceived *received);
+void g_mime_received_set_by_tcp_info (GMimeReceived *received, const char *comment);
+const char *g_mime_received_get_via (GMimeReceived *received);
+gboolean g_mime_received_set_via (GMimeReceived *received, const char *value, GError **error);
+const char *g_mime_received_get_with (GMimeReceived *received);
+gboolean g_mime_received_set_with (GMimeReceived *received, const char *value, GError **error);
+const char *g_mime_received_get_id (GMimeReceived *received);
+gboolean g_mime_received_set_id (GMimeReceived *received, const char *value, GError **error);
+const char *g_mime_received_get_for (GMimeReceived *received);
+gboolean g_mime_received_set_for (GMimeReceived *received, const char *value, GError **error);
 
 G_END_DECLS
 
