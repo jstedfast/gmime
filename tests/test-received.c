@@ -491,6 +491,225 @@ test_date_assignment (void)
 }
 
 static void
+test_host_constructor (void)
+{
+	static const struct {
+		const char *address;
+		const char *comment;
+	} literals[] = {
+		{ "::", "[::]" }, { "::1", "[::1]" }, { "::2", "[::2]" },
+		{ "::c000:201", "[::192.0.2.1]" },
+		{ "::ffff:c000:201", "[::ffff:192.0.2.1]" },
+		{ "::ffff:0:c000:201", "[::ffff:0:192.0.2.1]" },
+		{ "::ffff:0:1", "[::ffff:0:1]" },
+		{ "2001:db8:0:1:0:5efe:c000:201", "[2001:db8:0:1:0:5efe:192.0.2.1]" },
+		{ "::5efe:0:1", "[::5efe:0.0.0.1]" },
+		{ "1:0:0:2:0:0:3:4", "[1::2:0:0:3:4]" }
+	};
+	GInetAddress *from = g_inet_address_new_from_string ("192.168.1.1");
+	GInetAddress *by = g_inet_address_new_from_string ("2001:db8::1");
+	GDateTime *date = g_date_time_new_from_iso8601 ("2026-04-18T20:05:38.123456-04:00", NULL);
+	GMimeReceived *received;
+	GError *error = NULL;
+	guint i;
+
+	received = g_mime_received_new_with_hosts ("smtp.source.com", from, "smtp.target.com", by, date, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (received);
+	g_assert_cmpint (g_mime_received_get_clause_count (received), ==, 2);
+	assert_clause (received, 0, GMIME_RECEIVED_CLAUSE_FROM, "from", "smtp.source.com");
+	assert_clause (received, 1, GMIME_RECEIVED_CLAUSE_BY, "by", "smtp.target.com");
+	g_assert_cmpstr (g_mime_received_get_from_tcp_info (received), ==, "[192.168.1.1]");
+	g_assert_cmpstr (g_mime_received_get_by_tcp_info (received), ==, "[2001:db8::1]");
+	g_assert_true (g_mime_received_get_date_time (received) == date);
+	g_assert_null (received->date_time_str);
+	for (i = 0; i < G_N_ELEMENTS (literals); i++) {
+		GInetAddress *address = g_inet_address_new_from_string (literals[i].address);
+		GMimeReceived *other = g_mime_received_new_with_hosts ("source", address, "target", by, date, &error);
+
+		g_assert_no_error (error);
+		g_assert_nonnull (other);
+		g_assert_cmpstr (g_mime_received_get_from_tcp_info (other), ==, literals[i].comment);
+		g_object_unref (address);
+		g_object_unref (other);
+	}
+
+	g_assert_null (g_mime_received_new_with_hosts ("-invalid", from, "target", by, date, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_assert_null (g_mime_received_new_with_hosts ("source", from, "bad..domain", by, date, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*from != NULL*");
+	g_assert_null (g_mime_received_new_with_hosts (NULL, from, "target", by, date, &error));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*G_IS_INET_ADDRESS*");
+	g_assert_null (g_mime_received_new_with_hosts ("source", NULL, "target", by, date, &error));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*by != NULL*");
+	g_assert_null (g_mime_received_new_with_hosts ("source", from, NULL, by, date, &error));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*G_IS_INET_ADDRESS*");
+	g_assert_null (g_mime_received_new_with_hosts ("source", from, "target", NULL, date, &error));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*date_time != NULL*");
+	g_assert_null (g_mime_received_new_with_hosts ("source", from, "target", by, NULL, &error));
+	g_test_assert_expected_messages ();
+	g_assert_no_error (error);
+	g_object_unref (from);
+	g_object_unref (by);
+	g_date_time_unref (date);
+	g_assert_cmpstr (g_mime_received_get_by_tcp_info (received), ==, "[2001:db8::1]");
+	g_assert_cmpint (g_date_time_get_microsecond (g_mime_received_get_date_time (received)), ==, 123456);
+	g_object_unref (received);
+}
+
+static void
+assert_format (GMimeReceived *received, GMimeFormatOptions *options, const char *expected)
+{
+	char *formatted = g_mime_received_to_string (received, options);
+
+	g_assert_cmpstr (formatted, ==, expected);
+	g_free (formatted);
+}
+
+static void
+test_formatting (void)
+{
+	static const struct {
+		const char *input;
+		const char *output;
+	} cases[] = {
+		{ "", "\r\n" }, { ";", "\r\n" },
+		{ "(first)(second)", " (first) (second)\r\n" },
+		{ "From a BY b", " From a BY b\r\n" },
+		{ "from (before) host (after)", " from host (before) (after)\r\n" },
+		{ "from host (a(b)c)", " from host (a(b)c)\r\n" },
+		{ "from host (a\\\\b)", " from host (a\\\\b)\r\n" },
+		{ "from", " from \r\n" },
+		{ "From host; Fri, 29 Nov 91 07:13:33 EST", " From host; Fri, 29 Nov 91 07:13:33 EST\r\n" },
+		{ "; Fri, 29 Nov 91 07:13:33 EST", "; Fri, 29 Nov 91 07:13:33 EST\r\n" }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeReceived *received;
+	GMimeReceivedClause *clause;
+	GDateTime *date;
+	GTimeZone *zone;
+	GString *unicode;
+	char *value, *expected, *keyword;
+	guint i;
+
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		received = parse (cases[i].input, -1);
+		assert_format (received, options, cases[i].output);
+		g_object_unref (received);
+	}
+	received = parse ("From host; Fri, 29 Nov 91 07:13:33 EST", -1);
+	assert_format (received, options, " From host; Fri, 29 Nov 91 07:13:33 EST\r\n");
+	g_mime_received_set_date_time (received, g_mime_received_get_date_time (received));
+	assert_format (received, options, " From host; Fri, 29 Nov 1991 07:13:33 -0500\r\n");
+	g_mime_received_set_date_time (received, NULL);
+	clause = g_mime_received_get_clause (received, 0);
+	g_mime_received_clause_add_comment (clause, "comment\r\nBcc: evil@example.com\t\\");
+	assert_format (received, options, " From host (commentBcc: evil@example.com \\\\)\r\n");
+	g_assert_cmpstr (g_mime_received_clause_get_comment (clause, 0), ==, "comment\r\nBcc: evil@example.com\t\\");
+	g_mime_received_clause_clear_comments (clause);
+	g_mime_received_add_clause (received, clause);
+	assert_format (received, options, " From host From host\r\n");
+	g_mime_received_clear_clauses (received);
+
+	g_mime_format_options_set_max_line_length (options, 60);
+	value = g_strnfill (52, 'x');
+	clause = g_mime_received_clause_new_with_comment ("via", value, "", NULL);
+	g_mime_received_add_clause (received, clause);
+	g_object_unref (clause);
+	expected = g_strdup_printf ("\r\n\tvia %s ()\r\n", value);
+	assert_format (received, options, expected);
+	g_free (expected);
+	g_free (value);
+	value = g_strnfill (53, 'x');
+	g_assert_true (g_mime_received_set_via (received, value, NULL));
+	expected = g_strdup_printf ("\r\n\tvia %s\r\n\t()\r\n", value);
+	assert_format (received, options, expected);
+	g_free (expected);
+	g_free (value);
+	g_mime_received_clear_clauses (received);
+
+	keyword = g_strnfill (80, 'x');
+	clause = g_mime_received_clause_new (keyword, "v", NULL);
+	g_mime_received_add_clause (received, clause);
+	g_object_unref (clause);
+	expected = g_strdup_printf ("\r\n\t%s\r\n\tv\r\n", keyword);
+	assert_format (received, options, expected);
+	g_free (expected);
+	g_free (keyword);
+	g_mime_received_clear_clauses (received);
+
+	value = g_strnfill (80, 'x');
+	g_assert_true (g_mime_received_set_via (received, value, NULL));
+	expected = g_strdup_printf (" via\r\n\t%s\r\n", value);
+	assert_format (received, options, expected);
+	g_free (expected);
+	g_free (value);
+	g_mime_received_clear_clauses (received);
+
+	value = g_strnfill (46, 'x');
+	g_assert_true (g_mime_received_set_via (received, value, NULL));
+	date = g_date_time_new_from_iso8601 ("2026-04-18T20:05:38-04:00", NULL);
+	g_mime_received_set_date_time (received, date);
+	g_date_time_unref (date);
+	expected = g_strdup_printf (" via %s\r\n\t; Sat, 18 Apr 2026 20:05:38 -0400\r\n", value);
+	assert_format (received, options, expected);
+	g_free (expected);
+	value[45] = '\0';
+	g_assert_true (g_mime_received_set_via (received, value, NULL));
+	expected = g_strdup_printf (" via %s;\r\n\tSat, 18 Apr 2026 20:05:38 -0400\r\n", value);
+	assert_format (received, options, expected);
+	g_free (expected);
+	g_free (value);
+	g_mime_received_clear_clauses (received);
+
+	zone = g_time_zone_new_offset (30);
+	date = g_date_time_new (zone, 2026, 4, 18, 20, 5, 38);
+	g_mime_received_set_date_time (received, date);
+	g_date_time_unref (date);
+	assert_format (received, options, "; Sat, 18 Apr 2026 20:05:08 -0000\r\n");
+	date = g_date_time_new (zone, 1, 1, 1, 0, 0, 0);
+	g_mime_received_set_date_time (received, date);
+	g_date_time_unref (date);
+	g_time_zone_unref (zone);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*utc != NULL*");
+	g_assert_null (g_mime_received_to_string (received, options));
+	g_test_assert_expected_messages ();
+	g_mime_received_set_date_time (received, NULL);
+	unicode = g_string_new (NULL);
+	for (i = 0; i < 23; i++)
+		g_string_append (unicode, "\360\237\230\200");
+	g_assert_true (g_mime_received_set_via (received, unicode->str, NULL));
+	expected = g_strdup_printf (" via %s\r\n", unicode->str);
+	assert_format (received, options, expected);
+	g_free (expected);
+	g_string_append (unicode, "\360\237\230\200");
+	g_assert_true (g_mime_received_set_via (received, unicode->str, NULL));
+	expected = g_strdup_printf ("\r\n\tvia %s\r\n", unicode->str);
+	assert_format (received, options, expected);
+	g_free (expected);
+	g_string_free (unicode, TRUE);
+	g_object_unref (received);
+
+	received = parse ("x \303\251\360\237\230\200", -1);
+	assert_format (received, options, " x \303\251\360\237\230\200\r\n");
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	assert_format (received, options, " x \303\251\360\237\230\200\n");
+	g_mime_format_options_set_max_line_length (options, 78);
+	assert_format (received, NULL, g_str_has_suffix (g_mime_format_options_get_newline (NULL), "\r\n") ?
+		       " x \303\251\360\237\230\200\r\n" : " x \303\251\360\237\230\200\n");
+	g_object_unref (received);
+	g_mime_format_options_free (options);
+}
+
+static void
 test_errors (void)
 {
 	static const struct {
@@ -571,6 +790,12 @@ main (int argc, char **argv)
 	testsuite_check_passed ();
 	testsuite_check ("Date assignment, aliases and cached spelling");
 	test_date_assignment ();
+	testsuite_check_passed ();
+	testsuite_check ("Host/IP construction, ownership and validation");
+	test_host_constructor ();
+	testsuite_check_passed ();
+	testsuite_check ("Serialization, folding, comment escaping and cached dates");
+	test_formatting ();
 	testsuite_check_passed ();
 	testsuite_check ("Parse errors and programming-error guards");
 	test_errors ();

@@ -25,10 +25,12 @@
 #include <string.h>
 
 #include "gmime-received.h"
+#include "gmime-common.h"
 #include "gmime-internal.h"
 #include "gmime-parse-utils.h"
 #include "gmime-error.h"
 #include "gmime-table-private.h"
+#include "gmime-utils.h"
 
 /**
  * SECTION: gmime-received
@@ -91,6 +93,125 @@ g_mime_received_new (void)
 	return g_object_new (GMIME_TYPE_RECEIVED, NULL);
 }
 
+static char *
+format_ip_address (GInetAddress *address)
+{
+	guint i, end, count, zero_start = 0, zero_length = 0;
+	const guint8 *bytes;
+	gboolean embedded;
+	GString *builder;
+	guint16 words[8];
+
+	if (g_inet_address_get_family (address) == G_SOCKET_FAMILY_IPV4)
+		return g_inet_address_to_string (address);
+
+	bytes = g_inet_address_to_bytes (address);
+	for (i = 0; i < G_N_ELEMENTS (words); i++)
+		words[i] = ((guint16) bytes[i * 2] << 8) | bytes[i * 2 + 1];
+
+	/* Match IPAddress's compatible, mapped, SIIT and ISATAP embedded IPv4 spelling. */
+	embedded = (words[0] == 0 && words[1] == 0 && words[2] == 0 && words[3] == 0 &&
+		    words[6] != 0 && ((words[4] == 0 && (words[5] == 0 || words[5] == 0xffff)) ||
+				     (words[4] == 0xffff && words[5] == 0))) ||
+		   (words[4] == 0 && words[5] == 0x5efe);
+	count = embedded ? 6 : 8;
+
+	for (i = 0; i < count; i = end) {
+		end = i + 1;
+
+		if (words[i] != 0)
+			continue;
+
+		while (end < count && words[end] == 0)
+			end++;
+
+		if (end - i > 1 && end - i > zero_length) {
+			zero_start = i;
+			zero_length = end - i;
+		}
+	}
+
+	builder = g_string_new (NULL);
+	for (i = 0; i < count;) {
+		if (zero_length && i == zero_start) {
+			g_string_append (builder, "::");
+			i += zero_length;
+		} else {
+			if (builder->len && builder->str[builder->len - 1] != ':')
+				g_string_append_c (builder, ':');
+			g_string_append_printf (builder, "%x", words[i++]);
+		}
+	}
+
+	if (embedded) {
+		if (builder->str[builder->len - 1] != ':')
+			g_string_append_c (builder, ':');
+
+		g_string_append_printf (builder, "%u.%u.%u.%u", bytes[12], bytes[13], bytes[14], bytes[15]);
+	}
+
+	return g_string_free (builder, FALSE);
+}
+
+/**
+ * g_mime_received_new_with_hosts:
+ * @from: the sending host's domain or address literal
+ * @from_tcp_info: the sending host's IP address
+ * @by: the receiving host's domain or address literal
+ * @by_tcp_info: the receiving host's IP address
+ * @date_time: (transfer none): the date and timezone offset to retain
+ * @error: (nullable): return location for a #GError
+ *
+ * Creates validated From and By clauses with bracketed IP address comments.
+ * Host strings and address text are copied; the addresses are not retained.
+ * Invalid host values report %GMIME_ERROR_PARSE_ERROR.
+ *
+ * #GInetAddress does not carry an IPv6 scope ID. Scoped address comments can
+ * instead be assigned with g_mime_received_set_from_tcp_info() and
+ * g_mime_received_set_by_tcp_info().
+ *
+ * Returns: (transfer full) (nullable): a new value, or %NULL on error.
+ **/
+GMimeReceived *
+g_mime_received_new_with_hosts (const char *from, GInetAddress *from_tcp_info,
+			      const char *by, GInetAddress *by_tcp_info,
+			      GDateTime *date_time, GError **error)
+{
+	GInetAddress *addresses[] = { from_tcp_info, by_tcp_info };
+	const char *hosts[] = { from, by };
+	GMimeReceivedClause *clause;
+	GMimeReceived *received;
+	char *address, *comment;
+	guint i;
+
+	g_return_val_if_fail (from != NULL, NULL);
+	g_return_val_if_fail (G_IS_INET_ADDRESS (from_tcp_info), NULL);
+	g_return_val_if_fail (by != NULL, NULL);
+	g_return_val_if_fail (G_IS_INET_ADDRESS (by_tcp_info), NULL);
+	g_return_val_if_fail (date_time != NULL, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	received = g_mime_received_new ();
+	for (i = 0; i < G_N_ELEMENTS (hosts); i++) {
+		address = format_ip_address (addresses[i]);
+		comment = g_strdup_printf ("[%s]", address);
+		clause = g_mime_received_clause_new_with_comment (keywords[i], hosts[i], comment, error);
+		g_free (comment);
+		g_free (address);
+
+		if (!clause) {
+			g_object_unref (received);
+			return NULL;
+		}
+
+		g_ptr_array_add (received->clauses, clause);
+	}
+
+	g_mime_received_set_date_time (received, date_time);
+
+	return received;
+}
+
 static GMimeReceivedClause *
 parsed_clause_new (GMimeReceived *received, GMimeReceivedClauseId id, char *keyword,
 		   char *value, GPtrArray *comments)
@@ -101,8 +222,10 @@ parsed_clause_new (GMimeReceived *received, GMimeReceivedClauseId id, char *keyw
 	clause->id = id;
 	clause->keyword = keyword;
 	clause->value = value;
+
 	g_ptr_array_unref (clause->comments);
 	clause->comments = comments;
+
 	g_ptr_array_add (received->clauses, clause);
 
 	return clause;
@@ -328,6 +451,7 @@ set_value (GMimeReceived *received, GMimeReceivedClauseId id, const char *value,
 
 	g_ptr_array_add (received->clauses, clause);
 	g_ptr_array_sort (received->clauses, compare_clauses);
+
 	return TRUE;
 }
 
@@ -343,6 +467,7 @@ get_tcp_info (GMimeReceived *received, GMimeReceivedClauseId id)
 		return NULL;
 
 	clause = received->clauses->pdata[index];
+
 	return clause->comments->len ? clause->comments->pdata[0] : NULL;
 }
 
@@ -376,6 +501,184 @@ set_tcp_info (GMimeReceived *received, GMimeReceivedClauseId id, const char *com
 		parsed_clause_new (received, id, g_strdup (keywords[id - 1]), g_strdup (""), comments);
 		g_ptr_array_sort (received->clauses, compare_clauses);
 	}
+}
+
+static char *
+format_comment (const char *comment)
+{
+	GString *builder = g_string_new ("(");
+
+	while (*comment) {
+		if (*comment == '\\')
+			g_string_append_c (builder, '\\');
+
+		if (*comment == '\t')
+			g_string_append_c (builder, ' ');
+		else if (*comment != '\r' && *comment != '\n')
+			g_string_append_c (builder, *comment);
+
+		comment++;
+	}
+
+	g_string_append_c (builder, ')');
+	return g_string_free (builder, FALSE);
+}
+
+static void
+append_clause (GMimeFormatOptions *options, GString *builder, gsize *line_length, GMimeReceivedClause *clause)
+{
+	const char *newline = g_mime_format_options_get_newline (options);
+	gsize maxline = g_mime_format_options_get_max_line_length (options);
+	gsize keyword_length, value_length, comment_length;
+	char *comment = NULL;
+	guint i;
+
+	if (clause->comments->len)
+		comment = format_comment (clause->comments->pdata[0]);
+
+	if (clause->id != GMIME_RECEIVED_CLAUSE_NONE) {
+		comment_length = comment ? _g_mime_count_utf16_units (comment, comment + strlen (comment)) : 0;
+		keyword_length = _g_mime_count_utf16_units (clause->keyword, clause->keyword + strlen (clause->keyword));
+		value_length = _g_mime_count_utf16_units (clause->value, clause->value + strlen (clause->value));
+
+		if (comment_length > 0 && keyword_length + 1 + value_length + 1 + comment_length < maxline) {
+			/* keyword, value and (the first) comment can all fit on a single line */
+			if (*line_length + 1 + keyword_length + 1 + value_length + 1 + comment_length > maxline) {
+				/* fold the header value here so that we can put as many tokens on the same line as we can */
+				g_string_append_printf (builder, "%s\t", newline);
+				*line_length = 1;
+			} else {
+				/* they can all fit on the current line */
+				g_string_append_c (builder, ' ');
+				(*line_length)++;
+			}
+		} else if (keyword_length + 1 + value_length < maxline) {
+			/* keyword and value can both fit on a single line */
+			if (*line_length + 1 + keyword_length + 1 + value_length > maxline) {
+				/* they are too long to fit on the current line, so wrap and put them on the next line */
+				g_string_append_printf (builder, "%s\t", newline);
+				*line_length = 1;
+			} else {
+				/* they can both fit on the current line */
+				g_string_append_c (builder, ' ');
+				(*line_length)++;
+			}
+		} else {
+			/* we'll need to separate the keyword and value */
+			if (*line_length + 1 + keyword_length > maxline) {
+				/* keyword is too long to fit on the current line */
+				g_string_append_printf (builder, "%s\t", newline);
+				*line_length = 1;
+			} else {
+				/* keyword fit on the current line */
+				g_string_append_c (builder, ' ');
+				(*line_length)++;
+			}
+		}
+
+		/* append the keyword */
+		g_string_append (builder, clause->keyword);
+		*line_length += keyword_length;
+
+		if (*line_length + 1 + value_length > maxline) {
+			g_string_append_printf (builder, "%s\t", newline);
+			*line_length = 1;
+		} else {
+			g_string_append_c (builder, ' ');
+			(*line_length)++;
+		}
+
+		/* append the value */
+		g_string_append (builder, clause->value);
+		*line_length += value_length;
+	}
+
+	for (i = 0; i < clause->comments->len; i++) {
+		/* Note: ReceivedClause.Comments is a public list, so make sure that the comments cannot inject line breaks. */
+		if (i > 0)
+			comment = format_comment (clause->comments->pdata[i]);
+		comment_length = _g_mime_count_utf16_units (comment, comment + strlen (comment));
+
+		if (*line_length + 1 + comment_length > maxline) {
+			g_string_append_printf (builder, "%s\t", newline);
+			*line_length = 1;
+		} else {
+			g_string_append_c (builder, ' ');
+			(*line_length)++;
+		}
+
+		g_string_append (builder, comment);
+		*line_length += comment_length;
+		g_free (comment);
+	}
+}
+
+/**
+ * g_mime_received_to_string:
+ * @received: a #GMimeReceived
+ * @options: (nullable): a #GMimeFormatOptions or %NULL for the defaults
+ *
+ * Serializes the value without its field name, including leading whitespace
+ * and a terminating newline. Folding accounts for the "Received:" field name
+ * and counts UTF-16 units like MimeKit. Individual tokens are not split and
+ * may exceed the configured line-length target.
+ *
+ * Comments are unfolded and backslashes escaped. Clauses retain their order,
+ * keyword spelling and values. Parsed dates retain their unfolded spelling
+ * until date assignment invalidates the cache. Otherwise dates use
+ * g_mime_utils_header_format_date(). No RFC 2047 or IDN encoding is applied.
+ *
+ * Returns: (transfer full) (nullable): the serialized value, or %NULL if a date
+ * cannot be formatted because a required UTC conversion is out of range.
+ **/
+char *
+g_mime_received_to_string (GMimeReceived *received, GMimeFormatOptions *options)
+{
+	const char *newline = g_mime_format_options_get_newline (options);
+	gsize maxline = g_mime_format_options_get_max_line_length (options);
+	gsize line_length = strlen ("Received:"), stamp_length;
+	char *formatted = NULL;
+	const char *stamp;
+	GString *builder;
+	guint i;
+
+	g_return_val_if_fail (GMIME_IS_RECEIVED (received), NULL);
+
+	builder = g_string_new (NULL);
+	for (i = 0; i < received->clauses->len; i++)
+		append_clause (options, builder, &line_length, received->clauses->pdata[i]);
+
+	if (received->date_time) {
+		if (line_length + 1 > maxline) {
+			g_string_append_printf (builder, "%s\t", newline);
+			line_length = 1;
+		}
+
+		g_string_append_c (builder, ';');
+		line_length++;
+
+		/* use the cached value if available (so when reformatting a parsed header, we keep it in tact) */
+		if (!(stamp = received->date_time_str)) {
+			stamp = formatted = g_mime_utils_header_format_date (received->date_time);
+			if (!stamp) {
+				g_string_free (builder, TRUE);
+				return NULL;
+			}
+		}
+
+		stamp_length = _g_mime_count_utf16_units (stamp, stamp + strlen (stamp));
+
+		if (line_length + 1 + stamp_length > maxline)
+			g_string_append_printf (builder, "%s\t", newline);
+		else
+			g_string_append_c (builder, ' ');
+
+		g_string_append (builder, stamp);
+		g_free (formatted);
+	}
+
+	g_string_append (builder, newline);
+	return g_string_free (builder, FALSE);
 }
 
 /**

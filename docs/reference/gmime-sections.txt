@@ -1933,7 +1933,9 @@ GMimeReceivedClauseClass
 <FILE>gmime-received</FILE>
 GMimeReceived
 g_mime_received_new
+g_mime_received_new_with_hosts
 g_mime_received_parse
+g_mime_received_to_string
 g_mime_received_get_clause_count
 g_mime_received_get_clause
 g_mime_received_set_clause

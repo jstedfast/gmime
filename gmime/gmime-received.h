@@ -21,6 +21,8 @@
 #ifndef __GMIME_RECEIVED_H__
 #define __GMIME_RECEIVED_H__
 
+#include <gio/gio.h>
+#include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-received-clause.h>
 
@@ -58,7 +60,11 @@ struct _GMimeReceivedClass {
 GType g_mime_received_get_type (void);
 
 GMimeReceived *g_mime_received_new (void);
+GMimeReceived *g_mime_received_new_with_hosts (const char *from, GInetAddress *from_tcp_info,
+					    const char *by, GInetAddress *by_tcp_info,
+					    GDateTime *date_time, GError **error);
 GMimeReceived *g_mime_received_parse (GMimeParserOptions *options, const char *text, gssize length, GError **error);
+char *g_mime_received_to_string (GMimeReceived *received, GMimeFormatOptions *options);
 
 int g_mime_received_get_clause_count (GMimeReceived *received);
 GMimeReceivedClause *g_mime_received_get_clause (GMimeReceived *received, int index);

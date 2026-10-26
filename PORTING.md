@@ -1964,8 +1964,7 @@ clearing. Strings are copied on assignment; getters borrow them. Setters
 support aliases to existing strings. Comments may be empty and may contain
 parentheses, backslashes or line breaks, matching the source collection.
 Invalid comment UTF-8, NULL arguments and invalid indexes are programming
-errors. The parser is described below; serialization remains unported
-and must escape and fold comments.
+errors. Parsing, model mutation and comment serialization are described below.
 
 Persistent standalone regressions cover ownership, aliases, validation,
 atomic failure, comment ordering and programming-error guards. Normal and
@@ -2026,9 +2025,8 @@ Focused sanitizer checks are leak-clean. GIR, typelib, VAPI, GTK-doc and
 live GI/Python checks pass for all four APIs, including bounded byte-array
 input, errors and retained clause/date ownership. The complete core suite
 passes 36 of 37 programs; test-core retains only its two existing text-format
-failures. Native Windows execution remains unvalidated. Received construction
-and mutation are described below; the host/IP/date constructor and
-serialization remain unported.
+failures. Native Windows execution remains unvalidated. Received construction,
+mutation and serialization are described below.
 
 ### Received construction and mutation
 
@@ -2082,6 +2080,55 @@ GTK-doc and live GI/Python checks pass for all 26 construction/mutation APIs,
 including nullability, errors and retained clause/date ownership. The complete
 core suite passes 36 of 37 programs, with only test-core's two existing
 text-format failures. Native Windows execution remains unvalidated.
+
+### Received host construction and serialization
+
+`g_mime_received_new_with_hosts()` creates validated From and By clauses
+with bracketed IP address comments and retains the supplied date and offset.
+Host strings and address text are copied without retaining the GInetAddress
+objects. Invalid hosts report GMIME_ERROR_PARSE_ERROR and release the partial
+model. IPv6 spelling matches MimeKit, including zero-run compression and
+embedded IPv4 compatible, mapped, SIIT and ISATAP addresses, rather than
+depending on platform address formatting. GInetAddress cannot carry a scope
+ID; scoped comments can instead use the existing TCP-info setters.
+
+`g_mime_received_to_string()` ports Received.ToString(FormatOptions).
+It returns the header value only, including leading whitespace and the
+terminating configured newline. NULL options select native defaults.
+Folding starts after the nine-character "Received:" field name, counts
+UTF-16 units and retains MimeKit's exact keyword/value/first-comment packing
+thresholds. Continuation lines start with a tab. Individual tokens are not
+split, so oversized tokens may exceed the configured target.
+
+Comments drop CR/LF, replace tabs with spaces and escape backslashes without
+mutating stored comments; parentheses remain literal like MimeKit.
+The first escaped comment is reused for lookahead and output. Clauses keep
+their order, keyword spelling and values. Parsed dates retain their cached
+spelling until date assignment invalidates it; otherwise the existing date
+formatter supplies the timestamp. Required UTC conversion failures return
+NULL after the date helper's critical diagnostic and release the builder.
+Applicable MimeKit packing, folding, comment and date-cache inline comments
+are retained. This does not replace the separate raw Received header formatter
+or introduce RFC 2047 or IDN conversion.
+
+Persistent regressions cover construction, validation, retained ownership,
+embedded IPv4 spelling, zero-run ties, comment line-break protection and
+escaping, parsed date caches, exact folding boundaries, oversized tokens,
+non-BMP UTF-16 column accounting, both newline modes and out-of-range date
+conversion. Normal and ASan/UBSan/leak runs each compare 84,346 construction
+and serialization cases against actual MimeKit sources with zero differences,
+using the established NUL-to-U+FFFD native display-string adaptation.
+Cases include Received fixtures and every byte prefix, byte-value and Unicode
+inputs, all 256 IPv6 zero-word patterns, embedded IPv4 variants and randomized
+models and addresses. MimeKit sources remain unchanged.
+
+Focused native regressions and sanitizer checks pass. GIR, typelib, VAPI,
+GTK-doc and live GI/Python checks pass for both new APIs, including ownership,
+errors, date caching, Unicode folding and comment protection; existing clause,
+parser and mutation binding checks also pass. GTK-doc retains the environment's
+missing external GLib/GIO cross-reference warnings. The complete core suite
+passes 36 of 37 programs, with only test-core's two existing text-format
+failures. Native Windows execution remains unvalidated.
 
 ### Positional header-list operations
 
