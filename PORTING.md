@@ -1546,6 +1546,50 @@ The full core suite remains at 34/35 passing programs, with only test-core's
 two established text-format assertions. Native Windows validation remains
 pending.
 
+### Named header-list values
+
+`g_mime_header_list_get_value()` and
+`g_mime_header_list_set_value_full()` port MimeKit's named HeaderList indexer.
+Lookup returns the first matching header's borrowed decoded value, or NULL
+when absent. An unset legacy placeholder also returns NULL without falling
+through to a later duplicate. Decoding remains lazy and does not notify owners.
+
+Assignment updates the first matching object with the checked header setter,
+or appends a checked header when absent. It preserves existing objects,
+duplicates, raw field names, source offsets and parser options. Existing
+invalid parsed fields can be updated without repairing their names; a new
+field must pass the checked constructor's validation. NULL charset selects
+UTF-8; the optional explicit charset follows the existing checked APIs.
+Legacy `g_mime_header_list_set()` still collapses duplicates.
+
+Changing an existing header preserves body-separator state; appending enables
+the separator. Notifications flow through existing header subscriptions,
+including subscriptions for repeated occurrences and other lists sharing the
+same object. No redundant list event is added. All occurrences of a shared
+object see the changed value, while distinct later duplicates stay untouched.
+Failures preserve raw values, decoded caches, list state and owner models
+without notifications. This intentionally retains the checked setter's
+stronger rollback guarantee: MimeKit can change the first decoded cache
+before structured formatting throws.
+
+The source indexer bodies have no inline implementation comments to copy.
+Normalization and formatting reuse the checked helpers and their adapted
+source comments.
+
+An actual-source differential covers 5,328 cases per normal and
+ASan/UBSan/leak build with zero unexpected differences. It exercises the
+named indexer and explicit-charset assignment across empty, absent-name,
+duplicate and repeated-instance lists. It separately accounts for 1,854
+intentional reference failure-cache rollbacks and independently verifies 224
+inherited formatter differences against standalone checked construction.
+Native regressions also cover lazy/raw state, legacy placeholders, borrowed
+arguments, invalid parsed fields, detached shared owners, recipient updates
+and structured content models.
+
+Both APIs pass GIR/typelib, VAPI, GTK-doc and live GI/Python validation.
+The full core baseline remains unchanged: 34/35 programs pass, with only
+test-core's two established text-format assertions.
+
 ### Positional header-list operations
 
 `g_mime_header_list_index_of()` and

@@ -182,6 +182,9 @@ void g_mime_header_list_append (GMimeHeaderList *headers, const char *name, cons
 gboolean g_mime_header_list_append_full (GMimeHeaderList *headers, const char *name, const char *value,
 				       const char *charset, GError **error);
 void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *charset);
+const char *g_mime_header_list_get_value (GMimeHeaderList *headers, const char *name);
+gboolean g_mime_header_list_set_value_full (GMimeHeaderList *headers, const char *name, const char *value,
+					  const char *charset, GError **error);
 void g_mime_header_list_replace (GMimeHeaderList *headers, GMimeHeader *header);
 gboolean g_mime_header_list_replace_value_full (GMimeHeaderList *headers, const char *name, const char *value,
 					      const char *charset, GError **error);

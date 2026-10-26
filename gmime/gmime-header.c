@@ -2551,6 +2551,77 @@ g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name)
 }
 
 
+/**
+ * g_mime_header_list_get_value:
+ * @headers: a #GMimeHeaderList
+ * @name: the case-insensitive header field name
+ *
+ * Gets the decoded value of the first matching header without changing
+ * list order or notifying owners. Later matches are not considered, even
+ * if the first is an unset legacy placeholder.
+ *
+ * Returns: (transfer none) (nullable): the first header's decoded value,
+ * or %NULL if no match exists or the first header is unset. The value is
+ * owned by the header and is invalidated when that header is changed or
+ * released.
+ **/
+const char *
+g_mime_header_list_get_value (GMimeHeaderList *headers, const char *name)
+{
+	GMimeHeader *header;
+
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), NULL);
+	g_return_val_if_fail (name != NULL, NULL);
+
+	header = g_hash_table_lookup (headers->hash, name);
+
+	return header ? g_mime_header_get_value (header) : NULL;
+}
+
+
+/**
+ * g_mime_header_list_set_value_full:
+ * @headers: a #GMimeHeaderList
+ * @name: the case-insensitive header field name
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Sets only the first matching header using g_mime_header_set_value_full(),
+ * or appends a checked header using g_mime_header_list_append_full() if
+ * absent. Existing matches retain their identity, names, parser options and
+ * source offsets. Later duplicates are not removed or changed, unless they
+ * are additional occurrences of the same header object.
+ *
+ * Existing-header changes notify all lists sharing that object and preserve
+ * each list's body-separator state. Appending adds a body separator and
+ * emits the normal add notification. Validation failure leaves header and
+ * list state unchanged and emits no notification.
+ *
+ * Unlike g_mime_header_list_set(), this does not collapse duplicates.
+ * An invalid parsed field name is not repaired; if no match exists, @name
+ * must satisfy the checked constructor's field-name requirements.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_set_value_full (GMimeHeaderList *headers, const char *name, const char *value,
+				   const char *charset, GError **error)
+{
+	GMimeHeader *header;
+
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), FALSE);
+	g_return_val_if_fail (name != NULL, FALSE);
+	g_return_val_if_fail (value != NULL, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if ((header = g_hash_table_lookup (headers->hash, name)))
+		return g_mime_header_set_value_full (header, NULL, value, charset, error);
+
+	return g_mime_header_list_append_full (headers, name, value, charset, error);
+}
+
+
 static void
 header_list_remove_duplicates (GMimeHeaderList *headers, GMimeHeader *header, guint first)
 {

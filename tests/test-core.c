@@ -5248,6 +5248,230 @@ test_checked_header_list_values (void)
 }
 
 static void
+test_named_header_list_values (void)
+{
+	static const char text[] = "sUbJeCt \t: =?iso-8859-1?q?caf=E9?=\r\n\tfirst\r\n"
+		"Subject: later\r\nX-Keep: untouched\r\n";
+	static const char invalid_field[] = "X-First: valid\r\nbroken line\r\n";
+	static const struct {
+		const char *name, *initial, *value, *charset;
+	} invalid[] = {
+		{ "Content-Type", "text/plain", "invalid", NULL },
+		{ "Content-Type", "text/plain", "text/plain; name=\"unfinished", NULL },
+		{ "Content-Disposition", "attachment", "\"attachment\"", NULL },
+		{ "Subject", "first", "\377", NULL },
+		{ "Subject", "first", "new", "" },
+		{ "Subject", "first", "new", "x-no-such-charset" }
+	};
+	GMimeHeaderList *headers, *shared;
+	GMimeHeader *header, *later, *keep;
+	GMimeHeaderRawValueFormatter formatter;
+	GMimeParserOptions *options;
+	GMimeMessage *message, *other;
+	GMimePart *part;
+	GMimeStream *stream;
+	GError *error = NULL;
+	GBytes *raw_field, *raw_value;
+	const char *name, *raw, *value, *charset;
+	char *before, *after, *source;
+	guint i, changes, shared_changes, missing;
+	gint64 offset;
+
+	headers = g_mime_header_list_new (NULL);
+	check (g_mime_header_list_get_value (headers, "Subject") == NULL &&
+	       g_mime_header_list_get_value (headers, "") == NULL, "named value lookup returns NULL for missing fields");
+	g_mime_header_list_append (headers, "Subject", NULL, NULL);
+	header = g_mime_header_list_get_header_at (headers, 0);
+	g_mime_header_list_append (headers, "SUBJECT", "later", NULL);
+	check (g_mime_header_list_get_value (headers, "subject") == NULL,
+	       "named value lookup does not skip an unset first occurrence");
+	check (g_mime_header_list_set_value_full (headers, "sUbJeCt", "", NULL, &error) &&
+	       g_mime_header_list_get_header_at (headers, 0) == header &&
+	       g_mime_header_list_get_count (headers) == 2 &&
+	       !g_strcmp0 (g_mime_header_list_get_value (headers, "SUBJECT"), ""),
+	       "named assignment fills an existing placeholder without removing duplicates");
+	g_assert_no_error (error);
+	g_object_unref (headers);
+
+	stream = g_mime_stream_mem_new_with_buffer (text, sizeof (text) - 1);
+	headers = g_mime_header_list_load (NULL, stream, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_object_unref (stream);
+	header = g_mime_header_list_get_header_at (headers, 0);
+	later = g_mime_header_list_get_header_at (headers, 1);
+	keep = g_mime_header_list_get_header_at (headers, 2);
+	check (header->value == NULL, "named lookup starts with a lazy decoded cache");
+	raw_field = header->raw_field_bytes;
+	raw_value = header->raw_value_bytes;
+	raw = header->raw_value;
+	name = header->raw_name;
+	offset = header->offset;
+	options = header->options;
+	changes = 0;
+	g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+	value = g_mime_header_list_get_value (headers, "SUBJECT");
+	check (!g_strcmp0 (value, "caf\303\251\tfirst") && value == header->value &&
+	       g_mime_header_list_get_value (headers, "subject") == value,
+	       "named lookup returns the first header's borrowed decoded cache");
+	check (header->raw_field_bytes == raw_field && header->raw_value_bytes == raw_value &&
+	       header->raw_value == raw && changes == 0 && !headers->has_body_separator,
+	       "named lookup preserves raw bytes, separator state and notifications");
+	check (g_mime_header_list_set_value_full (headers, later->name, "caf\303\251", "latin1", &error),
+	       "named assignment accepts a lookup name borrowed from a later duplicate");
+	g_assert_no_error (error);
+	check (g_mime_header_list_get_header (headers, "subject") == header &&
+	       g_mime_header_list_get_header_at (headers, 1) == later &&
+	       g_mime_header_list_get_header_at (headers, 2) == keep &&
+	       g_mime_header_list_get_count (headers) == 3 && !strcmp (g_mime_header_get_value (later), "later"),
+	       "named assignment preserves every object, duplicate and list position");
+	check (header->raw_name == name && header->raw_field_bytes == raw_field && header->raw_value_bytes == NULL &&
+	       header->offset == offset && header->options == options && !header->reformat &&
+	       !header->explicit_raw_value && changes == 1 && !headers->has_body_separator,
+	       "named assignment preserves source identity and separator state while caching the new formatting");
+	check (g_mime_header_list_set_value_full (headers, header->name, header->value, header->charset, &error) &&
+	       changes == 2 && !strcmp (header->charset, "iso-8859-1"),
+	       "named assignment accepts its own borrowed value and charset");
+	g_assert_no_error (error);
+	formatter = header->formatter;
+	raw = header->raw_value;
+	value = header->value;
+	charset = header->charset;
+	header->formatter = fail_checked_header_format;
+	check (!g_mime_header_list_set_value_full (headers, "Subject", "errno", NULL, &error) &&
+	       g_error_matches (error, GMIME_ERROR, EIO) && header->raw_value == raw &&
+	       header->value == value && header->charset == charset && changes == 2,
+	       "named assignment propagates formatter failure without changing the first header or notifying");
+	g_clear_error (&error);
+	header->formatter = formatter;
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*name != NULL*");
+	check (g_mime_header_list_get_value (headers, NULL) == NULL, "named lookup requires a field name");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*value != NULL*");
+	check (!g_mime_header_list_set_value_full (headers, "Subject", NULL, NULL, &error),
+	       "named assignment requires a non-NULL value");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*name != NULL*");
+	check (!g_mime_header_list_set_value_full (headers, NULL, "new", NULL, &error),
+	       "named assignment requires a field name");
+	g_test_assert_expected_messages ();
+	error = g_error_new_literal (GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+	check (!g_mime_header_list_set_value_full (headers, "Subject", "new", NULL, &error) &&
+	       !strcmp (error->message, "existing error"), "named assignment requires a clear error destination");
+	g_test_assert_expected_messages ();
+	g_clear_error (&error);
+	g_object_unref (headers);
+
+	for (missing = 0; missing < 2; missing++) {
+		for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+			source = g_strdup_printf ("%s: %s\r\nX-Keep: untouched\r\n%s: %s\r\n",
+						  missing ? "X-Other" : invalid[i].name, invalid[i].initial,
+						  missing ? "X-Other" : invalid[i].name, invalid[i].initial);
+			stream = g_mime_stream_mem_new_with_buffer (source, strlen (source));
+			headers = g_mime_header_list_load (NULL, stream, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_object_unref (stream);
+			g_free (source);
+			header = g_mime_header_list_get_header_at (headers, 0);
+			raw_value = header->raw_value_bytes;
+			changes = 0;
+			g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+			before = g_mime_header_list_to_string (headers, NULL);
+			check (!g_mime_header_list_set_value_full (headers, invalid[i].name, invalid[i].value,
+								  invalid[i].charset, &error) && error != NULL,
+			       "named assignment reports invalid structured values and encodings");
+			g_clear_error (&error);
+			check (!g_mime_header_list_set_value_full (headers, invalid[i].name, invalid[i].value,
+								  invalid[i].charset, NULL),
+			       "named assignment can fail without an error destination");
+			after = g_mime_header_list_to_string (headers, NULL);
+			check (!strcmp (before, after) && g_mime_header_list_get_count (headers) == 3 &&
+			       g_mime_header_list_get_header_at (headers, 0) == header && header->value == NULL &&
+			       header->raw_value_bytes == raw_value && !headers->has_body_separator && changes == 0,
+			       "failed named assignment preserves lazy/raw state, duplicates, order, separators and events");
+			g_free (before);
+			g_free (after);
+			g_object_unref (headers);
+		}
+	}
+
+	stream = g_mime_stream_mem_new_with_buffer (invalid_field, sizeof (invalid_field) - 1);
+	headers = g_mime_header_list_load (NULL, stream, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_object_unref (stream);
+	header = g_mime_header_list_get_header_at (headers, 1);
+	g_assert_nonnull (header);
+	raw_field = header->raw_field_bytes;
+	check (header->invalid && g_mime_header_list_set_value_full (headers, header->name, "new", NULL, &error) &&
+	       header->invalid && header->raw_field_bytes == raw_field,
+	       "named assignment updates an existing invalid parsed field without repairing its name");
+	g_assert_no_error (error);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*assertion*failed*");
+	check (!g_mime_header_list_set_value_full (headers, "Another Bad Name", "new", NULL, &error),
+	       "named assignment validates a newly appended field name");
+	g_test_assert_expected_messages ();
+	g_object_unref (headers);
+
+	message = g_mime_message_new (FALSE);
+	other = g_mime_message_new (FALSE);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	shared = g_mime_entity_get_header_list (GMIME_ENTITY (other));
+	check (g_mime_header_list_set_value_full (headers, "Subject", "original", NULL, &error) &&
+	       !g_strcmp0 (g_mime_message_get_subject (message), "original"),
+	       "absent named assignment appends and updates the owning message");
+	header = g_mime_header_list_get_header (headers, "Subject");
+	g_mime_header_list_add (headers, header);
+	g_mime_header_list_append (headers, "SUBJECT", "later", NULL);
+	g_mime_header_list_add (shared, header);
+	changes = shared_changes = 0;
+	g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+	g_mime_event_add (shared->changed, count_checked_header_changes, &shared_changes);
+	check (g_mime_header_list_set_value_full (headers, "SUBJECT", "shared", NULL, &error) &&
+	       !g_strcmp0 (g_mime_message_get_subject (message), "shared") &&
+	       !g_strcmp0 (g_mime_message_get_subject (other), "shared") &&
+	       g_mime_header_list_get_count (headers) == 3 && changes == 2 && shared_changes == 1,
+	       "named assignment updates repeated/shared instances using their existing event subscriptions");
+	check (!strcmp (g_mime_header_get_value (g_mime_header_list_get_header_at (headers, 2)), "later"),
+	       "named assignment leaves distinct later duplicates unchanged");
+	g_assert_no_error (error);
+	g_object_unref (message);
+	check (g_mime_header_list_set_value_full (shared, "Subject", "survivor", NULL, &error) &&
+	       !g_strcmp0 (g_mime_message_get_subject (other), "survivor") &&
+	       changes == 2 && shared_changes == 2,
+	       "named assignment detaches destroyed lists while preserving surviving shared owners");
+	g_assert_no_error (error);
+	g_object_unref (other);
+	message = g_mime_message_new (FALSE);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	g_mime_header_list_append (headers, "To", "one@example.com", NULL);
+	g_mime_header_list_append (headers, "TO", "two@example.com", NULL);
+	check (g_mime_header_list_set_value_full (headers, "to", "new@example.com", NULL, &error) &&
+	       g_mime_internet_address_list_length (g_mime_message_get_to (message)) == 2,
+	       "named address assignment rebuilds recipients without removing later fields");
+	after = g_mime_internet_address_list_to_string (g_mime_message_get_to (message), NULL, FALSE);
+	check (strstr (after, "new@example.com") != NULL && strstr (after, "two@example.com") != NULL &&
+	       strstr (after, "one@example.com") == NULL,
+	       "named address assignment refreshes the first recipient and retains the later recipient");
+	g_free (after);
+	g_assert_no_error (error);
+	g_object_unref (message);
+	part = g_mime_part_new ();
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (part));
+	check (g_mime_header_list_set_value_full (headers, "Content-Type", "text/html; charset=utf-8", NULL, &error) &&
+	       g_mime_content_type_is_type (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "text", "html"),
+	       "named assignment updates the owning structured content model");
+	g_assert_no_error (error);
+	check (!g_mime_header_list_set_value_full (headers, "Content-Type", "invalid", NULL, &error) &&
+	       g_mime_content_type_is_type (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "text", "html"),
+	       "failed named assignment preserves the owning structured content model");
+	g_clear_error (&error);
+	g_object_unref (part);
+}
+
+static void
 test_header_cloning (void)
 {
 	static const char text[] = "X-First: first\r\nX-SuBjEcT \t: \317\360\350\342\345\362\r\n\tworld\r\n\r\n";
@@ -10926,6 +11150,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("checked header-list values");
 	test_checked_header_list_values ();
+	testsuite_end ();
+
+	testsuite_start ("named header-list values");
+	test_named_header_list_values ();
 	testsuite_end ();
 
 	testsuite_start ("mixed header charset policy");
