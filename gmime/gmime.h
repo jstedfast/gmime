@@ -32,6 +32,8 @@
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-disposition.h>
 #include <gmime/gmime-header-list-collection.h>
+#include <gmime/gmime-received-clause.h>
+#include <gmime/gmime-received.h>
 #include <gmime/gmime-content.h>
 #include <gmime/gmime-entity.h>
 #include <gmime/gmime-attachment-collection.h>

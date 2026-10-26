@@ -142,6 +142,8 @@ G_GNUC_INTERNAL GIConv _g_mime_charset_open_text_decoder (const char *charset, c
 G_GNUC_INTERNAL int _g_mime_charset_get_codepage (const char *charset);
 
 /* utils */
+G_GNUC_INTERNAL GDateTime *_g_mime_utils_header_decode_date (const char *text, gsize length);
+G_GNUC_INTERNAL char *_g_mime_utils_decode_8bit_text (GMimeParserOptions *options, const char *text, gsize length);
 G_GNUC_INTERNAL char *_g_mime_utils_convert_from_utf8 (const char *text, gsize length, const char **charset,
 						     gsize *converted_length);
 G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,

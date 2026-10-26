@@ -261,10 +261,43 @@ typedef struct _date_token {
 #define date_token_free(tok) g_slice_free (date_token, tok)
 #define date_token_new() g_slice_new (date_token)
 
+static gboolean
+date_skip_cfws (const char **in, const char *end)
+{
+	const char *p = *in;
+	gsize depth;
+
+	while (p < end) {
+		if (is_lwsp (*p)) {
+			p++;
+		} else if (*p == '(') {
+			depth = 1;
+			p++;
+			while (p < end && depth) {
+				if (*p == '\\' && p + 1 < end)
+					p++;
+				else if (*p == '(')
+					depth++;
+				else if (*p == ')')
+					depth--;
+				p++;
+			}
+			if (depth)
+				return FALSE;
+		} else {
+			break;
+		}
+	}
+
+	*in = p;
+	return TRUE;
+}
+
 static date_token *
-datetok (const char *date)
+datetok (const char *date, gsize length)
 {
 	date_token tokens, *token, *tail;
+	const char *limit = date + length;
 	const char *start, *end;
         unsigned char mask;
 	
@@ -272,18 +305,18 @@ datetok (const char *date)
 	tokens.next = NULL;
 	
 	start = date;
-	while (*start) {
-		if (!skip_cfws (&start))
+	while (start < limit) {
+		if (!date_skip_cfws (&start, limit))
 			break;
 		
-		if (*start == '\0')
+		if (start == limit)
 			break;
 		
 		mask = gmime_datetok_table[(unsigned char) *start];
 		
 		/* find the end of this token */
 		end = start + 1;
-		while (*end && !strchr ("-/,\t\r\n ", *end))
+		while (end < limit && !(*end && strchr ("-/,\t\r\n ", *end)))
 			mask |= gmime_datetok_table[(unsigned char) *end++];
 		
 		if (end != start) {
@@ -297,7 +330,7 @@ datetok (const char *date)
 			tail = token;
 		}
 		
-		if (*end)
+		if (end < limit)
 			start = end + 1;
 		else
 			break;
@@ -661,12 +694,20 @@ parse_broken_date (date_token *tokens)
 GDateTime *
 g_mime_utils_header_decode_date (const char *str)
 {
+	g_return_val_if_fail (str != NULL, NULL);
+
+	return _g_mime_utils_header_decode_date (str, strlen (str));
+}
+
+GDateTime *
+_g_mime_utils_header_decode_date (const char *str, gsize length)
+{
 	date_token *token, *tokens;
 	GDateTime *date;
 
 	g_return_val_if_fail (str != NULL, NULL);
 	
-	if (!(tokens = datetok (str)))
+	if (!(tokens = datetok (str, length)))
 		return NULL;
 	
 	if (!(date = parse_rfc822_date (tokens)))
@@ -1190,6 +1231,19 @@ g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t 
 	g_return_val_if_fail (text != NULL, NULL);
 
 	return decode_8bit (options, text, len, NULL);
+}
+
+char *
+_g_mime_utils_decode_8bit_text (GMimeParserOptions *options, const char *text, gsize length)
+{
+	char *decoded, *value;
+	size_t decoded_length;
+
+	decoded = decode_8bit (options, text, length, &decoded_length);
+	value = g_utf8_make_valid (decoded, decoded_length);
+	g_free (decoded);
+
+	return value;
 }
 
 

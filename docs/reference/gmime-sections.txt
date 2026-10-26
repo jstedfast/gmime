@@ -1897,6 +1897,60 @@ GMimeDomainListClass
 </SECTION>
 
 <SECTION>
+<FILE>gmime-received-clause</FILE>
+GMimeReceivedClauseId
+GMimeReceivedClause
+g_mime_received_clause_new
+g_mime_received_clause_new_with_comment
+g_mime_received_clause_get_id
+g_mime_received_clause_get_keyword
+g_mime_received_clause_get_value
+g_mime_received_clause_set_value
+g_mime_received_clause_get_comment_count
+g_mime_received_clause_get_comment
+g_mime_received_clause_index_of_comment
+g_mime_received_clause_add_comment
+g_mime_received_clause_insert_comment
+g_mime_received_clause_set_comment
+g_mime_received_clause_remove_comment
+g_mime_received_clause_remove_comment_at
+g_mime_received_clause_clear_comments
+
+<SUBSECTION Private>
+g_mime_received_clause_get_type
+
+<SUBSECTION Standard>
+GMIME_RECEIVED_CLAUSE
+GMIME_RECEIVED_CLAUSE_CLASS
+GMIME_RECEIVED_CLAUSE_GET_CLASS
+GMIME_IS_RECEIVED_CLAUSE
+GMIME_IS_RECEIVED_CLAUSE_CLASS
+GMIME_TYPE_RECEIVED_CLAUSE
+GMimeReceivedClauseClass
+</SECTION>
+
+<SECTION>
+<FILE>gmime-received</FILE>
+GMimeReceived
+g_mime_received_parse
+g_mime_received_get_clause_count
+g_mime_received_get_clause
+g_mime_received_get_date_time
+
+<SUBSECTION Private>
+g_mime_received_get_type
+
+<SUBSECTION Standard>
+GMIME_RECEIVED
+GMIME_RECEIVED_CLASS
+GMIME_RECEIVED_GET_CLASS
+GMIME_IS_RECEIVED
+GMIME_IS_RECEIVED_CLASS
+GMIME_TYPE_RECEIVED
+GMimeReceivedClass
+</SECTION>
+
+<SECTION>
 <FILE>gmime-format-options</FILE>
 GMimeParamEncodingMethod
 GMimeNewLineFormat

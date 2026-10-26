@@ -185,6 +185,8 @@ g_mime_init (void)
 	g_mime_header_get_type ();
 	g_mime_param_list_get_type ();
 	g_mime_header_list_get_type ();
+	g_mime_received_clause_get_type ();
+	g_mime_received_get_type ();
 	g_mime_content_type_get_type ();
 	g_mime_content_disposition_get_type ();
 	

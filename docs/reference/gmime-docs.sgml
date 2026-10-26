@@ -6,6 +6,8 @@
 <!ENTITY GMimeAutocrypt SYSTEM "xml/gmime-autocrypt.xml">
 <!ENTITY GMimeParam SYSTEM "xml/gmime-param.xml">
 <!ENTITY GMimeHeader SYSTEM "xml/gmime-header.xml">
+<!ENTITY GMimeReceivedClause SYSTEM "xml/gmime-received-clause.xml">
+<!ENTITY GMimeReceived SYSTEM "xml/gmime-received.xml">
 <!ENTITY GMimeHeaderListCollection SYSTEM "xml/gmime-header-list-collection.xml">
 <!ENTITY GMimeContentType SYSTEM "xml/gmime-content-type.xml">
 <!ENTITY GMimeDisposition SYSTEM "xml/gmime-disposition.xml">
@@ -254,6 +256,8 @@ string utilities, file utilities, a main loop abstraction, and so on.
     <chapter id="Headers">
       <title>Message and MIME Headers</title>
       &GMimeHeader;
+      &GMimeReceivedClause;
+      &GMimeReceived;
       &GMimeHeaderListCollection;
       &GMimeContentType;
       &GMimeDisposition;

@@ -1934,6 +1934,102 @@ The complete core suite passes 34 of 35 programs; test-core retains only
 its two existing text-format failures. Native Windows execution remains
 unvalidated.
 
+### Received clause model
+
+`GMimeReceivedClause` ports MimeKit's public ReceivedClause constructors,
+Id, Keyword, Value and ordered Comments collection. The corresponding
+`GMimeReceivedClauseId` enum preserves its eight numeric values; NONE is
+reserved for leading comments in the future Received parser and cannot
+be produced by the public constructors. Known keywords ignore ASCII case,
+but retain their original spelling. Extension keywords accept ASCII letters
+and hyphens, without an initial hyphen.
+
+`g_mime_received_clause_new()` and
+`g_mime_received_clause_new_with_comment()` create validated clauses.
+`get_id()` and `get_keyword()` are immutable; `get_value()` and `set_value()`
+provide verbatim, nonempty UTF-8 values without trimming or normalization.
+Invalid keywords or values report GMIME_ERROR_PARSE_ERROR, and failed
+assignments preserve the previous value and comments. From/By use MimeKit's
+permissive domain rules and IP literals, including legacy one-to-four-part
+IPv4, octal/hexadecimal forms and IPv6 scope syntax. ID uses complete,
+lenient message-id parsing rather than stricter message-id property
+assignment. For validates one mailbox using the existing address parser.
+Other clauses reject controls below 32, DEL, parentheses and semicolons.
+The source inline comments explaining verbatim ID validation and mailbox
+parsing are retained.
+
+Comment APIs expose count, indexed access, exact case-sensitive lookup,
+append, insert, replacement, first-match removal, indexed removal and
+clearing. Strings are copied on assignment; getters borrow them. Setters
+support aliases to existing strings. Comments may be empty and may contain
+parentheses, backslashes or line breaks, matching the source collection.
+Invalid comment UTF-8, NULL arguments and invalid indexes are programming
+errors. The parser is described below; serialization remains unported
+and must escape and fold comments.
+
+Persistent standalone regressions cover ownership, aliases, validation,
+atomic failure, comment ordering and programming-error guards. Normal and
+ASan/UBSan/leak runs each compare 51,174 constructor, assignment and comment
+mutation cases against actual MimeKit sources with zero differences.
+GIR, typelib, VAPI, GTK-doc and live GI/Python checks pass for the enum and
+all 15 APIs. Focused sanitizer checks are leak-clean. The complete core
+suite passes 35 of 36 programs; test-core retains only its two existing
+text-format failures. Native Windows execution remains unvalidated.
+
+### Received header parsing
+
+`GMimeReceived` ports MimeKit's Received parsing into a GObject with
+ordered clauses, indexed borrowed clause access and an optional borrowed
+GDateTime retaining its timezone offset. `g_mime_received_parse()` accepts
+bounded raw bytes or a NUL-terminated string, copies its parsed state and
+does not retain the input. NULL parser options use the repository defaults.
+Empty input, missing values and missing dates are accepted. Parsed clauses
+bypass the stricter public clause constructor validation, matching the
+source's internal parsing constructor.
+
+Leading comments form a NONE clause. Known keywords retain spelling and
+ignore ASCII case; duplicates fail, while extension clauses may repeat.
+Multi-token values collapse intervening whitespace to one space and stop
+at comments, semicolons or the next known keyword. Unknown words within a
+value are not automatically treated as extension keywords. Nested and
+escaped comments are parsed iteratively, preserving inner parentheses,
+removing quoting backslashes and CR/LF, and converting tabs to spaces.
+Only space, tab, CR and LF count as whitespace. Applicable MimeKit inline
+comments explaining these parsing and recovery stages are retained.
+
+Nonempty dates after the first semicolon use the existing standard and
+recovery date parser. Its tokenizer now takes an explicit byte length,
+including bounded comment scanning, so embedded NULs do not truncate dates.
+The public NUL-terminated date utility retains its existing contract.
+Original date spelling is cached privately with CR/LF removed and tabs
+changed to spaces for future serialization.
+
+Keyword, value, comment and cached-date decoding reuse the existing raw
+charset converter rather than RFC 2047 decoding. Decoded NULs become U+FFFD
+for native UTF-8 display strings. Duplicate known clauses, incomplete
+comments and invalid dates report GMIME_ERROR_PARSE_ERROR with input-relative
+byte offsets. Partial allocations are released on failure.
+
+Persistent standalone regressions cover recovery, ordering, retained
+ownership, deeply nested comments, obsolete dates, fallback charsets,
+nonterminated buffers, embedded NULs, exact error offsets and argument guards.
+Normal and ASan/UBSan/leak runs each compare 30,418 cases against actual
+MimeKit sources, including its Received fixtures and every byte prefix,
+all byte values in token/comment/date positions and randomized inputs.
+30,338 cases match exactly; the remaining 80 are Shift-JIS platform mapping
+differences independently reproduced by the existing native and managed
+charset converters. Clause structure, dates and error offsets match
+throughout, with no unexplained parser differences. A separate comparison
+of 14,609 existing date fixtures has zero differences.
+
+Focused sanitizer checks are leak-clean. GIR, typelib, VAPI, GTK-doc and
+live GI/Python checks pass for all four APIs, including bounded byte-array
+input, errors and retained clause/date ownership. The complete core suite
+passes 36 of 37 programs; test-core retains only its two existing text-format
+failures. Native Windows execution remains unvalidated. Public Received
+construction, convenience mutation, clause collection mutation and
+serialization remain unported.
+
 ### Positional header-list operations
 
 `g_mime_header_list_index_of()` and
