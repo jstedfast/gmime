@@ -281,6 +281,103 @@ _g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffe
 }
 
 
+/**
+ * g_mime_header_parse:
+ * @options: (nullable): parser options, or %NULL for the defaults
+ * @buffer: (array length=length) (element-type guint8) (nullable): input bytes
+ * @length: the number of bytes to parse
+ * @error: (nullable): return location for a #GError
+ *
+ * Parses a standalone header from the entire supplied byte span. The field
+ * consists of printable ASCII other than ':', followed by optional spaces
+ * or tabs and a colon. Like MimeKit's Header.TryParse(), this accepts an
+ * empty field name; it is not a complete RFC header validator.
+ *
+ * All bytes after the colon belong to the value, including embedded NULs,
+ * folded lines and any subsequent header-like lines. Existing LF or CRLF
+ * endings are preserved; if the input does not end in LF, the default
+ * newline sequence is appended to the raw value.
+ *
+ * The header owns copies of the input and parser options, has an unknown
+ * source offset (-1), and decodes its value lazily. Missing field separators
+ * return %NULL with %GMIME_ERROR_PARSE_ERROR and a relative byte offset.
+ * @buffer may be %NULL only when @length is zero.
+ *
+ * Returns: (nullable) (transfer full): the parsed header, or %NULL on error.
+ **/
+GMimeHeader *
+g_mime_header_parse (GMimeParserOptions *options, const guint8 *buffer, gsize length, GError **error)
+{
+	gsize name_length = 0, field_length, value_offset, value_length, newline_length;
+	const char *newline;
+	GMimeHeader *header;
+	guint8 *value;
+
+	g_return_val_if_fail (buffer != NULL || length == 0, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	/* find the end of the field name */
+	while (name_length < length && buffer[name_length] >= 33 &&
+	       buffer[name_length] < 127 && buffer[name_length] != ':')
+		name_length++;
+
+	field_length = name_length;
+	while (field_length < length && (buffer[field_length] == ' ' || buffer[field_length] == '\t'))
+		field_length++;
+
+	if (field_length == length || buffer[field_length] != ':') {
+		g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+			     "Expected header field separator at byte offset %" G_GSIZE_FORMAT, field_length);
+		return NULL;
+	}
+
+	/* skip over the ':' */
+	value_offset = field_length + 1;
+	value_length = length - value_offset;
+	newline = g_mime_format_options_get_newline (NULL);
+	newline_length = buffer[length - 1] != '\n' ? strlen (newline) : 0;
+	if (value_length > G_MAXSIZE - newline_length) {
+		g_set_error_literal (error, GMIME_ERROR, EOVERFLOW, "Header value is too large");
+		return NULL;
+	}
+
+	header = _g_mime_header_new_from_reader (options, buffer, length, name_length, field_length, FALSE, -1);
+
+	/* When called from the public parsing APIs, force the value to be
+	 * canonicalized by ending with a new-line sequence.
+	 * See https://github.com/jstedfast/MimeKit/issues/695 for more information. */
+	if (newline_length) {
+		value = g_malloc (value_length + newline_length);
+		memcpy (value, buffer + value_offset, value_length);
+		memcpy (value + value_length, newline, newline_length);
+		g_bytes_unref (header->raw_value);
+		header->raw_value = g_bytes_new_take (value, value_length + newline_length);
+	}
+
+	return header;
+}
+
+
+/**
+ * g_mime_header_parse_text:
+ * @options: (nullable): parser options, or %NULL for the defaults
+ * @text: a NUL-terminated UTF-8 header
+ * @error: (nullable): return location for a #GError
+ *
+ * Parses a standalone header using g_mime_header_parse(). Use the byte-span
+ * API for input containing embedded NULs or not terminated by a NUL.
+ *
+ * Returns: (nullable) (transfer full): the parsed header, or %NULL on error.
+ **/
+GMimeHeader *
+g_mime_header_parse_text (GMimeParserOptions *options, const char *text, GError **error)
+{
+	g_return_val_if_fail (text != NULL, NULL);
+
+	return g_mime_header_parse (options, (const guint8 *) text, strlen (text), error);
+}
+
+
 static char *
 header_normalize_value (const char *value)
 {

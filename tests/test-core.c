@@ -4825,6 +4825,151 @@ test_header_construction (void)
 }
 
 static void
+test_header_parsing (void)
+{
+	static const struct {
+		const char *input, *name, *raw_name, *raw_value, *decoded;
+		gsize length, value_length;
+	} cases[] = {
+		{ "Content-Type: text/plain", "Content-Type", "Content-Type", " text/plain\n", "text/plain", 0, 0 },
+		{ "Subject:", "Subject", "Subject", "\n", "", 0, 0 },
+		{ ": value", "", "", " value\n", "value", 0, 0 },
+		{ " \t: value", "", " \t", " value\n", "value", 0, 0 },
+		{ "sUbJeCt \t: one\r\n\ttwo\r\n", "sUbJeCt", "sUbJeCt \t", " one\r\n\ttwo\r\n", "one\ttwo", 0, 0 },
+		{ "Subject: value\r", "Subject", "Subject", " value\r\n", "value", 0, 0 },
+		{ "X!: value\nOther: data\n", "X!", "X!", " value\nOther: data\n", "valueOther: data", 0, 0 },
+		{ "Subject: =?utf-8?Q?caf=C3=A9?=", "Subject", "Subject", " =?utf-8?Q?caf=C3=A9?=\n", "caf\303\251", 0, 0 },
+		{ "Subject: caf\303\251", "Subject", "Subject", " caf\303\251\n", "caf\303\251", 0, 0 },
+		{ "Subject: before\0after", "Subject", "Subject", " before\0after\n", "before\357\277\275after",
+		  sizeof ("Subject: before\0after") - 1, sizeof (" before\0after\n") - 1 },
+		{ "Subject:\0\0\n", "Subject", "Subject", "\0\0\n", "\357\277\275\357\277\275",
+		  sizeof ("Subject:\0\0\n") - 1, sizeof ("\0\0\n") - 1 }
+	};
+	static const char *invalid[] = {
+		"", "Subject", "Subject \t", "Subject value: value", "\rSubject: v", "Subject\r: v"
+	};
+	static const char cyrillic[] = "Subject: \317\360\350\342\345\362";
+	GMimeParserOptions *options;
+	GMimeHeader *header, *clone;
+	GMimeStream *stream;
+	GByteArray *output;
+	GBytes *name, *raw;
+	GError *error = NULL;
+	guint8 *span;
+	gsize length, value_length;
+	guint i, c, prefix;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		length = cases[i].length ? cases[i].length : strlen (cases[i].input);
+		value_length = cases[i].value_length ? cases[i].value_length : strlen (cases[i].raw_value);
+		span = g_memdup2 (cases[i].input, length);
+		header = g_mime_header_parse (NULL, span, length, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (header);
+		memset (span, 0xff, length);
+		g_free (span);
+		check (!strcmp (g_mime_header_get_name (header), cases[i].name),
+		       "standalone parsing preserves field case and excludes trailing blanks from its name");
+		check (header->owns_options && header->offset == -1 && !header->invalid &&
+		       !header->reformat && !header->explicit_raw_value && header->value == NULL,
+		       "standalone parsing owns its options and leaves decoded values lazy");
+		name = g_mime_header_get_raw_name (header);
+		raw = g_mime_header_get_raw_value (header);
+		g_assert_cmpmem (g_bytes_get_data (name, NULL), g_bytes_get_size (name),
+				 cases[i].raw_name, strlen (cases[i].raw_name));
+		g_assert_cmpmem (g_bytes_get_data (raw, NULL), g_bytes_get_size (raw),
+				 cases[i].raw_value, value_length);
+		stream = g_mime_stream_mem_new ();
+		check (g_mime_header_write_to_stream (header, NULL, stream) ==
+		       (ssize_t) (strlen (cases[i].raw_name) + 1 + value_length),
+		       "standalone parsed headers serialize their complete raw byte spans");
+		output = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+		g_assert_cmpmem (output->data, strlen (cases[i].raw_name), cases[i].raw_name, strlen (cases[i].raw_name));
+		g_assert_cmpint (output->data[strlen (cases[i].raw_name)], ==, ':');
+		g_assert_cmpmem (output->data + strlen (cases[i].raw_name) + 1, value_length, cases[i].raw_value, value_length);
+		g_object_unref (stream);
+		clone = g_mime_header_clone (header);
+		g_object_unref (header);
+		check (!strcmp (g_mime_header_get_value (clone), cases[i].decoded),
+		       "standalone parsed clones decode encoded words and safely replace decoded NULs");
+		check (g_bytes_equal (clone->raw_name, name) && g_bytes_equal (clone->raw_value, raw),
+		       "decoding does not change independently owned raw bytes");
+		g_object_unref (clone);
+		g_bytes_unref (name);
+		g_bytes_unref (raw);
+		if (!cases[i].length) {
+			header = g_mime_header_parse_text (NULL, cases[i].input, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (header);
+			check (!strcmp (g_mime_header_get_value (header), cases[i].decoded),
+			       "standalone UTF-8 text parsing uses the bounded header parser");
+			g_object_unref (header);
+		}
+	}
+
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		check (g_mime_header_parse_text (NULL, invalid[i], &error) == NULL &&
+		       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR),
+		       "standalone parsing reports a missing field separator as a syntax error");
+		g_clear_error (&error);
+		check (g_mime_header_parse_text (NULL, invalid[i], NULL) == NULL,
+		       "standalone parsing can report failure without an error destination");
+	}
+	check (g_mime_header_parse (NULL, NULL, 0, &error) == NULL &&
+	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR),
+	       "empty byte spans report a parse error without reading a NULL buffer");
+	g_clear_error (&error);
+
+	for (prefix = 0; prefix < 2; prefix++) {
+		for (c = 0; c < 256; c++) {
+			guint8 input[] = { 'X', c, ':', 'v' };
+			gboolean valid = (c >= 32 && c < 127) || c == '\t';
+
+			length = sizeof (input) - (prefix ? 0 : 1);
+			span = g_memdup2 (input + (prefix ? 0 : 1), length);
+			header = g_mime_header_parse (NULL, span, length, &error);
+			check ((header != NULL) == valid,
+			       "field text and trailing blanks use MimeKit's exact ASCII byte classes");
+			if (valid) {
+				g_assert_no_error (error);
+				stream = g_mime_stream_mem_new ();
+				g_assert_cmpint (g_mime_header_write_to_stream (header, NULL, stream), ==, length + 1);
+				output = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+				g_assert_cmpmem (output->data, length, span, length);
+				g_assert_cmpint (output->data[length], ==, '\n');
+				g_object_unref (stream);
+				g_object_unref (header);
+			} else {
+				g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+				g_clear_error (&error);
+			}
+			g_free (span);
+		}
+	}
+
+	options = g_mime_parser_options_new ();
+	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "windows-1251", &error));
+	header = g_mime_header_parse (options, (const guint8 *) cyrillic, sizeof (cyrillic) - 1, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (header);
+	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "utf-8", &error));
+	g_mime_parser_options_free (options);
+	clone = g_mime_header_clone (header);
+	g_object_unref (header);
+	check (!strcmp (g_mime_parser_options_get_charset_encoding (clone->options), "windows-1251") &&
+	       !strcmp (g_mime_header_get_value (clone), "\320\237\321\200\320\270\320\262\320\265\321\202"),
+	       "standalone parsing snapshots options for lazy decoding after caller and source lifetimes");
+	g_object_unref (clone);
+
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*buffer != NULL || length == 0*");
+	check (g_mime_header_parse (NULL, NULL, 1, NULL) == NULL, "nonempty byte spans require a buffer");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*text != NULL*");
+	check (g_mime_header_parse_text (NULL, NULL, NULL) == NULL, "text parsing requires a string");
+	g_test_assert_expected_messages ();
+}
+
+static void
 count_checked_header_changes (gpointer sender, gpointer args, gpointer user_data)
 {
 	(*(guint *) user_data)++;
@@ -11519,6 +11664,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("standalone header construction");
 	test_header_construction ();
+	testsuite_end ();
+
+	testsuite_start ("standalone header parsing");
+	test_header_parsing ();
 	testsuite_end ();
 
 	testsuite_start ("checked header assignment");

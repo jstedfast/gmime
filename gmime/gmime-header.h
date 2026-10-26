@@ -114,6 +114,8 @@ GType g_mime_header_get_type (void);
 
 GMimeHeader *g_mime_header_new (const char *name, const char *value, const char *charset);
 GMimeHeader *g_mime_header_new_full (const char *name, const char *value, const char *charset, GError **error);
+GMimeHeader *g_mime_header_parse (GMimeParserOptions *options, const guint8 *buffer, gsize length, GError **error);
+GMimeHeader *g_mime_header_parse_text (GMimeParserOptions *options, const char *text, GError **error);
 GMimeHeader *g_mime_header_clone (GMimeHeader *header);
 
 const char *g_mime_header_get_name (GMimeHeader *header);

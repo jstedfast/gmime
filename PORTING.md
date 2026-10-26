@@ -1741,6 +1741,41 @@ reports 435 bytes retained by its existing depth-test type registrations;
 with leak detection disabled it has only the two established text-format
 assertions and no ASan/UBSan diagnostics.
 
+### Standalone header parsing
+
+`g_mime_header_parse()` ports MimeKit's public `Header.TryParse()` byte-array
+overloads as a bounded byte-span API. `g_mime_header_parse_text()` supplies
+the UTF-8 string convenience overload. Missing field separators return
+GMIME_ERROR_PARSE_ERROR with a relative byte offset; empty input is a parse
+failure. Printable ASCII field text, optional trailing spaces/tabs, and
+even empty field names follow the reference parser rather than the stricter
+standalone header constructor's validation.
+
+Raw field bytes retain case and trailing blanks, while the decoded name
+excludes those blanks. Every byte after the colon belongs to the value,
+including NULs and subsequent header-like lines. An existing final LF or
+CRLF is preserved; otherwise, the default formatting newline is appended.
+Relevant MimeKit inline comments, including the canonicalization rationale,
+are preserved. Tolerant stream-reader parsing is unchanged.
+
+Parsed headers own their raw bytes and a parser-options snapshot, start with
+an unknown offset and no decoded-value cache, and use the existing bounded
+decoders and U+FFFD policy when accessed. Persistent regressions cover
+nonterminated input, all 256 field-byte classifications at two positions,
+binary values, raw serialization, cloning, option lifetimes, UTF-8 text,
+empty fields and error paths.
+
+Normal and ASan/UBSan/leak validation each compare 9,704 exact-span
+parsing/raw-storage/serialization cases against actual MimeKit source with
+zero differences. The differential run aligns the native default newline
+with the Windows reference's CRLF default; persistent native tests also
+verify the normal LF default. Cases include arbitrary binary values,
+every-prefix truncations and both LF/CRLF list serialization.
+GIR, typelib, VAPI, GTK-doc and live GI/Python checks pass. Existing header
+and parser-model tests pass; test-core retains only its two established
+text-format failures. Focused parsing sanitizer checks are leak-clean.
+Native Windows execution remains unvalidated.
+
 ### Positional header-list operations
 
 `g_mime_header_list_index_of()` and
