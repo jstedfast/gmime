@@ -52,7 +52,7 @@ standalone_sources = {
   'encoding-validators': ['../gmime/gmime-encoding-validator.c', '../gmime/gmime-codec-simd.c'],
 }
 test_programs += {'test-charsets': executable(
-  'test-charsets', ['test-charsets.c', '../gmime/gmime-charset.c', '../gmime/gmime-iconv.c'],
+  'test-charsets', ['test-charsets.c', '../gmime/gmime-charset.c', '../gmime/gmime-iconv.c'], iconv_header,
   include_directories: gmime_inc,
   # Compile the private charset helpers locally, but resolve their stream API in GMime.
   dependencies: gmime_dep,
