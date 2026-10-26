@@ -2528,6 +2528,27 @@ g_mime_header_list_contains (GMimeHeaderList *headers, const char *name)
 
 
 /**
+ * g_mime_header_list_contains_id:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ *
+ * Checks whether a header with the canonical name for @id exists,
+ * ignoring ASCII case. Unknown and out-of-range IDs are programming errors.
+ * This does not decode values or notify owners.
+ *
+ * Returns: %TRUE if the specified header exists, or %FALSE otherwise.
+ **/
+gboolean
+g_mime_header_list_contains_id (GMimeHeaderList *headers, GMimeHeaderId id)
+{
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), FALSE);
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, FALSE);
+
+	return g_mime_header_list_contains (headers, g_mime_header_id_to_name (id));
+}
+
+
+/**
  * g_mime_header_list_contains_header:
  * @headers: a #GMimeHeaderList
  * @header: a #GMimeHeader
@@ -2565,6 +2586,36 @@ g_mime_header_list_index_of (GMimeHeaderList *headers, const char *name)
 	for (i = 0; i < headers->array->len; i++) {
 		header = headers->array->pdata[i];
 		if (!g_ascii_strcasecmp (header->name, name))
+			return i;
+	}
+
+	return -1;
+}
+
+
+/**
+ * g_mime_header_list_index_of_id:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ *
+ * Finds the first header with the specified cached identifier without
+ * decoding values or comparing field-name strings. Unknown and out-of-range
+ * IDs are programming errors.
+ *
+ * Returns: the 0-based index of the first matching header, or -1 if absent.
+ **/
+int
+g_mime_header_list_index_of_id (GMimeHeaderList *headers, GMimeHeaderId id)
+{
+	GMimeHeader *header;
+	guint i;
+
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), -1);
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, -1);
+
+	for (i = 0; i < headers->array->len; i++) {
+		header = headers->array->pdata[i];
+		if (header->id == id)
 			return i;
 	}
 
@@ -2619,6 +2670,36 @@ g_mime_header_list_last_index_of (GMimeHeaderList *headers, const char *name)
 	for (i = headers->array->len; i > 0; i--) {
 		header = headers->array->pdata[i - 1];
 		if (!g_ascii_strcasecmp (header->name, name))
+			return i - 1;
+	}
+
+	return -1;
+}
+
+
+/**
+ * g_mime_header_list_last_index_of_id:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ *
+ * Finds the last header with the specified cached identifier without
+ * decoding values or comparing field-name strings. Unknown and out-of-range
+ * IDs are programming errors.
+ *
+ * Returns: the 0-based index of the last matching header, or -1 if absent.
+ **/
+int
+g_mime_header_list_last_index_of_id (GMimeHeaderList *headers, GMimeHeaderId id)
+{
+	GMimeHeader *header;
+	guint i;
+
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), -1);
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, -1);
+
+	for (i = headers->array->len; i > 0; i--) {
+		header = headers->array->pdata[i - 1];
+		if (header->id == id)
 			return i - 1;
 	}
 
@@ -3010,6 +3091,30 @@ g_mime_header_list_get_value (GMimeHeaderList *headers, const char *name)
 
 
 /**
+ * g_mime_header_list_get_value_by_id:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ *
+ * Gets the decoded value of the first header with the canonical name for
+ * @id, ignoring ASCII case. Like g_mime_header_list_get_value(), this does
+ * not skip unset placeholders, change raw bytes or notify owners.
+ * Unknown and out-of-range IDs are programming errors.
+ *
+ * Returns: (transfer none) (nullable): the first header's decoded value,
+ * or %NULL if absent or unset. The value is owned by the header and is
+ * invalidated when that header is changed or released.
+ **/
+const char *
+g_mime_header_list_get_value_by_id (GMimeHeaderList *headers, GMimeHeaderId id)
+{
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), NULL);
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, NULL);
+
+	return g_mime_header_list_get_value (headers, g_mime_header_id_to_name (id));
+}
+
+
+/**
  * g_mime_header_list_set_value_full:
  * @headers: a #GMimeHeaderList
  * @name: the case-insensitive header field name
@@ -3397,6 +3502,28 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 
 
 /**
+ * g_mime_header_list_remove_id:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ *
+ * Removes the first header with the canonical name for @id, ignoring
+ * ASCII case. Uses the normal removal and owner-notification paths and
+ * preserves the other headers' order and raw bytes. Does nothing if
+ * absent. Unknown and out-of-range IDs are programming errors.
+ *
+ * Returns: %TRUE if the first occurrence was removed, or %FALSE if absent.
+ **/
+gboolean
+g_mime_header_list_remove_id (GMimeHeaderList *headers, GMimeHeaderId id)
+{
+	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), FALSE);
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, FALSE);
+
+	return g_mime_header_list_remove (headers, g_mime_header_id_to_name (id));
+}
+
+
+/**
  * g_mime_header_list_remove_header:
  * @headers: a #GMimeHeaderList
  * @header: a #GMimeHeader
@@ -3451,6 +3578,26 @@ g_mime_header_list_remove_all (GMimeHeaderList *headers, const char *name)
 			g_mime_header_list_remove_at (headers, i - 1);
 	}
 	g_free (field);
+}
+
+
+/**
+ * g_mime_header_list_remove_all_id:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ *
+ * Removes every header with the canonical name for @id, ignoring ASCII
+ * case. Each occurrence emits the normal removal notification; surviving
+ * headers retain their order and raw bytes. Does nothing if absent.
+ * Unknown and out-of-range IDs are programming errors.
+ **/
+void
+g_mime_header_list_remove_all_id (GMimeHeaderList *headers, GMimeHeaderId id)
+{
+	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
+	g_return_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS);
+
+	g_mime_header_list_remove_all (headers, g_mime_header_id_to_name (id));
 }
 
 

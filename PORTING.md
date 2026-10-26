@@ -1828,8 +1828,9 @@ construction or parsing. Cloning preserves it; reading it does not decode
 the value, change the original field spelling or alter raw GBytes. Existing
 field-specific formatting, parser options, serialization and value setters
 remain unchanged. The existing name-based APIs can use canonical names
-from the identifier helper; HeaderId-specific constructor/list overloads
-are not added in this increment.
+from the identifier helper. HeaderId-specific constructors and assignment
+helpers remain separate; identifier-based list lookup and removal are
+described below.
 
 Persistent regressions cover every common field, case variants, stream
 and standalone parsing, cloning, binary values, raw trailing blanks,
@@ -1842,6 +1843,45 @@ GIR, typelib, VAPI, GTK-doc and live GI/Python checks pass for every
 identifier. The complete core suite passes 34 of 35 programs; test-core
 retains only its two existing text-format failures. Focused sanitizer
 checks are leak-clean. Native Windows execution remains unvalidated.
+
+### Header-list identifier lookup and removal
+
+The HeaderId overloads of MimeKit's HeaderList.Contains(), IndexOf(),
+LastIndexOf(), getter, Remove() and RemoveAll() are available as
+`g_mime_header_list_contains_id()`, `g_mime_header_list_index_of_id()`,
+`g_mime_header_list_last_index_of_id()`,
+`g_mime_header_list_get_value_by_id()`, `g_mime_header_list_remove_id()`
+and `g_mime_header_list_remove_all_id()`. These source implementations
+contain no inline comments; the existing native mutation-path comments
+and ownership rules are retained.
+
+Index searches compare immutable cached IDs without decoding values.
+Contains, first-value access and removal reuse the canonical-name APIs.
+Value access does not skip an unset first occurrence, change raw GBytes
+or notify owners. Removal retains first-name lookup, surviving header
+order, shared-instance subscriptions, separator state and existing owner
+notifications. Bulk removal emits one notification per removed occurrence
+in reverse order; absent removal is a no-op.
+
+Unknown and out-of-range IDs are native programming errors, reported
+through GLib guards without changing the list. MimeKit explicitly rejects
+Unknown but does not consistently reject other invalid enum casts; the
+native guards also reject those casts rather than accidentally matching
+a literal "Unknown" field through the name-conversion fallback.
+
+Persistent regressions cover all 131 known IDs, mixed-case duplicates,
+binary values, lazy decoding, absent fields, unset placeholders, invalid
+IDs, detached/shared/repeated instances and owning-message updates.
+Normal and ASan/UBSan/leak runs each compare 36,453 cases against actual
+MimeKit sources with zero unexpected differences, including raw bytes,
+lookup results, separator state and removal notification order. Event
+actions are compared by meaning, not their differing enum numbers; decoded
+Unicode NULs are normalized to U+FFFD for the previously established native
+display-string contract. Raw bytes are compared without normalization.
+Focused sanitizer regressions are leak-clean. GIR, typelib, VAPI, GTK-doc
+and live GI/Python checks pass for all six APIs and all known IDs. The
+complete core suite passes 34 of 35 programs; test-core retains only its
+two existing text-format failures. Native Windows execution is unvalidated.
 
 ### Positional header-list operations
 

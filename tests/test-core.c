@@ -7139,6 +7139,178 @@ test_header_list_positions (void)
 }
 
 static void
+test_header_list_identifiers (void)
+{
+	static const GMimeHeaderId invalid_ids[] = {
+		GMIME_HEADER_UNKNOWN, -2, GMIME_HEADER_X_STATUS + 1, G_MININT, G_MAXINT
+	};
+	static const char binary[] = "sUbJeCt \t: a\0b\r\n";
+	GMimeHeaderList *headers, *other;
+	GMimeHeader *header, *second, *keep;
+	GMimeMessage *message;
+	GMimeHeaderId id;
+	GMimeStream *stream;
+	GBytes *raw_name, *raw_value;
+	GError *error = NULL;
+	char *name, *wire;
+	guint changes, other_changes, i;
+
+	for (id = GMIME_HEADER_ACCEPT_LANGUAGE; id <= GMIME_HEADER_X_STATUS; id++) {
+		headers = g_mime_header_list_new (NULL);
+		check (!g_mime_header_list_contains_id (headers, id) &&
+		       g_mime_header_list_index_of_id (headers, id) == -1 &&
+		       g_mime_header_list_last_index_of_id (headers, id) == -1 &&
+		       g_mime_header_list_get_value_by_id (headers, id) == NULL &&
+		       !g_mime_header_list_remove_id (headers, id), "empty lists have no matching header identifier");
+		g_mime_header_list_remove_all_id (headers, id);
+		g_mime_header_list_append (headers, "X-Id-Keep", "before", NULL);
+		wire = g_strdup_printf ("%s \t: first\r\n", g_mime_header_id_to_name (id));
+		header = g_mime_header_parse (NULL, (const guint8 *) wire, strlen (wire), &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (header);
+		g_free (wire);
+		g_mime_header_list_add (headers, header);
+		g_mime_header_list_append (headers, "X-Id-Keep", "after", NULL);
+		keep = g_mime_header_list_get_header_at (headers, 2);
+		name = g_ascii_strup (g_mime_header_id_to_name (id), -1);
+		g_mime_header_list_append (headers, name, "second", NULL);
+		g_free (name);
+		second = g_mime_header_list_get_header_at (headers, 3);
+		raw_name = header->raw_name;
+		raw_value = header->raw_value;
+		changes = 0;
+		g_mime_event_add (headers->changed, checked_header_list_changed, &changes);
+		headers->has_body_separator = FALSE;
+		check (g_mime_header_list_contains_id (headers, id) &&
+		       g_mime_header_list_index_of_id (headers, id) == 1 &&
+		       g_mime_header_list_last_index_of_id (headers, id) == 3 &&
+		       header->value == NULL, "identifier lookup uses cached IDs without decoding values");
+		check (!strcmp (g_mime_header_list_get_value_by_id (headers, id), "first") &&
+		       header->raw_name == raw_name && header->raw_value == raw_value &&
+		       changes == 0 && !headers->has_body_separator,
+		       "identifier value lookup decodes only the first value without changing raw bytes or notifying owners");
+		check (g_mime_header_list_remove_id (headers, id) && changes == 1 &&
+		       g_mime_header_list_index_of_id (headers, id) == 2 &&
+		       g_mime_header_list_last_index_of_id (headers, id) == 2 &&
+		       g_mime_header_list_get_header (headers, g_mime_header_id_to_name (id)) == second &&
+		       !strcmp (g_mime_header_list_get_value_by_id (headers, id), "second"),
+		       "identifier removal removes only the first occurrence and promotes the next case variant");
+		g_mime_header_set_value (header, NULL, "detached", NULL);
+		check (changes == 1, "removed headers stop notifying the identifier-removal list");
+		g_mime_header_list_remove_all_id (headers, id);
+		check (changes == 2 && g_mime_header_list_get_count (headers) == 2 &&
+		       !g_mime_header_list_contains_id (headers, id) &&
+		       g_mime_header_list_get_header_at (headers, 1) == keep,
+		       "identifier bulk removal notifies for each occurrence and preserves unrelated header order");
+		headers->has_body_separator = FALSE;
+		check (!g_mime_header_list_remove_id (headers, id), "absent identifier removal returns false");
+		g_mime_header_list_remove_all_id (headers, id);
+		check (changes == 2 && !headers->has_body_separator, "absent identifier removal leaves separator state unchanged");
+		g_object_unref (header);
+		g_object_unref (headers);
+	}
+
+	stream = g_mime_stream_mem_new_with_buffer (binary, sizeof (binary) - 1);
+	headers = g_mime_header_list_load (NULL, stream, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_object_unref (stream);
+	header = g_mime_header_list_get_header_at (headers, 0);
+	raw_name = header->raw_name;
+	raw_value = header->raw_value;
+	check (g_mime_header_list_contains_id (headers, GMIME_HEADER_SUBJECT) &&
+	       g_mime_header_list_index_of_id (headers, GMIME_HEADER_SUBJECT) == 0 &&
+	       g_mime_header_list_last_index_of_id (headers, GMIME_HEADER_SUBJECT) == 0 && header->value == NULL,
+	       "identifier lookup preserves a binary header's lazy decoded-value cache");
+	check (!strcmp (g_mime_header_list_get_value_by_id (headers, GMIME_HEADER_SUBJECT), "a\357\277\275b") &&
+	       header->raw_name == raw_name && header->raw_value == raw_value &&
+	       g_bytes_get_size (raw_value) == 6 &&
+	       !memcmp (g_bytes_get_data (raw_value, NULL), " a\0b\r\n", 6),
+	       "identifier value lookup replaces decoded NULs without changing the binary raw value");
+	g_mime_header_list_clear (headers);
+	g_mime_header_list_append (headers, "Subject", NULL, NULL);
+	g_mime_header_list_append (headers, "SUBJECT", "second", NULL);
+	check (g_mime_header_list_contains_id (headers, GMIME_HEADER_SUBJECT) &&
+	       g_mime_header_list_get_value_by_id (headers, GMIME_HEADER_SUBJECT) == NULL,
+	       "identifier value lookup does not skip the first unset placeholder");
+	g_mime_header_list_clear (headers);
+	g_mime_header_list_append (headers, "Unknown", "literal unknown field", NULL);
+	changes = 0;
+	g_mime_event_add (headers->changed, checked_header_list_changed, &changes);
+	headers->has_body_separator = FALSE;
+	for (i = 0; i < G_N_ELEMENTS (invalid_ids); i++) {
+		id = invalid_ids[i];
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		check (!g_mime_header_list_contains_id (headers, id), "invalid contains identifiers are rejected");
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		check (g_mime_header_list_index_of_id (headers, id) == -1, "invalid first-index identifiers are rejected");
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		check (g_mime_header_list_last_index_of_id (headers, id) == -1, "invalid last-index identifiers are rejected");
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		check (g_mime_header_list_get_value_by_id (headers, id) == NULL, "invalid value identifiers are rejected");
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		check (!g_mime_header_list_remove_id (headers, id), "invalid removal identifiers are rejected");
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		g_mime_header_list_remove_all_id (headers, id);
+		g_test_assert_expected_messages ();
+	}
+	check (g_mime_header_list_get_count (headers) == 1 && changes == 0 && !headers->has_body_separator &&
+	       !strcmp (g_mime_header_list_get_value (headers, "Unknown"), "literal unknown field"),
+	       "invalid identifiers never match extension fields or mutate the list");
+	g_object_unref (headers);
+
+	headers = g_mime_header_list_new (NULL);
+	other = g_mime_header_list_new (NULL);
+	header = g_mime_header_new ("Subject", "shared", NULL);
+	g_mime_header_list_add (headers, header);
+	g_mime_header_list_append (headers, "sUbJeCt", "middle", NULL);
+	second = g_mime_header_list_get_header_at (headers, 1);
+	g_mime_header_list_add (headers, header);
+	g_mime_header_list_add (other, header);
+	changes = other_changes = 0;
+	g_mime_event_add (headers->changed, checked_header_list_changed, &changes);
+	g_mime_event_add (other->changed, checked_header_list_changed, &other_changes);
+	check (g_mime_header_list_remove_id (headers, GMIME_HEADER_SUBJECT) &&
+	       g_mime_header_list_index_of_id (headers, GMIME_HEADER_SUBJECT) == 0 &&
+	       g_mime_header_list_last_index_of_id (headers, GMIME_HEADER_SUBJECT) == 1 &&
+	       g_mime_header_list_get_header (headers, "Subject") == second,
+	       "identifier removal preserves first-name lookup when the same header instance occurs again");
+	g_mime_header_set_value (header, NULL, "changed", NULL);
+	check (changes == 2 && other_changes == 1, "surviving shared occurrences retain their change subscriptions");
+	g_mime_header_list_remove_all_id (headers, GMIME_HEADER_SUBJECT);
+	check (changes == 4 && g_mime_header_list_get_count (headers) == 0, "bulk identifier removal notifies for every remaining occurrence");
+	g_mime_header_set_value (header, NULL, "other only", NULL);
+	check (changes == 4 && other_changes == 2 &&
+	       !strcmp (g_mime_header_list_get_value_by_id (other, GMIME_HEADER_SUBJECT), "other only"),
+	       "bulk identifier removal detaches only the target list from shared headers");
+	g_object_unref (header);
+	g_object_unref (headers);
+	g_object_unref (other);
+
+	message = g_mime_message_new (FALSE);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	g_mime_header_list_append (headers, "Subject", "first", NULL);
+	g_mime_header_list_append (headers, "SUBJECT", "second", NULL);
+	g_mime_header_list_append (headers, "To", "one@example.com", NULL);
+	g_mime_header_list_append (headers, "TO", "two@example.com", NULL);
+	check (g_mime_header_list_remove_id (headers, GMIME_HEADER_SUBJECT) &&
+	       g_mime_message_get_subject (message) == NULL &&
+	       !g_strcmp0 (g_mime_header_list_get_value_by_id (headers, GMIME_HEADER_SUBJECT), "second"),
+	       "identifier removal preserves the existing owner subject-invalidation behavior");
+	g_mime_header_list_remove_all_id (headers, GMIME_HEADER_SUBJECT);
+	g_mime_header_list_remove_all_id (headers, GMIME_HEADER_TO);
+	check (g_mime_message_get_subject (message) == NULL &&
+	       g_mime_internet_address_list_length (g_mime_message_get_to (message)) == 0,
+	       "bulk identifier removal synchronizes owner subjects and address lists");
+	g_object_unref (message);
+}
+
+static void
 test_header_list_remove_all (void)
 {
 	GMimeHeaderList *headers = g_mime_header_list_new (NULL);
@@ -12023,6 +12195,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("bulk header removal");
 	test_header_list_remove_all ();
+	testsuite_end ();
+
+	testsuite_start ("header-list identifier operations");
+	test_header_list_identifiers ();
 	testsuite_end ();
 
 	testsuite_start ("existing header instances");
