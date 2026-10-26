@@ -7311,6 +7311,276 @@ test_header_list_identifiers (void)
 }
 
 static void
+test_header_id_construction (void)
+{
+	static const GMimeHeaderId invalid[] = {
+		GMIME_HEADER_UNKNOWN, -2, GMIME_HEADER_X_STATUS + 1, G_MININT, G_MAXINT
+	};
+	GMimeHeader *header, *named, *clone;
+	GMimeHeaderId id;
+	const char *name, *value;
+	GError *error = NULL;
+	guint checked, i;
+
+	for (id = GMIME_HEADER_ACCEPT_LANGUAGE; id <= GMIME_HEADER_X_STATUS; id++) {
+		name = g_mime_header_id_to_name (id);
+		value = id == GMIME_HEADER_CONTENT_TYPE ? "text/plain; charset=utf-8" :
+			id == GMIME_HEADER_CONTENT_DISPOSITION ? "attachment; filename=example.txt" : "first";
+		for (checked = 0; checked < 2; checked++) {
+			header = checked ? g_mime_header_new_with_id_full (id, value, NULL, &error) :
+				g_mime_header_new_with_id (id, value, NULL);
+			named = checked ? g_mime_header_new_full (name, value, NULL, &error) :
+				g_mime_header_new (name, value, NULL);
+			g_assert_no_error (error);
+			g_assert_nonnull (header);
+			g_assert_nonnull (named);
+			check (g_mime_header_get_id (header) == id && !strcmp (header->name, name) &&
+			       !strcmp (header->value, value) && g_bytes_equal (header->raw_name, named->raw_name) &&
+			       g_bytes_equal (header->raw_value, named->raw_value),
+			       "identifier constructors use canonical names and the existing field-specific formatting");
+			check (header->owns_options && header->options != named->options && header->offset == -1,
+			       "identifier constructors own independent default parser options and have no source offset");
+			clone = g_mime_header_clone (header);
+			g_object_unref (header);
+			check (g_mime_header_get_id (clone) == id && g_bytes_equal (clone->raw_value, named->raw_value),
+			       "identifier-constructed clones retain their identifier and raw bytes after the original is freed");
+			g_object_unref (clone);
+			g_object_unref (named);
+		}
+	}
+	header = g_mime_header_new_with_id_full (GMIME_HEADER_SUBJECT, "\302\240 caf\303\251\r\n \342\200\203",
+						"iso-8859-1", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (header);
+	check (!strcmp (header->value, "caf\303\251") && !strcmp (header->charset, "iso-8859-1") &&
+	       strstr (testsuite_header_raw_text (header), "iso-8859-1") != NULL,
+	       "identifier construction unfolds Unicode text and honors an explicit charset");
+	g_object_unref (header);
+	check (g_mime_header_new_with_id_full (GMIME_HEADER_CONTENT_TYPE, "invalid", NULL, &error) == NULL &&
+	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR), "checked identifier construction reports invalid structured values");
+	g_clear_error (&error);
+	check (g_mime_header_new_with_id_full (GMIME_HEADER_SUBJECT, "\377", NULL, &error) == NULL &&
+	       g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE),
+	       "checked identifier construction reports invalid UTF-8");
+	g_clear_error (&error);
+	check (g_mime_header_new_with_id_full (GMIME_HEADER_SUBJECT, "value", "x-no-such-charset", &error) == NULL &&
+	       error != NULL && error->domain == G_CONVERT_ERROR, "checked identifier construction reports unsupported charsets");
+	g_clear_error (&error);
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		check (g_mime_header_new_with_id (invalid[i], "value", NULL) == NULL, "identifier construction rejects unknown and out-of-range IDs");
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+		check (g_mime_header_new_with_id_full (invalid[i], "value", NULL, &error) == NULL && error == NULL,
+		       "checked identifier construction rejects invalid IDs as programming errors");
+		g_test_assert_expected_messages ();
+	}
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*value != NULL*");
+	check (g_mime_header_new_with_id (GMIME_HEADER_SUBJECT, NULL, NULL) == NULL, "identifier construction requires a value");
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*value != NULL*");
+	check (g_mime_header_new_with_id_full (GMIME_HEADER_SUBJECT, NULL, NULL, &error) == NULL,
+	       "checked identifier construction requires a value");
+	g_test_assert_expected_messages ();
+}
+
+static gboolean
+change_header_list_id_value (GMimeHeaderList *headers, guint operation, int index, GMimeHeaderId id,
+			    const char *value, const char *charset, GError **error)
+{
+	switch (operation) {
+	case 0:
+		return g_mime_header_list_append_id_full (headers, id, value, charset, error);
+	case 1:
+		return g_mime_header_list_insert_id_full (headers, index, id, value, charset, error);
+	case 2:
+		return g_mime_header_list_replace_value_by_id_full (headers, id, value, charset, error);
+	default:
+		return g_mime_header_list_set_value_by_id_full (headers, id, value, charset, error);
+	}
+}
+
+static void
+test_header_list_id_values (void)
+{
+	static const struct {
+		GMimeHeaderId id;
+		const char *value, *charset;
+	} invalid[] = {
+		{ GMIME_HEADER_CONTENT_TYPE, "invalid", NULL },
+		{ GMIME_HEADER_CONTENT_TYPE, "text/plain; name=\"unfinished", NULL },
+		{ GMIME_HEADER_CONTENT_DISPOSITION, "\"attachment\"", NULL },
+		{ GMIME_HEADER_CONTENT_DISPOSITION, "attachment; filename=\"unfinished", NULL },
+		{ GMIME_HEADER_SUBJECT, "\377", NULL },
+		{ GMIME_HEADER_SUBJECT, "value", "" },
+		{ GMIME_HEADER_SUBJECT, "value", "x-no-such-charset" }
+	};
+	static const GMimeHeaderId invalid_ids[] = {
+		GMIME_HEADER_UNKNOWN, -2, GMIME_HEADER_X_STATUS + 1, G_MININT, G_MAXINT
+	};
+	GMimeHeaderList *headers, *shared;
+	GMimeHeader *original[5], *header;
+	GMimeMessage *message, *other;
+	GMimeParserOptions *options;
+	GMimeHeaderId id;
+	GMimeStream *stream;
+	GBytes *raw[5], *bytes, *field;
+	GError *error = NULL;
+	const char *value, *seed;
+	char *lower, *upper, *wire;
+	guint operation, i, j, next, changes, shared_changes;
+	gint64 offset;
+
+	for (id = GMIME_HEADER_ACCEPT_LANGUAGE; id <= GMIME_HEADER_X_STATUS; id++) {
+		seed = id == GMIME_HEADER_CONTENT_TYPE ? "text/plain" :
+			id == GMIME_HEADER_CONTENT_DISPOSITION ? "attachment" : "first";
+		value = id == GMIME_HEADER_CONTENT_TYPE ? "text/html" :
+			id == GMIME_HEADER_CONTENT_DISPOSITION ? "inline" : "replacement";
+		lower = g_ascii_strdown (g_mime_header_id_to_name (id), -1);
+		upper = g_ascii_strup (g_mime_header_id_to_name (id), -1);
+		wire = g_strdup_printf ("X-Before: before\r\n%s \t: %s\r\nX-Keep: keep\r\n%s: %s\r\nX-After: after\r\n",
+					lower, seed, upper, seed);
+		for (operation = 0; operation < 4; operation++) {
+			stream = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+			headers = g_mime_header_list_load (NULL, stream, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_object_unref (stream);
+			bytes = g_bytes_new_static (" \0keep\r\n", 8);
+			check (g_mime_header_set_raw_value (g_mime_header_list_get_header_at (headers, 2), bytes, &error),
+			       "prepare a binary unrelated header for identifier mutations");
+			g_bytes_unref (bytes);
+			for (i = 0; i < 5; i++) {
+				original[i] = g_object_ref (g_mime_header_list_get_header_at (headers, i));
+				raw[i] = original[i]->raw_value;
+			}
+			field = original[1]->raw_name;
+			options = original[1]->options;
+			offset = original[1]->offset;
+			changes = 0;
+			g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+			check (change_header_list_id_value (headers, operation, 2, id, value, NULL, &error),
+			       "checked identifier list mutation succeeds for every known field");
+			g_assert_no_error (error);
+			next = operation == 0 ? 5 : operation == 1 ? 2 : 1;
+			header = g_mime_header_list_get_header_at (headers, next);
+			check (header->id == id && !strcmp (header->value, value) &&
+			       !strcmp (header->name, operation == 3 ? lower : g_mime_header_id_to_name (id)) &&
+			       changes == 1 && headers->has_body_separator == (operation != 3),
+			       "identifier mutations use canonical new names, preserve existing spelling on assignment and retain notification/separator semantics");
+			check (g_mime_header_list_get_count (headers) == (operation < 2 ? 6 : operation == 2 ? 4 : 5) &&
+			       (operation == 3 ? header == original[1] && header->offset == offset &&
+				header->raw_name == field && header->options == options :
+				header != original[1] && header->owns_options && header->offset == -1),
+			       "identifier assignment preserves identity and duplicates while replacement creates one new header");
+			for (i = j = 0; i < 5; i++) {
+				if (operation == 3 && i == 1)
+					continue;
+				check (original[i]->raw_value == raw[i], "identifier mutation preserves unrelated and detached raw bytes");
+				if (operation == 2 && (i == 1 || i == 3))
+					continue;
+				if (operation != 3 && j == next)
+					j++;
+				check (g_mime_header_list_get_header_at (headers, operation == 3 ? i : j++) == original[i],
+				       "identifier mutations preserve surviving header identity and relative order");
+			}
+			g_object_unref (headers);
+			for (i = 0; i < 5; i++)
+				g_object_unref (original[i]);
+			headers = g_mime_header_list_new (NULL);
+			check (change_header_list_id_value (headers, operation, 0, id, value, NULL, &error) &&
+			       g_mime_header_list_get_count (headers) == 1 &&
+			       g_mime_header_list_get_header_at (headers, 0)->id == id,
+			       "identifier mutations append canonical headers when absent, including assignment and replacement");
+			g_assert_no_error (error);
+			g_object_unref (headers);
+		}
+		g_free (wire);
+		g_free (lower);
+		g_free (upper);
+	}
+
+	for (operation = 0; operation < 4; operation++) {
+		for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+			headers = g_mime_header_list_new (NULL);
+			seed = invalid[i].id == GMIME_HEADER_CONTENT_TYPE ? "text/plain" :
+				invalid[i].id == GMIME_HEADER_CONTENT_DISPOSITION ? "attachment" : "original";
+			check (g_mime_header_list_append_id_full (headers, invalid[i].id, seed, NULL, &error), "prepare a valid original identifier header");
+			header = g_mime_header_list_get_header_at (headers, 0);
+			bytes = g_bytes_ref (header->raw_value);
+			headers->has_body_separator = FALSE;
+			changes = 0;
+			g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+			check (!change_header_list_id_value (headers, operation, 0, invalid[i].id,
+							    invalid[i].value, invalid[i].charset, &error) && error != NULL,
+			       "identifier list mutations propagate structured-value and conversion errors");
+			g_clear_error (&error);
+			check (!change_header_list_id_value (headers, operation, 0, invalid[i].id,
+							    invalid[i].value, invalid[i].charset, NULL),
+			       "identifier list mutations can fail without an error destination");
+			check (changes == 0 && !headers->has_body_separator && g_mime_header_list_get_count (headers) == 1 &&
+			       g_mime_header_list_get_header_at (headers, 0) == header && header->raw_value == bytes &&
+			       !strcmp (header->value, seed), "failed identifier mutations preserve identity, cached/raw state, separator state and events");
+			g_bytes_unref (bytes);
+			g_object_unref (headers);
+		}
+		headers = g_mime_header_list_new (NULL);
+		for (i = 0; i < G_N_ELEMENTS (invalid_ids); i++) {
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id >= GMIME_HEADER_ACCEPT_LANGUAGE*");
+			check (!change_header_list_id_value (headers, operation, 0, invalid_ids[i], "value", NULL, &error),
+			       "identifier list mutations reject unknown and out-of-range IDs");
+			g_test_assert_expected_messages ();
+		}
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*value != NULL*");
+		check (!change_header_list_id_value (headers, operation, 0, GMIME_HEADER_SUBJECT, NULL, NULL, &error),
+		       "identifier list mutations reject NULL values instead of creating placeholders");
+		g_test_assert_expected_messages ();
+		error = g_error_new_literal (GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+		check (!change_header_list_id_value (headers, operation, 0, GMIME_HEADER_SUBJECT, "value", NULL, &error) &&
+		       !strcmp (error->message, "existing error"), "identifier mutations require a clear error destination");
+		g_test_assert_expected_messages ();
+		g_clear_error (&error);
+		if (operation == 1) {
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index >= 0*");
+			check (!change_header_list_id_value (headers, operation, -1, GMIME_HEADER_SUBJECT, "value", NULL, &error),
+			       "identifier insertion rejects negative indexes");
+			g_test_assert_expected_messages ();
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index <= headers->array->len*");
+			check (!change_header_list_id_value (headers, operation, 1, GMIME_HEADER_SUBJECT, "value", NULL, &error),
+			       "identifier insertion rejects indexes beyond the current count");
+			g_test_assert_expected_messages ();
+		}
+		check (g_mime_header_list_get_count (headers) == 0, "invalid identifier mutations leave an empty list unchanged");
+		g_object_unref (headers);
+	}
+
+	message = g_mime_message_new (FALSE);
+	other = g_mime_message_new (FALSE);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	shared = g_mime_entity_get_header_list (GMIME_ENTITY (other));
+	check (g_mime_header_list_append_id_full (headers, GMIME_HEADER_SUBJECT, "original", NULL, &error),
+	       "identifier append updates an owning message");
+	header = g_mime_header_list_get_header_at (headers, 0);
+	g_mime_header_list_add (headers, header);
+	g_mime_header_list_add (shared, header);
+	changes = shared_changes = 0;
+	g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+	g_mime_event_add (shared->changed, count_checked_header_changes, &shared_changes);
+	check (g_mime_header_list_set_value_by_id_full (headers, GMIME_HEADER_SUBJECT, "changed", NULL, &error) &&
+	       changes == 2 && shared_changes == 1 && !g_strcmp0 (g_mime_message_get_subject (message), "changed") &&
+	       !g_strcmp0 (g_mime_message_get_subject (other), "changed"),
+	       "identifier assignment updates repeated/shared instances and every owning message");
+	check (g_mime_header_list_replace_value_by_id_full (headers, GMIME_HEADER_SUBJECT, "replacement", NULL, &error) &&
+	       !g_strcmp0 (g_mime_message_get_subject (message), "replacement") &&
+	       !g_strcmp0 (g_mime_message_get_subject (other), "changed") && g_mime_header_list_get_count (headers) == 1,
+	       "identifier replacement collapses duplicates without changing removed headers in other owners");
+	g_assert_no_error (error);
+	g_object_unref (message);
+	g_object_unref (other);
+}
+
+static void
 test_header_list_remove_all (void)
 {
 	GMimeHeaderList *headers = g_mime_header_list_new (NULL);
@@ -12199,6 +12469,14 @@ main (int argc, char **argv)
 
 	testsuite_start ("header-list identifier operations");
 	test_header_list_identifiers ();
+	testsuite_end ();
+
+	testsuite_start ("header identifier construction");
+	test_header_id_construction ();
+	testsuite_end ();
+
+	testsuite_start ("header-list identifier values");
+	test_header_list_id_values ();
 	testsuite_end ();
 
 	testsuite_start ("existing header instances");

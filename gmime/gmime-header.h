@@ -392,6 +392,8 @@ GType g_mime_header_get_type (void);
 
 GMimeHeader *g_mime_header_new (const char *name, const char *value, const char *charset);
 GMimeHeader *g_mime_header_new_full (const char *name, const char *value, const char *charset, GError **error);
+GMimeHeader *g_mime_header_new_with_id (GMimeHeaderId id, const char *value, const char *charset);
+GMimeHeader *g_mime_header_new_with_id_full (GMimeHeaderId id, const char *value, const char *charset, GError **error);
 GMimeHeader *g_mime_header_parse (GMimeParserOptions *options, const guint8 *buffer, gsize length, GError **error);
 GMimeHeader *g_mime_header_parse_text (GMimeParserOptions *options, const char *text, GError **error);
 GMimeHeader *g_mime_header_clone (GMimeHeader *header);
@@ -460,20 +462,28 @@ void g_mime_header_list_insert_header (GMimeHeaderList *headers, int index, GMim
 void g_mime_header_list_insert (GMimeHeaderList *headers, int index, const char *name, const char *value, const char *charset);
 gboolean g_mime_header_list_insert_full (GMimeHeaderList *headers, int index, const char *name, const char *value,
 				       const char *charset, GError **error);
+gboolean g_mime_header_list_insert_id_full (GMimeHeaderList *headers, int index, GMimeHeaderId id, const char *value,
+					  const char *charset, GError **error);
 void g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *charset);
 gboolean g_mime_header_list_prepend_full (GMimeHeaderList *headers, const char *name, const char *value,
 					const char *charset, GError **error);
 void g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *charset);
 gboolean g_mime_header_list_append_full (GMimeHeaderList *headers, const char *name, const char *value,
 				       const char *charset, GError **error);
+gboolean g_mime_header_list_append_id_full (GMimeHeaderList *headers, GMimeHeaderId id, const char *value,
+					  const char *charset, GError **error);
 void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *charset);
 const char *g_mime_header_list_get_value (GMimeHeaderList *headers, const char *name);
 const char *g_mime_header_list_get_value_by_id (GMimeHeaderList *headers, GMimeHeaderId id);
 gboolean g_mime_header_list_set_value_full (GMimeHeaderList *headers, const char *name, const char *value,
 					  const char *charset, GError **error);
+gboolean g_mime_header_list_set_value_by_id_full (GMimeHeaderList *headers, GMimeHeaderId id, const char *value,
+						const char *charset, GError **error);
 void g_mime_header_list_replace (GMimeHeaderList *headers, GMimeHeader *header);
 gboolean g_mime_header_list_replace_value_full (GMimeHeaderList *headers, const char *name, const char *value,
 					      const char *charset, GError **error);
+gboolean g_mime_header_list_replace_value_by_id_full (GMimeHeaderList *headers, GMimeHeaderId id, const char *value,
+						    const char *charset, GError **error);
 GMimeHeader *g_mime_header_list_get_header (GMimeHeaderList *headers, const char *name);
 GMimeHeader *g_mime_header_list_get_header_at (GMimeHeaderList *headers, int index);
 void g_mime_header_list_set_header_at (GMimeHeaderList *headers, int index, GMimeHeader *header);

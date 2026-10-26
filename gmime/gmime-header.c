@@ -699,6 +699,54 @@ g_mime_header_new_full (const char *name, const char *value, const char *charset
 
 
 /**
+ * g_mime_header_new_with_id:
+ * @id: a known #GMimeHeaderId
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ *
+ * Creates a standalone header using the canonical field name for @id and
+ * g_mime_header_new(). The header owns its strings and an independent copy
+ * of the default parser options. Unknown and out-of-range IDs are
+ * programming errors.
+ *
+ * Use g_mime_header_new_with_id_full() for checked structured values and
+ * charset conversion with error reporting.
+ *
+ * Returns: (transfer full) (nullable): a new header, or %NULL on failure.
+ **/
+GMimeHeader *
+g_mime_header_new_with_id (GMimeHeaderId id, const char *value, const char *charset)
+{
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, NULL);
+
+	return g_mime_header_new (g_mime_header_id_to_name (id), value, charset);
+}
+
+
+/**
+ * g_mime_header_new_with_id_full:
+ * @id: a known #GMimeHeaderId
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Creates a standalone header using the canonical field name for @id and
+ * g_mime_header_new_full(), including its value normalization, independent
+ * default parser options, formatting and error reporting. Unknown and
+ * out-of-range IDs are programming errors.
+ *
+ * Returns: (transfer full) (nullable): a new header, or %NULL on failure.
+ **/
+GMimeHeader *
+g_mime_header_new_with_id_full (GMimeHeaderId id, const char *value, const char *charset, GError **error)
+{
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, NULL);
+
+	return g_mime_header_new_full (g_mime_header_id_to_name (id), value, charset, error);
+}
+
+
+/**
  * g_mime_header_clone:
  * @header: a #GMimeHeader
  *
@@ -2885,6 +2933,33 @@ g_mime_header_list_insert_full (GMimeHeaderList *headers, int index, const char 
 
 
 /**
+ * g_mime_header_list_insert_id_full:
+ * @headers: a #GMimeHeaderList
+ * @index: the 0-based insertion index, from zero through the current count
+ * @id: a known #GMimeHeaderId
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Constructs and inserts a checked header using the canonical field name
+ * for @id and g_mime_header_list_insert_full(). Existing headers retain
+ * their identity, raw bytes and relative order. Validation failure leaves
+ * the list and its notifications unchanged. Unknown and out-of-range IDs
+ * are programming errors.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_insert_id_full (GMimeHeaderList *headers, int index, GMimeHeaderId id,
+				 const char *value, const char *charset, GError **error)
+{
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, FALSE);
+
+	return g_mime_header_list_insert_full (headers, index, g_mime_header_id_to_name (id), value, charset, error);
+}
+
+
+/**
  * g_mime_header_list_prepend_full:
  * @headers: a #GMimeHeaderList
  * @name: a nonempty ASCII header field name without whitespace or a colon
@@ -2927,6 +3002,31 @@ g_mime_header_list_append_full (GMimeHeaderList *headers, const char *name, cons
 	g_return_val_if_fail (GMIME_IS_HEADER_LIST (headers), FALSE);
 
 	return g_mime_header_list_insert_full (headers, headers->array->len, name, value, charset, error);
+}
+
+
+/**
+ * g_mime_header_list_append_id_full:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Constructs and appends a checked header using the canonical field name
+ * for @id and g_mime_header_list_append_full(). Existing headers, including
+ * duplicates, are unchanged. Unknown and out-of-range IDs are programming
+ * errors. Failure leaves the list and its notifications unchanged.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_append_id_full (GMimeHeaderList *headers, GMimeHeaderId id,
+				 const char *value, const char *charset, GError **error)
+{
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, FALSE);
+
+	return g_mime_header_list_append_full (headers, g_mime_header_id_to_name (id), value, charset, error);
 }
 
 
@@ -3157,6 +3257,33 @@ g_mime_header_list_set_value_full (GMimeHeaderList *headers, const char *name, c
 }
 
 
+/**
+ * g_mime_header_list_set_value_by_id_full:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Sets only the first matching header, or appends a checked header with
+ * the canonical field name for @id if absent. Like MimeKit's HeaderId
+ * indexer, this preserves the first header's identity and field spelling
+ * and does not collapse duplicates. Uses g_mime_header_list_set_value_full()
+ * and its existing ownership, notification and atomic failure behavior.
+ * Unknown and out-of-range IDs are programming errors.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_set_value_by_id_full (GMimeHeaderList *headers, GMimeHeaderId id,
+				      const char *value, const char *charset, GError **error)
+{
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, FALSE);
+
+	return g_mime_header_list_set_value_full (headers, g_mime_header_id_to_name (id), value, charset, error);
+}
+
+
 static void
 header_list_remove_duplicates (GMimeHeaderList *headers, GMimeHeader *header, guint first)
 {
@@ -3338,6 +3465,33 @@ g_mime_header_list_replace_value_full (GMimeHeaderList *headers, const char *nam
 	g_object_unref (header);
 
 	return TRUE;
+}
+
+
+/**
+ * g_mime_header_list_replace_value_by_id_full:
+ * @headers: a #GMimeHeaderList
+ * @id: a known #GMimeHeaderId
+ * @value: the decoded UTF-8 header value
+ * @charset: (nullable): the encoding charset, or %NULL for UTF-8
+ * @error: return location for an error, or %NULL
+ *
+ * Constructs a checked header with the canonical field name for @id and
+ * replaces all matching headers using g_mime_header_list_replace_value_full().
+ * Unlike assignment, replacement installs a new header object and removes
+ * duplicates. If absent, the new header is appended. Existing native owner
+ * notifications and atomic failure behavior are preserved. Unknown and
+ * out-of-range IDs are programming errors.
+ *
+ * Returns: %TRUE on success, or %FALSE on failure.
+ **/
+gboolean
+g_mime_header_list_replace_value_by_id_full (GMimeHeaderList *headers, GMimeHeaderId id,
+					  const char *value, const char *charset, GError **error)
+{
+	g_return_val_if_fail (id >= GMIME_HEADER_ACCEPT_LANGUAGE && id <= GMIME_HEADER_X_STATUS, FALSE);
+
+	return g_mime_header_list_replace_value_full (headers, g_mime_header_id_to_name (id), value, charset, error);
 }
 
 

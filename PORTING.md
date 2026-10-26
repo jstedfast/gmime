@@ -1828,9 +1828,8 @@ construction or parsing. Cloning preserves it; reading it does not decode
 the value, change the original field spelling or alter raw GBytes. Existing
 field-specific formatting, parser options, serialization and value setters
 remain unchanged. The existing name-based APIs can use canonical names
-from the identifier helper. HeaderId-specific constructors and assignment
-helpers remain separate; identifier-based list lookup and removal are
-described below.
+from the identifier helper. Identifier-based list lookup, removal,
+construction and checked value operations are described below.
 
 Persistent regressions cover every common field, case variants, stream
 and standalone parsing, cloning, binary values, raw trailing blanks,
@@ -1882,6 +1881,58 @@ Focused sanitizer regressions are leak-clean. GIR, typelib, VAPI, GTK-doc
 and live GI/Python checks pass for all six APIs and all known IDs. The
 complete core suite passes 34 of 35 programs; test-core retains only its
 two existing text-format failures. Native Windows execution is unvalidated.
+
+### Header identifier construction and checked list values
+
+MimeKit's HeaderId Header constructors and HeaderList.Add(), Insert(),
+Replace() and indexer assignment overloads are available as
+`g_mime_header_new_with_id()`, `g_mime_header_new_with_id_full()`,
+`g_mime_header_list_append_id_full()`, `g_mime_header_list_insert_id_full()`,
+`g_mime_header_list_replace_value_by_id_full()` and
+`g_mime_header_list_set_value_by_id_full()`. These source constructors and
+forwarding methods contain no inline implementation comments; the shared
+native construction, formatting and mutation comments remain unchanged.
+
+Each operation resolves the canonical field name and delegates to its
+existing name-based implementation. New headers own independent default
+parser options and have no source offset. Assignment changes only the
+first matching header, retaining its object identity, original field
+spelling, raw name, parser options, source offset and distinct duplicates.
+Replacement installs a new canonical header and collapses duplicates.
+Both append a canonical header if absent. Unrelated and detached headers
+retain their raw bytes; shared headers retain the existing native owner
+notification behavior. Replacement keeps the native single-notification
+contract rather than adopting MimeKit's removal/addition notifications.
+
+Checked operations report malformed structured values, invalid UTF-8 and
+unsupported charsets without changing list/header state or notifying
+owners. MimeKit's existing-header setter can change its decoded cache
+before structured formatting throws; the native checked setter deliberately
+retains its established atomic failure contract. The legacy constructor
+continues to use existing unchecked construction behavior. Unknown and
+out-of-range IDs remain programming errors. The native checked assignment
+accepts an optional charset, consistent with its name-based counterpart;
+MimeKit's HeaderId indexer uses UTF-8.
+
+Persistent regressions cover all 131 IDs, canonical formatting, cloning,
+mixed-case duplicates, raw binary survivors, identity and source metadata,
+shared/repeated instances, owning-message updates, insertion bounds,
+conversion/parse failures and programming-error guards. Normal and
+ASan/UBSan/leak runs each compare 74,468 cases against actual MimeKit
+sources and independently assert exact equality to the existing native
+canonical-name path. There are zero unexpected differences: 18,435
+inherited formatter differences are restricted to newly created or
+explicitly updated headers, and eight cases retain the native atomic
+failure behavior instead of MimeKit's changed decoded cache. Untouched
+raw values are compared exactly; decoded Unicode NULs are normalized to
+U+FFFD only for the established native display-string contract.
+
+Focused sanitizer checks are leak-clean. GIR, typelib, VAPI, GTK-doc and
+live GI/Python checks pass for all six APIs and all known IDs, including
+error propagation and duplicate-preserving assignment versus replacement.
+The complete core suite passes 34 of 35 programs; test-core retains only
+its two existing text-format failures. Native Windows execution remains
+unvalidated.
 
 ### Positional header-list operations
 
