@@ -23,9 +23,9 @@
 #include <config.h>
 #endif
 
-#include "gmime-common.h"
 #include "gmime-encodings.h"
 #include "gmime-internal.h"
+#include "gmime-table-private.h"
 
 
 /**
@@ -50,8 +50,9 @@ is (const char *str, size_t length, const char *value)
  * @str: (nullable): a UTF-8 Content-Transfer-Encoding value
  *
  * Gets the appropriate #GMimeContentEncoding enumeration value based
- * on the input string. Leading Unicode whitespace is skipped; the first
- * whitespace or semicolon terminates the case-insensitive encoding name.
+ * on the input string. Leading ASCII linear whitespace (SP, HTAB, CR and LF)
+ * is skipped; the first linear whitespace or semicolon terminates the
+ * case-insensitive encoding name.
  * Any suffix after that delimiter is ignored, matching MimeKit's tolerance
  * for semicolons added by Google Docs. Comments are not skipped.
  *
@@ -74,7 +75,6 @@ GMimeContentEncoding
 _g_mime_content_encoding_parse (const char *str, gsize count)
 {
 	const char *start, *end;
-	gunichar c;
 	size_t length;
 
 	if (!str)
@@ -82,35 +82,15 @@ _g_mime_content_encoding_parse (const char *str, gsize count)
 
 	end = str + count;
 
-	/* MimeKit uses Char.IsWhiteSpace, not MIME linear whitespace. Validate
-	 * each code point before advancing so truncated UTF-8 stays in bounds. */
-	while (str < end) {
-		c = g_utf8_get_char_validated (str, end - str);
-
-		if (c == (gunichar) -1 || c == (gunichar) -2)
-			return GMIME_CONTENT_ENCODING_UNSPECIFIED;
-
-		if (!_g_mime_is_unicode_whitespace (c))
-			break;
-
-		str = g_utf8_next_char (str);
-	}
+	while (str < end && is_lwsp (*str))
+		str++;
 
 	start = str;
 
 	/* Only the first token matters: delimiters allow arbitrary trailing
 	 * text, but an embedded comment or extra name byte rejects the token. */
-	while (str < end && *str != ';') {
-		c = g_utf8_get_char_validated (str, end - str);
-
-		if (c == (gunichar) -1 || c == (gunichar) -2)
-			return GMIME_CONTENT_ENCODING_UNSPECIFIED;
-
-		if (_g_mime_is_unicode_whitespace (c))
-			break;
-
-		str = g_utf8_next_char (str);
-	}
+	while (str < end && !is_lwsp (*str) && *str != ';')
+		str++;
 
 	length = str - start;
 

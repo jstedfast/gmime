@@ -2101,12 +2101,16 @@ test_factory_names (void)
 	char space[7], *name;
 	guint i;
 
-	testsuite_check ("Encoding name factories recognize Unicode whitespace and semicolon delimiters");
+	testsuite_check ("Encoding name factories recognize only linear whitespace and semicolon delimiters");
 	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		GMimeContentEncoding encoding = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+			whitespace[i] == '\r' || whitespace[i] == '\n' ?
+			GMIME_CONTENT_ENCODING_BASE64 : GMIME_CONTENT_ENCODING_UNSPECIFIED;
+
 		space[g_unichar_to_utf8 (whitespace[i], space)] = '\0';
 		name = g_strdup_printf ("%sBaSe64%signored", space, space);
-		check_factory_vector (g_mime_filter_basic_create_encoder_by_name (name), GMIME_CONTENT_ENCODING_BASE64, TRUE);
-		check_factory_vector (g_mime_filter_basic_create_decoder_by_name (name), GMIME_CONTENT_ENCODING_BASE64, FALSE);
+		check_factory_vector (g_mime_filter_basic_create_encoder_by_name (name), encoding, TRUE);
+		check_factory_vector (g_mime_filter_basic_create_decoder_by_name (name), encoding, FALSE);
 		g_free (name);
 	}
 	testsuite_check_passed ();

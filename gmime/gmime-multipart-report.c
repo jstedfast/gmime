@@ -63,7 +63,7 @@ g_mime_multipart_report_init (GMimeMultipartReport *report)
  * @report_type: a UTF-8 report type
  *
  * Creates an empty multipart/report container with the specified report type.
- * Leading and trailing Unicode whitespace is removed from @report_type.
+ * Leading and trailing ASCII linear whitespace is removed from @report_type.
  * Empty values are allowed; %NULL and invalid UTF-8 are programming errors.
  *
  * Returns: (transfer full): a new #GMimeMultipartReport.
@@ -77,11 +77,14 @@ g_mime_multipart_report_new (const char *report_type)
 	g_return_val_if_fail (report_type != NULL && g_utf8_validate (report_type, -1, NULL), NULL);
 
 	report = g_object_new (GMIME_TYPE_MULTIPART_REPORT, NULL);
+
 	content_type = g_mime_content_type_new ("multipart", "report");
 	g_mime_entity_set_content_type ((GMimeEntity *) report, content_type);
 	g_object_unref (content_type);
+
 	g_mime_multipart_set_boundary ((GMimeMultipart *) report, NULL);
 	g_mime_multipart_report_set_report_type (report, report_type);
+
 	return report;
 }
 
@@ -106,15 +109,14 @@ g_mime_multipart_report_get_report_type (GMimeMultipartReport *report)
  * @report: a #GMimeMultipartReport
  * @report_type: a UTF-8 report type
  *
- * Sets the report-type parameter after removing leading and trailing Unicode
- * whitespace. Case and internal whitespace are preserved. Empty values are
+ * Sets the report-type parameter after removing leading and trailing ASCII
+ * linear whitespace. Case and internal whitespace are preserved. Empty values are
  * allowed; %NULL and invalid UTF-8 are programming errors. Assigning an
  * equivalent value preserves the raw header and parameter metadata.
  **/
 void
 g_mime_multipart_report_set_report_type (GMimeMultipartReport *report, const char *report_type)
 {
-	const char *start, *end, *previous;
 	char *value;
 
 	g_return_if_fail (GMIME_IS_MULTIPART_REPORT (report));
@@ -123,17 +125,7 @@ g_mime_multipart_report_set_report_type (GMimeMultipartReport *report, const cha
 	if (!g_strcmp0 (g_mime_multipart_report_get_report_type (report), report_type))
 		return;
 
-	start = report_type;
-	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
-		start = g_utf8_next_char (start);
-	end = start + strlen (start);
-	while (end > start) {
-		previous = g_utf8_prev_char (end);
-		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
-			break;
-		end = previous;
-	}
-	value = g_strndup (start, end - start);
+	value = g_mime_strdup_trim (report_type);
 	g_mime_entity_set_content_type_parameter ((GMimeEntity *) report, "report-type", value);
 	g_free (value);
 }

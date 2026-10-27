@@ -31,6 +31,7 @@
 #include "gmime-utils.h"
 #include "gmime-rfc2047-private.h"
 #include "gmime-message-part.h"
+#include "gmime-table-private.h"
 
 
 #define d(x)
@@ -374,20 +375,20 @@ fold_preamble_or_epilogue (const char *text, gboolean epilogue)
 	while (*inptr) {
 		start = inptr;
 
-		while (*inptr && _g_mime_is_unicode_whitespace (g_utf8_get_char (inptr))) {
+		while (*inptr && is_lwsp (*inptr)) {
 			if (*inptr == '\n') {
 				g_string_append (builder, newline);
 				start = inptr + 1;
 				line_length = 0;
 			}
 
-			inptr = g_utf8_next_char (inptr);
+			inptr++;
 		}
 
 		word = inptr;
 
-		while (*inptr && !_g_mime_is_unicode_whitespace (g_utf8_get_char (inptr)))
-			inptr = g_utf8_next_char (inptr);
+		while (*inptr && !is_lwsp (*inptr))
+			inptr++;
 
 		length = _g_mime_count_utf16_units (start, inptr);
 
@@ -416,8 +417,8 @@ fold_preamble_or_epilogue (const char *text, gboolean epilogue)
  * @multipart: a #GMimeMultipart object
  * @preamble: (nullable): UTF-8 preamble, or %NULL to remove it
  *
- * Sets the preamble on the multipart, folding at whitespace using the default
- * formatting options and ending a nonempty final line with a newline.
+ * Sets the preamble on the multipart, folding at linear whitespace using the
+ * default formatting options and ending a nonempty final line with a newline.
  * Oversized words remain intact. Assigning the current decoded value preserves
  * the original bytes instead of refolding them.
  **/
@@ -469,8 +470,8 @@ g_mime_multipart_get_preamble (GMimeMultipart *multipart)
  * @multipart: a #GMimeMultipart object
  * @epilogue: (nullable): UTF-8 epilogue, or %NULL to remove it
  *
- * Sets the epilogue on the multipart, folding at whitespace using the default
- * formatting options and ending a nonempty final line with a newline.
+ * Sets the epilogue on the multipart, folding at linear whitespace using the
+ * default formatting options and ending a nonempty final line with a newline.
  * The raw bytes include the closing boundary's newline, which is omitted from
  * the decoded view. Assigning the current decoded value preserves the bytes.
  **/
@@ -678,8 +679,6 @@ ptr_array_insert (GPtrArray *array, guint index, gpointer object)
 static void
 multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
 {
-	g_return_if_fail ((guint) index <= multipart->children->len);
-
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
 
 	if (multipart->raw_boundaries)
@@ -694,11 +693,9 @@ multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
  * g_mime_multipart_insert:
  * @multipart: a #GMimeMultipart object
  * @part: a #GMimeEntity
- * @index: the 0-based insertion index, from 0 through the current count
+ * @index: the 0-based index to insert the part
  *
- * Inserts @part into @multipart at the specified @index. Inserting at the
- * current count appends the part. An out-of-range index is a programming
- * error and leaves the multipart unchanged.
+ * Inserts @part into @multipart at the specified @index.
  **/
 void
 g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
@@ -750,7 +747,8 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 {
 	GMimeEntity *part;
 	
-	g_return_val_if_fail ((guint) index < multipart->children->len, NULL);
+	if ((guint) index >= multipart->children->len)
+		return NULL;
 	
 	part = multipart->children->pdata[index];
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
@@ -767,13 +765,12 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_remove_at:
  * @multipart: a #GMimeMultipart object
- * @index: the 0-based index of an existing part
+ * @index: the 0-based index of the part to remove
  *
- * Removes the part at the specified @index from @multipart, transferring
- * the multipart's reference to the caller. An out-of-range index is a
- * programming error and leaves the multipart unchanged.
+ * Removes the part at the specified @index from @multipart.
  *
- * Returns: (transfer full): the removed MIME part.
+ * Returns: (transfer full): the mime part that was removed or %NULL
+ * if the part was not contained within the multipart.
  **/
 GMimeEntity *
 g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
@@ -788,15 +785,14 @@ g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_replace:
  * @multipart: a #GMimeMultipart object
- * @index: the 0-based index of an existing part
+ * @index: the 0-based index of the part to replace
  * @replacement: a #GMimeEntity to use as the replacement
  *
  * Replaces the part at the specified @index within @multipart with
- * @replacement, transferring the multipart's old reference to the caller.
- * An out-of-range index is a programming error and leaves the multipart
- * unchanged.
+ * @replacement.
  *
- * Returns: (transfer full): the replaced MIME part.
+ * Returns: (transfer full): the part that was replaced or %NULL
+ * if the part was not contained within the multipart.
  **/
 GMimeEntity *
 g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *replacement)
@@ -807,7 +803,8 @@ g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *rep
 	g_return_val_if_fail (GMIME_IS_ENTITY (replacement), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
 	
-	g_return_val_if_fail ((guint) index < multipart->children->len, NULL);
+	if ((guint) index >= multipart->children->len)
+		return NULL;
 	
 	replaced = multipart->children->pdata[index];
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
@@ -823,7 +820,8 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 {
 	GMimeEntity *part;
 	
-	g_return_val_if_fail ((guint) index < multipart->children->len, NULL);
+	if ((guint) index >= multipart->children->len)
+		return NULL;
 	
 	part = multipart->children->pdata[index];
 	
@@ -834,10 +832,9 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_get_part:
  * @multipart: a #GMimeMultipart object
- * @index: the 0-based index of an existing part
+ * @index: the 0-based index of the part
  *
- * Gets the part at the specified @index within the multipart. An
- * out-of-range index is a programming error.
+ * Gets the part at the specified @index within the multipart.
  *
  * Returns: (transfer none): the part at position @index.
  **/
@@ -946,10 +943,7 @@ static void
 multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 {
 	char bbuf[27];
-	char *trimmed = NULL;
-
-	g_return_if_fail (boundary == NULL || g_utf8_validate (boundary, -1, NULL));
-
+	
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
 		GMimeRfc2047Encoder *encoder;
@@ -966,33 +960,19 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 		bbuf[len + 2] = '\0';
 		
 		boundary = bbuf;
-	} else {
-		trimmed = _g_mime_strdup_trim_unicode (boundary);
-		boundary = trimmed;
 	}
-
-	/* TODO: Consider validating the boundary according to RFC 2046 (1-70
-	 * characters, only bchars, not ending with a space) and rejecting invalid values. */
-	if (g_strcmp0 (g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary"), boundary))
-		g_mime_entity_set_content_type_parameter ((GMimeEntity *) multipart, "boundary", boundary);
-
-	g_free (trimmed);
+	
+	g_mime_entity_set_content_type_parameter ((GMimeEntity *) multipart, "boundary", boundary);
 }
 
 
 /**
  * g_mime_multipart_set_boundary:
  * @multipart: a #GMimeMultipart object
- * @boundary: (nullable): UTF-8 boundary or %NULL to autogenerate one
+ * @boundary: boundary or %NULL to autogenerate one
  *
  * Sets @boundary as the boundary on the multipart. If @boundary is
- * %NULL, then a boundary will be auto-generated for you. Non-NULL values
- * have surrounding Unicode whitespace removed. Empty values and other
- * boundaries outside RFC 2046's syntax remain accepted.
- *
- * Assigning a value that trims to the current boundary preserves raw headers
- * and parsed markers. Changed values invalidate parsed child and closing markers.
- * Invalid UTF-8 is a programming error and leaves the multipart unchanged.
+ * %NULL, then a boundary will be auto-generated for you.
  **/
 void
 g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)

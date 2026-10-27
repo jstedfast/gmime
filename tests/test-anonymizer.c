@@ -544,6 +544,168 @@ test_constructed_multipart (void)
 }
 
 static void
+test_generated_boundaries (void)
+{
+	static const char *cases[] = {
+		"b", "abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789",
+		"'()+_,-./:=?", " b", " b c", "b c", "b  c",
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefg",
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefgh"
+	};
+	GMimeAnonymizer *anonymizer = g_mime_anonymizer_new ();
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GError *error = NULL;
+	guint i, newline, count, child;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (newline = 0; newline < 2; newline++) {
+			const char *nl;
+			char *separator, *child_headers;
+
+			g_mime_format_options_set_newline_format (options, newline);
+			nl = g_mime_format_options_get_newline (options);
+			separator = g_strconcat (nl, nl, NULL);
+			child_headers = g_strconcat ("Content-Type: text/plain", separator, NULL);
+			for (count = 0; count <= 2; count += 2) {
+				GMimeMultipart *multipart = g_mime_multipart_new ();
+				GString *expected = g_string_new (NULL);
+				TestOutput *output = g_object_new (test_output_get_type (), NULL);
+				GByteArray *actual;
+				const char *boundary, *body;
+				gsize offset;
+
+				g_mime_multipart_set_boundary (multipart, cases[i]);
+				boundary = g_mime_multipart_get_boundary (multipart);
+				for (child = 0; child < count; child++) {
+					GMimePart *part = g_mime_part_new_with_type ("text", "plain");
+
+					g_mime_multipart_add (multipart, GMIME_ENTITY (part));
+					g_object_unref (part);
+					g_string_append (expected, "--");
+					g_string_append (expected, cases[i]);
+					g_string_append (expected, nl);
+					g_string_append (expected, child_headers);
+				}
+				g_string_append (expected, "--");
+				g_string_append (expected, cases[i]);
+				g_string_append (expected, "--");
+				g_string_append (expected, nl);
+				g_assert_true (g_mime_anonymizer_write_entity (anonymizer, options, GMIME_ENTITY (multipart),
+									     GMIME_STREAM (output), &error));
+				g_assert_no_error (error);
+				actual = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+				body = g_strstr_len ((const char *) actual->data, actual->len, separator);
+				g_assert_nonnull (body);
+				offset = body - (const char *) actual->data + strlen (separator);
+				g_assert_cmpmem (actual->data + offset, actual->len - offset, expected->str, expected->len);
+				g_assert_true (g_mime_multipart_get_boundary (multipart) == boundary);
+				g_assert_cmpstr (boundary, ==, cases[i]);
+				g_assert_cmpuint (output->closes, ==, 0);
+
+				if (i == G_N_ELEMENTS (cases) - 1 && count == 2) {
+					gsize failure;
+
+					for (failure = 0; failure < actual->len; failure++) {
+						TestOutput *failed = g_object_new (test_output_get_type (), NULL);
+
+						failed->fail_after = failure;
+						g_assert_false (g_mime_anonymizer_write_entity (anonymizer, options,
+							GMIME_ENTITY (multipart), GMIME_STREAM (failed), &error));
+						g_assert_error (error, GMIME_ERROR, EIO);
+						g_clear_error (&error);
+						assert_output (GMIME_STREAM (failed), (const char *) actual->data, failure);
+						g_assert_cmpuint (failed->closes, ==, 0);
+						g_object_unref (failed);
+					}
+					{
+						GMimeStream *again = g_mime_stream_mem_new ();
+
+						g_assert_true (g_mime_anonymizer_write_entity (anonymizer, options,
+							GMIME_ENTITY (multipart), again, &error));
+						g_assert_no_error (error);
+						assert_output (again, (const char *) actual->data, actual->len);
+						g_object_unref (again);
+					}
+				}
+				g_object_unref (output);
+				g_string_free (expected, TRUE);
+				g_object_unref (multipart);
+			}
+			g_free (child_headers);
+			g_free (separator);
+		}
+	}
+	g_mime_format_options_free (options);
+	g_object_unref (anonymizer);
+}
+
+static void
+test_binary_raw_boundaries (void)
+{
+	static const char opening[] = "--raw\0\377\n";
+	static const char closing[] = "--raw\0end--\n";
+	static const char trailing[] = "--raw\0tail";
+	GMimeAnonymizer *anonymizer = g_mime_anonymizer_new ();
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GError *error = NULL;
+	guint newline, truncated, child;
+
+	for (newline = 0; newline < 2; newline++) {
+		const char *nl;
+		char *separator, *child_headers;
+
+		g_mime_format_options_set_newline_format (options, newline);
+		nl = g_mime_format_options_get_newline (options);
+		separator = g_strconcat (nl, nl, NULL);
+		child_headers = g_strconcat ("Content-Type: text/plain", separator, NULL);
+		for (truncated = 0; truncated < 2; truncated++) {
+			GMimeMultipart *multipart = g_mime_multipart_new ();
+			GMimeStream *output = g_mime_stream_mem_new ();
+			GString *expected = g_string_new (NULL);
+			GByteArray *actual;
+			const char *body;
+			gsize offset;
+
+			g_mime_multipart_set_boundary (multipart, "valid");
+			for (child = 0; child < 2; child++) {
+				GMimePart *part = g_mime_part_new_with_type ("text", "plain");
+
+				g_mime_multipart_add (multipart, GMIME_ENTITY (part));
+				g_object_unref (part);
+				g_string_append_len (expected, opening, sizeof opening - 1);
+				g_string_append (expected, child_headers);
+			}
+			multipart->raw_boundaries = g_ptr_array_new_with_free_func ((GDestroyNotify) g_bytes_unref);
+			for (child = 0; child < 2; child++)
+				g_ptr_array_add (multipart->raw_boundaries, g_bytes_new_static (opening, sizeof opening - 1));
+			if (truncated) {
+				multipart->raw_end_boundary = g_bytes_new (NULL, 0);
+				multipart->raw_trailing_boundary = g_bytes_new_static (trailing, sizeof trailing - 1);
+				g_string_append_len (expected, trailing, sizeof trailing - 1);
+			} else {
+				multipart->raw_end_boundary = g_bytes_new_static (closing, sizeof closing - 1);
+				g_string_append_len (expected, closing, sizeof closing - 1);
+			}
+			g_assert_true (g_mime_anonymizer_write_entity (anonymizer, options, GMIME_ENTITY (multipart), output, &error));
+			g_assert_no_error (error);
+			actual = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+			body = g_strstr_len ((const char *) actual->data, actual->len, separator);
+			g_assert_nonnull (body);
+			offset = body - (const char *) actual->data + strlen (separator);
+			g_assert_cmpmem (actual->data + offset, actual->len - offset, expected->str, expected->len);
+			g_object_unref (output);
+			g_string_free (expected, TRUE);
+			g_object_unref (multipart);
+		}
+		g_free (child_headers);
+		g_free (separator);
+	}
+	g_mime_format_options_free (options);
+	g_object_unref (anonymizer);
+}
+
+static void
 test_deep_entities (void)
 {
 	GMimeAnonymizer *anonymizer = g_mime_anonymizer_new ();
@@ -675,6 +837,12 @@ main (int argc, char **argv)
 	testsuite_check_passed ();
 	testsuite_check ("Legacy constructed multipart text and closing-boundary policy");
 	test_constructed_multipart ();
+	testsuite_check_passed ();
+	testsuite_check ("Generated boundary markers preserve valid ASCII values and output failures");
+	test_generated_boundaries ();
+	testsuite_check_passed ();
+	testsuite_check ("Raw binary opening, closing and trailing boundaries bypass generated-marker conversion");
+	test_binary_raw_boundaries ();
 	testsuite_check_passed ();
 	testsuite_check ("Nested multipart and embedded messages use an explicit traversal stack");
 	test_deep_entities ();

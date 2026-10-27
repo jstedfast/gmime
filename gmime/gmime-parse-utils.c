@@ -95,22 +95,20 @@ _g_mime_parse_int32 (const char **in, gint32 *value)
 char *
 _g_mime_parse_message_id_value (const char *value)
 {
-	const char *start = value, *end, *p;
+	const char *inptr = value, *start, *end;
 	gboolean angle_addr, quoted = FALSE;
 	GString *text;
 	char *msgid;
 
-	if (!g_utf8_validate (value, -1, NULL))
-		return NULL;
-
-	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
-		start = g_utf8_next_char (start);
-	end = start + strlen (start);
-	while (end > start) {
-		p = g_utf8_prev_char (end);
-		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (p)))
-			break;
-		end = p;
+	while (is_lwsp (*inptr))
+		inptr++;
+	
+	start = inptr;
+	end = inptr;
+	
+	while (*inptr) {
+		if (!is_lwsp (*inptr++))
+			end = inptr;
 	}
 
 	if (start == end)
@@ -118,38 +116,43 @@ _g_mime_parse_message_id_value (const char *value)
 
 	angle_addr = *start == '<';
 	text = g_string_sized_new (end - start);
-	for (p = start; p < end; p++) {
-		if (*p == '\r' || *p == '\n') {
-			if (*p == '\r' && p + 1 < end && p[1] == '\n')
-				p++;
-			if (p + 1 == end || (p[1] != ' ' && p[1] != '\t'))
+
+	for (inptr = start; inptr < end; inptr++) {
+		if (*inptr == '\r' || *inptr == '\n') {
+			if (*inptr == '\r' && inptr + 1 < end && inptr[1] == '\n')
+				inptr++;
+
+			if (inptr + 1 == end || (inptr[1] != ' ' && inptr[1] != '\t'))
 				goto error;
 		} else {
-			g_string_append_c (text, *p);
+			g_string_append_c (text, *inptr);
 		}
 	}
 
 	if (!angle_addr) {
-		for (p = text->str; *p; p++) {
+		for (inptr = text->str; *inptr; inptr++) {
 			if (quoted) {
-				if (*p == '\\' && p[1])
-					p++;
-				else if (*p == '"')
+				if (*inptr == '\\' && inptr[1])
+					inptr++;
+				else if (*inptr == '"')
 					quoted = FALSE;
-			} else if (*p == '"') {
+			} else if (*inptr == '"') {
 				quoted = TRUE;
-			} else if (*p == ' ' || *p == '\t') {
+			} else if (*inptr == ' ' || *inptr == '\t') {
 				goto error;
 			}
 		}
+
 		g_string_prepend_c (text, '<');
 		g_string_append_c (text, '>');
 	}
 
-	p = text->str;
-	msgid = decode_msgid (&p);
-	if (msgid && (!skip_cfws (&p) || *p))
+	inptr = text->str;
+	msgid = decode_msgid (&inptr);
+
+	if (msgid && (!skip_cfws (&inptr) || *inptr))
 		g_clear_pointer (&msgid, g_free);
+
 	g_string_free (text, TRUE);
 
 	return msgid;
@@ -167,6 +170,7 @@ _g_mime_parse_cfws (const char *text, const char **in, GError **error)
 	while (**in == '(') {
 		if (!skip_comment (in))
 			return _g_mime_parse_error (error, text, *in, "Incomplete comment");
+
 		skip_lwsp (in);
 	}
 

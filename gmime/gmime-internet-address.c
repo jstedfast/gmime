@@ -120,26 +120,27 @@ g_mime_internet_address_finalize (GObject *object)
 gboolean
 _g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name)
 {
-	const char *end, *prev;
+	const char *end;
 	char *buf = NULL;
 	size_t len;
 
 	g_return_val_if_fail (name == NULL || g_utf8_validate (name, -1, NULL), FALSE);
 
-	/* Edge whitespace cannot survive folding and RFC 2047 round trips reliably. */
+	/* Edge linear whitespace cannot survive folding and RFC 2047 round trips reliably. */
 	if (name) {
-		while (*name && _g_mime_is_unicode_whitespace (g_utf8_get_char (name)))
-			name = g_utf8_next_char (name);
+		while (is_lwsp (*name))
+			name++;
+
 		end = name + strlen (name);
-		while (end > name) {
-			prev = g_utf8_prev_char (end);
-			if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (prev)))
-				break;
-			end = prev;
-		}
+
+		while (end > name && is_lwsp (end[-1]))
+			end--;
+
 		len = end - name;
+
 		if (ia->name && strlen (ia->name) == len && !memcmp (ia->name, name, len))
 			return FALSE;
+
 		buf = g_strndup (name, len);
 	} else if (!ia->name) {
 		return FALSE;
@@ -158,9 +159,10 @@ _g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name)
  * @name: (nullable): the display name for the address group or mailbox
  *
  * Set the display name of the #GMimeInternetAddress. Leading and trailing
- * Unicode whitespace is removed; interior whitespace is preserved. %NULL
- * remains distinct from an empty name. An unchanged name does not emit a
- * change notification.
+ * ASCII linear whitespace (SP, HTAB, CR and LF) is removed; interior
+ * whitespace, VT, FF and Unicode whitespace are preserved. %NULL remains
+ * distinct from an empty name. An unchanged name does not emit a change
+ * notification.
  *
  * Note: The @name string should be in UTF-8.
  **/

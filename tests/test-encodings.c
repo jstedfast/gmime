@@ -65,7 +65,7 @@ static struct _mapping {
 	{ "semicolon suffix", "bAsE64;anything", GMIME_CONTENT_ENCODING_BASE64 },
 	{ "whitespace suffix", "7bit garbage", GMIME_CONTENT_ENCODING_7BIT },
 	{ "hyphenated semicolon suffix", "7-BiT;anything", GMIME_CONTENT_ENCODING_7BIT },
-	{ "hyphenated Unicode whitespace", "\302\2058-bIt\343\200\200suffix", GMIME_CONTENT_ENCODING_8BIT },
+	{ "hyphenated Unicode whitespace", "\302\2058-bIt\343\200\200suffix", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "longer hyphenated token", "7-bitx", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "hyphenated embedded comment", "8-bit(comment)", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "empty token", ";base64", GMIME_CONTENT_ENCODING_UNSPECIFIED },
@@ -74,11 +74,14 @@ static struct _mapping {
 	{ "separated comment", "base64 (comment)", GMIME_CONTENT_ENCODING_BASE64 },
 	{ "longer token", "base64x", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "shorter token", "base6", GMIME_CONTENT_ENCODING_UNSPECIFIED },
-	{ "Unicode whitespace", "\302\205\342\200\257X-UUE\343\200\200suffix", GMIME_CONTENT_ENCODING_UUENCODE },
+	{ "Unicode whitespace", "\302\205\342\200\257X-UUE\343\200\200suffix", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "non-whitespace separator", "base64\342\200\213", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "truncated UTF-8 prefix", "\302", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "truncated UTF-8 name", "base64\342\200", GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	{ "invalid UTF-8 name", "base64\377", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "embedded linear whitespace", "ba se64", GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	{ "ignored Unicode suffix", "base64 \302\240", GMIME_CONTENT_ENCODING_BASE64 },
+	{ "ignored invalid whitespace suffix", "base64\t\377", GMIME_CONTENT_ENCODING_BASE64 },
 	{ "ignored invalid suffix", "base64;\377", GMIME_CONTENT_ENCODING_BASE64 }
 };
 
@@ -102,6 +105,37 @@ test_content_encoding_mappings (void)
 						g_mime_content_encoding_to_string (encoding));
 		else
 			testsuite_check_passed ();
+	}
+}
+
+static void
+test_content_encoding_whitespace (void)
+{
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
+	guint i, side;
+
+	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		char buffer[7] = { 0 };
+		GMimeContentEncoding expected = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+			whitespace[i] == '\r' || whitespace[i] == '\n' ?
+			GMIME_CONTENT_ENCODING_BASE64 : GMIME_CONTENT_ENCODING_UNSPECIFIED;
+
+		g_unichar_to_utf8 (whitespace[i], buffer);
+		for (side = 0; side < 3; side++) {
+			char *value = g_strconcat (" \t", side != 1 ? buffer : "", "bAsE64",
+						  side != 0 ? buffer : "", ";suffix", NULL);
+
+			testsuite_check ("Encoding-name whitespace U+%04X [%u]", whitespace[i], side);
+			if (g_mime_content_encoding_from_string (value) == expected)
+				testsuite_check_passed ();
+			else
+				testsuite_check_failed ("unexpected content encoding");
+			g_free (value);
+		}
 	}
 }
 
@@ -146,12 +180,15 @@ test_content_encoding_parser (void)
 		const char *decoded;
 	} cases[] = {
 		{ "base64;", GMIME_CONTENT_ENCODING_BASE64, "Hello" },
-		{ "\302\240BaSe64\343\200\200suffix", GMIME_CONTENT_ENCODING_BASE64, "Hello" },
+		{ "\302\240BaSe64\343\200\200suffix", GMIME_CONTENT_ENCODING_UNSPECIFIED, "SGVsbG8=" },
+		{ " \tBaSe64 suffix", GMIME_CONTENT_ENCODING_BASE64, "Hello" },
+		{ "\vbase64\vsuffix", GMIME_CONTENT_ENCODING_UNSPECIFIED, "SGVsbG8=" },
+		{ "base64\fsuffix", GMIME_CONTENT_ENCODING_UNSPECIFIED, "SGVsbG8=" },
 		{ "base64 (comment)", GMIME_CONTENT_ENCODING_BASE64, "Hello" },
 		{ "7-bit", GMIME_CONTENT_ENCODING_7BIT, "SGVsbG8=" },
 		{ "8-bit", GMIME_CONTENT_ENCODING_8BIT, "SGVsbG8=" },
 		{ "7-BiT;suffix", GMIME_CONTENT_ENCODING_7BIT, "SGVsbG8=" },
-		{ "\302\2408-bIt\343\200\200suffix", GMIME_CONTENT_ENCODING_8BIT, "SGVsbG8=" }
+		{ "\302\2408-bIt\343\200\200suffix", GMIME_CONTENT_ENCODING_UNSPECIFIED, "SGVsbG8=" }
 	};
 	GMimeStream *source, *decoded;
 	GMimeParser *parser;
@@ -839,6 +876,7 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("Content-Transfer-Encoding");
 	test_content_encoding_mappings ();
+	test_content_encoding_whitespace ();
 	test_content_encoding_bounds ();
 	test_content_encoding_parser ();
 	test_codec_filter_copies ();

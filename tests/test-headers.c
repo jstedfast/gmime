@@ -715,9 +715,10 @@ test_address_name_normalization (void)
 	} cases[] = {
 		{ NULL, NULL },
 		{ "", "" },
-		{ " \tJohn Smith\302\240 ", "John Smith" },
+		{ " \tJohn Smith\302\240 ", "John Smith\302\240" },
 		{ "  Jane Smith  ", "Jane Smith" },
-		{ " \t\v\f\r\n\302\205 ", "" },
+		{ " \t\v\f\r\n\302\205 ", "\v\f\r\n\302\205" },
+		{ " \t\r\n ", "" },
 		{ " \tFirst\t  Last \t", "First\t  Last" },
 		{ " \303\251mile \360\237\230\200 ", "\303\251mile \360\237\230\200" },
 		{ " \342\200\213 Name \342\200\213 ", "\342\200\213 Name \342\200\213" }
@@ -740,10 +741,17 @@ test_address_name_normalization (void)
 		test_address_name_case (cases[i].name, cases[i].expected);
 	for (space = 0; space < 2; space++) {
 		for (i = 0; i < (space ? G_N_ELEMENTS (whitespace) : G_N_ELEMENTS (non_whitespace)); i++) {
-			utf8[g_unichar_to_utf8 (space ? whitespace[i] : non_whitespace[i], utf8)] = '\0';
-			test_address_name_case (utf8, space ? "" : utf8);
+			gunichar c = space ? whitespace[i] : non_whitespace[i];
+			gboolean trim = c == ' ' || c == '\t' || c == '\r' || c == '\n';
+			char *padded;
+
+			utf8[g_unichar_to_utf8 (c, utf8)] = '\0';
+			test_address_name_case (utf8, trim ? "" : utf8);
 			name = g_strconcat (utf8, "First\t Last", utf8, NULL);
-			test_address_name_case (name, space ? "First\t Last" : name);
+			test_address_name_case (name, trim ? "First\t Last" : name);
+			padded = g_strconcat (" \t", name, "\r\n", NULL);
+			test_address_name_case (padded, trim ? "First\t Last" : name);
+			g_free (padded);
 			g_free (name);
 		}
 	}
@@ -773,6 +781,8 @@ test_address_name_sync (void)
 	guint nested;
 
 	for (nested = 0; nested < 2; nested++) {
+		char *snapshot = NULL;
+
 		message = g_mime_message_new (FALSE);
 		g_mime_entity_set_header (GMIME_ENTITY (message), "To", "", NULL);
 		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (message)), "To");
@@ -786,27 +796,38 @@ test_address_name_sync (void)
 
 		testsuite_check ("normalized address name header synchronization[%u]", nested);
 		try {
-			g_mime_internet_address_set_name (address, " \tOld\302\240 ");
+			g_mime_internet_address_set_name (address, " \tOld\r\n ");
 			if (group)
-				g_mime_internet_address_set_name (group, "\302\205Team\v");
+				g_mime_internet_address_set_name (group, " \tTeam\r\n");
 			if (g_strcmp0 (testsuite_header_raw_text (header), raw[nested]))
 				throw (exception_new ("equivalent name regenerated the raw header"));
 			g_mime_internet_address_set_name (address, g_mime_internet_address_get_name (address));
 			if (g_strcmp0 (testsuite_header_raw_text (header), raw[nested]))
 				throw (exception_new ("self-assignment regenerated the raw header"));
-			g_mime_internet_address_set_name (address, " \tNew\302\240 ");
+			g_mime_internet_address_set_name (address, " \tNew\r\n ");
 			if (g_strcmp0 (testsuite_header_raw_text (header), nested ?
 				       " Team: New <user@example.com>;\n" : " New <user@example.com>\n"))
 				throw (exception_new ("normalized name change did not update the raw header"));
 			if (group) {
-				g_mime_internet_address_set_name (group, " \t\302\240 ");
+				g_mime_internet_address_set_name (group, " \t\r\n ");
 				if (g_strcmp0 (testsuite_header_raw_text (header), " \"\": New <user@example.com>;\n"))
 					throw (exception_new ("whitespace-only group name did not update the raw header"));
 			}
+			snapshot = g_strdup (testsuite_header_raw_text (header));
+			g_mime_internet_address_set_name (address, " \tNew\302\240 ");
+			if (g_strcmp0 (g_mime_internet_address_get_name (address), "New\302\240") ||
+			    !strcmp (testsuite_header_raw_text (header), snapshot))
+				throw (exception_new ("Unicode name padding did not update the name and raw header"));
+			g_free (snapshot);
+			snapshot = g_strdup (testsuite_header_raw_text (header));
+			g_mime_internet_address_set_name (address, " \tNew\302\240\r\n");
+			if (g_strcmp0 (testsuite_header_raw_text (header), snapshot))
+				throw (exception_new ("equivalent Unicode name regenerated the raw header"));
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("%s", ex->message);
 		} finally;
+		g_free (snapshot);
 		g_object_unref (message);
 	}
 }
@@ -895,7 +916,7 @@ test_domainless_mailbox_formatting (void)
 static void
 test_unnamed_group_formatting (void)
 {
-	static const char *names[] = { NULL, "", "  ", "\t\302\240 " };
+	static const char *names[] = { NULL, "", "  ", "\t\r\n " };
 	static const char *addresses[] = { NULL, "a@example.com", "local" };
 	GMimeParserOptions *options = g_mime_parser_options_new ();
 	GMimeInternetAddressList *list, *parsed, *members;

@@ -292,8 +292,9 @@ g_mime_domain_list_set_domain (GMimeDomainList *list, int index, const char *dom
  * @options: (nullable): formatting options
  * @encode: whether to encode international domain names
  *
- * Empty and Unicode-whitespace-only entries are omitted. Other entries are
- * preserved, prefixed with '@', and separated by commas.
+ * Empty and ASCII-linear-whitespace-only entries (SP, HTAB, CR and LF) are
+ * omitted. Other entries are preserved, prefixed with '@', and separated
+ * by commas.
  *
  * Returns: (transfer full): the formatted source route, without a colon.
  **/
@@ -312,13 +313,16 @@ g_mime_domain_list_to_string (GMimeDomainList *list, GMimeFormatOptions *options
 		char *ascii;
 
 		domain = list->array->pdata[i];
-		for (p = domain; *p && _g_mime_is_unicode_whitespace (g_utf8_get_char (p)); p = g_utf8_next_char (p))
-			;
+
+		p = domain;
+		skip_lwsp (&p);
+
 		if (!*p)
 			continue;
 
 		if (str->len)
 			g_string_append_c (str, ',');
+
 		g_string_append_c (str, '@');
 		ascii = idn ? _g_mime_internet_address_encode_domain (domain) : g_strdup (domain);
 		g_string_append (str, ascii);

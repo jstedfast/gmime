@@ -124,36 +124,19 @@ g_mime_strdup_trim (const char *str)
 }
 
 gboolean
-_g_mime_is_unicode_whitespace (gunichar c)
+_g_mime_is_valid_boundary (const char *boundary)
 {
-	/* Unlike .NET, GLib does not classify VT and NEL as whitespace. */
-	return c == '\v' || c == 0x85 || g_unichar_isspace (c);
-}
+	gsize length = strlen (boundary), i;
 
-char *
-_g_mime_strdup_trim_unicode (const char *value)
-{
-	const char *start, *end, *previous;
+	if (!length || length > 70 || boundary[length - 1] == ' ')
+		return FALSE;
 
-	if (!value)
-		return NULL;
-
-	start = value;
-
-	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
-		start = g_utf8_next_char (start);
-
-	end = start + strlen (start);
-
-	while (end > start) {
-		previous = g_utf8_prev_char (end);
-		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
-			break;
-
-		end = previous;
+	for (i = 0; i < length; i++) {
+		if (!is_bchar (boundary[i]))
+			return FALSE;
 	}
 
-	return g_strndup (start, end - start);
+	return TRUE;
 }
 
 gboolean
@@ -163,13 +146,17 @@ _g_mime_strcase_equal_trimmed (const char *value, const char *token)
 
 	if (!value)
 		return FALSE;
-	while (*value && _g_mime_is_unicode_whitespace (g_utf8_get_char (value)))
-		value = g_utf8_next_char (value);
+
+	while (*value && is_lwsp (*value))
+		value++;
+
 	if (g_ascii_strncasecmp (value, token, length))
 		return FALSE;
+
 	value += length;
-	while (*value && _g_mime_is_unicode_whitespace (g_utf8_get_char (value)))
-		value = g_utf8_next_char (value);
+
+	while (*value && is_lwsp (*value))
+		value++;
 
 	return *value == '\0';
 }

@@ -55,14 +55,14 @@ test_domains (void)
 
 	g_mime_domain_list_add (list, "First.EXAMPLE");
 	g_mime_domain_list_add (list, "");
-	g_mime_domain_list_add (list, "\v\302\205\342\200\203");
+	g_mime_domain_list_add (list, " \t\r\n");
 	g_mime_domain_list_add (list, "m\303\274nich.example");
 	g_mime_domain_list_add (list, "[IPv6:::1]");
 	check (g_mime_domain_list_length (list) == 5, "domain collection preserves empty entries");
 	check (g_mime_domain_list_contains (list, "First.EXAMPLE") &&
 	       !g_mime_domain_list_contains (list, "first.example"), "domain lookup is case-sensitive");
 	check_string (g_mime_domain_list_to_string (list, NULL, FALSE),
-		      "@First.EXAMPLE,@m\303\274nich.example,@[IPv6:::1]", "display routes omit Unicode whitespace");
+		      "@First.EXAMPLE,@m\303\274nich.example,@[IPv6:::1]", "display routes omit linear whitespace");
 	check_string (g_mime_domain_list_to_string (list, NULL, TRUE),
 		      "@First.EXAMPLE,@xn--mnich-kva.example,@[IPv6:::1]", "transport routes encode only domain names");
 	g_mime_format_options_set_allow_international (options, TRUE);
@@ -87,7 +87,7 @@ test_domains (void)
 	g_object_unref (clone);
 	g_object_unref (list);
 
-	parsed = g_mime_domain_list_parse ("(route) @one.example,,, (next) @xn--mnich-kva.example", -1, &error);
+	parsed = g_mime_domain_list_parse ("(route)\r\n @one.example,,, \t(next) @xn--mnich-kva.example\r\n", -1, &error);
 	check (parsed != NULL && error == NULL, "parse source-route domains and empty comma entries");
 	if (parsed) {
 		check_string (g_mime_domain_list_to_string (parsed, NULL, FALSE),
@@ -104,9 +104,109 @@ test_domains (void)
 	check (parsed == NULL && error != NULL, "domain parser rejects trailing mailbox colon");
 	g_clear_error (&error);
 	parsed = g_mime_domain_list_parse ("@\342\200\210", -1, &error);
-	check (parsed && !g_mime_domain_list_length (parsed) && error == NULL,
-	       "parsed routes omit Unicode whitespace-only domains");
+	check (parsed && g_mime_domain_list_length (parsed) == 1 && error == NULL &&
+	       !strcmp (g_mime_domain_list_get_domain (parsed, 0), "\342\200\210"),
+	       "parsed routes retain Unicode whitespace-only domains");
 	g_clear_object (&parsed);
+}
+
+static void
+test_domain_whitespace (void)
+{
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeDomainList *list = g_mime_domain_list_new ();
+	guint i, padded, format;
+
+	g_mime_domain_list_add (list, "first.example");
+	g_mime_domain_list_add (list, "");
+	g_mime_domain_list_add (list, "last.example");
+	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		GMimeInternetAddress *address;
+		GMimeDomainList *parsed;
+		GError *error = NULL;
+		char buffer[7] = { 0 };
+		char *text;
+		gboolean lwsp = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+			whitespace[i] == '\r' || whitespace[i] == '\n';
+		gboolean valid = !lwsp && whitespace[i] != '\v' && whitespace[i] != '\f';
+
+		g_unichar_to_utf8 (whitespace[i], buffer);
+		for (padded = 0; padded < 2; padded++) {
+			char *domain = padded ? g_strconcat (" \t", buffer, "\r\n", NULL) : g_strdup (buffer);
+			char *expected = lwsp ? g_strdup ("@first.example,@last.example") :
+				g_strconcat ("@first.example,@", domain, ",@last.example", NULL);
+
+			g_mime_domain_list_set_domain (list, 1, domain);
+			for (format = 0; format < 3; format++) {
+				char *actual;
+
+				g_mime_format_options_set_allow_international (options, format == 2);
+				actual = g_mime_domain_list_to_string (list, options, format != 0);
+				testsuite_check ("Source-route whitespace U+%04X [%u/%u]", whitespace[i], padded, format);
+				if (!strcmp (actual, expected) &&
+				    !strcmp (g_mime_domain_list_get_domain (list, 1), domain))
+					testsuite_check_passed ();
+				else
+					testsuite_check_failed ("unexpected source route or stored-domain mutation");
+				g_free (actual);
+			}
+			g_free (expected);
+			g_free (domain);
+		}
+
+		text = g_strconcat ("@", buffer, NULL);
+		parsed = g_mime_domain_list_parse (text, -1, &error);
+		testsuite_check ("Source-route parser whitespace U+%04X", whitespace[i]);
+		if (valid ? parsed && error == NULL && g_mime_domain_list_length (parsed) == 1 &&
+		    !strcmp (g_mime_domain_list_get_domain (parsed, 0), buffer) :
+		    parsed == NULL && g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("unexpected parsed domain or error");
+		if (parsed) {
+			check_string (g_mime_domain_list_to_string (parsed, NULL, FALSE), text,
+				      "parsed Unicode-only domains survive display formatting");
+			check_string (g_mime_domain_list_to_string (parsed, NULL, TRUE), text,
+				      "parsed Unicode-only domains survive transport formatting");
+		}
+		g_clear_object (&parsed);
+		g_clear_error (&error);
+		g_free (text);
+
+		text = g_strconcat ("<@first.example,@", buffer, ",@last.example:user@example.com>", NULL);
+		address = g_mime_mailbox_address_parse (NULL, text, -1, &error);
+		parsed = address ? g_mime_mailbox_address_get_route (GMIME_MAILBOX_ADDRESS (address)) : NULL;
+		testsuite_check ("Mailbox source-route parser whitespace U+%04X", whitespace[i]);
+		if (valid ? parsed && error == NULL && g_mime_domain_list_length (parsed) == 3 &&
+		    !strcmp (g_mime_domain_list_get_domain (parsed, 1), buffer) :
+		    address == NULL && g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("unexpected mailbox route or error");
+		if (address) {
+			check_string (g_mime_internet_address_to_string (address, NULL, FALSE), text,
+				      "mailbox display formatting retains Unicode-only route domains");
+			check_string (g_mime_internet_address_to_string (address, NULL, TRUE), text,
+				      "mailbox transport formatting retains Unicode-only route domains");
+		}
+		g_clear_object (&address);
+		g_clear_error (&error);
+		g_free (text);
+	}
+	g_mime_domain_list_set_domain (list, 1, " \tKeep.EXAMPLE\r\n");
+	for (format = 0; format < 3; format++) {
+		g_mime_format_options_set_allow_international (options, format == 2);
+		check_string (g_mime_domain_list_to_string (list, options, format != 0),
+			      "@first.example,@ \tKeep.EXAMPLE\r\n,@last.example",
+			      "formatting does not trim nonblank domains");
+	}
+	g_object_unref (list);
+	g_mime_format_options_free (options);
 }
 
 static void
@@ -132,10 +232,10 @@ test_mailboxes (void)
 	check (!strcmp (g_mime_mailbox_address_get_raw_domain (mailbox), "xn--mnich-kva.example"), "stored mailbox domain");
 	check (!g_mime_mailbox_address_is_international (mailbox), "an ASCII A-label is not international");
 	check_string (g_mime_internet_address_to_string (ia, NULL, FALSE),
-		      "J\303\266rg <\"local@part\"@xn--mnich-kva.example>", "display mailbox preserves A-labels");
+		      "\302\240J\303\266rg <\"local@part\"@xn--mnich-kva.example>", "display mailbox preserves Unicode name padding and A-labels");
 	g_mime_format_options_set_allow_international (options, TRUE);
 	check_string (g_mime_internet_address_to_string (ia, options, TRUE),
-		      "J\303\266rg <\"local@part\"@xn--mnich-kva.example>", "international mailbox transport preserves A-labels");
+		      "\302\240J\303\266rg <\"local@part\"@xn--mnich-kva.example>", "international mailbox transport preserves Unicode name padding and A-labels");
 	raw = g_mime_mailbox_address_get_addrspec (mailbox);
 	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
 		check (!g_mime_mailbox_address_set_addrspec (mailbox, invalid[i], &error) &&
@@ -651,6 +751,7 @@ main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	testsuite_start ("address models and checked parsing");
 	test_domains ();
+	test_domain_whitespace ();
 	test_mailboxes ();
 	test_idn_accessors ();
 	test_values ();

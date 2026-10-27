@@ -36,6 +36,7 @@ enum {
 #define CHARS_ESPECIAL "()<>@,;:\"/[]?.=_" /* encoded word specials (rfc2047 5.1) */
 #define CHARS_PSPECIAL "!*+-/=_"           /* encoded phrase specials (rfc2047 5.3) */
 #define CHARS_ATTRCHAR "*'% "              /* attribute-char from rfc2184 */
+#define CHARS_BCHAR "'()+_,-./:=? "        /* boundary chars from rfc2046 */
 
 static unsigned short gmime_special_table[256];
 
@@ -49,11 +50,12 @@ enum {
 	IS_QPSAFE	= (1 << 6),
 	IS_ESAFE	= (1 << 7),  /* encoded word safe */
 	IS_PSAFE	= (1 << 8),  /* encoded word in phrase safe */
-	IS_ATTRCHAR     = (1 << 9),  /* attribute-char from rfc2184 */
+	IS_ATTRCHAR = (1 << 9),  /* attribute-char from rfc2184 */
+	IS_BCHAR    = (1 << 10), /* boundary chars from rfc2046 */
 	
 	/* ctype replacements */
-	IS_ASCII        = (1 << 10), /* ascii */
-	IS_BLANK        = (1 << 11), /* space or tab */
+	IS_ASCII    = (1 << 11), /* ascii */
+	IS_BLANK    = (1 << 12), /* space or tab */
 };
 
 #define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)
@@ -68,6 +70,7 @@ enum {
 #define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)
 #define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
 #define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)
+#define is_bchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_BCHAR) != 0)
 
 /* ctype replacements */
 #define is_ascii(x) ((gmime_special_table[(unsigned char)(x)] & IS_ASCII) != 0)
@@ -126,7 +129,7 @@ header_decode_init (void)
 		if ((i >= 33 && i <= 60) || (i >= 62 && i <= 126) || i == 32)
 			gmime_special_table[i] |= (IS_QPSAFE | IS_ESAFE);
 		if ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
-			gmime_special_table[i] |= IS_PSAFE;
+			gmime_special_table[i] |= IS_PSAFE | IS_BCHAR;
 		if (isascii (i))
 			gmime_special_table[i] |= IS_ASCII;
 	}
@@ -140,6 +143,7 @@ header_decode_init (void)
 	header_remove_bits (IS_ESAFE, CHARS_ESPECIAL);
 	header_remove_bits (IS_ATTRCHAR, CHARS_TSPECIAL CHARS_ATTRCHAR);
 	header_init_bits (IS_PSAFE, 0, FALSE, CHARS_PSPECIAL);
+	header_init_bits (IS_BCHAR, 0, FALSE, CHARS_BCHAR);
 }
 
 int main (int argc, char **argv)
@@ -172,10 +176,11 @@ int main (int argc, char **argv)
 	printf ("\tIS_ESAFE    = (1 << 7),  /* encoded word safe */\n");
 	printf ("\tIS_PSAFE    = (1 << 8),  /* encode word in phrase safe */\n");
 	printf ("\tIS_ATTRCHAR = (1 << 9),  /* attribute-char from rfc2184 */\n");
+	printf ("\tIS_BCHAR    = (1 << 10), /* boundary chars from rfc2046 */\n");
 	printf ("\t\n");
 	printf ("\t/* ctype replacements */\n");
-	printf ("\tIS_ASCII    = (1 << 10), /* ascii */\n");
-	printf ("\tIS_BLANK    = (1 << 11), /* space or tab */\n");
+	printf ("\tIS_ASCII    = (1 << 11), /* ascii */\n");
+	printf ("\tIS_BLANK    = (1 << 12), /* space or tab */\n");
 	printf ("};\n\n");
 	
 	printf ("#define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)\n");
@@ -191,6 +196,7 @@ int main (int argc, char **argv)
 	printf ("#define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)\n");
 	printf ("#define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)\n");
 	printf ("#define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)\n");
+	printf ("#define is_bchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_BCHAR) != 0)\n");
 	printf ("\n");
 	printf ("/* ctype replacements */\n");
 	printf ("#define is_ascii(x) ((gmime_special_table[(unsigned char)(x)] & IS_ASCII) != 0)\n");
@@ -205,6 +211,7 @@ int main (int argc, char **argv)
 	printf ("#define CHARS_ESPECIAL \"()<>@,;:\\\"/[]?.=_\" /* encoded word specials (rfc2047 5.1) */\n");
 	printf ("#define CHARS_PSPECIAL \"!*+-/=_\"           /* encoded phrase specials (rfc2047 5.3) */\n");
 	printf ("#define CHARS_ATTRCHAR \"*'%% \"              /* attribute-char from rfc2184 */\n");
+	printf ("#define CHARS_BCHAR \"'()+_,-./:=? \"        /* boundary chars from rfc2046 */\n");
 	printf ("\n");
 	
 	printf ("#define GMIME_FOLD_LEN 78\n");

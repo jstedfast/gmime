@@ -741,8 +741,8 @@ typedef enum {
 GMimeDomainList *
 _g_mime_domain_list_parse (const char **in)
 {
-	const char *inptr = *in;
 	GMimeDomainList *route = g_mime_domain_list_new ();
+	const char *inptr = *in;
 
 	if (!skip_cfws (&inptr) || *inptr != '@')
 		goto error;
@@ -750,27 +750,24 @@ _g_mime_domain_list_parse (const char **in)
 	do {
 		GString *domain = g_string_new (NULL);
 		gboolean valid;
-		const char *p;
 
 		inptr++;
 		valid = _g_mime_parse_domain (domain, &inptr, ",:");
+
 		if (!valid) {
 			g_string_free (domain, TRUE);
 			goto error;
 		}
-		/* Non-ASCII whitespace can parse as a domain, but formatting omits it. */
-		for (p = domain->str; *p && _g_mime_is_unicode_whitespace (g_utf8_get_char (p)); p = g_utf8_next_char (p))
-			;
-		if (*p)
-			g_ptr_array_add (route->array, g_string_free (domain, FALSE));
-		else
-			g_string_free (domain, TRUE);
+
+		g_ptr_array_add (route->array, g_string_free (domain, FALSE));
 
 		if (!skip_cfws (&inptr))
 			goto error;
+
 		/* The obsolete source-route grammar permits null domains between commas. */
 		while (*inptr == ',') {
 			inptr++;
+
 			if (!skip_cfws (&inptr))
 				goto error;
 		}

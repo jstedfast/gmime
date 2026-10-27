@@ -566,10 +566,10 @@ g_mime_header_parse_text (GMimeParserOptions *options, const char *text, GError 
  * g_mime_header_unfold:
  * @text: (nullable): a NUL-terminated UTF-8 header value
  *
- * Unfolds decoded header text for display, following MimeKit's
- * Header.Unfold(). Leading and trailing Unicode whitespace is removed;
- * internal whitespace is preserved except that all CR and LF characters
- * are removed. A %NULL input produces an empty string.
+ * Unfolds decoded header text for display. Leading and trailing linear
+ * whitespace (SP, HTAB, CR and LF) is removed; other whitespace is retained.
+ * All CR and LF characters are removed, including internal ones.
+ * A %NULL input produces an empty string.
  *
  * This does not decode RFC 2047 encoded words. Use the header value getters
  * to decode raw header bytes before unfolding.
@@ -587,24 +587,20 @@ g_mime_header_unfold (const char *text)
 
 	g_return_val_if_fail (g_utf8_validate (text, -1, NULL), NULL);
 
-	inptr = text;
-	while (*inptr && _g_mime_is_unicode_whitespace (g_utf8_get_char (inptr)))
-		inptr = g_utf8_next_char (inptr);
+	start = text;
+	skip_lwsp (&start);
 
-	start = end = inptr;
-	while (*inptr) {
-		gunichar c = g_utf8_get_char (inptr);
-
-		inptr = g_utf8_next_char (inptr);
-		if (!_g_mime_is_unicode_whitespace (c))
-			end = inptr;
-	}
+	end = start + strlen (start);
+	while (end > start && is_lwsp (end[-1]))
+		end--;
 
 	outptr = unfolded = g_malloc (end - start + 1);
+
 	for (inptr = start; inptr < end; inptr++) {
 		if (*inptr != '\r' && *inptr != '\n')
 			*outptr++ = *inptr;
 	}
+
 	*outptr = '\0';
 
 	return unfolded;
@@ -618,7 +614,7 @@ g_mime_header_unfold (const char *text)
  * @charset: (nullable): the encoding charset, or %NULL for UTF-8
  *
  * Creates a standalone header, preserving field-name case. Leading and
- * trailing Unicode whitespace is trimmed and CR/LF characters are removed
+ * trailing linear whitespace is trimmed and CR/LF characters are removed
  * from @value before formatting. The header owns its strings and an
  * independent copy of the default parser options and has no stream offset.
  *
@@ -829,7 +825,7 @@ g_mime_header_get_name (GMimeHeader *header)
  * g_mime_header_get_value:
  * @header: a #GMimeHeader
  *
- * Gets the header's unfolded value, trimming leading and trailing Unicode
+ * Gets the header's unfolded value, trimming leading and trailing linear
  * whitespace as in g_mime_header_unfold(). Literal and decoded NUL characters
  * are replaced with the Unicode replacement character U+FFFD.
  *
@@ -863,7 +859,7 @@ g_mime_header_get_value (GMimeHeader *header)
  * Decodes and unfolds the stored raw value using a copy of the header's
  * parser options with @charset as the fallback for undeclared 8-bit text.
  * Valid UTF-8 takes priority, and supported RFC 2047 declarations are
- * honored. Leading and trailing Unicode whitespace is removed.
+ * honored. Leading and trailing linear whitespace is removed.
  *
  * The result is newly allocated, even if the decoded value was already
  * cached. The header's options, cache, raw bytes and formatting state are
@@ -1051,7 +1047,7 @@ header_format_value_full (GMimeHeader *header, GMimeFormatOptions *options, cons
  * @charset: (nullable): the encoding charset, or %NULL for UTF-8
  * @error: return location for an error, or %NULL
  *
- * Trims leading and trailing Unicode whitespace, removes CR/LF characters,
+ * Trims leading and trailing linear whitespace, removes CR/LF characters,
  * and formats @value before replacing the header's state. Invalid UTF-8
  * and unsupported charsets produce %G_CONVERT_ERROR. Content-Type and
  * Content-Disposition use the checked parsers and report %GMIME_ERROR

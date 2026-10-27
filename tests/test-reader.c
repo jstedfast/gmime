@@ -942,6 +942,14 @@ test_binary_transfer_encoding (void)
 		{ "\0base64", sizeof ("\0base64") - 1, FALSE },
 		{ "base64 \0x", sizeof ("base64 \0x") - 1, TRUE },
 		{ "base64;\0x", sizeof ("base64;\0x") - 1, TRUE },
+		{ "\tbase64", sizeof ("\tbase64") - 1, TRUE },
+		{ "base64\tx", sizeof ("base64\tx") - 1, TRUE },
+		{ "\vbase64", sizeof ("\vbase64") - 1, FALSE },
+		{ "base64\f", sizeof ("base64\f") - 1, FALSE },
+		{ "\302\240base64", sizeof ("\302\240base64") - 1, FALSE },
+		{ "base64\343\200\200x", sizeof ("base64\343\200\200x") - 1, FALSE },
+		{ "base64\302", sizeof ("base64\302") - 1, FALSE },
+		{ "base64;\377", sizeof ("base64;\377") - 1, TRUE },
 	};
 	guint i, j;
 

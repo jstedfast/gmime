@@ -203,13 +203,16 @@ g_mime_message_id_list_add_range (GMimeMessageIdList *list, const char * const *
 	g_return_if_fail (length <= G_MAXINT && list->array->len <= G_MAXINT - length);
 
 	ids = g_ptr_array_new_with_free_func (g_free);
+
 	for (i = 0; i < length; i++) {
 		id = message_ids[i] ? _g_mime_parse_message_id_value (message_ids[i]) : NULL;
+
 		if (!id) {
 			g_ptr_array_unref (ids);
 			g_return_if_fail (id != NULL);
 			return;
 		}
+
 		g_ptr_array_add (ids, id);
 	}
 

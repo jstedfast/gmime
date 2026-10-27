@@ -367,11 +367,11 @@ test_address_name_whitespace (GMimeParserOptions *options)
 		{ "\"  John Smith  \" <user@example.com>", "John Smith" },
 		{ "\" =?utf-8?q?John_Smith?= \" <user@example.com>", "John Smith" },
 		{ "user@example.com (  John Smith  )", "John Smith" },
-		{ "\"\302\240John Smith\342\200\203\" <user@example.com>", "John Smith" },
-		{ "user@example.com (\302\240John Smith\342\200\203)", "John Smith" },
-		{ "\"=?utf-8?q?=C2=85John=09Smith=C2=A0?=\" <user@example.com>", "John\tSmith" },
-		{ "\"\342\200\203Group\342\200\203\": user@example.com;", "Group" },
-		{ "\"\302\240\": user@example.com;", "" }
+		{ "\"\302\240John Smith\342\200\203\" <user@example.com>", "\302\240John Smith\342\200\203" },
+		{ "user@example.com (\302\240John Smith\342\200\203)", "\302\240John Smith\342\200\203" },
+		{ "\"=?utf-8?q?=C2=85John=09Smith=C2=A0?=\" <user@example.com>", "\302\205John\tSmith\302\240" },
+		{ "\"\342\200\203Group\342\200\203\": user@example.com;", "\342\200\203Group\342\200\203" },
+		{ "\"\302\240\": user@example.com;", "\302\240" }
 	};
 	GMimeParserOptions *parser = g_mime_parser_options_clone (options);
 	GMimeInternetAddressList *addresses;

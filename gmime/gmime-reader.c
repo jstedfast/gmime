@@ -30,6 +30,7 @@
 #include "gmime-stream-block.h"
 #include "gmime-encodings.h"
 #include "gmime-error.h"
+#include "gmime-common.h"
 #include "gmime-internal.h"
 #include "gmime-parse-utils.h"
 #include "gmime-encoding-validator-private.h"
@@ -2007,22 +2008,6 @@ read_child_headers (GMimeReader *reader, EntityFrame *parent, gboolean message)
 }
 
 static gboolean
-valid_boundary (const char *boundary)
-{
-	gsize length = strlen (boundary), i;
-
-	if (!length || length > 70 || boundary[length - 1] == ' ')
-		return FALSE;
-
-	for (i = 0; i < length; i++) {
-		if (!g_ascii_isalnum (boundary[i]) && !strchr ("'()+_,-./:=? ", boundary[i]))
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
-static gboolean
 step_entity (GMimeReader *reader, gboolean message)
 {
 	GMimeReaderPrivate *priv = reader->priv;
@@ -2085,7 +2070,7 @@ step_entity (GMimeReader *reader, gboolean message)
 
 				frame->state = FRAME_END;
 			} else if (frame->type == GMIME_READER_ENTITY_MULTIPART) {
-				if (priv->active_logger && (!frame->boundary || !valid_boundary (frame->boundary)))
+				if (priv->active_logger && (!frame->boundary || !_g_mime_is_valid_boundary (frame->boundary)))
 					report_at (reader, frame->boundary ? GMIME_COMPLIANCE_INVALID_MULTIPART_BOUNDARY_PARAMETER :
 						   GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY_PARAMETER,
 						   frame->type_offset, frame->type_line, 1, GMIME_COMPLIANCE_POSITION_ELEMENT_START);

@@ -1065,10 +1065,12 @@ g_mime_entity_set_content_id (GMimeEntity *object, const char *content_id)
 	object->content_id = id;
 	
 	_g_mime_entity_block_header_list_changed (object);
+
 	if (msgid)
 		g_mime_header_list_set (object->headers, "Content-Id", msgid, NULL);
 	else
 		g_mime_header_list_remove_all (object->headers, "Content-Id");
+
 	_g_mime_entity_unblock_header_list_changed (object);
 	g_free (msgid);
 }
@@ -1112,21 +1114,13 @@ static void
 load_content_uri (GMimeEntity *object, const char *name, char **cache, gboolean absolute)
 {
 	GMimeHeader *header;
-	const char *value, *end, *previous;
+	const char *value;
 	char *uri;
 
 	header = g_mime_header_list_get_header (object->headers, name);
-	if (header && (value = g_mime_header_get_value (header)) && g_utf8_validate (value, -1, NULL)) {
-		while (*value && _g_mime_is_unicode_whitespace (g_utf8_get_char (value)))
-			value = g_utf8_next_char (value);
-		end = value + strlen (value);
-		while (end > value) {
-			previous = g_utf8_find_prev_char (value, end);
-			if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
-				break;
-			end = previous;
-		}
-		uri = g_strndup (value, end - value);
+	if (header && (value = g_mime_header_get_value (header))) {
+		uri = g_mime_strdup_trim (value);
+
 		if (_g_mime_is_content_uri (uri, absolute))
 			*cache = uri;
 		else
@@ -1144,10 +1138,12 @@ set_content_uri (GMimeEntity *object, const char *name, const char *uri, char **
 	*cache = copy;
 
 	_g_mime_entity_block_header_list_changed (object);
+
 	if (copy)
 		g_mime_header_list_set (object->headers, name, copy, NULL);
 	else
 		g_mime_header_list_remove_all (object->headers, name);
+
 	_g_mime_entity_unblock_header_list_changed (object);
 }
 
@@ -1182,8 +1178,9 @@ g_mime_entity_set_content_base (GMimeEntity *object, const char *uri)
  * g_mime_entity_get_content_base:
  * @object: a #GMimeEntity
  *
- * Gets the absolute URI from the first Content-Base header, trimming Unicode
- * whitespace. Invalid or relative values return %NULL without falling back
+ * Gets the absolute URI from the first Content-Base header. After header
+ * decoding, only surrounding ASCII linear whitespace (SP, HTAB, CR and LF)
+ * is trimmed. Invalid or relative values return %NULL without falling back
  * to later duplicates. Reads preserve raw headers; matching header edits
  * invalidate the cached value.
  *

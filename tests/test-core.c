@@ -1704,7 +1704,13 @@ test_message_id_assignment (void)
 		{ "local@host", "local@host" },
 		{ "<local@host>", "local@host" },
 		{ " \t<local@@host> (comment)\r\n", "local@host" },
-		{ "\v\302\205<local@host>\302\240\342\200\203", "local@host" },
+		{ "\v\302\205<local@host>\302\240\342\200\203", NULL },
+		{ "\f<local@host>\f", NULL },
+		{ "\302\240<local@host>", NULL },
+		{ "<local@host>\342\200\203", NULL },
+		{ "\302\240local@host\342\200\203", "\302\240local@host\342\200\203" },
+		{ " \t\302\240local@host\342\200\203\r\n", "\302\240local@host\342\200\203" },
+		{ "\302\205", "\302\205" },
 		{ "\r\nlocal@host\r\n", "local@host" },
 		{ "< local . part @ (comment) host. >", "local.part@host" },
 		{ "local-part", "local-part" },
@@ -2005,6 +2011,57 @@ test_message_reply_ids (void)
 	g_object_unref (message);
 	g_object_unref (parser);
 	g_object_unref (stream);
+}
+
+static void
+test_message_id_whitespace (void)
+{
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
+	GMimeMessageIdList *list = g_mime_message_id_list_new ();
+	guint i, bracketed, edge;
+
+	g_mime_message_id_list_add (list, "initial@host");
+	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		char buffer[7] = { 0 };
+		gboolean lwsp = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+			whitespace[i] == '\r' || whitespace[i] == '\n';
+
+		g_unichar_to_utf8 (whitespace[i], buffer);
+		for (bracketed = 0; bracketed < 2; bracketed++) {
+			for (edge = 0; edge < 3; edge++) {
+				char *value = g_strconcat (edge != 1 ? buffer : "",
+							  bracketed ? "<local@host>" : "local@host",
+							  edge != 0 ? buffer : "", NULL);
+				char *input = g_strconcat (" \t\r\n", value, "\r\n\t ", NULL);
+				const char *expected = lwsp ? "local@host" : NULL;
+
+				/* Bare local-parts tolerate controls; domain atoms do not. */
+				if (!lwsp && !bracketed && (whitespace[i] >= 0x80 || edge == 0))
+					expected = value;
+
+				g_mime_message_id_list_set_message_id (list, 0, "initial@host");
+				if (!expected)
+					g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*id != NULL*");
+				g_mime_message_id_list_set_message_id (list, 0, input);
+				if (!expected)
+					g_test_assert_expected_messages ();
+				testsuite_check ("Message-ID whitespace U+%04X [%u/%u]", whitespace[i], bracketed, edge);
+				if (g_mime_message_id_list_length (list) == 1 &&
+				    !g_strcmp0 (g_mime_message_id_list_get_message_id (list, 0),
+						expected ? expected : "initial@host"))
+					testsuite_check_passed ();
+				else
+					testsuite_check_failed ("unexpected normalization or mutation of a rejected ID");
+				g_free (input);
+				g_free (value);
+			}
+		}
+	}
+	g_object_unref (list);
 }
 
 static void
@@ -3015,6 +3072,11 @@ test_message_recipients (void)
 static void
 test_part_content_duration (void)
 {
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
 	static const struct {
 		const char *raw;
 		int duration;
@@ -3023,7 +3085,7 @@ test_part_content_duration (void)
 		{ " \r\n\t\n", -1 },
 		{ " 0\r\n", 0 },
 		{ " 000007 \t\r\n", 7 },
-		{ " \t\v\f42\r\n", 42 },
+		{ " \t\v\f42\r\n", -1 },
 		{ " 2147483647\n", G_MAXINT32 },
 		{ " 00000000002147483647\n", G_MAXINT32 },
 		{ " 2147483648\n", -1 },
@@ -3035,10 +3097,10 @@ test_part_content_duration (void)
 		{ " 7.0\n", -1 },
 		{ " 7 0\n", -1 },
 		{ " 0x7\n", -1 },
-		{ " \302\2407\n", 7 },
-		{ " 7\302\240\n", 7 },
-		{ " \302\2057\n", 7 },
-		{ " \342\200\2037\n", 7 },
+		{ " \302\2407\n", -1 },
+		{ " 7\302\240\n", -1 },
+		{ " \302\2057\n", -1 },
+		{ " \342\200\2037\n", -1 },
 		{ " 7\302\2400\n", -1 },
 		{ " \357\274\227\n", -1 },
 		{ " =?us-ascii?q?7?=\n", 7 }
@@ -3051,7 +3113,39 @@ test_part_content_duration (void)
 	GMimeParser *parser;
 	GError *error = NULL;
 	char *wire;
-	guint i;
+	guint i, side, type;
+
+	for (type = 0; type < 2; type++) {
+		part = type ? GMIME_PART (g_mime_text_part_new ()) : g_mime_part_new ();
+		entity = GMIME_ENTITY (part);
+		headers = g_mime_entity_get_header_list (entity);
+		for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+			char buffer[7] = { 0 };
+			int expected = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+				whitespace[i] == '\r' || whitespace[i] == '\n' ? 7 : -1;
+
+			g_unichar_to_utf8 (whitespace[i], buffer);
+			for (side = 0; side < 3; side++) {
+				char *value = g_strconcat (" \t", side != 1 ? buffer : "", "007",
+							  side != 0 ? buffer : "", "\r\n", NULL);
+				char *raw;
+
+				g_mime_header_list_set (headers, "Content-Duration", value, NULL);
+				first = g_mime_header_list_get_header (headers, "Content-Duration");
+				raw = g_strdup (testsuite_header_raw_text (first));
+				testsuite_check ("Decoded Content-Duration whitespace U+%04X [%u/%u]", whitespace[i], type, side);
+				if (g_mime_part_get_content_duration (part) == expected &&
+				    g_mime_part_get_content_duration (part) == expected &&
+				    !strcmp (testsuite_header_raw_text (first), raw))
+					testsuite_check_passed ();
+				else
+					testsuite_check_failed ("unexpected duration or raw-header mutation");
+				g_free (raw);
+				g_free (value);
+			}
+		}
+		g_object_unref (part);
+	}
 
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		part = g_mime_part_new ();
@@ -4071,6 +4165,11 @@ test_multipart_related_resources (void)
 static void
 test_entity_content_uris (void)
 {
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
 	static const struct {
 		const char *value;
 		gboolean absolute;
@@ -4115,7 +4214,7 @@ test_entity_content_uris (void)
 	GMimeStream *stream;
 	GError *error = NULL;
 	char *raw, *wire;
-	guint i, j, k;
+	guint i, j, k, side;
 
 	for (i = 0; i < G_N_ELEMENTS (entities); i++) {
 		entity = entities[i];
@@ -4138,6 +4237,42 @@ test_entity_content_uris (void)
 				check (!g_strcmp0 (testsuite_header_raw_text (first), raw),
 				       "URI reads, cached assignments, and rejected setters preserve raw header spelling");
 				g_free (raw);
+			}
+			for (k = 0; k < G_N_ELEMENTS (whitespace); k++) {
+				char buffer[7] = { 0 };
+				gboolean lwsp = whitespace[k] == ' ' || whitespace[k] == '\t' ||
+					whitespace[k] == '\r' || whitespace[k] == '\n';
+				const char *reference = properties[j].absolute ? uri : "../a.png";
+
+				g_unichar_to_utf8 (whitespace[k], buffer);
+				for (side = 0; side < 3; side++) {
+					char *text = g_strconcat (side != 1 ? buffer : "", reference,
+								 side != 0 ? buffer : "", NULL);
+					char *assignment = g_strconcat (" \t", text, "\r\n", NULL);
+
+					expected = lwsp ? reference : text;
+					if (whitespace[k] == '\v' || whitespace[k] == '\f' ||
+					    (!lwsp && properties[j].absolute && side != 1))
+						expected = NULL;
+					g_mime_header_list_clear (headers);
+					g_mime_header_list_set (headers, properties[j].name, assignment, NULL);
+					first = g_mime_header_list_get_header (headers, properties[j].name);
+					g_mime_header_list_append (headers, properties[j].name, uri, NULL);
+					raw = g_strdup (testsuite_header_raw_text (first));
+					testsuite_check ("Decoded %s whitespace U+%04X [%u/%u]",
+							 properties[j].name, whitespace[k], i, side);
+					if (!g_strcmp0 (properties[j].get (entity), expected) &&
+					    !g_strcmp0 (properties[j].get (entity), expected) &&
+					    !strcmp (testsuite_header_raw_text (first), raw) &&
+					    !strcmp (g_mime_header_get_value (first), assignment) &&
+					    g_mime_header_list_get_count (headers) == 2)
+						testsuite_check_passed ();
+					else
+						testsuite_check_failed ("unexpected URI, duplicate fallback or header mutation");
+					g_free (raw);
+					g_free (assignment);
+					g_free (text);
+				}
 			}
 			g_mime_header_list_clear (headers);
 			g_mime_header_list_append (headers, properties[j].name, "https://host/first", NULL);
@@ -4210,8 +4345,8 @@ test_entity_content_uris (void)
 		check (!g_strcmp0 (g_mime_entity_get_content_base (entity), "https://host/base/"),
 		       "location changes do not invalidate Content-Base");
 		g_mime_entity_set_header (entity, "Content-Location", "\302\240../a.png\342\200\203", NULL);
-		check (!g_strcmp0 (g_mime_entity_get_content_location (entity), "../a.png"),
-		       "URI getters trim surrounding Unicode whitespace");
+		check (!g_strcmp0 (g_mime_entity_get_content_location (entity), "\302\240../a.png\342\200\203"),
+		       "URI getters preserve Unicode whitespace in decoded header values");
 		g_mime_header_list_clear (headers);
 		check (g_mime_entity_get_content_base (entity) == NULL && g_mime_entity_get_content_location (entity) == NULL,
 		       "clearing headers resets both inherited URI caches");
@@ -4760,14 +4895,20 @@ test_header_construction (void)
 	g_object_unref (headers);
 
 	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		gboolean trim = whitespace[i][0] == ' ' || whitespace[i][0] == '\t' ||
+			whitespace[i][0] == '\r' || whitespace[i][0] == '\n';
+
 		text = g_strconcat (whitespace[i], "one\r\n\ttwo", whitespace[i], NULL);
+		expected = g_strconcat (trim ? "" : whitespace[i], "one\ttwo", trim ? "" : whitespace[i], NULL);
 		header = g_mime_header_new ("X-Test", text, NULL);
-		check (!strcmp (g_mime_header_get_value (header), "one\ttwo"),
-		       "standalone construction trims Unicode whitespace");
+		check (!strcmp (g_mime_header_get_value (header), expected),
+		       "standalone construction trims only linear whitespace");
 		g_object_unref (header);
+		g_free (expected);
 		g_free (text);
 		header = g_mime_header_new ("X-Test", whitespace[i], NULL);
-		check (!strcmp (g_mime_header_get_value (header), ""), "whitespace-only values construct an empty header");
+		check (!strcmp (g_mime_header_get_value (header), trim ? "" : whitespace[i]),
+		       "only linear-whitespace-only values construct an empty header");
 		check (testsuite_header_raw_text (header) != NULL, "empty headers have a formatted transport value");
 		g_object_unref (header);
 	}
@@ -5134,13 +5275,15 @@ test_header_unfolding (void)
 	static const struct {
 		const char *input, *expected;
 	} cases[] = {
-		{ NULL, "" }, { "", "" }, { "\r\n \t\v\f", "" },
+		{ NULL, "" }, { "", "" }, { "\r\n \t", "" }, { "\r\n \t\v\f", "\v\f" },
 		{ " \t\r\none\r\n\ttwo\nthree\rfour \t", "one\ttwothreefour" },
-		{ "\302\240one\302\205two\342\200\203", "one\302\205two" },
+		{ "\302\240one\302\205two\342\200\203", "\302\240one\302\205two\342\200\203" },
+		{ " \t\v\r\n ", "\v" },
+		{ " \302\240 one \302\205\t", "\302\240 one \302\205" },
 		{ "\357\273\277value\357\273\277", "\357\273\277value\357\273\277" },
 		{ "\342\200\213value\342\200\213", "\342\200\213value\342\200\213" },
 		{ "\034value\034", "\034value\034" },
-		{ "\vone\vtwo\v", "one\vtwo" },
+		{ "\vone\vtwo\v", "\vone\vtwo\v" },
 		{ " \360\237\230\200\r\nx ", "\360\237\230\200x" },
 		{ " =?utf-8?Q?caf=C3=A9?= ", "=?utf-8?Q?caf=C3=A9?=" }
 	};
@@ -5151,12 +5294,12 @@ test_header_unfolding (void)
 		0x205f, 0x3000
 	};
 	static const char body[] = "one\302\240two\r\nthree";
-	static const char expected[] = "one\302\240twothree";
+	static const char unfolded_body[] = "one\302\240twothree";
 	static const char binary[] = "Subject:\302\240before\0after\302\240\n";
 	GMimeHeader *header, *clone;
 	GError *error = NULL;
 	GBytes *raw;
-	GString *text;
+	GString *text, *expected;
 	char *unfolded, *decoded, *wire;
 	const char *cached;
 	guint i, j, changes;
@@ -5164,7 +5307,7 @@ test_header_unfolding (void)
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		unfolded = g_mime_header_unfold (cases[i].input);
 		check (!strcmp (unfolded, cases[i].expected),
-		       "Unicode header unfolding trims edges, removes only CR/LF internally and does not decode words");
+		       "header unfolding trims only linear whitespace, removes CR/LF and does not decode words");
 		g_free (unfolded);
 	}
 
@@ -5174,8 +5317,15 @@ test_header_unfolding (void)
 			g_string_append_unichar (text, whitespace[i]);
 			g_string_append (text, body);
 			g_string_append_unichar (text, whitespace[j]);
+			expected = g_string_new (NULL);
+			if (whitespace[i] != ' ' && whitespace[i] != '\t' && whitespace[i] != '\r' && whitespace[i] != '\n')
+				g_string_append_unichar (expected, whitespace[i]);
+			g_string_append (expected, unfolded_body);
+			if (whitespace[j] != ' ' && whitespace[j] != '\t' && whitespace[j] != '\r' && whitespace[j] != '\n')
+				g_string_append_unichar (expected, whitespace[j]);
 			unfolded = g_mime_header_unfold (text->str);
-			check (!strcmp (unfolded, expected), "all Unicode whitespace pairs trim without collapsing interior text");
+			check (!strcmp (unfolded, expected->str),
+			       "all whitespace boundary pairs trim only linear whitespace without collapsing interior text");
 			g_free (unfolded);
 			wire = g_strconcat ("Subject:", text->str, NULL);
 			header = g_mime_header_parse_text (NULL, wire, &error);
@@ -5187,30 +5337,31 @@ test_header_unfolding (void)
 			g_mime_event_add (header->changed, count_checked_header_changes, &changes);
 			decoded = g_mime_header_get_value_with_charset (header, "utf-8", &error);
 			g_assert_no_error (error);
-			check (!strcmp (decoded, expected) && header->value == NULL,
-			       "explicit decoded getters unfold Unicode whitespace without populating the cache");
+			check (!strcmp (decoded, expected->str) && header->value == NULL,
+			       "explicit decoded getters trim only linear whitespace without populating the cache");
 			g_free (decoded);
 			cached = g_mime_header_get_value (header);
-			check (!strcmp (cached, expected) && cached == g_mime_header_get_value (header),
-			       "ordinary decoded getters cache the same Unicode unfolding result");
+			check (!strcmp (cached, expected->str) && cached == g_mime_header_get_value (header),
+			       "ordinary decoded getters cache the same unfolding result");
 			check (!changes && g_bytes_equal (header->raw_value, raw),
-			       "Unicode unfolding preserves original raw bytes and sends no change events");
+			       "header unfolding preserves original raw bytes and sends no change events");
 			clone = g_mime_header_clone (header);
 			g_object_unref (header);
-			check (!strcmp (g_mime_header_get_value (clone), expected),
+			check (!strcmp (g_mime_header_get_value (clone), expected->str),
 			       "cloning preserves unfolded Unicode values after the source is released");
 			g_object_unref (clone);
 			g_bytes_unref (raw);
 			header = g_mime_header_new_full ("Subject", text->str, "utf-8", &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (header);
-			check (!strcmp (g_mime_header_get_value (header), expected),
-			       "checked construction reuses Unicode header unfolding");
+			check (!strcmp (g_mime_header_get_value (header), expected->str),
+			       "checked construction reuses linear-whitespace header unfolding");
 			g_assert_true (g_mime_header_set_value_full (header, NULL, text->str, "utf-8", &error));
 			g_assert_no_error (error);
-			check (!strcmp (g_mime_header_get_value (header), expected),
-			       "checked assignment reuses Unicode header unfolding");
+			check (!strcmp (g_mime_header_get_value (header), expected->str),
+			       "checked assignment reuses linear-whitespace header unfolding");
 			g_object_unref (header);
+			g_string_free (expected, TRUE);
 			g_string_free (text, TRUE);
 		}
 	}
@@ -5218,21 +5369,22 @@ test_header_unfolding (void)
 	header = g_mime_header_parse_text (NULL, "Subject: =?utf-8?Q?=C2=A0one=C2=A0?=\r\n", &error);
 	g_assert_no_error (error);
 	g_assert_nonnull (header);
-	check (!strcmp (g_mime_header_get_value (header), "one"),
-	       "Unicode whitespace is trimmed after RFC 2047 transfer and charset decoding");
+	check (!strcmp (g_mime_header_get_value (header), "\302\240one\302\240"),
+	       "Unicode whitespace is retained after RFC 2047 transfer and charset decoding");
 	g_object_unref (header);
 	header = g_mime_header_parse_text (NULL, "Subject: =?utf-8?Q?=C2=A0=E2=80=83?=\n", &error);
 	g_assert_no_error (error);
 	g_assert_nonnull (header);
-	check (!strcmp (g_mime_header_get_value (header), ""), "decoded Unicode whitespace-only values become empty");
+	check (!strcmp (g_mime_header_get_value (header), "\302\240\342\200\203"),
+	       "decoded Unicode whitespace-only values are retained");
 	g_object_unref (header);
 	header = g_mime_header_parse (NULL, (const guint8 *) binary, sizeof (binary) - 1, &error);
 	g_assert_no_error (error);
 	g_assert_nonnull (header);
 	raw = g_mime_header_get_raw_value (header);
-	check (!strcmp (g_mime_header_get_value (header), "before\357\277\275after") &&
+	check (!strcmp (g_mime_header_get_value (header), "\302\240before\357\277\275after\302\240") &&
 	       g_bytes_equal (header->raw_value, raw),
-	       "Unicode unfolding follows NUL replacement without truncating or altering binary raw values");
+	       "header unfolding follows NUL replacement without trimming Unicode or altering binary raw values");
 	g_bytes_unref (raw);
 	g_object_unref (header);
 
@@ -5240,7 +5392,8 @@ test_header_unfolding (void)
 	unfolded = g_mime_header_unfold (wire);
 	memset (wire, 'x', strlen (wire));
 	g_free (wire);
-	check (!strcmp (unfolded, "mutablevalue"), "public unfolding returns independently owned UTF-8 text");
+	check (!strcmp (unfolded, "\302\240mutablevalue\342\200\203"),
+	       "public unfolding returns independently owned UTF-8 text without trimming Unicode");
 	g_free (unfolded);
 
 	unfolded = g_mime_utils_header_unfold ("\302\240legacy\302\240");
@@ -5258,8 +5411,10 @@ test_checked_header_assignment (void)
 	static const struct {
 		const char *name, *value, *normalized, *raw;
 	} cases[] = {
-		{ "sUbJeCt", "\302\240 one\r\n\ttwo \342\200\203", "one\ttwo", " one\ttwo\n" },
-		{ "X-Empty", "\342\200\205\r\n", "", " \n" },
+		{ "sUbJeCt", "\302\240 one\r\n\ttwo \342\200\203", "\302\240 one\ttwo \342\200\203",
+		  " \302\240 one\ttwo \342\200\203\n" },
+		{ "X-Empty", " \t\r\n", "", " \n" },
+		{ "X-Unicode", "\342\200\205\r\n", "\342\200\205", " \342\200\205\n" },
 		{ "Content-Type", " text/plain; charset=utf-8 ", "text/plain; charset=utf-8",
 		  " text/plain; charset=utf-8\n" },
 		{ "Content-Disposition", " attachment; filename=\"file.txt\" ",
@@ -5290,6 +5445,7 @@ test_checked_header_assignment (void)
 	guint i, changes;
 
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	g_mime_format_options_set_allow_international (options, TRUE);
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		header = g_mime_header_new_full (cases[i].name, cases[i].value, NULL, &error);
 		g_assert_no_error (error);
@@ -5312,6 +5468,7 @@ test_checked_header_assignment (void)
 		       "checked assignments survive independent cloning");
 		g_object_unref (copy);
 	}
+	g_mime_format_options_set_allow_international (options, FALSE);
 
 	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
 		header = g_mime_header_new_full (invalid[i].name, invalid[i].value, NULL, &error);
@@ -5550,8 +5707,9 @@ test_checked_header_list_values (void)
 			g_assert_no_error (error);
 			next = operation == 0 ? 5 : operation == 1 ? 0 : operation == 2 ? index : 1;
 			header = g_mime_header_list_get_header_at (headers, next);
-			check (!strcmp (header->name, "sUbJeCt") && !strcmp (header->value, "replacement\tvalue"),
-			       "checked list operations preserve new field case and normalize values");
+			check (!strcmp (header->name, "sUbJeCt") &&
+			       !strcmp (header->value, "\302\240 replacement\tvalue \342\200\203"),
+			       "checked list operations preserve field case and Unicode whitespace while unfolding values");
 			check (header->owns_options && header->options != headers->options && header->offset == -1 &&
 			       !header->reformat && !header->explicit_raw_value,
 			       "checked list values own default options and retain checked-constructor formatting");
@@ -5923,7 +6081,9 @@ test_header_charset_value (void)
 		{ " caf\351\r\n", "windows-1252", "caf\303\251" },
 		{ " caf\351\r\n", "windows-1251", "caf\320\271" },
 		{ " \317\360\350\342\345\362\r\n", "windows-1251", "\320\237\321\200\320\270\320\262\320\265\321\202" },
-		{ " \302\240 caf\303\251\r\n\tfin \342\200\203\r\n", "windows-1251", "caf\303\251\tfin" },
+		{ " \302\240 caf\303\251\r\n\tfin \342\200\203\r\n", "windows-1251",
+		  "\302\240 caf\303\251\tfin \342\200\203" },
+		{ " =?iso-8859-1?q?=85one=A0?=\r\n", "windows-1251", "\302\205one\302\240" },
 		{ " =?iso-8859-1?q?caf=E9?=\r\n\tfin\r\n", "windows-1251", "caf\303\251\tfin" },
 		{ " =?x-unknown?q?caf=E9?=\r\n", "windows-1251", "caf\320\271" },
 		{ " caf\351\r\n", "utf-8", "caf\303\251" },
@@ -5976,7 +6136,7 @@ test_header_charset_value (void)
 			value = g_mime_header_get_value_with_charset (header, cases[i].charset, &error);
 			g_assert_no_error (error);
 			check (!g_strcmp0 (value, cases[i].expected),
-			       "explicit header decoding applies fallback, declared charsets, NUL replacement and Unicode unfolding");
+			       "explicit header decoding applies charsets and NUL replacement while trimming only linear whitespace");
 			again = g_mime_header_get_value_with_charset (header, cases[i].charset, &error);
 			g_assert_no_error (error);
 			check (again != value && again != cached && !g_strcmp0 (again, value),
@@ -7352,9 +7512,10 @@ test_header_id_construction (void)
 						"iso-8859-1", &error);
 	g_assert_no_error (error);
 	g_assert_nonnull (header);
-	check (!strcmp (header->value, "caf\303\251") && !strcmp (header->charset, "iso-8859-1") &&
-	       strstr (testsuite_header_raw_text (header), "iso-8859-1") != NULL,
-	       "identifier construction unfolds Unicode text and honors an explicit charset");
+	check (!strcmp (header->value, "\302\240 caf\303\251 \342\200\203") &&
+	       !strcmp (header->charset, "iso-8859-1") &&
+	       strstr (testsuite_header_raw_text (header), "utf-8") != NULL,
+	       "identifier construction preserves Unicode whitespace and uses lossless charset fallback");
 	g_object_unref (header);
 	check (g_mime_header_new_with_id_full (GMIME_HEADER_CONTENT_TYPE, "invalid", NULL, &error) == NULL &&
 	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR), "checked identifier construction reports invalid structured values");
@@ -8437,7 +8598,7 @@ test_content_md5_errors (void)
 	GError *error = NULL;
 	char *digest, *raw;
 	guint i;
-	const char *blank[] = { NULL, "", " \t\r\n", "\v\f\302\205\343\200\200" };
+	const char *blank[] = { NULL, "", " \t\r\n", "\f" };
 
 	check (g_mime_part_compute_content_md5 (part, &error) == NULL &&
 	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION),
@@ -8465,7 +8626,7 @@ test_content_md5_errors (void)
 		g_mime_part_set_content_md5 (part, blank[i]);
 		check (!g_mime_part_verify_content_md5 (part, &error) && error == NULL &&
 		       source->reset_calls == 0 && source->read_calls == 0,
-		       "missing and Unicode-blank digests skip all content I/O");
+		       "missing and ASCII-blank digests skip all content I/O");
 	}
 	g_mime_part_set_content_md5 (part, "kAFQmDzST7DWlj99KOF/cg==");
 	header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), "Content-Md5");
@@ -10530,12 +10691,24 @@ test_multipart_report (void)
 	check (g_mime_entity_get_content_type_parameter (GMIME_ENTITY (report), "boundary") != NULL,
 	       "report constructor generates its boundary before serialization");
 	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		GMimeMultipartReport *constructed;
+		char *assignment;
+		const char *expected;
+
 		memset (buffer, 0, sizeof (buffer));
 		g_unichar_to_utf8 (whitespace[i], buffer);
 		text = g_strconcat (buffer, "delivery-status", buffer, NULL);
-		g_mime_multipart_report_set_report_type (report, text);
-		check (!strcmp (g_mime_multipart_report_get_report_type (report), "delivery-status"),
-		       "report-type trimming recognizes every Unicode whitespace character used by MimeKit");
+		expected = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+			whitespace[i] == '\r' || whitespace[i] == '\n' ? "delivery-status" : text;
+		assignment = g_strconcat (" \t", text, "\r\n", NULL);
+		g_mime_multipart_report_set_report_type (report, assignment);
+		check (!strcmp (g_mime_multipart_report_get_report_type (report), expected),
+		       "report-type assignment trims only ASCII linear whitespace");
+		constructed = g_mime_multipart_report_new (assignment);
+		check (!strcmp (g_mime_multipart_report_get_report_type (constructed), expected),
+		       "report construction preserves non-linear and Unicode whitespace");
+		g_object_unref (constructed);
+		g_free (assignment);
 		g_free (text);
 	}
 	g_mime_multipart_report_set_report_type (report, "\342\200\213delivery-status\357\273\277");
@@ -12311,6 +12484,7 @@ main (int argc, char **argv)
 	testsuite_start ("Message-ID parsing and reference recovery");
 	test_message_id_parsing ();
 	test_message_id_assignment ();
+	test_message_id_whitespace ();
 	test_message_reply_ids ();
 	test_message_id_list ();
 	test_message_references ();
@@ -12385,7 +12559,7 @@ main (int argc, char **argv)
 	test_header_identifiers ();
 	testsuite_end ();
 
-	testsuite_start ("Unicode header unfolding");
+	testsuite_start ("linear-whitespace header unfolding");
 	test_header_unfolding ();
 	testsuite_end ();
 
