@@ -3623,6 +3623,51 @@ GI checks pass with existing warnings, including nullable UTF-8 setters,
 folded constructed serialization and retained string lifetimes.
 Native Windows execution remains unvalidated.
 
+### Multipart indexed collections
+
+Built-in multipart insertion now requires an index from zero through the
+current child count, inclusive; indexed access, removal and replacement
+require an existing child. Invalid indices produce GLib precondition
+diagnostics; excessive indices no longer silently append or return NULL.
+Rejected operations preserve children, references, raw delimiter slots,
+end/trailing markers and serialized bytes. Bounds checks on virtual
+operations remain in their default implementations, preserving subclass
+dispatch. Applicable MimeKit comments about unmatched trailing markers
+are retained beside the corresponding native field.
+
+Valid operations preserve duplicate references and same-object replacement,
+keep parsed delimiter slots aligned, and clear unmatched trailing markers
+on mutation. Remove-at and replacement transfer the multipart's old
+reference to the caller; indexed access remains borrowed. Native regressions
+exercise both returned references after the multipart is destroyed.
+Constructed multipart output also uses the existing delimiter-newline
+check, avoiding an extra blank line after children with no content while
+retaining legacy closing-marker suppression.
+
+There is one deliberate rejected-operation difference: MimeKit RemoveAt
+and indexed replacement clear RawTrailingBoundary before throwing for an
+invalid index. GMime retains its existing atomic rejection and diagnoses
+the programming error without discarding that marker.
+
+The 6,372 actual-source collection comparisons cover mixed, alternative
+and related constructed containers; complete, empty and truncated parsed
+models; negative/count/maximum indices; duplicate children; raw slots;
+both output newline formats; short reads; seekability; and memory/source
+storage. In normal and ASan/UBSan builds, 5,796 cases match exactly and
+576 explicitly reproduce the managed trailing-marker side effect, with
+no unexpected differences. All 80,472 existing public parser/writer cases
+still match in both builds. Focused parser-model, reader, anonymizer,
+body-builder and iterator tests pass with fatal criticals and leak
+checking. The full normal core suite retains its 38/39 baseline, with only
+test-core's two established text-format assertions failing. Full build,
+GIR, typelib, VAPI and GTK-doc generation pass with existing warnings.
+Live GI checks confirm borrowed getters, transferred old references,
+same-object replacement and object lifetimes for mixed, alternative and
+related containers. The existing folding, binary-view and constructed
+anonymizer comparisons also still match in both builds.
+Native Windows execution remains unvalidated. Raw marker APIs, boundary
+validation and managed disposal semantics remain separate work.
+
 ### Reader-backed mailbox model construction
 
 The private adapter now constructs successive mbox and MMDF messages using

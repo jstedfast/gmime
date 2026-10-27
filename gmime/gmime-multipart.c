@@ -678,6 +678,8 @@ ptr_array_insert (GPtrArray *array, guint index, gpointer object)
 static void
 multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
 {
+	g_return_if_fail ((guint) index <= multipart->children->len);
+
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
 
 	if (multipart->raw_boundaries)
@@ -692,9 +694,11 @@ multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
  * g_mime_multipart_insert:
  * @multipart: a #GMimeMultipart object
  * @part: a #GMimeEntity
- * @index: the 0-based index to insert the part
+ * @index: the 0-based insertion index, from 0 through the current count
  *
- * Inserts @part into @multipart at the specified @index.
+ * Inserts @part into @multipart at the specified @index. Inserting at the
+ * current count appends the part. An out-of-range index is a programming
+ * error and leaves the multipart unchanged.
  **/
 void
 g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
@@ -746,8 +750,7 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 {
 	GMimeEntity *part;
 	
-	if ((guint) index >= multipart->children->len)
-		return NULL;
+	g_return_val_if_fail ((guint) index < multipart->children->len, NULL);
 	
 	part = multipart->children->pdata[index];
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
@@ -764,12 +767,13 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_remove_at:
  * @multipart: a #GMimeMultipart object
- * @index: the 0-based index of the part to remove
+ * @index: the 0-based index of an existing part
  *
- * Removes the part at the specified @index from @multipart.
+ * Removes the part at the specified @index from @multipart, transferring
+ * the multipart's reference to the caller. An out-of-range index is a
+ * programming error and leaves the multipart unchanged.
  *
- * Returns: (transfer full): the mime part that was removed or %NULL
- * if the part was not contained within the multipart.
+ * Returns: (transfer full): the removed MIME part.
  **/
 GMimeEntity *
 g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
@@ -784,14 +788,15 @@ g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_replace:
  * @multipart: a #GMimeMultipart object
- * @index: the 0-based index of the part to replace
+ * @index: the 0-based index of an existing part
  * @replacement: a #GMimeEntity to use as the replacement
  *
  * Replaces the part at the specified @index within @multipart with
- * @replacement.
+ * @replacement, transferring the multipart's old reference to the caller.
+ * An out-of-range index is a programming error and leaves the multipart
+ * unchanged.
  *
- * Returns: (transfer full): the part that was replaced or %NULL
- * if the part was not contained within the multipart.
+ * Returns: (transfer full): the replaced MIME part.
  **/
 GMimeEntity *
 g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *replacement)
@@ -802,8 +807,7 @@ g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *rep
 	g_return_val_if_fail (GMIME_IS_ENTITY (replacement), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
 	
-	if ((guint) index >= multipart->children->len)
-		return NULL;
+	g_return_val_if_fail ((guint) index < multipart->children->len, NULL);
 	
 	replaced = multipart->children->pdata[index];
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
@@ -819,8 +823,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 {
 	GMimeEntity *part;
 	
-	if ((guint) index >= multipart->children->len)
-		return NULL;
+	g_return_val_if_fail ((guint) index < multipart->children->len, NULL);
 	
 	part = multipart->children->pdata[index];
 	
@@ -831,9 +834,10 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_get_part:
  * @multipart: a #GMimeMultipart object
- * @index: the 0-based index of the part
+ * @index: the 0-based index of an existing part
  *
- * Gets the part at the specified @index within the multipart.
+ * Gets the part at the specified @index within the multipart. An
+ * out-of-range index is a programming error.
  *
  * Returns: (transfer none): the part at position @index.
  **/

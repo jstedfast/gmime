@@ -64,6 +64,8 @@ struct _GMimeMultipart {
 	GBytes *raw_preamble;
 	GBytes *raw_epilogue;
 	GBytes *raw_end_boundary;
+	/* A boundary marker read at the very end of the stream without a MIME
+	 * part after it. Only written when raw_end_boundary is empty (truncated). */
 	GBytes *raw_trailing_boundary;
 	GPtrArray *raw_boundaries;
 };

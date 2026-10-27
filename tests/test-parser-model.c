@@ -1331,6 +1331,164 @@ test_multipart_models (void)
 }
 
 static void
+test_multipart_collection_bounds (void)
+{
+	static const char *wires[] = {
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n"
+		"--b \t\n\none\n--b\t\n\ntwo\n--b-- \t\r\nepi\n",
+		"Content-Type: multipart/mixed; boundary=b\n\n"
+		"--b \t\n\none\n--b\t\n\ntwo\n--b  ",
+		"Content-Type: multipart/mixed; boundary=b\n\n"
+		"--b \t\n\none\n--b\t\n\ntwo",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b--\n"
+	};
+	guint model, operation, range, i;
+
+	testsuite_check ("Multipart indexed operations reject invalid ranges without changing children or markers");
+	for (model = 0; model < G_N_ELEMENTS (wires) + 2; model++) {
+		for (operation = 0; operation < 4; operation++) {
+			for (range = 0; range < 3; range++) {
+				GMimeMultipart *multipart = model < 2 ? g_mime_multipart_new () : parse_multipart (wires[model - 2]);
+				GMimeEntity *candidate = (GMimeEntity *) g_mime_part_new ();
+				GMimeEntity *weak = candidate;
+				GMimeFormatOptions *options = g_mime_format_options_new ();
+				GPtrArray *children = g_ptr_array_new_with_free_func (g_object_unref);
+				GPtrArray *raw_boundaries;
+				GBytes *preamble, *epilogue, *end, *trailing, *boundaries[2] = { NULL, NULL };
+				GByteArray *before[2], *after;
+				gboolean write_end;
+				int index;
+
+				if (model < 2) {
+					g_mime_multipart_set_boundary (multipart, "b");
+					if (model == 1) {
+						g_mime_multipart_add (multipart, candidate);
+						g_mime_multipart_add (multipart, candidate);
+					}
+				}
+				g_object_add_weak_pointer (G_OBJECT (candidate), (gpointer *) &weak);
+				for (i = 0; i < multipart->children->len; i++) {
+					g_ptr_array_add (children, g_object_ref (multipart->children->pdata[i]));
+					if (multipart->raw_boundaries)
+						boundaries[i] = multipart->raw_boundaries->pdata[i];
+				}
+				raw_boundaries = multipart->raw_boundaries;
+				preamble = multipart->raw_preamble;
+				epilogue = multipart->raw_epilogue;
+				end = multipart->raw_end_boundary;
+				trailing = multipart->raw_trailing_boundary;
+				write_end = multipart->write_end_boundary;
+				for (i = 0; i < 2; i++) {
+					g_mime_format_options_set_newline_format (options, i);
+					before[i] = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+				}
+				index = range == 0 ? -1 : range == 1 ? (int) children->len + (operation == 0) : G_MAXINT;
+				g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index*");
+				if (operation == 0)
+					g_mime_multipart_insert (multipart, index, candidate);
+				else if (operation == 1)
+					g_assert_null (g_mime_multipart_remove_at (multipart, index));
+				else if (operation == 2)
+					g_assert_null (g_mime_multipart_replace (multipart, index, candidate));
+				else
+					g_assert_null (g_mime_multipart_get_part (multipart, index));
+				g_test_assert_expected_messages ();
+				g_assert_cmpuint (multipart->children->len, ==, children->len);
+				g_assert_true (multipart->raw_boundaries == raw_boundaries);
+				g_assert_true (multipart->raw_preamble == preamble);
+				g_assert_true (multipart->raw_epilogue == epilogue);
+				g_assert_true (multipart->raw_end_boundary == end);
+				g_assert_true (multipart->raw_trailing_boundary == trailing);
+				g_assert_cmpint (multipart->write_end_boundary, ==, write_end);
+				for (i = 0; i < children->len; i++) {
+					g_assert_true (multipart->children->pdata[i] == children->pdata[i]);
+					if (raw_boundaries) {
+						g_assert_cmpuint (raw_boundaries->len, ==, children->len);
+						g_assert_true (raw_boundaries->pdata[i] == boundaries[i]);
+					}
+				}
+				for (i = 0; i < 2; i++) {
+					g_mime_format_options_set_newline_format (options, i);
+					after = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+					g_assert_cmpmem (after->data, after->len, before[i]->data, before[i]->len);
+					g_byte_array_unref (before[i]);
+					g_byte_array_unref (after);
+				}
+				g_mime_format_options_free (options);
+				g_object_unref (multipart);
+				g_ptr_array_unref (children);
+				g_object_unref (candidate);
+				g_assert_null (weak);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart indexed edits retain aliases and transfer replaced and removed references");
+	for (model = 0; model < 5; model++) {
+		GMimeMultipart *multipart = model == 0 ? g_mime_multipart_new () : model == 1 ?
+			(GMimeMultipart *) g_mime_multipart_alternative_new () : parse_multipart (wires[model - 2]);
+		GMimeEntity *candidate = (GMimeEntity *) g_mime_part_new ();
+		GMimeEntity *weak = candidate, *removed, *replaced;
+		guint count = multipart->children->len;
+
+		if (model < 2)
+			g_mime_multipart_set_boundary (multipart, "b");
+		g_object_add_weak_pointer (G_OBJECT (candidate), (gpointer *) &weak);
+		g_mime_multipart_insert (multipart, count, candidate);
+		g_object_unref (candidate);
+		g_assert_true (g_mime_multipart_get_part (multipart, count) == weak);
+		g_assert_null (multipart->raw_trailing_boundary);
+		replaced = g_mime_multipart_replace (multipart, count, weak);
+		g_assert_true (replaced == weak);
+		g_object_unref (replaced);
+		g_mime_multipart_insert (multipart, 0, weak);
+		if (model < 2) {
+			GMimeFormatOptions *options = g_mime_format_options_new ();
+			guint newline;
+
+			for (newline = 0; newline < 2; newline++) {
+				GString *expected = g_string_new (NULL);
+				GByteArray *actual;
+				const char *nl;
+
+				g_mime_format_options_set_newline_format (options, newline);
+				nl = g_mime_format_options_get_newline (options);
+				g_string_append_printf (expected, "Content-Type: multipart/%s; boundary=b%s%s",
+							model == 0 ? "mixed" : "alternative", nl, nl);
+				for (i = 0; i < 2; i++)
+					g_string_append_printf (expected, "--b%sContent-Type: application/octet-stream%s%s", nl, nl, nl);
+				g_string_append_printf (expected, "--b--%s", nl);
+				actual = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, expected->str, expected->len);
+				g_byte_array_unref (actual);
+				g_string_free (expected, TRUE);
+			}
+			g_mime_format_options_free (options);
+		}
+		removed = g_mime_multipart_remove_at (multipart, count + 1);
+		g_assert_true (removed == weak);
+		g_assert_cmpint (g_mime_multipart_index_of (multipart, weak), ==, 0);
+		g_assert_true (g_mime_multipart_remove (multipart, weak));
+		g_assert_nonnull (weak);
+		g_assert_cmpint (g_mime_multipart_index_of (multipart, weak), ==, -1);
+		g_mime_multipart_add (multipart, removed);
+		candidate = (GMimeEntity *) g_mime_part_new ();
+		replaced = g_mime_multipart_replace (multipart, count, candidate);
+		g_assert_true (replaced == weak);
+		g_object_unref (candidate);
+		g_object_unref (multipart);
+		g_assert_true (removed == weak);
+		g_object_unref (removed);
+		g_assert_true (replaced == weak);
+		g_object_unref (replaced);
+		g_assert_null (weak);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_multipart_text_views (void)
 {
 	static const struct {
@@ -4190,6 +4348,7 @@ main (int argc, char **argv)
 	test_mailbox_models ();
 	test_mailbox_model_errors ();
 	test_multipart_models ();
+	test_multipart_collection_bounds ();
 	test_multipart_text_views ();
 	test_multipart_text_folding ();
 	test_multipart_output ();

@@ -500,6 +500,7 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 			GMimeEntity *previous = multipart->children->pdata[index - 1];
 
 			if ((!GMIME_IS_MULTIPART (previous) || ((GMimeMultipart *) previous)->write_end_boundary) &&
+			    !_g_mime_entity_ends_with_delimiter_newline (previous, FALSE) &&
 			    !writer_string (&writer, g_mime_format_options_get_newline (frame->options)))
 				goto fail;
 		}
