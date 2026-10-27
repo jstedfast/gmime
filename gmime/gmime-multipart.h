@@ -45,7 +45,7 @@ typedef struct _GMimeMultipartClass GMimeMultipartClass;
  * @parent_object: parent #GMimeEntity
  * @children: array of MIME sub-parts
  * @boundary: MIME boundary
- * @prologue: multipart prologue
+ * @preamble: multipart preamble
  * @epilogue: multipart epilogue
  *
  * A base MIME multipart object.
@@ -55,7 +55,7 @@ struct _GMimeMultipart {
 	
 	GPtrArray *children;
 	char *boundary;
-	char *prologue;
+	char *preamble;
 	char *epilogue;
 	
 	/* < private > */
@@ -93,11 +93,10 @@ struct _GMimeMultipartClass {
 GType g_mime_multipart_get_type (void);
 
 GMimeMultipart *g_mime_multipart_new (void);
-
 GMimeMultipart *g_mime_multipart_new_with_subtype (const char *subtype);
 
-void g_mime_multipart_set_prologue (GMimeMultipart *multipart, const char *prologue);
-const char *g_mime_multipart_get_prologue (GMimeMultipart *multipart);
+void g_mime_multipart_set_preamble (GMimeMultipart *multipart, const char *preamble);
+const char *g_mime_multipart_get_preamble (GMimeMultipart *multipart);
 
 void g_mime_multipart_set_epilogue (GMimeMultipart *multipart, const char *epilogue);
 const char *g_mime_multipart_get_epilogue (GMimeMultipart *multipart);
@@ -123,11 +122,9 @@ const char *g_mime_multipart_get_boundary (GMimeMultipart *multipart);
 
 gboolean g_mime_multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
 
-void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeEntityForeachFunc callback,
-			       gpointer user_data);
+void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeEntityForeachFunc callback, gpointer user_data);
 
-GMimeEntity *g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart,
-							   const char *content_id);
+GMimeEntity *g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const char *content_id);
 
 G_END_DECLS
 

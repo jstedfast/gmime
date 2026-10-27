@@ -430,8 +430,8 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 						if (multipart->raw_preamble && g_bytes_get_size (multipart->raw_preamble) &&
 						    !writer_bytes (&writer, options, multipart->raw_preamble, multipart->children->len > 0 || ensure))
 							goto fail;
-					} else if (multipart->prologue &&
-						   (!writer_string (&writer, multipart->prologue) ||
+					} else if (multipart->preamble &&
+						   (!writer_string (&writer, multipart->preamble) ||
 						    !writer_string (&writer, g_mime_format_options_get_newline (options)))) {
 						goto fail;
 					}

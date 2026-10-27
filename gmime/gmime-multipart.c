@@ -18,7 +18,6 @@
  *  02110-1301, USA.
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -144,7 +143,7 @@ g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass)
 {
 	multipart->children = g_ptr_array_new ();
 	multipart->write_end_boundary = TRUE;
-	multipart->prologue = NULL;
+	multipart->preamble = NULL;
 	multipart->epilogue = NULL;
 }
 
@@ -154,12 +153,14 @@ g_mime_multipart_finalize (GObject *object)
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	guint i;
 	
-	g_free (multipart->prologue);
+	g_free (multipart->preamble);
 	g_free (multipart->epilogue);
 	g_free (multipart->boundary);
+
 	if (((GMimeEntity *) multipart)->content_type)
 		g_mime_event_remove (((GMimeEntity *) multipart)->content_type->changed,
 				     (GMimeEventCallback) multipart_boundary_changed, multipart);
+
 	g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
 	g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
 	g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
@@ -186,8 +187,10 @@ multipart_boundary_changed (GMimeContentType *content_type, gpointer args, GMime
 	 * Generate them on output instead, as MimeKit's BoundaryChanged does. */
 	g_clear_pointer (&multipart->raw_boundaries, g_ptr_array_unref);
 	g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
+
 	if (multipart->reader_model)
 		multipart->write_end_boundary = TRUE;
+
 	g_free (multipart->boundary);
 	multipart->boundary = g_strdup (boundary);
 }
@@ -199,8 +202,10 @@ multipart_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
 
 	if (object->content_type)
 		g_mime_event_remove (object->content_type->changed, (GMimeEventCallback) multipart_boundary_changed, multipart);
+
 	parent_class->set_content_type (object, content_type);
 	g_mime_event_add (content_type->changed, (GMimeEventCallback) multipart_boundary_changed, multipart);
+
 	multipart_boundary_changed (content_type, NULL, multipart);
 }
 
@@ -216,6 +221,7 @@ _g_mime_multipart_initialize_from_reader (GMimeMultipart *multipart)
 {
 	multipart->reader_model = TRUE;
 	multipart->raw_boundaries = g_ptr_array_new_with_free_func (multipart_bytes_unref);
+
 	/* A parsed multipart starts truncated; the reader replaces this empty
 	 * marker if it encounters a real closing delimiter. NULL instead means
 	 * that serialization should generate the normal closing delimiter. */
@@ -227,6 +233,7 @@ void
 _g_mime_multipart_add_with_boundary (GMimeMultipart *multipart, GMimeEntity *part, GBytes *boundary)
 {
 	g_mime_multipart_add (multipart, part);
+
 	if (multipart->raw_boundaries && boundary)
 		multipart->raw_boundaries->pdata[multipart->raw_boundaries->len - 1] = g_bytes_ref (boundary);
 }
@@ -234,19 +241,22 @@ _g_mime_multipart_add_with_boundary (GMimeMultipart *multipart, GMimeEntity *par
 void
 _g_mime_multipart_set_raw_text (GMimeMultipart *multipart, GBytes *bytes, gboolean epilogue)
 {
-	gconstpointer data;
 	gsize length, skip = 0;
+	gconstpointer data;
 	char *text;
 
 	data = g_bytes_get_data (bytes, &length);
-	/* The raw epilogue includes the closing delimiter's CRLF. Hide that
-	 * first newline from the public text view, but retain it on the wire. */
+
+	/* In practice, the raw epilogue contains the CRLF belonging to the
+	 * end boundary, but for sanity, we pretend that it doesn't. */
 	if (epilogue && length && ((const char *) data)[0] == '\n')
 		skip = 1;
 	else if (epilogue && length > 1 && !memcmp (data, "\r\n", 2))
 		skip = 2;
-	text = length > skip ? g_mime_utils_decode_8bit (_g_mime_header_list_get_options (
+
+	text = length > skip ? _g_mime_utils_decode_8bit_text (_g_mime_header_list_get_options (
 		((GMimeEntity *) multipart)->headers), (const char *) data + skip, length - skip) : g_strdup ("");
+
 	if (epilogue) {
 		g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
 		multipart->raw_epilogue = g_bytes_ref (bytes);
@@ -255,8 +265,8 @@ _g_mime_multipart_set_raw_text (GMimeMultipart *multipart, GBytes *bytes, gboole
 	} else {
 		g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
 		multipart->raw_preamble = g_bytes_ref (bytes);
-		g_free (multipart->prologue);
-		multipart->prologue = text;
+		g_free (multipart->preamble);
+		multipart->preamble = text;
 	}
 }
 
@@ -350,47 +360,53 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 
 
 /**
- * g_mime_multipart_set_prologue:
+ * g_mime_multipart_set_preamble:
  * @multipart: a #GMimeMultipart object
- * @prologue: prologue
+ * @preamble: preamble
  *
- * Sets the prologue on the multipart.
+ * Sets the preamble on the multipart.
  **/
 void
-g_mime_multipart_set_prologue (GMimeMultipart *multipart, const char *prologue)
+g_mime_multipart_set_preamble (GMimeMultipart *multipart, const char *preamble)
 {
 	char *copy;
 
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 
-	if (multipart->reader_model && !g_strcmp0 (multipart->prologue, prologue))
+	if (multipart->reader_model && !g_strcmp0 (multipart->preamble, preamble))
 		return;
-	copy = g_strdup (prologue);
+
+	copy = g_strdup (preamble);
+
 	if (multipart->reader_model) {
 		g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
 		if (copy)
 			multipart->raw_preamble = g_bytes_new (copy, strlen (copy));
 	}
 	
-	g_free (multipart->prologue);
-	multipart->prologue = copy;
+	g_free (multipart->preamble);
+	multipart->preamble = copy;
 }
 
 
 /**
- * g_mime_multipart_get_prologue:
+ * g_mime_multipart_get_preamble:
  * @multipart: a #GMimeMultipart object
  *
- * Gets the prologue on the multipart.
+ * Gets the preamble on the multipart.
  *
- * Returns: a pointer to the prologue string on the multipart.
+ * Parsed bytes are retained separately from this decoded UTF-8 view. Embedded
+ * NUL characters become U+FFFD so the rest of the text remains visible without
+ * changing the original bytes. Assigning this same view back preserves them.
+ *
+ * Returns: (nullable) (transfer none): the preamble string, or %NULL if absent.
  **/
 const char *
-g_mime_multipart_get_prologue (GMimeMultipart *multipart)
+g_mime_multipart_get_preamble (GMimeMultipart *multipart)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	
-	return multipart->prologue;
+	return multipart->preamble;
 }
 
 
@@ -410,13 +426,17 @@ g_mime_multipart_set_epilogue (GMimeMultipart *multipart, const char *epilogue)
 
 	if (multipart->reader_model && !g_strcmp0 (multipart->epilogue, epilogue))
 		return;
+
 	copy = g_strdup (epilogue);
+
 	if (multipart->reader_model) {
 		g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
 		if (copy) {
 			char *raw = g_strconcat (g_mime_format_options_get_newline (NULL), copy, NULL);
 
 			multipart->raw_epilogue = g_bytes_new_take (raw, strlen (raw));
+			/* If we are setting an epilogue and the raw end boundary is
+			 * empty, reset it back to the default. */
 			if (multipart_is_truncated (multipart)) {
 				g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
 				multipart->write_end_boundary = TRUE;
@@ -435,7 +455,11 @@ g_mime_multipart_set_epilogue (GMimeMultipart *multipart, const char *epilogue)
  *
  * Gets the epilogue on the multipart.
  *
- * Returns: a pointer to the epilogue string on the multipart.
+ * The parsed UTF-8 view omits the closing boundary's first newline. Embedded
+ * NUL characters become U+FFFD without changing the original bytes. Assigning
+ * this same view back preserves them.
+ *
+ * Returns: (nullable) (transfer none): the epilogue string, or %NULL if absent.
  **/
 const char *
 g_mime_multipart_get_epilogue (GMimeMultipart *multipart)
@@ -453,8 +477,10 @@ multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMim
 	int i, count;
 
 	count = g_mime_multipart_get_count (multipart);
+
 	for (i = 0; i < count; i++) {
 		part = g_mime_multipart_get_part (multipart, i);
+
 		/* The text body should not follow a multipart; do not search later siblings. */
 		if (GMIME_IS_MULTIPART (part))
 			return g_mime_multipart_try_get_value ((GMimeMultipart *) part, format, body);
@@ -463,7 +489,9 @@ multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMim
 			/* The first non-attachment text part is the body, even if its format differs. */
 			if (!_g_mime_text_part_is_format ((GMimeTextPart *) part, format))
 				return FALSE;
+
 			*body = (GMimeTextPart *) part;
+
 			return TRUE;
 		}
 	}
@@ -518,6 +546,7 @@ multipart_clear (GMimeMultipart *multipart)
 	g_clear_pointer (&multipart->raw_boundaries, g_ptr_array_unref);
 	g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+
 	if (multipart->reader_model)
 		multipart->write_end_boundary = TRUE;
 }
@@ -542,8 +571,10 @@ static void
 multipart_add (GMimeMultipart *multipart, GMimeEntity *part)
 {
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+
 	if (multipart->raw_boundaries)
 		g_ptr_array_add (multipart->raw_boundaries, NULL);
+
 	g_ptr_array_add (multipart->children, part);
 	g_object_ref (part);
 }
@@ -592,8 +623,10 @@ static void
 multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
 {
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+
 	if (multipart->raw_boundaries)
 		ptr_array_insert (multipart->raw_boundaries, index, NULL);
+
 	ptr_array_insert (multipart->children, index, part);
 	g_object_ref (part);
 }
@@ -625,6 +658,7 @@ multipart_remove (GMimeMultipart *multipart, GMimeEntity *part)
 
 	if (index < 0)
 		return FALSE;
+
 	multipart_remove_at (multipart, index);
 	g_object_unref (part);
 	
@@ -661,6 +695,7 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 	
 	part = multipart->children->pdata[index];
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
+
 	if (multipart->raw_boundaries)
 		g_ptr_array_remove_index (multipart->raw_boundaries, index);
 	

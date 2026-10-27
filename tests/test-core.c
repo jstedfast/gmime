@@ -10024,7 +10024,7 @@ test_parser_read_errors (void)
 		"Content-Type: message/disposition-notification\n\nDisposition: displayed\n",
 		"Content-Type: multipart/report; boundary=b; report-type=delivery-status\n\n"
 		"--b\nContent-Type: text/plain\n\nReport\n--b--\n",
-		"Content-Type: multipart/mixed; boundary=b\n\nPrologue\n--b\n"
+		"Content-Type: multipart/mixed; boundary=b\n\nPreamble\n--b\n"
 		"Subject: Child\n\nBody\n--b--\nEpilogue\n"
 	};
 	const char *valid = "Subject: Reset\n\nBody\n";

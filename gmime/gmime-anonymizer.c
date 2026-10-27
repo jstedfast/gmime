@@ -867,7 +867,7 @@ static GBytes *
 multipart_raw_text (GMimeMultipart *multipart, GMimeFormatOptions *options, gboolean epilogue)
 {
 	GBytes *raw = epilogue ? multipart->raw_epilogue : multipart->raw_preamble;
-	const char *text = epilogue ? multipart->epilogue : multipart->prologue;
+	const char *text = epilogue ? multipart->epilogue : multipart->preamble;
 	char *value;
 
 	if (raw || multipart->reader_model)

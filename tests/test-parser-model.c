@@ -1200,10 +1200,10 @@ test_multipart_models (void)
 			assert_raw_bytes (multipart->raw_end_boundary, "--b-- \t", 7);
 			assert_raw_bytes (multipart->raw_boundaries->pdata[0], "--b \t\r\n", 7);
 			assert_raw_bytes (multipart->raw_boundaries->pdata[1], "--b\r\n", 5);
-			g_assert_cmpstr (g_mime_multipart_get_prologue (multipart), ==, "pre");
-			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, "epi");
+			g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, "pre\357\277\275one\n");
+			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, "epi\357\277\275tail\n");
 			/* Reassigning the decoded view must not discard binary bytes. */
-			g_mime_multipart_set_prologue (multipart, multipart->prologue);
+			g_mime_multipart_set_preamble (multipart, multipart->preamble);
 			g_mime_multipart_set_epilogue (multipart, multipart->epilogue);
 			output = g_mime_stream_block_new ();
 			written = g_mime_entity_write_to_stream (root, NULL, output);
@@ -1324,6 +1324,95 @@ test_multipart_models (void)
 		g_object_unref (multipart);
 		g_mime_content_type_set_parameter (type, "boundary", "after-owner-finalization");
 		g_object_unref (type);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_text_views (void)
+{
+	static const struct {
+		const char *preamble, *epilogue, *pretext, *epitext;
+		gsize prelength, epilength;
+		const char *charset;
+	} cases[] = {
+		{ "\0\0tail\n", "\n\0\0tail", "\357\277\275\357\277\275tail\n", "\357\277\275\357\277\275tail", 7, 7, NULL },
+		{ "a\0b\0c\n", "\r\nx\0y\0z\n", "a\357\277\275b\357\277\275c\n", "x\357\277\275y\357\277\275z\n", 6, 8, NULL },
+		{ "caf\303\251\0tail\n", "\n\303\251\0tail", "caf\303\251\357\277\275tail\n", "\303\251\357\277\275tail", 11, 8, NULL },
+		{ "a\377\0tail\n", "\n\r\377\0tail", "a\303\277\357\277\275tail\n", "\r\303\277\357\277\275tail", 8, 8, NULL },
+		{ "\377\0a\0\0\0\n\n", "\n\377\0x\0\0\0z\0",
+		  "\303\277a\357\277\275\340\250\212", "\303\277x\357\277\275z", 8, 9, "utf-16le" },
+		{ "\0\377\0a\0\0\n\n", "\n\0\377\0x\0\0\0z",
+		  "\303\277a\357\277\275\340\250\212", "\303\277x\357\277\275z", 8, 9, "utf-16be" },
+		{ "\0\0\0\377\0\0\0a\0\0\0\0\0\0\0\n", "\n\0\0\0\377\0\0\0x\0\0\0\0\0\0\0z",
+		  "\303\277a\357\277\275\n", "\303\277x\357\277\275z", 16, 17, "utf-32be" }
+	};
+	guint i, persistent;
+
+	testsuite_check ("Multipart text views replace NULs without changing raw bytes or no-op output");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (persistent = 0; persistent < 2; persistent++) {
+			GString *wire = g_string_new ("Content-Type: multipart/mixed; boundary=b\n\n");
+			GMimeStream *input, *before = g_mime_stream_mem_new (), *after = g_mime_stream_mem_new ();
+			GMimeMultipart *multipart;
+			GMimeEntity *entity;
+			GBytes *preamble, *epilogue;
+			GByteArray *original, *unchanged;
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			GError *error = NULL;
+			ssize_t written;
+
+			g_string_append_len (wire, cases[i].preamble, cases[i].prelength);
+			g_string_append (wire, "--b\n\nbody\n--b--");
+			g_string_append_len (wire, cases[i].epilogue, cases[i].epilength);
+			input = g_mime_stream_mem_new_with_buffer (wire->str, wire->len);
+			if (cases[i].charset) {
+				g_assert_true (g_mime_parser_options_set_charset_encoding (options, cases[i].charset, &error));
+				g_assert_no_error (error);
+			}
+			entity = g_mime_entity_load_with_storage (options, input, persistent, &error);
+			g_mime_parser_options_free (options);
+			g_assert_no_error (error);
+			g_assert_true (GMIME_IS_MULTIPART (entity));
+			multipart = (GMimeMultipart *) entity;
+			g_object_unref (input);
+			g_string_free (wire, TRUE);
+			preamble = g_bytes_ref (multipart->raw_preamble);
+			epilogue = g_bytes_ref (multipart->raw_epilogue);
+			assert_raw_bytes (preamble, cases[i].preamble, cases[i].prelength);
+			assert_raw_bytes (epilogue, cases[i].epilogue, cases[i].epilength);
+			written = g_mime_entity_write_to_stream (entity, NULL, before);
+			g_assert_cmpint (written, >, 0);
+			g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, cases[i].pretext);
+			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, cases[i].epitext);
+			g_assert_true (g_utf8_validate (multipart->preamble, -1, NULL));
+			g_assert_true (g_utf8_validate (multipart->epilogue, -1, NULL));
+			g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart));
+			g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart));
+			g_assert_true (multipart->raw_preamble == preamble);
+			g_assert_true (multipart->raw_epilogue == epilogue);
+			g_assert_cmpint (g_mime_entity_write_to_stream (entity, NULL, after), ==, written);
+			original = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) before);
+			unchanged = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) after);
+			g_assert_cmpmem (original->data, original->len, unchanged->data, unchanged->len);
+			g_object_unref (before);
+			g_object_unref (after);
+			g_mime_multipart_set_preamble (multipart, "new preamble\n");
+			g_mime_multipart_set_epilogue (multipart, "new epilogue");
+			assert_raw_bytes (multipart->raw_preamble, "new preamble\n", 13);
+			assert_raw_bytes (multipart->raw_epilogue, "\nnew epilogue", 13);
+			g_mime_multipart_set_preamble (multipart, NULL);
+			g_mime_multipart_set_epilogue (multipart, NULL);
+			g_assert_null (g_mime_multipart_get_preamble (multipart));
+			g_assert_null (g_mime_multipart_get_epilogue (multipart));
+			g_assert_null (multipart->raw_preamble);
+			g_assert_null (multipart->raw_epilogue);
+			g_object_unref (entity);
+			assert_raw_bytes (preamble, cases[i].preamble, cases[i].prelength);
+			assert_raw_bytes (epilogue, cases[i].epilogue, cases[i].epilength);
+			g_bytes_unref (preamble);
+			g_bytes_unref (epilogue);
+		}
 	}
 	testsuite_check_passed ();
 }
@@ -2341,7 +2430,7 @@ test_writer_dispatch (void)
 	g_mime_multipart_clear (multipart);
 	g_assert_true (g_mime_param_list_remove (g_mime_content_type_get_parameters (
 		((GMimeEntity *) multipart)->content_type), "boundary"));
-	g_mime_multipart_set_prologue (multipart, "pre");
+	g_mime_multipart_set_preamble (multipart, "pre");
 	g_mime_multipart_set_epilogue (multipart, "post");
 	bytes = serialize_writer ((GMimeEntity *) multipart, options, TRUE);
 	g_assert_cmpmem (bytes->data, bytes->len, "pre\npost", 8);
@@ -3936,6 +4025,7 @@ main (int argc, char **argv)
 	test_mailbox_models ();
 	test_mailbox_model_errors ();
 	test_multipart_models ();
+	test_multipart_text_views ();
 	test_multipart_output ();
 	test_model_errors ();
 	test_public_parser_models ();

@@ -37,6 +37,12 @@ This is an incremental migration, not yet a declaration of feature parity.
   `g_mime_content_*` and the `DATA_WRAPPER` portion of its type macros with
   `CONTENT`. Include `gmime/gmime-content.h` instead of `gmime/gmime-data-wrapper.h`.
 
+- `GMimeMultipart` now calls its leading text `preamble`, matching MimeKit
+  and MIME terminology. Replace `g_mime_multipart_get_prologue()` and
+  `g_mime_multipart_set_prologue()` with `g_mime_multipart_get_preamble()`
+  and `g_mime_multipart_set_preamble()`. The public struct field is also
+  renamed to `preamble`; no compatibility aliases are retained.
+
 - `InternetAddress`, `InternetAddressMailbox`, `InternetAddressGroup`, and
   `InternetAddressList` are now `GMimeInternetAddress`, `GMimeMailboxAddress`,
   `GMimeGroupAddress`, and `GMimeInternetAddressList`, respectively. The function
@@ -3494,8 +3500,8 @@ insertion/addition use generated markers, and removals discard matching
 slots. Clear restores generated closing markers. Boundary changes discard
 obsolete child/end markers, including direct parameter edits, Content-Type
 replacement and change-then-restore sequences; unrelated parameter edits
-preserve them. Reassigning an unchanged decoded prologue/epilogue retains
-its original binary bytes. Existing prologue/epilogue string-setter text
+preserve them. Reassigning an unchanged decoded preamble/epilogue retains
+its original binary bytes. Existing preamble/epilogue string-setter text
 semantics are retained rather than adding MimeKit's text-folding API here.
 
 The new corpus compares parsed multipart trees, raw text/markers, nullable
@@ -3528,6 +3534,45 @@ completed below, as is signature verification's special raw-marker CRLF
 canonicalization. Synchronous serialization now uses MimeKit's explicit
 writer-frame stack, as described below. Async/cancellation remains separate
 work.
+
+### Multipart binary text views
+
+Parsed multipart preambles and epilogues retain their original binary data
+in owned GBytes, independently of the decoded preamble/epilogue strings.
+The shared length-aware text decoder now replaces decoded Unicode NULs
+with U+FFFD instead of truncating these C-string views. Replacement happens
+after charset conversion: zero bytes within UTF-16/UTF-32 characters are
+not independently replaced. Existing charset selection remains unchanged.
+
+The epilogue view still omits one initial LF or CRLF belonging to the
+closing delimiter, without removing it from the raw bytes. MimeKit's
+inline comments about this newline and restoring a truncated closing
+delimiter when assigning an epilogue accompany the native implementation.
+Getter results are nullable borrowed UTF-8 strings. Assigning the same
+decoded value preserves both the original GBytes and serialized output.
+Changed and NULL assignments retain existing native setter behavior;
+MimeKit's preamble/epilogue folding remains separate work.
+
+Native regressions cover consecutive NULs, UTF-8, Latin-1 fallback,
+UTF-16LE/BE and UTF-32BE conversion, epilogue newline ownership, both
+content storage modes, no-op and changed setters, NULL removal, and raw
+snapshots retained after the source, model and replacement data are freed.
+These are immutable-byte lifetime checks, not a new multipart cloning API.
+Raw boundary-marker APIs are unchanged and their migration remains open.
+
+All 6,180 actual-source display/raw-byte/serialization cases match MimeKit
+in normal and ASan/UBSan builds. Only managed display NULs are normalized
+to U+FFFD for this native C-string adaptation; raw bytes and wire output
+are compared unchanged. Cases cover seven charsets, short and long input,
+three read sizes, LF/CRLF output, memory/source storage on seekable input
+and memory storage on nonseekable input. The existing 80,472 public parser
+and writer cases also still match in both builds. Focused parser-model,
+reader and anonymizer tests pass with leak detection. GIR, typelib, VAPI,
+GTK-doc, exported preamble symbols and live GI ownership/string checks
+pass with existing build warnings. The normal core baseline remains
+38/39 programs, with only
+test-core's two established text-format assertions failing. Native Windows
+execution remains unvalidated.
 
 ### Reader-backed mailbox model construction
 
@@ -3685,7 +3730,7 @@ newline completion. Signed children clear hidden-header filtering and
 disable international header reformatting without changing caller options.
 Raw markers, binary bodies, truncated multiparts and mixed-newline
 verification retain their existing reader-backed behavior. Constructed
-legacy multiparts retain their prologue/epilogue and delimiter conventions,
+legacy multiparts retain their preamble/epilogue and delimiter conventions,
 including suppression of the closing delimiter when no boundary is set.
 
 GMime deliberately retains GObject write_to_stream overrides, unlike
@@ -4343,10 +4388,7 @@ clean-build, bindings, and cross-platform validation remain pending.
 
 - Continue aligning public APIs with MimeKit while retaining the GPGME
   backend.
-- Audit multipart raw preamble/epilogue storage and access as GBytes.
-  Display conversion to char* must replace embedded NULs with U+FFFD while
-  preserving the original raw bytes. Raw boundary-marker API changes
-  remain an open decision.
+- Decide whether to migrate multipart raw boundary-marker APIs.
 - Build a shared-fixture differential harness against the reference
   MimeKit revision, recording intentional behavioral differences.
 - Port the remaining parser controls and header/address/parameter parsing

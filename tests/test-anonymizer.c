@@ -501,7 +501,7 @@ test_constructed_multipart (void)
 
 	g_assert_no_error (error);
 	g_mime_multipart_set_boundary (multipart, "x");
-	g_mime_multipart_set_prologue (multipart, "private");
+	g_mime_multipart_set_preamble (multipart, "private");
 	g_mime_multipart_set_epilogue (multipart, "private");
 	g_mime_multipart_add (multipart, child);
 	for (i = 0; i < 2; i++) {
@@ -512,7 +512,7 @@ test_constructed_multipart (void)
 		g_assert_true (g_mime_anonymizer_write_entity (anonymizer, NULL, GMIME_ENTITY (multipart), output, &error));
 		g_assert_no_error (error);
 		assert_output (output, expected, strlen (expected));
-		g_assert_cmpstr (g_mime_multipart_get_prologue (multipart), ==, "private");
+		g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, "private");
 		g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, "private");
 		g_free (expected);
 		g_object_unref (output);
