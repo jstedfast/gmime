@@ -1489,6 +1489,140 @@ test_multipart_collection_bounds (void)
 }
 
 static void
+test_multipart_boundary_normalization (void)
+{
+	static const char *wires[] = {
+		"Content-Type: multipart/mixed;\n\tboundary=\"b\"\n\npre\n"
+		"--b \t\n\nbody\n--b-- \t\nepi\n",
+		"Content-Type: multipart/mixed;\n\tboundary=\"b\"\n\npre\n"
+		"--b \t\n\nbody\n--b  "
+	};
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
+	static const char *values[] = {
+		"", " \t\r\n\302\205\343\200\200", " \tb \302\205", " a b ",
+		" \342\200\213b\342\200\213 ", " \357\273\277b\357\273\277 ",
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijk"
+	};
+	static const char *expected[] = {
+		"", "", "b", "a b", "\342\200\213b\342\200\213", "\357\273\277b\357\273\277",
+		"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijk"
+	};
+	guint model, i, newline;
+
+	testsuite_check ("Multipart boundary normalization preserves equivalent parsed markers and rejects invalid UTF-8 atomically");
+	for (model = 0; model < 3; model++) {
+		GMimeMultipart *multipart = model ? parse_multipart (wires[model - 1]) : g_mime_multipart_new ();
+		GMimeFormatOptions *options = g_mime_format_options_new ();
+		GPtrArray *raw_boundaries;
+		GBytes *end, *trailing;
+		GByteArray *before[2], *after;
+		const char *boundary;
+
+		if (!model)
+			g_mime_multipart_set_boundary (multipart, "b");
+		boundary = g_mime_multipart_get_boundary (multipart);
+		raw_boundaries = multipart->raw_boundaries;
+		end = multipart->raw_end_boundary;
+		trailing = multipart->raw_trailing_boundary;
+		for (newline = 0; newline < 2; newline++) {
+			g_mime_format_options_set_newline_format (options, newline);
+			before[newline] = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+		}
+		for (i = 0; i <= G_N_ELEMENTS (whitespace); i++) {
+			GString *padded = g_string_new (NULL);
+
+			if (i < G_N_ELEMENTS (whitespace))
+				g_string_append_unichar (padded, whitespace[i]);
+			g_string_append_c (padded, 'b');
+			if (i < G_N_ELEMENTS (whitespace))
+				g_string_append_unichar (padded, whitespace[i]);
+			g_mime_multipart_set_boundary (multipart, padded->str);
+			g_string_free (padded, TRUE);
+			g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart));
+			g_assert_true (g_mime_multipart_get_boundary (multipart) == boundary);
+			g_assert_true (multipart->raw_boundaries == raw_boundaries);
+			g_assert_true (multipart->raw_end_boundary == end);
+			g_assert_true (multipart->raw_trailing_boundary == trailing);
+			for (newline = 0; newline < 2; newline++) {
+				g_mime_format_options_set_newline_format (options, newline);
+				after = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+				g_assert_cmpmem (after->data, after->len, before[newline]->data, before[newline]->len);
+				g_byte_array_unref (after);
+			}
+		}
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+		g_mime_multipart_set_boundary (multipart, "\377b");
+		g_test_assert_expected_messages ();
+		g_assert_true (g_mime_multipart_get_boundary (multipart) == boundary);
+		g_assert_true (multipart->raw_boundaries == raw_boundaries);
+		g_assert_true (multipart->raw_end_boundary == end);
+		g_assert_true (multipart->raw_trailing_boundary == trailing);
+
+		g_mime_multipart_set_boundary (multipart, " \tchanged\302\205 ");
+		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "changed");
+		g_assert_null (multipart->raw_boundaries);
+		g_assert_null (multipart->raw_end_boundary);
+		g_assert_true (multipart->write_end_boundary);
+		g_assert_true (multipart->raw_trailing_boundary == trailing);
+		g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart) + 1);
+		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "hanged");
+		g_mime_entity_set_content_type_parameter ((GMimeEntity *) multipart, "boundary", " \tb\302\205 ");
+		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, " \tb\302\205 ");
+		g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart));
+		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "b");
+		for (i = 0; i < G_N_ELEMENTS (values); i++) {
+			g_mime_multipart_set_boundary (multipart, values[i]);
+			g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, expected[i]);
+		}
+		g_mime_multipart_set_boundary (multipart, "caf\303\251\360\237\230\200");
+		for (newline = 0; newline < 2; newline++) {
+			char *marker;
+
+			g_mime_format_options_set_newline_format (options, newline);
+			after = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+			g_assert_nonnull (g_strstr_len ((const char *) after->data, after->len, "--caf\?\?\?--"));
+			if (model) {
+				marker = g_strconcat ("--caf???", g_mime_format_options_get_newline (options), NULL);
+				g_assert_nonnull (g_strstr_len ((const char *) after->data, after->len, marker));
+				g_free (marker);
+			}
+			g_byte_array_unref (after);
+		}
+		for (newline = 0; newline < 2; newline++)
+			g_byte_array_unref (before[newline]);
+		g_mime_format_options_free (options);
+		g_object_unref (multipart);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart NULL boundary assignment retains native automatic generation");
+	for (model = 0; model < 3; model++) {
+		GMimeMultipart *multipart = model ? parse_multipart (wires[model - 1]) : g_mime_multipart_new ();
+		const char *boundary;
+		guchar *decoded;
+		gsize length;
+		char *encoded;
+
+		g_mime_multipart_set_boundary (multipart, NULL);
+		boundary = g_mime_multipart_get_boundary (multipart);
+		g_assert_cmpuint (strlen (boundary), ==, 26);
+		g_assert_true (g_str_has_prefix (boundary, "=-"));
+		decoded = g_base64_decode (boundary + 2, &length);
+		g_assert_cmpuint (length, ==, 16);
+		encoded = g_base64_encode (decoded, length);
+		g_assert_cmpstr (boundary + 2, ==, encoded);
+		g_free (encoded);
+		g_free (decoded);
+		g_object_unref (multipart);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_multipart_text_views (void)
 {
 	static const struct {
@@ -4349,6 +4483,7 @@ main (int argc, char **argv)
 	test_mailbox_model_errors ();
 	test_multipart_models ();
 	test_multipart_collection_bounds ();
+	test_multipart_boundary_normalization ();
 	test_multipart_text_views ();
 	test_multipart_text_folding ();
 	test_multipart_output ();

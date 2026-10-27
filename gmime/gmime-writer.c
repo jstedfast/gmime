@@ -190,6 +190,27 @@ _g_mime_entity_ends_with_delimiter_newline (GMimeEntity *entity, gboolean anonym
 	return FALSE;
 }
 
+static char *
+writer_default_boundary (const char *boundary, gboolean closing, const char *newline)
+{
+	char *marker = g_strdup_printf ("--%s%s%s", boundary, closing ? "--" : "", newline);
+	char *inptr = marker, *outptr = marker;
+
+	while (*inptr) {
+		char *next = g_utf8_next_char (inptr);
+		gunichar c = g_utf8_get_char (inptr);
+
+		/* ASCII replacement is per UTF-16 code unit, including surrogate pairs. */
+		*outptr++ = c < 0x80 ? (char) c : '?';
+		if (c >= 0x10000)
+			*outptr++ = '?';
+		inptr = next;
+	}
+	*outptr = '\0';
+
+	return marker;
+}
+
 static void
 multipart_frame_clear (gpointer data)
 {
@@ -216,8 +237,8 @@ writer_push (GMimeWriter *writer, GMimeMultipart *multipart, GMimeFormatOptions 
 	frame.multipart = multipart;
 	frame.ensure_newline = ensure;
 	frame.index = 0;
-	frame.boundary = g_strdup_printf ("--%s%s", boundary,
-					 g_mime_format_options_get_newline (frame.options));
+	frame.boundary = writer_default_boundary (boundary, FALSE,
+						 g_mime_format_options_get_newline (frame.options));
 
 	g_array_append_val (writer->frames, frame);
 }
@@ -253,7 +274,7 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 		const char *value = g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary");
 
 		if (multipart->write_end_boundary && value) {
-			boundary = g_strdup_printf ("--%s--%s", value, multipart->raw_epilogue ? "" : newline);
+			boundary = writer_default_boundary (value, TRUE, multipart->raw_epilogue ? "" : newline);
 			success = writer_string (writer, boundary);
 			g_free (boundary);
 
@@ -295,8 +316,8 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 			return FALSE;
 	} else {
 		/* A generated end marker includes a newline only without an epilogue. */
-		boundary = g_strdup_printf ("--%s--%s", g_mime_multipart_get_boundary (multipart),
-					   multipart->raw_epilogue ? "" : newline);
+		boundary = writer_default_boundary (g_mime_multipart_get_boundary (multipart), TRUE,
+						    multipart->raw_epilogue ? "" : newline);
 		success = writer_string (writer, boundary);
 		g_free (boundary);
 

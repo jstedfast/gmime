@@ -946,7 +946,10 @@ static void
 multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 {
 	char bbuf[27];
-	
+	char *trimmed = NULL;
+
+	g_return_if_fail (boundary == NULL || g_utf8_validate (boundary, -1, NULL));
+
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
 		GMimeRfc2047Encoder *encoder;
@@ -963,19 +966,33 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 		bbuf[len + 2] = '\0';
 		
 		boundary = bbuf;
+	} else {
+		trimmed = _g_mime_strdup_trim_unicode (boundary);
+		boundary = trimmed;
 	}
-	
-	g_mime_entity_set_content_type_parameter ((GMimeEntity *) multipart, "boundary", boundary);
+
+	/* TODO: Consider validating the boundary according to RFC 2046 (1-70
+	 * characters, only bchars, not ending with a space) and rejecting invalid values. */
+	if (g_strcmp0 (g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary"), boundary))
+		g_mime_entity_set_content_type_parameter ((GMimeEntity *) multipart, "boundary", boundary);
+
+	g_free (trimmed);
 }
 
 
 /**
  * g_mime_multipart_set_boundary:
  * @multipart: a #GMimeMultipart object
- * @boundary: boundary or %NULL to autogenerate one
+ * @boundary: (nullable): UTF-8 boundary or %NULL to autogenerate one
  *
  * Sets @boundary as the boundary on the multipart. If @boundary is
- * %NULL, then a boundary will be auto-generated for you.
+ * %NULL, then a boundary will be auto-generated for you. Non-NULL values
+ * have surrounding Unicode whitespace removed. Empty values and other
+ * boundaries outside RFC 2046's syntax remain accepted.
+ *
+ * Assigning a value that trims to the current boundary preserves raw headers
+ * and parsed markers. Changed values invalidate parsed child and closing markers.
+ * Invalid UTF-8 is a programming error and leaves the multipart unchanged.
  **/
 void
 g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)

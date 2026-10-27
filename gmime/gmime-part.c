@@ -182,33 +182,6 @@ static const char *content_headers[] = {
 };
 
 
-static char *
-trim_part_header_value (const char *value)
-{
-	const char *start, *end, *previous;
-
-	if (!value)
-		return NULL;
-
-	start = value;
-
-	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
-		start = g_utf8_next_char (start);
-
-	end = start + strlen (start);
-
-	while (end > start) {
-		previous = g_utf8_prev_char (end);
-		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
-			break;
-
-		end = previous;
-	}
-
-	return g_strndup (start, end - start);
-}
-
-
 static gboolean
 process_header (GMimeEntity *object, GMimeHeader *header)
 {
@@ -648,7 +621,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 	
 	/* Compare before trimming, as MimeKit does, but copy before freeing:
 	 * description may point into the getter's borrowed cached value. */
-	value = trim_part_header_value (description);
+	value = _g_mime_strdup_trim_unicode (description);
 	g_free (mime_part->content_description);
 	mime_part->content_description = value;
 	mime_part->content_description_loaded = TRUE;
@@ -684,7 +657,7 @@ g_mime_part_get_content_description (GMimePart *mime_part)
 		 * the first matching header, not the last event's header. */
 		header = g_mime_header_list_get_header (((GMimeEntity *) mime_part)->headers, "Content-Description");
 		if (header)
-			mime_part->content_description = trim_part_header_value (g_mime_header_get_value (header));
+			mime_part->content_description = _g_mime_strdup_trim_unicode (g_mime_header_get_value (header));
 		mime_part->content_description_loaded = TRUE;
 	}
 	
@@ -832,7 +805,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 
 	/* Compare before trimming, but copy before freeing: callers may pass
 	 * the getter's borrowed value or a substring back to this setter. */
-	value = trim_part_header_value (content_md5);
+	value = _g_mime_strdup_trim_unicode (content_md5);
 	g_free (mime_part->content_md5);
 	mime_part->content_md5 = value;
 	mime_part->content_md5_loaded = TRUE;
@@ -1001,7 +974,7 @@ g_mime_part_get_content_md5 (GMimePart *mime_part)
 		 * not make it the property's selected value. */
 		header = g_mime_header_list_get_header (((GMimeEntity *) mime_part)->headers, "Content-Md5");
 		if (header)
-			mime_part->content_md5 = trim_part_header_value (g_mime_header_get_value (header));
+			mime_part->content_md5 = _g_mime_strdup_trim_unicode (g_mime_header_get_value (header));
 		mime_part->content_md5_loaded = TRUE;
 	}
 	
@@ -1411,7 +1384,7 @@ g_mime_part_get_filename (GMimePart *mime_part)
 
 	/* Re-read the live models on every lookup, including direct parameter
 	 * edits. Keep a trimmed copy to preserve the native borrowed-string API. */
-	value = trim_part_header_value (filename);
+	value = _g_mime_strdup_trim_unicode (filename);
 	if (g_strcmp0 (mime_part->filename, value)) {
 		g_free (mime_part->filename);
 		mime_part->filename = value;

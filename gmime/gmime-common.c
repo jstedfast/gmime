@@ -130,6 +130,32 @@ _g_mime_is_unicode_whitespace (gunichar c)
 	return c == '\v' || c == 0x85 || g_unichar_isspace (c);
 }
 
+char *
+_g_mime_strdup_trim_unicode (const char *value)
+{
+	const char *start, *end, *previous;
+
+	if (!value)
+		return NULL;
+
+	start = value;
+
+	while (*start && _g_mime_is_unicode_whitespace (g_utf8_get_char (start)))
+		start = g_utf8_next_char (start);
+
+	end = start + strlen (start);
+
+	while (end > start) {
+		previous = g_utf8_prev_char (end);
+		if (!_g_mime_is_unicode_whitespace (g_utf8_get_char (previous)))
+			break;
+
+		end = previous;
+	}
+
+	return g_strndup (start, end - start);
+}
+
 gboolean
 _g_mime_strcase_equal_trimmed (const char *value, const char *token)
 {

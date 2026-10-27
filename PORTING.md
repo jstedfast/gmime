@@ -3668,6 +3668,52 @@ anonymizer comparisons also still match in both builds.
 Native Windows execution remains unvalidated. Raw marker APIs, boundary
 validation and managed disposal semantics remain separate work.
 
+### Multipart boundary assignment
+
+The multipart boundary setter now trims surrounding Unicode whitespace
+before comparing or assigning the Content-Type parameter, matching MimeKit.
+Values that trim to the current boundary preserve raw headers and parsed
+opening, closing and trailing marker state. Changed values retain existing
+raw-marker invalidation behavior. The setter copies before mutation, so
+borrowed getter values and substrings remain safe. The existing Unicode
+trim implementation is shared with part-header and filename accessors
+without changing their behavior.
+
+Empty values, internal whitespace, overlength values and non-ASCII values
+remain accepted. MimeKit's inline RFC 2046 validation TODO is retained;
+this change does not add boundary-syntax validation. Direct Content-Type
+parameter edits remain untrimmed. Invalid UTF-8 produces a GLib precondition
+diagnostic without changing state. The C-string API cannot represent
+embedded NUL. GMime retains its native NULL-to-generate setter and
+generate-if-absent getter rather than MimeKit's null rejection/null return.
+
+Generated writer delimiters now use MimeWriter's ASCII replacement
+semantics, including two replacement bytes for supplementary characters.
+The stored Unicode boundary and its encoded parameter remain unchanged.
+Raw parsed delimiters still bypass this conversion. This does not port
+MimeAnonymizer's separate unchecked UTF-16-to-byte boundary casts; its
+pre-existing non-ASCII generated-marker difference remains separate work.
+
+All 20,608 actual-source boundary comparisons match in normal and
+ASan/UBSan builds with leak checking. The 92 distinct inputs include all
+25 managed whitespace characters, non-whitespace Unicode controls,
+supplementary characters, empty/overlength values, repeated assignments,
+borrowed strings and substrings. Models include mixed, alternative and
+related constructed containers and complete, empty and truncated parsed
+messages, LF/DOS output, short reads, nonseekable streams and memory/source
+storage. The 6,372 existing collection comparisons also retain zero
+unexpected differences in both builds.
+
+Persistent native tests cover no-op marker identity and exact output,
+atomic invalid UTF-8 rejection, boundary changes, borrowed arguments,
+empty values, non-ASCII generated markers and native random generation.
+Focused model, reader, anonymizer, body-builder and iterator tests pass
+under fatal criticals and sanitizer leak checking. The full normal core
+suite retains its 38/39 baseline, with only test-core's two established
+text-format assertions failing. Full build, GIR, typelib, VAPI, GTK-doc
+and live GI checks pass with existing warnings. Native Windows execution
+remains unvalidated.
+
 ### Reader-backed mailbox model construction
 
 The private adapter now constructs successive mbox and MMDF messages using
