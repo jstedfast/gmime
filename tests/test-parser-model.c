@@ -35,6 +35,8 @@
 
 #include "testsuite.h"
 
+static GByteArray *serialize_writer (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only);
+
 typedef struct {
 	TestStreamOneByte parent_object;
 	gsize chunk, bytes_read, fail_after;
@@ -1400,7 +1402,7 @@ test_multipart_text_views (void)
 			g_mime_multipart_set_preamble (multipart, "new preamble\n");
 			g_mime_multipart_set_epilogue (multipart, "new epilogue");
 			assert_raw_bytes (multipart->raw_preamble, "new preamble\n", 13);
-			assert_raw_bytes (multipart->raw_epilogue, "\nnew epilogue", 13);
+			assert_raw_bytes (multipart->raw_epilogue, "\nnew epilogue\n", 14);
 			g_mime_multipart_set_preamble (multipart, NULL);
 			g_mime_multipart_set_epilogue (multipart, NULL);
 			g_assert_null (g_mime_multipart_get_preamble (multipart));
@@ -1414,6 +1416,169 @@ test_multipart_text_views (void)
 			g_bytes_unref (epilogue);
 		}
 	}
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_text_folding (void)
+{
+	static const struct {
+		const char *input, *folded;
+	} cases[] = {
+		{ NULL, NULL },
+		{ "", "" },
+		{ "hello world", "hello world\n" },
+		{ " \t", " \t\n" },
+		{ "a\r\nb\r\n", "a\nb\n" },
+		{ "a\rb", "a\rb\n" },
+		{ "a\n\nb\n", "a\n\nb\n" },
+		{ "a \n b\t", "a\n b\t\n" },
+		{ "a\302\205b\342\200\250c", "a\302\205b\342\200\250c\n" }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_get_default ();
+	GMimeNewLineFormat old_newline = g_mime_format_options_get_newline_format (options);
+	guint maxline = g_mime_format_options_get_max_line_length (options);
+	guint i, j, model, format;
+
+	testsuite_check ("Multipart text setters fold decoded views and retain immutable raw snapshots");
+	for (format = 0; format < 2; format++) {
+		g_mime_format_options_set_newline_format (options, format);
+		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+			GString *expected = cases[i].folded ? g_string_new (NULL) : NULL;
+			const char *newline = g_mime_format_options_get_newline (options);
+			char *epilogue;
+
+			if (expected) {
+				for (j = 0; cases[i].folded[j]; j++) {
+					if (cases[i].folded[j] == '\n')
+						g_string_append (expected, newline);
+					else
+						g_string_append_c (expected, cases[i].folded[j]);
+				}
+			}
+			epilogue = expected ? g_strconcat (newline, expected->str, NULL) : NULL;
+			for (model = 0; model < 3; model++) {
+				GMimeMultipart *multipart = model ? parse_multipart (model == 1 ?
+					"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\n\nbody\n--b--\nepi\n" :
+					"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody") : g_mime_multipart_new ();
+				GBytes *prebytes, *epibytes;
+
+				g_mime_multipart_set_preamble (multipart, cases[i].input);
+				g_mime_multipart_set_epilogue (multipart, cases[i].input);
+				g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected ? expected->str : NULL);
+				g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, expected ? expected->str : NULL);
+				prebytes = multipart->raw_preamble ? g_bytes_ref (multipart->raw_preamble) : NULL;
+				epibytes = multipart->raw_epilogue ? g_bytes_ref (multipart->raw_epilogue) : NULL;
+				g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart));
+				g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart));
+				g_assert_true (multipart->raw_preamble == prebytes);
+				g_assert_true (multipart->raw_epilogue == epibytes);
+				if (model == 2 && cases[i].input) {
+					g_assert_null (multipart->raw_end_boundary);
+					g_assert_true (multipart->write_end_boundary);
+				}
+				g_mime_multipart_set_preamble (multipart, "prefix suffix");
+				g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart) + 7);
+				g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_preamble (multipart));
+				g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart) + 3);
+				{
+					char *suffix = g_strconcat ("fix", newline, NULL);
+
+					g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, suffix);
+					g_free (suffix);
+				}
+				g_mime_multipart_set_preamble (multipart, NULL);
+				g_mime_multipart_set_epilogue (multipart, NULL);
+				g_object_unref (multipart);
+				if (prebytes) {
+					assert_raw_bytes (prebytes, expected->str, expected->len);
+					g_bytes_unref (prebytes);
+				}
+				if (epibytes) {
+					assert_raw_bytes (epibytes, epilogue, strlen (epilogue));
+					g_bytes_unref (epibytes);
+				}
+			}
+			if (expected)
+				g_string_free (expected, TRUE);
+			g_free (epilogue);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart folded setters serialize without duplicate delimiter newlines");
+	for (format = 0; format < 2; format++) {
+		g_mime_format_options_set_newline_format (options, format);
+		for (model = 0; model < 3; model++) {
+			GMimeMultipart *multipart = model ? parse_multipart (model == 1 ?
+				"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\n\nbody\n--b--\nepi\n" :
+				"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody") : g_mime_multipart_new ();
+			GMimeFormatOptions *output_options = g_mime_format_options_new ();
+
+			g_mime_multipart_set_boundary (multipart, "b");
+			g_mime_multipart_set_preamble (multipart, "before");
+			g_mime_multipart_set_epilogue (multipart, "after");
+			for (j = 0; j < 2; j++) {
+				const char *newline;
+				GByteArray *actual;
+				GString *expected = g_string_new (NULL);
+
+				g_mime_format_options_set_newline_format (output_options, j);
+				newline = g_mime_format_options_get_newline (output_options);
+				g_string_append_printf (expected, "Content-Type: multipart/mixed; boundary=b%s%sbefore%s",
+					newline, newline, newline);
+				if (model)
+					g_string_append_printf (expected, "--b\n%sbody%s", newline, newline);
+				g_string_append_printf (expected, "--b--%safter%s", newline, newline);
+				actual = serialize_writer ((GMimeEntity *) multipart, output_options, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, expected->str, expected->len);
+				g_byte_array_unref (actual);
+				g_string_free (expected, TRUE);
+			}
+			g_mime_format_options_free (output_options);
+			g_object_unref (multipart);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart folds at exact UTF-16 column limits without splitting oversized words");
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	for (i = maxline - 3; i <= maxline + 2; i++) {
+		GMimeMultipart *multipart = g_mime_multipart_new ();
+		char *word = g_strnfill (i, 'a');
+		char *input = g_strconcat (word, " b", NULL);
+		char *expected = g_strconcat (word, i >= maxline - 2 ? "\nb\n" : " b\n", NULL);
+
+		g_mime_multipart_set_preamble (multipart, input);
+		g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected);
+		g_free (word);
+		g_free (input);
+		g_free (expected);
+		g_object_unref (multipart);
+	}
+	{
+		GMimeMultipart *multipart = g_mime_multipart_new ();
+		GString *input = g_string_new (NULL);
+		char *expected;
+
+		for (i = 0; i < (maxline - 1) / 2; i++)
+			g_string_append (input, "\360\237\230\200");
+		expected = g_strconcat (input->str, "\nb\n", NULL);
+		g_string_append (input, " b");
+		g_mime_multipart_set_preamble (multipart, input->str);
+		g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+		g_mime_multipart_set_preamble (multipart, "\377");
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+		g_mime_multipart_set_epilogue (multipart, "\377");
+		g_test_assert_expected_messages ();
+		g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected);
+		g_assert_null (g_mime_multipart_get_epilogue (multipart));
+		g_free (expected);
+		g_string_free (input, TRUE);
+		g_object_unref (multipart);
+	}
+	g_mime_format_options_set_newline_format (options, old_newline);
 	testsuite_check_passed ();
 }
 
@@ -2433,7 +2598,7 @@ test_writer_dispatch (void)
 	g_mime_multipart_set_preamble (multipart, "pre");
 	g_mime_multipart_set_epilogue (multipart, "post");
 	bytes = serialize_writer ((GMimeEntity *) multipart, options, TRUE);
-	g_assert_cmpmem (bytes->data, bytes->len, "pre\npost", 8);
+	g_assert_cmpmem (bytes->data, bytes->len, "pre\n\npost\n", 10);
 	g_assert_null (g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary"));
 	g_byte_array_unref (bytes);
 	testsuite_check_passed ();
@@ -4026,6 +4191,7 @@ main (int argc, char **argv)
 	test_mailbox_model_errors ();
 	test_multipart_models ();
 	test_multipart_text_views ();
+	test_multipart_text_folding ();
 	test_multipart_output ();
 	test_model_errors ();
 	test_public_parser_models ();

@@ -2215,10 +2215,10 @@ Raw multipart delimiters, including trailing whitespace and original newlines,
 remain untouched. Preambles and epilogues are masked and newline-normalized.
 Truncated trees retain trailing delimiters without inventing closing markers.
 Missing boundaries are read without the native getter's boundary-generation
-side effects. Legacy constructed multipart text is adapted locally without
-changing its storage/setters; legacy closing-boundary suppression is treated
-as truncation for anonymization only. Ordinary writer behavior is unchanged.
-The pending raw-preamble/epilogue migration remains separate.
+side effects. Legacy string-only multipart text is adapted locally; setters
+now supply folded raw bytes as described below. Legacy closing-boundary
+suppression is treated as truncation for anonymization only. Raw
+boundary-marker API migration remains separate.
 
 Delivery-status groups and disposition-notification fields use header masking
 and the same preservation set. Malformed status fields fall back to raw body
@@ -2240,10 +2240,11 @@ depths remain unvalidated.
 
 There are no new masking differences. Sixty-two malformed EOF inputs are
 rejected before anonymization; an isolated committed-HEAD build reproduces
-all sixty-two. Forty constructed-epilogue cases inherit the legacy native
-setter's lack of final-newline folding, unlike MimeKit's setter. Masking
-identical raw epilogue bytes matches actual MimeKit in all forty cases.
-MimeKit sources remain unchanged.
+all sixty-two. The forty constructed-epilogue differences originally caused
+by the legacy setter's missing final-newline folding are resolved by the
+multipart text-folding port below. All 100 constructed multipart cases now
+match actual MimeKit in normal and ASan/UBSan builds. MimeKit sources remain
+unchanged.
 
 Persistent native regressions cover a 2,000-layer mixed tree, raw/truncated and
 missing delimiters, binary content, constructed MIME-Version insertion, legacy
@@ -3501,8 +3502,8 @@ slots. Clear restores generated closing markers. Boundary changes discard
 obsolete child/end markers, including direct parameter edits, Content-Type
 replacement and change-then-restore sequences; unrelated parameter edits
 preserve them. Reassigning an unchanged decoded preamble/epilogue retains
-its original binary bytes. Existing preamble/epilogue string-setter text
-semantics are retained rather than adding MimeKit's text-folding API here.
+its original binary bytes. String-setter folding and the corresponding
+constructed-writer adaptation are described below.
 
 The new corpus compares parsed multipart trees, raw text/markers, nullable
 content and LF/CRLF serialization against actual MimeKit sources, plus
@@ -3550,8 +3551,8 @@ inline comments about this newline and restoring a truncated closing
 delimiter when assigning an epilogue accompany the native implementation.
 Getter results are nullable borrowed UTF-8 strings. Assigning the same
 decoded value preserves both the original GBytes and serialized output.
-Changed and NULL assignments retain existing native setter behavior;
-MimeKit's preamble/epilogue folding remains separate work.
+Changed strings use the folding semantics described below; NULL removes
+the corresponding text and raw bytes.
 
 Native regressions cover consecutive NULs, UTF-8, Latin-1 fallback,
 UTF-16LE/BE and UTF-32BE conversion, epilogue newline ownership, both
@@ -3573,6 +3574,54 @@ pass with existing build warnings. The normal core baseline remains
 38/39 programs, with only
 test-core's two established text-format assertions failing. Native Windows
 execution remains unvalidated.
+
+### Multipart text folding and setters
+
+Preamble and epilogue setters now port Multipart.FoldPreambleOrEpilogue,
+using the default formatting options. Unicode whitespace classification
+and UTF-16 code-unit column counts match MimeKit, including supplementary
+characters. A following word wraps when it would reach or exceed the
+78-column default; oversized words remain intact. Explicit LF sequences
+are normalized, preceding whitespace in that run is discarded, and a
+nonempty final logical line receives a newline. Other whitespace,
+including bare CR, follows the source algorithm.
+
+This intentionally changes constructed and changed parsed text: getters
+return the folded value, rather than the original setter argument.
+NULL removes the text; empty strings remain distinct from NULL.
+Both object modes retain independently owned immutable raw bytes.
+An equal decoded assignment preserves raw-byte identity and serialization,
+including parsed binary text. Borrowed substrings and cross-field values
+are copied before their old storage is released. Invalid UTF-8 produces a
+GLib precondition diagnostic without changing the existing value.
+
+Raw epilogues include the closing delimiter's newline; decoded views omit
+it. Assigning a non-NULL changed epilogue restores a truncated closing
+marker. Applicable MimeKit newline-ownership and restoration comments
+remain alongside the implementation; the source folding routine itself
+has no inline comments. Constructed serialization now uses the folded
+raw bytes without duplicating delimiter newlines. Legacy string-only
+fallbacks, missing-boundary behavior and closing-marker suppression remain
+available. Raw boundary-marker APIs are unchanged.
+
+All 9,274 new actual-source folding cases match in normal and ASan/UBSan
+builds, comparing decoded values, raw bytes and exact LF/CRLF output.
+The corpus covers constructed, complete parsed and truncated objects,
+Unicode whitespace, exact thresholds, long words, randomized text,
+NULL/empty values, borrowed substring assignments, no-op binary data,
+short reads, seekability and memory/source storage. Harness-only default
+newline alignment exercises LF and CRLF independently of output options.
+All 6,180 binary-view cases and 80,472 existing public parser/writer cases
+also still match in both builds. All 100 constructed multipart anonymizer
+cases match, resolving the forty earlier setter-related differences.
+
+Focused parser-model, reader and anonymizer tests pass with fatal
+criticals, ASan/UBSan and leak detection. The complete normal core suite
+retains its 38/39 baseline, with only test-core's two established text-format
+assertions failing. Full build, GIR, typelib, VAPI, GTK-doc and live Python
+GI checks pass with existing warnings, including nullable UTF-8 setters,
+folded constructed serialization and retained string lifetimes.
+Native Windows execution remains unvalidated.
 
 ### Reader-backed mailbox model construction
 
@@ -3730,7 +3779,7 @@ newline completion. Signed children clear hidden-header filtering and
 disable international header reformatting without changing caller options.
 Raw markers, binary bodies, truncated multiparts and mixed-newline
 verification retain their existing reader-backed behavior. Constructed
-legacy multiparts retain their preamble/epilogue and delimiter conventions,
+legacy multiparts retain their delimiter conventions,
 including suppression of the closing delimiter when no boundary is set.
 
 GMime deliberately retains GObject write_to_stream overrides, unlike

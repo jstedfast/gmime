@@ -253,13 +253,16 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 		const char *value = g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary");
 
 		if (multipart->write_end_boundary && value) {
-			boundary = g_strdup_printf ("--%s--%s", value, newline);
+			boundary = g_strdup_printf ("--%s--%s", value, multipart->raw_epilogue ? "" : newline);
 			success = writer_string (writer, boundary);
 			g_free (boundary);
 
 			if (!success)
 				return FALSE;
 		}
+
+		if (multipart->raw_epilogue)
+			return writer_bytes (writer, options, multipart->raw_epilogue, frame->ensure_newline);
 
 		return !multipart->epilogue || writer_string (writer, multipart->epilogue);
 	}
@@ -426,7 +429,7 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 				if (GMIME_IS_MULTIPART (entity)) {
 					GMimeMultipart *multipart = (GMimeMultipart *) entity;
 
-					if (multipart->reader_model) {
+					if (multipart->reader_model || multipart->raw_preamble) {
 						if (multipart->raw_preamble && g_bytes_get_size (multipart->raw_preamble) &&
 						    !writer_bytes (&writer, options, multipart->raw_preamble, multipart->children->len > 0 || ensure))
 							goto fail;

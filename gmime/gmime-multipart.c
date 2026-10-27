@@ -359,12 +359,67 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 }
 
 
+static char *
+fold_preamble_or_epilogue (const char *text, gboolean epilogue)
+{
+	const char *newline = g_mime_format_options_get_newline (NULL);
+	gsize maxline = g_mime_format_options_get_max_line_length (NULL);
+	const char *start, *word, *inptr = text;
+	GString *builder = g_string_new (NULL);
+	gsize line_length = 0, length;
+
+	if (epilogue)
+		g_string_append (builder, newline);
+
+	while (*inptr) {
+		start = inptr;
+
+		while (*inptr && _g_mime_is_unicode_whitespace (g_utf8_get_char (inptr))) {
+			if (*inptr == '\n') {
+				g_string_append (builder, newline);
+				start = inptr + 1;
+				line_length = 0;
+			}
+
+			inptr = g_utf8_next_char (inptr);
+		}
+
+		word = inptr;
+
+		while (*inptr && !_g_mime_is_unicode_whitespace (g_utf8_get_char (inptr)))
+			inptr = g_utf8_next_char (inptr);
+
+		length = _g_mime_count_utf16_units (start, inptr);
+
+		if (line_length > 0 && line_length + length >= maxline) {
+			g_string_append (builder, newline);
+			length = _g_mime_count_utf16_units (word, inptr);
+			start = word;
+			line_length = 0;
+		}
+
+		if (length > 0) {
+			g_string_append_len (builder, start, inptr - start);
+			line_length += length;
+		}
+	}
+
+	if (line_length > 0)
+		g_string_append (builder, newline);
+
+	return g_string_free (builder, FALSE);
+}
+
+
 /**
  * g_mime_multipart_set_preamble:
  * @multipart: a #GMimeMultipart object
- * @preamble: preamble
+ * @preamble: (nullable): UTF-8 preamble, or %NULL to remove it
  *
- * Sets the preamble on the multipart.
+ * Sets the preamble on the multipart, folding at whitespace using the default
+ * formatting options and ending a nonempty final line with a newline.
+ * Oversized words remain intact. Assigning the current decoded value preserves
+ * the original bytes instead of refolding them.
  **/
 void
 g_mime_multipart_set_preamble (GMimeMultipart *multipart, const char *preamble)
@@ -372,17 +427,16 @@ g_mime_multipart_set_preamble (GMimeMultipart *multipart, const char *preamble)
 	char *copy;
 
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+	g_return_if_fail (preamble == NULL || g_utf8_validate (preamble, -1, NULL));
 
-	if (multipart->reader_model && !g_strcmp0 (multipart->preamble, preamble))
+	if (!g_strcmp0 (multipart->preamble, preamble))
 		return;
 
-	copy = g_strdup (preamble);
+	copy = preamble ? fold_preamble_or_epilogue (preamble, FALSE) : NULL;
+	g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
 
-	if (multipart->reader_model) {
-		g_clear_pointer (&multipart->raw_preamble, g_bytes_unref);
-		if (copy)
-			multipart->raw_preamble = g_bytes_new (copy, strlen (copy));
-	}
+	if (copy)
+		multipart->raw_preamble = g_bytes_new (copy, strlen (copy));
 	
 	g_free (multipart->preamble);
 	multipart->preamble = copy;
@@ -413,34 +467,36 @@ g_mime_multipart_get_preamble (GMimeMultipart *multipart)
 /**
  * g_mime_multipart_set_epilogue:
  * @multipart: a #GMimeMultipart object
- * @epilogue: epilogue
+ * @epilogue: (nullable): UTF-8 epilogue, or %NULL to remove it
  *
- * Sets the epilogue on the multipart.
+ * Sets the epilogue on the multipart, folding at whitespace using the default
+ * formatting options and ending a nonempty final line with a newline.
+ * The raw bytes include the closing boundary's newline, which is omitted from
+ * the decoded view. Assigning the current decoded value preserves the bytes.
  **/
 void
 g_mime_multipart_set_epilogue (GMimeMultipart *multipart, const char *epilogue)
 {
-	char *copy;
+	char *copy, *raw;
 
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+	g_return_if_fail (epilogue == NULL || g_utf8_validate (epilogue, -1, NULL));
 
-	if (multipart->reader_model && !g_strcmp0 (multipart->epilogue, epilogue))
+	if (!g_strcmp0 (multipart->epilogue, epilogue))
 		return;
 
-	copy = g_strdup (epilogue);
+	raw = epilogue ? fold_preamble_or_epilogue (epilogue, TRUE) : NULL;
+	copy = raw ? g_strdup (raw + strlen (g_mime_format_options_get_newline (NULL))) : NULL;
+	g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
 
-	if (multipart->reader_model) {
-		g_clear_pointer (&multipart->raw_epilogue, g_bytes_unref);
-		if (copy) {
-			char *raw = g_strconcat (g_mime_format_options_get_newline (NULL), copy, NULL);
+	if (raw) {
+		multipart->raw_epilogue = g_bytes_new_take (raw, strlen (raw));
 
-			multipart->raw_epilogue = g_bytes_new_take (raw, strlen (raw));
-			/* If we are setting an epilogue and the raw end boundary is
-			 * empty, reset it back to the default. */
-			if (multipart_is_truncated (multipart)) {
-				g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
-				multipart->write_end_boundary = TRUE;
-			}
+		/* If we are setting an epilogue and the raw end boundary is
+		 * empty, reset it back to the default. */
+		if (multipart_is_truncated (multipart)) {
+			g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
+			multipart->write_end_boundary = TRUE;
 		}
 	}
 	
