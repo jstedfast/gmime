@@ -28,6 +28,7 @@
 #include "gmime-format-options.h"
 #include "gmime-filter-dos2unix.h"
 #include "gmime-filter-unix2dos.h"
+#include "gmime-internal.h"
 
 
 /**
@@ -47,6 +48,7 @@ struct _GMimeFormatOptions {
 	gboolean international;
 	gboolean always_quote_param_values;
 	gboolean ensure_newline;
+	gboolean hide_unknown_headers;
 	GPtrArray *hidden;
 	guint maxline;
 };
@@ -113,6 +115,7 @@ g_mime_format_options_new (void)
 	options->international = FALSE;
 	options->always_quote_param_values = FALSE;
 	options->ensure_newline = FALSE;
+	options->hide_unknown_headers = FALSE;
 	options->maxline = 78;
 	
 	return options;
@@ -144,6 +147,7 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 	clone->international = options->international;
 	clone->always_quote_param_values = options->always_quote_param_values;
 	clone->ensure_newline = options->ensure_newline;
+	clone->hide_unknown_headers = hidden && options->hide_unknown_headers;
 	clone->maxline = options->maxline;
 	
 	clone->hidden = g_ptr_array_new ();
@@ -535,12 +539,21 @@ g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char 
 	if (options == NULL)
 		options = default_options;
 	
+	if (options->hide_unknown_headers && g_mime_header_id_from_name (header) == GMIME_HEADER_UNKNOWN)
+		return TRUE;
+
 	for (i = 0; i < options->hidden->len; i++) {
 		if (!g_ascii_strcasecmp (options->hidden->pdata[i], header))
 			return TRUE;
 	}
 	
 	return FALSE;
+}
+
+void
+_g_mime_format_options_set_hide_unknown_headers (GMimeFormatOptions *options, gboolean hide)
+{
+	options->hide_unknown_headers = hide;
 }
 
 
@@ -602,4 +615,5 @@ g_mime_format_options_clear_hidden_headers (GMimeFormatOptions *options)
 		g_free (options->hidden->pdata[i]);
 	
 	g_ptr_array_set_size (options->hidden, 0);
+	options->hide_unknown_headers = FALSE;
 }

@@ -3816,6 +3816,8 @@ g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
  * Writes the headers followed by the header/body separator. A parsed list
  * without a separator omits it until a structural edit is made. Changing a
  * contained header's value does not change this state.
+ * Hidden headers are only omitted when writing merged message headers,
+ * not standalone header lists or descendant MIME entity headers.
  *
  * Newline conversion is completed before the separator is written. The
  * caller's stream is not closed.
@@ -3870,10 +3872,8 @@ _g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOption
 	for (i = 0; i < headers->array->len; i++) {
 		header = (GMimeHeader *) headers->array->pdata[i];
 		
-		if (!g_mime_format_options_is_hidden_header (options, header->name)) {
-			if (g_mime_header_write_to_stream (header, options, filtered) == -1)
-				goto done;
-		}
+		if (g_mime_header_write_to_stream (header, options, filtered) == -1)
+			goto done;
 	}
 	
 	if (g_mime_stream_flush (filtered) == 0)

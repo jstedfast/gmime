@@ -1410,27 +1410,24 @@ g_mime_part_get_filename (GMimePart *mime_part)
 static void
 set_content (GMimePart *mime_part, GMimeContent *content)
 {
-	if (mime_part->content)
-		g_object_unref (mime_part->content);
-	
 	mime_part->openpgp = (GMimeOpenPGPData) -1;
-	
-	mime_part->content = content;
-	g_object_ref (content);
+	g_set_object (&mime_part->content, content);
 }
 
 
 /**
  * g_mime_part_set_content:
  * @mime_part: a #GMimePart object
- * @content: a #GMimeContent content object
+ * @content: (nullable): a #GMimeContent content object
  *
- * Sets the content on the mime part.
+ * Sets the content on the mime part, or clears it when @content is %NULL.
+ * The part retains a reference to @content.
  **/
 void
 g_mime_part_set_content (GMimePart *mime_part, GMimeContent *content)
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (content == NULL || GMIME_IS_CONTENT (content));
 	
 	if (mime_part->content == content)
 		return;
@@ -1443,11 +1440,11 @@ g_mime_part_set_content (GMimePart *mime_part, GMimeContent *content)
  * g_mime_part_get_content:
  * @mime_part: a #GMimePart object
  *
- * Gets the internal data-wrapper of the specified mime part, or %NULL
- * on error.
+ * Gets the content of the specified mime part, or %NULL if no content
+ * has been assigned.
  *
- * Returns: (transfer none): the data-wrapper for the mime part's
- * contents.
+ * Returns: (transfer none) (nullable): the part's content. The reference
+ * is valid until the content is replaced or the part is finalized.
  **/
 GMimeContent *
 g_mime_part_get_content (GMimePart *mime_part)

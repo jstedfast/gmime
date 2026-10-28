@@ -286,6 +286,7 @@ test_partial_reconstruction_parameters (void)
 	GMimeMessagePartial *first = g_mime_message_partial_new ("id", G_MAXINT32, G_MAXINT32);
 	GMimeMessagePartial *second = g_mime_message_partial_new ("id", 1, 2);
 	GMimeMessagePartial *partials[] = { first, second };
+	GMimeMessage *envelope = g_mime_message_new (FALSE);
 	GMimeParamList *parameters;
 	guint i;
 
@@ -296,17 +297,18 @@ test_partial_reconstruction_parameters (void)
 			g_mime_param_list_set_parameter (parameters, "number", invalid[i]);
 		else
 			g_mime_param_list_remove (parameters, "number");
-		g_assert_null (g_mime_message_partial_reconstruct_message (partials, G_N_ELEMENTS (partials)));
+		g_assert_null (g_mime_message_partial_join (NULL, envelope, partials, G_N_ELEMENTS (partials), NULL));
 		g_assert_true (partials[0] == first);
 		g_assert_true (partials[1] == second);
 	}
 	g_mime_param_list_set_parameter (parameters, "number", "1");
 	g_mime_param_list_set_parameter (parameters, "id", "other");
-	g_assert_null (g_mime_message_partial_reconstruct_message (partials, G_N_ELEMENTS (partials)));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, partials, G_N_ELEMENTS (partials), NULL));
 	g_assert_true (partials[0] == first);
 	g_assert_true (partials[1] == second);
 	g_object_unref (first);
 	g_object_unref (second);
+	g_object_unref (envelope);
 	testsuite_check_passed ();
 }
 
@@ -321,7 +323,7 @@ test_split_without_message_id (void)
 	testsuite_check ("splitting a message without Message-ID generates a shared partial id");
 	g_mime_entity_set_header (GMIME_ENTITY (message), "Subject", "Split without an id", NULL);
 	g_assert_null (g_mime_message_get_message_id (message));
-	messages = g_mime_message_partial_split_message (message, 8, &count);
+	messages = g_mime_message_partial_split (message, 8, &count, NULL);
 	g_assert_nonnull (messages);
 	g_assert_cmpuint (count, >, 1);
 	partials = g_new (GMimeMessagePartial *, count);
@@ -333,7 +335,7 @@ test_split_without_message_id (void)
 		assert_partial_parameters (partials[i], id, i + 1, count);
 	}
 	g_assert_null (g_mime_message_get_message_id (message));
-	reconstructed = g_mime_message_partial_reconstruct_message (partials, count);
+	reconstructed = g_mime_message_partial_join (NULL, messages[0], partials, count, NULL);
 	g_assert_nonnull (reconstructed);
 	g_object_unref (reconstructed);
 	for (i = 0; i < count; i++)
@@ -353,15 +355,15 @@ test_split_arguments (void)
 
 	testsuite_check ("message splitting validates the size and result count");
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*nparts != NULL*");
-	g_assert_null (g_mime_message_partial_split_message (message, 1, NULL));
+	g_assert_null (g_mime_message_partial_split (message, 1, NULL, NULL));
 	g_test_assert_expected_messages ();
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE*");
-	g_assert_null (g_mime_message_partial_split_message (NULL, 1, &count));
+	g_assert_null (g_mime_message_partial_split (NULL, 1, &count, NULL));
 	g_test_assert_expected_messages ();
 	g_assert_cmpuint (count, ==, 0);
 	count = 42;
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*max_size > 0*");
-	g_assert_null (g_mime_message_partial_split_message (message, 0, &count));
+	g_assert_null (g_mime_message_partial_split (message, 0, &count, NULL));
 	g_test_assert_expected_messages ();
 	g_assert_cmpuint (count, ==, 0);
 	g_object_unref (message);
@@ -448,6 +450,7 @@ test_reconstruction_content (void)
 	};
 	GMimeMessagePartial *parts[3], *input[3];
 	GMimeMessage *message;
+	GMimeMessage *envelope = g_mime_message_new (FALSE);
 	GMimeStream *output;
 	GByteArray *buffer;
 	GString *wire = g_string_new (headers);
@@ -465,8 +468,11 @@ test_reconstruction_content (void)
 				if (i != 2)
 					g_mime_param_list_remove (g_mime_content_type_get_parameters (
 						g_mime_entity_get_content_type (GMIME_ENTITY (parts[i]))), "total");
-				if ((int) i == missing)
+				if ((int) i == missing) {
+					set_reconstruction_content (parts[i], "discarded", 9, encodings[c]);
+					g_mime_part_set_content (GMIME_PART (parts[i]), NULL);
 					continue;
+				}
 				length = (wire->len - offset) / (3 - i - (missing >= (int) i));
 				set_reconstruction_content (parts[i], wire->str + offset, length,
 							    encodings[(c + i) % G_N_ELEMENTS (encodings)]);
@@ -477,7 +483,7 @@ test_reconstruction_content (void)
 			input[1] = parts[0];
 			input[2] = parts[1];
 			for (pass = 0; pass < 2; pass++) {
-				message = g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input));
+				message = g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), NULL);
 				g_assert_nonnull (message);
 				g_assert_true (input[0] == parts[2]);
 				g_assert_true (input[1] == parts[0]);
@@ -496,6 +502,7 @@ test_reconstruction_content (void)
 		}
 	}
 	g_string_free (wire, TRUE);
+	g_object_unref (envelope);
 	testsuite_check_passed ();
 }
 
@@ -512,31 +519,33 @@ test_reconstruction_failures (void)
 	GMimeStream *stream;
 	GByteArray *buffer;
 	GMimeMessage *message;
+	GMimeMessage *envelope = g_mime_message_new (FALSE);
+	GError *error = NULL;
 
 	testsuite_check ("reconstruction failures preserve input order and release decoded readers");
-	g_assert_null (g_mime_message_partial_reconstruct_message (NULL, 0));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, NULL, 0, NULL));
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*partials != NULL || num == 0*");
-	g_assert_null (g_mime_message_partial_reconstruct_message (NULL, 1));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, NULL, 1, NULL));
 	g_test_assert_expected_messages ();
 	input[1] = NULL;
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE_PARTIAL*");
-	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), NULL));
 	g_test_assert_expected_messages ();
 	g_assert_true (input[0] == last);
 	g_assert_null (input[1]);
 	input[1] = first;
 	g_mime_param_list_remove (parameters, "total");
-	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), NULL));
 	g_assert_true (input[0] == last && input[1] == first);
 	g_mime_param_list_set_parameter (parameters, "total", "3");
-	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), NULL));
 	g_assert_true (input[0] == last && input[1] == first);
 	g_mime_param_list_set_parameter (parameters, "total", "2");
 	g_mime_param_list_set_parameter (parameters, "number", "1");
-	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), NULL));
 	g_assert_true (input[0] == last && input[1] == first);
 	g_mime_param_list_set_parameter (parameters, "number", "2");
-	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), NULL));
 	g_assert_true (input[0] == last && input[1] == first);
 
 	set_reconstruction_content (first, wire, sizeof (wire) - 1, GMIME_CONTENT_ENCODING_BASE64);
@@ -546,19 +555,19 @@ test_reconstruction_failures (void)
 	g_mime_part_set_content (GMIME_PART (last), content);
 	g_object_unref (content);
 	errno = 0;
-	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
-	g_assert_cmpint (errno, ==, EBADF);
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), &error));
+	g_assert_error (error, GMIME_ERROR, EBADF);
+	g_clear_error (&error);
 	g_assert_true (input[0] == last && input[1] == first);
 	content = g_mime_content_new ();
 	g_mime_part_set_content (GMIME_PART (last), content);
 	g_object_unref (content);
-	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*content->stream != NULL*");
-	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
-	g_test_assert_expected_messages ();
-	g_object_unref (last);
-	last = g_mime_message_partial_new ("id", 2, 2);
-	input[0] = last;
-	message = g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input));
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_mime_part_set_content (GMIME_PART (last), NULL);
+	message = g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), &error);
+	g_assert_no_error (error);
 	g_assert_nonnull (message);
 	g_assert_cmpstr (g_mime_message_get_subject (message), ==, "rewind failure");
 	g_assert_true (input[0] == last && input[1] == first);
@@ -572,6 +581,31 @@ test_reconstruction_failures (void)
 	g_assert_cmpmem (buffer->data, buffer->len, "body", 4);
 	g_object_unref (stream);
 	g_object_unref (message);
+	g_object_unref (envelope);
+	testsuite_check_passed ();
+}
+
+static void
+test_split_failures (void)
+{
+	GMimeStream *stream = g_mime_stream_pipe_new (-1);
+	GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GMimePart *part = g_mime_part_new ();
+	GError *error = NULL;
+	size_t count = 42;
+
+	testsuite_check ("Split reports serialization failures and clears the output count");
+	g_mime_part_set_content (part, content);
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (part));
+	g_assert_null (g_mime_message_partial_split (message, 1, &count, &error));
+	g_assert_error (error, GMIME_ERROR, EBADF);
+	g_assert_cmpuint (count, ==, 0);
+	g_clear_error (&error);
+	g_object_unref (message);
+	g_object_unref (part);
+	g_object_unref (content);
+	g_object_unref (stream);
 	testsuite_check_passed ();
 }
 
@@ -607,7 +641,7 @@ test_split_message_clones (void)
 	g_assert_cmpint (g_mime_header_get_offset (source), >=, 0);
 	raw = g_mime_header_get_raw_value (source);
 	name = g_mime_header_get_raw_name (source);
-	messages = g_mime_message_partial_split_message (message, 16, &count);
+	messages = g_mime_message_partial_split (message, 16, &count, NULL);
 	g_assert_nonnull (messages);
 	g_assert_cmpuint (count, >, 1);
 
@@ -695,7 +729,7 @@ test_split_sizes (void)
 	data = g_bytes_get_data (before, &length);
 	for (c = 0; c < G_N_ELEMENTS (limits) + 3; c++) {
 		limit = c < G_N_ELEMENTS (limits) ? limits[c] : length + c - G_N_ELEMENTS (limits) - 1;
-		messages = g_mime_message_partial_split_message (message, limit, &count);
+		messages = g_mime_message_partial_split (message, limit, &count, NULL);
 		g_assert_nonnull (messages);
 		g_assert_cmpuint (count, >=, 1);
 		if (limit >= length) {
@@ -721,7 +755,7 @@ test_split_sizes (void)
 			}
 			buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (combined));
 			g_assert_cmpmem (buffer->data, buffer->len, data, length);
-			joined = g_mime_message_partial_reconstruct_message (partials, count);
+			joined = g_mime_message_partial_join (NULL, messages[0], partials, count, NULL);
 			g_assert_nonnull (joined);
 			after = split_message_bytes (joined);
 			g_assert_true (g_bytes_equal (before, after));
@@ -761,7 +795,7 @@ test_split_raw_headers (void)
 	g_assert_no_error (error);
 	g_mime_header_list_add (g_mime_entity_get_header_list (GMIME_ENTITY (message)), header);
 	g_mime_message_set_message_id (message, "split@example.com");
-	messages = g_mime_message_partial_split_message (message, 32, &count);
+	messages = g_mime_message_partial_split (message, 16, &count, NULL);
 	g_assert_nonnull (messages);
 	g_assert_cmpuint (count, >, 1);
 	g_object_unref (header);
@@ -784,11 +818,215 @@ test_split_raw_headers (void)
 	testsuite_check_passed ();
 }
 
+static void
+test_join_headers (void)
+{
+	static const char outer[] =
+		"x-TrAcE: one\0binary\r\nSubject: outer first\r\nReceived: outer trace\r\n"
+		"Message-Id: <outer@example.com>\r\nSubject: outer second\r\nX-Trace: two\r\n"
+		"Encrypted: outer encryption\r\nMIME-Version: 2.0\r\nDate: Fri, 1 Jan 2021 00:00:00 +0000\r\n"
+		"Content-Type: message/partial; id=id; number=1; total=3\r\n\r\n";
+	static const char inner[] =
+		"From: discarded@example.com\r\nSubject: inner first\r\nX-Drop: discarded\r\n"
+		"Message-Id: <inner@example.com>\r\nSubject: inner second\r\nEncrypted: inner first\r\n"
+		"MIME-Version: 1.0\r\nEncrypted: inner second\r\nMessage-Id: <second@example.com>\r\n"
+		"Content-Type: application/octet-stream\r\nContent-X-Body: retained\r\n\r\nbefore\0after\377";
+	static const char *names[] = {
+		"x-TrAcE", "Subject", "Received", "Message-Id", "Subject", "X-Trace",
+		"Encrypted", "MIME-Version", "Date", "Encrypted", "Message-Id"
+	};
+	GMimeMessage *envelope = parse_split_message (outer, sizeof (outer) - 1, NULL), *joined;
+	GMimeMessagePartial *parts[3], *input[3];
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeHeaderList *headers, *original;
+	GMimeHeader *header;
+	GBytes *before, *after, *raw, *copy;
+	GMimeStream *output;
+	GByteArray *buffer;
+	GError *error = NULL;
+	guint i;
+
+	testsuite_check ("Join combines ordered raw headers, clones envelope fields and clears offsets");
+	before = split_message_bytes (envelope);
+	original = g_mime_entity_get_header_list (GMIME_ENTITY (envelope));
+	raw = g_mime_header_get_raw_value (g_mime_header_list_get_header_at (original, 0));
+	g_mime_parser_options_set_address_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT);
+	g_mime_parser_options_set_max_mime_depth (options, 23);
+	for (i = 0; i < G_N_ELEMENTS (parts); i++) {
+		size_t start = (sizeof (inner) - 1) * i / 3;
+		size_t end = (sizeof (inner) - 1) * (i + 1) / 3;
+
+		parts[i] = g_mime_message_partial_new ("id", i + 1, 3);
+		set_reconstruction_content (parts[i], inner + start, end - start,
+					    i % 2 ? GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE : GMIME_CONTENT_ENCODING_BASE64);
+		input[2 - i] = parts[i];
+	}
+	joined = g_mime_message_partial_join (options, envelope, input, G_N_ELEMENTS (input), &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (joined);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (joined));
+	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, G_N_ELEMENTS (names));
+	g_assert_cmpint (g_mime_parser_options_get_address_compliance_mode (headers->options),
+			==, GMIME_RFC_COMPLIANCE_STRICT);
+	g_assert_cmpint (g_mime_parser_options_get_max_mime_depth (headers->options), ==, 23);
+	g_mime_parser_options_set_max_mime_depth (options, 24);
+	g_assert_cmpint (g_mime_parser_options_get_max_mime_depth (headers->options), ==, 23);
+	for (i = 0; i < G_N_ELEMENTS (names); i++) {
+		header = g_mime_header_list_get_header_at (headers, i);
+		g_assert_cmpstr (g_mime_header_get_name (header), ==, names[i]);
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, -1);
+	}
+	g_assert_cmpstr (g_mime_header_get_value (g_mime_header_list_get_header_at (headers, 1)), ==, "inner first");
+	g_assert_cmpstr (g_mime_header_get_value (g_mime_header_list_get_header_at (headers, 4)), ==, "inner second");
+	g_assert_cmpstr (g_mime_header_get_value (g_mime_header_list_get_header_at (headers, 9)), ==, "inner second");
+	header = g_mime_header_list_get_header_at (headers, 0);
+	g_assert_true (header != g_mime_header_list_get_header_at (original, 0));
+	copy = g_mime_header_get_raw_value (header);
+	g_assert_true (g_bytes_equal (raw, copy));
+	g_bytes_unref (copy);
+	g_bytes_unref (raw);
+	g_mime_header_set_value (header, NULL, "independent", NULL);
+	after = split_message_bytes (envelope);
+	g_assert_true (g_bytes_equal (before, after));
+	g_bytes_unref (before);
+	g_bytes_unref (after);
+	headers = g_mime_entity_get_header_list (joined->mime_part);
+	for (i = 0; i < (guint) g_mime_header_list_get_count (headers); i++)
+		g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header_at (headers, i)), ==, -1);
+	g_assert_cmpstr (g_mime_entity_get_header (joined->mime_part, "Content-X-Body"), ==, "retained");
+	for (i = 0; i < G_N_ELEMENTS (parts); i++) {
+		g_assert_true (input[2 - i] == parts[i]);
+		g_object_unref (parts[i]);
+	}
+	g_object_unref (envelope);
+	g_mime_parser_options_free (options);
+	output = g_mime_stream_mem_new ();
+	g_assert_cmpint (g_mime_content_decode_to_stream (g_mime_part_get_content (GMIME_PART (joined->mime_part)), output), ==, 13);
+	buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+	g_assert_cmpmem (buffer->data, buffer->len, "before\0after\377", 13);
+	g_object_unref (output);
+	g_object_unref (joined);
+	testsuite_check_passed ();
+}
+
+static void
+test_join_nullable_ids (void)
+{
+	static const char wire[] = "Subject: nullable ids\r\n\r\nbody";
+	static const char *ids[] = { NULL, "", "same" };
+	GMimeMessage *envelope = g_mime_message_new (FALSE), *joined;
+	GMimeMessagePartial *parts[] = {
+		g_mime_message_partial_new ("same", 1, 2),
+		g_mime_message_partial_new ("same", 2, 2)
+	};
+	GError *error = NULL;
+	guint i, j;
+
+	testsuite_check ("Join accepts matching nullable ids and reports metadata errors");
+	set_reconstruction_content (parts[0], wire, sizeof (wire) - 1, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, NULL, 0, &error));
+	g_assert_no_error (error);
+	for (i = 0; i < G_N_ELEMENTS (ids); i++) {
+		for (j = 0; j < G_N_ELEMENTS (parts); j++) {
+			GMimeParamList *parameters = g_mime_content_type_get_parameters (
+				g_mime_entity_get_content_type (GMIME_ENTITY (parts[j])));
+			if (ids[i])
+				g_mime_param_list_set_parameter (parameters, "id", ids[i]);
+			else
+				g_mime_param_list_remove (parameters, "id");
+		}
+		joined = g_mime_message_partial_join (NULL, envelope, parts, G_N_ELEMENTS (parts), &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (joined);
+		g_object_unref (joined);
+		g_mime_entity_set_content_type_parameter (GMIME_ENTITY (parts[1]), "id", "different");
+		g_assert_null (g_mime_message_partial_join (NULL, envelope, parts, G_N_ELEMENTS (parts), &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+		g_clear_error (&error);
+	}
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, parts, (size_t) G_MAXINT32 + 1, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_mime_entity_set_content_type_parameter (GMIME_ENTITY (parts[1]), "id", "same");
+	g_mime_part_set_content (GMIME_PART (parts[0]), NULL);
+	g_assert_null (g_mime_message_partial_join (NULL, envelope, parts, G_N_ELEMENTS (parts), &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_object_unref (parts[0]);
+	g_object_unref (parts[1]);
+	g_object_unref (envelope);
+	testsuite_check_passed ();
+}
+
+static void
+test_split_header_policy (void)
+{
+	guint kind;
+
+	for (kind = 0; kind < 4; kind++) {
+		char *wire = g_strdup_printf (
+			"From: envelope@example.com\r\nSubject: header policy\r\n"
+			"X-Envelope: restored\r\nMessage-Id: <policy@example.com>\r\n"
+			"MIME-Version: 1.0\r\nContent-Type: multipart/%s; boundary=b\r\n"
+			"Content-X-Root: hidden\r\n\r\n--b\r\nContent-Type: %s\r\n"
+			"X-Child: extension\r\nReceived: child trace\r\n\r\n%sbody\r\n--b--\r\n",
+			kind & 1 ? "signed" : "mixed", kind & 2 ? "message/rfc822" : "text/plain",
+			kind & 2 ? "From: inner@example.com\r\nSubject: inner\r\n"
+			"Content-Type: text/plain\r\n\r\n" : "");
+		GMimeMessage *message = parse_split_message (wire, strlen (wire), NULL), **messages, *joined;
+		GMimeMessagePartial **partials;
+		GMimeStream *combined = g_mime_stream_mem_new ();
+		GByteArray *buffer;
+		GBytes *before = split_message_bytes (message), *after;
+		GError *error = NULL;
+		size_t count, i;
+
+		testsuite_check ("Split suppresses envelope/unknown fields and preserves signed children (%u)", kind);
+		messages = g_mime_message_partial_split (message, 20, &count, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (messages);
+		g_assert_cmpuint (count, >, 1);
+		partials = g_new (GMimeMessagePartial *, count);
+		for (i = 0; i < count; i++) {
+			partials[i] = GMIME_MESSAGE_PARTIAL (messages[i]->mime_part);
+			g_assert_cmpint (g_mime_content_write_to_stream (
+				g_mime_part_get_content (GMIME_PART (partials[i])), combined), >, 0);
+		}
+		buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (combined));
+		g_assert_cmpint (g_strstr_len ((char *) buffer->data, buffer->len, "From:") != NULL,
+				==, kind == 3);
+		g_assert_null (g_strstr_len ((char *) buffer->data, buffer->len, "X-Envelope:"));
+		g_assert_null (g_strstr_len ((char *) buffer->data, buffer->len, "Content-X-Root:"));
+		g_assert_nonnull (g_strstr_len ((char *) buffer->data, buffer->len, "X-Child:"));
+		g_assert_nonnull (g_strstr_len ((char *) buffer->data, buffer->len, "Received: child trace"));
+		joined = g_mime_message_partial_join (NULL, messages[0], partials, count, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (joined);
+		g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (joined), "X-Envelope"), ==, "restored");
+		g_assert_null (g_mime_entity_get_header (joined->mime_part, "Content-X-Root"));
+		g_assert_false (g_mime_format_options_is_hidden_header (NULL, "X-Envelope"));
+		g_assert_false (g_mime_format_options_is_hidden_header (NULL, "From"));
+		after = split_message_bytes (message);
+		g_assert_true (g_bytes_equal (before, after));
+		g_bytes_unref (before);
+		g_bytes_unref (after);
+		g_free (partials);
+		for (i = 0; i < count; i++)
+			g_object_unref (messages[i]);
+		g_free (messages);
+		g_free (wire);
+		g_object_unref (combined);
+		g_object_unref (message);
+		g_object_unref (joined);
+		testsuite_check_passed ();
+	}
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/partial";
 	GMimeStream *stream, *combined, *expected;
-	GMimeMessage *message, **messages;
+	GMimeMessage *message, **messages, *envelope;
 	GMimeMessagePartial **parts;
 	GMimeFormatOptions *format;
 	GString *input, *output;
@@ -813,9 +1051,13 @@ int main (int argc, char **argv)
 	test_reconstruction_failures ();
 	test_split_without_message_id ();
 	test_split_arguments ();
+	test_split_failures ();
 	test_split_message_clones ();
 	test_split_sizes ();
 	test_split_raw_headers ();
+	test_join_headers ();
+	test_join_nullable_ids ();
+	test_split_header_policy ();
 	
 	format = g_mime_format_options_get_default ();
 	
@@ -848,6 +1090,7 @@ int main (int argc, char **argv)
 		
 		parser = g_mime_parser_new ();
 		partials = g_ptr_array_new ();
+		envelope = NULL;
 		dir = NULL;
 		
 		testsuite_check ("%s", dent);
@@ -874,6 +1117,8 @@ int main (int argc, char **argv)
 				
 				g_ptr_array_add (partials, message->mime_part);
 				g_object_ref (message->mime_part);
+				if (g_mime_message_partial_get_number (GMIME_MESSAGE_PARTIAL (message->mime_part)) == 1)
+					g_set_object (&envelope, message);
 				g_object_unref (message);
 				g_free (path);
 				path = NULL;
@@ -882,7 +1127,7 @@ int main (int argc, char **argv)
 			parts = (GMimeMessagePartial **) partials->pdata;
 			n = partials->len;
 			
-			if (!(message = g_mime_message_partial_reconstruct_message (parts, n))) {
+			if (!(message = g_mime_message_partial_join (NULL, envelope, parts, n, NULL))) {
 				for (i = 0; i < n; i++)
 					g_object_unref (parts[i]);
 				
@@ -917,9 +1162,10 @@ int main (int argc, char **argv)
 			
 			g_object_unref (combined);
 			
-			if (!(messages = g_mime_message_partial_split_message (message, 4096, &n))) {
+			if (!(messages = g_mime_message_partial_split (message, 4096, &n, NULL))) {
 				g_object_unref (expected);
 				g_object_unref (message);
+				g_set_object (&envelope, messages[0]);
 				
 				throw (exception_new ("Failed to split message `%s'", input->str));
 			}
@@ -937,7 +1183,7 @@ int main (int argc, char **argv)
 			parts = (GMimeMessagePartial **) partials->pdata;
 			n = partials->len;
 			
-			if (!(message = g_mime_message_partial_reconstruct_message (parts, n))) {
+			if (!(message = g_mime_message_partial_join (NULL, envelope, parts, n, NULL))) {
 				for (i = 0; i < n; i++)
 					g_object_unref (parts[i]);
 				g_object_unref (expected);
@@ -971,6 +1217,7 @@ int main (int argc, char **argv)
 			
 			g_free (path);
 		} finally;
+		g_clear_object (&envelope);
 		
 		g_string_truncate (output, outlen);
 		g_string_truncate (input, inlen);

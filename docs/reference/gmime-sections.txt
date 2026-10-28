@@ -1502,8 +1502,8 @@ g_mime_message_partial_new
 g_mime_message_partial_get_id
 g_mime_message_partial_get_number
 g_mime_message_partial_get_total
-g_mime_message_partial_reconstruct_message
-g_mime_message_partial_split_message
+g_mime_message_partial_join
+g_mime_message_partial_split
 
 <SUBSECTION Private>
 g_mime_message_partial_get_type

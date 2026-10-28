@@ -4630,11 +4630,9 @@ fixtures pass sanitizers with leak detection disabled for the previously
 documented fixture-harness leaks. Native C validation was under WSL;
 native Windows execution remains pending.
 
-The existing native payload-header policy is intentionally unchanged:
-GMime still encapsulates all original headers. MimeKit suppresses envelope
-headers and restores them in Join using an outer message argument, which
-the current native reconstruction API does not accept. That API and
-header-policy migration remain deferred; this is not full Split/Join parity.
+This initial increment left the native payload-header policy unchanged.
+The later "Message/partial Split and Join API migration" section supersedes
+that policy and completes the outer-message/header-policy migration.
 
 ## Message/partial reconstruction content
 
@@ -4674,11 +4672,104 @@ complete partial fixtures pass with leak detection disabled for the known
 fixture-harness leaks. Native C validation was under WSL, not native
 Windows.
 
-The public reconstruction signature and native encapsulated-header policy
-are unchanged. MimeKit's outer-message header merge and parser-options
-argument remain deferred, as does nullable fragment-id parity; native
-reconstruction still requires a present id. This increment does not claim
-complete Join parity.
+This content-only increment left the public reconstruction signature,
+encapsulated-header policy and nullable-id handling unchanged. The later
+"Message/partial Split and Join API migration" section supersedes those
+limitations.
+
+## Nullable part content
+
+MimeKit's nullable MimePart.Content assignment is now supported by
+g_mime_part_set_content(): NULL clears the content without a GLib critical.
+The setter retains assigned content, publishes the replacement before
+releasing the previous reference, and invalidates the native OpenPGP cache
+on changes. Reassigning the same content remains a no-op. Wrongly typed
+objects produce a native precondition diagnostic without changing content
+or cache state. Both content accessors have nullable introspection metadata.
+The source property has no inline implementation comments to transfer.
+
+Regressions cover ordinary, text and partial parts: initial and repeated
+NULL assignment, borrowed self-assignment, replacement, clearing, external
+references, backing-stream lifetime, finalization, OpenPGP cache behavior,
+and observation of replacement content during old-content finalization.
+Cleared parts serialize an empty body and retain their raw headers.
+Reconstruction tests now clear actual fragment content instead of creating
+replacement fragments to represent missing content.
+
+The normal library, GIR, typelib and Vala bindings build, and the part and
+partial suites pass. Isolated assignment and focused partial tests pass
+ASan/UBSan with leak checking; both complete fixture suites pass with leak
+detection disabled. The complete part fixture test still reports 1,168
+bytes in five allocations in unchanged text/format-options paths; the
+unchanged HEAD test reproduces the same report against the current library.
+The partial fixture-harness leaks remain as previously documented. Live
+Python GI checks cover nullable metadata, assignment, caller-reference
+release, clearing and empty serialization for all three tested part types.
+Native C validation was under WSL, not native Windows.
+
+## Message/partial Split and Join API migration
+
+The legacy split and reconstruction entrypoints have been replaced, without
+compatibility wrappers, by g_mime_message_partial_split() and
+g_mime_message_partial_join(). All repository callers are migrated. Split
+now accepts a GError output. Join accepts parser options, the first numbered
+fragment's enclosing GMimeMessage, the fragment array and a GError output.
+NULL options use the defaults, corresponding to MimeKit's default-options
+overload. Introspection exposes Message.partial_split() and
+MessagePartial.join(), including owned arrays/results, nullable arguments
+and exception propagation.
+
+Join ports MimeKit's CombineHeaders implementation and its applicable
+inline RFC 2046 comments. Inner envelope fields other than Subject,
+Message-ID, Encrypted and MIME-Version are discarded. Ordinary outer
+envelope fields are cloned in order, preserving raw names and binary values.
+Each outer special field positions the next matching inner special field;
+unmatched inner duplicates remain at the end. Outer special values do not
+replace missing inner values. Joined envelope and root-body header offsets
+are cleared; descendant offsets are not. Options and headers remain owned
+snapshots, independent of the source messages.
+
+Split clones the default format options and suppresses ordinary envelope
+fields, keeping the four special fields and known Content-* fields in the
+encapsulated payload. Unknown header ids are suppressed as a group,
+including unrecognized Content-* names. Filtering applies to merged message
+headers, including embedded messages, not standalone header lists or
+ordinary descendant entity headers. Header-list writing has been aligned
+with MimeKit to preserve those descendant fields. Bodyless messages also
+use unfiltered standalone lists, as in MimeKit. Multipart/signed children
+clear hidden-header settings, including the private unknown-id flag, so
+their embedded messages retain their headers. The original message and
+global format options are not changed. The no-split identity optimization
+is based on the filtered payload's size, not the full original wire size.
+
+Matching absent fragment ids are accepted; absent and empty ids remain
+distinct. Invalid numbers, sequences, totals and mismatching ids report
+GMIME_ERROR_INVALID_OPERATION. Empty fragment arrays return NULL without
+error. Present fragments with no reconstructable message report a parse
+error, including when all content is absent. Decoded content is loaded
+through the existing memory-backed message loader; the returned body
+outlives all source fragments. Stream and serialization failures report
+errors and clean up temporary ownership. Split clears its output count
+before failure. Counts above Int32.MaxValue are rejected before array
+traversal or fragment-number narrowing.
+
+The complete normal library, GIR, typelib and Vala build passes. Nine
+related suites pass: partial, MIME part, headers, concatenated streams,
+reader, types, visitor, MIME and iterator. Actual-source MimeKit comparison
+covers 5,149 cases in both normal and ASan/UBSan builds with leak checking:
+2,473 exact Split payload/identity/metadata cases and complete Split/Join
+message comparisons, 1,292 raw Join header/order/offset/ownership cases,
+and 1,384 decoded-content reconstruction cases. Fixtures include duplicate
+and missing special fields, folded and binary raw headers, nullable ids,
+malformed metadata, empty content, bodyless messages, nested messages,
+mixed/signed multiparts, unknown fields and header-heavy identity cases.
+
+Focused partial and isolated nullable-content regressions pass ASan/UBSan
+with leak checking. Both complete part/partial fixture suites pass with
+leak detection disabled for the previously documented unchanged leaks.
+Live Python GI verifies the new API round trip, identity, nullable
+ids/content, header offsets, unchanged caller order, errors and independent
+body lifetime. Native C validation remains under WSL, not native Windows.
 
 ## Remaining migration phases
 

@@ -65,9 +65,10 @@ int g_mime_message_partial_get_number (GMimeMessagePartial *partial);
 
 int g_mime_message_partial_get_total (GMimeMessagePartial *partial);
 
-GMimeMessage *g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num);
+GMimeMessage *g_mime_message_partial_join (GMimeParserOptions *options, GMimeMessage *message,
+					 GMimeMessagePartial **partials, size_t num, GError **error);
 
-GMimeMessage **g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, size_t *nparts);
+GMimeMessage **g_mime_message_partial_split (GMimeMessage *message, size_t max_size, size_t *nparts, GError **error);
 
 G_END_DECLS
 

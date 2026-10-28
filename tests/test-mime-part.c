@@ -816,6 +816,114 @@ test_content_description_assignment (void)
 }
 
 static void
+content_replaced (gpointer data, GObject *where_object_was)
+{
+	GMimePart *part = data;
+
+	g_assert_true ((GObject *) g_mime_part_get_content (part) != where_object_was);
+	g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_NONE);
+}
+
+static void
+test_content_assignment (void)
+{
+	GMimePart *parts[] = {
+		g_mime_part_new (),
+		GMIME_PART (g_mime_text_part_new ()),
+		GMIME_PART (g_mime_message_partial_new ("nullable", 1, 1))
+	};
+	GMimeContent *first, *second;
+	GMimeStream *stream, *output;
+	GObject *first_alive, *second_alive, *stream_alive;
+	GError *error = NULL;
+	char *before, *after;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (parts); i++) {
+		GMimePart *part = parts[i];
+
+		testsuite_check ("Nullable content assignment and ownership (%s)", G_OBJECT_TYPE_NAME (part));
+		g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_BASE64);
+		before = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+		g_assert_null (g_mime_part_get_content (part));
+		g_mime_part_set_content (part, NULL);
+		g_mime_part_set_content (part, NULL);
+		g_assert_null (g_mime_part_get_content (part));
+
+		stream = g_mime_stream_mem_new_with_buffer ("first", 5);
+		first = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+		first_alive = G_OBJECT (first);
+		g_object_add_weak_pointer (G_OBJECT (first), (gpointer *) &first_alive);
+		g_object_weak_ref (G_OBJECT (first), content_replaced, part);
+		g_mime_part_set_content (part, first);
+		g_assert_true (g_mime_part_get_content (part) == first);
+		g_object_unref (first);
+		g_object_unref (stream);
+		g_assert_nonnull (first_alive);
+		g_mime_part_set_openpgp_data (part, GMIME_OPENPGP_DATA_ENCRYPTED);
+		g_mime_part_set_content (part, g_mime_part_get_content (part));
+		g_assert_nonnull (first_alive);
+		g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_ENCRYPTED);
+
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*content == NULL || GMIME_IS_CONTENT (content)*");
+		g_mime_part_set_content (part, (GMimeContent *) g_mime_content_get_stream (
+			g_mime_part_get_content (part)));
+		g_test_assert_expected_messages ();
+		g_assert_true (G_OBJECT (g_mime_part_get_content (part)) == first_alive);
+		g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_ENCRYPTED);
+
+		stream = g_mime_stream_mem_new_with_buffer ("second", 6);
+		second = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+		second_alive = G_OBJECT (second);
+		stream_alive = G_OBJECT (stream);
+		g_object_add_weak_pointer (G_OBJECT (second), (gpointer *) &second_alive);
+		g_object_add_weak_pointer (G_OBJECT (stream), (gpointer *) &stream_alive);
+		g_object_weak_ref (G_OBJECT (second), content_replaced, part);
+		g_mime_part_set_content (part, second);
+		g_assert_null (first_alive);
+		g_assert_true (g_mime_part_get_content (part) == second);
+		g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_NONE);
+		g_mime_part_set_content (part, NULL);
+		g_assert_null (g_mime_part_get_content (part));
+		g_assert_nonnull (second_alive);
+		g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_NONE);
+		g_mime_part_set_content (part, second);
+		g_object_unref (second);
+		g_object_unref (stream);
+		g_assert_nonnull (second_alive);
+		g_assert_nonnull (stream_alive);
+		g_mime_part_set_openpgp_data (part, GMIME_OPENPGP_DATA_SIGNED);
+		g_mime_part_set_content (part, g_mime_part_get_content (part));
+		g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_SIGNED);
+		g_mime_part_set_content (part, NULL);
+		g_assert_null (g_mime_part_get_content (part));
+		g_assert_null (second_alive);
+		g_assert_null (stream_alive);
+		g_mime_part_set_content (part, NULL);
+		g_assert_true (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+		g_assert_no_error (error);
+		output = g_mime_stream_mem_new ();
+		g_assert_cmpint (g_mime_entity_write_content_to_stream (GMIME_ENTITY (part), NULL, output), ==, 0);
+		g_assert_cmpuint (g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output))->len, ==, 0);
+		g_object_unref (output);
+		after = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+		g_assert_cmpstr (after, ==, before);
+		g_free (before);
+		g_free (after);
+
+		first = g_mime_content_new ();
+		first_alive = G_OBJECT (first);
+		g_object_add_weak_pointer (G_OBJECT (first), (gpointer *) &first_alive);
+		g_mime_part_set_content (part, first);
+		g_object_unref (first);
+		g_assert_nonnull (first_alive);
+		g_object_unref (part);
+		g_assert_null (first_alive);
+		testsuite_check_passed ();
+	}
+}
+
+static void
 test_content_encoding_assignment (void)
 {
 	GMimePart *part = g_mime_part_new ();
@@ -1767,6 +1875,7 @@ int main (int argc, char **argv)
 	test_content_md5_lazy_property ();
 	test_content_md5_lazy_verification ();
 	test_content_description_assignment ();
+	test_content_assignment ();
 	test_content_encoding_assignment ();
 	test_content_encoding_invalid_assignment ();
 	test_content_encoding_consumers ();
