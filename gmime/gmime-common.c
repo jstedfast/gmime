@@ -139,24 +139,39 @@ _g_mime_is_valid_boundary (const char *boundary)
 	return TRUE;
 }
 
+static const char *
+skip_unicode_whitespace (const char *value)
+{
+	gunichar c;
+
+	while (*value) {
+		c = g_utf8_get_char (value);
+
+		if (!g_unichar_isspace (c) && c != 0x0b && c != 0x85)
+			break;
+
+		value = g_utf8_next_char (value);
+	}
+
+	return value;
+}
+
 gboolean
 _g_mime_strcase_equal_trimmed (const char *value, const char *token)
 {
 	size_t length = strlen (token);
 
-	if (!value)
+	if (!value || !g_utf8_validate (value, -1, NULL))
 		return FALSE;
 
-	while (*value && is_lwsp (*value))
-		value++;
+	value = skip_unicode_whitespace (value);
 
 	if (g_ascii_strncasecmp (value, token, length))
 		return FALSE;
 
 	value += length;
 
-	while (*value && is_lwsp (*value))
-		value++;
+	value = skip_unicode_whitespace (value);
 
 	return *value == '\0';
 }

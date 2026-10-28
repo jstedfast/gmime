@@ -1547,6 +1547,7 @@ test_cat_read (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 		g_object_unref (cat);
 		throw (ex);
 	}
+	g_object_unref (cat);
 }
 
 static void
@@ -1590,12 +1591,14 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld in original stream: %s",
 				    (long long) offset, g_strerror (errno));
+		g_object_unref (cat);
 		throw (ex);
 	}
 	
 	if (g_mime_stream_seek (cat, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld: %s",
 				    (long long) offset, g_strerror (errno));
+		g_object_unref (cat);
 		throw (ex);
 	}
 	
@@ -1604,6 +1607,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 		g_object_unref (cat);
 		throw (ex);
 	}
+	g_object_unref (cat);
 }
 
 static void

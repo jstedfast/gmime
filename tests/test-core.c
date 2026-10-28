@@ -1170,7 +1170,7 @@ test_rfc2047_word_merging (void)
 {
 	static const struct {
 		guint width;
-		const char *charset, *value, *phrase;
+		const char *charset, *value, *phrase, *text;
 	} cases[] = {
 		{ 60, "utf-8", "\346\227\245 aaaaaaaaaaaaaaaaaaaaaaaaaaa \346\227\245",
 		  "=?utf-8?q?=E6=97=A5_aaaaaaaaaaaaaaaaaaaaaaaaaaa?=\t=?utf-8?b?IOaXpQ==?=" },
@@ -1196,7 +1196,8 @@ test_rfc2047_word_merging (void)
 		  "=?iso-2022-jp?b?IBskQkZ8GyhCIBskQkZ8GyhCIBskQkZ8GyhC?=" },
 		{ 60, "utf-16", "\346\227\245 \346\227\245 \346\227\245 \346\227\245 \346\227\245 "
 		  "\346\227\245 \346\227\245 \346\227\245 \346\227\245",
-		  "=?utf-16?b?5WUgAOVlIADlZSAA5WUgAOVlIADlZSAA5WUgAOVlIADlZQ==?=" }
+		  "=?utf-16?b?5WUgAOVlIADlZSAA5WUgAOVlIADlZSAA5WUgAOVlIADlZQ==?=",
+		  "=?utf-16?b?5WUgAOVlIADlZSAA5WUgAA==?= =?utf-16?b?5WUgAOVlIADlZSAA5WUgAA==?= =?utf-16?b?5WU=?=" }
 	};
 	GMimeFormatOptions *options = g_mime_format_options_new ();
 	char *encoded, *decoded;
@@ -1208,14 +1209,18 @@ test_rfc2047_word_merging (void)
 		for (mixed = 0; mixed < 2; mixed++) {
 			g_mime_format_options_set_allow_mixed_charsets (options, mixed != 0);
 			for (phrase = 0; phrase < 2; phrase++) {
-				expected = g_string_new (cases[i].phrase);
+				expected = g_string_new (!phrase && cases[i].text ? cases[i].text : cases[i].phrase);
 				if (mixed && g_str_has_prefix (cases[i].value, "=?"))
 					g_string_replace (expected, "=?utf-8?", "=?us-ascii?", 0);
 				if (!phrase)
 					g_strdelimit (expected->str, "\t", ' ');
 				encoded = phrase ? g_mime_utils_header_encode_phrase (options, cases[i].value, cases[i].charset) :
 					g_mime_utils_header_encode_text (options, cases[i].value, cases[i].charset);
-				check (!strcmp (encoded, expected->str), "RFC 2047 merging matches MimeKit width and charset boundaries");
+				testsuite_check ("RFC 2047 merging [%u/%u/%u]", i, mixed, phrase);
+				if (!strcmp (encoded, expected->str))
+					testsuite_check_passed ();
+				else
+					testsuite_check_failed ("actual=\"%s\", expected=\"%s\"", encoded, expected->str);
 				decoded = phrase ? g_mime_utils_header_decode_phrase (NULL, encoded) :
 					g_mime_utils_header_decode_text (NULL, encoded);
 				check (!strcmp (decoded, cases[i].value), "encoded-word merging retains original whitespace and text");
@@ -3481,8 +3486,10 @@ test_text_part_formats (void)
 		{ "text", "plain", NULL, GMIME_TEXT_FORMAT_PLAIN, PLAIN },
 		{ "text", "plain", "flowed", GMIME_TEXT_FORMAT_FLOWED, PLAIN | FLOWED },
 		{ "TEXT", "plain", "\t FlOwEd \r\n", GMIME_TEXT_FORMAT_FLOWED, PLAIN | FLOWED },
-		{ "text", "PLAIN", "flowed", GMIME_TEXT_FORMAT_PLAIN, PLAIN | FLOWED },
-		{ "text", "Plain", "flowed", GMIME_TEXT_FORMAT_PLAIN, PLAIN | FLOWED },
+		{ "text", "PLAIN", "flowed", GMIME_TEXT_FORMAT_FLOWED, PLAIN | FLOWED },
+		{ "text", "Plain", "flowed", GMIME_TEXT_FORMAT_FLOWED, PLAIN | FLOWED },
+		{ "TeXt", "pLaIn", "\t FlOwEd \r\n", GMIME_TEXT_FORMAT_FLOWED, PLAIN | FLOWED },
+		{ "TEXT", "PLAIN", "fixed", GMIME_TEXT_FORMAT_PLAIN, PLAIN },
 		{ "text", "plain", "", GMIME_TEXT_FORMAT_PLAIN, PLAIN },
 		{ "text", "plain", "fixed", GMIME_TEXT_FORMAT_PLAIN, PLAIN },
 		{ "text", "plain", "flowed extra", GMIME_TEXT_FORMAT_PLAIN, PLAIN },
@@ -3584,8 +3591,9 @@ test_text_part_formats (void)
 	check (g_mime_text_part_is_html (part) && !g_mime_text_part_is_flowed (part) &&
 	       g_mime_text_part_get_format (part) == GMIME_TEXT_FORMAT_HTML,
 	       "raw Content-Type mutations immediately update text classification");
-	g_mime_entity_set_header (GMIME_ENTITY (part), "Content-Type", "text/plain; format=flowed", NULL);
-	check (g_mime_text_part_is_flowed (part), "raw format changes are not cached");
+	g_mime_entity_set_header (GMIME_ENTITY (part), "Content-Type", "TeXt/pLaIn; format=FlOwEd", NULL);
+	check (g_mime_text_part_is_flowed (part) && g_mime_text_part_get_format (part) == GMIME_TEXT_FORMAT_FLOWED,
+	       "raw format changes are not cached and ignore MIME type and parameter case");
 	content_type = g_mime_entity_get_content_type (GMIME_ENTITY (part));
 	g_mime_param_list_remove (g_mime_content_type_get_parameters (content_type), "format");
 	check (g_mime_text_part_is_plain (part) && !g_mime_text_part_is_flowed (part) &&
@@ -6562,15 +6570,42 @@ check_international_header (GMimeFormatOptions *options, const char *name, const
 	GMimeHeaderList *headers = g_mime_header_list_new (NULL);
 	GMimeHeader *header;
 	char *wire, *transport;
+	const char *raw;
 
 	g_mime_header_list_append (headers, name, "initial", NULL);
 	header = g_mime_header_list_get_header_at (headers, 0);
 	g_mime_header_set_value (header, options, value, "utf-16be");
 	check (g_utf8_validate (testsuite_header_raw_text (header), -1, NULL),
 	       "International header contains valid UTF-8");
-	check (!g_strcmp0 (testsuite_header_raw_text (header), expected),
-	       "International header has expected folding");
-	transport = g_strdup_printf ("%s:%s", name, expected);
+	raw = testsuite_header_raw_text (header);
+	if (expected) {
+		testsuite_check ("International header has expected folding");
+		if (!strcmp (raw, expected))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("width=%u value-length=%" G_GSIZE_FORMAT " actual=\"%.120s\", expected=\"%.120s\"",
+					       g_mime_format_options_get_max_line_length (options), strlen (value), raw, expected);
+	} else {
+		char *decoded = g_mime_utils_header_decode_text (NULL, raw);
+		char *unfolded = g_mime_utils_header_unfold (value);
+		char *actual = g_mime_utils_header_unfold (decoded);
+		char **words = g_strsplit_set (raw, " \t\r\n", -1);
+		char **lines = g_strsplit (raw, g_mime_format_options_get_newline (options), -1);
+		guint i, maxline = g_mime_format_options_get_max_line_length (options);
+
+		check (!strcmp (actual, unfolded), "oversized International words round-trip without inserted whitespace");
+		check (strstr (raw, "=?") != NULL, "oversized International words use lossless RFC 2047 fallback");
+		for (i = 0; words[i]; i++)
+			check (strlen (words[i]) <= MIN (75, maxline - 1), "fallback encoded words respect their size limit");
+		for (i = 0; lines[i]; i++)
+			check (strlen (lines[i]) <= maxline, "fallback folding respects the value line limit");
+		g_strfreev (lines);
+		g_strfreev (words);
+		g_free (unfolded);
+		g_free (decoded);
+		g_free (actual);
+	}
+	transport = g_strdup_printf ("%s:%s", name, expected ? expected : raw);
 	wire = header_wire_string (header, options);
 	check (!strcmp (wire, transport), "International serialization uses requested folding and newline format");
 	g_free (wire);
@@ -6617,20 +6652,13 @@ test_international_text_headers (void)
 				g_string_printf (expected, " %s%s", value->str, newline);
 				check_international_header (options, "Subject", value->str, expected->str);
 				g_string_append (value, glyphs[j]);
-				g_string_printf (expected, " %s%s", value->str, newline);
+				g_string_printf (expected, "%s %s%s", newline, value->str, newline);
 				check_international_header (options, "Subject", value->str, expected->str);
 				for (k = width - 8; k < width; k++)
 					g_string_append (value, glyphs[j]);
-				g_string_printf (expected, " %s%s", value->str, newline);
-				check_international_header (options, "Subject", value->str, expected->str);
+				check_international_header (options, "Subject", value->str, NULL);
 				g_string_append (value, glyphs[j]);
-				g_string_assign (expected, " ");
-				g_string_append_len (expected, value->str, strlen (glyphs[j]) * (width - 9));
-				g_string_append_printf (expected, "%s ", newline);
-				for (k = 0; k < 10; k++)
-					g_string_append (expected, glyphs[j]);
-				g_string_append (expected, newline);
-				check_international_header (options, "Subject", value->str, expected->str);
+				check_international_header (options, "Subject", value->str, NULL);
 			}
 
 			word = g_strnfill (width - 15, 'x');
@@ -6647,31 +6675,25 @@ test_international_text_headers (void)
 			prefix = g_strnfill (width - 10, 'a');
 			word = g_strnfill (width + 2, 'b');
 			g_string_printf (value, "%s\360\237\230\200%s", prefix, word);
-			g_string_printf (expected, " %s%s \360\237\230\200", prefix, newline);
-			g_string_append_len (expected, word, width - 3);
-			g_string_append_printf (expected, "%s bbbbb%s", newline, newline);
-			check_international_header (options, "Subject", value->str, expected->str);
+			check_international_header (options, "Subject", value->str, NULL);
 			g_free (prefix);
 			g_free (word);
 
 			word = g_strnfill (width * 2, ' ');
 			g_string_printf (value, "first%stail", word);
 			g_string_assign (expected, " first");
-			g_string_append_len (expected, word, width - 13);
+			g_string_append_len (expected, word, width - 14);
 			g_string_append (expected, newline);
-			g_string_append_len (expected, word, width + 1);
+			g_string_append_len (expected, word, width);
 			g_string_append (expected, newline);
-			g_string_append_printf (expected, "            tail%s", newline);
+			g_string_append_printf (expected, "              tail%s", newline);
 			check_international_header (options, "Subject", value->str, expected->str);
 			g_free (word);
 
 			for (j = 0; j < 2; j++) {
 				name = g_strnfill (j ? width + 10 : width - 2, 'X');
 				word = g_strnfill (width + 1, 'x');
-				g_string_printf (expected, " %s ", newline);
-				g_string_append_len (expected, word, width - 1);
-				g_string_append_printf (expected, "%s xx%s", newline, newline);
-				check_international_header (options, name, word, expected->str);
+				check_international_header (options, name, word, NULL);
 				g_free (name);
 				g_free (word);
 			}

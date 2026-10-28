@@ -62,6 +62,7 @@
 #include <gmime/gmime-domain-list.h>
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-codecs.h>
+#include <gmime/gmime-yenc.h>
 #include <gmime/gmime-compliance.h>
 #include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>

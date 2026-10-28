@@ -3879,6 +3879,9 @@ _g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOption
 	for (i = 0; i < headers->array->len; i++) {
 		header = (GMimeHeader *) headers->array->pdata[i];
 		
+		if (_g_mime_format_options_is_hidden_entity_header (options, header->name))
+			continue;
+
 		if (g_mime_header_write_to_stream (header, options, filtered) == -1)
 			goto done;
 	}

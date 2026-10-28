@@ -450,6 +450,11 @@ g_mime_entity_register_type (const char *type, const char *subtype, GType object
 		g_hash_table_insert (type_hash, bucket->type, bucket);
 	}
 	
+	if ((sub = g_hash_table_lookup (bucket->subtype_hash, subtype))) {
+		sub->object_type = object_type;
+		return;
+	}
+
 	sub = g_new (struct _subtype_bucket, 1);
 	sub->subtype = g_strdup (subtype);
 	sub->object_type = object_type;

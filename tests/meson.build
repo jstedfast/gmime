@@ -12,7 +12,7 @@ normal_tests = [
   'test-content-type',
   'test-reader', 'test-parser-model',
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',
-  'test-encodings', 'test-codecs', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
+  'test-encodings', 'test-codecs', 'test-yenc', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
   'test-mime-part', 'test-partial', 'test-mbox', 'test-autocrypt', 'test-mime', 'test-types',
 ]
 crypto_tests = ['test-pgp', 'test-pgpmime']

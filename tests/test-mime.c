@@ -447,7 +447,7 @@ static struct {
 static void
 test_date_parser (void)
 {
-	GDateTime *date;
+	GDateTime *date = NULL;
 	Exception *newex;
 	int tz_offset;
 	GTimeSpan tz;
@@ -495,6 +495,7 @@ test_date_parser (void)
 		} catch (ex) {
 			testsuite_check_failed ("Date: '%s': %s", dates[i].in, ex->message);
 		} finally;
+		g_clear_pointer (&date, g_date_time_unref);
 	}
 }
 
@@ -1198,12 +1199,34 @@ test_rfc2047_word_charsets (GMimeParserOptions *options)
 				g_string_append (input, "\xc3\xa9");
 
 			encoded = decoded = NULL;
+			words = NULL;
 			testsuite_check ("rfc2047 %s encoding threshold %u%%", phrase ? "phrase" : "text", i);
 			try {
 				encoded = phrase ? g_mime_utils_header_encode_phrase (format, input->str, "utf-32") :
 					g_mime_utils_header_encode_text (format, input->str, "utf-32");
-				if (!g_str_has_prefix (encoded, i < 17 ? "=?utf-32?q?" : "=?utf-32?b?"))
+				if (phrase && !g_str_has_prefix (encoded, i < 17 ? "=?utf-32?q?" : "=?utf-32?b?"))
 					throw (exception_new ("incorrect encoding at %u%%: %s", i, encoded));
+
+				if (!phrase) {
+					/* Text chunks select Q/B independently, not from the unsplit word. */
+					words = g_strsplit (encoded, " ", -1);
+					for (j = 0; words[j]; j++) {
+						gsize length, high = 0, k;
+						char *bytes;
+
+						decoded = g_mime_utils_header_decode_text (options, words[j]);
+						bytes = g_convert (decoded, -1, "UTF-32LE", "UTF-8", NULL, &length, NULL);
+						g_assert_nonnull (bytes);
+						for (k = 0; k < length; k++)
+							high += (guint8) bytes[k] > 127;
+						g_free (bytes);
+						g_clear_pointer (&decoded, g_free);
+						if (strlen (words[j]) > 75 || !g_str_has_prefix (words[j],
+							    (double) high < length * 0.17 ? "=?utf-32?q?" : "=?utf-32?b?"))
+							throw (exception_new ("incorrect chunk encoding: %s", words[j]));
+					}
+					g_clear_pointer (&words, g_strfreev);
+				}
 
 				decoded = phrase ? g_mime_utils_header_decode_phrase (options, encoded) :
 					g_mime_utils_header_decode_text (options, encoded);
@@ -1216,6 +1239,7 @@ test_rfc2047_word_charsets (GMimeParserOptions *options)
 			} finally;
 			g_free (decoded);
 			g_free (encoded);
+			g_clear_pointer (&words, g_strfreev);
 			g_string_free (input, TRUE);
 		}
 

@@ -703,6 +703,7 @@ gen_test_data (const char *datadir, char **stream_name)
 		g_object_unref (stream);
 	}
 	
+	g_object_unref (istream);
 	close (randfd);
 	
 	return 0;
@@ -1123,13 +1124,13 @@ int main (int argc, char **argv)
 			}
 		}
 		
-		g_free (stream_name);
 	}
 	
 	g_dir_close (outdir);
 	g_dir_close (dir);
 	
 exit:
+	g_free (stream_name);
 	
 	testsuite_end ();
 	

@@ -27,8 +27,11 @@
 
 struct _GMimeYencEncoder {
 	GObject parent_object;
+
+	GMimeNewLineFormat newline_format;
 	guint max_line_length;
 	guint column;
+
 	guint32 checksum;
 };
 
@@ -45,6 +48,7 @@ g_mime_yenc_encoder_class_init (GMimeYencEncoderClass *klass)
 static void
 g_mime_yenc_encoder_init (GMimeYencEncoder *self)
 {
+	self->newline_format = GMIME_NEWLINE_FORMAT_UNIX;
 	self->max_line_length = 128;
 	self->checksum = G_MAXUINT32;
 }
@@ -59,10 +63,11 @@ static GMimeEncoder *
 yenc_encoder_clone (GMimeEncoder *encoder)
 {
 	GMimeYencEncoder *self = GMIME_YENC_ENCODER (encoder);
-	GMimeYencEncoder *copy = g_mime_yenc_encoder_new_with_max_line_length (self->max_line_length);
+	GMimeYencEncoder *copy = g_mime_yenc_encoder_new_with_newline_format (self->newline_format, self->max_line_length);
 
 	copy->column = self->column;
 	copy->checksum = self->checksum;
+
 	return GMIME_ENCODER (copy);
 }
 
@@ -70,14 +75,17 @@ static gsize
 yenc_encoder_estimate (GMimeEncoder *encoder, gsize length)
 {
 	GMimeYencEncoder *self = GMIME_YENC_ENCODER (encoder);
-	gsize estimate;
+	gsize estimate, newlines;
+	guint newline_length = self->newline_format == GMIME_NEWLINE_FORMAT_DOS ? 2 : 1;
 
 	/* Every byte may need escaping, a previous call may have partly filled the
 	 * current line, and flush may add a final newline. */
 	if (!g_size_checked_mul (&estimate, length, 2) ||
-	    !g_size_checked_add (&estimate, estimate, estimate / self->max_line_length) ||
-	    !g_size_checked_add (&estimate, estimate, 2))
+	    !g_size_checked_add (&newlines, estimate / self->max_line_length, 2) ||
+	    !g_size_checked_mul (&newlines, newlines, newline_length) ||
+	    !g_size_checked_add (&estimate, estimate, newlines))
 		return G_MAXSIZE;
+
 	return estimate;
 }
 
@@ -93,6 +101,7 @@ yenc_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 		c = input[i];
 		self->checksum = codec_crc32_update (self->checksum, c);
 		c += 42;
+
 		if (c == 0 || c == '\t' || c == '\r' || c == '\n' || c == '=' || c == '.') {
 			output[written++] = '=';
 			output[written++] = c + 64;
@@ -101,11 +110,16 @@ yenc_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 			output[written++] = c;
 			self->column++;
 		}
+
 		if (self->column >= self->max_line_length) {
+			if (self->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+				output[written++] = '\r';
+
 			output[written++] = '\n';
 			self->column = 0;
 		}
 	}
+
 	return written;
 }
 
@@ -116,8 +130,13 @@ yenc_encoder_flush (GMimeEncoder *encoder, const guint8 *input, gsize length,
 	GMimeYencEncoder *self = GMIME_YENC_ENCODER (encoder);
 	gsize written = yenc_encoder_encode (encoder, input, length, output, capacity);
 
-	if (self->column)
+	if (self->column) {
+		if (self->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+			output[written++] = '\r';
+
 		output[written++] = '\n';
+	}
+
 	self->column = 0;
 	return written;
 }
@@ -166,12 +185,31 @@ g_mime_yenc_encoder_new (void)
 GMimeYencEncoder *
 g_mime_yenc_encoder_new_with_max_line_length (guint max_line_length)
 {
+	return g_mime_yenc_encoder_new_with_newline_format (GMIME_NEWLINE_FORMAT_UNIX, max_line_length);
+}
+
+/**
+ * g_mime_yenc_encoder_new_with_newline_format:
+ * @newline_format: DOS (CRLF) or Unix (LF) line endings
+ * @max_line_length: a line length between 60 and 998
+ *
+ * Creates a payload encoder. An escape pair may extend a line by one byte.
+ * The constructors without a newline argument retain their LF default.
+ *
+ * Returns: (transfer full): a yEnc encoder.
+ **/
+GMimeYencEncoder *
+g_mime_yenc_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length)
+{
 	GMimeYencEncoder *encoder;
 
+	g_return_val_if_fail (newline_format == GMIME_NEWLINE_FORMAT_UNIX || newline_format == GMIME_NEWLINE_FORMAT_DOS, NULL);
 	g_return_val_if_fail (max_line_length >= 60 && max_line_length <= 998, NULL);
 
 	encoder = g_mime_yenc_encoder_new ();
 	encoder->max_line_length = max_line_length;
+	encoder->newline_format = newline_format;
+
 	return encoder;
 }
 

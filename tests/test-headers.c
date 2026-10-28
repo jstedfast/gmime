@@ -481,6 +481,7 @@ test_address_sync (void)
 		g_object_unref (addr);
 		addr = g_mime_group_address_new ("Group");
 		g_mime_internet_address_list_insert (list, 0, addr);
+		g_object_unref (addr);
 		
 		if (!(value = g_mime_entity_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after inserting group"));
@@ -507,6 +508,7 @@ test_address_sync (void)
 		/* now let's try adding an address to the group... */
 		ia = g_mime_mailbox_address_new ("Tester", "tester@hotmail.com", NULL);
 		g_mime_internet_address_list_add (((GMimeGroupAddress *) addr)->members, ia);
+		g_object_unref (ia);
 		if (!(value = g_mime_entity_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after adding addr to group"));
 		if (strcmp ("Group: Tester <tester@hotmail.com>;", value) != 0)

@@ -65,6 +65,7 @@ new_encoder_with_newline_format (guint kind, GMimeNewLineFormat newline_format, 
 	case 0: return GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (newline_format, max_line_length));
 	case 1: return GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (newline_format, max_line_length));
 	case 2: return GMIME_ENCODER (g_mime_uu_encoder_new_with_newline_format (newline_format));
+	case 3: return GMIME_ENCODER (g_mime_yenc_encoder_new_with_newline_format (newline_format, max_line_length));
 	default: g_assert_not_reached ();
 	}
 }
@@ -655,7 +656,7 @@ test_newline_clone_reset (void)
 
 	for (i = 0; i < sizeof (input); i++)
 		input[i] = i * 31;
-	for (kind = 0; kind < 3; kind++) {
+	for (kind = 0; kind < 4; kind++) {
 		for (format = 0; format < 2; format++) {
 			for (limit = 60; limit <= 76; limit += 16) {
 				encoder = new_encoder_with_newline_format (kind, format, limit);

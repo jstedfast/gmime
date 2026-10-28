@@ -102,6 +102,7 @@ yenc_decoder_clone (GMimeDecoder *decoder)
 	GMimeYencDecoder *copy = g_mime_yenc_decoder_new (self->state.payload_only);
 
 	copy->state = self->state;
+
 	return GMIME_DECODER (copy);
 }
 
@@ -123,8 +124,10 @@ yenc_decoder_scan_begin (YencDecoderState *state, const guint8 *input, gsize len
 		switch (state->mode) {
 		case Y_EXPECT_BEGIN:
 			c = input[i++];
+
 			if (state->octet == '\n' && c == '=')
 				state->mode = Y_BEGIN_EQUAL;
+
 			state->octet = c;
 			break;
 		case Y_BEGIN_EQUAL:
@@ -141,6 +144,7 @@ yenc_decoder_scan_begin (YencDecoderState *state, const guint8 *input, gsize len
 		case Y_EXPECT_BEGIN_NEWLINE:
 		case Y_EXPECT_PART_NEWLINE:
 			state->octet = input[i++];
+
 			if (state->octet == '\n') {
 				if (state->mode == Y_EXPECT_BEGIN_NEWLINE) {
 					state->mode = Y_EXPECT_PART_OR_PAYLOAD;
@@ -198,6 +202,7 @@ yenc_decoder_scan_begin (YencDecoderState *state, const guint8 *input, gsize len
 			g_assert_not_reached ();
 		}
 	}
+
 	return i;
 }
 
@@ -211,25 +216,31 @@ yenc_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 
 	if (state->mode < Y_PAYLOAD)
 		i = yenc_decoder_scan_begin (state, input, length);
+
 	if (state->mode == Y_ENDED)
 		return 0;
+
 	for (; i < length; i++) {
 		c = state->octet = input[i];
+
 		if (c == '\r') {
 			state->escaped = FALSE;
 			continue;
 		}
+
 		if (c == '\n') {
 			state->escaped = FALSE;
 			state->eoln = TRUE;
 			continue;
 		}
+
 		if (state->escaped) {
 			if (state->eoln && c == 'y') {
 				/* An unescaped "=y" at the start of a payload line introduces the end marker. */
 				state->mode = Y_ENDED;
 				break;
 			}
+
 			state->escaped = FALSE;
 			state->eoln = FALSE;
 			c -= 64;
@@ -239,10 +250,12 @@ yenc_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 		} else {
 			state->eoln = FALSE;
 		}
+
 		c -= 42;
 		state->checksum = codec_crc32_update (state->checksum, c);
 		output[written++] = c;
 	}
+
 	return written;
 }
 
@@ -274,6 +287,7 @@ g_mime_yenc_decoder_new (gboolean payload_only)
 
 	decoder->state.payload_only = payload_only;
 	yenc_decoder_reset (GMIME_DECODER (decoder));
+
 	return decoder;
 }
 
@@ -290,5 +304,6 @@ guint32
 g_mime_yenc_decoder_get_checksum (GMimeYencDecoder *decoder)
 {
 	g_return_val_if_fail (GMIME_IS_YENC_DECODER (decoder), 0);
+
 	return decoder->state.checksum;
 }

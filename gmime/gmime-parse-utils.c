@@ -100,6 +100,9 @@ _g_mime_parse_message_id_value (const char *value)
 	GString *text;
 	char *msgid;
 
+	if (!g_utf8_validate (value, -1, NULL))
+		return NULL;
+
 	while (is_lwsp (*inptr))
 		inptr++;
 	

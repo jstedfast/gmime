@@ -110,6 +110,7 @@ test_ah_generation (void)
 {
 	GMimeAutocryptHeader *ah = NULL;
 	char *str = NULL;
+	GMimeAutocryptHeader *ah2 = NULL;
 	unsigned int i;
 	for (i = 0; i < G_N_ELEMENTS(gen_test_data); i++) {
 		try {
@@ -123,7 +124,7 @@ test_ah_generation (void)
 					 test->txt, str);
 				throw (exception_new ("failed comparison"));
 			}
-			GMimeAutocryptHeader *ah2 = g_mime_autocrypt_header_new_from_string (str);
+			ah2 = g_mime_autocrypt_header_new_from_string (str);
 			gint cmp = g_mime_autocrypt_header_compare (ah, ah2);
 			if (cmp) {
 				char *x = g_mime_autocrypt_header_to_string (ah2, FALSE);
@@ -137,6 +138,7 @@ test_ah_generation (void)
 		} catch (ex) {
 			testsuite_check_failed ("autocrypt header creation failed: %s", ex->message);
 		} finally;
+		g_clear_object (&ah2);
 		if (ah)
 			g_object_unref (ah);
 		g_free (str);
@@ -271,10 +273,10 @@ const static struct _ah_inject_test inject_test_data[] = {
 	  "Message-Id: <lovely-day@example.net>\n"
 	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\n"
 	  "Mime-Version: 1.0\n"
+	  "Content-Type: text/plain\n"
 	  "Autocrypt: addr=alice@example.org; keydata=CwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
 	  " CwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL\n"
-	  "Content-Type: text/plain\n"
 	  "\n"
 	  "Isn't it a lovely day?\n",
 	},
@@ -793,8 +795,8 @@ test_ah_injection (void)
 				GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
 				char *got = (char *) bytes->data;
 				
-				if (memcmp (got, test->after, strlen (test->after)) != 0) {
-					fprintf (stderr, "Expected: %s\nGot: %s\n", test->after, got);
+				if (bytes->len != strlen (test->after) || memcmp (got, test->after, bytes->len) != 0) {
+					fprintf (stderr, "Expected: %s\nGot: %.*s\n", test->after, (int) bytes->len, got);
 					g_object_unref (stream);
 					
 					throw (exception_new ("failed to match"));
@@ -820,8 +822,8 @@ test_ah_injection (void)
 				GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
 				char *got = (char*) bytes->data;
 				
-				if (memcmp (got, test->inner_after, strlen (test->inner_after)) != 0) {
-					fprintf (stderr, "Expected: %s\nGot: %s\n", test->inner_after, got);
+				if (bytes->len != strlen (test->inner_after) || memcmp (got, test->inner_after, bytes->len) != 0) {
+					fprintf (stderr, "Expected: %s\nGot: %.*s\n", test->inner_after, (int) bytes->len, got);
 					g_object_unref (stream);
 					
 					throw (exception_new ("failed to match"));
@@ -937,7 +939,7 @@ test_ah_message_parse (void)
 #else
 					/* pretend that we do not expect any gossip so that we don't fail the test
 					   simply because we don't have crypto support. */
-					gossip_expected = FALSE;
+					g_clear_object (&gossip_expected);
 #endif
 				}
 			}
@@ -963,6 +965,8 @@ test_ah_message_parse (void)
 			g_object_unref (gossip_expected);
 		if (gossip_got)
 			g_object_unref (gossip_got);
+		g_clear_object (&innerpart);
+		g_clear_object (&message);
 	}
 }
 

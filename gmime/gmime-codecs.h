@@ -125,6 +125,7 @@ GMimePassThroughEncoder *g_mime_pass_through_encoder_new (GMimeContentEncoding e
 GMimePassThroughDecoder *g_mime_pass_through_decoder_new (GMimeContentEncoding encoding);
 GMimeYencEncoder *g_mime_yenc_encoder_new (void);
 GMimeYencEncoder *g_mime_yenc_encoder_new_with_max_line_length (guint max_line_length);
+GMimeYencEncoder *g_mime_yenc_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
 guint32 g_mime_yenc_encoder_get_checksum (GMimeYencEncoder *encoder);
 GMimeYencDecoder *g_mime_yenc_decoder_new (gboolean payload_only);
 guint32 g_mime_yenc_decoder_get_checksum (GMimeYencDecoder *decoder);

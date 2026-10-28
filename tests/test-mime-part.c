@@ -1407,6 +1407,7 @@ test_write_to_stream (const char *datadir, const char *output, GMimeContentEncod
 error:
 	g_byte_array_free (expected, TRUE);
 	g_byte_array_free (actual, TRUE);
+	g_mime_format_options_free (options);
 	g_free (path);
 }
 
@@ -1797,7 +1798,7 @@ test_text_part (const char *datadir, const char *filename, const char *expected_
 	GByteArray *expected;
 	GMimeTextPart *part;
 	const char *charset;
-	char *text, *path;
+	char *text = NULL, *path;
 	
 	testsuite_check ("%s (%s)", what, filename);
 	
@@ -1830,14 +1831,13 @@ test_text_part (const char *datadir, const char *filename, const char *expected_
 	if (strcmp (text, (const char *) expected->data) != 0) {
 		testsuite_check_failed ("%s failed: text does not match: expected=%s; actual=%s",
 					what, (const char *) expected->data, text);
-		g_free (text);
 		goto cleanup;
 	}
 	
 	testsuite_check_passed ();
 	
 cleanup:
-	
+	g_free (text);
 	g_byte_array_free (expected, TRUE);
 	g_object_unref (part);
 }

@@ -1089,7 +1089,7 @@ int main (int argc, char **argv)
 		g_string_append (input, dent);
 		
 		parser = g_mime_parser_new ();
-		partials = g_ptr_array_new ();
+		partials = g_ptr_array_new_with_free_func (g_object_unref);
 		envelope = NULL;
 		dir = NULL;
 		
@@ -1128,14 +1128,10 @@ int main (int argc, char **argv)
 			n = partials->len;
 			
 			if (!(message = g_mime_message_partial_join (NULL, envelope, parts, n, NULL))) {
-				for (i = 0; i < n; i++)
-					g_object_unref (parts[i]);
-				
 				throw (exception_new ("Failed to recombine message/partial `%s'", input->str));
 			}
 			
-			for (i = 0; i < n; i++)
-				g_object_unref (parts[i]);
+			g_ptr_array_set_size (partials, 0);
 			
 			combined = g_mime_stream_mem_new ();
 			g_mime_entity_write_to_stream (GMIME_ENTITY (message), format, combined);
@@ -1165,14 +1161,12 @@ int main (int argc, char **argv)
 			if (!(messages = g_mime_message_partial_split (message, 4096, &n, NULL))) {
 				g_object_unref (expected);
 				g_object_unref (message);
-				g_set_object (&envelope, messages[0]);
-				
 				throw (exception_new ("Failed to split message `%s'", input->str));
 			}
 			
 			g_object_unref (message);
+			g_set_object (&envelope, messages[0]);
 			
-			g_ptr_array_set_size (partials, 0);
 			for (i = 0; i < n; i++) {
 				g_ptr_array_add (partials, messages[i]->mime_part);
 				g_object_ref (messages[i]->mime_part);
@@ -1184,12 +1178,11 @@ int main (int argc, char **argv)
 			n = partials->len;
 			
 			if (!(message = g_mime_message_partial_join (NULL, envelope, parts, n, NULL))) {
-				for (i = 0; i < n; i++)
-					g_object_unref (parts[i]);
 				g_object_unref (expected);
 				
 				throw (exception_new ("Failed to recombine split message/partial `%s'", input->str));
 			}
+			g_ptr_array_set_size (partials, 0);
 			
 			combined = g_mime_stream_mem_new ();
 			g_mime_entity_write_to_stream (GMIME_ENTITY (message), format, combined);

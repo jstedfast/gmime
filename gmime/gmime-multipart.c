@@ -693,7 +693,7 @@ multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part)
  * g_mime_multipart_insert:
  * @multipart: a #GMimeMultipart object
  * @part: a #GMimeEntity
- * @index: the 0-based index to insert the part
+ * @index: an index between zero and the part count, inclusive
  *
  * Inserts @part into @multipart at the specified @index.
  **/
@@ -702,7 +702,7 @@ g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeEntity *part
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (GMIME_IS_ENTITY (part));
-	g_return_if_fail (index >= 0);
+	g_return_if_fail (index >= 0 && index <= g_mime_multipart_get_count (multipart));
 	
 	GMIME_MULTIPART_GET_CLASS (multipart)->insert (multipart, index, part);
 }
@@ -776,7 +776,7 @@ GMimeEntity *
 g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
-	g_return_val_if_fail (index >= 0, NULL);
+	g_return_val_if_fail (index >= 0 && index < g_mime_multipart_get_count (multipart), NULL);
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->remove_at (multipart, index);
 }
@@ -801,10 +801,7 @@ g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeEntity *rep
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	g_return_val_if_fail (GMIME_IS_ENTITY (replacement), NULL);
-	g_return_val_if_fail (index >= 0, NULL);
-	
-	if ((guint) index >= multipart->children->len)
-		return NULL;
+	g_return_val_if_fail (index >= 0 && (guint) index < multipart->children->len, NULL);
 	
 	replaced = multipart->children->pdata[index];
 	g_clear_pointer (&multipart->raw_trailing_boundary, g_bytes_unref);
@@ -842,7 +839,7 @@ GMimeEntity *
 g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
-	g_return_val_if_fail (index >= 0, NULL);
+	g_return_val_if_fail (index >= 0 && index < g_mime_multipart_get_count (multipart), NULL);
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->get_part (multipart, index);
 }
@@ -969,7 +966,7 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 /**
  * g_mime_multipart_set_boundary:
  * @multipart: a #GMimeMultipart object
- * @boundary: boundary or %NULL to autogenerate one
+ * @boundary: a valid MIME boundary (1 to 70 ASCII characters), or %NULL to autogenerate one
  *
  * Sets @boundary as the boundary on the multipart. If @boundary is
  * %NULL, then a boundary will be auto-generated for you.
@@ -978,6 +975,7 @@ void
 g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+	g_return_if_fail (boundary == NULL || _g_mime_is_valid_boundary (boundary));
 	
 	GMIME_MULTIPART_GET_CLASS (multipart)->set_boundary (multipart, boundary);
 }

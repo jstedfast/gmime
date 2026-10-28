@@ -533,7 +533,7 @@ gboolean
 g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char *header)
 {
 	guint i;
-	
+
 	g_return_val_if_fail (header != NULL, FALSE);
 	
 	if (options == NULL)
@@ -548,6 +548,16 @@ g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char 
 	}
 	
 	return FALSE;
+}
+
+gboolean
+_g_mime_format_options_is_hidden_entity_header (GMimeFormatOptions *options, const char *header)
+{
+	if (options == NULL)
+		options = default_options;
+
+	/* Partial-message envelope filtering applies at message boundaries only. */
+	return !options->hide_unknown_headers && g_mime_format_options_is_hidden_header (options, header);
 }
 
 void
