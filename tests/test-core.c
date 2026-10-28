@@ -4759,25 +4759,27 @@ test_rfc2047_token_splitting (void)
 	static const struct {
 		guint width;
 		const char *charset, *glyph;
-		guint count, first, words;
+		guint count, first, words, text_first[2], text_words[2];
 	} cases[] = {
-		{ 60, "utf-8", "a", 58, 58, 1 },
-		{ 60, "utf-8", "a", 59, 43, 2 },
-		{ 61, "utf-8", "a", 60, 44, 2 },
-		{ 78, "utf-8", "a", 77, 61, 2 },
-		{ 120, "utf-8", "a", 119, 103, 2 },
-		{ 998, "utf-8", "a", 997, 981, 2 },
-		{ 60, "utf-8", "\303\251", 31, 30, 2 },
-		{ 78, "utf-8", "\303\251", 43, 42, 2 },
-		{ 60, "utf-8", "\346\227\245", 12, 11, 2 },
-		{ 62, "utf-8", "\346\227\245", 13, 12, 2 },
-		{ 60, "utf-8", "\360\237\230\200", 9, 8, 2 },
-		{ 60, "utf-16le", "\346\227\245", 17, 16, 2 },
-		{ 60, "utf-16be", "\346\227\245", 16, 15, 2 },
-		{ 60, "utf-32le", "\346\227\245", 9, 8, 2 },
-		{ 60, "utf-32be", "\346\227\245", 8, 7, 2 },
-		{ 60, "utf-16le", "\360\237\230\200", 9, 8, 2 },
-		{ 60, "iso-2022-jp", "\346\227\245", 4, 3, 2 }
+		{ 60, "utf-8", "a", 58, 58, 1, { 58, 58 }, { 1, 1 } },
+		{ 60, "utf-8", "a", 59, 43, 2, { 43, 43 }, { 2, 2 } },
+		{ 61, "utf-8", "a", 60, 44, 2, { 44, 44 }, { 2, 2 } },
+		{ 78, "utf-8", "a", 77, 61, 2, { 61, 30 }, { 2, 4 } },
+		{ 120, "utf-8", "a", 119, 103, 2, { 51, 51 }, { 4, 4 } },
+		{ 998, "utf-8", "a", 997, 981, 2, { 61, 30 }, { 18, 34 } },
+		{ 60, "utf-8", "\303\251", 31, 30, 2, { 15, 30 }, { 3, 2 } },
+		{ 78, "utf-8", "\303\251", 43, 42, 2, { 21, 42 }, { 3, 2 } },
+		{ 60, "utf-8", "\346\227\245", 12, 11, 2, { 11, 11 }, { 2, 2 } },
+		{ 62, "utf-8", "\346\227\245", 13, 12, 2, { 12, 12 }, { 2, 2 } },
+		{ 60, "utf-8", "\360\237\230\200", 9, 8, 2, { 8, 8 }, { 2, 2 } },
+		{ 60, "utf-16le", "\346\227\245", 17, 16, 2, { 16, 16 }, { 2, 2 } },
+		{ 60, "utf-16be", "\346\227\245", 16, 15, 2, { 15, 15 }, { 2, 2 } },
+		{ 60, "utf-32le", "\346\227\245", 9, 8, 2, { 8, 8 }, { 2, 2 } },
+		{ 60, "utf-32be", "\346\227\245", 8, 7, 2, { 7, 7 }, { 2, 2 } },
+		{ 60, "utf-16le", "\360\237\230\200", 9, 8, 2, { 8, 8 }, { 2, 2 } },
+		{ 78, "utf-8", "\360\237\230\200", 30, 12, 3, { 6, 6 }, { 5, 5 } },
+		{ 120, "utf-8", "\360\237\230\200", 30, 19, 2, { 9, 9 }, { 4, 4 } },
+		{ 60, "iso-2022-jp", "\346\227\245", 4, 3, 2, { 3, 3 }, { 2, 2 } }
 	};
 	static const char *fallback_values[] = {
 		"\346\227\245", "a\346\227\245", "aaaaaaaaaaaaaaa\346\227\245",
@@ -4802,10 +4804,14 @@ test_rfc2047_token_splitting (void)
 				check (!strcmp (decoded, value->str), "token splitting preserves complete Unicode scalars and decoded text");
 				g_free (decoded);
 				words = g_strsplit_set (encoded, " \t", -1);
-				check (g_strv_length (words) == cases[i].words, "token splitting matches MimeKit encoded-word counts");
+				check (g_strv_length (words) == (phrase ? cases[i].words : cases[i].text_words[mixed]),
+				       "token splitting matches MimeKit encoded-word counts");
 				decoded = g_mime_utils_header_decode_text (NULL, words[0]);
-				check (g_utf8_strlen (decoded, -1) == cases[i].first,
+				check (g_utf8_strlen (decoded, -1) == (phrase ? cases[i].first : cases[i].text_first[mixed]),
 				       "the first token matches MimeKit's strict width and charset boundary");
+				for (j = 0; !phrase && cases[i].text_words[mixed] > 1 && words[j]; j++)
+					check (strlen (words[j]) <= MIN (75, cases[i].width - 1),
+					       "text encoded words obey the final actual-size bound");
 				check (g_str_has_prefix (encoded, "=?") == (cases[i].words > 1),
 				       "oversized ASCII atoms become encoded words");
 				g_free (decoded);
@@ -7099,6 +7105,12 @@ test_signature_headers (void)
 				check_signature_header (header, options, value->str, expected->str);
 				g_free (word);
 
+				word = g_strnfill (width - strlen (names[i]) - 5, 'a');
+				g_string_printf (value, "x=%s\303\251", word);
+				g_string_printf (expected, "%s\t%s%s", newline, value->str, newline);
+				check_signature_header (header, options, value->str, expected->str);
+				g_free (word);
+
 				word = g_strnfill (width - 1, 'A');
 				g_string_printf (value, "b=%s", word);
 				g_string_printf (expected, "%s\tb=", newline);
@@ -7116,6 +7128,15 @@ test_signature_headers (void)
 				check_signature_header (header, options, value->str, expected->str);
 				g_free (word);
 
+				word = g_strnfill (width - 6, 'a');
+				g_string_printf (value, "h=%s:\303\251:end", word);
+				g_string_printf (expected, "%s\th=%s:%s\t\303\251:end%s", newline, word, newline, newline);
+				check_signature_header (header, options, value->str, expected->str);
+				g_string_printf (value, "z=%s|\303\251|end", word);
+				g_string_printf (expected, "%s\tz=%s|%s\t\303\251|end%s", newline, word, newline, newline);
+				check_signature_header (header, options, value->str, expected->str);
+				g_free (word);
+
 				word = g_strnfill (width + 3, 'a');
 				g_string_printf (value, "h=%s:bb::cc:", word);
 				g_string_printf (expected, "%s\t%s\th=%s:%s\tbb::cc:%s", newline, newline, word, newline, newline);
@@ -7124,7 +7145,7 @@ test_signature_headers (void)
 
 				word = g_strnfill (width - 4, 'a');
 				g_string_printf (value, "x=%s\360\237\230\200bb", word);
-				g_string_printf (expected, "%s\tx=%s%s\t\360\237\230\200bb%s", newline, word, newline, newline);
+				g_string_printf (expected, "%s\tx=%s\360%s\t\237\230\200bb%s", newline, word, newline, newline);
 				check_signature_header (header, options, value->str, expected->str);
 				g_free (word);
 			}

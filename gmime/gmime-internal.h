@@ -151,10 +151,14 @@ G_GNUC_INTERNAL GDateTime *_g_mime_utils_header_decode_date (const char *text, g
 G_GNUC_INTERNAL char *_g_mime_utils_decode_8bit_text (GMimeParserOptions *options, const char *text, gsize length);
 G_GNUC_INTERNAL char *_g_mime_utils_convert_from_utf8 (const char *text, gsize length, const char **charset,
 						     gsize *converted_length);
+G_GNUC_INTERNAL void _g_mime_utils_rfc2047_encode_word (GString *string, const char *word, gsize length,
+						      const char *charset, gboolean phrase);
+G_GNUC_INTERNAL gsize _g_mime_utils_rfc2047_estimate_word_length (const char *charset, gsize byte_count,
+							       gsize encode_count);
 G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
-							      const char *field, const char *value);
+							      size_t field_length, const char *value);
 G_GNUC_INTERNAL char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
-							    const char *field, const char *value);
+							    size_t field_length, const char *value);
 G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, size_t length,
 							const char **charset, gint64 offset);
 G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *text, size_t length,

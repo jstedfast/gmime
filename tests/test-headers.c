@@ -1398,8 +1398,11 @@ test_text_header_line_lengths (void)
 
 				word = g_strnfill (widths[i] - 25, 'a');
 				value = g_strdup_printf ("=?us-ascii?q?%s?=\t =?utf-8?b?d29ybGQ=?=", word);
-				expected = g_strdup_printf ("Subject: =?us-ascii?q?%s?=%s\t =?utf-8?b?d29ybGQ=?=%s",
-							    word, newline, newline);
+				expected = structured ?
+					g_strdup_printf ("Subject: =?us-ascii?q?%s?=%s\t =?utf-8?b?d29ybGQ=?=%s",
+							 word, newline, newline) :
+					g_strdup_printf ("Subject: =?us-ascii?q?%s?=\t%s =?utf-8?b?d29ybGQ=?=%s",
+							 word, newline, newline);
 				test_text_fold_case (clone, value, expected, structured);
 				g_free (word);
 				g_free (value);
@@ -1471,6 +1474,282 @@ test_text_header_line_lengths (void)
 
 	test_text_fold_case (NULL, "text", "Subject: text\n", FALSE);
 	g_object_unref (headers);
+	g_mime_format_options_free (options);
+}
+
+static void
+test_header_field_lengths (void)
+{
+	static const char *fields[] = { "", "X-Text \t", "List-Post \t", "tO \t" };
+	static const guint widths[] = { 60, 78, 120, 998 };
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeHeader *header;
+	GMimeStream *stream;
+	GByteArray *output;
+	GError *error = NULL;
+	const char *newline;
+	char *word, *value, *input, *expected;
+	guint i, j, dos, international, parsed;
+
+	for (i = 0; i < G_N_ELEMENTS (widths); i++) {
+		g_mime_format_options_set_max_line_length (options, widths[i]);
+		for (dos = 0; dos < 2; dos++) {
+			g_mime_format_options_set_newline_format (options, dos ?
+				GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			newline = g_mime_format_options_get_newline (options);
+			for (international = 0; international < 2; international++) {
+				g_mime_format_options_set_allow_international (options, international);
+				for (j = 0; j < G_N_ELEMENTS (fields); j++) {
+					word = g_strnfill (widths[i] - strlen (fields[j]) - (j == 3 ? 7 : 2), 'a');
+					value = j == 3 ? g_strconcat (word, "@a, x@b", NULL) :
+						g_strconcat (word, " x", NULL);
+					input = g_strconcat (fields[j], ": ", value, newline, NULL);
+					for (parsed = 0; parsed < 2; parsed++) {
+						header = g_mime_header_parse_text (NULL, input, &error);
+						g_assert_no_error (error);
+						g_assert_nonnull (header);
+						if (!parsed)
+							g_mime_header_set_value (header, options, value, "utf-8");
+
+						if (parsed && (!international || j != 0))
+							expected = g_strconcat (fields[j], ": ", value, newline, NULL);
+						else if (j == 3)
+							expected = g_strconcat (fields[j], ": ", word, "@a,", newline, " x@b", newline, NULL);
+						else
+							expected = g_strconcat (fields[j], ": ", word, newline, " x", newline, NULL);
+
+						stream = g_mime_stream_mem_new ();
+						testsuite_check ("field length formatting[%u,%u,%u,%u,%u]",
+								 widths[i], dos, international, j, parsed);
+						try {
+							if (g_mime_header_write_to_stream (header, options, stream) < 0)
+								throw (exception_new ("could not serialize header"));
+							output = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+							if (output->len != strlen (expected) ||
+							    memcmp (output->data, expected, output->len))
+								throw (exception_new ("field length changed folding or raw field bytes:\n"
+										      "expected: %s\nactual: %.*s",
+										      expected, (int) output->len, output->data));
+							testsuite_check_passed ();
+						} catch (ex) {
+							testsuite_check_failed ("%s", ex->message);
+						} finally;
+						g_object_unref (stream);
+						g_object_unref (header);
+						g_free (expected);
+					}
+					g_free (input);
+					g_free (value);
+					g_free (word);
+				}
+			}
+		}
+	}
+
+	g_mime_format_options_free (options);
+}
+
+static void
+test_header_formatting_parity (void)
+{
+	static const guint widths[] = { 60, 61, 78, 120, 998 };
+	static const struct {
+		const char *field, *value, *wire;
+	} cases[] = {
+		{ "To", "invalid <", "To: invalid <" },
+		{ "To", "a@example.com, invalid <", "To: a@example.com, invalid <" },
+		{ "Subject", "", "Subject:" },
+		{ "X-Test", "", "X-Test:" }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeHeaderList *headers = g_mime_header_list_new (NULL);
+	GMimeHeader *header;
+	const char *newline;
+	char *wire, *expected, *value, *word, *decoded, *unfolded;
+	guint i, j, dos, international;
+	int offset;
+
+	for (i = 0; i < G_N_ELEMENTS (widths); i++) {
+		g_mime_format_options_set_max_line_length (options, widths[i]);
+		for (dos = 0; dos < 2; dos++) {
+			g_mime_format_options_set_newline_format (options, dos ?
+				GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			newline = g_mime_format_options_get_newline (options);
+			for (international = 0; international < 2; international++) {
+				g_mime_format_options_set_allow_international (options, international);
+				for (j = 0; j < G_N_ELEMENTS (cases); j++) {
+					g_mime_header_list_clear (headers);
+					g_mime_header_list_append (headers, cases[j].field, "original", NULL);
+					header = g_mime_header_list_get_header_at (headers, 0);
+					g_mime_header_set_value (header, options, cases[j].value, "utf-8");
+					wire = g_mime_header_list_to_string (headers, options);
+					expected = g_strconcat (cases[j].wire,
+						international && !*cases[j].value ? " " : "", newline, NULL);
+					testsuite_check ("header formatter parity[%u,%u,%u,%u]", widths[i], dos, international, j);
+					try {
+						if (strcmp (wire, expected))
+							throw (exception_new ("invalid address fallback or empty header changed: %s", wire));
+						testsuite_check_passed ();
+					} catch (ex) {
+						testsuite_check_failed ("%s", ex->message);
+					} finally;
+					g_free (expected);
+					g_free (wire);
+				}
+
+				g_mime_header_list_clear (headers);
+				g_mime_header_list_append (headers, "Subject", "", NULL);
+				header = g_mime_header_list_get_header_at (headers, 0);
+				word = g_strnfill (widths[i] - 12, 'x');
+				value = g_strconcat (word, "\t \t tail", NULL);
+				expected = g_strdup_printf ("Subject: %s\t \t%s tail%s", word, newline, newline);
+				g_mime_header_set_value (header, options, value, "utf-8");
+				wire = g_mime_header_list_to_string (headers, options);
+				testsuite_check ("whitespace-run folding parity[%u,%u,%u]", widths[i], dos, international);
+				try {
+					if (strcmp (wire, expected))
+						throw (exception_new ("whitespace run folded at the wrong character"));
+					testsuite_check_passed ();
+				} catch (ex) {
+					testsuite_check_failed ("%s", ex->message);
+				} finally;
+				g_free (expected);
+				g_free (wire);
+				g_free (value);
+				g_free (word);
+
+				for (offset = -1; international && offset <= 1; offset++) {
+					word = g_strnfill (widths[i] + offset, 'x');
+					g_mime_header_set_value (header, options, word, "utf-8");
+					wire = g_mime_header_list_to_string (headers, options);
+					decoded = g_mime_utils_header_decode_text (NULL, wire + strlen ("Subject:"));
+					unfolded = g_mime_utils_header_unfold (decoded);
+					testsuite_check ("international oversized word[%u,%u,%d]", widths[i], dos, offset);
+					try {
+						if (strcmp (unfolded, word) ||
+						    ((strstr (wire, "=?") != NULL) != (offset >= 0)))
+							throw (exception_new ("international folding inserted whitespace into a word"));
+						testsuite_check_passed ();
+					} catch (ex) {
+						testsuite_check_failed ("%s", ex->message);
+					} finally;
+					g_free (unfolded);
+					g_free (decoded);
+					g_free (wire);
+					g_free (word);
+				}
+
+				g_mime_header_list_clear (headers);
+				g_mime_header_list_append (headers, "To", "", NULL);
+				header = g_mime_header_list_get_header_at (headers, 0);
+				testsuite_header_set_raw_text (header, "\tinvalid <\r\n");
+				wire = g_mime_header_list_to_string (headers, options);
+				expected = g_strconcat ("To:\tinvalid <", newline, NULL);
+				testsuite_check ("untouched invalid address[%u,%u,%u]", widths[i], dos, international);
+				try {
+					if (strcmp (wire, expected) || strcmp (testsuite_header_raw_text (header), "\tinvalid <\r\n"))
+						throw (exception_new ("invalid raw address was discarded or mutated"));
+					testsuite_check_passed ();
+				} catch (ex) {
+					testsuite_check_failed ("%s", ex->message);
+				} finally;
+				g_free (expected);
+				g_free (wire);
+			}
+		}
+	}
+
+	g_mime_format_options_set_max_line_length (options, 60);
+	g_mime_format_options_set_allow_international (options, TRUE);
+	word = g_strdup ("attachment; filename=\"\320\237\321\200\320\270\320\262\320\265\321\202.txt\"");
+	for (dos = 0; dos < 2; dos++) {
+		g_mime_format_options_set_newline_format (options, dos ?
+			GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+		newline = g_mime_format_options_get_newline (options);
+		for (j = 0; j < 2; j++) {
+			g_mime_header_list_clear (headers);
+			g_mime_header_list_append (headers, "Content-Disposition", "", NULL);
+			header = g_mime_header_list_get_header_at (headers, 0);
+			value = g_strconcat (word, j ? "; after=end" : "", NULL);
+			g_mime_header_set_value (header, options, value, "utf-8");
+			wire = g_mime_header_list_to_string (headers, options);
+			expected = j ?
+				g_strdup_printf ("Content-Disposition: attachment;%s\t%s; after=end%s",
+						 newline, word + strlen ("attachment; "), newline) :
+				g_strconcat ("Content-Disposition: ", word, newline, NULL);
+			testsuite_check ("international parameter exact physical fit[%u,%u]", dos, j);
+			try {
+				if (strcmp (wire, expected))
+					throw (exception_new ("exact fit lost parity or left no room for the next semicolon"));
+				testsuite_check_passed ();
+			} catch (ex) {
+				testsuite_check_failed ("%s", ex->message);
+			} finally;
+			g_free (expected);
+			g_free (wire);
+			g_free (value);
+		}
+	}
+	g_free (word);
+	g_object_unref (headers);
+	g_mime_format_options_free (options);
+}
+
+static void
+test_header_serialization_parity (void)
+{
+	static const char input[] =
+		"To:\tinvalid <\r\nMIME-Version: 1.0\r\n"
+		"X-Preserved:\tkeep  spaces\r\n \tand fold\r\n"
+		"Content-Type: text/plain; charset=utf-8\r\n"
+		"Content-Transfer-Encoding: 8bit\r\n\r\nbody\r\n";
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeEntity *entity;
+	GMimeStream *source, *output;
+	GError *error = NULL;
+	GByteArray *bytes;
+	const char *newline;
+	char *expected;
+	guint dos, international, message;
+
+	for (dos = 0; dos < 2; dos++) {
+		g_mime_format_options_set_newline_format (options, dos ?
+			GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+		newline = g_mime_format_options_get_newline (options);
+		for (international = 0; international < 2; international++) {
+			g_mime_format_options_set_allow_international (options, international);
+			expected = g_strconcat ("To:\tinvalid <", newline, "MIME-Version: 1.0", newline,
+				international ? "X-Preserved: keep  spaces \tand fold" : "X-Preserved:\tkeep  spaces",
+				international ? "" : newline, international ? "" : " \tand fold", newline,
+				"Content-Type: text/plain; charset=utf-8", newline,
+				"Content-Transfer-Encoding: 8bit", newline, newline, "body", newline, NULL);
+			for (message = 0; message < 2; message++) {
+				entity = NULL;
+				source = g_mime_stream_mem_new_with_buffer (input, sizeof input - 1);
+				output = g_mime_stream_mem_new ();
+				testsuite_check ("header serialization parity[%u,%u,%u]", dos, international, message);
+				try {
+					entity = message ? GMIME_ENTITY (g_mime_message_load (NULL, source, &error)) :
+						g_mime_entity_load (NULL, source, &error);
+					if (!entity || error)
+						throw (exception_new ("could not load header fixture"));
+					if (g_mime_entity_write_to_stream (entity, options, output) < 0)
+						throw (exception_new ("could not serialize header fixture"));
+					bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+					if (bytes->len != strlen (expected) || memcmp (bytes->data, expected, bytes->len))
+						throw (exception_new ("message or entity formatting differs from MimeKit"));
+					testsuite_check_passed ();
+				} catch (ex) {
+					testsuite_check_failed ("%s", ex->message);
+				} finally;
+				g_clear_error (&error);
+				g_clear_object (&entity);
+				g_object_unref (output);
+				g_object_unref (source);
+			}
+			g_free (expected);
+		}
+	}
 	g_mime_format_options_free (options);
 }
 
@@ -2600,7 +2879,11 @@ test_parameter_encoding_selection (void)
 				g_string_truncate (str, 0);
 				try {
 					g_mime_param_list_encode (list, options, FALSE, str);
-					if ((i + 9 + (flags == 2 ? i + 2 : flags == 1 ? 2 : 0) >= 78) !=
+					if (!mode && i == 64 && flags == 2) {
+						if (!g_str_has_prefix (str->str, "; filename=\"") ||
+						    strlen (str->str) != strlen ("; filename=\"\"") + 2 * i)
+							throw (exception_new ("non-folding quoted chunk differs from MimeKit"));
+					} else if ((i + 9 + (flags == 2 ? i + 2 : flags == 1 ? 2 : 0) >= 78) !=
 					    (strstr (str->str, mode ? "filename=\"=?" : "filename*") != NULL))
 						throw (exception_new ("incorrect encoding-width boundary"));
 					parsed = g_mime_param_list_parse (NULL, str->str);
@@ -2808,6 +3091,142 @@ test_parameter_continuation_formatting (void)
 }
 
 static void
+test_parameter_formatting_parity (void)
+{
+	static const struct {
+		const char *glyph, *charset, *expected;
+		guint repeat, width;
+		GMimeParamEncodingMethod method;
+	} cases[] = {
+		{ "\303\251", "utf-8",
+		  "Content-Type: application/octet-stream;\n"
+		  "\tfilename=\"=?iso-8859-1?b?6enp6enp6enp6enp6enp6enp6ek=?=\";\n\tafter=end\n",
+		  20, 60, GMIME_PARAM_ENCODING_METHOD_RFC2047 },
+		{ "\346\227\245", "utf-8",
+		  "Content-Type: application/octet-stream; filename=\"=?utf-8?b?5pel5pel5pel?=\n"
+		  "\t=?utf-8?b?5pel5pel5pel5pel5pel5pel5pel?=\"; after=end\n",
+		  10, 78, GMIME_PARAM_ENCODING_METHOD_RFC2047 },
+		{ "\346\227\245", "utf-8",
+		  "Content-Type: application/octet-stream;\n"
+		  "\tfilename*0*=utf-8''%E6%97%A5%E6%97%A5%E6%97%A5%E6%97%A5;\n"
+		  "\tfilename*1*=%E6%97%A5%E6%97%A5%E6%97%A5%E6%97%A5%E6%97%A5;\n"
+		  "\tfilename*2*=%E6%97%A5%E6%97%A5%E6%97%A5; after=end\n",
+		  12, 60, GMIME_PARAM_ENCODING_METHOD_RFC2231 },
+		{ "\346\227\245.txt", "iso-2022-jp",
+		  "Content-Type: application/octet-stream; filename=\"=?iso-2022-jp?b?" "?=\n"
+		  "\t=?iso-2022-jp?b?GyRCRnwbKEIudHh0?=\"; after=end\n",
+		  1, 78, GMIME_PARAM_ENCODING_METHOD_RFC2047 },
+		{ "=?=========", "utf-8",
+		  "Content-Type: application/octet-stream;\n"
+		  "\tfilename=\"=?us-ascii?q?=3D=3F=3D=3D=3D=3D=3D=3D=3D=3D?=\n"
+		  "\t=?us-ascii?q?=3D?=\"; after=end\n",
+		  1, 60, GMIME_PARAM_ENCODING_METHOD_RFC2047 }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeContentType *type, *parsed;
+	GMimeParam *param;
+	GString *value = g_string_new (NULL);
+	char *raw, *wire, *expected, **lines;
+	guint i, j, dos;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		g_string_truncate (value, 0);
+		for (j = 0; j < cases[i].repeat; j++)
+			g_string_append (value, cases[i].glyph);
+		type = g_mime_content_type_new ("application", "octet-stream");
+		g_mime_content_type_set_parameter (type, "filename", value->str);
+		g_mime_content_type_set_parameter (type, "after", "end");
+		param = g_mime_param_list_get_parameter (g_mime_content_type_get_parameters (type), "filename");
+		g_mime_param_set_charset (param, cases[i].charset);
+		g_mime_param_set_encoding_method (param, cases[i].method);
+		g_mime_format_options_set_max_line_length (options, cases[i].width);
+		for (dos = 0; dos < 2; dos++) {
+			g_mime_format_options_set_newline_format (options, dos ?
+				GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			lines = g_strsplit (cases[i].expected, "\n", -1);
+			expected = g_strjoinv (g_mime_format_options_get_newline (options), lines);
+			raw = g_mime_content_type_encode (type, options);
+			wire = g_strconcat ("Content-Type:", raw, NULL);
+			parsed = g_mime_content_type_parse (NULL, raw);
+			testsuite_check ("parameter formatting parity[%u,%u]", i, dos);
+			try {
+				if (strcmp (wire, expected))
+					throw (exception_new ("unexpected parameter chunk output: %s", wire));
+				if (!parsed || g_strcmp0 (g_mime_content_type_get_parameter (parsed, "filename"), value->str) ||
+				    g_strcmp0 (g_mime_content_type_get_parameter (parsed, "after"), "end"))
+					throw (exception_new ("formatted parameter did not round-trip"));
+				testsuite_check_passed ();
+			} catch (ex) {
+				testsuite_check_failed ("%s", ex->message);
+			} finally;
+			g_clear_object (&parsed);
+			g_free (wire);
+			g_free (raw);
+			g_free (expected);
+			g_strfreev (lines);
+		}
+		g_object_unref (type);
+	}
+
+	g_string_truncate (value, 0);
+	for (i = 0; i < 720; i++)
+		g_string_append_c (value, 'a');
+	type = g_mime_content_type_new ("application", "octet-stream");
+	g_mime_content_type_set_parameter (type, "filename", value->str);
+	g_mime_content_type_set_parameter (type, "after", "end");
+	g_mime_format_options_set_param_encoding_method (options, GMIME_PARAM_ENCODING_METHOD_RFC2231);
+	g_mime_format_options_set_max_line_length (options, 60);
+	for (dos = 0; dos < 2; dos++) {
+		g_mime_format_options_set_newline_format (options, dos ?
+			GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+		expected = g_strdup_printf ("\tfilename*9=%.*s;%s\tfilename*10=%.*s;%s",
+			46, value->str, g_mime_format_options_get_newline (options),
+			46, value->str, g_mime_format_options_get_newline (options));
+		raw = g_mime_content_type_encode (type, options);
+		parsed = g_mime_content_type_parse (NULL, raw);
+		testsuite_check ("raw continuation index width parity[%u]", dos);
+		try {
+			if (!strstr (raw, expected))
+				throw (exception_new ("continuation index growth prematurely shortened a raw chunk"));
+			if (!parsed || g_strcmp0 (g_mime_content_type_get_parameter (parsed, "filename"), value->str) ||
+			    g_strcmp0 (g_mime_content_type_get_parameter (parsed, "after"), "end"))
+				throw (exception_new ("raw continuations did not round-trip"));
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("%s", ex->message);
+		} finally;
+		g_clear_object (&parsed);
+		g_free (raw);
+		g_free (expected);
+	}
+
+	g_mime_content_type_set_parameter (type, "filename", "=?=========");
+	g_mime_param_list_remove (g_mime_content_type_get_parameters (type), "after");
+	g_mime_format_options_set_param_encoding_method (options, GMIME_PARAM_ENCODING_METHOD_RFC2047);
+	for (dos = 0; dos < 2; dos++) {
+		g_mime_format_options_set_newline_format (options, dos ?
+			GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+		expected = g_strdup_printf (" application/octet-stream;%s"
+			"\tfilename=\"=?us-ascii?q?=3D=3F=3D=3D=3D=3D=3D=3D=3D=3D=3D?=\"%s",
+			g_mime_format_options_get_newline (options), g_mime_format_options_get_newline (options));
+		raw = g_mime_content_type_encode (type, options);
+		testsuite_check ("final encoded parameter exact physical fit[%u]", dos);
+		try {
+			if (strcmp (raw, expected))
+				throw (exception_new ("final encoded parameter unnecessarily reserved a semicolon"));
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("%s", ex->message);
+		} finally;
+		g_free (raw);
+		g_free (expected);
+	}
+	g_object_unref (type);
+	g_string_free (value, TRUE);
+	g_mime_format_options_free (options);
+}
+
+static void
 test_parameter_line_lengths (void)
 {
 	static const guint widths[] = { 60, 78, 120, 998 };
@@ -2817,6 +3236,7 @@ test_parameter_line_lengths (void)
 	} cases[] = {
 		{ NULL, "", "a", "", 1200 },
 		{ NULL, "", " \\\"", "", 200 },
+		{ NULL, "=?", "=", "", 9 },
 		{ NULL, "", "\360\237\230\200", "", 200 },
 		{ "utf-16le", "", "\344\270\255", "", 200 },
 		{ "iso-2022-jp", "\344\270\255", "a", "\344\270\255", 1000 },
@@ -2963,6 +3383,9 @@ int main (int argc, char **argv)
 	test_unnamed_group_formatting ();
 	test_address_line_lengths ();
 	test_text_header_line_lengths ();
+	test_header_field_lengths ();
+	test_header_formatting_parity ();
+	test_header_serialization_parity ();
 	test_address_header_whitespace ();
 	test_literal_encoded_word_headers ();
 	test_structured_header_line_lengths ();
@@ -2978,6 +3401,7 @@ int main (int argc, char **argv)
 	test_parameter_output_charsets ();
 	test_parameter_encoding_selection ();
 	test_parameter_continuation_formatting ();
+	test_parameter_formatting_parity ();
 	test_parameter_line_lengths ();
 	testsuite_end ();
 	

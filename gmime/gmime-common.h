@@ -41,6 +41,7 @@ G_GNUC_INTERNAL char *g_mime_strdup_trim (const char *str);
 G_GNUC_INTERNAL gboolean _g_mime_is_valid_boundary (const char *boundary);
 G_GNUC_INTERNAL gboolean _g_mime_strcase_equal_trimmed (const char *value, const char *token);
 G_GNUC_INTERNAL size_t _g_mime_count_utf16_units (const char *start, const char *end);
+G_GNUC_INTERNAL const char *_g_mime_get_utf16_chunk_end (const char *start, const char *end, size_t *length);
 
 G_END_DECLS
 

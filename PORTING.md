@@ -919,8 +919,12 @@ longer acquire unnecessary charset declarations. Explicit language
 metadata still forces a declaration, preserving the native language API.
 When the declaration alone exhausts the first piece's budget, it is
 emitted separately before consuming the first character.
-Fitting uses actual quoted/encoded sizes and accounts for additional
-continuation-index digits, so wrapping can differ from MimeKit's estimates.
+Initial chunk sizing and shrinking now follow MimeKit's UTF-16 and
+converted-byte estimates, including nearest-even rounding. Raw quoted
+pieces are not incorrectly charged for percent encoding, and index growth
+does not prematurely shorten chunks. A final actual-byte check retains
+GMime's physical line bounds, accounting for continuation-index digits and
+the following semicolon; it can shorten chunks when the reference overruns.
 At least one complete character is emitted per payload piece even if an
 oversized name leaves insufficient room. The fold flag and newline format
 apply to all continuation breaks.
@@ -937,13 +941,17 @@ header-text encoder. It encodes the entire value, preserving leading and
 trailing whitespace, and uses the same lossless charset selection as
 RFC 2231. Independently encoded words preserve Unicode character boundaries
 and byte-counted UTF-16/UTF-32 data. ISO-2022-JP output uses Base64.
-Word fitting uses actual encoded bytes rather than MimeKit's estimated
-widths, so wrapping can differ for escaped or multibyte data. Oversized
-parameter names still make the first line exceed the target width, but
-the writer always consumes at least one character and makes progress.
-The fold flag controls both parameter and encoded-word line breaks.
-Wider physical lines can hold multiple words, each independently limited
-to 75 characters.
+Initial placement and per-character estimates follow MimeKit. The shared
+RFC 2047 word codec then checks actual output, preserving the native
+75-character word bound and physical-byte line limits when estimates
+underestimate escaped or multibyte data. Final words reserve the closing
+quote and any following parameter's semicolon, without overfolding a
+last parameter that exactly fits. An initial empty word is retained
+when the estimator cannot fit the first scalar, as with ISO-2022-JP.
+Oversized names still make unavoidable prefixes exceed the target;
+progress guards prevent empty-word loops. Subsequent words begin on
+tab-indented continuation lines when folding is enabled, or are separated
+by spaces otherwise. Nonfolding output introduces no line breaks.
 
 GMimeFormatOptions now exposes get/set_max_line_length(), following
 MimeKit's MaxLineLength: default 78, with an inclusive range of 60 to 998.
@@ -953,6 +961,9 @@ newline format. Parameter encoding selection, ordinary parameter folding,
 RFC 2231 continuations, and RFC 2047 parameter words honor this setting.
 Actual first-word sizing prevents multibyte charsets from overflowing
 short lines merely because the initial placement estimate fits.
+An ordinary final international parameter can exactly fill the physical
+line when MimeKit's UTF-16 estimate fits. Nonfinal parameters retain room
+for the next semicolon instead of overrunning the byte limit.
 
 Parameters now have a public `g_mime_param_new(name, value)` constructor,
 independent `clone()` copies, and unencoded display strings. Parameter display
@@ -1143,6 +1154,11 @@ cloned options are respected. Existing nonfolding to_string() behavior
 and untouched raw address headers are preserved.
 RFC 2047 names share the phrase tokenizer, charset-aware splitting and merging,
 and canonical MIME labels described below.
+Address-header formatting now requires the entire list to parse. If parsing
+fails, decoded assignments use the ordinary text formatter rather than
+discarding invalid text or retaining only a valid prefix. Invalid parsed raw
+address fields remain unchanged during International serialization, apart
+from the writer's selected newline normalization.
 Parsed mailbox and group display names now convert literal tabs to spaces
 before RFC 2047 decoding, following MimeKit. Trailing comment names use the
 same normalization, including domainless mailboxes. Encoded tabs retain
@@ -1268,6 +1284,16 @@ encoding-tag casing. Folding preserves whitespace between encoded words
 and does not synthesize whitespace between adjacent encoded words; decoding
 still ignores inter-word whitespace as required. Untouched raw headers
 retain their original folding outside International mode.
+Unstructured whitespace runs now fold while consuming the run, including
+between encoded words, matching MimeKit's precise space/tab placement.
+Empty non-International text values emit only the terminating newline
+after the colon; International formatting retains its initial space.
+
+Private folding helpers accept field lengths, excluding the colon, instead
+of copying raw field names into temporary strings just to measure them.
+Helpers that emit the field name use a bounded pointer and length. Parsed
+International formatting still measures the decoded field name without
+trailing whitespace; assigned values use the complete raw field length.
 
 RFC 2047 text and phrase encoding now honors `AllowMixedCharsets`, corresponding
 to MimeKit's `AllowMixedHeaderCharsets`. It defaults to false: encoded words use
@@ -1299,8 +1325,8 @@ coalesce without a size limit. Custom-charset character estimates include
 independent converter flushes and replacement costs, matching MimeKit's sizing
 model, while emitted words retain lossless UTF-8 fallback. Adjacent encoded
 words use tabs in phrases and spaces in unstructured text, with original
-whitespace retained inside the encoded payload. These are size estimates, not
-hard output-length guarantees.
+whitespace retained inside the encoded payload. These are size estimates;
+text output also applies the final actual-size splitting described below.
 
 RFC 2047 token splitting now collects those metrics incrementally and uses the
 configured width and requested charset instead of fixed character-count limits.
@@ -1310,9 +1336,13 @@ the wrapper, and unseparated pieces retain their encoded-word type. Stateful
 encodings are measured with independent character flushes; supplementary
 characters are never split. Charset estimates are collected before mixed-charset
 selection, just like MimeKit, so Latin-1 costs, actual requested-charset bytes,
-and lossless UTF-8 fallback can differ. This follows MimeKit's approximation
-rather than imposing a hard encoded-byte limit. Unsupported charset names
-still fall back losslessly, including names too long to fit a wrapper; iconv
+and lossless UTF-8 fallback can differ. Text encoding now performs MimeKit's
+final actual-size check, halving oversized UTF-16 chunks until each encoded
+word fits MIN(75, MaxLineLength - 1), without splitting Unicode scalars.
+Phrase encoding retains its single-word emission for each estimated token.
+At least one complete scalar is emitted even if its wrapper cannot fit.
+Unsupported charset names still fall back losslessly, including names too
+long to fit a wrapper; iconv
 extensions that can discard input use the existing lossless conversion path
 for measurement as well as emission.
 
@@ -1334,13 +1364,12 @@ International formatting of ordinary text headers now follows MimeKit's
 of the requested charset, unfolds input line breaks, and folds at the last
 separator character while retaining spaces and tabs. Folding counts UTF-16
 units, not UTF-8 bytes; supplementary characters count as two units and
-are never split. Words longer than the target are split over continuation
-lines. Shorter first words remain intact even if the field prefix makes
-the first line exceed the target, and long whitespace runs can exceed it
-by one unit, matching MimeKit. This is not a hard UTF-8 byte-length limit.
-If a full or oversized field prefix leaves no room for a long word, GMime
-moves the word to a continuation rather than reproducing MimeKit's invalid
-substring-range failure. In decoded assignments, literal encoded-word-looking
+are never split. Words at least as long as the target cause the entire
+value to use UTF-8 RFC 2047 encoding and ordinary text folding, following
+MimeKit and avoiding inserted decoded whitespace. Shorter first words move
+to a continuation if their field prefix leaves insufficient room. Whitespace
+runs fold at the target, not one character beyond it. This is not a hard
+UTF-8 byte-length limit. In decoded assignments, literal encoded-word-looking
 text is written unchanged in International mode, as in MimeKit.
 
 Parsed ordinary headers now follow MimeKit's International `GetRawValue()`
@@ -1414,13 +1443,10 @@ remain on the current line; oversized first tags can move off the field line.
 
 Long `h` and `z` tags fold between colon- and pipe-delimited entries,
 respectively, retaining empty entries and never splitting an oversized list
-entry. Other long tags are split using tab continuations. Widths count
-UTF-16 units, matching MimeKit; GMime keeps Unicode characters intact even
-where MimeKit's substring slicing would split a surrogate pair. Signature
-values are normally ASCII; this formatter retains UTF-8 text rather than
-converting to the requested charset, consistent with GMime's other structured
-header formatters. Invalid UTF-8 is rejected without replacing existing
-header state.
+entry. Other long tags are split using tab continuations. Signature values
+are treated as ASCII: widths, list-entry lengths, and chunk boundaries count
+bytes, without Unicode character handling. The requested charset is unused.
+Invalid UTF-8 is still rejected without replacing existing header state.
 
 The formatter applies to newly assigned or explicitly formatted values in
 both ordinary and International modes. Parsed or explicitly assigned raw
@@ -1434,7 +1460,7 @@ signing, or verification, or change the cryptography backend.
 UTF-8 value, and optional encoding charset, following MimeKit's field/value
 constructors. A NULL charset selects UTF-8; explicit charsets use the existing
 header encoder and its lossless UTF-8 fallback. Names preserve case and must
-be nonempty printable ASCII excluding colon. Leading and trailing Unicode
+be nonempty printable ASCII excluding colon. Leading and trailing ASCII linear
 whitespace is trimmed and CR/LF characters are removed from the cached value
 before invoking the existing field-specific formatter. Empty values are valid;
 NULL values, invalid UTF-8, and invalid names are GLib programming errors.
@@ -1444,9 +1470,8 @@ snapshot, so no header list is needed to manage their lifetime. Their stream
 offset is unknown (-1). They support the existing setters, formatting, display,
 serialization, and cloning APIs. This does not change the legacy list
 append/prepend/insert normalization or the handling of parsed raw headers.
-Field-specific formatting still uses GMime's existing implementations,
-including their malformed structured-value recovery and the RFC 2047
-formatting differences noted below. The checked constructor and assignment
+Field-specific formatting uses the implementations and explicit native
+policies described above. The checked constructor and assignment
 APIs below provide structured-value rejection without changing these legacy
 entry points.
 
@@ -1478,7 +1503,8 @@ mapping. Unsupported or empty charset names and malformed UTF-8 produce
 `G_CONVERT_ERROR`. A supported charset that cannot represent the actual text
 still permits the existing header encoder's lossless UTF-8 fallback.
 
-Values are Unicode-trimmed and unfolded before field-specific formatting.
+Values are ASCII-linear-whitespace-trimmed and unfolded before field-specific
+formatting.
 Content-Type and Content-Disposition use the existing checked parsers,
 including their configured recovery rules, rather than the legacy fallback
 parsers. Parse failures produce `GMIME_ERROR_PARSE_ERROR`. Parsed parameter
@@ -1505,17 +1531,30 @@ The actual-source differential covers 9,878 construction/assignment cases in
 each normal and ASan/UBSan/leak build, with zero unexpected differences.
 It includes Unicode normalization, invalid structured values, charset aliases
 and failures, Cyrillic parameter encodings, formatting widths/newlines,
-International output, and deterministic malformed-input fixtures. There are
-326 constructor platform-newline differences and 273 inherited formatter
-differences, each checked against an independent existing native header or
-standalone content-header encoding path. These include RFC 2047 word selection,
-parameter charset/language spelling, and address recovery/folding; this slice
-does not change those formatters.
+International output, and deterministic malformed-input fixtures. Remaining
+differences are explicitly classified: 331 constructor platform-newline cases,
+70 preserved RFC 2231 language declarations, 130 ASCII-only linear-whitespace
+trimming cases, and 28 lossless UTF-8 fallbacks instead of best-fit mappings.
+No prior-native-formatter comparison is accepted as a general exemption.
 
-GIR/typelib, VAPI, GTK-doc and live GI/Python checks pass. The full core suite
-remains at 34/35 passing programs: test-core retains its two existing
-text-format assertions, while checked header assignment passes. Native
-Windows validation remains pending.
+An additional 6,568 actual-source cases pass in each normal and
+ASan/UBSan/leak build, comparing direct text/phrase/parameter formatting,
+untouched raw headers, parsed header-list output, and complete message and
+entity serialization. Both newline formats, International output, widths
+60 through 998, supplementary scalars and charset variants are covered.
+There are zero unexpected differences; explicit exceptions comprise 892
+native word/physical-line bound cases, 92 lossless parameter-byte/conversion
+cases, and 80 explicit-endian native parameter charset labels.
+
+Eight focused native formatter suites pass normally. All formatter and
+parameter-list checks also pass in isolation with ASan/UBSan/leak checking.
+The complete header suite's sanitizer run retains a
+648-byte/25-allocation address-sync fixture
+leak, independently reproduced on unchanged HEAD. Unrelated core and parser
+model assertion aborts were also reproduced on unchanged HEAD. GIR/typelib
+and VAPI builds pass with the existing warning-callback scope annotation
+warning. GTK-doc builds with documentation warnings. Native Windows
+validation remains pending.
 
 ### Checked header-list field/value operations
 

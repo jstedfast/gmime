@@ -219,7 +219,9 @@ g_mime_utils_header_format_date (GDateTime *date)
 		// only solution is to convert the date being formatted into its UTC representation and
 		// use "-0000" as the timezone (as opposed to the normal "+0000" used for actual UTC).
 		date = utc = g_date_time_to_utc (date);
+
 		g_return_val_if_fail (utc != NULL, NULL);
+
 		tz_offset = 0;
 		sign = '-';
 	}
@@ -273,6 +275,7 @@ date_skip_cfws (const char **in, const char *end)
 		} else if (*p == '(') {
 			depth = 1;
 			p++;
+
 			while (p < end && depth) {
 				if (*p == '\\' && p + 1 < end)
 					p++;
@@ -282,6 +285,7 @@ date_skip_cfws (const char **in, const char *end)
 					depth--;
 				p++;
 			}
+
 			if (depth)
 				return FALSE;
 		} else {
@@ -290,6 +294,7 @@ date_skip_cfws (const char **in, const char *end)
 	}
 
 	*in = p;
+
 	return TRUE;
 }
 
@@ -352,8 +357,10 @@ decode_int (const char *in, size_t inlen)
 	while (inptr < inend) {
 		if (!(*inptr >= '0' && *inptr <= '9'))
 			return -1;
+
 		if (val > (INT_MAX - (*inptr - '0')) / 10)
 			return -1;
+
 		val = (val * 10) + (*inptr - '0');
 		inptr++;
 	}
@@ -459,6 +466,7 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 	if (*sec == 60) {
 		if (*hour != 23 || *min != 59)
 			return FALSE;
+
 		/* GDateTime cannot represent leap seconds; use the last second of the day. */
 		*sec = 59;
 	}
@@ -529,6 +537,7 @@ get_tzone (date_token *token, int *offset)
 		return FALSE;
 
 	*offset = value;
+
 	return TRUE;
 }
 
@@ -657,6 +666,7 @@ parse_broken_date (date_token *tokens)
 				}
 				continue;
 			}
+
 			if (token->len > 2)
 				continue;
 
@@ -950,6 +960,7 @@ g_mime_utils_unquote_string (char *str)
 				*str++ = *inptr++;
 			else
 				inptr++;
+
 			escaped = !escaped;
 		} else if (*inptr == '"') {
 			if (escaped) {
@@ -1017,9 +1028,10 @@ g_mime_utils_best_encoding (const unsigned char *text, size_t len)
 	size_t count = 0;
 	
 	inend = text + len;
-	for (ch = text; ch < inend; ch++)
+	for (ch = text; ch < inend; ch++) {
 		if (*ch > (unsigned char) 127)
 			count++;
+	}
 	
 	if ((float) count <= len * 0.17)
 		return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
@@ -1142,8 +1154,10 @@ decode_8bit (GMimeParserOptions *options, const char *text, size_t len, size_t *
 	charset = g_mime_parser_options_get_charset_encoding (options);
 	/* UTF-8 is always the first choice when no invalid sequences are present. */
 	charsets[n++] = "utf-8";
+
 	if (g_ascii_strcasecmp (charset, "utf-8") && g_ascii_strcasecmp (charset, "iso-8859-1"))
 		charsets[n++] = charset;
+
 	charsets[n++] = "iso-8859-1";
 	charsets[n] = NULL;
 	best = charsets[0];
@@ -1163,6 +1177,7 @@ decode_8bit (GMimeParserOptions *options, const char *text, size_t len, size_t *
 		if (ninval == 0) {
 			if (decoded_length)
 				*decoded_length = outlen;
+
 			return g_realloc (out, outlen + 1);
 		}
 		
@@ -1195,6 +1210,7 @@ decode_8bit (GMimeParserOptions *options, const char *text, size_t len, size_t *
 		
 		if (decoded_length)
 			*decoded_length = outbuf - out;
+
 		*outbuf++ = '\0';
 		
 		return g_realloc (out, (size_t) (outbuf - out));
@@ -1206,6 +1222,7 @@ decode_8bit (GMimeParserOptions *options, const char *text, size_t len, size_t *
 
 	if (decoded_length)
 		*decoded_length = outlen;
+
 	return g_realloc (out, outlen + 1);
 }
 
@@ -1343,6 +1360,7 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 	while (inptr < inend && *inptr != '?' && *inptr != '*') {
 		if (!is_ascii (*inptr) || (!is_atom (*inptr) && *inptr != '.'))
 			return NULL;
+
 		inptr++;
 	}
 
@@ -1356,6 +1374,7 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 		while (inptr < inend && *inptr != '?') {
 			if (!is_ascii (*inptr) || !is_atom (*inptr))
 				return NULL;
+
 			inptr++;
 		}
 	}
@@ -1383,11 +1402,12 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 	token = rfc2047_token_new (payload, inend - payload);
 	token->word = word;
 	token->word_length = len;
+	token->encoding = encoding;
+
 	buf = g_strndup (charset, n);
 	token->charset = g_mime_charset_iconv_name (buf);
 	token->codepage = _g_mime_charset_get_codepage (token->charset);
 	g_free (buf);
-	token->encoding = encoding;
 	
 	return token;
 }
@@ -1458,7 +1478,6 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t len
 				 * separate encoded-word tokens that
 				 * have been merged with other
 				 * words. */
-				
 				has_specials = FALSE;
 				
 				if (inend - inptr >= 2 && !memcmp (inptr, "=?", 2)) {
@@ -1467,9 +1486,10 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t len
 					/* skip past the charset (if one is even declared, sigh) */
 					while (inptr < inend && *inptr != '?' && !is_lwsp (*inptr)) {
 						ascii = ascii && is_ascii (*inptr);
-						if (!is_atom (*inptr)) {
+
+						if (!is_atom (*inptr))
 							has_specials = TRUE;
-						}
+
 						inptr++;
 					}
 					
@@ -1489,10 +1509,12 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t len
 					while (inptr < inend && (inend - inptr < 2 || memcmp (inptr, "?=", 2))) {
 						if (*inptr == '=' && rfc2047_is_encoded_word_start (inptr, inend))
 							break;
+
 						ascii = ascii && is_ascii (*inptr);
-						if (!is_atom (*inptr)) {
+
+						if (!is_atom (*inptr))
 							has_specials = TRUE;
-						}
+
 						inptr++;
 					}
 					
@@ -1518,9 +1540,8 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t len
 				}
 			} else {
 				/* Encoded-word tokens are atoms. */
-				while (inptr < inend && is_ascii (*inptr) && is_atom (*inptr)) {
+				while (inptr < inend && is_ascii (*inptr) && is_atom (*inptr))
 					inptr++;
-				}
 			}
 			
 			n = (size_t) (inptr - word);
@@ -1562,6 +1583,7 @@ tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t len
 			}
 			
 			ascii = TRUE;
+
 			/* Append the non-ASCII atom token. */
 			while (inptr < inend && !is_lwsp (*inptr) && (!is_ascii (*inptr) || !is_atom (*inptr))) {
 				ascii = ascii && is_ascii (*inptr);
@@ -1645,9 +1667,12 @@ tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t lengt
 					while (inptr < inend && (inend - inptr < 2 || memcmp (inptr, "?=", 2))) {
 						if (*inptr == '=' && rfc2047_is_encoded_word_start (inptr, inend))
 							break;
+
 						ascii = ascii && is_ascii (*inptr);
+
 						if (is_lwsp (*inptr))
 							has_specials = TRUE;
+
 						inptr++;
 					}
 					
@@ -1833,6 +1858,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 				token = token->next;
 				outlen += len;
 			} while (token != next);
+
 			g_mime_decoder_reset (decoder);
 			outptr = outbuf;
 			
@@ -1844,6 +1870,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 				
 				while (!g_utf8_validate (str, len, (const char **) &str)) {
 					len = outlen - (str - (char *) outptr);
+
 					if (*str) {
 						*str = '?';
 					} else {
@@ -1911,6 +1938,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 		g_string_free (decoded, TRUE);
 		decoded = value;
 	}
+
 	return g_string_free (decoded, FALSE);
 }
 
@@ -2087,14 +2115,16 @@ rfc2047_charset_name (const char *charset)
 {
 	if (!g_ascii_strcasecmp (charset, "utf-16le"))
 		return "utf-16";
+
 	if (!g_ascii_strcasecmp (charset, "utf-32le"))
 		return "utf-32";
+
 	return charset;
 }
 
-static void
-rfc2047_encode_word (GString *string, const char *word, size_t len,
-		     const char *charset, gushort safemask)
+void
+_g_mime_utils_rfc2047_encode_word (GString *string, const char *word, size_t len,
+				  const char *charset, gboolean phrase)
 {
 	const char *conversion_charset = charset;
 	size_t enclen, pos, count = 0;
@@ -2119,7 +2149,7 @@ rfc2047_encode_word (GString *string, const char *word, size_t len,
 	if (g_ascii_strncasecmp (charset, "iso-2022-jp", 11) == 0 || (double) count >= len * 0.17) {
 		encoder = _g_mime_rfc2047_base64_encoder_new ();
 	} else {
-		encoder = _g_mime_rfc2047_quoted_printable_encoder_new (safemask & IS_PSAFE ?
+		encoder = _g_mime_rfc2047_quoted_printable_encoder_new (phrase ?
 			GMIME_QENCODE_MODE_PHRASE : GMIME_QENCODE_MODE_TEXT);
 	}
 	
@@ -2135,6 +2165,49 @@ rfc2047_encode_word (GString *string, const char *word, size_t len,
 	g_object_unref (encoder);
 	g_free (encoded);
 	g_free (converted);
+}
+
+static void
+rfc2047_encode_words (GString *string, GMimeFormatOptions *options, const char *word,
+		     size_t length, const char *charset, gboolean phrase)
+{
+	size_t max_length = MIN (75, g_mime_format_options_get_max_line_length (options) - 1);
+	const char *end = word + length, *next;
+	size_t remaining, chunk_length, count;
+
+	if (phrase) {
+		_g_mime_utils_rfc2047_encode_word (string, word, length, charset, TRUE);
+		return;
+	}
+
+	remaining = chunk_length = _g_mime_count_utf16_units (word, end);
+
+	while (word < end) {
+		size_t start_length = string->len;
+
+		count = MIN (chunk_length, remaining);
+		next = _g_mime_get_utf16_chunk_end (word, end, &count);
+
+		while (TRUE) {
+			size_t scalar_length = g_utf8_get_char (word) >= 0x10000 ? 2 : 1;
+
+			_g_mime_utils_rfc2047_encode_word (string, word, next - word, charset, FALSE);
+			if (string->len - start_length <= max_length || count == scalar_length)
+				break;
+
+			/* Estimates can miss Q-encoding expansion or whitespace included from the preceding gap. */
+			g_string_truncate (string, start_length);
+			count = MAX (count / 2, scalar_length);
+			next = _g_mime_get_utf16_chunk_end (word, end, &count);
+			chunk_length = count;
+		}
+
+		remaining -= count;
+		word = next;
+
+		if (word < end)
+			g_string_append_c (string, ' ');
+	}
 }
 
 
@@ -2189,15 +2262,10 @@ rfc2047_character_byte_count (const char *charset, const char *start, const char
 	return length;
 }
 
-static gsize
-rfc2047_estimate_word_length (const char *charset, int encoding, gsize byte_count, gsize encode_count)
+gsize
+_g_mime_utils_rfc2047_estimate_word_length (const char *charset, gsize byte_count, gsize encode_count)
 {
 	gsize length;
-
-	if (encoding == 0)
-		charset = "us-ascii";
-	else if (encoding == 1)
-		charset = "iso-8859-1";
 
 	length = strlen (rfc2047_charset_name (charset ? charset : "utf-8")) + 7;
 
@@ -2208,6 +2276,17 @@ rfc2047_estimate_word_length (const char *charset, int encoding, gsize byte_coun
 		return length + byte_count + encode_count * 2;
 
 	return length + ((byte_count + 2) / 3) * 4;
+}
+
+static gsize
+rfc2047_estimate_word_length (const char *charset, int encoding, gsize byte_count, gsize encode_count)
+{
+	if (encoding == 0)
+		charset = "us-ascii";
+	else if (encoding == 1)
+		charset = "iso-8859-1";
+
+	return _g_mime_utils_rfc2047_estimate_word_length (charset, byte_count, encode_count);
 }
 
 /* okay, so 'unstructured text' fields don't actually contain 'word'
@@ -2240,6 +2319,7 @@ rfc2047_encode_get_rfc822_words (GMimeFormatOptions *options, const char *charse
 		
 		start = inptr;
 		c = g_utf8_get_char (inptr);
+
 		if (!g_unichar_validate (c)) {
 			w(g_warning ("Invalid UTF-8 sequence encountered"));
 			inptr++;
@@ -2360,14 +2440,17 @@ rfc2047_encode_get_rfc822_words (GMimeFormatOptions *options, const char *charse
 
 		for (word = first; ; word = word->next) {
 			encoded |= word->type == WORD_2047;
+
 			if (!word->next || word->end != word->next->start)
 				break;
 		}
+
 		next = word->next;
 
-		if (encoded)
+		if (encoded) {
 			for (word = first; word != next; word = word->next)
 				word->type = WORD_2047;
+		}
 	}
 	
 #if d(!)0
@@ -2424,6 +2507,7 @@ should_merge_words (guint maxline, const char *charset, rfc822_word *word, rfc82
 		
 		length = rfc2047_estimate_word_length (charset, MAX (word->encoding, next->encoding),
 						      length, word->encode_count + next->encode_count);
+
 		return length < maxline - 1;
 	default:
 		return FALSE;
@@ -2571,7 +2655,7 @@ rfc2047_encode (GMimeFormatOptions *options, const char *in, gushort safemask, c
 				charset = word->encoding == 0 ? "us-ascii" : "iso-8859-1";
 			}
 
-			rfc2047_encode_word (out, start, len, charset, safemask);
+			rfc2047_encode_words (out, options, start, len, charset, safemask & IS_PSAFE);
 			break;
 		}
 		
@@ -2666,7 +2750,7 @@ g_mime_utils_header_encode_text (GMimeFormatOptions *options, const char *text, 
 
 
 static char *
-header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *value,
+header_fold_tokens (GMimeFormatOptions *options, const char *field, size_t field_length, const char *value,
 		    size_t vlen, rfc2047_token *tokens, gboolean structured, gboolean include_field)
 {
 	size_t maxline = g_mime_format_options_get_max_line_length (options);
@@ -2675,11 +2759,11 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 	size_t lwsp, tab, len, n;
 	GString *output;
 
-	len = strlen (field) + 2;
+	len = field_length + 2;
 
 	if (include_field) {
 		output = g_string_sized_new (len + vlen + 1);
-		g_string_append (output, field);
+		g_string_append_len (output, field, field_length);
 		g_string_append (output, ": ");
 	} else {
 		output = g_string_sized_new (vlen + 2);
@@ -2695,6 +2779,12 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 			for (n = 0; n < token->length; n++) {
 				if (token->text[n] == '\r')
 					continue;
+
+				if (!structured && token->text[n] != '\n' && len >= maxline) {
+					g_string_append (output, newline);
+					len = 0;
+					tab = 0;
+				}
 				
 				lwsp = output->len;
 				if (token->text[n] == '\t')
@@ -2735,7 +2825,6 @@ header_fold_tokens (GMimeFormatOptions *options, const char *field, const char *
 			/* Note: if the encoded-word token is longer than the fold length, oh well...
 			 * it probably just means that we are folding a header written by a user-agent
 			 * with a different max line length than ours. */
-			
 			g_string_append_len (output, token->word, token->word_length);
 			len += token->word_length;
 			lwsp = 0;
@@ -2816,9 +2905,7 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
 {
 	rfc2047_token *tokens;
 	const char *value;
-	char *folded;
-	char *field;
-	size_t len;
+	size_t field_length, len;
 	
 	if (header == NULL)
 		return NULL;
@@ -2830,7 +2917,7 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
 	if (*value == '\0')
 		return NULL;
 	
-	field = g_strndup (header, value - header);
+	field_length = value - header;
 	
 	value++;
 	while (*value && is_lwsp (*value))
@@ -2838,10 +2925,8 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
 	
 	len = strlen (value);
 	tokens = tokenize_rfc2047_phrase (options, value, len, -1, TRUE);
-	folded = header_fold_tokens (format, field, value, len, tokens, TRUE, TRUE);
-	g_free (field);
-	
-	return folded;
+
+	return header_fold_tokens (format, header, field_length, value, len, tokens, TRUE, TRUE);
 }
 
 
@@ -2849,7 +2934,7 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
  * _g_mime_utils_structured_header_fold:
  * @options: (nullable): a #GMimeParserOptions or %NULL
  * @format: (nullable): a #GMimeFormatOptions or %NULL
- * @field: header field
+ * @field_length: header field length, excluding the colon
  * @value: header value
  *
  * Folds an structured header according to the rules in rfc822.
@@ -2858,13 +2943,10 @@ g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOpt
  **/
 char *
 _g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
-				      const char *field, const char *value)
+				      size_t field_length, const char *value)
 {
 	rfc2047_token *tokens;
 	size_t len;
-	
-	if (field == NULL)
-		return NULL;
 	
 	if (value == NULL)
 		return g_strdup (g_mime_format_options_get_newline (format));
@@ -2872,7 +2954,7 @@ _g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOp
 	len = strlen (value);
 	tokens = tokenize_rfc2047_phrase (options, value, len, -1, TRUE);
 	
-	return header_fold_tokens (format, field, value, len, tokens, TRUE, FALSE);
+	return header_fold_tokens (format, NULL, field_length, value, len, tokens, TRUE, FALSE);
 }
 
 
@@ -2894,9 +2976,7 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
 {
 	rfc2047_token *tokens;
 	const char *value;
-	char *folded;
-	char *field;
-	size_t len;
+	size_t field_length, len;
 	
 	if (header == NULL)
 		return NULL;
@@ -2908,7 +2988,7 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
 	if (*value == '\0')
 		return NULL;
 	
-	field = g_strndup (header, value - header);
+	field_length = value - header;
 	
 	value++;
 	while (*value && is_lwsp (*value))
@@ -2916,10 +2996,8 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
 	
 	len = strlen (value);
 	tokens = tokenize_rfc2047_text (options, value, len, -1, TRUE);
-	folded = header_fold_tokens (format, field, value, len, tokens, FALSE, TRUE);
-	g_free (field);
-	
-	return folded;
+
+	return header_fold_tokens (format, header, field_length, value, len, tokens, FALSE, TRUE);
 }
 
 
@@ -2927,7 +3005,7 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
  * _g_mime_utils_unstructured_header_fold:
  * @options: (nullable): a #GMimeParserOptions or %NULL
  * @format: (nullable): a #GMimeFormatOptions or %NULL
- * @field: header field
+ * @field_length: header field length, excluding the colon
  * @value: header value
  *
  * Folds an unstructured header according to the rules in rfc822.
@@ -2935,21 +3013,19 @@ g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatO
  * Returns: an allocated string containing the folded header.
  **/
 char *
-_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format, const char *field, const char *value)
+_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
+					size_t field_length, const char *value)
 {
 	rfc2047_token *tokens;
 	size_t len;
 	
-	if (field == NULL)
-		return NULL;
-	
-	if (value == NULL)
+	if (value == NULL || *value == '\0')
 		return g_strdup (g_mime_format_options_get_newline (format));
 	
 	len = strlen (value);
 	tokens = tokenize_rfc2047_text (options, value, len, -1, TRUE);
 	
-	return header_fold_tokens (format, field, value, len, tokens, FALSE, FALSE);
+	return header_fold_tokens (format, NULL, field_length, value, len, tokens, FALSE, FALSE);
 }
 
 

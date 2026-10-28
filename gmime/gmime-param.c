@@ -955,8 +955,10 @@ encode_param_value (GMimeParam *param, const char **charset, gsize *length)
 	GMimeCharset best;
 
 	*length = strlen (param->value);
+
 	g_mime_charset_init (&best);
 	g_mime_charset_step (&best, param->value, *length);
+
 	if (best.level == 0) {
 		for (inptr = param->value; *inptr; inptr++) {
 			if (g_ascii_iscntrl (*inptr)) {
@@ -1049,81 +1051,50 @@ convert_param_chunk (const char *value, gsize length, GIConv cd, gsize *written,
 	return g_convert_with_iconv (value, length, cd, NULL, written, error);
 }
 
-static char *
-encode_rfc2047_word (const char *value, gsize length, const char *charset, GIConv cd,
-		     GMimeRfc2047Encoder **encoders, GError **error)
-{
-	GMimeRfc2047Encoder *encoder;
-	gsize count = 0, i, capacity, written;
-	char *converted;
-	guint8 *encoded;
-	GString *word;
-
-	converted = convert_param_chunk (value, length, cd, &length, error);
-	if (!converted)
-		return NULL;
-
-	for (i = 0; i < length; i++) {
-		if ((unsigned char) converted[i] > 127)
-			count++;
-	}
-
-	encoder = encoders[g_ascii_strncasecmp (charset, "iso-2022-jp", 11) == 0 ||
-			   !((double) count < length * 0.17)];
-	capacity = _g_mime_rfc2047_encoder_estimate_output_length (encoder, length);
-
-	g_assert (capacity != G_MAXSIZE);
-
-	encoded = g_malloc (capacity);
-	written = _g_mime_rfc2047_encoder_encode (encoder, (const guint8 *) converted, length, encoded, capacity);
-	word = g_string_new ("=?");
-	g_string_append_printf (word, "%s?%c?", charset, _g_mime_rfc2047_encoder_get_encoding (encoder));
-	g_string_append_len (word, (const char *) encoded, written);
-	g_string_append (word, "?=");
-	g_free (converted);
-	g_free (encoded);
-
-	return g_string_free (word, FALSE);
-}
-
 static gboolean
-encode_rfc2047_param (GMimeParam *param, GMimeFormatOptions *options, gboolean fold, GString *str, size_t *used)
+encode_rfc2047_param (GMimeParam *param, GMimeFormatOptions *options, gboolean fold,
+		     gboolean has_next, GString *str, size_t *used)
 {
+	const char *charset, *conversion_charset, *start = param->value, *end, *next, *newline;
 	size_t maxline = g_mime_format_options_get_max_line_length (options);
-	const char *charset, *start = param->value, *end, *next, *newline;
-	char *converted, *word = NULL, *candidate;
-	size_t line = *used, limit, chars = 0;
-	GMimeRfc2047Encoder *encoders[2];
+	size_t line = *used, limit, chars;
+	char *converted, *mime_charset;
 	gboolean success = FALSE;
 	GError *error = NULL;
+	GString *out, *word;
 	gsize length;
-	GString *out;
 	GIConv cd;
 
+	/* Validate a lossless charset for the entire value before splitting it.
+	 * Discard these bytes and their length: each chunk is converted independently. */
 	converted = encode_param_value (param, &charset, &length);
 	g_free (converted);
 
-	cd = g_iconv_open (g_mime_charset_iconv_name (charset), g_mime_charset_iconv_name ("UTF-8"));
+	charset = mime_charset = _g_mime_charset_get_mime_name (charset);
+	conversion_charset = charset;
+
+	if (!g_ascii_strcasecmp (charset, "utf-16"))
+		conversion_charset = "utf-16le";
+	else if (!g_ascii_strcasecmp (charset, "utf-32"))
+		conversion_charset = "utf-32le";
+
+	cd = g_iconv_open (g_mime_charset_iconv_name (conversion_charset), g_mime_charset_iconv_name ("UTF-8"));
+
 	if (cd == (GIConv) -1) {
 		g_warning ("Cannot open parameter charset '%s': %s", charset, g_strerror (errno));
+		g_free (mime_charset);
 		return FALSE;
 	}
 
-	encoders[0] = _g_mime_rfc2047_quoted_printable_encoder_new (GMIME_QENCODE_MODE_TEXT);
-	encoders[1] = _g_mime_rfc2047_base64_encoder_new ();
 	newline = g_mime_format_options_get_newline (options);
 	out = g_string_new (";");
+	word = g_string_new (NULL);
 	line++;
 
-	for (end = start; *end && chars < 10; end = g_utf8_next_char (end))
-		chars += g_utf8_get_char (end) > 0xffff ? 2 : 1;
+	chars = _g_mime_count_utf16_units (start, start + strlen (start));
 
-	candidate = encode_rfc2047_word (start, g_utf8_next_char (start) - start, charset, cd, encoders, &error);
-	if (!candidate)
-		goto done;
-
-	if (fold && (line + strlen (param->name) + strlen (charset) + 10 + MIN (chars, 10) >= maxline ||
-		     line + strlen (param->name) + strlen (candidate) + 5 > maxline)) {
+	/* Account for: <SPACE> + <NAME> + "=\"=?<CHARSET>?b?<10 chars>?=\"" */
+	if (fold && line + strlen (param->name) + strlen (charset) + 10 + MIN (chars, 10) >= maxline) {
 		g_string_append_printf (out, "%s\t", newline);
 		line = 1;
 	} else {
@@ -1131,61 +1102,78 @@ encode_rfc2047_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 		line++;
 	}
 
-	g_free (candidate);
 	g_string_append_printf (out, "%s=\"", param->name);
 	line += strlen (param->name) + 2;
 
 	while (*start) {
-		limit = MIN (maxline - 2, 77);
+		gsize byte_count = 0, encode_count = 0;
+
+		limit = maxline - 2;
 
 		if (fold)
-			limit = line < maxline - 1 ? MIN (maxline - line - 1, 77) : 0;
+			limit = line < maxline - 1 ? maxline - line - 1 : 0;
 
 		end = start;
 
-		/* Convert complete UTF-8 characters, never halves of a character in separate words. */
 		while (*end) {
+			gunichar c = g_utf8_get_char (end);
+
 			next = g_utf8_next_char (end);
-			candidate = encode_rfc2047_word (start, next - start, charset, cd, encoders, &error);
+			if (c < 127) {
+				if (is_ctrl (c) || c == '"' || c == '\\')
+					encode_count++;
+				byte_count++;
+			} else if (c < 256) {
+				/* iso-8859-1 */
+				encode_count++;
+				byte_count++;
+			} else {
+				if (!(converted = convert_param_chunk (end, next - end, cd, &length, &error)))
+					goto done;
 
-			if (!candidate)
-				goto done;
-
-			if (word && strlen (candidate) + 1 >= limit) {
-				g_free (candidate);
-				break;
+				g_free (converted);
+				byte_count += length;
+				encode_count += length;
 			}
 
-			g_free (word);
-			word = candidate;
-			end = next;
-
-			if (strlen (word) + 1 >= limit)
+			if (limit <= 1 || _g_mime_utils_rfc2047_estimate_word_length (charset, byte_count, encode_count) >= limit - 1)
 				break;
+
+			end = next;
 		}
 
-		g_string_append (out, word);
-		line += strlen (word);
-		g_clear_pointer (&word, g_free);
+		/* Empty first words match the estimate, but oversized prefixes must still make progress. */
+		if (end == start && (!fold || line + strlen (charset) + 8 > maxline))
+			end = g_utf8_next_char (start);
+
+		while (TRUE) {
+			size_t suffix = 1 + (!*end && has_next);
+
+			g_string_truncate (word, 0);
+			_g_mime_utils_rfc2047_encode_word (word, start, end - start, charset, FALSE);
+
+			if (fold && line + word->len + suffix > maxline && end == g_utf8_next_char (start) &&
+			    line + strlen (charset) + 8 <= maxline) {
+				end = start;
+				continue;
+			}
+
+			if ((word->len <= 75 && (!fold || line + word->len + suffix <= maxline)) ||
+			    end <= g_utf8_next_char (start))
+				break;
+
+			/* Retain the native encoded-word and physical-line bounds when estimates underestimate output. */
+			end = g_utf8_prev_char (end);
+		}
+
+		g_string_append_len (out, word->str, word->len);
+		line += word->len;
 		start = end;
 
 		if (*start) {
 			if (fold) {
-				candidate = encode_rfc2047_word (start, g_utf8_next_char (start) - start,
-					charset, cd, encoders, &error);
-
-				if (!candidate)
-					goto done;
-
-				if (line + strlen (candidate) + 3 > maxline) {
-					g_string_append_printf (out, "%s\t", newline);
-					line = 1;
-				} else {
-					g_string_append_c (out, ' ');
-					line++;
-				}
-
-				g_free (candidate);
+				g_string_append_printf (out, "%s\t", newline);
+				line = 1;
 			} else {
 				g_string_append_c (out, ' ');
 				line++;
@@ -1203,10 +1191,9 @@ done:
 		g_warning ("Cannot encode parameter charset '%s': %s", charset, error->message);
 
 	g_clear_error (&error);
-	g_free (word);
+	g_free (mime_charset);
+	g_string_free (word, TRUE);
 	g_string_free (out, TRUE);
-	g_object_unref (encoders[0]);
-	g_object_unref (encoders[1]);
 	g_iconv_close (cd);
 
 	return success;
@@ -1233,7 +1220,7 @@ g_string_append_len_quoted (GString *str, const char *text, size_t len)
 
 static char *
 encode_rfc2231_chunk (const char *value, gsize length, GIConv cd, gsize bom_length, const char *declaration,
-		     gboolean international, gboolean *encoded, GError **error)
+		     gboolean international, gboolean *encoded, gsize *byte_count, GError **error)
 {
 	gboolean quote = FALSE;
 	gsize count, i, capacity;
@@ -1242,13 +1229,13 @@ encode_rfc2231_chunk (const char *value, gsize length, GIConv cd, gsize bom_leng
 	guint8 *rfc2231;
 	GString *out;
 
-	converted = convert_param_chunk (value, length, cd, &count, error);
-	if (!converted)
+	if (!(converted = convert_param_chunk (value, length, cd, &count, error)))
 		return NULL;
 
 	g_assert (count >= bom_length);
 	bytes = converted + bom_length;
 	count -= bom_length;
+	*byte_count = count;
 
 	/* Raw continuations are decoded independently of the declared charset. */
 	*encoded = declaration || count != length || memcmp (bytes, value, length) != 0;
@@ -1284,15 +1271,30 @@ encode_rfc2231_chunk (const char *value, gsize length, GIConv cd, gsize bom_leng
 	return g_string_free (out, FALSE);
 }
 
+static size_t
+shrink_param_chunk (size_t length, size_t minimum, gsize count, gsize excess)
+{
+	gsize ratio = count / length, remainder = count % length;
+	size_t shrink;
+
+	/* Match Math.Round's nearest-even estimate of bytes per UTF-16 character. */
+	if (remainder > length - remainder || (remainder == length - remainder && (ratio & 1)))
+		ratio++;
+
+	shrink = ratio > 1 ? MAX (excess / ratio, 1) : 1;
+
+	return shrink >= length - minimum ? minimum : length - shrink;
+}
+
 static gboolean
 encode_rfc2231_param (GMimeParam *param, GMimeFormatOptions *options, gboolean fold, GString *str, size_t *used)
 {
+	size_t line = *used, nlen = strlen (param->name), max_length, limit, length, remaining, units, minimum;
 	gboolean international = g_mime_format_options_get_allow_international (options);
 	size_t maxline = g_mime_format_options_get_max_line_length (options);
-	const char *charset, *start = param->value, *end, *next, *newline;
-	char *converted, *declaration = NULL, *value = NULL, *candidate;
-	gboolean success = FALSE, encoded = FALSE, candidate_encoded;
-	size_t line = *used, nlen = strlen (param->name), limit, length;
+	const char *charset, *start = param->value, *end, *inend, *newline;
+	char *converted, *mime_charset, *declaration = NULL, *value = NULL;
+	gboolean success = FALSE, encoded = FALSE;
 	guint index = 0, digits, n;
 	gsize count, bom_length = 0;
 	GError *error = NULL;
@@ -1307,9 +1309,28 @@ encode_rfc2231_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 		g_free (converted);
 	}
 
+	mime_charset = _g_mime_charset_get_mime_name (charset);
+
+	if (!g_ascii_strcasecmp (mime_charset, "utf-16") || !g_ascii_strcasecmp (mime_charset, "utf-32")) {
+		char *explicit_endian = g_strconcat (mime_charset, "le", NULL);
+
+		g_free (mime_charset);
+		mime_charset = explicit_endian;
+	}
+
+	if (!g_ascii_strncasecmp (mime_charset, "utf-", 4)) {
+		char *lowercase = g_ascii_strdown (mime_charset, -1);
+
+		g_free (mime_charset);
+		mime_charset = lowercase;
+	}
+
+	charset = mime_charset;
 	cd = g_iconv_open (g_mime_charset_iconv_name (charset), g_mime_charset_iconv_name ("UTF-8"));
+
 	if (cd == (GIConv) -1) {
 		g_warning ("Cannot open parameter charset '%s': %s", charset, g_strerror (errno));
+		g_free (mime_charset);
 		return FALSE;
 	}
 
@@ -1318,12 +1339,14 @@ encode_rfc2231_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 
 	/* Use explicit endianness instead of emitting converter-generated BOMs. */
 	converted = convert_param_chunk ("a", 1, cd, &count, &error);
+
 	if (converted) {
 		if (count >= 4 && (!memcmp (converted, "\377\376\000\000", 4) ||
 				   !memcmp (converted, "\000\000\376\377", 4)))
 			bom_length = 4;
 		else if (count >= 2 && (!memcmp (converted, "\377\376", 2) || !memcmp (converted, "\376\377", 2)))
 			bom_length = 2;
+
 		if (bom_length == 4)
 			charset = (unsigned char) converted[0] == 0xff ? "utf-32le" : "utf-32be";
 		else if (bom_length == 2)
@@ -1340,42 +1363,75 @@ encode_rfc2231_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 	if (param_value_needs_encoding (param->value, options) || (param->lang && *param->lang))
 		declaration = g_strdup_printf ("%s'%s'", charset, param->lang ? param->lang : "");
 
+	max_length = nlen < maxline - 6 ? MAX (maxline - (nlen + 6), 3) : 3;
+	inend = start + strlen (start);
+	remaining = _g_mime_count_utf16_units (start, inend);
+
 	do {
+		gsize declaration_length = declaration ? strlen (declaration) : 0;
+
 		digits = 1;
 
 		for (n = index; n >= 10; n /= 10)
 			digits++;
 
-		limit = nlen < maxline - (digits + 5) ? maxline - (nlen + digits + 5) : 3;
+		limit = max_length;
+		units = 0;
 		end = start;
 
 		/* A long parameter name and charset may leave no room for data in the first chunk. */
-		if (declaration && strlen (declaration) >= limit) {
+		if (declaration && declaration_length >= limit) {
 			value = g_strdup (declaration);
 			encoded = TRUE;
 		} else {
-			/* Each chunk is converted independently, so never split a UTF-8 character. */
-			while (*end) {
-				next = g_utf8_next_char (end);
-				candidate = encode_rfc2231_chunk (start, next - start, cd, bom_length,
-					declaration, international, &candidate_encoded, &error);
+			/* Reduce the max allowed length to account for the charset declaration. */
+			limit -= declaration_length;
+			minimum = g_utf8_get_char (start) >= 0x10000 ? 2 : 1;
+			units = MAX (MIN (limit, remaining), minimum);
 
-				if (!candidate)
+			while (TRUE) {
+				gsize encoded_length, overhead;
+
+				end = _g_mime_get_utf16_chunk_end (start, inend, &units);
+				if (!(value = encode_rfc2231_chunk (start, end - start, cd, bom_length,
+					declaration, international, &encoded, &count, &error)))
 					goto done;
 
-				if (value && strlen (candidate) > limit) {
-					g_free (candidate);
-					break;
+				if (count > limit && units > minimum) {
+					units = shrink_param_chunk (units, minimum, count, count - limit);
+					g_clear_pointer (&value, g_free);
+					continue;
 				}
 
-				g_free (value);
+				encoded_length = strlen (value) - declaration_length;
+				if (encoded && units > minimum && encoded_length > 3 && encoded_length > limit) {
+					gssize excess = 0;
+					gsize i;
 
-				value = candidate;
-				encoded = candidate_encoded;
-				end = next;
+					for (i = encoded_length; i > limit;) {
+						i--;
+						excess += encoded && value[declaration_length + i] == '%' ? -1 : 1;
+					}
 
-				if (strlen (value) >= limit)
-					break;
+					units = shrink_param_chunk (units, minimum, count, (gsize) MAX (excess, 1));
+					g_clear_pointer (&value, g_free);
+					continue;
+				}
+
+				overhead = nlen + (encoded ? 2 : 1) + 2;
+
+				if (index || *end)
+					overhead += digits + 1;
+
+				if (fold && units > minimum && nlen + digits + 5 < maxline &&
+				    (overhead >= maxline || strlen (value) > maxline - overhead)) {
+					/* Reserve the next semicolon and account for growing continuation indices. */
+					units--;
+					g_clear_pointer (&value, g_free);
+					continue;
+				}
+
+				break;
 			}
 		}
 
@@ -1407,8 +1463,10 @@ encode_rfc2231_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 		g_string_append_c (out, '=');
 		g_string_append (out, value);
 		line += length;
+
 		g_clear_pointer (&value, g_free);
 		start = end;
+		remaining -= units;
 		index++;
 	} while (*start);
 
@@ -1423,6 +1481,7 @@ done:
 	g_clear_error (&error);
 	g_free (value);
 	g_free (declaration);
+	g_free (mime_charset);
 	g_string_free (out, TRUE);
 	g_iconv_close (cd);
 
@@ -1446,9 +1505,9 @@ done:
 void
 g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gboolean fold, GString *str)
 {
+	size_t used, maxline;
 	const char *newline;
 	guint count, i;
-	size_t used, maxline;
 	
 	g_return_if_fail (GMIME_IS_PARAM_LIST (list));
 	g_return_if_fail (str != NULL);
@@ -1460,8 +1519,8 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 	
 	for (i = 0; i < count; i++) {
 		GMimeParamEncodingMethod method;
-		size_t nlen, vlen, quote = 0;
-		size_t here = str->len;
+		size_t nlen, vlen, length, quote = 0;
+		gboolean fits;
 		GMimeParam *param;
 		char *value;
 		
@@ -1474,7 +1533,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 		
 		method = param_encoding_method (param, options);
 		if (method == GMIME_PARAM_ENCODING_METHOD_RFC2047) {
-			if (!encode_rfc2047_param (param, options, fold, str, &used))
+			if (!encode_rfc2047_param (param, options, fold, i + 1 < count, str, &used))
 				return;
 			continue;
 		}
@@ -1493,24 +1552,35 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 		
 		g_string_append_c (str, ';');
 		used++;
-		
-		if (fold && (used + nlen + vlen + quote + 2 >= maxline)) {
+
+		length = used + nlen + vlen + quote + 2;
+		fits = length < maxline;
+
+		if (length == maxline && i + 1 == count) {
+			const char *line = strrchr (str->str, '\n');
+
+			line = line ? line + 1 : str->str;
+			fits = _g_mime_count_utf16_units (line, str->str + str->len) +
+				nlen + _g_mime_count_utf16_units (value, value + vlen) + quote + 2 < maxline;
+		}
+
+		if (fold && !fits) {
 			g_string_append (str, newline);
 			g_string_append_c (str, '\t');
-			here = str->len;
 			used = 1;
 		} else {
 			g_string_append_c (str, ' ');
-			here = str->len;
 			used++;
 		}
 		
 		g_string_append_printf (str, "%s=", param->name);
+
 		if (quote)
 			g_string_append_len_quoted (str, value, vlen);
 		else
 			g_string_append_len (str, value, vlen);
-		used += (str->len - here);
+
+		used += nlen + 1 + vlen + quote;
 		
 		g_free (value);
 	}
@@ -1575,7 +1645,9 @@ decode_quoted_string (const char **in, gboolean unquote)
 	if (!unquote) {
 		if (*inptr == '"')
 			inptr++;
+
 		*in = inptr;
+
 		return g_strndup (start, (size_t) (inptr - start));
 	}
 
@@ -1595,6 +1667,7 @@ decode_quoted_string (const char **in, gboolean unquote)
 		while (*inptr) {
 			if (*inptr == '\\')
 				inptr++;
+
 			if (*inptr)
 				*outptr++ = *inptr++;
 		}
@@ -1631,6 +1704,7 @@ decode_token (GMimeRfcComplianceMode mode, const char **in)
 	
 	if (inptr > start) {
 		*in = inptr;
+
 		return g_strndup (start, (size_t) (inptr - start));
 	} else {
 		return NULL;
@@ -1674,6 +1748,7 @@ decode_param_token (const char **in)
 
 	if (inptr > start) {
 		*in = inptr;
+
 		return g_strndup (start, (size_t) (inptr - start));
 	} else {
 		return NULL;
@@ -1795,9 +1870,11 @@ param_unquote_value (char *value)
 
 	g_mime_utils_unquote_string (value);
 	inptr = outptr = value;
+
 	while (*inptr) {
 		if (*inptr != '\r' && *inptr != '\n')
 			*outptr++ = *inptr;
+
 		inptr++;
 	}
 
@@ -1841,8 +1918,10 @@ decode_param_full (GMimeParserOptions *options, const char *text, const char **i
 		if (g_ascii_isdigit (*inptr)) {
 			while (g_ascii_isdigit (*inptr)) {
 				digit = *inptr - '0';
+
 				if (INT_OVERFLOW (number, digit))
 					return _g_mime_parse_error (error, text, inptr, "Parameter continuation index overflow");
+
 				number = number * 10 + digit;
 				inptr++;
 			}
@@ -2015,6 +2094,7 @@ rfc2184_param_charset (const char **in, char **langp)
 		*langp = NULL;
 		return NULL;
 	}
+
 	*langp = inptr > lang ? g_strndup (lang, (size_t) (inptr - lang)) : NULL;
 	inptr++;
 	
@@ -2050,7 +2130,9 @@ charset_invalid_length (const char *charset, const unsigned char *in, size_t len
 		return 1;
 
 	/* Replace a maximal valid UTF-8 prefix once, not once per byte. */
-	for (n = 2; n < MIN (width, len) && in[n] >= 0x80 && in[n] <= 0xbf; n++);
+	for (n = 2; n < MIN (width, len) && in[n] >= 0x80 && in[n] <= 0xbf; n++)
+		;
+
 	return n;
 }
 
@@ -2085,8 +2167,10 @@ charset_convert (const char **charset, const char *in, size_t inlen, GString *ou
 	while (inleft > 0) {
 		outptr = buffer;
 		outleft = sizeof (buffer);
+
 		status = iconv (cd, (char **) &inptr, &inleft, &outptr, &outleft);
 		code = errno;
+
 		g_string_append_len (out, buffer, outptr - buffer);
 
 		if (status != (size_t) -1 || code == E2BIG)
@@ -2107,12 +2191,16 @@ charset_convert (const char **charset, const char *in, size_t inlen, GString *ou
 	do {
 		outptr = buffer;
 		outleft = sizeof (buffer);
+
 		status = iconv (cd, NULL, NULL, &outptr, &outleft);
 		code = errno;
+
 		g_string_append_len (out, buffer, outptr - buffer);
 	} while (status == (size_t) -1 && code == E2BIG);
+
 	if (status == (size_t) -1)
 		g_warning ("Cannot flush parameter charset '%s': %s", *charset, g_strerror (code));
+
 	g_mime_iconv_close (cd);
 }
 
@@ -2138,9 +2226,8 @@ rfc2184_decode (const char *value, char **charsetp, char **langp)
 static char *
 rfc2184_decode_raw (GMimeParserOptions *options, const char *value)
 {
-	char *decoded;
+	char *decoded = g_mime_utils_decode_8bit (options, value, strlen (value));
 
-	decoded = g_mime_utils_decode_8bit (options, value, strlen (value));
 	/* Unencoded continuation values are sometimes quoted in real-world messages. */
 	if (*value == '"')
 		param_unquote_value (decoded);
@@ -2310,6 +2397,7 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
 			rfc2184_param_free (list);
 			list = t;
 		}
+
 		g_object_unref (params);
 		return NULL;
 	}
@@ -2325,10 +2413,13 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
 		have_charset = FALSE;
 		
 		g_ptr_array_sort (rfc2184->parts, rfc2184_sort_cb);
+
 		for (i = 0; i < rfc2184->parts->len; i++) {
 			part = rfc2184->parts->pdata[i];
+
 			if (part->encoded) {
 				inptr = part->value;
+
 				if (!have_charset) {
 					rfc2184->charset = rfc2184_param_charset (&inptr, &rfc2184->lang);
 					have_charset = TRUE;

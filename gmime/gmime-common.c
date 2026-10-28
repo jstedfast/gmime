@@ -173,3 +173,24 @@ _g_mime_count_utf16_units (const char *start, const char *end)
 
 	return length;
 }
+
+const char *
+_g_mime_get_utf16_chunk_end (const char *start, const char *end, size_t *length)
+{
+	size_t limit = *length, units = 0;
+
+	while (start < end) {
+		size_t count = g_utf8_get_char (start) >= 0x10000 ? 2 : 1;
+
+		/* Never split a surrogate pair between values, or each half would be encoded separately (and lost). */
+		if (units && (units >= limit || count > limit - units))
+			break;
+
+		units += count;
+		start = g_utf8_next_char (start);
+	}
+
+	*length = units;
+
+	return start;
+}
