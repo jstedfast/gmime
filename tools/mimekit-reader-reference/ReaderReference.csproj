@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DefineConstants>$(DefineConstants);ENABLE_SNM</DefineConstants>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NoWarn>CS0618;CS1591;CS8632</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MimeKitSource)\MimeKit\**\*.cs"
+             Exclude="$(MimeKitSource)\MimeKit\bin\**;$(MimeKitSource)\MimeKit\obj\**;$(MimeKitSource)\MimeKit\Utils\EventHandler.cs;$(MimeKitSource)\MimeKit\Utils\OptimizedOrdinalComparer.cs" />
+  </ItemGroup>
+  <Target Name="CheckReferenceSource" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(MimeKitSource)\MimeKit\MimeReader.cs')"
+           Text="Set -p:MimeKitSource to a MimeKit checkout containing the reference MimeReader." />
+  </Target>
+</Project>

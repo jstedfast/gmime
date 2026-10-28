@@ -37,6 +37,10 @@ init_scanners (void)
 {
 	static const char *names[] = { "scalar", "SSE2", "AVX2", "NEON" };
 	GMimeReaderScanBackend backend;
+#ifndef GMIME_DISABLE_SIMD
+	const char *required = g_getenv ("GMIME_TEST_REQUIRE_READER_BACKEND");
+	gboolean found = required == NULL;
+#endif
 
 	scanner_names[scanner_count] = "dispatched";
 	scanners[scanner_count++] = _g_mime_reader_scan_lines;
@@ -48,11 +52,25 @@ init_scanners (void)
 			scanner_names[scanner_count] = names[backend];
 			scanners[scanner_count++] = scanner;
 		}
+		else {
+			g_print ("Skipping MIME scanner backend: %s (not compiled or CPU/OS unsupported)\n", names[backend]);
+		}
+#ifndef GMIME_DISABLE_SIMD
+		if (required && !strcmp (required, names[backend])) {
+			if (!scanner)
+				g_error ("Required MIME scanner backend is unavailable: %s", required);
+			found = TRUE;
+		}
+#endif
 #ifdef GMIME_DISABLE_SIMD
-		else
+		if (!scanner)
 			g_assert_cmpint (backend, !=, GMIME_READER_SCAN_SCALAR);
 #endif
 	}
+#ifndef GMIME_DISABLE_SIMD
+	if (!found)
+		g_error ("Unknown required MIME scanner backend: %s", required);
+#endif
 #ifdef GMIME_DISABLE_SIMD
 	g_assert_cmpuint (scanner_count, ==, 2);
 #elif defined(__x86_64__) || defined(_M_X64)

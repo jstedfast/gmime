@@ -1960,14 +1960,98 @@ test_compliance_failures (void)
 	g_array_unref (issues);
 }
 
+static void
+test_mimekit_reference (const char *datadir)
+{
+	char *path = g_build_filename (datadir, "mimekit.txt", NULL), *data;
+	GError *error = NULL;
+	char **lines;
+	guint i, count = 0, empty_failures = 0;
+
+	g_assert_true (g_file_get_contents (path, &data, NULL, &error));
+	g_assert_no_error (error);
+	lines = g_strsplit (data, "\n", -1);
+	for (i = 0; lines[i]; i++) {
+		GMimeParserOptions *options;
+		ReaderInput *input;
+		TestReader *reader;
+		char **fields, *actual;
+		guint8 *bytes;
+		gsize length;
+		gboolean success;
+
+		if (!lines[i][0] || lines[i][0] == '#')
+			continue;
+		fields = g_strsplit (lines[i], "|", -1);
+		g_assert_cmpuint (g_strv_length (fields), ==, 8);
+		bytes = g_base64_decode (fields[0], &length);
+		input = new_input ((const char *) bytes, length, g_ascii_strtoull (fields[1], NULL, 10));
+		input->origin = g_ascii_strtoll (fields[2], NULL, 10);
+		input->nonseekable = !strcmp (fields[3], "1");
+		options = g_mime_parser_options_new ();
+		g_mime_parser_options_set_max_mime_depth (options, 512);
+		reader = new_reader (input, options);
+		reader->trace_newlines = TRUE;
+		success = g_mime_reader_read_message ((GMimeReader *) reader, &error);
+		if (success)
+			g_assert_no_error (error);
+		else
+			g_assert_nonnull (error);
+		actual = g_strdup_printf ("%d|%" G_GINT64_FORMAT "|%d|%s", success,
+					  g_mime_reader_tell ((GMimeReader *) reader),
+					  g_mime_reader_eos ((GMimeReader *) reader), reader->trace->str);
+		{
+			gboolean expected_eos = !strcmp (fields[6], "1");
+			char *expected;
+
+			/* Native EOS denotes successful completion, not a failed empty read. */
+			if (length == 0) {
+				g_assert_false (success);
+				g_assert_true (expected_eos);
+				expected_eos = FALSE;
+				empty_failures++;
+			}
+			expected = g_strdup_printf ("%s|%s|%d|%s", fields[4], fields[5], expected_eos, fields[7]);
+
+			g_assert_cmpstr (actual, ==, expected);
+			g_free (expected);
+		}
+		g_clear_error (&error);
+		g_free (actual);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_mime_parser_options_free (options);
+		g_free (bytes);
+		g_strfreev (fields);
+		count++;
+	}
+	g_assert_cmpuint (count, ==, 90);
+	g_assert_cmpuint (empty_failures, ==, 6);
+	g_strfreev (lines);
+	g_free (data);
+	g_free (path);
+}
+
 int
 main (int argc, char **argv)
 {
 	int errors;
+	const char *datadir = "data" G_DIR_SEPARATOR_S "reader";
+	int i;
 
 	g_mime_init ();
 	testsuite_init (argc, argv);
 	testsuite_start ("GMimeReader headers, entities and parser OpenPGP option");
+
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] != '-') {
+			datadir = argv[i];
+			break;
+		}
+	}
+	testsuite_check ("Frozen actual-MimeKit message and newline differential cases");
+	test_mimekit_reference (datadir);
+	testsuite_check_passed ();
 
 	testsuite_check ("Raw header callbacks and chunk boundaries");
 	test_headers ();

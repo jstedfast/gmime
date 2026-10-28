@@ -1,5 +1,7 @@
 /_build*/
 /build*/
+/tools/mimekit-reader-reference/bin/
+/tools/mimekit-reader-reference/obj/
 *.tar.xz
 *.sha256sum
 .DS_Store

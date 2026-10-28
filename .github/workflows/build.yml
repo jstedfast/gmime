@@ -5,27 +5,144 @@ on:
     branches: [ "master", "v4.0-dev" ]
   pull_request:
     branches: [ "master", "v4.0-dev" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    runs-on: ubuntu-26.04
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        features: [enabled, disabled]
+        include:
+          - name: Linux x64 GCC / full integration
+            os: ubuntu-26.04
+            arch: x86_64
+            cc: gcc
+            features: enabled
+            backend: AVX2
+            integration: true
+          - name: Linux x64 GCC / minimal
+            os: ubuntu-26.04
+            arch: x86_64
+            cc: gcc
+            features: disabled
+            backend: AVX2
+          - name: Linux ARM64 GCC
+            os: ubuntu-26.04-arm
+            arch: aarch64
+            cc: gcc
+            features: enabled
+            backend: NEON
+          - name: macOS ARM64 Clang
+            os: macos-15
+            arch: arm64
+            cc: clang
+            features: enabled
+            backend: NEON
+          - name: macOS ARM64 Clang / minimal
+            os: macos-15
+            arch: arm64
+            cc: clang
+            features: disabled
+            backend: NEON
+          - name: Linux x64 Clang / ASan + UBSan
+            os: ubuntu-26.04
+            arch: x86_64
+            cc: clang
+            features: enabled
+            backend: AVX2
+            sanitize: true
+          - name: Linux x64 GCC / static
+            os: ubuntu-26.04
+            arch: x86_64
+            cc: gcc
+            features: disabled
+            backend: AVX2
+            static: true
+    defaults:
+      run:
+        shell: bash
+    env:
+      CC: ${{ matrix.cc }}
+      GMIME_TEST_REQUIRE_READER_BACKEND: ${{ matrix.backend }}
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:abort_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1:print_stacktrace=1
     steps:
-    - uses: actions/checkout@v3
-    - name: apt-get install packages
+    - uses: actions/checkout@v7
+    - name: Install Linux dependencies
+      if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get -y install meson ninja-build pkg-config gtk-doc-tools valac libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev gobject-introspection libgirepository1.0-dev gnupg gpgsm
-    - name: configure
-      run: meson setup _build -Dcrypto=${{ matrix.features }} -Dlibidn=${{ matrix.features }} -Dintrospection=enabled -Dvapi=enabled -Dgtk_doc=true
-    - name: build
+        sudo apt-get -y install meson ninja-build pkg-config clang \
+          libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev gnupg gpgsm
+        if [[ '${{ matrix.integration }}' == 'true' ]]; then
+          sudo apt-get -y install gtk-doc-tools valac gobject-introspection \
+            libgirepository1.0-dev python3-gi
+        fi
+    - name: Install macOS dependencies
+      if: runner.os == 'macOS'
+      run: |
+        brew install meson ninja pkgconf glib libidn2 gpgme gnupg
+        echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$(brew --prefix)/share/pkgconfig" >> "$GITHUB_ENV"
+    - name: Verify architecture and report toolchain
+      run: |
+        test "$(uname -m)" = '${{ matrix.arch }}'
+        uname -a
+        "$CC" --version
+        meson --version
+        ninja --version
+        pkg-config --modversion glib-2.0 gobject-2.0 gio-2.0 zlib gpgme libidn2
+        gpg --version
+    - name: Configure optimized build with assertions
+      run: |
+        extra=(-Dintrospection=disabled -Dvapi=disabled -Dgtk_doc=false)
+        if [[ '${{ matrix.integration }}' == 'true' ]]; then
+          extra=(-Dintrospection=enabled -Dvapi=enabled -Dgtk_doc=true)
+        fi
+        if [[ '${{ matrix.sanitize }}' == 'true' ]]; then
+          extra+=(-Db_sanitize=address,undefined)
+        fi
+        if [[ '${{ matrix.static }}' == 'true' ]]; then
+          extra+=(-Ddefault_library=static)
+        fi
+        meson setup _build --buildtype=debugoptimized -Db_ndebug=false \
+          --prefix="$RUNNER_TEMP/gmime-prefix" --libdir=lib \
+          -Dcrypto='${{ matrix.features }}' -Dlibidn='${{ matrix.features }}' "${extra[@]}"
+    - name: Build
       run: meson compile -C _build
-    - name: test
+    - name: Report and require native SIMD coverage
+      run: meson test -C _build --no-rebuild --verbose test-reader-simd test-reader-simd-scalar
+    - name: Test
       run: meson test -C _build --print-errorlogs
-    - name: documentation
-      if: matrix.features == 'enabled'
+    - name: Build documentation
+      if: matrix.integration
       run: meson compile -C _build gmime-doc
-    - name: install
-      run: meson install -C _build --destdir "${{ runner.temp }}/gmime-install"
+    - name: Test source distribution
+      if: matrix.integration
+      run: meson dist -C _build
+    - name: Stage and verify installation
+      if: matrix.integration || matrix.static
+      run: |
+        meson install -C _build --destdir "$RUNNER_TEMP/gmime-stage"
+        test -f "$RUNNER_TEMP/gmime-stage$RUNNER_TEMP/gmime-prefix/include/gmime-4.0/gmime/gmime.h"
+        # A real private prefix lets pkg-config resolve system dependencies
+        # without applying the staged sysroot to GLib and other dependencies.
+        meson install -C _build
+        extra=()
+        if [[ '${{ matrix.integration }}' == 'true' ]]; then extra+=(--bindings); fi
+        if [[ '${{ matrix.static }}' == 'true' ]]; then extra+=(--static); fi
+        python3 tools/check-installed.py "$RUNNER_TEMP/gmime-prefix" "${extra[@]}"
+    - name: Upload failure logs
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: logs-${{ strategy.job-index }}
+        path: |
+          _build/meson-logs/
+          _build/meson-private/dist-build/meson-logs/
+          _build/meson-dist/
+        if-no-files-found: ignore

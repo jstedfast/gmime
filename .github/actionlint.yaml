@@ -1,0 +1,5 @@
+# Hosted labels added after actionlint 1.7.12's built-in runner inventory.
+self-hosted-runner:
+  labels:
+    - ubuntu-26.04
+    - ubuntu-26.04-arm
