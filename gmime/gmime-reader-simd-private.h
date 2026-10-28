@@ -32,6 +32,16 @@ typedef struct {
 	guint formats;
 } GMimeReaderScan;
 
+typedef enum {
+	GMIME_READER_SCAN_SCALAR,
+	GMIME_READER_SCAN_SSE2,
+	GMIME_READER_SCAN_AVX2,
+	GMIME_READER_SCAN_NEON
+} GMimeReaderScanBackend;
+
+typedef GMimeReaderScan (*GMimeReaderScanFunc) (const guint8 *input, gsize length,
+					      guint8 first, guint8 second);
+
 /* Skip complete non-boundary lines, always including the first complete line.
  * Leave both the next possible delimiter and an incomplete final line intact.
  * The input has no readable sentinel or alignment requirement. */
@@ -39,6 +49,9 @@ G_GNUC_INTERNAL GMimeReaderScan _g_mime_reader_scan_lines (const guint8 *input, 
 							 guint8 first, guint8 second);
 G_GNUC_INTERNAL GMimeReaderScan _g_mime_reader_scan_lines_scalar (const guint8 *input, gsize length,
 								guint8 first, guint8 second);
+
+/* NULL means that this backend is not compiled in or cannot run on this CPU/OS. */
+G_GNUC_INTERNAL GMimeReaderScanFunc _g_mime_reader_scan_lines_get_backend (GMimeReaderScanBackend backend);
 
 G_END_DECLS
 #endif

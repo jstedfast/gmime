@@ -3392,14 +3392,38 @@ encoding validators are now connected to reader wire content and flush at
 content completion. Validation includes the newline withheld before a
 boundary, even when that newline is not delivered as leaf content.
 
-Runtime-selected SSE2 scanning counts complete LF/CRLF lines and stops
-before possible MIME/mailbox delimiters. It has a portable scalar fallback
-and a GMIME_DISABLE_SIMD build, uses only bounded unaligned loads, and
-retains possible one-byte delimiter prefixes for lookahead. Bit-scan
-intrinsics enumerate newline masks without GLib's linear bit search.
-An optimized local benchmark measured 1.68x scalar throughput for short
-lines, 10.92x for 80-byte lines and 8.82x for an incomplete long line;
-these are workload/machine-specific measurements, not API guarantees.
+Runtime-selected AVX2/POPCNT, SSE2 and ARM NEON content scanners count
+complete LF/CRLF lines and stop before possible MIME/mailbox delimiters.
+The 128-bit and 256-bit kernels port MimeReader's vector delimiter-prefix
+and CRLF masks, cross-vector CR carry and bulk population counts. They
+also retain both final line offsets required by the native reader.
+AVX2 selection checks CPU support and OS preservation of XMM/YMM state;
+GCC/Clang target attributes isolate the x86 kernels from baseline code.
+NEON is available on ARM64 and in NEON-targeted 32-bit ARM builds;
+other targets retain the portable scalar fallback.
+
+All kernels use bounded unaligned loads without a readable sentinel.
+Shifted loads require two extra readable bytes, with the remaining tail
+handled scalarly. Possible one-byte delimiter prefixes remain buffered
+for lookahead. GMIME_DISABLE_SIMD builds contain only the scalar backend.
+Header scanning and fused LF/NUL/high-bit searches are not changed here.
+test-reader-simd exercises every available backend independently, even
+when runtime dispatch prefers a wider kernel. It covers every vector
+lane, CRLF carry, dense newline masks, delimiter prefixes, short tails,
+unaligned input and inaccessible guard-page bounds. ARM64 NEON and scalar
+builds also pass these checks under QEMU. The --benchmark mode reports
+each available kernel against the same scalar workloads; results are
+machine- and workload-dependent.
+
+Local comparisons with the previous SSE2 scanner also use MimeKit's
+Star Trek message and content-length/JWZ mailbox benchmark fixtures,
+with identical message counts and consumed offsets. Alternating pinned
+runs measured roughly 5-10% higher reader throughput with AVX2; full
+message construction stayed within about 3% of the baseline. Synthetic
+dense-newline workloads improve substantially with either x86 kernel,
+but SSE2-only short/ordinary-line workloads can still be slower than
+the old scanner. These measurements do not imply universal speedups;
+ARM validation establishes correctness under emulation, not throughput.
 
 Native tests cover long markers, short reads, every callback-abort stage,
 mailbox input errors, logger replacement/lifetime, diagnostic budgets,
@@ -4573,8 +4597,10 @@ bytes; decoding stores only the twelve result bytes, never vector padding.
 test-codecs and test-codecs-scalar run the same codec regressions against
 the dispatched and scalar implementations, including guard-page bounds.
 Both accept --benchmark for the same one-MiB Base64/uuencode workload.
-AVX2, AVX-512, ARM64, and MIME content/boundary scanner kernels remain
-subsequent SIMD work.
+AVX2, AVX-512 and ARM64 codec kernels remain subsequent SIMD work.
+MIME content scanning now has SSE2, AVX2 and ARM NEON kernels, as described
+in the synchronous reader section above. Fused header byte searches remain
+deferred.
 
 The initial differential run covered 61,200 fixtures against MimeKit,
 comparing emitted bytes, per-call output estimates/counts, and clones
