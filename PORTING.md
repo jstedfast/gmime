@@ -59,14 +59,14 @@ These are real symbol and registered GType renames, not compatibility aliases.
 Update forward declarations, public application APIs, subclass parent types,
 casts, type checks, signal/property types, binding names, and direct includes.
 
-| 3.x type | 4.0 type | 4.0 function prefix |
-|---|---|---|
-| `GMimeObject` | `GMimeEntity` | `g_mime_entity_` |
-| `GMimeDataWrapper` | `GMimeContent` | `g_mime_content_` |
-| `InternetAddress` | `GMimeInternetAddress` | `g_mime_internet_address_` |
-| `InternetAddressMailbox` | `GMimeMailboxAddress` | `g_mime_mailbox_address_` |
-| `InternetAddressGroup` | `GMimeGroupAddress` | `g_mime_group_address_` |
-| `InternetAddressList` | `GMimeInternetAddressList` | `g_mime_internet_address_list_` |
+| 3.x type | 3.x function prefix | 4.0 type | 4.0 function prefix |
+|---|---|---|---|
+| `GMimeObject` | `g_mime_object_` | `GMimeEntity` | `g_mime_entity_` |
+| `GMimeDataWrapper` | `g_mime_data_wrapper_` | `GMimeContent` | `g_mime_content_` |
+| `InternetAddress` | `internet_address_` | `GMimeInternetAddress` | `g_mime_internet_address_` |
+| `InternetAddressMailbox` | `internet_address_mailbox_` | `GMimeMailboxAddress` | `g_mime_mailbox_address_` |
+| `InternetAddressGroup` | `internet_address_group_` | `GMimeGroupAddress` | `g_mime_group_address_` |
+| `InternetAddressList` | `internet_address_list_` | `GMimeInternetAddressList` | `g_mime_internet_address_list_` |
 
 Rename the corresponding `Class` types too. In macro names, replace `OBJECT`
 with `ENTITY` and `DATA_WRAPPER` with `CONTENT`; for example,
