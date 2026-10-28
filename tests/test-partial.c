@@ -20,6 +20,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -400,6 +401,181 @@ split_message_bytes (GMimeMessage *message)
 }
 
 static void
+set_reconstruction_content (GMimeMessagePartial *partial, const char *data, size_t length,
+			    GMimeContentEncoding encoding)
+{
+	GMimeContent *content;
+	GMimeStream *stream;
+	char *encoded = NULL;
+
+	if (encoding == GMIME_CONTENT_ENCODING_BASE64) {
+		encoded = g_base64_encode ((const guchar *) data, length);
+		length = strlen (encoded);
+	} else if (encoding == GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE) {
+		GString *quoted = g_string_new (NULL);
+		size_t i;
+
+		for (i = 0; i < length; i++) {
+			if (i && i % 23 == 0)
+				g_string_append (quoted, "=\r\n");
+			g_string_append_printf (quoted, "=%02X", (unsigned char) data[i]);
+		}
+		length = quoted->len;
+		encoded = g_string_free (quoted, FALSE);
+	}
+
+	stream = g_mime_stream_mem_new_with_buffer (encoded ? encoded : data, length);
+	if (length > 1)
+		g_assert_cmpint (g_mime_stream_seek (stream, 1, GMIME_STREAM_SEEK_SET), ==, 1);
+	content = g_mime_content_new_with_stream (stream, encoding);
+	g_mime_part_set_content (GMIME_PART (partial), content);
+	g_object_unref (content);
+	g_object_unref (stream);
+	g_free (encoded);
+}
+
+static void
+test_reconstruction_content (void)
+{
+	static const char headers[] =
+		"Subject: decoded fragments\r\n"
+		"Content-Type: application/octet-stream\r\n\r\n";
+	static const char body[] = "before\0after\377\r\n";
+	static const GMimeContentEncoding encodings[] = {
+		GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_CONTENT_ENCODING_7BIT,
+		GMIME_CONTENT_ENCODING_8BIT, GMIME_CONTENT_ENCODING_BINARY,
+		GMIME_CONTENT_ENCODING_BASE64, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE
+	};
+	GMimeMessagePartial *parts[3], *input[3];
+	GMimeMessage *message;
+	GMimeStream *output;
+	GByteArray *buffer;
+	GString *wire = g_string_new (headers);
+	size_t offset, length;
+	int missing, pass;
+	guint c, i;
+
+	testsuite_check ("reconstruction decodes content, skips absent content and preserves input order");
+	g_string_append_len (wire, body, sizeof (body) - 1);
+	for (c = 0; c < G_N_ELEMENTS (encodings); c++) {
+		for (missing = -1; missing < 3; missing++) {
+			offset = 0;
+			for (i = 0; i < G_N_ELEMENTS (parts); i++) {
+				parts[i] = g_mime_message_partial_new ("reconstruction", i + 1, 3);
+				if (i != 2)
+					g_mime_param_list_remove (g_mime_content_type_get_parameters (
+						g_mime_entity_get_content_type (GMIME_ENTITY (parts[i]))), "total");
+				if ((int) i == missing)
+					continue;
+				length = (wire->len - offset) / (3 - i - (missing >= (int) i));
+				set_reconstruction_content (parts[i], wire->str + offset, length,
+							    encodings[(c + i) % G_N_ELEMENTS (encodings)]);
+				offset += length;
+			}
+			g_assert_cmpuint (offset, ==, wire->len);
+			input[0] = parts[2];
+			input[1] = parts[0];
+			input[2] = parts[1];
+			for (pass = 0; pass < 2; pass++) {
+				message = g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input));
+				g_assert_nonnull (message);
+				g_assert_true (input[0] == parts[2]);
+				g_assert_true (input[1] == parts[0]);
+				g_assert_true (input[2] == parts[1]);
+				g_assert_cmpstr (g_mime_message_get_subject (message), ==, "decoded fragments");
+				output = g_mime_stream_mem_new ();
+				g_assert_cmpint (g_mime_content_decode_to_stream (
+					g_mime_part_get_content (GMIME_PART (message->mime_part)), output), ==, sizeof (body) - 1);
+				buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+				g_assert_cmpmem (buffer->data, buffer->len, body, sizeof (body) - 1);
+				g_object_unref (output);
+				g_object_unref (message);
+			}
+			for (i = 0; i < G_N_ELEMENTS (parts); i++)
+				g_object_unref (parts[i]);
+		}
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_reconstruction_failures (void)
+{
+	static const char wire[] = "Subject: rewind failure\r\n\r\nbody";
+	GMimeMessagePartial *first = g_mime_message_partial_new ("id", 1, 2);
+	GMimeMessagePartial *last = g_mime_message_partial_new ("id", 2, 2);
+	GMimeMessagePartial *input[] = { last, first };
+	GMimeParamList *parameters = g_mime_content_type_get_parameters (
+		g_mime_entity_get_content_type (GMIME_ENTITY (last)));
+	GMimeContent *content;
+	GMimeStream *stream;
+	GByteArray *buffer;
+	GMimeMessage *message;
+
+	testsuite_check ("reconstruction failures preserve input order and release decoded readers");
+	g_assert_null (g_mime_message_partial_reconstruct_message (NULL, 0));
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*partials != NULL || num == 0*");
+	g_assert_null (g_mime_message_partial_reconstruct_message (NULL, 1));
+	g_test_assert_expected_messages ();
+	input[1] = NULL;
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE_PARTIAL*");
+	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_test_assert_expected_messages ();
+	g_assert_true (input[0] == last);
+	g_assert_null (input[1]);
+	input[1] = first;
+	g_mime_param_list_remove (parameters, "total");
+	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_true (input[0] == last && input[1] == first);
+	g_mime_param_list_set_parameter (parameters, "total", "3");
+	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_true (input[0] == last && input[1] == first);
+	g_mime_param_list_set_parameter (parameters, "total", "2");
+	g_mime_param_list_set_parameter (parameters, "number", "1");
+	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_true (input[0] == last && input[1] == first);
+	g_mime_param_list_set_parameter (parameters, "number", "2");
+	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_true (input[0] == last && input[1] == first);
+
+	set_reconstruction_content (first, wire, sizeof (wire) - 1, GMIME_CONTENT_ENCODING_BASE64);
+	stream = g_mime_stream_pipe_new (-1);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_object_unref (stream);
+	g_mime_part_set_content (GMIME_PART (last), content);
+	g_object_unref (content);
+	errno = 0;
+	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_assert_cmpint (errno, ==, EBADF);
+	g_assert_true (input[0] == last && input[1] == first);
+	content = g_mime_content_new ();
+	g_mime_part_set_content (GMIME_PART (last), content);
+	g_object_unref (content);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*content->stream != NULL*");
+	g_assert_null (g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input)));
+	g_test_assert_expected_messages ();
+	g_object_unref (last);
+	last = g_mime_message_partial_new ("id", 2, 2);
+	input[0] = last;
+	message = g_mime_message_partial_reconstruct_message (input, G_N_ELEMENTS (input));
+	g_assert_nonnull (message);
+	g_assert_cmpstr (g_mime_message_get_subject (message), ==, "rewind failure");
+	g_assert_true (input[0] == last && input[1] == first);
+	g_object_unref (first);
+	g_object_unref (last);
+	g_assert_cmpstr (g_mime_message_get_subject (message), ==, "rewind failure");
+	stream = g_mime_stream_mem_new ();
+	g_assert_cmpint (g_mime_content_decode_to_stream (
+		g_mime_part_get_content (GMIME_PART (message->mime_part)), stream), ==, 4);
+	buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+	g_assert_cmpmem (buffer->data, buffer->len, "body", 4);
+	g_object_unref (stream);
+	g_object_unref (message);
+	testsuite_check_passed ();
+}
+
+static void
 test_split_message_clones (void)
 {
 	static const char wire[] =
@@ -633,6 +809,8 @@ int main (int argc, char **argv)
 	test_partial_parameters ();
 	test_parsed_partial_parameters ();
 	test_partial_reconstruction_parameters ();
+	test_reconstruction_content ();
+	test_reconstruction_failures ();
 	test_split_without_message_id ();
 	test_split_arguments ();
 	test_split_message_clones ();

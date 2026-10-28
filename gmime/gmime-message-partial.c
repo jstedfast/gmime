@@ -229,37 +229,47 @@ partial_compare (const void *v1, const void *v2)
 
 /**
  * g_mime_message_partial_reconstruct_message:
- * @partials: (array length=num) (element-type GMimeMessagePartial): an array of message/partial mime parts
+ * @partials: (nullable) (array length=num) (element-type GMimeMessagePartial): an array of message/partial mime parts,
+ *   or %NULL when @num is zero
  * @num: the number of elements in @partials
  *
  * Reconstructs the GMimeMessage from the given message/partial parts
- * in @partials.
+ * in @partials without changing their order in the caller's array.
+ * Each fragment's content is decoded before concatenation; fragments
+ * without content contribute no bytes. Only the last fragment is
+ * required to specify the total number of parts. Parsed body content is
+ * stored in memory rather than as substreams of the decoded readers.
  *
- * Returns: (transfer full): a GMimeMessage object on success or %NULL
+ * Returns: (nullable) (transfer full): a GMimeMessage object on success or %NULL
  * on fail.
  **/
 GMimeMessage *
 g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num)
 {
-	GMimeMessagePartial *partial;
+	GMimeMessagePartial *partial, **parts;
 	GMimeStream *cat, *stream;
 	GMimeContent *wrapper;
 	GMimeMessage *message;
 	GMimeParser *parser;
 	int total, number;
-	const char *id;
+	const char *id = NULL;
 	size_t i;
 	
-	if (num == 0 || !(id = g_mime_message_partial_get_id (partials[0])))
+	g_return_val_if_fail (partials != NULL || num == 0, NULL);
+
+	if (num == 0)
 		return NULL;
 
 	for (i = 0; i < num; i++) {
 		const char *partial_id;
 
 		partial = partials[i];
+		g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), NULL);
 
 		/* sanity check to make sure this part belongs... */
 		partial_id = g_mime_message_partial_get_id (partial);
+		if (i == 0)
+			id = partial_id;
 		if (!partial_id || strcmp (id, partial_id))
 			return NULL;
 
@@ -267,20 +277,22 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 			return NULL;
 	}
 	
-	/* get them into the correct order... */
-	qsort ((void *) partials, num, sizeof (gpointer), partial_compare);
+	parts = g_new (GMimeMessagePartial *, num);
+	memcpy (parts, partials, num * sizeof (*parts));
+	qsort (parts, num, sizeof (*parts), partial_compare);
 	
 	/* only the last message/partial part is REQUIRED to have the total parameter */
-	if ((total = g_mime_message_partial_get_total (partials[num - 1])) == -1)
+	total = g_mime_message_partial_get_total (parts[num - 1]);
+	if (total == -1 || num != (size_t) total) {
+		g_free (parts);
 		return NULL;
-	
-	if (num != (size_t) total)
-		return NULL;
+	}
 	
 	cat = g_mime_stream_cat_new ();
 	
+	/* chain all the partial content streams... */
 	for (i = 0; i < num; i++) {
-		partial = partials[i];
+		partial = parts[i];
 		
 		/* sanity check to make sure we aren't missing any parts */
 		number = g_mime_message_partial_get_number (partial);
@@ -288,15 +300,22 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 			goto exception;
 		
 		wrapper = g_mime_part_get_content ((GMimePart *) partial);
-		stream = g_mime_content_get_stream (wrapper);
-		
-		g_mime_stream_reset (stream);
+		if (!wrapper)
+			continue;
+
+		if (!(stream = g_mime_content_open (wrapper)))
+			goto exception;
+
 		g_mime_stream_cat_add_source ((GMimeStreamCat *) cat, stream);
+		g_object_unref (stream);
 	}
+	g_free (parts);
 	
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, cat);
+	parser = g_mime_parser_new_with_stream_and_storage (cat, GMIME_FORMAT_MESSAGE,
+							  GMIME_CONTENT_STORAGE_MEMORY, NULL);
 	g_object_unref (cat);
+	if (!parser)
+		return NULL;
 	
 	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	g_object_unref (parser);
@@ -306,6 +325,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
  exception:
 	
 	g_object_unref (cat);
+	g_free (parts);
 	
 	return NULL;
 }

@@ -4636,6 +4636,50 @@ headers and restores them in Join using an outer message argument, which
 the current native reconstruction API does not accept. That API and
 header-policy migration remain deferred; this is not full Split/Join parity.
 
+## Message/partial reconstruction content
+
+Reconstruction now follows MimeKit Join's content path: it sorts a private
+copy of the fragment array, opens each present content through its decoded
+reader, and skips absent content. The caller's array is unchanged on both
+success and failure. Applicable MimeKit chain and comparator comments are
+preserved. Existing id, sequence, and final-total validation remains; only
+the last fragment must provide total.
+
+Decoded readers cannot provide arbitrary source substreams. Reconstruction
+therefore explicitly selects memory content storage, matching MimeKit's
+default parser storage, instead of trying to persist decoded substreams.
+The returned message owns its parsed body bytes independently of fragment
+streams; this copies body content into memory rather than retaining source
+views. Failed content opening stops reconstruction and releases earlier
+decoded readers. The legacy native return remains NULL for malformed or
+unreadable input. NULL arrays are accepted only for zero fragments; NULL
+or wrongly typed entries use native precondition diagnostics. Nullable
+input/output annotations are included in the generated bindings.
+
+Focused regressions cover mixed raw, 7bit, 8bit, binary, Base64 and
+quoted-printable content, arbitrary fragment boundaries, absent first,
+middle and last content, missing nonfinal totals, repeated reconstruction,
+unchanged input order, malformed metadata, absent content streams, failed
+rewinds, cleanup and returned-body lifetime. All 1,384 actual-source
+MimeKit comparisons match decoded bodies, selected inner headers, failure
+outcomes and input-order preservation in normal and ASan/UBSan builds
+with leak checking. These comparisons additionally exercise uuencode,
+empty bodies, empty streams, shuffled fragments and random binary data.
+They use only inner headers unaffected by MimeKit's CombineHeaders policy.
+
+The normal library, GIR, typelib and Vala bindings build, and the six
+related partial, concatenated-stream, reader, parameter, type and visitor
+suites pass. Focused partial tests pass ASan/UBSan and leak checking;
+complete partial fixtures pass with leak detection disabled for the known
+fixture-harness leaks. Native C validation was under WSL, not native
+Windows.
+
+The public reconstruction signature and native encapsulated-header policy
+are unchanged. MimeKit's outer-message header merge and parser-options
+argument remain deferred, as does nullable fragment-id parity; native
+reconstruction still requires a present id. This increment does not claim
+complete Join parity.
+
 ## Remaining migration phases
 
 Managed collection CopyTo(T[] array, int offset) convenience APIs, including
