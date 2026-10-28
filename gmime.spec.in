@@ -11,7 +11,7 @@ Release: 1%{?dist}
 Summary: MIME parser and utility library
 License: LGPL-2.1-or-later
 URL: https://github.com/jstedfast/gmime
-Source0: https://download.gnome.org/sources/gmime/@GMIME_API_VERSION@/gmime-%{version}.tar.xz
+Source0: https://github.com/jstedfast/gmime/releases/download/%{version}/gmime-%{version}.tar.xz
 
 BuildRequires: gcc
 BuildRequires: meson >= 1.3.0
