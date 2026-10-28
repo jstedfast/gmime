@@ -395,6 +395,19 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *ist
 }
 
 
+static gboolean
+crypto_check_flags (guint flags, guint supported, const char *operation, GError **err)
+{
+	if (!(flags & ~supported))
+		return TRUE;
+
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+		     "Unsupported %s flags: 0x%x", operation, flags & ~supported);
+
+	return FALSE;
+}
+
+
 /**
  * g_mime_crypto_context_verify:
  * @ctx: a #GMimeCryptoContext
@@ -410,6 +423,9 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *ist
  * plaintext into. Otherwise @sigstream is assumed to be the signature
  * stream and is used to verify the integirity of the @istream.
  *
+ * Undefined flag bits cause a %GMIME_ERROR_NOT_SUPPORTED error before the
+ * crypto backend is invoked.
+ *
  * Returns: (nullable) (transfer full): a #GMimeSignatureList object containing
  * the status of each signature or %NULL on error.
  **/
@@ -420,6 +436,10 @@ g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, G
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
 	
+	if (!crypto_check_flags (flags, GMIME_VERIFY_ENABLE_KEYSERVER_LOOKUPS |
+				 GMIME_VERIFY_ENABLE_ONLINE_CERTIFICATE_CHECKS, "verification", err))
+		return NULL;
+
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->verify (ctx, flags, istream, sigstream, ostream, err);
 }
 
@@ -449,6 +469,9 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * Encrypts (and optionally signs) the cleartext input stream and
  * writes the resulting ciphertext to the output stream.
  *
+ * Undefined flag bits cause a %GMIME_ERROR_NOT_SUPPORTED error before the
+ * crypto backend is invoked.
+ *
  * Returns: %0 on success or %-1 on fail.
  **/
 int
@@ -459,6 +482,10 @@ g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const cha
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
+	if (!crypto_check_flags (flags, GMIME_ENCRYPT_ALWAYS_TRUST | GMIME_ENCRYPT_NO_COMPRESS |
+				 GMIME_ENCRYPT_SYMMETRIC | GMIME_ENCRYPT_THROW_KEYIDS, "encryption", err))
+		return -1;
+
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, flags, recipients, istream, ostream, err);
 }
 
@@ -485,6 +512,9 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *se
  *
  * Decrypts the ciphertext input stream and writes the resulting cleartext
  * to the output stream.
+ *
+ * Undefined flag bits cause a %GMIME_ERROR_NOT_SUPPORTED error before the
+ * crypto backend is invoked.
  *
  * When non-%NULL, @session_key should be a %NULL-terminated string,
  * such as the one returned by g_mime_decrypt_result_get_session_key()
@@ -514,6 +544,11 @@ g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags,
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), NULL);
 	
+	if (!crypto_check_flags (flags, GMIME_DECRYPT_EXPORT_SESSION_KEY | GMIME_DECRYPT_NO_VERIFY |
+				 GMIME_DECRYPT_ENABLE_KEYSERVER_LOOKUPS |
+				 GMIME_DECRYPT_ENABLE_ONLINE_CERTIFICATE_CHECKS, "decryption", err))
+		return NULL;
+
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, flags, session_key, istream, ostream, err);
 }
 

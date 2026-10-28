@@ -310,6 +310,22 @@ unless an exact concrete type is truly required.
 
 Cryptography remains backed by GPGME/GnuPG. This migration does not introduce
 the managed cryptography backend or DKIM/ARC signing and verification.
+Verification, decryption, and encryption reject undefined flag bits with
+`GMIME_ERROR_NOT_SUPPORTED` before invoking the backend. Pass only flags
+defined for that operation; do not rely on unknown bits being ignored.
+
+GPGME-aware C applications can borrow the backend context through
+`g_mime_gpg_context_get_gpgme_ctx()` or
+`g_mime_pkcs7_context_get_gpgme_ctx()`. Certificates returned by GPGME-backed
+verification or decryption retain their backend key when available;
+`g_mime_certificate_get_gpgme_key()` exposes it for inspecting all user IDs,
+per-identity validity, and subkeys. These accessors return `gpointer`, require
+no GPGME types in GMime's public headers, and are excluded from introspection.
+Do not release borrowed contexts or keys. A key remains valid for the
+certificate's lifetime, independently of the context; use `gpgme_key_ref()`
+to keep it longer. Accessors return `NULL` when the backend handle is
+unavailable. Existing certificate getters keep their single-identity behavior.
+
 The new body builder, attachment collection, visitor, and report helpers are
 optional conveniences; a working explicit MIME tree need not be rewritten
 to use them.

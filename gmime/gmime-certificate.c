@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "gmime-certificate.h"
+#include "gmime-gpgme-utils.h"
 
 
 /**
@@ -39,49 +40,24 @@
  **/
 
 
-static void g_mime_certificate_class_init (GMimeCertificateClass *klass);
-static void g_mime_certificate_init (GMimeCertificate *cert, GMimeCertificateClass *klass);
 static void g_mime_certificate_finalize (GObject *object);
 
-static GObjectClass *parent_class = NULL;
+typedef struct {
+	gpointer key;
+} GMimeCertificatePrivate;
 
-
-GType
-g_mime_certificate_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeCertificateClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_certificate_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeCertificate),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_certificate_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCertificate", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeCertificate, g_mime_certificate, G_TYPE_OBJECT)
 
 static void
 g_mime_certificate_class_init (GMimeCertificateClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	
-	parent_class = g_type_class_ref (G_TYPE_OBJECT);
-	
 	object_class->finalize = g_mime_certificate_finalize;
 }
 
 static void
-g_mime_certificate_init (GMimeCertificate *cert, GMimeCertificateClass *klass)
+g_mime_certificate_init (GMimeCertificate *cert)
 {
 	cert->pubkey_algo = GMIME_PUBKEY_ALGO_DEFAULT;
 	cert->digest_algo = GMIME_DIGEST_ALGO_DEFAULT;
@@ -103,6 +79,13 @@ g_mime_certificate_finalize (GObject *object)
 {
 	GMimeCertificate *cert = (GMimeCertificate *) object;
 
+#ifdef ENABLE_CRYPTO
+	GMimeCertificatePrivate *priv = g_mime_certificate_get_instance_private (cert);
+
+	if (priv->key)
+		gpgme_key_unref (priv->key);
+#endif
+
 	g_clear_pointer (&cert->created, g_date_time_unref);
 	g_clear_pointer (&cert->expires, g_date_time_unref);
 	
@@ -114,7 +97,7 @@ g_mime_certificate_finalize (GObject *object)
 	g_free (cert->name);
 	g_free (cert->user_id);
 	
-	G_OBJECT_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (g_mime_certificate_parent_class)->finalize (object);
 }
 
 
@@ -130,6 +113,53 @@ g_mime_certificate_new (void)
 {
 	return g_object_new (GMIME_TYPE_CERTIFICATE, NULL);
 }
+
+
+/**
+ * g_mime_certificate_get_gpgme_key: (skip)
+ * @cert: a #GMimeCertificate
+ *
+ * Gets the underlying GPGME key as a borrowed `gpgme_key_t`, allowing access
+ * to all user IDs, their validity, and subkeys. The certificate retains a
+ * reference to the key independently of the crypto context. The caller must
+ * not modify or unref the borrowed key; use `gpgme_key_ref` to retain it
+ * beyond the lifetime of @cert.
+ *
+ * The key is a snapshot of backend metadata and is not changed by the
+ * certificate's setters.
+ *
+ * Returns: (transfer none) (nullable): the GPGME key, valid until @cert is
+ * destroyed, or %NULL if no GPGME key is available. This includes certificates
+ * created by other backends and builds without crypto support.
+ **/
+gpointer
+g_mime_certificate_get_gpgme_key (GMimeCertificate *cert)
+{
+	GMimeCertificatePrivate *priv;
+
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE (cert), NULL);
+
+	priv = g_mime_certificate_get_instance_private (cert);
+
+	return priv->key;
+}
+
+
+#ifdef ENABLE_CRYPTO
+void
+_g_mime_certificate_set_gpgme_key (GMimeCertificate *cert, gpgme_key_t key)
+{
+	GMimeCertificatePrivate *priv = g_mime_certificate_get_instance_private (cert);
+
+	if (key)
+		gpgme_key_ref (key);
+
+	if (priv->key)
+		gpgme_key_unref (priv->key);
+
+	priv->key = key;
+}
+#endif
 
 
 /**
@@ -541,6 +571,7 @@ g_mime_certificate_set_created (GMimeCertificate *cert, GDateTime *created)
 	
 	if (created)
 		g_date_time_ref (created);
+
 	g_clear_pointer (&cert->created, g_date_time_unref);
 	cert->created = created;
 }
@@ -580,6 +611,7 @@ g_mime_certificate_set_expires (GMimeCertificate *cert, GDateTime *expires)
 	
 	if (expires)
 		g_date_time_ref (expires);
+
 	g_clear_pointer (&cert->expires, g_date_time_unref);
 	cert->expires = expires;
 }

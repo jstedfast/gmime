@@ -41,6 +41,8 @@ GType g_mime_gpg_context_get_type (void);
 
 GMimeCryptoContext *g_mime_gpg_context_new (void);
 
+gpointer g_mime_gpg_context_get_gpgme_ctx (GMimeGpgContext *ctx);
+
 G_END_DECLS
 
 #endif /* __GMIME_GPG_CONTEXT_H__ */

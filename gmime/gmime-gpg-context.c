@@ -386,6 +386,30 @@ gpg_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *o
 
 
 /**
+ * g_mime_gpg_context_get_gpgme_ctx: (skip)
+ * @ctx: a #GMimeGpgContext
+ *
+ * Gets the underlying GPGME context as a borrowed `gpgme_ctx_t`. The caller
+ * must not release it or use it concurrently with GMime operations. Changing
+ * its configuration can affect subsequent GMime operations.
+ *
+ * Returns: (transfer none) (nullable): the GPGME context, valid until @ctx is
+ * destroyed, or %NULL if unavailable, including in builds without crypto support.
+ **/
+gpointer
+g_mime_gpg_context_get_gpgme_ctx (GMimeGpgContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), NULL);
+
+#ifdef ENABLE_CRYPTO
+	return ctx->ctx;
+#else
+	return NULL;
+#endif
+}
+
+
+/**
  * g_mime_gpg_context_new:
  *
  * Creates a new gpg crypto context object.

@@ -167,8 +167,9 @@ typedef enum {
  * and each name may also have a different validity level (e.g. if the
  * issuing CA is bound by name constraints).
  *
- * Note that the GMime API currently only exposes the highest-validty
- * User ID for any given certificate.
+ * The single-identity certificate accessors expose only the highest-validity
+ * identity information. GPGME-aware C applications can inspect all identities
+ * using g_mime_certificate_get_gpgme_key().
  **/
 typedef enum {
 	GMIME_VALIDITY_UNKNOWN   = 0,
@@ -227,6 +228,8 @@ struct _GMimeCertificateClass {
 GType g_mime_certificate_get_type (void);
 
 GMimeCertificate *g_mime_certificate_new (void);
+
+gpointer g_mime_certificate_get_gpgme_key (GMimeCertificate *cert);
 
 void g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeTrust trust);
 GMimeTrust g_mime_certificate_get_trust (GMimeCertificate *cert);

@@ -386,6 +386,8 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify, GMimeSignatureLis
 		g_mime_certificate_set_key_id (signature->cert, sig->fpr);
 		
 		if (gpgme_get_key (ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
+			_g_mime_certificate_set_gpgme_key (signature->cert, key);
+
 			/* get more signer info from their signing key */
 			g_mime_certificate_set_trust (signature->cert, (GMimeTrust) key->owner_trust);
 			g_mime_certificate_set_issuer_serial (signature->cert, key->issuer_serial);
@@ -400,6 +402,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify, GMimeSignatureLis
 				if (!founduid || !_gpgv_lt (uid->validity, validity)) {
 					/* this is as good as the best UID we've found so far */
 					founduid = TRUE;
+
 					if (_gpgv_lt (validity, uid->validity)) {
 						/* this is actually better than the last best,
 						   so clear all the previously-found uids */
@@ -407,6 +410,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify, GMimeSignatureLis
 						g_mime_certificate_set_email (signature->cert, NULL);
 						g_mime_certificate_set_user_id (signature->cert, NULL);
 					}
+
 					validity = uid->validity;
 
 					if (uid->name && *uid->name && !g_mime_certificate_get_name (signature->cert))
@@ -422,8 +426,10 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify, GMimeSignatureLis
 						g_mime_certificate_set_user_id (signature->cert, uid->uid);
 					
 				}
+
 				uid = uid->next;
 			}
+
 			g_mime_certificate_set_id_validity (signature->cert, (GMimeValidity)(validity));
 			
 			/* get the subkey used for signing */
@@ -452,6 +458,7 @@ g_mime_gpgme_get_signatures (gpgme_ctx_t ctx, gboolean verify, GMimeSignatureLis
 	}
 	
 	*out = signatures;
+
 	return TRUE;
 }
 
@@ -503,10 +510,13 @@ g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeVerifyFlags flags, GMimeStream *istre
 	gpgme_set_offline (ctx, (flags & GMIME_VERIFY_ENABLE_ONLINE_CERTIFICATE_CHECKS) == 0);
 	
 	error = gpgme_op_verify (ctx, sig, signed_text, plain);
+
 	if (signed_text)
 		gpgme_data_release (signed_text);
+
 	if (plain)
 		gpgme_data_release (plain);
+
 	gpgme_data_release (sig);
 	
 	if (error != GPG_ERR_NO_ERROR) {
@@ -609,9 +619,11 @@ g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx, GError **err)
 	gpgme_decrypt_result_t res;
 	gpgme_recipient_t recipient;
 	GMimeCertificate *cert;
+	gpgme_key_t key;
 	
 	result = g_mime_decrypt_result_new ();
 	result->recipients = g_mime_certificate_list_new ();
+
 	if (!g_mime_gpgme_get_signatures (ctx, FALSE, &result->signatures, err)) {
 		g_object_unref (result);
 		return NULL;
@@ -628,12 +640,19 @@ g_mime_gpgme_get_decrypt_result (gpgme_ctx_t ctx, GError **err)
 #endif
 	
 	recipient = res->recipients;
+
 	while (recipient != NULL) {
 		cert = g_mime_certificate_new ();
 		g_mime_certificate_list_add (result->recipients, cert);
 		
 		g_mime_certificate_set_pubkey_algo (cert, (GMimePubKeyAlgo) recipient->pubkey_algo);
 		g_mime_certificate_set_key_id (cert, recipient->keyid);
+
+		if (recipient->keyid && gpgme_get_key (ctx, recipient->keyid, &key, 0) == GPG_ERR_NO_ERROR && key) {
+			_g_mime_certificate_set_gpgme_key (cert, key);
+			gpgme_key_unref (key);
+		}
+
 		g_object_unref(cert);
 		
 		recipient = recipient->next;

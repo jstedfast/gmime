@@ -40,6 +40,8 @@ GType g_mime_pkcs7_context_get_type (void);
 
 GMimeCryptoContext *g_mime_pkcs7_context_new (void);
 
+gpointer g_mime_pkcs7_context_get_gpgme_ctx (GMimePkcs7Context *ctx);
+
 G_END_DECLS
 
 #endif /* __GMIME_PKCS7_CONTEXT_H__ */

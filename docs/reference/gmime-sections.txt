@@ -2303,6 +2303,7 @@ GMimeTrust
 GMimeValidity
 GMimeCertificate
 g_mime_certificate_new
+g_mime_certificate_get_gpgme_key
 g_mime_certificate_get_pubkey_algo
 g_mime_certificate_set_pubkey_algo
 g_mime_certificate_get_digest_algo
@@ -2471,6 +2472,7 @@ GMimeDecryptResultClass
 <FILE>gmime-gpg-context</FILE>
 GMimeGpgContext
 g_mime_gpg_context_new
+g_mime_gpg_context_get_gpgme_ctx
 
 <SUBSECTION Private>
 g_mime_gpg_context_get_type
@@ -2489,6 +2491,7 @@ GMimeGpgContextClass
 <FILE>gmime-pkcs7-context</FILE>
 GMimePkcs7Context
 g_mime_pkcs7_context_new
+g_mime_pkcs7_context_get_gpgme_ctx
 
 <SUBSECTION Private>
 g_mime_pkcs7_context_get_type

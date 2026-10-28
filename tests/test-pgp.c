@@ -32,6 +32,10 @@
 
 #include <gmime/gmime.h>
 
+#ifdef ENABLE_CRYPTO
+#include <gpgme.h>
+#endif
+
 #include "testsuite.h"
 
 extern int verbose;
@@ -223,6 +227,24 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	   We test asking for session_key over in test-pgpmime.c */
 	if (ex == NULL && result->session_key)
 		ex = exception_new ("got session_key when not requested");
+
+#ifdef ENABLE_CRYPTO
+	if (ex == NULL) {
+		GMimeCertificateList *recipients = g_mime_decrypt_result_get_recipients (result);
+		GMimeCertificate *cert;
+		gpgme_key_t key;
+		int i;
+
+		for (i = 0; i < g_mime_certificate_list_length (recipients); i++) {
+			cert = g_mime_certificate_list_get_certificate (recipients, i);
+			key = g_mime_certificate_get_gpgme_key (cert);
+			if (!key || !key->subkeys) {
+				ex = exception_new ("decryption recipient has no backend key");
+				break;
+			}
+		}
+	}
+#endif
 	
 	g_object_unref (result);
 	
@@ -242,6 +264,137 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	if (ex != NULL)
 		throw (ex);
 }
+
+#ifdef ENABLE_CRYPTO
+static void
+test_gpgme_handles (GMimeCryptoContext *ctx)
+{
+	static const char fingerprint[] = "DA26DAB7572A1C5F2AB1A74BB47760E95182C200";
+	GMimeCryptoContext *owner = g_mime_gpg_context_new (), *pkcs7 = NULL;
+	GMimeStream *input = g_mime_stream_mem_new_with_buffer ("backend handles", 15);
+	GMimeStream *signed_data = g_mime_stream_mem_new ();
+	GMimeSignatureList *signatures = NULL;
+	GMimeCertificate *cert = NULL;
+	gpgme_key_t key = NULL, retained = NULL, expected = NULL;
+	gpgme_ctx_t backend;
+	gpgme_user_id_t uid, expected_uid;
+	GError *error = NULL;
+	const char *failure = NULL;
+	gboolean original = FALSE, alternate = FALSE, no_email = FALSE;
+	guint count = 0;
+
+	if (!owner || !(backend = g_mime_gpg_context_get_gpgme_ctx (GMIME_GPG_CONTEXT (owner))) ||
+	    gpgme_get_protocol (backend) != GPGME_PROTOCOL_OpenPGP) {
+		failure = "OpenPGP context does not expose its backend";
+		goto done;
+	}
+
+	if (gpgme_engine_check_version (GPGME_PROTOCOL_CMS) == GPG_ERR_NO_ERROR) {
+		pkcs7 = g_mime_pkcs7_context_new ();
+		if (!pkcs7 || !g_mime_pkcs7_context_get_gpgme_ctx (GMIME_PKCS7_CONTEXT (pkcs7)) ||
+		    gpgme_get_protocol (g_mime_pkcs7_context_get_gpgme_ctx (GMIME_PKCS7_CONTEXT (pkcs7))) !=
+		    GPGME_PROTOCOL_CMS) {
+			failure = "PKCS7 context does not expose its backend";
+			goto done;
+		}
+	} else {
+		testsuite_check_warn ("CMS backend handle check requires gpgsm");
+	}
+
+	if (g_mime_crypto_context_sign (ctx, TRUE, "no.user@no.domain", input, signed_data, &error) == -1) {
+		failure = "could not sign backend-handle test data";
+		goto done;
+	}
+	g_mime_stream_reset (input);
+	g_mime_stream_reset (signed_data);
+	signatures = g_mime_crypto_context_verify (owner, GMIME_VERIFY_NONE, input, signed_data, NULL, &error);
+	if (!signatures || g_mime_signature_list_length (signatures) != 1 ||
+	    (get_sig_status (signatures) & GMIME_SIGNATURE_STATUS_RED)) {
+		failure = "multiple identities must still produce one valid signature";
+		goto done;
+	}
+
+	cert = g_object_ref (g_mime_signature_get_certificate (g_mime_signature_list_get_signature (signatures, 0)));
+	key = g_mime_certificate_get_gpgme_key (cert);
+	if (!key || !key->subkeys || g_strcmp0 (key->subkeys->fpr, fingerprint) ||
+	    backend != g_mime_gpg_context_get_gpgme_ctx (GMIME_GPG_CONTEXT (owner))) {
+		failure = "signature certificate does not retain its backend key";
+		goto done;
+	}
+
+	if (gpgme_get_key (backend, fingerprint, &expected, 0) != GPG_ERR_NO_ERROR || !expected) {
+		failure = "could not look up the expected backend identity metadata";
+		goto done;
+	}
+	expected_uid = expected->uids;
+	for (uid = key->uids; uid; uid = uid->next) {
+		count++;
+		original |= g_strcmp0 (uid->email, "no.user@no.domain") == 0;
+		alternate |= g_strcmp0 (uid->email, "other.user@no.domain") == 0 &&
+			g_strcmp0 (uid->name, "Another User") == 0 &&
+			g_strcmp0 (uid->comment, "second identity") == 0;
+		no_email |= g_strcmp0 (uid->uid, "Test Identity Without Email") == 0 &&
+			(!uid->email || !*uid->email);
+		if (!expected_uid || g_strcmp0 (uid->uid, expected_uid->uid) ||
+		    uid->validity != expected_uid->validity || uid->revoked != expected_uid->revoked ||
+		    uid->invalid != expected_uid->invalid) {
+			failure = "backend key did not preserve each identity's validity and status";
+			goto done;
+		}
+		expected_uid = expected_uid->next;
+	}
+	if (count != 3 || !original || !alternate || !no_email || expected_uid) {
+		failure = "backend key must expose all identities, including one without an email address";
+		goto done;
+	}
+	gpgme_key_unref (expected);
+	expected = NULL;
+
+	g_mime_certificate_set_user_id (cert, "application override");
+	if (g_strcmp0 (key->uids->uid, "application override") == 0 ||
+	    g_mime_certificate_get_gpgme_key (cert) != key) {
+		failure = "certificate setters must not modify the backend key";
+		goto done;
+	}
+
+	if (gpgme_op_keylist_start (backend, NULL, 0) != GPG_ERR_NO_ERROR ||
+	    gpgme_op_keylist_end (backend) != GPG_ERR_NO_ERROR) {
+		failure = "borrowed backend context cannot be used for native operations";
+		goto done;
+	}
+	g_clear_object (&signatures);
+	g_clear_object (&owner);
+	if (g_mime_certificate_get_gpgme_key (cert) != key || !key->uids ||
+	    g_strcmp0 (key->subkeys->fpr, fingerprint)) {
+		failure = "certificate key must survive later backend operations and context destruction";
+		goto done;
+	}
+
+	retained = key;
+	gpgme_key_ref (retained);
+	g_clear_object (&cert);
+	if (!retained->uids || g_strcmp0 (retained->subkeys->fpr, fingerprint))
+		failure = "caller-referenced key must survive certificate destruction";
+
+done:
+	if (expected)
+		gpgme_key_unref (expected);
+	if (retained)
+		gpgme_key_unref (retained);
+	g_clear_object (&cert);
+	g_clear_object (&signatures);
+	g_clear_object (&owner);
+	g_clear_object (&pkcs7);
+	g_object_unref (signed_data);
+	g_object_unref (input);
+	if (failure) {
+		Exception *ex = exception_new ("%s%s%s", failure, error ? ": " : "", error ? error->message : "");
+		g_clear_error (&error);
+		throw (ex);
+	}
+	g_clear_error (&error);
+}
+#endif
 
 static void
 test_export (GMimeCryptoContext *ctx, const char *path)
@@ -586,6 +739,18 @@ int main (int argc, char **argv)
 	
 	g_object_unref (istream);
 	g_object_unref (ostream);
+
+	testsuite_check ("GPGME backend handles and multi-identity key lifetime");
+	try {
+		key = g_build_filename (datadir, "gmime-multi-uid.gpg.pub", NULL);
+		import_key (ctx, key);
+		g_free (key);
+		test_gpgme_handles (ctx);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("GPGME backend handles: %s", ex->message);
+	} finally;
+
 	g_object_unref (ctx);
 
 	filter = (GMimeFilterOpenPGP *) g_mime_filter_openpgp_new ();

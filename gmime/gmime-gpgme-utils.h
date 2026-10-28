@@ -30,6 +30,8 @@
 
 G_BEGIN_DECLS
 
+G_GNUC_INTERNAL void _g_mime_certificate_set_gpgme_key (GMimeCertificate *cert, gpgme_key_t key);
+
 G_GNUC_INTERNAL gpgme_error_t g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint,
 								const char *passphrase_info,
 								int prev_was_bad, int fd);

@@ -9394,6 +9394,166 @@ test_content_copy (void)
 	g_object_unref (source);
 }
 
+typedef struct {
+	GMimeCryptoContext parent_object;
+	guint calls;
+	guint flags;
+} TestCryptoContext;
+
+typedef GMimeCryptoContextClass TestCryptoContextClass;
+
+G_DEFINE_TYPE (TestCryptoContext, test_crypto_context, GMIME_TYPE_CRYPTO_CONTEXT)
+
+static GMimeSignatureList *
+test_crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *istream,
+		    GMimeStream *sigstream, GMimeStream *ostream, GError **err)
+{
+	TestCryptoContext *test = (TestCryptoContext *) ctx;
+
+	test->calls++;
+	test->flags = flags;
+	return g_mime_signature_list_new ();
+}
+
+static int
+test_crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeEncryptFlags flags,
+		     GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
+{
+	TestCryptoContext *test = (TestCryptoContext *) ctx;
+
+	test->calls++;
+	test->flags = flags;
+	return 0;
+}
+
+static GMimeDecryptResult *
+test_crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const char *session_key,
+		     GMimeStream *istream, GMimeStream *ostream, GError **err)
+{
+	TestCryptoContext *test = (TestCryptoContext *) ctx;
+
+	test->calls++;
+	test->flags = flags;
+	return g_mime_decrypt_result_new ();
+}
+
+static void
+test_crypto_context_class_init (TestCryptoContextClass *klass)
+{
+	klass->verify = test_crypto_verify;
+	klass->encrypt = test_crypto_encrypt;
+	klass->decrypt = test_crypto_decrypt;
+}
+
+static void
+test_crypto_context_init (TestCryptoContext *ctx)
+{
+}
+
+static gboolean
+test_crypto_dispatch (TestCryptoContext *test, guint operation, guint flags, GPtrArray *recipients,
+		      GMimeStream *input, GMimeStream *output, GError **error)
+{
+	GMimeCryptoContext *ctx = GMIME_CRYPTO_CONTEXT (test);
+	GMimeSignatureList *signatures;
+	GMimeDecryptResult *result;
+	gboolean success;
+
+	switch (operation) {
+	case 0:
+		signatures = g_mime_crypto_context_verify (ctx, flags, input, NULL, output, error);
+		success = signatures != NULL;
+		g_clear_object (&signatures);
+		return success;
+	case 1:
+		return g_mime_crypto_context_encrypt (ctx, FALSE, NULL, flags, recipients, input, output, error) == 0;
+	default:
+		result = g_mime_crypto_context_decrypt (ctx, flags, NULL, input, output, error);
+		success = result != NULL;
+		g_clear_object (&result);
+		return success;
+	}
+}
+
+static void
+test_crypto_flags (void)
+{
+	static const guint masks[] = {
+		GMIME_VERIFY_ENABLE_KEYSERVER_LOOKUPS | GMIME_VERIFY_ENABLE_ONLINE_CERTIFICATE_CHECKS,
+		GMIME_ENCRYPT_ALWAYS_TRUST | GMIME_ENCRYPT_NO_COMPRESS |
+		GMIME_ENCRYPT_SYMMETRIC | GMIME_ENCRYPT_THROW_KEYIDS,
+		GMIME_DECRYPT_EXPORT_SESSION_KEY | GMIME_DECRYPT_NO_VERIFY |
+		GMIME_DECRYPT_ENABLE_KEYSERVER_LOOKUPS | GMIME_DECRYPT_ENABLE_ONLINE_CERTIFICATE_CHECKS
+	};
+	TestCryptoContext *ctx = g_object_new (test_crypto_context_get_type (), NULL);
+	GMimeStream *input = g_mime_stream_mem_new_with_buffer ("input", 5);
+	GMimeStream *output = g_mime_stream_mem_new ();
+	GPtrArray *recipients = g_ptr_array_new ();
+	GError *error = NULL;
+	guint operation, flags, bit, calls, mixed;
+	char *unknown;
+
+	for (operation = 0; operation < G_N_ELEMENTS (masks); operation++) {
+		flags = masks[operation];
+		do {
+			calls = ctx->calls;
+			check (test_crypto_dispatch (ctx, operation, flags, recipients, input, output, &error) &&
+			       !error && ctx->calls == calls + 1 && ctx->flags == flags,
+			       "every defined crypto flag combination reaches the backend unchanged");
+			g_clear_error (&error);
+			flags = (flags - 1) & masks[operation];
+		} while (flags != masks[operation]);
+
+		for (bit = 0; bit < sizeof (guint) * 8; bit++) {
+			if ((1u << bit) & masks[operation])
+				continue;
+
+			for (mixed = 0; mixed < 2; mixed++) {
+				flags = (1u << bit) | (mixed ? masks[operation] : 0);
+				calls = ctx->calls;
+				unknown = g_strdup_printf ("0x%x", 1u << bit);
+				check (!test_crypto_dispatch (ctx, operation, flags, recipients, input, output, &error) &&
+				       error && error->domain == GMIME_ERROR && error->code == GMIME_ERROR_NOT_SUPPORTED &&
+				       strstr (error->message, unknown) && ctx->calls == calls,
+				       "undefined crypto bits fail explicitly without reaching the backend");
+				g_free (unknown);
+				g_clear_error (&error);
+				check (!test_crypto_dispatch (ctx, operation, flags, recipients, input, output, NULL) &&
+				       ctx->calls == calls, "undefined crypto bits also fail without an error destination");
+			}
+		}
+	}
+
+	check (g_mime_stream_tell (input) == 0 && g_mime_stream_length (output) == 0,
+	       "flag validation leaves input and output streams untouched");
+	g_ptr_array_unref (recipients);
+	g_object_unref (output);
+	g_object_unref (input);
+	g_object_unref (ctx);
+}
+
+static void
+test_crypto_backend_handles (void)
+{
+	GMimeCertificate *cert = g_mime_certificate_new ();
+	GMimeGpgContext *gpg = g_object_new (GMIME_TYPE_GPG_CONTEXT, NULL);
+	GMimePkcs7Context *pkcs7 = g_object_new (GMIME_TYPE_PKCS7_CONTEXT, NULL);
+
+	check (g_mime_certificate_get_gpgme_key (cert) == NULL,
+	       "application-created certificates have no backend key");
+	check (g_mime_gpg_context_get_gpgme_ctx (gpg) == NULL &&
+	       g_mime_pkcs7_context_get_gpgme_ctx (pkcs7) == NULL,
+	       "uninitialized crypto contexts have no backend handle");
+#ifndef ENABLE_CRYPTO
+	check (g_mime_gpg_context_new () == NULL && g_mime_pkcs7_context_new () == NULL,
+	       "crypto-disabled builds expose nullable handles without requiring GPGME");
+#endif
+
+	g_object_unref (pkcs7);
+	g_object_unref (gpg);
+	g_object_unref (cert);
+}
+
 static void
 test_crypto_dates (void)
 {
@@ -12807,6 +12967,11 @@ main (int argc, char **argv)
 	test_header_list_separators ();
 	test_header_list_writing_errors ();
 	test_entity_header_separators ();
+	testsuite_end ();
+
+	testsuite_start ("crypto flag validation");
+	test_crypto_flags ();
+	test_crypto_backend_handles ();
 	testsuite_end ();
 
 	testsuite_start ("certificate and signature dates");
