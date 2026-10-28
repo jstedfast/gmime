@@ -852,7 +852,7 @@ of GMime.
 |docs/reference/|Contains SGML and HTML versions of the GMime reference manual|
 |docs/tutorial/ |Contains SGML and HTML versions of the GMime tutorial|
 |AUTHORS        |List of primary authors (source code developers)|
-|COPYING        |The GNU Lesser General Public License, version 2|
+|LICENSE        |The GNU Lesser General Public License, version 2.1|
 |INSTALL        |In-depth installation instructions|
 |TODO           |Description of planned GMime development|
 |[PORTING.md](PORTING.md)|Migration from GMime 3.0 to 4.0 and the MimeKit porting contract|

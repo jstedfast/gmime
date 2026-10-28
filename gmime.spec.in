@@ -47,7 +47,7 @@ the Multipurpose Internet Mail Extension (MIME).
 %meson_install
 
 %files
-%license COPYING LICENSE
+%license LICENSE
 %doc AUTHORS NEWS README.md PORTING.md
 %{_libdir}/libgmime-@GMIME_API_VERSION@.so*
 %{_libdir}/pkgconfig/gmime-@GMIME_API_VERSION@.pc
