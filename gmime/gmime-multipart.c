@@ -54,7 +54,6 @@ static void g_mime_multipart_finalize (GObject *object);
 /* GMimeEntity class methods */
 static ssize_t multipart_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					  gboolean content_only, GMimeStream *stream);
-static void multipart_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
 static gboolean multipart_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
 				   guint max_line_length, GError **error);
 
@@ -120,7 +119,6 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	gobject_class->finalize = g_mime_multipart_finalize;
 	
 	object_class->write_to_stream = multipart_write_to_stream;
-	object_class->encode = multipart_encode;
 	object_class->accept = multipart_accept;
 	object_class->prepare_with_max_line_length = multipart_prepare;
 	object_class->set_content_type = multipart_set_content_type;
@@ -282,20 +280,6 @@ multipart_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gbo
 {
 	return _g_mime_writer_write (object, options, content_only, stream);
 }
-
-static void
-multipart_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
-{
-	GMimeMultipart *multipart = (GMimeMultipart *) object;
-	GMimeEntity *subpart;
-	int i;
-	
-	for (i = 0; i < g_mime_multipart_get_count (multipart); i++) {
-		subpart = g_mime_multipart_get_part (multipart, i);
-		g_mime_entity_encode (subpart, constraint);
-	}
-}
-
 
 static gboolean
 multipart_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)

@@ -69,7 +69,6 @@ static void mime_part_headers_cleared (GMimeEntity *object);
 
 static ssize_t mime_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					  gboolean content_only, GMimeStream *stream);
-static void mime_part_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
 static gboolean mime_part_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
 				   guint max_line_length, GError **error);
 
@@ -126,7 +125,6 @@ g_mime_part_class_init (GMimePartClass *klass)
 	object_class->header_removed = mime_part_header_removed;
 	object_class->headers_cleared = mime_part_headers_cleared;
 	object_class->write_to_stream = mime_part_write_to_stream;
-	object_class->encode = mime_part_encode;
 	object_class->accept = mime_part_accept;
 	object_class->prepare_with_max_line_length = mime_part_prepare;
 	
@@ -430,66 +428,6 @@ mime_part_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gbo
 {
 	return _g_mime_writer_write (object, options, content_only, stream);
 }
-
-static void
-mime_part_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
-{
-	GMimePart *part = (GMimePart *) object;
-	GMimeContentEncoding encoding;
-	GMimeStream *stream, *null;
-	GMimeFilter *filter;
-	
-	g_mime_part_get_content_encoding (part);
-
-	switch (part->encoding) {
-	case GMIME_CONTENT_ENCODING_BINARY:
-		/* This encoding is only safe if the constraint is binary. */
-		if (constraint == GMIME_ENCODING_CONSTRAINT_BINARY)
-			return;
-		break;
-	case GMIME_CONTENT_ENCODING_BASE64:
-	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
-	case GMIME_CONTENT_ENCODING_UUENCODE:
-		/* These encodings are always safe. */
-		return;
-	default:
-		break;
-	}
-	
-	filter = g_mime_filter_best_new (GMIME_FILTER_BEST_ENCODING);
-	
-	null = g_mime_stream_null_new ();
-	stream = g_mime_stream_filter_new (null);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) stream, filter);
-	g_object_unref (null);
-	
-	g_mime_content_decode_to_stream (part->content, stream);
-	g_object_unref (stream);
-	
-	encoding = g_mime_filter_best_encoding ((GMimeFilterBest *) filter, constraint);
-	
-	switch (part->encoding) {
-	case GMIME_CONTENT_ENCODING_UNSPECIFIED:
-		g_mime_part_set_content_encoding (part, encoding);
-		break;
-	case GMIME_CONTENT_ENCODING_7BIT:
-		/* This encoding is generally safe, but we may need to encode From-lines. */
-		if (((GMimeFilterBest *) filter)->hadfrom)
-			g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
-		break;
-	case GMIME_CONTENT_ENCODING_8BIT:
-		if (constraint == GMIME_ENCODING_CONSTRAINT_7BIT)
-			g_mime_part_set_content_encoding (part, encoding);
-		else if (((GMimeFilterBest *) filter)->hadfrom)
-			g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
-		break;
-	default:
-		break;
-	}
-	
-	g_object_unref (filter);
-}
-
 
 /**
  * g_mime_part_new:
@@ -1252,8 +1190,7 @@ g_mime_part_prepare (GMimePart *mime_part, GMimeEncodingConstraint constraint, G
  * otherwise follow the best-encoding API. Failure leaves transfer encoding
  * headers and the previous encoder limit unchanged.
  *
- * Unlike g_mime_entity_encode(), this checked API reports analysis failures
- * and ports MimeKit's leaf-part preparation policy.
+ * Reports analysis failures and follows MimeKit's leaf-part preparation policy.
  *
  * Returns: %TRUE on success, or %FALSE on failure.
  **/

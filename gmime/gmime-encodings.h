@@ -58,7 +58,7 @@ typedef enum {
  * @GMIME_ENCODING_CONSTRAINT_BINARY: The stream may contain any binary data.
  *
  * Used with functions like g_mime_filter_best_encoding() and
- * g_mime_entity_encode() as the 'constraint' argument. These values
+ * g_mime_entity_prepare() as the 'constraint' argument. These values
  * provide a means of letting the filter know what the encoding
  * constraints are for the stream.
  **/

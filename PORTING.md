@@ -231,6 +231,11 @@ The following APIs now propagate failures rather than hiding partial reads:
 | `g_mime_part_verify_content_md5()` | Adds final `GError **` |
 
 The encoding/preparation APIs also have `_with_max_line_length()` variants.
+Replace 3.x `g_mime_object_encode()` calls with
+`g_mime_entity_prepare(entity, constraint, error)` and check its return value.
+The intermediate 4.0 `g_mime_entity_encode()` API and the entity class's
+`encode` virtual method have been removed. Subclasses should implement
+`prepare_with_max_line_length` instead.
 Do not serialize after failed preparation without handling the failure.
 For MD5 verification, FALSE without an error means no usable digest or a
 mismatch; FALSE with an error means content could not be read.

@@ -66,7 +66,6 @@ static void message_headers_cleared (GMimeEntity *object);
 static char *message_get_headers (GMimeEntity *object, GMimeFormatOptions *options);
 static ssize_t message_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options,
 					gboolean content_only, GMimeStream *stream);
-static void message_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
 static gboolean message_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
 				 guint max_line_length, GError **error);
 
@@ -166,7 +165,6 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	object_class->headers_cleared = message_headers_cleared;
 	object_class->get_headers = message_get_headers;
 	object_class->write_to_stream = message_write_to_stream;
-	object_class->encode = message_encode;
 	object_class->accept = message_accept;
 	object_class->prepare_with_max_line_length = message_prepare;
 }
@@ -993,17 +991,6 @@ message_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gbool
 {
 	return _g_mime_writer_write (object, options, content_only, stream);
 }
-
-static void
-message_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
-{
-	GMimeMessage *message = (GMimeMessage *) object;
-	
-	if (message->mime_part != NULL)
-		g_mime_entity_encode (message->mime_part, constraint);
-}
-
-
 
 static gboolean
 message_has_mime_version (GMimeMessage *message)

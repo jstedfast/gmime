@@ -1024,9 +1024,10 @@ test_content_encoding_consumers (void)
 	GMimeStream *output = g_mime_stream_mem_new ();
 	GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
 	GMimeHeader *header;
+	GError *error = NULL;
 	char *raw;
 
-	testsuite_check ("Serialization and legacy encoding resolve the first raw transfer-encoding header");
+	testsuite_check ("Serialization and preparation resolve the first raw transfer-encoding header");
 	g_mime_part_set_content (part, content);
 	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "BASE64", NULL);
 	g_mime_header_list_append (headers, "Content-Transfer-Encoding", "binary", NULL);
@@ -1037,7 +1038,8 @@ test_content_encoding_consumers (void)
 	g_assert_cmpmem (bytes->data, bytes->len, "SGVsbG8=\n", 9);
 	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 	testsuite_header_set_raw_text (header, raw);
-	g_mime_entity_encode (entity, GMIME_ENCODING_CONSTRAINT_7BIT);
+	g_assert_true (g_mime_entity_prepare (entity, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+	g_assert_no_error (error);
 	g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
 	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 	g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
@@ -1357,6 +1359,7 @@ test_write_to_stream (const char *datadir, const char *output, GMimeContentEncod
 	GMimeStream *stream;
 	GByteArray *expected;
 	GByteArray *actual;
+	GError *error = NULL;
 	char *path;
 	
 	testsuite_check ("%s (%s)", what, output);
@@ -1374,10 +1377,12 @@ test_write_to_stream (const char *datadir, const char *output, GMimeContentEncod
 	g_mime_part_set_content_id (mime_part, id);
 	g_mime_part_set_content_md5 (mime_part, md5);
 	
-	if (encoding == GMIME_CONTENT_ENCODING_UNSPECIFIED)
-		g_mime_entity_encode ((GMimeEntity *) mime_part, GMIME_ENCODING_CONSTRAINT_7BIT);
-	else
+	if (encoding == GMIME_CONTENT_ENCODING_UNSPECIFIED) {
+		g_assert_true (g_mime_entity_prepare (GMIME_ENTITY (mime_part), GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+		g_assert_no_error (error);
+	} else {
 		g_mime_part_set_content_encoding (mime_part, encoding);
+	}
 	
 	actual = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();

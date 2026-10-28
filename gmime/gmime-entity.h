@@ -89,8 +89,6 @@ struct _GMimeEntityClass {
 	ssize_t      (* write_to_stream) (GMimeEntity *object, GMimeFormatOptions *options,
 					  gboolean content_only, GMimeStream *stream);
 
-	void         (* encode) (GMimeEntity *object, GMimeEncodingConstraint constraint);
-
 	void         (* accept) (GMimeEntity *object, GMimeVisitor *visitor);
 
 	gboolean     (* prepare_with_max_line_length) (GMimeEntity *object, GMimeEncodingConstraint constraint,
@@ -167,8 +165,6 @@ gboolean g_mime_entity_write_to_file (GMimeEntity *object, GMimeFormatOptions *o
 gboolean g_mime_entity_write_content_to_file (GMimeEntity *object, GMimeFormatOptions *options,
 					    const char *filename, GError **error);
 char *g_mime_entity_to_string (GMimeEntity *object, GMimeFormatOptions *options);
-
-void g_mime_entity_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
 
 gboolean g_mime_entity_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, GError **error);
 gboolean g_mime_entity_prepare_with_max_line_length (GMimeEntity *object, GMimeEncodingConstraint constraint,

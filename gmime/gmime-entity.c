@@ -77,7 +77,6 @@ static void object_headers_cleared (GMimeEntity *object);
 static void object_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
 static char *object_get_headers (GMimeEntity *object, GMimeFormatOptions *options);
 static ssize_t object_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream);
-static void object_encode (GMimeEntity *object, GMimeEncodingConstraint constraint);
 static void object_accept (GMimeEntity *object, GMimeVisitor *visitor);
 
 static void header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *args, GMimeEntity *object);
@@ -159,7 +158,6 @@ g_mime_entity_class_init (GMimeEntityClass *klass)
 	klass->set_content_type = object_set_content_type;
 	klass->get_headers = object_get_headers;
 	klass->write_to_stream = object_write_to_stream;
-	klass->encode = object_encode;
 	klass->accept = object_accept;
 	klass->prepare_with_max_line_length = NULL;
 }
@@ -1535,31 +1533,6 @@ g_mime_entity_write_content_to_file (GMimeEntity *object, GMimeFormatOptions *op
 }
 
 
-static void
-object_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
-{
-	return;
-}
-
-
-/**
- * g_mime_entity_encode:
- * @object: a #GMimeEntity
- * @constraint: a #GMimeEncodingConstraint
- *
- * Calculates and sets the most efficient Content-Transfer-Encoding
- * for this #GMimeEntity and all child parts based on the @constraint
- * provided.
- **/
-void
-g_mime_entity_encode (GMimeEntity *object, GMimeEncodingConstraint constraint)
-{
-	g_return_if_fail (GMIME_IS_ENTITY (object));
-	
-	GMIME_ENTITY_GET_CLASS (object)->encode (object, constraint);
-}
-
-
 /**
  * g_mime_entity_prepare:
  * @object: a #GMimeEntity
@@ -1605,8 +1578,8 @@ g_mime_entity_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, 
  * this is not an atomic operation on the entire tree. The failing leaf
  * preserves its transfer headers and previous encoder limit.
  *
- * Unlike g_mime_entity_encode(), this checked API reports analysis failures
- * and carries the requested encoder line limit into serialization.
+ * Reports analysis failures and carries the requested encoder line limit
+ * into serialization.
  *
  * Returns: %TRUE on success, or %FALSE on failure.
  **/

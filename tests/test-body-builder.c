@@ -420,7 +420,8 @@ test_roundtrip (void)
 	body = g_mime_body_builder_to_message_body (builder, &error);
 	g_assert_no_error (error);
 	g_object_unref (builder);
-	g_mime_entity_encode (body, GMIME_ENCODING_CONSTRAINT_7BIT);
+	g_assert_true (g_mime_entity_prepare (body, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
+	g_assert_no_error (error);
 	g_assert_cmpint (g_mime_entity_write_to_stream (body, NULL, stream), >, 0);
 	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
 	parser = g_mime_parser_new_with_stream (stream);

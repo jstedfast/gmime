@@ -1015,7 +1015,8 @@ g_mime_entity_write_content_to_stream
 g_mime_entity_write_to_file
 g_mime_entity_write_content_to_file
 g_mime_entity_to_string
-g_mime_entity_encode
+g_mime_entity_prepare
+g_mime_entity_prepare_with_max_line_length
 g_mime_entity_accept
 
 <SUBSECTION Private>
