@@ -31,7 +31,9 @@
 #include "gmime-stream-cat.h"
 #include "gmime-stream-mem.h"
 #include "gmime-internal.h"
+#include "gmime-parse-utils.h"
 #include "gmime-parser.h"
+#include "gmime-utils.h"
 
 
 /**
@@ -45,14 +47,6 @@
 
 /* GObject class methods */
 static void g_mime_message_partial_class_init (GMimeMessagePartialClass *klass);
-static void g_mime_message_partial_init (GMimeMessagePartial *catpart, GMimeMessagePartialClass *klass);
-static void g_mime_message_partial_finalize (GObject *object);
-
-/* GMimeEntity class methods */
-static void message_partial_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
-
-
-static GMimePartClass *parent_class = NULL;
 
 static void
 message_partial_accept (GMimeEntity *object, GMimeVisitor *visitor)
@@ -76,7 +70,7 @@ g_mime_message_partial_get_type (void)
 			NULL, /* class_data */
 			sizeof (GMimeMessagePartial),
 			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_message_partial_init,
+			NULL, /* instance_init */
 		};
 		
 		type = g_type_register_static (GMIME_TYPE_PART, "GMimeMessagePartial", &info, 0);
@@ -90,62 +84,39 @@ static void
 g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 {
 	GMimeEntityClass *object_class = GMIME_ENTITY_CLASS (klass);
-	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-	
-	parent_class = g_type_class_ref (GMIME_TYPE_PART);
-	
-	gobject_class->finalize = g_mime_message_partial_finalize;
-	
-	object_class->set_content_type = message_partial_set_content_type;
+
 	object_class->accept = message_partial_accept;
 }
 
-static void
-g_mime_message_partial_init (GMimeMessagePartial *partial, GMimeMessagePartialClass *klass)
+static int
+message_partial_get_integer (GMimeMessagePartial *partial, const char *name)
 {
-	partial->id = NULL;
-	partial->number = -1;
-	partial->total = -1;
-}
-
-static void
-g_mime_message_partial_finalize (GObject *object)
-{
-	GMimeMessagePartial *partial = (GMimeMessagePartial *) object;
-	
-	g_free (partial->id);
-	
-	G_OBJECT_CLASS (parent_class)->finalize (object);
-}
-
-
-static void
-message_partial_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
-{
-	GMimeMessagePartial *partial = (GMimeMessagePartial *) object;
+	GMimeContentType *content_type = ((GMimeEntity *) partial)->content_type;
 	const char *value;
-	
-	value = g_mime_content_type_get_parameter (content_type, "id");
-	g_free (partial->id);
-	partial->id = g_strdup (value);
-	
-	value = g_mime_content_type_get_parameter (content_type, "number");
-	partial->number = value ? strtol (value, NULL, 10) : -1;
-	
-	value = g_mime_content_type_get_parameter (content_type, "total");
-	partial->total = value ? strtol (value, NULL, 10) : -1;
-	
-	GMIME_ENTITY_CLASS (parent_class)->set_content_type (object, content_type);
+	gint32 number;
+
+	if (!content_type || !(value = g_mime_content_type_get_parameter (content_type, name)))
+		return -1;
+
+	value += strspn (value, " \t\r\n\v\f");
+
+	if (!_g_mime_parse_int32 (&value, &number))
+		return -1;
+
+	value += strspn (value, " \t\r\n\v\f");
+
+	return *value ? -1 : number;
 }
 
 
 /**
  * g_mime_message_partial_new:
  * @id: message/partial part id
- * @number: message/partial part number
- * @total: total number of message/partial parts
+ * @number: message/partial part number, starting at 1
+ * @total: total number of message/partial parts, at least @number
  *
  * Creates a new MIME message/partial object.
+ * The @id may be empty, but must be a non-%NULL UTF-8 string.
  *
  * Returns: an empty MIME message/partial object.
  **/
@@ -155,20 +126,21 @@ g_mime_message_partial_new (const char *id, int number, int total)
 	GMimeContentType *content_type;
 	GMimeMessagePartial *partial;
 	char *num;
+
+	g_return_val_if_fail (id != NULL && g_utf8_validate (id, -1, NULL), NULL);
+	g_return_val_if_fail (number >= 1, NULL);
+	g_return_val_if_fail (total >= number, NULL);
 	
 	partial = g_object_new (GMIME_TYPE_MESSAGE_PARTIAL, NULL);
 	
 	content_type = g_mime_content_type_new ("message", "partial");
 	
-	partial->id = g_strdup (id);
 	g_mime_content_type_set_parameter (content_type, "id", id);
 	
-	partial->number = number;
 	num = g_strdup_printf ("%d", number);
 	g_mime_content_type_set_parameter (content_type, "number", num);
 	g_free (num);
 	
-	partial->total = total;
 	num = g_strdup_printf ("%d", total);
 	g_mime_content_type_set_parameter (content_type, "total", num);
 	g_free (num);
@@ -186,14 +158,17 @@ g_mime_message_partial_new (const char *id, int number, int total)
  *
  * Gets the message/partial id parameter value.
  *
- * Returns: the message/partial id or %NULL on fail.
+ * Returns: (nullable): the borrowed message/partial id, or %NULL if absent.
+ * The value is valid until the Content-Type or its parameters change.
  **/
 const char *
 g_mime_message_partial_get_id (GMimeMessagePartial *partial)
 {
+	GMimeEntity *entity = (GMimeEntity *) partial;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), NULL);
 	
-	return partial->id;
+	return entity->content_type ? g_mime_content_type_get_parameter (entity->content_type, "id") : NULL;
 }
 
 
@@ -203,14 +178,16 @@ g_mime_message_partial_get_id (GMimeMessagePartial *partial)
  *
  * Gets the message/partial part number.
  *
- * Returns: the message/partial part number or %-1 on fail.
+ * Returns: the message/partial part number or %-1 if absent, malformed,
+ * or outside the nonnegative 32-bit integer range. Surrounding ASCII
+ * whitespace is allowed, but signs and trailing non-whitespace are not.
  **/
 int
 g_mime_message_partial_get_number (GMimeMessagePartial *partial)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), -1);
 	
-	return partial->number;
+	return message_partial_get_integer (partial, "number");
 }
 
 
@@ -222,14 +199,16 @@ g_mime_message_partial_get_number (GMimeMessagePartial *partial)
  * reconstruct the original message.
  *
  * Returns: the total number of message/partial parts needed to
- * reconstruct the original message or -1 on fail.
+ * reconstruct the original message or %-1 if absent, malformed, or outside
+ * the nonnegative 32-bit integer range. Surrounding ASCII whitespace is
+ * allowed, but signs and trailing non-whitespace are not.
  **/
 int
 g_mime_message_partial_get_total (GMimeMessagePartial *partial)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), -1);
 	
-	return partial->total;
+	return message_partial_get_integer (partial, "total");
 }
 
 
@@ -240,6 +219,7 @@ partial_compare (const void *v1, const void *v2)
 	GMimeMessagePartial **partial2 = (GMimeMessagePartial **) v2;
 	int num1, num2;
 	
+	/* Note: reconstruct_message() has already validated that every partial has a number. */
 	num1 = g_mime_message_partial_get_number (*partial1);
 	num2 = g_mime_message_partial_get_number (*partial2);
 	
@@ -262,8 +242,8 @@ GMimeMessage *
 g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num)
 {
 	GMimeMessagePartial *partial;
-	GMimeContent *wrapper;
 	GMimeStream *cat, *stream;
+	GMimeContent *wrapper;
 	GMimeMessage *message;
 	GMimeParser *parser;
 	int total, number;
@@ -272,6 +252,20 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 	
 	if (num == 0 || !(id = g_mime_message_partial_get_id (partials[0])))
 		return NULL;
+
+	for (i = 0; i < num; i++) {
+		const char *partial_id;
+
+		partial = partials[i];
+
+		/* sanity check to make sure this part belongs... */
+		partial_id = g_mime_message_partial_get_id (partial);
+		if (!partial_id || strcmp (id, partial_id))
+			return NULL;
+
+		if (g_mime_message_partial_get_number (partial) == -1)
+			return NULL;
+	}
 	
 	/* get them into the correct order... */
 	qsort ((void *) partials, num, sizeof (gpointer), partial_compare);
@@ -286,19 +280,10 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 	cat = g_mime_stream_cat_new ();
 	
 	for (i = 0; i < num; i++) {
-		const char *partial_id;
-		
 		partial = partials[i];
 		
-		/* sanity check to make sure this part belongs... */
-		partial_id = g_mime_message_partial_get_id (partial);
-		if (!partial_id || strcmp (id, partial_id))
-			goto exception;
-		
 		/* sanity check to make sure we aren't missing any parts */
-		if ((number = g_mime_message_partial_get_number (partial)) == -1)
-			goto exception;
-		
+		number = g_mime_message_partial_get_number (partial);
 		if ((size_t) number != i + 1)
 			goto exception;
 		
@@ -374,6 +359,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	GMimeStream *stream, *substream;
 	GMimeFormatOptions *options;
 	GMimeContent *wrapper;
+	char *generated_id = NULL;
 	const unsigned char *buf;
 	GPtrArray *parts;
 	gint64 len, end;
@@ -433,6 +419,8 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	}
 	
 	id = g_mime_message_get_message_id (message);
+	if (!id)
+		id = generated_id = g_mime_utils_generate_message_id (NULL);
 	
 	for (i = 0; i < parts->len; i++) {
 		partial = g_mime_message_partial_new (id, i + 1, parts->len);
@@ -447,6 +435,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 		g_object_unref (partial);
 	}
 	
+	g_free (generated_id);
 	g_object_unref (stream);
 	
 	messages = (GMimeMessage **) parts->pdata;

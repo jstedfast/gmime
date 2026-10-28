@@ -4570,7 +4570,40 @@ payloads and UTF-8 sequences, empty words, decoder reset boundaries, and
 long runs of single-character payloads. Full header-policy differential,
 clean-build, bindings, and cross-platform validation remain pending.
 
+## Message/partial parameter properties
+
+MessagePartial construction and its Id, Number, and Total properties now
+follow MimeKit. Construction requires a non-NULL UTF-8 id (empty is allowed),
+number >= 1, and total >= number. The getters read live Content-Type
+parameters, including direct parameter edits and header/type replacement.
+The id is borrowed; absent or invalid numeric values return -1 instead of
+MimeKit's nullable integer. Zero remains valid when reading parameters.
+Integer parsing accepts decimal digits and surrounding SP, HTAB, CR, LF,
+VT, or FF, but rejects signs, Unicode whitespace, trailing garbage, and
+values above Int32.MaxValue without changing the parameter or raw header.
+
+The obsolete public id/number/total cache fields were removed from the
+GMimeMessagePartial struct for GMime 4; callers must use the getters.
+Splitting generates a shared partial id when Message-ID is absent, without
+changing the original message. Reconstruction validates ids and numbers
+before sorting, including MimeKit's corresponding comparator precondition
+comment. Existing applicable split implementation comments are retained.
+The remaining split/join algorithm and header-policy differences are not
+part of this increment.
+
+The normal library, GIR, typelib, and Vala bindings build successfully.
+Related reader, parameter, type, visitor, and partial-message tests pass.
+All 49,807 numeric parameter cases match actual MimeKit source in normal
+and ASan/UBSan builds. Focused partial regressions also pass leak checking.
+The complete partial fixture test passes ASan/UBSan with leak detection
+disabled; its older fixture harness reproduces the same existing leaks
+(355,174 bytes in 2,599 allocations).
+
 ## Remaining migration phases
+
+Managed collection CopyTo(T[] array, int offset) convenience APIs, including
+Multipart.CopyTo(), are intentionally excluded from the port. Stream and
+content copying APIs are unaffected.
 
 - Continue aligning public APIs with MimeKit while retaining the GPGME
   backend.
