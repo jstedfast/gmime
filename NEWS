@@ -1,3 +1,10 @@
+### GMime 4.0
+
+* Modernized MIME parsing, content handling, header formatting, and address APIs.
+* Added streaming readers, body/attachment helpers, report types, and SIMD scans.
+* Replaced Autotools with Meson; GLib 2.88 or newer is required.
+* This release breaks API/ABI compatibility; see PORTING.md for migration.
+
 ### GMime 3.2.15
 
 * Fixed the g_mime_object_get_header API definition to note that it can return null

@@ -4,12 +4,11 @@
 
 ## What is GMime?
 
-This development tree is migrating GMime 4 to MimeKit.Core's parsing and
-serialization behavior. The port is incremental and is not yet feature-complete.
-See [PORTING.md](PORTING.md) for the API renames, scope, and compatibility contract.
-
 GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose
 Internet Mail Extension (MIME) as defined by [numerous IETF specifications](https://github.com/jstedfast/gmime/blob/master/RFCs.md).
+
+See [PORTING.md](PORTING.md) to migrate applications from GMime 3.x, and
+[STATUS.md](STATUS.md) for implementation scope and compatibility decisions.
 
 GMime features an extremely robust high-performance parser designed to be able to preserve byte-for-byte information
 allowing developers to re-seralize the parsed messages back to a stream exactly as the parser found them. It also features
@@ -126,6 +125,38 @@ Meson's standard options provide static libraries (`-Ddefault_library=static`),
 coverage (`-Db_coverage=true`), and sanitizers (`-Db_sanitize=address,undefined`).
 When cross-compiling without an executable wrapper, GMime uses its built-in
 platform charset aliases instead of running the iconv alias detector.
+
+### Continuous integration and reference tests
+
+CI builds optimized, assertion-enabled configurations on native Linux x64
+and ARM64 and macOS ARM64, with optional features enabled and disabled.
+Linux additionally checks Clang ASan/UBSan, static linking, source
+distributions, documentation, and installed C/GIR/Vala consumers.
+The SIMD test reports available and unavailable backends; CI explicitly
+requires AVX2 on its x64 entries and NEON on ARM64. It fails instead of
+silently substituting scalar coverage. Hosted-runner timings are not
+performance gates. A required Windows job is deferred until a full-library
+integration build is available; scanner-only MSVC checks are not equivalent.
+
+The normal reader test includes 90 frozen actual-MimeKit callback traces,
+including newline detection, multipart/embedded messages, truncated input,
+short reads, nonseekable streams, and a 4096-byte buffer edge. These run
+without .NET or a MimeKit checkout on every CI platform. To regenerate them,
+use the .NET 10 SDK and the actual reference sources, not GMime output:
+
+```sh
+dotnet run --project tools/mimekit-reader-reference \
+  -p:MimeKitSource=/path/to/MimeKit -- \
+  /path/to/MimeKit tests/data/reader/mimekit.txt
+```
+
+Use the same reference directory for the build property and program argument.
+The fixture records both the reference Git revision and a SHA-256 digest of
+the compiled source files, including local source edits. Review regenerated
+differences and the associated reference changes before accepting them.
+The harness compiles the reference sources without modifying their checkout.
+The six empty-input cases explicitly retain GMime's documented EOS-on-success
+contract: unlike MimeKit, a failed empty read does not report successful EOS.
 
 ## Using GMime
 
@@ -855,7 +886,8 @@ of GMime.
 |LICENSE        |The GNU Lesser General Public License, version 2.1|
 |INSTALL        |In-depth installation instructions|
 |TODO           |Description of planned GMime development|
-|[PORTING.md](PORTING.md)|Migration from GMime 3.0 to 4.0 and the MimeKit porting contract|
+|[PORTING.md](PORTING.md)|Application migration from GMime 3.2.15 to 4.0|
+|[STATUS.md](STATUS.md)|Implementation status, compatibility decisions, and validation history|
 
 
 ## Discussion Forums

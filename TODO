@@ -6,16 +6,6 @@ tasks are presented in.
 GMime 3.4+ Planning:
 ====================
 
-- Would it be valuable to add GMimeMultipartAlternative and GMimeMultipartRelated
-  subclasses (like MimeKit)? Or would it just be better to fold that functionality
-  into GMimeMultipart?
-
-- What about GMimeMultipartReport, GMimeMessageDeliveryStatus, and
-  GMimeMessageDispositionNotification?
-
-- Provide g_mime_message_get_text_body(), get_html_body(), get_attachments()-like
-  API's similar to what MimeKit offers?
-
 - Implement DKIM-Signature support?
 
 - Implement Pretty-Easy-Privacy support? What is that? Is that something that makes

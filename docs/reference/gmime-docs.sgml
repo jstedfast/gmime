@@ -40,6 +40,7 @@
 <!ENTITY GMimeEncoder SYSTEM "xml/gmime-encoder.xml">
 <!ENTITY GMimeDecoder SYSTEM "xml/gmime-decoder.xml">
 <!ENTITY gmime-codecs SYSTEM "xml/gmime-codecs.xml">
+<!ENTITY gmime-yenc SYSTEM "xml/gmime-yenc.xml">
 <!ENTITY GMimeInternetAddress SYSTEM "xml/gmime-internet-address.xml">
 <!ENTITY GMimeDomainList SYSTEM "xml/gmime-domain-list.xml">
 <!ENTITY GMimeGroupAddress SYSTEM "xml/gmime-group-address.xml">
@@ -198,6 +199,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &GMimeEncoder;
     &GMimeDecoder;
     &gmime-codecs;
+    &gmime-yenc;
     &gmime-utils;
     &gmime-types;
     &GMimeMessageIdList;
