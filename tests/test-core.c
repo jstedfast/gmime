@@ -9394,6 +9394,325 @@ test_content_copy (void)
 	g_object_unref (source);
 }
 
+static GMimeApplicationPkcs7Mime *
+test_compressed_part_new (const void *data, size_t length, GMimeContentEncoding encoding)
+{
+	GMimeApplicationPkcs7Mime *part;
+	GMimeContent *content;
+	GMimeStream *stream;
+
+	part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA);
+	stream = g_mime_stream_mem_new_with_buffer (data, length);
+	content = g_mime_content_new_with_stream (stream, encoding);
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	g_object_unref (stream);
+	return part;
+}
+
+static void
+test_compressed_data (void)
+{
+	/* Independently encoded RFC 3274 fixtures with RFC 1950 zlib content. */
+	static const char *valid[] = {
+		"MGkGCyqGSIb3DQEJEAEJoFowWAIBADANBgsqhkiG9w0BCRADCDBEBgkqhkiG9w0BBwGgNwQ1eJxzzs8rSc0r0Q2pLEi1UihJrSjRL8hJzMzj5eLlcs7PLShKLS5OTVFIhijT4+UCALDBELA=",
+		"MGsGCyqGSIb3DQEJEAEJoFwwWgIBADAPBgsqhkiG9w0BCRADCAUAMEQGCSqGSIb3DQEHAaA3BDV4nHPOzytJzSvRDaksSLVSKEmtKNEvyEnMzOPl4uVyzs8tKEotLk5NUUiGKNPj5QIAsMEQsA==",
+		"MIAGCyqGSIb3DQEJEAEJoIAwgAIBADCABgsqhkiG9w0BCRADCAUAAAAwgAYJKoZIhvcNAQcBoIAkgAQIeJxzzs8rSc0kgAQtK9ENqSxItVIoSa0o0S/ISczM4+Xi5XLOzy0oSi0uTk1RSIYo0+PlAgCwwRCwAAAAAAAAAAAAAAAAAAA=",
+		"MG0GCyqGSIb3DQEJEAEJoF4wXAIBADANBgsqhkiG9w0BCRADCDBIBgkqhkiG9w0BBwGgOyQ5BAh4nHPOzytJzQQtK9ENqSxItVIoSa0o0S/ISczM4+Xi5XLOzy0oSi0uTk1RSIYo0+PlAgCwwRCw"
+	};
+	static const char *invalid[] = {
+		"MGgGCyqGSIb3DQEJEAEJoFkwVwIBADANBgsqhkiG9w0BCRADCDBDBgkqhkiG9w0BBwGgNgQ0eJxzzs8rSc0r0Q2pLEi1UihJrSjRL8hJzMzj5eLlcs7PLShKLS5OTVFIhijT4+UCALDBEA==",
+		"MGoGCyqGSIb3DQEJEAEJoFswWQIBADANBgsqhkiG9w0BCRADCDBFBgkqhkiG9w0BBwGgOAQ2eJxzzs8rSc0r0Q2pLEi1UihJrSjRL8hJzMzj5eLlcs7PLShKLS5OTVFIhijT4+UCALDBELB4",
+		"MIGgBgsqhkiG9w0BCRABCaCBkDCBjQIBADANBgsqhkiG9w0BCRADCDB5BgkqhkiG9w0BBwGgbARqeJxzzs8rSc0r0Q2pLEi1UihJrSjRL8hJzMzj5eLlcs7PLShKLS5OTVFIhijT4+UCALDBELB4nHPOzytJzSvRDaksSLVSKEmtKNEvyEnMzOPl4uVyzs8tKEotLk5NUUiGKNPj5QIAsMEQsA==",
+		"MHUGCyqGSIb3DQEJEAEJoGYwZAIBADANBgsqhkiG9w0BCRADCDBQBgkqhkiG9w0BBwGgQwRBH4sIAAAAAAAACnPOzytJzSvRDaksSLVSKEmtKNEvyEnMzOPl4uVyzs8tKEotLk5NUUiGKNPj5QIAZ9ZRXDEAAAA=",
+		"MGMGCyqGSIb3DQEJEAEJoFQwUgIBADANBgsqhkiG9w0BCRADCDA+BgkqhkiG9w0BBwGgMQQvc87PK0nNK9ENqSxItVIoSa0o0S/ISczM4+Xi5XLOzy0oSi0uTk1RSIYo0+PlAgA=",
+		"MDwGCyqGSIb3DQEJEAEJoC0wKwIBADANBgsqhkiG9w0BCRADCDAXBgkqhkiG9w0BBwGgCgQIeJwDAAAAAAE=",
+		"MIIBDQYLKoZIhvcNAQkQAQmggf0wgfoCAQAwDQYLKoZIhvcNAQkQAwgwgeUGCSqGSIb3DQEHAaCB1ySAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSABDV4nHPOzytJzSvRDaksSLVSKEmtKNEvyEnMzOPl4uVyzs8tKEotLk5NUUiGKNPj5QIAsMEQsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+	};
+	static const struct {
+		guint offset;
+		unsigned char value;
+		int code;
+	} mutations[] = {
+		{ 0, 0x31, GMIME_ERROR_PARSE_ERROR },
+		{ 1, 0xff, GMIME_ERROR_PARSE_ERROR },
+		{ 1, 0x68, GMIME_ERROR_PARSE_ERROR },
+		{ 14, 8, GMIME_ERROR_PARSE_ERROR },
+		{ 21, 1, GMIME_ERROR_PARSE_ERROR },
+		{ 36, 7, GMIME_ERROR_NOT_SUPPORTED },
+		{ 49, 2, GMIME_ERROR_NOT_SUPPORTED },
+		{ 53, 0x80, GMIME_ERROR_PARSE_ERROR },
+		{ 106, 0, GMIME_ERROR_PARSE_ERROR }
+	};
+	GMimeApplicationPkcs7Mime *part, *compressed;
+	GMimeEntity *entity;
+	GMimeTextPart *text_part;
+	GMimePart *binary;
+	GMimeContent *content;
+	GMimeContentType *type;
+	GMimeFormatOptions *options;
+	GMimeStream *stream, *decoded;
+	TestStreamFailure *failure;
+	GByteArray *bytes, *original;
+	GError *error = NULL;
+	unsigned char *data, *changed, *payload;
+	gsize length;
+	char *text;
+	guint i, j;
+	guint32 random = 0x12345678;
+	gboolean rejected;
+
+	for (i = 0; i < G_N_ELEMENTS (valid); i++) {
+		data = g_base64_decode (valid[i], &length);
+		part = test_compressed_part_new (data, length, GMIME_CONTENT_ENCODING_BINARY);
+		entity = g_mime_application_pkcs7_mime_decompress (part, 49, &error);
+		g_assert_no_error (error);
+		check (GMIME_IS_TEXT_PART (entity), "DER and BER CompressedData decode without a crypto context");
+		if (GMIME_IS_TEXT_PART (entity)) {
+			text = g_mime_text_part_get_text (GMIME_TEXT_PART (entity));
+			check (text && !strcmp (text, "Compressed content.\n"),
+			       "decompressed MIME content normalizes DOS newlines");
+			g_free (text);
+		}
+		g_clear_object (&entity);
+		entity = g_mime_application_pkcs7_mime_decompress (part, 48, &error);
+		check (!entity && error && strstr (error->message, "maximum size"),
+		       "decompression limit includes MIME headers and raw DOS newlines");
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (part);
+
+		rejected = TRUE;
+		for (j = 0; j < length; j++) {
+			part = test_compressed_part_new (data, j, GMIME_CONTENT_ENCODING_BINARY);
+			entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
+			rejected = rejected && !entity && error != NULL;
+			g_clear_error (&error);
+			g_clear_object (&entity);
+			g_object_unref (part);
+		}
+		check (rejected, "every truncated DER or BER prefix fails with an explicit error");
+		g_free (data);
+	}
+
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		data = g_base64_decode (invalid[i], &length);
+		part = test_compressed_part_new (data, length, GMIME_CONTENT_ENCODING_BINARY);
+		entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
+		check (!entity && error,
+		       "truncated, trailing, concatenated, non-zlib, empty, and deeply nested payloads are rejected");
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (part);
+		g_free (data);
+	}
+
+	data = g_base64_decode (valid[0], &length);
+	for (i = 0; i < G_N_ELEMENTS (mutations); i++) {
+		changed = g_memdup2 (data, length);
+		changed[mutations[i].offset] = mutations[i].value;
+		part = test_compressed_part_new (changed, length, GMIME_CONTENT_ENCODING_BINARY);
+		entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
+		check (!entity, "invalid CMS tags, lengths, OIDs, versions, and zlib checksums fail");
+		g_assert_error (error, GMIME_ERROR, mutations[i].code);
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (part);
+		g_free (changed);
+	}
+	changed = g_malloc (length + 1);
+	memcpy (changed, data, length);
+	changed[length] = 0;
+	part = test_compressed_part_new (changed, length + 1, GMIME_CONTENT_ENCODING_BINARY);
+	entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
+	check (!entity && error, "trailing CMS data is rejected");
+	g_clear_error (&error);
+	g_clear_object (&entity);
+	g_object_unref (part);
+	g_free (changed);
+
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j <= length; j++) {
+			failure = g_object_new (test_stream_failure_get_type (), NULL);
+			failure->parent_object.source = g_mime_stream_mem_new_with_buffer ((char *) data, length);
+			failure->fail_after = j;
+			failure->unset_error = i;
+			failure->onebyte = TRUE;
+			g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+			part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA);
+			content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BINARY);
+			g_mime_part_set_content (GMIME_PART (part), content);
+			g_object_unref (content);
+			entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
+			check (!entity, "CMS read failures never return partial or complete-looking entities");
+			g_assert_error (error, GMIME_ERROR, (i ? GMIME_ERROR_GENERAL : EIO));
+			g_clear_error (&error);
+			g_clear_object (&entity);
+			failure->bytes_read = 0;
+			failure->fail_after = G_MAXSIZE;
+			failure->fail_reset_on = failure->reset_calls + 1;
+			entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
+			g_assert_error (error, GMIME_ERROR, (i ? GMIME_ERROR_GENERAL : ESPIPE));
+			g_clear_error (&error);
+			g_clear_object (&entity);
+			entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
+			check (entity && !error, "decompression supports one-byte reads and retrying after an I/O failure");
+			g_clear_error (&error);
+			g_clear_object (&entity);
+			check (!failure->close_calls, "decompression does not close the caller's content stream");
+			g_object_unref (part);
+			g_object_unref (failure);
+		}
+	}
+	g_free (data);
+
+	part = test_compressed_part_new (valid[0], strlen (valid[0]), GMIME_CONTENT_ENCODING_BASE64);
+	type = g_mime_content_type_new ("application", "pkcs7-mime");
+	g_mime_entity_set_content_type (GMIME_ENTITY (part), type);
+	g_object_unref (type);
+	entity = g_mime_application_pkcs7_mime_decompress (part, 49, &error);
+	check (entity && !error, "base64 transfer decoding and missing smime-type parameters are supported");
+	g_clear_object (&entity);
+	g_clear_error (&error);
+	g_object_unref (part);
+
+	part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA);
+	check (!g_mime_application_pkcs7_mime_decompress (part, 1024, &error),
+	       "decompression rejects incompatible S/MIME types");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_object_unref (part);
+	part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA);
+	check (!g_mime_application_pkcs7_mime_decompress (part, 1024, &error),
+	       "decompression reports absent content");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	content = g_mime_content_new ();
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	check (!g_mime_application_pkcs7_mime_decompress (part, 1024, &error),
+	       "decompression reports missing backing streams");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_object_unref (part);
+
+	text_part = g_mime_text_part_new ();
+	g_mime_text_part_set_text (text_part, "Compressed content.\n");
+	compressed = g_mime_application_pkcs7_mime_compress (GMIME_ENTITY (text_part), &error);
+	g_assert_no_error (error);
+	check (compressed && g_mime_application_pkcs7_mime_get_smime_type (compressed) ==
+	       GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA &&
+	       !strcmp (g_mime_part_get_filename (GMIME_PART (compressed)), "smime.p7z") &&
+	       g_mime_part_get_content_encoding (GMIME_PART (compressed)) == GMIME_CONTENT_ENCODING_BASE64,
+	       "compression constructs a compressed-data S/MIME attachment");
+	if (compressed) {
+		entity = g_mime_application_pkcs7_mime_decompress (compressed, 1024, &error);
+		check (GMIME_IS_TEXT_PART (entity) && !error, "compressed MIME entities round-trip");
+		g_clear_object (&entity);
+		g_clear_error (&error);
+		stream = g_mime_stream_mem_new ();
+		g_mime_entity_write_to_stream (GMIME_ENTITY (compressed), NULL, stream);
+		g_mime_stream_reset (stream);
+		entity = g_mime_entity_load (NULL, stream, &error);
+		g_assert_no_error (error);
+		check (GMIME_IS_APPLICATION_PKCS7_MIME (entity), "serialized compressed attachments retain their MIME type");
+		if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
+			GMimeEntity *expanded;
+
+			expanded = g_mime_application_pkcs7_mime_decompress (GMIME_APPLICATION_PKCS7_MIME (entity),
+									   1024, &error);
+			check (GMIME_IS_TEXT_PART (expanded) && !error,
+			       "serialized compressed attachments decode their base64 content before decompression");
+			g_clear_error (&error);
+			g_clear_object (&expanded);
+		}
+		g_clear_object (&entity);
+		g_object_unref (stream);
+		g_object_unref (compressed);
+	}
+	text = g_strnfill (1024 * 1024, 'A');
+	g_mime_text_part_set_text (text_part, text);
+	g_free (text);
+	compressed = g_mime_application_pkcs7_mime_compress (GMIME_ENTITY (text_part), &error);
+	g_assert_no_error (error);
+	check (compressed != NULL, "highly compressible MIME content can be compressed");
+	if (compressed) {
+		entity = g_mime_application_pkcs7_mime_decompress (compressed, 4096, &error);
+		check (!entity && error && strstr (error->message, "maximum size"),
+		       "high-expansion zlib payloads stop at the decompressed-size limit");
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (compressed);
+	}
+	g_object_unref (text_part);
+
+	payload = g_malloc (60000);
+	for (i = 0; i < 60000; i++) {
+		random ^= random << 13;
+		random ^= random >> 17;
+		random ^= random << 5;
+		payload[i] = random;
+	}
+	binary = g_mime_part_new_with_type ("application", "octet-stream");
+	stream = g_mime_stream_mem_new_with_buffer ((char *) payload, 60000);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+	g_mime_part_set_content (binary, content);
+	g_mime_part_set_content_encoding (binary, GMIME_CONTENT_ENCODING_BASE64);
+	g_object_unref (content);
+	g_object_unref (stream);
+	options = g_mime_format_options_clone (NULL);
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	stream = g_mime_stream_mem_new ();
+	g_mime_entity_write_to_stream (GMIME_ENTITY (binary), options, stream);
+	g_mime_format_options_free (options);
+	original = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+	compressed = g_mime_application_pkcs7_mime_compress (GMIME_ENTITY (binary), &error);
+	g_assert_no_error (error);
+	check (compressed != NULL, "compression handles incompressible content spanning many buffers");
+	if (compressed) {
+		entity = g_mime_application_pkcs7_mime_decompress (compressed, original->len, &error);
+		check (GMIME_IS_PART (entity) && !error, "long-form DER lengths and multi-buffer zlib output round-trip");
+		if (GMIME_IS_PART (entity)) {
+			decoded = g_mime_stream_mem_new ();
+			g_mime_content_decode_to_stream (g_mime_part_get_content (GMIME_PART (entity)), decoded);
+			bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (decoded));
+			check (bytes->len == 60000 && !memcmp (bytes->data, payload, 60000),
+			       "compression preserves arbitrary binary MIME content exactly");
+			g_object_unref (decoded);
+		}
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		entity = g_mime_application_pkcs7_mime_decompress (compressed, original->len - 1, &error);
+		check (!entity && error, "multi-buffer decompression enforces the exact expanded-byte limit");
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (compressed);
+	}
+	g_object_unref (stream);
+	g_object_unref (binary);
+	g_free (payload);
+
+	for (i = 0; i < 2; i++) {
+		failure = g_object_new (test_stream_failure_get_type (), NULL);
+		failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("content", 7);
+		failure->fail_after = 3;
+		failure->unset_error = i;
+		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+		binary = g_mime_part_new ();
+		content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BINARY);
+		g_mime_part_set_content (binary, content);
+		g_object_unref (content);
+		compressed = g_mime_application_pkcs7_mime_compress (GMIME_ENTITY (binary), &error);
+		check (!compressed, "compression propagates MIME serialization read failures");
+		g_assert_error (error, GMIME_ERROR, (i ? GMIME_ERROR_GENERAL : EIO));
+		g_clear_error (&error);
+		g_clear_object (&compressed);
+		g_object_unref (binary);
+		g_object_unref (failure);
+	}
+}
+
 typedef struct {
 	GMimeCryptoContext parent_object;
 	guint calls;
@@ -9403,6 +9722,16 @@ typedef struct {
 typedef GMimeCryptoContextClass TestCryptoContextClass;
 
 G_DEFINE_TYPE (TestCryptoContext, test_crypto_context, GMIME_TYPE_CRYPTO_CONTEXT)
+
+#if 0 /* AuthEnvelopedData prototype (#65). */
+static TestCryptoContext *authenveloped_context;
+
+static GMimeCryptoContext *
+test_authenveloped_context_new (void)
+{
+	return g_object_ref (GMIME_CRYPTO_CONTEXT (authenveloped_context));
+}
+#endif
 
 static GMimeSignatureList *
 test_crypto_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *istream,
@@ -9434,7 +9763,119 @@ test_crypto_decrypt (GMimeCryptoContext *ctx, GMimeDecryptFlags flags, const cha
 
 	test->calls++;
 	test->flags = flags;
+#if 0 /* AuthEnvelopedData prototype (#65). */
+	/* Routing-only mock: no CMS parsing or cryptographic authentication. */
+	if (test == authenveloped_context) {
+		static const char plaintext[] = "Content-Type: text/plain\r\n\r\nAuthenticated content.\r\n";
+		char marker[3];
+
+		/* Model a backend that emits plaintext before checking the tag. */
+		if (g_mime_stream_write (ostream, plaintext, sizeof (plaintext) - 1) != sizeof (plaintext) - 1) {
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+					     "Could not write mock decrypted content");
+			return NULL;
+		}
+
+		if (g_mime_stream_read (istream, marker, sizeof (marker)) != sizeof (marker) ||
+		    memcmp (marker, "CMS", sizeof (marker))) {
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+					     "Mock authentication failure");
+			return NULL;
+		}
+	}
+#endif
 	return g_mime_decrypt_result_new ();
+}
+
+static void
+test_authenveloped_data (void)
+{
+	static const char message[] =
+		"Content-Type: application/pkcs7-mime; smime-type=AUTHENVELOPED-DATA\r\n"
+		"Content-Transfer-Encoding: base64\r\n\r\nQ01T\r\n";
+	GMimeApplicationPkcs7Mime *part;
+	GMimeEntity *parsed;
+	GMimeStream *stream;
+	GMimeParser *parser;
+	GMimeContentType *type;
+	GError *error = NULL;
+
+	part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA);
+	type = g_mime_entity_get_content_type (GMIME_ENTITY (part));
+	check (g_mime_application_pkcs7_mime_get_smime_type (part) == GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA &&
+	       !strcmp (g_mime_content_type_get_parameter (type, "smime-type"), "authEnveloped-data") &&
+	       !strcmp (g_mime_part_get_filename (GMIME_PART (part)), "smime.p7m") &&
+	       g_mime_part_get_content_encoding (GMIME_PART (part)) == GMIME_CONTENT_ENCODING_BASE64,
+	       "AuthEnvelopedData construction uses its own MIME type and normal S/MIME attachment conventions");
+	g_object_unref (part);
+
+	stream = g_mime_stream_mem_new_with_buffer (message, sizeof (message) - 1);
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	parsed = g_mime_parser_construct_part (parser, NULL, &error);
+	g_object_unref (parser);
+	g_object_unref (stream);
+	check (GMIME_IS_APPLICATION_PKCS7_MIME (parsed) && !error,
+	       "AuthEnvelopedData parses as an S/MIME part");
+	g_clear_error (&error);
+	if (!GMIME_IS_APPLICATION_PKCS7_MIME (parsed)) {
+		g_clear_object (&parsed);
+		return;
+	}
+
+	part = GMIME_APPLICATION_PKCS7_MIME (parsed);
+	check (g_mime_application_pkcs7_mime_get_smime_type (part) == GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA,
+	       "AuthEnvelopedData recognition is case-insensitive");
+
+#if 0 /* AuthEnvelopedData prototype (#65). */
+	/*
+	 * Enable all matching prototype blocks together. GPGME/GPGSM/KSBA still
+	 * need fixes for GCM parameters and the missing DECRYPTION_OKAY status.
+	 * Backend authentication errors must never become successful decryptions.
+	 */
+	GMimeDecryptResult *result = NULL;
+	GMimeEntity *decrypted;
+	GMimeContent *content;
+	char *text;
+
+	authenveloped_context = g_object_new (test_crypto_context_get_type (), NULL);
+	g_mime_crypto_context_register ("application/pkcs7-mime", test_authenveloped_context_new);
+	decrypted = g_mime_application_pkcs7_mime_decrypt (part, GMIME_DECRYPT_ENABLE_ONLINE_CERTIFICATE_CHECKS,
+							NULL, &result, &error);
+	check (GMIME_IS_TEXT_PART (decrypted) && result && !error &&
+	       authenveloped_context->calls == 1 &&
+	       authenveloped_context->flags == GMIME_DECRYPT_ENABLE_ONLINE_CERTIFICATE_CHECKS,
+	       "AuthEnvelopedData uses the existing CMS decrypt operation and preserves its options");
+	if (GMIME_IS_TEXT_PART (decrypted)) {
+		text = g_mime_text_part_get_text (GMIME_TEXT_PART (decrypted));
+		check (text && !strcmp (text, "Authenticated content.\n"),
+		       "decrypted MIME content is parsed only after backend success");
+		g_free (text);
+	}
+	check (result && !g_mime_decrypt_result_get_signatures (result),
+	       "authenticated encryption does not manufacture a digital signature");
+	g_clear_object (&decrypted);
+	g_clear_object (&result);
+	g_clear_error (&error);
+
+	stream = g_mime_stream_mem_new_with_buffer ("BAD", 3);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	g_object_unref (stream);
+	decrypted = g_mime_application_pkcs7_mime_decrypt (part, GMIME_DECRYPT_NO_VERIFY, NULL, &result, &error);
+	check (!decrypted && !result && error && error->domain == GMIME_ERROR &&
+	       error->code == GMIME_ERROR_PROTOCOL_ERROR &&
+	       !strcmp (error->message, "Mock authentication failure") &&
+	       authenveloped_context->calls == 2 && authenveloped_context->flags == GMIME_DECRYPT_NO_VERIFY,
+	       "authentication failure discards plaintext even when signature verification is disabled");
+	g_clear_object (&decrypted);
+	g_clear_object (&result);
+	g_clear_error (&error);
+	g_mime_crypto_context_register ("application/pkcs7-mime", g_mime_pkcs7_context_new);
+	g_clear_object (&authenveloped_context);
+#endif
+	g_object_unref (parsed);
 }
 
 static void
@@ -12972,6 +13413,14 @@ main (int argc, char **argv)
 	testsuite_start ("crypto flag validation");
 	test_crypto_flags ();
 	test_crypto_backend_handles ();
+	testsuite_end ();
+
+	testsuite_start ("AuthEnvelopedData MIME recognition and construction");
+	test_authenveloped_data ();
+	testsuite_end ();
+
+	testsuite_start ("CMS CompressedData");
+	test_compressed_data ();
 	testsuite_end ();
 
 	testsuite_start ("certificate and signature dates");

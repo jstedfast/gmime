@@ -41,6 +41,7 @@ typedef struct _GMimeApplicationPkcs7MimeClass GMimeApplicationPkcs7MimeClass;
 
 /**
  * GMimeSecureMimeType:
+ * @GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA: The S/MIME content contains authenticated enveloped data.
  * @GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA: The S/MIME content contains compressed data.
  * @GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA: The S/MIME content contains enveloped data.
  * @GMIME_SECURE_MIME_TYPE_SIGNED_DATA: The S/MIME content contains signed data.
@@ -50,6 +51,7 @@ typedef struct _GMimeApplicationPkcs7MimeClass GMimeApplicationPkcs7MimeClass;
  * The S/MIME data type.
  **/
 typedef enum _GMimeSecureMimeType {
+	GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA,
 	GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA,
 	GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA,
 	GMIME_SECURE_MIME_TYPE_SIGNED_DATA,
@@ -82,8 +84,9 @@ GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_new (GMimeSecureMimeTyp
 
 GMimeSecureMimeType g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_mime);
 
-/*GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err);*/
-/*GMimeEntity *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime);*/
+GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err);
+GMimeEntity *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
+						       size_t max_size, GError **err);
 
 GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_encrypt (GMimeEntity *entity, GMimeEncryptFlags flags,
 								  GPtrArray *recipients, GError **err);
