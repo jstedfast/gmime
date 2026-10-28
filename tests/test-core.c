@@ -9397,8 +9397,8 @@ test_options (void)
 	check (g_mime_parser_options_get_max_mime_depth (options) == 1024, "default MIME depth");
 	check (g_mime_parser_options_get_max_address_group_depth (NULL) == 3, "implicit default address group depth");
 	check (g_mime_parser_options_get_max_mime_depth (NULL) == 1024, "implicit default MIME depth");
-	check (g_mime_parser_options_get_max_header_length (options) == 16 * 1024 * 1024, "default header length");
-	check (g_mime_parser_options_get_max_header_length (NULL) == 16 * 1024 * 1024, "implicit default header length");
+	check (g_mime_parser_options_get_max_header_length (options) == 16 * 1024, "default header length");
+	check (g_mime_parser_options_get_max_header_length (NULL) == 16 * 1024, "implicit default header length");
 	check (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (options), "default unquoted commas");
 	check (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (NULL), "implicit default unquoted commas");
 	check (g_mime_parser_options_get_allow_addresses_without_domain (options), "default local addresses");
@@ -10154,7 +10154,7 @@ test_header_lengths (void)
 	};
 	const int name_lengths[] = { 4095, 4096, 4097, 8192 };
 	char *text, *name, *value;
-	const int default_limit = 16 * 1024 * 1024;
+	const int default_limit = 16 * 1024;
 	guint i, j;
 	int message, onebyte, delta, length;
 
@@ -10207,14 +10207,21 @@ test_header_lengths (void)
 	text = g_malloc (default_limit + 3);
 	memcpy (text, "X: ", 3);
 	memset (text + 3, 'a', default_limit - 4);
-	text[default_limit - 1] = '\n';
 	text[default_limit] = '\n';
-	text[default_limit + 1] = '\0';
-	check_header_length (text, 0, TRUE, FALSE, FALSE);
-	text[default_limit - 1] = 'a';
-	text[default_limit + 1] = '\n';
 	text[default_limit + 2] = '\0';
-	check_header_length (text, 0, TRUE, FALSE, TRUE);
+	for (message = 0; message < 2; message++) {
+		for (onebyte = 0; onebyte < 2; onebyte++) {
+			text[default_limit - 1] = '\n';
+			text[default_limit + 1] = '\0';
+			check_header_length (text, 0, message, onebyte, FALSE);
+			check_header_length (text, default_limit, message, onebyte, FALSE);
+			text[default_limit - 1] = 'a';
+			text[default_limit + 1] = '\n';
+			check_header_length (text, 0, message, onebyte, TRUE);
+			check_header_length (text, default_limit, message, onebyte, TRUE);
+			check_header_length (text, 2 * default_limit, message, onebyte, FALSE);
+		}
+	}
 	g_free (text);
 }
 

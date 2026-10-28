@@ -138,7 +138,7 @@ g_mime_parser_options_new (void)
 	options->detect_openpgp = FALSE;
 	options->max_address_group_depth = 3;
 	options->max_mime_depth = 1024;
-	options->max_header_length = 16 * 1024 * 1024;
+	options->max_header_length = 16 * 1024;
 	
 	options->charset_encoding = g_strdup ("utf-8");
 	
@@ -482,7 +482,7 @@ g_mime_parser_options_set_max_mime_depth (GMimeParserOptions *options, int max_d
  * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Gets the maximum raw length of a single header, in bytes.
- * The default is 16777216 (16 MiB).
+ * The default is 16384 (16 KiB).
  *
  * Returns: the maximum header length.
  **/
