@@ -633,7 +633,7 @@ int main (int argc, char *argv[])
 		if (!(gpg = g_find_program_in_path ("gpg")))
 			return EXIT_FAILURE;
 	
-	if (testsuite_setup_gpghome (gpg) != 0)
+	if (testsuite_setup_gpghome (gpg, "pgpmime") != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {

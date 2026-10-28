@@ -479,93 +479,141 @@ testsuite_can_safely_override_session_key (const char *gpg)
 	return get_gpg_version (gpg) >= v2_1_16;
 }
 
-int
-testsuite_setup_gpghome (const char *gpg)
+static char *gnupg_home = NULL;
+static char *saved_gnupg_home = NULL;
+static gboolean gnupg_uses_agent = FALSE;
+
+static gboolean
+run_gpg_command (char **argv)
 {
-	char *command;
-	FILE *fp;
-	
-	/* reset .gnupg config directory */
-	if (system ("/bin/rm -rf ./tmp") != 0)
+	GError *error = NULL;
+	int status;
+
+	if (!g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
+			   NULL, NULL, NULL, NULL, &status, &error) ||
+	    !g_spawn_check_wait_status (status, &error)) {
+		fprintf (stderr, "%s failed: %s\n", argv[0], error->message);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+write_gpg_config (const char *name, const char *config)
+{
+	char *path = g_build_filename (gnupg_home, name, NULL);
+	GError *error = NULL;
+	gboolean success;
+	char *text;
+
+#if DEBUG_GNUPG
+	text = g_strdup_printf ("%slog-file socket://%s/S.log\ndebug 1024\nverbose\n",
+				config, gnupg_home);
+#else
+	text = g_strdup (config);
+#endif
+
+	success = g_file_set_contents (path, text, -1, &error);
+	if (!success) {
+		fprintf (stderr, "Cannot write %s: %s\n", path, error->message);
+		g_error_free (error);
+	}
+
+	g_free (path);
+	g_free (text);
+
+	return success;
+}
+
+static void
+cleanup_gpghome (void)
+{
+	if (testsuite_destroy_gpghome () != EXIT_SUCCESS)
+		fprintf (stderr, "Failed to clean up the test GnuPG home.\n");
+}
+
+int
+testsuite_setup_gpghome (const char *gpg, const char *name)
+{
+	static gboolean cleanup_registered = FALSE;
+	char *argv[] = { (char *) gpg, "--list-keys", NULL };
+	GError *error = NULL;
+	char *template;
+
+	g_return_val_if_fail (name != NULL, EXIT_FAILURE);
+	g_return_val_if_fail (gnupg_home == NULL, EXIT_FAILURE);
+
+	template = g_strdup_printf ("gmime-%s-XXXXXX", name);
+	gnupg_home = g_dir_make_tmp (template, &error);
+	g_free (template);
+
+	if (!gnupg_home) {
+		fprintf (stderr, "Cannot create a test GnuPG home: %s\n", error->message);
+		g_error_free (error);
 		return EXIT_FAILURE;
-	
-	if (g_mkdir ("./tmp", 0755) != 0)
-		return EXIT_FAILURE;
-	
-	g_setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	}
+
+	saved_gnupg_home = g_strdup (g_getenv ("GNUPGHOME"));
+	g_setenv ("GNUPGHOME", gnupg_home, TRUE);
+	gnupg_uses_agent = get_gpg_version (gpg) >= ((2 << 24) | (1 << 16));
+
+	if (!cleanup_registered) {
+		if (atexit (cleanup_gpghome) != 0) {
+			fprintf (stderr, "Cannot register test GnuPG home cleanup.\n");
+			goto fail;
+		}
+		cleanup_registered = TRUE;
+	}
 	
 	/* disable environment variables that gpg-agent uses for pinentry */
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
 	g_unsetenv ("DISPLAY");
 	g_unsetenv ("GPG_TTY");
-	
-        command = g_strdup_printf ("%s --list-keys > /dev/null 2>&1", gpg);
-	if (system (command) != 0) {
-		g_free (command);
-		return EXIT_FAILURE;
-	}
-	
-	g_free (command);
-	
-	if (get_gpg_version (gpg) >= ((2 << 24) | (1 << 16))) {
-		if (!(fp = fopen ("./tmp/.gnupg/gpg.conf", "a")))
-			return EXIT_FAILURE;
-		
-		if (fprintf (fp, "pinentry-mode loopback\n") == -1) {
-			fclose (fp);
-			return EXIT_FAILURE;
-		}
-		
-		if (fclose (fp))
-			return EXIT_FAILURE;
-	}
-	
-	if (!(fp = fopen ("./tmp/.gnupg/gpgsm.conf", "a")))
-		return EXIT_FAILURE;
-	
-	if (fprintf (fp, "disable-crl-checks\n") == -1) {
-		fclose (fp);
-		return EXIT_FAILURE;
-	}
-	
-	if (fclose (fp))
-		return EXIT_FAILURE;
-	
+
+	if (!write_gpg_config ("gpg.conf", gnupg_uses_agent ? "pinentry-mode loopback\n" : "") ||
+	    !write_gpg_config ("gpgsm.conf", "disable-crl-checks\n"))
+		goto fail;
+
 #if DEBUG_GNUPG
-	if (TRUE) {
-		const char *files[] = { "./tmp/.gnupg/gpg.conf", "./tmp/.gnupg/gpgsm.conf", "./tmp/.gnupg/gpg-agent.conf", "./tmp/.gnupg/dirmngr.conf", NULL };
-		const char debug[] = "log-file socket://%s/tmp/.gnupg/S.log\ndebug 1024\nverbose\n";
-		char *cwd = g_get_current_dir ();
-		int i;
-		
-		for (i = 0; files[i]; i++) {
-			if (!(fp = fopen (files[i], "a")))
-				return EXIT_FAILURE;
-			
-			if (fprintf (fp, debug, cwd) == -1) {
-				g_free (cwd);
-				fclose (fp);
-				return EXIT_FAILURE;
-			}
-			
-			if (fclose (fp)) {
-				g_free (cwd);
-				return EXIT_FAILURE;
-			}
-		}
-		
-		g_free (cwd);
-	}
+	if (!write_gpg_config ("gpg-agent.conf", "") || !write_gpg_config ("dirmngr.conf", ""))
+		goto fail;
 #endif
-	
+
+	if (!run_gpg_command (argv))
+		goto fail;
+
 	return EXIT_SUCCESS;
+
+fail:
+	cleanup_gpghome ();
+	return EXIT_FAILURE;
 }
 
 int
 testsuite_destroy_gpghome (void)
 {
-	if (system ("/bin/rm -rf ./tmp") != 0)
+	char *kill_argv[] = { "gpgconf", "--homedir", gnupg_home, "--kill", "all", NULL };
+	char *remove_argv[] = { "/bin/rm", "-rf", "--", gnupg_home, NULL };
+
+	if (!gnupg_home)
+		return EXIT_SUCCESS;
+
+	if (gnupg_uses_agent && !run_gpg_command (kill_argv))
 		return EXIT_FAILURE;
+
+	if (!run_gpg_command (remove_argv))
+		return EXIT_FAILURE;
+
+	if (saved_gnupg_home)
+		g_setenv ("GNUPGHOME", saved_gnupg_home, TRUE);
+	else
+		g_unsetenv ("GNUPGHOME");
+
+	g_clear_pointer (&saved_gnupg_home, g_free);
+	g_clear_pointer (&gnupg_home, g_free);
+
 	return EXIT_SUCCESS;
 }
 

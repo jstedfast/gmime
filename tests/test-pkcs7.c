@@ -317,7 +317,7 @@ int main (int argc, char **argv)
 	
 	testsuite_init (argc, argv);
 	
-	if (testsuite_setup_gpghome ("gpgsm") != 0)
+	if (testsuite_setup_gpghome ("gpgsm", "pkcs7") != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {

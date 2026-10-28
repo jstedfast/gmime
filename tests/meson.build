@@ -83,8 +83,8 @@ foreach name, program : test_programs
   else
     data_dir = meson.current_source_dir() / 'data' / data_name
   endif
-  # These programs reset a shared tmp directory for their scratch files or keyring.
-  serial = name in crypto_tests + ['test-mbox', 'test-autocrypt']
+  # The mbox test still uses a shared tmp directory for its scratch files.
+  serial = name == 'test-mbox'
   test(
     name, program,
     args: ['-v', data_dir],
