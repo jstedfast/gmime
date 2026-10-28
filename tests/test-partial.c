@@ -345,6 +345,229 @@ test_split_without_message_id (void)
 }
 
 static void
+test_split_arguments (void)
+{
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	size_t count = 42;
+
+	testsuite_check ("message splitting validates the size and result count");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*nparts != NULL*");
+	g_assert_null (g_mime_message_partial_split_message (message, 1, NULL));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE*");
+	g_assert_null (g_mime_message_partial_split_message (NULL, 1, &count));
+	g_test_assert_expected_messages ();
+	g_assert_cmpuint (count, ==, 0);
+	count = 42;
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*max_size > 0*");
+	g_assert_null (g_mime_message_partial_split_message (message, 0, &count));
+	g_test_assert_expected_messages ();
+	g_assert_cmpuint (count, ==, 0);
+	g_object_unref (message);
+	testsuite_check_passed ();
+}
+
+static GMimeMessage *
+parse_split_message (const char *wire, size_t length, GMimeParserOptions *options)
+{
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer (wire, length);
+	GMimeParser *parser = g_mime_parser_new_with_stream (stream);
+	GMimeMessage *message;
+	GError *error = NULL;
+
+	message = g_mime_parser_construct_message (parser, options, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (parser);
+	g_object_unref (stream);
+
+	return message;
+}
+
+static GBytes *
+split_message_bytes (GMimeMessage *message)
+{
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	GByteArray *buffer;
+	GBytes *bytes;
+
+	g_assert_cmpint (g_mime_entity_write_to_stream (GMIME_ENTITY (message), NULL, stream), >=, 0);
+	buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+	bytes = g_bytes_new (buffer->data, buffer->len);
+	g_object_unref (stream);
+
+	return bytes;
+}
+
+static void
+test_split_message_clones (void)
+{
+	static const char wire[] =
+		"Subject: cloning\r\n"
+		"mEsSaGe-Id: (original) <source@example.com>\r\n"
+		"X-CaSe: before\0after\r\n"
+		"Message-Id: <source@example.com>\r\n"
+		"Content-Type: text/plain\r\n\r\nbody\n";
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeMessage *message, **messages;
+	GMimeHeaderList *original, *cloned;
+	GMimeHeader *source, *header;
+	GBytes *raw, *name, *actual;
+	GHashTable *ids = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	GError *error = NULL;
+	const char *id;
+	size_t count, i;
+	int j, id_count;
+
+	testsuite_check ("fragment messages clone raw headers and options and replace envelope ids");
+	g_mime_parser_options_set_address_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT);
+	g_mime_parser_options_set_max_mime_depth (options, 23);
+	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "iso-8859-1", &error));
+	g_assert_no_error (error);
+	message = parse_split_message (wire, sizeof (wire) - 1, options);
+	g_mime_parser_options_free (options);
+	original = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	source = g_mime_header_list_get_header (original, "X-CaSe");
+	g_assert_cmpint (g_mime_header_get_offset (source), >=, 0);
+	raw = g_mime_header_get_raw_value (source);
+	name = g_mime_header_get_raw_name (source);
+	messages = g_mime_message_partial_split_message (message, 16, &count);
+	g_assert_nonnull (messages);
+	g_assert_cmpuint (count, >, 1);
+
+	for (i = 0; i < count; i++) {
+		id = g_mime_message_get_message_id (messages[i]);
+		g_assert_nonnull (id);
+		g_assert_cmpstr (id, !=, "source@example.com");
+		g_assert_true (g_hash_table_add (ids, g_strdup (id)));
+		assert_partial_parameters (GMIME_MESSAGE_PARTIAL (messages[i]->mime_part),
+					   "source@example.com", i + 1, count);
+		cloned = g_mime_entity_get_header_list (GMIME_ENTITY (messages[i]));
+		g_assert_true (cloned->options != original->options);
+		g_assert_cmpint (g_mime_parser_options_get_address_compliance_mode (cloned->options),
+				==, GMIME_RFC_COMPLIANCE_STRICT);
+		g_assert_cmpint (g_mime_parser_options_get_max_mime_depth (cloned->options), ==, 23);
+		g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (cloned->options), ==,
+				g_mime_parser_options_get_charset_encoding (original->options));
+		id_count = 0;
+		for (j = 0; j < g_mime_header_list_get_count (cloned); j++) {
+			header = g_mime_header_list_get_header_at (cloned, j);
+			g_assert_cmpint (g_mime_header_get_offset (header), ==, -1);
+			if (g_mime_header_get_id (header) == GMIME_HEADER_MESSAGE_ID) {
+				g_assert_cmpint (j, ==, 1);
+				g_assert_cmpstr (g_mime_header_get_name (header), ==, "Message-Id");
+				id_count++;
+			}
+		}
+		g_assert_cmpint (id_count, ==, 1);
+		header = g_mime_header_list_get_header (cloned, "X-CaSe");
+		g_assert_true (header != source);
+		actual = g_mime_header_get_raw_value (header);
+		g_assert_true (g_bytes_equal (raw, actual));
+		g_bytes_unref (actual);
+		actual = g_mime_header_get_raw_name (header);
+		g_assert_true (g_bytes_equal (name, actual));
+		g_bytes_unref (actual);
+	}
+
+	g_assert_cmpint (g_mime_header_list_get_count (original), ==, 4);
+	g_assert_cmpstr (g_mime_header_get_name (g_mime_header_list_get_header_at (original, 1)),
+			==, "mEsSaGe-Id");
+	g_mime_parser_options_set_max_mime_depth (original->options, 24);
+	cloned = g_mime_entity_get_header_list (GMIME_ENTITY (messages[0]));
+	g_assert_cmpint (g_mime_parser_options_get_max_mime_depth (cloned->options), ==, 23);
+	g_mime_header_set_value (g_mime_header_list_get_header (cloned, "X-CaSe"), NULL, "edited", NULL);
+	actual = g_mime_header_get_raw_value (source);
+	g_assert_true (g_bytes_equal (raw, actual));
+	g_bytes_unref (actual);
+	g_object_unref (message);
+	cloned = g_mime_entity_get_header_list (GMIME_ENTITY (messages[1]));
+	actual = g_mime_header_get_raw_value (g_mime_header_list_get_header (cloned, "X-CaSe"));
+	g_assert_true (g_bytes_equal (raw, actual));
+	g_bytes_unref (actual);
+	for (i = 0; i < count; i++)
+		g_object_unref (messages[i]);
+	g_free (messages);
+	g_bytes_unref (raw);
+	g_bytes_unref (name);
+	g_hash_table_destroy (ids);
+	testsuite_check_passed ();
+}
+
+static void
+test_split_sizes (void)
+{
+	static const char wire[] =
+		"Message-Id: <sizes@example.com>\r\n"
+		"Subject: sizes\r\n"
+		"MIME-Version: 1.0\r\n"
+		"Content-Type: application/octet-stream\r\n"
+		"\r\nab\ncdef\r\nghij\0klmn\377opqr\n";
+	static const size_t limits[] = { 1, 2, 3, 7, 8, 15, 16, 31, 32, 63, 64, G_MAXSIZE };
+	GMimeMessage *message = parse_split_message (wire, sizeof (wire) - 1, NULL), **messages, *joined;
+	GMimeMessagePartial **partials;
+	GMimeStream *combined;
+	GByteArray *buffer;
+	GBytes *before, *after;
+	gboolean boundary_newline = FALSE;
+	const char *data;
+	size_t length, limit, count, i;
+	guint c;
+
+	testsuite_check ("split sizes preserve exact bytes, identity and reconstruction");
+	before = split_message_bytes (message);
+	data = g_bytes_get_data (before, &length);
+	for (c = 0; c < G_N_ELEMENTS (limits) + 3; c++) {
+		limit = c < G_N_ELEMENTS (limits) ? limits[c] : length + c - G_N_ELEMENTS (limits) - 1;
+		messages = g_mime_message_partial_split_message (message, limit, &count);
+		g_assert_nonnull (messages);
+		g_assert_cmpuint (count, >=, 1);
+		if (limit >= length) {
+			g_assert_cmpuint (count, ==, 1);
+			g_assert_true (messages[0] == message);
+		} else {
+			combined = g_mime_stream_mem_new ();
+			partials = g_new (GMimeMessagePartial *, count);
+			for (i = 0; i < count; i++) {
+				ssize_t size;
+
+				partials[i] = GMIME_MESSAGE_PARTIAL (messages[i]->mime_part);
+				assert_partial_parameters (partials[i], "sizes@example.com", i + 1, count);
+				size = g_mime_content_write_to_stream (
+					g_mime_part_get_content (GMIME_PART (partials[i])), combined);
+				g_assert_cmpint (size, >, 0);
+				g_assert_cmpuint (size, <=, limit + 1);
+				if ((size_t) size == limit + 1) {
+					buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (combined));
+					g_assert_cmpint (buffer->data[buffer->len - 1], ==, '\n');
+					boundary_newline = TRUE;
+				}
+			}
+			buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (combined));
+			g_assert_cmpmem (buffer->data, buffer->len, data, length);
+			joined = g_mime_message_partial_reconstruct_message (partials, count);
+			g_assert_nonnull (joined);
+			after = split_message_bytes (joined);
+			g_assert_true (g_bytes_equal (before, after));
+			g_bytes_unref (after);
+			g_object_unref (joined);
+			g_free (partials);
+			g_object_unref (combined);
+		}
+		for (i = 0; i < count; i++)
+			g_object_unref (messages[i]);
+		g_free (messages);
+		after = split_message_bytes (message);
+		g_assert_true (g_bytes_equal (before, after));
+		g_bytes_unref (after);
+	}
+	g_assert_true (boundary_newline);
+	g_bytes_unref (before);
+	g_object_unref (message);
+	testsuite_check_passed ();
+}
+
+static void
 test_split_raw_headers (void)
 {
 	static const char raw[] = " before\0after\r\n";
@@ -411,6 +634,9 @@ int main (int argc, char **argv)
 	test_parsed_partial_parameters ();
 	test_partial_reconstruction_parameters ();
 	test_split_without_message_id ();
+	test_split_arguments ();
+	test_split_message_clones ();
+	test_split_sizes ();
 	test_split_raw_headers ();
 	
 	format = g_mime_format_options_get_default ();

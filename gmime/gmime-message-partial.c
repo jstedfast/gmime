@@ -314,24 +314,33 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 static GMimeMessage *
 message_partial_message_new (GMimeMessage *base)
 {
-	GMimeHeaderList *headers;
+	GMimeHeaderList *headers, *cloned;
 	GMimeMessage *message;
 	GMimeHeader *header, *copy;
+	char *id, *value;
 	int count, i;
 	
 	message = g_mime_message_new (FALSE);
-	
 	headers = ((GMimeEntity *) base)->headers;
+	cloned = ((GMimeEntity *) message)->headers;
+	_g_mime_header_list_set_options (cloned, _g_mime_header_list_get_options (headers));
 	
 	count = g_mime_header_list_get_count (headers);
 	
 	for (i = 0; i < count; i++) {
 		header = g_mime_header_list_get_header_at (headers, i);
 		copy = g_mime_header_clone (header);
-		copy->offset = header->offset;
-		g_mime_header_list_add (((GMimeEntity *) message)->headers, copy);
+		g_mime_header_list_add (cloned, copy);
 		g_object_unref (copy);
 	}
+
+	id = g_mime_utils_generate_message_id (NULL);
+	value = g_strdup_printf ("<%s>", id);
+	header = g_mime_header_new_with_id (GMIME_HEADER_MESSAGE_ID, value, NULL);
+	g_mime_header_list_replace (cloned, header);
+	g_object_unref (header);
+	g_free (value);
+	g_free (id);
 	
 	return message;
 }
@@ -340,13 +349,20 @@ message_partial_message_new (GMimeMessage *base)
 /**
  * g_mime_message_partial_split_message:
  * @message: message object
- * @max_size: max size
+ * @max_size: positive target size for each fragment
  * @nparts: (out): number of parts
  *
  * Splits @message into an array of #GMimeMessage objects each
  * containing a single #GMimeMessagePartial object containing
- * @max_size bytes or fewer. @nparts is set to the number of
- * #GMimeMessagePartial objects created.
+ * @max_size bytes or fewer, preferring whole lines. A newline at the
+ * target boundary is included in the preceding fragment, which can make
+ * it one byte larger. @nparts is set to the number of messages returned.
+ * If no splitting is needed, the returned array contains a reference to
+ * the original message.
+ *
+ * Each fragment message has a new Message-Id, distinct from the original
+ * and from the id shared by the message/partial bodies. The original
+ * headers are otherwise cloned without changing the source message.
  *
  * Returns: (nullable) (transfer full) (array length=nparts): an array of #GMimeMessage objects and
  * sets @nparts to the number of messages returned or %NULL on fail.
@@ -367,9 +383,11 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	gint64 start;
 	guint i;
 	
+	g_return_val_if_fail (nparts != NULL, NULL);
+
 	*nparts = 0;
-	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	g_return_val_if_fail (max_size > 0, NULL);
 	
 	options = g_mime_format_options_get_default ();
 	stream = g_mime_stream_mem_new ();
@@ -384,7 +402,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	len = g_mime_stream_length (stream);
 	
 	/* optimization */
-	if (len <= (gint64) max_size) {
+	if ((guint64) len <= max_size) {
 		g_object_unref (stream);
 		g_object_ref (message);
 		
@@ -402,7 +420,9 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	while (start < len) {
 		/* Preferably, we'd split on whole-lines if we can,
 		 * but if that's not possible, split on max size */
-		if ((end = MIN (len, start + max_size)) < len) {
+		end = start + (gint64) MIN ((guint64) (len - start), max_size);
+
+		if (end < len) {
 			register gint64 ebx; /* end boundary */
 			
 			ebx = end;

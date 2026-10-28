@@ -4599,6 +4599,43 @@ The complete partial fixture test passes ASan/UBSan with leak detection
 disabled; its older fixture harness reproduces the same existing leaks
 (355,174 bytes in 2,599 allocations).
 
+## Message/partial fragment cloning and split sizing
+
+Split fragment envelopes now follow MimeKit's CloneMessage helper: parser
+options are preserved using GMime's owned snapshots, headers are cloned
+with their binary raw bytes intact and unknown stream offsets, and all
+original Message-ID duplicates are replaced by one canonical, fresh header
+at the first matching position. Every envelope has its own Message-ID,
+distinct from the id shared by the message/partial bodies. Header edits
+and parser-option changes remain independent of the source and siblings.
+Applicable MimeKit whole-line splitting comments are retained.
+
+Splitting rejects zero sizes and missing output pointers. Oversized native
+size_t targets, including G_MAXSIZE, no longer narrow to a negative signed
+length. An unnecessary split returns an owned reference to the original
+message without changing its id. Whole-line splitting preserves MimeKit's
+boundary behavior: an LF at the target boundary is included, so a fragment
+can contain max_size + 1 bytes.
+
+Focused regressions cover preconditions, duplicate replacement, binary raw
+headers, parser options, offsets, ownership, independence, exact-size and
+oversized targets, byte concatenation, and reconstruction. All 2,101
+actual-source MimeKit differential cases match exact fragment bytes,
+boundaries, unsplit identity, and tested metadata contracts in normal and
+ASan/UBSan builds with leak checking. The comparison aligns DOS newlines
+and uses headers retained in MimeKit's encapsulated payload. The normal
+library and bindings build and the five related suites pass; focused
+partial tests pass sanitizers with leak checking. Complete partial
+fixtures pass sanitizers with leak detection disabled for the previously
+documented fixture-harness leaks. Native C validation was under WSL;
+native Windows execution remains pending.
+
+The existing native payload-header policy is intentionally unchanged:
+GMime still encapsulates all original headers. MimeKit suppresses envelope
+headers and restores them in Join using an outer message argument, which
+the current native reconstruction API does not accept. That API and
+header-policy migration remain deferred; this is not full Split/Join parity.
+
 ## Remaining migration phases
 
 Managed collection CopyTo(T[] array, int offset) convenience APIs, including
