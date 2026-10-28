@@ -404,6 +404,15 @@ message_update_references (GMimeMessage *message)
 }
 
 static void
+message_update_subject (GMimeMessage *message)
+{
+	const char *value = g_mime_header_list_get_value (GMIME_ENTITY (message)->headers, "Subject");
+
+	g_free (message->subject);
+	message->subject = g_strdup (value);
+}
+
+static void
 message_update_reply_id (GMimeMessage *message, const char *name, char **id)
 {
 	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
@@ -493,7 +502,7 @@ process_header (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeH
 {
 	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeMessage *message = (GMimeMessage *) object;
-	const char *name, *value;
+	const char *name;
 	guint i;
 	
 	name = g_mime_header_get_name (header);
@@ -577,12 +586,7 @@ process_header (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeH
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
 		break;
 	case HEADER_SUBJECT:
-		g_free (message->subject);
-		
-		if ((value = g_mime_header_get_value (header)))
-			message->subject = g_strdup (value);
-		else
-			message->subject = NULL;
+		message_update_subject (message);
 		break;
 	case HEADER_DATE:
 		message_update_date (message, name, &message->date);
@@ -591,12 +595,7 @@ process_header (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeH
 		message_update_date (message, name, &message->resent_date);
 		break;
 	case HEADER_MESSAGE_ID:
-		g_free (message->message_id);
-		
-		if ((value = g_mime_header_get_value (header)))
-			message->message_id = g_mime_utils_decode_message_id (value);
-		else
-			message->message_id = NULL;
+		message_update_reply_id (message, name, &message->message_id);
 		break;
 	case HEADER_IN_REPLY_TO:
 		message_update_reply_id (message, name, &message->in_reply_to);
@@ -684,8 +683,7 @@ message_header_removed (GMimeEntity *object, GMimeHeader *header)
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
 		break;
 	case HEADER_SUBJECT:
-		g_free (message->subject);
-		message->subject = NULL;
+		message_update_subject (message);
 		break;
 	case HEADER_DATE:
 		message_update_date (message, name, &message->date);
@@ -694,8 +692,7 @@ message_header_removed (GMimeEntity *object, GMimeHeader *header)
 		message_update_date (message, name, &message->resent_date);
 		break;
 	case HEADER_MESSAGE_ID:
-		g_free (message->message_id);
-		message->message_id = NULL;
+		message_update_reply_id (message, name, &message->message_id);
 		break;
 	case HEADER_IN_REPLY_TO:
 		message_update_reply_id (message, name, &message->in_reply_to);
@@ -1650,14 +1647,34 @@ g_mime_message_get_recipients (GMimeMessage *message, gboolean only_unique)
 	return result;
 }
 
+static gboolean
+message_has_duplicate_header (GMimeMessage *message, const char *name)
+{
+	GMimeHeaderList *headers = GMIME_ENTITY (message)->headers;
+
+	return g_mime_header_list_index_of (headers, name) != g_mime_header_list_last_index_of (headers, name);
+}
+
+static void
+message_set_resent_header (GMimeMessage *message, const char *name, const char *value)
+{
+	GMimeHeaderList *headers = GMIME_ENTITY (message)->headers;
+	GMimeHeader *header = g_mime_header_list_get_header (headers, name);
+
+	if (header)
+		g_mime_header_set_value (header, NULL, value, NULL);
+	else
+		g_mime_header_list_append (headers, name, value, NULL);
+}
+
 /**
  * g_mime_message_set_importance:
  * @message: a #GMimeMessage
  * @importance: the message importance
  *
  * Sets the Importance header to low, normal, or high. Assigning the
- * current importance leaves the raw headers unchanged. Invalid enum
- * values are programming errors and leave the message unchanged.
+ * current importance preserves a single raw header; duplicates are replaced.
+ * Invalid enum values are programming errors and leave the message unchanged.
  **/
 void
 g_mime_message_set_importance (GMimeMessage *message, GMimeMessageImportance importance)
@@ -1667,7 +1684,7 @@ g_mime_message_set_importance (GMimeMessage *message, GMimeMessageImportance imp
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (importance >= GMIME_MESSAGE_IMPORTANCE_LOW && importance <= GMIME_MESSAGE_IMPORTANCE_HIGH);
 
-	if (message->importance != importance)
+	if (message->importance != importance || message_has_duplicate_header (message, "Importance"))
 		g_mime_entity_set_header ((GMimeEntity *) message, "Importance", values[importance], NULL);
 }
 
@@ -1692,8 +1709,8 @@ g_mime_message_get_importance (GMimeMessage *message)
  * @priority: the message priority
  *
  * Sets the Priority header to non-urgent, normal, or urgent. Assigning
- * the current priority preserves raw headers. Invalid enum values are
- * programming errors and leave the message unchanged.
+ * the current priority preserves a single raw header; duplicates are replaced.
+ * Invalid enum values are programming errors and leave the message unchanged.
  **/
 void
 g_mime_message_set_priority (GMimeMessage *message, GMimeMessagePriority priority)
@@ -1703,7 +1720,7 @@ g_mime_message_set_priority (GMimeMessage *message, GMimeMessagePriority priorit
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (priority >= GMIME_MESSAGE_PRIORITY_NON_URGENT && priority <= GMIME_MESSAGE_PRIORITY_URGENT);
 
-	if (message->priority != priority)
+	if (message->priority != priority || message_has_duplicate_header (message, "Priority"))
 		g_mime_entity_set_header ((GMimeEntity *) message, "Priority", values[priority], NULL);
 }
 
@@ -1728,8 +1745,9 @@ g_mime_message_get_priority (GMimeMessage *message)
  * @priority: the message's numeric priority
  *
  * Sets the X-Priority header to its numeric value and descriptive label.
- * Assigning the current priority preserves raw headers. Invalid enum
- * values are programming errors and leave the message unchanged.
+ * Assigning the current priority preserves a single raw header; duplicates
+ * are replaced. Invalid enum values are programming errors and leave the
+ * message unchanged.
  **/
 void
 g_mime_message_set_x_priority (GMimeMessage *message, GMimeXMessagePriority priority)
@@ -1739,7 +1757,7 @@ g_mime_message_set_x_priority (GMimeMessage *message, GMimeXMessagePriority prio
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (priority >= GMIME_X_MESSAGE_PRIORITY_HIGHEST && priority <= GMIME_X_MESSAGE_PRIORITY_LOWEST);
 
-	if (message->x_priority != priority)
+	if (message->x_priority != priority || message_has_duplicate_header (message, "X-Priority"))
 		g_mime_entity_set_header ((GMimeEntity *) message, "X-Priority", values[priority - 1], NULL);
 }
 
@@ -1802,13 +1820,13 @@ g_mime_message_get_subject (GMimeMessage *message)
 
 
 static void
-message_set_date (GMimeMessage *message, const char *name, GDateTime **cache, GDateTime *date)
+message_set_date (GMimeMessage *message, const char *name, GDateTime **cache, GDateTime *date, gboolean replace)
 {
 	char *str;
 
 	g_return_if_fail (date != NULL);
 
-	if (*cache && g_date_time_equal (*cache, date))
+	if (*cache && g_date_time_equal (*cache, date) && (!replace || !message_has_duplicate_header (message, name)))
 		return;
 
 	str = g_mime_utils_header_format_date (date);
@@ -1816,7 +1834,10 @@ message_set_date (GMimeMessage *message, const char *name, GDateTime **cache, GD
 		return;
 
 	g_date_time_ref (date);
-	g_mime_entity_set_header ((GMimeEntity *) message, name, str, NULL);
+	if (replace)
+		g_mime_entity_set_header ((GMimeEntity *) message, name, str, NULL);
+	else
+		message_set_resent_header (message, name, str);
 	g_clear_pointer (cache, g_date_time_unref);
 	*cache = date;
 	g_free (str);
@@ -1829,15 +1850,16 @@ message_set_date (GMimeMessage *message, const char *name, GDateTime **cache, GD
  * 
  * Sets the Date header on a MIME Message. The message retains @date,
  * including its timezone and microseconds; the header represents whole
- * seconds. Assigning the same instant preserves the current cached value,
- * raw header, and any duplicates. A %NULL date is a programming error.
+ * seconds. Assigning the same instant preserves the current cached value
+ * and raw header unless duplicate Date headers need to be replaced.
+ * A %NULL date is a programming error.
  **/
 void
 g_mime_message_set_date (GMimeMessage *message, GDateTime *date)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 
-	message_set_date (message, "Date", &message->date, date);
+	message_set_date (message, "Date", &message->date, date, TRUE);
 }
 
 
@@ -1867,15 +1889,16 @@ g_mime_message_get_date (GMimeMessage *message)
  * Sets the Resent-Date header independently of Date. The message retains
  * @date, including its timezone and microseconds; the header represents
  * whole seconds. Assigning the same instant preserves the current cached
- * value, raw header, and any duplicates. Changed values remove duplicate
- * Resent-Date headers. A %NULL date is a programming error.
+ * value, raw header, and any duplicates. Changed values update only the first
+ * Resent-Date header, preserving older resent blocks. A %NULL date is a
+ * programming error.
  **/
 void
 g_mime_message_set_resent_date (GMimeMessage *message, GDateTime *date)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 
-	message_set_date (message, "Resent-Date", &message->resent_date, date);
+	message_set_date (message, "Resent-Date", &message->resent_date, date, FALSE);
 }
 
 /**
@@ -1906,7 +1929,7 @@ g_mime_message_get_resent_date (GMimeMessage *message)
  * Sets the Message-Id after normalizing a complete message-id. Invalid
  * values, including empty IDs, extra tokens, and non-folding line breaks,
  * are programming errors and leave the message unchanged. Assigning the
- * current ID preserves the original raw header.
+ * current ID preserves a single raw header; duplicates are replaced.
  **/
 void
 g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
@@ -1916,7 +1939,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (message_id != NULL);
 
-	if (!g_strcmp0 (message->message_id, message_id))
+	if (!g_strcmp0 (message->message_id, message_id) && !message_has_duplicate_header (message, "Message-Id"))
 		return;
 
 	id = _g_mime_parse_message_id_value (message_id);
@@ -1952,8 +1975,9 @@ g_mime_message_get_message_id (GMimeMessage *message)
  *
  * Sets the In-Reply-To header after normalizing a complete message-id.
  * Invalid values are programming errors and leave the message unchanged.
- * Assigning the current ID preserves the raw header. A %NULL value removes
- * all In-Reply-To headers, including malformed duplicates.
+ * Assigning the current ID preserves a single raw header; duplicates are
+ * replaced. A %NULL value removes all In-Reply-To headers, including
+ * malformed duplicates.
  **/
 void
 g_mime_message_set_in_reply_to (GMimeMessage *message, const char *message_id)
@@ -1966,7 +1990,7 @@ g_mime_message_set_in_reply_to (GMimeMessage *message, const char *message_id)
 		g_mime_header_list_remove_all (((GMimeEntity *) message)->headers, "In-Reply-To");
 		return;
 	}
-	if (!g_strcmp0 (message->in_reply_to, message_id))
+	if (!g_strcmp0 (message->in_reply_to, message_id) && !message_has_duplicate_header (message, "In-Reply-To"))
 		return;
 
 	id = _g_mime_parse_message_id_value (message_id);
@@ -2003,6 +2027,8 @@ g_mime_message_get_in_reply_to (GMimeMessage *message)
  * Sets the Resent-Message-Id header after normalizing a complete message-id.
  * Invalid values, including %NULL, are programming errors and leave the
  * message unchanged. Assigning the current ID preserves the raw header.
+ * Changed values update only the first Resent-Message-Id header, preserving
+ * older resent blocks.
  **/
 void
 g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message_id)
@@ -2019,7 +2045,7 @@ g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message
 	g_return_if_fail (id != NULL);
 	value = g_strdup_printf ("<%s>", id);
 	g_free (id);
-	g_mime_entity_set_header ((GMimeEntity *) message, "Resent-Message-Id", value, NULL);
+	message_set_resent_header (message, "Resent-Message-Id", value);
 	g_free (value);
 }
 

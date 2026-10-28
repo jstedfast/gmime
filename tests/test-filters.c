@@ -322,6 +322,185 @@ error:
 }
 
 static void
+assert_html_urls (const char *input, size_t length, const char *expected, guint32 flags)
+{
+	GMimeFilter *filter = g_mime_filter_html_new (flags, 0);
+	char *bounded = g_malloc (MAX (length, 1)), *out;
+	size_t split, step = length > 512 ? length : 1, outlen, prespace;
+	GString *actual = g_string_new (NULL);
+
+	memcpy (bounded, input, length);
+	for (split = 0; split <= length; split += step) {
+		g_mime_filter_reset (filter);
+		g_string_truncate (actual, 0);
+		g_mime_filter_filter (filter, bounded, split, 0, &out, &outlen, &prespace);
+		if (outlen)
+			g_string_append_len (actual, out, outlen);
+		g_mime_filter_complete (filter, bounded + split, length - split, 0, &out, &outlen, &prespace);
+		if (outlen)
+			g_string_append_len (actual, out, outlen);
+
+		testsuite_check ("HTML URL conversion (%zu bytes, split %zu, flags %u)", length, split, flags);
+		if (actual->len == strlen (expected) && !memcmp (actual->str, expected, actual->len))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("expected=\"%.300s\", actual=\"%.300s\"", expected, actual->str);
+	}
+
+	g_string_free (actual, TRUE);
+	g_object_unref (filter);
+	g_free (bounded);
+}
+
+static void
+assert_html_link (const char *url, const char *prefix, guint32 flags)
+{
+	char *escaped = g_markup_escape_text (url, -1);
+	char *expected = g_strdup_printf ("<a href=\"%s%s\">%s</a>", prefix, escaped, escaped);
+
+	assert_html_urls (url, strlen (url), expected, flags);
+	g_free (expected);
+	g_free (escaped);
+}
+
+static void
+test_html_urls (void)
+{
+	static const struct {
+		const char *url, *prefix;
+	} urls[] = {
+		{ "http://example.com#section", "" },
+		{ "http://example.com#", "" },
+		{ "http://example.com?x=#", "" },
+		{ "http://example.com?_=1", "" },
+		{ "http://example.com?%78=1", "" },
+		{ "http://example.com?&x=1&&y=", "" },
+		{ "http://example.com?x=a?b&y=/c?d", "" },
+		{ "http://example.com:00099999#f", "" },
+		{ "http://example.com/a(b)c", "" },
+		{ "www.example.com#part_(one)", "http://" },
+		{ "ftp.example.com#section", "ftp://" },
+		{ "file:///a({b}[c])", "" },
+		{ "http://user:pass%21@[::1]:080/path?x=1&_=2#f", "" },
+		{ "http://@example.com/", "" },
+		{ "http://us\303\251r@b\303\274cher.example/", "" },
+		{ "http://example.com/path@elsewhere.test", "" },
+		{ "http://[::]/", "" },
+		{ "http://[::1]/", "" },
+		{ "http://[1:2:3:4:5:6::8]/", "" },
+		{ "http://[::ffff:192.0.2.1]/", "" },
+		{ "mailto:a@[1.2.3.4]", "" },
+		{ "mailto:a@[IPv6:::]", "" },
+		{ "mailto:a@example.com?subject=(hi)", "" },
+		{ "mailto:?subject=hi", "" },
+		{ "mailto:\"a b\"@example.com?subject=hi", "" },
+		{ "a@[1.2.3.4]", "mailto:" },
+		{ "a@[001.002.003.004]", "mailto:" },
+		{ "a@[IPv6:::]", "mailto:" },
+		{ "a@[IPv6:1:2:3:4:5:6::]", "mailto:" },
+		{ "\"a b\"@example.com", "mailto:" },
+		{ "user@EXAMPLE.XN--P1AI", "mailto:" },
+		{ "user@example.\344\270\255\345\233\275", "mailto:" }
+	};
+	static const char *invalid[] = {
+		"@", "http://", "file://", "mailto:", "mailto:a@", "mailto:a@-host",
+		"http://[1:2:3:4:5:6:7:]/", "http://[1::2::3]/", "http://[fffff::1]/",
+		"http://[::ffff:192.0.2.1234]/", "http://[::ffff:192.000.2.1]/",
+		"http://[IPv6:::1]/", "http://[v1.future]/", "http://[127.0.0.1]/",
+		"http://[fe80::1%25eth0]/", "http://user@-host/", "http://user@@host/",
+		"a@[256.1.2.3]", "a@[1.2.3.4444]", "a@[1.2.3.4.5]",
+		"a@[IPv6:1:2:3:4:5:6::8]", "a@[IPv6:1:2:3:4:5:6:7:]",
+		"user@example.xn--a", "user@example.xn--abc-", "user@example.xn--p1ai-",
+		"user@example.c", "user@example.123"
+	};
+	static const struct {
+		const char *input, *expected;
+	} rendering[] = {
+		{ "(http://example.com/a(b)c).", "(<a href=\"http://example.com/a(b)c\">http://example.com/a(b)c</a>)." },
+		{ "[http://[::1]/a[0]]", "[<a href=\"http://[::1]/a[0]\">http://[::1]/a[0]</a>]" },
+		{ "{http://example.com/a({b}[c])}.",
+		  "{<a href=\"http://example.com/a({b}[c])\">http://example.com/a({b}[c])</a>}." },
+		{ "|file:///a|", "|<a href=\"file:///a\">file:///a</a>|" },
+		{ "See <http://example.com?_=1&x=\"y\"#f> & done.",
+		  "See &lt;<a href=\"http://example.com?_=1&amp;x=&quot;y&quot;#f\">"
+		  "http://example.com?_=1&amp;x=&quot;y&quot;#f</a>&gt; &amp; done." },
+		{ "Bad http://[1:2:3:4:5:6:7:] then www.example.com#f and a@[1.2.3.4]",
+		  "Bad http://[1:2:3:4:5:6:7:] then <a href=\"http://www.example.com#f\">www.example.com#f</a>"
+		  " and <a href=\"mailto:a@[1.2.3.4]\">a@[1.2.3.4]</a>" },
+		{ "http://example.com#section\342\200\213next",
+		  "<a href=\"http://example.com#section\">http://example.com#section</a>&#8203;next" },
+		{ "http://example.com?_=1\302\240next",
+		  "<a href=\"http://example.com?_=1\">http://example.com?_=1</a>&#160;next" },
+		{ "http://example.com?_=1\342\200\256hidden",
+		  "<a href=\"http://example.com?_=1\">http://example.com?_=1</a>&#8238;hidden" },
+		{ "http://example.com?!", "<a href=\"http://example.com\">http://example.com</a>?!" }
+	};
+	const guint32 flags = GMIME_FILTER_HTML_CONVERT_URLS | GMIME_FILTER_HTML_CONVERT_ADDRESSES;
+	GString *text;
+	char *label, *host, *input, *expected, *local;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (urls); i++)
+		assert_html_link (urls[i].url, urls[i].prefix, flags);
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++)
+		assert_html_urls (invalid[i], strlen (invalid[i]), invalid[i], GMIME_FILTER_HTML_CONVERT_URLS);
+	for (i = 0; i < G_N_ELEMENTS (rendering); i++)
+		assert_html_urls (rendering[i].input, strlen (rendering[i].input), rendering[i].expected, flags);
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		if (!g_str_has_prefix (invalid[i], "http:"))
+			assert_html_urls (invalid[i], strlen (invalid[i]), invalid[i], flags);
+	}
+
+	assert_html_urls ("a@[1.2.3.4]outside", 10, "a@[1.2.3.4", flags);
+	assert_html_urls ("a@[IPv6:::]outside", 10, "a@[IPv6:::", flags);
+	assert_html_urls ("http://[::1]outside", 11, "http://[::1", flags);
+	assert_html_urls ("http://example.com#f\0www.example.com", sizeof ("http://example.com#f\0www.example.com") - 1,
+		"<a href=\"http://example.com#f\">http://example.com#f</a>&#0;"
+		"<a href=\"http://www.example.com\">www.example.com</a>", flags);
+
+	label = g_strnfill (63, 'a');
+	host = g_strdup_printf ("%s.%s.%s.%.*s.com", label, label, label, 59, label);
+	input = g_strdup_printf ("http://%s#f", host);
+	assert_html_link (input, "", flags);
+	g_free (input);
+	input = g_strdup_printf ("http://%sa", host);
+	assert_html_urls (input, strlen (input), input, GMIME_FILTER_HTML_CONVERT_URLS);
+	g_free (input);
+	g_free (host);
+	input = g_strdup_printf ("user@example.%sa", label);
+	assert_html_urls (input, strlen (input), input, flags);
+	g_free (input);
+	g_free (label);
+
+	local = g_strnfill (64, 'a');
+	input = g_strdup_printf ("%s@example.com", local);
+	assert_html_link (input, "mailto:", flags);
+	g_free (input);
+	input = g_strdup_printf ("%sa@example.com", local);
+	assert_html_urls (input, strlen (input), input, flags);
+	g_free (input);
+	g_free (local);
+
+	text = g_string_new ("user@example.");
+	for (i = 0; i < 57; i++)
+		g_string_append (text, "\303\251");
+	assert_html_link (text->str, "mailto:", flags);
+	g_string_free (text, TRUE);
+
+	text = g_string_new (NULL);
+	for (i = 0; i < 5000; i++)
+		g_string_append (text, "www.");
+	local = g_strnfill (64, 'a');
+	g_string_append (text, local);
+	expected = g_strdup_printf ("%s <a href=\"http://example.com#f\">http://example.com#f</a>", text->str);
+	g_string_append (text, " http://example.com#f");
+	assert_html_urls (text->str, text->len, expected, flags);
+	g_free (expected);
+	g_free (local);
+	g_string_free (text, TRUE);
+}
+
+static void
 test_html (const char *datadir, const char *input, const char *output, guint32 citation)
 {
 	guint32 flags = GMIME_FILTER_HTML_CONVERT_NL | GMIME_FILTER_HTML_CONVERT_SPACES |
@@ -2284,6 +2463,7 @@ int main (int argc, char **argv)
 	test_factory_names ();
 	test_factory_newlines ();
 	test_factory_preconditions ();
+	test_html_urls ();
 	
 	//test_charset_conversion (datadir, "chinese", "utf-8", "big5"); // Note: utf-8 -> big5 drops characters
 	test_charset_conversion (datadir, "cyrillic", "utf-8", "cp1251");

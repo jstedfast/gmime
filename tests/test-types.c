@@ -175,6 +175,9 @@ test_builtin_mappings (void)
 		g_free (file_name);
 	}
 	assert_mime_type ("file.gzip", "application/gzip");
+	assert_mime_type ("file.py", "text/x-script.python");
+	assert_mime_type ("file.PY", "text/x-script.python");
+	assert_extension ("text/x-script.phyton", ".py");
 	assert_mime_type ("file.yml", "application/yaml");
 	assert_extension ("application/x-gzip", ".gz");
 	assert_extension ("audio/x-flac", ".flac");

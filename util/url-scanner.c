@@ -18,600 +18,624 @@
  *  02110-1301, USA.
  */
 
+/* URL scanning adapted from MimeKit.
+ *
+ * Copyright (c) 2013-2026 .NET Foundation and Contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
-#include "gtrie.h"
 #include "url-scanner.h"
+#include "gmime/gmime-internet-address-private.h"
 
+/* Match MimeKit's UTF-16 limits while retaining byte offsets in UTF-8 input. */
+#define MAX_LOCAL_PART_LENGTH 64
+#define MAX_DOMAIN_LENGTH 255
+#define MAX_LABEL_LENGTH 63
+
+typedef struct {
+	urlpattern_t *url;
+	size_t anchor;
+	size_t length;
+} AnchoredPattern;
 
 struct _UrlScanner {
 	GPtrArray *patterns;
-	GTrie *trie;
 };
-
 
 UrlScanner *
 url_scanner_new (void)
 {
-	UrlScanner *scanner;
-	
-	scanner = g_new (UrlScanner, 1);
-	scanner->patterns = g_ptr_array_new ();
-	scanner->trie = g_trie_new (TRUE);
-	
+	UrlScanner *scanner = g_new (UrlScanner, 1);
+
+	scanner->patterns = g_ptr_array_new_with_free_func (g_free);
+
 	return scanner;
 }
-
 
 void
 url_scanner_free (UrlScanner *scanner)
 {
 	g_return_if_fail (scanner != NULL);
-	
+
 	g_ptr_array_free (scanner->patterns, TRUE);
-	g_trie_free (scanner->trie);
 	g_free (scanner);
 }
-
 
 void
 url_scanner_add (UrlScanner *scanner, urlpattern_t *pattern)
 {
-	g_return_if_fail (scanner != NULL);
-	
-	g_trie_add (scanner->trie, pattern->pattern, scanner->patterns->len);
-	g_ptr_array_add (scanner->patterns, pattern);
-}
+	AnchoredPattern *anchored, *other;
+	const char *anchor;
+	guint index;
 
+	g_return_if_fail (scanner != NULL);
+	g_return_if_fail (pattern != NULL);
+
+	anchor = strpbrk (pattern->pattern, "@:.");
+	g_return_if_fail (anchor != NULL && strpbrk (anchor + 1, "@:.") == NULL);
+
+	anchored = g_new (AnchoredPattern, 1);
+	anchored->url = pattern;
+	anchored->anchor = anchor - pattern->pattern;
+	anchored->length = strlen (pattern->pattern);
+
+	for (index = 0; index < scanner->patterns->len; index++) {
+		other = g_ptr_array_index (scanner->patterns, index);
+		if (other->anchor < anchored->anchor ||
+		    (other->anchor == anchored->anchor && other->length < anchored->length))
+			break;
+	}
+
+	g_ptr_array_insert (scanner->patterns, index, anchored);
+}
 
 gboolean
 url_scanner_scan (UrlScanner *scanner, const char *in, size_t inlen, urlmatch_t *match)
 {
-	const char *pos, *inend;
-	urlpattern_t *pat;
-	int pattern_id;
-	
+	const char *pos, *start, *inend;
+	AnchoredPattern *anchored;
+	urlpattern_t *pattern;
+	guint i;
+
 	g_return_val_if_fail (scanner != NULL, FALSE);
 	g_return_val_if_fail (in != NULL, FALSE);
-	
-	if (!(pos = g_trie_search (scanner->trie, in, inlen, &pattern_id)))
-		return FALSE;
-	
-	pat = g_ptr_array_index (scanner->patterns, pattern_id);
-	
-	match->pattern = pat->pattern;
-	match->prefix = pat->prefix;
-	
+	g_return_val_if_fail (match != NULL, FALSE);
+
 	inend = in + inlen;
-	if (!pat->start (in, pos, inend, match))
-		return FALSE;
-	
-	if (!pat->end (in, pos, inend, match))
-		return FALSE;
-	
-	return TRUE;
-}
+	/* Each pattern has one anchor. Earlier anchors also imply earlier starts;
+	 * sorting patterns by anchor offset makes equal-anchor matches leftmost-longest. */
+	for (pos = in; pos < inend; pos++) {
+		if (*pos != '@' && *pos != ':' && *pos != '.')
+			continue;
 
+		for (i = 0; i < scanner->patterns->len; i++) {
+			anchored = g_ptr_array_index (scanner->patterns, i);
+			pattern = anchored->url;
+			if (pattern->pattern[anchored->anchor] != *pos ||
+			    (size_t) (pos - in) < anchored->anchor ||
+			    (size_t) (inend - pos) < anchored->length - anchored->anchor)
+				continue;
 
-static unsigned char url_scanner_table[256] = {
-	  1,  1,  1,  1,  1,  1,  1,  1,  1,  9,  9,  1,  1,  9,  1,  1,
-	  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
-	 24,128,160,128,128,128,128,128,160,160,128,128,160,192,160,160,
-	 68, 68, 68, 68, 68, 68, 68, 68, 68, 68,160,160, 32,128, 32,128,
-	160, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
-	 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,160,160,160,128,128,
-	128, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
-	 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,128,128,128,128,  1,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,
-	128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128
-};
+			start = pos - anchored->anchor;
+			if (g_ascii_strncasecmp (start, pattern->pattern, anchored->length))
+				continue;
 
-enum {
-	IS_CTRL		= (1 << 0),
-	IS_ALPHA        = (1 << 1),
-	IS_DIGIT        = (1 << 2),
-	IS_LWSP		= (1 << 3),
-	IS_SPACE	= (1 << 4),
-	IS_SPECIAL	= (1 << 5),
-	IS_DOMAIN       = (1 << 6),
-	IS_URLSAFE      = (1 << 7),
-};
-
-#define is_ctrl(x) ((url_scanner_table[(unsigned char)(x)] & IS_CTRL) != 0)
-#define is_lwsp(x) ((url_scanner_table[(unsigned char)(x)] & IS_LWSP) != 0)
-#define is_atom(x) ((url_scanner_table[(unsigned char)(x)] & (IS_SPECIAL|IS_SPACE|IS_CTRL)) == 0)
-#define is_alpha(x) ((url_scanner_table[(unsigned char)(x)] & IS_ALPHA) != 0)
-#define is_digit(x) ((url_scanner_table[(unsigned char)(x)] & IS_DIGIT) != 0)
-#define is_domain(x) ((url_scanner_table[(unsigned char)(x)] & IS_DOMAIN) != 0)
-#define is_urlsafe(x) ((url_scanner_table[(unsigned char)(x)] & (IS_ALPHA|IS_DIGIT|IS_URLSAFE)) != 0)
-
-static struct {
-	char open;
-	char close;
-} url_braces[] = {
-	{ '(', ')' },
-	{ '{', '}' },
-	{ '[', ']' },
-	{ '<', '>' },
-	{ '|', '|' },
-};
-
-static gboolean
-is_open_brace (char c)
-{
-	unsigned int i;
-	
-	for (i = 0; i < G_N_ELEMENTS (url_braces); i++) {
-		if (c == url_braces[i].open)
-			return TRUE;
+			match->pattern = pattern->pattern;
+			match->prefix = pattern->prefix;
+			if (pattern->start (in, start, inend, match) &&
+			    pattern->end (in, start, inend, match))
+				return TRUE;
+		}
 	}
-	
+
 	return FALSE;
 }
 
-static char
-url_stop_at_brace (const char *in, size_t so)
+static size_t
+url_character_length (const char *pos, const char *end, const char *ascii)
 {
-	int i;
-	
-	if (so > 0) {
-		for (i = 0; i < 4; i++) {
-			if (in[so - 1] == url_braces[i].open)
-				return url_braces[i].close;
-		}
-	}
-	
-	return '\0';
+	gunichar c;
+
+	if (pos == end)
+		return 0;
+
+	if ((guchar) *pos < 128)
+		return g_ascii_isalnum (*pos) || (*pos && strchr (ascii, *pos)) ? 1 : 0;
+
+	c = g_utf8_get_char_validated (pos, end - pos);
+	if (c == (gunichar) -1 || c == (gunichar) -2 ||
+	    g_unichar_isspace (c) || g_unichar_iscntrl (c) || g_unichar_type (c) == G_UNICODE_FORMAT)
+		return 0;
+
+	return g_utf8_next_char (pos) - pos;
 }
 
+static gboolean
+url_skip_domain (const char **position, const char *end, const char *start)
+{
+	const char *pos = *position;
+	size_t length, label_length, domain_length = pos - start;
+
+	do {
+		label_length = 0;
+		if (pos == end || *pos == '-' || !(length = url_character_length (pos, end, "-")))
+			return FALSE;
+
+		do {
+			pos += length;
+			label_length += length == 4 ? 2 : 1;
+			domain_length += length == 4 ? 2 : 1;
+			if (label_length > MAX_LABEL_LENGTH || domain_length > MAX_DOMAIN_LENGTH)
+				return FALSE;
+		} while ((length = url_character_length (pos, end, "-")));
+
+		if (pos == end || *pos != '.')
+			break;
+
+		if (pos + 1 == end || pos[1] == '-' || !url_character_length (pos + 1, end, "-"))
+			break;
+
+		pos++;
+		domain_length++;
+	} while (TRUE);
+
+	*position = pos;
+	return TRUE;
+}
+
+static gboolean
+url_skip_local_part (const char **position, const char *end)
+{
+	const char *pos = *position;
+	gboolean escaped, closed;
+	size_t length, local_length = 0;
+
+	do {
+		if (pos < end && *pos == '"') {
+			escaped = closed = FALSE;
+			pos++;
+			local_length++;
+			while (pos < end) {
+				length = (guchar) *pos < 128 ? 1 : url_character_length (pos, end, "");
+				if (!length || !*pos)
+					return FALSE;
+				local_length += length == 4 ? 2 : 1;
+				if (local_length > MAX_LOCAL_PART_LENGTH)
+					return FALSE;
+				if (*pos == '\\') {
+					escaped = !escaped;
+				} else {
+					if (*pos == '"' && !escaped) {
+						pos += length;
+						closed = TRUE;
+						break;
+					}
+					escaped = FALSE;
+				}
+				pos++;
+			}
+			if (!closed)
+				return FALSE;
+		} else {
+			if (!(length = url_character_length (pos, end, "!#$%&'*+-/=?^_`{|}~")))
+				return FALSE;
+			do {
+				pos += length;
+				local_length += length == 4 ? 2 : 1;
+				if (local_length > MAX_LOCAL_PART_LENGTH)
+					return FALSE;
+			} while ((length = url_character_length (pos, end, "!#$%&'*+-/=?^_`{|}~")));
+		}
+
+		if (pos == end || *pos != '.')
+			break;
+		pos++;
+		local_length++;
+	} while (TRUE);
+
+	*position = pos;
+	return TRUE;
+}
+
+static gboolean
+url_skip_ipv4 (const char **position, const char *end, gboolean smtp)
+{
+	const char *pos = *position, *start;
+	int group, value;
+
+	for (group = 0; group < 4; group++) {
+		start = pos;
+		value = 0;
+		while (pos < end && g_ascii_isdigit (*pos) && pos - start < 3)
+			value = value * 10 + (*pos++ - '0');
+
+		if (pos == start || value > 255 || (!smtp && pos - start > 1 && *start == '0'))
+			return FALSE;
+		if (group < 3 && (pos == end || *pos++ != '.'))
+			return FALSE;
+	}
+
+	*position = pos;
+	return TRUE;
+}
+
+static gboolean
+url_skip_ipv6 (const char **position, const char *end, gboolean smtp)
+{
+	const char *pos = *position, *start;
+	gboolean compressed = FALSE;
+	int groups = 0;
+
+	if (pos < end && *pos == ':') {
+		if (end - pos < 2 || pos[1] != ':')
+			return FALSE;
+		compressed = TRUE;
+		pos += 2;
+	}
+
+	while (pos < end && *pos != ']') {
+		start = pos;
+		while (pos < end && g_ascii_isxdigit (*pos) && pos - start < 4)
+			pos++;
+		if (pos == start || ++groups > 8)
+			return FALSE;
+
+		if (pos < end && *pos == '.') {
+			pos = start;
+			if (++groups > 8 || !url_skip_ipv4 (&pos, end, smtp))
+				return FALSE;
+			break;
+		}
+
+		if (pos == end || *pos != ':')
+			break;
+		pos++;
+		if (pos == end || *pos == ']')
+			return FALSE;
+		if (*pos == ':') {
+			if (compressed)
+				return FALSE;
+			compressed = TRUE;
+			pos++;
+		}
+	}
+
+	if (compressed ? groups > (smtp ? 6 : 7) : groups != 8)
+		return FALSE;
+
+	*position = pos;
+	return TRUE;
+}
+
+static gboolean
+url_skip_literal (const char **position, const char *end, gboolean smtp)
+{
+	const char *pos = *position + 1;
+
+	if (smtp && end - pos >= 5 && !g_ascii_strncasecmp (pos, "IPv6:", 5)) {
+		pos += 5;
+		if (!url_skip_ipv6 (&pos, end, TRUE))
+			return FALSE;
+	} else if (smtp) {
+		if (!url_skip_ipv4 (&pos, end, TRUE))
+			return FALSE;
+	} else if (!url_skip_ipv6 (&pos, end, FALSE)) {
+		return FALSE;
+	}
+
+	if (pos == end || *pos != ']')
+		return FALSE;
+
+	*position = pos + 1;
+	return TRUE;
+}
+
+static gboolean
+url_domain_is_qualified (const char *start, const char *end)
+{
+	const char *label = end, *pos;
+	char *ascii, *unicode;
+	gboolean valid;
+
+	while (label > start && label[-1] != '.')
+		label--;
+	if (label == start || end - label < 2)
+		return FALSE;
+
+	if (end - label >= 5 && !g_ascii_strncasecmp (label, "xn--", 4)) {
+		ascii = g_strndup (label, end - label);
+		unicode = _g_mime_internet_address_decode_domain (ascii);
+		valid = g_ascii_strcasecmp (ascii, unicode) != 0;
+		g_free (unicode);
+		g_free (ascii);
+		return valid;
+	}
+
+	for (pos = label; pos < end; pos = g_utf8_next_char (pos)) {
+		if (!g_unichar_isalpha (g_utf8_get_char (pos)))
+			return FALSE;
+	}
+
+	return g_utf8_strlen (label, end - label) >= 2;
+}
 
 gboolean
 url_addrspec_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
-	register const char *inptr = pos;
-	
-	g_assert (*inptr == '@');
-	
-	if (inptr == in)
-		return FALSE;
-	
-	inptr--;
-	
-	while (inptr > in) {
-		if (is_atom (*inptr))
-			inptr--;
-		else
+	const char *start = pos, *previous, *word;
+	gboolean closed;
+	size_t length, local_length = 0;
+
+	do {
+		if (start == in)
+			return FALSE;
+
+		word = start;
+		if (start[-1] == '"') {
+			start--;
+			local_length++;
+			closed = FALSE;
+			while (start > in) {
+				previous = g_utf8_find_prev_char (in, start);
+				if (!previous)
+					return FALSE;
+				if ((guchar) *previous >= 128 && !url_character_length (previous, start, ""))
+					return FALSE;
+				length = start - previous;
+				start = previous;
+				local_length += length == 4 ? 2 : 1;
+				if (local_length > MAX_LOCAL_PART_LENGTH || !*start)
+					return FALSE;
+				if (*start == '"' && (start == in || start[-1] != '\\')) {
+					closed = TRUE;
+					break;
+				}
+			}
+			if (!closed)
+				return FALSE;
+		} else {
+			while (start > in) {
+				previous = g_utf8_find_prev_char (in, start);
+				if (!previous || !(length = url_character_length (previous, start, "!#$%&'*+-/=?^_`{|}~")))
+					break;
+				start = previous;
+				local_length += length == 4 ? 2 : 1;
+				if (local_length > MAX_LOCAL_PART_LENGTH)
+					return FALSE;
+			}
+			if (start == word)
+				return FALSE;
+		}
+
+		if (start == in || start[-1] != '.')
 			break;
-		
-		while (inptr > in && is_atom (*inptr))
-			inptr--;
-		
-		if (inptr > in && *inptr == '.')
-			inptr--;
-	}
-	
-	if (!is_atom (*inptr) || is_open_brace (*inptr))
-		inptr++;
-	
-	if (inptr == pos)
-		return FALSE;
-	
-	match->um_so = (inptr - in);
-	
+		start--;
+		if (++local_length > MAX_LOCAL_PART_LENGTH)
+			return FALSE;
+	} while (TRUE);
+
+	match->um_so = start - in;
 	return TRUE;
 }
 
 gboolean
 url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
-	const char *inptr = pos;
-	int parts = 0, digits;
-	gboolean got_dot = FALSE;
-	
-	g_assert (*inptr == '@');
-	
-	inptr++;
-	
-	if (*inptr == '[') {
-		/* domain literal */
-		do {
-			inptr++;
-			
-			digits = 0;
-			while (inptr < inend && is_digit (*inptr) && digits < 3) {
-				inptr++;
-				digits++;
-			}
-			
-			parts++;
-			
-			if (*inptr != '.' && parts != 4)
-				return FALSE;
-		} while (parts < 4);
-		
-		if (inptr < inend && *inptr == ']')
-			inptr++;
-		else
-			return FALSE;
-		
-		got_dot = TRUE;
-	} else {
-		while (inptr < inend) {
-			if (is_domain (*inptr))
-				inptr++;
-			else
-				break;
-			
-			while (inptr < inend && is_domain (*inptr))
-				inptr++;
-			
-			if (inptr < inend && *inptr == '.' && is_domain (inptr[1])) {
-				if (*inptr == '.')
-					got_dot = TRUE;
-				inptr++;
-			}
-		}
-	}
-	
-	if (inptr == pos + 1 || !got_dot)
+	const char *start = pos + 1, *end = start;
+
+	if (start == inend)
 		return FALSE;
-	
-	match->um_eo = (inptr - in);
-	
+
+	if (*start == '[') {
+		if (!url_skip_literal (&end, inend, TRUE))
+			return FALSE;
+	} else if (!url_skip_domain (&end, inend, start) || !url_domain_is_qualified (start, end)) {
+		return FALSE;
+	}
+
+	match->um_eo = end - in;
 	return TRUE;
 }
 
+static const char *
+url_trim_punctuation (const char *start, const char *end)
+{
+	gssize parentheses = 0, brackets = 0, braces = 0;
+	const char *pos;
+
+	for (pos = start; pos < end; pos++) {
+		switch (*pos) {
+		case '(': parentheses++; break;
+		case ')': parentheses--; break;
+		case '[': brackets++; break;
+		case ']': brackets--; break;
+		case '{': braces++; break;
+		case '}': braces--; break;
+		}
+	}
+
+	while (end > start) {
+		if (end[-1] == ')' && parentheses < 0)
+			parentheses++;
+		else if (end[-1] == ']' && brackets < 0)
+			brackets++;
+		else if (end[-1] == '}' && braces < 0)
+			braces++;
+		else if (!strchr (".,:;!?'\"*", end[-1]))
+			break;
+		end--;
+	}
+
+	return end;
+}
+
+static const char *
+url_skip_suffix (const char *in, const char *url, const char *pos, const char *end)
+{
+	const char *start = pos;
+	char open = url > in ? url[-1] : '\0', close;
+	size_t depth = 0, length;
+
+	switch (open) {
+	case '(': close = ')'; break;
+	case '[': close = ']'; break;
+	case '{': close = '}'; break;
+	case '<': close = '>'; break;
+	case '|': close = '|'; break;
+	default: close = '\0'; break;
+	}
+
+	while ((length = url_character_length (pos, end, "$-_.+!*'(),{}|\\^~[]`#%\";/?:@&="))) {
+		if (close) {
+			if (*pos == close) {
+				if (!depth)
+					break;
+				depth--;
+			} else if (*pos == open) {
+				depth++;
+			}
+		}
+		pos += length;
+	}
+
+	return url_trim_punctuation (start, pos);
+}
 
 gboolean
 url_file_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
-	match->um_so = (pos - in);
-	
+	match->um_so = pos - in;
 	return TRUE;
 }
 
 gboolean
 url_file_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
-	register const char *inptr = pos;
-	char close_brace;
-	
-	inptr += strlen (match->pattern);
-	
-	if (*inptr == '/')
-		inptr++;
-	
-	close_brace = url_stop_at_brace (in, match->um_so);
-	
-	while (inptr < inend && is_urlsafe (*inptr) && *inptr != close_brace)
-		inptr++;
-	
-	if (inptr == pos)
+	const char *start = pos + strlen (match->pattern);
+	const char *end = url_skip_suffix (in, pos, start, inend);
+
+	if (end == start)
 		return FALSE;
-	
-	match->um_eo = (inptr - in);
-	
+
+	match->um_eo = end - in;
 	return TRUE;
 }
 
 gboolean
 url_web_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
-	match->um_so = (pos - in);
-	
+	match->um_so = pos - in;
 	return TRUE;
+}
+
+static gboolean
+url_mailto_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
+{
+	const char *start = pos + strlen (match->pattern), *end = start;
+
+	if (url_skip_local_part (&end, inend) && end < inend && *end == '@') {
+		end++;
+		if (end == inend)
+			return FALSE;
+		if (*end == '[') {
+			if (!url_skip_literal (&end, inend, TRUE))
+				return FALSE;
+		} else if (!url_skip_domain (&end, inend, end)) {
+			return FALSE;
+		}
+	} else {
+		end = start;
+	}
+
+	if (end < inend && *end == '?')
+		end = url_skip_suffix (in, pos, end, inend);
+
+	if (end == start)
+		return FALSE;
+
+	match->um_eo = end - in;
+	return TRUE;
+}
+
+static void
+url_skip_userinfo (const char **position, const char *end)
+{
+	const char *pos = *position;
+	size_t length;
+
+	while (pos < end) {
+		if (*pos == '@') {
+			*position = pos + 1;
+			return;
+		}
+		if (*pos == '%') {
+			if (end - pos < 3 || !g_ascii_isxdigit (pos[1]) || !g_ascii_isxdigit (pos[2]))
+				return;
+			pos += 3;
+		} else if ((length = url_character_length (pos, end, "-._~!$&'()*+,;=:"))) {
+			pos += length;
+		} else {
+			return;
+		}
+	}
 }
 
 gboolean
 url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
-	register const char *inptr = pos;
-	gboolean openbracket = FALSE;
-	gboolean passwd = FALSE;
-	const char *save;
-	char close_brace;
-	int port, val, n;
-	char *end;
-	
-	inptr += strlen (match->pattern);
-	
-	close_brace = url_stop_at_brace (in, match->um_so);
-	
-	/* find the end of the domain */
-	if (is_digit (*inptr)) {
-		/* this is either an IP literal or it could be a subdomain that begins with a numeric character(s) */
-		save = inptr;
-		while (inptr < inend && is_digit (*inptr))
-			inptr++;
-		
-		if (inptr < inend && *inptr == '.') {
-			inptr = save;
-			goto ip_literal2;
-		}
-		
-		if (is_atom (*inptr)) {
-			inptr = save;
-			goto atom;
-		}
+	const char *end = pos + strlen (match->pattern), *host;
 
+	if (!g_ascii_strcasecmp (match->pattern, "mailto:"))
+		return url_mailto_end (in, pos, inend, match);
+
+	if (g_str_has_suffix (match->pattern, "://"))
+		url_skip_userinfo (&end, inend);
+
+	if (end == inend)
 		return FALSE;
-	} else if (is_atom (*inptr)) {
-		/* might be a domain or user@domain */
-		save = inptr;
-	atom:
-		while (inptr < inend) {
-			if (!is_atom (*inptr))
-				break;
-			
-			inptr++;
-			
-			while (inptr < inend && is_atom (*inptr))
-				inptr++;
-			
-			if ((inptr + 1) < inend && *inptr == '.' && is_atom (inptr[1]))
-				inptr++;
-		}
-		
-		if (*inptr != '@')
-			inptr = save;
-		else
-			inptr++;
-		
-		if (*inptr == '[') {
-			/* IPv6 (or possibly IPv4) address literal */
-			goto ip_literal;
-		}
-		
-		if (is_domain (*inptr)) {
-			/* domain name or IPv4 address */
-			goto domain;
-		}
-	} else if (*inptr == '[') {
-	ip_literal:
-		openbracket = TRUE;
-		inptr++;
-		
-		if (is_digit (*inptr)) {
-		ip_literal2:
-			/* could be IPv4 or IPv6 */
-			if ((val = strtol (inptr, &end, 10)) < 0)
-				return FALSE;
-			if ((*end >= 'A' && *end <= 'F') || (*end >= 'a' && *end <= 'f')) {
-				if ((val = strtol (inptr, &end, 16)) < 0)
-					return FALSE;
-			}
-		} else if ((*inptr >= 'A' && *inptr <= 'F') || (*inptr >= 'a' && *inptr <= 'f')) {
-			/* IPv6 address literals are in hex */
-			if ((val = strtol (inptr, &end, 16)) < 0 || *end != ':')
-				return FALSE;
-		} else if (*inptr == ':') {
-			/* IPv6 can start with a ':' */
-			end = (char *) inptr;
-			val = 256; /* invalid value */
-		} else {
+
+	host = !g_ascii_strcasecmp (match->pattern, "www.") ||
+		!g_ascii_strcasecmp (match->pattern, "ftp.") ? pos : end;
+
+	if (*end == '[') {
+		if (!url_skip_literal (&end, inend, FALSE))
 			return FALSE;
-		}
-		
-		switch (*end) {
-		case '.': /* IPv4 address literal */
-			n = 1;
-			do {
-				if (val > 255 || *end != '.')
-					return FALSE;
-				
-				inptr = end + 1;
-				if ((val = strtol (inptr, &end, 10)) < 0)
-					return FALSE;
-				
-				n++;
-			} while (n < 4);
-			
-			if (val > 255 || n < 4 || (openbracket && *end != ']'))
-				return FALSE;
-			
-			inptr = end + 1;
-			break;
-		case ':': /* IPv6 address literal */
-			if (!openbracket)
-				return FALSE;
-			
-			do {
-				if (end[1] != ':') {
-					inptr = end + 1;
-					if ((val = strtol (inptr, &end, 16)) < 0 || val > 65535)
-						return FALSE;
-				} else {
-					inptr = end;
-					end++;
-				}
-			} while (end > inptr && *end == ':');
-			
-			if (*end == '.') {
-				n = 1;
-				
-				do {
-					inptr = end + 1;
-					if ((val = strtol (inptr, &end, 10)) < 0 || val > 255)
-						return FALSE;
-					n++;
-				} while (n < 4 && end > inptr && *end == '.');
-			}
-			
-			if (*end != ']')
-				return FALSE;
-			
-			inptr = end + 1;
-			break;
-		default:
-			return FALSE;
-		}
-	} else if (is_domain (*inptr)) {
-	domain:
-		while (inptr < inend) {
-			if (!is_domain (*inptr))
-				break;
-			
-			inptr++;
-			
-			while (inptr < inend && is_domain (*inptr))
-				inptr++;
-			
-			if ((inptr + 1) < inend && *inptr == '.' && (is_domain (inptr[1]) || inptr[1] == '/'))
-				inptr++;
-		}
-	} else {
+	} else if (!url_skip_domain (&end, inend, host)) {
 		return FALSE;
 	}
-	
-	if (inptr < inend) {
-		switch (*inptr) {
-		case ':': /* we either have a port or a password */
-			inptr++;
-			
-			if (is_digit (*inptr) || passwd) {
-				port = (*inptr++ - '0');
-				
-				while (inptr < inend && is_digit (*inptr) && port < 65536)
-					port = (port * 10) + (*inptr++ - '0');
-				
-				if (!passwd && (port >= 65536 || *inptr == '@')) {
-					if (inptr < inend) {
-						/* this must be a password? */
-						goto passwd;
-					}
-					
-					inptr--;
-				}
-			} else {
-			passwd:
-				passwd = TRUE;
-				save = inptr;
-				
-				while (inptr < inend && is_atom (*inptr))
-					inptr++;
-				
-				if ((inptr + 2) < inend) {
-					if (*inptr == '@') {
-						inptr++;
-						if (is_domain (*inptr))
-							goto domain;
-					}
-					
-					return FALSE;
-				}
-			}
-			
-			if (inptr >= inend || *inptr != '/')
-				break;
-			
-			/* we have a '/' so there could be a path - fall through */
-		case '/': /* we've detected a path component to our url */
-		case '?': /* we've detected params component to our url */
-			inptr++;
-			
-			while (inptr < inend && is_urlsafe (*inptr) && *inptr != close_brace)
-				inptr++;
-			
-			break;
-		default:
-			break;
-		}
+
+	if (end < inend && *end == ':') {
+		end++;
+		while (end < inend && g_ascii_isdigit (*end))
+			end++;
 	}
-	
-	/* urls are extremely unlikely to end with any
-	 * punctuation, so strip any trailing
-	 * punctuation off. Also strip off any closing
-	 * braces or quotes. */
-	while (inptr > pos && strchr (",.:;?!-|)}]'\"", inptr[-1]))
-		inptr--;
-	
-	match->um_eo = (inptr - in);
-	
+
+	if (end < inend && (*end == '/' || *end == '?' || *end == '#'))
+		end = url_skip_suffix (in, pos, end, inend);
+
+	match->um_eo = end - in;
 	return TRUE;
 }
-
-
-#ifdef BUILD_TABLE
-
-#include <stdio.h>
-
-/* got these from rfc1738 */
-#define CHARS_LWSP " \t\n\r"               /* linear whitespace chars */
-#define CHARS_SPECIAL "()<>@,;:\\\".[]"
-
-/* got these from rfc1738 */
-#define CHARS_URLSAFE "$-_.+!*'(),{}|\\^~[]`#%\";/?:@&="
-
-
-static void
-table_init_bits (unsigned int mask, const char *vals)
-{
-	int i;
-	
-	for (i = 0; vals[i] != '\0'; i++)
-		url_scanner_table[(unsigned char) vals[i]] |= mask;
-}
-
-static void
-url_scanner_table_init (void)
-{
-	int i;
-	
-	for (i = 0; i < 256; i++) {
-		url_scanner_table[i] = 0;
-		if (i < 32)
-			url_scanner_table[i] |= IS_CTRL;
-		if ((i >= '0' && i <= '9'))
-			url_scanner_table[i] |= IS_DIGIT | IS_DOMAIN;
-		if ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
-			url_scanner_table[i] |= IS_ALPHA | IS_DOMAIN;
-		if (i >= 128)
-			url_scaller_table[i] |= IS_URLSAFE;
-		if (i == 127)
-			url_scanner_table[i] |= IS_CTRL;
-	}
-	
-	url_scanner_table[' '] |= IS_SPACE;
-	url_scanner_table['-'] |= IS_DOMAIN;
-	
-	/* not defined to be special in rfc0822, but when scanning
-           backwards to find the beginning of the email address we do
-           not want to include this char if we come across it - so
-           this is kind of a hack, but it's ok */
-	url_scanner_table['/'] |= IS_SPECIAL;
-	
-	table_init_bits (IS_LWSP, CHARS_LWSP);
-	table_init_bits (IS_SPECIAL, CHARS_SPECIAL);
-	table_init_bits (IS_URLSAFE, CHARS_URLSAFE);
-}
-
-int main (int argc, char **argv)
-{
-	int i;
-	
-	url_scanner_table_init ();
-	
-	printf ("static unsigned char url_scanner_table[256] = {");
-	for (i = 0; i < 256; i++) {
-		printf ("%s%3d%s", (i % 16) ? "" : "\n\t",
-			url_scanner_table[i], i != 255 ? "," : "\n");
-	}
-	printf ("};\n\n");
-	
-	return 0;
-}
-
-#endif /* BUILD_TABLE */

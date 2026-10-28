@@ -440,8 +440,9 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		
 #define CONVERT_URLS_OR_ADDRESSES (GMIME_FILTER_HTML_CONVERT_URLS | GMIME_FILTER_HTML_CONVERT_ADDRESSES)
 		if (html->flags & CONVERT_URLS_OR_ADDRESSES) {
-			size_t matchlen, buflen, len;
+			size_t matchlen, escapedlen, buflen, len;
 			urlmatch_t match;
+			char *escaped;
 			
 			len = inptr - start;
 			
@@ -455,21 +456,24 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					len -= match.um_so;
 					
 					matchlen = match.um_eo - match.um_so;
-					
-					buflen = 20 + strlen (match.prefix) + matchlen + matchlen;
+					escaped = g_markup_escape_text (start, matchlen);
+					escapedlen = strlen (escaped);
+
+					buflen = 20 + strlen (match.prefix) + escapedlen + escapedlen;
 					outptr = check_size (filter, outptr, &outend, buflen);
 					
 					/* write out the href tag */
 					outptr = g_stpcpy (outptr, "<a href=\"");
 					outptr = g_stpcpy (outptr, match.prefix);
-					memcpy (outptr, start, matchlen);
-					outptr += matchlen;
+					memcpy (outptr, escaped, escapedlen);
+					outptr += escapedlen;
 					outptr = g_stpcpy (outptr, "\">");
 					
 					/* now write the matched string */
-					memcpy (outptr, start, matchlen);
+					memcpy (outptr, escaped, escapedlen);
+					g_free (escaped);
 					html->column += matchlen;
-					outptr += matchlen;
+					outptr += escapedlen;
 					start += matchlen;
 					len -= matchlen;
 					

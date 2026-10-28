@@ -1827,6 +1827,12 @@ test_message_id_assignment (void)
 	g_test_assert_expected_messages ();
 	check (!strcmp (testsuite_header_raw_text (header), raw), "invalid message id preserves raw header");
 	g_free (raw);
+	g_mime_header_list_append (headers, "mEsSaGe-Id", "<duplicate@host>", NULL);
+	g_mime_message_set_message_id (message, g_mime_message_get_message_id (message));
+	check (g_mime_header_list_index_of (headers, "Message-Id") ==
+	       g_mime_header_list_last_index_of (headers, "Message-Id") &&
+	       !strcmp (g_mime_message_get_message_id (message), "local@host"),
+	       "same-value message id assignment removes case-insensitive duplicates with an aliased cache");
 	g_mime_message_set_message_id (message, testsuite_header_raw_text (header));
 	check (!g_strcmp0 (g_mime_message_get_message_id (message), "local@host"),
 	       "message-id assignment safely consumes an aliased raw header");
@@ -1838,6 +1844,14 @@ test_message_id_assignment (void)
 	g_test_assert_expected_messages ();
 	check (!g_strcmp0 (g_mime_message_get_message_id (message), "ocal@host"),
 	       "NULL message id is rejected without changing the cache");
+	g_mime_message_set_subject (message, "Original subject", NULL);
+	g_mime_header_list_append (headers, "sUbJeCt", "Duplicate subject", NULL);
+	check (!strcmp (g_mime_message_get_subject (message), "Original subject"),
+	       "the first subject remains cached after appending a duplicate");
+	g_mime_message_set_subject (message, g_mime_message_get_subject (message), NULL);
+	check (!g_strcmp0 (g_mime_message_get_subject (message), "Original subject") &&
+	       g_mime_header_list_index_of (headers, "Subject") == g_mime_header_list_last_index_of (headers, "Subject"),
+	       "same-value subject assignment deduplicates without clearing the cached subject");
 
 	headers = g_mime_entity_get_header_list (content);
 	header = g_mime_header_list_get_header (headers, "Content-Id");
@@ -1956,6 +1970,18 @@ test_message_reply_ids (void)
 		testsuite_header_set_raw_text (duplicate, " <changed@host>\n");
 		check (!g_strcmp0 (properties[j].get (message), "ocal@host"),
 		       "appending or changing a duplicate does not override the first reply ID");
+		properties[j].set (message, properties[j].get (message));
+		check (g_mime_header_list_get_count (headers) == (j ? 2 : 1) &&
+		       !strcmp (properties[j].get (message), "ocal@host"),
+		       "equal reply IDs remove singleton duplicates but preserve older resent headers");
+		properties[j].set (message, "updated@host");
+		check (g_mime_header_list_get_count (headers) == (j ? 2 : 1) &&
+		       (!j || !strcmp (testsuite_header_raw_text (duplicate), " <changed@host>\n")),
+		       "changed resent IDs preserve older header objects and raw values");
+		if (!j) {
+			g_mime_header_list_append (headers, properties[j].name, "<changed@host>", NULL);
+			duplicate = g_mime_header_list_get_header_at (headers, 1);
+		}
 		testsuite_header_set_raw_text (header, " <incomplete\n");
 		check (properties[j].get (message) == NULL,
 		       "a malformed first reply ID does not fall back to a later header");
@@ -2455,9 +2481,11 @@ test_message_priorities (void)
 		check (message_priority_get (message, type) == high[type], "the first priority header wins");
 		testsuite_header_set_raw_text (duplicate, " unknown\n");
 		message_priority_set (message, type, high[type]);
-		check (g_mime_header_list_get_count (headers) == 2 &&
-		       !strcmp (testsuite_header_raw_text (header), original[type]),
-		       "equal priority assignments preserve raw headers and duplicates");
+		check (g_mime_header_list_get_count (headers) == 1 &&
+		       !strcmp (g_mime_header_get_value (header), values[type][high[type] - first]),
+		       "equal priority assignments replace duplicate headers");
+		g_mime_header_list_append (headers, names[type], "unknown", NULL);
+		duplicate = g_mime_header_list_get_header_at (headers, 1);
 		testsuite_header_set_raw_text (header, " unknown\n");
 		g_mime_header_set_value (duplicate, NULL, values[type][low[type] - first], NULL);
 		check (message_priority_get (message, type) == normal[type],
@@ -2578,10 +2606,15 @@ test_message_dates (void)
 		date = properties[type].get (message);
 		properties[type].set (message, date);
 		properties[type].set (message, alias);
-		check (properties[type].get (message) == date && g_mime_header_list_get_count (headers) == 2 &&
-		       !strcmp (testsuite_header_raw_text (header), first),
-		       "equal instants and self-assignment preserve date timezone, raw bytes and duplicates");
+		check (properties[type].get (message) == date &&
+		       g_mime_header_list_get_count (headers) == (type ? 2 : 1) &&
+		       (!type || !strcmp (testsuite_header_raw_text (header), first)),
+		       "equal dates remove singleton duplicates but preserve resent dates and cached timezone");
 		g_date_time_unref (alias);
+		if (!type) {
+			g_mime_header_list_append (headers, properties[type].name, second, NULL);
+			duplicate = g_mime_header_list_get_header_at (headers, 1);
+		}
 		testsuite_header_set_raw_text (header, " invalid\n");
 		g_mime_header_set_value (duplicate, NULL, second, NULL);
 		check (properties[type].get (message) == NULL, "an invalid first date does not fall back to duplicates");
@@ -2608,8 +2641,9 @@ test_message_dates (void)
 		check (g_date_time_get_microsecond (date) == 123456 &&
 		       g_date_time_get_utc_offset (date) == 19800 * G_TIME_SPAN_SECOND &&
 		       !g_strcmp0 (g_mime_entity_get_header (GMIME_ENTITY (message), properties[type].name), formatted) &&
-		       g_mime_header_list_get_count (headers) == 1,
-		       "date assignments retain timezone and microseconds while writing canonical headers without duplicates");
+		       g_mime_header_list_get_count (headers) == (type ? 2 : 1) &&
+		       (!type || !strcmp (g_mime_header_get_value (g_mime_header_list_get_header_at (headers, 1)), second)),
+		       "date assignments retain precision and preserve only older resent headers");
 		g_free (formatted);
 		changed = g_date_time_add (date, 1);
 		raw = g_strdup (testsuite_header_raw_text (replacement));
@@ -2685,6 +2719,51 @@ test_message_dates (void)
 	g_object_unref (message);
 	g_object_unref (parser);
 	g_object_unref (stream);
+
+	{
+		static const char *names[] = { "Resent-Date", "Resent-Message-Id", "Resent-To" };
+		static const char *values[] = {
+			"Sat, 01 Mar 2025 09:00:00 +0000", "<newer@example.com>", "newer@example.com",
+			"Fri, 28 Feb 2025 09:00:00 +0000", "<older@example.com>", "older@example.com"
+		};
+		GMimeHeader *snapshots[G_N_ELEMENTS (values)];
+		char *raw[G_N_ELEMENTS (values)];
+		gboolean preserved;
+
+		message = g_mime_message_new (FALSE);
+		headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+		for (i = 0; i < G_N_ELEMENTS (values); i++) {
+			g_mime_header_list_append (headers, names[i % G_N_ELEMENTS (names)], values[i], NULL);
+			snapshots[i] = g_object_ref (g_mime_header_list_get_header_at (headers, i));
+			raw[i] = g_strdup (testsuite_header_raw_text (snapshots[i]));
+		}
+
+		g_mime_message_set_resent_date (message, g_mime_message_get_resent_date (message));
+		g_mime_message_set_resent_message_id (message, g_mime_message_get_resent_message_id (message));
+		preserved = g_mime_header_list_get_count (headers) == G_N_ELEMENTS (values);
+		for (i = 0; preserved && i < G_N_ELEMENTS (values); i++)
+			preserved = g_mime_header_list_get_header_at (headers, i) == snapshots[i] &&
+				!strcmp (testsuite_header_raw_text (snapshots[i]), raw[i]);
+		check (preserved, "same-value resent assignments preserve the order and raw bytes of complete resent blocks");
+
+		date = g_date_time_new_utc (2025, 3, 2, 9, 0, 0);
+		g_mime_message_set_resent_date (message, date);
+		g_date_time_unref (date);
+		g_mime_message_set_resent_message_id (message, "updated@example.com");
+		preserved = g_mime_header_list_get_count (headers) == G_N_ELEMENTS (values);
+		for (i = 0; preserved && i < G_N_ELEMENTS (values); i++)
+			preserved = g_mime_header_list_get_header_at (headers, i) == snapshots[i] &&
+				(i < 2 || !strcmp (testsuite_header_raw_text (snapshots[i]), raw[i]));
+		check (preserved && g_date_time_get_day_of_month (g_mime_message_get_resent_date (message)) == 2 &&
+		       !g_strcmp0 (g_mime_message_get_resent_message_id (message), "updated@example.com"),
+		       "changed resent assignments update only the newest fields without disturbing older blocks");
+
+		for (i = 0; i < G_N_ELEMENTS (values); i++) {
+			g_object_unref (snapshots[i]);
+			g_free (raw[i]);
+		}
+		g_object_unref (message);
+	}
 }
 
 static void
@@ -7502,9 +7581,9 @@ test_header_list_identifiers (void)
 	g_mime_header_list_append (headers, "To", "one@example.com", NULL);
 	g_mime_header_list_append (headers, "TO", "two@example.com", NULL);
 	check (g_mime_header_list_remove_id (headers, GMIME_HEADER_SUBJECT) &&
-	       g_mime_message_get_subject (message) == NULL &&
+	       !g_strcmp0 (g_mime_message_get_subject (message), "second") &&
 	       !g_strcmp0 (g_mime_header_list_get_value_by_id (headers, GMIME_HEADER_SUBJECT), "second"),
-	       "identifier removal preserves the existing owner subject-invalidation behavior");
+	       "identifier removal promotes the next subject in the owning message");
 	g_mime_header_list_remove_all_id (headers, GMIME_HEADER_SUBJECT);
 	g_mime_header_list_remove_all_id (headers, GMIME_HEADER_TO);
 	check (g_mime_message_get_subject (message) == NULL &&
@@ -8199,6 +8278,9 @@ test_header_list_replace (void)
 	       !g_strcmp0 (g_mime_message_get_subject (other), "other-only"),
 	       "replacement detaches removed instances only from the receiving list");
 	g_mime_header_list_replace (headers, replacement);
+	check (!g_strcmp0 (g_mime_message_get_subject (other), "other-only"),
+	       "a shared duplicate does not override the first subject");
+	g_mime_header_list_remove_at (shared, 0);
 	g_mime_header_set_value (replacement, NULL, "both", NULL);
 	check (!g_strcmp0 (g_mime_message_get_subject (message), "both") &&
 	       !g_strcmp0 (g_mime_message_get_subject (other), "both"),
@@ -8359,6 +8441,9 @@ test_header_list_set_header_at (void)
 	       !g_strcmp0 (g_mime_message_get_subject (other), "other-only"),
 	       "indexed assignment detaches only the replaced occurrence's owner listener");
 	g_mime_header_list_add (shared, replacement);
+	check (!g_strcmp0 (g_mime_message_get_subject (other), "other-only"),
+	       "adding a shared duplicate preserves the first subject");
+	g_mime_header_list_remove_at (shared, 0);
 	g_mime_header_set_value (replacement, NULL, "both", NULL);
 	check (!g_strcmp0 (g_mime_message_get_subject (message), "both") &&
 	       !g_strcmp0 (g_mime_message_get_subject (other), "both"), "indexed replacement remains editable across containing lists");
