@@ -57,7 +57,7 @@ typedef struct {
 } YencDecoderState;
 
 struct _GMimeYencDecoder {
-	GObject parent_object;
+	GObject parent_instance;
 	YencDecoderState state;
 };
 

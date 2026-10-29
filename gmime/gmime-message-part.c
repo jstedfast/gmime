@@ -32,6 +32,8 @@
 #define d(x)
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-message-part
  * @title: GMimeMessagePart
@@ -45,7 +47,7 @@
 
 /* GObject class methods */
 static void g_mime_message_part_class_init (GMimeMessagePartClass *klass);
-static void g_mime_message_part_init (GMimeMessagePart *message_part, GMimeMessagePartClass *klass);
+static void g_mime_message_part_init (GMimeMessagePart *message_part);
 static void g_mime_message_part_finalize (GObject *object);
 
 /* GMimeEntity class methods */
@@ -64,28 +66,13 @@ message_part_accept (GMimeEntity *object, GMimeVisitor *visitor)
 }
 
 
-GType
-g_mime_message_part_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessagePart, g_mime_message_part, GMIME_TYPE_ENTITY)
+
+GMimeMessagePartPrivate *
+_g_mime_message_part_get_private (GMimeMessagePart *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeMessagePartClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_message_part_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeMessagePart),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_message_part_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_ENTITY, "GMimeMessagePart", &info, 0);
-	}
-	
-	return type;
+	return g_mime_message_part_get_instance_private (object);
 }
 
 
@@ -105,18 +92,21 @@ g_mime_message_part_class_init (GMimeMessagePartClass *klass)
 }
 
 static void
-g_mime_message_part_init (GMimeMessagePart *part, GMimeMessagePartClass *klass)
+g_mime_message_part_init (GMimeMessagePart *part)
 {
-	part->message = NULL;
+	GMimeMessagePartPrivate *priv = _g_mime_message_part_get_private (part);
+
+	priv->message = NULL;
 }
 
 static void
 g_mime_message_part_finalize (GObject *object)
 {
 	GMimeMessagePart *part = (GMimeMessagePart *) object;
-	
-	if (part->message)
-		g_object_unref (part->message);
+	GMimeMessagePartPrivate *priv = _g_mime_message_part_get_private (part);
+
+	if (priv->message)
+		g_object_unref (priv->message);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -128,8 +118,10 @@ message_part_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, g
 
 	/* An absent encapsulated message is an empty container, not leaf data
 	 * to analyze or an outer Content-Transfer-Encoding to rewrite. */
-	return !part->message ||
-		g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (part->message), constraint, max_line_length, error);
+	GMimeMessagePartPrivate *priv = _g_mime_message_part_get_private (part);
+
+	return !priv->message ||
+		g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (priv->message), constraint, max_line_length, error);
 }
 
 
@@ -180,10 +172,13 @@ g_mime_message_part_new (const char *subtype)
 GMimeMessagePart *
 g_mime_message_part_new_with_message (const char *subtype, GMimeMessage *message)
 {
+	GMimeMessagePartPrivate *priv;
 	GMimeMessagePart *part;
 	
 	part = g_mime_message_part_new (subtype);
-	part->message = message;
+	priv = _g_mime_message_part_get_private (part);
+
+	priv->message = message;
 	g_object_ref (message);
 	
 	return part;
@@ -200,15 +195,19 @@ g_mime_message_part_new_with_message (const char *subtype, GMimeMessage *message
 void
 g_mime_message_part_set_message (GMimeMessagePart *part, GMimeMessage *message)
 {
+	GMimeMessagePartPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_MESSAGE_PART (part));
 	
 	if (message)
 		g_object_ref (message);
 	
-	if (part->message)
-		g_object_unref (part->message);
+	priv = _g_mime_message_part_get_private (part);
+
+	if (priv->message)
+		g_object_unref (priv->message);
 	
-	part->message = message;
+	priv->message = message;
 }
 
 
@@ -223,7 +222,11 @@ g_mime_message_part_set_message (GMimeMessagePart *part, GMimeMessage *message)
 GMimeMessage *
 g_mime_message_part_get_message (GMimeMessagePart *part)
 {
+	GMimeMessagePartPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PART (part), NULL);
 	
-	return part->message;
+	priv = _g_mime_message_part_get_private (part);
+
+	return priv->message;
 }

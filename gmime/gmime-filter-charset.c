@@ -30,6 +30,8 @@
 #include "gmime-iconv.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-charset
  * @title: GMimeFilterCharset
@@ -53,7 +55,7 @@
 
 
 static void g_mime_filter_charset_class_init (GMimeFilterCharsetClass *klass);
-static void g_mime_filter_charset_init (GMimeFilterCharset *filter, GMimeFilterCharsetClass *klass);
+static void g_mime_filter_charset_init (GMimeFilterCharset *filter);
 static void g_mime_filter_charset_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -67,28 +69,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_charset_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterCharset, g_mime_filter_charset, GMIME_TYPE_FILTER)
+
+GMimeFilterCharsetPrivate *
+_g_mime_filter_charset_get_private (GMimeFilterCharset *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterCharsetClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_charset_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterCharset),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_charset_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterCharset", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_charset_get_instance_private (object);
 }
 
 
@@ -109,22 +96,25 @@ g_mime_filter_charset_class_init (GMimeFilterCharsetClass *klass)
 }
 
 static void
-g_mime_filter_charset_init (GMimeFilterCharset *filter, GMimeFilterCharsetClass *klass)
+g_mime_filter_charset_init (GMimeFilterCharset *filter)
 {
-	filter->from_charset = NULL;
-	filter->to_charset = NULL;
-	filter->cd = (iconv_t) -1;
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private (filter);
+
+	priv->from_charset = NULL;
+	priv->to_charset = NULL;
+	priv->cd = (iconv_t) -1;
 }
 
 static void
 g_mime_filter_charset_finalize (GObject *object)
 {
-	GMimeFilterCharset *filter = (GMimeFilterCharset *) object;
-	
-	g_free (filter->from_charset);
-	g_free (filter->to_charset);
-	if (filter->cd != (iconv_t) -1)
-		g_mime_iconv_close (filter->cd);
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) object);
+
+	g_free (priv->from_charset);
+	g_free (priv->to_charset);
+
+	if (priv->cd != (iconv_t) -1)
+		g_mime_iconv_close (priv->cd);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -133,31 +123,34 @@ g_mime_filter_charset_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
-	
-	return g_mime_filter_charset_new (charset->from_charset, charset->to_charset);
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) filter);
+
+	return g_mime_filter_charset_new (priv->from_charset, priv->to_charset);
 }
 
 static void
 grow_output (GMimeFilter *filter, char **outbuf, size_t *outleft)
 {
-	size_t written = *outbuf - filter->outbuf;
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
+	size_t written = *outbuf - priv->outbuf;
 
-	if (G_UNLIKELY (filter->outsize > (G_MAXSIZE - 16) / 2))
+	if (G_UNLIKELY (priv->outsize > (G_MAXSIZE - 16) / 2))
 		g_error ("GMimeFilterCharset output buffer size overflow");
 
 	/* Reallocation moves the buffer, so retain a byte offset, not iconv's
 	 * old output pointer. Already converted bytes must survive growth. */
-	g_mime_filter_set_size (filter, filter->outsize * 2 + 16, TRUE);
-	*outbuf = filter->outbuf + written;
-	*outleft = filter->outsize - written;
+	g_mime_filter_set_size (filter, priv->outsize * 2 + 16, TRUE);
+
+	*outbuf = priv->outbuf + written;
+	*outleft = priv->outsize - written;
 }
 
 static void
 convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	 char **out, size_t *outlen, size_t *outprespace, gboolean complete)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
+	GMimeFilterCharsetPrivate *charset = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	size_t inleft = len, outleft;
 	char *inbuf = in, *outbuf;
 
@@ -175,8 +168,9 @@ convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	 * decoder/encoder loop, drain complete characters in this call rather
 	 * than saving valid input just because its output needs more space. */
 	g_mime_filter_set_size (filter, len + 16, FALSE);
-	outbuf = filter->outbuf;
-	outleft = filter->outsize;
+
+	outbuf = priv->outbuf;
+	outleft = priv->outsize;
 
 	while (inleft > 0) {
 		if (iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft) != (size_t) -1)
@@ -212,9 +206,9 @@ convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		}
 	}
 
-	*out = filter->outbuf;
-	*outlen = outbuf - filter->outbuf;
-	*outprespace = filter->outpre;
+	*out = priv->outbuf;
+	*outlen = outbuf - priv->outbuf;
+	*outprespace = priv->outpre;
 }
 
 static void
@@ -234,9 +228,9 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
-	
-	if (charset->cd != (iconv_t) -1 && iconv (charset->cd, NULL, NULL, NULL, NULL) == (size_t) -1)
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) filter);
+
+	if (priv->cd != (iconv_t) -1 && iconv (priv->cd, NULL, NULL, NULL, NULL) == (size_t) -1)
 		g_error ("GMimeFilterCharset reset failed: %s", g_strerror (errno));
 }
 
@@ -258,6 +252,7 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 {
+	GMimeFilterCharsetPrivate *priv;
 	GMimeFilterCharset *charset;
 	iconv_t cd;
 	
@@ -266,9 +261,11 @@ g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 		return NULL;
 	
 	charset = g_object_new (GMIME_TYPE_FILTER_CHARSET, NULL);
-	charset->from_charset = g_strdup (from_charset);
-	charset->to_charset = g_strdup (to_charset);
-	charset->cd = cd;
+	priv = _g_mime_filter_charset_get_private (charset);
+
+	priv->from_charset = g_strdup (from_charset);
+	priv->to_charset = g_strdup (to_charset);
+	priv->cd = cd;
 	
 	return (GMimeFilter *) charset;
 }
@@ -285,9 +282,13 @@ g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 const char *
 g_mime_filter_charset_get_from_charset (GMimeFilterCharset *filter)
 {
+	GMimeFilterCharsetPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_CHARSET (filter), NULL);
 
-	return filter->from_charset;
+	priv = _g_mime_filter_charset_get_private (filter);
+
+	return priv->from_charset;
 }
 
 /**
@@ -302,7 +303,11 @@ g_mime_filter_charset_get_from_charset (GMimeFilterCharset *filter)
 const char *
 g_mime_filter_charset_get_to_charset (GMimeFilterCharset *filter)
 {
+	GMimeFilterCharsetPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_CHARSET (filter), NULL);
 
-	return filter->to_charset;
+	priv = _g_mime_filter_charset_get_private (filter);
+
+	return priv->to_charset;
 }

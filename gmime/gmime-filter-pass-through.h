@@ -26,30 +26,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_PASS_THROUGH            (g_mime_filter_pass_through_get_type ())
-#define GMIME_FILTER_PASS_THROUGH(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_PASS_THROUGH, GMimeFilterPassThrough))
-#define GMIME_FILTER_PASS_THROUGH_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_PASS_THROUGH, GMimeFilterPassThroughClass))
-#define GMIME_IS_FILTER_PASS_THROUGH(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_PASS_THROUGH))
-#define GMIME_IS_FILTER_PASS_THROUGH_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_PASS_THROUGH))
-#define GMIME_FILTER_PASS_THROUGH_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_PASS_THROUGH, GMimeFilterPassThroughClass))
 
-typedef struct _GMimeFilterPassThrough GMimeFilterPassThrough;
-typedef struct _GMimeFilterPassThroughClass GMimeFilterPassThroughClass;
 
 /**
  * GMimeFilterPassThrough:
- * @parent_object: parent #GMimeFilter
  *
  * A filter that returns input unchanged without copying or buffering it.
  **/
-struct _GMimeFilterPassThrough {
-	GMimeFilter parent_object;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterPassThrough, g_mime_filter_pass_through, GMIME, FILTER_PASS_THROUGH, GMimeFilter)
 
 struct _GMimeFilterPassThroughClass {
 	GMimeFilterClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_filter_pass_through_get_type (void);
 
 GMimeFilter *g_mime_filter_pass_through_new (void);
 

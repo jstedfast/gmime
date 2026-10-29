@@ -27,6 +27,8 @@
 #include "gmime-multipart.h"
 #include "gmime-error.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-iterator
  * @title: GMimeIterator
@@ -67,7 +69,7 @@ typedef struct {
 
 static void iterator_finalize (GObject *object);
 
-G_DEFINE_TYPE (GMimeIterator, g_mime_iterator, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeIterator, g_mime_iterator, G_TYPE_OBJECT)
 
 static void
 frame_clear (gpointer data)

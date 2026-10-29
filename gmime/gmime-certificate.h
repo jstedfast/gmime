@@ -28,25 +28,11 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_CERTIFICATE                  (g_mime_certificate_get_type ())
-#define GMIME_CERTIFICATE(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CERTIFICATE, GMimeCertificate))
-#define GMIME_CERTIFICATE_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CERTIFICATE, GMimeCertificateClass))
-#define GMIME_IS_CERTIFICATE(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_CERTIFICATE))
-#define GMIME_IS_CERTIFICATE_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CERTIFICATE))
-#define GMIME_CERTIFICATE_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_CERTIFICATE, GMimeCertificateClass))
 
 #define GMIME_TYPE_CERTIFICATE_LIST             (g_mime_certificate_list_get_type ())
-#define GMIME_CERTIFICATE_LIST(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CERTIFICATE_LIST, GMimeCertificateList))
-#define GMIME_CERTIFICATE_LIST_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CERTIFICATE_LIST, GMimeCertificateListClass))
-#define GMIME_IS_CERTIFICATE_LIST(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_CERTIFICATE_LIST))
-#define GMIME_IS_CERTIFICATE_LIST_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CERTIFICATE_LIST))
-#define GMIME_CERTIFICATE_LIST_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_CERTIFICATE_LIST, GMimeCertificateListClass))
 
 
-typedef struct _GMimeCertificate GMimeCertificate;
-typedef struct _GMimeCertificateClass GMimeCertificateClass;
 
-typedef struct _GMimeCertificateList GMimeCertificateList;
-typedef struct _GMimeCertificateListClass GMimeCertificateListClass;
 
 
 /**
@@ -182,50 +168,13 @@ typedef enum {
 
 /**
  * GMimeCertificate:
- * @parent_object: parent #GObject
- * @pubkey_algo: The public-key algorithm used by the certificate, if known.
- * @digest_algo: The digest algorithm used by the certificate, if known.
- * @trust: The level of trust assigned to this certificate.
- * @issuer_serial: The issuer of the certificate, if known.
- * @issuer_name: The issuer of the certificate, if known.
- * @fingerprint: A hex string representing the certificate's fingerprint.
- * @created: (nullable): The creation date of the certificate, or %NULL if unknown.
- * @expires: (nullable): The expiration date of the certificate, or %NULL if unknown.
- * @keyid: The certificate's key id.
- * @email: The email address of the person or entity.
- * @name: The name of the person or entity.
- * @user_id: The full User ID of the certificate.
- * @id_validity: the validity of the email address, name, and User ID.
  *
  * An object containing useful information about a certificate. Dates are owned
  * by the certificate; use the setters to replace them. An expiration date of
  * 9999-12-31 23:59:59.999999 UTC means the certificate never expires.
  **/
-struct _GMimeCertificate {
-	GObject parent_object;
-	
-	GMimePubKeyAlgo pubkey_algo;
-	GMimeDigestAlgo digest_algo;
-	GMimeTrust trust;
-	char *issuer_serial;
-	char *issuer_name;
-	char *fingerprint;
-	GDateTime *created;
-	GDateTime *expires;
-	char *keyid;
-	char *email;
-	char *name;
-	char *user_id;
-	GMimeValidity id_validity;
-};
+G_DECLARE_FINAL_TYPE (GMimeCertificate, g_mime_certificate, GMIME, CERTIFICATE, GObject)
 
-struct _GMimeCertificateClass {
-	GObjectClass parent_class;
-	
-};
-
-
-GType g_mime_certificate_get_type (void);
 
 GMimeCertificate *g_mime_certificate_new (void);
 
@@ -273,23 +222,11 @@ GDateTime *g_mime_certificate_get_expires (GMimeCertificate *cert);
 
 /**
  * GMimeCertificateList:
- * @parent_object: parent #GObject
- * @array: An array of #GMimeCertificate objects.
  *
  * A collection of #GMimeCertificate objects.
  **/
-struct _GMimeCertificateList {
-	GObject parent_object;
-	GPtrArray *array;
-};
+G_DECLARE_FINAL_TYPE (GMimeCertificateList, g_mime_certificate_list, GMIME, CERTIFICATE_LIST, GObject)
 
-struct _GMimeCertificateListClass {
-	GObjectClass parent_class;
-	
-};
-
-
-GType g_mime_certificate_list_get_type (void);
 
 GMimeCertificateList *g_mime_certificate_list_new (void);
 

@@ -25,6 +25,8 @@
 #include "gmime-filter-anonymize.h"
 #include "gmime-table-private.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-anonymize
  * @title: GMimeFilterAnonymize
@@ -56,20 +58,24 @@ static void
 filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
+	GMimeFilterPrivate *priv;
 	size_t i;
 
 	/* Always use separate output storage, even for all-whitespace input:
 	 * MimeKit's anonymizer does not overwrite the caller's buffer. */
 	g_mime_filter_set_size (filter, inlen, FALSE);
+
+	priv = _g_mime_filter_get_private (filter);
+
 	for (i = 0; i < inlen; i++) {
 		/* Native linear whitespace matches MimeKit's four-byte set;
 		 * locale/Unicode whitespace would incorrectly preserve VT or FF. */
-		filter->outbuf[i] = is_lwsp (inbuf[i]) ? inbuf[i] : 'x';
+		priv->outbuf[i] = is_lwsp (inbuf[i]) ? inbuf[i] : 'x';
 	}
 
-	*outbuf = filter->outbuf;
+	*outbuf = priv->outbuf;
 	*outlen = inlen;
-	*outprespace = filter->outpre;
+	*outprespace = priv->outpre;
 }
 
 static void

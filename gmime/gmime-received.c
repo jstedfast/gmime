@@ -32,6 +32,8 @@
 #include "gmime-table-private.h"
 #include "gmime-utils.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-received
  * @title: GMimeReceived
@@ -52,7 +54,7 @@
  * but not NULL entries.
  **/
 
-G_DEFINE_TYPE (GMimeReceived, g_mime_received, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeReceived, g_mime_received, G_TYPE_OBJECT)
 
 static const char *keywords[] = { "from", "by", "via", "with", "id", "for" };
 

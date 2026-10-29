@@ -20,13 +20,6 @@ Entity
 Parser
   .construct_message nullable
 
-// G-I doesn't support annotations on fields (bug #561619)
-Filter
-  .backbuf type="uint8[]" array_length_field="backsize"
-  .outreal type="uint8[]"
-	.outbuf type="unowned uint8[]" array_length_field="outsize"
-  .outptr type="unowned uint8[]"
-
 // Conflicts
 Entity
   .write_to_stream#virtual_method name="write_to_stream_vfunc"

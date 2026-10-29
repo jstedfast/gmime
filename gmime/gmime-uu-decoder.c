@@ -46,7 +46,7 @@ typedef struct {
 } UUDecoderState;
 
 struct _GMimeUUDecoder {
-	GObject parent_object;
+	GObject parent_instance;
 	UUDecoderState state;
 };
 

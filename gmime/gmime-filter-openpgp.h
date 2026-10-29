@@ -27,14 +27,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_OPENPGP            (g_mime_filter_openpgp_get_type ())
-#define GMIME_FILTER_OPENPGP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_OPENPGP, GMimeFilterOpenPGP))
-#define GMIME_FILTER_OPENPGP_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_OPENPGP, GMimeFilterOpenPGPClass))
-#define GMIME_IS_FILTER_OPENPGP(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_OPENPGP))
-#define GMIME_IS_FILTER_OPENPGP_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_OPENPGP))
-#define GMIME_FILTER_OPENPGP_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_OPENPGP, GMimeFilterOpenPGPClass))
 
-typedef struct _GMimeFilterOpenPGP GMimeFilterOpenPGP;
-typedef struct _GMimeFilterOpenPGPClass GMimeFilterOpenPGPClass;
 
 
 /**
@@ -57,7 +50,7 @@ typedef enum {
 
 
 /**
- * GMimeOpenPGPState:
+ * GMimeOpenPGPPrivate:
  * @GMIME_OPENPGP_NONE: No OpenPGP markers have been found (yet).
  * @GMIME_OPENPGP_BEGIN_PGP_MESSAGE: The "-----BEGIN PGP MESSAGE-----" marker has been found.
  * @GMIME_OPENPGP_END_PGP_MESSAGE: The "-----END PGP MESSAGE-----" marker has been found.
@@ -84,15 +77,15 @@ typedef enum {
 	GMIME_OPENPGP_END_PGP_PUBLIC_KEY_BLOCK    = (1 << 6) | (1 << 5),
 	GMIME_OPENPGP_BEGIN_PGP_PRIVATE_KEY_BLOCK = (1 << 7),
 	GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK   = (1 << 8) | (1 << 7)
-} GMimeOpenPGPState;
+} GMimeOpenPGPPrivate;
 
 
 /**
  * GMimeOpenPGPMarker:
  * @marker: The OpenPGP marker.
  * @len: The length of the OpenPGP marker.
- * @before: The #GMimeOpenPGPState that the state machine must be in before encountering this marker.
- * @after: The #GMimeOpenPGPState that the state machine will transition into once this marker is found.
+ * @before: The #GMimeOpenPGPPrivate that the state machine must be in before encountering this marker.
+ * @after: The #GMimeOpenPGPPrivate that the state machine will transition into once this marker is found.
  * @is_end_marker: %TRUE if the marker is an end marker; otherwise, %FALSE.
  *
  * An OpenPGP marker for use with GMime's internal state machines used for detecting OpenPGP blocks.
@@ -102,40 +95,28 @@ typedef enum {
 typedef struct {
 	const char *marker;
 	size_t len;
-	GMimeOpenPGPState before;
-	GMimeOpenPGPState after;
+	GMimeOpenPGPPrivate before;
+	GMimeOpenPGPPrivate after;
 	gboolean is_end_marker;
 } GMimeOpenPGPMarker;
 
 
 /**
  * GMimeFilterOpenPGP:
- * @parent_object: parent #GMimeFilter
  *
  * A filter to detect OpenPGP markers.
  *
  * Since: 3.2
  **/
-struct _GMimeFilterOpenPGP {
-	GMimeFilter parent_object;
-	
-	/* < private > */
-	GMimeOpenPGPState state;
-	gboolean seen_end_marker;
-	gboolean midline;
-	gint64 begin_offset;
-	gint64 end_offset;
-	gint64 position;
-	guint next;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterOpenPGP, g_mime_filter_openpgp, GMIME, FILTER_OPENPGP, GMimeFilter)
 
 struct _GMimeFilterOpenPGPClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_openpgp_get_type (void);
 
 GMimeFilter *g_mime_filter_openpgp_new (void);
 

@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -205,9 +206,9 @@ create_message (GMimeEntity *body)
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	
-	/*fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
-		 GMIME_STREAM_MEM (stream)->buffer->len,
-		 GMIME_STREAM_MEM (stream)->buffer->data);*/
+	/*GMimeStreamMemPrivate *priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
+	fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
+		 priv->buffer->len, priv->buffer->data);*/
 	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
@@ -229,6 +230,7 @@ then we have ourselves a winner I guess...\n"
 static void
 test_multipart_signed (GMimeCryptoContext *ctx)
 {
+	GMimeMessagePrivate *priv;
 	GMimeSignatureList *signatures;
 	GMimeSignatureStatus status;
 	GMimeMultipartSigned *mps;
@@ -253,13 +255,15 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	message = create_message ((GMimeEntity *) mps);
 	g_object_unref (mps);
 	
-	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
+	priv = _g_mime_message_get_private (message);
+
+	if (!GMIME_IS_MULTIPART_SIGNED (priv->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not a multipart/signed?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	mps = (GMimeMultipartSigned *) message->mime_part;
+	mps = (GMimeMultipartSigned *) priv->mime_part;
 	
 	if (!(signatures = g_mime_multipart_signed_verify (mps, 0, &err))) {
 		ex = exception_new ("%s", err->message);
@@ -353,6 +357,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 			  GMimeStream *cleartext, GMimeStream *stream,
 			  const char *session_key)
 {
+	GMimeMessagePrivate *priv;
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeSignatureStatus status;
 	GMimeStream *test_stream;
@@ -375,13 +380,15 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	g_object_unref (parser);
 	
-	if (!GMIME_IS_MULTIPART_ENCRYPTED (message->mime_part)) {
+	priv = _g_mime_message_get_private (message);
+
+	if (!GMIME_IS_MULTIPART_ENCRYPTED (priv->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not a multipart/encrypted?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	mpe = (GMimeMultipartEncrypted *) message->mime_part;
+	mpe = (GMimeMultipartEncrypted *) priv->mime_part;
 	
 	/* okay, now to test our decrypt function... */
 	decrypted = g_mime_multipart_encrypted_decrypt (mpe, GMIME_DECRYPT_EXPORT_SESSION_KEY, session_key, &result, &err);
@@ -481,6 +488,9 @@ create_mime_part (void)
 static void
 test_openpgp_sign (void)
 {
+	GMimeContentPrivate *priv_priv;
+	GMimeContentPrivate *content_priv;
+	GMimePartPrivate *priv;
 	GMimeSignatureList *signatures;
 	GMimeStream *original;
 	GMimePart *mime_part;
@@ -489,7 +499,11 @@ test_openpgp_sign (void)
 	GByteArray *buf[2];
 	
 	mime_part = create_mime_part ();
-	original = mime_part->content->stream;
+	priv = _g_mime_part_get_private (mime_part);
+
+	priv_priv = _g_mime_content_get_private (priv->content);
+
+	original = priv_priv->stream;
 	g_object_ref (original);
 	
 	if (!g_mime_part_openpgp_sign (mime_part, "no.user@no.domain", &err)) {
@@ -524,7 +538,9 @@ test_openpgp_sign (void)
 	}
 
 	buf[0] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (original));
-	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (mime_part->content->stream));
+	content_priv = _g_mime_content_get_private (priv->content);
+
+	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (content_priv->stream));
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("extracted data does not match original cleartext");
@@ -540,6 +556,9 @@ test_openpgp_sign (void)
 static void
 test_openpgp_encrypt (gboolean sign)
 {
+	GMimeContentPrivate *priv_priv;
+	GMimeContentPrivate *content_priv;
+	GMimePartPrivate *priv;
 	GMimeDecryptResult *result;
 	GMimeStream *original;
 	GMimePart *mime_part;
@@ -552,7 +571,11 @@ test_openpgp_encrypt (gboolean sign)
 	g_ptr_array_add (rcpts, "no.user@no.domain");
 	
 	mime_part = create_mime_part ();
-	original = mime_part->content->stream;
+	priv = _g_mime_part_get_private (mime_part);
+
+	priv_priv = _g_mime_content_get_private (priv->content);
+
+	original = priv_priv->stream;
 	g_object_ref (original);
 	
 	if (!g_mime_part_openpgp_encrypt (mime_part, sign, "no.user@no.domain", GMIME_ENCRYPT_ALWAYS_TRUST, rcpts, &err)) {
@@ -590,7 +613,9 @@ test_openpgp_encrypt (gboolean sign)
 	}
 	
 	buf[0] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (original));
-	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (mime_part->content->stream));
+	content_priv = _g_mime_content_get_private (priv->content);
+
+	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (content_priv->stream));
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("decrypted data does not match original cleartext");

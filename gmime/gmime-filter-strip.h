@@ -27,36 +27,23 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_STRIP            (g_mime_filter_strip_get_type ())
-#define GMIME_FILTER_STRIP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_STRIP, GMimeFilterStrip))
-#define GMIME_FILTER_STRIP_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_STRIP, GMimeFilterStripClass))
-#define GMIME_IS_FILTER_STRIP(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_STRIP))
-#define GMIME_IS_FILTER_STRIP_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_STRIP))
-#define GMIME_FILTER_STRIP_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_STRIP, GMimeFilterStripClass))
 
-typedef struct _GMimeFilterStrip GMimeFilterStrip;
-typedef struct _GMimeFilterStripClass GMimeFilterStripClass;
 
 /**
  * GMimeFilterStrip:
- * @parent_object: parent #GMimeFilter
  *
  * A filter for stripping trailing ASCII spaces and tabs from lines and
  * completed input, matching MimeKit's TrailingWhitespaceFilter.
  **/
-struct _GMimeFilterStrip {
-	GMimeFilter parent_object;
-	
-	/* < private > */
-	void *lwsp;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterStrip, g_mime_filter_strip, GMIME, FILTER_STRIP, GMimeFilter)
 
 struct _GMimeFilterStripClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_strip_get_type (void);
 
 GMimeFilter *g_mime_filter_strip_new (void);
 

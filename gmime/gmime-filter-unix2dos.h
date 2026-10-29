@@ -27,38 +27,23 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_UNIX2DOS            (g_mime_filter_unix2dos_get_type ())
-#define GMIME_FILTER_UNIX2DOS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_UNIX2DOS, GMimeFilterUnix2Dos))
-#define GMIME_FILTER_UNIX2DOS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_UNIX2DOS, GMimeFilterUnix2DosClass))
-#define GMIME_IS_FILTER_UNIX2DOS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_UNIX2DOS))
-#define GMIME_IS_FILTER_UNIX2DOS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_UNIX2DOS))
-#define GMIME_FILTER_UNIX2DOS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_UNIX2DOS, GMimeFilterUnix2DosClass))
 
-typedef struct _GMimeFilterUnix2Dos GMimeFilterUnix2Dos;
-typedef struct _GMimeFilterUnix2DosClass GMimeFilterUnix2DosClass;
 
 /**
  * GMimeFilterUnix2Dos:
- * @parent_object: parent #GMimeFilter
- * @ensure_newline: %TRUE if the filter should ensure that the stream ends with a new line
- * @pc: previous byte or completion state
  *
  * A filter converting bare LF bytes to CRLF while preserving existing CRLF
  * pairs and other bytes.
  **/
-struct _GMimeFilterUnix2Dos {
-	GMimeFilter parent_object;
-	
-	gboolean ensure_newline;
-	char pc;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterUnix2Dos, g_mime_filter_unix2dos, GMIME, FILTER_UNIX2DOS, GMimeFilter)
 
 struct _GMimeFilterUnix2DosClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_unix2dos_get_type (void);
 
 GMimeFilter *g_mime_filter_unix2dos_new (gboolean ensure_newline);
 

@@ -27,14 +27,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_FROM            (g_mime_filter_from_get_type ())
-#define GMIME_FILTER_FROM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_FROM, GMimeFilterFrom))
-#define GMIME_FILTER_FROM_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_FROM, GMimeFilterFromClass))
-#define GMIME_IS_FILTER_FROM(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_FROM))
-#define GMIME_IS_FILTER_FROM_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_FROM))
-#define GMIME_FILTER_FROM_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_FROM, GMimeFilterFromClass))
 
-typedef struct _GMimeFilterFrom GMimeFilterFrom;
-typedef struct _GMimeFilterFromClass GMimeFilterFromClass;
 
 
 /**
@@ -54,28 +47,20 @@ typedef enum {
 
 /**
  * GMimeFilterFrom:
- * @parent_object: parent #GMimeFilter
- * @mode: #GMimeFilterFromMode
- * @midline: %TRUE if in the middle of a line
  *
  * A filter for armoring or escaping exact "From " markers at the beginning
  * of input or after LF. Incomplete prefixes span calls and are emitted
  * unchanged on completion. Bare CR does not begin a new line.
  **/
-struct _GMimeFilterFrom {
-	GMimeFilter parent_object;
-	
-	GMimeFilterFromMode mode;
-	gboolean midline;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterFrom, g_mime_filter_from, GMIME, FILTER_FROM, GMimeFilter)
 
 struct _GMimeFilterFromClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_from_get_type (void);
 
 GMimeFilter *g_mime_filter_from_new (GMimeFilterFromMode mode);
 

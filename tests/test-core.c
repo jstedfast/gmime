@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -35,7 +36,7 @@
 #include "testsuite.h"
 
 typedef struct {
-	TestStreamOneByte parent_object;
+	TestStreamOneByte parent_instance;
 	gsize fail_after;
 	gsize bytes_read;
 	guint read_calls;
@@ -77,7 +78,7 @@ failure_stream_read (GMimeStream *stream, char *buf, size_t len)
 	len = MIN (len, test->fail_after - test->bytes_read);
 	if (test->onebyte)
 		len = MIN (len, 1);
-	nread = g_mime_stream_read (test->parent_object.source, buf, len);
+	nread = g_mime_stream_read (test->parent_instance.source, buf, len);
 	if (nread > 0)
 		test->bytes_read += nread;
 	return nread;
@@ -92,7 +93,7 @@ failure_stream_tell (GMimeStream *stream)
 		errno = ESPIPE;
 		return -1;
 	}
-	return test->position_offset + g_mime_stream_tell (test->parent_object.source);
+	return test->position_offset + g_mime_stream_tell (test->parent_instance.source);
 }
 
 static ssize_t
@@ -112,7 +113,7 @@ failure_stream_write (GMimeStream *stream, const char *buf, size_t len)
 	len = MIN (len, test->fail_after - test->bytes_written);
 	if (test->onebyte)
 		len = MIN (len, 1);
-	nwritten = g_mime_stream_write (test->parent_object.source, buf, len);
+	nwritten = g_mime_stream_write (test->parent_instance.source, buf, len);
 	if (nwritten > 0)
 		test->bytes_written += nwritten;
 	return nwritten;
@@ -128,7 +129,7 @@ failure_stream_reset (GMimeStream *stream)
 		return -1;
 	}
 
-	return g_mime_stream_reset (test->parent_object.source);
+	return g_mime_stream_reset (test->parent_instance.source);
 }
 
 static int
@@ -150,7 +151,7 @@ failure_stream_close (GMimeStream *stream)
 		return -1;
 	}
 
-	return g_mime_stream_close (test->parent_object.source);
+	return g_mime_stream_close (test->parent_instance.source);
 }
 
 static void
@@ -172,7 +173,7 @@ test_stream_failure_init (TestStreamFailure *stream)
 }
 
 typedef struct {
-	GMimeContent parent_object;
+	GMimeContent parent_instance;
 	guint write_calls;
 	guint decode_calls;
 	gboolean fail_decode;
@@ -215,7 +216,7 @@ test_content_init (TestContent *content)
 }
 
 typedef struct {
-	GMimePart parent_object;
+	GMimePart parent_instance;
 	guint calls;
 	guint max_line_length;
 	GMimeEncodingConstraint constraint;
@@ -448,7 +449,7 @@ test_header_list_loading_errors (void)
 
 		for (i = 0; i < 4; i++) {
 			failure = g_object_new (test_stream_failure_get_type (), NULL);
-			failure->parent_object.source = g_mime_stream_mem_new_with_buffer (text, sizeof (text) - 1);
+			failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (text, sizeof (text) - 1);
 			failure->fail_after = i == 3 ? strstr (text, "\n\n") - text + 2 : i * 7;
 			failure->onebyte = onebyte;
 			failure->nonseekable = TRUE;
@@ -740,7 +741,7 @@ test_header_list_writing_errors (void)
 				output = g_mime_stream_mem_new ();
 				failure = g_object_new (test_stream_failure_get_type (), NULL);
 				g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
-				failure->parent_object.source = g_object_ref (output);
+				failure->parent_instance.source = g_object_ref (output);
 				failure->fail_after = limit;
 				failure->onebyte = onebyte;
 				failure->zero_write = zero;
@@ -770,7 +771,7 @@ test_header_list_writing_errors (void)
 			output = g_mime_stream_mem_new ();
 			failure = g_object_new (test_stream_failure_get_type (), NULL);
 			g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
-			failure->parent_object.source = g_object_ref (output);
+			failure->parent_instance.source = g_object_ref (output);
 			failure->fail_after = limit;
 			failure->onebyte = TRUE;
 			failure->zero_write = zero;
@@ -3352,7 +3353,7 @@ test_text_part_charset_errors (void)
 		for (j = 0; j < 2; j++) {
 			for (offset = 0; offset <= 8; offset++) {
 				failure = g_object_new (test_stream_failure_get_type (), NULL);
-				failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
+				failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
 				failure->fail_after = offset;
 				failure->onebyte = i;
 				failure->unset_error = j;
@@ -3462,7 +3463,7 @@ test_charset_bom_detection (void)
 			source = g_mime_stream_mem_new_with_buffer ((const char *) payload, cases[i].length + 1);
 			g_assert_cmpint (g_mime_stream_seek (source, 1, GMIME_STREAM_SEEK_SET), ==, 1);
 			failure = g_object_new (test_stream_failure_get_type (), NULL);
-			failure->parent_object.source = g_object_ref (source);
+			failure->parent_instance.source = g_object_ref (source);
 			failure->fail_after = mode == 2 ? 2 : G_MAXSIZE;
 			failure->onebyte = mode == 1;
 			failure->zero_read = mode == 3;
@@ -3507,7 +3508,7 @@ test_charset_bom_detection (void)
 
 	for (unset = 0; unset < 2; unset++) {
 		failure = g_object_new (test_stream_failure_get_type (), NULL);
-		failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("\357\273\277tail", 7);
+		failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ("\357\273\277tail", 7);
 		failure->unset_error = unset;
 		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
 		charset = "stale";
@@ -4175,7 +4176,7 @@ test_multipart_related_resources (void)
 	g_clear_error (&error);
 	check (!reader && !mime_type && !charset, "unbacked content reports an explicit invalid-operation error");
 	failure = g_object_new (test_stream_failure_get_type (), NULL);
-	failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
+	failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
 	failure->fail_after = G_MAXSIZE;
 	failure->fail_reset_on = 1;
 	g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
@@ -8662,7 +8663,7 @@ test_content_open (void)
 	check (weak == NULL, "releasing a decoded reader releases its retained source");
 
 	failure = g_object_new (test_stream_failure_get_type (), NULL);
-	failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
+	failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
 	g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
 	failure->fail_after = G_MAXSIZE;
 	content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BASE64);
@@ -8670,14 +8671,14 @@ test_content_open (void)
 	check (reader && failure->read_calls == 0 && failure->reset_calls == 1,
 	       "opening decoded content rewinds without eagerly reading or decoding");
 	g_assert_nonnull (reader);
-	g_mime_stream_close (failure->parent_object.source);
+	g_mime_stream_close (failure->parent_instance.source);
 	errno = 0;
 	check (g_mime_stream_read (reader, buffer, sizeof (buffer)) == -1 && errno == EBADF,
 	       "decoded reads report source errors even when the source also reports EOF");
 	g_object_unref (reader);
 	replacement = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
-	g_object_unref (failure->parent_object.source);
-	failure->parent_object.source = replacement;
+	g_object_unref (failure->parent_instance.source);
+	failure->parent_instance.source = replacement;
 	failure->fail_after = 4;
 	failure->onebyte = TRUE;
 	reader = g_mime_content_open (content);
@@ -8745,7 +8746,7 @@ test_content_md5_errors (void)
 	       "verification propagates a missing backing stream instead of reporting a mismatch");
 	g_clear_error (&error);
 
-	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	source->parent_instance.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
 	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 	source->fail_after = G_MAXSIZE;
 	source->onebyte = TRUE;
@@ -8857,7 +8858,7 @@ test_part_best_encoding_errors (void)
 	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION),
 	       "encoding analysis without a backing stream reports an invalid operation");
 	g_clear_error (&error);
-	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	source->parent_instance.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
 	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 	source->onebyte = TRUE;
 	g_mime_content_set_stream (content, GMIME_STREAM (source));
@@ -8932,7 +8933,7 @@ test_part_best_encoding_errors (void)
 
 	custom = g_object_new (test_content_get_type (), NULL);
 	source = g_object_new (test_stream_failure_get_type (), NULL);
-	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("AA==", 4);
+	source->parent_instance.source = g_mime_stream_mem_new_with_buffer ("AA==", 4);
 	source->fail_after = 0;
 	source->fail_reset_on = 1;
 	g_mime_content_set_stream (GMIME_CONTENT (custom), GMIME_STREAM (source));
@@ -8958,6 +8959,7 @@ test_part_best_encoding_errors (void)
 static void
 test_part_prepare_errors (void)
 {
+	GMimePartPrivate *priv;
 	GMimePart *part = g_mime_part_new_with_type ("text", "plain");
 	GMimeContent *content = g_mime_content_new ();
 	TestStreamFailure *source = g_object_new (test_stream_failure_get_type (), NULL);
@@ -8989,14 +8991,16 @@ test_part_prepare_errors (void)
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
 	g_clear_error (&error);
 
-	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	source->parent_instance.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
 	source->onebyte = TRUE;
 	source->fail_after = G_MAXSIZE;
 	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 	g_mime_content_set_stream (content, GMIME_STREAM (source));
 	g_assert_true (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 60, &error));
 	g_assert_no_error (error);
-	g_assert_cmpuint (part->encoder_max_line_length, ==, 60);
+	priv = _g_mime_part_get_private (part);
+
+	g_assert_cmpuint (priv->encoder_max_line_length, ==, 60);
 	before = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
 
 	for (i = 0; i < 6; i++) {
@@ -9008,7 +9012,7 @@ test_part_prepare_errors (void)
 		g_assert_false (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 70, &error));
 		g_assert_error (error, GMIME_ERROR, (i >= 3 ? GMIME_ERROR_GENERAL : (i % 3 == 1 ? EIO : ESPIPE)));
 		g_clear_error (&error);
-		g_assert_cmpuint (part->encoder_max_line_length, ==, 60);
+		g_assert_cmpuint (priv->encoder_max_line_length, ==, 60);
 		after = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
 		g_assert_cmpstr (after, ==, before);
 		g_free (after);
@@ -9030,14 +9034,14 @@ test_part_prepare_errors (void)
 	source->unset_error = FALSE;
 	g_assert_true (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT, 70, &error));
 	g_assert_no_error (error);
-	g_assert_cmpuint (part->encoder_max_line_length, ==, 70);
+	g_assert_cmpuint (priv->encoder_max_line_length, ==, 70);
 	g_assert_cmpint (g_mime_stream_tell (GMIME_STREAM (source)), ==, 0);
 	resets = source->reset_calls;
 	g_assert_false (g_mime_part_prepare (part, -1, &error));
 	g_assert_error (error, GMIME_ERROR, EINVAL);
 	g_clear_error (&error);
 	g_assert_cmpuint (source->reset_calls, ==, resets + 2);
-	g_assert_cmpuint (part->encoder_max_line_length, ==, 70);
+	g_assert_cmpuint (priv->encoder_max_line_length, ==, 70);
 
 	custom = g_object_new (test_content_get_type (), NULL);
 	g_mime_content_set_stream (GMIME_CONTENT (custom), GMIME_STREAM (source));
@@ -9047,13 +9051,13 @@ test_part_prepare_errors (void)
 	g_assert_no_error (error);
 	g_assert_cmpuint (custom->decode_calls, ==, 1);
 	g_assert_cmpuint (custom->write_calls, ==, 1);
-	check (part->encoder_max_line_length == 78,
+	check (priv->encoder_max_line_length == 78,
 	       "successful preparation honors content overrides and records the default encoder limit");
 	custom->fail_decode = TRUE;
 	g_assert_false (g_mime_part_prepare (part, GMIME_ENCODING_CONSTRAINT_7BIT, &error));
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL);
 	g_clear_error (&error);
-	g_assert_cmpuint (part->encoder_max_line_length, ==, 78);
+	g_assert_cmpuint (priv->encoder_max_line_length, ==, 78);
 	g_free (before);
 	g_object_unref (custom);
 	g_object_unref (source);
@@ -9064,6 +9068,9 @@ test_part_prepare_errors (void)
 static void
 test_entity_prepare (void)
 {
+	GMimePartPrivate *first_priv;
+	GMimePartPrivate *body_priv;
+	GMimePartPrivate *failing_priv;
 	GMimeMessage *message = g_mime_message_new (FALSE), *inner = g_mime_message_new (FALSE);
 	GMimeMultipart *root = g_mime_multipart_new (), *nested = g_mime_multipart_new ();
 	GMimeMultipartSigned *signed_part = g_mime_multipart_signed_new ();
@@ -9092,7 +9099,7 @@ test_entity_prepare (void)
 	g_mime_part_set_content (body, content);
 	g_object_unref (content);
 	g_object_unref (memory);
-	source->parent_object.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
+	source->parent_instance.source = g_mime_stream_mem_new_with_buffer ("abc", 3);
 	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 	content = g_mime_content_new_with_stream (GMIME_STREAM (source), GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_part_set_content (failing, content);
@@ -9125,8 +9132,12 @@ test_entity_prepare (void)
 	       g_error_matches (error, GMIME_ERROR, EIO),
 	       "recursive preparation reports the first failing child's I/O error");
 	g_clear_error (&error);
+	failing_priv = _g_mime_part_get_private (failing);
+
+	first_priv = _g_mime_part_get_private (first);
+
 	check (g_mime_part_get_content_encoding (first) == GMIME_CONTENT_ENCODING_BASE64 &&
-	       first->encoder_max_line_length == 60 && failing->encoder_max_line_length == 0 &&
+	       first_priv->encoder_max_line_length == 60 && failing_priv->encoder_max_line_length == 0 &&
 	       g_mime_part_get_content_encoding (failing) == GMIME_CONTENT_ENCODING_7BIT &&
 	       last->calls == 0 && protected->calls == 0 &&
 	       g_mime_part_get_content_encoding (GMIME_PART (protected)) == GMIME_CONTENT_ENCODING_8BIT &&
@@ -9139,10 +9150,12 @@ test_entity_prepare (void)
 	source->fail_after = G_MAXSIZE;
 	g_assert_true (g_mime_entity_prepare_with_max_line_length (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, 61, &error));
 	g_assert_no_error (error);
-	check (first->encoder_max_line_length == 60 && failing->encoder_max_line_length == 61 &&
+	body_priv = _g_mime_part_get_private (body);
+
+	check (first_priv->encoder_max_line_length == 60 && failing_priv->encoder_max_line_length == 61 &&
 	       last->calls == 1 && last->max_line_length == 61 && last->constraint == GMIME_ENCODING_CONSTRAINT_7BIT &&
 	       protected->calls == 0 && g_mime_part_get_content_encoding (body) == GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE &&
-	       body->encoder_max_line_length == 61,
+	       body_priv->encoder_max_line_length == 61,
 	       "successful retry delegates through nested multipart, message and subclass prepare implementations");
 	g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (inner), "MIME-Version"), ==, "1.0");
 	g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (attached), "Content-Transfer-Encoding"), ==, "binary");
@@ -9283,14 +9296,16 @@ test_content_copy (void)
 
 	for (decode = 0; decode < 2; decode++) {
 		for (mode = 0; mode < 4; mode++) {
+			GMimeStreamMemPrivate *input_priv, *sink_priv;
+
 			input = g_object_new (test_stream_failure_get_type (), NULL);
-			input->parent_object.source = g_mime_stream_mem_new_with_buffer ("Q2F0", 4);
+			input->parent_instance.source = g_mime_stream_mem_new_with_buffer ("Q2F0", 4);
 			input->onebyte = TRUE;
 			input->fail_after = mode == 3 ? 2 : G_MAXSIZE;
 			g_mime_stream_construct (GMIME_STREAM (input), 0, -1);
 			content = g_mime_content_new_with_stream (GMIME_STREAM (input), GMIME_CONTENT_ENCODING_BASE64);
 			sink = g_object_new (test_stream_failure_get_type (), NULL);
-			sink->parent_object.source = g_mime_stream_mem_new ();
+			sink->parent_instance.source = g_mime_stream_mem_new ();
 			sink->onebyte = TRUE;
 			sink->fail_after = mode == 1 || mode == 2 ? 1 : G_MAXSIZE;
 			sink->zero_write = mode == 2;
@@ -9299,17 +9314,20 @@ test_content_copy (void)
 			written = decode ? g_mime_content_decode_to_stream (content, GMIME_STREAM (sink)) :
 				g_mime_content_write_to_stream (content, GMIME_STREAM (sink));
 			if (mode == 0) {
-				bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (sink->parent_object.source));
+				bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (sink->parent_instance.source));
 				check (written == (decode ? 3 : 4) && bytes->len == written &&
 				       !memcmp (bytes->data, decode ? "Cat" : "Q2F0", written) && input->reset_calls == 2,
 				       "raw and decoded copies complete short writes and rewind after success");
 			} else {
 				check (written == -1 && errno == (mode == 1 ? ENOSPC : EIO) && input->reset_calls == 1 &&
-				       g_mime_stream_tell (input->parent_object.source) > 0,
+				       g_mime_stream_tell (input->parent_instance.source) > 0,
 				       "failed and zero-progress writes or reads preserve errors and source progress without rewinding");
 			}
-			check (GMIME_STREAM_MEM (input->parent_object.source)->buffer != NULL &&
-			       GMIME_STREAM_MEM (sink->parent_object.source)->buffer != NULL &&
+			input_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (input->parent_instance.source));
+			sink_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (sink->parent_instance.source));
+
+			check (input_priv->buffer != NULL &&
+			       sink_priv->buffer != NULL &&
 			       input->flush_calls == 0 && sink->flush_calls == 0,
 			       "content copying never closes or flushes the input or output stream");
 			g_object_unref (content);
@@ -9318,7 +9336,7 @@ test_content_copy (void)
 		}
 
 		input = g_object_new (test_stream_failure_get_type (), NULL);
-		input->parent_object.source = g_mime_stream_mem_new_with_buffer ("Q2F0", 4);
+		input->parent_instance.source = g_mime_stream_mem_new_with_buffer ("Q2F0", 4);
 		input->fail_after = G_MAXSIZE;
 		input->fail_reset_on = 1;
 		g_mime_stream_construct (GMIME_STREAM (input), 0, -1);
@@ -9535,7 +9553,7 @@ test_compressed_data (void)
 	for (i = 0; i < 2; i++) {
 		for (j = 0; j <= length; j++) {
 			failure = g_object_new (test_stream_failure_get_type (), NULL);
-			failure->parent_object.source = g_mime_stream_mem_new_with_buffer ((char *) data, length);
+			failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ((char *) data, length);
 			failure->fail_after = j;
 			failure->unset_error = i;
 			failure->onebyte = TRUE;
@@ -9695,7 +9713,7 @@ test_compressed_data (void)
 
 	for (i = 0; i < 2; i++) {
 		failure = g_object_new (test_stream_failure_get_type (), NULL);
-		failure->parent_object.source = g_mime_stream_mem_new_with_buffer ("content", 7);
+		failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ("content", 7);
 		failure->fail_after = 3;
 		failure->unset_error = i;
 		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
@@ -9714,7 +9732,7 @@ test_compressed_data (void)
 }
 
 typedef struct {
-	GMimeCryptoContext parent_object;
+	GMimeCryptoContext parent_instance;
 	guint calls;
 	guint flags;
 } TestCryptoContext;
@@ -10435,7 +10453,7 @@ test_content_length_offset_overflow (void)
 	GMimeMessage *message;
 	GError *error = NULL;
 
-	input->parent_object.source = g_mime_stream_mem_new_with_buffer (text, sizeof (text) - 1);
+	input->parent_instance.source = g_mime_stream_mem_new_with_buffer (text, sizeof (text) - 1);
 	input->fail_after = G_MAXSIZE;
 	input->position_offset = G_MAXINT64 - 1024;
 	g_mime_stream_construct (GMIME_STREAM (input), input->position_offset, -1);
@@ -10940,7 +10958,7 @@ test_parser_read_errors (void)
 				for (offset = 0; offset < strlen (texts[i]); offset++) {
 					input = g_mime_stream_mem_new_with_buffer (texts[i], strlen (texts[i]));
 					failure = g_object_new (test_stream_failure_get_type (), NULL);
-					failure->parent_object.source = input;
+					failure->parent_instance.source = input;
 					failure->fail_after = offset;
 					failure->onebyte = onebyte;
 					failure->nonseekable = onebyte;
@@ -11831,7 +11849,7 @@ test_disposition_notification (void)
 	for (offset = 0; offset < strlen (payload); offset++) {
 		notification = g_mime_message_disposition_notification_new ();
 		failure = g_object_new (test_stream_failure_get_type (), NULL);
-		failure->parent_object.source = g_mime_stream_mem_new_with_buffer (payload, strlen (payload));
+		failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (payload, strlen (payload));
 		failure->fail_after = offset;
 		failure->onebyte = TRUE;
 		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
@@ -12081,7 +12099,7 @@ test_delivery_status (void)
 			for (onebyte = 0; onebyte < 2; onebyte++) {
 				status = g_mime_message_delivery_status_new ();
 				failure = g_object_new (test_stream_failure_get_type (), NULL);
-				failure->parent_object.source = g_mime_stream_mem_new_with_buffer (body, strlen (body));
+				failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (body, strlen (body));
 				failure->fail_after = G_MAXSIZE;
 				failure->nonseekable = TRUE;
 				failure->onebyte = onebyte;
@@ -12148,7 +12166,7 @@ test_delivery_status (void)
 	for (onebyte = 0; onebyte < 2; onebyte++) {
 		status = g_mime_message_delivery_status_new ();
 		failure = g_object_new (test_stream_failure_get_type (), NULL);
-		failure->parent_object.source = g_mime_stream_mem_new_with_buffer (text, strlen (text));
+		failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (text, strlen (text));
 		failure->fail_after = G_MAXSIZE;
 		failure->onebyte = onebyte;
 		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
@@ -12232,7 +12250,7 @@ test_delivery_status (void)
 		for (offset = 0; offset < strlen (input); offset++) {
 			status = g_mime_message_delivery_status_new ();
 			failure = g_object_new (test_stream_failure_get_type (), NULL);
-			failure->parent_object.source = g_mime_stream_mem_new_with_buffer (input, strlen (input));
+			failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (input, strlen (input));
 			failure->fail_after = offset;
 			failure->onebyte = TRUE;
 			g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
@@ -12446,7 +12464,7 @@ test_feedback_report (void)
 	for (offset = 0; offset < strlen (payload); offset++) {
 		report = g_mime_message_feedback_report_new ();
 		failure = g_object_new (test_stream_failure_get_type (), NULL);
-		failure->parent_object.source = g_mime_stream_mem_new_with_buffer (payload, strlen (payload));
+		failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (payload, strlen (payload));
 		failure->fail_after = offset;
 		failure->onebyte = TRUE;
 		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
@@ -12628,7 +12646,7 @@ test_header_list_collection (void)
 }
 
 typedef struct {
-	GMimeFilter parent_object;
+	GMimeFilter parent_instance;
 	guint complete_calls;
 	guint reset_calls;
 	char marker;
@@ -12651,15 +12669,18 @@ static void
 completion_filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			    char **outbuf, size_t *outlen, size_t *outprespace)
 {
+	GMimeFilterPrivate *priv;
 	TestCompletionFilter *test = (TestCompletionFilter *) filter;
 
 	test->complete_calls++;
 	g_mime_filter_set_size (filter, inlen + 1, FALSE);
-	memcpy (filter->outbuf, inbuf, inlen);
-	filter->outbuf[inlen] = test->marker;
-	*outbuf = filter->outbuf;
+	priv = _g_mime_filter_get_private (filter);
+
+	memcpy (priv->outbuf, inbuf, inlen);
+	priv->outbuf[inlen] = test->marker;
+	*outbuf = priv->outbuf;
 	*outlen = inlen + 1;
-	*outprespace = filter->outpre;
+	*outprespace = priv->outpre;
 }
 
 static void
@@ -12920,7 +12941,7 @@ test_filtered_stream_completion (void)
 					memory = g_mime_stream_mem_new_with_byte_array (bytes);
 					g_mime_stream_mem_set_owner (GMIME_STREAM_MEM (memory), FALSE);
 					source = g_object_new (test_stream_failure_get_type (), NULL);
-					source->parent_object.source = memory;
+					source->parent_instance.source = memory;
 					source->onebyte = TRUE;
 					source->fail_after = 3 + partial;
 					source->zero_write = zero;
@@ -12986,7 +13007,7 @@ test_filtered_stream_lifecycle (void)
 	guint writes, pending;
 
 	source = g_object_new (test_stream_failure_get_type (), NULL);
-	source->parent_object.source = g_mime_stream_mem_new ();
+	source->parent_instance.source = g_mime_stream_mem_new ();
 	source->fail_after = G_MAXSIZE;
 	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 	stream = g_mime_stream_filter_new (GMIME_STREAM (source));
@@ -13000,7 +13021,7 @@ test_filtered_stream_lifecycle (void)
 	g_assert_cmpuint (filter->complete_calls, ==, 1);
 	g_assert_cmpint (g_mime_stream_write (stream, "\000\377", 2), ==, 2);
 	g_assert_cmpint (g_mime_stream_close (stream), ==, 0);
-	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_object.source));
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_instance.source));
 	g_assert_cmpmem (bytes->data, bytes->len, "!\000\377!", 4);
 	g_assert_cmpuint (filter->complete_calls, ==, 2);
 	g_assert_cmpuint (source->close_calls, ==, 0);
@@ -13027,21 +13048,21 @@ test_filtered_stream_lifecycle (void)
 	check (TRUE, "fresh and repeated flushes, binary reuse, zero-length writes and close errors preserve completion state");
 
 	source = g_object_new (test_stream_failure_get_type (), NULL);
-	source->parent_object.source = g_mime_stream_mem_new ();
+	source->parent_instance.source = g_mime_stream_mem_new ();
 	source->fail_after = 1;
 	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 	stream = g_mime_stream_filter_new (GMIME_STREAM (source));
 	errno = 0;
 	g_assert_cmpint (g_mime_stream_write (stream, "abc", 3), ==, -1);
 	g_assert_cmpint (errno, ==, ENOSPC);
-	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_object.source));
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_instance.source));
 	g_assert_cmpmem (bytes->data, bytes->len, "a", 1);
 	g_object_unref (stream);
 	g_object_unref (source);
 	check (TRUE, "ordinary failed writes report errors after accepting a prefix");
 
 	source = g_object_new (test_stream_failure_get_type (), NULL);
-	source->parent_object.source = g_mime_stream_mem_new ();
+	source->parent_instance.source = g_mime_stream_mem_new ();
 	source->fail_after = 0;
 	g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 	stream = g_mime_stream_filter_new (GMIME_STREAM (source));
@@ -13057,7 +13078,7 @@ test_filtered_stream_lifecycle (void)
 	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
 	g_assert_cmpuint (filter->reset_calls, ==, 1);
 	g_assert_cmpint (g_mime_stream_flush (stream), ==, 0);
-	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_object.source));
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_instance.source));
 	g_assert_cmpmem (bytes->data, bytes->len, "!", 1);
 	g_assert_cmpuint (filter->complete_calls, ==, 2);
 	g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, 1);
@@ -13072,7 +13093,7 @@ test_filtered_stream_lifecycle (void)
 
 	for (pending = 0; pending < 2; pending++) {
 		source = g_object_new (test_stream_failure_get_type (), NULL);
-		source->parent_object.source = g_mime_stream_mem_new ();
+		source->parent_instance.source = g_mime_stream_mem_new ();
 		g_mime_stream_construct (GMIME_STREAM (source), 0, -1);
 		stream = g_mime_stream_filter_new (GMIME_STREAM (source));
 		g_mime_stream_filter_set_owner (GMIME_STREAM_FILTER (stream), TRUE);
@@ -13104,7 +13125,7 @@ test_filtered_stream_reads (void)
 
 	for (mode = 0; mode < 4; mode++) {
 		source = g_object_new (test_stream_failure_get_type (), NULL);
-		source->parent_object.source = g_mime_stream_mem_new_with_buffer ("ab\r", 3);
+		source->parent_instance.source = g_mime_stream_mem_new_with_buffer ("ab\r", 3);
 		source->onebyte = mode != 0;
 		source->fail_after = mode == 2 ? 1 : G_MAXSIZE;
 		source->zero_read = mode == 3;

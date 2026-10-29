@@ -27,39 +27,24 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_WINDOWS            (g_mime_filter_windows_get_type ())
-#define GMIME_FILTER_WINDOWS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindows))
-#define GMIME_FILTER_WINDOWS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindowsClass))
-#define GMIME_IS_FILTER_WINDOWS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_WINDOWS))
-#define GMIME_IS_FILTER_WINDOWS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_WINDOWS))
-#define GMIME_FILTER_WINDOWS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindowsClass))
 
-typedef struct _GMimeFilterWindows GMimeFilterWindows;
-typedef struct _GMimeFilterWindowsClass GMimeFilterWindowsClass;
 
 /**
  * GMimeFilterWindows:
- * @parent_object: parent #GMimeFilter
- * @is_windows: %TRUE if the stream is detected to be a windows-cp125x charset
- * @claimed_charset: charset the text stream is claimed to be
  *
  * A filter for detecting whether or not a text stream claimed to be
  * iso-8859-X is really that charset or if it is really a
  * Windows-CP125x charset.
  **/
-struct _GMimeFilterWindows {
-	GMimeFilter parent_object;
-	
-	gboolean is_windows;
-	char *claimed_charset;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterWindows, g_mime_filter_windows, GMIME, FILTER_WINDOWS, GMimeFilter)
 
 struct _GMimeFilterWindowsClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_windows_get_type (void);
 
 GMimeFilter *g_mime_filter_windows_new (const char *claimed_charset);
 

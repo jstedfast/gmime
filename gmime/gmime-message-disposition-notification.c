@@ -26,6 +26,8 @@
 #include "gmime-visitor.h"
 #include "gmime-internal.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-message-disposition-notification
  * @title: GMimeMessageDispositionNotification
@@ -40,7 +42,14 @@
 static void notification_finalize (GObject *object);
 static void fields_changed (GMimeHeaderList *fields, gpointer args, GMimeMessageDispositionNotification *notification);
 
-G_DEFINE_TYPE (GMimeMessageDispositionNotification, g_mime_message_disposition_notification, GMIME_TYPE_PART)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessageDispositionNotification, g_mime_message_disposition_notification, GMIME_TYPE_PART)
+
+GMimeMessageDispositionNotificationPrivate *
+_g_mime_message_disposition_notification_get_private (GMimeMessageDispositionNotification *object)
+{
+	return g_mime_message_disposition_notification_get_instance_private (object);
+}
 
 static void
 notification_accept (GMimeEntity *object, GMimeVisitor *visitor)
@@ -58,18 +67,22 @@ g_mime_message_disposition_notification_class_init (GMimeMessageDispositionNotif
 static void
 g_mime_message_disposition_notification_init (GMimeMessageDispositionNotification *notification)
 {
-	notification->fields = NULL;
+	GMimeMessageDispositionNotificationPrivate *priv = _g_mime_message_disposition_notification_get_private (notification);
+
+	priv->fields = NULL;
 }
 
 static void
 notification_finalize (GObject *object)
 {
 	GMimeMessageDispositionNotification *notification = GMIME_MESSAGE_DISPOSITION_NOTIFICATION (object);
+	GMimeMessageDispositionNotificationPrivate *priv = _g_mime_message_disposition_notification_get_private (notification);
 
-	if (notification->fields) {
-		g_mime_event_remove (notification->fields->changed, (GMimeEventCallback) fields_changed, notification);
-		g_object_unref (notification->fields);
+	if (priv->fields) {
+		g_mime_event_remove (priv->fields->changed, (GMimeEventCallback) fields_changed, notification);
+		g_object_unref (priv->fields);
 	}
+
 	G_OBJECT_CLASS (g_mime_message_disposition_notification_parent_class)->finalize (object);
 }
 
@@ -125,18 +138,22 @@ g_mime_message_disposition_notification_new (void)
 GMimeHeaderList *
 g_mime_message_disposition_notification_get_fields (GMimeMessageDispositionNotification *notification, GError **error)
 {
+	GMimeMessageDispositionNotificationPrivate *priv;
 	GMimeHeaderList *fields;
 
 	g_return_val_if_fail (GMIME_IS_MESSAGE_DISPOSITION_NOTIFICATION (notification), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if (notification->fields)
-		return notification->fields;
+	priv = _g_mime_message_disposition_notification_get_private (notification);
 
-	fields = _g_mime_part_load_fields ((GMimePart *) notification, "Disposition notification", error);
-	if (!fields)
+	if (priv->fields)
+		return priv->fields;
+
+	if (!(fields = _g_mime_part_load_fields ((GMimePart *) notification, "Disposition notification", error)))
 		return NULL;
-	notification->fields = fields;
+
+	priv->fields = fields;
 	g_mime_event_add (fields->changed, (GMimeEventCallback) fields_changed, notification);
+
 	return fields;
 }

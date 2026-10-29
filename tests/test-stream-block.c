@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <errno.h>
@@ -164,6 +165,7 @@ test_block_seek (void)
 static void
 test_block_views (void)
 {
+	GMimeStreamPrivate *priv;
 	GMimeStream *stream = g_mime_stream_block_new (), *sub, *nested;
 	char data[8192], buffer[8];
 	GByteArray *copy;
@@ -189,7 +191,9 @@ test_block_views (void)
 	g_assert_cmpint (g_mime_stream_reset (sub), ==, 0);
 	nested = g_mime_stream_substream (sub, 2048, -1);
 	g_assert_nonnull (nested);
-	g_assert_cmpint (nested->bound_end, ==, 2051);
+	priv = _g_mime_stream_get_private (nested);
+
+	g_assert_cmpint (priv->bound_end, ==, 2051);
 	g_assert_null (g_mime_stream_substream (sub, 2046, 2050));
 	g_assert_null (g_mime_stream_substream (sub, 2048, 2052));
 	g_assert_null (g_mime_stream_substream (sub, 2051, 2050));
@@ -208,7 +212,7 @@ test_block_views (void)
 	g_assert_cmpint (g_mime_stream_close (stream), ==, 0);
 	g_object_unref (stream);
 	g_assert_cmpint (g_mime_stream_block_set_length (GMIME_STREAM_BLOCK (nested), 4), ==, 0);
-	g_assert_cmpint (nested->bound_end, ==, 2052);
+	g_assert_cmpint (priv->bound_end, ==, 2052);
 	g_assert_cmpint (g_mime_stream_write (nested, "WXYZ", 4), ==, 4);
 	g_assert_cmpint (g_mime_stream_read (sub, buffer, sizeof (buffer)), ==, 4);
 	g_assert_cmpmem (buffer, 4, "\0WXY", 4);

@@ -39,6 +39,8 @@
 #define d(x)
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-html
  * @title: GMimeFilterHTML
@@ -77,7 +79,7 @@ static struct {
 #define NUM_URL_PATTERNS (sizeof (patterns) / sizeof (patterns[0]))
 
 static void g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass);
-static void g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass);
+static void g_mime_filter_html_init (GMimeFilterHTML *filter);
 static void g_mime_filter_html_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -91,28 +93,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_html_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterHTML, g_mime_filter_html, GMIME_TYPE_FILTER)
+
+GMimeFilterHTMLPrivate *
+_g_mime_filter_html_get_private (GMimeFilterHTML *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterHTMLClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_html_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterHTML),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_html_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterHTML", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_html_get_instance_private (object);
 }
 
 
@@ -133,23 +120,25 @@ g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass)
 }
 
 static void
-g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
+g_mime_filter_html_init (GMimeFilterHTML *filter)
 {
-	filter->scanner = url_scanner_new ();
+	GMimeFilterHTMLPrivate *priv = _g_mime_filter_html_get_private (filter);
+
+	priv->scanner = url_scanner_new ();
 	
-	filter->flags = 0;
-	filter->colour = 0;
-	filter->column = 0;
-	filter->pre_open = FALSE;
-	filter->citation_depth = 0;
+	priv->flags = 0;
+	priv->colour = 0;
+	priv->column = 0;
+	priv->pre_open = FALSE;
+	priv->citation_depth = 0;
 }
 
 static void
 g_mime_filter_html_finalize (GObject *object)
 {
-	GMimeFilterHTML *html = (GMimeFilterHTML *) object;
-	
-	url_scanner_free (html->scanner);
+	GMimeFilterHTMLPrivate *priv = _g_mime_filter_html_get_private ((GMimeFilterHTML *) object);
+
+	url_scanner_free (priv->scanner);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -158,27 +147,28 @@ g_mime_filter_html_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
-	
-	return g_mime_filter_html_new (html->flags, html->colour);
+	GMimeFilterHTMLPrivate *priv = _g_mime_filter_html_get_private ((GMimeFilterHTML *) filter);
+
+	return g_mime_filter_html_new (priv->flags, priv->colour);
 }
 
 static char *
 check_size (GMimeFilter *filter, char *outptr, char **outend, size_t len)
 {
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	size_t outleft = (size_t) (*outend - outptr);
 	size_t offset;
 	
 	if (outleft >= len)
 		return outptr;
+
+	offset = outptr - priv->outbuf;
 	
-	offset = outptr - filter->outbuf;
+	g_mime_filter_set_size (filter, priv->outsize + len, TRUE);
 	
-	g_mime_filter_set_size (filter, filter->outsize + len, TRUE);
+	*outend = priv->outbuf + priv->outsize;
 	
-	*outend = filter->outbuf + filter->outsize;
-	
-	return filter->outbuf + offset;
+	return priv->outbuf + offset;
 }
 
 static int
@@ -252,6 +242,7 @@ html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 	
 	while (inptr < inend) {
 		r = *inptr++;
+
 	loop:
 		if (r < 0x80) {
 			*in = inptr;
@@ -259,6 +250,7 @@ html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 		} else if (r < 0xf8) { /* valid start char? */
 			u = r;
 			m = 0x7f80;	/* used to mask out the length bits */
+
 			do {
 				if (inptr >= inend)
 					return 0xffff;
@@ -288,7 +280,7 @@ html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 static char *
 writeln (GMimeFilter *filter, const char *in, const char *end, char *outptr, char **outend)
 {
-	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
+	GMimeFilterHTMLPrivate *html = _g_mime_filter_html_get_private ((GMimeFilterHTML *) filter);
 	const unsigned char *instart = (const unsigned char *) in;
 	const unsigned char *inend = (const unsigned char *) end;
 	const unsigned char *inptr = instart;
@@ -299,6 +291,7 @@ writeln (GMimeFilter *filter, const char *in, const char *end, char *outptr, cha
 		outptr = check_size (filter, outptr, outend, 16);
 		
 		u = html_utf8_getc (&inptr, inend);
+
 		switch (u) {
 		case 0xffff:
 			w(g_warning ("Invalid UTF-8 sequence encountered"));
@@ -348,6 +341,7 @@ writeln (GMimeFilter *filter, const char *in, const char *end, char *outptr, cha
 				else
 					outptr += sprintf (outptr, "&#%u;", u);
 			}
+
 			html->column++;
 			break;
 		}
@@ -360,7 +354,8 @@ static void
 html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	      char **out, size_t *outlen, size_t *outprespace, gboolean flush)
 {
-	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
+	GMimeFilterHTMLPrivate *html = _g_mime_filter_html_get_private ((GMimeFilterHTML *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	register char *inptr, *outptr;
 	char *start, *outend;
 	const char *inend;
@@ -370,9 +365,10 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	
 	start = inptr = in;
 	inend = in + inlen;
-	outptr = filter->outbuf;
-	outend = filter->outbuf + filter->outsize;
-	
+
+	outptr = priv->outbuf;
+	outend = priv->outbuf + priv->outsize;
+
 	if (html->flags & GMIME_FILTER_HTML_PRE && !html->pre_open) {
 		outptr = g_stpcpy (outptr, "<pre>");
 		html->pre_open = TRUE;
@@ -528,9 +524,9 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		g_mime_filter_backup (filter, start, (unsigned) (inend - start));
 	}
 	
-	*out = filter->outbuf;
-	*outlen = outptr - filter->outbuf;
-	*outprespace = filter->outpre;
+	*out = priv->outbuf;
+	*outlen = outptr - priv->outbuf;
+	*outprespace = priv->outpre;
 }
 
 static void
@@ -550,11 +546,11 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
-	
-	html->column = 0;
-	html->pre_open = FALSE;
-	html->citation_depth = 0;
+	GMimeFilterHTMLPrivate *priv = _g_mime_filter_html_get_private ((GMimeFilterHTML *) filter);
+
+	priv->column = 0;
+	priv->pre_open = FALSE;
+	priv->citation_depth = 0;
 }
 
 
@@ -571,16 +567,19 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_html_new (guint32 flags, guint32 colour)
 {
+	GMimeFilterHTMLPrivate *priv;
 	GMimeFilterHTML *filter;
 	guint i;
 	
 	filter = g_object_new (GMIME_TYPE_FILTER_HTML, NULL);
-	filter->flags = flags;
-	filter->colour = colour;
+	priv = _g_mime_filter_html_get_private (filter);
+
+	priv->flags = flags;
+	priv->colour = colour;
 	
 	for (i = 0; i < NUM_URL_PATTERNS; i++) {
 		if (patterns[i].mask & flags)
-			url_scanner_add (filter->scanner, &patterns[i].pattern);
+			url_scanner_add (priv->scanner, &patterns[i].pattern);
 	}
 	
 	return (GMimeFilter *) filter;

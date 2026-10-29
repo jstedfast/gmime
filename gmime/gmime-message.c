@@ -44,6 +44,8 @@
 #include "gmime-events.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-message
  * @title: GMimeMessage
@@ -54,7 +56,7 @@
  **/
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
-static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
+static void g_mime_message_init (GMimeMessage *message);
 static void g_mime_message_finalize (GObject *object);
 
 /* GMimeEntity class methods */
@@ -124,28 +126,13 @@ static char *rfc822_headers[] = {
 };
 
 
-GType
-g_mime_message_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessage, g_mime_message, GMIME_TYPE_ENTITY)
+
+GMimeMessagePrivate *
+_g_mime_message_get_private (GMimeMessage *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeMessageClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_message_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeMessage),
-			0,   /* n_preallocs */
-			(GInstanceInitFunc) g_mime_message_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_ENTITY, "GMimeMessage", &info, 0);
-	}
-	
-	return type;
+	return g_mime_message_get_instance_private (object);
 }
 
 
@@ -172,9 +159,8 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 static void
 connect_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	GMimeInternetAddressList *addrlist;
-	
-	addrlist = message->addrlists[type];
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeInternetAddressList *addrlist = priv->addrlists[type];
 	
 	g_mime_event_add (addrlist->changed, address_types[type].changed_cb, message);
 }
@@ -182,9 +168,8 @@ connect_changed_event (GMimeMessage *message, GMimeAddressType type)
 static void
 disconnect_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	GMimeInternetAddressList *addrlist;
-	
-	addrlist = message->addrlists[type];
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeInternetAddressList *addrlist = priv->addrlists[type];
 	
 	g_mime_event_remove (addrlist->changed, address_types[type].changed_cb, message);
 }
@@ -192,9 +177,8 @@ disconnect_changed_event (GMimeMessage *message, GMimeAddressType type)
 static void
 block_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	GMimeInternetAddressList *addrlist;
-	
-	addrlist = message->addrlists[type];
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeInternetAddressList *addrlist = priv->addrlists[type];
 	
 	g_mime_event_block (addrlist->changed, address_types[type].changed_cb, message);
 }
@@ -202,36 +186,40 @@ block_changed_event (GMimeMessage *message, GMimeAddressType type)
 static void
 unblock_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	GMimeInternetAddressList *addrlist;
-	
-	addrlist = message->addrlists[type];
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeInternetAddressList *addrlist = priv->addrlists[type];
 	
 	g_mime_event_unblock (addrlist->changed, address_types[type].changed_cb, message);
 }
 
 static void
-g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
+g_mime_message_init (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeEntityPrivate *entity_priv;
 	guint i;
-	
-	message->addrlists = g_new (GMimeInternetAddressList *, N_ADDRESS_TYPES);
-	((GMimeEntity *) message)->ensure_newline = TRUE;
-	message->message_id = NULL;
-	message->in_reply_to = NULL;
-	message->resent_message_id = NULL;
-	message->mime_part = NULL;
-	message->subject = NULL;
-	message->date = NULL;
-	message->resent_date = NULL;
-	message->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
-	message->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
-	message->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;
-	message->references = g_mime_message_id_list_new ();
-	g_mime_event_add (message->references->changed, (GMimeEventCallback) references_changed, message);
+
+	priv->addrlists = g_new (GMimeInternetAddressList *, N_ADDRESS_TYPES);
+	entity_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+	entity_priv->ensure_newline = TRUE;
+	priv->message_id = NULL;
+	priv->in_reply_to = NULL;
+	priv->resent_message_id = NULL;
+	priv->mime_part = NULL;
+	priv->subject = NULL;
+	priv->date = NULL;
+	priv->resent_date = NULL;
+	priv->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
+	priv->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
+	priv->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;
+	priv->references = g_mime_message_id_list_new ();
+
+	g_mime_event_add (priv->references->changed, (GMimeEventCallback) references_changed, message);
 	
 	/* initialize recipient lists */
 	for (i = 0; i < N_ADDRESS_TYPES; i++) {
-		message->addrlists[i] = g_mime_internet_address_list_new ();
+		priv->addrlists[i] = g_mime_internet_address_list_new ();
 		connect_changed_event (message, i);
 	}
 }
@@ -239,32 +227,34 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 static void
 g_mime_message_finalize (GObject *object)
 {
+	GMimeMessagePrivate *priv = _g_mime_message_get_private ((GMimeMessage *) object);
 	GMimeMessage *message = (GMimeMessage *) object;
 	guint i;
 	
 	/* disconnect changed handlers */
 	for (i = 0; i < N_ADDRESS_TYPES; i++) {
 		disconnect_changed_event (message, i);
-		g_object_unref (message->addrlists[i]);
+		g_object_unref (priv->addrlists[i]);
 	}
 	
-	g_free (message->addrlists);
-	g_free (message->message_id);
-	g_free (message->in_reply_to);
-	g_free (message->resent_message_id);
-	g_free (message->subject);
-	g_free (message->marker);
-	g_clear_pointer (&message->raw_marker, g_bytes_unref);
-	g_mime_event_remove (message->references->changed, (GMimeEventCallback) references_changed, message);
-	g_object_unref (message->references);
+	g_free (priv->addrlists);
+	g_free (priv->message_id);
+	g_free (priv->in_reply_to);
+	g_free (priv->resent_message_id);
+	g_free (priv->subject);
+	g_free (priv->marker);
+	g_clear_pointer (&priv->raw_marker, g_bytes_unref);
+	g_mime_event_remove (priv->references->changed, (GMimeEventCallback) references_changed, message);
+	g_object_unref (priv->references);
 	
-	if (message->date)
-		g_date_time_unref (message->date);
-	g_clear_pointer (&message->resent_date, g_date_time_unref);
+	if (priv->date)
+		g_date_time_unref (priv->date);
+
+	g_clear_pointer (&priv->resent_date, g_date_time_unref);
 	
 	/* unref child mime part */
-	if (message->mime_part)
-		g_object_unref (message->mime_part);
+	if (priv->mime_part)
+		g_object_unref (priv->mime_part);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -326,7 +316,9 @@ static const char *message_headers[] = {
 static void
 message_update_priority (GMimeMessage *message, guint type)
 {
-	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeHeaderList *headers = entity_priv->headers;
 	GMimeHeader *header = g_mime_header_list_get_header (headers, message_headers[type]);
 	const char *value = NULL;
 	char *raw = NULL;
@@ -340,40 +332,45 @@ message_update_priority (GMimeMessage *message, guint type)
 	switch (type) {
 	case HEADER_IMPORTANCE:
 		if (_g_mime_strcase_equal_trimmed (value, "high"))
-			message->importance = GMIME_MESSAGE_IMPORTANCE_HIGH;
+			priv->importance = GMIME_MESSAGE_IMPORTANCE_HIGH;
 		else if (_g_mime_strcase_equal_trimmed (value, "low"))
-			message->importance = GMIME_MESSAGE_IMPORTANCE_LOW;
+			priv->importance = GMIME_MESSAGE_IMPORTANCE_LOW;
 		else
-			message->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
+			priv->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
 		break;
 	case HEADER_PRIORITY:
 		if (_g_mime_strcase_equal_trimmed (value, "urgent"))
-			message->priority = GMIME_MESSAGE_PRIORITY_URGENT;
+			priv->priority = GMIME_MESSAGE_PRIORITY_URGENT;
 		else if (_g_mime_strcase_equal_trimmed (value, "non-urgent"))
-			message->priority = GMIME_MESSAGE_PRIORITY_NON_URGENT;
+			priv->priority = GMIME_MESSAGE_PRIORITY_NON_URGENT;
 		else
-			message->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
+			priv->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
 		break;
 	case HEADER_X_PRIORITY:
-		message->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;
+		priv->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;
+
 		if (value) {
 			skip_lwsp (&value);
+
 			if (_g_mime_parse_int32 (&value, &number))
-				message->x_priority = (GMimeXMessagePriority) CLAMP (number, 1, 5);
+				priv->x_priority = (GMimeXMessagePriority) CLAMP (number, 1, 5);
 		}
 		break;
 	}
+
 	g_free (raw);
 }
 
 static void
 message_update_date (GMimeMessage *message, const char *name, GDateTime **date)
 {
-	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+	GMimeHeaderList *headers = priv->headers;
 	GMimeHeader *header = g_mime_header_list_get_header (headers, name);
 	char *value;
 
 	g_clear_pointer (date, g_date_time_unref);
+
 	if (header && (value = _g_mime_header_dup_raw_value (header))) {
 		*date = g_mime_utils_header_decode_date (value);
 		g_free (value);
@@ -383,49 +380,62 @@ message_update_date (GMimeMessage *message, const char *name, GDateTime **date)
 static void
 message_update_references (GMimeMessage *message)
 {
-	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
-	GMimeMessageIdList *list = message->references;
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+	GMimeHeaderList *headers = entity_priv->headers;
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeMessageIdList *list = priv->references;
 	GMimeHeader *header;
 	const char *value;
 	char *id, *raw;
 
 	g_mime_event_block (list->changed, (GMimeEventCallback) references_changed, message);
 	g_mime_message_id_list_clear (list);
+
 	header = g_mime_header_list_get_header (headers, "References");
+
 	if (header && (raw = _g_mime_header_dup_raw_value (header))) {
 		value = raw;
+
 		while ((id = _g_mime_parse_reference (&value)))
 			g_ptr_array_add (list->array, id);
+
 		g_free (raw);
 	}
+
 	g_mime_event_unblock (list->changed, (GMimeEventCallback) references_changed, message);
 }
 
 static void
 message_update_subject (GMimeMessage *message)
 {
-	const char *value = g_mime_header_list_get_value (GMIME_ENTITY (message)->headers, "Subject");
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (GMIME_ENTITY (message));
+	const char *value = g_mime_header_list_get_value (entity_priv->headers, "Subject");
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
 
-	g_free (message->subject);
-	message->subject = g_strdup (value);
+	g_free (priv->subject);
+	priv->subject = g_strdup (value);
 }
 
 static void
 message_update_reply_id (GMimeMessage *message, const char *name, char **id)
 {
-	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+	GMimeHeaderList *headers = priv->headers;
+	GMimeHeader *header;
 	const char *value;
 	char *raw;
-	GMimeHeader *header;
 
 	g_clear_pointer (id, g_free);
 	header = g_mime_header_list_get_header (headers, name);
+
 	if (header && (raw = _g_mime_header_dup_raw_value (header))) {
 		value = raw;
+
 		if (!g_ascii_strcasecmp (name, "In-Reply-To"))
 			*id = _g_mime_parse_reference (&value);
 		else
 			*id = g_mime_utils_decode_message_id (value);
+
 		g_free (raw);
 	}
 }
@@ -433,12 +443,11 @@ message_update_reply_id (GMimeMessage *message, const char *name, char **id)
 static void
 message_add_addresses (GMimeMessage *message, GMimeParserOptions *options, GMimeHeader *header, GMimeAddressType type)
 {
-	GMimeInternetAddressList *addrlist;
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeInternetAddressList *addrlist = priv->addrlists[type];
 	char *value;
 	
 	block_changed_event (message, type);
-	
-	addrlist = message->addrlists[type];
 	
 	if ((value = _g_mime_header_dup_raw_value (header))) {
 		_g_mime_internet_address_list_append_parse (addrlist, options, value, header->offset);
@@ -451,20 +460,21 @@ message_add_addresses (GMimeMessage *message, GMimeParserOptions *options, GMime
 static void
 message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GMimeAddressType type)
 {
-	GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
-	GMimeInternetAddressList *addrlist;
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeInternetAddressList *addrlist = priv->addrlists[type];
+	GMimeHeaderList *headers = entity_priv->headers;
 	const char *name;
 	char *value;
 	GMimeHeader *header;
 	int count, i;
 	
 	block_changed_event (message, type);
-	
-	addrlist = message->addrlists[type];
-	
+
 	g_mime_internet_address_list_clear (addrlist);
 	
 	count = g_mime_header_list_get_count (headers);
+
 	for (i = 0; i < count; i++) {
 		header = g_mime_header_list_get_header_at (headers, i);
 		name = g_mime_header_get_name (header);
@@ -482,24 +492,28 @@ message_update_addresses (GMimeMessage *message, GMimeParserOptions *options, GM
 }
 
 static gboolean
-header_was_appended (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeHeader *header)
+header_was_appended (GMimeEntity *entity, GMimeHeaderListChangedAction action, GMimeHeader *header)
 {
 	// Note: This is a hack until we can have a message_header_inserted() API.
 	if (action == GMIME_HEADER_LIST_CHANGED_ACTION_ADDED) {
-		int count = g_mime_header_list_get_count (object->headers);
-		GMimeHeader *last = g_mime_header_list_get_header_at (object->headers, count - 1);
+		GMimeEntityPrivate *priv = _g_mime_entity_get_private (entity);
+		int count = g_mime_header_list_get_count (priv->headers);
+		GMimeHeader *last = g_mime_header_list_get_header_at (priv->headers, count - 1);
+
 		/* An earlier insertion can share the last header's identity. */
-		return header == last && g_mime_header_list_index_of_header (object->headers, header) == count - 1;
+		return header == last && g_mime_header_list_index_of_header (priv->headers, header) == count - 1;
 	}
 
 	return FALSE;
 }
 
 static void
-process_header (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeHeader *header)
+process_header (GMimeEntity *entity, GMimeHeaderListChangedAction action, GMimeHeader *header)
 {
-	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
-	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeMessage *message = (GMimeMessage *) entity;
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (entity);
+	GMimeParserOptions *options = _g_mime_header_list_get_options (entity_priv->headers);
 	const char *name;
 	guint i;
 	
@@ -509,76 +523,76 @@ process_header (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeH
 		if (!g_ascii_strcasecmp (message_headers[i], name))
 			break;
 	}
-	
+
 	switch (i) {
 	case HEADER_SENDER:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_SENDER);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_SENDER);
 		break;
 	case HEADER_FROM:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_FROM);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_FROM);
 		break;
 	case HEADER_REPLY_TO:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_REPLY_TO);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_REPLY_TO);
 		break;
 	case HEADER_TO:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_TO);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_TO);
 		break;
 	case HEADER_CC:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_CC);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_CC);
 		break;
 	case HEADER_BCC:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_BCC);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_BCC);
 		break;
 	case HEADER_RESENT_FROM:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_RESENT_FROM);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_FROM);
 		break;
 	case HEADER_RESENT_REPLY_TO:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
 		break;
 	case HEADER_RESENT_TO:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_RESENT_TO);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_TO);
 		break;
 	case HEADER_RESENT_CC:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_RESENT_CC);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_CC);
 		break;
 	case HEADER_RESENT_BCC:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_RESENT_BCC);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_BCC);
 		break;
 	case HEADER_RESENT_SENDER:
-		if (header_was_appended (object, action, header))
+		if (header_was_appended (entity, action, header))
 			message_add_addresses (message, options, header, GMIME_ADDRESS_TYPE_RESENT_SENDER);
 		else
 			message_update_addresses (message, options, GMIME_ADDRESS_TYPE_RESENT_SENDER);
@@ -587,19 +601,19 @@ process_header (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeH
 		message_update_subject (message);
 		break;
 	case HEADER_DATE:
-		message_update_date (message, name, &message->date);
+		message_update_date (message, name, &priv->date);
 		break;
 	case HEADER_RESENT_DATE:
-		message_update_date (message, name, &message->resent_date);
+		message_update_date (message, name, &priv->resent_date);
 		break;
 	case HEADER_MESSAGE_ID:
-		message_update_reply_id (message, name, &message->message_id);
+		message_update_reply_id (message, name, &priv->message_id);
 		break;
 	case HEADER_IN_REPLY_TO:
-		message_update_reply_id (message, name, &message->in_reply_to);
+		message_update_reply_id (message, name, &priv->in_reply_to);
 		break;
 	case HEADER_RESENT_MESSAGE_ID:
-		message_update_reply_id (message, name, &message->resent_message_id);
+		message_update_reply_id (message, name, &priv->resent_message_id);
 		break;
 	case HEADER_REFERENCES:
 		message_update_references (message);
@@ -613,26 +627,28 @@ process_header (GMimeEntity *object, GMimeHeaderListChangedAction action, GMimeH
 }
 
 static void
-message_header_added (GMimeEntity *object, GMimeHeader *header)
+message_header_added (GMimeEntity *entity, GMimeHeader *header)
 {
-	process_header (object, GMIME_HEADER_LIST_CHANGED_ACTION_ADDED, header);
+	process_header (entity, GMIME_HEADER_LIST_CHANGED_ACTION_ADDED, header);
 	
-	GMIME_ENTITY_CLASS (parent_class)->header_added (object, header);
+	GMIME_ENTITY_CLASS (parent_class)->header_added (entity, header);
 }
 
 static void
-message_header_changed (GMimeEntity *object, GMimeHeader *header)
+message_header_changed (GMimeEntity *entity, GMimeHeader *header)
 {
-	process_header (object, GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED, header);
+	process_header (entity, GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED, header);
 	
-	GMIME_ENTITY_CLASS (parent_class)->header_changed (object, header);
+	GMIME_ENTITY_CLASS (parent_class)->header_changed (entity, header);
 }
 
 static void
-message_header_removed (GMimeEntity *object, GMimeHeader *header)
+message_header_removed (GMimeEntity *entity, GMimeHeader *header)
 {
-	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
-	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeMessage *message = (GMimeMessage *) entity;
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (entity);
+	GMimeParserOptions *options = _g_mime_header_list_get_options (entity_priv->headers);
 	const char *name;
 	guint i;
 	
@@ -642,7 +658,7 @@ message_header_removed (GMimeEntity *object, GMimeHeader *header)
 		if (!g_ascii_strcasecmp (message_headers[i], name))
 			break;
 	}
-	
+
 	switch (i) {
 	case HEADER_SENDER:
 		message_update_addresses (message, options, GMIME_ADDRESS_TYPE_SENDER);
@@ -684,19 +700,19 @@ message_header_removed (GMimeEntity *object, GMimeHeader *header)
 		message_update_subject (message);
 		break;
 	case HEADER_DATE:
-		message_update_date (message, name, &message->date);
+		message_update_date (message, name, &priv->date);
 		break;
 	case HEADER_RESENT_DATE:
-		message_update_date (message, name, &message->resent_date);
+		message_update_date (message, name, &priv->resent_date);
 		break;
 	case HEADER_MESSAGE_ID:
-		message_update_reply_id (message, name, &message->message_id);
+		message_update_reply_id (message, name, &priv->message_id);
 		break;
 	case HEADER_IN_REPLY_TO:
-		message_update_reply_id (message, name, &message->in_reply_to);
+		message_update_reply_id (message, name, &priv->in_reply_to);
 		break;
 	case HEADER_RESENT_MESSAGE_ID:
-		message_update_reply_id (message, name, &message->resent_message_id);
+		message_update_reply_id (message, name, &priv->resent_message_id);
 		break;
 	case HEADER_REFERENCES:
 		message_update_references (message);
@@ -708,39 +724,41 @@ message_header_removed (GMimeEntity *object, GMimeHeader *header)
 		break;
 	}
 	
-	GMIME_ENTITY_CLASS (parent_class)->header_removed (object, header);
+	GMIME_ENTITY_CLASS (parent_class)->header_removed (entity, header);
 }
 
 static void
-message_headers_cleared (GMimeEntity *object)
+message_headers_cleared (GMimeEntity *entity)
 {
-	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeMessage *message = (GMimeMessage *) entity;
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
 	guint i;
 	
 	for (i = 0; i < N_ADDRESS_TYPES; i++) {
 		block_changed_event (message, i);
-		g_mime_internet_address_list_clear (message->addrlists[i]);
+		g_mime_internet_address_list_clear (priv->addrlists[i]);
 		unblock_changed_event (message, i);
 	}
-	
-	g_free (message->message_id);
-	message->message_id = NULL;
-	g_clear_pointer (&message->in_reply_to, g_free);
-	g_clear_pointer (&message->resent_message_id, g_free);
+
+	g_free (priv->message_id);
+	priv->message_id = NULL;
+	g_clear_pointer (&priv->in_reply_to, g_free);
+	g_clear_pointer (&priv->resent_message_id, g_free);
 	message_update_references (message);
-	message->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
-	message->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
-	message->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;
-	g_free (message->subject);
-	message->subject = NULL;
-	
-	if (message->date) {
-		g_date_time_unref (message->date);
-		message->date = NULL;
+	priv->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
+	priv->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
+	priv->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;
+	g_free (priv->subject);
+	priv->subject = NULL;
+
+	if (priv->date) {
+		g_date_time_unref (priv->date);
+		priv->date = NULL;
 	}
-	g_clear_pointer (&message->resent_date, g_date_time_unref);
+
+	g_clear_pointer (&priv->resent_date, g_date_time_unref);
 	
-	GMIME_ENTITY_CLASS (parent_class)->headers_cleared (object);
+	GMIME_ENTITY_CLASS (parent_class)->headers_cleared (entity);
 }
 
 
@@ -820,28 +838,38 @@ g_mime_message_load_from_file (GMimeParserOptions *options, const char *filename
 GPtrArray *
 _g_mime_message_merge_headers (GMimeMessage *message)
 {
-	GMimeEntity *object = (GMimeEntity *) message;
-	GMimeEntity *mime_part = message->mime_part;
 	GPtrArray *headers = g_ptr_array_new_with_free_func (g_object_unref);
-	guint index = 0, body_index = 0;
+	GMimeEntity *entity = (GMimeEntity *) message;
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (entity);
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeEntity *mime_part = priv->mime_part;
+	GMimeEntityPrivate *mime_part_priv = NULL;
 	GMimeHeader *header, *body_header;
+	guint index = 0, body_index = 0;
 
 	if (mime_part != NULL) {
+		mime_part_priv = _g_mime_entity_get_private (mime_part);
+
 		/* write all the prepended message headers first */
-		while (index < object->headers->array->len) {
-			header = object->headers->array->pdata[index];
+		while (index < entity_priv->headers->array->len) {
+			header = entity_priv->headers->array->pdata[index];
+
 			if (header->offset >= 0)
 				break;
+
 			g_ptr_array_add (headers, g_object_ref (header));
 			index++;
 		}
 
 		/* now merge the message and body headers as they appeared in the raw message */
-		while (index < object->headers->array->len && body_index < mime_part->headers->array->len) {
-			body_header = mime_part->headers->array->pdata[body_index];
+		while (index < entity_priv->headers->array->len && body_index < mime_part_priv->headers->array->len) {
+			body_header = mime_part_priv->headers->array->pdata[body_index];
+
 			if (body_header->offset < 0)
 				break;
-			header = object->headers->array->pdata[index];
+
+			header = entity_priv->headers->array->pdata[index];
+
 			if (header->offset >= 0 && header->offset < body_header->offset) {
 				g_ptr_array_add (headers, g_object_ref (header));
 				index++;
@@ -851,11 +879,13 @@ _g_mime_message_merge_headers (GMimeMessage *message)
 			}
 		}
 	}
-	while (index < object->headers->array->len)
-		g_ptr_array_add (headers, g_object_ref (object->headers->array->pdata[index++]));
-	if (mime_part) {
-		while (body_index < mime_part->headers->array->len)
-			g_ptr_array_add (headers, g_object_ref (mime_part->headers->array->pdata[body_index++]));
+
+	while (index < entity_priv->headers->array->len)
+		g_ptr_array_add (headers, g_object_ref (entity_priv->headers->array->pdata[index++]));
+
+	if (mime_part_priv != NULL) {
+		while (body_index < mime_part_priv->headers->array->len)
+			g_ptr_array_add (headers, g_object_ref (mime_part_priv->headers->array->pdata[body_index++]));
 	}
 
 	return headers;
@@ -864,9 +894,11 @@ _g_mime_message_merge_headers (GMimeMessage *message)
 
 /* Write the message headers (merged with the headers of the body, if any). */
 ssize_t
-_g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options, GMimeStream *stream)
+_g_mime_message_write_headers (GMimeEntity *entity, GMimeFormatOptions *options, GMimeStream *stream)
 {
-	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeMessage *message = (GMimeMessage *) entity;
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (entity);
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
 	GMimeStream *filtered;
 	GMimeFilter *filter;
 	GPtrArray *headers;
@@ -874,8 +906,8 @@ _g_mime_message_write_headers (GMimeEntity *object, GMimeFormatOptions *options,
 	int errsv;
 	guint i;
 
-	if (!message->mime_part)
-		return _g_mime_header_list_write_to_stream (object->headers, options, stream);
+	if (!priv->mime_part)
+		return _g_mime_header_list_write_to_stream (entity_priv->headers, options, stream);
 
 	headers = _g_mime_message_merge_headers (message);
 	filtered = g_mime_stream_filter_new (stream);
@@ -925,19 +957,30 @@ done:
 ssize_t
 g_mime_message_write_headers_to_stream (GMimeMessage *message, GMimeFormatOptions *options, GMimeStream *stream)
 {
-	GMimeEntity *object = (GMimeEntity *) message;
+	GMimeEntity *entity = (GMimeEntity *) message;
+	GMimeEntityPrivate *entity_priv;
+	GMimeMessagePrivate *priv;
 	GMimeHeaderList *headers;
-	const char *newline;
 	ssize_t total, nwritten;
+	const char *newline;
 	size_t length;
 
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 
-	if ((total = _g_mime_message_write_headers (object, options, stream)) < 0)
+	if ((total = _g_mime_message_write_headers (entity, options, stream)) < 0)
 		return -1;
 
-	headers = message->mime_part ? message->mime_part->headers : object->headers;
+	priv = _g_mime_message_get_private (message);
+	entity_priv = _g_mime_entity_get_private (entity);
+
+	if (priv->mime_part) {
+		GMimeEntityPrivate *part_priv = _g_mime_entity_get_private (priv->mime_part);
+
+		headers = part_priv->headers;
+	} else {
+		headers = entity_priv->headers;
+	}
 
 	if (headers->has_body_separator) {
 		newline = g_mime_format_options_get_newline (options);
@@ -995,15 +1038,15 @@ message_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gbool
 static gboolean
 message_has_mime_version (GMimeMessage *message)
 {
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (GMIME_ENTITY (message));
+	gboolean valid = FALSE;
 	GMimeHeader *header;
 	const char *inptr;
-	char *raw;
-	gboolean valid = FALSE;
-	gint32 value;
 	guint count = 0;
+	gint32 value;
+	char *raw;
 
-	header = g_mime_header_list_get_header (GMIME_ENTITY (message)->headers, "MIME-Version");
-	if (!header)
+	if (!(header = g_mime_header_list_get_header (priv->headers, "MIME-Version")))
 		return FALSE;
 
 	/* MimeKit parses the first raw header as two to four Int32 components,
@@ -1037,19 +1080,26 @@ done:
 
 
 static gboolean
-message_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)
+message_prepare (GMimeEntity *entity, GMimeEncodingConstraint constraint, guint max_line_length, GError **error)
 {
-	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeMessage *message = (GMimeMessage *) entity;
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeEntityPrivate *part_priv;
+	GMimeEntityPrivate *object_priv;
 
-	if (!message->mime_part)
+	if (!priv->mime_part)
 		return TRUE;
+
+	part_priv = _g_mime_entity_get_private (priv->mime_part);
 
 	/* Publish MIME-Version before preparing the body, even if preparation
 	 * later fails. Existing valid versions and duplicates remain untouched. */
-	if (g_mime_header_list_get_count (message->mime_part->headers) > 0 && !message_has_mime_version (message))
-		g_mime_header_list_set (object->headers, "MIME-Version", "1.0", NULL);
+	object_priv = _g_mime_entity_get_private (entity);
 
-	return g_mime_entity_prepare_with_max_line_length (message->mime_part, constraint, max_line_length, error);
+	if (g_mime_header_list_get_count (part_priv->headers) > 0 && !message_has_mime_version (message))
+		g_mime_header_list_set (object_priv->headers, "MIME-Version", "1.0", NULL);
+
+	return g_mime_entity_prepare_with_max_line_length (priv->mime_part, constraint, max_line_length, error);
 }
 
 
@@ -1067,7 +1117,6 @@ message_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint, guint 
 GMimeMessage *
 g_mime_message_new (gboolean pretty_headers)
 {
-	GMimeHeaderList *headers;
 	GMimeMessage *message;
 	guint i;
 	
@@ -1075,7 +1124,8 @@ g_mime_message_new (gboolean pretty_headers)
 	
 	if (pretty_headers) {
 		/* Populate with the "standard" rfc822 headers so we can have a standard order */
-		headers = ((GMimeEntity *) message)->headers;
+		GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+		GMimeHeaderList *headers = priv->headers;
 		
 		_g_mime_entity_block_header_list_changed ((GMimeEntity *) message);
 
@@ -1107,9 +1157,13 @@ g_mime_message_new (gboolean pretty_headers)
 GMimeInternetAddressList *
 g_mime_message_get_sender (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->addrlists[GMIME_ADDRESS_TYPE_SENDER];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_SENDER];
 }
 
 
@@ -1124,9 +1178,13 @@ g_mime_message_get_sender (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_from (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->addrlists[GMIME_ADDRESS_TYPE_FROM];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_FROM];
 }
 
 
@@ -1141,9 +1199,13 @@ g_mime_message_get_from (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_reply_to (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->addrlists[GMIME_ADDRESS_TYPE_REPLY_TO];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_REPLY_TO];
 }
 
 
@@ -1158,9 +1220,13 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_to (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->addrlists[GMIME_ADDRESS_TYPE_TO];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_TO];
 }
 
 
@@ -1175,9 +1241,13 @@ g_mime_message_get_to (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_cc (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->addrlists[GMIME_ADDRESS_TYPE_CC];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_CC];
 }
 
 
@@ -1192,9 +1262,13 @@ g_mime_message_get_cc (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_bcc (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->addrlists[GMIME_ADDRESS_TYPE_BCC];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_BCC];
 }
 
 
@@ -1213,9 +1287,13 @@ g_mime_message_get_bcc (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_resent_from (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_FROM];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_FROM];
 }
 
 /**
@@ -1230,9 +1308,13 @@ g_mime_message_get_resent_from (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_resent_reply_to (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_REPLY_TO];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_REPLY_TO];
 }
 
 /**
@@ -1247,9 +1329,13 @@ g_mime_message_get_resent_reply_to (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_resent_to (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_TO];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_TO];
 }
 
 /**
@@ -1264,9 +1350,13 @@ g_mime_message_get_resent_to (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_resent_cc (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_CC];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_CC];
 }
 
 /**
@@ -1281,9 +1371,13 @@ g_mime_message_get_resent_cc (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_resent_bcc (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_BCC];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_BCC];
 }
 
 /**
@@ -1305,24 +1399,29 @@ g_mime_message_get_resent_bcc (GMimeMessage *message)
 GMimeInternetAddressList *
 g_mime_message_get_resent_sender (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->addrlists[GMIME_ADDRESS_TYPE_RESENT_SENDER];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_SENDER];
 }
 
 static void
 references_changed (GMimeMessageIdList *list, gpointer args, GMimeMessage *message)
 {
-	GMimeEntity *object = (GMimeEntity *) message;
-	const char *newline = g_mime_format_options_get_newline (NULL);
 	size_t maxline = g_mime_format_options_get_max_line_length (NULL);
+	const char *newline = g_mime_format_options_get_newline (NULL);
+	GMimeEntity *entity = (GMimeEntity *) message;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (entity);
 	size_t line = strlen ("References:");
 	const char *id;
 	GString *str;
 	size_t length;
 	guint i;
 
-	_g_mime_entity_block_header_list_changed (object);
+	_g_mime_entity_block_header_list_changed (entity);
 
 	if (list->array->len) {
 		str = g_string_new (NULL);
@@ -1348,26 +1447,27 @@ references_changed (GMimeMessageIdList *list, gpointer args, GMimeMessage *messa
 		}
 
 		g_string_append (str, newline);
-		_g_mime_header_list_set (object->headers, "References", str->str);
+		_g_mime_header_list_set (priv->headers, "References", str->str);
 		g_string_free (str, TRUE);
 	} else {
-		g_mime_header_list_remove_all (object->headers, "References");
+		g_mime_header_list_remove_all (priv->headers, "References");
 	}
 
-	_g_mime_entity_unblock_header_list_changed (object);
+	_g_mime_entity_unblock_header_list_changed (entity);
 }
 
 static void
 sync_g_mime_internet_address_list (GMimeInternetAddressList *list, GMimeMessage *message, const char *name)
 {
-	GMimeEntity *object = (GMimeEntity *) message;
+	GMimeEntity *entity = (GMimeEntity *) message;
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (entity);
 	GString *str;
 	guint n;
 	
 	if (g_mime_internet_address_list_length (list) == 0) {
-		_g_mime_entity_block_header_list_changed (object);
-		g_mime_header_list_remove_all (object->headers, name);
-		_g_mime_entity_unblock_header_list_changed (object);
+		_g_mime_entity_block_header_list_changed (entity);
+		g_mime_header_list_remove_all (entity_priv->headers, name);
+		_g_mime_entity_unblock_header_list_changed (entity);
 		return;
 	}
 
@@ -1378,9 +1478,9 @@ sync_g_mime_internet_address_list (GMimeInternetAddressList *list, GMimeMessage 
 	g_string_append_c (str, ' ');
 	g_mime_internet_address_list_encode (list, NULL, str);
 	
-	_g_mime_entity_block_header_list_changed (object);
-	_g_mime_header_list_set (object->headers, name, str->str + n);
-	_g_mime_entity_unblock_header_list_changed (object);
+	_g_mime_entity_block_header_list_changed (entity);
+	_g_mime_header_list_set (entity_priv->headers, name, str->str + n);
+	_g_mime_entity_unblock_header_list_changed (entity);
 	
 	g_string_free (str, TRUE);
 }
@@ -1388,7 +1488,8 @@ sync_g_mime_internet_address_list (GMimeInternetAddressList *list, GMimeMessage 
 static void
 sync_address_header (GMimeMessage *message, GMimeAddressType type)
 {
-	GMimeInternetAddressList *list = message->addrlists[type];
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
+	GMimeInternetAddressList *list = priv->addrlists[type];
 	const char *name = address_types[type].name;
 	
 	sync_g_mime_internet_address_list (list, message, name);
@@ -1485,13 +1586,15 @@ gboolean
 g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, const char *name, const char *addr, GError **error)
 {
 	GMimeInternetAddressList *addrlist;
+	GMimeMessagePrivate *priv;
 	GMimeInternetAddress *ia;
 	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), FALSE);
 	g_return_val_if_fail (type >= 0 && type < N_ADDRESS_TYPES, FALSE);
 	g_return_val_if_fail (addr != NULL, FALSE);
 	
-	addrlist = message->addrlists[type];
+	priv = _g_mime_message_get_private (message);
+	addrlist = priv->addrlists[type];
 
 	if (!(ia = g_mime_mailbox_address_new (name, addr, error)))
 		return FALSE;
@@ -1516,10 +1619,14 @@ g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, const 
 GMimeInternetAddressList *
 g_mime_message_get_addresses (GMimeMessage *message, GMimeAddressType type)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	g_return_val_if_fail (type < N_ADDRESS_TYPES, NULL);
 	
-	return message->addrlists[type];
+	priv = _g_mime_message_get_private (message);
+
+	return priv->addrlists[type];
 }
 
 
@@ -1539,12 +1646,15 @@ GMimeInternetAddressList *
 g_mime_message_get_all_recipients (GMimeMessage *message)
 {
 	GMimeInternetAddressList *recipients, *list = NULL;
+	GMimeMessagePrivate *priv;
 	guint i;
 	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+
+	priv = _g_mime_message_get_private (message);
 	
 	for (i = GMIME_ADDRESS_TYPE_TO; i <= GMIME_ADDRESS_TYPE_BCC; i++) {
-		recipients = message->addrlists[i];
+		recipients = priv->addrlists[i];
 		
 		if (g_mime_internet_address_list_length (recipients) == 0)
 			continue;
@@ -1588,13 +1698,16 @@ g_mime_message_get_recipients (GMimeMessage *message, gboolean only_unique)
 {
 	GMimeInternetAddressList *result, *mailboxes;
 	GMimeInternetAddress *mailbox;
+	GMimeMessagePrivate *priv;
 	GHashTable *unique = NULL;
 	guint first, last, type, i;
 
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	if (g_mime_internet_address_list_length (message->addrlists[GMIME_ADDRESS_TYPE_RESENT_SENDER]) > 0 ||
-	    g_mime_internet_address_list_length (message->addrlists[GMIME_ADDRESS_TYPE_RESENT_FROM]) > 0) {
+	priv = _g_mime_message_get_private (message);
+
+	if (g_mime_internet_address_list_length (priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_SENDER]) > 0 ||
+	    g_mime_internet_address_list_length (priv->addrlists[GMIME_ADDRESS_TYPE_RESENT_FROM]) > 0) {
 		first = GMIME_ADDRESS_TYPE_RESENT_TO;
 		last = GMIME_ADDRESS_TYPE_RESENT_BCC;
 	} else {
@@ -1609,7 +1722,7 @@ g_mime_message_get_recipients (GMimeMessage *message, gboolean only_unique)
 
 	for (type = first; type <= last; type++) {
 		/* FIXME: this could probably be done via some sort of foreach() instead of allocating an array */
-		mailboxes = g_mime_internet_address_list_get_mailboxes (message->addrlists[type]);
+		mailboxes = g_mime_internet_address_list_get_mailboxes (priv->addrlists[type]);
 
 		for (i = 0; i < mailboxes->array->len; i++) {
 			mailbox = mailboxes->array->pdata[i];
@@ -1637,7 +1750,8 @@ g_mime_message_get_recipients (GMimeMessage *message, gboolean only_unique)
 static gboolean
 message_has_duplicate_header (GMimeMessage *message, const char *name)
 {
-	GMimeHeaderList *headers = GMIME_ENTITY (message)->headers;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (GMIME_ENTITY (message));
+	GMimeHeaderList *headers = priv->headers;
 
 	return g_mime_header_list_index_of (headers, name) != g_mime_header_list_last_index_of (headers, name);
 }
@@ -1645,7 +1759,8 @@ message_has_duplicate_header (GMimeMessage *message, const char *name)
 static void
 message_set_resent_header (GMimeMessage *message, const char *name, const char *value)
 {
-	GMimeHeaderList *headers = GMIME_ENTITY (message)->headers;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (GMIME_ENTITY (message));
+	GMimeHeaderList *headers = priv->headers;
 	GMimeHeader *header = g_mime_header_list_get_header (headers, name);
 
 	if (header)
@@ -1667,11 +1782,14 @@ void
 g_mime_message_set_importance (GMimeMessage *message, GMimeMessageImportance importance)
 {
 	static const char *values[] = { "low", "normal", "high" };
+	GMimeMessagePrivate *priv;
 
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (importance >= GMIME_MESSAGE_IMPORTANCE_LOW && importance <= GMIME_MESSAGE_IMPORTANCE_HIGH);
 
-	if (message->importance != importance || message_has_duplicate_header (message, "Importance"))
+	priv = _g_mime_message_get_private (message);
+
+	if (priv->importance != importance || message_has_duplicate_header (message, "Importance"))
 		g_mime_entity_set_header ((GMimeEntity *) message, "Importance", values[importance], NULL);
 }
 
@@ -1685,9 +1803,13 @@ g_mime_message_set_importance (GMimeMessage *message, GMimeMessageImportance imp
 GMimeMessageImportance
 g_mime_message_get_importance (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), GMIME_MESSAGE_IMPORTANCE_NORMAL);
 
-	return message->importance;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->importance;
 }
 
 /**
@@ -1703,11 +1825,14 @@ void
 g_mime_message_set_priority (GMimeMessage *message, GMimeMessagePriority priority)
 {
 	static const char *values[] = { "non-urgent", "normal", "urgent" };
+	GMimeMessagePrivate *priv;
 
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (priority >= GMIME_MESSAGE_PRIORITY_NON_URGENT && priority <= GMIME_MESSAGE_PRIORITY_URGENT);
 
-	if (message->priority != priority || message_has_duplicate_header (message, "Priority"))
+	priv = _g_mime_message_get_private (message);
+
+	if (priv->priority != priority || message_has_duplicate_header (message, "Priority"))
 		g_mime_entity_set_header ((GMimeEntity *) message, "Priority", values[priority], NULL);
 }
 
@@ -1721,9 +1846,13 @@ g_mime_message_set_priority (GMimeMessage *message, GMimeMessagePriority priorit
 GMimeMessagePriority
 g_mime_message_get_priority (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), GMIME_MESSAGE_PRIORITY_NORMAL);
 
-	return message->priority;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->priority;
 }
 
 /**
@@ -1740,11 +1869,14 @@ void
 g_mime_message_set_x_priority (GMimeMessage *message, GMimeXMessagePriority priority)
 {
 	static const char *values[] = { "1 (Highest)", "2 (High)", "3 (Normal)", "4 (Low)", "5 (Lowest)" };
+	GMimeMessagePrivate *priv;
 
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (priority >= GMIME_X_MESSAGE_PRIORITY_HIGHEST && priority <= GMIME_X_MESSAGE_PRIORITY_LOWEST);
 
-	if (message->x_priority != priority || message_has_duplicate_header (message, "X-Priority"))
+	priv = _g_mime_message_get_private (message);
+
+	if (priv->x_priority != priority || message_has_duplicate_header (message, "X-Priority"))
 		g_mime_entity_set_header ((GMimeEntity *) message, "X-Priority", values[priority - 1], NULL);
 }
 
@@ -1762,9 +1894,13 @@ g_mime_message_set_x_priority (GMimeMessage *message, GMimeXMessagePriority prio
 GMimeXMessagePriority
 g_mime_message_get_x_priority (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), GMIME_X_MESSAGE_PRIORITY_NORMAL);
 
-	return message->x_priority;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->x_priority;
 }
 
 /**
@@ -1800,9 +1936,13 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject, const ch
 const char *
 g_mime_message_get_subject (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->subject;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->subject;
 }
 
 
@@ -1816,15 +1956,16 @@ message_set_date (GMimeMessage *message, const char *name, GDateTime **cache, GD
 	if (*cache && g_date_time_equal (*cache, date) && (!replace || !message_has_duplicate_header (message, name)))
 		return;
 
-	str = g_mime_utils_header_format_date (date);
-	if (!str)
+	if (!(str = g_mime_utils_header_format_date (date)))
 		return;
 
 	g_date_time_ref (date);
+
 	if (replace)
 		g_mime_entity_set_header ((GMimeEntity *) message, name, str, NULL);
 	else
 		message_set_resent_header (message, name, str);
+
 	g_clear_pointer (cache, g_date_time_unref);
 	*cache = date;
 	g_free (str);
@@ -1844,9 +1985,13 @@ message_set_date (GMimeMessage *message, const char *name, GDateTime **cache, GD
 void
 g_mime_message_set_date (GMimeMessage *message, GDateTime *date)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 
-	message_set_date (message, "Date", &message->date, date, TRUE);
+	priv = _g_mime_message_get_private (message);
+
+	message_set_date (message, "Date", &priv->date, date, TRUE);
 }
 
 
@@ -1863,9 +2008,13 @@ g_mime_message_set_date (GMimeMessage *message, GDateTime *date)
 GDateTime *
 g_mime_message_get_date (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->date;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->date;
 }
 
 /**
@@ -1883,9 +2032,13 @@ g_mime_message_get_date (GMimeMessage *message)
 void
 g_mime_message_set_resent_date (GMimeMessage *message, GDateTime *date)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 
-	message_set_date (message, "Resent-Date", &message->resent_date, date, FALSE);
+	priv = _g_mime_message_get_private (message);
+
+	message_set_date (message, "Resent-Date", &priv->resent_date, date, FALSE);
 }
 
 /**
@@ -1902,9 +2055,13 @@ g_mime_message_set_resent_date (GMimeMessage *message, GDateTime *date)
 GDateTime *
 g_mime_message_get_resent_date (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->resent_date;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->resent_date;
 }
 
 
@@ -1921,12 +2078,15 @@ g_mime_message_get_resent_date (GMimeMessage *message)
 void
 g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 {
+	GMimeMessagePrivate *priv;
 	char *id, *msgid;
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (message_id != NULL);
 
-	if (!g_strcmp0 (message->message_id, message_id) && !message_has_duplicate_header (message, "Message-Id"))
+	priv = _g_mime_message_get_private (message);
+
+	if (!g_strcmp0 (priv->message_id, message_id) && !message_has_duplicate_header (message, "Message-Id"))
 		return;
 
 	id = _g_mime_parse_message_id_value (message_id);
@@ -1934,6 +2094,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 	
 	msgid = g_strdup_printf ("<%s>", id);
 	g_free (id);
+
 	g_mime_entity_set_header ((GMimeEntity *) message, "Message-Id", msgid, NULL);
 	g_free (msgid);
 }
@@ -1950,9 +2111,13 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 const char *
 g_mime_message_get_message_id (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->message_id;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->message_id;
 }
 
 /**
@@ -1969,21 +2134,29 @@ g_mime_message_get_message_id (GMimeMessage *message)
 void
 g_mime_message_set_in_reply_to (GMimeMessage *message, const char *message_id)
 {
+	GMimeMessagePrivate *priv;
 	char *id, *value;
 
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 
 	if (!message_id) {
-		g_mime_header_list_remove_all (((GMimeEntity *) message)->headers, "In-Reply-To");
+		GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+
+		g_mime_header_list_remove_all (entity_priv->headers, "In-Reply-To");
 		return;
 	}
-	if (!g_strcmp0 (message->in_reply_to, message_id) && !message_has_duplicate_header (message, "In-Reply-To"))
+
+	priv = _g_mime_message_get_private (message);
+
+	if (!g_strcmp0 (priv->in_reply_to, message_id) && !message_has_duplicate_header (message, "In-Reply-To"))
 		return;
 
 	id = _g_mime_parse_message_id_value (message_id);
 	g_return_if_fail (id != NULL);
+
 	value = g_strdup_printf ("<%s>", id);
 	g_free (id);
+
 	g_mime_entity_set_header ((GMimeEntity *) message, "In-Reply-To", value, NULL);
 	g_free (value);
 }
@@ -2001,9 +2174,13 @@ g_mime_message_set_in_reply_to (GMimeMessage *message, const char *message_id)
 const char *
 g_mime_message_get_in_reply_to (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->in_reply_to;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->in_reply_to;
 }
 
 /**
@@ -2020,18 +2197,23 @@ g_mime_message_get_in_reply_to (GMimeMessage *message)
 void
 g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message_id)
 {
+	GMimeMessagePrivate *priv;
 	char *id, *value;
 
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (message_id != NULL);
 
-	if (!g_strcmp0 (message->resent_message_id, message_id))
+	priv = _g_mime_message_get_private (message);
+
+	if (!g_strcmp0 (priv->resent_message_id, message_id))
 		return;
 
 	id = _g_mime_parse_message_id_value (message_id);
 	g_return_if_fail (id != NULL);
+
 	value = g_strdup_printf ("<%s>", id);
 	g_free (id);
+
 	message_set_resent_header (message, "Resent-Message-Id", value);
 	g_free (value);
 }
@@ -2047,9 +2229,13 @@ g_mime_message_set_resent_message_id (GMimeMessage *message, const char *message
 const char *
 g_mime_message_get_resent_message_id (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->resent_message_id;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->resent_message_id;
 }
 
 /**
@@ -2067,9 +2253,13 @@ g_mime_message_get_resent_message_id (GMimeMessage *message)
 GMimeMessageIdList *
 g_mime_message_get_references (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 
-	return message->references;
+	priv = _g_mime_message_get_private (message);
+
+	return priv->references;
 }
 
 
@@ -2085,12 +2275,16 @@ g_mime_message_get_references (GMimeMessage *message)
 GMimeEntity *
 g_mime_message_get_mime_part (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	if (message->mime_part == NULL)
+	priv = _g_mime_message_get_private (message);
+
+	if (priv->mime_part == NULL)
 		return NULL;
 	
-	return message->mime_part;
+	return priv->mime_part;
 }
 
 
@@ -2104,32 +2298,38 @@ g_mime_message_get_mime_part (GMimeMessage *message)
 void
 g_mime_message_set_mime_part (GMimeMessage *message, GMimeEntity *mime_part)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_if_fail (GMIME_IS_ENTITY (mime_part));
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	if (message->mime_part == mime_part)
+	priv = _g_mime_message_get_private (message);
+
+	if (priv->mime_part == mime_part)
 		return;
 	
-	if (message->mime_part)
-		g_object_unref (message->mime_part);
+	if (priv->mime_part)
+		g_object_unref (priv->mime_part);
 	
 	if (mime_part) {
-		GMimeHeaderList *headers = ((GMimeEntity *) message)->headers;
+		GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+		GMimeEntityPrivate *mime_part_priv = _g_mime_entity_get_private (mime_part);
+		GMimeHeaderList *headers = entity_priv->headers;
 		GMimeHeader *header;
 		int i;
 		
 		if (!g_mime_header_list_contains (headers, "MIME-Version"))
 			g_mime_header_list_append (headers, "MIME-Version", "1.0", NULL);
-		
-		for (i = 0; i < g_mime_header_list_get_count (mime_part->headers); i++) {
-			header = g_mime_header_list_get_header_at (mime_part->headers, i);
+
+		for (i = 0; i < g_mime_header_list_get_count (mime_part_priv->headers); i++) {
+			header = g_mime_header_list_get_header_at (mime_part_priv->headers, i);
 			_g_mime_header_set_offset (header, -1);
 		}
 		
 		g_object_ref (mime_part);
 	}
 	
-	message->mime_part = mime_part;
+	priv->mime_part = mime_part;
 }
 
 
@@ -2145,14 +2345,18 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeEntity *mime_part)
 void
 g_mime_message_foreach (GMimeMessage *message, GMimeEntityForeachFunc callback, gpointer user_data)
 {
+	GMimeMessagePrivate *priv;
+
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (callback != NULL);
 	
-	callback ((GMimeEntity *) message, message->mime_part, user_data);
+	priv = _g_mime_message_get_private (message);
+
+	callback ((GMimeEntity *) message, priv->mime_part, user_data);
 	
 	/* Attached messages are single body parts; do not descend into message/rfc822 content. */
-	if (GMIME_IS_MULTIPART (message->mime_part))
-		g_mime_multipart_foreach ((GMimeMultipart *) message->mime_part, callback, user_data);
+	if (GMIME_IS_MULTIPART (priv->mime_part))
+		g_mime_multipart_foreach ((GMimeMultipart *) priv->mime_part, callback, user_data);
 }
 
 static void
@@ -2259,37 +2463,52 @@ g_mime_message_get_attachments (GMimeMessage *message)
 gboolean
 g_mime_message_try_get_entity (GMimeMessage *message, const char *path_specifier, GMimeEntity **entity)
 {
-	GMimeEntity *current;
-	gboolean message_body = TRUE;
 	const char *inptr = path_specifier;
+	gboolean message_body = TRUE;
+	GMimeMessagePrivate *priv;
+	GMimeEntity *current;
 	int index, digit;
 
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), FALSE);
 	g_return_val_if_fail (path_specifier != NULL, FALSE);
 	g_return_val_if_fail (entity != NULL, FALSE);
 
+	priv = _g_mime_message_get_private (message);
 	*entity = NULL;
-	if (!(current = message->mime_part))
+
+	if (!(current = priv->mime_part))
 		return FALSE;
 
 	while (TRUE) {
 		index = 0;
+
 		if (!g_ascii_isdigit (*inptr))
 			return FALSE;
+
 		do {
 			digit = *inptr++ - '0';
+
 			if (index > (G_MAXINT32 - digit) / 10)
 				return FALSE;
+
 			index = index * 10 + digit;
 		} while (g_ascii_isdigit (*inptr));
+
 		if (*inptr && *inptr != '.')
 			return FALSE;
 
 		if (!message_body && GMIME_IS_MESSAGE_PART (current)) {
 			GMimeMessage *embedded = g_mime_message_part_get_message (GMIME_MESSAGE_PART (current));
+			GMimeMessagePrivate *embedded_priv;
 
-			if (!embedded || !(current = embedded->mime_part))
+			if (!embedded)
 				return FALSE;
+
+			embedded_priv = _g_mime_message_get_private (embedded);
+
+			if (!(current = embedded_priv->mime_part))
+				return FALSE;
+
 			message_body = TRUE;
 		}
 
@@ -2300,12 +2519,14 @@ g_mime_message_try_get_entity (GMimeMessage *message, const char *path_specifier
 			} else {
 				if (index > g_mime_multipart_get_count (GMIME_MULTIPART (current)))
 					return FALSE;
+
 				current = g_mime_multipart_get_part (GMIME_MULTIPART (current), index - 1);
 				message_body = FALSE;
 			}
 		} else {
 			if (!message_body || index != 1)
 				return FALSE;
+
 			message_body = FALSE;
 		}
 
@@ -2313,6 +2534,7 @@ g_mime_message_try_get_entity (GMimeMessage *message, const char *path_specifier
 			*entity = current;
 			return TRUE;
 		}
+
 		inptr++;
 	}
 }
@@ -2340,6 +2562,7 @@ multipart_guess_body (GMimeMultipart *multipart)
 	}
 	
 	type = g_mime_entity_get_content_type ((GMimeEntity *) multipart);
+
 	if (g_mime_content_type_is_type (type, "multipart", "alternative")) {
 		/* very likely that this is the body - leave it up to
 		 * our caller to decide which format of the body it
@@ -2388,16 +2611,20 @@ multipart_guess_body (GMimeMultipart *multipart)
 GMimeEntity *
 g_mime_message_get_body (GMimeMessage *message)
 {
+	GMimeMessagePrivate *priv;
 	GMimeEntity *mime_part;
 	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	if (!(mime_part = message->mime_part))
+	priv = _g_mime_message_get_private (message);
+
+	if (!(mime_part = priv->mime_part))
 		return NULL;
 	
 	if (GMIME_IS_MULTIPART (mime_part))
 		return multipart_guess_body ((GMimeMultipart *) mime_part);
-	else if (GMIME_IS_PART (mime_part) && part_is_textual (mime_part))
+	
+	if (GMIME_IS_PART (mime_part) && part_is_textual (mime_part))
 		return mime_part;
 	
 	return NULL;
@@ -2442,31 +2669,42 @@ g_mime_message_get_body (GMimeMessage *message)
 GMimeAutocryptHeader *
 g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
 {
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-
 	GMimeAutocryptHeaderList *retlist = NULL;
 	GMimeAutocryptHeader *ret = NULL;
-	GDateTime *newnow = NULL;
 	GDateTime *effective_date = NULL;
+	GMimeMessagePrivate *priv;
+	GDateTime *newnow = NULL;
+
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+
+	priv = _g_mime_message_get_private (message);
+
 	if (now == NULL)
 		now = newnow = g_date_time_new_now_utc ();
+
 	effective_date = now;
-	if (message->date && g_date_time_compare (message->date, now) < 0)
-		effective_date = message->date;
+
+	if (priv->date && g_date_time_compare (priv->date, now) < 0)
+		effective_date = priv->date;
+
 	retlist = g_mime_entity_get_autocrypt_headers (GMIME_ENTITY (message),
 						       effective_date,
 						       "autocrypt",
-						       message->addrlists[GMIME_ADDRESS_TYPE_FROM],
+						       priv->addrlists[GMIME_ADDRESS_TYPE_FROM],
 						       TRUE);
+
 	if (newnow)
 		g_date_time_unref (newnow);
+	
 	if (retlist) {
 		if (g_mime_autocrypt_header_list_get_count (retlist) == 1) {
 			ret = g_mime_autocrypt_header_list_get_header_at (retlist, 0);
 			g_object_ref (ret);
 		}
+
 		g_object_unref (retlist);
 	}
+
 	return ret;
 }
 
@@ -2522,24 +2760,36 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
 GMimeAutocryptHeaderList *
 g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeEntity *inner_part)
 {
+	GMimeAutocryptHeaderList *ret = NULL;
+	GMimeInternetAddressList *addresses;
+	GDateTime *effective_date = NULL;
+	GDateTime *newnow = NULL;
+	GMimeMessagePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	g_return_val_if_fail (GMIME_IS_ENTITY (inner_part), NULL);
-	GMimeInternetAddressList *addresses = g_mime_message_get_all_recipients (message);
-	GDateTime *newnow = NULL;
-	GDateTime *effective_date = NULL;
-	GMimeAutocryptHeaderList *ret = NULL;
+
+	addresses = g_mime_message_get_all_recipients (message);
+	priv = _g_mime_message_get_private (message);
+	
 	if (now == NULL)
 		now = newnow = g_date_time_new_now_utc ();
+
 	effective_date = now;
-	if (message->date && g_date_time_compare (message->date, now) < 0)
-		effective_date = message->date;
+
+	if (priv->date && g_date_time_compare (priv->date, now) < 0)
+		effective_date = priv->date;
+
 	ret = g_mime_entity_get_autocrypt_headers (inner_part,
 						   effective_date,
 						   "autocrypt-gossip",
 						   addresses, FALSE);
+
 	g_object_unref (addresses);
+	
 	if (newnow)
 		g_date_time_unref (newnow);
+	
 	return ret;
 }
 
@@ -2578,12 +2828,14 @@ GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMess
 								       const char *session_key,
 								       GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	GMimeAutocryptHeaderList *ret = NULL;
 	GMimeEntity *top_level = NULL;
 	GMimeEntity *inner_part = NULL;
 
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+
 	top_level = g_mime_message_get_mime_part (message);
+
 	if (!GMIME_IS_MULTIPART_ENCRYPTED (top_level))
 		return NULL;
 
@@ -2592,6 +2844,7 @@ GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMess
 							 session_key,
 							 NULL, /* we do not care about decryptresult */
 							 err);
+
 	if (inner_part) {
 		ret = g_mime_message_get_autocrypt_gossip_headers_from_inner_part (message, now, inner_part);
 		g_object_unref (inner_part);

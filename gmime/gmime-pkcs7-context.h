@@ -27,16 +27,9 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_PKCS7_CONTEXT            (g_mime_pkcs7_context_get_type ())
-#define GMIME_PKCS7_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PKCS7_CONTEXT, GMimePkcs7Context))
-#define GMIME_PKCS7_CONTEXT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PKCS7_CONTEXT, GMimePkcs7ContextClass))
-#define GMIME_IS_PKCS7_CONTEXT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_PKCS7_CONTEXT))
-#define GMIME_IS_PKCS7_CONTEXT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PKCS7_CONTEXT))
-#define GMIME_PKCS7_CONTEXT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_PKCS7_CONTEXT, GMimePkcs7ContextClass))
 
-typedef struct _GMimePkcs7Context GMimePkcs7Context;
-typedef struct _GMimePkcs7ContextClass GMimePkcs7ContextClass;
 
-GType g_mime_pkcs7_context_get_type (void);
+G_DECLARE_FINAL_TYPE (GMimePkcs7Context, g_mime_pkcs7_context, GMIME, PKCS7_CONTEXT, GMimeCryptoContext)
 
 GMimeCryptoContext *g_mime_pkcs7_context_new (void);
 

@@ -122,7 +122,7 @@ write_part_bodystructure (GMimeEntity *part, FILE *fp)
 		const char *str;
 		char *nstring;
 		
-		message = GMIME_MESSAGE_PART (part)->message;
+		message = g_mime_message_part_get_message (GMIME_MESSAGE_PART (part));
 		
 		/* print envelope */
 		fputc ('(', fp);
@@ -196,7 +196,7 @@ write_part_bodystructure (GMimeEntity *part, FILE *fp)
 		fputs (") ", fp);
 		
 		/* print body */
-		write_part_bodystructure ((GMimeEntity *) message->mime_part, fp);
+		write_part_bodystructure ((GMimeEntity *) g_mime_message_get_mime_part (message), fp);
 	} else if (GMIME_IS_PART (part)) {
 		GMimeContentDisposition *disposition;
 		
@@ -261,7 +261,7 @@ write_bodystructure (GMimeMessage *message, const char *uid)
 	fp = fopen (filename, "wt");
 	g_free (filename);
 	
-	write_part_bodystructure (message->mime_part, fp);
+	write_part_bodystructure (g_mime_message_get_mime_part (message), fp);
 	
 	fclose (fp);
 }
@@ -348,7 +348,7 @@ write_message (GMimeMessage *message, const char *uid)
 {
 	write_header (message, uid);
 	write_bodystructure (message, uid);
-	write_part (message->mime_part, uid, "1");
+	write_part (g_mime_message_get_mime_part (message), uid, "1");
 }
 
 struct _envelope {
@@ -764,7 +764,7 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 	
 	stream = g_mime_stream_fs_new (fd);
 	
-	content = g_mime_content_new_with_stream (stream, part->encoding);
+	content = g_mime_content_new_with_stream (stream, g_mime_part_get_content_encoding (part));
 	g_object_unref (stream);
 	
 	g_mime_part_set_content (part, content);
@@ -1000,7 +1000,9 @@ int main (int argc, char **argv)
 	}
 	
 	if (message) {
-		uid = g_strdup (message->message_id ? message->message_id : basename (argv[i]));
+		const char *msgid = g_mime_message_get_message_id (message);
+
+		uid = g_strdup (msgid ? msgid : basename (argv[i]));
 		g_mkdir (uid, 0777);
 		write_message (message, uid);
 		g_object_unref (message);

@@ -25,30 +25,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_TEXT_RFC822_HEADERS            (g_mime_text_rfc822_headers_get_type ())
-#define GMIME_TEXT_RFC822_HEADERS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_TEXT_RFC822_HEADERS, GMimeTextRfc822Headers))
-#define GMIME_TEXT_RFC822_HEADERS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_TEXT_RFC822_HEADERS, GMimeTextRfc822HeadersClass))
-#define GMIME_IS_TEXT_RFC822_HEADERS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_TEXT_RFC822_HEADERS))
-#define GMIME_IS_TEXT_RFC822_HEADERS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_TEXT_RFC822_HEADERS))
-#define GMIME_TEXT_RFC822_HEADERS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_TEXT_RFC822_HEADERS, GMimeTextRfc822HeadersClass))
 
-typedef struct _GMimeTextRfc822Headers GMimeTextRfc822Headers;
-typedef struct _GMimeTextRfc822HeadersClass GMimeTextRfc822HeadersClass;
 
 /**
  * GMimeTextRfc822Headers:
- * @parent_object: parent #GMimeMessagePart
  *
  * A text/rfc822-headers entity containing an embedded message's headers.
  **/
-struct _GMimeTextRfc822Headers {
-	GMimeMessagePart parent_object;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeTextRfc822Headers, g_mime_text_rfc822_headers, GMIME, TEXT_RFC822_HEADERS, GMimeMessagePart)
 
 struct _GMimeTextRfc822HeadersClass {
 	GMimeMessagePartClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_text_rfc822_headers_get_type (void);
 
 GMimeTextRfc822Headers *g_mime_text_rfc822_headers_new (void);
 

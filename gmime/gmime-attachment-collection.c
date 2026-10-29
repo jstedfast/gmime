@@ -37,6 +37,8 @@
 #include "gmime-text-part.h"
 #include "gmime-types.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-attachment-collection
  * @title: GMimeAttachmentCollection
@@ -60,7 +62,7 @@
 
 static void collection_finalize (GObject *object);
 
-G_DEFINE_TYPE (GMimeAttachmentCollection, g_mime_attachment_collection, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeAttachmentCollection, g_mime_attachment_collection, G_TYPE_OBJECT)
 
 static void
 g_mime_attachment_collection_class_init (GMimeAttachmentCollectionClass *klass)

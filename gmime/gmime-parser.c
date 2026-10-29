@@ -31,6 +31,8 @@
 #include "gmime-reader-private.h"
 #include "gmime-internal.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-parser
  * @title: GMimeParser
@@ -50,7 +52,7 @@ struct _GMimeParserPrivate {
 	gboolean reading;
 };
 
-G_DEFINE_TYPE (GMimeParser, g_mime_parser, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeParser, g_mime_parser, G_TYPE_OBJECT)
 
 static void
 g_mime_parser_finalize (GObject *object)

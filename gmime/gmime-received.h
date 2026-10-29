@@ -29,35 +29,15 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_RECEIVED            (g_mime_received_get_type ())
-#define GMIME_RECEIVED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_RECEIVED, GMimeReceived))
-#define GMIME_RECEIVED_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_RECEIVED, GMimeReceivedClass))
-#define GMIME_IS_RECEIVED(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_RECEIVED))
-#define GMIME_IS_RECEIVED_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_RECEIVED))
-#define GMIME_RECEIVED_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_RECEIVED, GMimeReceivedClass))
 
-typedef struct _GMimeReceived GMimeReceived;
-typedef struct _GMimeReceivedClass GMimeReceivedClass;
 
 /**
  * GMimeReceived:
- * @parent_object: parent #GObject
  *
  * A Received header value, containing ordered clauses and an optional date.
  **/
-struct _GMimeReceived {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeReceived, g_mime_received, GMIME, RECEIVED, GObject)
 
-	/* <private> */
-	GPtrArray *clauses;
-	GDateTime *date_time;
-	char *date_time_str;
-};
-
-struct _GMimeReceivedClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_received_get_type (void);
 
 GMimeReceived *g_mime_received_new (void);
 GMimeReceived *g_mime_received_new_with_hosts (const char *from, GInetAddress *from_tcp_info,

@@ -28,14 +28,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_HTML            (g_mime_filter_html_get_type ())
-#define GMIME_FILTER_HTML(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTML))
-#define GMIME_FILTER_HTML_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
-#define GMIME_IS_FILTER_HTML(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_HTML))
-#define GMIME_IS_FILTER_HTML_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_HTML))
-#define GMIME_FILTER_HTML_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
 
-typedef struct _GMimeFilterHTML GMimeFilterHTML;
-typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 
 
 /**
@@ -112,37 +105,18 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 
 /**
  * GMimeFilterHTML:
- * @parent_object: parent #GMimeFilter
- * @scanner: URL scanner state
- * @flags: flags specifying HTML conversion rules
- * @colour: cite colour
- * @column: current column
- * @pre_open: currently inside of a 'pre' tag.
- * @citation_depth: current citation depth level.
  *
  * A filter for converting text/plain into text/html.
  **/
-struct _GMimeFilterHTML {
-	GMimeFilter parent_object;
-	
-	struct _UrlScanner *scanner;
-	
-	guint32 flags;
-	guint32 colour;
-	
-	guint32 column       : 31;
-	guint32 pre_open     : 1;
-	
-	guint32 citation_depth;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterHTML, g_mime_filter_html, GMIME, FILTER_HTML, GMimeFilter)
 
 struct _GMimeFilterHTMLClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_html_get_type (void);
 
 GMimeFilter *g_mime_filter_html_new (guint32 flags, guint32 colour);
 

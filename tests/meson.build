@@ -1,3 +1,5 @@
+tests_private_args = ['-DGMIME_PRIVATE_TESTS']
+
 testsuite_lib = static_library(
   'testsuite', 'testsuite.c',
   include_directories: gmime_inc,
@@ -20,7 +22,15 @@ if have_crypto
   normal_tests += crypto_tests
 endif
 
-test_programs = {}
+test_programs = {
+  'test-encapsulation': executable(
+    'test-encapsulation', 'test-encapsulation.c',
+    include_directories: gmime_inc,
+    dependencies: gmime_dep,
+    link_with: testsuite_lib,
+    c_args: ['-DG_LOG_DOMAIN="gmime-tests"'],
+  ),
+}
 foreach name : normal_tests
   sources = [name + '.c']
   if name == 'test-core'
@@ -33,7 +43,7 @@ foreach name : normal_tests
     include_directories: gmime_inc,
     dependencies: gmime_dep,
     link_with: testsuite_lib,
-    c_args: ['-DG_LOG_DOMAIN="gmime-tests"'],
+    c_args: ['-DG_LOG_DOMAIN="gmime-tests"'] + tests_private_args,
   )}
 endforeach
 
@@ -59,7 +69,7 @@ test_programs += {'test-charsets': executable(
   include_directories: gmime_inc,
   # Compile the private charset helpers locally, but resolve their stream API in GMime.
   dependencies: gmime_dep,
-  c_args: ['-DG_LOG_DOMAIN="gmime-tests"'],
+  c_args: ['-DG_LOG_DOMAIN="gmime-tests"'] + tests_private_args,
 )}
 foreach name, sources : standalone_sources
   foreach scalar : [false, true]
@@ -71,7 +81,7 @@ foreach name, sources : standalone_sources
       test_name, ['test-' + name + '.c'] + sources,
       include_directories: gmime_inc,
       dependencies: public_deps,
-      c_args: ['-DG_LOG_DOMAIN="gmime-tests"'] + (scalar ? ['-DGMIME_DISABLE_SIMD'] : []),
+      c_args: ['-DG_LOG_DOMAIN="gmime-tests"'] + tests_private_args + (scalar ? ['-DGMIME_DISABLE_SIMD'] : []),
     )}
   endforeach
 endforeach
@@ -105,6 +115,6 @@ foreach name : manual_programs
     include_directories: gmime_inc,
     dependencies: gmime_dep,
     link_with: testsuite_lib,
-    c_args: ['-DG_LOG_DOMAIN="gmime-tests"'],
+    c_args: ['-DG_LOG_DOMAIN="gmime-tests"'] + tests_private_args,
   )
 endforeach

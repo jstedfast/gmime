@@ -28,24 +28,12 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_CRYPTO_CONTEXT            (g_mime_crypto_context_get_type ())
-#define GMIME_CRYPTO_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CRYPTO_CONTEXT, GMimeCryptoContext))
-#define GMIME_CRYPTO_CONTEXT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CRYPTO_CONTEXT, GMimeCryptoContextClass))
-#define GMIME_IS_CRYPTO_CONTEXT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_CRYPTO_CONTEXT))
-#define GMIME_IS_CRYPTO_CONTEXT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CRYPTO_CONTEXT))
-#define GMIME_CRYPTO_CONTEXT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_CRYPTO_CONTEXT, GMimeCryptoContextClass))
 
 #define GMIME_TYPE_DECRYPT_RESULT            (g_mime_decrypt_result_get_type ())
-#define GMIME_DECRYPT_RESULT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_DECRYPT_RESULT, GMimeDecryptResult))
-#define GMIME_DECRYPT_RESULT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_DECRYPT_RESULT, GMimeDecryptResultClass))
-#define GMIME_IS_DECRYPT_RESULT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_DECRYPT_RESULT))
-#define GMIME_IS_DECRYPT_RESULT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_DECRYPT_RESULT))
-#define GMIME_DECRYPT_RESULT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_DECRYPT_RESULT, GMimeDecryptResultClass))
 
 typedef struct _GMimeCryptoContext GMimeCryptoContext;
-typedef struct _GMimeCryptoContextClass GMimeCryptoContextClass;
 
 typedef struct _GMimeDecryptResult GMimeDecryptResult;
-typedef struct _GMimeDecryptResultClass GMimeDecryptResultClass;
 
 
 /**
@@ -133,16 +121,10 @@ typedef enum {
 
 /**
  * GMimeCryptoContext:
- * @parent_object: parent #GObject
- * @request_passwd: a callback for requesting a password
  *
  * A crypto context for use with MIME.
  **/
-struct _GMimeCryptoContext {
-	GObject parent_object;
-	
-	GMimePasswordRequestFunc request_passwd;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeCryptoContext, g_mime_crypto_context, GMIME, CRYPTO_CONTEXT, GObject)
 
 struct _GMimeCryptoContextClass {
 	GObjectClass parent_class;
@@ -184,10 +166,11 @@ struct _GMimeCryptoContextClass {
 	int                      (* decompress)  (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
 #endif
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_crypto_context_get_type (void);
 
 void g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc callback);
 GMimeCryptoContext *g_mime_crypto_context_new (const char *protocol);
@@ -261,31 +244,11 @@ typedef enum {
 
 /**
  * GMimeDecryptResult:
- * @parent_object: parent #GObject
- * @recipients: A #GMimeCertificateList
- * @signatures: A #GMimeSignatureList if signed or %NULL otherwise.
- * @cipher: The cipher algorithm used to encrypt the stream.
- * @mdc: The MDC digest algorithm used, if any.
- * @session_key: The session key if requested or %NULL otherwise.
  *
  * An object containing the results from decrypting an encrypted stream.
  **/
-struct _GMimeDecryptResult {
-	GObject parent_object;
-	
-	GMimeCertificateList *recipients;
-	GMimeSignatureList *signatures;
-	GMimeCipherAlgo cipher;
-	GMimeDigestAlgo mdc;
-	char *session_key;
-};
+G_DECLARE_FINAL_TYPE (GMimeDecryptResult, g_mime_decrypt_result, GMIME, DECRYPT_RESULT, GObject)
 
-struct _GMimeDecryptResultClass {
-	GObjectClass parent_class;
-	
-};
-
-GType g_mime_decrypt_result_get_type (void);
 
 GMimeDecryptResult *g_mime_decrypt_result_new (void);
 

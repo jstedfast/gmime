@@ -30,6 +30,8 @@
 #include "gmime-parse-utils.h"
 #include "gmime-error.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-received-clause
  * @title: GMimeReceivedClause
@@ -46,7 +48,7 @@
  * must escape and fold comments rather than emitting them verbatim.
  **/
 
-G_DEFINE_TYPE (GMimeReceivedClause, g_mime_received_clause, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeReceivedClause, g_mime_received_clause, G_TYPE_OBJECT)
 
 static void
 received_clause_finalize (GObject *object)

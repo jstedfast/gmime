@@ -32,14 +32,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM            (g_mime_stream_get_type ())
-#define GMIME_STREAM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))
-#define GMIME_STREAM_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM, GMimeStreamClass))
-#define GMIME_IS_STREAM(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM))
-#define GMIME_IS_STREAM_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM))
-#define GMIME_STREAM_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM, GMimeStreamClass))
 
-typedef struct _GMimeStream GMimeStream;
-typedef struct _GMimeStreamClass GMimeStreamClass;
 
 
 /**
@@ -72,20 +65,10 @@ typedef struct {
 
 /**
  * GMimeStream:
- * @parent_object: parent #GObject
  *
  * Abstract I/O stream class.
  **/
-struct _GMimeStream {
-	/* <private> */
-	GObject parent_object;
-	
-	GMimeStream *super_stream;
-	
-	gint64 position;
-	gint64 bound_start;
-	gint64 bound_end;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStream, g_mime_stream, GMIME, STREAM, GObject)
 
 struct _GMimeStreamClass {
 	GObjectClass parent_class;
@@ -100,10 +83,11 @@ struct _GMimeStreamClass {
 	gint64   (* tell)   (GMimeStream *stream);
 	gint64   (* length) (GMimeStream *stream);
 	GMimeStream * (* substream) (GMimeStream *stream, gint64 start, gint64 end);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_stream_get_type (void);
 
 void g_mime_stream_construct (GMimeStream *stream, gint64 start, gint64 end);
 
@@ -122,6 +106,10 @@ gint64    g_mime_stream_length  (GMimeStream *stream);
 GMimeStream *g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 void      g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 end);
+void      g_mime_stream_get_bounds (GMimeStream *stream, gint64 *start, gint64 *end);
+
+gint64    g_mime_stream_get_position (GMimeStream *stream);
+void      g_mime_stream_set_position (GMimeStream *stream, gint64 position);
 
 ssize_t   g_mime_stream_write_string (GMimeStream *stream, const char *str);
 ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...) G_GNUC_PRINTF (2, 3);

@@ -43,6 +43,8 @@
 #include "gmime-utils.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-header
  * @title: GMimeHeaderList
@@ -276,7 +278,7 @@ static struct {
 
 
 static void g_mime_header_class_init (GMimeHeaderClass *klass);
-static void g_mime_header_init (GMimeHeader *header, GMimeHeaderClass *klass);
+static void g_mime_header_init (GMimeHeader *header);
 static void g_mime_header_finalize (GObject *object);
 static char *reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options);
 static char *fold_international_text (GMimeFormatOptions *options, size_t field_length, const char *value);
@@ -286,29 +288,7 @@ static char *format_mailing_list_command (GMimeFormatOptions *options, size_t fi
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_header_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeHeaderClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_header_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeHeader),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_header_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeHeader", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeHeader, g_mime_header, G_TYPE_OBJECT)
 
 static void
 g_mime_header_class_init (GMimeHeaderClass *klass)
@@ -321,7 +301,7 @@ g_mime_header_class_init (GMimeHeaderClass *klass)
 }
 
 static void
-g_mime_header_init (GMimeHeader *header, GMimeHeaderClass *klass)
+g_mime_header_init (GMimeHeader *header)
 {
 	header->changed = g_mime_event_new (header);
 	header->formatter = NULL;
@@ -2346,36 +2326,14 @@ header_changed (GMimeHeader *header, gpointer user_args, GMimeHeaderList *list)
 
 
 static void g_mime_header_list_class_init (GMimeHeaderListClass *klass);
-static void g_mime_header_list_init (GMimeHeaderList *list, GMimeHeaderListClass *klass);
+static void g_mime_header_list_init (GMimeHeaderList *list);
 static void g_mime_header_list_finalize (GObject *object);
 
 
 static GObjectClass *list_parent_class = NULL;
 
 
-GType
-g_mime_header_list_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeHeaderListClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_header_list_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeHeaderList),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_header_list_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeHeaderList", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeHeaderList, g_mime_header_list, G_TYPE_OBJECT)
 
 
 static void
@@ -2389,7 +2347,7 @@ g_mime_header_list_class_init (GMimeHeaderListClass *klass)
 }
 
 static void
-g_mime_header_list_init (GMimeHeaderList *list, GMimeHeaderListClass *klass)
+g_mime_header_list_init (GMimeHeaderList *list)
 {
 	/* The lookup table references only the first header of each field name. */
 	list->hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);

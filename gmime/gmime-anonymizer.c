@@ -36,6 +36,8 @@
 #include "gmime-stream-filter.h"
 #include "gmime-table-private.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-anonymizer
  * @title: GMimeAnonymizer
@@ -53,7 +55,7 @@
  * whitespace rather than decoding sensitive content into the output.
  **/
 
-G_DEFINE_TYPE (GMimeAnonymizer, g_mime_anonymizer, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeAnonymizer, g_mime_anonymizer, G_TYPE_OBJECT)
 
 static void
 g_mime_anonymizer_finalize (GObject *object)
@@ -834,9 +836,15 @@ anonymize_message_headers (GMimeAnonymizer *anonymizer, GMimeFormatOptions *opti
 
 	/* Constructed native messages request a final newline; parsed messages
 	 * clear this flag, corresponding to MimeKit's strict/loose distinction. */
-	if (object->ensure_newline && message->mime_part && message->mime_part->headers->array->len &&
-	    !g_mime_header_list_contains (object->headers, "MIME-Version"))
-		g_mime_header_list_set (object->headers, "MIME-Version", "1.0", NULL);
+	GMimeEntityPrivate *object_priv = _g_mime_entity_get_private (object);
+	GMimeMessagePrivate *message_priv = _g_mime_message_get_private (message);
+
+	if (object_priv->ensure_newline && message_priv->mime_part) {
+		GMimeEntityPrivate *part_priv = _g_mime_entity_get_private (message_priv->mime_part);
+
+		if (part_priv->headers->array->len && !g_mime_header_list_contains (object_priv->headers, "MIME-Version"))
+			g_mime_header_list_set (object_priv->headers, "MIME-Version", "1.0", NULL);
+	}
 
 	headers = _g_mime_message_merge_headers (message);
 	success = anonymize_headers (anonymizer, options, headers, stream, error);
@@ -845,9 +853,12 @@ anonymize_message_headers (GMimeAnonymizer *anonymizer, GMimeFormatOptions *opti
 	if (!success)
 		return FALSE;
 
-	if (message->mime_part) {
-		*ensure = object->ensure_newline || g_mime_format_options_get_ensure_newline (options);
-		return (!object->ensure_newline && !message->mime_part->headers->has_body_separator) ||
+	if (message_priv->mime_part) {
+		GMimeEntityPrivate *part_priv = _g_mime_entity_get_private (message_priv->mime_part);
+
+		*ensure = object_priv->ensure_newline || g_mime_format_options_get_ensure_newline (options);
+
+		return (!object_priv->ensure_newline && !part_priv->headers->has_body_separator) ||
 			write_newline (options, stream);
 	}
 
@@ -859,18 +870,21 @@ anonymize_message_headers (GMimeAnonymizer *anonymizer, GMimeFormatOptions *opti
 static gboolean
 multipart_is_truncated (GMimeMultipart *multipart)
 {
-	return (multipart->raw_end_boundary && !g_bytes_get_size (multipart->raw_end_boundary)) ||
-		(!multipart->reader_model && !multipart->write_end_boundary);
+	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
+
+	return (priv->raw_end_boundary && !g_bytes_get_size (priv->raw_end_boundary)) ||
+		(!priv->reader_model && !priv->write_end_boundary);
 }
 
 static GBytes *
 multipart_raw_text (GMimeMultipart *multipart, GMimeFormatOptions *options, gboolean epilogue)
 {
-	GBytes *raw = epilogue ? multipart->raw_epilogue : multipart->raw_preamble;
-	const char *text = epilogue ? multipart->epilogue : multipart->preamble;
+	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
+	GBytes *raw = epilogue ? priv->raw_epilogue : priv->raw_preamble;
+	const char *text = epilogue ? priv->epilogue : priv->preamble;
 	char *value;
 
-	if (raw || multipart->reader_model)
+	if (raw || priv->reader_model)
 		return raw ? g_bytes_ref (raw) : NULL;
 
 	if (!text)
@@ -888,6 +902,7 @@ static gboolean
 write_multipart_end (AnonymizerFrame *frame, GMimeStream *stream)
 {
 	GMimeMultipart *multipart = frame->multipart;
+	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 	GMimeFormatOptions *options = frame->options;
 	GBytes *epilogue;
 	gboolean success;
@@ -895,15 +910,15 @@ write_multipart_end (AnonymizerFrame *frame, GMimeStream *stream)
 
 	if (multipart_is_truncated (multipart)) {
 		/* The multipart was truncated, so there is no end boundary (or epilogue) to write. */
-		if (multipart->raw_trailing_boundary) {
+		if (priv->raw_trailing_boundary) {
 			gsize length;
-			const char *data = g_bytes_get_data (multipart->raw_trailing_boundary, &length);
+			const char *data = g_bytes_get_data (priv->raw_trailing_boundary, &length);
 
-			if (multipart->children->len && !_g_mime_entity_ends_with_delimiter_newline (
-			    multipart->children->pdata[multipart->children->len - 1], TRUE) && !write_newline (options, stream))
+			if (priv->children->len && !_g_mime_entity_ends_with_delimiter_newline (
+			    priv->children->pdata[priv->children->len - 1], TRUE) && !write_newline (options, stream))
 				return FALSE;
 
-			if (!write_raw (stream, multipart->raw_trailing_boundary))
+			if (!write_raw (stream, priv->raw_trailing_boundary))
 				return FALSE;
 
 			if (frame->ensure_newline && (!length || data[length - 1] != '\n'))
@@ -913,14 +928,14 @@ write_multipart_end (AnonymizerFrame *frame, GMimeStream *stream)
 		return TRUE;
 	}
 
-	if (multipart->children->len && !_g_mime_entity_ends_with_delimiter_newline (
-	    multipart->children->pdata[multipart->children->len - 1], TRUE) && !write_newline (options, stream))
+	if (priv->children->len && !_g_mime_entity_ends_with_delimiter_newline (
+	    priv->children->pdata[priv->children->len - 1], TRUE) && !write_newline (options, stream))
 		return FALSE;
 
 	epilogue = multipart_raw_text (multipart, options, TRUE);
 
-	if (multipart->raw_end_boundary) {
-		success = write_raw (stream, multipart->raw_end_boundary);
+	if (priv->raw_end_boundary) {
+		success = write_raw (stream, priv->raw_end_boundary);
 	} else {
 		const char *value = g_mime_entity_get_content_type_parameter (GMIME_ENTITY (multipart), "boundary");
 
@@ -933,7 +948,7 @@ write_multipart_end (AnonymizerFrame *frame, GMimeStream *stream)
 	if (success) {
 		if (epilogue && g_bytes_get_size (epilogue))
 			success = anonymize_bytes (options, stream, epilogue, frame->ensure_newline);
-		else if (frame->ensure_newline && (multipart->raw_end_boundary || epilogue))
+		else if (frame->ensure_newline && (priv->raw_end_boundary || epilogue))
 			success = write_newline (options, stream);
 	}
 
@@ -1028,18 +1043,23 @@ static gboolean
 anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMimeEntity *root,
 		  GMimeStream *stream, gboolean message, GError **error)
 {
+	GMimeEntityPrivate *root_priv = _g_mime_entity_get_private (root);
+	gboolean content_only = FALSE, ensure = root_priv->ensure_newline, success = FALSE;
 	GArray *frames = g_array_new (FALSE, FALSE, sizeof (AnonymizerFrame));
 	GMimeEntity *entity = g_object_ref (root);
 	GMimeFormatOptions *temporary = NULL;
-	gboolean content_only = FALSE, ensure = root->ensure_newline, success = FALSE;
 	int errsv;
 
 	g_array_set_clear_func (frames, anonymizer_frame_clear);
 	if (message) {
+		GMimeMessagePrivate *message_priv;
+
 		if (!anonymize_message_headers (anonymizer, options, (GMimeMessage *) entity, stream, &ensure, error))
 			goto done;
 
-		entity = ((GMimeMessage *) root)->mime_part;
+		message_priv = _g_mime_message_get_private (((GMimeMessage *) root));
+
+		entity = message_priv->mime_part;
 		if (entity)
 			g_object_ref (entity);
 
@@ -1048,12 +1068,16 @@ anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMim
 	}
 
 	while (TRUE) {
+		GMimeMultipartPrivate *multipart_priv;
+
 		if (entity) {
 			GMimeEntity *next = NULL;
 
 			if (!content_only) {
-				if (!anonymize_headers (anonymizer, options, entity->headers->array, stream, error) ||
-				    (entity->headers->has_body_separator && !write_newline (options, stream)))
+				GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (entity);
+
+				if (!anonymize_headers (anonymizer, options, entity_priv->headers->array, stream, error) ||
+				    (entity_priv->headers->has_body_separator && !write_newline (options, stream)))
 					goto done;
 			}
 
@@ -1061,6 +1085,8 @@ anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMim
 				GMimeMessage *embedded = g_mime_message_part_get_message ((GMimeMessagePart *) entity);
 
 				if (embedded) {
+					GMimeMessagePrivate *embedded_priv;
+
 					/* Note: Only ensure that the embedded message ends with a new-line if this part is supposed to end with one. */
 					if (g_mime_format_options_get_ensure_newline (options) != ensure) {
 						GMimeFormatOptions *copy = g_mime_format_options_clone (options);
@@ -1073,18 +1099,21 @@ anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMim
 					if (!anonymize_message_headers (anonymizer, options, embedded, stream, &ensure, error))
 						goto done;
 
-					if (embedded->mime_part)
-						next = g_object_ref (embedded->mime_part);
+					embedded_priv = _g_mime_message_get_private (embedded);
+
+					if (embedded_priv->mime_part)
+						next = g_object_ref (embedded_priv->mime_part);
 
 					content_only = TRUE;
 				}
 			} else if (GMIME_IS_MULTIPART (entity)) {
 				GMimeMultipart *multipart = (GMimeMultipart *) entity;
+				GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 				GBytes *preamble = multipart_raw_text (multipart, options, FALSE);
 				AnonymizerFrame frame;
 				const char *boundary;
 
-				success = anonymize_bytes (options, stream, preamble, multipart->children->len > 0 || ensure);
+				success = anonymize_bytes (options, stream, preamble, priv->children->len > 0 || ensure);
 				g_clear_pointer (&preamble, g_bytes_unref);
 
 				if (!success)
@@ -1124,12 +1153,15 @@ anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMim
 		GMimeMultipart *multipart = frame->multipart;
 		guint index = frame->index++;
 
-		if (index < multipart->children->len) {
-			GBytes *boundary = multipart->raw_boundaries ? multipart->raw_boundaries->pdata[index] : NULL;
+		multipart_priv = _g_mime_multipart_get_private (multipart);
+
+		if (index < multipart_priv->children->len) {
+			GBytes *boundary = multipart_priv->raw_boundaries ? multipart_priv->raw_boundaries->pdata[index] : NULL;
+			GMimeEntityPrivate *entity_priv;
 
 			options = frame->options;
 
-			if (index > 0 && !_g_mime_entity_ends_with_delimiter_newline (multipart->children->pdata[index - 1], TRUE) &&
+			if (index > 0 && !_g_mime_entity_ends_with_delimiter_newline (multipart_priv->children->pdata[index - 1], TRUE) &&
 			    !write_newline (options, stream))
 				goto done;
 
@@ -1137,9 +1169,11 @@ anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMim
 			      write_bytes (stream, frame->boundary, strlen (frame->boundary))))
 				goto done;
 
-			entity = g_object_ref (multipart->children->pdata[index]);
-			ensure = entity->ensure_newline || (frame->ensure_newline && index + 1 == multipart->children->len &&
-				multipart_is_truncated (multipart) && !multipart->raw_trailing_boundary);
+			entity = g_object_ref (multipart_priv->children->pdata[index]);
+			entity_priv = _g_mime_entity_get_private (entity);
+
+			ensure = entity_priv->ensure_newline || (frame->ensure_newline && index + 1 == multipart_priv->children->len &&
+				multipart_is_truncated (multipart) && !multipart_priv->raw_trailing_boundary);
 			content_only = FALSE;
 		} else {
 			if (!write_multipart_end (frame, stream))

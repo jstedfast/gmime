@@ -30,6 +30,8 @@
 #include "gmime-parse-utils.h"
 #include "gmime-common.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-domain-list
  * @title: GMimeDomainList
@@ -40,7 +42,7 @@
 
 static void g_mime_domain_list_finalize (GObject *object);
 
-G_DEFINE_TYPE (GMimeDomainList, g_mime_domain_list, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeDomainList, g_mime_domain_list, G_TYPE_OBJECT)
 
 static void
 g_mime_domain_list_class_init (GMimeDomainListClass *klass)

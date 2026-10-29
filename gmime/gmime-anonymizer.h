@@ -27,33 +27,15 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_ANONYMIZER            (g_mime_anonymizer_get_type ())
-#define GMIME_ANONYMIZER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_ANONYMIZER, GMimeAnonymizer))
-#define GMIME_ANONYMIZER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_ANONYMIZER, GMimeAnonymizerClass))
-#define GMIME_IS_ANONYMIZER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_ANONYMIZER))
-#define GMIME_IS_ANONYMIZER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_ANONYMIZER))
-#define GMIME_ANONYMIZER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_ANONYMIZER, GMimeAnonymizerClass))
 
-typedef struct _GMimeAnonymizer GMimeAnonymizer;
-typedef struct _GMimeAnonymizerClass GMimeAnonymizerClass;
 
 /**
  * GMimeAnonymizer:
- * @parent_object: parent #GObject
  *
  * MIME anonymization with configurable preserved header fields.
  **/
-struct _GMimeAnonymizer {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeAnonymizer, g_mime_anonymizer, GMIME, ANONYMIZER, GObject)
 
-	/* <private> */
-	GHashTable *preserve_headers;
-};
-
-struct _GMimeAnonymizerClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_anonymizer_get_type (void);
 
 GMimeAnonymizer *g_mime_anonymizer_new (void);
 gboolean g_mime_anonymizer_add_preserved_header (GMimeAnonymizer *anonymizer, const char *name);

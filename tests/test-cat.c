@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -50,7 +51,7 @@ extern int verbose;
 static int randfd;
 
 typedef struct {
-	TestStreamOneByte parent_object;
+	TestStreamOneByte parent_instance;
 	size_t chunk_size, bytes_read, fail_after;
 	guint read_calls, seek_calls, reset_calls;
 	gboolean nonseekable, zero_read;
@@ -85,9 +86,11 @@ cat_source_read (GMimeStream *stream, char *buf, size_t len)
 
 	len = MIN (len, source->chunk_size);
 	len = MIN (len, source->fail_after - source->bytes_read);
-	n = g_mime_stream_read (source->parent_object.source, buf, len);
+	n = g_mime_stream_read (source->parent_instance.source, buf, len);
 	if (n > 0) {
-		stream->position += n;
+		GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+		priv->position += n;
 		source->bytes_read += n;
 	}
 	return n;
@@ -103,7 +106,7 @@ cat_source_tell (GMimeStream *stream)
 		errno = ESPIPE;
 		return -1;
 	}
-	return g_mime_stream_tell (source->parent_object.source);
+	return g_mime_stream_tell (source->parent_instance.source);
 }
 
 static gint64
@@ -121,7 +124,7 @@ cat_source_length (GMimeStream *stream)
 		return -1;
 	}
 	return source->reported_length >= 0 ? source->reported_length :
-		g_mime_stream_length (source->parent_object.source);
+		g_mime_stream_length (source->parent_instance.source);
 }
 
 static ssize_t
@@ -139,9 +142,11 @@ cat_source_write (GMimeStream *stream, const char *buf, size_t len)
 	}
 	len = MIN (len, source->chunk_size);
 	len = MIN (len, source->write_after - source->bytes_written);
-	n = g_mime_stream_write (source->parent_object.source, buf, len);
+	n = g_mime_stream_write (source->parent_instance.source, buf, len);
 	if (n > 0) {
-		stream->position += n;
+		GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+		priv->position += n;
 		source->bytes_written += n;
 	}
 	return n;
@@ -157,12 +162,13 @@ cat_source_flush (GMimeStream *stream)
 		errno = EIO;
 		return -1;
 	}
-	return g_mime_stream_flush (source->parent_object.source);
+	return g_mime_stream_flush (source->parent_instance.source);
 }
 
 static gint64
 cat_source_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
+	GMimeStreamPrivate *priv;
 	TestCatSource *source = (TestCatSource *) stream;
 	gint64 position;
 
@@ -176,9 +182,11 @@ cat_source_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		return -1;
 	}
 
-	position = g_mime_stream_seek (source->parent_object.source, offset, whence);
+	position = g_mime_stream_seek (source->parent_instance.source, offset, whence);
+	priv = _g_mime_stream_get_private (stream);
+
 	if (position != -1)
-		stream->position = position;
+		priv->position = position;
 	return position;
 }
 
@@ -193,7 +201,7 @@ cat_source_reset (GMimeStream *stream)
 		return -1;
 	}
 
-	if (g_mime_stream_reset (source->parent_object.source) == -1)
+	if (g_mime_stream_reset (source->parent_instance.source) == -1)
 		return -1;
 	source->bytes_read = 0;
 	source->bytes_written = 0;
@@ -231,7 +239,7 @@ cat_source_new (const char *data, size_t len)
 	TestCatSource *source = g_object_new (test_cat_source_get_type (), NULL);
 
 	g_mime_stream_construct ((GMimeStream *) source, 0, -1);
-	source->parent_object.source = g_mime_stream_mem_new_with_buffer (data, len);
+	source->parent_instance.source = g_mime_stream_mem_new_with_buffer (data, len);
 	return source;
 }
 
@@ -256,8 +264,8 @@ test_cat_read_fill (void)
 			sources[2] = cat_source_new ("", 0);
 			sources[3] = cat_source_new ("YYYcdef", 7);
 			sources[4] = cat_source_new ("", 0);
-			g_assert_cmpint (g_mime_stream_seek (sources[1]->parent_object.source, 2, GMIME_STREAM_SEEK_SET), ==, 2);
-			g_assert_cmpint (g_mime_stream_seek (sources[3]->parent_object.source, 3, GMIME_STREAM_SEEK_SET), ==, 3);
+			g_assert_cmpint (g_mime_stream_seek (sources[1]->parent_instance.source, 2, GMIME_STREAM_SEEK_SET), ==, 2);
+			g_assert_cmpint (g_mime_stream_seek (sources[3]->parent_instance.source, 3, GMIME_STREAM_SEEK_SET), ==, 3);
 			for (i = 0; i < G_N_ELEMENTS (sources); i++) {
 				sources[i]->chunk_size = chunk;
 				sources[i]->nonseekable = TRUE;
@@ -430,7 +438,7 @@ test_cat_read_reposition (void)
 	g_assert_cmpmem (buf, 3, "abc", 3);
 	g_assert_true (g_mime_stream_eos (cat));
 	g_assert_cmpint (g_mime_stream_read (cat, buf, sizeof (buf)), ==, 0);
-	g_assert_cmpint (g_mime_stream_tell (second->parent_object.source), ==, 1);
+	g_assert_cmpint (g_mime_stream_tell (second->parent_instance.source), ==, 1);
 	g_object_unref (first);
 	g_object_unref (second);
 	g_object_unref (cat);
@@ -443,8 +451,8 @@ test_cat_read_reposition (void)
 	g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), (GMimeStream *) second);
 	g_assert_cmpint (g_mime_stream_read (cat, buf, sizeof (buf)), ==, 0);
 	g_assert_true (g_mime_stream_eos (cat));
-	g_mime_stream_write (first->parent_object.source, "a", 1);
-	g_mime_stream_write (second->parent_object.source, "b", 1);
+	g_mime_stream_write (first->parent_instance.source, "a", 1);
+	g_mime_stream_write (second->parent_instance.source, "b", 1);
 	g_assert_cmpint (g_mime_stream_reset (cat), ==, 0);
 	g_assert_cmpuint (first->reset_calls, ==, 1);
 	g_assert_cmpuint (second->reset_calls, ==, 1);
@@ -601,7 +609,7 @@ test_cat_seek_boundaries (void)
 		g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), (GMimeStream *) sources[i]);
 	g_assert_cmpint (g_mime_stream_length (cat), ==, 6);
 	g_assert_cmpint (g_mime_stream_seek (cat, 2, GMIME_STREAM_SEEK_SET), ==, 2);
-	g_assert_cmpint (g_mime_stream_tell (sources[0]->parent_object.source), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (sources[0]->parent_instance.source), ==, 2);
 	g_assert_cmpuint (sources[1]->seek_calls, ==, 0);
 	g_assert_cmpuint (sources[2]->seek_calls, ==, 0);
 	g_assert_cmpint (g_mime_stream_flush (cat), ==, 0);
@@ -610,7 +618,7 @@ test_cat_seek_boundaries (void)
 	g_assert_cmpint (g_mime_stream_write (cat, "X", 1), ==, 1);
 	g_assert_cmpint (g_mime_stream_seek (cat, 0, GMIME_STREAM_SEEK_END), ==, 6);
 	for (i = 0; i < G_N_ELEMENTS (sources); i++) {
-		g_assert_cmpint (g_mime_stream_tell (sources[i]->parent_object.source), ==, i == 1 ? 0 : 2);
+		g_assert_cmpint (g_mime_stream_tell (sources[i]->parent_instance.source), ==, i == 1 ? 0 : 2);
 		g_assert_cmpuint (sources[i]->reset_calls, ==, 0);
 	}
 	g_assert_false (g_mime_stream_eos (cat));
@@ -618,7 +626,7 @@ test_cat_seek_boundaries (void)
 	g_assert_cmpuint (sources[3]->flush_calls, ==, 1);
 	g_assert_cmpint (g_mime_stream_seek (cat, 0, GMIME_STREAM_SEEK_SET), ==, 0);
 	for (i = 0; i < G_N_ELEMENTS (sources); i++) {
-		g_assert_cmpint (g_mime_stream_tell (sources[i]->parent_object.source), ==, 0);
+		g_assert_cmpint (g_mime_stream_tell (sources[i]->parent_instance.source), ==, 0);
 		g_assert_cmpuint (sources[i]->reset_calls, ==, 0);
 	}
 	g_assert_cmpint (g_mime_stream_read (cat, buf, sizeof (buf)), ==, 6);
@@ -647,19 +655,19 @@ test_cat_seek_unvisited (void)
 	char buf[4];
 
 	testsuite_check ("Chained seeks leave unvisited children and same-position EOF unchanged");
-	g_mime_stream_seek (tail->parent_object.source, 1, GMIME_STREAM_SEEK_SET);
+	g_mime_stream_seek (tail->parent_instance.source, 1, GMIME_STREAM_SEEK_SET);
 	g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), (GMimeStream *) first);
 	g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), (GMimeStream *) tail);
 	g_assert_cmpint (g_mime_stream_seek (cat, 1, GMIME_STREAM_SEEK_SET), ==, 1);
 	g_assert_cmpint (g_mime_stream_seek (cat, -1, GMIME_STREAM_SEEK_CUR), ==, 0);
 	g_assert_cmpuint (tail->seek_calls, ==, 0);
 	g_assert_cmpuint (tail->reset_calls, ==, 0);
-	g_assert_cmpint (g_mime_stream_tell (tail->parent_object.source), ==, 1);
+	g_assert_cmpint (g_mime_stream_tell (tail->parent_instance.source), ==, 1);
 	g_assert_cmpint (g_mime_stream_reset (cat), ==, 0);
-	g_assert_cmpint (g_mime_stream_tell (tail->parent_object.source), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (tail->parent_instance.source), ==, 0);
 	g_assert_cmpuint (first->reset_calls, ==, 1);
 	g_assert_cmpuint (tail->reset_calls, ==, 1);
-	g_mime_stream_seek (tail->parent_object.source, 1, GMIME_STREAM_SEEK_SET);
+	g_mime_stream_seek (tail->parent_instance.source, 1, GMIME_STREAM_SEEK_SET);
 	g_assert_cmpint (g_mime_stream_read (cat, buf, sizeof (buf)), ==, 3);
 	g_assert_cmpmem (buf, 3, "abd", 3);
 	g_object_unref (cat);
@@ -716,7 +724,7 @@ test_cat_seek_errors (void)
 	g_assert_cmpint (g_mime_stream_seek (cat, 3, GMIME_STREAM_SEEK_SET), ==, -1);
 	g_assert_cmpint (errno, ==, EIO);
 	g_assert_cmpint (g_mime_stream_tell (cat), ==, 2);
-	g_assert_cmpint (g_mime_stream_tell (first->parent_object.source), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (first->parent_instance.source), ==, 2);
 	g_assert_cmpuint (second->seek_calls, ==, 0);
 	second->nonseekable = TRUE;
 	errno = 0;
@@ -730,7 +738,7 @@ test_cat_seek_errors (void)
 	g_assert_cmpint (g_mime_stream_seek (cat, 1, GMIME_STREAM_SEEK_SET), ==, -1);
 	g_assert_cmpint (errno, ==, EIO);
 	g_assert_cmpint (g_mime_stream_tell (cat), ==, 0);
-	g_assert_cmpint (g_mime_stream_tell (second->parent_object.source), ==, 1);
+	g_assert_cmpint (g_mime_stream_tell (second->parent_instance.source), ==, 1);
 	g_assert_cmpint (g_mime_stream_reset (cat), ==, 0);
 	g_assert_cmpint (g_mime_stream_seek (cat, 0, GMIME_STREAM_SEEK_END), ==, 6);
 	tail->fail_seek_call = tail->seek_calls + 1;
@@ -738,9 +746,9 @@ test_cat_seek_errors (void)
 	g_assert_cmpint (g_mime_stream_seek (cat, 1, GMIME_STREAM_SEEK_SET), ==, -1);
 	g_assert_cmpint (errno, ==, EIO);
 	g_assert_cmpint (g_mime_stream_tell (cat), ==, 1);
-	g_assert_cmpint (g_mime_stream_tell (first->parent_object.source), ==, 1);
-	g_assert_cmpint (g_mime_stream_tell (second->parent_object.source), ==, 0);
-	g_assert_cmpint (g_mime_stream_tell (tail->parent_object.source), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (first->parent_instance.source), ==, 1);
+	g_assert_cmpint (g_mime_stream_tell (second->parent_instance.source), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (tail->parent_instance.source), ==, 2);
 	/* An explicit reset recovers all children after a partial backward seek. */
 	g_assert_cmpint (g_mime_stream_reset (cat), ==, 0);
 	g_assert_cmpint (g_mime_stream_read (cat, buf, sizeof (buf)), ==, 6);
@@ -750,10 +758,10 @@ test_cat_seek_errors (void)
 	g_assert_cmpint (g_mime_stream_seek (cat, 0, GMIME_STREAM_SEEK_SET), ==, -1);
 	g_assert_cmpint (errno, ==, EIO);
 	g_assert_cmpint (g_mime_stream_tell (cat), ==, 0);
-	g_assert_cmpint (g_mime_stream_tell (tail->parent_object.source), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (tail->parent_instance.source), ==, 2);
 	/* Position zero alone does not mean that all children have been reset. */
 	g_assert_cmpint (g_mime_stream_reset (cat), ==, 0);
-	g_assert_cmpint (g_mime_stream_tell (tail->parent_object.source), ==, 0);
+	g_assert_cmpint (g_mime_stream_tell (tail->parent_instance.source), ==, 0);
 	g_assert_cmpint (g_mime_stream_read (cat, buf, sizeof (buf)), ==, 6);
 	g_assert_cmpmem (buf, 6, "abcdef", 6);
 	g_object_unref (cat);
@@ -818,8 +826,8 @@ test_cat_seek_limits (void)
 	g_assert_cmpint (g_mime_stream_seek (cat, 2, GMIME_STREAM_SEEK_SET), ==, -1);
 	g_assert_cmpint (errno, ==, EINVAL);
 	g_assert_cmpint (g_mime_stream_seek (cat, 0, GMIME_STREAM_SEEK_END), ==, 7);
-	g_assert_cmpint (g_mime_stream_tell (first->parent_object.source), ==, 2);
-	g_assert_cmpint (g_mime_stream_tell (tail->parent_object.source), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (first->parent_instance.source), ==, 2);
+	g_assert_cmpint (g_mime_stream_tell (tail->parent_instance.source), ==, 2);
 	errno = 0;
 	g_assert_cmpint (g_mime_stream_seek (cat, 1, GMIME_STREAM_SEEK_CUR), ==, -1);
 	g_assert_cmpint (errno, ==, EINVAL);
@@ -852,7 +860,7 @@ test_cat_seek_limits (void)
 static void
 cat_source_assert_data (TestCatSource *source, const char *data, size_t len)
 {
-	GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_object.source));
+	GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (source->parent_instance.source));
 
 	g_assert_cmpuint (bytes->len, ==, len);
 	g_assert_cmpmem (bytes->data, bytes->len, data, len);
@@ -878,9 +886,9 @@ test_cat_write_fill (void)
 			sources[2] = cat_source_new ("", 0);
 			sources[3] = cat_source_new ("YY456", 5);
 			sources[4] = cat_source_new ("Q", 1);
-			g_mime_stream_seek (sources[1]->parent_object.source, 2, GMIME_STREAM_SEEK_SET);
-			g_mime_stream_seek (sources[3]->parent_object.source, 2, GMIME_STREAM_SEEK_SET);
-			g_mime_stream_seek (sources[4]->parent_object.source, 1, GMIME_STREAM_SEEK_SET);
+			g_mime_stream_seek (sources[1]->parent_instance.source, 2, GMIME_STREAM_SEEK_SET);
+			g_mime_stream_seek (sources[3]->parent_instance.source, 2, GMIME_STREAM_SEEK_SET);
+			g_mime_stream_seek (sources[4]->parent_instance.source, 1, GMIME_STREAM_SEEK_SET);
 			for (i = 0; i < G_N_ELEMENTS (sources); i++) {
 				sources[i]->chunk_size = chunk;
 				sources[i]->nonseekable = TRUE;
@@ -994,7 +1002,7 @@ test_cat_write_flush_retry (void)
 	for (start = 0; start <= 2; start += 2) {
 		first = cat_source_new ("ab", 2);
 		tail = cat_source_new ("", 0);
-		g_mime_stream_seek (first->parent_object.source, start, GMIME_STREAM_SEEK_SET);
+		g_mime_stream_seek (first->parent_instance.source, start, GMIME_STREAM_SEEK_SET);
 		first->fail_flush = TRUE;
 		cat = g_mime_stream_cat_new ();
 		g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), (GMimeStream *) first);
@@ -1372,20 +1380,22 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 	gint64 len, totalsize, totalread = 0;
 	size_t nread, size;
 	ssize_t n;
-	
+	GMimeStreamPrivate *orig_priv = _g_mime_stream_get_private (orig);
+	GMimeStreamPrivate *dup_priv = _g_mime_stream_get_private (dup);
+
 	v(fprintf (stdout, "Matching original stream (%" G_GINT64_FORMAT " -> %" G_GINT64_FORMAT ") with %s (%" G_GINT64_FORMAT ", %" G_GINT64_FORMAT ")... ",
-		   orig->position, orig->bound_end, filename, dup->position, dup->bound_end));
+		   orig_priv->position, orig_priv->bound_end, filename, dup_priv->position, dup_priv->bound_end));
 	
-	if (orig->bound_end != -1) {
-		totalsize = orig->bound_end - orig->position;
+	if (orig_priv->bound_end != -1) {
+		totalsize = orig_priv->bound_end - orig_priv->position;
 	} else if ((len = g_mime_stream_length (orig)) == -1) {
 		g_strlcpy (errstr, "Error: Unable to get length of original stream\n", sizeof (errstr));
 		goto fail;
-	} else if (len < (orig->position - orig->bound_start)) {
+	} else if (len < (orig_priv->position - orig_priv->bound_start)) {
 		g_strlcpy (errstr, "Error: Overflow on original stream?\n", sizeof (errstr));
 		goto fail;
 	} else {
-		totalsize = len - (orig->position - orig->bound_start);
+		totalsize = len - (orig_priv->position - orig_priv->bound_start);
 	}
 	
 	while (totalread < totalsize) {
@@ -1558,9 +1568,10 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	gint64 offset, len;
 	Exception *ex;
 	int fd;
-	
-	if (whole->bound_end != -1) {
-		len = whole->bound_end - whole->bound_start;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (whole);
+
+	if (priv->bound_end != -1) {
+		len = priv->bound_end - priv->bound_start;
 	} else if ((len = g_mime_stream_length (whole)) == -1) {
 		ex = exception_new ("unable to get original stream length");
 		throw (ex);
@@ -1618,9 +1629,10 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	gint64 start, end, len;
 	Exception *ex;
 	int fd;
-	
-	if (whole->bound_end != -1) {
-		len = whole->bound_end - whole->bound_start;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (whole);
+
+	if (priv->bound_end != -1) {
+		len = priv->bound_end - priv->bound_start;
 	} else if ((len = g_mime_stream_length (whole)) == -1) {
 		ex = exception_new ("unable to get original stream length");
 		throw (ex);

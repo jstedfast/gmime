@@ -9,6 +9,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <errno.h>
@@ -38,15 +39,16 @@ static ssize_t
 output_write (GMimeStream *stream, const char *buffer, size_t length)
 {
 	TestOutput *output = (TestOutput *) stream;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
 
-	if ((guint64) stream->position >= output->fail_after) {
+	if ((guint64) priv->position >= output->fail_after) {
 		errno = EIO;
 		return -1;
 	}
 	if (output->zero_write)
 		return 0;
 	length = MIN (length, output->chunk_size);
-	length = MIN (length, output->fail_after - stream->position);
+	length = MIN (length, output->fail_after - priv->position);
 	return GMIME_STREAM_CLASS (test_output_parent_class)->write (stream, buffer, length);
 }
 
@@ -464,17 +466,18 @@ test_constructed_message (void)
 	GMimeContent *content = g_mime_content_new_with_stream (input, GMIME_CONTENT_ENCODING_BINARY);
 	GMimeStream *output = g_mime_stream_mem_new ();
 	GError *error = NULL;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (GMIME_ENTITY (message));
 
-	g_mime_header_list_clear (GMIME_ENTITY (message)->headers);
+	g_mime_header_list_clear (priv->headers);
 	g_mime_message_set_subject (message, "private", NULL);
 	g_mime_part_set_content (part, content);
 	g_mime_part_set_content_encoding (part, GMIME_CONTENT_ENCODING_BINARY);
 	g_mime_message_set_mime_part (message, GMIME_ENTITY (part));
-	g_mime_header_list_remove (GMIME_ENTITY (message)->headers, "MIME-Version");
-	g_assert_false (g_mime_header_list_contains (GMIME_ENTITY (message)->headers, "MIME-Version"));
+	g_mime_header_list_remove (priv->headers, "MIME-Version");
+	g_assert_false (g_mime_header_list_contains (priv->headers, "MIME-Version"));
 	g_assert_true (g_mime_anonymizer_write_message (anonymizer, NULL, message, output, &error));
 	g_assert_no_error (error);
-	g_assert_true (g_mime_header_list_contains (GMIME_ENTITY (message)->headers, "MIME-Version"));
+	g_assert_true (g_mime_header_list_contains (priv->headers, "MIME-Version"));
 	assert_output (output, expected, sizeof expected - 1);
 	g_assert_cmpint (g_mime_stream_tell (input), ==, 0);
 	g_assert_cmpint (g_mime_stream_read (input, (char [8]) { 0 }, 8), ==, 8);
@@ -489,6 +492,7 @@ test_constructed_message (void)
 static void
 test_constructed_multipart (void)
 {
+	GMimeMultipartPrivate *priv;
 	static const char wire[] = "Content-Type: text/plain\n\nprivate";
 	static const char prefix[] = "Content-Type: multipart/mixed; boundary=x\n\nxxxxxxx\n"
 		"--x\nContent-Type: text/plain\n\nxxxxxxx";
@@ -504,11 +508,13 @@ test_constructed_multipart (void)
 	g_mime_multipart_set_preamble (multipart, "private");
 	g_mime_multipart_set_epilogue (multipart, "private");
 	g_mime_multipart_add (multipart, child);
+	priv = _g_mime_multipart_get_private (multipart);
+
 	for (i = 0; i < 2; i++) {
 		GMimeStream *output = g_mime_stream_mem_new ();
 		char *expected = i ? g_strdup (prefix) : g_strconcat (prefix, "\n--x--\nxxxxxxx\n", NULL);
 
-		multipart->write_end_boundary = i == 0;
+		priv->write_end_boundary = i == 0;
 		g_assert_true (g_mime_anonymizer_write_entity (anonymizer, NULL, GMIME_ENTITY (multipart), output, &error));
 		g_assert_no_error (error);
 		assert_output (output, expected, strlen (expected));
@@ -529,7 +535,7 @@ test_constructed_multipart (void)
 		g_mime_multipart_clear (multipart);
 		g_mime_multipart_add (multipart, GMIME_ENTITY (empty));
 		g_object_unref (empty);
-		multipart->write_end_boundary = FALSE;
+		priv->write_end_boundary = FALSE;
 		g_mime_multipart_add (outer, GMIME_ENTITY (multipart));
 		g_assert_true (g_mime_anonymizer_write_entity (anonymizer, NULL, GMIME_ENTITY (outer), output, &error));
 		g_assert_no_error (error);
@@ -660,6 +666,7 @@ test_binary_raw_boundaries (void)
 		separator = g_strconcat (nl, nl, NULL);
 		child_headers = g_strconcat ("Content-Type: text/plain", separator, NULL);
 		for (truncated = 0; truncated < 2; truncated++) {
+			GMimeMultipartPrivate *priv;
 			GMimeMultipart *multipart = g_mime_multipart_new ();
 			GMimeStream *output = g_mime_stream_mem_new ();
 			GString *expected = g_string_new (NULL);
@@ -676,15 +683,17 @@ test_binary_raw_boundaries (void)
 				g_string_append_len (expected, opening, sizeof opening - 1);
 				g_string_append (expected, child_headers);
 			}
-			multipart->raw_boundaries = g_ptr_array_new_with_free_func ((GDestroyNotify) g_bytes_unref);
+			priv = _g_mime_multipart_get_private (multipart);
+
+			priv->raw_boundaries = g_ptr_array_new_with_free_func ((GDestroyNotify) g_bytes_unref);
 			for (child = 0; child < 2; child++)
-				g_ptr_array_add (multipart->raw_boundaries, g_bytes_new_static (opening, sizeof opening - 1));
+				g_ptr_array_add (priv->raw_boundaries, g_bytes_new_static (opening, sizeof opening - 1));
 			if (truncated) {
-				multipart->raw_end_boundary = g_bytes_new (NULL, 0);
-				multipart->raw_trailing_boundary = g_bytes_new_static (trailing, sizeof trailing - 1);
+				priv->raw_end_boundary = g_bytes_new (NULL, 0);
+				priv->raw_trailing_boundary = g_bytes_new_static (trailing, sizeof trailing - 1);
 				g_string_append_len (expected, trailing, sizeof trailing - 1);
 			} else {
-				multipart->raw_end_boundary = g_bytes_new_static (closing, sizeof closing - 1);
+				priv->raw_end_boundary = g_bytes_new_static (closing, sizeof closing - 1);
 				g_string_append_len (expected, closing, sizeof closing - 1);
 			}
 			g_assert_true (g_mime_anonymizer_write_entity (anonymizer, options, GMIME_ENTITY (multipart), output, &error));

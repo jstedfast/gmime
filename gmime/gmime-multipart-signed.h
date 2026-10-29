@@ -28,14 +28,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART_SIGNED            (g_mime_multipart_signed_get_type ())
-#define GMIME_MULTIPART_SIGNED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_SIGNED, GMimeMultipartSigned))
-#define GMIME_MULTIPART_SIGNED_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART_SIGNED, GMimeMultipartSignedClass))
-#define GMIME_IS_MULTIPART_SIGNED(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART_SIGNED))
-#define GMIME_IS_MULTIPART_SIGNED_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART_SIGNED))
-#define GMIME_MULTIPART_SIGNED_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART_SIGNED, GMimeMultipartSignedClass))
 
-typedef struct _GMimeMultipartSigned GMimeMultipartSigned;
-typedef struct _GMimeMultipartSignedClass GMimeMultipartSignedClass;
 
 enum {
 	GMIME_MULTIPART_SIGNED_CONTENT,
@@ -45,22 +38,18 @@ enum {
 
 /**
  * GMimeMultipartSigned:
- * @parent_object: parent #GMimeMultipart
  *
  * A multipart/signed MIME part.
  **/
-struct _GMimeMultipartSigned {
-	GMimeMultipart parent_object;
-	
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMultipartSigned, g_mime_multipart_signed, GMIME, MULTIPART_SIGNED, GMimeMultipart)
 
 struct _GMimeMultipartSignedClass {
 	GMimeMultipartClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_multipart_signed_get_type (void);
 
 GMimeMultipartSigned *g_mime_multipart_signed_new (void);
 

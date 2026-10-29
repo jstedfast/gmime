@@ -34,6 +34,8 @@
 #include "gmime-stream-pipe.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-stream-pipe
  * @title: GMimeStreamPipe
@@ -46,7 +48,7 @@
 
 
 static void g_mime_stream_pipe_class_init (GMimeStreamPipeClass *klass);
-static void g_mime_stream_pipe_init (GMimeStreamPipe *stream, GMimeStreamPipeClass *klass);
+static void g_mime_stream_pipe_init (GMimeStreamPipe *stream);
 static void g_mime_stream_pipe_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -64,28 +66,13 @@ static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 
 static GMimeStreamClass *parent_class = NULL;
 
 
-GType
-g_mime_stream_pipe_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeStreamPipe, g_mime_stream_pipe, GMIME_TYPE_STREAM)
+
+GMimeStreamPipePrivate *
+_g_mime_stream_pipe_get_private (GMimeStreamPipe *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeStreamPipeClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_stream_pipe_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeStreamPipe),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_stream_pipe_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_STREAM, "GMimeStreamPipe", &info, 0);
-	}
-	
-	return type;
+	return g_mime_stream_pipe_get_instance_private (object);
 }
 
 
@@ -112,11 +99,13 @@ g_mime_stream_pipe_class_init (GMimeStreamPipeClass *klass)
 }
 
 static void
-g_mime_stream_pipe_init (GMimeStreamPipe *stream, GMimeStreamPipeClass *klass)
+g_mime_stream_pipe_init (GMimeStreamPipe *stream)
 {
-	stream->owner = TRUE;
-	stream->eos = FALSE;
-	stream->fd = -1;
+	GMimeStreamPipePrivate *priv = _g_mime_stream_pipe_get_private (stream);
+
+	priv->owner = TRUE;
+	priv->eos = FALSE;
+	priv->fd = -1;
 }
 
 static void
@@ -133,29 +122,33 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamPipe *pipes = (GMimeStreamPipe *) stream;
+	GMimeStreamPipePrivate *priv = _g_mime_stream_pipe_get_private (pipes);
+	GMimeStreamPrivate *stream_priv;
 	ssize_t nread;
-	
-	if (pipes->fd == -1) {
+
+	if (priv->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->bound_end != -1 && stream_priv->position >= stream_priv->bound_end) {
 		errno = EINVAL;
 		return -1;
 	}
 	
-	if (stream->bound_end != -1)
-		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
+	if (stream_priv->bound_end != -1)
+		len = (size_t) MIN (stream_priv->bound_end - stream_priv->position, (gint64) len);
 	
 	do {
-		nread = read (pipes->fd, buf, len);
+		nread = read (priv->fd, buf, len);
 	} while (nread == -1 && errno == EINTR);
 	
 	if (nread > 0) {
-		stream->position += nread;
+		stream_priv->position += nread;
 	} else if (nread == 0) {
-		pipes->eos = TRUE;
+		priv->eos = TRUE;
 	}
 	
 	return nread;
@@ -165,25 +158,29 @@ static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamPipe *pipes = (GMimeStreamPipe *) stream;
+	GMimeStreamPipePrivate *priv = _g_mime_stream_pipe_get_private (pipes);
+	GMimeStreamPrivate *stream_priv;
 	size_t nwritten = 0;
 	ssize_t n;
-	
-	if (pipes->fd == -1) {
+
+	if (priv->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->bound_end != -1 && stream_priv->position >= stream_priv->bound_end) {
 		errno = EINVAL;
 		return -1;
 	}
 	
-	if (stream->bound_end != -1)
-		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
+	if (stream_priv->bound_end != -1)
+		len = (size_t) MIN (stream_priv->bound_end - stream_priv->position, (gint64) len);
 	
 	do {
 		do {
-			n = write (pipes->fd, buf + nwritten, len - nwritten);
+			n = write (priv->fd, buf + nwritten, len - nwritten);
 		} while (n == -1 && (errno == EINTR || errno == EAGAIN));
 		
 		if (n > 0)
@@ -191,10 +188,10 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	} while (n != -1 && nwritten < len);
 	
 	if (n == -1 && (errno == EFBIG || errno == ENOSPC))
-		pipes->eos = TRUE;
+		priv->eos = TRUE;
 	
 	if (nwritten > 0) {
-		stream->position += nwritten;
+		stream_priv->position += nwritten;
 	} else if (n == -1) {
 		/* error and nothing written */
 		return -1;
@@ -207,8 +204,9 @@ static int
 stream_flush (GMimeStream *stream)
 {
 	GMimeStreamPipe *pipes = (GMimeStreamPipe *) stream;
-	
-	if (pipes->fd == -1) {
+	GMimeStreamPipePrivate *priv = _g_mime_stream_pipe_get_private (pipes);
+
+	if (priv->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
@@ -220,18 +218,19 @@ static int
 stream_close (GMimeStream *stream)
 {
 	GMimeStreamPipe *pipes = (GMimeStreamPipe *) stream;
+	GMimeStreamPipePrivate *priv = _g_mime_stream_pipe_get_private (pipes);
 	int rv;
-	
-	if (pipes->fd == -1)
+
+	if (priv->fd == -1)
 		return 0;
 	
-	if (pipes->owner) {
+	if (priv->owner) {
 		do {
-			if ((rv = close (pipes->fd)) == 0)
-				pipes->fd = -1;
+			if ((rv = close (priv->fd)) == 0)
+				priv->fd = -1;
 		} while (rv == -1 && errno == EINTR);
 	} else {
-		pipes->fd = -1;
+		priv->fd = -1;
 		rv = 0;
 	}
 	
@@ -242,19 +241,21 @@ static gboolean
 stream_eos (GMimeStream *stream)
 {
 	GMimeStreamPipe *pipes = (GMimeStreamPipe *) stream;
-	
-	if (pipes->fd == -1)
+	GMimeStreamPipePrivate *priv = _g_mime_stream_pipe_get_private (pipes);
+
+	if (priv->fd == -1)
 		return TRUE;
 	
-	return pipes->eos;
+	return priv->eos;
 }
 
 static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamPipe *pipes = (GMimeStreamPipe *) stream;
-	
-	if (pipes->fd == -1) {
+	GMimeStreamPipePrivate *priv = _g_mime_stream_pipe_get_private (pipes);
+
+	if (priv->fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
@@ -286,13 +287,18 @@ stream_length (GMimeStream *stream)
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
+	GMimeStreamPipePrivate *stream_priv;
+	GMimeStreamPipePrivate *priv;
 	GMimeStreamPipe *pipes;
 	
 	pipes = g_object_new (GMIME_TYPE_STREAM_PIPE, NULL);
 	g_mime_stream_construct ((GMimeStream *) pipes, start, end);
-	pipes->fd = ((GMimeStreamPipe *) stream)->fd;
-	pipes->owner = FALSE;
-	pipes->eos = FALSE;
+	stream_priv = _g_mime_stream_pipe_get_private ((GMimeStreamPipe *) stream);
+	priv = _g_mime_stream_pipe_get_private (pipes);
+
+	priv->fd = stream_priv->fd;
+	priv->owner = FALSE;
+	priv->eos = FALSE;
 	
 	return (GMimeStream *) pipes;
 }
@@ -309,13 +315,16 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 GMimeStream *
 g_mime_stream_pipe_new (int fd)
 {
+	GMimeStreamPipePrivate *priv;
 	GMimeStreamPipe *pipes;
 	
 	pipes = g_object_new (GMIME_TYPE_STREAM_PIPE, NULL);
 	g_mime_stream_construct ((GMimeStream *) pipes, 0, -1);
-	pipes->owner = TRUE;
-	pipes->eos = FALSE;
-	pipes->fd = fd;
+	priv = _g_mime_stream_pipe_get_private (pipes);
+
+	priv->owner = TRUE;
+	priv->eos = FALSE;
+	priv->fd = fd;
 	
 	return (GMimeStream *) pipes;
 }
@@ -333,9 +342,13 @@ g_mime_stream_pipe_new (int fd)
 gboolean
 g_mime_stream_pipe_get_owner (GMimeStreamPipe *stream)
 {
+	GMimeStreamPipePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_STREAM_PIPE (stream), FALSE);
 	
-	return stream->owner;
+	priv = _g_mime_stream_pipe_get_private (stream);
+
+	return priv->owner;
 }
 
 
@@ -352,7 +365,11 @@ g_mime_stream_pipe_get_owner (GMimeStreamPipe *stream)
 void
 g_mime_stream_pipe_set_owner (GMimeStreamPipe *stream, gboolean owner)
 {
+	GMimeStreamPipePrivate *priv;
+
 	g_return_if_fail (GMIME_IS_STREAM_PIPE (stream));
 	
-	stream->owner = owner;
+	priv = _g_mime_stream_pipe_get_private (stream);
+
+	priv->owner = owner;
 }

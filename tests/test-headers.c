@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <gmime/gmime.h>
@@ -412,6 +413,7 @@ test_disposition_sync (void)
 static void
 test_address_sync (void)
 {
+	GMimeEntityPrivate *object_priv;
 	const char *raw_value, *value;
 	GMimeInternetAddress *addr, *ia;
 	GMimeInternetAddressList *list;
@@ -423,10 +425,13 @@ test_address_sync (void)
 	message = g_mime_message_new (TRUE);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
 	object = (GMimeEntity *) message;
-	headers = object->headers;
+	object_priv = _g_mime_entity_get_private (object);
+
+	headers = object_priv->headers;
 	
 	testsuite_check ("address header synchronization");
 	try {
+		GMimeGroupAddressPrivate *addr_priv;
 		/* first, check that the To recipients are empty */
 		if (list == NULL || g_mime_internet_address_list_length (list) != 0)
 			throw (exception_new ("unexpected initial internet address list"));
@@ -507,7 +512,9 @@ test_address_sync (void)
 		
 		/* now let's try adding an address to the group... */
 		ia = g_mime_mailbox_address_new ("Tester", "tester@hotmail.com", NULL);
-		g_mime_internet_address_list_add (((GMimeGroupAddress *) addr)->members, ia);
+		addr_priv = _g_mime_group_address_get_private (((GMimeGroupAddress *) addr));
+
+		g_mime_internet_address_list_add (addr_priv->members, ia);
 		g_object_unref (ia);
 		if (!(value = g_mime_entity_get_header (object, "To")))
 			throw (exception_new ("address list header unexpectedly null after adding addr to group"));

@@ -28,7 +28,7 @@
 #include "testsuite.h"
 
 typedef struct {
-	GMimeVisitor parent_object;
+	GMimeVisitor parent_instance;
 	GString *trace;
 	int mode;
 	GMimeMultipart *root;

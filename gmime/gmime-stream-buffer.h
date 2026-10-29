@@ -27,14 +27,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_BUFFER            (g_mime_stream_buffer_get_type ())
-#define GMIME_STREAM_BUFFER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))
-#define GMIME_STREAM_BUFFER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
-#define GMIME_IS_STREAM_BUFFER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_BUFFER))
-#define GMIME_IS_STREAM_BUFFER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_BUFFER))
-#define GMIME_STREAM_BUFFER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
 
-typedef struct _GMimeStreamBuffer GMimeStreamBuffer;
-typedef struct _GMimeStreamBufferClass GMimeStreamBufferClass;
 
 
 /**
@@ -52,35 +45,18 @@ typedef enum {
 
 /**
  * GMimeStreamBuffer:
- * @parent_object: parent #GMimeStream
- * @mode: buffering mode
- * @source: source stream
- * @buffer: internal buffer
- * @bufptr: current position in the buffer
- * @bufend: end of the buffer
- * @buflen: buffer length
  *
  * A buffered stream wrapper around any #GMimeStream object.
  **/
-struct _GMimeStreamBuffer {
-	GMimeStream parent_object;
-	
-	GMimeStreamBufferMode mode;
-	GMimeStream *source;
-	
-	char *buffer;
-	char *bufptr;
-	char *bufend;
-	size_t buflen;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamBuffer, g_mime_stream_buffer, GMIME, STREAM_BUFFER, GMimeStream)
 
 struct _GMimeStreamBufferClass {
 	GMimeStreamClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_stream_buffer_get_type (void);
 
 GMimeStream *g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode);
 

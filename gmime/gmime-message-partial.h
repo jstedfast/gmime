@@ -30,32 +30,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_PARTIAL            (g_mime_message_partial_get_type ())
-#define GMIME_MESSAGE_PARTIAL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartial))
-#define GMIME_MESSAGE_PARTIAL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
-#define GMIME_IS_MESSAGE_PARTIAL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_PARTIAL))
-#define GMIME_IS_MESSAGE_PARTIAL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_PARTIAL))
-#define GMIME_MESSAGE_PARTIAL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
 
-typedef struct _GMimeMessagePartial GMimeMessagePartial;
-typedef struct _GMimeMessagePartialClass GMimeMessagePartialClass;
 
 /**
  * GMimeMessagePartial:
- * @parent_object: parent #GMimePart object
  *
  * A message/partial MIME part.
  **/
-struct _GMimeMessagePartial {
-	GMimePart parent_object;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessagePartial, g_mime_message_partial, GMIME, MESSAGE_PARTIAL, GMimePart)
 
 struct _GMimeMessagePartialClass {
 	GMimePartClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_message_partial_get_type (void);
 
 GMimeMessagePartial *g_mime_message_partial_new (const char *id, int number, int total);
 

@@ -30,14 +30,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_APPLICATION_PKCS7_MIME            (g_mime_application_pkcs7_mime_get_type ())
-#define GMIME_APPLICATION_PKCS7_MIME(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_APPLICATION_PKCS7_MIME, GMimeApplicationPkcs7Mime))
-#define GMIME_APPLICATION_PKCS7_MIME_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_APPLICATION_PKCS7_MIME, GMimeApplicationPkcs7MimeClass))
-#define GMIME_IS_APPLICATION_PKCS7_MIME(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_APPLICATION_PKCS7_MIME))
-#define GMIME_IS_APPLICATION_PKCS7_MIME_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_APPLICATION_PKCS7_MIME))
-#define GMIME_APPLICATION_PKCS7_MIME_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_APPLICATION_PKCS7_MIME, GMimeApplicationPkcs7MimeClass))
 
-typedef struct _GMimeApplicationPkcs7Mime GMimeApplicationPkcs7Mime;
-typedef struct _GMimeApplicationPkcs7MimeClass GMimeApplicationPkcs7MimeClass;
 
 /**
  * GMimeSecureMimeType:
@@ -61,24 +54,18 @@ typedef enum _GMimeSecureMimeType {
 
 /**
  * GMimeApplicationPkcs7Mime:
- * @parent_object: parent #GMimePart object
- * @smime_type: The smime-type Content-Type parameter.
  *
  * An application/pkcs7-mime MIME part.
  **/
-struct _GMimeApplicationPkcs7Mime {
-	GMimePart parent_object;
-
-	GMimeSecureMimeType smime_type;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeApplicationPkcs7Mime, g_mime_application_pkcs7_mime, GMIME, APPLICATION_PKCS7_MIME, GMimePart)
 
 struct _GMimeApplicationPkcs7MimeClass {
 	GMimePartClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_application_pkcs7_mime_get_type (void);
 
 GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type);
 

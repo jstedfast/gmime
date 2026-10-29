@@ -26,7 +26,7 @@
 #include "gmime-codec-private.h"
 
 struct _GMimeYencEncoder {
-	GObject parent_object;
+	GObject parent_instance;
 
 	GMimeNewLineFormat newline_format;
 	guint max_line_length;

@@ -19,6 +19,7 @@
  */
 
 #include <string.h>
+#include <gmime/gmime-object-private.h>
 #include <gmime/gmime.h>
 
 #include "testsuite.h"
@@ -352,6 +353,9 @@ test_idn_accessors (void)
 static void
 test_values (void)
 {
+	GMimeInternetAddressPrivate *priv;
+	GMimeGroupAddressPrivate *other_priv;
+	GMimeGroupAddressPrivate *group_priv;
 	GMimeInternetAddressList *list, *clone, *flat;
 	GMimeInternetAddress *group, *child, *other;
 	GMimeDomainList *route;
@@ -368,13 +372,21 @@ test_values (void)
 	check (g_mime_internet_address_list_equal (list, clone), "deep-cloned address lists compare equal");
 	check (g_mime_internet_address_list_compare (list, clone) == 0, "deep-cloned address list ordering");
 	other = g_mime_internet_address_list_get_address (clone, 0);
-	check (group != other && !strcmp (other->charset, "iso-8859-1"), "clone preserves charset and independent group ownership");
-	child = g_mime_internet_address_list_get_address (GMIME_GROUP_ADDRESS (other)->members, 0);
+	priv = _g_mime_internet_address_get_private (other);
+
+	check (group != other && !strcmp (priv->charset, "iso-8859-1"), "clone preserves charset and independent group ownership");
+	other_priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (other));
+
+	child = g_mime_internet_address_list_get_address (other_priv->members, 0);
 	route = g_mime_mailbox_address_get_route (GMIME_MAILBOX_ADDRESS (child));
 	g_mime_domain_list_add (route, "new.example");
 	check (g_mime_internet_address_list_equal (list, clone), "mailbox equality ignores routes");
-	check (g_mime_domain_list_length (GMIME_MAILBOX_ADDRESS (
-		g_mime_internet_address_list_get_address (GMIME_GROUP_ADDRESS (group)->members, 0))->route) == 2,
+	group_priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (group));
+
+	GMimeMailboxAddress *mailbox = GMIME_MAILBOX_ADDRESS (g_mime_internet_address_list_get_address (group_priv->members, 0));
+	GMimeMailboxAddressPrivate *mailbox_priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	check (g_mime_domain_list_length (mailbox_priv->route) == 2,
 		"cloned routes are independent");
 	check (g_mime_internet_address_list_contains (list, other), "list lookup uses recursive address equality");
 	g_mime_mailbox_address_set_addrspec (GMIME_MAILBOX_ADDRESS (child), "changed@example.com", NULL);
@@ -384,7 +396,7 @@ test_values (void)
 	flat = g_mime_internet_address_list_get_mailboxes (list);
 	check (g_mime_internet_address_list_length (flat) == 3, "flattening descends into nested groups");
 	check (g_mime_internet_address_list_get_address (flat, 0) ==
-	       g_mime_internet_address_list_get_address (GMIME_GROUP_ADDRESS (group)->members, 0),
+	       g_mime_internet_address_list_get_address (group_priv->members, 0),
 	       "flattening retains the original mailbox objects");
 	g_object_unref (clone);
 	g_object_unref (list);
@@ -467,6 +479,8 @@ test_ordering (void)
 static void
 test_collections (void)
 {
+	GMimeGroupAddressPrivate *group_priv;
+	GMimeGroupAddressPrivate *inner_priv;
 	GMimeInternetAddressList *list, *prepend, *members;
 	GMimeInternetAddress *ia, *group, *inner;
 	guint i, len;
@@ -491,8 +505,12 @@ test_collections (void)
 
 	list = g_mime_internet_address_list_parse_full (NULL, "Outer: Inner: a@example.com;;", -1, NULL);
 	group = g_mime_internet_address_list_get_address (list, 0);
-	inner = g_mime_internet_address_list_get_address (GMIME_GROUP_ADDRESS (group)->members, 0);
-	members = GMIME_GROUP_ADDRESS (inner)->members;
+	group_priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (group));
+
+	inner = g_mime_internet_address_list_get_address (group_priv->members, 0);
+	inner_priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (inner));
+
+	members = inner_priv->members;
 	g_mime_group_address_set_members (GMIME_GROUP_ADDRESS (group), members);
 	ia = g_mime_internet_address_list_get_address (members, 0);
 	g_mime_internet_address_list_set_address (list, 0, ia);

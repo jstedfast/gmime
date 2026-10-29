@@ -27,33 +27,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_FEEDBACK_REPORT            (g_mime_message_feedback_report_get_type ())
-#define GMIME_MESSAGE_FEEDBACK_REPORT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_FEEDBACK_REPORT, GMimeMessageFeedbackReport))
-#define GMIME_MESSAGE_FEEDBACK_REPORT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_FEEDBACK_REPORT, GMimeMessageFeedbackReportClass))
-#define GMIME_IS_MESSAGE_FEEDBACK_REPORT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_FEEDBACK_REPORT))
-#define GMIME_IS_MESSAGE_FEEDBACK_REPORT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_FEEDBACK_REPORT))
-#define GMIME_MESSAGE_FEEDBACK_REPORT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_FEEDBACK_REPORT, GMimeMessageFeedbackReportClass))
 
-typedef struct _GMimeMessageFeedbackReport GMimeMessageFeedbackReport;
-typedef struct _GMimeMessageFeedbackReportClass GMimeMessageFeedbackReportClass;
 
 /**
  * GMimeMessageFeedbackReport:
- * @parent_object: parent #GMimePart
  *
  * A message/feedback-report part with lazily parsed fields.
  **/
-struct _GMimeMessageFeedbackReport {
-	GMimePart parent_object;
-
-	/* < private > */
-	GMimeHeaderList *fields;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessageFeedbackReport, g_mime_message_feedback_report, GMIME, MESSAGE_FEEDBACK_REPORT, GMimePart)
 
 struct _GMimeMessageFeedbackReportClass {
 	GMimePartClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_message_feedback_report_get_type (void);
 
 GMimeMessageFeedbackReport *g_mime_message_feedback_report_new (void);
 GMimeHeaderList *g_mime_message_feedback_report_get_fields (GMimeMessageFeedbackReport *report, GError **error);

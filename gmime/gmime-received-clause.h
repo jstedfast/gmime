@@ -26,14 +26,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_RECEIVED_CLAUSE            (g_mime_received_clause_get_type ())
-#define GMIME_RECEIVED_CLAUSE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_RECEIVED_CLAUSE, GMimeReceivedClause))
-#define GMIME_RECEIVED_CLAUSE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_RECEIVED_CLAUSE, GMimeReceivedClauseClass))
-#define GMIME_IS_RECEIVED_CLAUSE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_RECEIVED_CLAUSE))
-#define GMIME_IS_RECEIVED_CLAUSE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_RECEIVED_CLAUSE))
-#define GMIME_RECEIVED_CLAUSE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_RECEIVED_CLAUSE, GMimeReceivedClauseClass))
 
-typedef struct _GMimeReceivedClause GMimeReceivedClause;
-typedef struct _GMimeReceivedClauseClass GMimeReceivedClauseClass;
 
 /**
  * GMimeReceivedClauseId:
@@ -61,25 +54,11 @@ typedef enum {
 
 /**
  * GMimeReceivedClause:
- * @parent_object: parent #GObject
  *
  * A Received header keyword, value and ordered collection of comments.
  **/
-struct _GMimeReceivedClause {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeReceivedClause, g_mime_received_clause, GMIME, RECEIVED_CLAUSE, GObject)
 
-	/* <private> */
-	GMimeReceivedClauseId id;
-	char *keyword;
-	char *value;
-	GPtrArray *comments;
-};
-
-struct _GMimeReceivedClauseClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_received_clause_get_type (void);
 
 GMimeReceivedClause *g_mime_received_clause_new (const char *keyword, const char *value, GError **error);
 GMimeReceivedClause *g_mime_received_clause_new_with_comment (const char *keyword, const char *value,

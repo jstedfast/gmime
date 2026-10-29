@@ -52,7 +52,7 @@
 
 /* GObject class methods */
 static void g_mime_text_part_class_init (GMimeTextPartClass *klass);
-static void g_mime_text_part_init (GMimeTextPart *mime_part, GMimeTextPartClass *klass);
+static void g_mime_text_part_init (GMimeTextPart *mime_part);
 static void g_mime_text_part_finalize (GObject *object);
 
 
@@ -65,29 +65,7 @@ text_part_accept (GMimeEntity *object, GMimeVisitor *visitor)
 }
 
 
-GType
-g_mime_text_part_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeTextPartClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_text_part_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeTextPart),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_text_part_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_PART, "GMimeTextPart", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_TYPE (GMimeTextPart, g_mime_text_part, GMIME_TYPE_PART)
 
 
 static void
@@ -102,7 +80,7 @@ g_mime_text_part_class_init (GMimeTextPartClass *klass)
 }
 
 static void
-g_mime_text_part_init (GMimeTextPart *mime_part, GMimeTextPartClass *klass)
+g_mime_text_part_init (GMimeTextPart *mime_part)
 {
 }
 

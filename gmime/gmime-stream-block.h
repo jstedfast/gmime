@@ -26,33 +26,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_BLOCK            (g_mime_stream_block_get_type ())
-#define GMIME_STREAM_BLOCK(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_BLOCK, GMimeStreamBlock))
-#define GMIME_STREAM_BLOCK_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_BLOCK, GMimeStreamBlockClass))
-#define GMIME_IS_STREAM_BLOCK(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_BLOCK))
-#define GMIME_IS_STREAM_BLOCK_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_BLOCK))
-#define GMIME_STREAM_BLOCK_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_BLOCK, GMimeStreamBlockClass))
 
-typedef struct _GMimeStreamBlock GMimeStreamBlock;
-typedef struct _GMimeStreamBlockClass GMimeStreamBlockClass;
 
 /**
  * GMimeStreamBlock:
- * @parent_object: parent #GMimeStream
  *
  * A memory stream backed by non-contiguous 2048-byte blocks.
  **/
-struct _GMimeStreamBlock {
-	GMimeStream parent_object;
-
-	/* <private> */
-	struct _GMimeStreamBlockPrivate *priv;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamBlock, g_mime_stream_block, GMIME, STREAM_BLOCK, GMimeStream)
 
 struct _GMimeStreamBlockClass {
 	GMimeStreamClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_stream_block_get_type (void);
 
 GMimeStream *g_mime_stream_block_new (void);
 int g_mime_stream_block_set_length (GMimeStreamBlock *stream, gint64 length);

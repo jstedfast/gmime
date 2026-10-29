@@ -25,6 +25,8 @@
 #include "gmime-header-list-collection.h"
 #include "gmime-events.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-header-list-collection
  * @title: GMimeHeaderListCollection
@@ -39,7 +41,7 @@
 static void collection_finalize (GObject *object);
 static void group_changed (GMimeHeaderList *group, gpointer args, GMimeHeaderListCollection *collection);
 
-G_DEFINE_TYPE (GMimeHeaderListCollection, g_mime_header_list_collection, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeHeaderListCollection, g_mime_header_list_collection, G_TYPE_OBJECT)
 
 static void
 g_mime_header_list_collection_class_init (GMimeHeaderListCollectionClass *klass)

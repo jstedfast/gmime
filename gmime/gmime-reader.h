@@ -29,14 +29,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_READER            (g_mime_reader_get_type ())
-#define GMIME_READER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_READER, GMimeReader))
-#define GMIME_READER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_READER, GMimeReaderClass))
-#define GMIME_IS_READER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_READER))
-#define GMIME_IS_READER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_READER))
-#define GMIME_READER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_READER, GMimeReaderClass))
 
-typedef struct _GMimeReader GMimeReader;
-typedef struct _GMimeReaderClass GMimeReaderClass;
 
 /**
  * GMimeReaderEntityType:
@@ -85,17 +78,11 @@ typedef enum {
 
 /**
  * GMimeReader:
- * @parent_object: parent #GObject
  *
  * A buffered, forward-only MIME reader. Subclasses consume wire data through
  * virtual callbacks without constructing a MIME object tree.
  **/
-struct _GMimeReader {
-	GObject parent_object;
-
-	/*< private >*/
-	struct _GMimeReaderPrivate *priv;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeReader, g_mime_reader, GMIME, READER, GObject)
 
 /**
  * GMimeReaderClass:
@@ -444,9 +431,11 @@ struct _GMimeReaderClass {
 	 **/
 	gboolean (* marker_end) (GMimeReader *reader, gint64 begin_offset, guint64 line_number,
 				gint64 end_offset, GError **error);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_reader_get_type (void);
 
 GMimeReader *g_mime_reader_new (GMimeParserOptions *options, GMimeStream *stream);
 GMimeReader *g_mime_reader_new_with_format (GMimeParserOptions *options, GMimeStream *stream, GMimeFormat format);

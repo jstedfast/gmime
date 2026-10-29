@@ -27,35 +27,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_CHECKSUM            (g_mime_filter_checksum_get_type ())
-#define GMIME_FILTER_CHECKSUM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_CHECKSUM, GMimeFilterChecksum))
-#define GMIME_FILTER_CHECKSUM_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_CHECKSUM, GMimeFilterChecksumClass))
-#define GMIME_IS_FILTER_CHECKSUM(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_CHECKSUM))
-#define GMIME_IS_FILTER_CHECKSUM_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_CHECKSUM))
-#define GMIME_FILTER_CHECKSUM_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_CHECKSUM, GMimeFilterChecksumClass))
 
-typedef struct _GMimeFilterChecksum GMimeFilterChecksum;
-typedef struct _GMimeFilterChecksumClass GMimeFilterChecksumClass;
 
 /**
  * GMimeFilterChecksum:
- * @parent_object: parent #GMimeFilter
- * @checksum: The checksum context
  *
  * A filter for calculating the checksum of a stream.
  **/
-struct _GMimeFilterChecksum {
-	GMimeFilter parent_object;
-	
-	GChecksum *checksum;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterChecksum, g_mime_filter_checksum, GMIME, FILTER_CHECKSUM, GMimeFilter)
 
 struct _GMimeFilterChecksumClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_checksum_get_type (void);
 
 GMimeFilter *g_mime_filter_checksum_new (GChecksumType type);
 

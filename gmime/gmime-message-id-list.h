@@ -28,32 +28,17 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_ID_LIST (g_mime_message_id_list_get_type ())
-#define GMIME_MESSAGE_ID_LIST(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_ID_LIST, GMimeMessageIdList))
-#define GMIME_IS_MESSAGE_ID_LIST(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_ID_LIST))
 
-typedef struct _GMimeMessageIdList GMimeMessageIdList;
-typedef struct _GMimeMessageIdListClass GMimeMessageIdListClass;
 
 /**
  * GMimeMessageIdList:
- * @parent_object: parent #GObject
  *
  * An ordered, mutable collection of message identifiers.
  * Changes propagate to the owning message's References header.
  **/
-struct _GMimeMessageIdList {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeMessageIdList, g_mime_message_id_list, GMIME, MESSAGE_ID_LIST, GObject)
 
-	/* <private> */
-	GPtrArray *array;
-	gpointer changed;
-};
 
-struct _GMimeMessageIdListClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_message_id_list_get_type (void);
 GMimeMessageIdList *g_mime_message_id_list_new (void);
 GMimeMessageIdList *g_mime_message_id_list_clone (GMimeMessageIdList *list);
 GMimeMessageIdList *g_mime_message_id_list_parse (GMimeParserOptions *options, const char *text);

@@ -37,6 +37,7 @@
 #include "gmime-utils.h"
 #include "gmime-error.h"
 
+#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-message-partial
@@ -57,28 +58,11 @@ message_partial_accept (GMimeEntity *object, GMimeVisitor *visitor)
 }
 
 
-GType
-g_mime_message_partial_get_type (void)
+G_DEFINE_TYPE (GMimeMessagePartial, g_mime_message_partial, GMIME_TYPE_PART)
+
+static void
+g_mime_message_partial_init (GMimeMessagePartial *partial)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeMessagePartialClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_message_partial_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeMessagePartial),
-			0,    /* n_preallocs */
-			NULL, /* instance_init */
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_PART, "GMimeMessagePartial", &info, 0);
-	}
-	
-	return type;
 }
 
 
@@ -93,7 +77,8 @@ g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 static int
 message_partial_get_integer (GMimeMessagePartial *partial, const char *name)
 {
-	GMimeContentType *content_type = ((GMimeEntity *) partial)->content_type;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) partial);
+	GMimeContentType *content_type = priv->content_type;
 	const char *value;
 	gint32 number;
 
@@ -167,10 +152,13 @@ const char *
 g_mime_message_partial_get_id (GMimeMessagePartial *partial)
 {
 	GMimeEntity *entity = (GMimeEntity *) partial;
+	GMimeEntityPrivate *priv;
 
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), NULL);
 	
-	return entity->content_type ? g_mime_content_type_get_parameter (entity->content_type, "id") : NULL;
+	priv = _g_mime_entity_get_private (entity);
+
+	return priv->content_type ? g_mime_content_type_get_parameter (priv->content_type, "id") : NULL;
 }
 
 
@@ -238,8 +226,11 @@ partial_preserves_header (GMimeHeaderId id)
 static void
 combine_headers (GMimeMessage *message, GMimeMessage *joined)
 {
-	GMimeHeaderList *outer = ((GMimeEntity *) message)->headers;
-	GMimeHeaderList *inner = ((GMimeEntity *) joined)->headers;
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+	GMimeHeaderList *outer = entity_priv->headers;
+	GMimeEntityPrivate *joined_entity_priv = _g_mime_entity_get_private ((GMimeEntity *) joined);
+	GMimeMessagePrivate *joined_priv = _g_mime_message_get_private (joined);
+	GMimeHeaderList *inner = joined_entity_priv->headers;
 	GPtrArray *headers = g_ptr_array_new_with_free_func (g_object_unref);
 	GMimeHeader *header, *original, *clone;
 	int i = 0, index;
@@ -290,8 +281,10 @@ combine_headers (GMimeMessage *message, GMimeMessage *joined)
 
 	g_ptr_array_unref (headers);
 
-	if (joined->mime_part) {
-		inner = joined->mime_part->headers;
+	if (joined_priv->mime_part) {
+		GMimeEntityPrivate *part_priv = _g_mime_entity_get_private (joined_priv->mime_part);
+
+		inner = part_priv->headers;
 
 		for (i = 0; i < g_mime_header_list_get_count (inner); i++)
 			_g_mime_header_set_offset (g_mime_header_list_get_header_at (inner, i), -1);
@@ -351,6 +344,7 @@ g_mime_message_partial_join (GMimeParserOptions *options, GMimeMessage *message,
 		const char *partial_id;
 
 		partial = partials[i];
+
 		g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), NULL);
 
 		/* sanity check to make sure this part belongs... */
@@ -444,6 +438,7 @@ g_mime_message_partial_join (GMimeParserOptions *options, GMimeMessage *message,
 static GMimeMessage *
 message_partial_message_new (GMimeMessage *base)
 {
+	GMimeEntityPrivate *base_priv, *priv;
 	GMimeHeaderList *headers, *cloned;
 	GMimeHeader *header, *copy;
 	GMimeMessage *message;
@@ -451,8 +446,12 @@ message_partial_message_new (GMimeMessage *base)
 	int count, i;
 	
 	message = g_mime_message_new (FALSE);
-	headers = ((GMimeEntity *) base)->headers;
-	cloned = ((GMimeEntity *) message)->headers;
+	base_priv = _g_mime_entity_get_private ((GMimeEntity *) base);
+
+	headers = base_priv->headers;
+	priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+
+	cloned = priv->headers;
 	_g_mime_header_list_set_options (cloned, _g_mime_header_list_get_options (headers));
 	
 	count = g_mime_header_list_get_count (headers);
@@ -506,6 +505,7 @@ message_partial_message_new (GMimeMessage *base)
 GMimeMessage **
 g_mime_message_partial_split (GMimeMessage *message, size_t max_size, size_t *nparts, GError **error)
 {
+	GMimeStreamMemPrivate *priv;
 	GMimeMessage **messages;
 	GMimeMessagePartial *partial;
 	GMimeStream *stream, *substream;
@@ -573,7 +573,9 @@ g_mime_message_partial_split (GMimeMessage *message, size_t max_size, size_t *np
 	
 	start = 0;
 	parts = g_ptr_array_new_with_free_func (g_object_unref);
-	buf = ((GMimeStreamMem *) stream)->buffer->data;
+	priv = _g_mime_stream_mem_get_private ((GMimeStreamMem *) stream);
+
+	buf = priv->buffer->data;
 	
 	while (start < len) {
 		/* Preferably, we'd split on whole-lines if we can,

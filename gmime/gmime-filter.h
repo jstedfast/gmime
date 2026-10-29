@@ -29,38 +29,14 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER            (g_mime_filter_get_type ())
-#define GMIME_FILTER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER, GMimeFilter))
-#define GMIME_FILTER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER, GMimeFilterClass))
-#define GMIME_IS_FILTER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER))
-#define GMIME_IS_FILTER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER))
-#define GMIME_FILTER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER, GMimeFilterClass))
 
-typedef struct _GMimeFilter GMimeFilter;
-typedef struct _GMimeFilterClass GMimeFilterClass;
 
 /**
  * GMimeFilter:
- * @parent_object: parent #GObject
- * @priv: private state data
  *
  * Base class for filters used by #GMimeStreamFilter.
  **/
-struct _GMimeFilter {
-	GObject parent_object;
-	
-	struct _GMimeFilterPrivate *priv;
-	
-	/* <protected> */
-	char *outreal;   /* real malloc'd buffer */
-	char *outbuf;    /* first 'writable' position allowed (@outreal + @outpre) */
-	char *outptr;    /* current writable position */
-	size_t outsize;  /* current bytes in @outbuf */
-	size_t outpre;   /* current prespace of @outbuf */
-	
-	char *backbuf;   /* backup buffer */
-	size_t backsize; /* backup buffer size */
-	size_t backlen;  /* number of bytes backed-up in @backbuf */
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilter, g_mime_filter, GMIME, FILTER, GObject)
 
 struct _GMimeFilterClass {
 	GObjectClass parent_class;
@@ -75,10 +51,10 @@ struct _GMimeFilterClass {
 			   char **outbuf, size_t *outlen, size_t *outprespace);
 	
 	void (* reset)    (GMimeFilter *filter);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
-
-
-GType g_mime_filter_get_type (void);
 
 
 GMimeFilter *g_mime_filter_copy (GMimeFilter *filter);
@@ -99,6 +75,7 @@ void g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length)
 
 /* ensure this much size available for filter output */
 void g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep);
+char *g_mime_filter_get_output_buffer (GMimeFilter *filter, size_t *size, size_t *prespace);
 
 G_END_DECLS
 

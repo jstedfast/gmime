@@ -27,17 +27,9 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_GPG_CONTEXT            (g_mime_gpg_context_get_type ())
-#define GMIME_GPG_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContext))
-#define GMIME_GPG_CONTEXT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContextClass))
-#define GMIME_IS_GPG_CONTEXT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_GPG_CONTEXT))
-#define GMIME_IS_GPG_CONTEXT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_GPG_CONTEXT))
-#define GMIME_GPG_CONTEXT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContextClass))
-
-typedef struct _GMimeGpgContext GMimeGpgContext;
-typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
 
 
-GType g_mime_gpg_context_get_type (void);
+G_DECLARE_FINAL_TYPE (GMimeGpgContext, g_mime_gpg_context, GMIME, GPG_CONTEXT, GMimeCryptoContext)
 
 GMimeCryptoContext *g_mime_gpg_context_new (void);
 

@@ -68,7 +68,7 @@ struct _GMimeYencOptions {
  * alone does not imply that content has been validated.
  **/
 struct _GMimeYencHeader {
-	GObject parent_object;
+	GObject parent_instance;
 	char *filename;
 	gint64 size, begin, end;
 	guint line_length, part_number, total_parts;
@@ -87,7 +87,7 @@ struct _GMimeYencHeader {
  * closed; non-seekable sources are supported.
  **/
 struct _GMimeYencReader {
-	GObject parent_object;
+	GObject parent_instance;
 	GMimeYencOptions *options;
 	GMimeStream *stream;
 	GMimeYencHeader *header;
@@ -109,16 +109,16 @@ struct _GMimeYencReader {
  * explicitly closed. No MIME headers or NNTP framing are generated.
  **/
 struct _GMimeYencWriter {
-	GObject parent_object;
+	GObject parent_instance;
 	GMimeYencOptions *options;
 	GMimeStream *stream;
 	gboolean faulted;
 };
 
 G_DEFINE_BOXED_TYPE (GMimeYencOptions, g_mime_yenc_options, g_mime_yenc_options_clone, g_mime_yenc_options_free)
-G_DEFINE_TYPE (GMimeYencHeader, g_mime_yenc_header, G_TYPE_OBJECT)
-G_DEFINE_TYPE (GMimeYencReader, g_mime_yenc_reader, G_TYPE_OBJECT)
-G_DEFINE_TYPE (GMimeYencWriter, g_mime_yenc_writer, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeYencHeader, g_mime_yenc_header, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeYencReader, g_mime_yenc_reader, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeYencWriter, g_mime_yenc_writer, G_TYPE_OBJECT)
 
 static gboolean
 yenc_error (GError **error, const char *message)

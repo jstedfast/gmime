@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <errno.h>
@@ -30,7 +31,7 @@
 #include "testsuite.h"
 
 typedef struct {
-	TestStreamOneByte parent_object;
+	TestStreamOneByte parent_instance;
 	gsize chunk, bytes_read, fail_after;
 	guint reads, resets, closes;
 	gboolean nonseekable, unset_errno, zero_read;
@@ -55,7 +56,7 @@ reader_input_read (GMimeStream *stream, char *buffer, size_t length)
 		return -1;
 	}
 	length = MIN (length, MIN (input->chunk, input->fail_after - input->bytes_read));
-	nread = g_mime_stream_read (input->parent_object.source, buffer, length);
+	nread = g_mime_stream_read (input->parent_instance.source, buffer, length);
 	if (nread > 0)
 		input->bytes_read += nread;
 	return nread;
@@ -70,14 +71,14 @@ reader_input_tell (GMimeStream *stream)
 		errno = ESPIPE;
 		return -1;
 	}
-	return input->origin + g_mime_stream_tell (input->parent_object.source);
+	return input->origin + g_mime_stream_tell (input->parent_instance.source);
 }
 
 static int
 reader_input_reset (GMimeStream *stream)
 {
 	((ReaderInput *) stream)->resets++;
-	return g_mime_stream_reset (((ReaderInput *) stream)->parent_object.source);
+	return g_mime_stream_reset (((ReaderInput *) stream)->parent_instance.source);
 }
 
 static int
@@ -110,13 +111,13 @@ new_input (const char *data, gsize length, gsize chunk)
 {
 	ReaderInput *input = g_object_new (reader_input_get_type (), NULL);
 
-	input->parent_object.source = g_mime_stream_mem_new_with_buffer (data, length);
+	input->parent_instance.source = g_mime_stream_mem_new_with_buffer (data, length);
 	input->chunk = chunk;
 	return input;
 }
 
 typedef struct {
-	GMimeReader parent_object;
+	GMimeReader parent_instance;
 	GString *trace;
 	GByteArray *content, *boundary;
 	guint entities, max_entities, content_chunks;
@@ -627,7 +628,7 @@ test_reader_state (void)
 
 	input->origin = G_MAXINT64;
 	/* Reset only the test source, never the reader's stream. */
-	g_mime_stream_reset (input->parent_object.source);
+	g_mime_stream_reset (input->parent_instance.source);
 	reader = new_reader (input, NULL);
 	g_assert_false (g_mime_reader_read_headers ((GMimeReader *) reader, &error));
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
@@ -720,6 +721,7 @@ test_openpgp_option (void)
 		for (enabled = 0; enabled < 2; enabled++) {
 			for (encoded = 0; encoded < 2; encoded++) {
 				for (construct = 0; construct < 4; construct++) {
+					GMimePartPrivate *priv;
 					char *body = encoded ? g_base64_encode ((const guint8 *) cases[i].armor, strlen (cases[i].armor)) : g_strdup (cases[i].armor);
 					char *wire = g_strdup_printf ("%sContent-Type: text/plain\nContent-Transfer-Encoding: %s\n\n%s%s",
 								      construct == 2 ? "From sender Sat Jan  1 00:00:00 2000\n" :
@@ -745,10 +747,12 @@ test_openpgp_option (void)
 					g_assert_no_error (error);
 					g_assert_nonnull (entity);
 					part = construct == 0 ? GMIME_PART (entity) : GMIME_PART (g_mime_message_get_mime_part (GMIME_MESSAGE (entity)));
+					priv = _g_mime_part_get_private (part);
+
 					if (!enabled || encoded)
-						g_assert_cmpint (part->openpgp, ==, (GMimeOpenPGPData) -1);
+						g_assert_cmpint (priv->openpgp, ==, (GMimeOpenPGPData) -1);
 					else
-						g_assert_cmpint (part->openpgp, ==, cases[i].type);
+						g_assert_cmpint (priv->openpgp, ==, cases[i].type);
 					g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, cases[i].type);
 					g_object_unref (entity);
 					g_object_unref (parser);
@@ -779,6 +783,7 @@ test_openpgp_reuse (void)
 	parser = g_mime_parser_new_with_stream (stream);
 	g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
 	for (i = 0; i < 5; i++) {
+		GMimePartPrivate *part_priv;
 		GError *error = NULL;
 		GMimeMessage *message;
 		GMimePart *part;
@@ -789,7 +794,9 @@ test_openpgp_reuse (void)
 		g_assert_no_error (error);
 		g_assert_nonnull (message);
 		part = GMIME_PART (g_mime_message_get_mime_part (message));
-		g_assert_cmpint (part->openpgp, ==, (enabled ? GMIME_OPENPGP_DATA_ENCRYPTED : (GMimeOpenPGPData) -1));
+		part_priv = _g_mime_part_get_private (part);
+
+		g_assert_cmpint (part_priv->openpgp, ==, (enabled ? GMIME_OPENPGP_DATA_ENCRYPTED : (GMimeOpenPGPData) -1));
 		g_object_unref (message);
 	}
 	g_object_unref (parser);
@@ -797,6 +804,8 @@ test_openpgp_reuse (void)
 	g_string_free (wire, TRUE);
 
 	for (i = 0; i < 2; i++) {
+		GMimePartPrivate *first_priv;
+		GMimePartPrivate *second_priv;
 		GError *error = NULL;
 		GMimeEntity *entity;
 		GMimeMultipart *multipart;
@@ -815,8 +824,12 @@ test_openpgp_reuse (void)
 		g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 2);
 		first = GMIME_PART (g_mime_multipart_get_part (multipart, 0));
 		second = GMIME_PART (g_mime_multipart_get_part (multipart, 1));
-		g_assert_cmpint (first->openpgp, ==, (i ? GMIME_OPENPGP_DATA_ENCRYPTED : (GMimeOpenPGPData) -1));
-		g_assert_cmpint (second->openpgp, ==, (i ? GMIME_OPENPGP_DATA_NONE : (GMimeOpenPGPData) -1));
+		first_priv = _g_mime_part_get_private (first);
+
+		g_assert_cmpint (first_priv->openpgp, ==, (i ? GMIME_OPENPGP_DATA_ENCRYPTED : (GMimeOpenPGPData) -1));
+		second_priv = _g_mime_part_get_private (second);
+
+		g_assert_cmpint (second_priv->openpgp, ==, (i ? GMIME_OPENPGP_DATA_NONE : (GMimeOpenPGPData) -1));
 		g_object_unref (entity);
 		g_object_unref (parser);
 		g_object_unref (stream);

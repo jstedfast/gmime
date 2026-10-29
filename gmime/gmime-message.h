@@ -37,14 +37,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
-#define GMIME_MESSAGE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))
-#define GMIME_MESSAGE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE, GMimeMessageClass))
-#define GMIME_IS_MESSAGE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE))
-#define GMIME_IS_MESSAGE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE))
-#define GMIME_MESSAGE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE, GMimeMessageClass))
 
-typedef struct _GMimeMessage GMimeMessage;
-typedef struct _GMimeMessageClass GMimeMessageClass;
 
 
 /**
@@ -128,43 +121,18 @@ typedef enum {
 
 /**
  * GMimeMessage:
- * @parent_object: parent #GMimeEntity
- * @addrlists: a table of address lists
- * @mime_part: toplevel MIME part
- * @message_id: Message-Id string
- * @date: Date value
- * @subject: Subject string
  *
  * A MIME Message object.
  **/
-struct _GMimeMessage {
-	GMimeEntity parent_object;
-	
-	GMimeInternetAddressList **addrlists;
-	GMimeEntity *mime_part;
-	char *message_id;
-	GDateTime *date;
-	char *subject;
-	
-	/* <private> */
-	char *marker;
-	GBytes *raw_marker;
-	char *in_reply_to;
-	char *resent_message_id;
-	GMimeMessageIdList *references;
-	GMimeMessageImportance importance;
-	GMimeMessagePriority priority;
-	GMimeXMessagePriority x_priority;
-	GDateTime *resent_date;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessage, g_mime_message, GMIME, MESSAGE, GMimeEntity)
 
 struct _GMimeMessageClass {
 	GMimeEntityClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_message_get_type (void);
 
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
 

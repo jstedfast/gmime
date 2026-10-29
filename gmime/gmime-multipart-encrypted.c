@@ -46,6 +46,8 @@
 #define _(x) x
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-multipart-encrypted
  * @title: GMimeMultipartEncrypted
@@ -59,36 +61,14 @@
 
 /* GObject class methods */
 static void g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass);
-static void g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mps, GMimeMultipartEncryptedClass *klass);
+static void g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mps);
 static void g_mime_multipart_encrypted_finalize (GObject *object);
 
 
 static GMimeMultipartClass *parent_class = NULL;
 
 
-GType
-g_mime_multipart_encrypted_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeMultipartEncryptedClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_multipart_encrypted_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeMultipartEncrypted),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_multipart_encrypted_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_MULTIPART, "GMimeMultipartEncrypted", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_TYPE (GMimeMultipartEncrypted, g_mime_multipart_encrypted, GMIME_TYPE_MULTIPART)
 
 
 static void
@@ -102,7 +82,7 @@ g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass)
 }
 
 static void
-g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mpe, GMimeMultipartEncryptedClass *klass)
+g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mpe)
 {
 	
 }
@@ -266,9 +246,10 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 	GMimeStream *filtered, *stream, *ciphertext;
 	const char *protocol, *supported;
 	GMimeContentType *content_type;
-	GMimeContent *content;
+	GMimeEntityPrivate *priv;
 	GMimeDecryptResult *res;
 	GMimeCryptoContext *ctx;
+	GMimeContent *content;
 	GMimeFilter *filter;
 	GMimeParser *parser;
 	char *mime_type;
@@ -308,7 +289,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 	version_part = g_mime_multipart_get_part ((GMimeMultipart *) encrypted, GMIME_MULTIPART_ENCRYPTED_VERSION);
 	
 	/* make sure the protocol matches the version part's content-type */
-	mime_type = g_mime_content_type_get_mime_type (version_part->content_type);
+	priv = _g_mime_entity_get_private (version_part);
+	mime_type = g_mime_content_type_get_mime_type (priv->content_type);
+
 	if (g_ascii_strcasecmp (mime_type, protocol) != 0) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: content-type does not match protocol."));
@@ -318,11 +301,13 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 		
 		return NULL;
 	}
+
 	g_free (mime_type);
 	
 	/* get the encrypted part and check that it is of type application/octet-stream */
 	encrypted_part = g_mime_multipart_get_part ((GMimeMultipart *) encrypted, GMIME_MULTIPART_ENCRYPTED_CONTENT);
 	content_type = g_mime_entity_get_content_type (encrypted_part);
+
 	if (!g_mime_content_type_is_type (content_type, "application", "octet-stream")) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: unexpected content type."));

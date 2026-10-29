@@ -26,34 +26,16 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_BODY_BUILDER (g_mime_body_builder_get_type ())
-#define GMIME_BODY_BUILDER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_BODY_BUILDER, GMimeBodyBuilder))
-#define GMIME_IS_BODY_BUILDER(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_BODY_BUILDER))
 
-typedef struct _GMimeBodyBuilder GMimeBodyBuilder;
-typedef struct _GMimeBodyBuilderClass GMimeBodyBuilderClass;
 
 /**
  * GMimeBodyBuilder:
- * @parent_object: parent #GObject
  *
  * A helper for constructing common MIME message body structures.
  **/
-struct _GMimeBodyBuilder {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeBodyBuilder, g_mime_body_builder, GMIME, BODY_BUILDER, GObject)
 
-	/* <private> */
-	GMimeAttachmentCollection *attachments;
-	GMimeAttachmentCollection *linked_resources;
-	char *text_body;
-	char *html_body;
-	char *body_encoding;
-};
 
-struct _GMimeBodyBuilderClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_body_builder_get_type (void);
 GMimeBodyBuilder *g_mime_body_builder_new (void);
 GMimeAttachmentCollection *g_mime_body_builder_get_attachments (GMimeBodyBuilder *builder);
 GMimeAttachmentCollection *g_mime_body_builder_get_linked_resources (GMimeBodyBuilder *builder);

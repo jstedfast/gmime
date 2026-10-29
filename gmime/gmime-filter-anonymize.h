@@ -26,30 +26,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_ANONYMIZE            (g_mime_filter_anonymize_get_type ())
-#define GMIME_FILTER_ANONYMIZE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_ANONYMIZE, GMimeFilterAnonymize))
-#define GMIME_FILTER_ANONYMIZE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_ANONYMIZE, GMimeFilterAnonymizeClass))
-#define GMIME_IS_FILTER_ANONYMIZE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_ANONYMIZE))
-#define GMIME_IS_FILTER_ANONYMIZE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_ANONYMIZE))
-#define GMIME_FILTER_ANONYMIZE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_ANONYMIZE, GMimeFilterAnonymizeClass))
 
-typedef struct _GMimeFilterAnonymize GMimeFilterAnonymize;
-typedef struct _GMimeFilterAnonymizeClass GMimeFilterAnonymizeClass;
 
 /**
  * GMimeFilterAnonymize:
- * @parent_object: parent #GMimeFilter
  *
  * A filter that replaces non-whitespace bytes with lowercase ASCII 'x'.
  **/
-struct _GMimeFilterAnonymize {
-	GMimeFilter parent_object;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterAnonymize, g_mime_filter_anonymize, GMIME, FILTER_ANONYMIZE, GMimeFilter)
 
 struct _GMimeFilterAnonymizeClass {
 	GMimeFilterClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_filter_anonymize_get_type (void);
 
 GMimeFilter *g_mime_filter_anonymize_new (void);
 

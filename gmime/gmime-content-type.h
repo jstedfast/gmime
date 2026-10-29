@@ -30,40 +30,15 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_CONTENT_TYPE              (g_mime_content_type_get_type ())
-#define GMIME_CONTENT_TYPE(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), g_mime_content_type_get_type (), GMimeContentType))
-#define GMIME_CONTENT_TYPE_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), g_mime_content_type_get_type (), GMimeContentTypeClass))
-#define GMIME_IS_CONTENT_TYPE(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj), g_mime_content_type_get_type ()))
-#define GMIME_IS_CONTENT_TYPE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), g_mime_content_type_get_type ()))
-#define GMIME_CONTENT_TYPE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), g_mime_content_type_get_type (), GMimeContentTypeClass))
 
-typedef struct _GMimeContentType GMimeContentType;
-typedef struct _GMimeContentTypeClass GMimeContentTypeClass;
 
 /**
  * GMimeContentType:
- * @parent_object: parent #GObject
- * @type: media type
- * @subtype: media subtype
- * @params: a #GMimeParam list
  *
  * A data structure representing a Content-Type.
  **/
-struct _GMimeContentType {
-	GObject parent_object;
-	
-	char *type, *subtype;
-	GMimeParamList *params;
-	
-	/* < private > */
-	gpointer changed;
-};
+G_DECLARE_FINAL_TYPE (GMimeContentType, g_mime_content_type, GMIME, CONTENT_TYPE, GObject)
 
-struct _GMimeContentTypeClass {
-	GObjectClass parent_class;
-	
-};
-
-GType g_mime_content_type_get_type (void);
 
 GMimeContentType *g_mime_content_type_new (const char *type, const char *subtype);
 GMimeContentType *g_mime_content_type_parse (GMimeParserOptions *options, const char *str);

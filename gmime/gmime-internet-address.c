@@ -39,6 +39,8 @@
 #include "gmime-error.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-internet-address
  * @title: GMimeInternetAddress
@@ -51,36 +53,20 @@
 
 
 static void g_mime_internet_address_class_init (GMimeInternetAddressClass *klass);
-static void g_mime_internet_address_init (GMimeInternetAddress *ia, GMimeInternetAddressClass *klass);
+static void g_mime_internet_address_init (GMimeInternetAddress *ia);
 static void g_mime_internet_address_finalize (GObject *object);
 
 
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_internet_address_get_type (void)
+
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GMimeInternetAddress, g_mime_internet_address, G_TYPE_OBJECT)
+
+GMimeInternetAddressPrivate *
+_g_mime_internet_address_get_private (GMimeInternetAddress *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeInternetAddressClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_internet_address_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeInternetAddress),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_internet_address_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeInternetAddress",
-					       &info, G_TYPE_FLAG_ABSTRACT);
-	}
-	
-	return type;
+	return g_mime_internet_address_get_instance_private (object);
 }
 
 
@@ -97,21 +83,23 @@ g_mime_internet_address_class_init (GMimeInternetAddressClass *klass)
 }
 
 static void
-g_mime_internet_address_init (GMimeInternetAddress *ia, GMimeInternetAddressClass *klass)
+g_mime_internet_address_init (GMimeInternetAddress *ia)
 {
-	ia->changed = g_mime_event_new ((GObject *) ia);
-	ia->charset = NULL;
-	ia->name = NULL;
+	GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (ia);
+
+	priv->changed = g_mime_event_new ((GObject *) ia);
+	priv->charset = NULL;
+	priv->name = NULL;
 }
 
 static void
 g_mime_internet_address_finalize (GObject *object)
 {
-	GMimeInternetAddress *ia = (GMimeInternetAddress *) object;
-	
-	g_mime_event_free (ia->changed);
-	g_free (ia->charset);
-	g_free (ia->name);
+	GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private ((GMimeInternetAddress *) object);
+
+	g_mime_event_free (priv->changed);
+	g_free (priv->charset);
+	g_free (priv->name);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -120,11 +108,14 @@ g_mime_internet_address_finalize (GObject *object)
 gboolean
 _g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name)
 {
+	GMimeInternetAddressPrivate *priv;
 	const char *end;
 	char *buf = NULL;
 	size_t len;
 
 	g_return_val_if_fail (name == NULL || g_utf8_validate (name, -1, NULL), FALSE);
+
+	priv = _g_mime_internet_address_get_private (ia);
 
 	/* Edge linear whitespace cannot survive folding and RFC 2047 round trips reliably. */
 	if (name) {
@@ -138,16 +129,16 @@ _g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name)
 
 		len = end - name;
 
-		if (ia->name && strlen (ia->name) == len && !memcmp (ia->name, name, len))
+		if (priv->name && strlen (priv->name) == len && !memcmp (priv->name, name, len))
 			return FALSE;
 
 		buf = g_strndup (name, len);
-	} else if (!ia->name) {
+	} else if (!priv->name) {
 		return FALSE;
 	}
 
-	g_free (ia->name);
-	ia->name = buf;
+	g_free (priv->name);
+	priv->name = buf;
 
 	return TRUE;
 }
@@ -171,8 +162,11 @@ g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name)
 {
 	g_return_if_fail (GMIME_IS_INTERNET_ADDRESS (ia));
 	
-	if (_g_mime_internet_address_set_name (ia, name))
-		g_mime_event_emit (ia->changed, NULL);
+	if (_g_mime_internet_address_set_name (ia, name)) {
+		GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (ia);
+
+		g_mime_event_emit (priv->changed, NULL);
+	}
 }
 
 
@@ -189,9 +183,13 @@ g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name)
 const char *
 g_mime_internet_address_get_name (GMimeInternetAddress *ia)
 {
+	GMimeInternetAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_INTERNET_ADDRESS (ia), NULL);
 	
-	return ia->name;
+	priv = _g_mime_internet_address_get_private (ia);
+
+	return priv->name;
 }
 
 
@@ -206,18 +204,21 @@ g_mime_internet_address_get_name (GMimeInternetAddress *ia)
 void
 g_mime_internet_address_set_charset (GMimeInternetAddress *ia, const char *charset)
 {
+	GMimeInternetAddressPrivate *priv;
 	char *buf;
 	
 	g_return_if_fail (GMIME_IS_INTERNET_ADDRESS (ia));
 
-	if (!g_strcmp0 (ia->charset, charset))
+	priv = _g_mime_internet_address_get_private (ia);
+
+	if (!g_strcmp0 (priv->charset, charset))
 		return;
 
 	buf = charset ? g_strdup (charset) : NULL;
-	g_free (ia->charset);
-	ia->charset = buf;
+	g_free (priv->charset);
+	priv->charset = buf;
 	
-	g_mime_event_emit (ia->changed, NULL);
+	g_mime_event_emit (priv->changed, NULL);
 }
 
 
@@ -233,9 +234,13 @@ g_mime_internet_address_set_charset (GMimeInternetAddress *ia, const char *chars
 const char *
 g_mime_internet_address_get_charset (GMimeInternetAddress *ia)
 {
+	GMimeInternetAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_INTERNET_ADDRESS (ia), NULL);
 	
-	return ia->charset;
+	priv = _g_mime_internet_address_get_private (ia);
+
+	return priv->charset;
 }
 
 
@@ -322,6 +327,8 @@ g_mime_internet_address_equal (GMimeInternetAddress *ia, GMimeInternetAddress *o
 int
 g_mime_internet_address_compare (GMimeInternetAddress *ia, GMimeInternetAddress *other)
 {
+	GMimeInternetAddressPrivate *ia_priv;
+	GMimeInternetAddressPrivate *other_priv;
 	char *left, *right;
 	int result;
 
@@ -331,10 +338,13 @@ g_mime_internet_address_compare (GMimeInternetAddress *ia, GMimeInternetAddress 
 	if (ia == other)
 		return 0;
 
-	if (!ia->name || !other->name) {
-		result = (ia->name != NULL) - (other->name != NULL);
+	ia_priv = _g_mime_internet_address_get_private (ia);
+	other_priv = _g_mime_internet_address_get_private (other);
+
+	if (!ia_priv->name || !other_priv->name) {
+		result = (ia_priv->name != NULL) - (other_priv->name != NULL);
 	} else {
-		result = g_strcmp0 (ia->name, other->name);
+		result = g_strcmp0 (ia_priv->name, other_priv->name);
 	}
 
 	if (result)

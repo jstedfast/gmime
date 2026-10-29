@@ -28,6 +28,8 @@
 #include "gmime-filter-from.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-from
  * @title: GMimeFilterFrom
@@ -50,7 +52,7 @@
 
 
 static void g_mime_filter_from_class_init (GMimeFilterFromClass *klass);
-static void g_mime_filter_from_init (GMimeFilterFrom *filter, GMimeFilterFromClass *klass);
+static void g_mime_filter_from_init (GMimeFilterFrom *filter);
 static void g_mime_filter_from_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -66,28 +68,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_from_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterFrom, g_mime_filter_from, GMIME_TYPE_FILTER)
+
+GMimeFilterFromPrivate *
+_g_mime_filter_from_get_private (GMimeFilterFrom *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterFromClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_from_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterFrom),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_from_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterFrom", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_from_get_instance_private (object);
 }
 
 
@@ -108,9 +95,11 @@ g_mime_filter_from_class_init (GMimeFilterFromClass *klass)
 }
 
 static void
-g_mime_filter_from_init (GMimeFilterFrom *filter, GMimeFilterFromClass *klass)
+g_mime_filter_from_init (GMimeFilterFrom *filter)
 {
-	filter->midline = FALSE;
+	GMimeFilterFromPrivate *priv = _g_mime_filter_from_get_private (filter);
+
+	priv->midline = FALSE;
 }
 
 static void
@@ -123,28 +112,28 @@ g_mime_filter_from_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
-	
-	return g_mime_filter_from_new (from->mode);
+	GMimeFilterFromPrivate *priv = _g_mime_filter_from_get_private ((GMimeFilterFrom *) filter);
+
+	return g_mime_filter_from_new (priv->mode);
 }
 
 static void
 convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	 char **out, size_t *outlen, size_t *outprespace, gboolean flush)
 {
-	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
+	GMimeFilterFromPrivate *priv = _g_mime_filter_from_get_private ((GMimeFilterFrom *) filter);
 	const char *inptr = in, *inend = in + len, *newline, *src;
-	GArray *offsets = NULL;
 	size_t consumed = len, left, offset, growth, need;
+	GArray *offsets = NULL;
 	char *outptr;
 	guint i;
 
-	if (from->midline) {
+	if (priv->midline) {
 		/* The last pass ended mid-line; first find the end of that line. */
 		newline = memchr (inptr, '\n', len);
 		if (newline) {
 			inptr = newline + 1;
-			from->midline = FALSE;
+			priv->midline = FALSE;
 		} else {
 			/* No LF in this block: all of it still belongs to that line. */
 			inptr = inend;
@@ -172,7 +161,7 @@ convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				break;
 			}
 
-			from->midline = TRUE;
+			priv->midline = TRUE;
 			break;
 		}
 
@@ -180,19 +169,27 @@ convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	}
 
 	if (offsets) {
-		growth = from->mode == GMIME_FILTER_FROM_MODE_ARMOR ? 2 : 1;
+		GMimeFilterPrivate *filter_priv;
+
+		growth = priv->mode == GMIME_FILTER_FROM_MODE_ARMOR ? 2 : 1;
+
 		if (G_UNLIKELY (offsets->len > (G_MAXSIZE - consumed) / growth))
 			g_error ("GMimeFilterFrom output buffer size overflow");
+
 		need = consumed + (size_t) offsets->len * growth;
 		g_mime_filter_set_size (filter, need, FALSE);
 
 		src = in;
-		outptr = filter->outbuf;
+		filter_priv = _g_mime_filter_get_private (filter);
+
+		outptr = filter_priv->outbuf;
+
 		for (i = 0; i < offsets->len; i++) {
 			inptr = in + g_array_index (offsets, size_t, i);
 			memcpy (outptr, src, (size_t) (inptr - src));
 			outptr += inptr - src;
-			if (from->mode == GMIME_FILTER_FROM_MODE_ARMOR) {
+
+			if (priv->mode == GMIME_FILTER_FROM_MODE_ARMOR) {
 				/* Encode only the F using quoted-printable. */
 				*outptr++ = '=';
 				*outptr++ = '4';
@@ -207,9 +204,9 @@ convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		/* Copy the remaining input, excluding bytes saved for the next pass. */
 		left = consumed - (size_t) (src - in);
 		memcpy (outptr, src, left);
-		*out = filter->outbuf;
+		*out = filter_priv->outbuf;
 		*outlen = need;
-		*outprespace = filter->outpre;
+		*outprespace = filter_priv->outpre;
 		g_array_unref (offsets);
 	} else {
 		*out = in;
@@ -235,9 +232,9 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
-	
-	from->midline = FALSE;
+	GMimeFilterFromPrivate *priv = _g_mime_filter_from_get_private ((GMimeFilterFrom *) filter);
+
+	priv->midline = FALSE;
 }
 
 
@@ -266,17 +263,20 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_from_new (GMimeFilterFromMode mode)
 {
+	GMimeFilterFromPrivate *priv;
 	GMimeFilterFrom *from;
 	
 	from = g_object_new (GMIME_TYPE_FILTER_FROM, NULL);
-	from->midline = FALSE;
+	priv = _g_mime_filter_from_get_private (from);
+
+	priv->midline = FALSE;
 	switch (mode) {
 	case GMIME_FILTER_FROM_MODE_ARMOR:
-		from->mode = mode;
+		priv->mode = mode;
 		break;
 	case GMIME_FILTER_FROM_MODE_ESCAPE:
 	default:
-		from->mode = GMIME_FILTER_FROM_MODE_ESCAPE;
+		priv->mode = GMIME_FILTER_FROM_MODE_ESCAPE;
 		break;
 	}
 	

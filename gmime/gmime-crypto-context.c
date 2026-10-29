@@ -30,6 +30,8 @@
 #include "gmime-error.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-crypto-context
  * @title: GMimeCryptoContext
@@ -42,7 +44,7 @@
 
 
 static void g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass);
-static void g_mime_crypto_context_init (GMimeCryptoContext *ctx, GMimeCryptoContextClass *klass);
+static void g_mime_crypto_context_init (GMimeCryptoContext *ctx);
 static void g_mime_crypto_context_finalize (GObject *object);
 
 static GMimeDigestAlgo crypto_digest_id (GMimeCryptoContext *ctx, const char *name);
@@ -81,30 +83,15 @@ static GHashTable *type_hash = NULL;
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_crypto_context_get_type (void)
+
+G_DEFINE_TYPE_WITH_CODE (GMimeCryptoContext, g_mime_crypto_context, G_TYPE_OBJECT,
+			G_ADD_PRIVATE (GMimeCryptoContext)
+			type_hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, g_free, NULL);)
+
+GMimeCryptoContextPrivate *
+_g_mime_crypto_context_get_private (GMimeCryptoContext *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeCryptoContextClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_crypto_context_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeCryptoContext),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_crypto_context_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCryptoContext", &info, 0);
-		
-		type_hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, g_free, NULL);
-	}
-	
-	return type;
+	return g_mime_crypto_context_get_instance_private (object);
 }
 
 
@@ -131,9 +118,11 @@ g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass)
 }
 
 static void
-g_mime_crypto_context_init (GMimeCryptoContext *ctx, GMimeCryptoContextClass *klass)
+g_mime_crypto_context_init (GMimeCryptoContext *ctx)
 {
-	ctx->request_passwd = NULL;
+	GMimeCryptoContextPrivate *priv = _g_mime_crypto_context_get_private (ctx);
+
+	priv->request_passwd = NULL;
 }
 
 static void
@@ -201,9 +190,13 @@ g_mime_crypto_context_new (const char *protocol)
 void
 g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd)
 {
+	GMimeCryptoContextPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx));
 	
-	ctx->request_passwd = request_passwd;
+	priv = _g_mime_crypto_context_get_private (ctx);
+
+	priv->request_passwd = request_passwd;
 }
 
 
@@ -226,9 +219,13 @@ crypto_digest_id (GMimeCryptoContext *ctx, const char *name)
 GMimePasswordRequestFunc
 g_mime_crypto_context_get_request_password (GMimeCryptoContext *ctx)
 {
+	GMimeCryptoContextPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	
-	return ctx->request_passwd;
+	priv = _g_mime_crypto_context_get_private (ctx);
+
+	return priv->request_passwd;
 }
 
 
@@ -623,35 +620,13 @@ g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 
 
 static void g_mime_decrypt_result_class_init (GMimeDecryptResultClass *klass);
-static void g_mime_decrypt_result_init (GMimeDecryptResult *cert, GMimeDecryptResultClass *klass);
+static void g_mime_decrypt_result_init (GMimeDecryptResult *cert);
 static void g_mime_decrypt_result_finalize (GObject *object);
 
 static GObjectClass *result_parent_class = NULL;
 
 
-GType
-g_mime_decrypt_result_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeDecryptResultClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_decrypt_result_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeDecryptResult),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_decrypt_result_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeDecryptResult", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeDecryptResult, g_mime_decrypt_result, G_TYPE_OBJECT)
 
 static void
 g_mime_decrypt_result_class_init (GMimeDecryptResultClass *klass)
@@ -664,7 +639,7 @@ g_mime_decrypt_result_class_init (GMimeDecryptResultClass *klass)
 }
 
 static void
-g_mime_decrypt_result_init (GMimeDecryptResult *result, GMimeDecryptResultClass *klass)
+g_mime_decrypt_result_init (GMimeDecryptResult *result)
 {
 	result->cipher = GMIME_CIPHER_ALGO_DEFAULT;
 	result->mdc = GMIME_DIGEST_ALGO_DEFAULT;

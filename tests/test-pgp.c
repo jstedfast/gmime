@@ -19,6 +19,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -71,6 +72,7 @@ get_sig_status (GMimeSignatureList *signatures)
 static void
 test_sign (GMimeCryptoContext *ctx, gboolean detached, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeStreamMemPrivate *priv;
 	GError *err = NULL;
 	Exception *ex;
 	int rv;
@@ -83,10 +85,12 @@ test_sign (GMimeCryptoContext *ctx, gboolean detached, GMimeStream *cleartext, G
 		throw (ex);
 	}
 	
+	priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (ciphertext));
+
 	v(fprintf (stderr, "signature (%s):\n%.*s\n",
 		   g_mime_crypto_context_digest_name (ctx, rv),
-		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
-		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
+		   priv->buffer->len,
+		   priv->buffer->data));
 }
 
 static void
@@ -118,6 +122,8 @@ test_verify_detached (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStre
 static void
 test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeStreamMemPrivate *cleartext_priv;
+	GMimeStreamMemPrivate *stream_priv;
 	GMimeSignatureList *signatures;
 	GMimeSignatureStatus status;
 	Exception *ex = NULL;
@@ -147,8 +153,12 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 	
 	g_object_unref (signatures);
 	
-	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
-	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
+	cleartext_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (cleartext));
+
+	buf[0] = cleartext_priv->buffer;
+	stream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
+
+	buf[1] = stream_priv->buffer;
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("extracted data does not match original cleartext");
@@ -162,6 +172,7 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 static void
 test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeStreamMemPrivate *priv;
 	GPtrArray *recipients;
 	GError *err = NULL;
 	Exception *ex;
@@ -182,9 +193,11 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 		throw (ex);
 	}
 	
+	priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (ciphertext));
+
 	v(fprintf (stderr, "ciphertext:\n%.*s\n",
-		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
-		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
+		   priv->buffer->len,
+		   priv->buffer->data));
 }
 
 static void
@@ -399,6 +412,8 @@ done:
 static void
 test_export (GMimeCryptoContext *ctx, const char *path)
 {
+	GMimeStreamMemPrivate *istream_priv;
+	GMimeStreamMemPrivate *ostream_priv;
 	GMimeStream *istream, *ostream;
 	register const char *inptr;
 	const char *inbuf, *outbuf;
@@ -432,8 +447,10 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 		throw (ex);
 	}
 	
-	inbuf = (const char *) GMIME_STREAM_MEM (istream)->buffer->data;
-	inlen = GMIME_STREAM_MEM (istream)->buffer->len;
+	istream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (istream));
+
+	inbuf = (const char *) istream_priv->buffer->data;
+	inlen = istream_priv->buffer->len;
 	if ((inptr = strstr (inbuf, "\n\n"))) {
 		/* skip past the headers which may have different version numbers */
 		inptr += 2;
@@ -441,8 +458,10 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 		inbuf = inptr;
 	}
 	
-	outbuf = (const char *) GMIME_STREAM_MEM (ostream)->buffer->data;
-	outlen = GMIME_STREAM_MEM (ostream)->buffer->len;
+	ostream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (ostream));
+
+	outbuf = (const char *) ostream_priv->buffer->data;
+	outlen = ostream_priv->buffer->len;
 	if ((inptr = strstr (outbuf, "\n\n"))) {
 		/* skip past the headers which may have different version numbers */
 		inptr += 2;
@@ -523,6 +542,8 @@ static char *openpgp_data_types[] = {
 static void
 test_openpgp_filter (GMimeFilterOpenPGP *filter, const char *path, GMimeOpenPGPData data_type, gint64 begin, gint64 end)
 {
+	GMimeStreamMemPrivate *expected_priv;
+	GMimeStreamMemPrivate *ostream_priv;
 	GMimeStream *filtered, *stream, *expected, *ostream;
 	GMimeFilter *dos2unix;
 	GMimeOpenPGPData type;
@@ -575,8 +596,12 @@ test_openpgp_filter (GMimeFilterOpenPGP *filter, const char *path, GMimeOpenPGPD
 	g_object_unref (filtered);
 	g_object_unref (stream);
 	
-	buf[0] = GMIME_STREAM_MEM (expected)->buffer;
-	buf[1] = GMIME_STREAM_MEM (ostream)->buffer;
+	expected_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (expected));
+
+	buf[0] = expected_priv->buffer;
+	ostream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (ostream));
+
+	buf[1] = ostream_priv->buffer;
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("filtered data does not match the expected result");

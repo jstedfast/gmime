@@ -29,6 +29,8 @@
 #include "gmime-gpgme-utils.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-certificate
  * @title: GMimeCertificate
@@ -46,7 +48,7 @@ typedef struct {
 	gpointer key;
 } GMimeCertificatePrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (GMimeCertificate, g_mime_certificate, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE_WITH_PRIVATE (GMimeCertificate, g_mime_certificate, G_TYPE_OBJECT)
 
 static void
 g_mime_certificate_class_init (GMimeCertificateClass *klass)
@@ -637,36 +639,14 @@ g_mime_certificate_get_expires (GMimeCertificate *cert)
 
 
 static void g_mime_certificate_list_class_init (GMimeCertificateListClass *klass);
-static void g_mime_certificate_list_init (GMimeCertificateList *list, GMimeCertificateListClass *klass);
+static void g_mime_certificate_list_init (GMimeCertificateList *list);
 static void g_mime_certificate_list_finalize (GObject *object);
 
 
 static GObjectClass *list_parent_class = NULL;
 
 
-GType
-g_mime_certificate_list_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeCertificateListClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_certificate_list_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeCertificateList),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_certificate_list_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCertificateList", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeCertificateList, g_mime_certificate_list, G_TYPE_OBJECT)
 
 
 static void
@@ -680,7 +660,7 @@ g_mime_certificate_list_class_init (GMimeCertificateListClass *klass)
 }
 
 static void
-g_mime_certificate_list_init (GMimeCertificateList *list, GMimeCertificateListClass *klass)
+g_mime_certificate_list_init (GMimeCertificateList *list)
 {
 	list->array = g_ptr_array_new ();
 }

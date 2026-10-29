@@ -27,33 +27,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_DELIVERY_STATUS            (g_mime_message_delivery_status_get_type ())
-#define GMIME_MESSAGE_DELIVERY_STATUS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_DELIVERY_STATUS, GMimeMessageDeliveryStatus))
-#define GMIME_MESSAGE_DELIVERY_STATUS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_DELIVERY_STATUS, GMimeMessageDeliveryStatusClass))
-#define GMIME_IS_MESSAGE_DELIVERY_STATUS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_DELIVERY_STATUS))
-#define GMIME_IS_MESSAGE_DELIVERY_STATUS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_DELIVERY_STATUS))
-#define GMIME_MESSAGE_DELIVERY_STATUS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_DELIVERY_STATUS, GMimeMessageDeliveryStatusClass))
 
-typedef struct _GMimeMessageDeliveryStatus GMimeMessageDeliveryStatus;
-typedef struct _GMimeMessageDeliveryStatusClass GMimeMessageDeliveryStatusClass;
 
 /**
  * GMimeMessageDeliveryStatus:
- * @parent_object: parent #GMimePart
  *
  * A message/delivery-status part with lazily parsed status groups.
  **/
-struct _GMimeMessageDeliveryStatus {
-	GMimePart parent_object;
-
-	/* < private > */
-	GMimeHeaderListCollection *groups;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessageDeliveryStatus, g_mime_message_delivery_status, GMIME, MESSAGE_DELIVERY_STATUS, GMimePart)
 
 struct _GMimeMessageDeliveryStatusClass {
 	GMimePartClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_message_delivery_status_get_type (void);
 
 GMimeMessageDeliveryStatus *g_mime_message_delivery_status_new (void);
 GMimeHeaderListCollection *g_mime_message_delivery_status_get_status_groups (GMimeMessageDeliveryStatus *status, GError **error);

@@ -27,6 +27,8 @@
 
 #include "gmime-autocrypt.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-autocrypt
  * @title: GMimeAutocryptHeader
@@ -42,35 +44,13 @@
 
 
 static void g_mime_autocrypt_header_class_init (GMimeAutocryptHeaderClass *klass);
-static void g_mime_autocrypt_header_init (GMimeAutocryptHeader *ah, GMimeAutocryptHeaderClass *klass);
+static void g_mime_autocrypt_header_init (GMimeAutocryptHeader *ah);
 static void g_mime_autocrypt_header_finalize (GObject *object);
 
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_autocrypt_header_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeAutocryptHeaderClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_autocrypt_header_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeAutocryptHeader),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_autocrypt_header_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeAutocryptHeader", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeAutocryptHeader, g_mime_autocrypt_header, G_TYPE_OBJECT)
 
 static void
 g_mime_autocrypt_header_class_init (GMimeAutocryptHeaderClass *klass)
@@ -83,7 +63,7 @@ g_mime_autocrypt_header_class_init (GMimeAutocryptHeaderClass *klass)
 }
 
 static void
-g_mime_autocrypt_header_init (GMimeAutocryptHeader *ah, GMimeAutocryptHeaderClass *klass)
+g_mime_autocrypt_header_init (GMimeAutocryptHeader *ah)
 {
 	ah->address = NULL;
 	ah->prefer_encrypt = GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE;
@@ -298,9 +278,13 @@ g_mime_autocrypt_header_get_address (GMimeAutocryptHeader *ah)
 const char *
 g_mime_autocrypt_header_get_address_as_string (GMimeAutocryptHeader *ah)
 {
+	GMimeMailboxAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
 	
-	return ah->address->addrspec;
+	priv = _g_mime_mailbox_address_get_private (ah->address);
+
+	return priv->addrspec;
 }
 
 
@@ -430,9 +414,16 @@ g_mime_autocrypt_header_get_effective_date (GMimeAutocryptHeader *ah)
 gboolean
 g_mime_autocrypt_header_is_complete (GMimeAutocryptHeader *ah)
 {
+	GMimeMailboxAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), FALSE);
-	
-	return (ah->address && ah->address->addrspec && ah->keydata &&
+
+	if (!ah->address)
+		return FALSE;
+
+	priv = _g_mime_mailbox_address_get_private (ah->address);
+
+	return (priv->addrspec && ah->keydata &&
 		g_bytes_get_size (ah->keydata) && g_bytes_get_data (ah->keydata, NULL));
 }
 
@@ -517,50 +508,62 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 int
 g_mime_autocrypt_header_compare (GMimeAutocryptHeader *ah1, GMimeAutocryptHeader *ah2)
 {
+	GMimeMailboxAddressPrivate *priv1 = ah1->address ? _g_mime_mailbox_address_get_private (ah1->address) : NULL;
+	GMimeMailboxAddressPrivate *priv2 = ah2->address ? _g_mime_mailbox_address_get_private (ah2->address) : NULL;
 	/* note that NULL values sort before non-NULL values */
 	int ret;
-	if ((!ah1->address || !ah1->address->addrspec) && (ah2->address && ah2->address->addrspec))
+
+	if ((!priv1 || !priv1->addrspec) && (priv2 && priv2->addrspec))
 		return -1;
-	if ((ah1->address && ah1->address->addrspec) && (!ah2->address || !ah2->address->addrspec))
+
+	if ((priv1 && priv1->addrspec) && (!priv2 || !priv2->addrspec))
 		return 1;
-	if (ah1->address && ah1->address->addrspec && ah2->address && ah2->address->addrspec) {
-		ret = strcmp (ah1->address->addrspec, ah2->address->addrspec);
-		if (ret)
+
+	if (priv1 && priv1->addrspec && priv2 && priv2->addrspec) {
+		if ((ret = strcmp (priv1->addrspec, priv2->addrspec)))
 			return ret;
 	}
 	
 	if (!ah1->effective_date && ah2->effective_date)
 		return -1;
+
 	if (ah1->effective_date && !ah2->effective_date)
 		return 1;
+
 	if (ah1->effective_date && ah2->effective_date) {
-		ret = g_date_time_compare (ah1->effective_date, ah2->effective_date);
-		if (ret)
+		if ((ret = g_date_time_compare (ah1->effective_date, ah2->effective_date)))
 			return ret;
 	}
 	
 	if (!ah1->keydata && ah2->keydata)
 		return -1;
+
 	if (ah1->keydata && !ah2->keydata)
 		return 1;
+
 	if (ah1->keydata && ah2->keydata) {
 		gsize s1, s2;
 		gconstpointer p1, p2;
+
 		p1 = g_bytes_get_data (ah1->keydata, &s1);
 		p2 = g_bytes_get_data (ah2->keydata, &s2);
+
 		if (s1 < s2)
 			return -1;
+
 		if (s1 > s2)
 			return 1;
-		ret = memcmp (p1, p2, s1);
-		if (ret)
+
+		if ((ret = memcmp (p1, p2, s1)))
 			return ret;
 	}
 	
 	if (ah1->prefer_encrypt < ah2->prefer_encrypt)
 		return -1;
+
 	if (ah1->prefer_encrypt > ah2->prefer_encrypt)
 		return 1;
+
 	return 0;
 }
 
@@ -585,8 +588,10 @@ g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHeader *
 	dst_addr = g_mime_mailbox_address_get_address (dst->address, TRUE);
 	src_addr = g_mime_mailbox_address_get_address (src->address, TRUE);
 	matches = !g_strcmp0 (dst_addr, src_addr);
+
 	g_free (dst_addr);
 	g_free (src_addr);
+
 	if (!matches)
 		return;
 	
@@ -604,6 +609,7 @@ g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHeader *
 	
 	if (dst->effective_date)
 		g_date_time_unref (dst->effective_date);
+
 	if (src->effective_date) {
 		g_date_time_ref (src->effective_date);
 		dst->effective_date = src->effective_date;
@@ -617,35 +623,13 @@ g_mime_autocrypt_header_clone (GMimeAutocryptHeader *dst, GMimeAutocryptHeader *
 
 
 static void g_mime_autocrypt_header_list_class_init (GMimeAutocryptHeaderListClass *klass);
-static void g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *list, GMimeAutocryptHeaderListClass *klass);
+static void g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *list);
 static void g_mime_autocrypt_header_list_finalize (GObject *object);
 
 static GObjectClass *ahl_parent_class = NULL;
 
 
-GType
-g_mime_autocrypt_header_list_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeAutocryptHeaderListClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_autocrypt_header_list_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeAutocryptHeaderList),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_autocrypt_header_list_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeAutocryptHeaderList", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeAutocryptHeaderList, g_mime_autocrypt_header_list, G_TYPE_OBJECT)
 
 static void
 g_mime_autocrypt_header_list_class_init (GMimeAutocryptHeaderListClass *klass)
@@ -658,7 +642,7 @@ g_mime_autocrypt_header_list_class_init (GMimeAutocryptHeaderListClass *klass)
 }
 
 static void
-g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *list, GMimeAutocryptHeaderListClass *klass)
+g_mime_autocrypt_header_list_init (GMimeAutocryptHeaderList *list)
 {
 	list->array = g_ptr_array_new_with_free_func (g_object_unref);
 }

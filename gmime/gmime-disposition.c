@@ -35,6 +35,8 @@
 #include "gmime-events.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-disposition
  * @title: GMimeContentDisposition
@@ -47,7 +49,7 @@
 
 
 static void g_mime_content_disposition_class_init (GMimeContentDispositionClass *klass);
-static void g_mime_content_disposition_init (GMimeContentDisposition *disposition, GMimeContentDispositionClass *klass);
+static void g_mime_content_disposition_init (GMimeContentDisposition *disposition);
 static void g_mime_content_disposition_finalize (GObject *object);
 
 static void param_list_changed (GMimeParamList *list, gpointer args, GMimeContentDisposition *disposition);
@@ -56,29 +58,7 @@ static void param_list_changed (GMimeParamList *list, gpointer args, GMimeConten
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_content_disposition_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeContentDispositionClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_content_disposition_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeContentDisposition),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_content_disposition_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeContentDisposition", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeContentDisposition, g_mime_content_disposition, G_TYPE_OBJECT)
 
 
 static void
@@ -92,7 +72,7 @@ g_mime_content_disposition_class_init (GMimeContentDispositionClass *klass)
 }
 
 static void
-g_mime_content_disposition_init (GMimeContentDisposition *disposition, GMimeContentDispositionClass *klass)
+g_mime_content_disposition_init (GMimeContentDisposition *disposition)
 {
 	disposition->changed = g_mime_event_new ((GObject *) disposition);
 	disposition->params = g_mime_param_list_new ();

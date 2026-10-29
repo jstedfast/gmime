@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <errno.h>
@@ -39,7 +40,7 @@
 static GByteArray *serialize_writer (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only);
 
 typedef struct {
-	TestStreamOneByte parent_object;
+	TestStreamOneByte parent_instance;
 	gsize chunk, bytes_read, fail_after;
 	gboolean nonseekable, fail_seek, fail_substream, unset_errno;
 	gint64 origin;
@@ -62,7 +63,7 @@ model_input_read (GMimeStream *stream, char *buffer, size_t length)
 		return -1;
 	}
 	length = MIN (length, MIN (input->chunk, input->fail_after - input->bytes_read));
-	nread = g_mime_stream_read (input->parent_object.source, buffer, length);
+	nread = g_mime_stream_read (input->parent_instance.source, buffer, length);
 	if (nread > 0)
 		input->bytes_read += nread;
 
@@ -79,7 +80,7 @@ model_input_tell (GMimeStream *stream)
 		return -1;
 	}
 
-	return input->origin + g_mime_stream_tell (input->parent_object.source);
+	return input->origin + g_mime_stream_tell (input->parent_instance.source);
 }
 
 static int
@@ -107,7 +108,7 @@ model_input_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	}
 	if (whence == GMIME_STREAM_SEEK_SET)
 		offset -= input->origin;
-	position = g_mime_stream_seek (input->parent_object.source, offset, whence);
+	position = g_mime_stream_seek (input->parent_instance.source, offset, whence);
 
 	return position < 0 ? position : position + input->origin;
 }
@@ -123,8 +124,8 @@ model_input_substream (GMimeStream *stream, gint64 begin, gint64 end)
 		return NULL;
 	}
 
-	return GMIME_STREAM_GET_CLASS (input->parent_object.source)->substream (
-		input->parent_object.source, begin - input->origin, end < 0 ? end : end - input->origin);
+	return GMIME_STREAM_GET_CLASS (input->parent_instance.source)->substream (
+		input->parent_instance.source, begin - input->origin, end < 0 ? end : end - input->origin);
 }
 
 static void
@@ -152,7 +153,7 @@ new_input (const char *data, gsize length, gsize chunk)
 {
 	ModelInput *input = g_object_new (model_input_get_type (), NULL);
 
-	input->parent_object.source = g_mime_stream_mem_new_with_buffer (data, length);
+	input->parent_instance.source = g_mime_stream_mem_new_with_buffer (data, length);
 	g_mime_stream_construct ((GMimeStream *) input, 0, -1);
 	input->chunk = chunk;
 	return input;
@@ -180,7 +181,7 @@ serialize_headers (GMimeHeaderList *headers, gboolean international)
 }
 
 typedef struct {
-	GMimeStream parent_object;
+	GMimeStream parent_instance;
 	gsize written, limit, chunk;
 	gsize short_start, short_end;
 	guint flushes, closes;
@@ -398,6 +399,7 @@ test_leaf_models (void)
 		char *wire = g_strconcat (cases[i].headers, cases[i].raw, NULL);
 
 		for (mode = 0; mode < 8; mode++) {
+			GMimeEntityPrivate *priv;
 			ModelInput *input = new_input (wire, strlen (wire), mode & 1 ? 1 : 4096);
 			GMimeReader *reader;
 			GMimeEntity *entity;
@@ -412,7 +414,9 @@ test_leaf_models (void)
 			g_assert_no_error (error);
 			g_assert_nonnull (entity);
 			g_assert_cmpstr (G_OBJECT_TYPE_NAME (entity), ==, cases[i].type);
-			g_assert_false (entity->ensure_newline);
+			priv = _g_mime_entity_get_private (entity);
+
+			g_assert_false (priv->ensure_newline);
 			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, cases[i].encoding);
 			content = g_mime_part_get_content (GMIME_PART (entity));
 			g_assert_cmpint (input->views, ==, *cases[i].raw && (mode & 4) && !(mode & 2) ? 1 : 0);
@@ -468,6 +472,7 @@ test_binary_encoding_headers (void)
 		g_string_append_len (wire, cases[i].value, cases[i].length);
 		g_string_append (wire, "\nYWJj\n");
 		for (mode = 0; mode < 4; mode++) {
+			GMimeEntityPrivate *priv;
 			ModelInput *input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
 			GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
 			GError *error = NULL;
@@ -485,11 +490,13 @@ test_binary_encoding_headers (void)
 			bytes = read_content (g_mime_part_get_content (GMIME_PART (entity)), TRUE);
 			g_assert_cmpmem (bytes->data, bytes->len, decoded, strlen (decoded));
 			g_byte_array_unref (bytes);
-			bytes = serialize_headers (entity->headers, FALSE);
+			priv = _g_mime_entity_get_private (entity);
+
+			bytes = serialize_headers (priv->headers, FALSE);
 			g_assert_cmpmem (bytes->data, bytes->len, wire->str, wire->len - 6);
 			g_byte_array_unref (bytes);
 
-			header = g_mime_header_list_get_header (entity->headers, "Content-Transfer-Encoding");
+			header = g_mime_header_list_get_header (priv->headers, "Content-Transfer-Encoding");
 			testsuite_header_set_raw_text (header, " base64\n");
 			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, GMIME_CONTENT_ENCODING_BASE64);
 			g_mime_header_set_value (header, NULL, "quoted-printable", NULL);
@@ -512,6 +519,7 @@ test_binary_encoding_headers (void)
 static void
 test_model_metadata (void)
 {
+	GMimeEntityPrivate *priv;
 	static const char wire[] = "Content-Type: text/plain; charset=us-ascii\n"
 		"Content-Type: application/octet-stream\nContent-Disposition: inline\n"
 		"Content-Disposition: attachment\nContent-Id: <first@example.com>\n"
@@ -532,8 +540,10 @@ test_model_metadata (void)
 	entity = _g_mime_parser_reader_construct_part (reader, &error);
 	g_assert_no_error (error);
 	g_assert_true (GMIME_IS_TEXT_PART (entity));
-	g_assert_true (g_mime_content_type_is_type (entity->content_type, "text", "plain"));
-	g_assert_cmpstr (g_mime_content_type_get_parameter (entity->content_type, "charset"), ==, "us-ascii");
+	priv = _g_mime_entity_get_private (entity);
+
+	g_assert_true (g_mime_content_type_is_type (priv->content_type, "text", "plain"));
+	g_assert_cmpstr (g_mime_content_type_get_parameter (priv->content_type, "charset"), ==, "us-ascii");
 	g_assert_cmpstr (g_mime_entity_get_disposition (entity), ==, "inline");
 	g_assert_cmpstr (g_mime_entity_get_content_id (entity), ==, "first@example.com");
 	headers = g_mime_entity_get_header_list (entity);
@@ -551,7 +561,7 @@ test_model_metadata (void)
 	g_mime_content_set_newline_format (content, GMIME_NEWLINE_FORMAT_DOS);
 	g_assert_true (g_mime_content_get_newline_format (content, &newline));
 	g_assert_cmpint (newline, ==, GMIME_NEWLINE_FORMAT_DOS);
-	g_mime_content_set_stream (content, input->parent_object.source);
+	g_mime_content_set_stream (content, input->parent_instance.source);
 	g_assert_false (g_mime_content_get_newline_format (content, NULL));
 	g_object_unref (entity);
 	g_object_unref (reader);
@@ -637,6 +647,7 @@ test_model_stream_replacement (void)
 static void
 test_model_type_registration (void)
 {
+	GMimeEntityPrivate *priv;
 	static const char wire[] = "Content-Type: application/x-reader-leaf\n\nbody";
 	static const char container[] = "Content-Type: application/x-reader-container\n\nbody";
 	ModelInput *input = new_input (wire, sizeof (wire) - 1, 3);
@@ -650,7 +661,9 @@ test_model_type_registration (void)
 	entity = _g_mime_parser_reader_construct_part (reader, &error);
 	g_assert_no_error (error);
 	g_assert_true (GMIME_IS_TEXT_PART (entity));
-	g_assert_true (g_mime_content_type_is_type (entity->content_type, "application", "x-reader-leaf"));
+	priv = _g_mime_entity_get_private (entity);
+
+	g_assert_true (g_mime_content_type_is_type (priv->content_type, "application", "x-reader-leaf"));
 	g_object_unref (entity);
 	g_object_unref (input);
 
@@ -696,6 +709,8 @@ test_message_models (void)
 		inner_offset = wire->len;
 		g_string_append_len (wire, inner, sizeof (inner) - 1);
 		for (mode = 0; mode < 8; mode++) {
+			GMimeEntityPrivate *message_priv;
+			GMimeEntityPrivate *body_priv;
 			ModelInput *input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
 			GMimeReader *reader;
 			GMimeEntity *entity, *body;
@@ -710,25 +725,33 @@ test_message_models (void)
 				message = _g_mime_parser_reader_construct_message (reader, &error);
 				entity = (GMimeEntity *) message;
 			} else {
+				GMimeEntityPrivate *entity_priv;
+
 				entity = _g_mime_parser_reader_construct_part (reader, &error);
 				g_assert_no_error (error);
 				g_assert_true (GMIME_IS_MESSAGE_PART (entity));
 				message = g_mime_message_part_get_message (GMIME_MESSAGE_PART (entity));
-				g_assert_cmpint (g_mime_header_list_get_count (entity->headers), ==, 2);
+				entity_priv = _g_mime_entity_get_private (entity);
+
+				g_assert_cmpint (g_mime_header_list_get_count (entity_priv->headers), ==, 2);
 			}
 			g_assert_no_error (error);
 			g_assert_nonnull (message);
 			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "first");
 			g_assert_cmpint (g_mime_internet_address_list_length (g_mime_message_get_to (message)), ==, 2);
-			headers = ((GMimeEntity *) message)->headers;
+			message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+			headers = message_priv->headers;
 			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 5);
 			g_assert_false (g_mime_header_list_contains (headers, "MIME-Version"));
 			g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header (headers, "Subject")), ==, inner_offset);
 			body = g_mime_message_get_mime_part (message);
 			g_assert_true (GMIME_IS_TEXT_PART (body));
-			g_assert_cmpint (g_mime_header_list_get_count (body->headers), ==, 2);
-			g_assert_true (body->headers->has_body_separator);
-			g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header (body->headers, "Content-Type")), ==,
+			body_priv = _g_mime_entity_get_private (body);
+
+			g_assert_cmpint (g_mime_header_list_get_count (body_priv->headers), ==, 2);
+			g_assert_true (body_priv->headers->has_body_separator);
+			g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header (body_priv->headers, "Content-Type")), ==,
 					inner_offset + strlen ("Subject: first\n"));
 			g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
 			g_object_unref (reader);
@@ -904,6 +927,9 @@ test_mailbox_models (void)
 
 		for (mode = 0; mode < 4; mode++) {
 			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GMimeEntityPrivate *message_priv;
+				GMimeMessagePrivate *message_priv2;
+				GMimeMessagePrivate *next_priv;
 				ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
 				GMimeReader *reader;
 				GMimeMessage *message, *next;
@@ -927,13 +953,17 @@ test_mailbox_models (void)
 				g_assert_nonnull (message);
 				g_assert_false (g_mime_reader_eos (reader));
 				g_assert_cmpstr (g_mime_message_get_subject (message), ==, "first");
+				message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
 				g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header (
-					((GMimeEntity *) message)->headers, "Subject")), ==, origin + first_headers);
+					message_priv->headers, "Subject")), ==, origin + first_headers);
 				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, origin + begin);
 				saved_marker = g_bytes_ref (_g_mime_parser_reader_get_mbox_marker (reader));
 				assert_raw_bytes (saved_marker, marker->str, marker->len);
-				assert_raw_bytes (message->raw_marker, preheader, sizeof (preheader) - 1);
-				multipart = GMIME_MULTIPART (message->mime_part);
+				message_priv2 = _g_mime_message_get_private (message);
+
+				assert_raw_bytes (message_priv2->raw_marker, preheader, sizeof (preheader) - 1);
+				multipart = GMIME_MULTIPART (message_priv2->mime_part);
 				g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 2);
 				content = g_mime_part_get_content (GMIME_PART (g_mime_multipart_get_part (multipart, 0)));
 				bytes = read_content (content, FALSE);
@@ -948,7 +978,9 @@ test_mailbox_models (void)
 				g_assert_cmpstr (g_mime_message_get_subject (next), ==, "second");
 				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, origin + next_begin);
 				assert_raw_bytes (_g_mime_parser_reader_get_mbox_marker (reader), next_marker, strlen (next_marker));
-				g_assert_null (next->raw_marker);
+				next_priv = _g_mime_message_get_private (next);
+
+				g_assert_null (next_priv->raw_marker);
 				g_assert_true (g_mime_reader_eos (reader));
 				g_assert_null (_g_mime_parser_reader_construct_message (reader, &error));
 				g_assert_no_error (error);
@@ -958,7 +990,7 @@ test_mailbox_models (void)
 				g_object_unref (input);
 				assert_raw_bytes (saved_marker, marker->str, marker->len);
 				g_bytes_unref (saved_marker);
-				bytes = read_content (g_mime_part_get_content (GMIME_PART (next->mime_part)), FALSE);
+				bytes = read_content (g_mime_part_get_content (GMIME_PART (next_priv->mime_part)), FALSE);
 				g_assert_cmpmem (bytes->data, bytes->len, "two\0tail", 8);
 				g_byte_array_unref (bytes);
 				bytes = read_content (content, FALSE);
@@ -983,6 +1015,8 @@ test_mailbox_models (void)
 
 		for (format = 0; format < G_N_ELEMENTS (wires); format++) {
 			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GMimeMessagePrivate *priv;
+				GMimeMessagePrivate *message_priv5;
 				ModelInput *input = new_input (wires[format], strlen (wires[format]), chunks[chunk]);
 				GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, TRUE);
 				GError *error = NULL;
@@ -993,8 +1027,12 @@ test_mailbox_models (void)
 				message = _g_mime_parser_reader_construct_message (reader, &error);
 				g_assert_no_error (error);
 				g_assert_nonnull (message);
-				g_assert_true (GMIME_IS_MESSAGE_PART (message->mime_part));
-				g_assert_null (g_mime_message_part_get_message (GMIME_MESSAGE_PART (message->mime_part)));
+				priv = _g_mime_message_get_private (message);
+
+				g_assert_true (GMIME_IS_MESSAGE_PART (priv->mime_part));
+				message_priv5 = _g_mime_message_get_private (message);
+
+				g_assert_null (g_mime_message_part_get_message (GMIME_MESSAGE_PART (message_priv5->mime_part)));
 				g_object_unref (message);
 				message = _g_mime_parser_reader_construct_message (reader, &error);
 				g_assert_no_error (error);
@@ -1011,6 +1049,7 @@ test_mailbox_models (void)
 
 	testsuite_check ("Embedded-message mailbox lookahead does not read an entire long envelope");
 	{
+		GMimeMessagePrivate *message_priv3;
 		static const char prefix[] = "From first\nContent-Type: message/rfc822\n\n";
 		GString *wire = g_string_new (prefix);
 		ModelInput *input;
@@ -1029,8 +1068,10 @@ test_mailbox_models (void)
 		message = _g_mime_parser_reader_construct_message (reader, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (message);
-		g_assert_true (GMIME_IS_MESSAGE_PART (message->mime_part));
-		g_assert_null (g_mime_message_part_get_message (GMIME_MESSAGE_PART (message->mime_part)));
+		message_priv3 = _g_mime_message_get_private (message);
+
+		g_assert_true (GMIME_IS_MESSAGE_PART (message_priv3->mime_part));
+		g_assert_null (g_mime_message_part_get_message (GMIME_MESSAGE_PART (message_priv3->mime_part)));
 		g_assert_cmpint (g_mime_reader_tell (reader), ==, sizeof (prefix) - 1);
 		g_assert_cmpuint (input->bytes_read, <=, input->fail_after);
 		g_object_unref (message);
@@ -1065,7 +1106,8 @@ test_mailbox_models (void)
 				g_assert_no_error (error);
 				g_assert_nonnull (message);
 				if (!count) {
-					GByteArray *bytes = read_content (g_mime_part_get_content (GMIME_PART (message->mime_part)), FALSE);
+					GMimeMessagePrivate *message_priv4 = _g_mime_message_get_private (message);
+					GByteArray *bytes = read_content (g_mime_part_get_content (GMIME_PART (message_priv4->mime_part)), FALSE);
 					gsize length = mode & 4 ? sizeof (body) - 2 : strlen ("before");
 
 					g_assert_cmpmem (bytes->data, bytes->len, body, length);
@@ -1177,6 +1219,7 @@ test_multipart_models (void)
 	testsuite_check ("Multipart models preserve binary text, raw markers and source lifetimes");
 	for (mode = 0; mode < 8; mode++) {
 		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			GMimeMultipartPrivate *multipart_priv;
 			ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
 			GMimeReader *reader;
 			GMimeEntity *root;
@@ -1192,22 +1235,30 @@ test_multipart_models (void)
 				_g_mime_parser_reader_construct_part (reader, &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (root);
-			multipart = (GMimeMultipart *) (mode & 4 ? ((GMimeMessage *) root)->mime_part : root);
+			if (mode & 4) {
+				GMimeMessagePrivate *priv = _g_mime_message_get_private ((GMimeMessage *) root);
+
+				multipart = (GMimeMultipart *) priv->mime_part;
+			} else {
+				multipart = (GMimeMultipart *) root;
+			}
 			g_assert_true (GMIME_IS_MULTIPART (multipart));
 			g_assert_cmpuint (input->views, ==, (mode & 2) && !(mode & 1) ? 1 : 0);
 			g_object_unref (reader);
 			g_object_unref (input);
-			g_assert_cmpuint (multipart->children->len, ==, 2);
-			assert_raw_bytes (multipart->raw_preamble, "pre\0one\n", 8);
-			assert_raw_bytes (multipart->raw_epilogue, "\r\nepi\0tail\n", 11);
-			assert_raw_bytes (multipart->raw_end_boundary, "--b-- \t", 7);
-			assert_raw_bytes (multipart->raw_boundaries->pdata[0], "--b \t\r\n", 7);
-			assert_raw_bytes (multipart->raw_boundaries->pdata[1], "--b\r\n", 5);
+			multipart_priv = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv->children->len, ==, 2);
+			assert_raw_bytes (multipart_priv->raw_preamble, "pre\0one\n", 8);
+			assert_raw_bytes (multipart_priv->raw_epilogue, "\r\nepi\0tail\n", 11);
+			assert_raw_bytes (multipart_priv->raw_end_boundary, "--b-- \t", 7);
+			assert_raw_bytes (multipart_priv->raw_boundaries->pdata[0], "--b \t\r\n", 7);
+			assert_raw_bytes (multipart_priv->raw_boundaries->pdata[1], "--b\r\n", 5);
 			g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, "pre\357\277\275one\n");
 			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, "epi\357\277\275tail\n");
 			/* Reassigning the decoded view must not discard binary bytes. */
-			g_mime_multipart_set_preamble (multipart, multipart->preamble);
-			g_mime_multipart_set_epilogue (multipart, multipart->epilogue);
+			g_mime_multipart_set_preamble (multipart, multipart_priv->preamble);
+			g_mime_multipart_set_epilogue (multipart, multipart_priv->epilogue);
 			output = g_mime_stream_block_new ();
 			written = g_mime_entity_write_to_stream (root, NULL, output);
 			bytes = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) output, NULL);
@@ -1230,6 +1281,7 @@ test_multipart_models (void)
 			char *text = g_strconcat ("Content-Type: multipart/mixed; boundary=b\n\n", bodies[body], NULL);
 
 			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GMimeMultipartPrivate *multipart_priv2;
 				ModelInput *input = new_input (text, strlen (text), chunks[chunk]);
 				GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
 				GError *error = NULL;
@@ -1240,9 +1292,11 @@ test_multipart_models (void)
 
 				g_assert_no_error (error);
 				g_assert_true (GMIME_IS_MULTIPART (multipart));
-				g_assert_cmpuint (multipart->children->len, ==, counts[body]);
-				g_assert_cmpint (multipart->raw_trailing_boundary != NULL, ==, body == 0);
-				g_assert_cmpuint (g_bytes_get_size (multipart->raw_end_boundary), ==, 0);
+				multipart_priv2 = _g_mime_multipart_get_private (multipart);
+
+				g_assert_cmpuint (multipart_priv2->children->len, ==, counts[body]);
+				g_assert_cmpint (multipart_priv2->raw_trailing_boundary != NULL, ==, body == 0);
+				g_assert_cmpuint (g_bytes_get_size (multipart_priv2->raw_end_boundary), ==, 0);
 				g_assert_cmpint (g_mime_entity_write_to_stream (entity, NULL, output), ==, strlen (text));
 				bytes = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) output, NULL);
 				g_assert_cmpmem (bytes->data, bytes->len, text, strlen (text));
@@ -1259,44 +1313,72 @@ test_multipart_models (void)
 
 	testsuite_check ("Multipart mutations keep delimiter slots aligned and invalidate changed boundaries");
 	for (operation = 0; operation < 11; operation++) {
+		GMimeEntityPrivate *entity_priv3;
 		GMimeMultipart *multipart = parse_multipart (mutations);
-		GMimeEntity *first = g_object_ref (multipart->children->pdata[0]);
+		GMimeMultipartPrivate *multipart_priv3 = _g_mime_multipart_get_private (multipart);
+		GMimeEntity *first = g_object_ref (multipart_priv3->children->pdata[0]);
 		GMimeEntity *removed;
-		GBytes *original = g_bytes_ref (multipart->raw_boundaries->pdata[0]);
+		GBytes *original = g_bytes_ref (multipart_priv3->raw_boundaries->pdata[0]);
 		GMimeContentType *type;
 		GMimeStream *output;
 		GByteArray *bytes;
 
-		g_assert_cmpuint (multipart->children->len, ==, 2);
-		g_assert_nonnull (multipart->raw_trailing_boundary);
+		g_assert_cmpuint (multipart_priv3->children->len, ==, 2);
+		g_assert_nonnull (multipart_priv3->raw_trailing_boundary);
 		if (operation == 0) {
+			GMimeMultipartPrivate *multipart_priv4;
+
 			g_mime_multipart_add (multipart, first);
-			g_assert_null (multipart->raw_boundaries->pdata[2]);
+			multipart_priv4 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv4->raw_boundaries->pdata[2]);
 		} else if (operation == 1) {
+			GMimeMultipartPrivate *multipart_priv5;
+
 			g_mime_multipart_insert (multipart, 0, first);
-			g_assert_null (multipart->raw_boundaries->pdata[0]);
-			g_assert_true (multipart->raw_boundaries->pdata[1] == original);
+			multipart_priv5 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv5->raw_boundaries->pdata[0]);
+			g_assert_true (multipart_priv5->raw_boundaries->pdata[1] == original);
 		} else if (operation == 2) {
+			GMimeMultipartPrivate *multipart_priv6;
+
 			g_assert_true (g_mime_multipart_remove (multipart, first));
-			g_assert_cmpuint (multipart->raw_boundaries->len, ==, 1);
+			multipart_priv6 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv6->raw_boundaries->len, ==, 1);
 		} else if (operation == 3) {
+			GMimeMultipartPrivate *multipart_priv7;
+
 			removed = g_mime_multipart_remove_at (multipart, 0);
 			g_object_unref (removed);
-			g_assert_cmpuint (multipart->raw_boundaries->len, ==, 1);
+			multipart_priv7 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv7->raw_boundaries->len, ==, 1);
 		} else if (operation == 4) {
+			GMimeMultipartPrivate *multipart_priv8;
+
 			removed = g_mime_multipart_replace (multipart, 1, first);
 			g_object_unref (removed);
-			g_assert_cmpuint (multipart->raw_boundaries->len, ==, 2);
-			g_assert_true (multipart->raw_boundaries->pdata[0] == original);
+			multipart_priv8 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv8->raw_boundaries->len, ==, 2);
+			g_assert_true (multipart_priv8->raw_boundaries->pdata[0] == original);
 		} else if (operation == 5) {
+			GMimeMultipartPrivate *multipart_priv9;
+
 			g_mime_multipart_clear (multipart);
-			g_assert_null (multipart->raw_boundaries);
-			g_assert_null (multipart->raw_end_boundary);
+			multipart_priv9 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv9->raw_boundaries);
+			g_assert_null (multipart_priv9->raw_end_boundary);
 		} else if (operation == 6) {
 			g_mime_multipart_set_boundary (multipart, "changed");
 			g_mime_multipart_set_boundary (multipart, "b");
 		} else if (operation == 7) {
-			g_mime_content_type_set_parameter (((GMimeEntity *) multipart)->content_type, "boundary", "changed");
+			GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+			g_mime_content_type_set_parameter (entity_priv->content_type, "boundary", "changed");
 		} else if (operation == 8) {
 			type = g_mime_content_type_parse (NULL, "multipart/mixed; boundary=changed");
 			g_mime_entity_set_content_type ((GMimeEntity *) multipart, type);
@@ -1305,15 +1387,22 @@ test_multipart_models (void)
 			g_mime_entity_set_header ((GMimeEntity *) multipart, "Content-Type",
 						 "multipart/mixed; boundary=changed", NULL);
 		} else {
-			g_mime_content_type_set_parameter (((GMimeEntity *) multipart)->content_type, "x", "value");
-			g_assert_true (multipart->raw_boundaries->pdata[0] == original);
-			g_assert_nonnull (multipart->raw_trailing_boundary);
+			GMimeMultipartPrivate *multipart_priv10;
+			GMimeEntityPrivate *entity_priv2 = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+			g_mime_content_type_set_parameter (entity_priv2->content_type, "x", "value");
+			multipart_priv10 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_true (multipart_priv10->raw_boundaries->pdata[0] == original);
+			g_assert_nonnull (multipart_priv10->raw_trailing_boundary);
 		}
 		if (operation < 6)
-			g_assert_null (multipart->raw_trailing_boundary);
+			g_assert_null (multipart_priv3->raw_trailing_boundary);
 		else if (operation < 10) {
-			g_assert_null (multipart->raw_boundaries);
-			g_assert_null (multipart->raw_end_boundary);
+			GMimeMultipartPrivate *multipart_priv11 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv11->raw_boundaries);
+			g_assert_null (multipart_priv11->raw_end_boundary);
 		}
 		output = g_mime_stream_block_new ();
 		g_assert_cmpint (g_mime_entity_write_to_stream ((GMimeEntity *) multipart, NULL, output), >, 0);
@@ -1323,7 +1412,9 @@ test_multipart_models (void)
 		g_object_unref (output);
 		g_bytes_unref (original);
 		g_object_unref (first);
-		type = g_object_ref (((GMimeEntity *) multipart)->content_type);
+		entity_priv3 = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+		type = g_object_ref (entity_priv3->content_type);
 		g_object_unref (multipart);
 		g_mime_content_type_set_parameter (type, "boundary", "after-owner-finalization");
 		g_object_unref (type);
@@ -1350,6 +1441,7 @@ test_multipart_collection_bounds (void)
 	for (model = 0; model < G_N_ELEMENTS (wires) + 2; model++) {
 		for (operation = 0; operation < 4; operation++) {
 			for (range = 0; range < 3; range++) {
+				GMimeMultipartPrivate *priv;
 				GMimeMultipart *multipart = model < 2 ? g_mime_multipart_new () : parse_multipart (wires[model - 2]);
 				GMimeEntity *candidate = (GMimeEntity *) g_mime_part_new ();
 				GMimeEntity *weak = candidate;
@@ -1369,17 +1461,21 @@ test_multipart_collection_bounds (void)
 					}
 				}
 				g_object_add_weak_pointer (G_OBJECT (candidate), (gpointer *) &weak);
-				for (i = 0; i < multipart->children->len; i++) {
-					g_ptr_array_add (children, g_object_ref (multipart->children->pdata[i]));
-					if (multipart->raw_boundaries)
-						boundaries[i] = multipart->raw_boundaries->pdata[i];
+				priv = _g_mime_multipart_get_private (multipart);
+
+				for (i = 0; i < priv->children->len; i++) {
+					GMimeMultipartPrivate *multipart_priv = _g_mime_multipart_get_private (multipart);
+
+					g_ptr_array_add (children, g_object_ref (multipart_priv->children->pdata[i]));
+					if (multipart_priv->raw_boundaries)
+						boundaries[i] = multipart_priv->raw_boundaries->pdata[i];
 				}
-				raw_boundaries = multipart->raw_boundaries;
-				preamble = multipart->raw_preamble;
-				epilogue = multipart->raw_epilogue;
-				end = multipart->raw_end_boundary;
-				trailing = multipart->raw_trailing_boundary;
-				write_end = multipart->write_end_boundary;
+				raw_boundaries = priv->raw_boundaries;
+				preamble = priv->raw_preamble;
+				epilogue = priv->raw_epilogue;
+				end = priv->raw_end_boundary;
+				trailing = priv->raw_trailing_boundary;
+				write_end = priv->write_end_boundary;
 				for (i = 0; i < 2; i++) {
 					g_mime_format_options_set_newline_format (options, i);
 					before[i] = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
@@ -1395,15 +1491,17 @@ test_multipart_collection_bounds (void)
 				else
 					g_assert_null (g_mime_multipart_get_part (multipart, index));
 				g_test_assert_expected_messages ();
-				g_assert_cmpuint (multipart->children->len, ==, children->len);
-				g_assert_true (multipart->raw_boundaries == raw_boundaries);
-				g_assert_true (multipart->raw_preamble == preamble);
-				g_assert_true (multipart->raw_epilogue == epilogue);
-				g_assert_true (multipart->raw_end_boundary == end);
-				g_assert_true (multipart->raw_trailing_boundary == trailing);
-				g_assert_cmpint (multipart->write_end_boundary, ==, write_end);
+				g_assert_cmpuint (priv->children->len, ==, children->len);
+				g_assert_true (priv->raw_boundaries == raw_boundaries);
+				g_assert_true (priv->raw_preamble == preamble);
+				g_assert_true (priv->raw_epilogue == epilogue);
+				g_assert_true (priv->raw_end_boundary == end);
+				g_assert_true (priv->raw_trailing_boundary == trailing);
+				g_assert_cmpint (priv->write_end_boundary, ==, write_end);
 				for (i = 0; i < children->len; i++) {
-					g_assert_true (multipart->children->pdata[i] == children->pdata[i]);
+					GMimeMultipartPrivate *multipart_priv2 = _g_mime_multipart_get_private (multipart);
+
+					g_assert_true (multipart_priv2->children->pdata[i] == children->pdata[i]);
 					if (raw_boundaries) {
 						g_assert_cmpuint (raw_boundaries->len, ==, children->len);
 						g_assert_true (raw_boundaries->pdata[i] == boundaries[i]);
@@ -1432,7 +1530,8 @@ test_multipart_collection_bounds (void)
 			(GMimeMultipart *) g_mime_multipart_alternative_new () : parse_multipart (wires[model - 2]);
 		GMimeEntity *candidate = (GMimeEntity *) g_mime_part_new ();
 		GMimeEntity *weak = candidate, *removed, *replaced;
-		guint count = multipart->children->len;
+		GMimeMultipartPrivate *multipart_priv3 = _g_mime_multipart_get_private (multipart);
+		guint count = multipart_priv3->children->len;
 
 		if (model < 2)
 			g_mime_multipart_set_boundary (multipart, "b");
@@ -1440,7 +1539,7 @@ test_multipart_collection_bounds (void)
 		g_mime_multipart_insert (multipart, count, candidate);
 		g_object_unref (candidate);
 		g_assert_true (g_mime_multipart_get_part (multipart, count) == weak);
-		g_assert_null (multipart->raw_trailing_boundary);
+		g_assert_null (multipart_priv3->raw_trailing_boundary);
 		replaced = g_mime_multipart_replace (multipart, count, weak);
 		g_assert_true (replaced == weak);
 		g_object_unref (replaced);
@@ -1545,6 +1644,8 @@ test_multipart_boundary_validation (void)
 
 	testsuite_check ("Multipart boundary rejection and identical assignment preserve headers, markers and exact output");
 	for (model = 0; model < 3; model++) {
+		GMimeEntityPrivate *multipart_priv;
+		GMimeMultipartPrivate *multipart_priv2;
 		GMimeMultipart *multipart = model ? parse_multipart (wires[model - 1]) : g_mime_multipart_new ();
 		GMimeFormatOptions *options = g_mime_format_options_new ();
 		GMimeHeader *header;
@@ -1557,12 +1658,16 @@ test_multipart_boundary_validation (void)
 		if (!model)
 			g_mime_multipart_set_boundary (multipart, "b");
 		boundary = g_mime_multipart_get_boundary (multipart);
-		header = g_mime_header_list_get_header (((GMimeEntity *) multipart)->headers, "Content-Type");
+		multipart_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+		header = g_mime_header_list_get_header (multipart_priv->headers, "Content-Type");
 		raw_header = header->raw_value;
-		raw_boundaries = multipart->raw_boundaries;
-		end = multipart->raw_end_boundary;
-		trailing = multipart->raw_trailing_boundary;
-		write_end = multipart->write_end_boundary;
+		multipart_priv2 = _g_mime_multipart_get_private (multipart);
+
+		raw_boundaries = multipart_priv2->raw_boundaries;
+		end = multipart_priv2->raw_end_boundary;
+		trailing = multipart_priv2->raw_trailing_boundary;
+		write_end = multipart_priv2->write_end_boundary;
 		for (newline = 0; newline < 2; newline++) {
 			g_mime_format_options_set_newline_format (options, newline);
 			before[newline] = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
@@ -1574,10 +1679,10 @@ test_multipart_boundary_validation (void)
 			g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart));
 			g_assert_true (g_mime_multipart_get_boundary (multipart) == boundary);
 			g_assert_true (header->raw_value == raw_header);
-			g_assert_true (multipart->raw_boundaries == raw_boundaries);
-			g_assert_true (multipart->raw_end_boundary == end);
-			g_assert_true (multipart->raw_trailing_boundary == trailing);
-			g_assert_cmpint (multipart->write_end_boundary, ==, write_end);
+			g_assert_true (multipart_priv2->raw_boundaries == raw_boundaries);
+			g_assert_true (multipart_priv2->raw_end_boundary == end);
+			g_assert_true (multipart_priv2->raw_trailing_boundary == trailing);
+			g_assert_cmpint (multipart_priv2->write_end_boundary, ==, write_end);
 		}
 		for (newline = 0; newline < 2; newline++) {
 			g_mime_format_options_set_newline_format (options, newline);
@@ -1589,10 +1694,10 @@ test_multipart_boundary_validation (void)
 
 		g_mime_multipart_set_boundary (multipart, "changed");
 		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "changed");
-		g_assert_null (multipart->raw_boundaries);
-		g_assert_null (multipart->raw_end_boundary);
-		g_assert_true (multipart->write_end_boundary);
-		g_assert_true (multipart->raw_trailing_boundary == trailing);
+		g_assert_null (multipart_priv2->raw_boundaries);
+		g_assert_null (multipart_priv2->raw_end_boundary);
+		g_assert_true (multipart_priv2->write_end_boundary);
+		g_assert_true (multipart_priv2->raw_trailing_boundary == trailing);
 		g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart) + 1);
 		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "hanged");
 		g_mime_format_options_free (options);
@@ -1640,6 +1745,7 @@ test_multipart_boundary_validation (void)
 
 	testsuite_check ("Multipart NULL boundary assignment retains native automatic generation");
 	for (model = 0; model < 3; model++) {
+		GMimeEntityPrivate *entity_priv;
 		GMimeMultipart *multipart = model ? parse_multipart (wires[model - 1]) : g_mime_multipart_new ();
 		const char *boundary;
 		guchar *decoded;
@@ -1656,11 +1762,13 @@ test_multipart_boundary_validation (void)
 		g_assert_cmpstr (boundary + 2, ==, encoded);
 		g_free (encoded);
 		g_free (decoded);
-		g_mime_content_type_set_boundary (((GMimeEntity *) multipart)->content_type, NULL);
+		entity_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+		g_mime_content_type_set_boundary (entity_priv->content_type, NULL);
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*_g_mime_is_valid_boundary*");
 		g_mime_multipart_set_boundary (multipart, "");
 		g_test_assert_expected_messages ();
-		g_assert_null (g_mime_content_type_get_boundary (((GMimeEntity *) multipart)->content_type));
+		g_assert_null (g_mime_content_type_get_boundary (entity_priv->content_type));
 		boundary = g_mime_multipart_get_boundary (multipart);
 		g_assert_cmpuint (strlen (boundary), ==, 26);
 		for (i = 0; boundary[i]; i++)
@@ -1695,6 +1803,7 @@ test_multipart_text_views (void)
 	testsuite_check ("Multipart text views replace NULs without changing raw bytes or no-op output");
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		for (persistent = 0; persistent < 2; persistent++) {
+			GMimeMultipartPrivate *priv;
 			GString *wire = g_string_new ("Content-Type: multipart/mixed; boundary=b\n\n");
 			GMimeStream *input, *before = g_mime_stream_mem_new (), *after = g_mime_stream_mem_new ();
 			GMimeMultipart *multipart;
@@ -1720,20 +1829,22 @@ test_multipart_text_views (void)
 			multipart = (GMimeMultipart *) entity;
 			g_object_unref (input);
 			g_string_free (wire, TRUE);
-			preamble = g_bytes_ref (multipart->raw_preamble);
-			epilogue = g_bytes_ref (multipart->raw_epilogue);
+			priv = _g_mime_multipart_get_private (multipart);
+
+			preamble = g_bytes_ref (priv->raw_preamble);
+			epilogue = g_bytes_ref (priv->raw_epilogue);
 			assert_raw_bytes (preamble, cases[i].preamble, cases[i].prelength);
 			assert_raw_bytes (epilogue, cases[i].epilogue, cases[i].epilength);
 			written = g_mime_entity_write_to_stream (entity, NULL, before);
 			g_assert_cmpint (written, >, 0);
 			g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, cases[i].pretext);
 			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, cases[i].epitext);
-			g_assert_true (g_utf8_validate (multipart->preamble, -1, NULL));
-			g_assert_true (g_utf8_validate (multipart->epilogue, -1, NULL));
+			g_assert_true (g_utf8_validate (priv->preamble, -1, NULL));
+			g_assert_true (g_utf8_validate (priv->epilogue, -1, NULL));
 			g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart));
 			g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart));
-			g_assert_true (multipart->raw_preamble == preamble);
-			g_assert_true (multipart->raw_epilogue == epilogue);
+			g_assert_true (priv->raw_preamble == preamble);
+			g_assert_true (priv->raw_epilogue == epilogue);
 			g_assert_cmpint (g_mime_entity_write_to_stream (entity, NULL, after), ==, written);
 			original = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) before);
 			unchanged = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) after);
@@ -1742,14 +1853,14 @@ test_multipart_text_views (void)
 			g_object_unref (after);
 			g_mime_multipart_set_preamble (multipart, "new preamble\n");
 			g_mime_multipart_set_epilogue (multipart, "new epilogue");
-			assert_raw_bytes (multipart->raw_preamble, "new preamble\n", 13);
-			assert_raw_bytes (multipart->raw_epilogue, "\nnew epilogue\n", 14);
+			assert_raw_bytes (priv->raw_preamble, "new preamble\n", 13);
+			assert_raw_bytes (priv->raw_epilogue, "\nnew epilogue\n", 14);
 			g_mime_multipart_set_preamble (multipart, NULL);
 			g_mime_multipart_set_epilogue (multipart, NULL);
 			g_assert_null (g_mime_multipart_get_preamble (multipart));
 			g_assert_null (g_mime_multipart_get_epilogue (multipart));
-			g_assert_null (multipart->raw_preamble);
-			g_assert_null (multipart->raw_epilogue);
+			g_assert_null (priv->raw_preamble);
+			g_assert_null (priv->raw_epilogue);
 			g_object_unref (entity);
 			assert_raw_bytes (preamble, cases[i].preamble, cases[i].prelength);
 			assert_raw_bytes (epilogue, cases[i].epilogue, cases[i].epilength);
@@ -1807,6 +1918,7 @@ test_multipart_text_folding (void)
 			}
 			epilogue = expected ? g_strconcat (newline, expected->str, NULL) : NULL;
 			for (model = 0; model < 3; model++) {
+				GMimeMultipartPrivate *priv;
 				GMimeMultipart *multipart = model ? parse_multipart (model == 1 ?
 					"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\n\nbody\n--b--\nepi\n" :
 					"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody") : g_mime_multipart_new ();
@@ -1816,15 +1928,17 @@ test_multipart_text_folding (void)
 				g_mime_multipart_set_epilogue (multipart, cases[i].input);
 				g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected ? expected->str : NULL);
 				g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, expected ? expected->str : NULL);
-				prebytes = multipart->raw_preamble ? g_bytes_ref (multipart->raw_preamble) : NULL;
-				epibytes = multipart->raw_epilogue ? g_bytes_ref (multipart->raw_epilogue) : NULL;
+				priv = _g_mime_multipart_get_private (multipart);
+
+				prebytes = priv->raw_preamble ? g_bytes_ref (priv->raw_preamble) : NULL;
+				epibytes = priv->raw_epilogue ? g_bytes_ref (priv->raw_epilogue) : NULL;
 				g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart));
 				g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart));
-				g_assert_true (multipart->raw_preamble == prebytes);
-				g_assert_true (multipart->raw_epilogue == epibytes);
+				g_assert_true (priv->raw_preamble == prebytes);
+				g_assert_true (priv->raw_epilogue == epibytes);
 				if (model == 2 && cases[i].input) {
-					g_assert_null (multipart->raw_end_boundary);
-					g_assert_true (multipart->write_end_boundary);
+					g_assert_null (priv->raw_end_boundary);
+					g_assert_true (priv->write_end_boundary);
 				}
 				g_mime_multipart_set_preamble (multipart, "prefix suffix");
 				g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart) + 7);
@@ -1976,8 +2090,9 @@ test_multipart_output (void)
 	testsuite_check ("Multipart output counts normalized bytes and propagates write/filter-completion failures");
 	for (i = 0; i < G_N_ELEMENTS (wires); i++) {
 		GMimeMultipart *multipart = parse_multipart (wires[i]);
+		GMimeEntityPrivate *priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
 
-		((GMimeEntity *) multipart)->ensure_newline = TRUE;
+		priv->ensure_newline = TRUE;
 		for (newline = 0; newline < 2; newline++) {
 			GMimeFormatOptions *options = g_mime_format_options_new ();
 			GMimeStream *stream = g_mime_stream_block_new ();
@@ -2150,6 +2265,7 @@ test_public_parser_models (void)
 	testsuite_check ("Public parser retains one buffer across headers, formats, persistence and mailbox reads");
 	for (mode = 0; mode < 4; mode++) {
 		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			GMimeMessagePrivate *first_priv;
 			ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
 			GMimeParser *parser;
 			GMimeHeaderList *headers;
@@ -2178,7 +2294,9 @@ test_public_parser_models (void)
 			marker = g_mime_parser_get_mbox_marker (parser);
 			g_assert_cmpstr (marker, ==, "From sender");
 			g_free (marker);
-			saved = g_mime_part_get_content (GMIME_PART (first->mime_part));
+			first_priv = _g_mime_message_get_private (first);
+
+			saved = g_mime_part_get_content (GMIME_PART (first_priv->mime_part));
 			bytes = read_content (saved, FALSE);
 			g_assert_cmpmem (bytes->data, bytes->len, "one\0tail", 8);
 			g_byte_array_unref (bytes);
@@ -2207,6 +2325,8 @@ test_public_parser_models (void)
 
 	testsuite_check ("Public parsing retains incomplete embedded-message pre-header bytes at EOF");
 	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		GMimeMessagePrivate *outer_priv;
+		GMimeMessagePrivate *inner_priv;
 		static const char incomplete[] = "Content-Type: message/rfc822\n\nSubject: outer\n"
 			"Content-Type: multipart/digest; boundary=b\n\n--b\n\nx";
 		ModelInput *input = new_input (incomplete, sizeof (incomplete) - 1, chunks[chunk]);
@@ -2221,13 +2341,17 @@ test_public_parser_models (void)
 		g_assert_no_error (error);
 		g_assert_true (GMIME_IS_MESSAGE_PART (entity));
 		outer = g_mime_message_part_get_message (GMIME_MESSAGE_PART (entity));
-		g_assert_true (GMIME_IS_MULTIPART (outer->mime_part));
-		child = g_mime_multipart_get_part (GMIME_MULTIPART (outer->mime_part), 0);
+		outer_priv = _g_mime_message_get_private (outer);
+
+		g_assert_true (GMIME_IS_MULTIPART (outer_priv->mime_part));
+		child = g_mime_multipart_get_part (GMIME_MULTIPART (outer_priv->mime_part), 0);
 		g_assert_true (GMIME_IS_MESSAGE_PART (child));
 		inner = g_mime_message_part_get_message (GMIME_MESSAGE_PART (child));
 		g_assert_nonnull (inner);
-		g_assert_nonnull (inner->raw_marker);
-		bytes = g_bytes_get_data (inner->raw_marker, &length);
+		inner_priv = _g_mime_message_get_private (inner);
+
+		g_assert_nonnull (inner_priv->raw_marker);
+		bytes = g_bytes_get_data (inner_priv->raw_marker, &length);
 		g_assert_cmpmem (bytes, length, "x", 1);
 		g_object_unref (entity);
 		g_object_unref (parser);
@@ -2448,7 +2572,7 @@ new_model_verify_context (void)
 }
 
 typedef struct {
-	GMimeMultipart parent_object;
+	GMimeMultipart parent_instance;
 	GMimeStream *output;
 } ModelVerifyMultipart;
 
@@ -2561,8 +2685,10 @@ test_signature_markers (void)
 				g_assert_no_error (error);
 				g_assert_true (GMIME_IS_MULTIPART (entity));
 				multipart = (GMimeMultipart *) entity;
-				slot = slot_index == 0 ? (GBytes **) &multipart->raw_boundaries->pdata[0] :
-					slot_index == 1 ? &multipart->raw_end_boundary : &multipart->raw_trailing_boundary;
+				GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
+
+				slot = slot_index == 0 ? (GBytes **) &priv->raw_boundaries->pdata[0] :
+					slot_index == 1 ? &priv->raw_end_boundary : &priv->raw_trailing_boundary;
 				g_assert_nonnull (*slot);
 				g_bytes_unref (*slot);
 				*slot = g_bytes_new_static (markers[i].canonical, markers[i].canonical_length);
@@ -2707,7 +2833,9 @@ test_signature_markers (void)
 		if (mode < 2) {
 			GMimeEntity *invalid = mode ? (GMimeEntity *) g_mime_multipart_new () :
 				(GMimeEntity *) g_mime_part_new ();
-			g_mime_entity_set_content_type (invalid, signature->content_type);
+			GMimeEntityPrivate *signature_priv = _g_mime_entity_get_private (signature);
+
+			g_mime_entity_set_content_type (invalid, signature_priv->content_type);
 			g_object_unref (g_mime_multipart_replace ((GMimeMultipart *) signed_part, 1, invalid));
 			g_object_unref (invalid);
 		} else {
@@ -2803,7 +2931,8 @@ test_writer_depth (void)
 				g_ptr_array_add (entities, root);
 			}
 			for (i = 0; i < entities->len; i++) {
-				guint8 ensure = ((GMimeEntity *) entities->pdata[i])->ensure_newline;
+				GMimeEntityPrivate *entities_priv = _g_mime_entity_get_private (((GMimeEntity *) entities->pdata[i]));
+				guint8 ensure = entities_priv->ensure_newline;
 
 				g_byte_array_append (flags, &ensure, 1);
 			}
@@ -2826,8 +2955,11 @@ test_writer_depth (void)
 			errno = 0;
 			g_assert_cmpint (g_mime_entity_write_to_stream (root, options, (GMimeStream *) output), ==, -1);
 			g_assert_cmpint (errno, ==, EIO);
-			for (i = 0; i < entities->len; i++)
-				g_assert_cmpint (((GMimeEntity *) entities->pdata[i])->ensure_newline, ==, flags->data[i]);
+			for (i = 0; i < entities->len; i++) {
+				GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) entities->pdata[i]);
+
+				g_assert_cmpint (priv->ensure_newline, ==, flags->data[i]);
+			}
 
 			/* Keep each descendant alive until its parent has been released:
 			 * model finalizers, unlike the writer, still recurse. */
@@ -2848,7 +2980,7 @@ test_writer_depth (void)
 }
 
 typedef struct {
-	GMimePart parent_object;
+	GMimePart parent_instance;
 	GMimeEntity *nested;
 	guint calls;
 	gboolean content_only, international, hidden, fail;
@@ -2893,6 +3025,9 @@ model_writer_part_init (ModelWriterPart *part)
 static void
 test_writer_dispatch (void)
 {
+	GMimeEntityPrivate *message_priv;
+	GMimeEntityPrivate *part_priv;
+	GMimeEntityPrivate *multipart_priv;
 	GMimeFormatOptions *options = g_mime_format_options_new ();
 	GMimeMultipart *multipart = g_mime_multipart_new_with_subtype ("signed");
 	ModelWriterPart *part = g_object_new (model_writer_part_get_type (), NULL);
@@ -2949,14 +3084,18 @@ test_writer_dispatch (void)
 
 	testsuite_check ("Message writing passes newline requirements without mutating its body");
 	g_mime_message_set_mime_part (message, (GMimeEntity *) part);
-	((GMimeEntity *) message)->ensure_newline = FALSE;
-	((GMimeEntity *) part)->ensure_newline = TRUE;
+	message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+	message_priv->ensure_newline = FALSE;
+	part_priv = _g_mime_entity_get_private (((GMimeEntity *) part));
+
+	part_priv->ensure_newline = TRUE;
 	calls = part->calls;
 	bytes = serialize_writer ((GMimeEntity *) message, options, TRUE);
 	g_assert_cmpmem (bytes->data, bytes->len, "body", 4);
 	g_assert_cmpuint (part->calls, ==, calls + 1);
 	g_assert_true (part->content_only);
-	g_assert_true (((GMimeEntity *) part)->ensure_newline);
+	g_assert_true (part_priv->ensure_newline);
 	g_byte_array_unref (bytes);
 	bytes = serialize_writer ((GMimeEntity *) part, options, TRUE);
 	g_assert_cmpmem (bytes->data, bytes->len, "body\n", 5);
@@ -2966,14 +3105,16 @@ test_writer_dispatch (void)
 	errno = 0;
 	g_assert_cmpint (g_mime_entity_write_content_to_stream ((GMimeEntity *) message, options, (GMimeStream *) output), ==, -1);
 	g_assert_cmpint (errno, ==, EIO);
-	g_assert_true (((GMimeEntity *) part)->ensure_newline);
-	g_assert_false (((GMimeEntity *) message)->ensure_newline);
+	g_assert_true (part_priv->ensure_newline);
+	g_assert_false (message_priv->ensure_newline);
 	testsuite_check_passed ();
 
 	testsuite_check ("Legacy multipart writing retains text and does not invent a removed boundary");
 	g_mime_multipart_clear (multipart);
+	multipart_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
 	g_assert_true (g_mime_param_list_remove (g_mime_content_type_get_parameters (
-		((GMimeEntity *) multipart)->content_type), "boundary"));
+		multipart_priv->content_type), "boundary"));
 	g_mime_multipart_set_preamble (multipart, "pre");
 	g_mime_multipart_set_epilogue (multipart, "post");
 	bytes = serialize_writer ((GMimeEntity *) multipart, options, TRUE);
@@ -3119,8 +3260,11 @@ test_message_header_writing (void)
 				g_mime_parser_init_with_stream (parser, input);
 				message = g_mime_parser_construct_message (parser, NULL, &error);
 				g_assert_no_error (error);
-				if (prepend)
-					g_mime_header_list_prepend (((GMimeEntity *) message)->headers, "X-Prepended", "first", NULL);
+				if (prepend) {
+					GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+
+					g_mime_header_list_prepend (priv->headers, "X-Prepended", "first", NULL);
+				}
 				if (append)
 					g_mime_message_set_subject (message, "appended", NULL);
 				expected = g_strconcat (prepend ? "X-Prepended: first\n" : "",
@@ -3151,6 +3295,8 @@ test_message_header_writing (void)
 
 	testsuite_check ("Headers-only writing leaves body writers, content, flags and caller streams untouched");
 	{
+		GMimeEntityPrivate *message_priv;
+		GMimeEntityPrivate *body_priv;
 		ModelWriterPart *body = g_object_new (model_writer_part_get_type (), NULL);
 		GMimeMessage *message = g_mime_message_new (FALSE);
 		ModelInput *input = new_input ("body", 4, 1);
@@ -3181,8 +3327,12 @@ test_message_header_writing (void)
 		g_assert_cmpuint (input->reads, ==, reads);
 		g_assert_cmpuint (input->seeks, ==, seeks);
 		g_assert_cmpuint (input->resets, ==, resets);
-		g_assert_true (((GMimeEntity *) message)->ensure_newline);
-		g_assert_false (((GMimeEntity *) body)->ensure_newline);
+		message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+		g_assert_true (message_priv->ensure_newline);
+		body_priv = _g_mime_entity_get_private (((GMimeEntity *) body));
+
+		g_assert_false (body_priv->ensure_newline);
 		g_assert_true (g_mime_format_options_get_ensure_newline (options));
 		for (mode = 0; mode < 2; mode++) {
 			ModelOutput *limited = g_object_new (model_output_get_type (), NULL);
@@ -3206,8 +3356,8 @@ test_message_header_writing (void)
 		g_assert_cmpuint (input->reads, ==, reads);
 		g_assert_cmpuint (input->seeks, ==, seeks);
 		g_assert_cmpuint (input->resets, ==, resets);
-		g_assert_true (((GMimeEntity *) message)->ensure_newline);
-		g_assert_false (((GMimeEntity *) body)->ensure_newline);
+		g_assert_true (message_priv->ensure_newline);
+		g_assert_false (body_priv->ensure_newline);
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE (message)*");
 		g_assert_cmpint (g_mime_message_write_headers_to_stream (NULL, options, output), ==, -1);
 		g_test_assert_expected_messages ();
@@ -3226,7 +3376,7 @@ test_message_header_writing (void)
 }
 
 typedef struct {
-	GMimePart parent_object;
+	GMimePart parent_instance;
 	GMimeStream *stream;
 	GMimeFormatOptions *options;
 	guint calls, failure;
@@ -3257,16 +3407,19 @@ model_file_part_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolea
 #ifdef __linux__
 	if (part->failure == 3) {
 		GMimeStreamFile *file = (GMimeStreamFile *) stream;
+		GMimeStreamFilePrivate *file_priv = _g_mime_stream_file_get_private (file);
 
-		g_assert_cmpint (fclose (file->fp), ==, 0);
-		file->fp = g_fopen ("/dev/full", "wb");
-		g_assert_nonnull (file->fp);
-		g_assert_cmpint (setvbuf (file->fp, part->buffer, _IOFBF, sizeof (part->buffer)), ==, 0);
-		g_assert_cmpint (fputc ('x', file->fp), ==, 'x');
+		g_assert_cmpint (fclose (file_priv->fp), ==, 0);
+		file_priv->fp = g_fopen ("/dev/full", "wb");
+		g_assert_nonnull (file_priv->fp);
+		g_assert_cmpint (setvbuf (file_priv->fp, part->buffer, _IOFBF, sizeof (part->buffer)), ==, 0);
+		g_assert_cmpint (fputc ('x', file_priv->fp), ==, 'x');
 		return 0;
 	}
 	if (part->failure >= 4) {
-		g_assert_cmpint (close (fileno (GMIME_STREAM_FILE (stream)->fp)), ==, 0);
+		GMimeStreamFilePrivate *stream_priv = _g_mime_stream_file_get_private (GMIME_STREAM_FILE (stream));
+
+		g_assert_cmpint (close (fileno (stream_priv->fp)), ==, 0);
 		errno = part->failure == 5 ? EACCES : 0;
 		return part->failure == 4 ? 0 : -1;
 	}
@@ -3406,6 +3559,7 @@ test_file_writing (void)
 		GMimeFormatOptions *selected = format ? options : NULL;
 
 		for (content_only = 0; content_only < 2; content_only++) {
+			GMimeStreamFilePrivate *custom_priv;
 			GByteArray *expected = serialize_writer ((GMimeEntity *) custom, selected, content_only);
 			guint calls = custom->calls;
 
@@ -3417,7 +3571,9 @@ test_file_writing (void)
 			g_assert_cmpuint (custom->calls, ==, calls + 1);
 			g_assert_true (custom->options == selected);
 			g_assert_cmpint (custom->content_only, ==, content_only);
-			g_assert_null (GMIME_STREAM_FILE (custom->stream)->fp);
+			custom_priv = _g_mime_stream_file_get_private (GMIME_STREAM_FILE (custom->stream));
+
+			g_assert_null (custom_priv->fp);
 			g_assert_cmpint (g_mime_stream_close (custom->stream), ==, 0);
 			g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
 			g_assert_cmpmem (actual, length, expected->data, expected->len);
@@ -3439,6 +3595,8 @@ test_file_writing (void)
 
 		custom->failure = i;
 		for (content_only = 0; content_only < 2; content_only++) {
+			GMimeStreamFilePrivate *stream_file_priv;
+
 			errno = EBUSY;
 			if (content_only)
 				g_assert_false (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, options, filename, &error));
@@ -3449,7 +3607,9 @@ test_file_writing (void)
 			g_assert_nonnull (strstr (error->message, operation));
 			g_assert_nonnull (strstr (error->message, filename));
 			g_clear_error (&error);
-			g_assert_null (GMIME_STREAM_FILE (custom->stream)->fp);
+			stream_file_priv = _g_mime_stream_file_get_private (GMIME_STREAM_FILE (custom->stream));
+
+			g_assert_null (stream_file_priv->fp);
 			g_assert_cmpint (g_mime_stream_close (custom->stream), ==, 0);
 			g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
 			g_assert_cmpmem (actual, length, "prefix", i < 3 ? 6 : 0);
@@ -3567,7 +3727,7 @@ test_loading (void)
 
 				g_string_append_len (wire, cases[i], length);
 				input = new_input (wire->str, wire->len, 1);
-				g_assert_cmpint (g_mime_stream_seek (input->parent_object.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+				g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
 				input->nonseekable = nonseekable;
 				input->fail_seek = TRUE;
 				alive = input;
@@ -3585,7 +3745,7 @@ test_loading (void)
 					g_assert_cmpuint (warnings[GMIME_WARN_TRUNCATED_MESSAGE], >, 0);
 				expected = serialize_writer (entity, format, FALSE);
 				g_byte_array_set_size (g_mime_stream_mem_get_byte_array (
-					(GMimeStreamMem *) input->parent_object.source), 0);
+					(GMimeStreamMem *) input->parent_instance.source), 0);
 				g_assert_cmpint (g_mime_stream_close ((GMimeStream *) input), ==, 0);
 				g_object_unref (input);
 				g_assert_null (alive);
@@ -3791,7 +3951,7 @@ test_loading_storage (void)
 
 					g_string_append (wire, cases[i]);
 					input = new_input (wire->str, wire->len, chunk);
-					g_assert_cmpint (g_mime_stream_seek (input->parent_object.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+					g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
 					input->fail_seek = storage == GMIME_CONTENT_STORAGE_MEMORY;
 					alive = input;
 					g_object_add_weak_pointer (G_OBJECT (input), &alive);
@@ -3834,7 +3994,7 @@ test_loading_storage (void)
 	for (message = 0; message < 2; message++) {
 		for (storage = GMIME_CONTENT_STORAGE_MEMORY; storage <= GMIME_CONTENT_STORAGE_SOURCE; storage++) {
 			ModelInput *input = new_input (cases[0], strlen (cases[0]), 1);
-			GByteArray *source = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) input->parent_object.source);
+			GByteArray *source = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) input->parent_instance.source);
 			GMimeEntity *entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (
 				NULL, (GMimeStream *) input, storage, &error) :
 				g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, storage, &error);
@@ -4074,7 +4234,7 @@ test_parser_storage (void)
 				input = new_input (wire->str, wire->len, chunk);
 				alive = input;
 				g_object_add_weak_pointer (G_OBJECT (input), &alive);
-				g_assert_cmpint (g_mime_stream_seek (input->parent_object.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+				g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
 				input->fail_seek = storage == GMIME_CONTENT_STORAGE_MEMORY;
 				parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input, format, storage, &error);
 				g_assert_no_error (error);
@@ -4086,13 +4246,16 @@ test_parser_storage (void)
 				g_assert_cmpint (g_mime_parser_get_format (parser), ==, format);
 				g_assert_cmpint (g_mime_parser_get_persist_stream (parser), ==, storage == GMIME_CONTENT_STORAGE_SOURCE);
 				for (i = 0; i < count; i++) {
+					GMimeMessagePrivate *messages_priv;
 					GByteArray *bytes;
 
 					messages[i] = g_mime_parser_construct_message (parser, NULL, &error);
 					g_assert_no_error (error);
 					g_assert_nonnull (messages[i]);
 					g_assert_cmpstr (g_mime_message_get_subject (messages[i]), ==, i ? "second" : "first");
-					bytes = read_content (g_mime_part_get_content (GMIME_PART (messages[i]->mime_part)), FALSE);
+					messages_priv = _g_mime_message_get_private (messages[i]);
+
+					bytes = read_content (g_mime_part_get_content (GMIME_PART (messages_priv->mime_part)), FALSE);
 					g_assert_cmpmem (bytes->data, bytes->len, i ? "two" : "one", 3);
 					g_byte_array_unref (bytes);
 				}
@@ -4103,7 +4266,8 @@ test_parser_storage (void)
 				g_object_unref (input);
 				g_assert_cmpint (alive != NULL, ==, storage == GMIME_CONTENT_STORAGE_SOURCE);
 				for (i = 0; i < count; i++) {
-					GByteArray *bytes = read_content (g_mime_part_get_content (GMIME_PART (messages[i]->mime_part)), FALSE);
+					GMimeMessagePrivate *message_priv = _g_mime_message_get_private (messages[i]);
+					GByteArray *bytes = read_content (g_mime_part_get_content (GMIME_PART (message_priv->mime_part)), FALSE);
 
 					g_assert_cmpmem (bytes->data, bytes->len, i ? "two" : "one", 3);
 					g_byte_array_unref (bytes);
@@ -4189,7 +4353,9 @@ test_parser_storage (void)
 			g_assert_cmpuint (calls, ==, 3);
 			g_object_unref (parser);
 			for (i = 0; i < 2; i++) {
-				bytes = read_content (g_mime_part_get_content (GMIME_PART (old[i]->mime_part)), FALSE);
+				GMimeMessagePrivate *old_priv = _g_mime_message_get_private (old[i]);
+
+				bytes = read_content (g_mime_part_get_content (GMIME_PART (old_priv->mime_part)), FALSE);
 				g_assert_cmpmem (bytes->data, bytes->len, i ? "two" : "one", 3);
 				g_byte_array_unref (bytes);
 				g_object_unref (old[i]);
@@ -4325,6 +4491,7 @@ test_content_type_load (void)
 	testsuite_check ("Content-type loading reparses models and copies current-position content without taking ownership");
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		for (nonseekable = 0; nonseekable < 2; nonseekable++) {
+			GMimeEntityPrivate *priv;
 			GMimeContentType *type = g_mime_content_type_parse (NULL, cases[i].type);
 			GString *wire = g_string_new ("skip"), *expected = g_string_new ("Content-Type: ");
 			GMimeEntity *entity;
@@ -4338,7 +4505,7 @@ test_content_type_load (void)
 			input = new_input (wire->str, wire->len, 1);
 			alive = input;
 			g_object_add_weak_pointer (G_OBJECT (input), &alive);
-			g_assert_cmpint (g_mime_stream_seek (input->parent_object.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+			g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
 			input->nonseekable = nonseekable;
 			input->fail_seek = TRUE;
 			before = g_mime_content_type_to_string (type);
@@ -4346,15 +4513,17 @@ test_content_type_load (void)
 			g_assert_no_error (error);
 			g_assert_nonnull (entity);
 			g_assert_cmpstr (G_OBJECT_TYPE_NAME (entity), ==, cases[i].klass);
-			g_assert_true (entity->content_type != type);
+			priv = _g_mime_entity_get_private (entity);
+
+			g_assert_true (priv->content_type != type);
 			after = g_mime_content_type_to_string (type);
 			g_assert_cmpstr (before, ==, after);
 			g_assert_cmpuint (input->seeks, ==, 0);
 			g_assert_cmpuint (input->resets, ==, 0);
 			g_assert_cmpuint (input->views, ==, 0);
 			g_assert_cmpuint (input->bytes_read, ==, cases[i].length);
-			g_assert_cmpint (g_mime_stream_tell (input->parent_object.source), ==, wire->len);
-			bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) input->parent_object.source);
+			g_assert_cmpint (g_mime_stream_tell (input->parent_instance.source), ==, wire->len);
+			bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) input->parent_instance.source);
 			g_assert_nonnull (bytes);
 			g_assert_cmpuint (bytes->len, ==, wire->len);
 			g_byte_array_set_size (bytes, 0);
@@ -4489,6 +4658,7 @@ test_ensure_newline (void)
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		for (dos = 0; dos < 2; dos++) {
 			for (persist = 0; persist < 2; persist++) {
+				GMimeEntityPrivate *body_priv;
 				ModelInput *input = new_input (cases[i].wire, strlen (cases[i].wire), 1);
 				GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
 				GMimeEntity *entity, *body;
@@ -4500,9 +4670,17 @@ test_ensure_newline (void)
 					g_mime_parser_construct_part (parser, NULL, &error);
 				g_assert_no_error (error);
 				g_assert_nonnull (entity);
-				body = cases[i].message ? ((GMimeMessage *) entity)->mime_part : entity;
+				if (cases[i].message) {
+					GMimeMessagePrivate *priv = _g_mime_message_get_private ((GMimeMessage *) entity);
+
+					body = priv->mime_part;
+				} else {
+					body = entity;
+				}
 				g_assert_nonnull (body);
-				body_ensure = body->ensure_newline;
+				body_priv = _g_mime_entity_get_private (body);
+
+				body_ensure = body_priv->ensure_newline;
 				g_mime_format_options_set_newline_format (options, dos ? GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
 				for (ensure = 0; ensure < 2; ensure++) {
 					GString *expected = g_string_new (NULL);
@@ -4523,14 +4701,14 @@ test_ensure_newline (void)
 					g_mime_format_options_set_ensure_newline (options, ensure);
 					bytes = serialize_writer (entity, options, FALSE);
 					g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
-					g_assert_cmpint (body->ensure_newline, ==, body_ensure);
+					g_assert_cmpint (body_priv->ensure_newline, ==, body_ensure);
 					g_assert_cmpint (g_mime_format_options_get_ensure_newline (options), ==, ensure);
 					if (ensure && cases[i].append) {
 						output->limit = bytes->len - strlen (newline);
 						errno = 0;
 						g_assert_cmpint (g_mime_entity_write_to_stream (entity, options, (GMimeStream *) output), ==, -1);
 						g_assert_cmpint (errno, ==, EIO);
-						g_assert_cmpint (body->ensure_newline, ==, body_ensure);
+						g_assert_cmpint (body_priv->ensure_newline, ==, body_ensure);
 					}
 					again = serialize_writer (entity, options, FALSE);
 					g_assert_cmpmem (again->data, again->len, bytes->data, bytes->len);

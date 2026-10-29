@@ -47,6 +47,8 @@
 #define _(x) x
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-gpg-context
  * @title: GMimeGpgContext
@@ -64,21 +66,17 @@
  * A GnuPG crypto context.
  **/
 struct _GMimeGpgContext {
-	GMimeCryptoContext parent_object;
+	GMimeCryptoContext parent_instance;
 	
 #ifdef ENABLE_CRYPTO
 	gpgme_ctx_t ctx;
 #endif
 };
 
-struct _GMimeGpgContextClass {
-	GMimeCryptoContextClass parent_class;
-	
-};
 
 
 static void g_mime_gpg_context_class_init (GMimeGpgContextClass *klass);
-static void g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass);
+static void g_mime_gpg_context_init (GMimeGpgContext *ctx);
 static void g_mime_gpg_context_finalize (GObject *object);
 
 static GMimeDigestAlgo gpg_digest_id (GMimeCryptoContext *ctx, const char *name);
@@ -110,29 +108,7 @@ static int gpg_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 static GMimeCryptoContextClass *parent_class = NULL;
 
 
-GType
-g_mime_gpg_context_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeGpgContextClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_gpg_context_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeGpgContext),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_gpg_context_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_CRYPTO_CONTEXT, "GMimeGpgContext", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeGpgContext, g_mime_gpg_context, GMIME_TYPE_CRYPTO_CONTEXT)
 
 
 static void
@@ -159,7 +135,7 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 }
 
 static void
-g_mime_gpg_context_init (GMimeGpgContext *gpg, GMimeGpgContextClass *klass)
+g_mime_gpg_context_init (GMimeGpgContext *gpg)
 {
 #ifdef ENABLE_CRYPTO
 	gpg->ctx = NULL;
@@ -267,9 +243,10 @@ gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 static void
 set_passphrase_callback (GMimeCryptoContext *context)
 {
+	GMimeCryptoContextPrivate *priv = _g_mime_crypto_context_get_private (context);
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
-	
-	if (context->request_passwd)
+
+	if (priv->request_passwd)
 		gpgme_set_passphrase_cb (gpg->ctx, g_mime_gpgme_passphrase_callback, gpg);
 	else
 		gpgme_set_passphrase_cb (gpg->ctx, NULL, NULL);

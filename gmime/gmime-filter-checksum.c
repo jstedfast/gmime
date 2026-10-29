@@ -26,6 +26,8 @@
 #include "gmime-filter-checksum.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-checksum
  * @title: GMimeFilterChecksum
@@ -36,7 +38,7 @@
  **/
 
 static void g_mime_filter_checksum_class_init (GMimeFilterChecksumClass *klass);
-static void g_mime_filter_checksum_init (GMimeFilterChecksum *filter, GMimeFilterChecksumClass *klass);
+static void g_mime_filter_checksum_init (GMimeFilterChecksum *filter);
 static void g_mime_filter_checksum_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -50,28 +52,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_checksum_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterChecksum, g_mime_filter_checksum, GMIME_TYPE_FILTER)
+
+GMimeFilterChecksumPrivate *
+_g_mime_filter_checksum_get_private (GMimeFilterChecksum *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterChecksumClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_checksum_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterChecksum),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_checksum_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterChecksum", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_checksum_get_instance_private (object);
 }
 
 
@@ -92,18 +79,20 @@ g_mime_filter_checksum_class_init (GMimeFilterChecksumClass *klass)
 }
 
 static void
-g_mime_filter_checksum_init (GMimeFilterChecksum *filter, GMimeFilterChecksumClass *klass)
+g_mime_filter_checksum_init (GMimeFilterChecksum *filter)
 {
-	filter->checksum = NULL;
+	GMimeFilterChecksumPrivate *priv = _g_mime_filter_checksum_get_private (filter);
+
+	priv->checksum = NULL;
 }
 
 static void
 g_mime_filter_checksum_finalize (GObject *object)
 {
-	GMimeFilterChecksum *filter = (GMimeFilterChecksum *) object;
-	
-	if (filter->checksum)
-		g_checksum_free (filter->checksum);
+	GMimeFilterChecksumPrivate *priv = _g_mime_filter_checksum_get_private ((GMimeFilterChecksum *) object);
+
+	if (priv->checksum)
+		g_checksum_free (priv->checksum);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -112,11 +101,15 @@ g_mime_filter_checksum_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GChecksum *checksum = ((GMimeFilterChecksum *) filter)->checksum;
+	GMimeFilterChecksumPrivate *priv = _g_mime_filter_checksum_get_private ((GMimeFilterChecksum *) filter);
+	GMimeFilterChecksumPrivate *copy_priv;
+	GChecksum *checksum = priv->checksum;
 	GMimeFilterChecksum *copy;
 	
 	copy = g_object_new (GMIME_TYPE_FILTER_CHECKSUM, NULL);
-	copy->checksum = checksum ? g_checksum_copy (checksum) : NULL;
+	copy_priv = _g_mime_filter_checksum_get_private (copy);
+
+	copy_priv->checksum = checksum ? g_checksum_copy (checksum) : NULL;
 	
 	return (GMimeFilter *) copy;
 }
@@ -126,7 +119,8 @@ static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	GChecksum *checksum = ((GMimeFilterChecksum *) filter)->checksum;
+	GMimeFilterChecksumPrivate *priv = _g_mime_filter_checksum_get_private ((GMimeFilterChecksum *) filter);
+	GChecksum *checksum = priv->checksum;
 	
 	g_checksum_update (checksum, (unsigned char *) in, len);
 	
@@ -145,7 +139,8 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GChecksum *checksum = ((GMimeFilterChecksum *) filter)->checksum;
+	GMimeFilterChecksumPrivate *priv = _g_mime_filter_checksum_get_private (((GMimeFilterChecksum *) filter));
+	GChecksum *checksum = priv->checksum;
 	
 	g_checksum_reset (checksum);
 }
@@ -162,10 +157,13 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_checksum_new (GChecksumType type)
 {
+	GMimeFilterChecksumPrivate *priv;
 	GMimeFilterChecksum *checksum;
 	
 	checksum = g_object_new (GMIME_TYPE_FILTER_CHECKSUM, NULL);
-	checksum->checksum = g_checksum_new (type);
+	priv = _g_mime_filter_checksum_get_private (checksum);
+
+	priv->checksum = g_checksum_new (type);
 	
 	return (GMimeFilter *) checksum;
 }
@@ -184,9 +182,13 @@ g_mime_filter_checksum_new (GChecksumType type)
 size_t
 g_mime_filter_checksum_get_digest (GMimeFilterChecksum *checksum, unsigned char *digest, size_t len)
 {
+	GMimeFilterChecksumPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_CHECKSUM (checksum), 0);
 	
-	g_checksum_get_digest (checksum->checksum, digest, &len);
+	priv = _g_mime_filter_checksum_get_private (checksum);
+
+	g_checksum_get_digest (priv->checksum, digest, &len);
 	
 	return len;
 }
@@ -203,7 +205,11 @@ g_mime_filter_checksum_get_digest (GMimeFilterChecksum *checksum, unsigned char 
 gchar *
 g_mime_filter_checksum_get_string (GMimeFilterChecksum *checksum)
 {
+	GMimeFilterChecksumPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_CHECKSUM (checksum), NULL);
 
-	return g_strdup (g_checksum_get_string (checksum->checksum));
+	priv = _g_mime_filter_checksum_get_private (checksum);
+
+	return g_strdup (g_checksum_get_string (priv->checksum));
 }

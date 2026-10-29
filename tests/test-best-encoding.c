@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <string.h>
@@ -161,6 +162,8 @@ test_line_lengths (void)
 static void
 test_reset_copy_and_charset (void)
 {
+	GMimeFilterBestPrivate *copy_priv;
+	GMimeFilterBestPrivate *filter_priv;
 	GMimeFilter *filter = g_mime_filter_best_new (GMIME_FILTER_BEST_ENCODING | GMIME_FILTER_BEST_CHARSET);
 	GMimeFilter *charset = g_mime_filter_best_new (GMIME_FILTER_BEST_CHARSET);
 	GMimeFilter *copy;
@@ -176,7 +179,11 @@ test_reset_copy_and_charset (void)
 			 GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, GMIME_CONTENT_ENCODING_BASE64);
 
 	copy = g_mime_filter_copy (filter);
-	g_assert_cmpint (GMIME_FILTER_BEST (copy)->flags, ==, GMIME_FILTER_BEST (filter)->flags);
+	copy_priv = _g_mime_filter_best_get_private (GMIME_FILTER_BEST (copy));
+
+	filter_priv = _g_mime_filter_best_get_private (GMIME_FILTER_BEST (filter));
+
+	g_assert_cmpint (copy_priv->flags, ==, filter_priv->flags);
 	check_encodings (GMIME_FILTER_BEST (copy), 78, GMIME_CONTENT_ENCODING_7BIT,
 			 GMIME_CONTENT_ENCODING_7BIT, GMIME_CONTENT_ENCODING_7BIT);
 	g_assert_cmpstr (g_mime_filter_best_charset (GMIME_FILTER_BEST (copy)), ==, "us-ascii");
@@ -197,32 +204,33 @@ test_large_counters (void)
 {
 	GMimeFilter *filter = g_mime_filter_best_new (GMIME_FILTER_BEST_ENCODING);
 	GMimeFilterBest *best = GMIME_FILTER_BEST (filter);
+	GMimeFilterBestPrivate *priv = _g_mime_filter_best_get_private (best);
 
-	best->total = G_MAXUINT32;
-	best->count8 = G_MAXUINT32 / 2;
+	priv->total = G_MAXUINT32;
+	priv->count8 = G_MAXUINT32 / 2;
 	feed (filter, "\200\200\0\n", 4, TRUE);
-	g_assert_true (best->total == (guint64) G_MAXUINT32 + 4);
-	g_assert_true (best->count8 == (guint64) G_MAXUINT32 / 2 + 2);
-	g_assert_true (best->count0 == 1);
+	g_assert_true (priv->total == (guint64) G_MAXUINT32 + 4);
+	g_assert_true (priv->count8 == (guint64) G_MAXUINT32 / 2 + 2);
+	g_assert_true (priv->count0 == 1);
 	check_encodings (best, 998, GMIME_CONTENT_ENCODING_BASE64,
 			 GMIME_CONTENT_ENCODING_BASE64, GMIME_CONTENT_ENCODING_BINARY);
 
 	g_mime_filter_reset (filter);
-	best->total = G_MAXUINT32;
-	best->linelen = G_MAXUINT32;
-	best->previous = 'x';
+	priv->total = G_MAXUINT32;
+	priv->linelen = G_MAXUINT32;
+	priv->previous = 'x';
 	feed (filter, "x\r\n", 3, TRUE);
-	g_assert_true (best->maxline == (guint64) G_MAXUINT32 + 1);
+	g_assert_true (priv->maxline == (guint64) G_MAXUINT32 + 1);
 	check_encodings (best, 998, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE,
 			 GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
 
 	g_mime_filter_reset (filter);
-	best->total = G_MAXUINT64 - 100;
-	best->count8 = (best->total / 100) * 17 + ((best->total % 100) * 17) / 100;
-	best->maxline = 1000;
+	priv->total = G_MAXUINT64 - 100;
+	priv->count8 = (priv->total / 100) * 17 + ((priv->total % 100) * 17) / 100;
+	priv->maxline = 1000;
 	check_encodings (best, 998, GMIME_CONTENT_ENCODING_BASE64,
 			 GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
-	best->count8++;
+	priv->count8++;
 	g_assert_cmpint (g_mime_filter_best_encoding (best, GMIME_ENCODING_CONSTRAINT_BINARY), ==, GMIME_CONTENT_ENCODING_BASE64);
 	g_object_unref (filter);
 }

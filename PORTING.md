@@ -93,7 +93,7 @@ Additional replacements:
 * `GMIME_CONTENT_ENCODING_DEFAULT` becomes
   `GMIME_CONTENT_ENCODING_UNSPECIFIED`; its numeric value remains zero.
 * Multipart `get_prologue()` / `set_prologue()` become `get_preamble()` /
-  `set_preamble()`. The public struct field is also `preamble`.
+  `set_preamble()`.
 * `GMimeReferences` is replaced by the GObject-based `GMimeMessageIdList`.
   Migrate its operations explicitly; it is not a boxed linked-list rename.
   Release lists with `g_object_unref()`, not the old references free function.
@@ -103,6 +103,38 @@ Additional replacements:
 
 Do not perform an unchecked global substring replacement: distinguish a
 GMime type macro from unrelated GObject or application identifiers.
+
+### Instance state and subclassing
+
+GObject instance state is now private. Use public getters, setters, and
+collection methods rather than accessing fields or copying instance structs.
+In particular, use `g_mime_stream_mem_get_byte_array()` for a memory stream's
+buffer and `g_mime_stream_null_get_written()` /
+`g_mime_stream_null_get_newlines()` for null-stream statistics.
+
+MIME entities, streams, filters, addresses, content, readers, visitors, and
+the crypto-context base remain derivable. Their public class structs expose
+virtual methods for subclasses, not an alternative calling API: invoke
+public functions to retain validation and dispatch. Reserved class slots
+are private and must not be used by applications.
+
+Data objects and utilities (headers, parameters, collections, certificates,
+signatures, results, content types/dispositions, parsers, body builders,
+anonymizers, iterators, and Received models) are opaque, final types.
+The existing opaque codec, yEnc, and built-in crypto backend types are also
+final. Use composition rather than deriving from these types.
+
+Stream implementations can use `g_mime_stream_get_position()` /
+`g_mime_stream_set_position()` for base-class position bookkeeping and
+`g_mime_stream_get_bounds()` for bounds. These helpers do not invoke virtual
+methods or seek the backend. Applications should continue to use
+`g_mime_stream_tell()` and `g_mime_stream_seek()`.
+
+Filter implementations should allocate output with `g_mime_filter_set_size()`
+and obtain the writable buffer, capacity, and prespace using
+`g_mime_filter_get_output_buffer()`. Track any output cursor in the subclass's
+own private state. Rebuild all subclasses: parent instance and class layouts
+have changed.
 
 ## 3. Preserve decoded-content behavior explicitly
 

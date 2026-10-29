@@ -28,6 +28,8 @@
 #include "gmime-stream-block.h"
 #include "gmime-error.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-stream-block
  * @title: GMimeStreamBlock
@@ -54,11 +56,11 @@
 #define BLOCK_SIZE 2048
 #define MAX_CAPACITY ((gint64) G_MAXINT * BLOCK_SIZE)
 
-struct _GMimeStreamBlockPrivate {
+typedef struct _GMimeStreamBlockStorage {
 	grefcount refs;
 	GPtrArray *blocks;
 	gint64 length;
-};
+} GMimeStreamBlockStorage;
 
 static void stream_finalize (GObject *object);
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -72,7 +74,14 @@ static gint64 stream_tell (GMimeStream *stream);
 static gint64 stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
-G_DEFINE_TYPE (GMimeStreamBlock, g_mime_stream_block, GMIME_TYPE_STREAM)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeStreamBlock, g_mime_stream_block, GMIME_TYPE_STREAM)
+
+GMimeStreamBlockPrivate *
+_g_mime_stream_block_get_private (GMimeStreamBlock *object)
+{
+	return g_mime_stream_block_get_instance_private (object);
+}
 
 static void
 g_mime_stream_block_class_init (GMimeStreamBlockClass *klass)
@@ -95,24 +104,33 @@ g_mime_stream_block_class_init (GMimeStreamBlockClass *klass)
 static void
 g_mime_stream_block_init (GMimeStreamBlock *stream)
 {
-	stream->priv = g_new0 (struct _GMimeStreamBlockPrivate, 1);
-	g_ref_count_init (&stream->priv->refs);
-	stream->priv->blocks = g_ptr_array_new_with_free_func (g_free);
+	GMimeStreamBlockPrivate *stream_priv = _g_mime_stream_block_get_private (stream);
+	GMimeStreamBlockStorage *storage = g_new0 (GMimeStreamBlockStorage, 1);
+
+	g_ref_count_init (&storage->refs);
+	storage->blocks = g_ptr_array_new_with_free_func (g_free);
+	stream_priv->storage = storage;
+
 	g_mime_stream_construct (GMIME_STREAM (stream), 0, -1);
 }
 
 static gboolean
 check_open (GMimeStream *stream)
 {
-	if (!GMIME_STREAM_BLOCK (stream)->priv) {
+	GMimeStreamBlockPrivate *priv = _g_mime_stream_block_get_private (GMIME_STREAM_BLOCK (stream));
+	GMimeStreamPrivate *stream_priv;
+
+	if (!priv->storage) {
 		errno = EBADF;
 		return FALSE;
 	}
 
-	if (stream->bound_start < 0 || stream->bound_end < -1 ||
-	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start) ||
-	    stream->position < stream->bound_start ||
-	    (stream->bound_end != -1 && stream->position > stream->bound_end)) {
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->bound_start < 0 || stream_priv->bound_end < -1 ||
+	    (stream_priv->bound_end != -1 && stream_priv->bound_end < stream_priv->bound_start) ||
+	    stream_priv->position < stream_priv->bound_start ||
+	    (stream_priv->bound_end != -1 && stream_priv->position > stream_priv->bound_end)) {
 		errno = EINVAL;
 		return FALSE;
 	}
@@ -123,20 +141,22 @@ check_open (GMimeStream *stream)
 static gint64
 get_end (GMimeStream *stream)
 {
-	gint64 end = GMIME_STREAM_BLOCK (stream)->priv->length;
+	GMimeStreamBlockPrivate *priv = _g_mime_stream_block_get_private (GMIME_STREAM_BLOCK (stream));
+	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+	gint64 end = priv->storage->length;
 
-	return stream->bound_end == -1 ? end : MIN (end, stream->bound_end);
+	return stream_priv->bound_end == -1 ? end : MIN (end, stream_priv->bound_end);
 }
 
 static void
-ensure_capacity (struct _GMimeStreamBlockPrivate *priv, gint64 length)
+ensure_capacity (GMimeStreamBlockStorage *storage, gint64 length)
 {
-	while ((gint64) priv->blocks->len * BLOCK_SIZE < length)
-		g_ptr_array_add (priv->blocks, g_malloc0 (BLOCK_SIZE));
+	while ((gint64) storage->blocks->len * BLOCK_SIZE < length)
+		g_ptr_array_add (storage->blocks, g_malloc0 (BLOCK_SIZE));
 }
 
 static void
-copy_bytes (struct _GMimeStreamBlockPrivate *priv, gint64 position, char *buf, size_t len)
+copy_bytes (GMimeStreamBlockStorage *storage, gint64 position, char *buf, size_t len)
 {
 	guint block = (guint) (position / BLOCK_SIZE);
 	guint offset = (guint) (position % BLOCK_SIZE);
@@ -144,7 +164,7 @@ copy_bytes (struct _GMimeStreamBlockPrivate *priv, gint64 position, char *buf, s
 
 	while (len > 0) {
 		n = MIN (BLOCK_SIZE - offset, len);
-		memcpy (buf, (char *) priv->blocks->pdata[block++] + offset, n);
+		memcpy (buf, (char *) storage->blocks->pdata[block++] + offset, n);
 		offset = 0;
 		buf += n;
 		len -= n;
@@ -161,6 +181,8 @@ stream_finalize (GObject *object)
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamBlockPrivate *stream_block_priv;
 	gint64 end;
 	size_t n;
 
@@ -168,12 +190,16 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		return -1;
 
 	end = get_end (stream);
-	if (stream->position >= end)
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->position >= end)
 		return 0;
 
-	n = (size_t) MIN ((gint64) MIN (len, (size_t) G_MAXSSIZE), end - stream->position);
-	copy_bytes (GMIME_STREAM_BLOCK (stream)->priv, stream->position, buf, n);
-	stream->position += n;
+	n = (size_t) MIN ((gint64) MIN (len, (size_t) G_MAXSSIZE), end - stream_priv->position);
+	stream_block_priv = _g_mime_stream_block_get_private (GMIME_STREAM_BLOCK (stream));
+
+	copy_bytes (stream_block_priv->storage, stream_priv->position, buf, n);
+	stream_priv->position += n;
 
 	return (ssize_t) n;
 }
@@ -181,7 +207,9 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
-	struct _GMimeStreamBlockPrivate *priv = GMIME_STREAM_BLOCK (stream)->priv;
+	GMimeStreamBlockPrivate *priv = _g_mime_stream_block_get_private (GMIME_STREAM_BLOCK (stream));
+	GMimeStreamBlockStorage *storage = priv->storage;
+	GMimeStreamPrivate *stream_priv;
 	guint block, offset;
 	size_t n, written = 0;
 
@@ -190,33 +218,36 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 
 	/* Validate before allocating or changing content, including the source's
 	 * exclusive write limit even though SetLength accepts MaxCapacity. */
-	if (len > G_MAXSSIZE || stream->position >= MAX_CAPACITY ||
-	    len >= (guint64) (MAX_CAPACITY - stream->position)) {
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (len > G_MAXSSIZE || stream_priv->position >= MAX_CAPACITY ||
+	    len >= (guint64) (MAX_CAPACITY - stream_priv->position)) {
 		errno = EOVERFLOW;
 		return -1;
 	}
 
-	if (stream->bound_end != -1) {
-		if (stream->position >= stream->bound_end) {
+	if (stream_priv->bound_end != -1) {
+		if (stream_priv->position >= stream_priv->bound_end) {
 			errno = EINVAL;
 			return -1;
 		}
 
-		len = (size_t) MIN ((gint64) len, stream->bound_end - stream->position);
+		len = (size_t) MIN ((gint64) len, stream_priv->bound_end - stream_priv->position);
 	}
 
-	ensure_capacity (priv, stream->position + len);
-	block = (guint) (stream->position / BLOCK_SIZE);
-	offset = (guint) (stream->position % BLOCK_SIZE);
+	ensure_capacity (storage, stream_priv->position + len);
+	block = (guint) (stream_priv->position / BLOCK_SIZE);
+	offset = (guint) (stream_priv->position % BLOCK_SIZE);
+
 	while (written < len) {
 		n = MIN (BLOCK_SIZE - offset, len - written);
-		memcpy ((char *) priv->blocks->pdata[block++] + offset, buf + written, n);
+		memcpy ((char *) storage->blocks->pdata[block++] + offset, buf + written, n);
 		offset = 0;
 		written += n;
 	}
 
-	stream->position += written;
-	priv->length = MAX (priv->length, stream->position);
+	stream_priv->position += written;
+	storage->length = MAX (storage->length, stream_priv->position);
 
 	return (ssize_t) written;
 }
@@ -232,14 +263,16 @@ static int
 stream_close (GMimeStream *stream)
 {
 	GMimeStreamBlock *block = GMIME_STREAM_BLOCK (stream);
+	GMimeStreamBlockPrivate *priv = _g_mime_stream_block_get_private (block);
+	GMimeStreamBlockStorage *storage = priv->storage;
 
-	if (block->priv) {
-		if (g_ref_count_dec (&block->priv->refs)) {
-			g_ptr_array_unref (block->priv->blocks);
-			g_free (block->priv);
+	if (storage) {
+		if (g_ref_count_dec (&storage->refs)) {
+			g_ptr_array_unref (storage->blocks);
+			g_free (storage);
 		}
 
-		block->priv = NULL;
+		priv->storage = NULL;
 	}
 
 	return 0;
@@ -248,7 +281,10 @@ stream_close (GMimeStream *stream)
 static gboolean
 stream_eos (GMimeStream *stream)
 {
-	return !GMIME_STREAM_BLOCK (stream)->priv || stream->position >= get_end (stream);
+	GMimeStreamBlockPrivate *priv = _g_mime_stream_block_get_private (GMIME_STREAM_BLOCK (stream));
+	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+
+	return !priv->storage || stream_priv->position >= get_end (stream);
 }
 
 static int
@@ -260,15 +296,18 @@ stream_reset (GMimeStream *stream)
 static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
+	GMimeStreamPrivate *priv;
 	gint64 origin, real;
 
 	if (!check_open (stream))
 		return -1;
 
+	priv = _g_mime_stream_get_private (stream);
+
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET: origin = 0; break;
-	case GMIME_STREAM_SEEK_CUR: origin = stream->position; break;
-	case GMIME_STREAM_SEEK_END: origin = MAX (stream->bound_start, get_end (stream)); break;
+	case GMIME_STREAM_SEEK_CUR: origin = priv->position; break;
+	case GMIME_STREAM_SEEK_END: origin = MAX (priv->bound_start, get_end (stream)); break;
 	default:
 		errno = EINVAL;
 		return -1;
@@ -281,22 +320,22 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	}
 
 	real = origin + offset;
-	if (real < stream->bound_start || real > MAX_CAPACITY) {
+	if (real < priv->bound_start || real > MAX_CAPACITY) {
 		errno = EINVAL;
 		return -1;
 	}
 
 	/* Short-cut seeking to the current position before checking the extent:
 	 * another view may have shortened the shared backing store. */
-	if (real == stream->position)
+	if (real == priv->position)
 		return real;
 
-	if (real > MAX (stream->bound_start, get_end (stream))) {
+	if (real > MAX (priv->bound_start, get_end (stream))) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	stream->position = real;
+	priv->position = real;
 
 	return real;
 }
@@ -304,37 +343,52 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
-	return check_open (stream) ? stream->position : -1;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+	return check_open (stream) ? priv->position : -1;
 }
 
 static gint64
 stream_length (GMimeStream *stream)
 {
-	return check_open (stream) ? MAX (0, get_end (stream) - stream->bound_start) : -1;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+	return check_open (stream) ? MAX (0, get_end (stream) - priv->bound_start) : -1;
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamBlockPrivate *sub_priv;
+	GMimeStreamBlockPrivate *priv;
 	GMimeStreamBlock *sub;
 
 	if (!check_open (stream))
 		return NULL;
 
-	if (start < stream->bound_start || start > MAX_CAPACITY || end < -1 ||
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (start < stream_priv->bound_start || start > MAX_CAPACITY || end < -1 ||
 	    (end != -1 && (end < start || end > MAX_CAPACITY)) ||
-	    (stream->bound_end != -1 &&
-	     (start > stream->bound_end || (end != -1 && end > stream->bound_end)))) {
+	    (stream_priv->bound_end != -1 &&
+	     (start > stream_priv->bound_end || (end != -1 && end > stream_priv->bound_end)))) {
 		errno = EINVAL;
 		return NULL;
 	}
 
 	sub = GMIME_STREAM_BLOCK (g_mime_stream_block_new ());
 	stream_close (GMIME_STREAM (sub));
-	sub->priv = GMIME_STREAM_BLOCK (stream)->priv;
-	g_ref_count_inc (&sub->priv->refs);
-	if (end == -1 && stream->bound_end != -1)
-		end = stream->bound_end;
+	sub_priv = _g_mime_stream_block_get_private (sub);
+
+	priv = _g_mime_stream_block_get_private (GMIME_STREAM_BLOCK (stream));
+
+	sub_priv->storage = priv->storage;
+	g_ref_count_inc (&sub_priv->storage->refs);
+
+	if (end == -1 && stream_priv->bound_end != -1)
+		end = stream_priv->bound_end;
+
 	g_mime_stream_construct (GMIME_STREAM (sub), start, end);
 
 	return GMIME_STREAM (sub);
@@ -370,10 +424,12 @@ g_mime_stream_block_new (void)
 int
 g_mime_stream_block_set_length (GMimeStreamBlock *stream, gint64 length)
 {
-	struct _GMimeStreamBlockPrivate *priv;
-	GMimeStream *base;
-	gint64 end, capacity;
+	GMimeStreamBlockStorage *storage;
+	GMimeStreamPrivate *base_priv;
+	GMimeStreamBlockPrivate *priv;
 	guint block, offset, count;
+	gint64 end, capacity;
+	GMimeStream *base;
 
 	g_return_val_if_fail (GMIME_IS_STREAM_BLOCK (stream), -1);
 
@@ -386,34 +442,40 @@ g_mime_stream_block_set_length (GMimeStreamBlock *stream, gint64 length)
 		return -1;
 	}
 
-	if (base->bound_start > MAX_CAPACITY || length > MAX_CAPACITY - base->bound_start) {
+	base_priv = _g_mime_stream_get_private (base);
+
+	if (base_priv->bound_start > MAX_CAPACITY || length > MAX_CAPACITY - base_priv->bound_start) {
 		errno = EOVERFLOW;
 		return -1;
 	}
 
-	priv = stream->priv;
-	end = base->bound_start + length;
-	capacity = (gint64) priv->blocks->len * BLOCK_SIZE;
+	priv = _g_mime_stream_block_get_private (stream);
+
+	storage = priv->storage;
+	end = base_priv->bound_start + length;
+	capacity = (gint64) storage->blocks->len * BLOCK_SIZE;
+
 	if (end > capacity) {
-		ensure_capacity (priv, end);
-	} else if (end < priv->length) {
+		ensure_capacity (storage, end);
+	} else if (end < storage->length) {
 		/* Shed unused blocks, retaining the boundary block so its discarded
 		 * bytes can be cleared before a later extension reuses them. */
 		while (capacity - end > BLOCK_SIZE) {
-			g_ptr_array_remove_index (priv->blocks, priv->blocks->len - 1);
+			g_ptr_array_remove_index (storage->blocks, storage->blocks->len - 1);
 			capacity -= BLOCK_SIZE;
 		}
 
-		count = (guint) (MIN (priv->length, capacity) - end);
+		count = (guint) (MIN (storage->length, capacity) - end);
 		block = (guint) (end / BLOCK_SIZE);
 		offset = (guint) (end % BLOCK_SIZE);
-		memset ((char *) priv->blocks->pdata[block] + offset, 0, count);
+		memset ((char *) storage->blocks->pdata[block] + offset, 0, count);
 	}
 
-	priv->length = end;
-	base->position = MIN (base->position, end);
-	if (base->bound_end != -1)
-		base->bound_end = end;
+	storage->length = end;
+	base_priv->position = MIN (base_priv->position, end);
+
+	if (base_priv->bound_end != -1)
+		base_priv->bound_end = end;
 
 	return 0;
 }
@@ -433,6 +495,8 @@ g_mime_stream_block_set_length (GMimeStreamBlock *stream, gint64 length)
 GByteArray *
 g_mime_stream_block_to_byte_array (GMimeStreamBlock *stream, GError **error)
 {
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamBlockPrivate *priv;
 	GByteArray *array;
 	gint64 length;
 
@@ -452,7 +516,11 @@ g_mime_stream_block_to_byte_array (GMimeStreamBlock *stream, GError **error)
 
 	array = g_byte_array_sized_new ((guint) length);
 	g_byte_array_set_size (array, (guint) length);
-	copy_bytes (stream->priv, GMIME_STREAM (stream)->bound_start, (char *) array->data, array->len);
+	priv = _g_mime_stream_block_get_private (stream);
+
+	stream_priv = _g_mime_stream_get_private (GMIME_STREAM (stream));
+
+	copy_bytes (priv->storage, stream_priv->bound_start, (char *) array->data, array->len);
 
 	return array;
 }

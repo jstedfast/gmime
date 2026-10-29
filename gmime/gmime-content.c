@@ -31,6 +31,8 @@
 #include "gmime-internal.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-content
  * @title: GMimeContent
@@ -45,7 +47,7 @@
 
 
 static void g_mime_content_class_init (GMimeContentClass *klass);
-static void g_mime_content_init (GMimeContent *content, GMimeContentClass *klass);
+static void g_mime_content_init (GMimeContent *content);
 static void g_mime_content_finalize (GObject *object);
 
 static ssize_t write_to_stream (GMimeContent *content, GMimeStream *stream);
@@ -55,28 +57,13 @@ static ssize_t decode_to_stream (GMimeContent *content, GMimeStream *stream);
 static GObject *parent_class = NULL;
 
 
-GType
-g_mime_content_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeContent, g_mime_content, G_TYPE_OBJECT)
+
+GMimeContentPrivate *
+_g_mime_content_get_private (GMimeContent *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeContentClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_content_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeContent),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_content_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeContent", &info, 0);
-	}
-	
-	return type;
+	return g_mime_content_get_instance_private (object);
 }
 
 
@@ -94,19 +81,22 @@ g_mime_content_class_init (GMimeContentClass *klass)
 }
 
 static void
-g_mime_content_init (GMimeContent *content, GMimeContentClass *klass)
+g_mime_content_init (GMimeContent *content)
 {
-	content->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
-	content->stream = NULL;
+	GMimeContentPrivate *priv = _g_mime_content_get_private (content);
+
+	priv->encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
+	priv->stream = NULL;
 }
 
 static void
 g_mime_content_finalize (GObject *object)
 {
 	GMimeContent *content = (GMimeContent *) object;
-	
-	if (content->stream)
-		g_object_unref (content->stream);
+	GMimeContentPrivate *priv = _g_mime_content_get_private (content);
+
+	if (priv->stream)
+		g_object_unref (priv->stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -140,13 +130,16 @@ g_mime_content_new (void)
 GMimeContent *
 g_mime_content_new_with_stream (GMimeStream *stream, GMimeContentEncoding encoding)
 {
+	GMimeContentPrivate *priv;
 	GMimeContent *content;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
 	
 	content = g_mime_content_new ();
-	content->encoding = encoding;
-	content->stream = stream;
+	priv = _g_mime_content_get_private (content);
+
+	priv->encoding = encoding;
+	priv->stream = stream;
 	
 	if (stream)
 		g_object_ref (stream);
@@ -170,17 +163,21 @@ g_mime_content_new_with_stream (GMimeStream *stream, GMimeContentEncoding encodi
 void
 g_mime_content_set_stream (GMimeContent *content, GMimeStream *stream)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_CONTENT (content));
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
 	if (stream)
 		g_object_ref (stream);
 	
-	if (content->stream)
-		g_object_unref (content->stream);
+	priv = _g_mime_content_get_private (content);
+
+	if (priv->stream)
+		g_object_unref (priv->stream);
 	
-	content->stream = stream;
-	content->has_newline_format = FALSE;
+	priv->stream = stream;
+	priv->has_newline_format = FALSE;
 }
 
 
@@ -195,9 +192,13 @@ g_mime_content_set_stream (GMimeContent *content, GMimeStream *stream)
 GMimeStream *
 g_mime_content_get_stream (GMimeContent *content)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_CONTENT (content), NULL);
 	
-	return content->stream;
+	priv = _g_mime_content_get_private (content);
+
+	return priv->stream;
 }
 
 
@@ -211,9 +212,13 @@ g_mime_content_get_stream (GMimeContent *content)
 void
 g_mime_content_set_encoding (GMimeContent *content, GMimeContentEncoding encoding)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_CONTENT (content));
 	
-	content->encoding = encoding;
+	priv = _g_mime_content_get_private (content);
+
+	priv->encoding = encoding;
 }
 
 
@@ -228,9 +233,13 @@ g_mime_content_set_encoding (GMimeContent *content, GMimeContentEncoding encodin
 GMimeContentEncoding
 g_mime_content_get_encoding (GMimeContent *content)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_CONTENT (content), GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	
-	return content->encoding;
+	priv = _g_mime_content_get_private (content);
+
+	return priv->encoding;
 }
 
 
@@ -250,13 +259,17 @@ g_mime_content_get_encoding (GMimeContent *content)
 gboolean
 g_mime_content_get_newline_format (GMimeContent *content, GMimeNewLineFormat *format)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_CONTENT (content), FALSE);
 
-	if (!content->has_newline_format)
+	priv = _g_mime_content_get_private (content);
+
+	if (!priv->has_newline_format)
 		return FALSE;
 
 	if (format)
-		*format = content->newline_format;
+		*format = priv->newline_format;
 
 	return TRUE;
 }
@@ -271,11 +284,15 @@ g_mime_content_get_newline_format (GMimeContent *content, GMimeNewLineFormat *fo
 void
 g_mime_content_set_newline_format (GMimeContent *content, GMimeNewLineFormat format)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_CONTENT (content));
 	g_return_if_fail (format >= GMIME_NEWLINE_FORMAT_UNIX && format <= GMIME_NEWLINE_FORMAT_MIXED);
 
-	content->newline_format = format;
-	content->has_newline_format = TRUE;
+	priv = _g_mime_content_get_private (content);
+
+	priv->newline_format = format;
+	priv->has_newline_format = TRUE;
 }
 
 /**
@@ -288,24 +305,31 @@ g_mime_content_set_newline_format (GMimeContent *content, GMimeNewLineFormat for
 void
 g_mime_content_clear_newline_format (GMimeContent *content)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_CONTENT (content));
 
-	content->has_newline_format = FALSE;
+	priv = _g_mime_content_get_private (content);
+
+	priv->has_newline_format = FALSE;
 }
 
 static GMimeStream *
 create_decoder_stream (GMimeContent *content, GMimeStream *stream)
 {
+	GMimeContentPrivate *priv;
 	GMimeStream *filtered_stream;
 	GMimeFilter *filter;
 
 	filtered_stream = g_mime_stream_filter_new (stream);
 
-	switch (content->encoding) {
+	priv = _g_mime_content_get_private (content);
+
+	switch (priv->encoding) {
 	case GMIME_CONTENT_ENCODING_BASE64:
 	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 	case GMIME_CONTENT_ENCODING_UUENCODE:
-		filter = g_mime_filter_basic_new (content->encoding, FALSE);
+		filter = g_mime_filter_basic_new (priv->encoding, FALSE);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		g_object_unref (filter);
 		break;
@@ -337,13 +361,17 @@ create_decoder_stream (GMimeContent *content, GMimeStream *stream)
 GMimeStream *
 g_mime_content_open (GMimeContent *content)
 {
-	g_return_val_if_fail (GMIME_IS_CONTENT (content), NULL);
-	g_return_val_if_fail (content->stream != NULL, NULL);
+	GMimeContentPrivate *priv;
 
-	if (g_mime_stream_reset (content->stream) == -1)
+	g_return_val_if_fail (GMIME_IS_CONTENT (content), NULL);
+	priv = _g_mime_content_get_private (content);
+
+	g_return_val_if_fail (priv->stream != NULL, NULL);
+
+	if (g_mime_stream_reset (priv->stream) == -1)
 		return NULL;
 
-	return create_decoder_stream (content, content->stream);
+	return create_decoder_stream (content, priv->stream);
 }
 
 static ssize_t
@@ -351,11 +379,12 @@ write_to_stream (GMimeContent *content, GMimeStream *stream)
 {
 	ssize_t nread, total = 0;
 	char buffer[4096];
+	GMimeContentPrivate *priv = _g_mime_content_get_private (content);
 
-	if (g_mime_stream_reset (content->stream) == -1)
+	if (g_mime_stream_reset (priv->stream) == -1)
 		return -1;
 
-	while ((nread = g_mime_stream_read (content->stream, buffer, sizeof (buffer))) > 0) {
+	while ((nread = g_mime_stream_read (priv->stream, buffer, sizeof (buffer))) > 0) {
 		if (nread > G_MAXSSIZE - total) {
 			errno = EOVERFLOW;
 			return -1;
@@ -367,7 +396,7 @@ write_to_stream (GMimeContent *content, GMimeStream *stream)
 		total += nread;
 	}
 
-	if (nread == -1 || g_mime_stream_reset (content->stream) == -1)
+	if (nread == -1 || g_mime_stream_reset (priv->stream) == -1)
 		return -1;
 
 	return total;
@@ -418,9 +447,13 @@ decode_to_stream (GMimeContent *content, GMimeStream *stream)
 ssize_t
 g_mime_content_write_to_stream (GMimeContent *content, GMimeStream *stream)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_CONTENT (content), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
-	g_return_val_if_fail (content->stream != NULL, -1);
+	priv = _g_mime_content_get_private (content);
+
+	g_return_val_if_fail (priv->stream != NULL, -1);
 	
 	return GMIME_CONTENT_GET_CLASS (content)->write_to_stream (content, stream);
 }
@@ -444,9 +477,13 @@ g_mime_content_write_to_stream (GMimeContent *content, GMimeStream *stream)
 ssize_t
 g_mime_content_decode_to_stream (GMimeContent *content, GMimeStream *stream)
 {
+	GMimeContentPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_CONTENT (content), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
-	g_return_val_if_fail (content->stream != NULL, -1);
+	priv = _g_mime_content_get_private (content);
+
+	g_return_val_if_fail (priv->stream != NULL, -1);
 
 	return GMIME_CONTENT_GET_CLASS (content)->decode_to_stream (content, stream);
 }

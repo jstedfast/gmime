@@ -31,6 +31,8 @@
 #include "gmime-utils.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-basic
  * @title: GMimeFilterBasic
@@ -50,7 +52,7 @@
 
 
 static void g_mime_filter_basic_class_init (GMimeFilterBasicClass *klass);
-static void g_mime_filter_basic_init (GMimeFilterBasic *filter, GMimeFilterBasicClass *klass);
+static void g_mime_filter_basic_init (GMimeFilterBasic *filter);
 static void g_mime_filter_basic_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -64,28 +66,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_basic_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterBasic, g_mime_filter_basic, GMIME_TYPE_FILTER)
+
+GMimeFilterBasicPrivate *
+_g_mime_filter_basic_get_private (GMimeFilterBasic *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterBasicClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_basic_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterBasic),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_basic_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterBasic", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_basic_get_instance_private (object);
 }
 
 
@@ -106,7 +93,7 @@ g_mime_filter_basic_class_init (GMimeFilterBasicClass *klass)
 }
 
 static void
-g_mime_filter_basic_init (GMimeFilterBasic *filter, GMimeFilterBasicClass *klass)
+g_mime_filter_basic_init (GMimeFilterBasic *filter)
 {
 	
 }
@@ -114,10 +101,10 @@ g_mime_filter_basic_init (GMimeFilterBasic *filter, GMimeFilterBasicClass *klass
 static void
 g_mime_filter_basic_finalize (GObject *object)
 {
-	GMimeFilterBasic *basic = (GMimeFilterBasic *) object;
+	GMimeFilterBasicPrivate *priv = _g_mime_filter_basic_get_private ((GMimeFilterBasic *) object);
 
-	g_clear_object (&basic->encoder);
-	g_clear_object (&basic->decoder);
+	g_clear_object (&priv->encoder);
+	g_clear_object (&priv->decoder);
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -125,16 +112,16 @@ g_mime_filter_basic_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
+	GMimeFilterBasicPrivate *priv = _g_mime_filter_basic_get_private ((GMimeFilterBasic *) filter);
 	GMimeFilter *copy;
 
-	if (basic->encoder) {
-		GMimeEncoder *encoder = g_mime_encoder_clone (basic->encoder);
+	if (priv->encoder) {
+		GMimeEncoder *encoder = g_mime_encoder_clone (priv->encoder);
 		g_mime_encoder_reset (encoder);
 		copy = g_mime_filter_basic_new_with_encoder (encoder);
 		g_object_unref (encoder);
 	} else {
-		GMimeDecoder *decoder = g_mime_decoder_clone (basic->decoder);
+		GMimeDecoder *decoder = g_mime_decoder_clone (priv->decoder);
 		g_mime_decoder_reset (decoder);
 		copy = g_mime_filter_basic_new_with_decoder (decoder);
 		g_object_unref (decoder);
@@ -147,19 +134,22 @@ static void
 filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
+	GMimeFilterBasicPrivate *basic = _g_mime_filter_basic_get_private ((GMimeFilterBasic *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	size_t nwritten, len;
 
 	len = basic->encoder ? g_mime_encoder_estimate_output_length (basic->encoder, inlen) :
 		g_mime_decoder_estimate_output_length (basic->decoder, inlen);
+
 	g_mime_filter_set_size (filter, len, FALSE);
+
 	nwritten = basic->encoder ?
-		g_mime_encoder_encode (basic->encoder, (const guint8 *) inbuf, inlen, (guint8 *) filter->outbuf, len) :
-		g_mime_decoder_decode (basic->decoder, (const guint8 *) inbuf, inlen, (guint8 *) filter->outbuf, len);
+		g_mime_encoder_encode (basic->encoder, (const guint8 *) inbuf, inlen, (guint8 *) priv->outbuf, len) :
+		g_mime_decoder_decode (basic->decoder, (const guint8 *) inbuf, inlen, (guint8 *) priv->outbuf, len);
 	g_assert (nwritten <= len);
 	
-	*outprespace = filter->outpre;
-	*outbuf = filter->outbuf;
+	*outprespace = priv->outpre;
+	*outbuf = priv->outbuf;
 	*outlen = nwritten;
 }
 
@@ -167,7 +157,8 @@ static void
 filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		 char **outbuf, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
+	GMimeFilterBasicPrivate *basic = _g_mime_filter_basic_get_private ((GMimeFilterBasic *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	size_t nwritten, len;
 
 	if (!basic->encoder) {
@@ -177,12 +168,13 @@ filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace
 
 	len = g_mime_encoder_estimate_output_length (basic->encoder, inlen);
 	g_mime_filter_set_size (filter, len, FALSE);
+
 	nwritten = g_mime_encoder_flush (basic->encoder, (const guint8 *) inbuf, inlen,
-					(guint8 *) filter->outbuf, len);
+					(guint8 *) priv->outbuf, len);
 	g_assert (nwritten <= len);
 	
-	*outprespace = filter->outpre;
-	*outbuf = filter->outbuf;
+	*outprespace = priv->outpre;
+	*outbuf = priv->outbuf;
 	*outlen = nwritten;
 }
 
@@ -190,8 +182,8 @@ filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
-	
+	GMimeFilterBasicPrivate *basic = _g_mime_filter_basic_get_private ((GMimeFilterBasic *) filter);
+
 	if (basic->encoder)
 		g_mime_encoder_reset (basic->encoder);
 	else
@@ -236,6 +228,7 @@ g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode)
 			encoder = GMIME_ENCODER (g_mime_pass_through_encoder_new (encoding));
 			break;
 		}
+
 		filter = g_mime_filter_basic_new_with_encoder (encoder);
 		g_object_unref (encoder);
 	} else {
@@ -253,9 +246,11 @@ g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode)
 			decoder = GMIME_DECODER (g_mime_pass_through_decoder_new (encoding));
 			break;
 		}
+
 		filter = g_mime_filter_basic_new_with_decoder (decoder);
 		g_object_unref (decoder);
 	}
+
 	return filter;
 }
 
@@ -271,10 +266,16 @@ g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode)
 GMimeFilter *
 g_mime_filter_basic_new_with_encoder (GMimeEncoder *encoder)
 {
+	GMimeFilterBasicPrivate *priv;
 	GMimeFilterBasic *basic;
+
 	g_return_val_if_fail (GMIME_IS_ENCODER (encoder), NULL);
+
 	basic = g_object_new (GMIME_TYPE_FILTER_BASIC, NULL);
-	basic->encoder = g_object_ref (encoder);
+	priv = _g_mime_filter_basic_get_private (basic);
+
+	priv->encoder = g_object_ref (encoder);
+
 	return GMIME_FILTER (basic);
 }
 
@@ -290,10 +291,16 @@ g_mime_filter_basic_new_with_encoder (GMimeEncoder *encoder)
 GMimeFilter *
 g_mime_filter_basic_new_with_decoder (GMimeDecoder *decoder)
 {
+	GMimeFilterBasicPrivate *priv;
 	GMimeFilterBasic *basic;
+
 	g_return_val_if_fail (GMIME_IS_DECODER (decoder), NULL);
+
 	basic = g_object_new (GMIME_TYPE_FILTER_BASIC, NULL);
-	basic->decoder = g_object_ref (decoder);
+	priv = _g_mime_filter_basic_get_private (basic);
+
+	priv->decoder = g_object_ref (decoder);
+
 	return GMIME_FILTER (basic);
 }
 
@@ -352,11 +359,13 @@ g_mime_filter_basic_create_encoder_with_newline_format (GMimeContentEncoding enc
 	default:
 		return g_mime_filter_pass_through_new ();
 	}
+
 	if (!encoder)
 		return NULL;
 
 	filter = g_mime_filter_basic_new_with_encoder (encoder);
 	g_object_unref (encoder);
+
 	return filter;
 }
 

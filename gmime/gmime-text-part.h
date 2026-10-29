@@ -27,14 +27,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_TEXT_PART            (g_mime_text_part_get_type ())
-#define GMIME_TEXT_PART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_TEXT_PART, GMimeTextPart))
-#define GMIME_TEXT_PART_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_TEXT_PART, GMimeTextPartClass))
-#define GMIME_IS_TEXT_PART(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_TEXT_PART))
-#define GMIME_IS_TEXT_PART_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_TEXT_PART))
-#define GMIME_TEXT_PART_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_TEXT_PART, GMimeTextPartClass))
 
-typedef struct _GMimeTextPart GMimeTextPart;
-typedef struct _GMimeTextPartClass GMimeTextPartClass;
 
 /**
  * GMimeTextFormat:
@@ -60,22 +53,18 @@ typedef enum {
 
 /**
  * GMimeTextPart:
- * @parent_object: parent #GMimePart
  *
  * A text MIME part object.
  **/
-struct _GMimeTextPart {
-	GMimePart parent_object;
-	
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeTextPart, g_mime_text_part, GMIME, TEXT_PART, GMimePart)
 
 struct _GMimeTextPartClass {
 	GMimePartClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_text_part_get_type (void);
 
 /* constructors */
 GMimeTextPart *g_mime_text_part_new (void);

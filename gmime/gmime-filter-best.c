@@ -28,6 +28,8 @@
 #include "gmime-filter-best.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-best
  * @title: GMimeFilterBest
@@ -46,7 +48,7 @@
 
 
 static void g_mime_filter_best_class_init (GMimeFilterBestClass *klass);
-static void g_mime_filter_best_init (GMimeFilterBest *filter, GMimeFilterBestClass *klass);
+static void g_mime_filter_best_init (GMimeFilterBest *filter);
 static void g_mime_filter_best_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -60,28 +62,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_best_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterBest, g_mime_filter_best, GMIME_TYPE_FILTER)
+
+GMimeFilterBestPrivate *
+_g_mime_filter_best_get_private (GMimeFilterBest *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterBestClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_best_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterBest),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_best_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterBest", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_best_get_instance_private (object);
 }
 
 
@@ -102,9 +89,11 @@ g_mime_filter_best_class_init (GMimeFilterBestClass *klass)
 }
 
 static void
-g_mime_filter_best_init (GMimeFilterBest *filter, GMimeFilterBestClass *klass)
+g_mime_filter_best_init (GMimeFilterBest *filter)
 {
-	filter->frombuf[5] = '\0';
+	GMimeFilterBestPrivate *priv = _g_mime_filter_best_get_private (filter);
+
+	priv->frombuf[5] = '\0';
 }
 
 static void
@@ -117,53 +106,55 @@ g_mime_filter_best_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterBest *best = (GMimeFilterBest *) filter;
-	
-	return g_mime_filter_best_new (best->flags);
+	GMimeFilterBestPrivate *priv = _g_mime_filter_best_get_private ((GMimeFilterBest *) filter);
+
+	return g_mime_filter_best_new (priv->flags);
 }
 
 static void
 filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterBest *best = (GMimeFilterBest *) filter;
+	GMimeFilterBestPrivate *priv = _g_mime_filter_best_get_private ((GMimeFilterBest *) filter);
 	size_t i;
+
+	if (priv->flags & GMIME_FILTER_BEST_CHARSET)
+		g_mime_charset_step (&priv->charset, inbuf, inlen);
 	
-	if (best->flags & GMIME_FILTER_BEST_CHARSET)
-		g_mime_charset_step (&best->charset, inbuf, inlen);
-	
-	if (best->flags & GMIME_FILTER_BEST_ENCODING) {
-		if (G_UNLIKELY (inlen > G_MAXUINT64 - best->total))
+	if (priv->flags & GMIME_FILTER_BEST_ENCODING) {
+		if (G_UNLIKELY (inlen > G_MAXUINT64 - priv->total))
 			g_error ("GMimeFilterBest byte count overflow");
-		best->total += inlen;
+
+		priv->total += inlen;
 
 		for (i = 0; i < inlen; i++) {
 			unsigned char c = (unsigned char) inbuf[i];
 
 			if (c != '\n') {
 				if (c == 0)
-					best->count0++;
+					priv->count0++;
 				else if (c > 127)
-					best->count8++;
+					priv->count8++;
 
-				if (!best->hadfrom && best->fromlen < 5)
-					best->frombuf[best->fromlen++] = c;
+				if (!priv->hadfrom && priv->fromlen < 5)
+					priv->frombuf[priv->fromlen++] = c;
 
-				best->linelen++;
+				priv->linelen++;
 			} else {
-				if (best->previous == '\r')
-					best->linelen--;
+				if (priv->previous == '\r')
+					priv->linelen--;
 
-				best->maxline = MAX (best->maxline, best->linelen);
-				best->linelen = 0;
+				priv->maxline = MAX (priv->maxline, priv->linelen);
+				priv->linelen = 0;
 
 				/* Check our from-save buffer for "From ". */
-				if (!best->hadfrom && best->fromlen == 5 && !memcmp (best->frombuf, "From ", 5))
-					best->hadfrom = TRUE;
+				if (!priv->hadfrom && priv->fromlen == 5 && !memcmp (priv->frombuf, "From ", 5))
+					priv->hadfrom = TRUE;
 
-				best->fromlen = 0;
+				priv->fromlen = 0;
 			}
-			best->previous = c;
+
+			priv->previous = c;
 		}
 	}
 	
@@ -182,17 +173,17 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterBest *best = (GMimeFilterBest *) filter;
-	
-	g_mime_charset_init (&best->charset);
-	best->count0 = 0;
-	best->count8 = 0;
-	best->total = 0;
-	best->maxline = 0;
-	best->linelen = 0;
-	best->fromlen = 0;
-	best->hadfrom = FALSE;
-	best->previous = 0;
+	GMimeFilterBestPrivate *priv = _g_mime_filter_best_get_private ((GMimeFilterBest *) filter);
+
+	g_mime_charset_init (&priv->charset);
+	priv->count0 = 0;
+	priv->count8 = 0;
+	priv->total = 0;
+	priv->maxline = 0;
+	priv->linelen = 0;
+	priv->fromlen = 0;
+	priv->hadfrom = FALSE;
+	priv->previous = 0;
 }
 
 
@@ -216,10 +207,13 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_best_new (GMimeFilterBestFlags flags)
 {
+	GMimeFilterBestPrivate *priv;
 	GMimeFilterBest *best;
 	
 	best = g_object_new (GMIME_TYPE_FILTER_BEST, NULL);
-	best->flags = flags;
+	priv = _g_mime_filter_best_get_private (best);
+
+	priv->flags = flags;
 	filter_reset ((GMimeFilter *) best);
 	
 	return (GMimeFilter *) best;
@@ -240,14 +234,17 @@ g_mime_filter_best_new (GMimeFilterBestFlags flags)
 const char *
 g_mime_filter_best_charset (GMimeFilterBest *best)
 {
+	GMimeFilterBestPrivate *priv;
 	const char *charset;
 	
 	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), NULL);
 	
-	if (!(best->flags & GMIME_FILTER_BEST_CHARSET))
+	priv = _g_mime_filter_best_get_private (best);
+
+	if (!(priv->flags & GMIME_FILTER_BEST_CHARSET))
 		return NULL;
 	
-	charset = g_mime_charset_best_name (&best->charset);
+	charset = g_mime_charset_best_name (&priv->charset);
 	
 	return charset ? charset : "us-ascii";
 }
@@ -295,6 +292,7 @@ GMimeContentEncoding
 g_mime_filter_best_encoding_with_max_line_length (GMimeFilterBest *best, GMimeEncodingConstraint constraint,
 					       guint max_line_length)
 {
+	GMimeFilterBestPrivate *priv;
 	guint64 longest, threshold;
 
 	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), GMIME_CONTENT_ENCODING_UNSPECIFIED);
@@ -302,53 +300,55 @@ g_mime_filter_best_encoding_with_max_line_length (GMimeFilterBest *best, GMimeEn
 			      constraint <= GMIME_ENCODING_CONSTRAINT_BINARY, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_return_val_if_fail (max_line_length >= 60 && max_line_length <= 998, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 
-	if (!(best->flags & GMIME_FILTER_BEST_ENCODING))
+	priv = _g_mime_filter_best_get_private (best);
+
+	if (!(priv->flags & GMIME_FILTER_BEST_ENCODING))
 		return GMIME_CONTENT_ENCODING_UNSPECIFIED;
 
 	/* The final line may not be terminated by a newline. */
-	longest = MAX (best->maxline, best->linelen);
+	longest = MAX (priv->maxline, priv->linelen);
 	/* Calculate floor(total * 17 / 100) without overflowing the counters. */
-	threshold = (best->total / 100) * 17 + ((best->total % 100) * 17) / 100;
+	threshold = (priv->total / 100) * 17 + ((priv->total % 100) * 17) / 100;
 
 	switch (constraint) {
 	case GMIME_ENCODING_CONSTRAINT_7BIT:
-		if (best->count0 > 0)
+		if (priv->count0 > 0)
 			return GMIME_CONTENT_ENCODING_BASE64;
 
-		if (best->count8 > 0) {
-			if (best->count8 >= threshold)
+		if (priv->count8 > 0) {
+			if (priv->count8 >= threshold)
 				return GMIME_CONTENT_ENCODING_BASE64;
 
 			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		}
 
-		if (best->hadfrom || longest > max_line_length)
+		if (priv->hadfrom || longest > max_line_length)
 			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 
 		break;
 	case GMIME_ENCODING_CONSTRAINT_8BIT:
-		if (best->count0 > 0)
+		if (priv->count0 > 0)
 			return GMIME_CONTENT_ENCODING_BASE64;
 
-		if (best->hadfrom || longest > max_line_length)
+		if (priv->hadfrom || longest > max_line_length)
 			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 
-		if (best->count8 > 0)
+		if (priv->count8 > 0)
 			return GMIME_CONTENT_ENCODING_8BIT;
 
 		break;
 	case GMIME_ENCODING_CONSTRAINT_BINARY:
-		if (best->hadfrom || longest > max_line_length) {
-			if (best->count0 > 0 || best->count8 > threshold)
+		if (priv->hadfrom || longest > max_line_length) {
+			if (priv->count0 > 0 || priv->count8 > threshold)
 				return GMIME_CONTENT_ENCODING_BASE64;
 
 			return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		}
 
-		if (best->count0 > 0)
+		if (priv->count0 > 0)
 			return GMIME_CONTENT_ENCODING_BINARY;
 
-		if (best->count8 > 0)
+		if (priv->count8 > 0)
 			return GMIME_CONTENT_ENCODING_8BIT;
 
 		break;

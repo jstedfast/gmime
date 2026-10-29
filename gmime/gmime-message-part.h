@@ -28,35 +28,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_PART            (g_mime_message_part_get_type ())
-#define GMIME_MESSAGE_PART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_PART, GMimeMessagePart))
-#define GMIME_MESSAGE_PART_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_PART, GMimeMessagePartClass))
-#define GMIME_IS_MESSAGE_PART(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_PART))
-#define GMIME_IS_MESSAGE_PART_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_PART))
-#define GMIME_MESSAGE_PART_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_PART, GMimeMessagePartClass))
 
-typedef struct _GMimeMessagePart GMimeMessagePart;
-typedef struct _GMimeMessagePartClass GMimeMessagePartClass;
 
 /**
  * GMimeMessagePart:
- * @parent_object: parent #GMimeEntity
- * @message: child #GMimeMessage
  *
  * A message/rfc822 or message/news MIME part.
  **/
-struct _GMimeMessagePart {
-	GMimeEntity parent_object;
-	
-	GMimeMessage *message;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessagePart, g_mime_message_part, GMIME, MESSAGE_PART, GMimeEntity)
 
 struct _GMimeMessagePartClass {
 	GMimeEntityClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_message_part_get_type (void);
 
 GMimeMessagePart *g_mime_message_part_new (const char *subtype);
 

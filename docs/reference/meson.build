@@ -13,7 +13,7 @@ gmime_doc = gnome.gtkdoc(
     'gmime-rfc2047-private.h', 'gmime-encoding-validator-private.h',
     'gmime-charset-map-private.h', 'gmime-table-private.h', 'gmime-parse-utils.h',
     'gmime-gpgme-utils.h', 'gmime-internal.h', 'gmime-common.h', 'gmime-events.h',
-    'gmime-parser-reader-private.h',
+    'gmime-parser-reader-private.h', 'gmime-object-private.h',
     'charset-map.c', 'gen-table.c',
   ],
   scan_args: ['--deprecated-guards=GMIME_DISABLE_DEPRECATED'],

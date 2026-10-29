@@ -31,6 +31,8 @@
 #include "gmime-multipart-related.h"
 #include "gmime-text-part.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-body-builder
  * @title: GMimeBodyBuilder
@@ -56,7 +58,7 @@
 
 static void body_builder_finalize (GObject *object);
 
-G_DEFINE_TYPE (GMimeBodyBuilder, g_mime_body_builder, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeBodyBuilder, g_mime_body_builder, G_TYPE_OBJECT)
 
 static void
 g_mime_body_builder_class_init (GMimeBodyBuilderClass *klass)
@@ -257,12 +259,13 @@ g_mime_body_builder_set_body_encoding (GMimeBodyBuilder *builder, const char *ch
 
 	/* Probe the same encoder used by text parts without changing the
 	 * selected charset until validation and converter setup succeed. */
-	converted = _g_mime_charset_encode_text (charset, "", NULL, &name, error);
-	if (!converted)
+	if (!(converted = _g_mime_charset_encode_text (charset, "", NULL, &name, error)))
 		return FALSE;
+
 	g_free (converted);
 	g_free (builder->body_encoding);
 	builder->body_encoding = name;
+
 	return TRUE;
 }
 
@@ -298,9 +301,9 @@ g_mime_body_builder_to_message_body (GMimeBodyBuilder *builder, GError **error)
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	if (builder->text_body) {
-		text = create_text_part (builder, "plain", builder->text_body, error);
-		if (!text)
+		if (!(text = create_text_part (builder, "plain", builder->text_body, error)))
 			return NULL;
+
 		if (builder->html_body) {
 			alternative = g_mime_multipart_alternative_new ();
 			g_mime_multipart_add ((GMimeMultipart *) alternative, text);
@@ -312,23 +315,29 @@ g_mime_body_builder_to_message_body (GMimeBodyBuilder *builder, GError **error)
 	}
 
 	if (builder->html_body) {
-		text = create_text_part (builder, "html", builder->html_body, error);
-		if (!text) {
+		if (!(text = create_text_part (builder, "html", builder->html_body, error))) {
 			g_clear_object (&body);
 			return NULL;
 		}
+
 		count = g_mime_attachment_collection_get_count (builder->linked_resources);
+
 		if (count > 0) {
 			related = g_mime_multipart_related_new ();
 			g_mime_multipart_related_set_root (related, text);
 			g_object_unref (text);
-			for (i = 0; i < count; i++)
-				g_mime_multipart_add ((GMimeMultipart *) related,
-						     g_mime_attachment_collection_get_attachment (builder->linked_resources, i));
+
+			for (i = 0; i < count; i++) {
+				GMimeEntity *attachment = g_mime_attachment_collection_get_attachment (builder->linked_resources, i);
+
+				g_mime_multipart_add ((GMimeMultipart *) related, attachment);
+			}
+
 			html = (GMimeEntity *) related;
 		} else {
 			html = text;
 		}
+
 		if (alternative) {
 			g_mime_multipart_add ((GMimeMultipart *) alternative, html);
 			g_object_unref (html);
@@ -341,13 +350,17 @@ g_mime_body_builder_to_message_body (GMimeBodyBuilder *builder, GError **error)
 	if (count > 0) {
 		if (!body && count == 1)
 			return g_object_ref (g_mime_attachment_collection_get_attachment (builder->attachments, 0));
+
 		mixed = g_mime_multipart_new_with_subtype ("mixed");
+
 		if (body) {
 			g_mime_multipart_add (mixed, body);
 			g_object_unref (body);
 		}
+
 		for (i = 0; i < count; i++)
 			g_mime_multipart_add (mixed, g_mime_attachment_collection_get_attachment (builder->attachments, i));
+
 		body = (GMimeEntity *) mixed;
 	}
 

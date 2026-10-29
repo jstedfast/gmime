@@ -26,6 +26,8 @@
 #include "gmime-visitor.h"
 #include "gmime-internal.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-message-feedback-report
  * @title: GMimeMessageFeedbackReport
@@ -38,7 +40,14 @@
 static void report_finalize (GObject *object);
 static void fields_changed (GMimeHeaderList *fields, gpointer args, GMimeMessageFeedbackReport *report);
 
-G_DEFINE_TYPE (GMimeMessageFeedbackReport, g_mime_message_feedback_report, GMIME_TYPE_PART)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessageFeedbackReport, g_mime_message_feedback_report, GMIME_TYPE_PART)
+
+GMimeMessageFeedbackReportPrivate *
+_g_mime_message_feedback_report_get_private (GMimeMessageFeedbackReport *object)
+{
+	return g_mime_message_feedback_report_get_instance_private (object);
+}
 
 static void
 report_accept (GMimeEntity *object, GMimeVisitor *visitor)
@@ -56,18 +65,22 @@ g_mime_message_feedback_report_class_init (GMimeMessageFeedbackReportClass *klas
 static void
 g_mime_message_feedback_report_init (GMimeMessageFeedbackReport *report)
 {
-	report->fields = NULL;
+	GMimeMessageFeedbackReportPrivate *priv = _g_mime_message_feedback_report_get_private (report);
+
+	priv->fields = NULL;
 }
 
 static void
 report_finalize (GObject *object)
 {
 	GMimeMessageFeedbackReport *report = GMIME_MESSAGE_FEEDBACK_REPORT (object);
+	GMimeMessageFeedbackReportPrivate *priv = _g_mime_message_feedback_report_get_private (report);
 
-	if (report->fields) {
-		g_mime_event_remove (report->fields->changed, (GMimeEventCallback) fields_changed, report);
-		g_object_unref (report->fields);
+	if (priv->fields) {
+		g_mime_event_remove (priv->fields->changed, (GMimeEventCallback) fields_changed, report);
+		g_object_unref (priv->fields);
 	}
+
 	G_OBJECT_CLASS (g_mime_message_feedback_report_parent_class)->finalize (object);
 }
 
@@ -96,6 +109,7 @@ g_mime_message_feedback_report_new (void)
 	content_type = g_mime_content_type_new ("message", "feedback-report");
 	g_mime_entity_set_content_type ((GMimeEntity *) report, content_type);
 	g_object_unref (content_type);
+
 	return report;
 }
 
@@ -122,18 +136,22 @@ g_mime_message_feedback_report_new (void)
 GMimeHeaderList *
 g_mime_message_feedback_report_get_fields (GMimeMessageFeedbackReport *report, GError **error)
 {
+	GMimeMessageFeedbackReportPrivate *priv;
 	GMimeHeaderList *fields;
 
 	g_return_val_if_fail (GMIME_IS_MESSAGE_FEEDBACK_REPORT (report), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if (report->fields)
-		return report->fields;
+	priv = _g_mime_message_feedback_report_get_private (report);
 
-	fields = _g_mime_part_load_fields ((GMimePart *) report, "Feedback report", error);
-	if (!fields)
+	if (priv->fields)
+		return priv->fields;
+
+	if (!(fields = _g_mime_part_load_fields ((GMimePart *) report, "Feedback report", error)))
 		return NULL;
-	report->fields = fields;
+
+	priv->fields = fields;
 	g_mime_event_add (fields->changed, (GMimeEventCallback) fields_changed, report);
+
 	return fields;
 }

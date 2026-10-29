@@ -39,8 +39,10 @@
 #include "gmime-filter-openpgp.h"
 #include "gmime-utils.h"
 
+#include "gmime-object-private.h"
+
 typedef struct {
-	GMimeReader parent_object;
+	GMimeReader parent_instance;
 	GMimeStream *stream;
 	GMimeHeaderList *headers;
 	GPtrArray *stack;
@@ -168,6 +170,7 @@ parser_reader_check_repeated_header (GMimeParserOptions *options, GMimeEntity *e
 		"bcc", "cc", "date", "from", "in-reply-to", "message-id",
 		"references", "reply-to", "sender", "subject", "to"
 	};
+	GMimeEntityPrivate *priv;
 	GMimeHeader *existing;
 	guint i;
 
@@ -179,11 +182,14 @@ parser_reader_check_repeated_header (GMimeParserOptions *options, GMimeEntity *e
 			if (!g_ascii_strcasecmp (header->name, singletons[i]))
 				break;
 		}
+
 		if (i == G_N_ELEMENTS (singletons))
 			return;
 	}
 
-	if ((existing = g_mime_header_list_get_header (entity->headers, header->name)))
+	priv = _g_mime_entity_get_private (entity);
+
+	if ((existing = g_mime_header_list_get_header (priv->headers, header->name)))
 		_g_mime_parser_options_warn (options, header->offset,
 					    g_bytes_equal (existing->raw_value, header->raw_value) ?
 					    GMIME_WARN_DUPLICATED_HEADER : GMIME_CRIT_CONFLICTING_HEADER,
@@ -193,12 +199,14 @@ parser_reader_check_repeated_header (GMimeParserOptions *options, GMimeEntity *e
 static void
 parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboolean toplevel)
 {
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (entity);
 	gboolean message = GMIME_IS_MESSAGE (entity);
 	int i, count;
 
-	entity->ensure_newline = FALSE;
-	_g_mime_header_list_set_options (entity->headers, g_mime_reader_get_options ((GMimeReader *) reader));
-	g_mime_header_list_clear (entity->headers);
+	priv->ensure_newline = FALSE;
+
+	_g_mime_header_list_set_options (priv->headers, g_mime_reader_get_options ((GMimeReader *) reader));
+	g_mime_header_list_clear (priv->headers);
 
 	/* MimeKit attaches Headers.Changed after copying the parsed headers.
 	 * Do likewise: later duplicates must not replace the first parsed value.
@@ -214,29 +222,31 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 		if ((message && content) || (!message && toplevel && !content))
 			continue;
 
-		parser_reader_check_repeated_header (entity->headers->options, entity, header);
-		g_mime_header_list_add (entity->headers, header);
+		parser_reader_check_repeated_header (priv->headers->options, entity, header);
+		g_mime_header_list_add (priv->headers, header);
+
 		if (header->owns_options)
 			g_mime_parser_options_free (header->options);
-		header->options = entity->headers->options;
+
+		header->options = priv->headers->options;
 		header->owns_options = FALSE;
 	}
 
 	_g_mime_entity_unblock_header_list_changed (entity);
 
 	if (!message)
-		entity->headers->has_body_separator = reader->has_body_separator;
+		priv->headers->has_body_separator = reader->has_body_separator;
 
 	/* Initialize GMime's eager caches once per field. Address callbacks
 	 * see the complete list, including repeated address headers, just as
 	 * MimeKit's lazy properties do. Invalid fields are wire data only. */
-	count = g_mime_header_list_get_count (entity->headers);
+	count = g_mime_header_list_get_count (priv->headers);
 
 	for (i = 0; i < count; i++) {
-		GMimeHeader *header = g_mime_header_list_get_header_at (entity->headers, i);
+		GMimeHeader *header = g_mime_header_list_get_header_at (priv->headers, i);
 
 		if (!header->invalid && g_ascii_strcasecmp (header->name, "Content-Type") &&
-		    g_mime_header_list_get_header (entity->headers, header->name) == header)
+		    g_mime_header_list_get_header (priv->headers, header->name) == header)
 			GMIME_ENTITY_GET_CLASS (entity)->header_added (entity, header);
 	}
 }
@@ -253,11 +263,11 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
 	GMimeParserOptions *options = g_mime_reader_get_options (base);
-	GMimeContentType *copy;
-	GMimeEntity *entity;
 	GMimeEntity *parent = parser_reader_peek (reader);
 	const char *media_type, *subtype;
 	gboolean opaque = FALSE;
+	GMimeContentType *copy;
+	GMimeEntity *entity;
 
 	media_type = g_mime_content_type_get_media_type (content_type);
 	subtype = g_mime_content_type_get_media_subtype (content_type);
@@ -275,6 +285,8 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 	}
 
 	if (entity && type == GMIME_READER_ENTITY_PART && (!GMIME_IS_PART (entity) || opaque)) {
+		GMimeEntityPrivate *entity_priv;
+
 		if (!opaque && !((G_OBJECT_TYPE (entity) == GMIME_TYPE_MESSAGE_PART &&
 				  (g_mime_content_type_is_type (content_type, "message", "rfc822") ||
 				   g_mime_content_type_is_type (content_type, "message", "rfc2822") ||
@@ -302,7 +314,9 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 		 * applies when the reader reaches the MIME nesting limit. */
 		entity = g_object_new (!g_ascii_strcasecmp (media_type, "text") ?
 				       GMIME_TYPE_TEXT_PART : GMIME_TYPE_PART, NULL);
-		_g_mime_header_list_set_options (entity->headers, options);
+		entity_priv = _g_mime_entity_get_private (entity);
+
+		_g_mime_header_list_set_options (entity_priv->headers, options);
 	}
 
 	if (!entity) {
@@ -345,7 +359,9 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 	} else if (parent) {
 		/* Parsed bodies retain their offsets and do not synthesize a
 		 * MIME-Version header, unlike the public body assignment helper. */
-		GMIME_MESSAGE (parent)->mime_part = g_object_ref (entity);
+		GMimeMessagePrivate *parent_priv = _g_mime_message_get_private (GMIME_MESSAGE (parent));
+
+		parent_priv->mime_part = g_object_ref (entity);
 	}
 
 	g_ptr_array_add (reader->stack, entity);
@@ -365,8 +381,10 @@ parser_reader_entity_end (GMimeReader *base, GMimeReaderEntityType type, GMimeCo
 
 		/* Preserve an opening marker at EOF that was not followed by a
 		 * child, but only if no closing delimiter was encountered. */
-		if (!multipart->write_end_boundary && reader->boundary)
-			multipart->raw_trailing_boundary = g_byte_array_free_to_bytes (
+		GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
+
+		if (!priv->write_end_boundary && reader->boundary)
+			priv->raw_trailing_boundary = g_byte_array_free_to_bytes (
 				g_steal_pointer (&reader->boundary));
 		g_clear_pointer (&reader->boundary, g_byte_array_unref);
 	}
@@ -384,6 +402,7 @@ parser_reader_message_begin (GMimeReader *base, gint64 begin, guint64 line, GErr
 	GMimeEntity *parent = parser_reader_peek (reader);
 	GMimeMessage *message = g_mime_message_new (FALSE);
 	GByteArray *marker = NULL;
+	GMimeMessagePrivate *priv;
 
 	/* MimeKit keeps leading invalid message headers as pre-header marker
 	 * bytes, not headers. Embedded messages write these bytes unchanged,
@@ -404,8 +423,10 @@ parser_reader_message_begin (GMimeReader *base, gint64 begin, guint64 line, GErr
 		g_mime_header_list_remove_at (reader->headers, 0);
 	}
 
+	priv = _g_mime_message_get_private (message);
+
 	if (marker)
-		message->raw_marker = g_byte_array_free_to_bytes (marker);
+		priv->raw_marker = g_byte_array_free_to_bytes (marker);
 
 	parser_reader_copy_headers (reader, (GMimeEntity *) message, FALSE);
 
@@ -496,10 +517,11 @@ parser_reader_boundary_end (GMimeReader *base, gboolean final, gint64 begin, gui
 
 	if (final) {
 		GMimeMultipart *multipart = (GMimeMultipart *) parser_reader_peek (reader);
+		GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 
-		g_clear_pointer (&multipart->raw_end_boundary, g_bytes_unref);
-		multipart->raw_end_boundary = g_byte_array_free_to_bytes (g_steal_pointer (&reader->end_boundary));
-		multipart->write_end_boundary = TRUE;
+		g_clear_pointer (&priv->raw_end_boundary, g_bytes_unref);
+		priv->raw_end_boundary = g_byte_array_free_to_bytes (g_steal_pointer (&reader->end_boundary));
+		priv->write_end_boundary = TRUE;
 	}
 
 	return TRUE;

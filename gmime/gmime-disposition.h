@@ -30,14 +30,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_CONTENT_DISPOSITION              (g_mime_content_disposition_get_type ())
-#define GMIME_CONTENT_DISPOSITION(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), g_mime_content_disposition_get_type (), GMimeContentDisposition))
-#define GMIME_CONTENT_DISPOSITION_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), g_mime_content_disposition_get_type (), GMimeContentDispositionClass))
-#define GMIME_IS_CONTENT_DISPOSITION(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj), g_mime_content_disposition_get_type ()))
-#define GMIME_IS_CONTENT_DISPOSITION_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), g_mime_content_disposition_get_type ()))
-#define GMIME_CONTENT_DISPOSITION_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), g_mime_content_disposition_get_type (), GMimeContentDispositionClass))
 
-typedef struct _GMimeContentDisposition GMimeContentDisposition;
-typedef struct _GMimeContentDispositionClass GMimeContentDispositionClass;
 
 /**
  * GMIME_DISPOSITION_ATTACHMENT:
@@ -57,28 +50,10 @@ typedef struct _GMimeContentDispositionClass GMimeContentDispositionClass;
 
 /**
  * GMimeContentDisposition:
- * @parent_object: parent #GObject
- * @disposition: disposition
- * @params: a #GMimeParam list
  *
  * A data structure representing a Content-Disposition.
  **/
-struct _GMimeContentDisposition {
-	GObject parent_object;
-	
-	char *disposition;
-	GMimeParamList *params;
-	
-	/* < private > */
-	gpointer changed;
-};
-
-struct _GMimeContentDispositionClass {
-	GObjectClass parent_class;
-	
-};
-
-GType g_mime_content_disposition_get_type (void);
+G_DECLARE_FINAL_TYPE (GMimeContentDisposition, g_mime_content_disposition, GMIME, CONTENT_DISPOSITION, GObject)
 
 
 GMimeContentDisposition *g_mime_content_disposition_new (void);

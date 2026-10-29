@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -179,6 +180,7 @@ test_parser (GMimeParser *parser, GMimeParserOptions *options, GMimeStream *mbox
 static gboolean
 streams_match (GMimeStream *istream, GMimeStream *ostream)
 {
+	GMimeStreamPrivate *priv;
 	char buf[4096], dbuf[4096], errstr[1024], *bufptr, *bufend, *dbufptr;
 	gint64 len, totalsize, totalread = 0;
 	size_t nread, size;
@@ -187,16 +189,18 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 	
 	v(fprintf (stdout, "Checking if streams match... "));
 	
-	if (istream->bound_end != -1) {
-		totalsize = istream->bound_end - istream->position;
+	priv = _g_mime_stream_get_private (istream);
+
+	if (priv->bound_end != -1) {
+		totalsize = priv->bound_end - priv->position;
 	} else if ((len = g_mime_stream_length (istream)) == -1) {
 		sprintf (errstr, "Error: Unable to get length of original stream\n");
 		goto fail;
-	} else if (len < (istream->position - istream->bound_start)) {
+	} else if (len < (priv->position - priv->bound_start)) {
 		sprintf (errstr, "Error: Overflow on original stream?\n");
 		goto fail;
 	} else {
-		totalsize = len - (istream->position - istream->bound_start);
+		totalsize = len - (priv->position - priv->bound_start);
 	}
 	
 	while (totalread < totalsize) {

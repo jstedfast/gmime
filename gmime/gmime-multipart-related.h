@@ -26,30 +26,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART_RELATED            (g_mime_multipart_related_get_type ())
-#define GMIME_MULTIPART_RELATED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_RELATED, GMimeMultipartRelated))
-#define GMIME_MULTIPART_RELATED_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART_RELATED, GMimeMultipartRelatedClass))
-#define GMIME_IS_MULTIPART_RELATED(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART_RELATED))
-#define GMIME_IS_MULTIPART_RELATED_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART_RELATED))
-#define GMIME_MULTIPART_RELATED_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART_RELATED, GMimeMultipartRelatedClass))
 
-typedef struct _GMimeMultipartRelated GMimeMultipartRelated;
-typedef struct _GMimeMultipartRelatedClass GMimeMultipartRelatedClass;
 
 /**
  * GMimeMultipartRelated:
- * @parent_object: parent #GMimeMultipart
  *
  * A multipart/related whose root document references its other parts.
  **/
-struct _GMimeMultipartRelated {
-	GMimeMultipart parent_object;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMultipartRelated, g_mime_multipart_related, GMIME, MULTIPART_RELATED, GMimeMultipart)
 
 struct _GMimeMultipartRelatedClass {
 	GMimeMultipartClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_multipart_related_get_type (void);
 
 GMimeMultipartRelated *g_mime_multipart_related_new (void);
 

@@ -26,6 +26,8 @@
 #include "gmime-filter-openpgp.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-openpgp
  * @title: GMimeFilterOpenPGP
@@ -50,7 +52,7 @@ const GMimeOpenPGPMarker g_mime_openpgp_markers[9] = {
 #define NUM_OPENPGP_MARKERS G_N_ELEMENTS (g_mime_openpgp_markers)
 
 static void g_mime_filter_openpgp_class_init (GMimeFilterOpenPGPClass *klass);
-static void g_mime_filter_openpgp_init (GMimeFilterOpenPGP *filter, GMimeFilterOpenPGPClass *klass);
+static void g_mime_filter_openpgp_init (GMimeFilterOpenPGP *filter);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
 static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
@@ -63,28 +65,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_openpgp_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterOpenPGP, g_mime_filter_openpgp, GMIME_TYPE_FILTER)
+
+GMimeFilterOpenPGPPrivate *
+_g_mime_filter_openpgp_get_private (GMimeFilterOpenPGP *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterOpenPGPClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_openpgp_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterOpenPGP),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_openpgp_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterOpenPGP", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_openpgp_get_instance_private (object);
 }
 
 
@@ -102,15 +89,17 @@ g_mime_filter_openpgp_class_init (GMimeFilterOpenPGPClass *klass)
 }
 
 static void
-g_mime_filter_openpgp_init (GMimeFilterOpenPGP *filter, GMimeFilterOpenPGPClass *klass)
+g_mime_filter_openpgp_init (GMimeFilterOpenPGP *filter)
 {
-	filter->state = GMIME_OPENPGP_NONE;
-	filter->seen_end_marker = FALSE;
-	filter->midline = FALSE;
-	filter->begin_offset = -1;
-	filter->end_offset = -1;
-	filter->position = 0;
-	filter->next = 0;
+	GMimeFilterOpenPGPPrivate *priv = _g_mime_filter_openpgp_get_private (filter);
+
+	priv->state = GMIME_OPENPGP_NONE;
+	priv->seen_end_marker = FALSE;
+	priv->midline = FALSE;
+	priv->begin_offset = -1;
+	priv->end_offset = -1;
+	priv->position = 0;
+	priv->next = 0;
 }
 
 
@@ -172,17 +161,18 @@ is_partial_match (const char *input, const char *inend, const GMimeOpenPGPMarker
 static void
 set_position (GMimeFilterOpenPGP *openpgp, gint64 offset, guint marker, gboolean cr)
 {
+	GMimeFilterOpenPGPPrivate *priv = _g_mime_filter_openpgp_get_private (openpgp);
 	size_t length = g_mime_openpgp_markers[marker].len + (cr ? 2 : 1);
-	
-	switch (openpgp->state) {
-	case GMIME_OPENPGP_BEGIN_PGP_PRIVATE_KEY_BLOCK: openpgp->begin_offset = openpgp->position + offset; break;
-	case GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK: openpgp->end_offset = openpgp->position + offset + length; break;
-	case GMIME_OPENPGP_BEGIN_PGP_PUBLIC_KEY_BLOCK: openpgp->begin_offset = openpgp->position + offset; break;
-	case GMIME_OPENPGP_END_PGP_PUBLIC_KEY_BLOCK: openpgp->end_offset = openpgp->position + offset + length; break;
-	case GMIME_OPENPGP_BEGIN_PGP_SIGNED_MESSAGE: openpgp->begin_offset = openpgp->position + offset; break;
-	case GMIME_OPENPGP_END_PGP_SIGNATURE: openpgp->end_offset = openpgp->position + offset + length; break;
-	case GMIME_OPENPGP_BEGIN_PGP_MESSAGE: openpgp->begin_offset = openpgp->position + offset; break;
-	case GMIME_OPENPGP_END_PGP_MESSAGE: openpgp->end_offset = openpgp->position + offset + length; break;
+
+	switch (priv->state) {
+	case GMIME_OPENPGP_BEGIN_PGP_PRIVATE_KEY_BLOCK: priv->begin_offset = priv->position + offset; break;
+	case GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK: priv->end_offset = priv->position + offset + length; break;
+	case GMIME_OPENPGP_BEGIN_PGP_PUBLIC_KEY_BLOCK: priv->begin_offset = priv->position + offset; break;
+	case GMIME_OPENPGP_END_PGP_PUBLIC_KEY_BLOCK: priv->end_offset = priv->position + offset + length; break;
+	case GMIME_OPENPGP_BEGIN_PGP_SIGNED_MESSAGE: priv->begin_offset = priv->position + offset; break;
+	case GMIME_OPENPGP_END_PGP_SIGNATURE: priv->end_offset = priv->position + offset + length; break;
+	case GMIME_OPENPGP_BEGIN_PGP_MESSAGE: priv->begin_offset = priv->position + offset; break;
+	case GMIME_OPENPGP_END_PGP_MESSAGE: priv->end_offset = priv->position + offset + length; break;
 	default: break;
 	}
 }
@@ -191,7 +181,7 @@ static void
 scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
       char **outbuf, size_t *outlen, size_t *outprespace, gboolean flush)
 {
-	GMimeFilterOpenPGP *openpgp = (GMimeFilterOpenPGP *) filter;
+	GMimeFilterOpenPGPPrivate *openpgp = _g_mime_filter_openpgp_get_private ((GMimeFilterOpenPGP *) filter);
 	const char *inend = inbuf + inlen;
 	const char *inptr = inbuf;
 	gboolean cr;
@@ -200,7 +190,7 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	*outprespace = prespace;
 	*outbuf = inbuf;
 	*outlen = 0;
-	
+
 	if (openpgp->seen_end_marker || inlen == 0)
 		return;
 	
@@ -252,7 +242,7 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 			for (i = 0; i < NUM_OPENPGP_MARKERS; i++) {
 				if (g_mime_openpgp_markers[i].before == openpgp->state && is_marker (lineptr, inend, &g_mime_openpgp_markers[i], &cr)) {
 					openpgp->state = g_mime_openpgp_markers[i].after;
-					set_position (openpgp, lineptr - inbuf, i, cr);
+					set_position ((GMimeFilterOpenPGP *) filter, lineptr - inbuf, i, cr);
 					*outbuf = (char *) lineptr;
 					*outlen = inptr - lineptr;
 					
@@ -302,7 +292,7 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		if (is_marker (lineptr, inend, &g_mime_openpgp_markers[openpgp->next], &cr)) {
 			openpgp->seen_end_marker = g_mime_openpgp_markers[openpgp->next].is_end_marker;
 			openpgp->state = g_mime_openpgp_markers[openpgp->next].after;
-			set_position (openpgp, lineptr - inbuf, openpgp->next, cr);
+			set_position ((GMimeFilterOpenPGP *) filter, lineptr - inbuf, openpgp->next, cr);
 			
 			if (openpgp->seen_end_marker)
 				break;
@@ -332,15 +322,15 @@ filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterOpenPGP *openpgp = (GMimeFilterOpenPGP *) filter;
-	
-	openpgp->state = GMIME_OPENPGP_NONE;
-	openpgp->seen_end_marker = FALSE;
-	openpgp->midline = FALSE;
-	openpgp->begin_offset = -1;
-	openpgp->end_offset = -1;
-	openpgp->position = 0;
-	openpgp->next = 0;
+	GMimeFilterOpenPGPPrivate *priv = _g_mime_filter_openpgp_get_private ((GMimeFilterOpenPGP *) filter);
+
+	priv->state = GMIME_OPENPGP_NONE;
+	priv->seen_end_marker = FALSE;
+	priv->midline = FALSE;
+	priv->begin_offset = -1;
+	priv->end_offset = -1;
+	priv->position = 0;
+	priv->next = 0;
 }
 
 
@@ -373,9 +363,13 @@ g_mime_filter_openpgp_new (void)
 GMimeOpenPGPData
 g_mime_filter_openpgp_get_data_type (GMimeFilterOpenPGP *openpgp)
 {
+	GMimeFilterOpenPGPPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_OPENPGP (openpgp), GMIME_OPENPGP_DATA_NONE);
 	
-	switch (openpgp->state) {
+	priv = _g_mime_filter_openpgp_get_private (openpgp);
+
+	switch (priv->state) {
 	case GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK: return GMIME_OPENPGP_DATA_PRIVATE_KEY;
 	case GMIME_OPENPGP_END_PGP_PUBLIC_KEY_BLOCK: return GMIME_OPENPGP_DATA_PUBLIC_KEY;
 	case GMIME_OPENPGP_END_PGP_SIGNATURE: return GMIME_OPENPGP_DATA_SIGNED;
@@ -398,9 +392,13 @@ g_mime_filter_openpgp_get_data_type (GMimeFilterOpenPGP *openpgp)
 gint64
 g_mime_filter_openpgp_get_begin_offset (GMimeFilterOpenPGP *openpgp)
 {
+	GMimeFilterOpenPGPPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_OPENPGP (openpgp), -1);
 	
-	return openpgp->begin_offset;
+	priv = _g_mime_filter_openpgp_get_private (openpgp);
+
+	return priv->begin_offset;
 }
 
 
@@ -417,7 +415,11 @@ g_mime_filter_openpgp_get_begin_offset (GMimeFilterOpenPGP *openpgp)
 gint64
 g_mime_filter_openpgp_get_end_offset (GMimeFilterOpenPGP *openpgp)
 {
+	GMimeFilterOpenPGPPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_OPENPGP (openpgp), -1);
 	
-	return openpgp->end_offset;
+	priv = _g_mime_filter_openpgp_get_private (openpgp);
+
+	return priv->end_offset;
 }

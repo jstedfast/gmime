@@ -25,7 +25,7 @@
 #include "gmime-codecs.h"
 
 struct _GMimePassThroughDecoder {
-	GObject parent_object;
+	GObject parent_instance;
 	GMimeContentEncoding encoding;
 };
 

@@ -31,6 +31,8 @@
 #include "gmime-internal.h"
 #include "gmime-error.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-message-delivery-status
  * @title: GMimeMessageDeliveryStatus
@@ -45,7 +47,14 @@
 static void status_finalize (GObject *object);
 static void groups_changed (GMimeHeaderListCollection *groups, gpointer args, GMimeMessageDeliveryStatus *status);
 
-G_DEFINE_TYPE (GMimeMessageDeliveryStatus, g_mime_message_delivery_status, GMIME_TYPE_PART)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessageDeliveryStatus, g_mime_message_delivery_status, GMIME_TYPE_PART)
+
+GMimeMessageDeliveryStatusPrivate *
+_g_mime_message_delivery_status_get_private (GMimeMessageDeliveryStatus *object)
+{
+	return g_mime_message_delivery_status_get_instance_private (object);
+}
 
 static void
 status_accept (GMimeEntity *object, GMimeVisitor *visitor)
@@ -63,18 +72,22 @@ g_mime_message_delivery_status_class_init (GMimeMessageDeliveryStatusClass *klas
 static void
 g_mime_message_delivery_status_init (GMimeMessageDeliveryStatus *status)
 {
-	status->groups = NULL;
+	GMimeMessageDeliveryStatusPrivate *priv = _g_mime_message_delivery_status_get_private (status);
+
+	priv->groups = NULL;
 }
 
 static void
 status_finalize (GObject *object)
 {
 	GMimeMessageDeliveryStatus *status = GMIME_MESSAGE_DELIVERY_STATUS (object);
+	GMimeMessageDeliveryStatusPrivate *priv = _g_mime_message_delivery_status_get_private (status);
 
-	if (status->groups) {
-		g_mime_event_remove (status->groups->changed, (GMimeEventCallback) groups_changed, status);
-		g_object_unref (status->groups);
+	if (priv->groups) {
+		g_mime_event_remove (priv->groups->changed, (GMimeEventCallback) groups_changed, status);
+		g_object_unref (priv->groups);
 	}
+
 	G_OBJECT_CLASS (g_mime_message_delivery_status_parent_class)->finalize (object);
 }
 
@@ -90,6 +103,7 @@ groups_changed (GMimeHeaderListCollection *groups, gpointer args, GMimeMessageDe
 		if (g_mime_header_list_write_to_stream (g_mime_header_list_collection_get_group (groups, i), NULL, stream) == -1)
 			goto fail;
 	}
+
 	if (g_mime_stream_reset (stream) == -1)
 		goto fail;
 
@@ -97,12 +111,15 @@ groups_changed (GMimeHeaderListCollection *groups, gpointer args, GMimeMessageDe
 	g_mime_part_set_content ((GMimePart *) status, content);
 	g_object_unref (content);
 	g_object_unref (stream);
+
 	return;
 
  fail:
 	errsv = errno;
+
 	g_warning ("Failed to serialize delivery status groups: %s",
 		   errsv ? g_strerror (errsv) : "unknown I/O error");
+
 	g_object_unref (stream);
 }
 
@@ -243,6 +260,7 @@ g_mime_message_delivery_status_new (void)
 GMimeHeaderListCollection *
 g_mime_message_delivery_status_get_status_groups (GMimeMessageDeliveryStatus *status, GError **error)
 {
+	GMimeMessageDeliveryStatusPrivate *priv;
 	GMimeHeaderListCollection *groups;
 	GMimeContent *content;
 	GMimeStream *stream;
@@ -251,8 +269,10 @@ g_mime_message_delivery_status_get_status_groups (GMimeMessageDeliveryStatus *st
 	g_return_val_if_fail (GMIME_IS_MESSAGE_DELIVERY_STATUS (status), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if (status->groups)
-		return status->groups;
+	priv = _g_mime_message_delivery_status_get_private (status);
+
+	if (priv->groups)
+		return priv->groups;
 
 	content = g_mime_part_get_content ((GMimePart *) status);
 	if (content) {
@@ -261,8 +281,10 @@ g_mime_message_delivery_status_get_status_groups (GMimeMessageDeliveryStatus *st
 					     "Delivery status content has no backing stream");
 			return NULL;
 		}
+
 		errno = 0;
 		stream = g_mime_content_open (content);
+
 		if (!stream) {
 			errsv = errno;
 			g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
@@ -270,19 +292,25 @@ g_mime_message_delivery_status_get_status_groups (GMimeMessageDeliveryStatus *st
 				     errsv ? g_strerror (errsv) : "unknown I/O error");
 			return NULL;
 		}
+
 		groups = parse_status_groups (stream, error);
 		g_object_unref (stream);
+
 		if (!groups)
 			return NULL;
 	} else {
 		stream = g_mime_stream_mem_new ();
 		content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+
 		g_mime_part_set_content ((GMimePart *) status, content);
 		g_object_unref (content);
 		g_object_unref (stream);
+
 		groups = g_mime_header_list_collection_new ();
 	}
-	status->groups = groups;
+
+	priv->groups = groups;
 	g_mime_event_add (groups->changed, (GMimeEventCallback) groups_changed, status);
+
 	return groups;
 }

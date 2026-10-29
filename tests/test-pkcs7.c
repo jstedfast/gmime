@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -115,6 +116,8 @@ test_verify_detached (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStre
 static void
 test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeStreamMemPrivate *cleartext_priv;
+	GMimeStreamMemPrivate *stream_priv;
 	GMimeSignatureList *signatures;
 	GMimeSignatureStatus status;
 	Exception *ex = NULL;
@@ -144,8 +147,12 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 	
 	g_object_unref (signatures);
 	
-	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
-	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
+	cleartext_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (cleartext));
+
+	buf[0] = cleartext_priv->buffer;
+	stream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
+
+	buf[1] = stream_priv->buffer;
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("extracted data does not match original cleartext");
@@ -181,6 +188,8 @@ test_encrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 static void
 test_decrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeStreamMemPrivate *cleartext_priv;
+	GMimeStreamMemPrivate *stream_priv;
 	GMimeCertificateList *recipients;
 	GMimeDecryptResult *result;
 	Exception *ex = NULL;
@@ -211,8 +220,12 @@ test_decrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 		throw (ex);
 	}
 	
-	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
-	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
+	cleartext_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (cleartext));
+
+	buf[0] = cleartext_priv->buffer;
+	stream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
+
+	buf[1] = stream_priv->buffer;
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("decrypted data does not match original cleartext");
@@ -226,6 +239,8 @@ test_decrypt (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 static void
 test_export (GMimeCryptoContext *ctx, const char *path)
 {
+	GMimeStreamMemPrivate *istream_priv;
+	GMimeStreamMemPrivate *ostream_priv;
 	GMimeStream *istream, *ostream;
 	const char *inbuf, *outbuf;
 	size_t inlen, outlen;
@@ -258,11 +273,15 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 		throw (ex);
 	}
 	
-	inbuf = (const char *) GMIME_STREAM_MEM (istream)->buffer->data;
-	inlen = GMIME_STREAM_MEM (istream)->buffer->len;
+	istream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (istream));
+
+	inbuf = (const char *) istream_priv->buffer->data;
+	inlen = istream_priv->buffer->len;
 	
-	outbuf = (const char *) GMIME_STREAM_MEM (ostream)->buffer->data;
-	outlen = GMIME_STREAM_MEM (ostream)->buffer->len;
+	ostream_priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (ostream));
+
+	outbuf = (const char *) ostream_priv->buffer->data;
+	outlen = ostream_priv->buffer->len;
 	
 	if (outlen != inlen || memcmp (outbuf, inbuf, inlen) != 0) {
 		FILE *fp = fopen ("exported.crt", "w");

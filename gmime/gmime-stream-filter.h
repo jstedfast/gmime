@@ -28,39 +28,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
-#define GMIME_STREAM_FILTER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))
-#define GMIME_STREAM_FILTER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
-#define GMIME_IS_STREAM_FILTER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_FILTER))
-#define GMIME_IS_STREAM_FILTER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILTER))
-#define GMIME_STREAM_FILTER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
 
-typedef struct _GMimeStreamFilter GMimeStreamFilter;
-typedef struct _GMimeStreamFilterClass GMimeStreamFilterClass;
 
 /**
  * GMimeStreamFilter:
- * @parent_object: parent #GMimeStream
- * @priv: private state data
- * @source: source stream
  *
  * A #GMimeStream which passes data through any #GMimeFilter objects.
  **/
-struct _GMimeStreamFilter {
-	GMimeStream parent_object;
-	
-	struct _GMimeStreamFilterPrivate *priv;
-	
-	GMimeStream *source;
-	gboolean owner;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamFilter, g_mime_stream_filter, GMIME, STREAM_FILTER, GMimeStream)
 
 struct _GMimeStreamFilterClass {
 	GMimeStreamClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_stream_filter_get_type (void);
 
 GMimeStream *g_mime_stream_filter_new (GMimeStream *stream);
 

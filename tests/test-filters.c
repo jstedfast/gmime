@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -654,12 +655,13 @@ filter_chunk (GMimeFilter *filter, const guint8 *input, size_t length, gboolean 
 	char *buffer, *output;
 	guint8 preload[16];
 	gboolean passthrough;
-	size_t backedup = filter->backlen;
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
+	size_t backedup = priv->backlen;
 	size_t i;
 
 	g_assert_cmpuint (backedup, <=, sizeof (preload));
 	if (backedup)
-		memcpy (preload, filter->backbuf, backedup);
+		memcpy (preload, priv->backbuf, backedup);
 	buffer = g_malloc (length + 32);
 	memset (buffer, 'Z', length + 32);
 	if (length)
@@ -677,8 +679,8 @@ filter_chunk (GMimeFilter *filter, const guint8 *input, size_t length, gboolean 
 		g_assert_cmpuint (outlen, <=, length + backedup);
 		g_assert_cmpuint (outprespace, ==, 16 - backedup);
 	} else {
-		g_assert_true (output == filter->outbuf);
-		g_assert_cmpuint (outprespace, ==, filter->outpre);
+		g_assert_true (output == priv->outbuf);
+		g_assert_cmpuint (outprespace, ==, priv->outpre);
 	}
 	for (i = 0; i < 16; i++) {
 		if (i < 16 - backedup)
@@ -1186,6 +1188,8 @@ check_from_splits (const guint8 *input, size_t length)
 		expected = from_expected (input, length, mode);
 		for (split = 0; split <= length; split++) {
 			for (final = 0; final < 2; final++) {
+				GMimeFilterPrivate *priv;
+
 				g_mime_filter_reset (filter);
 				g_byte_array_set_size (actual, 0);
 				filter_chunk (filter, input, split, FALSE, actual);
@@ -1196,7 +1200,9 @@ check_from_splits (const guint8 *input, size_t length)
 				check_filter_result (actual, expected);
 				filter_chunk (filter, input, 0, TRUE, actual);
 				check_filter_result (actual, expected);
-				g_assert_cmpuint (filter->backlen, ==, 0);
+				priv = _g_mime_filter_get_private (filter);
+
+				g_assert_cmpuint (priv->backlen, ==, 0);
 			}
 		}
 		g_byte_array_unref (expected);
@@ -1242,23 +1248,28 @@ test_from_streaming (void)
 static void
 test_from_lifecycle (void)
 {
+	GMimeFilterFromPrivate *filter_from_priv;
 	GByteArray *actual = g_byte_array_new (), *expected;
 	GMimeFilter *filter, *copy;
 	guint mode;
 
 	testsuite_check ("From filters immediate mismatches, fresh copies, reset and reuse");
 	for (mode = 0; mode < 2; mode++) {
+		GMimeFilterPrivate *filter_priv;
+
 		filter = g_mime_filter_from_new (mode);
 		g_byte_array_set_size (actual, 0);
 		g_assert_true (filter_chunk (filter, (const guint8 *) "Fx", 2, FALSE, actual));
 		g_assert_cmpuint (actual->len, ==, 2);
 		g_assert_cmpint (memcmp (actual->data, "Fx", 2), ==, 0);
-		g_assert_cmpuint (filter->backlen, ==, 0);
+		filter_priv = _g_mime_filter_get_private (filter);
+
+		g_assert_cmpuint (filter_priv->backlen, ==, 0);
 		g_mime_filter_reset (filter);
 		g_byte_array_set_size (actual, 0);
 		filter_chunk (filter, (const guint8 *) "Fr", 2, FALSE, actual);
 		g_assert_cmpuint (actual->len, ==, 0);
-		g_assert_cmpuint (filter->backlen, ==, 2);
+		g_assert_cmpuint (filter_priv->backlen, ==, 2);
 		copy = g_mime_filter_copy (filter);
 		g_assert_true (GMIME_IS_FILTER_FROM (copy));
 		filter_chunk (copy, (const guint8 *) "From ", 5, TRUE, actual);
@@ -1290,7 +1301,9 @@ test_from_lifecycle (void)
 		g_object_unref (filter);
 	}
 	filter = g_mime_filter_from_new ((GMimeFilterFromMode) -1);
-	g_assert_cmpint (GMIME_FILTER_FROM (filter)->mode, ==, GMIME_FILTER_FROM_MODE_ESCAPE);
+	filter_from_priv = _g_mime_filter_from_get_private (GMIME_FILTER_FROM (filter));
+
+	g_assert_cmpint (filter_from_priv->mode, ==, GMIME_FILTER_FROM_MODE_ESCAPE);
 	g_byte_array_set_size (actual, 0);
 	filter_chunk (filter, (const guint8 *) "From ", 5, TRUE, actual);
 	expected = from_expected ((const guint8 *) "From ", 5, GMIME_FILTER_FROM_MODE_ESCAPE);
@@ -1359,6 +1372,8 @@ test_from_many_lines (void)
 		memcpy (input + (size_t) i * 6, "From \n", 6);
 	memcpy (input + (size_t) count * 6, "Fro", 3);
 	for (mode = 0; mode < 2; mode++) {
+		GMimeFilterPrivate *priv;
+
 		escaped = mode == GMIME_FILTER_FROM_MODE_ARMOR ? "=46rom \n" : ">From \n";
 		width = strlen (escaped);
 		expected = g_byte_array_sized_new (count * width + 3);
@@ -1368,7 +1383,9 @@ test_from_many_lines (void)
 		g_byte_array_set_size (actual, 0);
 		filter_chunk (filter, input, (size_t) count * 6 + 3, FALSE, actual);
 		check_filter_result (actual, expected);
-		g_assert_cmpuint (filter->backlen, ==, 3);
+		priv = _g_mime_filter_get_private (filter);
+
+		g_assert_cmpuint (priv->backlen, ==, 3);
 		filter_chunk (filter, input, 0, TRUE, actual);
 		g_byte_array_append (expected, (const guint8 *) "Fro", 3);
 		check_filter_result (actual, expected);
@@ -1498,15 +1515,19 @@ test_charset_incremental (void)
 		g_assert_nonnull (filter);
 		for (split = 0; split <= cases[i].inlen; split++) {
 			for (final = 0; final < 2; final++) {
+				GMimeFilterPrivate *priv;
+
 				g_mime_filter_reset (filter);
 				g_byte_array_set_size (actual, 0);
 				g_assert_false (filter_chunk (filter, cases[i].input, split, FALSE, actual));
-				g_assert_cmpuint (filter->backlen, <=, 3);
+				priv = _g_mime_filter_get_private (filter);
+
+				g_assert_cmpuint (priv->backlen, <=, 3);
 				g_assert_false (filter_chunk (filter, cases[i].input, 0, FALSE, actual));
 				g_assert_false (filter_chunk (filter, cases[i].input + split,
 							     cases[i].inlen - split, final, actual));
 				g_assert_cmpmem (actual->data, actual->len, cases[i].output, cases[i].outlen);
-				g_assert_cmpuint (filter->backlen, ==, 0);
+				g_assert_cmpuint (priv->backlen, ==, 0);
 				g_assert_false (filter_chunk (filter, cases[i].input, 0, TRUE, actual));
 				g_assert_false (filter_chunk (filter, cases[i].input, 0, TRUE, actual));
 				g_assert_cmpmem (actual->data, actual->len, cases[i].output, cases[i].outlen);
@@ -1535,13 +1556,17 @@ test_charset_growth (void)
 		expected->data[i * 4] = input[i];
 	}
 	for (final = 0; final < 2; final++) {
+		GMimeFilterPrivate *priv;
+
 		filter = g_mime_filter_charset_new ("UTF-8", "UTF-32LE");
 		g_assert_nonnull (filter);
 		g_byte_array_set_size (actual, 0);
 		g_assert_false (filter_chunk (filter, input, 65537, final, actual));
 		check_filter_result (actual, expected);
-		g_assert_cmpuint (filter->backlen, ==, 0);
-		g_assert_cmpuint (filter->outsize, >=, expected->len);
+		priv = _g_mime_filter_get_private (filter);
+
+		g_assert_cmpuint (priv->backlen, ==, 0);
+		g_assert_cmpuint (priv->outsize, >=, expected->len);
 		g_assert_false (filter_chunk (filter, input, 0, FALSE, actual));
 		g_assert_false (filter_chunk (filter, input, 0, TRUE, actual));
 		check_filter_result (actual, expected);
@@ -1556,6 +1581,12 @@ test_charset_growth (void)
 static void
 test_charset_lifecycle (void)
 {
+	GMimeFilterPrivate *filter_priv;
+	GMimeFilterPrivate *filter_priv2;
+	GMimeFilterPrivate *filter_priv3;
+	GMimeFilterCharsetPrivate *filter_charset_priv2;
+	GMimeFilterPrivate *copy_priv;
+	GMimeFilterCharsetPrivate *filter_charset_priv;
 	static const guint8 japanese[] = "\343\201\202\343\201\204";
 	static const guint8 shifted[] = { 0x1b, '$', 'B', '$', '"', '$', '$', 0x1b, '(', 'B' };
 	static const guint8 incomplete[] = { 0xe2, 0x82 };
@@ -1573,11 +1604,19 @@ test_charset_lifecycle (void)
 	g_assert_cmpstr (g_mime_filter_charset_get_to_charset (GMIME_FILTER_CHARSET (filter)), ==, "UTF-16LE");
 	g_assert_false (filter_chunk (filter, incomplete, sizeof (incomplete), FALSE, actual));
 	g_assert_cmpuint (actual->len, ==, 0);
-	g_assert_cmpuint (filter->backlen, ==, sizeof (incomplete));
+	filter_priv = _g_mime_filter_get_private (filter);
+
+	g_assert_cmpuint (filter_priv->backlen, ==, sizeof (incomplete));
 	copy = g_mime_filter_copy (filter);
 	g_assert_true (GMIME_IS_FILTER_CHARSET (copy));
-	g_assert_cmpuint (copy->backlen, ==, 0);
-	g_assert_true (GMIME_FILTER_CHARSET (copy)->cd != GMIME_FILTER_CHARSET (filter)->cd);
+	copy_priv = _g_mime_filter_get_private (copy);
+
+	g_assert_cmpuint (copy_priv->backlen, ==, 0);
+	filter_charset_priv = _g_mime_filter_charset_get_private (GMIME_FILTER_CHARSET (copy));
+
+	filter_charset_priv2 = _g_mime_filter_charset_get_private (GMIME_FILTER_CHARSET (filter));
+
+	g_assert_true (filter_charset_priv->cd != filter_charset_priv2->cd);
 	g_assert_cmpstr (g_mime_filter_charset_get_from_charset (GMIME_FILTER_CHARSET (copy)), ==, "uTf-8");
 	g_assert_cmpstr (g_mime_filter_charset_get_to_charset (GMIME_FILTER_CHARSET (copy)), ==, "UTF-16LE");
 	g_object_unref (filter);
@@ -1586,7 +1625,7 @@ test_charset_lifecycle (void)
 	g_byte_array_set_size (actual, 0);
 	g_assert_false (filter_chunk (copy, incomplete, sizeof (incomplete), FALSE, actual));
 	g_mime_filter_reset (copy);
-	g_assert_cmpuint (copy->backlen, ==, 0);
+	g_assert_cmpuint (copy_priv->backlen, ==, 0);
 	g_assert_false (filter_chunk (copy, (const guint8 *) "B", 1, TRUE, actual));
 	g_assert_cmpmem (actual->data, actual->len, "B\0", 2);
 	g_object_unref (copy);
@@ -1625,9 +1664,13 @@ test_charset_lifecycle (void)
 	g_byte_array_set_size (actual, 0);
 	g_assert_false (filter_chunk (filter, malformed, sizeof (malformed), FALSE, actual));
 	g_assert_cmpmem (actual->data, actual->len, "AB", 2);
-	g_assert_cmpuint (filter->backlen, ==, 2);
+	filter_priv2 = _g_mime_filter_get_private (filter);
+
+	g_assert_cmpuint (filter_priv2->backlen, ==, 2);
 	g_assert_false (filter_chunk (filter, malformed, 0, TRUE, actual));
-	g_assert_cmpuint (filter->backlen, ==, 0);
+	filter_priv3 = _g_mime_filter_get_private (filter);
+
+	g_assert_cmpuint (filter_priv3->backlen, ==, 0);
 	g_assert_cmpmem (actual->data, actual->len, "AB", 2);
 	g_byte_array_set_size (actual, 0);
 	g_assert_false (filter_chunk (filter, (const guint8 *) "A\302\243B", 4, TRUE, actual));
@@ -1714,6 +1757,7 @@ anonymize_expected (const guint8 *input, size_t length)
 static void
 test_anonymize_bytes (void)
 {
+	GMimeFilterPrivate *filter_priv;
 	static const size_t prespaces[] = { 0, 1, 16 };
 	GMimeFilter *filter;
 	GByteArray *expected;
@@ -1736,6 +1780,8 @@ test_anonymize_bytes (void)
 		for (p = 0; p < G_N_ELEMENTS (prespaces); p++) {
 			for (offset = 0; offset <= 256; offset++) {
 				for (length = 0; length <= 256 - offset; length++) {
+					GMimeFilterPrivate *priv;
+
 					output = NULL;
 					outlen = outprespace = G_MAXSIZE;
 					if (complete)
@@ -1744,18 +1790,22 @@ test_anonymize_bytes (void)
 					else
 						g_mime_filter_filter (filter, input + 16 + offset, length, prespaces[p],
 								      &output, &outlen, &outprespace);
-					g_assert_true (output == filter->outbuf);
+					priv = _g_mime_filter_get_private (filter);
+
+					g_assert_true (output == priv->outbuf);
 					g_assert_nonnull (output);
 					g_assert_cmpuint (outlen, ==, length);
-					g_assert_cmpuint (outprespace, ==, filter->outpre);
+					g_assert_cmpuint (outprespace, ==, priv->outpre);
 					g_assert_cmpmem (output, outlen, expected->data + offset, length);
 				}
 			}
 		}
 	}
 	g_assert_cmpmem (input, sizeof (input), saved, sizeof (saved));
-	g_assert_null (filter->backbuf);
-	g_assert_cmpuint (filter->backlen, ==, 0);
+	filter_priv = _g_mime_filter_get_private (filter);
+
+	g_assert_null (filter_priv->backbuf);
+	g_assert_cmpuint (filter_priv->backlen, ==, 0);
 	g_byte_array_unref (expected);
 	g_object_unref (filter);
 	testsuite_check_passed ();
@@ -1764,6 +1814,8 @@ test_anonymize_bytes (void)
 static void
 test_anonymize_lifecycle (void)
 {
+	GMimeFilterPrivate *copy_priv;
+	GMimeFilterPrivate *filter_priv;
 	static const guint8 whitespace[] = " \t\r\n";
 	GMimeFilter *filter = g_mime_filter_anonymize_new (), *copy;
 	GByteArray *actual = g_byte_array_new (), *expected;
@@ -1789,11 +1841,15 @@ test_anonymize_lifecycle (void)
 	copy = g_mime_filter_copy (filter);
 	g_assert_true (GMIME_IS_FILTER_ANONYMIZE (copy));
 	g_assert_true (copy != filter);
-	g_assert_null (copy->outbuf);
+	copy_priv = _g_mime_filter_get_private (copy);
+
+	g_assert_null (copy_priv->outbuf);
 	g_byte_array_set_size (actual, 0);
 	g_assert_false (filter_chunk (copy, whitespace, sizeof (whitespace) - 1, TRUE, actual));
 	g_assert_cmpmem (actual->data, actual->len, whitespace, sizeof (whitespace) - 1);
-	g_assert_true (copy->outbuf != filter->outbuf);
+	filter_priv = _g_mime_filter_get_private (filter);
+
+	g_assert_true (copy_priv->outbuf != filter_priv->outbuf);
 	g_object_unref (filter);
 	g_byte_array_set_size (actual, 0);
 	g_assert_false (filter_chunk (copy, input, sizeof (input), FALSE, actual));
@@ -1878,6 +1934,7 @@ test_anonymize_streams (void)
 static void
 test_pass_through_identity (void)
 {
+	GMimeFilterPrivate *priv;
 	static const size_t prespaces[] = { 0, 1, 16 };
 	GMimeFilter *filter;
 	char input[288], saved[288], *output;
@@ -1914,11 +1971,13 @@ test_pass_through_identity (void)
 		}
 	}
 	g_assert_cmpint (memcmp (input, saved, sizeof (input)), ==, 0);
-	g_assert_null (filter->outbuf);
-	g_assert_null (filter->outreal);
-	g_assert_cmpuint (filter->outsize, ==, 0);
-	g_assert_null (filter->backbuf);
-	g_assert_cmpuint (filter->backlen, ==, 0);
+	priv = _g_mime_filter_get_private (filter);
+
+	g_assert_null (priv->outbuf);
+	g_assert_null (priv->outreal);
+	g_assert_cmpuint (priv->outsize, ==, 0);
+	g_assert_null (priv->backbuf);
+	g_assert_cmpuint (priv->backlen, ==, 0);
 	g_object_unref (filter);
 	testsuite_check_passed ();
 }
@@ -1926,6 +1985,7 @@ test_pass_through_identity (void)
 static void
 test_pass_through_lifecycle (void)
 {
+	GMimeFilterPrivate *priv;
 	GMimeFilter *filter = g_mime_filter_pass_through_new (), *copy;
 	GByteArray *actual = g_byte_array_new (), *expected = g_byte_array_new ();
 	guint8 input[256];
@@ -1958,8 +2018,10 @@ test_pass_through_lifecycle (void)
 	g_byte_array_set_size (actual, 0);
 	g_assert_true (filter_chunk (copy, input, sizeof (input), FALSE, actual));
 	check_filter_result (actual, expected);
-	g_assert_null (copy->outbuf);
-	g_assert_null (copy->backbuf);
+	priv = _g_mime_filter_get_private (copy);
+
+	g_assert_null (priv->outbuf);
+	g_assert_null (priv->backbuf);
 	g_object_unref (copy);
 	g_byte_array_unref (expected);
 	g_byte_array_unref (actual);
@@ -2074,11 +2136,18 @@ test_encoding_newline_lifecycle (void)
 			g_byte_array_set_size (expected, 0);
 			filter_chunk (filter, input, sizeof (input), TRUE, expected);
 			for (split = 0; split <= sizeof (input); split++) {
+				GMimeFilterBasicPrivate *copy_priv;
+				GMimeFilterBasicPrivate *filter_priv;
+
 				g_byte_array_set_size (actual, 0);
 				g_byte_array_set_size (copied, 0);
 				filter_chunk (filter, input, split, FALSE, actual);
 				copy = g_mime_filter_copy (filter);
-				g_assert_true (GMIME_FILTER_BASIC (copy)->encoder != GMIME_FILTER_BASIC (filter)->encoder);
+				copy_priv = _g_mime_filter_basic_get_private (GMIME_FILTER_BASIC (copy));
+
+				filter_priv = _g_mime_filter_basic_get_private (GMIME_FILTER_BASIC (filter));
+
+				g_assert_true (copy_priv->encoder != filter_priv->encoder);
 				filter_chunk (filter, input + split, sizeof (input) - split, TRUE, actual);
 				check_filter_result (actual, expected);
 				filter_chunk (copy, input, sizeof (input), TRUE, copied);
@@ -2160,24 +2229,31 @@ test_encoding_newline_streams (void)
 static void
 check_factory_selection (GMimeFilter *filter, GMimeContentEncoding encoding, gboolean encode)
 {
+	GMimeFilterBasicPrivate *basic_priv;
 	GMimeFilterBasic *basic;
 
 	g_assert_nonnull (filter);
 	if (encoding < GMIME_CONTENT_ENCODING_BASE64 || encoding > GMIME_CONTENT_ENCODING_UUENCODE) {
+		GMimeFilterPrivate *filter_priv;
+
 		g_assert_true (GMIME_IS_FILTER_PASS_THROUGH (filter));
-		g_assert_null (filter->outbuf);
+		filter_priv = _g_mime_filter_get_private (filter);
+
+		g_assert_null (filter_priv->outbuf);
 		return;
 	}
 	g_assert_true (GMIME_IS_FILTER_BASIC (filter));
 	basic = GMIME_FILTER_BASIC (filter);
+	basic_priv = _g_mime_filter_basic_get_private (basic);
+
 	if (encode) {
-		g_assert_nonnull (basic->encoder);
-		g_assert_null (basic->decoder);
-		g_assert_cmpint (g_mime_encoder_get_encoding (basic->encoder), ==, encoding);
+		g_assert_nonnull (basic_priv->encoder);
+		g_assert_null (basic_priv->decoder);
+		g_assert_cmpint (g_mime_encoder_get_encoding (basic_priv->encoder), ==, encoding);
 	} else {
-		g_assert_nonnull (basic->decoder);
-		g_assert_null (basic->encoder);
-		g_assert_cmpint (g_mime_decoder_get_encoding (basic->decoder), ==, encoding);
+		g_assert_nonnull (basic_priv->decoder);
+		g_assert_null (basic_priv->encoder);
+		g_assert_cmpint (g_mime_decoder_get_encoding (basic_priv->decoder), ==, encoding);
 	}
 }
 

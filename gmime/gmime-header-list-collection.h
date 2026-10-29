@@ -26,31 +26,16 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_HEADER_LIST_COLLECTION (g_mime_header_list_collection_get_type ())
-#define GMIME_HEADER_LIST_COLLECTION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_HEADER_LIST_COLLECTION, GMimeHeaderListCollection))
-#define GMIME_IS_HEADER_LIST_COLLECTION(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_HEADER_LIST_COLLECTION))
 
-typedef struct _GMimeHeaderListCollection GMimeHeaderListCollection;
-typedef struct _GMimeHeaderListCollectionClass GMimeHeaderListCollectionClass;
 
 /**
  * GMimeHeaderListCollection:
- * @parent_object: parent #GObject
  *
  * An ordered collection of shared header-list groups.
  **/
-struct _GMimeHeaderListCollection {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeHeaderListCollection, g_mime_header_list_collection, GMIME, HEADER_LIST_COLLECTION, GObject)
 
-	/* <private> */
-	GPtrArray *array;
-	gpointer changed;
-};
 
-struct _GMimeHeaderListCollectionClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_header_list_collection_get_type (void);
 GMimeHeaderListCollection *g_mime_header_list_collection_new (void);
 int g_mime_header_list_collection_get_count (GMimeHeaderListCollection *collection);
 GMimeHeaderList *g_mime_header_list_collection_get_group (GMimeHeaderListCollection *collection, int index);

@@ -26,31 +26,23 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART_ALTERNATIVE            (g_mime_multipart_alternative_get_type ())
-#define GMIME_MULTIPART_ALTERNATIVE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_ALTERNATIVE, GMimeMultipartAlternative))
-#define GMIME_MULTIPART_ALTERNATIVE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART_ALTERNATIVE, GMimeMultipartAlternativeClass))
-#define GMIME_IS_MULTIPART_ALTERNATIVE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART_ALTERNATIVE))
-#define GMIME_IS_MULTIPART_ALTERNATIVE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART_ALTERNATIVE))
-#define GMIME_MULTIPART_ALTERNATIVE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART_ALTERNATIVE, GMimeMultipartAlternativeClass))
 
-typedef struct _GMimeMultipartAlternative GMimeMultipartAlternative;
-typedef struct _GMimeMultipartAlternativeClass GMimeMultipartAlternativeClass;
 
 /**
  * GMimeMultipartAlternative:
- * @parent_object: parent #GMimeMultipart
  *
  * A multipart/alternative whose text-body selection searches children
  * from the most faithful alternative to the least faithful.
  **/
-struct _GMimeMultipartAlternative {
-	GMimeMultipart parent_object;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMultipartAlternative, g_mime_multipart_alternative, GMIME, MULTIPART_ALTERNATIVE, GMimeMultipart)
 
 struct _GMimeMultipartAlternativeClass {
 	GMimeMultipartClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_multipart_alternative_get_type (void);
 
 GMimeMultipartAlternative *g_mime_multipart_alternative_new (void);
 

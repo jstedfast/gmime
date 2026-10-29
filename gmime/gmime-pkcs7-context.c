@@ -64,20 +64,16 @@
  * A PKCS7 crypto context.
  **/
 struct _GMimePkcs7Context {
-	GMimeCryptoContext parent_object;
+	GMimeCryptoContext parent_instance;
 	
 #ifdef ENABLE_CRYPTO
 	gpgme_ctx_t ctx;
 #endif
 };
 
-struct _GMimePkcs7ContextClass {
-	GMimeCryptoContextClass parent_class;
-	
-};
 
 static void g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass);
-static void g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass);
+static void g_mime_pkcs7_context_init (GMimePkcs7Context *ctx);
 static void g_mime_pkcs7_context_finalize (GObject *object);
 
 static GMimeDigestAlgo pkcs7_digest_id (GMimeCryptoContext *ctx, const char *name);
@@ -109,29 +105,7 @@ static int pkcs7_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 static GMimeCryptoContextClass *parent_class = NULL;
 
 
-GType
-g_mime_pkcs7_context_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimePkcs7ContextClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_pkcs7_context_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimePkcs7Context),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_pkcs7_context_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_CRYPTO_CONTEXT, "GMimePkcs7Context", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimePkcs7Context, g_mime_pkcs7_context, GMIME_TYPE_CRYPTO_CONTEXT)
 
 
 static void
@@ -158,7 +132,7 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 }
 
 static void
-g_mime_pkcs7_context_init (GMimePkcs7Context *pkcs7, GMimePkcs7ContextClass *klass)
+g_mime_pkcs7_context_init (GMimePkcs7Context *pkcs7)
 {
 #ifdef ENABLE_CRYPTO
 	pkcs7->ctx = NULL;

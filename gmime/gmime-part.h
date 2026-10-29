@@ -35,53 +35,24 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_PART            (g_mime_part_get_type ())
-#define GMIME_PART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PART, GMimePart))
-#define GMIME_PART_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PART, GMimePartClass))
-#define GMIME_IS_PART(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_PART))
-#define GMIME_IS_PART_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PART))
-#define GMIME_PART_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_PART, GMimePartClass))
 
-typedef struct _GMimePart GMimePart;
-typedef struct _GMimePartClass GMimePartClass;
 
 /**
  * GMimePart:
- * @parent_object: parent #GMimeEntity
- * @encoding: a #GMimeContentEncoding
- * @openpgp: a #GMimeOpenPGPData
- * @content: a #GMimeContent representing the MIME part's content
  *
  * A leaf-node MIME part object.
  **/
-struct _GMimePart {
-	GMimeEntity parent_object;
-	
-	GMimeContentEncoding encoding;
-	GMimeOpenPGPData openpgp;
-	GMimeContent *content;
-
-	/* < private > */
-	char *content_description;
-	char *content_md5;
-	char *filename;
-
-	int content_duration;
-
-	unsigned int content_duration_loaded : 1;
-	unsigned int content_description_loaded : 1;
-	unsigned int encoding_loaded : 1;
-	unsigned int content_md5_loaded : 1;
-	unsigned int encoder_max_line_length : 10;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimePart, g_mime_part, GMIME, PART, GMimeEntity)
 
 struct _GMimePartClass {
 	GMimeEntityClass parent_class;
 	
 	void (* set_content) (GMimePart *mime_part, GMimeContent *content);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_part_get_type (void);
 
 /* constructors */
 GMimePart *g_mime_part_new (void);

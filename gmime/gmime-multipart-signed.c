@@ -48,6 +48,8 @@
 #define _(x) x
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-multipart-signed
  * @title: GMimeMultipartSigned
@@ -61,7 +63,7 @@
 
 /* GObject class methods */
 static void g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass);
-static void g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultipartSignedClass *klass);
+static void g_mime_multipart_signed_init (GMimeMultipartSigned *mps);
 static void g_mime_multipart_signed_finalize (GObject *object);
 
 /* GMimeEntity class methods */
@@ -72,29 +74,7 @@ static gboolean multipart_signed_prepare (GMimeEntity *object, GMimeEncodingCons
 static GMimeMultipartClass *parent_class = NULL;
 
 
-GType
-g_mime_multipart_signed_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeMultipartSignedClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_multipart_signed_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeMultipartSigned),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_multipart_signed_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_MULTIPART, "GMimeMultipartSigned", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_TYPE (GMimeMultipartSigned, g_mime_multipart_signed, GMIME_TYPE_MULTIPART)
 
 
 static void
@@ -111,7 +91,7 @@ g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass)
 }
 
 static void
-g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultipartSignedClass *klass)
+g_mime_multipart_signed_init (GMimeMultipartSigned *mps)
 {
 	
 }
@@ -185,7 +165,10 @@ sign_prepare (GMimeEntity *mime_part)
 			sign_prepare (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (mime_part)) {
-		subpart = GMIME_MESSAGE_PART (mime_part)->message->mime_part;
+		GMimeMessagePartPrivate *priv = _g_mime_message_part_get_private (GMIME_MESSAGE_PART (mime_part));
+		GMimeMessagePrivate *message_priv = _g_mime_message_get_private (priv->message);
+
+		subpart = message_priv->mime_part;
 		sign_prepare (subpart);
 	} else {
 		encoding = g_mime_part_get_content_encoding ((GMimePart *) mime_part);
@@ -380,6 +363,7 @@ mime_types_equal (const char *mime_type, const char *official_type)
 GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)
 {
+	GMimeEntityPrivate *signature_priv;
 	const char *supported, *protocol;
 	GMimeEntity *content, *signature;
 	GMimeStream *stream = NULL, *sigstream = NULL;
@@ -427,6 +411,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	}
 	
 	signature = g_mime_multipart_get_part ((GMimeMultipart *) mps, GMIME_MULTIPART_SIGNED_SIGNATURE);
+
 	if (!GMIME_IS_PART (signature) || !(wrapper = g_mime_part_get_content ((GMimePart *) signature))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot verify multipart/signed part: signature content is missing."));
@@ -435,7 +420,9 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	}
 	
 	/* make sure the protocol matches the signature content-type */
-	mime_type = g_mime_content_type_get_mime_type (signature->content_type);
+	signature_priv = _g_mime_entity_get_private (signature);
+	mime_type = g_mime_content_type_get_mime_type (signature_priv->content_type);
+
 	if (!mime_types_equal (mime_type, supported)) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot verify multipart/signed part: signature content-type does not match protocol."));
@@ -444,6 +431,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 		
 		return NULL;
 	}
+
 	g_free (mime_type);
 	
 	content = g_mime_multipart_get_part ((GMimeMultipart *) mps, GMIME_MULTIPART_SIGNED_CONTENT);
@@ -478,8 +466,12 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	/* verify the signature */
 	signatures = g_mime_crypto_context_verify (ctx, flags, stream, sigstream, NULL, err);
 	
-	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
-		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
+	d({
+		GMimeStreamMemPrivate *priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
+
+		printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
+			(int) priv->buffer->len, priv->buffer->data);
+	});
 	
 	goto done;
 

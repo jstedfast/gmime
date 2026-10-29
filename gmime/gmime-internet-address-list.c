@@ -43,6 +43,8 @@
 #endif /* ENABLE_WARNINGS */
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-internet-address-list
  * @title: GMimeInternetAddressList
@@ -55,36 +57,14 @@
 
 
 static void g_mime_internet_address_list_class_init (GMimeInternetAddressListClass *klass);
-static void g_mime_internet_address_list_init (GMimeInternetAddressList *list, GMimeInternetAddressListClass *klass);
+static void g_mime_internet_address_list_init (GMimeInternetAddressList *list);
 static void g_mime_internet_address_list_finalize (GObject *object);
 
 
 static GObjectClass *list_parent_class = NULL;
 
 
-GType
-g_mime_internet_address_list_get_type (void)
-{
-	static GType type = 0;
-
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeInternetAddressListClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_internet_address_list_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeInternetAddressList),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_internet_address_list_init,
-		};
-
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeInternetAddressList", &info, 0);
-	}
-
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeInternetAddressList, g_mime_internet_address_list, G_TYPE_OBJECT)
 
 
 static void
@@ -98,7 +78,7 @@ g_mime_internet_address_list_class_init (GMimeInternetAddressListClass *klass)
 }
 
 static void
-g_mime_internet_address_list_init (GMimeInternetAddressList *list, GMimeInternetAddressListClass *klass)
+g_mime_internet_address_list_init (GMimeInternetAddressList *list)
 {
 	list->changed = g_mime_event_new ((GObject *) list);
 	list->array = g_ptr_array_new ();
@@ -118,8 +98,12 @@ g_mime_internet_address_list_finalize (GObject *object)
 	guint i;
 
 	for (i = 0; i < list->array->len; i++) {
+		GMimeInternetAddressPrivate *priv;
+
 		ia = (GMimeInternetAddress *) list->array->pdata[i];
-		g_mime_event_remove (ia->changed, (GMimeEventCallback) address_changed, list);
+		priv = _g_mime_internet_address_get_private (ia);
+
+		g_mime_event_remove (priv->changed, (GMimeEventCallback) address_changed, list);
 		g_object_unref (ia);
 	}
 
@@ -177,8 +161,12 @@ g_mime_internet_address_list_clear (GMimeInternetAddressList *list)
 	g_return_if_fail (GMIME_IS_INTERNET_ADDRESS_LIST (list));
 
 	for (i = 0; i < list->array->len; i++) {
+		GMimeInternetAddressPrivate *priv;
+
 		ia = (GMimeInternetAddress *) list->array->pdata[i];
-		g_mime_event_remove (ia->changed, (GMimeEventCallback) address_changed, list);
+		priv = _g_mime_internet_address_get_private (ia);
+
+		g_mime_event_remove (priv->changed, (GMimeEventCallback) address_changed, list);
 		g_object_unref (ia);
 	}
 
@@ -191,9 +179,10 @@ g_mime_internet_address_list_clear (GMimeInternetAddressList *list)
 static int
 _g_mime_internet_address_list_add (GMimeInternetAddressList *list, GMimeInternetAddress *ia)
 {
+	GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (ia);
 	int index;
 
-	g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
+	g_mime_event_add (priv->changed, (GMimeEventCallback) address_changed, list);
 
 	index = list->array->len;
 	g_ptr_array_add (list->array, ia);
@@ -254,8 +243,12 @@ g_mime_internet_address_list_prepend (GMimeInternetAddressList *list, GMimeInter
 	memmove (list->array->pdata + count, list->array->pdata, sizeof (gpointer) * len);
 
 	for (i = 0; i < count; i++) {
+		GMimeInternetAddressPrivate *priv;
+
 		ia = (GMimeInternetAddress *) prepend->array->pdata[i];
-		g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
+		priv = _g_mime_internet_address_get_private (ia);
+
+		g_mime_event_add (priv->changed, (GMimeEventCallback) address_changed, list);
 		list->array->pdata[i] = ia;
 		g_object_ref (ia);
 	}
@@ -286,8 +279,12 @@ g_mime_internet_address_list_append (GMimeInternetAddressList *list, GMimeIntern
 	g_ptr_array_set_size (list->array, len + count);
 
 	for (i = 0; i < count; i++) {
+		GMimeInternetAddressPrivate *priv;
+
 		ia = (GMimeInternetAddress *) append->array->pdata[i];
-		g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
+		priv = _g_mime_internet_address_get_private (ia);
+
+		g_mime_event_add (priv->changed, (GMimeEventCallback) address_changed, list);
 		list->array->pdata[len + i] = ia;
 		g_object_ref (ia);
 	}
@@ -308,6 +305,7 @@ g_mime_internet_address_list_append (GMimeInternetAddressList *list, GMimeIntern
 void
 g_mime_internet_address_list_insert (GMimeInternetAddressList *list, int index, GMimeInternetAddress *ia)
 {
+	GMimeInternetAddressPrivate *priv;
 	char *dest, *src;
 	size_t n;
 
@@ -316,7 +314,9 @@ g_mime_internet_address_list_insert (GMimeInternetAddressList *list, int index, 
 	g_return_if_fail (index >= 0);
 	g_return_if_fail ((guint) index <= list->array->len);
 
-	g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
+	priv = _g_mime_internet_address_get_private (ia);
+
+	g_mime_event_add (priv->changed, (GMimeEventCallback) address_changed, list);
 	g_object_ref (ia);
 
 	if ((guint) index < list->array->len) {
@@ -378,6 +378,7 @@ g_mime_internet_address_list_remove (GMimeInternetAddressList *list, GMimeIntern
 gboolean
 g_mime_internet_address_list_remove_at (GMimeInternetAddressList *list, int index)
 {
+	GMimeInternetAddressPrivate *priv;
 	GMimeInternetAddress *ia;
 
 	g_return_val_if_fail (GMIME_IS_INTERNET_ADDRESS_LIST (list), FALSE);
@@ -387,7 +388,9 @@ g_mime_internet_address_list_remove_at (GMimeInternetAddressList *list, int inde
 		return FALSE;
 
 	ia = list->array->pdata[index];
-	g_mime_event_remove (ia->changed, (GMimeEventCallback) address_changed, list);
+	priv = _g_mime_internet_address_get_private (ia);
+
+	g_mime_event_remove (priv->changed, (GMimeEventCallback) address_changed, list);
 	g_object_unref (ia);
 
 	g_ptr_array_remove_index (list->array, index);
@@ -479,6 +482,8 @@ g_mime_internet_address_list_get_address (GMimeInternetAddressList *list, int in
 void
 g_mime_internet_address_list_set_address (GMimeInternetAddressList *list, int index, GMimeInternetAddress *ia)
 {
+	GMimeInternetAddressPrivate *old_priv;
+	GMimeInternetAddressPrivate *ia_priv;
 	GMimeInternetAddress *old;
 
 	g_return_if_fail (GMIME_IS_INTERNET_ADDRESS_LIST (list));
@@ -491,10 +496,13 @@ g_mime_internet_address_list_set_address (GMimeInternetAddressList *list, int in
 		return;
 
 	g_object_ref (ia);
-	g_mime_event_remove (old->changed, (GMimeEventCallback) address_changed, list);
+
+	old_priv = _g_mime_internet_address_get_private (old);
+	g_mime_event_remove (old_priv->changed, (GMimeEventCallback) address_changed, list);
 	g_object_unref (old);
 
-	g_mime_event_add (ia->changed, (GMimeEventCallback) address_changed, list);
+	ia_priv = _g_mime_internet_address_get_private (ia);
+	g_mime_event_add (ia_priv->changed, (GMimeEventCallback) address_changed, list);
 	list->array->pdata[index] = ia;
 
 	g_mime_event_emit (list->changed, NULL);
@@ -587,10 +595,13 @@ append_mailboxes (GMimeInternetAddressList *result, GMimeInternetAddressList *li
 	for (i = 0; i < list->array->len; i++) {
 		GMimeInternetAddress *ia = list->array->pdata[i];
 
-		if (GMIME_IS_MAILBOX_ADDRESS (ia))
+		if (GMIME_IS_MAILBOX_ADDRESS (ia)) {
 			g_mime_internet_address_list_add (result, ia);
-		else if (GMIME_IS_GROUP_ADDRESS (ia))
-			append_mailboxes (result, GMIME_GROUP_ADDRESS (ia)->members);
+		} else if (GMIME_IS_GROUP_ADDRESS (ia)) {
+			GMimeGroupAddressPrivate *priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (ia));
+
+			append_mailboxes (result, priv->members);
+		}
 	}
 }
 
@@ -1012,6 +1023,7 @@ static gboolean
 group_parse (GMimeGroupAddress *group, GMimeParserOptions *options, AddressParserFlags flags,
 	     const char **in, int group_depth, gint64 offset)
 {
+	GMimeGroupAddressPrivate *priv = _g_mime_group_address_get_private (group);
 	const char *inptr = *in;
 	gboolean valid;
 
@@ -1022,13 +1034,15 @@ group_parse (GMimeGroupAddress *group, GMimeParserOptions *options, AddressParse
 	while (*inptr == ':' || is_lwsp (*inptr))
 		inptr++;
 
-	valid = address_list_parse (group->members, options, flags | ALLOW_ANY, &inptr, TRUE, group_depth, offset);
+	valid = address_list_parse (priv->members, options, flags | ALLOW_ANY, &inptr, TRUE, group_depth, offset);
+
 	if (!valid) {
 		if (!(flags & INTERNAL)) {
 			*in = inptr;
 			return FALSE;
 		}
-		g_mime_internet_address_list_clear (group->members);
+
+		g_mime_internet_address_list_clear (priv->members);
 	}
 
 	if (*inptr != ';') {
@@ -1036,6 +1050,7 @@ group_parse (GMimeGroupAddress *group, GMimeParserOptions *options, AddressParse
 			*in = inptr;
 			return FALSE;
 		}
+
 		while (*inptr && *inptr != ';')
 			inptr++;
 	} else {
@@ -1392,7 +1407,9 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 				*in = inptr;
 				return FALSE;
 			}
+
 			inptr = start;
+
 			/* Resynchronize without treating separators inside quotes or comments as
 			 * address boundaries. Leave the actual separator for the list/group parser. */
 			while (*inptr && *inptr != ',' && (!is_group || *inptr != ';')) {
@@ -1406,9 +1423,11 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 		} else {
 			_g_mime_internet_address_list_add (list, address);
 
-			if (charset)
-				address->charset = g_strdup (charset);
+			if (charset) {
+				GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (address);
 
+				priv->charset = g_strdup (charset);
+			}
 		}
 
 		/* Note: we loop here in case there are any null addresses between commas */
@@ -1428,6 +1447,7 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 
 		if (can_warn && !(separator_between_addrs || (*inptr == '\0') || (is_group && *inptr == ';')))
 			_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_LIST, *in);
+
 		if (g_mime_parser_options_get_address_compliance_mode (options) == GMIME_RFC_COMPLIANCE_STRICT &&
 		    !separator_between_addrs && *inptr && !(is_group && *inptr == ';')) {
 			*in = inptr;
@@ -1504,19 +1524,25 @@ _g_mime_internet_address_parse (GMimeParserOptions *options, const char *str, gs
 
 	if (!(copy = _g_mime_internet_address_copy_text (str, length, error)))
 		return NULL;
+
 	if (type == GMIME_TYPE_MAILBOX_ADDRESS)
 		flags = ALLOW_MAILBOX;
 	else if (type == GMIME_TYPE_GROUP_ADDRESS)
 		flags = ALLOW_GROUP;
+
 	inptr = copy;
-	if (!address_parse (options, flags, &inptr, &charset, &address, 0, -1) ||
-	    !skip_cfws (&inptr) || *inptr) {
+
+	if (!address_parse (options, flags, &inptr, &charset, &address, 0, -1) || !skip_cfws (&inptr) || *inptr) {
 		g_clear_object (&address);
+
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 			     "Invalid address at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - copy));
 	} else if (charset) {
-		address->charset = g_strdup (charset);
+		GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (address);
+
+		priv->charset = g_strdup (charset);
 	}
+
 	g_free (copy);
 
 	return address;
@@ -1531,6 +1557,7 @@ _g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *st
 	g_return_val_if_fail (str != NULL, NULL);
 
 	list = g_mime_internet_address_list_new ();
+
 	if (!address_list_parse (list, options, ALLOW_ANY | INTERNAL, &inptr, FALSE, 0, offset) || list->array->len == 0) {
 		g_object_unref (list);
 		return NULL;

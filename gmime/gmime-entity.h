@@ -38,41 +38,15 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_ENTITY            (g_mime_entity_get_type ())
-#define GMIME_ENTITY(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_ENTITY, GMimeEntity))
-#define GMIME_ENTITY_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_ENTITY, GMimeEntityClass))
-#define GMIME_IS_ENTITY(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_ENTITY))
-#define GMIME_IS_ENTITY_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_ENTITY))
-#define GMIME_ENTITY_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_ENTITY, GMimeEntityClass))
 
-typedef struct _GMimeEntity GMimeEntity;
-typedef struct _GMimeEntityClass GMimeEntityClass;
 typedef struct _GMimeVisitor GMimeVisitor;
 
 /**
  * GMimeEntity:
- * @parent_object: parent #GObject
- * @disposition: a #GMimeContentDisposition
- * @content_type: a #GMimeContentType
- * @headers: a #GMimeHeaderList
  *
  * Base class for all MIME parts.
  **/
-struct _GMimeEntity {
-	GObject parent_object;
-
-	GMimeContentDisposition *disposition;
-	GMimeContentType *content_type;
-	GMimeHeaderList *headers;
-
-	/* < private > */
-	char *content_id;
-	char *content_base;
-	char *content_location;
-
-	unsigned int ensure_newline : 1;
-	unsigned int content_base_loaded : 1;
-	unsigned int content_location_loaded : 1;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeEntity, g_mime_entity, GMIME, ENTITY, GObject)
 
 struct _GMimeEntityClass {
 	GObjectClass parent_class;
@@ -93,6 +67,9 @@ struct _GMimeEntityClass {
 
 	gboolean     (* prepare_with_max_line_length) (GMimeEntity *object, GMimeEncodingConstraint constraint,
 						      guint max_line_length, GError **error);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
 
@@ -107,8 +84,6 @@ struct _GMimeEntityClass {
  **/
 typedef void (* GMimeEntityForeachFunc) (GMimeEntity *parent, GMimeEntity *part, gpointer user_data);
 
-
-GType g_mime_entity_get_type (void);
 
 void g_mime_entity_register_type (const char *type, const char *subtype, GType object_type);
 

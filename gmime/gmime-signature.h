@@ -27,25 +27,11 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_SIGNATURE                  (g_mime_signature_get_type ())
-#define GMIME_SIGNATURE(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_SIGNATURE, GMimeSignature))
-#define GMIME_SIGNATURE_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_SIGNATURE, GMimeSignatureClass))
-#define GMIME_IS_SIGNATURE(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_SIGNATURE))
-#define GMIME_IS_SIGNATURE_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_SIGNATURE))
-#define GMIME_SIGNATURE_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_SIGNATURE, GMimeSignatureClass))
 
 #define GMIME_TYPE_SIGNATURE_LIST             (g_mime_signature_list_get_type ())
-#define GMIME_SIGNATURE_LIST(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_SIGNATURE_LIST, GMimeSignatureList))
-#define GMIME_SIGNATURE_LIST_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_SIGNATURE_LIST, GMimeSignatureListClass))
-#define GMIME_IS_SIGNATURE_LIST(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_SIGNATURE_LIST))
-#define GMIME_IS_SIGNATURE_LIST_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_SIGNATURE_LIST))
-#define GMIME_SIGNATURE_LIST_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_SIGNATURE_LIST, GMimeSignatureListClass))
 
 
-typedef struct _GMimeSignature GMimeSignature;
-typedef struct _GMimeSignatureClass GMimeSignatureClass;
 
-typedef struct _GMimeSignatureList GMimeSignatureList;
-typedef struct _GMimeSignatureListClass GMimeSignatureListClass;
 
 
 /**
@@ -92,32 +78,13 @@ typedef enum {
 
 /**
  * GMimeSignature:
- * @parent_object: parent #GObject
- * @status: A bitfield of #GMimeSignatureStatus values.
- * @cert: The #GMimeCertificate used in the signature.
- * @created: (nullable): The creation date of the signature, or %NULL if unknown.
- * @expires: (nullable): The expiration date of the signature, or %NULL if unknown.
  *
  * An object containing useful information about a signature. Dates are owned
  * by the signature; use the setters to replace them. An expiration date of
  * 9999-12-31 23:59:59.999999 UTC means the signature never expires.
  **/
-struct _GMimeSignature {
-	GObject parent_object;
-	
-	GMimeSignatureStatus status;
-	GMimeCertificate *cert;
-	GDateTime *created;
-	GDateTime *expires;
-};
+G_DECLARE_FINAL_TYPE (GMimeSignature, g_mime_signature, GMIME, SIGNATURE, GObject)
 
-struct _GMimeSignatureClass {
-	GObjectClass parent_class;
-	
-};
-
-
-GType g_mime_signature_get_type (void);
 
 GMimeSignature *g_mime_signature_new (void);
 
@@ -136,24 +103,11 @@ GDateTime *g_mime_signature_get_expires (GMimeSignature *sig);
 
 /**
  * GMimeSignatureList:
- * @parent_object: parent #GObject
  *
  * A collection of #GMimeSignature objects.
  **/
-struct _GMimeSignatureList {
-	GObject parent_object;
-	
-	/* < private > */
-	GPtrArray *array;
-};
+G_DECLARE_FINAL_TYPE (GMimeSignatureList, g_mime_signature_list, GMIME, SIGNATURE_LIST, GObject)
 
-struct _GMimeSignatureListClass {
-	GObjectClass parent_class;
-	
-};
-
-
-GType g_mime_signature_list_get_type (void);
 
 GMimeSignatureList *g_mime_signature_list_new (void);
 

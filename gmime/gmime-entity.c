@@ -41,6 +41,8 @@
 #include "gmime-parse-utils.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-entity
  * @title: GMimeEntity
@@ -66,7 +68,7 @@ static void _g_mime_entity_set_content_disposition (GMimeEntity *object, GMimeCo
 void _g_mime_entity_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
 
 static void g_mime_entity_class_init (GMimeEntityClass *klass);
-static void g_mime_entity_init (GMimeEntity *object, GMimeEntityClass *klass);
+static void g_mime_entity_init (GMimeEntity *object);
 static void g_mime_entity_finalize (GObject *object);
 
 static void object_header_added    (GMimeEntity *object, GMimeHeader *header);
@@ -116,29 +118,13 @@ g_mime_entity_accept (GMimeEntity *object, GMimeVisitor *visitor)
 }
 
 
-GType
-g_mime_entity_get_type (void)
+
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GMimeEntity, g_mime_entity, G_TYPE_OBJECT)
+
+GMimeEntityPrivate *
+_g_mime_entity_get_private (GMimeEntity *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeEntityClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_entity_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeEntity),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_entity_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeEntity",
-					       &info, G_TYPE_FLAG_ABSTRACT);
-	}
-	
-	return type;
+	return g_mime_entity_get_instance_private (object);
 }
 
 
@@ -163,22 +149,25 @@ g_mime_entity_class_init (GMimeEntityClass *klass)
 }
 
 static void
-g_mime_entity_init (GMimeEntity *object, GMimeEntityClass *klass)
+g_mime_entity_init (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
 	GMimeHeaderList *headers;
 	
 	headers = g_mime_header_list_new (g_mime_parser_options_get_default ());
 	g_mime_event_add (headers->changed, (GMimeEventCallback) header_list_changed, object);
-	object->headers = headers;
+	priv = _g_mime_entity_get_private (object);
+
+	priv->headers = headers;
 	
-	object->ensure_newline = FALSE;
-	object->content_type = NULL;
-	object->disposition = NULL;
-	object->content_id = NULL;
-	object->content_base = NULL;
-	object->content_location = NULL;
-	object->content_base_loaded = FALSE;
-	object->content_location_loaded = FALSE;
+	priv->ensure_newline = FALSE;
+	priv->content_type = NULL;
+	priv->disposition = NULL;
+	priv->content_id = NULL;
+	priv->content_base = NULL;
+	priv->content_location = NULL;
+	priv->content_base_loaded = FALSE;
+	priv->content_location_loaded = FALSE;
 }
 
 
@@ -187,28 +176,29 @@ g_mime_entity_finalize (GObject *object)
 {
 	GMimeEntity *mime = (GMimeEntity *) object;
 	GMimeEvent *event;
-	
-	if (mime->content_type) {
-		event = mime->content_type->changed;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (mime);
+
+	if (priv->content_type) {
+		event = priv->content_type->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) content_type_changed, object);
-		g_object_unref (mime->content_type);
+		g_object_unref (priv->content_type);
 	}
 	
-	if (mime->disposition) {
-		event = mime->disposition->changed;
+	if (priv->disposition) {
+		event = priv->disposition->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
-		g_object_unref (mime->disposition);
+		g_object_unref (priv->disposition);
 	}
 	
-	if (mime->headers) {
-		event = mime->headers->changed;
+	if (priv->headers) {
+		event = priv->headers->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) header_list_changed, object);
-		g_object_unref (mime->headers);
+		g_object_unref (priv->headers);
 	}
 	
-	g_free (mime->content_id);
-	g_free (mime->content_base);
-	g_free (mime->content_location);
+	g_free (priv->content_id);
+	g_free (priv->content_base);
+	g_free (priv->content_location);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -239,7 +229,8 @@ object_header_added (GMimeEntity *object, GMimeHeader *header)
 static void
 object_header_changed (GMimeEntity *object, GMimeHeader *header)
 {
-	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+	GMimeParserOptions *options = _g_mime_header_list_get_options (priv->headers);
 	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
@@ -275,16 +266,16 @@ object_header_changed (GMimeEntity *object, GMimeHeader *header)
 		break;
 	case HEADER_CONTENT_ID:
 		value = g_mime_header_get_value (header);
-		g_free (object->content_id);
-		object->content_id = g_mime_utils_decode_message_id (value);
+		g_free (priv->content_id);
+		priv->content_id = g_mime_utils_decode_message_id (value);
 		break;
 	case HEADER_CONTENT_BASE:
-		g_clear_pointer (&object->content_base, g_free);
-		object->content_base_loaded = FALSE;
+		g_clear_pointer (&priv->content_base, g_free);
+		priv->content_base_loaded = FALSE;
 		break;
 	case HEADER_CONTENT_LOCATION:
-		g_clear_pointer (&object->content_location, g_free);
-		object->content_location_loaded = FALSE;
+		g_clear_pointer (&priv->content_location, g_free);
+		priv->content_location_loaded = FALSE;
 		break;
 	}
 }
@@ -292,6 +283,7 @@ object_header_changed (GMimeEntity *object, GMimeHeader *header)
 static void
 object_header_removed (GMimeEntity *object, GMimeHeader *header)
 {
+	GMimeEntityPrivate *priv;
 	GMimeEvent *event;
 	const char *name;
 	guint i;
@@ -306,29 +298,31 @@ object_header_removed (GMimeEntity *object, GMimeHeader *header)
 			break;
 	}
 	
+	priv = _g_mime_entity_get_private (object);
+
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
-		if (object->disposition) {
-			event = object->disposition->changed;
+		if (priv->disposition) {
+			event = priv->disposition->changed;
 			g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
-			g_object_unref (object->disposition);
-			object->disposition = NULL;
+			g_object_unref (priv->disposition);
+			priv->disposition = NULL;
 		}
 		break;
 	case HEADER_CONTENT_TYPE:
 		/* never allow the removal of the Content-Type header */
 		break;
 	case HEADER_CONTENT_ID:
-		g_free (object->content_id);
-		object->content_id = NULL;
+		g_free (priv->content_id);
+		priv->content_id = NULL;
 		break;
 	case HEADER_CONTENT_BASE:
-		g_clear_pointer (&object->content_base, g_free);
-		object->content_base_loaded = FALSE;
+		g_clear_pointer (&priv->content_base, g_free);
+		priv->content_base_loaded = FALSE;
 		break;
 	case HEADER_CONTENT_LOCATION:
-		g_clear_pointer (&object->content_location, g_free);
-		object->content_location_loaded = FALSE;
+		g_clear_pointer (&priv->content_location, g_free);
+		priv->content_location_loaded = FALSE;
 		break;
 	}
 }
@@ -337,20 +331,21 @@ static void
 object_headers_cleared (GMimeEntity *object)
 {
 	GMimeEvent *event;
-	
-	if (object->disposition) {
-		event = object->disposition->changed;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+
+	if (priv->disposition) {
+		event = priv->disposition->changed;
 		g_mime_event_remove (event, (GMimeEventCallback) content_disposition_changed, object);
-		g_object_unref (object->disposition);
-		object->disposition = NULL;
+		g_object_unref (priv->disposition);
+		priv->disposition = NULL;
 	}
 	
-	g_free (object->content_id);
-	object->content_id = NULL;
-	g_clear_pointer (&object->content_base, g_free);
-	g_clear_pointer (&object->content_location, g_free);
-	object->content_base_loaded = FALSE;
-	object->content_location_loaded = FALSE;
+	g_free (priv->content_id);
+	priv->content_id = NULL;
+	g_clear_pointer (&priv->content_base, g_free);
+	g_clear_pointer (&priv->content_location, g_free);
+	priv->content_base_loaded = FALSE;
+	priv->content_location_loaded = FALSE;
 }
 
 static void
@@ -377,24 +372,31 @@ header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *
 void
 _g_mime_entity_block_header_list_changed (GMimeEntity *object)
 {
-	g_mime_event_block (object->headers->changed, (GMimeEventCallback) header_list_changed, object);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+
+	g_mime_event_block (priv->headers->changed, (GMimeEventCallback) header_list_changed, object);
 }
 
 void
 _g_mime_entity_unblock_header_list_changed (GMimeEntity *object)
 {
-	g_mime_event_unblock (object->headers->changed, (GMimeEventCallback) header_list_changed, object);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+
+	g_mime_event_unblock (priv->headers->changed, (GMimeEventCallback) header_list_changed, object);
 }
 
 static void
 content_type_changed (GMimeContentType *content_type, gpointer args, GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
 	char *raw_value;
 	
 	raw_value = g_mime_content_type_encode (content_type, NULL);
 	
 	_g_mime_entity_block_header_list_changed (object);
-	_g_mime_header_list_set (object->headers, "Content-Type", raw_value);
+	priv = _g_mime_entity_get_private (object);
+
+	_g_mime_header_list_set (priv->headers, "Content-Type", raw_value);
 	_g_mime_entity_unblock_header_list_changed (object);
 	g_free (raw_value);
 }
@@ -402,16 +404,19 @@ content_type_changed (GMimeContentType *content_type, gpointer args, GMimeEntity
 static void
 content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
 	char *raw_value;
 	
 	_g_mime_entity_block_header_list_changed (object);
 	
+	priv = _g_mime_entity_get_private (object);
+
 	if (disposition) {
 		raw_value = g_mime_content_disposition_encode (disposition, NULL);
-		_g_mime_header_list_set (object->headers, "Content-Disposition", raw_value);
+		_g_mime_header_list_set (priv->headers, "Content-Disposition", raw_value);
 		g_free (raw_value);
 	} else {
-		g_mime_header_list_remove (object->headers, "Content-Disposition");
+		g_mime_header_list_remove (priv->headers, "Content-Disposition");
 	}
 	
 	_g_mime_entity_unblock_header_list_changed (object);
@@ -479,6 +484,7 @@ g_mime_entity_register_type (const char *type, const char *subtype, GType object
 GMimeEntity *
 g_mime_entity_new (GMimeParserOptions *options, GMimeContentType *content_type)
 {
+	GMimeEntityPrivate *priv;
 	struct _type_bucket *bucket;
 	struct _subtype_bucket *sub;
 	GMimeEntity *object;
@@ -508,7 +514,9 @@ g_mime_entity_new (GMimeParserOptions *options, GMimeContentType *content_type)
 	}
 	
 	object = g_object_new (obj_type, NULL);
-	_g_mime_header_list_set_options (object->headers, options);
+	priv = _g_mime_entity_get_private (object);
+
+	_g_mime_header_list_set_options (priv->headers, options);
 	
 	g_mime_entity_set_content_type (object, content_type);
 	
@@ -535,6 +543,7 @@ g_mime_entity_new (GMimeParserOptions *options, GMimeContentType *content_type)
 GMimeEntity *
 g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const char *subtype)
 {
+	GMimeEntityPrivate *priv;
 	struct _type_bucket *bucket;
 	struct _subtype_bucket *sub;
 	GMimeEntity *object;
@@ -564,7 +573,9 @@ g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const cha
 	}
 	
 	object = g_object_new (obj_type, NULL);
-	_g_mime_header_list_set_options (object->headers, options);
+	priv = _g_mime_entity_get_private (object);
+
+	_g_mime_header_list_set_options (priv->headers, options);
 	
 	return object;
 }
@@ -714,13 +725,15 @@ g_mime_entity_load_with_content_type (GMimeParserOptions *options, GMimeContentT
 static void
 object_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
 {
-	if (object->content_type) {
-		g_mime_event_remove (object->content_type->changed, (GMimeEventCallback) content_type_changed, object);
-		g_object_unref (object->content_type);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+
+	if (priv->content_type) {
+		g_mime_event_remove (priv->content_type->changed, (GMimeEventCallback) content_type_changed, object);
+		g_object_unref (priv->content_type);
 	}
 	
 	g_mime_event_add (content_type->changed, (GMimeEventCallback) content_type_changed, object);
-	object->content_type = content_type;
+	priv->content_type = content_type;
 	g_object_ref (content_type);
 }
 
@@ -753,10 +766,14 @@ _g_mime_entity_set_content_type (GMimeEntity *object, GMimeContentType *content_
 void
 g_mime_entity_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	
-	if (object->content_type == content_type)
+	priv = _g_mime_entity_get_private (object);
+
+	if (priv->content_type == content_type)
 		return;
 	
 	GMIME_ENTITY_GET_CLASS (object)->set_content_type (object, content_type);
@@ -778,9 +795,13 @@ g_mime_entity_set_content_type (GMimeEntity *object, GMimeContentType *content_t
 GMimeContentType *
 g_mime_entity_get_content_type (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	
-	return object->content_type;
+	priv = _g_mime_entity_get_private (object);
+
+	return priv->content_type;
 }
 
 
@@ -798,10 +819,14 @@ g_mime_entity_get_content_type (GMimeEntity *object)
 void
 g_mime_entity_set_content_type_parameter (GMimeEntity *object, const char *name, const char *value)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (name != NULL);
 	
-	g_mime_content_type_set_parameter (object->content_type, name, value);
+	priv = _g_mime_entity_get_private (object);
+
+	g_mime_content_type_set_parameter (priv->content_type, name, value);
 }
 
 
@@ -820,10 +845,14 @@ g_mime_entity_set_content_type_parameter (GMimeEntity *object, const char *name,
 const char *
 g_mime_entity_get_content_type_parameter (GMimeEntity *object, const char *name)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	g_return_val_if_fail (name != NULL, NULL);
 	
-	return g_mime_content_type_get_parameter (object->content_type, name);
+	priv = _g_mime_entity_get_private (object);
+
+	return g_mime_content_type_get_parameter (priv->content_type, name);
 }
 
 
@@ -839,9 +868,13 @@ g_mime_entity_get_content_type_parameter (GMimeEntity *object, const char *name)
 GMimeContentDisposition *
 g_mime_entity_get_content_disposition (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	
-	return object->disposition;
+	priv = _g_mime_entity_get_private (object);
+
+	return priv->disposition;
 }
 
 /**
@@ -858,13 +891,15 @@ g_mime_entity_get_content_disposition (GMimeEntity *object)
 static void
 _g_mime_entity_set_content_disposition (GMimeEntity *object, GMimeContentDisposition *disposition)
 {
-	if (object->disposition) {
-		g_mime_event_remove (object->disposition->changed, (GMimeEventCallback) content_disposition_changed, object);
-		g_object_unref (object->disposition);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+
+	if (priv->disposition) {
+		g_mime_event_remove (priv->disposition->changed, (GMimeEventCallback) content_disposition_changed, object);
+		g_object_unref (priv->disposition);
 	}
 	
 	g_mime_event_add (disposition->changed, (GMimeEventCallback) content_disposition_changed, object);
-	object->disposition = disposition;
+	priv->disposition = disposition;
 	g_object_ref (disposition);
 }
 
@@ -880,10 +915,14 @@ _g_mime_entity_set_content_disposition (GMimeEntity *object, GMimeContentDisposi
 void
 g_mime_entity_set_content_disposition (GMimeEntity *object, GMimeContentDisposition *disposition)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition));
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	
-	if (object->disposition == disposition)
+	priv = _g_mime_entity_get_private (object);
+
+	if (priv->disposition == disposition)
 		return;
 	
 	_g_mime_entity_set_content_disposition (object, disposition);
@@ -905,13 +944,16 @@ g_mime_entity_set_content_disposition (GMimeEntity *object, GMimeContentDisposit
 void
 g_mime_entity_set_disposition (GMimeEntity *object, const char *disposition)
 {
+	GMimeEntityPrivate *priv;
 	GMimeContentDisposition *disp;
 	
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (disposition != NULL);
 	
-	if (object->disposition) {
-		g_mime_content_disposition_set_disposition (object->disposition, disposition);
+	priv = _g_mime_entity_get_private (object);
+
+	if (priv->disposition) {
+		g_mime_content_disposition_set_disposition (priv->disposition, disposition);
 		return;
 	}
 	
@@ -934,10 +976,14 @@ g_mime_entity_set_disposition (GMimeEntity *object, const char *disposition)
 const char *
 g_mime_entity_get_disposition (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	
-	if (object->disposition)
-		return g_mime_content_disposition_get_disposition (object->disposition);
+	priv = _g_mime_entity_get_private (object);
+
+	if (priv->disposition)
+		return g_mime_content_disposition_get_disposition (priv->disposition);
 	
 	return NULL;
 }
@@ -955,9 +1001,13 @@ g_mime_entity_get_disposition (GMimeEntity *object)
 gboolean
 g_mime_entity_is_attachment (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), FALSE);
 
-	return object->disposition != NULL && g_mime_content_disposition_is_attachment (object->disposition);
+	priv = _g_mime_entity_get_private (object);
+
+	return priv->disposition != NULL && g_mime_content_disposition_is_attachment (priv->disposition);
 }
 
 /**
@@ -998,18 +1048,21 @@ g_mime_entity_set_is_attachment (GMimeEntity *object, gboolean attachment)
 void
 g_mime_entity_set_content_disposition_parameter (GMimeEntity *object, const char *name, const char *value)
 {
+	GMimeEntityPrivate *priv;
 	GMimeContentDisposition *disposition;
 	
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (name != NULL);
 	
-	if (!object->disposition) {
+	priv = _g_mime_entity_get_private (object);
+
+	if (!priv->disposition) {
 		disposition = g_mime_content_disposition_new ();
 		_g_mime_entity_set_content_disposition (object, disposition);
 		g_object_unref (disposition);
 	}
 	
-	g_mime_content_disposition_set_parameter (object->disposition, name, value);
+	g_mime_content_disposition_set_parameter (priv->disposition, name, value);
 }
 
 
@@ -1028,13 +1081,17 @@ g_mime_entity_set_content_disposition_parameter (GMimeEntity *object, const char
 const char *
 g_mime_entity_get_content_disposition_parameter (GMimeEntity *object, const char *name)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	g_return_val_if_fail (name != NULL, NULL);
 	
-	if (!object->disposition)
+	priv = _g_mime_entity_get_private (object);
+
+	if (!priv->disposition)
 		return NULL;
 	
-	return g_mime_content_disposition_get_parameter (object->disposition, name);
+	return g_mime_content_disposition_get_parameter (priv->disposition, name);
 }
 
 
@@ -1051,12 +1108,15 @@ g_mime_entity_get_content_disposition_parameter (GMimeEntity *object, const char
 void
 g_mime_entity_set_content_id (GMimeEntity *object, const char *content_id)
 {
+	GMimeEntityPrivate *priv;
 	char *id = NULL, *msgid = NULL;
 	
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 
+	priv = _g_mime_entity_get_private (object);
+
 	if (content_id) {
-		if (!g_strcmp0 (object->content_id, content_id))
+		if (!g_strcmp0 (priv->content_id, content_id))
 			return;
 
 		id = _g_mime_parse_message_id_value (content_id);
@@ -1064,15 +1124,15 @@ g_mime_entity_set_content_id (GMimeEntity *object, const char *content_id)
 		msgid = g_strdup_printf ("<%s>", id);
 	}
 	
-	g_free (object->content_id);
-	object->content_id = id;
+	g_free (priv->content_id);
+	priv->content_id = id;
 	
 	_g_mime_entity_block_header_list_changed (object);
 
 	if (msgid)
-		g_mime_header_list_set (object->headers, "Content-Id", msgid, NULL);
+		g_mime_header_list_set (priv->headers, "Content-Id", msgid, NULL);
 	else
-		g_mime_header_list_remove_all (object->headers, "Content-Id");
+		g_mime_header_list_remove_all (priv->headers, "Content-Id");
 
 	_g_mime_entity_unblock_header_list_changed (object);
 	g_free (msgid);
@@ -1090,9 +1150,13 @@ g_mime_entity_set_content_id (GMimeEntity *object, const char *content_id)
 const char *
 g_mime_entity_get_content_id (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	
-	return object->content_id;
+	priv = _g_mime_entity_get_private (object);
+
+	return priv->content_id;
 }
 
 gboolean
@@ -1119,8 +1183,9 @@ load_content_uri (GMimeEntity *object, const char *name, char **cache, gboolean 
 	GMimeHeader *header;
 	const char *value;
 	char *uri;
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
 
-	header = g_mime_header_list_get_header (object->headers, name);
+	header = g_mime_header_list_get_header (priv->headers, name);
 	if (header && (value = g_mime_header_get_value (header))) {
 		uri = g_mime_strdup_trim (value);
 
@@ -1134,6 +1199,7 @@ load_content_uri (GMimeEntity *object, const char *name, char **cache, gboolean 
 static void
 set_content_uri (GMimeEntity *object, const char *name, const char *uri, char **cache)
 {
+	GMimeEntityPrivate *priv;
 	char *copy;
 
 	copy = g_strdup (uri);
@@ -1142,10 +1208,12 @@ set_content_uri (GMimeEntity *object, const char *name, const char *uri, char **
 
 	_g_mime_entity_block_header_list_changed (object);
 
+	priv = _g_mime_entity_get_private (object);
+
 	if (copy)
-		g_mime_header_list_set (object->headers, name, copy, NULL);
+		g_mime_header_list_set (priv->headers, name, copy, NULL);
 	else
-		g_mime_header_list_remove_all (object->headers, name);
+		g_mime_header_list_remove_all (priv->headers, name);
 
 	_g_mime_entity_unblock_header_list_changed (object);
 }
@@ -1167,14 +1235,18 @@ set_content_uri (GMimeEntity *object, const char *name, const char *uri, char **
 void
 g_mime_entity_set_content_base (GMimeEntity *object, const char *uri)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (uri == NULL || _g_mime_is_content_uri (uri, TRUE));
 
-	if (object->content_base_loaded && !g_strcmp0 (object->content_base, uri))
+	priv = _g_mime_entity_get_private (object);
+
+	if (priv->content_base_loaded && !g_strcmp0 (priv->content_base, uri))
 		return;
 
-	object->content_base_loaded = TRUE;
-	set_content_uri (object, "Content-Base", uri, &object->content_base);
+	priv->content_base_loaded = TRUE;
+	set_content_uri (object, "Content-Base", uri, &priv->content_base);
 }
 
 /**
@@ -1192,14 +1264,18 @@ g_mime_entity_set_content_base (GMimeEntity *object, const char *uri)
 const char *
 g_mime_entity_get_content_base (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 
-	if (!object->content_base_loaded) {
-		load_content_uri (object, "Content-Base", &object->content_base, TRUE);
-		object->content_base_loaded = TRUE;
+	priv = _g_mime_entity_get_private (object);
+
+	if (!priv->content_base_loaded) {
+		load_content_uri (object, "Content-Base", &priv->content_base, TRUE);
+		priv->content_base_loaded = TRUE;
 	}
 
-	return object->content_base;
+	return priv->content_base;
 }
 
 /**
@@ -1215,14 +1291,18 @@ g_mime_entity_get_content_base (GMimeEntity *object)
 void
 g_mime_entity_set_content_location (GMimeEntity *object, const char *uri)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (uri == NULL || _g_mime_is_content_uri (uri, FALSE));
 
-	if (object->content_location_loaded && !g_strcmp0 (object->content_location, uri))
+	priv = _g_mime_entity_get_private (object);
+
+	if (priv->content_location_loaded && !g_strcmp0 (priv->content_location, uri))
 		return;
 
-	object->content_location_loaded = TRUE;
-	set_content_uri (object, "Content-Location", uri, &object->content_location);
+	priv->content_location_loaded = TRUE;
+	set_content_uri (object, "Content-Location", uri, &priv->content_location);
 }
 
 /**
@@ -1239,14 +1319,18 @@ g_mime_entity_set_content_location (GMimeEntity *object, const char *uri)
 const char *
 g_mime_entity_get_content_location (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 
-	if (!object->content_location_loaded) {
-		load_content_uri (object, "Content-Location", &object->content_location, FALSE);
-		object->content_location_loaded = TRUE;
+	priv = _g_mime_entity_get_private (object);
+
+	if (!priv->content_location_loaded) {
+		load_content_uri (object, "Content-Location", &priv->content_location, FALSE);
+		priv->content_location_loaded = TRUE;
 	}
 
-	return object->content_location;
+	return priv->content_location;
 }
 
 
@@ -1262,10 +1346,14 @@ g_mime_entity_get_content_location (GMimeEntity *object)
 void
 g_mime_entity_prepend_header (GMimeEntity *object, const char *header, const char *value, const char *charset)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (header != NULL);
 	
-	g_mime_header_list_prepend (object->headers, header, value, charset);
+	priv = _g_mime_entity_get_private (object);
+
+	g_mime_header_list_prepend (priv->headers, header, value, charset);
 }
 
 
@@ -1273,7 +1361,9 @@ void
 _g_mime_entity_append_header (GMimeEntity *object, const char *header, const char *raw_name,
 			      const char *raw_value, gint64 offset)
 {
-	_g_mime_header_list_append (object->headers, header, raw_name, raw_value, offset);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+
+	_g_mime_header_list_append (priv->headers, header, raw_name, raw_value, offset);
 }
 
 
@@ -1289,10 +1379,14 @@ _g_mime_entity_append_header (GMimeEntity *object, const char *header, const cha
 void
 g_mime_entity_append_header (GMimeEntity *object, const char *header, const char *value, const char *charset)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (header != NULL);
 	
-	g_mime_header_list_append (object->headers, header, value, charset);
+	priv = _g_mime_entity_get_private (object);
+
+	g_mime_header_list_append (priv->headers, header, value, charset);
 }
 
 
@@ -1308,10 +1402,14 @@ g_mime_entity_append_header (GMimeEntity *object, const char *header, const char
 void
 g_mime_entity_set_header (GMimeEntity *object, const char *header, const char *value, const char *charset)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_ENTITY (object));
 	g_return_if_fail (header != NULL);
 	
-	g_mime_header_list_set (object->headers, header, value, charset);
+	priv = _g_mime_entity_get_private (object);
+
+	g_mime_header_list_set (priv->headers, header, value, charset);
 }
 
 
@@ -1328,11 +1426,14 @@ g_mime_entity_set_header (GMimeEntity *object, const char *header, const char *v
 const char *
 g_mime_entity_get_header (GMimeEntity *object, const char *header)
 {
+	GMimeEntityPrivate *priv;
 	GMimeHeader *hdr;
 	
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	
-	if (!(hdr = g_mime_header_list_get_header (object->headers, header)))
+	priv = _g_mime_entity_get_private (object);
+
+	if (!(hdr = g_mime_header_list_get_header (priv->headers, header)))
 		return NULL;
 	
 	return g_mime_header_get_value (hdr);
@@ -1352,16 +1453,22 @@ g_mime_entity_get_header (GMimeEntity *object, const char *header)
 gboolean
 g_mime_entity_remove_header (GMimeEntity *object, const char *header)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), FALSE);
 	
-	return g_mime_header_list_remove (object->headers, header);
+	priv = _g_mime_entity_get_private (object);
+
+	return g_mime_header_list_remove (priv->headers, header);
 }
 
 
 static char *
 object_get_headers (GMimeEntity *object, GMimeFormatOptions *options)
 {
-	return g_mime_header_list_to_string (object->headers, options);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (object);
+
+	return g_mime_header_list_to_string (priv->headers, options);
 }
 
 
@@ -1662,9 +1769,13 @@ g_mime_entity_to_string (GMimeEntity *object, GMimeFormatOptions *options)
 GMimeHeaderList *
 g_mime_entity_get_header_list (GMimeEntity *object)
 {
+	GMimeEntityPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (object), NULL);
 	
-	return object->headers;
+	priv = _g_mime_entity_get_private (object);
+
+	return priv->headers;
 }
 
 

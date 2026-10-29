@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <errno.h>
@@ -51,7 +52,8 @@ static ssize_t
 input_read (GMimeStream *stream, char *buffer, size_t length)
 {
 	TestInput *input = (TestInput *) stream;
-	gsize position = stream->position;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+	gsize position = priv->position;
 
 	if (input->closed || position >= input->fail_after) {
 		errno = input->closed ? EBADF : input->error_number;
@@ -61,13 +63,14 @@ input_read (GMimeStream *stream, char *buffer, size_t length)
 	length = MIN (length, input->chunk_size);
 	length = MIN (length, input->fail_after - position);
 	memcpy (buffer, input->data + position, length);
-	stream->position += length;
+	priv->position += length;
 	return length;
 }
 
 static gint64
 input_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
+	GMimeStreamPrivate *priv;
 	TestInput *input = (TestInput *) stream;
 	gint64 position;
 
@@ -75,34 +78,42 @@ input_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		errno = ESPIPE;
 		return -1;
 	}
-	if (input->fail_rewind && whence == GMIME_STREAM_SEEK_SET && offset == 0 && stream->position > 0) {
+	priv = _g_mime_stream_get_private (stream);
+
+	if (input->fail_rewind && whence == GMIME_STREAM_SEEK_SET && offset == 0 && priv->position > 0) {
 		errno = EIO;
 		return -1;
 	}
-	position = whence == GMIME_STREAM_SEEK_CUR ? stream->position + offset :
+	position = whence == GMIME_STREAM_SEEK_CUR ? priv->position + offset :
 		whence == GMIME_STREAM_SEEK_END ? (gint64) input->length + offset : offset;
 	if (position < 0 || (guint64) position > input->length) {
 		errno = EINVAL;
 		return -1;
 	}
-	stream->position = position;
+	priv->position = position;
 	return position;
 }
 
 static gint64
 input_tell (GMimeStream *stream)
 {
+	GMimeStreamPrivate *priv;
+
 	if (!((TestInput *) stream)->seekable) {
 		errno = ESPIPE;
 		return -1;
 	}
-	return stream->position;
+	priv = _g_mime_stream_get_private (stream);
+
+	return priv->position;
 }
 
 static gboolean
 input_eos (GMimeStream *stream)
 {
-	return (guint64) stream->position == ((TestInput *) stream)->length;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+	return (guint64) priv->position == ((TestInput *) stream)->length;
 }
 
 static int

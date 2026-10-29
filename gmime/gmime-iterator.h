@@ -26,33 +26,16 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_ITERATOR (g_mime_iterator_get_type ())
-#define GMIME_ITERATOR(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_ITERATOR, GMimeIterator))
-#define GMIME_IS_ITERATOR(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_ITERATOR))
 
-typedef struct _GMimeIterator GMimeIterator;
-typedef struct _GMimeIteratorClass GMimeIteratorClass;
 
 /**
  * GMimeIterator:
- * @parent_object: parent #GObject
  *
  * A depth-first iterator over the entities in a message.
  **/
-struct _GMimeIterator {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeIterator, g_mime_iterator, GMIME, ITERATOR, GObject)
 
-	/* <private> */
-	GMimeMessage *message;
-	GArray *frames;
-	gboolean move_first;
-	gboolean skip_requested;
-};
 
-struct _GMimeIteratorClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_iterator_get_type (void);
 GMimeIterator *g_mime_iterator_new (GMimeMessage *message);
 GMimeMessage *g_mime_iterator_get_message (GMimeIterator *iter);
 gboolean g_mime_iterator_is_valid (GMimeIterator *iter);

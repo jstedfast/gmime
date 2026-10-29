@@ -26,6 +26,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <errno.h>
@@ -53,35 +54,39 @@ test_read (GMimeStream *stream, char *buffer, size_t length)
 {
 	YencTestStream *self = (YencTestStream *) stream;
 	gsize count;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
 
-	if (stream->position >= self->fail_after) {
+	if (priv->position >= self->fail_after) {
 		errno = EIO;
 		return -1;
 	}
-	count = MIN (length, MIN (self->chunk, self->data->len - (gsize) stream->position));
-	count = MIN (count, (guint64) (self->fail_after - stream->position));
+	count = MIN (length, MIN (self->chunk, self->data->len - (gsize) priv->position));
+	count = MIN (count, (guint64) (self->fail_after - priv->position));
 	if (count)
-		memcpy (buffer, self->data->data + stream->position, count);
-	stream->position += count;
+		memcpy (buffer, self->data->data + priv->position, count);
+	priv->position += count;
 	return count;
 }
 
 static ssize_t
 test_write (GMimeStream *stream, const char *buffer, size_t length)
 {
+	GMimeStreamPrivate *priv;
 	YencTestStream *self = (YencTestStream *) stream;
 	gsize count;
 
 	if (self->zero_write)
 		return 0;
-	if (stream->position >= self->fail_after) {
+	priv = _g_mime_stream_get_private (stream);
+
+	if (priv->position >= self->fail_after) {
 		errno = ENOSPC;
 		return -1;
 	}
 	count = MIN (length, self->chunk);
-	count = MIN (count, (guint64) (self->fail_after - stream->position));
+	count = MIN (count, (guint64) (self->fail_after - priv->position));
 	g_byte_array_append (self->data, (const guint8 *) buffer, count);
-	stream->position += count;
+	priv->position += count;
 	return count;
 }
 
@@ -670,9 +675,11 @@ test_io_failures (void)
 		} else {
 			g_assert_true (g_mime_yenc_reader_read_next (reader, &error));
 			g_assert_no_error (error);
-			if (i == 1)
-				input->fail_after = input->parent.position + 3;
-			else if (i == 2)
+			if (i == 1) {
+				GMimeStreamPrivate *priv = _g_mime_stream_get_private (&input->parent);
+
+				input->fail_after = priv->position + 3;
+			} else if (i == 2)
 				output->fail_after = 3;
 			else
 				output->zero_write = TRUE;

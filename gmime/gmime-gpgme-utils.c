@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include "gmime-object-private.h"
 #endif
 
 #include <limits.h>
@@ -77,6 +78,7 @@ static struct gpgme_data_cbs gpg_stream_funcs = {
 gpgme_error_t
 g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *passphrase_info, int prev_was_bad, int fd)
 {
+	GMimeCryptoContextPrivate *priv;
 	GMimeCryptoContext *context = (GMimeCryptoContext *) hook;
 	GMimeStream *stream;
 	gpgme_error_t error;
@@ -85,7 +87,9 @@ g_mime_gpgme_passphrase_callback (void *hook, const char *uid_hint, const char *
 	
 	stream = g_mime_stream_pipe_new (fd);
 	g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) stream, FALSE);
-	rv = context->request_passwd (context, uid_hint, passphrase_info, prev_was_bad, stream, &err);
+	priv = _g_mime_crypto_context_get_private (context);
+
+	rv = priv->request_passwd (context, uid_hint, passphrase_info, prev_was_bad, stream, &err);
 	g_object_unref (stream);
 	
 	if (!rv) {

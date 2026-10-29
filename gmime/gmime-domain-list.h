@@ -27,31 +27,16 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_DOMAIN_LIST (g_mime_domain_list_get_type ())
-#define GMIME_DOMAIN_LIST(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_DOMAIN_LIST, GMimeDomainList))
-#define GMIME_IS_DOMAIN_LIST(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_DOMAIN_LIST))
 
-typedef struct _GMimeDomainList GMimeDomainList;
-typedef struct _GMimeDomainListClass GMimeDomainListClass;
 
 /**
  * GMimeDomainList:
- * @parent_object: parent #GObject
  *
  * An ordered collection of source-route domains.
  **/
-struct _GMimeDomainList {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeDomainList, g_mime_domain_list, GMIME, DOMAIN_LIST, GObject)
 
-	/* < private > */
-	GPtrArray *array;
-	gpointer changed;
-};
 
-struct _GMimeDomainListClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_domain_list_get_type (void);
 GMimeDomainList *g_mime_domain_list_new (void);
 GMimeDomainList *g_mime_domain_list_clone (GMimeDomainList *list);
 int g_mime_domain_list_length (GMimeDomainList *list);

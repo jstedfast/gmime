@@ -800,6 +800,7 @@ GMimeStream *
 test_stream_onebyte_new (GMimeStream *source)
 {
 	TestStreamOneByte *test;
+	gint64 start, end;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (source), NULL);
 	
@@ -808,9 +809,8 @@ test_stream_onebyte_new (GMimeStream *source)
 	test->source = source;
 	g_object_ref (source);
 	
-	g_mime_stream_construct ((GMimeStream *) test,
-				 source->bound_start,
-				 source->bound_end);
+	g_mime_stream_get_bounds (source, &start, &end);
+	g_mime_stream_construct ((GMimeStream *) test, start, end);
 	
 	return (GMimeStream *) test;
 }

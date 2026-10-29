@@ -27,33 +27,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_DISPOSITION_NOTIFICATION            (g_mime_message_disposition_notification_get_type ())
-#define GMIME_MESSAGE_DISPOSITION_NOTIFICATION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_DISPOSITION_NOTIFICATION, GMimeMessageDispositionNotification))
-#define GMIME_MESSAGE_DISPOSITION_NOTIFICATION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_DISPOSITION_NOTIFICATION, GMimeMessageDispositionNotificationClass))
-#define GMIME_IS_MESSAGE_DISPOSITION_NOTIFICATION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_DISPOSITION_NOTIFICATION))
-#define GMIME_IS_MESSAGE_DISPOSITION_NOTIFICATION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_DISPOSITION_NOTIFICATION))
-#define GMIME_MESSAGE_DISPOSITION_NOTIFICATION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_DISPOSITION_NOTIFICATION, GMimeMessageDispositionNotificationClass))
 
-typedef struct _GMimeMessageDispositionNotification GMimeMessageDispositionNotification;
-typedef struct _GMimeMessageDispositionNotificationClass GMimeMessageDispositionNotificationClass;
 
 /**
  * GMimeMessageDispositionNotification:
- * @parent_object: parent #GMimePart
  *
  * A message/disposition-notification part with lazily parsed fields.
  **/
-struct _GMimeMessageDispositionNotification {
-	GMimePart parent_object;
-
-	/* < private > */
-	GMimeHeaderList *fields;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessageDispositionNotification, g_mime_message_disposition_notification, GMIME, MESSAGE_DISPOSITION_NOTIFICATION, GMimePart)
 
 struct _GMimeMessageDispositionNotificationClass {
 	GMimePartClass parent_class;
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_message_disposition_notification_get_type (void);
 
 GMimeMessageDispositionNotification *g_mime_message_disposition_notification_new (void);
 GMimeHeaderList *g_mime_message_disposition_notification_get_fields (GMimeMessageDispositionNotification *notification, GError **error);

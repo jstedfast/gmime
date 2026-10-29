@@ -27,6 +27,8 @@
 #include "gmime-events.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-group-address
  * @title: GMimeGroupAddress
@@ -38,7 +40,7 @@
 
 
 static void g_mime_group_address_class_init (GMimeGroupAddressClass *klass);
-static void g_mime_group_address_init (GMimeGroupAddress *group, GMimeGroupAddressClass *klass);
+static void g_mime_group_address_init (GMimeGroupAddress *group);
 static void g_mime_group_address_finalize (GObject *object);
 
 static void group_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint32 flags,
@@ -50,11 +52,16 @@ static GObjectClass *group_parent_class = NULL;
 static GMimeInternetAddress *
 group_clone (GMimeInternetAddress *ia)
 {
-	GMimeInternetAddressList *members = g_mime_internet_address_list_clone (GMIME_GROUP_ADDRESS (ia)->members);
-	GMimeInternetAddress *clone = g_mime_group_address_new (ia->name);
+	GMimeGroupAddressPrivate *group_priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (ia));
+	GMimeInternetAddressList *members = g_mime_internet_address_list_clone (group_priv->members);
+	GMimeInternetAddressPrivate *ia_priv = _g_mime_internet_address_get_private (ia);
+	GMimeInternetAddress *clone = g_mime_group_address_new (ia_priv->name);
+	GMimeInternetAddressPrivate *clone_priv;
 
 	g_mime_group_address_set_members (GMIME_GROUP_ADDRESS (clone), members);
-	clone->charset = g_strdup (ia->charset);
+	clone_priv = _g_mime_internet_address_get_private (clone);
+
+	clone_priv->charset = g_strdup (ia_priv->charset);
 	g_object_unref (members);
 
 	return clone;
@@ -63,33 +70,27 @@ group_clone (GMimeInternetAddress *ia)
 static gboolean
 group_equal (GMimeInternetAddress *ia, GMimeInternetAddress *other)
 {
-	return GMIME_IS_GROUP_ADDRESS (other) && !g_strcmp0 (ia->name, other->name) &&
-		g_mime_internet_address_list_equal (GMIME_GROUP_ADDRESS (ia)->members, GMIME_GROUP_ADDRESS (other)->members);
+	GMimeInternetAddressPrivate *ia_priv = _g_mime_internet_address_get_private (ia);
+	GMimeInternetAddressPrivate *other_priv = _g_mime_internet_address_get_private (other);
+	GMimeGroupAddressPrivate *group_priv, *other_group_priv;
+
+	if (!GMIME_IS_GROUP_ADDRESS (other) || g_strcmp0 (ia_priv->name, other_priv->name))
+		return FALSE;
+
+	group_priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (ia));
+	other_group_priv = _g_mime_group_address_get_private (GMIME_GROUP_ADDRESS (other));
+
+	return g_mime_internet_address_list_equal (group_priv->members, other_group_priv->members);
 }
 
 
-GType
-g_mime_group_address_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeGroupAddress, g_mime_group_address, GMIME_TYPE_INTERNET_ADDRESS)
+
+GMimeGroupAddressPrivate *
+_g_mime_group_address_get_private (GMimeGroupAddress *object)
 {
-	static GType type = 0;
-
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeGroupAddressClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_group_address_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeGroupAddress),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_group_address_init,
-		};
-
-		type = g_type_register_static (GMIME_TYPE_INTERNET_ADDRESS, "GMimeGroupAddress", &info, 0);
-	}
-
-	return type;
+	return g_mime_group_address_get_instance_private (object);
 }
 
 
@@ -111,25 +112,30 @@ g_mime_group_address_class_init (GMimeGroupAddressClass *klass)
 static void
 members_changed (GMimeInternetAddressList *members, gpointer args, GMimeInternetAddress *group)
 {
-	g_mime_event_emit (((GMimeInternetAddress *) group)->changed, NULL);
+	GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (((GMimeInternetAddress *) group));
+
+	g_mime_event_emit (priv->changed, NULL);
 }
 
 static void
-g_mime_group_address_init (GMimeGroupAddress *group, GMimeGroupAddressClass *klass)
+g_mime_group_address_init (GMimeGroupAddress *group)
 {
-	group->members = g_mime_internet_address_list_new ();
+	GMimeGroupAddressPrivate *priv = _g_mime_group_address_get_private (group);
 
-	g_mime_event_add (group->members->changed, (GMimeEventCallback) members_changed, group);
+	priv->members = g_mime_internet_address_list_new ();
+
+	g_mime_event_add (priv->members->changed, (GMimeEventCallback) members_changed, group);
 }
 
 static void
 g_mime_group_address_finalize (GObject *object)
 {
 	GMimeGroupAddress *group = (GMimeGroupAddress *) object;
+	GMimeGroupAddressPrivate *priv = _g_mime_group_address_get_private (group);
 
-	g_mime_event_remove (group->members->changed, (GMimeEventCallback) members_changed, group);
+	g_mime_event_remove (priv->members->changed, (GMimeEventCallback) members_changed, group);
 
-	g_object_unref (group->members);
+	g_object_unref (priv->members);
 
 	G_OBJECT_CLASS (group_parent_class)->finalize (object);
 }
@@ -185,25 +191,32 @@ g_mime_group_address_parse (GMimeParserOptions *options, const char *str, gssize
 void
 g_mime_group_address_set_members (GMimeGroupAddress *group, GMimeInternetAddressList *members)
 {
+	GMimeInternetAddressPrivate *ia_priv;
+	GMimeGroupAddressPrivate *group_priv;
+
 	g_return_if_fail (GMIME_IS_GROUP_ADDRESS (group));
 	g_return_if_fail (GMIME_IS_INTERNET_ADDRESS_LIST (members));
 
-	if (group->members == members)
+	group_priv = _g_mime_group_address_get_private (group);
+
+	if (group_priv->members == members)
 		return;
 
 	g_object_ref (members);
-	if (group->members) {
-		g_mime_event_remove (group->members->changed, (GMimeEventCallback) members_changed, group);
-		g_object_unref (group->members);
+	if (group_priv->members) {
+		g_mime_event_remove (group_priv->members->changed, (GMimeEventCallback) members_changed, group);
+		g_object_unref (group_priv->members);
 	}
 
 	if (members) {
 		g_mime_event_add (members->changed, (GMimeEventCallback) members_changed, group);
 	}
 
-	group->members = members;
+	group_priv->members = members;
 
-	g_mime_event_emit (((GMimeInternetAddress *) group)->changed, NULL);
+	ia_priv = _g_mime_internet_address_get_private (((GMimeInternetAddress *) group));
+
+	g_mime_event_emit (ia_priv->changed, NULL);
 }
 
 
@@ -220,9 +233,13 @@ g_mime_group_address_set_members (GMimeGroupAddress *group, GMimeInternetAddress
 GMimeInternetAddressList *
 g_mime_group_address_get_members (GMimeGroupAddress *group)
 {
+	GMimeGroupAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_GROUP_ADDRESS (group), NULL);
 
-	return group->members;
+	priv = _g_mime_group_address_get_private (group);
+
+	return priv->members;
 }
 
 
@@ -238,27 +255,33 @@ g_mime_group_address_get_members (GMimeGroupAddress *group)
 int
 g_mime_group_address_add_member (GMimeGroupAddress *group, GMimeInternetAddress *member)
 {
+	GMimeGroupAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_GROUP_ADDRESS (group), -1);
 	g_return_val_if_fail (GMIME_IS_INTERNET_ADDRESS (member), -1);
 
-	return g_mime_internet_address_list_add (group->members, member);
+	priv = _g_mime_group_address_get_private (group);
+
+	return g_mime_internet_address_list_add (priv->members, member);
 }
 
 
 static void
 group_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint32 flags, size_t *linelen, GString *str)
 {
+	GMimeInternetAddressPrivate *ia_priv = _g_mime_internet_address_get_private (ia);
 	GMimeGroupAddress *group = (GMimeGroupAddress *) ia;
+	GMimeGroupAddressPrivate *group_priv = _g_mime_group_address_get_private (group);
 	gboolean encode = flags & GMIME_INTERNET_ADDRESS_ENCODE;
 	char *name = NULL;
 
-	if (encode && (!ia->name || !*ia->name)) {
+	if (encode && (!ia_priv->name || !*ia_priv->name)) {
 		/* RFC 5322 requires a display name. Quoting an empty one also keeps nested
 		 * unnamed groups parseable instead of looking like extraneous colons. */
 		g_string_append_len (str, "\"\"", 2);
 		*linelen += 2;
-	} else if (ia->name != NULL) {
-		name = _g_mime_internet_address_encode_name (options, ia->name, encode, ia->charset);
+	} else if (ia_priv->name != NULL) {
+		name = _g_mime_internet_address_encode_name (options, ia_priv->name, encode, ia_priv->charset);
 		_g_mime_internet_address_append_name (str, linelen, name, options, flags);
 	}
 
@@ -266,7 +289,7 @@ group_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint32 
 	*linelen += 2;
 	g_free (name);
 
-	_g_mime_internet_address_list_to_string (group->members, options, flags & ~GMIME_INTERNET_ADDRESS_FIRST,
+	_g_mime_internet_address_list_to_string (group_priv->members, options, flags & ~GMIME_INTERNET_ADDRESS_FIRST,
 						linelen, str);
 	g_string_append_c (str, ';');
 	*linelen += 1;

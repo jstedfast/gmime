@@ -28,6 +28,8 @@
 
 #include "gmime-stream-buffer.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-stream-buffer
  * @title: GMimeStreamBuffer
@@ -47,7 +49,7 @@
 #define BLOCK_BUFFER_LEN   4096
 
 static void g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass);
-static void g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBufferClass *klass);
+static void g_mime_stream_buffer_init (GMimeStreamBuffer *stream);
 static void g_mime_stream_buffer_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -65,28 +67,13 @@ static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 
 static GMimeStreamClass *parent_class = NULL;
 
 
-GType
-g_mime_stream_buffer_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeStreamBuffer, g_mime_stream_buffer, GMIME_TYPE_STREAM)
+
+GMimeStreamBufferPrivate *
+_g_mime_stream_buffer_get_private (GMimeStreamBuffer *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeStreamBufferClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_stream_buffer_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeStreamBuffer),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_stream_buffer_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_STREAM, "GMimeStreamBuffer", &info, 0);
-	}
-	
-	return type;
+	return g_mime_stream_buffer_get_instance_private (object);
 }
 
 
@@ -113,14 +100,16 @@ g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass)
 }
 
 static void
-g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBufferClass *klass)
+g_mime_stream_buffer_init (GMimeStreamBuffer *stream)
 {
-	stream->source = NULL;
-	stream->buffer = NULL;
-	stream->bufptr = NULL;
-	stream->bufend = NULL;
-	stream->buflen = 0;
-	stream->mode = 0;
+	GMimeStreamBufferPrivate *priv = _g_mime_stream_buffer_get_private (stream);
+
+	priv->source = NULL;
+	priv->buffer = NULL;
+	priv->bufptr = NULL;
+	priv->bufend = NULL;
+	priv->buflen = 0;
+	priv->mode = 0;
 }
 
 static void
@@ -138,28 +127,30 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	GMimeStreamBufferPrivate *buffer_priv = _g_mime_stream_buffer_get_private (buffer);
+	GMimeStreamPrivate *stream_priv;
 	ssize_t n, nread = 0;
-	
-	if (buffer->source == NULL) {
+
+	if (buffer_priv->source == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_READ) {
+	if (buffer_priv->mode == GMIME_STREAM_BUFFER_BLOCK_READ) {
 		while (len > 0) {
 			/* consume what we can from any pre-buffered data we have left */
-			if ((n = MIN (buffer->buflen, len)) > 0) {
-				memcpy (buf + nread, buffer->bufptr, n);
-				buffer->bufptr += n;
-				buffer->buflen -= n;
+			if ((n = MIN (buffer_priv->buflen, len)) > 0) {
+				memcpy (buf + nread, buffer_priv->bufptr, n);
+				buffer_priv->bufptr += n;
+				buffer_priv->buflen -= n;
 				nread += n;
 				len -= n;
 			}
 			
 			if (len >= BLOCK_BUFFER_LEN) {
 				/* bypass intermediate buffer, read straight from disk */
-				buffer->bufptr = buffer->buffer;
-				if ((n = g_mime_stream_read (buffer->source, buf + nread, len)) > 0) {
+				buffer_priv->bufptr = buffer_priv->buffer;
+				if ((n = g_mime_stream_read (buffer_priv->source, buf + nread, len)) > 0) {
 					nread += n;
 					len -= n;
 				}
@@ -167,10 +158,10 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 				break;
 			} else if (len > 0) {
 				/* buffer more data */
-				if ((n = g_mime_stream_read (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN)) > 0)
-					buffer->buflen = n;
+				if ((n = g_mime_stream_read (buffer_priv->source, buffer_priv->buffer, BLOCK_BUFFER_LEN)) > 0)
+					buffer_priv->buflen = n;
 				
-				buffer->bufptr = buffer->buffer;
+				buffer_priv->bufptr = buffer_priv->buffer;
 			}
 			
 			if (n <= 0) {
@@ -181,11 +172,12 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 			}
 		}
 	} else {
-		if ((nread = g_mime_stream_read (buffer->source, buf, len)) == -1)
+		if ((nread = g_mime_stream_read (buffer_priv->source, buf, len)) == -1)
 			return -1;
 	}
 	
-	stream->position += nread;
+	stream_priv = _g_mime_stream_get_private (stream);
+	stream_priv->position += nread;
 	
 	return nread;
 }
@@ -194,39 +186,41 @@ static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	GMimeStream *source = buffer->source;
+	GMimeStreamBufferPrivate *buffer_priv = _g_mime_stream_buffer_get_private (buffer);
+	GMimeStream *source = buffer_priv->source;
+	GMimeStreamPrivate *stream_priv;
 	ssize_t n, nwritten = 0;
 	size_t left = len;
 	
-	if (buffer->source == NULL) {
+	if (buffer_priv->source == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_WRITE) {
+	if (buffer_priv->mode == GMIME_STREAM_BUFFER_BLOCK_WRITE) {
 		while (left > 0) {
-			n = MIN (BLOCK_BUFFER_LEN - buffer->buflen, left);
-			if (buffer->buflen > 0 || n < BLOCK_BUFFER_LEN) {
+			n = MIN (BLOCK_BUFFER_LEN - buffer_priv->buflen, left);
+			if (buffer_priv->buflen > 0 || n < BLOCK_BUFFER_LEN) {
 				/* add the data to our pending write buffer */
-				memcpy (buffer->bufptr, buf + nwritten, n);
-				buffer->bufptr += n;
-				buffer->buflen += n;
+				memcpy (buffer_priv->bufptr, buf + nwritten, n);
+				buffer_priv->bufptr += n;
+				buffer_priv->buflen += n;
 				nwritten += n;
 				left -= n;
 			}
 			
-			if (buffer->buflen == BLOCK_BUFFER_LEN) {
+			if (buffer_priv->buflen == BLOCK_BUFFER_LEN) {
 				/* flush our buffer... */
-				n = g_mime_stream_write (source, buffer->buffer, BLOCK_BUFFER_LEN);
+				n = g_mime_stream_write (source, buffer_priv->buffer, BLOCK_BUFFER_LEN);
 				if (n == BLOCK_BUFFER_LEN) {
 					/* wrote everything... */
-					buffer->bufptr = buffer->buffer;
-					buffer->buflen = 0;
+					buffer_priv->bufptr = buffer_priv->buffer;
+					buffer_priv->buflen = 0;
 				} else if (n > 0) {
 					/* still have buffered data left... */
-					memmove (buffer->buffer, buffer->buffer + n, BLOCK_BUFFER_LEN - n);
-					buffer->bufptr -= n;
-					buffer->buflen -= n;
+					memmove (buffer_priv->buffer, buffer_priv->buffer + n, BLOCK_BUFFER_LEN - n);
+					buffer_priv->bufptr -= n;
+					buffer_priv->buflen -= n;
 				} else if (n == -1) {
 					if (nwritten == 0)
 						return -1;
@@ -235,7 +229,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 				}
 			}
 			
-			if (buffer->buflen == 0 && left >= BLOCK_BUFFER_LEN) {
+			if (buffer_priv->buflen == 0 && left >= BLOCK_BUFFER_LEN) {
 				while (left >= BLOCK_BUFFER_LEN) {
 					if ((n = g_mime_stream_write (source, buf + nwritten, BLOCK_BUFFER_LEN)) == -1) {
 						if (nwritten == 0)
@@ -257,7 +251,8 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 			return -1;
 	}
 	
-	stream->position += nwritten;
+	stream_priv = _g_mime_stream_get_private (stream);
+	stream_priv->position += nwritten;
 	
 	return nwritten;
 }
@@ -266,40 +261,42 @@ static int
 stream_flush (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
-	if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_WRITE && buffer->buflen > 0) {
+	GMimeStreamBufferPrivate *priv = _g_mime_stream_buffer_get_private (buffer);
+
+	if (priv->mode == GMIME_STREAM_BUFFER_BLOCK_WRITE && priv->buflen > 0) {
 		ssize_t written = 0;
 		
-		written = g_mime_stream_write (buffer->source, buffer->buffer, buffer->buflen);
+		written = g_mime_stream_write (priv->source, priv->buffer, priv->buflen);
 		if (written > 0) {
-			memmove (buffer->buffer, buffer->buffer + written, buffer->buflen - written);
-			buffer->bufptr -= written;
-			buffer->buflen -= written;
+			memmove (priv->buffer, priv->buffer + written, priv->buflen - written);
+			priv->bufptr -= written;
+			priv->buflen -= written;
 		}
 		
-		if (buffer->buflen != 0)
+		if (priv->buflen != 0)
 			return -1;
 	}
 	
-	return g_mime_stream_flush (buffer->source);
+	return g_mime_stream_flush (priv->source);
 }
 
 static int
 stream_close (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
-	if (buffer->source == NULL)
+	GMimeStreamBufferPrivate *priv = _g_mime_stream_buffer_get_private (buffer);
+
+	if (priv->source == NULL)
 		return 0;
 	
-	g_object_unref (buffer->source);
-	buffer->source = NULL;
+	g_object_unref (priv->source);
+	priv->source = NULL;
 	
-	g_free (buffer->buffer);
-	buffer->buffer = NULL;
-	buffer->bufptr = NULL;
-	buffer->bufend = NULL;
-	buffer->buflen = 0;
+	g_free (priv->buffer);
+	priv->buffer = NULL;
+	priv->bufptr = NULL;
+	priv->bufend = NULL;
+	priv->buflen = 0;
 	
 	return 0;
 }
@@ -308,15 +305,16 @@ static gboolean
 stream_eos (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
-	if (buffer->source == NULL)
+	GMimeStreamBufferPrivate *priv = _g_mime_stream_buffer_get_private (buffer);
+
+	if (priv->source == NULL)
 		return TRUE;
 	
-	if (!g_mime_stream_eos (buffer->source))
+	if (!g_mime_stream_eos (priv->source))
 		return FALSE;
 	
-	if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_READ)
-		return buffer->buflen == 0;
+	if (priv->mode == GMIME_STREAM_BUFFER_BLOCK_READ)
+		return priv->buflen == 0;
 	
 	return TRUE;
 }
@@ -325,17 +323,18 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
-	if (buffer->source == NULL) {
+	GMimeStreamBufferPrivate *priv = _g_mime_stream_buffer_get_private (buffer);
+
+	if (priv->source == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	if (g_mime_stream_reset (buffer->source) == -1)
+	if (g_mime_stream_reset (priv->source) == -1)
 		return -1;
 	
-	buffer->bufptr = buffer->buffer;
-	buffer->buflen = 0;
+	priv->bufptr = priv->buffer;
+	priv->buflen = 0;
 	
 	return 0;
 }
@@ -344,6 +343,8 @@ static gint64
 stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+	GMimeStreamBufferPrivate *buffer_priv = _g_mime_stream_buffer_get_private (buffer);
 	gint64 real;
 	
 	/* convert all seeks into a relative seek (aka SEEK_CUR) */
@@ -352,8 +353,8 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 		/* no-op for now */
 		break;
 	case GMIME_STREAM_SEEK_SET:
-		if (stream->position == offset)
-			return stream->position;
+		if (stream_priv->position == offset)
+			return stream_priv->position;
 		
 		if (offset < 0) {
 			/* not allowed to seek to a negative position */
@@ -361,18 +362,18 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 			return -1;
 		}
 		
-		offset -= stream->position;
+		offset -= stream_priv->position;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		if (stream->bound_end == -1) {
+		if (stream_priv->bound_end == -1) {
 			/* gotta do this the slow way */
-			if ((real = g_mime_stream_seek (buffer->source, offset, GMIME_STREAM_SEEK_END)) == -1)
+			if ((real = g_mime_stream_seek (buffer_priv->source, offset, GMIME_STREAM_SEEK_END)) == -1)
 				return -1;
 			
-			stream->position = real;
+			stream_priv->position = real;
 			
-			buffer->bufptr = buffer->buffer;
-			buffer->buflen = 0;
+			buffer_priv->bufptr = buffer_priv->buffer;
+			buffer_priv->buflen = 0;
 			
 			return real;
 		}
@@ -383,7 +384,7 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 			return -1;
 		}
 		
-		offset += stream->bound_end;
+		offset += stream_priv->bound_end;
 		break;
 	default:
 		/* invalid whence argument */
@@ -394,27 +395,27 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 	/* now that offset is relative to our current position... */
 	
 	if (offset == 0)
-		return stream->position;
+		return stream_priv->position;
 	
-	if ((offset < 0 && offset >= (buffer->buffer - buffer->bufptr))
-	    || (offset > 0 && offset <= (gint64) buffer->buflen)) {
+	if ((offset < 0 && offset >= (buffer_priv->buffer - buffer_priv->bufptr))
+	    || (offset > 0 && offset <= (gint64) buffer_priv->buflen)) {
 		/* the position is within our pre-buffered region */
-		stream->position += offset;
-		buffer->bufptr += (size_t) offset;
-		buffer->buflen -= (size_t) offset;
+		stream_priv->position += offset;
+		buffer_priv->bufptr += (size_t) offset;
+		buffer_priv->buflen -= (size_t) offset;
 		
-		return stream->position;
+		return stream_priv->position;
 	}
 	
 	/* we are now forced to do an actual seek */
-	offset += stream->position;
-	if ((real = g_mime_stream_seek (buffer->source, offset, GMIME_STREAM_SEEK_SET)) == -1)
+	offset += stream_priv->position;
+	if ((real = g_mime_stream_seek (buffer_priv->source, offset, GMIME_STREAM_SEEK_SET)) == -1)
 		return -1;
 	
-	stream->position = real;
+	stream_priv->position = real;
 	
-	buffer->bufptr = buffer->buffer;
-	buffer->buflen = 0;
+	buffer_priv->bufptr = buffer_priv->buffer;
+	buffer_priv->buflen = 0;
 	
 	return real;
 }
@@ -423,22 +424,25 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	GMimeStreamBufferPrivate *buffer_priv = _g_mime_stream_buffer_get_private (buffer);
 	gint64 real;
-	
-	if (buffer->source == NULL) {
+
+	if (buffer_priv->source == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_READ)
+	if (buffer_priv->mode == GMIME_STREAM_BUFFER_BLOCK_READ)
 		return stream_seek_block_read (stream, offset, whence);
 	
 	if (stream_flush (stream) != 0)
 		return -1;
 	
-	if ((real = g_mime_stream_seek (buffer->source, offset, whence)) != -1) {
-		stream->position = real;
-		buffer->buflen = 0;
+	if ((real = g_mime_stream_seek (buffer_priv->source, offset, whence)) != -1) {
+		GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+
+		stream_priv->position = real;
+		buffer_priv->buflen = 0;
 	}
 	
 	return real;
@@ -447,36 +451,42 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
+	GMimeStreamPrivate *stream_priv;
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
-	if (buffer->source == NULL) {
+	GMimeStreamBufferPrivate *buffer_priv = _g_mime_stream_buffer_get_private (buffer);
+
+	if (buffer_priv->source == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	return stream->position;
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	return stream_priv->position;
 }
 
 static gint64
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
-	if (buffer->source == NULL) {
+	GMimeStreamBufferPrivate *priv = _g_mime_stream_buffer_get_private (buffer);
+
+	if (priv->source == NULL) {
 		errno = EBADF;
 		return -1;
 	}
 	
-	return g_mime_stream_length (buffer->source);
+	return g_mime_stream_length (priv->source);
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
+	GMimeStreamBufferPrivate *priv = _g_mime_stream_buffer_get_private (buffer);
+
 	/* substream our source */
-	return GMIME_STREAM_GET_CLASS (buffer->source)->substream (buffer->source, start, end);
+	return GMIME_STREAM_GET_CLASS (priv->source)->substream (priv->source, start, end);
 }
 
 
@@ -492,24 +502,29 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 GMimeStream *
 g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 {
+	GMimeStreamBufferPrivate *priv;
+	GMimeStreamPrivate *source_priv;
 	GMimeStreamBuffer *buffer;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (source), NULL);
 	
 	buffer = g_object_new (GMIME_TYPE_STREAM_BUFFER, NULL);
-	
-	buffer->source = source;
+	priv = _g_mime_stream_buffer_get_private (buffer);
+
+	priv->source = source;
 	g_object_ref (source);
 	
-	buffer->mode = mode;
-	buffer->buffer = g_malloc (BLOCK_BUFFER_LEN);
-	buffer->bufend = buffer->buffer + BLOCK_BUFFER_LEN;
-	buffer->bufptr = buffer->buffer;
-	buffer->buflen = 0;
+	priv->mode = mode;
+	priv->buffer = g_malloc (BLOCK_BUFFER_LEN);
+	priv->bufend = priv->buffer + BLOCK_BUFFER_LEN;
+	priv->bufptr = priv->buffer;
+	priv->buflen = 0;
 	
+	source_priv = _g_mime_stream_get_private (source);
+
 	g_mime_stream_construct ((GMimeStream *) buffer,
-				 source->bound_start,
-				 source->bound_end);
+				 source_priv->bound_start,
+				 source_priv->bound_end);
 	
 	return (GMimeStream *) buffer;
 }
@@ -545,11 +560,14 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 	
 	if (GMIME_IS_STREAM_BUFFER (stream)) {
 		GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-		
-		if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_READ) {
+		GMimeStreamBufferPrivate *buffer_priv = _g_mime_stream_buffer_get_private (buffer);
+
+		if (buffer_priv->mode == GMIME_STREAM_BUFFER_BLOCK_READ) {
+			GMimeStreamPrivate *stream_priv;
+
 			while (outptr < outend) {
-				inptr = buffer->bufptr;
-				inend = inptr + buffer->buflen;
+				inptr = buffer_priv->bufptr;
+				inend = inptr + buffer_priv->buflen;
 				
 				while (outptr < outend && inptr < inend && *inptr != '\n')
 					c = *outptr++ = *inptr++;
@@ -557,25 +575,26 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 				if (outptr < outend && inptr < inend && c != '\n')
 					c = *outptr++ = *inptr++;
 				
-				buffer->buflen = inend - inptr;
-				buffer->bufptr = inptr;
+				buffer_priv->buflen = inend - inptr;
+				buffer_priv->bufptr = inptr;
 				
 				if (c == '\n')
 					break;
 				
-				if (buffer->buflen == 0) {
+				if (buffer_priv->buflen == 0) {
 					/* buffer more data */
-					buffer->bufptr = buffer->buffer;
-					n = g_mime_stream_read (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN);
+					buffer_priv->bufptr = buffer_priv->buffer;
+					n = g_mime_stream_read (buffer_priv->source, buffer_priv->buffer, BLOCK_BUFFER_LEN);
 					if (n <= 0)
 						break;
 					
-					buffer->buflen = n;
+					buffer_priv->buflen = n;
 				}
 			}
 			
 			/* increment our stream position pointer */
-			stream->position += (outptr - buf);
+			stream_priv = _g_mime_stream_get_private (stream);
+			stream_priv->position += (outptr - buf);
 		} else {
 			goto slow_and_painful;
 		}

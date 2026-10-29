@@ -19,6 +19,7 @@
 
 
 #include <stdio.h>
+#include <gmime/gmime-object-private.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -38,6 +39,7 @@ extern int verbose;
 static gboolean
 streams_match (GMimeStream *expected, GMimeStream *actual)
 {
+	GMimeStreamPrivate *priv;
 	char buf[4096], dbuf[4096], errstr[1024], *bufptr, *bufend, *dbufptr;
 	gint64 len, totalsize, totalread = 0;
 	size_t nread, size;
@@ -46,16 +48,18 @@ streams_match (GMimeStream *expected, GMimeStream *actual)
 	
 	v(fprintf (stdout, "Checking if streams match... "));
 	
-	if (expected->bound_end != -1) {
-		totalsize = expected->bound_end - expected->position;
+	priv = _g_mime_stream_get_private (expected);
+
+	if (priv->bound_end != -1) {
+		totalsize = priv->bound_end - priv->position;
 	} else if ((len = g_mime_stream_length (expected)) == -1) {
 		sprintf (errstr, "Error: Unable to get length of expected stream\n");
 		goto fail;
-	} else if (len < (expected->position - expected->bound_start)) {
+	} else if (len < (priv->position - priv->bound_start)) {
 		sprintf (errstr, "Error: Overflow on expected stream?\n");
 		goto fail;
 	} else {
-		totalsize = len - (expected->position - expected->bound_start);
+		totalsize = len - (priv->position - priv->bound_start);
 	}
 	
 	while (totalread < totalsize) {
@@ -315,6 +319,7 @@ test_partial_reconstruction_parameters (void)
 static void
 test_split_without_message_id (void)
 {
+	GMimeMessagePrivate *messages_priv;
 	GMimeMessage *message = g_mime_message_new (FALSE), **messages, *reconstructed;
 	GMimeMessagePartial **partials;
 	char *id;
@@ -327,11 +332,15 @@ test_split_without_message_id (void)
 	g_assert_nonnull (messages);
 	g_assert_cmpuint (count, >, 1);
 	partials = g_new (GMimeMessagePartial *, count);
-	id = g_strdup (g_mime_message_partial_get_id (GMIME_MESSAGE_PARTIAL (messages[0]->mime_part)));
+	messages_priv = _g_mime_message_get_private (messages[0]);
+
+	id = g_strdup (g_mime_message_partial_get_id (GMIME_MESSAGE_PARTIAL (messages_priv->mime_part)));
 	g_assert_nonnull (id);
 	g_assert_cmpstr (id, !=, "");
 	for (i = 0; i < count; i++) {
-		partials[i] = GMIME_MESSAGE_PARTIAL (messages[i]->mime_part);
+		GMimeMessagePrivate *message_priv = _g_mime_message_get_private (messages[i]);
+
+		partials[i] = GMIME_MESSAGE_PARTIAL (message_priv->mime_part);
 		assert_partial_parameters (partials[i], id, i + 1, count);
 	}
 	g_assert_null (g_mime_message_get_message_id (message));
@@ -483,6 +492,8 @@ test_reconstruction_content (void)
 			input[1] = parts[0];
 			input[2] = parts[1];
 			for (pass = 0; pass < 2; pass++) {
+				GMimeMessagePrivate *priv;
+
 				message = g_mime_message_partial_join (NULL, envelope, input, G_N_ELEMENTS (input), NULL);
 				g_assert_nonnull (message);
 				g_assert_true (input[0] == parts[2]);
@@ -490,8 +501,10 @@ test_reconstruction_content (void)
 				g_assert_true (input[2] == parts[1]);
 				g_assert_cmpstr (g_mime_message_get_subject (message), ==, "decoded fragments");
 				output = g_mime_stream_mem_new ();
+				priv = _g_mime_message_get_private (message);
+
 				g_assert_cmpint (g_mime_content_decode_to_stream (
-					g_mime_part_get_content (GMIME_PART (message->mime_part)), output), ==, sizeof (body) - 1);
+					g_mime_part_get_content (GMIME_PART (priv->mime_part)), output), ==, sizeof (body) - 1);
 				buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
 				g_assert_cmpmem (buffer->data, buffer->len, body, sizeof (body) - 1);
 				g_object_unref (output);
@@ -509,6 +522,7 @@ test_reconstruction_content (void)
 static void
 test_reconstruction_failures (void)
 {
+	GMimeMessagePrivate *priv;
 	static const char wire[] = "Subject: rewind failure\r\n\r\nbody";
 	GMimeMessagePartial *first = g_mime_message_partial_new ("id", 1, 2);
 	GMimeMessagePartial *last = g_mime_message_partial_new ("id", 2, 2);
@@ -575,8 +589,10 @@ test_reconstruction_failures (void)
 	g_object_unref (last);
 	g_assert_cmpstr (g_mime_message_get_subject (message), ==, "rewind failure");
 	stream = g_mime_stream_mem_new ();
+	priv = _g_mime_message_get_private (message);
+
 	g_assert_cmpint (g_mime_content_decode_to_stream (
-		g_mime_part_get_content (GMIME_PART (message->mime_part)), stream), ==, 4);
+		g_mime_part_get_content (GMIME_PART (priv->mime_part)), stream), ==, 4);
 	buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
 	g_assert_cmpmem (buffer->data, buffer->len, "body", 4);
 	g_object_unref (stream);
@@ -646,11 +662,15 @@ test_split_message_clones (void)
 	g_assert_cmpuint (count, >, 1);
 
 	for (i = 0; i < count; i++) {
+		GMimeMessagePrivate *priv;
+
 		id = g_mime_message_get_message_id (messages[i]);
 		g_assert_nonnull (id);
 		g_assert_cmpstr (id, !=, "source@example.com");
 		g_assert_true (g_hash_table_add (ids, g_strdup (id)));
-		assert_partial_parameters (GMIME_MESSAGE_PARTIAL (messages[i]->mime_part),
+		priv = _g_mime_message_get_private (messages[i]);
+
+		assert_partial_parameters (GMIME_MESSAGE_PARTIAL (priv->mime_part),
 					   "source@example.com", i + 1, count);
 		cloned = g_mime_entity_get_header_list (GMIME_ENTITY (messages[i]));
 		g_assert_true (cloned->options != original->options);
@@ -740,8 +760,9 @@ test_split_sizes (void)
 			partials = g_new (GMimeMessagePartial *, count);
 			for (i = 0; i < count; i++) {
 				ssize_t size;
+				GMimeMessagePrivate *priv = _g_mime_message_get_private (messages[i]);
 
-				partials[i] = GMIME_MESSAGE_PARTIAL (messages[i]->mime_part);
+				partials[i] = GMIME_MESSAGE_PARTIAL (priv->mime_part);
 				assert_partial_parameters (partials[i], "sizes@example.com", i + 1, count);
 				size = g_mime_content_write_to_stream (
 					g_mime_part_get_content (GMIME_PART (partials[i])), combined);
@@ -821,6 +842,7 @@ test_split_raw_headers (void)
 static void
 test_join_headers (void)
 {
+	GMimeMessagePrivate *priv;
 	static const char outer[] =
 		"x-TrAcE: one\0binary\r\nSubject: outer first\r\nReceived: outer trace\r\n"
 		"Message-Id: <outer@example.com>\r\nSubject: outer second\r\nX-Trace: two\r\n"
@@ -890,10 +912,12 @@ test_join_headers (void)
 	g_assert_true (g_bytes_equal (before, after));
 	g_bytes_unref (before);
 	g_bytes_unref (after);
-	headers = g_mime_entity_get_header_list (joined->mime_part);
+	priv = _g_mime_message_get_private (joined);
+
+	headers = g_mime_entity_get_header_list (priv->mime_part);
 	for (i = 0; i < (guint) g_mime_header_list_get_count (headers); i++)
 		g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header_at (headers, i)), ==, -1);
-	g_assert_cmpstr (g_mime_entity_get_header (joined->mime_part, "Content-X-Body"), ==, "retained");
+	g_assert_cmpstr (g_mime_entity_get_header (priv->mime_part, "Content-X-Body"), ==, "retained");
 	for (i = 0; i < G_N_ELEMENTS (parts); i++) {
 		g_assert_true (input[2 - i] == parts[i]);
 		g_object_unref (parts[i]);
@@ -901,7 +925,7 @@ test_join_headers (void)
 	g_object_unref (envelope);
 	g_mime_parser_options_free (options);
 	output = g_mime_stream_mem_new ();
-	g_assert_cmpint (g_mime_content_decode_to_stream (g_mime_part_get_content (GMIME_PART (joined->mime_part)), output), ==, 13);
+	g_assert_cmpint (g_mime_content_decode_to_stream (g_mime_part_get_content (GMIME_PART (priv->mime_part)), output), ==, 13);
 	buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
 	g_assert_cmpmem (buffer->data, buffer->len, "before\0after\377", 13);
 	g_object_unref (output);
@@ -964,6 +988,7 @@ test_split_header_policy (void)
 	guint kind;
 
 	for (kind = 0; kind < 4; kind++) {
+		GMimeMessagePrivate *priv;
 		char *wire = g_strdup_printf (
 			"From: envelope@example.com\r\nSubject: header policy\r\n"
 			"X-Envelope: restored\r\nMessage-Id: <policy@example.com>\r\n"
@@ -988,7 +1013,9 @@ test_split_header_policy (void)
 		g_assert_cmpuint (count, >, 1);
 		partials = g_new (GMimeMessagePartial *, count);
 		for (i = 0; i < count; i++) {
-			partials[i] = GMIME_MESSAGE_PARTIAL (messages[i]->mime_part);
+			GMimeMessagePrivate *messages_priv = _g_mime_message_get_private (messages[i]);
+
+			partials[i] = GMIME_MESSAGE_PARTIAL (messages_priv->mime_part);
 			g_assert_cmpint (g_mime_content_write_to_stream (
 				g_mime_part_get_content (GMIME_PART (partials[i])), combined), >, 0);
 		}
@@ -1003,7 +1030,9 @@ test_split_header_policy (void)
 		g_assert_no_error (error);
 		g_assert_nonnull (joined);
 		g_assert_cmpstr (g_mime_entity_get_header (GMIME_ENTITY (joined), "X-Envelope"), ==, "restored");
-		g_assert_null (g_mime_entity_get_header (joined->mime_part, "Content-X-Root"));
+		priv = _g_mime_message_get_private (joined);
+
+		g_assert_null (g_mime_entity_get_header (priv->mime_part, "Content-X-Root"));
 		g_assert_false (g_mime_format_options_is_hidden_header (NULL, "X-Envelope"));
 		g_assert_false (g_mime_format_options_is_hidden_header (NULL, "From"));
 		after = split_message_bytes (message);
@@ -1099,6 +1128,8 @@ int main (int argc, char **argv)
 				throw (exception_new ("Failed to open `%s'", input->str));
 			
 			while ((dent = g_dir_read_name (dir))) {
+				GMimeMessagePrivate *priv;
+
 				path = g_build_filename (input->str, dent, NULL);
 				
 				if (!(stream = g_mime_stream_file_open (path, "r", NULL)))
@@ -1110,14 +1141,16 @@ int main (int argc, char **argv)
 				if (!(message = g_mime_parser_construct_message (parser, NULL, NULL)))
 					throw (exception_new ("Failed to parse `%s'", path));
 				
-				if (!GMIME_IS_MESSAGE_PARTIAL (message->mime_part)) {
+				priv = _g_mime_message_get_private (message);
+
+				if (!GMIME_IS_MESSAGE_PARTIAL (priv->mime_part)) {
 					g_object_unref (message);
 					throw (exception_new ("`%s' is not a message/partial", path));
 				}
 				
-				g_ptr_array_add (partials, message->mime_part);
-				g_object_ref (message->mime_part);
-				if (g_mime_message_partial_get_number (GMIME_MESSAGE_PARTIAL (message->mime_part)) == 1)
+				g_ptr_array_add (partials, priv->mime_part);
+				g_object_ref (priv->mime_part);
+				if (g_mime_message_partial_get_number (GMIME_MESSAGE_PARTIAL (priv->mime_part)) == 1)
 					g_set_object (&envelope, message);
 				g_object_unref (message);
 				g_free (path);
@@ -1168,8 +1201,13 @@ int main (int argc, char **argv)
 			g_set_object (&envelope, messages[0]);
 			
 			for (i = 0; i < n; i++) {
-				g_ptr_array_add (partials, messages[i]->mime_part);
-				g_object_ref (messages[i]->mime_part);
+				GMimeMessagePrivate *messages_priv = _g_mime_message_get_private (messages[i]);
+				GMimeMessagePrivate *message_priv;
+
+				g_ptr_array_add (partials, messages_priv->mime_part);
+				message_priv = _g_mime_message_get_private (messages[i]);
+
+				g_object_ref (message_priv->mime_part);
 				g_object_unref (messages[i]);
 			}
 			g_free (messages);

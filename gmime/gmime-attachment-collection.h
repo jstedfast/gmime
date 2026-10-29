@@ -27,31 +27,16 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_ATTACHMENT_COLLECTION (g_mime_attachment_collection_get_type ())
-#define GMIME_ATTACHMENT_COLLECTION(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_ATTACHMENT_COLLECTION, GMimeAttachmentCollection))
-#define GMIME_IS_ATTACHMENT_COLLECTION(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_ATTACHMENT_COLLECTION))
 
-typedef struct _GMimeAttachmentCollection GMimeAttachmentCollection;
-typedef struct _GMimeAttachmentCollectionClass GMimeAttachmentCollectionClass;
 
 /**
  * GMimeAttachmentCollection:
- * @parent_object: parent #GObject
  *
  * An ordered, mutable collection for constructing attachments or linked resources.
  **/
-struct _GMimeAttachmentCollection {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeAttachmentCollection, g_mime_attachment_collection, GMIME, ATTACHMENT_COLLECTION, GObject)
 
-	/* <private> */
-	GPtrArray *array;
-	gboolean linked;
-};
 
-struct _GMimeAttachmentCollectionClass {
-	GObjectClass parent_class;
-};
-
-GType g_mime_attachment_collection_get_type (void);
 GMimeAttachmentCollection *g_mime_attachment_collection_new (gboolean linked_resources);
 int g_mime_attachment_collection_get_count (GMimeAttachmentCollection *collection);
 GMimeEntity *g_mime_attachment_collection_get_attachment (GMimeAttachmentCollection *collection, int index);

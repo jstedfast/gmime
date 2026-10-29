@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -1753,6 +1754,8 @@ test_part_prepare (void)
 	for (kind = 0; kind < 2; kind++) {
 		for (i = 0; i < G_N_ELEMENTS (limits); i++) {
 			for (newline = GMIME_NEWLINE_FORMAT_UNIX; newline <= GMIME_NEWLINE_FORMAT_DOS; newline++) {
+				GMimePartPrivate *priv;
+
 				part = g_mime_part_new_with_type (kind ? "application" : "text", kind ? "octet-stream" : "plain");
 				source = g_mime_stream_mem_new_with_buffer (text, strlen (text));
 				content = g_mime_content_new_with_stream (source, GMIME_CONTENT_ENCODING_UNSPECIFIED);
@@ -1784,7 +1787,9 @@ test_part_prepare (void)
 				g_assert_true (g_mime_part_prepare_with_max_line_length (part, GMIME_ENCODING_CONSTRAINT_7BIT,
 										      998, &error));
 				g_assert_no_error (error);
-				g_assert_cmpuint (part->encoder_max_line_length, ==, limits[i]);
+				priv = _g_mime_part_get_private (part);
+
+				g_assert_cmpuint (priv->encoder_max_line_length, ==, limits[i]);
 				g_object_unref (output);
 				g_object_unref (content);
 				g_object_unref (source);

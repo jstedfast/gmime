@@ -27,14 +27,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_GZIP            (g_mime_filter_gzip_get_type ())
-#define GMIME_FILTER_GZIP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZip))
-#define GMIME_FILTER_GZIP_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZipClass))
-#define GMIME_IS_FILTER_GZIP(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_GZIP))
-#define GMIME_IS_FILTER_GZIP_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_GZIP))
-#define GMIME_FILTER_GZIP_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZipClass))
 
-typedef struct _GMimeFilterGZip GMimeFilterGZip;
-typedef struct _GMimeFilterGZipClass GMimeFilterGZipClass;
 
 
 /**
@@ -52,29 +45,18 @@ typedef enum {
 
 /**
  * GMimeFilterGZip:
- * @parent_object: parent #GMimeFilter
- * @priv: private state data
- * @mode: #GMimeFilterGZipMode
- * @level: compression level
  *
  * A filter for compresing or decompressing a gzip stream.
  **/
-struct _GMimeFilterGZip {
-	GMimeFilter parent_object;
-	
-	struct _GMimeFilterGZipPrivate *priv;
-	
-	GMimeFilterGZipMode mode;
-	int level;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterGZip, g_mime_filter_gzip, GMIME, FILTER_GZIP, GMimeFilter)
 
 struct _GMimeFilterGZipClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_gzip_get_type (void);
 
 GMimeFilter *g_mime_filter_gzip_new (GMimeFilterGZipMode mode, int level);
 

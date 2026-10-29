@@ -32,7 +32,7 @@ typedef struct {
 } UUEncoderState;
 
 struct _GMimeUUEncoder {
-	GObject parent_object;
+	GObject parent_instance;
 	UUEncoderState state;
 };
 

@@ -49,7 +49,6 @@ g_mime_attachment_collection_remove_at
 g_mime_attachment_collection_get_type
 
 <SUBSECTION Standard>
-GMimeAttachmentCollectionClass
 GMIME_TYPE_ATTACHMENT_COLLECTION
 GMIME_ATTACHMENT_COLLECTION
 GMIME_IS_ATTACHMENT_COLLECTION
@@ -73,7 +72,6 @@ g_mime_body_builder_to_message_body
 g_mime_body_builder_get_type
 
 <SUBSECTION Standard>
-GMimeBodyBuilderClass
 GMIME_TYPE_BODY_BUILDER
 GMIME_BODY_BUILDER
 GMIME_IS_BODY_BUILDER
@@ -96,6 +94,9 @@ g_mime_stream_close
 g_mime_stream_length
 g_mime_stream_substream
 g_mime_stream_set_bounds
+g_mime_stream_get_bounds
+g_mime_stream_get_position
+g_mime_stream_set_position
 g_mime_stream_write_string
 g_mime_stream_printf
 g_mime_stream_write_to_stream
@@ -290,6 +291,8 @@ GMimeStreamNull
 g_mime_stream_null_new
 g_mime_stream_null_set_length
 g_mime_stream_null_get_count_newlines
+g_mime_stream_null_get_written
+g_mime_stream_null_get_newlines
 g_mime_stream_null_set_count_newlines
 
 <SUBSECTION Private>
@@ -356,6 +359,7 @@ g_mime_filter_complete
 g_mime_filter_reset
 g_mime_filter_backup
 g_mime_filter_set_size
+g_mime_filter_get_output_buffer
 
 <SUBSECTION Private>
 g_mime_filter_get_type
@@ -775,17 +779,9 @@ g_mime_param_list_get_type
 GMIME_PARAM
 GMIME_IS_PARAM
 GMIME_TYPE_PARAM
-GMIME_PARAM_CLASS
-GMIME_IS_PARAM_CLASS
-GMIME_PARAM_GET_CLASS
-GMimeParamClass
 GMIME_PARAM_LIST
 GMIME_IS_PARAM_LIST
 GMIME_TYPE_PARAM_LIST
-GMIME_PARAM_LIST_CLASS
-GMIME_IS_PARAM_LIST_CLASS
-GMIME_PARAM_LIST_GET_CLASS
-GMimeParamListClass
 </SECTION>
 
 <SECTION>
@@ -877,17 +873,9 @@ g_mime_header_list_get_type
 GMIME_HEADER
 GMIME_IS_HEADER
 GMIME_TYPE_HEADER
-GMIME_HEADER_CLASS
-GMIME_IS_HEADER_CLASS
-GMIME_HEADER_GET_CLASS
-GMimeHeaderClass
 GMIME_HEADER_LIST
 GMIME_IS_HEADER_LIST
 GMIME_TYPE_HEADER_LIST
-GMIME_HEADER_LIST_CLASS
-GMIME_IS_HEADER_LIST_CLASS
-GMIME_HEADER_LIST_GET_CLASS
-GMimeHeaderListClass
 </SECTION>
 
 <SECTION>
@@ -926,10 +914,6 @@ g_mime_content_type_get_type
 GMIME_CONTENT_TYPE
 GMIME_IS_CONTENT_TYPE
 GMIME_TYPE_CONTENT_TYPE
-GMIME_CONTENT_TYPE_CLASS
-GMIME_IS_CONTENT_TYPE_CLASS
-GMIME_CONTENT_TYPE_GET_CLASS
-GMimeContentTypeClass
 </SECTION>
 
 <SECTION>
@@ -968,10 +952,6 @@ g_mime_content_disposition_get_type
 GMIME_CONTENT_DISPOSITION
 GMIME_IS_CONTENT_DISPOSITION
 GMIME_TYPE_CONTENT_DISPOSITION
-GMIME_CONTENT_DISPOSITION_CLASS
-GMIME_IS_CONTENT_DISPOSITION_CLASS
-GMIME_CONTENT_DISPOSITION_GET_CLASS
-GMimeContentDispositionClass
 </SECTION>
 
 <SECTION>
@@ -1081,7 +1061,6 @@ GMimePartClass
 <SECTION>
 <FILE>gmime-iterator</FILE>
 GMimeIterator
-GMimeIteratorClass
 g_mime_iterator_new
 g_mime_iterator_get_message
 g_mime_iterator_is_valid
@@ -1568,7 +1547,6 @@ g_mime_header_list_collection_remove
 g_mime_header_list_collection_get_type
 
 <SUBSECTION Standard>
-GMimeHeaderListCollectionClass
 GMIME_TYPE_HEADER_LIST_COLLECTION
 GMIME_HEADER_LIST_COLLECTION
 GMIME_IS_HEADER_LIST_COLLECTION
@@ -1598,7 +1576,6 @@ g_mime_message_id_list_get_type
 
 <SUBSECTION Standard>
 GMIME_TYPE_MESSAGE_ID_LIST
-GMimeMessageIdListClass
 GMIME_MESSAGE_ID_LIST
 GMIME_IS_MESSAGE_ID_LIST
 </SECTION>
@@ -1708,16 +1685,6 @@ g_mime_yenc_encoder_get_checksum
 g_mime_yenc_decoder_new
 g_mime_yenc_decoder_get_checksum
 <SUBSECTION Standard>
-GMimeBase64EncoderClass
-GMimeBase64DecoderClass
-GMimeQuotedPrintableEncoderClass
-GMimeQuotedPrintableDecoderClass
-GMimeUUEncoderClass
-GMimeUUDecoderClass
-GMimePassThroughEncoderClass
-GMimePassThroughDecoderClass
-GMimeYencEncoderClass
-GMimeYencDecoderClass
 GMIME_TYPE_BASE64_ENCODER
 GMIME_BASE64_ENCODER
 GMIME_IS_BASE64_ENCODER
@@ -1798,9 +1765,6 @@ g_mime_yenc_reader_get_expected_part_checksum
 g_mime_yenc_writer_new
 g_mime_yenc_writer_write
 <SUBSECTION Standard>
-GMimeYencHeaderClass
-GMimeYencReaderClass
-GMimeYencWriterClass
 GMIME_TYPE_YENC_OPTIONS
 GMIME_TYPE_YENC_HEADER
 GMIME_YENC_HEADER
@@ -1926,9 +1890,6 @@ g_mime_internet_address_list_get_type
 GMIME_INTERNET_ADDRESS_LIST
 GMIME_IS_INTERNET_ADDRESS_LIST
 GMIME_TYPE_INTERNET_ADDRESS_LIST
-GMIME_INTERNET_ADDRESS_LIST_CLASS
-GMIME_IS_INTERNET_ADDRESS_LIST_CLASS
-GMimeInternetAddressListClass
 </SECTION>
 
 <SECTION>
@@ -1956,7 +1917,6 @@ g_mime_domain_list_get_type
 GMIME_DOMAIN_LIST
 GMIME_IS_DOMAIN_LIST
 GMIME_TYPE_DOMAIN_LIST
-GMimeDomainListClass
 </SECTION>
 
 <SECTION>
@@ -1976,13 +1936,9 @@ g_mime_anonymizer_write_entity
 g_mime_anonymizer_get_type
 
 <SUBSECTION Standard>
-GMimeAnonymizerClass
 GMIME_TYPE_ANONYMIZER
 GMIME_ANONYMIZER
-GMIME_ANONYMIZER_CLASS
-GMIME_ANONYMIZER_GET_CLASS
 GMIME_IS_ANONYMIZER
-GMIME_IS_ANONYMIZER_CLASS
 </SECTION>
 
 <SECTION>
@@ -2010,12 +1966,8 @@ g_mime_received_clause_get_type
 
 <SUBSECTION Standard>
 GMIME_RECEIVED_CLAUSE
-GMIME_RECEIVED_CLAUSE_CLASS
-GMIME_RECEIVED_CLAUSE_GET_CLASS
 GMIME_IS_RECEIVED_CLAUSE
-GMIME_IS_RECEIVED_CLAUSE_CLASS
 GMIME_TYPE_RECEIVED_CLAUSE
-GMimeReceivedClauseClass
 </SECTION>
 
 <SECTION>
@@ -2059,12 +2011,8 @@ g_mime_received_get_type
 
 <SUBSECTION Standard>
 GMIME_RECEIVED
-GMIME_RECEIVED_CLASS
-GMIME_RECEIVED_GET_CLASS
 GMIME_IS_RECEIVED
-GMIME_IS_RECEIVED_CLASS
 GMIME_TYPE_RECEIVED
-GMimeReceivedClass
 </SECTION>
 
 <SECTION>
@@ -2178,10 +2126,6 @@ g_mime_parser_get_type
 GMIME_PARSER
 GMIME_IS_PARSER
 GMIME_TYPE_PARSER
-GMIME_PARSER_CLASS
-GMIME_IS_PARSER_CLASS
-GMIME_PARSER_GET_CLASS
-GMimeParserClass
 </SECTION>
 
 <SECTION>
@@ -2354,17 +2298,9 @@ g_mime_certificate_list_get_type
 GMIME_CERTIFICATE
 GMIME_IS_CERTIFICATE
 GMIME_TYPE_CERTIFICATE
-GMIME_CERTIFICATE_CLASS
-GMIME_IS_CERTIFICATE_CLASS
-GMIME_CERTIFICATE_GET_CLASS
-GMimeCertificateClass
 GMIME_CERTIFICATE_LIST
 GMIME_IS_CERTIFICATE_LIST
 GMIME_TYPE_CERTIFICATE_LIST
-GMIME_CERTIFICATE_LIST_CLASS
-GMIME_IS_CERTIFICATE_LIST_CLASS
-GMIME_CERTIFICATE_LIST_GET_CLASS
-GMimeCertificateListClass
 </SECTION>
 
 <SECTION>
@@ -2401,17 +2337,9 @@ g_mime_signature_list_get_type
 GMIME_SIGNATURE
 GMIME_IS_SIGNATURE
 GMIME_TYPE_SIGNATURE
-GMIME_SIGNATURE_CLASS
-GMIME_IS_SIGNATURE_CLASS
-GMIME_SIGNATURE_GET_CLASS
-GMimeSignatureClass
 GMIME_SIGNATURE_LIST
 GMIME_IS_SIGNATURE_LIST
 GMIME_TYPE_SIGNATURE_LIST
-GMIME_SIGNATURE_LIST_CLASS
-GMIME_IS_SIGNATURE_LIST_CLASS
-GMIME_SIGNATURE_LIST_GET_CLASS
-GMimeSignatureListClass
 </SECTION>
 
 <SECTION>
@@ -2465,10 +2393,6 @@ GMimeCryptoContextClass
 GMIME_DECRYPT_RESULT
 GMIME_IS_DECRYPT_RESULT
 GMIME_TYPE_DECRYPT_RESULT
-GMIME_DECRYPT_RESULT_CLASS
-GMIME_IS_DECRYPT_RESULT_CLASS
-GMIME_DECRYPT_RESULT_GET_CLASS
-GMimeDecryptResultClass
 </SECTION>
 
 <SECTION>
@@ -2484,10 +2408,6 @@ g_mime_gpg_context_get_type
 GMIME_GPG_CONTEXT
 GMIME_IS_GPG_CONTEXT
 GMIME_TYPE_GPG_CONTEXT
-GMIME_GPG_CONTEXT_CLASS
-GMIME_IS_GPG_CONTEXT_CLASS
-GMIME_GPG_CONTEXT_GET_CLASS
-GMimeGpgContextClass
 </SECTION>
 
 <SECTION>
@@ -2503,10 +2423,6 @@ g_mime_pkcs7_context_get_type
 GMIME_PKCS7_CONTEXT
 GMIME_IS_PKCS7_CONTEXT
 GMIME_TYPE_PKCS7_CONTEXT
-GMIME_PKCS7_CONTEXT_CLASS
-GMIME_IS_PKCS7_CONTEXT_CLASS
-GMIME_PKCS7_CONTEXT_GET_CLASS
-GMimePkcs7ContextClass
 </SECTION>
 
 <SECTION>
@@ -2546,15 +2462,7 @@ g_mime_autocrypt_header_list_get_type
 GMIME_AUTOCRYPT_HEADER
 GMIME_IS_AUTOCRYPT_HEADER
 GMIME_TYPE_AUTOCRYPT_HEADER
-GMIME_AUTOCRYPT_HEADER_CLASS
-GMIME_IS_AUTOCRYPT_HEADER_CLASS
-GMIME_AUTOCRYPT_HEADER_GET_CLASS
-GMimeAutocryptHeaderClass
 GMIME_AUTOCRYPT_HEADER_LIST
 GMIME_IS_AUTOCRYPT_HEADER_LIST
 GMIME_TYPE_AUTOCRYPT_HEADER_LIST
-GMIME_AUTOCRYPT_HEADER_LIST_CLASS
-GMIME_IS_AUTOCRYPT_HEADER_LIST_CLASS
-GMIME_AUTOCRYPT_HEADER_LIST_GET_CLASS
-GMimeAutocryptHeaderListClass
 </SECTION>

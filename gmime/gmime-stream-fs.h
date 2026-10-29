@@ -27,39 +27,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_FS            (g_mime_stream_fs_get_type ())
-#define GMIME_STREAM_FS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFs))
-#define GMIME_STREAM_FS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FS, GMimeStreamFsClass))
-#define GMIME_IS_STREAM_FS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_FS))
-#define GMIME_IS_STREAM_FS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FS))
-#define GMIME_STREAM_FS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFsClass))
 
-typedef struct _GMimeStreamFs GMimeStreamFs;
-typedef struct _GMimeStreamFsClass GMimeStreamFsClass;
 
 /**
  * GMimeStreamFs:
- * @parent_object: parent #GMimeStream
- * @owner: %TRUE if this stream owns @fd
- * @eos: %TRUE if end-of-stream
- * @fd: file descriptor
  *
  * A #GMimeStream wrapper around POSIX file descriptors.
  **/
-struct _GMimeStreamFs {
-	GMimeStream parent_object;
-	
-	gboolean owner;
-	gboolean eos;
-	int fd;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamFs, g_mime_stream_fs, GMIME, STREAM_FS, GMimeStream)
 
 struct _GMimeStreamFsClass {
 	GMimeStreamClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_stream_fs_get_type (void);
 
 GMimeStream *g_mime_stream_fs_new (int fd);
 GMimeStream *g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end);

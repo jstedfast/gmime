@@ -31,44 +31,14 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART            (g_mime_multipart_get_type ())
-#define GMIME_MULTIPART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))
-#define GMIME_MULTIPART_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
-#define GMIME_IS_MULTIPART(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART))
-#define GMIME_IS_MULTIPART_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART))
-#define GMIME_MULTIPART_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
 
-typedef struct _GMimeMultipart GMimeMultipart;
-typedef struct _GMimeMultipartClass GMimeMultipartClass;
 
 /**
  * GMimeMultipart:
- * @parent_object: parent #GMimeEntity
- * @children: array of MIME sub-parts
- * @boundary: MIME boundary
- * @preamble: multipart preamble
- * @epilogue: multipart epilogue
  *
  * A base MIME multipart object.
  **/
-struct _GMimeMultipart {
-	GMimeEntity parent_object;
-	
-	GPtrArray *children;
-	char *boundary;
-	char *preamble;
-	char *epilogue;
-	
-	/* < private > */
-	gboolean write_end_boundary;
-	gboolean reader_model;
-	GBytes *raw_preamble;
-	GBytes *raw_epilogue;
-	GBytes *raw_end_boundary;
-	/* A boundary marker read at the very end of the stream without a MIME
-	 * part after it. Only written when raw_end_boundary is empty (truncated). */
-	GBytes *raw_trailing_boundary;
-	GPtrArray *raw_boundaries;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMultipart, g_mime_multipart, GMIME, MULTIPART, GMimeEntity)
 
 struct _GMimeMultipartClass {
 	GMimeEntityClass parent_class;
@@ -89,10 +59,11 @@ struct _GMimeMultipartClass {
 	const char * (* get_boundary) (GMimeMultipart *multipart);
 
 	gboolean (* try_get_value) (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_multipart_get_type (void);
 
 GMimeMultipart *g_mime_multipart_new (void);
 GMimeMultipart *g_mime_multipart_new_with_subtype (const char *subtype);

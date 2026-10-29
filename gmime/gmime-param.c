@@ -50,6 +50,8 @@
 
 #define d(x)
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-param
  * @title: GMimeParamList
@@ -62,36 +64,14 @@
 
 
 static void g_mime_param_class_init (GMimeParamClass *klass);
-static void g_mime_param_init (GMimeParam *cert, GMimeParamClass *klass);
+static void g_mime_param_init (GMimeParam *cert);
 static void g_mime_param_finalize (GObject *object);
 static void g_string_append_len_quoted (GString *str, const char *text, size_t len);
 
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_param_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeParamClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_param_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeParam),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_param_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeParam", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeParam, g_mime_param, G_TYPE_OBJECT)
 
 static void
 g_mime_param_class_init (GMimeParamClass *klass)
@@ -104,7 +84,7 @@ g_mime_param_class_init (GMimeParamClass *klass)
 }
 
 static void
-g_mime_param_init (GMimeParam *param, GMimeParamClass *klass)
+g_mime_param_init (GMimeParam *param)
 {
 	param->method = GMIME_PARAM_ENCODING_METHOD_DEFAULT;
 	param->always_quote = FALSE;
@@ -475,36 +455,14 @@ param_changed (GMimeParam *param, gpointer args, GMimeParamList *list)
 
 
 static void g_mime_param_list_class_init (GMimeParamListClass *klass);
-static void g_mime_param_list_init (GMimeParamList *list, GMimeParamListClass *klass);
+static void g_mime_param_list_init (GMimeParamList *list);
 static void g_mime_param_list_finalize (GObject *object);
 
 
 static GObjectClass *list_parent_class = NULL;
 
 
-GType
-g_mime_param_list_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeParamListClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_param_list_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeParamList),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_param_list_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeParamList", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeParamList, g_mime_param_list, G_TYPE_OBJECT)
 
 
 static void
@@ -518,7 +476,7 @@ g_mime_param_list_class_init (GMimeParamListClass *klass)
 }
 
 static void
-g_mime_param_list_init (GMimeParamList *list, GMimeParamListClass *klass)
+g_mime_param_list_init (GMimeParamList *list)
 {
 	list->changed = g_mime_event_new (list);
 	list->array = g_ptr_array_new ();

@@ -28,6 +28,8 @@
 #include "gmime-parse-utils.h"
 #include "gmime-events.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-message-id-list
  * @title: GMimeMessageIdList
@@ -39,7 +41,7 @@
 
 static void g_mime_message_id_list_finalize (GObject *object);
 
-G_DEFINE_TYPE (GMimeMessageIdList, g_mime_message_id_list, G_TYPE_OBJECT)
+G_DEFINE_FINAL_TYPE (GMimeMessageIdList, g_mime_message_id_list, G_TYPE_OBJECT)
 
 static void
 g_mime_message_id_list_class_init (GMimeMessageIdListClass *klass)

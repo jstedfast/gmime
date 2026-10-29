@@ -97,7 +97,7 @@ typedef struct _TestStreamOneByte TestStreamOneByte;
 typedef struct _TestStreamOneByteClass TestStreamOneByteClass;
 
 struct _TestStreamOneByte {
-	GMimeStream parent_object;
+	GMimeStream parent_instance;
 	GMimeStream *source;
 };
 

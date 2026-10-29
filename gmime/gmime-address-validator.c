@@ -32,9 +32,11 @@
  */
 typedef struct {
 	const guint8 *text;
+
+	GMimeComplianceContext context;
 	GMimeComplianceIssueFunc report;
 	gpointer user_data;
-	GMimeComplianceContext context;
+
 	gint64 stream_offset;
 	guint64 line_number, column_number;
 	gssize start_index, end_index, index;
@@ -53,22 +55,6 @@ typedef struct {
 	// addr-spec, and which it is cannot be known until the value has been parsed.
 	gssize null_cursor;
 
-	gboolean reported_control_character;
-	gboolean reported_stray_carriage_return;
-	gboolean reported_iso2022_local_part;
-	gboolean reported_null_byte_in_display_name;
-	gboolean reported_null_byte_in_address;
-
-	// Note: Whether the address currently being scanned was cut short by a damaged local-part.
-	// Set by LogDamagedLocalPart and cleared at the start of each address, it tells the list loops
-	// that the character the scan stopped on has already been accounted for.
-	gboolean damaged_local_part;
-
-	// Note: Whether scanning is inside a group-list. A ';' ends a group, but rfc5322 address-list
-	// is comma-separated only, so outside a group there is nothing for a ';' to delimit and it is
-	// an unquoted special in whatever token it interrupted.
-	gboolean in_group_list;
-
 	// Note: The number of nested groups that are open within the current group. rfc5322 does not permit
 	// a group inside a group, but tracking them (rather than recursing, which would let the input drive
 	// the stack depth) means that the ';' that terminates a nested group is not mistaken for the end of
@@ -83,17 +69,35 @@ typedef struct {
 
 	// The last reusable phrase extent, and indexes allocated only when malformed input would
 	// otherwise make lookahead repeatedly scan overlapping regions.
-	gboolean skipped_comment;
-	gssize phrase_from;
-	gssize phrase_end;
-	gboolean phrase_simple;
 	// -2 means not searched; -1 means the simple phrase contains no '@'.
 	gssize phrase_at;
+	gssize phrase_from;
+	gssize phrase_end;
 
 	GArray *line_starts;
 	gssize *phrase_ends, *unquoted_ats;
 	gssize name_addr_from;
-	gboolean name_addr_follows;
+
+	// Note: From here down must remain all boolean bit fields */
+	gboolean name_addr_follows : 1;
+	gboolean skipped_comment : 1;
+	gboolean phrase_simple : 1;
+
+	// Note: Whether the address currently being scanned was cut short by a damaged local-part.
+	// Set by LogDamagedLocalPart and cleared at the start of each address, it tells the list loops
+	// that the character the scan stopped on has already been accounted for.
+	gboolean damaged_local_part : 1;
+
+	// Note: Whether scanning is inside a group-list. A ';' ends a group, but rfc5322 address-list
+	// is comma-separated only, so outside a group there is nothing for a ';' to delimit and it is
+	// an unquoted special in whatever token it interrupted.
+	gboolean in_group_list : 1;
+
+	gboolean reported_control_character : 1;
+	gboolean reported_stray_carriage_return : 1;
+	gboolean reported_iso2022_local_part : 1;
+	gboolean reported_null_byte_in_display_name : 1;
+	gboolean reported_null_byte_in_address : 1;
 } AddressValidator;
 
 static gboolean

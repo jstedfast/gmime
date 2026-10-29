@@ -34,7 +34,7 @@ typedef struct {
 } Base64EncoderState;
 
 struct _GMimeBase64Encoder {
-	GObject parent_object;
+	GObject parent_instance;
 	Base64EncoderState state;
 };
 

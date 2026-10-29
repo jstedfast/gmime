@@ -28,6 +28,8 @@
 #include "gmime-signature.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-signature
  * @title: GMimeSignature
@@ -40,35 +42,13 @@
 
 
 static void g_mime_signature_class_init (GMimeSignatureClass *klass);
-static void g_mime_signature_init (GMimeSignature *sig, GMimeSignatureClass *klass);
+static void g_mime_signature_init (GMimeSignature *sig);
 static void g_mime_signature_finalize (GObject *object);
 
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_signature_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeSignatureClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_signature_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeSignature),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_signature_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeSignature", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeSignature, g_mime_signature, G_TYPE_OBJECT)
 
 static void
 g_mime_signature_class_init (GMimeSignatureClass *klass)
@@ -81,7 +61,7 @@ g_mime_signature_class_init (GMimeSignatureClass *klass)
 }
 
 static void
-g_mime_signature_init (GMimeSignature *sig, GMimeSignatureClass *klass)
+g_mime_signature_init (GMimeSignature *sig)
 {
 	sig->cert = g_mime_certificate_new ();
 	sig->created = NULL;
@@ -273,36 +253,14 @@ g_mime_signature_get_expires (GMimeSignature *sig)
 
 
 static void g_mime_signature_list_class_init (GMimeSignatureListClass *klass);
-static void g_mime_signature_list_init (GMimeSignatureList *list, GMimeSignatureListClass *klass);
+static void g_mime_signature_list_init (GMimeSignatureList *list);
 static void g_mime_signature_list_finalize (GObject *object);
 
 
 static GObjectClass *list_parent_class = NULL;
 
 
-GType
-g_mime_signature_list_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeSignatureListClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_signature_list_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeSignatureList),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_signature_list_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeSignatureList", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeSignatureList, g_mime_signature_list, G_TYPE_OBJECT)
 
 
 static void
@@ -316,7 +274,7 @@ g_mime_signature_list_class_init (GMimeSignatureListClass *klass)
 }
 
 static void
-g_mime_signature_list_init (GMimeSignatureList *list, GMimeSignatureListClass *klass)
+g_mime_signature_list_init (GMimeSignatureList *list)
 {
 	list->array = g_ptr_array_new ();
 }

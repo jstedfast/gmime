@@ -32,61 +32,26 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_INTERNET_ADDRESS                  (g_mime_internet_address_get_type ())
-#define GMIME_INTERNET_ADDRESS(obj)                  (G_TYPE_CHECK_INSTANCE_CAST ((obj), g_mime_internet_address_get_type (), GMimeInternetAddress))
-#define GMIME_INTERNET_ADDRESS_CLASS(klass)          (G_TYPE_CHECK_CLASS_CAST ((klass), g_mime_internet_address_get_type (), GMimeInternetAddressClass))
-#define GMIME_IS_INTERNET_ADDRESS(obj)               (G_TYPE_CHECK_INSTANCE_TYPE ((obj), g_mime_internet_address_get_type ()))
-#define GMIME_IS_INTERNET_ADDRESS_CLASS(klass)       (G_TYPE_CHECK_CLASS_TYPE ((klass), g_mime_internet_address_get_type ()))
-#define GMIME_INTERNET_ADDRESS_GET_CLASS(obj)        (G_TYPE_INSTANCE_GET_CLASS ((obj), g_mime_internet_address_get_type (), GMimeInternetAddressClass))
 
 #define GMIME_TYPE_GROUP_ADDRESS            (g_mime_group_address_get_type ())
-#define GMIME_GROUP_ADDRESS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_GROUP_ADDRESS, GMimeGroupAddress))
-#define GMIME_GROUP_ADDRESS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_GROUP_ADDRESS, GMimeGroupAddressClass))
-#define GMIME_IS_GROUP_ADDRESS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_GROUP_ADDRESS))
-#define GMIME_IS_GROUP_ADDRESS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_GROUP_ADDRESS))
 
 #define GMIME_TYPE_MAILBOX_ADDRESS          (g_mime_mailbox_address_get_type ())
-#define GMIME_MAILBOX_ADDRESS(obj)          (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MAILBOX_ADDRESS, GMimeMailboxAddress))
-#define GMIME_MAILBOX_ADDRESS_CLASS(klass)  (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MAILBOX_ADDRESS, GMimeMailboxAddressClass))
-#define GMIME_IS_MAILBOX_ADDRESS(obj)       (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MAILBOX_ADDRESS))
-#define GMIME_IS_MAILBOX_ADDRESS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MAILBOX_ADDRESS))
 
 #define GMIME_TYPE_INTERNET_ADDRESS_LIST             (g_mime_internet_address_list_get_type ())
-#define GMIME_INTERNET_ADDRESS_LIST(obj)             (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_INTERNET_ADDRESS_LIST, GMimeInternetAddressList))
-#define GMIME_INTERNET_ADDRESS_LIST_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_INTERNET_ADDRESS_LIST, GMimeInternetAddressListClass))
-#define GMIME_IS_INTERNET_ADDRESS_LIST(obj)          (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_INTERNET_ADDRESS_LIST))
-#define GMIME_IS_INTERNET_ADDRESS_LIST_CLASS(klass)  (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_INTERNET_ADDRESS_LIST))
 
 
-typedef struct _GMimeInternetAddress GMimeInternetAddress;
-typedef struct _GMimeInternetAddressClass GMimeInternetAddressClass;
 
-typedef struct _GMimeGroupAddress GMimeGroupAddress;
-typedef struct _GMimeGroupAddressClass GMimeGroupAddressClass;
 
-typedef struct _GMimeMailboxAddress GMimeMailboxAddress;
-typedef struct _GMimeMailboxAddressClass GMimeMailboxAddressClass;
 
 typedef struct _GMimeInternetAddressList GMimeInternetAddressList;
-typedef struct _GMimeInternetAddressListClass GMimeInternetAddressListClass;
 
 
 /**
  * GMimeInternetAddress:
- * @parent_object: parent #GObject
- * @charset: the charset used for encoding the name
- * @name: display name
  *
  * An RFC 2822 Address object.
  **/
-struct _GMimeInternetAddress {
-	GObject parent_object;
-
-	char *charset;
-	char *name;
-
-	/* < private > */
-	gpointer changed;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeInternetAddress, g_mime_internet_address, GMIME, INTERNET_ADDRESS, GObject)
 
 struct _GMimeInternetAddressClass {
 	GObjectClass parent_class;
@@ -96,10 +61,11 @@ struct _GMimeInternetAddressClass {
 			    size_t *linelen, GString *str);
 	GMimeInternetAddress * (* clone) (GMimeInternetAddress *ia);
 	gboolean (* equal) (GMimeInternetAddress *ia, GMimeInternetAddress *other);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_internet_address_get_type (void);
 
 void g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name);
 const char *g_mime_internet_address_get_name (GMimeInternetAddress *ia);
@@ -116,28 +82,18 @@ GMimeInternetAddress *g_mime_internet_address_parse (GMimeParserOptions *options
 
 /**
  * GMimeMailboxAddress:
- * @parent_object: parent #GMimeInternetAddress
- * @addrspec: the address string
- * @at: the index of the '@' character
- * @route: the source-route domains
  *
  * An RFC 2822 Mailbox address.
  **/
-struct _GMimeMailboxAddress {
-	GMimeInternetAddress parent_object;
-
-	char *addrspec;
-	int at;
-	GMimeDomainList *route;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMailboxAddress, g_mime_mailbox_address, GMIME, MAILBOX_ADDRESS, GMimeInternetAddress)
 
 struct _GMimeMailboxAddressClass {
 	GMimeInternetAddressClass parent_class;
 
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_mailbox_address_get_type (void);
 
 GMimeInternetAddress *g_mime_mailbox_address_new (const char *name, const char *addr, GError **error);
 
@@ -155,24 +111,18 @@ GMimeInternetAddress *g_mime_mailbox_address_parse (GMimeParserOptions *options,
 
 /**
  * GMimeGroupAddress:
- * @parent_object: parent #GMimeInternetAddress
- * @members: a #GMimeInternetAddressList of group members
  *
  * An RFC 2822 Group address.
  **/
-struct _GMimeGroupAddress {
-	GMimeInternetAddress parent_object;
-
-	GMimeInternetAddressList *members;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeGroupAddress, g_mime_group_address, GMIME, GROUP_ADDRESS, GMimeInternetAddress)
 
 struct _GMimeGroupAddressClass {
 	GMimeInternetAddressClass parent_class;
 
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_group_address_get_type (void);
 
 GMimeInternetAddress *g_mime_group_address_new (const char *name);
 GMimeInternetAddress *g_mime_group_address_parse (GMimeParserOptions *options, const char *str, gssize length, GError **error);
@@ -185,27 +135,11 @@ int g_mime_group_address_add_member (GMimeGroupAddress *group, GMimeInternetAddr
 
 /**
  * GMimeInternetAddressList:
- * @parent_object: parent #GObject
- * @array: The array of #GMimeInternetAddress objects.
  *
  * A collection of #GMimeInternetAddress objects.
  **/
-struct _GMimeInternetAddressList {
-	GObject parent_object;
+G_DECLARE_FINAL_TYPE (GMimeInternetAddressList, g_mime_internet_address_list, GMIME, INTERNET_ADDRESS_LIST, GObject)
 
-	GPtrArray *array;
-
-	/* < private > */
-	gpointer changed;
-};
-
-struct _GMimeInternetAddressListClass {
-	GObjectClass parent_class;
-
-};
-
-
-GType g_mime_internet_address_list_get_type (void);
 
 GMimeInternetAddressList *g_mime_internet_address_list_new (void);
 GMimeInternetAddressList *g_mime_internet_address_list_clone (GMimeInternetAddressList *list);

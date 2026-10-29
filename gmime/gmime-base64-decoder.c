@@ -50,7 +50,7 @@ typedef struct {
 } Base64DecoderState;
 
 struct _GMimeBase64Decoder {
-	GObject parent_object;
+	GObject parent_instance;
 	Base64DecoderState state;
 };
 

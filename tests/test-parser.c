@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -195,12 +196,15 @@ test_parser (GMimeStream *stream)
 	
 #ifdef TEST_PRESERVE_HEADERS
 	{
+		GMimeEntityPrivate *priv;
 		GMimeStream *output;
 		
 		fprintf (stdout, "\nTesting preservation of headers...\n\n");
 		output = g_mime_stream_file_new (stdout);
 		g_mime_stream_file_set_owner ((GMimeStreamFile *) output, FALSE);
-		g_mime_header_list_write_to_stream (GMIME_ENTITY (message)->headers, format, output);
+		priv = _g_mime_entity_get_private (GMIME_ENTITY (message));
+
+		g_mime_header_list_write_to_stream (priv->headers, format, output);
 		g_mime_stream_flush (output);
 		g_object_unref (output);
 		fprintf (stdout, "\n");

@@ -51,6 +51,9 @@ struct _GMimeEncoderInterface {
 	gsize (*flush) (GMimeEncoder *encoder, const guint8 *input, gsize input_length,
 			guint8 *output, gsize output_capacity);
 	void (*reset) (GMimeEncoder *encoder);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
 GMimeContentEncoding g_mime_encoder_get_encoding (GMimeEncoder *encoder);

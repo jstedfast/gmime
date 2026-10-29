@@ -32,7 +32,7 @@ typedef struct {
 } QPEncoderState;
 
 struct _GMimeQuotedPrintableEncoder {
-	GObject parent_object;
+	GObject parent_instance;
 	QPEncoderState state;
 };
 

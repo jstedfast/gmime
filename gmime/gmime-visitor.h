@@ -36,24 +36,15 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_VISITOR            (g_mime_visitor_get_type ())
-#define GMIME_VISITOR(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_VISITOR, GMimeVisitor))
-#define GMIME_VISITOR_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_VISITOR, GMimeVisitorClass))
-#define GMIME_IS_VISITOR(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_VISITOR))
-#define GMIME_IS_VISITOR_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_VISITOR))
-#define GMIME_VISITOR_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_VISITOR, GMimeVisitorClass))
 
-typedef struct _GMimeVisitorClass GMimeVisitorClass;
 
 /**
  * GMimeVisitor:
- * @parent_object: parent #GObject
  *
  * An abstract visitor for MIME trees. Derive from this type to examine,
  * transform or copy a tree, overriding the relevant visit methods.
  **/
-struct _GMimeVisitor {
-	GObject parent_object;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeVisitor, g_mime_visitor, GMIME, VISITOR, GObject)
 
 /**
  * GMimeVisitorClass:
@@ -102,9 +93,11 @@ struct _GMimeVisitorClass {
 	void (* visit_body) (GMimeVisitor *visitor, GMimeMessage *message);
 	void (* visit_children) (GMimeVisitor *visitor, GMimeMultipart *multipart);
 	void (* visit_message_part_message) (GMimeVisitor *visitor, GMimeMessagePart *part);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-GType g_mime_visitor_get_type (void);
 
 void g_mime_visitor_visit (GMimeVisitor *visitor, GMimeEntity *entity);
 void g_mime_visitor_visit_entity (GMimeVisitor *visitor, GMimeEntity *entity);

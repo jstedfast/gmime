@@ -26,6 +26,8 @@
 #include "gmime-filter-smtp-data.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-smtp-data
  * @title: GMimeFilterSmtpData
@@ -36,7 +38,7 @@
 
 
 static void g_mime_filter_smtp_data_class_init (GMimeFilterSmtpDataClass *klass);
-static void g_mime_filter_smtp_data_init (GMimeFilterSmtpData *filter, GMimeFilterSmtpDataClass *klass);
+static void g_mime_filter_smtp_data_init (GMimeFilterSmtpData *filter);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
 static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
@@ -47,28 +49,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_smtp_data_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterSmtpData, g_mime_filter_smtp_data, GMIME_TYPE_FILTER)
+
+GMimeFilterSmtpDataPrivate *
+_g_mime_filter_smtp_data_get_private (GMimeFilterSmtpData *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterSmtpDataClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_smtp_data_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterSmtpData),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_smtp_data_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterSmtpData", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_smtp_data_get_instance_private (object);
 }
 
 
@@ -86,9 +73,11 @@ g_mime_filter_smtp_data_class_init (GMimeFilterSmtpDataClass *klass)
 }
 
 static void
-g_mime_filter_smtp_data_init (GMimeFilterSmtpData *filter, GMimeFilterSmtpDataClass *klass)
+g_mime_filter_smtp_data_init (GMimeFilterSmtpData *filter)
 {
-	filter->bol = TRUE;
+	GMimeFilterSmtpDataPrivate *priv = _g_mime_filter_smtp_data_get_private (filter);
+
+	priv->bol = TRUE;
 }
 
 
@@ -102,7 +91,8 @@ static void
 filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterSmtpData *smtp = (GMimeFilterSmtpData *) filter;
+	GMimeFilterSmtpDataPrivate *smtp = _g_mime_filter_smtp_data_get_private ((GMimeFilterSmtpData *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	register const char *inptr = inbuf;
 	const char *inend = inbuf + inlen;
 	gboolean escape = smtp->bol;
@@ -121,8 +111,8 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	}
 	
 	g_mime_filter_set_size (filter, inlen + ndots, FALSE);
-	
-	outptr = filter->outbuf;
+
+	outptr = priv->outbuf;
 	inptr = inbuf;
 	
 	while (inptr < inend) {
@@ -136,17 +126,17 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		*outptr++ = *inptr++;
 	}
 	
-	*outlen = outptr - filter->outbuf;
-	*outprespace = filter->outpre;
-	*outbuf = filter->outbuf;
+	*outlen = outptr - priv->outbuf;
+	*outprespace = priv->outpre;
+	*outbuf = priv->outbuf;
 }
 
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterSmtpData *smtp = (GMimeFilterSmtpData *) filter;
-	
-	smtp->bol = TRUE;
+	GMimeFilterSmtpDataPrivate *priv = _g_mime_filter_smtp_data_get_private ((GMimeFilterSmtpData *) filter);
+
+	priv->bol = TRUE;
 }
 
 

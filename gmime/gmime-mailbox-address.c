@@ -31,6 +31,8 @@
 #include "gmime-parse-utils.h"
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-mailbox-address
  * @title: GMimeMailboxAddress
@@ -43,7 +45,7 @@
 
 
 static void g_mime_mailbox_address_class_init (GMimeMailboxAddressClass *klass);
-static void g_mime_mailbox_address_init (GMimeMailboxAddress *mailbox, GMimeMailboxAddressClass *klass);
+static void g_mime_mailbox_address_init (GMimeMailboxAddress *mailbox);
 static void g_mime_mailbox_address_finalize (GObject *object);
 
 static void mailbox_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint32 flags,
@@ -55,28 +57,13 @@ static gboolean mailbox_equal (GMimeInternetAddress *ia, GMimeInternetAddress *o
 static GObjectClass *mailbox_parent_class = NULL;
 
 
-GType
-g_mime_mailbox_address_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeMailboxAddress, g_mime_mailbox_address, GMIME_TYPE_INTERNET_ADDRESS)
+
+GMimeMailboxAddressPrivate *
+_g_mime_mailbox_address_get_private (GMimeMailboxAddress *object)
 {
-	static GType type = 0;
-
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeMailboxAddressClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_mailbox_address_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeMailboxAddress),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_mailbox_address_init,
-		};
-
-		type = g_type_register_static (GMIME_TYPE_INTERNET_ADDRESS, "GMimeMailboxAddress", &info, 0);
-	}
-
-	return type;
+	return g_mime_mailbox_address_get_instance_private (object);
 }
 
 
@@ -98,26 +85,32 @@ g_mime_mailbox_address_class_init (GMimeMailboxAddressClass *klass)
 static void
 route_changed (GMimeDomainList *route, gpointer args, GMimeMailboxAddress *mailbox)
 {
-	g_mime_event_emit (mailbox->parent_object.changed, NULL);
+	GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (&mailbox->parent_instance);
+
+	g_mime_event_emit (priv->changed, NULL);
 }
 
 static void
-g_mime_mailbox_address_init (GMimeMailboxAddress *mailbox, GMimeMailboxAddressClass *klass)
+g_mime_mailbox_address_init (GMimeMailboxAddress *mailbox)
 {
-	mailbox->addrspec = g_strdup ("");
-	mailbox->at = -1;
-	mailbox->route = g_mime_domain_list_new ();
-	g_mime_event_add (mailbox->route->changed, (GMimeEventCallback) route_changed, mailbox);
+	GMimeMailboxAddressPrivate *priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	priv->addrspec = g_strdup ("");
+	priv->at = -1;
+	priv->route = g_mime_domain_list_new ();
+
+	g_mime_event_add (priv->route->changed, (GMimeEventCallback) route_changed, mailbox);
 }
 
 static void
 g_mime_mailbox_address_finalize (GObject *object)
 {
 	GMimeMailboxAddress *mailbox = (GMimeMailboxAddress *) object;
+	GMimeMailboxAddressPrivate *priv = _g_mime_mailbox_address_get_private (mailbox);
 
-	g_free (mailbox->addrspec);
-	g_mime_event_remove (mailbox->route->changed, (GMimeEventCallback) route_changed, mailbox);
-	g_object_unref (mailbox->route);
+	g_free (priv->addrspec);
+	g_mime_event_remove (priv->route->changed, (GMimeEventCallback) route_changed, mailbox);
+	g_object_unref (priv->route);
 
 	G_OBJECT_CLASS (mailbox_parent_class)->finalize (object);
 }
@@ -125,17 +118,20 @@ g_mime_mailbox_address_finalize (GObject *object)
 GMimeInternetAddress *
 _g_mime_mailbox_address_new (const char *name, const char *addr, int at, GMimeDomainList *route)
 {
+	GMimeMailboxAddressPrivate *priv;
 	GMimeMailboxAddress *mailbox;
 
 	mailbox = g_object_new (GMIME_TYPE_MAILBOX_ADDRESS, NULL);
-	g_free (mailbox->addrspec);
-	mailbox->addrspec = g_strdup (addr);
-	mailbox->at = at;
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	g_free (priv->addrspec);
+	priv->addrspec = g_strdup (addr);
+	priv->at = at;
 
 	if (route) {
-		g_mime_event_remove (mailbox->route->changed, (GMimeEventCallback) route_changed, mailbox);
-		g_object_unref (mailbox->route);
-		mailbox->route = g_object_ref (route);
+		g_mime_event_remove (priv->route->changed, (GMimeEventCallback) route_changed, mailbox);
+		g_object_unref (priv->route);
+		priv->route = g_object_ref (route);
 		g_mime_event_add (route->changed, (GMimeEventCallback) route_changed, mailbox);
 	}
 
@@ -147,12 +143,17 @@ _g_mime_mailbox_address_new (const char *name, const char *addr, int at, GMimeDo
 static GMimeInternetAddress *
 mailbox_clone (GMimeInternetAddress *ia)
 {
+	GMimeInternetAddressPrivate *ia_priv = _g_mime_internet_address_get_private (ia);
 	GMimeMailboxAddress *mailbox = GMIME_MAILBOX_ADDRESS (ia);
-	GMimeDomainList *route = g_mime_domain_list_clone (mailbox->route);
+	GMimeMailboxAddressPrivate *mailbox_priv = _g_mime_mailbox_address_get_private (mailbox);
+	GMimeDomainList *route = g_mime_domain_list_clone (mailbox_priv->route);
+	GMimeInternetAddressPrivate *clone_priv;
 	GMimeInternetAddress *clone;
 
-	clone = _g_mime_mailbox_address_new (ia->name, mailbox->addrspec, mailbox->at, route);
-	clone->charset = g_strdup (ia->charset);
+	clone = _g_mime_mailbox_address_new (ia_priv->name, mailbox_priv->addrspec, mailbox_priv->at, route);
+	clone_priv = _g_mime_internet_address_get_private (clone);
+
+	clone_priv->charset = g_strdup (ia_priv->charset);
 	g_object_unref (route);
 
 	return clone;
@@ -161,8 +162,17 @@ mailbox_clone (GMimeInternetAddress *ia)
 static gboolean
 mailbox_equal (GMimeInternetAddress *ia, GMimeInternetAddress *other)
 {
-	return GMIME_IS_MAILBOX_ADDRESS (other) && !g_strcmp0 (ia->name, other->name) &&
-		!strcmp (GMIME_MAILBOX_ADDRESS (ia)->addrspec, GMIME_MAILBOX_ADDRESS (other)->addrspec);
+	GMimeInternetAddressPrivate *other_priv = _g_mime_internet_address_get_private (other);
+	GMimeInternetAddressPrivate *ia_priv = _g_mime_internet_address_get_private (ia);
+	GMimeMailboxAddressPrivate *mailbox_priv, *other_mailbox_priv;
+
+	if (!GMIME_IS_MAILBOX_ADDRESS (other) || g_strcmp0 (ia_priv->name, other_priv->name))
+		return FALSE;
+
+	mailbox_priv = _g_mime_mailbox_address_get_private (GMIME_MAILBOX_ADDRESS (ia));
+	other_mailbox_priv = _g_mime_mailbox_address_get_private (GMIME_MAILBOX_ADDRESS (other));
+
+	return !strcmp (mailbox_priv->addrspec, other_mailbox_priv->addrspec);
 }
 
 static gboolean
@@ -243,6 +253,8 @@ g_mime_mailbox_address_new (const char *name, const char *addr, GError **error)
 gboolean
 g_mime_mailbox_address_set_addrspec (GMimeMailboxAddress *mailbox, const char *addr, GError **error)
 {
+	GMimeMailboxAddressPrivate *mailbox_priv;
+	GMimeInternetAddressPrivate *ia_priv;
 	char *parsed;
 	int at;
 
@@ -250,18 +262,22 @@ g_mime_mailbox_address_set_addrspec (GMimeMailboxAddress *mailbox, const char *a
 	g_return_val_if_fail (addr != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	if (!strcmp (mailbox->addrspec, addr))
+	mailbox_priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	if (!strcmp (mailbox_priv->addrspec, addr))
 		return TRUE;
 
 	if (!parse_mailbox_addr (addr, &parsed, &at, error))
 		return FALSE;
 
-	g_free (mailbox->addrspec);
+	g_free (mailbox_priv->addrspec);
 
-	mailbox->addrspec = parsed;
-	mailbox->at = at;
+	mailbox_priv->addrspec = parsed;
+	mailbox_priv->at = at;
 
-	g_mime_event_emit (((GMimeInternetAddress *) mailbox)->changed, NULL);
+	ia_priv = _g_mime_internet_address_get_private ((GMimeInternetAddress *) mailbox);
+
+	g_mime_event_emit (ia_priv->changed, NULL);
 
 	return TRUE;
 }
@@ -279,9 +295,13 @@ g_mime_mailbox_address_set_addrspec (GMimeMailboxAddress *mailbox, const char *a
 const char *
 g_mime_mailbox_address_get_addrspec (GMimeMailboxAddress *mailbox)
 {
+	GMimeMailboxAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MAILBOX_ADDRESS (mailbox), NULL);
 
-	return mailbox->addrspec;
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	return priv->addrspec;
 }
 
 
@@ -294,9 +314,13 @@ g_mime_mailbox_address_get_addrspec (GMimeMailboxAddress *mailbox)
 char *
 g_mime_mailbox_address_get_local_part (GMimeMailboxAddress *mailbox)
 {
+	GMimeMailboxAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MAILBOX_ADDRESS (mailbox), NULL);
 
-	return mailbox->at < 0 ? g_strdup (mailbox->addrspec) : g_strndup (mailbox->addrspec, mailbox->at);
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	return priv->at < 0 ? g_strdup (priv->addrspec) : g_strndup (priv->addrspec, priv->at);
 }
 
 /**
@@ -311,9 +335,13 @@ g_mime_mailbox_address_get_local_part (GMimeMailboxAddress *mailbox)
 const char *
 g_mime_mailbox_address_get_raw_domain (GMimeMailboxAddress *mailbox)
 {
+	GMimeMailboxAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MAILBOX_ADDRESS (mailbox), NULL);
 
-	return mailbox->at < 0 ? "" : mailbox->addrspec + mailbox->at + 1;
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	return priv->at < 0 ? "" : priv->addrspec + priv->at + 1;
 }
 
 /**
@@ -352,15 +380,18 @@ g_mime_mailbox_address_get_domain (GMimeMailboxAddress *mailbox, gboolean idn_en
 char *
 g_mime_mailbox_address_get_address (GMimeMailboxAddress *mailbox, gboolean idn_encode)
 {
+	GMimeMailboxAddressPrivate *priv;
 	char *domain, *local, *address;
 
 	g_return_val_if_fail (GMIME_IS_MAILBOX_ADDRESS (mailbox), NULL);
 
-	if (mailbox->at < 0)
-		return g_strdup (mailbox->addrspec);
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	if (priv->at < 0)
+		return g_strdup (priv->addrspec);
 
 	domain = g_mime_mailbox_address_get_domain (mailbox, idn_encode);
-	local = g_strndup (mailbox->addrspec, mailbox->at + 1);
+	local = g_strndup (priv->addrspec, priv->at + 1);
 	address = g_strconcat (local, domain, NULL);
 
 	g_free (local);
@@ -372,18 +403,21 @@ g_mime_mailbox_address_get_address (GMimeMailboxAddress *mailbox, gboolean idn_e
 char *
 _g_mime_mailbox_address_get_hashable_addrspec (GMimeMailboxAddress *mailbox)
 {
+	GMimeMailboxAddressPrivate *priv;
 	char *encoded, *domain, *local, *address;
 
 	g_return_val_if_fail (GMIME_IS_MAILBOX_ADDRESS (mailbox), NULL);
 
-	if (mailbox->at < 0)
-		return g_strdup (mailbox->addrspec);
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	if (priv->at < 0)
+		return g_strdup (priv->addrspec);
 
 	encoded = g_mime_mailbox_address_get_domain (mailbox, TRUE);
 	domain = g_ascii_strdown (encoded, -1);
 	g_free (encoded);
 
-	local = g_strndup (mailbox->addrspec, mailbox->at + 1);
+	local = g_strndup (priv->addrspec, priv->at + 1);
 	address = g_strconcat (local, domain, NULL);
 
 	g_free (local);
@@ -401,9 +435,13 @@ _g_mime_mailbox_address_get_hashable_addrspec (GMimeMailboxAddress *mailbox)
 GMimeDomainList *
 g_mime_mailbox_address_get_route (GMimeMailboxAddress *mailbox)
 {
+	GMimeMailboxAddressPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_MAILBOX_ADDRESS (mailbox), NULL);
 
-	return mailbox->route;
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	return priv->route;
 }
 
 /**
@@ -415,16 +453,21 @@ g_mime_mailbox_address_get_route (GMimeMailboxAddress *mailbox)
 gboolean
 g_mime_mailbox_address_is_international (GMimeMailboxAddress *mailbox)
 {
+	GMimeMailboxAddressPrivate *priv;
 	guint i;
 
 	g_return_val_if_fail (GMIME_IS_MAILBOX_ADDRESS (mailbox), FALSE);
 
-	if (!*mailbox->addrspec)
+	priv = _g_mime_mailbox_address_get_private (mailbox);
+
+	if (!*priv->addrspec)
 		return FALSE;
-	if (g_hostname_is_non_ascii (mailbox->addrspec))
+
+	if (g_hostname_is_non_ascii (priv->addrspec))
 		return TRUE;
-	for (i = 0; i < mailbox->route->array->len; i++) {
-		if (g_hostname_is_non_ascii (mailbox->route->array->pdata[i]))
+
+	for (i = 0; i < priv->route->array->len; i++) {
+		if (g_hostname_is_non_ascii (priv->route->array->pdata[i]))
 			return TRUE;
 	}
 
@@ -442,6 +485,7 @@ convert_addrspec (const char *addr, gboolean encode)
 
 	if (!*addr || !_g_mime_internet_address_parse_addrspec (&inptr, "", GMIME_RFC_COMPLIANCE_LOOSER, &parsed, &at))
 		return g_strdup (addr);
+
 	if (at < 0)
 		return parsed;
 
@@ -449,6 +493,7 @@ convert_addrspec (const char *addr, gboolean encode)
 		_g_mime_internet_address_decode_domain (parsed + at + 1);
 	local = g_strndup (parsed, at + 1);
 	converted = g_strconcat (local, ascii, NULL);
+
 	g_free (parsed);
 	g_free (ascii);
 	g_free (local);
@@ -506,20 +551,24 @@ g_mime_mailbox_address_parse (GMimeParserOptions *options, const char *str, gssi
 static void
 mailbox_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint32 flags, size_t *linelen, GString *str)
 {
+	GMimeMailboxAddressPrivate *priv = _g_mime_mailbox_address_get_private ((GMimeMailboxAddress *) ia);
+	GMimeInternetAddressPrivate *ia_priv = _g_mime_internet_address_get_private (ia);
+	guint maxlen = g_mime_format_options_get_max_line_length (options);
 	GMimeMailboxAddress *mailbox = (GMimeMailboxAddress *) ia;
 	gboolean encode = flags & GMIME_INTERNET_ADDRESS_ENCODE;
 	gboolean fold = flags & GMIME_INTERNET_ADDRESS_FOLD;
-	guint maxlen = g_mime_format_options_get_max_line_length (options);
-	const char *newline, *addr;
 	char *name, *route, *encoded_addr = NULL;
+	const char *newline, *addr;
 	size_t len, columns;
 
 	newline = g_mime_format_options_get_newline (options);
 
 	if (encode && !g_mime_format_options_get_allow_international (options))
 		encoded_addr = g_mime_mailbox_address_get_address (mailbox, TRUE);
-	addr = encoded_addr ? encoded_addr : mailbox->addrspec;
-	route = g_mime_domain_list_to_string (mailbox->route, options, encode);
+
+	addr = encoded_addr ? encoded_addr : priv->addrspec;
+	route = g_mime_domain_list_to_string (priv->route, options, encode);
+
 	if (*route) {
 		char *routed = g_strconcat (route, ":", addr, NULL);
 
@@ -528,8 +577,8 @@ mailbox_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint3
 		addr = route;
 	}
 
-	if (ia->name && *ia->name) {
-		name = _g_mime_internet_address_encode_name (options, ia->name, encode, ia->charset);
+	if (ia_priv->name && *ia_priv->name) {
+		name = _g_mime_internet_address_encode_name (options, ia_priv->name, encode, ia_priv->charset);
 		_g_mime_internet_address_append_name (str, linelen, name, options, flags);
 		g_free (name);
 
@@ -551,7 +600,7 @@ mailbox_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint3
 	} else {
 		/* Bare domainless addr-specs require a parser option, but angle-addrs
 		 * without a domain are always parseable. */
-		gboolean angle = *route || (encode && mailbox->at < 0 && *addr);
+		gboolean angle = *route || (encode && priv->at < 0 && *addr);
 
 		len = strlen (addr);
 		columns = _g_mime_internet_address_text_length (addr, len, options);
@@ -563,16 +612,21 @@ mailbox_to_string (GMimeInternetAddress *ia, GMimeFormatOptions *options, guint3
 			} else {
 				_g_mime_internet_address_linewrap (str, newline);
 			}
+
 			*linelen = 1;
 		}
 
 		if (angle)
 			g_string_append_c (str, '<');
+
 		g_string_append_len (str, addr, len);
+
 		if (angle)
 			g_string_append_c (str, '>');
+
 		*linelen += columns + (angle ? 2 : 0);
 	}
+
 	g_free (route);
 	g_free (encoded_addr);
 }

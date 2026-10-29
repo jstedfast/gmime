@@ -47,6 +47,8 @@
 #define d(x)
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-content-type
  * @title: GMimeContentType
@@ -59,7 +61,7 @@
 
 
 static void g_mime_content_type_class_init (GMimeContentTypeClass *klass);
-static void g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass);
+static void g_mime_content_type_init (GMimeContentType *content_type);
 static void g_mime_content_type_finalize (GObject *object);
 
 static void param_list_changed (GMimeParamList *list, gpointer args, GMimeContentType *content_type);
@@ -68,29 +70,7 @@ static void param_list_changed (GMimeParamList *list, gpointer args, GMimeConten
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_content_type_get_type (void)
-{
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeContentTypeClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_content_type_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeContentType),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_content_type_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeContentType", &info, 0);
-	}
-	
-	return type;
-}
+G_DEFINE_FINAL_TYPE (GMimeContentType, g_mime_content_type, G_TYPE_OBJECT)
 
 
 static void
@@ -104,7 +84,7 @@ g_mime_content_type_class_init (GMimeContentTypeClass *klass)
 }
 
 static void
-g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass)
+g_mime_content_type_init (GMimeContentType *content_type)
 {
 	content_type->changed = g_mime_event_new ((GObject *) content_type);
 	content_type->params = g_mime_param_list_new ();

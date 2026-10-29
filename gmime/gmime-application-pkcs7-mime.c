@@ -38,6 +38,8 @@
 
 #define _(x) x
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-application-pkcs7-mime
  * @title: GMimeApplicationPkcs7Mime
@@ -49,7 +51,7 @@
 
 /* GObject class methods */
 static void g_mime_application_pkcs7_mime_class_init (GMimeApplicationPkcs7MimeClass *klass);
-static void g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *catpart, GMimeApplicationPkcs7MimeClass *klass);
+static void g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *catpart);
 static void g_mime_application_pkcs7_mime_finalize (GObject *object);
 
 /* GMimeEntity class methods */
@@ -59,28 +61,13 @@ static void application_pkcs7_mime_set_content_type (GMimeEntity *object, GMimeC
 static GMimePartClass *parent_class = NULL;
 
 
-GType
-g_mime_application_pkcs7_mime_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeApplicationPkcs7Mime, g_mime_application_pkcs7_mime, GMIME_TYPE_PART)
+
+GMimeApplicationPkcs7MimePrivate *
+_g_mime_application_pkcs7_mime_get_private (GMimeApplicationPkcs7Mime *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeApplicationPkcs7MimeClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_application_pkcs7_mime_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeApplicationPkcs7Mime),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_application_pkcs7_mime_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_PART, "GMimeApplicationPkcs7Mime", &info, 0);
-	}
-	
-	return type;
+	return g_mime_application_pkcs7_mime_get_instance_private (object);
 }
 
 
@@ -98,9 +85,11 @@ g_mime_application_pkcs7_mime_class_init (GMimeApplicationPkcs7MimeClass *klass)
 }
 
 static void
-g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeApplicationPkcs7MimeClass *klass)
+g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *pkcs7_mime)
 {
-	pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
+	GMimeApplicationPkcs7MimePrivate *priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	priv->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
 }
 
 static void
@@ -115,22 +104,23 @@ application_pkcs7_mime_set_content_type (GMimeEntity *object, GMimeContentType *
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime = (GMimeApplicationPkcs7Mime *) object;
 	const char *value;
-	
+	GMimeApplicationPkcs7MimePrivate *priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
 	if ((value = g_mime_content_type_get_parameter (content_type, "smime-type")) != NULL) {
 		if (!g_ascii_strcasecmp (value, "compressed-data"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA;
 		else if (!g_ascii_strcasecmp (value, "enveloped-data"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA;
 		else if (!g_ascii_strcasecmp (value, "authEnveloped-data"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA;
 		else if (!g_ascii_strcasecmp (value, "signed-data"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_SIGNED_DATA;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_SIGNED_DATA;
 		else if (!g_ascii_strcasecmp (value, "certs-only"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_CERTS_ONLY;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_CERTS_ONLY;
 		else
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
 	} else {
-		pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
+		priv->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
 	}
 	
 	GMIME_ENTITY_CLASS (parent_class)->set_content_type (object, content_type);
@@ -203,9 +193,13 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 GMimeSecureMimeType
 g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_mime)
 {
+	GMimeApplicationPkcs7MimePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), GMIME_SECURE_MIME_TYPE_UNKNOWN);
 	
-	return pkcs7_mime->smime_type;
+	priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	return priv->smime_type;
 }
 
 
@@ -728,23 +722,26 @@ g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err)
 GMimeEntity *
 g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime, size_t max_size, GError **err)
 {
+	static const unsigned char zero = 0;
+	GMimeApplicationPkcs7MimePrivate *priv;
 	GMimeStream *filtered, *compressed, *stream;
+	gboolean at_end, finished = FALSE, valid;
+	CompressedDataReader reader = { 0 };
 	GMimeEntity *decompressed = NULL;
+	z_stream zstream = { 0 };
 	GMimeContent *content;
 	GMimeFilter *filter;
-	CompressedDataReader reader = { 0 };
-	z_stream zstream = { 0 };
-	static const unsigned char zero = 0;
-	gboolean at_end, finished = FALSE, valid;
+	unsigned char byte;
 	size_t total = 0;
 	ssize_t nread;
-	unsigned char byte;
 
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
 	g_return_val_if_fail (max_size > 0, NULL);
 
-	if (pkcs7_mime->smime_type != GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA &&
-	    pkcs7_mime->smime_type != GMIME_SECURE_MIME_TYPE_UNKNOWN) {
+	priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	if (priv->smime_type != GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA &&
+	    priv->smime_type != GMIME_SECURE_MIME_TYPE_UNKNOWN) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
 				     _("The S/MIME part does not contain compressed data."));
 		return NULL;

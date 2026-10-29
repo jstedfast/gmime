@@ -28,14 +28,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART_ENCRYPTED            (g_mime_multipart_encrypted_get_type ())
-#define GMIME_MULTIPART_ENCRYPTED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncrypted))
-#define GMIME_MULTIPART_ENCRYPTED_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
-#define GMIME_IS_MULTIPART_ENCRYPTED(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED))
-#define GMIME_IS_MULTIPART_ENCRYPTED_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED))
-#define GMIME_MULTIPART_ENCRYPTED_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
 
-typedef struct _GMimeMultipartEncrypted GMimeMultipartEncrypted;
-typedef struct _GMimeMultipartEncryptedClass GMimeMultipartEncryptedClass;
 
 enum {
 	GMIME_MULTIPART_ENCRYPTED_VERSION,
@@ -45,22 +38,18 @@ enum {
 
 /**
  * GMimeMultipartEncrypted:
- * @parent_object: parent #GMimeMultipart
  *
  * A multipart/encrypted MIME part.
  **/
-struct _GMimeMultipartEncrypted {
-	GMimeMultipart parent_object;
-	
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMultipartEncrypted, g_mime_multipart_encrypted, GMIME, MULTIPART_ENCRYPTED, GMimeMultipart)
 
 struct _GMimeMultipartEncryptedClass {
 	GMimeMultipartClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_multipart_encrypted_get_type (void);
 
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
 

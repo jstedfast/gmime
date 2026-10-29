@@ -49,6 +49,9 @@ struct _GMimeDecoderInterface {
 	gsize (*decode) (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
 			 guint8 *output, gsize output_capacity);
 	void (*reset) (GMimeDecoder *decoder);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
 GMimeContentEncoding g_mime_decoder_get_encoding (GMimeDecoder *decoder);

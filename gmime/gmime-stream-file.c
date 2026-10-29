@@ -35,6 +35,7 @@
 #include "gmime-stream-file.h"
 #include "gmime-error.h"
 
+#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-stream-file
@@ -59,7 +60,7 @@
 
 
 static void g_mime_stream_file_class_init (GMimeStreamFileClass *klass);
-static void g_mime_stream_file_init (GMimeStreamFile *stream, GMimeStreamFileClass *klass);
+static void g_mime_stream_file_init (GMimeStreamFile *stream);
 static void g_mime_stream_file_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -73,32 +74,14 @@ static gint64 stream_tell (GMimeStream *stream);
 static gint64 stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
-
 static GMimeStreamClass *parent_class = NULL;
 
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeStreamFile, g_mime_stream_file, GMIME_TYPE_STREAM)
 
-GType
-g_mime_stream_file_get_type (void)
+GMimeStreamFilePrivate *
+_g_mime_stream_file_get_private (GMimeStreamFile *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeStreamFileClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_stream_file_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeStreamFile),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_stream_file_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_STREAM, "GMimeStreamFile", &info, 0);
-	}
-	
-	return type;
+	return g_mime_stream_file_get_instance_private (object);
 }
 
 
@@ -125,11 +108,13 @@ g_mime_stream_file_class_init (GMimeStreamFileClass *klass)
 }
 
 static void
-g_mime_stream_file_init (GMimeStreamFile *stream, GMimeStreamFileClass *klass)
+g_mime_stream_file_init (GMimeStreamFile *stream)
 {
-	stream->owner = TRUE;
-	stream->fp = NULL;
-	stream->cached_eos = FALSE;
+	GMimeStreamFilePrivate *priv = _g_mime_stream_file_get_private (stream);
+
+	priv->owner = TRUE;
+	priv->fp = NULL;
+	priv->cached_eos = FALSE;
 }
 
 static void
@@ -146,15 +131,20 @@ g_mime_stream_file_finalize (GObject *object)
 static gboolean
 check_open (GMimeStream *stream)
 {
-	if (GMIME_STREAM_FILE (stream)->fp == NULL) {
+	GMimeStreamFilePrivate *priv = _g_mime_stream_file_get_private (GMIME_STREAM_FILE (stream));
+	GMimeStreamPrivate *stream_priv;
+
+	if (priv->fp == NULL) {
 		errno = EBADF;
 		return FALSE;
 	}
 
-	if (stream->bound_start < 0 || stream->bound_end < -1 ||
-	    (stream->bound_end != -1 && stream->bound_end < stream->bound_start) ||
-	    stream->position < stream->bound_start ||
-	    (stream->bound_end != -1 && stream->position > stream->bound_end)) {
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->bound_start < 0 || stream_priv->bound_end < -1 ||
+	    (stream_priv->bound_end != -1 && stream_priv->bound_end < stream_priv->bound_start) ||
+	    stream_priv->position < stream_priv->bound_start ||
+	    (stream_priv->bound_end != -1 && stream_priv->position > stream_priv->bound_end)) {
 		errno = EINVAL;
 		return FALSE;
 	}
@@ -176,6 +166,8 @@ stdio_error (void)
 static int
 seek_file (GMimeStreamFile *fstream, gint64 offset, int whence)
 {
+	GMimeStreamFilePrivate *priv;
+
 	/* fseek takes long, which may be narrower than our logical position. */
 	if ((gint64) (long) offset != offset) {
 		errno = EOVERFLOW;
@@ -184,7 +176,9 @@ seek_file (GMimeStreamFile *fstream, gint64 offset, int whence)
 
 	errno = 0;
 	/* Any nonzero fseek result is a failure, not just -1. */
-	if (fseek (fstream->fp, (long) offset, whence) != 0)
+	priv = _g_mime_stream_file_get_private (fstream);
+
+	if (fseek (priv->fp, (long) offset, whence) != 0)
 		return stdio_error ();
 
 	return 0;
@@ -193,7 +187,9 @@ seek_file (GMimeStreamFile *fstream, gint64 offset, int whence)
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamFilePrivate *priv;
 	size_t nread;
 	
 	if (!check_open (stream))
@@ -205,37 +201,41 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	}
 	
 	/* A finite end is EOF without moving the FILE pointer for a sibling. */
-	if (stream->bound_end != -1 && stream->position == stream->bound_end) {
-		fstream->cached_eos = TRUE;
+	stream_priv = _g_mime_stream_get_private (stream);
+	priv = _g_mime_stream_file_get_private (file);
+
+	if (stream_priv->bound_end != -1 && stream_priv->position == stream_priv->bound_end) {
+		priv->cached_eos = TRUE;
 		return 0;
 	}
 	
-	if (stream->bound_end != -1)
-		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
+	if (stream_priv->bound_end != -1)
+		len = (size_t) MIN (stream_priv->bound_end - stream_priv->position, (gint64) len);
 	
-	if (len > (guint64) (G_MAXINT64 - stream->position)) {
+	if (len > (guint64) (G_MAXINT64 - stream_priv->position)) {
 		errno = EOVERFLOW;
 		return -1;
 	}
 
 	/* Do not short-circuit local EOF: the file may have grown since then. */
-	if (seek_file (fstream, stream->position, SEEK_SET) == -1)
+	if (seek_file (file, stream_priv->position, SEEK_SET) == -1)
 		return -1;
 	
 	/* The shared FILE's indicators belong to its previous operation, which
 	 * may have been performed by another view. Observe this attempt alone. */
-	clearerr (fstream->fp);
+	clearerr (priv->fp);
 	errno = 0;
-	nread = fread (buf, 1, len, fstream->fp);
-	if (nread > 0)
-		stream->position += nread;
 
-	if (ferror (fstream->fp)) {
+	nread = fread (buf, 1, len, priv->fp);
+	if (nread > 0)
+		stream_priv->position += nread;
+
+	if (ferror (priv->fp)) {
 		stdio_error ();
 		if (nread == 0)
 			return -1;
 	} else if (nread == 0) {
-		fstream->cached_eos = TRUE;
+		priv->cached_eos = TRUE;
 	}
 	
 	return (ssize_t) nread;
@@ -244,7 +244,9 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamFilePrivate *priv;
 	size_t nwritten;
 	
 	if (!check_open (stream))
@@ -255,30 +257,35 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		return -1;
 	}
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->bound_end != -1 && stream_priv->position >= stream_priv->bound_end) {
 		errno = EINVAL;
 		return -1;
 	}
 	
-	if (stream->bound_end != -1)
-		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
+	if (stream_priv->bound_end != -1)
+		len = (size_t) MIN (stream_priv->bound_end - stream_priv->position, (gint64) len);
 	
 	/* Clip first so a fitting native partial write need not overflow. */
-	if (len > (guint64) (G_MAXINT64 - stream->position)) {
+	if (len > (guint64) (G_MAXINT64 - stream_priv->position)) {
 		errno = EOVERFLOW;
 		return -1;
 	}
 
-	if (seek_file (fstream, stream->position, SEEK_SET) == -1)
+	if (seek_file (file, stream_priv->position, SEEK_SET) == -1)
 		return -1;
 
-	clearerr (fstream->fp);
-	errno = 0;
-	nwritten = fwrite (buf, 1, len, fstream->fp);
-	if (nwritten > 0)
-		stream->position += nwritten;
+	priv = _g_mime_stream_file_get_private (file);
 
-	if (ferror (fstream->fp)) {
+	clearerr (priv->fp);
+	errno = 0;
+
+	nwritten = fwrite (buf, 1, len, priv->fp);
+	if (nwritten > 0)
+		stream_priv->position += nwritten;
+
+	if (ferror (priv->fp)) {
 		stdio_error ();
 		if (nwritten == 0)
 			return -1;
@@ -290,29 +297,34 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 static int
 stream_flush (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamFilePrivate *priv;
 	
 	if (!check_open (stream))
 		return -1;
 	
 	errno = 0;
-	return fflush (fstream->fp) == 0 ? 0 : stdio_error ();
+	priv = _g_mime_stream_file_get_private (file);
+
+	return fflush (priv->fp) == 0 ? 0 : stdio_error ();
 }
 
 static int
 stream_close (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamFilePrivate *priv = _g_mime_stream_file_get_private (file);
 	FILE *fp;
-	
-	if (fstream->fp == NULL)
+
+	if (priv->fp == NULL)
 		return 0;
 	
 	/* fclose invalidates the FILE even on failure. Detach before calling
 	 * it so a later close or finalizer cannot use the released pointer. */
-	fp = fstream->fp;
-	fstream->fp = NULL;
-	if (!fstream->owner)
+	fp = priv->fp;
+	priv->fp = NULL;
+
+	if (!priv->owner)
 		return 0;
 	
 	errno = 0;
@@ -322,27 +334,34 @@ stream_close (GMimeStream *stream)
 static gboolean
 stream_eos (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	
-	if (fstream->fp == NULL)
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamFilePrivate *priv = _g_mime_stream_file_get_private (file);
+
+	if (priv->fp == NULL)
 		return TRUE;
 	
-	return fstream->cached_eos;
+	return priv->cached_eos;
 }
 
 static int
 stream_reset (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamFilePrivate *priv;
 	
 	if (!check_open (stream))
 		return -1;
 	
-	if (stream->position != stream->bound_start &&
-	    seek_file (fstream, stream->bound_start, SEEK_SET) == -1)
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->position != stream_priv->bound_start &&
+	    seek_file (file, stream_priv->bound_start, SEEK_SET) == -1)
 		return -1;
 
-	fstream->cached_eos = FALSE;
+	priv = _g_mime_stream_file_get_private (file);
+
+	priv->cached_eos = FALSE;
 	
 	return 0;
 }
@@ -350,35 +369,42 @@ stream_reset (GMimeStream *stream)
 static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamFilePrivate *priv;
 	gint64 origin, real;
 	
 	if (!check_open (stream))
 		return -1;
 	
+	stream_priv = _g_mime_stream_get_private (stream);
+	priv = _g_mime_stream_file_get_private (file);
+
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
 		origin = 0;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		origin = stream->position;
+		origin = stream_priv->position;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		if (offset > 0 || (stream->bound_end == -1 && !fstream->cached_eos)) {
+		if (offset > 0 || (stream_priv->bound_end == -1 && !priv->cached_eos)) {
 			/* Query physical EOF before checked addition. Other views'
 			 * stdio operations must not change our cached seek origin. */
-			if (seek_file (fstream, 0, SEEK_END) == -1)
+			if (seek_file (file, 0, SEEK_END) == -1)
 				return -1;
+
 			errno = 0;
-			if ((origin = ftell (fstream->fp)) == -1)
+
+			if ((origin = ftell (priv->fp)) == -1)
 				return stdio_error ();
-		} else if (stream->bound_end == -1) {
+		} else if (stream_priv->bound_end == -1) {
 			/* seeking backwards from eos (which happens
 			 * to be our current position) */
-			origin = stream->position;
+			origin = stream_priv->position;
 		} else {
 			/* seeking backwards from a known position */
-			origin = stream->bound_end;
+			origin = stream_priv->bound_end;
 		}
 		break;
 	default:
@@ -391,31 +417,32 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		errno = EOVERFLOW;
 		return -1;
 	}
+
 	real = origin + offset;
 	
 	/* sanity check the resultant offset */
-	if (real < stream->bound_start) {
+	if (real < stream_priv->bound_start) {
 		errno = EINVAL;
 		return -1;
 	}
 
 	/* Same-position seeks retain the view's observed EOF, like MimeKit. */
-	if (real == stream->position)
+	if (real == stream_priv->position)
 		return real;
 	
-	if (stream->bound_end != -1 && real > stream->bound_end) {
+	if (stream_priv->bound_end != -1 && real > stream_priv->bound_end) {
 		errno = EINVAL;
 		return -1;
 	}
 	
-	if (seek_file (fstream, real, SEEK_SET) == -1)
+	if (seek_file (file, real, SEEK_SET) == -1)
 		return -1;
 
-	if ((stream->bound_end != -1 && real < stream->bound_end) ||
-	    (fstream->cached_eos && real < stream->position))
-		fstream->cached_eos = FALSE;
+	if ((stream_priv->bound_end != -1 && real < stream_priv->bound_end) ||
+	    (priv->cached_eos && real < stream_priv->position))
+		priv->cached_eos = FALSE;
 	
-	stream->position = real;
+	stream_priv->position = real;
 	
 	return real;
 }
@@ -423,52 +450,68 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
+	GMimeStreamPrivate *priv;
+
 	if (!check_open (stream))
 		return -1;
 
-	return stream->position;
+	priv = _g_mime_stream_get_private (stream);
+
+	return priv->position;
 }
 
 static gint64
 stream_length (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFile *file = (GMimeStreamFile *) stream;
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamFilePrivate *priv;
 	gint64 bound_end;
 	
 	if (!check_open (stream))
 		return -1;
 	
-	if (stream->bound_end != -1)
-		return stream->bound_end - stream->bound_start;
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	if (stream_priv->bound_end != -1)
+		return stream_priv->bound_end - stream_priv->bound_start;
 	
-	if (seek_file (fstream, 0, SEEK_END) == -1)
+	if (seek_file (file, 0, SEEK_END) == -1)
 		return -1;
 	
 	errno = 0;
-	bound_end = ftell (fstream->fp);
+	priv = _g_mime_stream_file_get_private (file);
+
+	bound_end = ftell (priv->fp);
 	if (bound_end == -1)
 		return stdio_error ();
 	
-	if (seek_file (fstream, stream->position, SEEK_SET) == -1)
+	if (seek_file (file, stream_priv->position, SEEK_SET) == -1)
 		return -1;
 	
-	return MAX (0, bound_end - stream->bound_start);
+	return MAX (0, bound_end - stream_priv->bound_start);
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
-	GMimeStreamFile *fstream;
+	GMimeStreamFilePrivate *file_priv;
+	GMimeStreamFilePrivate *stream_priv;
+	GMimeStreamFile *file;
 
 	if (!check_open (stream))
 		return NULL;
 	
-	fstream = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
-	g_mime_stream_construct ((GMimeStream *) fstream, start, end);
-	fstream->fp = ((GMimeStreamFile *) stream)->fp;
-	fstream->owner = FALSE;
+	file = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
+	g_mime_stream_construct ((GMimeStream *) file, start, end);
+	file_priv = _g_mime_stream_file_get_private (file);
+
+	stream_priv = _g_mime_stream_file_get_private (((GMimeStreamFile *) stream));
+
+	file_priv->fp = stream_priv->fp;
+	file_priv->owner = FALSE;
 	
-	return (GMimeStream *) fstream;
+	return (GMimeStream *) file;
 }
 
 
@@ -518,7 +561,8 @@ g_mime_stream_file_new (FILE *fp)
 GMimeStream *
 g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
 {
-	GMimeStreamFile *fstream;
+	GMimeStreamFilePrivate *priv;
+	GMimeStreamFile *file;
 	
 	g_return_val_if_fail (fp != NULL, NULL);
 	
@@ -526,12 +570,14 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
 	_setmode (_fileno (fp), O_BINARY);
 #endif
 	
-	fstream = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
-	g_mime_stream_construct ((GMimeStream *) fstream, start, end);
-	fstream->owner = TRUE;
-	fstream->fp = fp;
+	file = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
+	g_mime_stream_construct ((GMimeStream *) file, start, end);
+	priv = _g_mime_stream_file_get_private (file);
+
+	priv->owner = TRUE;
+	priv->fp = fp;
 	
-	return (GMimeStream *) fstream;
+	return (GMimeStream *) file;
 }
 
 
@@ -575,9 +621,13 @@ g_mime_stream_file_open (const char *path, const char *mode, GError **err)
 gboolean
 g_mime_stream_file_get_owner (GMimeStreamFile *stream)
 {
+	GMimeStreamFilePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_STREAM_FILE (stream), FALSE);
 	
-	return stream->owner;
+	priv = _g_mime_stream_file_get_private (stream);
+
+	return priv->owner;
 }
 
 
@@ -594,7 +644,11 @@ g_mime_stream_file_get_owner (GMimeStreamFile *stream)
 void
 g_mime_stream_file_set_owner (GMimeStreamFile *stream, gboolean owner)
 {
+	GMimeStreamFilePrivate *priv;
+
 	g_return_if_fail (GMIME_IS_STREAM_FILE (stream));
 	
-	stream->owner = owner;
+	priv = _g_mime_stream_file_get_private (stream);
+
+	priv->owner = owner;
 }

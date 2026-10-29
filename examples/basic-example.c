@@ -222,7 +222,7 @@ add_a_mime_part (GMimeMessage *message)
 	g_object_unref (mime_part);
 	
 	/* now append the message's toplevel part to our multipart */
-	g_mime_multipart_add (multipart, message->mime_part);
+	g_mime_multipart_add (multipart, g_mime_message_get_mime_part (message));
 	
 	/* now replace the message's toplevel mime part with our new multipart */
 	g_mime_message_set_mime_part (message, (GMimeEntity *) multipart);
@@ -239,7 +239,7 @@ remove_a_mime_part (GMimeMessage *message)
 	   part of that multipart is our text part, lets remove the
 	   first part of the toplevel mime part... */
 	
-	multipart = (GMimeMultipart *) message->mime_part;
+	multipart = (GMimeMultipart *) g_mime_message_get_mime_part (message);
 	
 	/* subpart indexes start at 0 */
 	g_mime_multipart_remove_at (multipart, 0);

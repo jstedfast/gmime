@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include "gmime-object-private.h"
 #endif
 
 #include <errno.h>
@@ -147,7 +148,9 @@ writer_raw_boundary (GMimeWriter *writer, GMimeFormatOptions *options, GBytes *b
 static gboolean
 multipart_is_truncated (GMimeMultipart *multipart)
 {
-	return multipart->raw_end_boundary && !g_bytes_get_size (multipart->raw_end_boundary);
+	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
+
+	return priv->raw_end_boundary && !g_bytes_get_size (priv->raw_end_boundary);
 }
 
 /* RFC 2046 assigns the newline before a delimiter to the delimiter, not
@@ -159,29 +162,35 @@ _g_mime_entity_ends_with_delimiter_newline (GMimeEntity *entity, gboolean anonym
 	while (entity) {
 		if (GMIME_IS_MULTIPART (entity)) {
 			GMimeMultipart *multipart = (GMimeMultipart *) entity;
+			GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 			gsize length;
 			const guint8 *data;
 
 			if (!multipart_is_truncated (multipart) &&
-			    !(anonymize && !multipart->reader_model && !multipart->write_end_boundary))
+			    !(anonymize && !priv->reader_model && !priv->write_end_boundary))
 				return FALSE;
 
-			if (multipart->raw_trailing_boundary) {
-				data = g_bytes_get_data (multipart->raw_trailing_boundary, &length);
+			if (priv->raw_trailing_boundary) {
+				data = g_bytes_get_data (priv->raw_trailing_boundary, &length);
 				return length && data[length - 1] == '\n';
 			}
 
-			if (!multipart->children->len)
+			if (!priv->children->len)
 				return TRUE;
 
-			entity = multipart->children->pdata[multipart->children->len - 1];
+			entity = priv->children->pdata[priv->children->len - 1];
 		} else if (GMIME_IS_MESSAGE_PART (entity)) {
 			GMimeMessage *message = g_mime_message_part_get_message ((GMimeMessagePart *) entity);
+			GMimeMessagePrivate *priv;
 
-			if (!message || !message->mime_part)
+			if (!message)
 				return TRUE;
 
-			entity = message->mime_part;
+			priv = _g_mime_message_get_private (message);
+			if (!priv->mime_part)
+				return TRUE;
+
+			entity = priv->mime_part;
 		} else {
 			return GMIME_IS_PART (entity) && !g_mime_part_get_content ((GMimePart *) entity);
 		}
@@ -203,8 +212,10 @@ multipart_frame_clear (gpointer data)
 static void
 writer_push (GMimeWriter *writer, GMimeMultipart *multipart, GMimeFormatOptions *options, gboolean ensure)
 {
-	gboolean is_signed = g_mime_content_type_is_type (((GMimeEntity *) multipart)->content_type, "multipart", "signed");
-	const char *boundary = multipart->reader_model ? g_mime_multipart_get_boundary (multipart) :
+	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) multipart);
+	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
+	gboolean is_signed = g_mime_content_type_is_type (entity_priv->content_type, "multipart", "signed");
+	const char *boundary = priv->reader_model ? g_mime_multipart_get_boundary (multipart) :
 		g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary");
 	MultipartFrame frame;
 
@@ -226,14 +237,15 @@ static gboolean
 writer_boundary (GMimeWriter *writer, MultipartFrame *frame, guint index)
 {
 	GMimeMultipart *multipart = frame->multipart;
+	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 	GBytes *raw;
 
-	if (multipart->reader_model && index &&
-	    !_g_mime_entity_ends_with_delimiter_newline (multipart->children->pdata[index - 1], FALSE) &&
+	if (priv->reader_model && index &&
+	    !_g_mime_entity_ends_with_delimiter_newline (priv->children->pdata[index - 1], FALSE) &&
 	    !writer_string (writer, g_mime_format_options_get_newline (frame->options)))
 		return FALSE;
 
-	raw = multipart->raw_boundaries ? multipart->raw_boundaries->pdata[index] : NULL;
+	raw = priv->raw_boundaries ? priv->raw_boundaries->pdata[index] : NULL;
 
 	return raw ? writer_raw_boundary (writer, frame->options, raw) : writer_string (writer, frame->boundary);
 }
@@ -244,15 +256,16 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 {
 	GMimeMultipart *multipart = frame->multipart;
 	GMimeFormatOptions *options = frame->options;
+	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 	const char *newline = g_mime_format_options_get_newline (options);
 	char *boundary;
 	gboolean success;
 
-	if (!multipart->reader_model) {
+	if (!priv->reader_model) {
 		const char *value = g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary");
 
-		if (multipart->write_end_boundary && value) {
-			boundary = g_strdup_printf ("--%s--%s", value, multipart->raw_epilogue ? "" : newline);
+		if (priv->write_end_boundary && value) {
+			boundary = g_strdup_printf ("--%s--%s", value, priv->raw_epilogue ? "" : newline);
 			success = writer_string (writer, boundary);
 			g_free (boundary);
 
@@ -260,26 +273,26 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 				return FALSE;
 		}
 
-		if (multipart->raw_epilogue)
-			return writer_bytes (writer, options, multipart->raw_epilogue, frame->ensure_newline);
+		if (priv->raw_epilogue)
+			return writer_bytes (writer, options, priv->raw_epilogue, frame->ensure_newline);
 
-		return !multipart->epilogue || writer_string (writer, multipart->epilogue);
+		return !priv->epilogue || writer_string (writer, priv->epilogue);
 	}
 
-	if (multipart->children->len && !_g_mime_entity_ends_with_delimiter_newline (
-	    multipart->children->pdata[multipart->children->len - 1], FALSE) &&
-	    (!multipart_is_truncated (multipart) || multipart->raw_trailing_boundary) &&
+	if (priv->children->len && !_g_mime_entity_ends_with_delimiter_newline (
+	    priv->children->pdata[priv->children->len - 1], FALSE) &&
+	    (!multipart_is_truncated (multipart) || priv->raw_trailing_boundary) &&
 	    !writer_string (writer, newline))
 		return FALSE;
 
 	if (multipart_is_truncated (multipart)) {
 		/* There is no closing delimiter or epilogue after truncation, but
 		 * an opening marker at EOF may not have acquired a child. */
-		if (multipart->raw_trailing_boundary) {
+		if (priv->raw_trailing_boundary) {
 			gsize length;
-			const guint8 *data = g_bytes_get_data (multipart->raw_trailing_boundary, &length);
+			const guint8 *data = g_bytes_get_data (priv->raw_trailing_boundary, &length);
 
-			if (!writer_raw_boundary (writer, options, multipart->raw_trailing_boundary))
+			if (!writer_raw_boundary (writer, options, priv->raw_trailing_boundary))
 				return FALSE;
 
 			if (frame->ensure_newline && (!length || data[length - 1] != '\n'))
@@ -289,13 +302,13 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 		return TRUE;
 	}
 
-	if (multipart->raw_end_boundary) {
-		if (!writer_raw_boundary (writer, options, multipart->raw_end_boundary))
+	if (priv->raw_end_boundary) {
+		if (!writer_raw_boundary (writer, options, priv->raw_end_boundary))
 			return FALSE;
 	} else {
 		/* A generated end marker includes a newline only without an epilogue. */
 		boundary = g_strdup_printf ("--%s--%s", g_mime_multipart_get_boundary (multipart),
-					   multipart->raw_epilogue ? "" : newline);
+					   priv->raw_epilogue ? "" : newline);
 		success = writer_string (writer, boundary);
 		g_free (boundary);
 
@@ -303,11 +316,11 @@ writer_end (GMimeWriter *writer, MultipartFrame *frame)
 			return FALSE;
 	}
 
-	if (multipart->raw_epilogue && g_bytes_get_size (multipart->raw_epilogue))
-		return writer_bytes (writer, options, multipart->raw_epilogue, frame->ensure_newline);
+	if (priv->raw_epilogue && g_bytes_get_size (priv->raw_epilogue))
+		return writer_bytes (writer, options, priv->raw_epilogue, frame->ensure_newline);
 
 	/* The end marker owns a newline only if generated without an epilogue. */
-	return !frame->ensure_newline || (!multipart->raw_end_boundary && !multipart->raw_epilogue) ||
+	return !frame->ensure_newline || (!priv->raw_end_boundary && !priv->raw_epilogue) ||
 		writer_string (writer, newline);
 }
 
@@ -315,24 +328,25 @@ static gboolean
 writer_message_marker (GMimeWriter *writer, GMimeMessage *message, GMimeFormatOptions *options)
 {
 	const char *newline = g_mime_format_options_get_newline (options);
+	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
 	gconstpointer data;
 	gsize length;
 
-	if (message->raw_marker) {
-		data = g_bytes_get_data (message->raw_marker, &length);
+	if (priv->raw_marker) {
+		data = g_bytes_get_data (priv->raw_marker, &length);
 		return !length || writer_write (writer, data, length);
 	}
 
-	if (!message->marker || !(length = strlen (message->marker)))
+	if (!priv->marker || !(length = strlen (priv->marker)))
 		return TRUE;
 
-	if (message->marker[length - 1] == '\n') {
+	if (priv->marker[length - 1] == '\n') {
 		length--;
-		if (length && message->marker[length - 1] == '\r')
+		if (length && priv->marker[length - 1] == '\r')
 			length--;
 	}
 
-	return writer_write (writer, message->marker, length) && writer_string (writer, newline);
+	return writer_write (writer, priv->marker, length) && writer_string (writer, newline);
 }
 
 static gboolean
@@ -396,6 +410,8 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 	g_array_set_clear_func (writer.frames, multipart_frame_clear);
 
 	while (TRUE) {
+		GMimeMultipartPrivate *multipart_priv;
+		GMimeEntityPrivate *entity_priv;
 		GMimeMultipart *multipart;
 		MultipartFrame *frame;
 		guint index;
@@ -408,32 +424,41 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 					goto fail;
 			} else if (GMIME_IS_MESSAGE (entity)) {
 				GMimeMessage *message = (GMimeMessage *) entity;
+				GMimeMessagePrivate *message_priv;
 
 				if (!content_only) {
 					if (!writer_add (&writer, g_mime_message_write_headers_to_stream (message, options, stream)))
 						goto fail;
 				}
 
-				/* Get the message body and whether it must end with a newline. */
-				ensure = entity->ensure_newline || g_mime_format_options_get_ensure_newline (options);
+				message_priv = _g_mime_message_get_private (message);
+				entity_priv = _g_mime_entity_get_private (entity);
 
-				if (message->mime_part)
-					next = g_object_ref (message->mime_part);
+				/* Get the message body and whether it must end with a newline. */
+				ensure = entity_priv->ensure_newline || g_mime_format_options_get_ensure_newline (options);
+
+				if (message_priv->mime_part)
+					next = g_object_ref (message_priv->mime_part);
 
 				content_only = TRUE;
 			} else {
-				if (!content_only && !writer_add (&writer, g_mime_header_list_write_to_stream (entity->headers, options, stream)))
-					goto fail;
+				if (!content_only) {
+					GMimeEntityPrivate *priv = _g_mime_entity_get_private (entity);
+
+					if (!writer_add (&writer, g_mime_header_list_write_to_stream (priv->headers, options, stream)))
+						goto fail;
+				}
 
 				if (GMIME_IS_MULTIPART (entity)) {
 					GMimeMultipart *multipart = (GMimeMultipart *) entity;
+					GMimeMultipartPrivate *multipart_priv = _g_mime_multipart_get_private (multipart);
 
-					if (multipart->reader_model || multipart->raw_preamble) {
-						if (multipart->raw_preamble && g_bytes_get_size (multipart->raw_preamble) &&
-						    !writer_bytes (&writer, options, multipart->raw_preamble, multipart->children->len > 0 || ensure))
+					if (multipart_priv->reader_model || multipart_priv->raw_preamble) {
+						if (multipart_priv->raw_preamble && g_bytes_get_size (multipart_priv->raw_preamble) &&
+						    !writer_bytes (&writer, options, multipart_priv->raw_preamble, multipart_priv->children->len > 0 || ensure))
 							goto fail;
-					} else if (multipart->preamble &&
-						   (!writer_string (&writer, multipart->preamble) ||
+					} else if (multipart_priv->preamble &&
+						   (!writer_string (&writer, multipart_priv->preamble) ||
 						    !writer_string (&writer, g_mime_format_options_get_newline (options)))) {
 						goto fail;
 					}
@@ -495,18 +520,28 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 		multipart = frame->multipart;
 		index = frame->index++;
 
-		if (!multipart->reader_model && index && index <= multipart->children->len) {
-			GMimeEntity *previous = multipart->children->pdata[index - 1];
+		multipart_priv = _g_mime_multipart_get_private (multipart);
 
-			if ((!GMIME_IS_MULTIPART (previous) || ((GMimeMultipart *) previous)->write_end_boundary) &&
+		if (!multipart_priv->reader_model && index && index <= multipart_priv->children->len) {
+			GMimeEntity *previous = multipart_priv->children->pdata[index - 1];
+			gboolean write_end_boundary = TRUE;
+
+			if (GMIME_IS_MULTIPART (previous)) {
+				GMimeMultipartPrivate *priv = _g_mime_multipart_get_private ((GMimeMultipart *) previous);
+
+				write_end_boundary = priv->write_end_boundary;
+			}
+
+			if (write_end_boundary &&
 			    !_g_mime_entity_ends_with_delimiter_newline (previous, FALSE) &&
 			    !writer_string (&writer, g_mime_format_options_get_newline (frame->options)))
 				goto fail;
 		}
 
-		if (index >= multipart->children->len) {
+		if (index >= multipart_priv->children->len) {
 			if (!writer_end (&writer, frame))
 				goto fail;
+
 			g_array_set_size (writer.frames, writer.frames->len - 1);
 			continue;
 		}
@@ -514,15 +549,17 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 		if (!writer_boundary (&writer, frame, index))
 			goto fail;
 
-		if (index >= multipart->children->len) {
+		if (index >= multipart_priv->children->len) {
 			errno = EINVAL;
 			goto fail;
 		}
 
-		entity = g_object_ref (multipart->children->pdata[index]);
+		entity = g_object_ref (multipart_priv->children->pdata[index]);
+		entity_priv = _g_mime_entity_get_private (entity);
 		options = frame->options;
-		ensure = entity->ensure_newline || (frame->ensure_newline && index + 1 == multipart->children->len &&
-			multipart_is_truncated (multipart) && !multipart->raw_trailing_boundary);
+
+		ensure = entity_priv->ensure_newline || (frame->ensure_newline && index + 1 == multipart_priv->children->len &&
+			multipart_is_truncated (multipart) && !multipart_priv->raw_trailing_boundary);
 		content_only = FALSE;
 	}
 
@@ -543,8 +580,9 @@ ssize_t
 _g_mime_writer_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
 {
 	WriterDispatch *parent = g_private_get (&dispatch_writer);
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (entity);
 	gboolean ensure = parent && parent->entity == entity ? parent->ensure_newline :
-		entity->ensure_newline;
+		priv->ensure_newline;
 
 	return writer_run (entity, options, content_only, stream, parent && parent->writer->verifying_signature, FALSE, ensure);
 }
@@ -552,6 +590,8 @@ _g_mime_writer_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolean
 ssize_t
 _g_mime_writer_write_for_signature (GMimeEntity *entity, GMimeFormatOptions *options, GMimeStream *stream)
 {
+	GMimeEntityPrivate *priv = _g_mime_entity_get_private (entity);
+
 	return writer_run (entity, options, FALSE, stream, TRUE, TRUE,
-			   entity->ensure_newline);
+			   priv->ensure_newline);
 }

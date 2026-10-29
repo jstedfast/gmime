@@ -29,6 +29,8 @@
 #define d(x)
 
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-filter-windows
  * @title: GMimeFilterWindows
@@ -41,7 +43,7 @@
 
 
 static void g_mime_filter_windows_class_init (GMimeFilterWindowsClass *klass);
-static void g_mime_filter_windows_init (GMimeFilterWindows *filter, GMimeFilterWindowsClass *klass);
+static void g_mime_filter_windows_init (GMimeFilterWindows *filter);
 static void g_mime_filter_windows_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -55,28 +57,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_windows_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterWindows, g_mime_filter_windows, GMIME_TYPE_FILTER)
+
+GMimeFilterWindowsPrivate *
+_g_mime_filter_windows_get_private (GMimeFilterWindows *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterWindowsClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_windows_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterWindows),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_windows_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterWindows", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_windows_get_instance_private (object);
 }
 
 
@@ -97,18 +84,21 @@ g_mime_filter_windows_class_init (GMimeFilterWindowsClass *klass)
 }
 
 static void
-g_mime_filter_windows_init (GMimeFilterWindows *filter, GMimeFilterWindowsClass *klass)
+g_mime_filter_windows_init (GMimeFilterWindows *filter)
 {
-	filter->claimed_charset = NULL;
-	filter->is_windows = FALSE;
+	GMimeFilterWindowsPrivate *priv = _g_mime_filter_windows_get_private (filter);
+
+	priv->claimed_charset = NULL;
+	priv->is_windows = FALSE;
 }
 
 static void
 g_mime_filter_windows_finalize (GObject *object)
 {
 	GMimeFilterWindows *filter = (GMimeFilterWindows *) object;
-	
-	g_free (filter->claimed_charset);
+	GMimeFilterWindowsPrivate *priv = _g_mime_filter_windows_get_private (filter);
+
+	g_free (priv->claimed_charset);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -118,8 +108,9 @@ static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
 	GMimeFilterWindows *windows = (GMimeFilterWindows *) filter;
-	
-	return g_mime_filter_windows_new (windows->claimed_charset);
+	GMimeFilterWindowsPrivate *priv = _g_mime_filter_windows_get_private (windows);
+
+	return g_mime_filter_windows_new (priv->claimed_charset);
 }
 
 static void
@@ -127,10 +118,11 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterWindows *windows = (GMimeFilterWindows *) filter;
+	GMimeFilterWindowsPrivate *priv = _g_mime_filter_windows_get_private (windows);
 	register unsigned char *inptr;
 	unsigned char *inend;
-	
-	if (!windows->is_windows) {
+
+	if (!priv->is_windows) {
 		inptr = (unsigned char *) in;
 		inend = inptr + len;
 		
@@ -141,7 +133,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				d(g_warning ("Encountered text encoded in a Windows charset trying "
 					     "to pass itself off as being encoded in %s",
 					     windows->claimed_charset));
-				windows->is_windows = TRUE;
+				priv->is_windows = TRUE;
 				break;
 			}
 		}
@@ -163,8 +155,9 @@ static void
 filter_reset (GMimeFilter *filter)
 {
 	GMimeFilterWindows *windows = (GMimeFilterWindows *) filter;
-	
-	windows->is_windows = FALSE;
+	GMimeFilterWindowsPrivate *priv = _g_mime_filter_windows_get_private (windows);
+
+	priv->is_windows = FALSE;
 }
 
 
@@ -181,14 +174,17 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_windows_new (const char *claimed_charset)
 {
-	GMimeFilterWindows *new;
-	
+	GMimeFilterWindowsPrivate *priv;
+	GMimeFilterWindows *filter;
+
 	g_return_val_if_fail (claimed_charset != NULL, NULL);
 	
-	new = g_object_new (GMIME_TYPE_FILTER_WINDOWS, NULL);
-	new->claimed_charset = g_strdup (claimed_charset);
+	filter = g_object_new (GMIME_TYPE_FILTER_WINDOWS, NULL);
+	priv = _g_mime_filter_windows_get_private (filter);
+
+	priv->claimed_charset = g_strdup (claimed_charset);
 	
-	return (GMimeFilter *) new;
+	return (GMimeFilter *) filter;
 }
 
 
@@ -205,9 +201,13 @@ g_mime_filter_windows_new (const char *claimed_charset)
 gboolean
 g_mime_filter_windows_is_windows_charset (GMimeFilterWindows *filter)
 {
+	GMimeFilterWindowsPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_WINDOWS (filter), FALSE);
 	
-	return filter->is_windows;
+	priv = _g_mime_filter_windows_get_private (filter);
+
+	return priv->is_windows;
 }
 
 
@@ -224,10 +224,14 @@ g_mime_filter_windows_is_windows_charset (GMimeFilterWindows *filter)
 const char *
 g_mime_filter_windows_real_charset (GMimeFilterWindows *filter)
 {
+	GMimeFilterWindowsPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_FILTER_WINDOWS (filter), NULL);
 	
-	if (filter->is_windows)
-		return g_mime_charset_iso_to_windows (filter->claimed_charset);
+	priv = _g_mime_filter_windows_get_private (filter);
+
+	if (priv->is_windows)
+		return g_mime_charset_iso_to_windows (priv->claimed_charset);
 	else
-		return filter->claimed_charset;
+		return priv->claimed_charset;
 }

@@ -34,14 +34,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_CONTENT            (g_mime_content_get_type ())
-#define GMIME_CONTENT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CONTENT, GMimeContent))
-#define GMIME_CONTENT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CONTENT, GMimeContentClass))
-#define GMIME_IS_CONTENT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_CONTENT))
-#define GMIME_IS_CONTENT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CONTENT))
-#define GMIME_CONTENT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_CONTENT, GMimeContentClass))
 
-typedef struct _GMimeContent GMimeContent;
-typedef struct _GMimeContentClass GMimeContentClass;
 
 /**
  * GMimeContentStorage:
@@ -61,32 +54,21 @@ typedef enum {
 
 /**
  * GMimeContent:
- * @parent_object: parent #GObject
- * @encoding: the encoding of the content
- * @stream: content stream
  *
  * A wrapper for a stream which may be encoded.
  **/
-struct _GMimeContent {
-	GObject parent_object;
-
-	GMimeContentEncoding encoding;
-	GMimeStream *stream;
-
-	/* <private> */
-	GMimeNewLineFormat newline_format;
-	gboolean has_newline_format;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeContent, g_mime_content, GMIME, CONTENT, GObject)
 
 struct _GMimeContentClass {
 	GObjectClass parent_class;
 
 	ssize_t (* write_to_stream) (GMimeContent *content, GMimeStream *stream);
 	ssize_t (* decode_to_stream) (GMimeContent *content, GMimeStream *stream);
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_content_get_type (void);
 
 GMimeContent *g_mime_content_new (void);
 GMimeContent *g_mime_content_new_with_stream (GMimeStream *stream, GMimeContentEncoding encoding);

@@ -27,14 +27,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_ENRICHED            (g_mime_filter_enriched_get_type ())
-#define GMIME_FILTER_ENRICHED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_ENRICHED, GMimeFilterEnriched))
-#define GMIME_FILTER_ENRICHED_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_ENRICHED, GMimeFilterEnrichedClass))
-#define GMIME_IS_FILTER_ENRICHED(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_ENRICHED))
-#define GMIME_IS_FILTER_ENRICHED_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_ENRICHED))
-#define GMIME_FILTER_ENRICHED_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_ENRICHED, GMimeFilterEnrichedClass))
 
-typedef struct _GMimeFilterEnriched GMimeFilterEnriched;
-typedef struct _GMimeFilterEnrichedClass GMimeFilterEnrichedClass;
 
 
 /**
@@ -47,27 +40,19 @@ typedef struct _GMimeFilterEnrichedClass GMimeFilterEnrichedClass;
 
 /**
  * GMimeFilterEnriched:
- * @parent_object: parent #GMimeFilter
- * @flags: bit flags
- * @nofill: nofill tag state
  *
  * A filter for converting text/enriched or text/richtext textual
  * streams into text/html.
  **/
-struct _GMimeFilterEnriched {
-	GMimeFilter parent_object;
-	
-	guint32 flags;
-	int nofill;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterEnriched, g_mime_filter_enriched, GMIME, FILTER_ENRICHED, GMimeFilter)
 
 struct _GMimeFilterEnrichedClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_enriched_get_type (void);
 
 GMimeFilter *g_mime_filter_enriched_new (guint32 flags);
 

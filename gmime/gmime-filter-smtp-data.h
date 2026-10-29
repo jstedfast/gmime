@@ -27,35 +27,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_SMTP_DATA            (g_mime_filter_smtp_data_get_type ())
-#define GMIME_FILTER_SMTP_DATA(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_SMTP_DATA, GMimeFilterSmtpData))
-#define GMIME_FILTER_SMTP_DATA_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_SMTP_DATA, GMimeFilterSmtpDataClass))
-#define GMIME_IS_FILTER_SMTP_DATA(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_SMTP_DATA))
-#define GMIME_IS_FILTER_SMTP_DATA_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_SMTP_DATA))
-#define GMIME_FILTER_SMTP_DATA_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_SMTP_DATA, GMimeFilterSmtpDataClass))
 
-typedef struct _GMimeFilterSmtpData GMimeFilterSmtpData;
-typedef struct _GMimeFilterSmtpDataClass GMimeFilterSmtpDataClass;
 
 /**
  * GMimeFilterSmtpData:
- * @parent_object: parent #GMimeFilter
- * @bol: beginning-of-line state.
  *
  * A filter to byte-stuff SMTP DATA.
  **/
-struct _GMimeFilterSmtpData {
-	GMimeFilter parent_object;
-	
-	gboolean bol;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterSmtpData, g_mime_filter_smtp_data, GMIME, FILTER_SMTP_DATA, GMimeFilter)
 
 struct _GMimeFilterSmtpDataClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_smtp_data_get_type (void);
 
 GMimeFilter *g_mime_filter_smtp_data_new (void);
 

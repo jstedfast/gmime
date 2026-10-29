@@ -28,36 +28,22 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_BASIC            (g_mime_filter_basic_get_type ())
-#define GMIME_FILTER_BASIC(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_BASIC, GMimeFilterBasic))
-#define GMIME_FILTER_BASIC_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_BASIC, GMimeFilterBasicClass))
-#define GMIME_IS_FILTER_BASIC(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_BASIC))
-#define GMIME_IS_FILTER_BASIC_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_BASIC))
-#define GMIME_FILTER_BASIC_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_BASIC, GMimeFilterBasicClass))
 
-typedef struct _GMimeFilterBasic GMimeFilterBasic;
-typedef struct _GMimeFilterBasicClass GMimeFilterBasicClass;
 
 /**
  * GMimeFilterBasic:
- * @parent_object: parent #GMimeFilter
- * @encoder: (nullable): encoder, or %NULL when decoding
- * @decoder: (nullable): decoder, or %NULL when encoding
  *
  * A basic encoder/decoder filter for the MIME encodings.
  **/
-struct _GMimeFilterBasic {
-	GMimeFilter parent_object;
-	GMimeEncoder *encoder;
-	GMimeDecoder *decoder;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterBasic, g_mime_filter_basic, GMIME, FILTER_BASIC, GMimeFilter)
 
 struct _GMimeFilterBasicClass {
 	GMimeFilterClass parent_class;
-	
+
+	/*< private >*/
+	gpointer reserved[8];
 };
 
-
-GType g_mime_filter_basic_get_type (void);
 
 GMimeFilter *g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode);
 GMimeFilter *g_mime_filter_basic_new_with_encoder (GMimeEncoder *encoder);

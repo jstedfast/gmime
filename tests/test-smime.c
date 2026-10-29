@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -207,9 +208,9 @@ create_message (GMimeEntity *body)
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	
-	/*fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
-		 GMIME_STREAM_MEM (stream)->buffer->len,
-		 GMIME_STREAM_MEM (stream)->buffer->data);*/
+	/*GMimeStreamMemPrivate *priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
+	fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
+		 priv->buffer->len, priv->buffer->data);*/
 	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
@@ -231,6 +232,7 @@ then we have ourselves a winner I guess...\n"
 static void
 test_multipart_signed (GMimeCryptoContext *ctx)
 {
+	GMimeMessagePrivate *priv;
 	GMimeSignatureList *signatures;
 	GMimeMultipartSigned *mps;
 	GMimeMessage *message;
@@ -254,13 +256,15 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	message = create_message ((GMimeEntity *) mps);
 	g_object_unref (mps);
 	
-	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
+	priv = _g_mime_message_get_private (message);
+
+	if (!GMIME_IS_MULTIPART_SIGNED (priv->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not a multipart/signed?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	mps = (GMimeMultipartSigned *) message->mime_part;
+	mps = (GMimeMultipartSigned *) priv->mime_part;
 	
 	if (!(signatures = g_mime_multipart_signed_verify (mps, 0, &err))) {
 		ex = exception_new ("%s", err->message);
@@ -279,6 +283,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 static void
 test_pkcs7_mime_sign (void)
 {
+	GMimeMessagePrivate *priv;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeSignatureList *signatures;
 	GMimeMessage *message;
@@ -303,13 +308,15 @@ test_pkcs7_mime_sign (void)
 	message = create_message ((GMimeEntity *) pkcs7_mime);
 	g_object_unref (pkcs7_mime);
 	
-	if (!GMIME_IS_APPLICATION_PKCS7_MIME (message->mime_part)) {
+	priv = _g_mime_message_get_private (message);
+
+	if (!GMIME_IS_APPLICATION_PKCS7_MIME (priv->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not an application/pkcs7-mime?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	pkcs7_mime = (GMimeApplicationPkcs7Mime *) message->mime_part;
+	pkcs7_mime = (GMimeApplicationPkcs7Mime *) priv->mime_part;
 	
 	if (!(signatures = g_mime_application_pkcs7_mime_verify (pkcs7_mime, 0, &entity, &err))) {
 		ex = exception_new ("verify failed: %s", err->message);
@@ -345,6 +352,7 @@ test_pkcs7_mime_sign (void)
 static void
 test_pkcs7_mime_encrypt (void)
 {
+	GMimeMessagePrivate *priv;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeDecryptResult *result;
 	GPtrArray *recipients;
@@ -374,13 +382,15 @@ test_pkcs7_mime_encrypt (void)
 	message = create_message ((GMimeEntity *) pkcs7_mime);
 	g_object_unref (pkcs7_mime);
 	
-	if (!GMIME_IS_APPLICATION_PKCS7_MIME (message->mime_part)) {
+	priv = _g_mime_message_get_private (message);
+
+	if (!GMIME_IS_APPLICATION_PKCS7_MIME (priv->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not an application/pkcs7-mime?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	pkcs7_mime = (GMimeApplicationPkcs7Mime *) message->mime_part;
+	pkcs7_mime = (GMimeApplicationPkcs7Mime *) priv->mime_part;
 	
 	if (!(entity = g_mime_application_pkcs7_mime_decrypt (pkcs7_mime, 0, NULL, &result, &err))) {
 		ex = exception_new ("decrypt failed: %s", err->message);

@@ -37,6 +37,8 @@
 #include "gmime-address-validator-private.h"
 #include "gmime-reader-simd-private.h"
 
+#include "gmime-object-private.h"
+
 /**
  * SECTION: gmime-reader
  * @title: GMimeReader
@@ -84,45 +86,69 @@ typedef struct {
 } ComplianceLogger;
 
 struct _GMimeReaderPrivate {
-	GMimeParserOptions *options;
-	GMimeStream *stream;
-	GByteArray *header;
-	GError *error;
-	guint8 input[READ_AHEAD_SIZE + BLOCK_SIZE + PAD_SIZE];
-	gsize input_index, input_end;
-	gint64 position;
-	guint64 line_number;
-	gint64 line_begin, prev_line_begin;
-	guint8 previous[2];
-	guint previous_count;
-	GPtrArray *frames;
-	EntityFrame *boundary;
-	GMimeContentType *content_type;
-	GMimeContentEncoding encoding;
 	GMimeComplianceOptions *compliance_options;
 	ComplianceLogger *logger, *active_logger;
-	GMimeComplianceContext context;
 	GMimeComplianceValidators validators;
+	GMimeComplianceContext context;
 	guint issue_counts[91], issue_limit;
-	gboolean truncated_issues, reported_depth;
+	GMimeEncodingValidator *validator;
+
+	GMimeParserOptions *options;
+	GMimeStream *stream;
+	GMimeFormat format;
+	gint64 position;
+
+	guint8 input[READ_AHEAD_SIZE + BLOCK_SIZE + PAD_SIZE];
+	gsize input_index, input_end;
+
+	guint64 line_number;
+	gint64 line_begin, prev_line_begin;
+
+	GByteArray *header;
+	GError *error;
+
+	guint8 previous[2];
+	guint previous_count;
+
+	GPtrArray *frames;
+	EntityFrame *boundary;
+
+	GMimeContentType *content_type;
+	GMimeContentEncoding encoding;
+	gint64 content_length, content_end;
+
 	guint32 seen_message, seen_resent;
-	gboolean message_headers, seen_mime_version;
 	gint64 header_begin, type_offset, encoding_offset;
 	guint64 header_line, type_line, encoding_line, encoding_column;
-	GMimeEncodingValidator *validator;
-	GMimeFormat format;
-	gint64 content_length, content_end;
-	gboolean header_limit_exceeded;
-	gboolean stop_at_separator;
-	gboolean mailbox_boundary;
-	gboolean seen_encoding, final_boundary, boundary_eos;
-	gboolean entity_read, toplevel, headers_complete;
-	gboolean input_eos, complete_eos, reading, initial;
+
+	unsigned int truncated_issues : 1;
+	unsigned int reported_depth : 1;
+	unsigned int message_headers : 1;
+	unsigned int seen_mime_version : 1;
+	unsigned int header_limit_exceeded : 1;
+	unsigned int stop_at_separator : 1;
+	unsigned int mailbox_boundary : 1;
+	unsigned int seen_encoding : 1;
+	unsigned int final_boundary : 1;
+	unsigned int boundary_eos : 1;
+	unsigned int entity_read : 1;
+	unsigned int toplevel : 1;
+	unsigned int headers_complete : 1;
+	unsigned int input_eos : 1;
+	unsigned int complete_eos : 1;
+	unsigned int reading : 1;
+	unsigned int initial : 1;
 };
 
 typedef struct _GMimeReaderPrivate GMimeReaderPrivate;
 
 G_DEFINE_TYPE_WITH_PRIVATE (GMimeReader, g_mime_reader, G_TYPE_OBJECT)
+
+static GMimeReaderPrivate *
+_g_mime_reader_get_private (GMimeReader *object)
+{
+	return g_mime_reader_get_instance_private (object);
+}
 
 static void
 logger_unref (ComplianceLogger *logger)
@@ -138,7 +164,7 @@ logger_unref (ComplianceLogger *logger)
 static void
 begin_compliance (GMimeReader *reader)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 
 	/* A callback may replace the logger or options. Keep the current
 	 * operation's snapshot, including callback data, alive until it ends. */
@@ -157,17 +183,18 @@ begin_compliance (GMimeReader *reader)
 static void
 end_compliance (GMimeReader *reader)
 {
-	ComplianceLogger *logger = reader->priv->active_logger;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+	ComplianceLogger *logger = priv->active_logger;
 
-	reader->priv->active_logger = NULL;
-	g_clear_object (&reader->priv->validator);
+	priv->active_logger = NULL;
+	g_clear_object (&priv->validator);
 	logger_unref (logger);
 }
 
 static void
 report_issue (const GMimeComplianceIssue *issue, gpointer user_data)
 {
-	GMimeReaderPrivate *priv = GMIME_READER (user_data)->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (GMIME_READER (user_data));
 	GMimeComplianceIssue truncated;
 	guint index = (guint) issue->violation;
 
@@ -198,7 +225,8 @@ static void
 report_at (GMimeReader *reader, GMimeComplianceViolation violation, gint64 offset,
 	   guint64 line, guint64 column, GMimeCompliancePositionKind kind)
 {
-	GMimeComplianceIssue issue = { reader->priv->context, violation, offset, line, column, kind };
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+	GMimeComplianceIssue issue = { priv->context, violation, offset, line, column, kind };
 
 	report_issue (&issue, reader);
 }
@@ -234,7 +262,7 @@ static void
 g_mime_reader_finalize (GObject *object)
 {
 	GMimeReader *reader = GMIME_READER (object);
-	struct _GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 
 	g_mime_parser_options_free (priv->options);
 	g_mime_compliance_options_free (priv->compliance_options);
@@ -260,14 +288,15 @@ g_mime_reader_class_init (GMimeReaderClass *klass)
 static void
 g_mime_reader_init (GMimeReader *reader)
 {
-	reader->priv = g_mime_reader_get_instance_private (reader);
-	reader->priv->options = g_mime_parser_options_clone (NULL);
-	reader->priv->compliance_options = g_mime_compliance_options_clone (NULL);
-	reader->priv->header = g_byte_array_sized_new (512);
-	reader->priv->input_index = READ_AHEAD_SIZE;
-	reader->priv->input_end = READ_AHEAD_SIZE;
-	reader->priv->line_number = 1;
-	reader->priv->initial = TRUE;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+
+	priv->options = g_mime_parser_options_clone (NULL);
+	priv->compliance_options = g_mime_compliance_options_clone (NULL);
+	priv->header = g_byte_array_sized_new (512);
+	priv->input_index = READ_AHEAD_SIZE;
+	priv->input_end = READ_AHEAD_SIZE;
+	priv->line_number = 1;
+	priv->initial = TRUE;
 }
 
 /**
@@ -347,9 +376,11 @@ g_mime_reader_set_stream_with_format (GMimeReader *reader, GMimeStream *stream, 
 	g_return_if_fail (GMIME_IS_READER (reader));
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	g_return_if_fail (format >= GMIME_FORMAT_MESSAGE && format <= GMIME_FORMAT_MMDF);
-	g_return_if_fail (!reader->priv->reading);
 
-	priv = reader->priv;
+	priv = _g_mime_reader_get_private (reader);
+
+	g_return_if_fail (!priv->reading);
+
 	g_object_ref (stream);
 	g_clear_object (&priv->stream);
 	priv->stream = stream;
@@ -385,9 +416,13 @@ g_mime_reader_set_stream_with_format (GMimeReader *reader, GMimeStream *stream, 
 GMimeFormat
 g_mime_reader_get_format (GMimeReader *reader)
 {
+	GMimeReaderPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_READER (reader), GMIME_FORMAT_MESSAGE);
 
-	return reader->priv->format;
+	priv = _g_mime_reader_get_private (reader);
+
+	return priv->format;
 }
 
 /**
@@ -401,9 +436,13 @@ g_mime_reader_get_format (GMimeReader *reader)
 GMimeParserOptions *
 g_mime_reader_get_options (GMimeReader *reader)
 {
+	GMimeReaderPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_READER (reader), NULL);
 
-	return reader->priv->options;
+	priv = _g_mime_reader_get_private (reader);
+
+	return priv->options;
 }
 
 /**
@@ -417,14 +456,17 @@ g_mime_reader_get_options (GMimeReader *reader)
 void
 g_mime_reader_set_options (GMimeReader *reader, GMimeParserOptions *options)
 {
+	GMimeReaderPrivate *priv;
 	GMimeParserOptions *copy;
 
 	g_return_if_fail (GMIME_IS_READER (reader));
-	g_return_if_fail (!reader->priv->reading);
+	priv = _g_mime_reader_get_private (reader);
+
+	g_return_if_fail (!priv->reading);
 
 	copy = g_mime_parser_options_clone (options);
-	g_mime_parser_options_free (reader->priv->options);
-	reader->priv->options = copy;
+	g_mime_parser_options_free (priv->options);
+	priv->options = copy;
 }
 
 /**
@@ -438,9 +480,13 @@ g_mime_reader_set_options (GMimeReader *reader, GMimeParserOptions *options)
 GMimeComplianceOptions *
 g_mime_reader_get_compliance_options (GMimeReader *reader)
 {
+	GMimeReaderPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_READER (reader), NULL);
 
-	return reader->priv->compliance_options;
+	priv = _g_mime_reader_get_private (reader);
+
+	return priv->compliance_options;
 }
 
 /**
@@ -454,13 +500,16 @@ g_mime_reader_get_compliance_options (GMimeReader *reader)
 void
 g_mime_reader_set_compliance_options (GMimeReader *reader, GMimeComplianceOptions *options)
 {
+	GMimeReaderPrivate *priv;
 	GMimeComplianceOptions *copy;
 
 	g_return_if_fail (GMIME_IS_READER (reader));
 
 	copy = g_mime_compliance_options_clone (options);
-	g_mime_compliance_options_free (reader->priv->compliance_options);
-	reader->priv->compliance_options = copy;
+	priv = _g_mime_reader_get_private (reader);
+
+	g_mime_compliance_options_free (priv->compliance_options);
+	priv->compliance_options = copy;
 }
 
 /**
@@ -479,6 +528,7 @@ void
 g_mime_reader_set_compliance_logger (GMimeReader *reader, GMimeComplianceIssueFunc report,
 				    gpointer user_data, GDestroyNotify destroy)
 {
+	GMimeReaderPrivate *priv;
 	ComplianceLogger *logger = NULL, *previous;
 
 	g_return_if_fail (GMIME_IS_READER (reader));
@@ -492,8 +542,10 @@ g_mime_reader_set_compliance_logger (GMimeReader *reader, GMimeComplianceIssueFu
 		logger->refs = 1;
 	}
 
-	previous = reader->priv->logger;
-	reader->priv->logger = logger;
+	priv = _g_mime_reader_get_private (reader);
+
+	previous = priv->logger;
+	priv->logger = logger;
 	logger_unref (previous);
 }
 
@@ -508,9 +560,13 @@ g_mime_reader_set_compliance_logger (GMimeReader *reader, GMimeComplianceIssueFu
 gint64
 g_mime_reader_tell (GMimeReader *reader)
 {
+	GMimeReaderPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_READER (reader), -1);
 
-	return reader->priv->position - (reader->priv->input_end - reader->priv->input_index);
+	priv = _g_mime_reader_get_private (reader);
+
+	return priv->position - (priv->input_end - priv->input_index);
 }
 
 /**
@@ -525,15 +581,19 @@ g_mime_reader_tell (GMimeReader *reader)
 gboolean
 g_mime_reader_eos (GMimeReader *reader)
 {
+	GMimeReaderPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_READER (reader), TRUE);
 
-	return reader->priv->complete_eos;
+	priv = _g_mime_reader_get_private (reader);
+
+	return priv->complete_eos;
 }
 
 static gsize
 read_ahead (GMimeReader *reader, gsize atleast)
 {
-	struct _GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gsize left = priv->input_end - priv->input_index;
 	gsize start = READ_AHEAD_SIZE;
 	ssize_t nread;
@@ -559,6 +619,7 @@ read_ahead (GMimeReader *reader, gsize atleast)
 		} else {
 			start = priv->input_end;
 		}
+
 		priv->input_end = start;
 	} else {
 		priv->input_index = start;
@@ -603,10 +664,12 @@ read_ahead_at_least (GMimeReader *reader, gsize atleast)
 
 	/* A short read does not mean EOF. Unlike read_ahead(), keep filling
 	 * until there is enough input, no progress, or an actual end/error. */
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+
 	do {
-		previous = reader->priv->input_end - reader->priv->input_index;
+		previous = priv->input_end - priv->input_index;
 		available = read_ahead (reader, atleast);
-	} while (!reader->priv->error && available < atleast && available > previous);
+	} while (!priv->error && available < atleast && available > previous);
 
 	return available;
 }
@@ -614,17 +677,21 @@ read_ahead_at_least (GMimeReader *reader, gsize atleast)
 static gboolean
 callback_result (GMimeReader *reader, gboolean result)
 {
-	if (!result && !reader->priv->error)
-		g_set_error_literal (&reader->priv->error, GMIME_ERROR, GMIME_ERROR_GENERAL,
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+
+	if (!result && !priv->error)
+		g_set_error_literal (&priv->error, GMIME_ERROR, GMIME_ERROR_GENERAL,
 				     "MIME reader callback failed without an error.");
 
-	return reader->priv->error == NULL;
+	return priv->error == NULL;
 }
 
 static gboolean
 invalid_headers (GMimeReader *reader, gint64 offset)
 {
-	g_set_error (&reader->priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+
+	g_set_error (&priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 		     "Failed to parse headers at offset %" G_GINT64_FORMAT ".", offset);
 	return FALSE;
 }
@@ -632,7 +699,7 @@ invalid_headers (GMimeReader *reader, gint64 offset)
 static gboolean
 append_header (GMimeReader *reader, const guint8 *buffer, gsize length, gint64 offset)
 {
-	struct _GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gsize limit = g_mime_parser_options_get_max_header_length (priv->options);
 
 	/* Check before allocating, including folds and line terminators in the
@@ -658,9 +725,9 @@ is_blank (guint8 c)
 static void
 consume_input (GMimeReader *reader, gsize length)
 {
-	GMimeReaderPrivate *priv = reader->priv;
-	gsize i;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 offset = g_mime_reader_tell (reader);
+	gsize i;
 
 	/* Keep line positions and the last two bytes outside the input buffer:
 	 * refilling may move or discard the bytes before the logical cursor. */
@@ -753,7 +820,7 @@ static void
 check_header_semantics (GMimeReader *reader, gsize name_length, gsize field_length,
 			gboolean invalid, gint64 begin, guint64 line)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	const guint8 *data = priv->header->data;
 	const guint8 *value = data + (invalid ? 0 : field_length + 1);
 	gsize length = priv->header->len - (invalid ? 0 : field_length + 1);
@@ -797,7 +864,7 @@ check_header_semantics (GMimeReader *reader, gsize name_length, gsize field_leng
 static void
 check_missing_headers (GMimeReader *reader, gint64 offset, guint64 line, gboolean eof)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	GMimeCompliancePositionKind kind = eof ? GMIME_COMPLIANCE_POSITION_EXACT : GMIME_COMPLIANCE_POSITION_LINE_START;
 	guint64 column = eof ? (guint64) (offset - priv->line_begin) + 1 : 1;
 
@@ -826,7 +893,7 @@ boundary_whitespace (guint8 c)
 static gboolean
 check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	guint i;
 
 	if (length < 2)
@@ -881,7 +948,7 @@ check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
 static gboolean
 boundary_in_headers (GMimeReader *reader, gboolean accept_eof)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	const guint8 *start, *lf;
 	gsize left;
 
@@ -915,7 +982,7 @@ boundary_in_headers (GMimeReader *reader, gboolean accept_eof)
 static void
 update_header_state (GMimeReader *reader, gsize name_length, gsize field_length, gint64 begin, guint64 line)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	const guint8 *header = priv->header->data;
 	const char *value = (const char *) header + field_length + 1;
 	gsize length = priv->header->len - field_length - 1;
@@ -1019,7 +1086,7 @@ static gboolean
 detect_invalid_header (GMimeReader *reader, gboolean blanks, gboolean *invalid, gssize *invalid_index,
 		       gsize *name_length, gsize *field_length)
 {
-	struct _GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	const guint8 *start = priv->input + priv->input_index;
 	const guint8 *end = priv->input + priv->input_end;
 	const guint8 *inptr = start;
@@ -1068,7 +1135,7 @@ typedef struct {
 static void
 check_header_span (GMimeReader *reader, HeaderDetection *detection, const guint8 *data, gsize length)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
 	guint64 column = (guint64) (begin - priv->line_begin) + 1;
 	gsize i;
@@ -1136,7 +1203,7 @@ is_from_line (const guint8 *buffer, gsize length)
 static gboolean
 step_headers (GMimeReader *reader, gboolean message)
 {
-	struct _GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	GMimeReaderClass *klass = GMIME_READER_GET_CLASS (reader);
 	guint64 begin_line_number = priv->line_number;
 	gint64 begin_offset = g_mime_reader_tell (reader);
@@ -1239,11 +1306,13 @@ step_headers (GMimeReader *reader, gboolean message)
 
 					if (!append_header (reader, priv->input + priv->input_index, count, offset))
 						return FALSE;
+
 					name_blanks = is_blank (priv->input[priv->input_end - 1]);
 					consume_input (reader, count);
 					field_prefix += count;
 					continue;
 				}
+
 				invalid = TRUE;
 				invalid_index = -1;
 				break;
@@ -1255,6 +1324,7 @@ step_headers (GMimeReader *reader, gboolean message)
 
 		if (invalid_index >= 0)
 			invalid_index += field_prefix;
+
 		start = priv->input + priv->input_index;
 		left = priv->input_end - priv->input_index;
 
@@ -1455,14 +1525,16 @@ g_mime_reader_read_headers (GMimeReader *reader, GError **error)
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (GMIME_IS_READER (reader), FALSE);
-	g_return_val_if_fail (GMIME_IS_STREAM (reader->priv->stream), FALSE);
-	g_return_val_if_fail (!reader->priv->reading, FALSE);
+
+	priv = _g_mime_reader_get_private (reader);
+
+	g_return_val_if_fail (GMIME_IS_STREAM (priv->stream), FALSE);
+	g_return_val_if_fail (!priv->reading, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	/* Keep the reader and its borrowed callback buffers alive even if a
 	 * callback releases the caller's last reference. */
 	g_object_ref (reader);
-	priv = reader->priv;
 	priv->reading = TRUE;
 	priv->toplevel = TRUE;
 	begin_compliance (reader);
@@ -1491,25 +1563,26 @@ gboolean
 _g_mime_reader_read_headers_to_separator (GMimeReader *reader, GError **error)
 {
 	gboolean result;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 
-	g_return_val_if_fail (!reader->priv->reading, FALSE);
+	g_return_val_if_fail (!priv->reading, FALSE);
 
-	reader->priv->stop_at_separator = TRUE;
+	priv->stop_at_separator = TRUE;
 	result = g_mime_reader_read_headers (reader, error);
-	reader->priv->stop_at_separator = FALSE;
+	priv->stop_at_separator = FALSE;
 	return result;
 }
 
 /* A callback may either return FALSE or set an error. Both abort traversal,
  * including callbacks whose implementation accidentally returns TRUE. */
-#define READER_CALLBACK(reader, name, ...) \
+#define READER_CALLBACK(reader, priv, name, ...) \
 	(!(GMIME_READER_GET_CLASS (reader)->name) || \
-	 callback_result ((reader), GMIME_READER_GET_CLASS (reader)->name ((reader), __VA_ARGS__, &(reader)->priv->error)))
+	 callback_result ((reader), GMIME_READER_GET_CLASS (reader)->name ((reader), __VA_ARGS__, &(priv)->error)))
 
 static gint64
 entity_end_offset (GMimeReader *reader, gint64 begin)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 end = g_mime_reader_tell (reader);
 
 	if (!priv->boundary_eos && priv->previous_count && priv->previous[1] == '\n') {
@@ -1524,7 +1597,7 @@ entity_end_offset (GMimeReader *reader, gint64 begin)
 static guint64
 content_lines (GMimeReader *reader, gint64 begin, guint64 begin_line, gint64 end)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	guint64 lines = priv->line_number - begin_line;
 
 	if (priv->line_begin >= begin && end > priv->line_begin)
@@ -1539,7 +1612,7 @@ content_lines (GMimeReader *reader, gint64 begin, guint64 begin_line, gint64 end
 static gsize
 boundary_read_ahead (GMimeReader *reader)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gsize length = READ_AHEAD_SIZE;
 	guint i;
 
@@ -1583,7 +1656,7 @@ report_encoding_issue (const GMimeEncodingIssue *issue, gpointer user_data)
 static void
 consume_scanned_lines (GMimeReader *reader, const GMimeReaderScan *scan)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
 	const guint8 *data = priv->input + priv->input_index;
 
@@ -1602,7 +1675,7 @@ consume_scanned_lines (GMimeReader *reader, const GMimeReaderScan *scan)
 static gboolean
 is_partial_boundary (GMimeReader *reader, const guint8 *start, gsize length)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	guint i;
 
 	if (start[0] == '-') {
@@ -1625,6 +1698,7 @@ static gboolean
 deliver_content_batch (GMimeReader *reader, GMimeReaderContentType type, guint8 *output,
 		       gsize *buffered, gsize *pending, gboolean trim, gint64 *delivered)
 {
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gsize count, withheld = 0;
 
 	if (!*buffered)
@@ -1641,20 +1715,21 @@ deliver_content_batch (GMimeReader *reader, GMimeReaderContentType type, guint8 
 
 	count -= withheld;
 
-	if (count && !READER_CALLBACK (reader, content_read, type, output, count))
+	if (count && !READER_CALLBACK (reader, priv, content_read, type, output, count))
 		return FALSE;
 
 	*delivered += count;
 	memmove (output, output + count, withheld);
 	*pending = withheld;
 	*buffered = 0;
+
 	return TRUE;
 }
 
 static gboolean
 scan_content (GMimeReader *reader, GMimeReaderContentType type)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader), delivered = 0;
 	guint64 begin_line = priv->line_number;
 	guint8 output[READ_AHEAD_SIZE + BLOCK_SIZE + 2];
@@ -1668,7 +1743,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	gboolean detect_null = frame->encoding != GMIME_CONTENT_ENCODING_BINARY;
 	gsize validator_start = priv->input_index;
 
-	if (!READER_CALLBACK (reader, content_begin, type, begin, begin_line))
+	if (!READER_CALLBACK (reader, priv, content_begin, type, begin, begin_line))
 		return FALSE;
 
 	if (priv->active_logger && type == GMIME_READER_CONTENT_PART) {
@@ -1681,11 +1756,10 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	}
 
 	while (!priv->boundary && !priv->mailbox_boundary && !priv->boundary_eos) {
+		gsize atleast = boundary_read_ahead (reader);
+		GMimeReaderScan scan = { 0 };
 		const guint8 *start, *lf;
 		gsize left, length;
-		GMimeReaderScan scan = { 0 };
-
-		gsize atleast = boundary_read_ahead (reader);
 
 		if (incomplete)
 			atleast = MAX (atleast, priv->input_end - priv->input_index + 1);
@@ -1821,24 +1895,24 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	}
 
 	if (npending && priv->boundary_eos) {
-		if (!READER_CALLBACK (reader, content_read, type, output, npending))
+		if (!READER_CALLBACK (reader, priv, content_read, type, output, npending))
 			return FALSE;
 		delivered += npending;
 	}
 
-	return READER_CALLBACK (reader, content_end, type, begin, begin_line, begin + delivered,
+	return READER_CALLBACK (reader, priv, content_end, type, begin, begin_line, begin + delivered,
 				content_lines (reader, begin, begin_line, begin + delivered), newline_format);
 }
 
 static gboolean
 skip_boundary (GMimeReader *reader, gboolean *terminated)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
 	guint64 line = priv->line_number;
 	gboolean final = priv->final_boundary;
 
-	if (!READER_CALLBACK (reader, boundary_begin, final, begin, line))
+	if (!READER_CALLBACK (reader, priv, boundary_begin, final, begin, line))
 		return FALSE;
 
 	do {
@@ -1860,12 +1934,13 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 
 		if (length) {
 			consume_input (reader, length);
-			if (!READER_CALLBACK (reader, boundary_read, final, start, length, offset, line))
+			if (!READER_CALLBACK (reader, priv, boundary_read, final, start, length, offset, line))
 				return FALSE;
 		}
 
 		if (terminated)
 			*terminated = lf != NULL;
+
 		if (lf || priv->input_eos)
 			break;
 
@@ -1878,7 +1953,7 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 
 	priv->boundary = NULL;
 
-	return READER_CALLBACK (reader, boundary_end, final, begin, line, g_mime_reader_tell (reader));
+	return READER_CALLBACK (reader, priv, boundary_end, final, begin, line, g_mime_reader_tell (reader));
 }
 
 static gboolean
@@ -1911,7 +1986,7 @@ entity_frame_free (gpointer data)
 static EntityFrame *
 push_entity (GMimeReader *reader, EntityFrame *parent, gint64 begin, guint64 line)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	EntityFrame *frame = g_new0 (EntityFrame, 1);
 	gboolean encoded = priv->encoding == GMIME_CONTENT_ENCODING_BASE64 ||
 		priv->encoding == GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE ||
@@ -1975,13 +2050,15 @@ push_entity (GMimeReader *reader, EntityFrame *parent, gint64 begin, guint64 lin
 static gboolean
 begin_entity (GMimeReader *reader, EntityFrame *frame)
 {
-	return READER_CALLBACK (reader, entity_begin, frame->type, frame->content_type, frame->begin, frame->begin_line);
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+
+	return READER_CALLBACK (reader, priv, entity_begin, frame->type, frame->content_type, frame->begin, frame->begin_line);
 }
 
 static gboolean
 read_child_headers (GMimeReader *reader, EntityFrame *parent, gboolean message)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
 	guint64 line = priv->line_number;
 	EntityFrame *child;
@@ -1997,7 +2074,7 @@ read_child_headers (GMimeReader *reader, EntityFrame *parent, gboolean message)
 		parent->message_headers_end = g_mime_reader_tell (reader);
 		parent->message_active = TRUE;
 
-		if (!READER_CALLBACK (reader, message_begin, begin, line))
+		if (!READER_CALLBACK (reader, priv, message_begin, begin, line))
 			return FALSE;
 	}
 
@@ -2010,7 +2087,7 @@ read_child_headers (GMimeReader *reader, EntityFrame *parent, gboolean message)
 static gboolean
 step_entity (GMimeReader *reader, gboolean message)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
 	guint64 line = priv->line_number;
 	EntityFrame *frame;
@@ -2028,7 +2105,7 @@ step_entity (GMimeReader *reader, gboolean message)
 	if (!priv->headers_complete)
 		return invalid_headers (reader, begin);
 
-	if (message && !READER_CALLBACK (reader, message_begin, begin, line))
+	if (message && !READER_CALLBACK (reader, priv, message_begin, begin, line))
 		return FALSE;
 
 	if (message) {
@@ -2179,12 +2256,12 @@ step_entity (GMimeReader *reader, gboolean message)
 		lines = content_lines (reader, frame->content_begin, frame->content_line,
 				       entity_end_offset (reader, frame->content_begin));
 
-		if (!READER_CALLBACK (reader, entity_end, frame->type, frame->content_type, frame->begin,
+		if (!READER_CALLBACK (reader, priv, entity_end, frame->type, frame->content_type, frame->begin,
 				      frame->begin_line, MIN (frame->headers_end, end), end, lines))
 			return FALSE;
 
 		if (message && priv->frames->len == 1 &&
-		    !READER_CALLBACK (reader, message_end, frame->begin, frame->begin_line,
+		    !READER_CALLBACK (reader, priv, message_end, frame->begin, frame->begin_line,
 				      MIN (frame->headers_end, end), end, lines))
 			return FALSE;
 
@@ -2194,7 +2271,7 @@ step_entity (GMimeReader *reader, gboolean message)
 			frame = g_ptr_array_index (priv->frames, priv->frames->len - 1);
 
 			if (frame->message_active) {
-				if (!READER_CALLBACK (reader, message_end, frame->message_begin, frame->message_line,
+				if (!READER_CALLBACK (reader, priv, message_end, frame->message_begin, frame->message_line,
 						      MIN (frame->message_headers_end, end), end, lines))
 					return FALSE;
 
@@ -2211,7 +2288,7 @@ step_entity (GMimeReader *reader, gboolean message)
 static gboolean
 step_mailbox_marker (GMimeReader *reader)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	const char *prefix = priv->format == GMIME_FORMAT_MBOX ? "From " : "\1\1\1\1";
 	gsize prefix_length = strlen (prefix);
 	gboolean midline = FALSE;
@@ -2248,7 +2325,7 @@ found:
 	begin = g_mime_reader_tell (reader);
 	line = priv->line_number;
 
-	if (!READER_CALLBACK (reader, marker_begin, begin, line))
+	if (!READER_CALLBACK (reader, priv, marker_begin, begin, line))
 		return FALSE;
 
 	for (;;) {
@@ -2267,13 +2344,13 @@ found:
 		if (count && start[count - 1] == '\r')
 			count--;
 
-		if (!READER_CALLBACK (reader, marker_read, start, count))
+		if (!READER_CALLBACK (reader, priv, marker_read, start, count))
 			return FALSE;
 
 		if (lf) {
 			consume_input (reader, lf - start + 1);
 			priv->mailbox_boundary = FALSE;
-			return READER_CALLBACK (reader, marker_end, begin, line, g_mime_reader_tell (reader));
+			return READER_CALLBACK (reader, priv, marker_end, begin, line, g_mime_reader_tell (reader));
 		}
 
 		/* Leave a split CRLF intact, but consume a final CR at actual EOF
@@ -2291,7 +2368,7 @@ static gboolean
 step_byte_order_mark (GMimeReader *reader)
 {
 	static const guint8 bom[] = { 0xef, 0xbb, 0xbf };
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gsize index = 0;
 
 	/* Only the initialized message path strips a UTF-8 BOM. Consume a
@@ -2325,12 +2402,13 @@ read_entity_or_message (GMimeReader *reader, gboolean message, GError **error)
 	gboolean result = FALSE;
 
 	g_return_val_if_fail (GMIME_IS_READER (reader), FALSE);
-	g_return_val_if_fail (GMIME_IS_STREAM (reader->priv->stream), FALSE);
-	g_return_val_if_fail (!reader->priv->reading, FALSE);
+	priv = _g_mime_reader_get_private (reader);
+
+	g_return_val_if_fail (GMIME_IS_STREAM (priv->stream), FALSE);
+	g_return_val_if_fail (!priv->reading, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	g_object_ref (reader);
-	priv = reader->priv;
 	priv->reading = TRUE;
 	begin_compliance (reader);
 
@@ -2445,9 +2523,13 @@ g_mime_reader_read_message (GMimeReader *reader, GError **error)
 GMimeStream *
 _g_mime_reader_get_stream (GMimeReader *reader)
 {
+	GMimeReaderPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_READER (reader), NULL);
 
-	return reader->priv->stream;
+	priv = _g_mime_reader_get_private (reader);
+
+	return priv->stream;
 }
 
 /* GMimeParser's format setter must retain unread bytes, not reassign the
@@ -2455,11 +2537,15 @@ _g_mime_reader_get_stream (GMimeReader *reader)
 void
 _g_mime_reader_set_format (GMimeReader *reader, GMimeFormat format)
 {
+	GMimeReaderPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_READER (reader));
 	g_return_if_fail (format >= GMIME_FORMAT_MESSAGE && format <= GMIME_FORMAT_MMDF);
-	g_return_if_fail (!reader->priv->reading);
+	priv = _g_mime_reader_get_private (reader);
 
-	reader->priv->format = format;
+	g_return_if_fail (!priv->reading);
+
+	priv->format = format;
 }
 
 /* Public model construction returns NULL without an error at EOF, unlike
@@ -2467,7 +2553,7 @@ _g_mime_reader_set_format (GMimeReader *reader, GMimeFormat format)
 gboolean
 _g_mime_reader_has_input (GMimeReader *reader, GError **error)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gboolean more;
 
 	g_return_val_if_fail (!priv->reading, FALSE);
@@ -2485,13 +2571,15 @@ _g_mime_reader_has_input (GMimeReader *reader, GError **error)
 gboolean
 _g_mime_reader_header_limit_exceeded (GMimeReader *reader)
 {
-	return reader->priv->header_limit_exceeded;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+
+	return priv->header_limit_exceeded;
 }
 
 gboolean
 _g_mime_reader_input_eos (GMimeReader *reader)
 {
-	GMimeReaderPrivate *priv = reader->priv;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 
 	return priv->input_index == priv->input_end &&
 		(priv->input_eos || g_mime_stream_eos (priv->stream));
@@ -2508,14 +2596,16 @@ _g_mime_reader_restore_stream_position (GMimeReader *reader, GError **error)
 	int err;
 
 	g_return_val_if_fail (GMIME_IS_READER (reader), FALSE);
-	g_return_val_if_fail (GMIME_IS_STREAM (reader->priv->stream), FALSE);
-	g_return_val_if_fail (!reader->priv->reading, FALSE);
+	priv = _g_mime_reader_get_private (reader);
+
+	g_return_val_if_fail (GMIME_IS_STREAM (priv->stream), FALSE);
+	g_return_val_if_fail (!priv->reading, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	priv = reader->priv;
 	if (!priv->error) {
 		errno = 0;
 		position = g_mime_stream_tell (priv->stream);
+
 		if (position < 0 || (position != priv->position &&
 		    g_mime_stream_seek (priv->stream, priv->position, GMIME_STREAM_SEEK_SET) != priv->position)) {
 			err = errno;
@@ -2524,6 +2614,7 @@ _g_mime_reader_restore_stream_position (GMimeReader *reader, GError **error)
 				     err ? g_strerror (err) : "stream seek failed");
 		}
 	}
+
 	if (priv->error) {
 		g_propagate_error (error, g_error_copy (priv->error));
 		return FALSE;
@@ -2541,12 +2632,14 @@ _g_mime_reader_skip_blank_lines (GMimeReader *reader, GError **error)
 	gboolean more = FALSE;
 
 	g_return_val_if_fail (GMIME_IS_READER (reader), FALSE);
-	g_return_val_if_fail (GMIME_IS_STREAM (reader->priv->stream), FALSE);
-	g_return_val_if_fail (!reader->priv->reading, FALSE);
+
+	priv = _g_mime_reader_get_private (reader);
+
+	g_return_val_if_fail (GMIME_IS_STREAM (priv->stream), FALSE);
+	g_return_val_if_fail (!priv->reading, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
 	g_object_ref (reader);
-	priv = reader->priv;
 	priv->reading = TRUE;
 
 	if (!priv->error)
@@ -2590,12 +2683,14 @@ _g_mime_reader_read_to_eos (GMimeReader *reader, GError **error)
 	GMimeStream *content;
 
 	g_return_val_if_fail (GMIME_IS_READER (reader), NULL);
-	g_return_val_if_fail (GMIME_IS_STREAM (reader->priv->stream), NULL);
-	g_return_val_if_fail (!reader->priv->reading, NULL);
+
+	priv = _g_mime_reader_get_private (reader);
+
+	g_return_val_if_fail (GMIME_IS_STREAM (priv->stream), NULL);
+	g_return_val_if_fail (!priv->reading, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	g_object_ref (reader);
-	priv = reader->priv;
 	priv->reading = TRUE;
 	content = g_mime_stream_block_new ();
 
