@@ -746,8 +746,10 @@ test_ah_injection (void)
 			if (test->acheader) {
 				GMimeAutocryptHeader *ah = _gen_header (test->acheader);
 				
-			        g_mime_entity_set_header (GMIME_ENTITY (before), "Autocrypt",
-						         g_mime_autocrypt_header_to_string (ah, FALSE), NULL);
+				str = g_mime_autocrypt_header_to_string (ah, FALSE);
+				g_mime_entity_set_header (GMIME_ENTITY (before), "Autocrypt", str, NULL);
+				g_free (str);
+				str = NULL;
 				g_object_unref (ah);
 			}
 			
@@ -762,8 +764,10 @@ test_ah_injection (void)
 					GMimeAutocryptHeaderList *ahl = _gen_header_list (test->gossipheaders);
 					
 					for (ix = 0; ix < g_mime_autocrypt_header_list_get_count (ahl); ix++) {
-						g_mime_entity_append_header (mainpart, "Autocrypt-Gossip",
-									     g_mime_autocrypt_header_to_string (g_mime_autocrypt_header_list_get_header_at (ahl, ix), TRUE), NULL);
+						str = g_mime_autocrypt_header_to_string (g_mime_autocrypt_header_list_get_header_at (ahl, ix), TRUE);
+						g_mime_entity_append_header (mainpart, "Autocrypt-Gossip", str, NULL);
+						g_free (str);
+						str = NULL;
 					}
 					
 					g_object_unref (ahl);
@@ -1100,8 +1104,12 @@ int main (int argc, char **argv)
 		if (!(gpg = g_find_program_in_path ("gpg")))
 			return EXIT_FAILURE;
 	
-	if (testsuite_setup_gpghome (gpg, "autocrypt") != 0)
+	if (testsuite_setup_gpghome (gpg, "autocrypt") != 0) {
+		g_free (gpg);
 		return EXIT_FAILURE;
+	}
+
+	g_free (gpg);
 #endif
 	
 	testsuite_start ("Autocrypt: generate headers");

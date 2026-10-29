@@ -392,6 +392,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	
 	/* okay, now to test our decrypt function... */
 	decrypted = g_mime_multipart_encrypted_decrypt (mpe, GMIME_DECRYPT_EXPORT_SESSION_KEY, session_key, &result, &err);
+	g_object_unref (message);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
 		g_error_free (err);
@@ -401,6 +402,8 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 #if GPGME_VERSION_NUMBER >= 0x010800
 	if (!result->session_key) {
 		ex = exception_new ("No session key returned!");
+		g_object_unref (result);
+		g_object_unref (decrypted);
 		throw (ex);
 	}
 	
@@ -425,11 +428,13 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	if (ex != NULL) {
 		g_free (ret);
 		ret = NULL;
+		g_object_unref (decrypted);
 		throw (ex);
 	}
 	
 	test_stream = g_mime_stream_mem_new ();
 	g_mime_entity_write_to_stream (decrypted, format, test_stream);
+	g_object_unref (decrypted);
 	
 	buf[0] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) cleartext);
 	buf[1] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) test_stream);

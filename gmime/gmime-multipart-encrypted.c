@@ -162,6 +162,7 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeEntity *entity
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
 	g_mime_entity_write_to_stream (entity, options, stream);
+	g_mime_format_options_free (options);
 	
 	/* reset the content stream */
 	g_mime_stream_reset (stream);
