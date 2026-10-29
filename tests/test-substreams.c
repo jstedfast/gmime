@@ -136,6 +136,54 @@ test_substream_ranges (void)
 }
 
 static void
+test_filter_substream_bounds (void)
+{
+	const gint64 bounds[][2] = { { 4, 10 }, { 5, -1 }, { 14, 14 } };
+	GMimeStream *source, *parent, *child;
+	GMimeFilter *filter;
+	gint64 start, end, expected_end;
+	guint i, j;
+
+	testsuite_check ("Filter substreams initialize child bounds and position without changing the parent");
+	for (i = 0; i < 2; i++) {
+		source = g_mime_stream_mem_new_with_buffer ("0123456789abcdef", 16);
+		g_mime_stream_set_bounds (source, 2, 14);
+		g_assert_cmpint (g_mime_stream_seek (source, 7, GMIME_STREAM_SEEK_SET), ==, 7);
+		parent = g_mime_stream_filter_new (source);
+		g_mime_stream_set_position (parent, 9);
+
+		if (i) {
+			filter = g_mime_filter_dos2unix_new (FALSE);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (parent), filter);
+			g_object_unref (filter);
+		}
+
+		for (j = 0; j < G_N_ELEMENTS (bounds); j++) {
+			child = g_mime_stream_substream (parent, bounds[j][0], bounds[j][1]);
+			g_assert_nonnull (child);
+			g_assert_true (GMIME_IS_STREAM_FILTER (child));
+			expected_end = bounds[j][1] == -1 ? 14 : bounds[j][1];
+			g_mime_stream_get_bounds (child, &start, &end);
+			g_assert_cmpint (start, ==, bounds[j][0]);
+			g_assert_cmpint (end, ==, expected_end);
+			g_assert_cmpint (g_mime_stream_get_position (child), ==, bounds[j][0]);
+			g_assert_cmpint (g_mime_stream_length (child), ==, expected_end - bounds[j][0]);
+			g_mime_stream_get_bounds (parent, &start, &end);
+			g_assert_cmpint (start, ==, 2);
+			g_assert_cmpint (end, ==, 14);
+			g_assert_cmpint (g_mime_stream_get_position (parent), ==, 9);
+			g_assert_cmpint (g_mime_stream_length (parent), ==, 12);
+			g_assert_cmpint (g_mime_stream_tell (source), ==, 7);
+			g_object_unref (child);
+		}
+
+		g_object_unref (parent);
+		g_object_unref (source);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_mem_substream_reads (void)
 {
 	GMimeStreamMemPrivate *priv;
@@ -1309,6 +1357,7 @@ main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	testsuite_start ("Native substreams");
 	test_substream_ranges ();
+	test_filter_substream_bounds ();
 	test_mem_substream_reads ();
 	test_mem_substream_writes ();
 	test_mem_substream_seeks ();
