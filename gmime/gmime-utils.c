@@ -1882,7 +1882,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 				
 				g_string_append_len (decoded, (char *) outptr, outlen);
 			} else if ((checked && codepage < 0) ||
-				   (cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
+				   (cd = g_mime_iconv_open ("UTF-8", _g_mime_charset_get_text_converter (charset))) == (iconv_t) -1) {
 				/* Unknown declarations use the fallback, not native locale aliases. */
 				w(g_warning ("Cannot convert from %s to UTF-8, header display may "
 					     "be corrupt: %s", charset[0] ? charset : "unspecified charset",

@@ -306,7 +306,8 @@ testsuite_check_failed (const char *fmt, ...)
 	
 	g_assert (stack != NULL && stack->type == CHECK);
 	
-	if (verbose > 2) {
+	if (verbose > 0) {
+		fprintf (stderr, "FAILED: %s: ", stack->message);
 		va_start (ap, fmt);
 		vfprintf (stderr, fmt, ap);
 		va_end (ap);

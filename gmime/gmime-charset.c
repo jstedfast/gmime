@@ -832,8 +832,8 @@ _g_mime_charset_get_text_name (const char *charset, GError **error)
 	return _g_mime_charset_get_mime_name (charset);
 }
 
-static const char *
-get_text_converter (const char *name)
+const char *
+_g_mime_charset_get_text_converter (const char *name)
 {
 	if (!g_ascii_strcasecmp (name, "utf-16"))
 		return "UTF-16LE";
@@ -853,7 +853,7 @@ _g_mime_charset_encode_text (const char *charset, const char *text, gsize *lengt
 		return NULL;
 
 	/* Explicit-endian encoders omit the preamble, like Encoding.GetBytes. */
-	bytes = g_convert (text, -1, get_text_converter (name), "UTF-8", NULL, length, error);
+	bytes = g_convert (text, -1, _g_mime_charset_get_text_converter (name), "UTF-8", NULL, length, error);
 	if (bytes)
 		*mime_name = name;
 	else
@@ -875,7 +875,7 @@ _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, G
 	if (!(name = _g_mime_charset_get_text_name (charset, error)))
 		return (GIConv) -1;
 
-	converter = get_text_converter (name);
+	converter = _g_mime_charset_get_text_converter (name);
 	errno = 0;
 	decoder = g_iconv_open ("UTF-8", converter);
 	errsv = errno;

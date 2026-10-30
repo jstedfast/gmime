@@ -146,6 +146,7 @@ G_GNUC_INTERNAL char *_g_mime_charset_get_mime_name (const char *charset);
 G_GNUC_INTERNAL char *_g_mime_charset_encode_text (const char *charset, const char *text, gsize *length,
 						 char **mime_name, GError **error);
 G_GNUC_INTERNAL char *_g_mime_charset_get_text_name (const char *charset, GError **error);
+G_GNUC_INTERNAL const char *_g_mime_charset_get_text_converter (const char *name);
 G_GNUC_INTERNAL GIConv _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error);
 G_GNUC_INTERNAL int _g_mime_charset_get_codepage (const char *charset);
 

@@ -12493,8 +12493,10 @@ test_feedback_report (void)
 }
 
 static void
-count_collection_changes (GMimeHeaderListCollection *collection, gpointer args, guint *count)
+count_collection_changes (gpointer collection, gpointer args, gpointer user_data)
 {
+	guint *count = user_data;
+
 	(*count)++;
 }
 
@@ -12512,8 +12514,8 @@ test_header_list_collection (void)
 	guint changes = 0, shared_changes = 0;
 	int index;
 
-	g_mime_event_add (collection->changed, (GMimeEventCallback) count_collection_changes, &changes);
-	g_mime_event_add (shared->changed, (GMimeEventCallback) count_collection_changes, &shared_changes);
+	g_mime_event_add (collection->changed, count_collection_changes, &changes);
+	g_mime_event_add (shared->changed, count_collection_changes, &shared_changes);
 	check (g_mime_header_list_collection_get_count (collection) == 0 &&
 	       !g_mime_header_list_collection_contains (collection, first), "new header-group collections are empty");
 	g_mime_header_list_collection_add (collection, first);

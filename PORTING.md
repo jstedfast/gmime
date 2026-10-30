@@ -208,6 +208,11 @@ The fallback charset array is replaced by a single charset:
 Undeclared text is tried as UTF-8, then the configured charset, then Latin-1.
 Check setter failure rather than silently proceeding with another charset.
 
+Generic UTF-16 and UTF-32 text and RFC 2047 encoded words use little-endian
+bytes, consistently with GMime's encoders rather than the platform iconv
+default. Explicit-endian charsets retain their byte order. The low-level
+`GMimeFilterCharset` and iconv wrappers still use native conversion behavior.
+
 Review these defaults against application/security requirements:
 
 | Option | 4.0 default |

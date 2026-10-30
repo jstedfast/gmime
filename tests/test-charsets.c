@@ -64,6 +64,39 @@ test_codepages (void)
 }
 
 static void
+test_text_converters (void)
+{
+	static const struct {
+		const char *name, *converter, *bytes;
+		gsize length;
+	} cases[] = {
+		{ "utf-16", "UTF-16LE", "c\0a\0f\0\351\0", 8 },
+		{ "UTF-16", "UTF-16LE", "c\0a\0f\0\351\0", 8 },
+		{ "utf-32", "UTF-32LE", "c\0\0\0a\0\0\0f\0\0\0\351\0\0\0", 16 },
+		{ "UTF-32", "UTF-32LE", "c\0\0\0a\0\0\0f\0\0\0\351\0\0\0", 16 },
+		{ "utf-16be", "utf-16be", "\0c\0a\0f\0\351", 8 },
+		{ "utf-32be", "utf-32be", "\0\0\0c\0\0\0a\0\0\0f\0\0\0\351", 16 }
+	};
+	guint i;
+
+	g_mime_charset_map_init ();
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		const char *converter = _g_mime_charset_get_text_converter (cases[i].name);
+		GError *error = NULL;
+		char *decoded;
+
+		g_assert_cmpstr (converter, ==, cases[i].converter);
+		decoded = g_convert (cases[i].bytes, cases[i].length, "UTF-8", converter, NULL, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (decoded, ==, "caf\303\251");
+		g_free (decoded);
+	}
+	g_assert_cmpstr (g_mime_charset_iconv_name ("UTF-16"), ==, "UTF-16");
+	g_assert_cmpstr (g_mime_charset_iconv_name ("UTF-32"), ==, "UTF-32");
+	g_mime_charset_map_shutdown ();
+}
+
+static void
 test_native_identities (void)
 {
 	GHashTable *seen = g_hash_table_new (g_direct_hash, g_direct_equal);
@@ -163,6 +196,7 @@ main (int argc, char **argv)
 {
 	g_test_init (&argc, &argv, NULL);
 	g_test_add_func ("/charsets/codepages", test_codepages);
+	g_test_add_func ("/charsets/text-converters", test_text_converters);
 	g_test_add_func ("/charsets/native-identities", test_native_identities);
 	g_test_add_func ("/charsets/lifetime", test_lifetime);
 	g_test_add_func ("/charsets/threads", test_threads);

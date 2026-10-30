@@ -622,6 +622,8 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
  * @mime_part: a #GMimeTextPart
  *
  * Gets the text content of the @mime_part as a string.
+ * Generic UTF-16 and UTF-32 charsets use little-endian bytes, matching
+ * g_mime_text_part_set_text_with_charset().
  *
  * Returns: a newly allocated string containing the utf-8 encoded text content.
  **/
@@ -644,7 +646,7 @@ g_mime_text_part_get_text (GMimeTextPart *mime_part)
 	stream = g_mime_stream_mem_new ();
 	
 	if ((charset = g_mime_content_type_get_parameter (content_type, "charset")) != NULL &&
-	    (filter = g_mime_filter_charset_new (charset, "utf-8")) != NULL) {
+	    (filter = g_mime_filter_charset_new (_g_mime_charset_get_text_converter (charset), "utf-8")) != NULL) {
 		filtered = g_mime_stream_filter_new (stream);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 		g_object_unref (filter);

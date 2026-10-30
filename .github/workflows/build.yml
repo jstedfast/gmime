@@ -104,7 +104,8 @@ jobs:
           extra=(-Dintrospection=enabled -Dvapi=enabled -Dgtk_doc=true)
         fi
         if [[ '${{ matrix.sanitize }}' == 'true' ]]; then
-          extra+=(-Db_sanitize=address,undefined)
+          # Clang resolves shared-library sanitizer symbols in the executable.
+          extra+=(-Db_sanitize=address,undefined -Db_lundef=false)
         fi
         if [[ '${{ matrix.static }}' == 'true' ]]; then
           extra+=(-Ddefault_library=static)
