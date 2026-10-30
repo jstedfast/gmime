@@ -136,26 +136,64 @@ test_builtin_mappings (void)
 		{ ".txt", "text/plain" },
 		{ ".csv", "text/csv" },
 		{ ".3mf", "model/3mf" },
+		{ ".aiff", "audio/x-aiff" },
 		{ ".apng", "image/apng" },
+		{ ".arrow", "application/vnd.apache.arrow.file" },
+		{ ".avi", "video/x-msvideo" },
 		{ ".avif", "image/avif" },
 		{ ".cbor", "application/cbor" },
+		{ ".class", "application/java-vm" },
+		{ ".dart", "application/vnd.dart" },
+		{ ".deb", "application/vnd.debian.binary-package" },
+		{ ".dwg", "image/vnd.dwg" },
+		{ ".dxf", "image/vnd.dxf" },
+		{ ".eot", "application/vnd.ms-fontobject" },
 		{ ".flac", "audio/flac" },
 		{ ".geojson", "application/geo+json" },
 		{ ".glb", "model/gltf-binary" },
 		{ ".gltf", "model/gltf+json" },
 		{ ".gz", "application/gzip" },
 		{ ".heic", "image/heic" },
+		{ ".heics", "image/heic-sequence" },
 		{ ".heif", "image/heif" },
+		{ ".heifs", "image/heif-sequence" },
+		{ ".hqx", "application/mac-binhex40" },
+		{ ".jp2", "image/jp2" },
+		{ ".jpf", "image/jpx" },
 		{ ".jsonld", "application/ld+json" },
 		{ ".jxl", "image/jxl" },
+		{ ".m3u", "audio/x-mpegurl" },
+		{ ".m3u8", "application/vnd.apple.mpegurl" },
+		{ ".mif", "application/vnd.mif" },
+		{ ".mka", "audio/matroska" },
 		{ ".mkv", "video/matroska" },
 		{ ".obj", "model/obj" },
+		{ ".odf", "application/vnd.oasis.opendocument.formula" },
+		{ ".odg", "application/vnd.oasis.opendocument.graphics" },
+		{ ".otg", "application/vnd.oasis.opendocument.graphics-template" },
+		{ ".otp", "application/vnd.oasis.opendocument.presentation-template" },
+		{ ".ots", "application/vnd.oasis.opendocument.spreadsheet-template" },
+		{ ".ott", "application/vnd.oasis.opendocument.text-template" },
+		{ ".p12", "application/pkcs12" },
 		{ ".parquet", "application/vnd.apache.parquet" },
+		{ ".pcl", "application/vnd.hp-PCL" },
+		{ ".pnm", "image/x-portable-anymap" },
+		{ ".psd", "image/vnd.adobe.photoshop" },
+		{ ".py", "text/x-script.python" },
+		{ ".roff", "text/troff" },
+		{ ".smil", "application/smil+xml" },
+		{ ".sqlite3", "application/vnd.sqlite3" },
+		{ ".step", "model/step" },
 		{ ".stl", "model/stl" },
 		{ ".toml", "application/toml" },
+		{ ".vsd", "application/vnd.visio" },
 		{ ".vtt", "text/vtt" },
 		{ ".wasm", "application/wasm" },
 		{ ".webmanifest", "application/manifest+json" },
+		{ ".wpd", "application/vnd.wordperfect" },
+		{ ".wrl", "model/vrml" },
+		{ ".xls", "application/vnd.ms-excel" },
+		{ ".xpm", "image/x-xpixmap" },
 		{ ".yaml", "application/yaml" },
 		{ ".zst", "application/zstd" },
 	};
@@ -174,15 +212,6 @@ test_builtin_mappings (void)
 		g_free (upper);
 		g_free (file_name);
 	}
-	assert_mime_type ("file.gzip", "application/gzip");
-	assert_mime_type ("file.py", "text/x-script.python");
-	assert_mime_type ("file.PY", "text/x-script.python");
-	assert_extension ("text/x-script.phyton", ".py");
-	assert_mime_type ("file.yml", "application/yaml");
-	assert_extension ("application/x-gzip", ".gz");
-	assert_extension ("audio/x-flac", ".flac");
-	assert_extension ("video/x-matroska", ".mkv");
-	assert_extension ("application/sla", ".stl");
 	assert_extension ("image/jpeg", ".jpg");
 	assert_extension ("text/html", ".html");
 	assert_extension ("application/x-gmime-unknown", NULL);
@@ -190,6 +219,134 @@ test_builtin_mappings (void)
 	assert_extension (" text/plain", NULL);
 	assert_extension ("text/plain ", NULL);
 	assert_extension ("text/plain; charset=utf-8", NULL);
+}
+
+static void
+test_mapping_aliases (void)
+{
+	static const struct {
+		const char *extension;
+		const char *mime_type;
+		const char *preferred_extension;
+	} alternate_extensions[] = {
+		{ ".yml", "application/yaml", ".yaml" },
+		{ ".gzip", "application/gzip", ".gz" },
+		{ ".aif", "audio/x-aiff", ".aiff" },
+		{ ".aifc", "audio/x-aiff", ".aiff" },
+		{ ".asx", "video/x-ms-asf", ".asf" },
+		{ ".au", "audio/basic", ".snd" },
+		{ ".jpg2", "image/jp2", ".jp2" },
+		{ ".jpx", "image/jpx", ".jpf" },
+		{ ".man", "text/troff", ".roff" },
+		{ ".me", "text/troff", ".roff" },
+		{ ".ms", "text/troff", ".roff" },
+		{ ".opus", "audio/ogg", ".ogg" },
+		{ ".pfx", "application/pkcs12", ".p12" },
+		{ ".pm", "image/x-xpixmap", ".xpm" },
+		{ ".smi", "application/smil+xml", ".smil" },
+		{ ".sml", "application/smil+xml", ".smil" },
+		{ ".sqlite", "application/vnd.sqlite3", ".sqlite3" },
+		{ ".stp", "model/step", ".step" },
+		{ ".t", "text/troff", ".roff" },
+		{ ".tr", "text/troff", ".roff" },
+		{ ".udeb", "application/vnd.debian.binary-package", ".deb" },
+		{ ".vrml", "model/vrml", ".wrl" },
+		{ ".vss", "application/vnd.visio", ".vsd" },
+		{ ".vst", "application/vnd.visio", ".vsd" },
+		{ ".vsw", "application/vnd.visio", ".vsd" },
+		{ ".w60", "application/vnd.wordperfect", ".wpd" },
+		{ ".w61", "application/vnd.wordperfect", ".wpd" },
+		{ ".wp", "application/vnd.wordperfect", ".wpd" },
+		{ ".wp5", "application/vnd.wordperfect", ".wpd" },
+		{ ".wp6", "application/vnd.wordperfect", ".wpd" },
+		{ ".wrz", "model/vrml", ".wrl" },
+		{ ".wsc", "text/scriptlet", ".sct" },
+		{ ".xl", "application/vnd.ms-excel", ".xls" },
+		{ ".xlb", "application/vnd.ms-excel", ".xls" },
+		{ ".xlc", "application/vnd.ms-excel", ".xls" },
+		{ ".xld", "application/vnd.ms-excel", ".xls" },
+		{ ".xlk", "application/vnd.ms-excel", ".xls" },
+		{ ".xll", "application/vnd.ms-excel", ".xls" },
+		{ ".xlm", "application/vnd.ms-excel", ".xls" },
+		{ ".xlv", "application/vnd.ms-excel", ".xls" },
+		{ ".xlw", "application/vnd.ms-excel", ".xls" },
+	};
+	static const struct {
+		const char *mime_type;
+		const char *extension;
+	} legacy_types[] = {
+		{ "application/x-gzip", ".gz" },
+		{ "audio/x-flac", ".flac" },
+		{ "video/x-matroska", ".mkv" },
+		{ "application/sla", ".stl" },
+		{ "application/acad", ".dwg" },
+		{ "application/binhex", ".hqx" },
+		{ "application/dart", ".dart" },
+		{ "application/dxf", ".dxf" },
+		{ "application/excel", ".xls" },
+		{ "application/pkcs-12", ".p12" },
+		{ "application/smil", ".smi" },
+		{ "application/step", ".step" },
+		{ "application/vnd.bw-fontobject", ".eot" },
+		{ "application/wordperfect", ".wp5" },
+		{ "application/wordperfect6.0", ".w60" },
+		{ "application/wordperfect6.1", ".w61" },
+		{ "application/x-deb", ".deb" },
+		{ "application/x-debian-package", ".deb" },
+		{ "application/x-java-applet", ".class" },
+		{ "application/x-mif", ".mif" },
+		{ "application/x-mplayer2", ".asx" },
+		{ "application/x-pcl", ".pcl" },
+		{ "application/x-pkcs12", ".pfx" },
+		{ "application/x-portable-anymap", ".pnm" },
+		{ "application/x-sqlite3", ".sqlite3" },
+		{ "application/x-troff", ".roff" },
+		{ "application/x-troff-man", ".man" },
+		{ "application/x-troff-me", ".me" },
+		{ "application/x-troff-ms", ".ms" },
+		{ "application/x-visio", ".vsd" },
+		{ "application/x-vrml", ".vrml" },
+		{ "application/x-world", ".svr" },
+		{ "audio/aiff", ".aiff" },
+		{ "audio/opus", ".opus" },
+		{ "audio/x-au", ".au" },
+		{ "audio/x-matroska", ".mka" },
+		{ "audio/x-mpequrl", ".m3u" },
+		{ "image/xpm", ".xpm" },
+		{ "text/scriplet", ".wsc" },
+		{ "text/x-script.phyton", ".py" },
+		{ "video/avi", ".avi" },
+	};
+	static const struct {
+		const char *file_name;
+		const char *mime_type;
+	} preserved[] = {
+		{ "filename.ts", "application/typescript" },
+		{ "filename.rpm", "audio/x-pn-realaudio-plugin" },
+		{ "filename.xml", "text/xml" },
+		{ "filename.rtf", "text/rtf" },
+		{ "filename.db", "application/octet-stream" },
+	};
+	char *file_name, *upper;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (alternate_extensions); i++) {
+		file_name = g_strconcat ("filename", alternate_extensions[i].extension, NULL);
+		assert_mime_type (file_name, alternate_extensions[i].mime_type);
+		upper = g_ascii_strup (file_name, -1);
+		assert_mime_type (upper, alternate_extensions[i].mime_type);
+		assert_extension (alternate_extensions[i].mime_type, alternate_extensions[i].preferred_extension);
+		g_free (upper);
+		g_free (file_name);
+	}
+	for (i = 0; i < G_N_ELEMENTS (legacy_types); i++) {
+		assert_extension (legacy_types[i].mime_type, legacy_types[i].extension);
+		upper = g_ascii_strup (legacy_types[i].mime_type, -1);
+		assert_extension (upper, legacy_types[i].extension);
+		g_free (upper);
+	}
+	for (i = 0; i < G_N_ELEMENTS (preserved); i++)
+		assert_mime_type (preserved[i].file_name, preserved[i].mime_type);
 }
 
 static void
@@ -313,6 +470,7 @@ main (int argc, char **argv)
 	testsuite_start ("MIME-type and file extension mappings");
 	test_concurrency ();
 	test_builtin_mappings ();
+	test_mapping_aliases ();
 	test_paths ();
 	test_registration ();
 	test_preconditions ();

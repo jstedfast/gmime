@@ -556,6 +556,16 @@ This is an incremental migration, not yet a declaration of feature parity.
   bytes exactly. Inputs are not trimmed or parsed as Content-Type values.
   NULL arguments and empty registration values are programming errors.
 
+  The tables include MimeKit's legacy mapping refresh from commit
+  ee3d18f32f2ef37c3d18293ca5cf727883b707f8: 591 extension-to-type and 457
+  type-to-extension entries. Updated names cover AIFF, AVI, Debian packages,
+  CAD, Excel, WordPerfect, PKCS#12, SMIL, troff and XPM; additions include
+  Arrow, SQLite, HLS, Matroska audio, JPEG 2000, HEIF sequences and OpenDocument
+  formats. Reverse aliases, including historical misspellings, remain
+  supported. Ambiguous extensions such as .ts, .rpm, .xml, .rtf and .db keep
+  their prior behavior. Regression cases cover both lookup directions,
+  alternate extensions, ASCII case-insensitivity and legacy aliases.
+
 - `GMimeIterator` ports MimeKit's message-based depth-first iterator as a
   GObject. It starts before the first body entity; move_next() visits
   multipart children and encapsulated message bodies without visiting
