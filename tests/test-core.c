@@ -1271,6 +1271,7 @@ test_rfc2047_charset_aliases (void)
 		{ "big5-0", "big5", "\344\270\255" },
 		{ "big5.eten-0", "big5", "\344\270\255" },
 		{ "BIG5HKSCS-0", "big5-hkscs", "\360\240\200\241" },
+		{ "BIG5HKSCS", "big5-hkscs", "\360\240\200\241" },
 		{ "gb18030-0", "gb18030", "\344\270\255" }
 	};
 	static const guint widths[] = { 60, 61, 78, 120, 998 };

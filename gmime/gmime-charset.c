@@ -129,7 +129,8 @@ static struct {
 	/* Chinese charsets */
 	{ "big5-0",          "BIG5",       "big5" },
 	{ "big5.eten-0",     "BIG5",       "big5" },
-	{ "big5hkscs-0",     "BIG5HKSCS",   "big5-hkscs" },
+	{ "big5hkscs-0",     "BIG5-HKSCS", "big5-hkscs" },
+	{ "big5hkscs",       "BIG5-HKSCS", "big5-hkscs" },
 	/* Note: GBK is a superset of gb2312 (see
 	 * http://en.wikipedia.org/wiki/GBK for details), so 'upgrade'
 	 * gb2312 to GBK so that we can completely convert GBK text
@@ -146,9 +147,9 @@ static struct {
 	{ "gbk",             "GBK",        "euc-cn" },
 	
 	/* Japanese charsets */
-	{ "eucjp-0",         "eucJP",      "euc-jp" },
-	{ "ujis-0",          "ujis",       "euc-jp" },
-	{ "ujis",            "ujis",       "euc-jp" },
+	{ "eucjp-0",         "euc-jp",     "euc-jp" },
+	{ "ujis-0",          "euc-jp",     "euc-jp" },
+	{ "ujis",            "euc-jp",     "euc-jp" },
 	{ "eucJP",           "eucJP",      "euc-jp" },
 	{ NULL,              NULL,         NULL }
 };
@@ -168,6 +169,7 @@ static struct {
 } cjkr_lang_map[] = {
 	{ "Big5",          "zh" },
 	{ "BIG5HKSCS",     "zh" },
+	{ "BIG5-HKSCS",    "zh" },
 	{ "gb2312",        "zh" },
 	{ "gb18030",       "zh" },
 	{ "gbk",           "zh" },

@@ -97,6 +97,36 @@ test_text_converters (void)
 }
 
 static void
+test_native_aliases (void)
+{
+	static const struct {
+		const char *alias, *converter, *bytes, *text, *language;
+	} cases[] = {
+		{ "UJIS", "euc-jp", "\244\242", "\343\201\202", "ja" },
+		{ "ujis-0", "euc-jp", "\244\242", "\343\201\202", "ja" },
+		{ "eucjp-0", "euc-jp", "\244\242", "\343\201\202", "ja" },
+		{ "BIG5HKSCS", "BIG5-HKSCS", "\234\161", "\360\240\200\241", "zh" },
+		{ "big5hkscs-0", "BIG5-HKSCS", "\234\161", "\360\240\200\241", "zh" }
+	};
+	guint i;
+
+	g_mime_charset_map_init ();
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		const char *converter = g_mime_charset_iconv_name (cases[i].alias);
+		GError *error = NULL;
+		char *decoded;
+
+		g_assert_cmpstr (converter, ==, cases[i].converter);
+		g_assert_cmpstr (g_mime_charset_language (converter), ==, cases[i].language);
+		decoded = g_convert (cases[i].bytes, -1, "UTF-8", converter, NULL, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (decoded, ==, cases[i].text);
+		g_free (decoded);
+	}
+	g_mime_charset_map_shutdown ();
+}
+
+static void
 test_native_identities (void)
 {
 	GHashTable *seen = g_hash_table_new (g_direct_hash, g_direct_equal);
@@ -197,6 +227,7 @@ main (int argc, char **argv)
 	g_test_init (&argc, &argv, NULL);
 	g_test_add_func ("/charsets/codepages", test_codepages);
 	g_test_add_func ("/charsets/text-converters", test_text_converters);
+	g_test_add_func ("/charsets/native-aliases", test_native_aliases);
 	g_test_add_func ("/charsets/native-identities", test_native_identities);
 	g_test_add_func ("/charsets/lifetime", test_lifetime);
 	g_test_add_func ("/charsets/threads", test_threads);
