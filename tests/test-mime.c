@@ -406,7 +406,7 @@ test_address_name_whitespace (GMimeParserOptions *options)
 	else
 		testsuite_check_passed ();
 	g_free (unquoted);
-	g_mime_parser_options_free (parser);
+	g_mime_parser_options_unref (parser);
 }
 
 static struct {
@@ -923,7 +923,7 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 		g_free (enc);
 	}
 
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 	test_rfc2047_decoding (options);
 }
 
@@ -1019,7 +1019,7 @@ test_rfc2047_quoted_words (GMimeParserOptions *options)
 	}
 	g_free (expected);
 	g_string_free (input, TRUE);
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -1123,7 +1123,7 @@ test_rfc2047_literal_words (GMimeParserOptions *options)
 			g_clear_object (&addresses);
 		}
 	}
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -1281,7 +1281,7 @@ test_rfc2047_word_charsets (GMimeParserOptions *options)
 		}
 	}
 
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static struct {
@@ -1618,7 +1618,7 @@ int main (int argc, char **argv)
 	test_references (options);
 	testsuite_end ();
 	
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	
 	g_mime_shutdown ();
 	

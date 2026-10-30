@@ -449,7 +449,7 @@ test_headers (void)
 	g_free (first);
 	g_free (second);
 	g_free (expected);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -551,7 +551,7 @@ test_reader_limits_and_errors (void)
 		g_object_unref (reader);
 		g_object_unref (input);
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 
 	for (stage = 1; stage <= 4; stage++) {
 		guint mode;
@@ -711,7 +711,7 @@ test_reader_default_callbacks (void)
 	g_object_unref (reader);
 	g_assert_cmpuint (input->closes, ==, 0);
 	g_object_unref (input);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -740,7 +740,7 @@ test_openpgp_option (void)
 	clone = g_mime_parser_options_clone (options);
 	g_mime_parser_options_set_detect_openpgp (options, FALSE);
 	g_assert_true (g_mime_parser_options_get_detect_openpgp (clone));
-	g_mime_parser_options_free (clone);
+	g_mime_parser_options_unref (clone);
 
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		for (enabled = 0; enabled < 2; enabled++) {
@@ -789,7 +789,7 @@ test_openpgp_option (void)
 			}
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -860,7 +860,7 @@ test_openpgp_reuse (void)
 		g_object_unref (stream);
 		g_string_free (wire, TRUE);
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -1403,7 +1403,7 @@ test_entity_limits_and_errors (void)
 		g_assert_cmpuint (input->closes, ==, 0);
 		g_object_unref (input);
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -1470,7 +1470,7 @@ test_entity_streaming_and_depth (void)
 	g_clear_error (&error);
 	g_object_unref (plain);
 	g_object_unref (input);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	g_string_free (wire, TRUE);
 }
 
@@ -1542,7 +1542,7 @@ test_mailboxes (void)
 		}
 		g_free (expected);
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	g_free (length_wire);
 }
 
@@ -2198,7 +2198,7 @@ test_mimekit_reference (const char *datadir)
 		g_free (actual);
 		g_object_unref (reader);
 		g_object_unref (input);
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		g_free (bytes);
 		g_strfreev (fields);
 		count++;
@@ -2252,7 +2252,7 @@ record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chu
 	trace = g_strdup (test->trace->str);
 	g_object_unref (reader);
 	g_object_unref (input);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	return trace;
 }
 

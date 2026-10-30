@@ -963,7 +963,7 @@ anonymizer_frame_clear (gpointer data)
 	AnonymizerFrame *frame = data;
 
 	g_object_unref (frame->multipart);
-	g_mime_format_options_free (frame->options);
+	g_mime_format_options_unref (frame->options);
 	g_free (frame->boundary);
 }
 
@@ -1092,7 +1092,7 @@ anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMim
 						GMimeFormatOptions *copy = g_mime_format_options_clone (options);
 
 						g_mime_format_options_set_ensure_newline (copy, ensure);
-						g_clear_pointer (&temporary, g_mime_format_options_free);
+						g_clear_pointer (&temporary, g_mime_format_options_unref);
 						options = temporary = copy;
 					}
 
@@ -1142,7 +1142,7 @@ anonymize_entity (GMimeAnonymizer *anonymizer, GMimeFormatOptions *options, GMim
 			continue;
 		}
 
-		g_clear_pointer (&temporary, g_mime_format_options_free);
+		g_clear_pointer (&temporary, g_mime_format_options_unref);
 
 		if (!frames->len) {
 			success = TRUE;
@@ -1191,7 +1191,7 @@ done:
 			     "Failed to anonymize MIME content: %s", errsv ? g_strerror (errsv) : "unknown I/O error");
 
 	g_clear_object (&entity);
-	g_clear_pointer (&temporary, g_mime_format_options_free);
+	g_clear_pointer (&temporary, g_mime_format_options_unref);
 	g_array_unref (frames);
 	errno = errsv;
 

@@ -620,12 +620,12 @@ g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err)
 
 	if (g_mime_entity_write_to_stream (entity, options, stream) == -1) {
 		compressed_data_io_error (err);
-		g_mime_format_options_free (options);
+		g_mime_format_options_unref (options);
 		g_object_unref (stream);
 		return NULL;
 	}
 
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 
 	compressed = g_mime_stream_mem_new ();
 	status = deflateInit (&zstream, Z_DEFAULT_COMPRESSION);

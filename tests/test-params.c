@@ -535,7 +535,7 @@ test_checked_parsing (void)
 		check_string (g_mime_param_list_to_string (list), "; x=\"y2147483648 =a\"",
 			      "loose parsing never truncates real characters when trimming whitespace");
 	g_clear_object (&list);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -592,7 +592,7 @@ test_checked_parse_errors (void)
 			g_clear_object (&list);
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -742,7 +742,7 @@ test_checked_content_fields (void)
 			g_free (text);
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -803,7 +803,7 @@ test_checked_content_errors (void)
 			g_clear_object (&object);
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -1762,7 +1762,7 @@ test_international_values (void)
 		g_object_unref (list);
 	}
 	g_string_free (str, TRUE);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1867,7 +1867,7 @@ test_international_continuations (void)
 	}
 	g_string_free (input, TRUE);
 	g_string_free (str, TRUE);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1913,7 +1913,7 @@ test_international_headers (void)
 	g_object_unref (headers);
 	g_object_unref (disposition);
 	g_object_unref (type);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1938,7 +1938,7 @@ test_international_oversized_name (void)
 	g_object_unref (parsed);
 	g_object_unref (list);
 	g_string_free (str, TRUE);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_free (name);
 }
 

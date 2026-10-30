@@ -103,7 +103,9 @@ typedef enum {
 /**
  * GMimeParserOptions:
  *
- * A set of parser options used by #GMimeParser and various other parsing functions.
+ * A reference-counted set of parser options used by #GMimeParser and various
+ * other parsing functions. Boxed copies share settings; use
+ * g_mime_parser_options_clone() for an independent copy.
  **/
 typedef struct _GMimeParserOptions GMimeParserOptions;
 
@@ -124,7 +126,8 @@ GType g_mime_parser_options_get_type (void);
 GMimeParserOptions *g_mime_parser_options_get_default (void);
 
 GMimeParserOptions *g_mime_parser_options_new (void);
-void g_mime_parser_options_free (GMimeParserOptions *options);
+GMimeParserOptions *g_mime_parser_options_ref (GMimeParserOptions *options);
+void g_mime_parser_options_unref (GMimeParserOptions *options);
 
 GMimeParserOptions *g_mime_parser_options_clone (GMimeParserOptions *options);
 

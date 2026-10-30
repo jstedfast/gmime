@@ -209,7 +209,7 @@ test_bounded_input (void)
 	clause = g_mime_received_get_clause (received, 0);
 	g_assert_cmpstr (g_mime_received_clause_get_comment (clause, 0), ==, "\342\202\254");
 	g_object_unref (received);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 
 	received = parse ("from =?utf-8?q?caf=C3=A9?=", -1);
 	assert_clause (received, 0, GMIME_RECEIVED_CLAUSE_FROM, "from", "=?utf-8?q?caf=C3=A9?=");
@@ -707,7 +707,7 @@ test_formatting (void)
 	assert_format (received, NULL, g_str_has_suffix (g_mime_format_options_get_newline (NULL), "\r\n") ?
 		       " x \303\251\360\237\230\200\r\n" : " x \303\251\360\237\230\200\n");
 	g_object_unref (received);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void

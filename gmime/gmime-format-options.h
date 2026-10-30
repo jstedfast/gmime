@@ -70,7 +70,9 @@ typedef enum {
 /**
  * GMimeFormatOptions:
  *
- * Format options for serializing various GMime objects.
+ * Reference-counted format options for serializing various GMime objects.
+ * Boxed copies share settings; use g_mime_format_options_clone() for an
+ * independent copy.
  **/
 typedef struct _GMimeFormatOptions GMimeFormatOptions;
 
@@ -79,7 +81,8 @@ GType g_mime_format_options_get_type (void);
 GMimeFormatOptions *g_mime_format_options_get_default (void);
 
 GMimeFormatOptions *g_mime_format_options_new (void);
-void g_mime_format_options_free (GMimeFormatOptions *options);
+GMimeFormatOptions *g_mime_format_options_ref (GMimeFormatOptions *options);
+void g_mime_format_options_unref (GMimeFormatOptions *options);
 
 GMimeFormatOptions *g_mime_format_options_clone (GMimeFormatOptions *options);
 

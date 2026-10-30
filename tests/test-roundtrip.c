@@ -118,8 +118,8 @@ test_roundtrip (const char *path, const char *name)
 		g_object_unref (input);
 		g_object_unref (output);
 	}
-	g_mime_format_options_free (format);
-	g_mime_parser_options_free (options);
+	g_mime_format_options_unref (format);
+	g_mime_parser_options_unref (options);
 	g_free (data);
 }
 

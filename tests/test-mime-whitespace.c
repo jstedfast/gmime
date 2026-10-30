@@ -233,7 +233,7 @@ test_address_whitespace (void)
 		testsuite_check_passed ();
 	}
 	g_free (name);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (message);
 }
 

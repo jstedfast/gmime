@@ -919,7 +919,7 @@ test_domainless_mailbox_formatting (void)
 			}
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -1024,7 +1024,7 @@ test_unnamed_group_formatting (void)
 			}
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -1273,7 +1273,7 @@ test_address_line_lengths (void)
 			g_free (raw);
 			g_free (full);
 			g_free (wire);
-			g_mime_format_options_free (clone);
+			g_mime_format_options_unref (clone);
 			g_mime_format_options_set_max_line_length (options, widths[i]);
 		}
 	}
@@ -1281,7 +1281,7 @@ test_address_line_lengths (void)
 	test_address_format_case (NULL, "First <a@example.com>, Second <b@example.com>",
 				 " First <a@example.com>, Second <b@example.com>\n");
 	g_object_unref (headers);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1476,14 +1476,14 @@ test_text_header_line_lengths (void)
 			g_free (raw);
 			g_free (full);
 			g_free (wire);
-			g_mime_format_options_free (clone);
+			g_mime_format_options_unref (clone);
 			g_mime_format_options_set_max_line_length (options, widths[i]);
 		}
 	}
 
 	test_text_fold_case (NULL, "text", "Subject: text\n", FALSE);
 	g_object_unref (headers);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1555,7 +1555,7 @@ test_header_field_lengths (void)
 		}
 	}
 
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1701,7 +1701,7 @@ test_header_formatting_parity (void)
 	}
 	g_free (word);
 	g_object_unref (headers);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1759,7 +1759,7 @@ test_header_serialization_parity (void)
 			g_free (expected);
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1831,7 +1831,7 @@ test_address_header_whitespace (void)
 			}
 		}
 	}
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 	g_object_unref (headers);
 }
 
@@ -1909,7 +1909,7 @@ test_literal_encoded_word_headers (void)
 		}
 	}
 	g_object_unref (headers);
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -2030,7 +2030,7 @@ test_structured_header_line_lengths (void)
 		}
 	}
 	g_object_unref (list);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -2088,7 +2088,7 @@ test_message_id_formatting (void)
 	}
 	g_free (long_id);
 	g_object_unref (list);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -2199,7 +2199,7 @@ test_notification_options_formatting (void)
 	} finally;
 	g_free (wire);
 	g_object_unref (list);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static struct {
@@ -2257,8 +2257,8 @@ test_parameter_lists (void)
 		g_object_unref (list);
 	}
 
-	g_mime_format_options_free (rfc2047);
-	g_mime_format_options_free (rfc2231);
+	g_mime_format_options_unref (rfc2047);
+	g_mime_format_options_unref (rfc2231);
 	g_string_free (str, TRUE);
 }
 
@@ -2460,7 +2460,7 @@ test_parameter_continuation_charsets (void)
 	g_free (suffix);
 	g_free (text);
 	g_free (expected);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -2503,7 +2503,7 @@ test_parameter_quoting (void)
 		clone = g_mime_format_options_clone (NULL);
 		if (g_mime_format_options_get_always_quote_param_values (clone))
 			throw (exception_new ("cloned defaults should not force quoting"));
-		g_mime_format_options_free (clone);
+		g_mime_format_options_unref (clone);
 		clone = NULL;
 		g_mime_format_options_set_always_quote_param_values (options, -7);
 		g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
@@ -2518,7 +2518,7 @@ test_parameter_quoting (void)
 		testsuite_check_failed ("%s", ex->message);
 	} finally;
 	if (clone)
-		g_mime_format_options_free (clone);
+		g_mime_format_options_unref (clone);
 
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		for (flags = 0; flags < 32; flags++) {
@@ -2666,7 +2666,7 @@ test_parameter_quoting (void)
 		}
 	}
 
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_string_free (str, TRUE);
 }
 
@@ -2777,7 +2777,7 @@ test_parameter_output_charsets (void)
 		g_free (expected);
 	}
 
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_string_free (str, TRUE);
 }
 
@@ -2987,7 +2987,7 @@ test_parameter_encoding_selection (void)
 		g_free (value);
 	}
 
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_string_free (str, TRUE);
 }
 
@@ -3096,7 +3096,7 @@ test_parameter_continuation_formatting (void)
 
 	g_string_free (input, TRUE);
 	g_string_free (str, TRUE);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -3232,7 +3232,7 @@ test_parameter_formatting_parity (void)
 	}
 	g_object_unref (type);
 	g_string_free (value, TRUE);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -3357,7 +3357,7 @@ test_parameter_line_lengths (void)
 
 	g_string_free (input, TRUE);
 	g_string_free (str, TRUE);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 int main (int argc, char **argv)

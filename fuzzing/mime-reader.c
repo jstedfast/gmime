@@ -331,7 +331,7 @@ read_input (const guint8 *data, gsize length, GMimeFormat format, gsize chunk, F
 	trace = g_string_new_len (reader->trace->str, reader->trace->len);
 	g_object_unref (reader);
 	g_object_unref (stream);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	return trace;
 }
 

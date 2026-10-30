@@ -71,8 +71,8 @@ test_domains (void)
 	check (g_mime_format_options_get_allow_international (format), "international formatting option is cloned");
 	check_string (g_mime_domain_list_to_string (list, format, TRUE),
 		      "@First.EXAMPLE,@m\303\274nich.example,@[IPv6:::1]", "international routes preserve Unicode");
-	g_mime_format_options_free (format);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (format);
+	g_mime_format_options_unref (options);
 	clone = g_mime_domain_list_clone (list);
 	g_mime_domain_list_set_domain (clone, 0, g_mime_domain_list_get_domain (clone, 0) + 6);
 	check (!strcmp (g_mime_domain_list_get_domain (clone, 0), "EXAMPLE") &&
@@ -207,7 +207,7 @@ test_domain_whitespace (void)
 			      "formatting does not trim nonblank domains");
 	}
 	g_object_unref (list);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -272,7 +272,7 @@ test_mailboxes (void)
 		      "best-effort IDN helpers preserve unparseable input");
 done:
 	g_clear_error (&error);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -347,7 +347,7 @@ test_idn_accessors (void)
 		      "decoding reads the updated domain");
 	g_object_unref (address);
 	g_object_unref (parsed);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -620,7 +620,7 @@ test_parsing (void)
 		check_string (g_mime_internet_address_list_to_string (list, NULL, FALSE), "valid@example.com",
 			      "header recovery resumes at the next comma");
 	g_clear_object (&list);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -651,7 +651,7 @@ test_international_formatting (void)
 	       "international folding counts Unicode columns rather than UTF-8 bytes");
 	g_object_unref (address);
 	g_object_unref (headers);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -759,7 +759,7 @@ test_header_recovery (void)
 			g_free (text);
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 int

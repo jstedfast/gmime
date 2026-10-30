@@ -493,7 +493,7 @@ _g_mime_gpgme_serialize (GMimeEntity *entity, GError **error)
 	errno = 0;
 	written = g_mime_entity_write_to_stream (entity, options, stream);
 
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 
 	if (written < 0 || g_mime_stream_reset (stream) < 0) {
 		_g_mime_gpgme_io_error (error);

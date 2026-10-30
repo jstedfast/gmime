@@ -203,7 +203,7 @@ test_content_type_constructors (void)
 	g_assert_null (first);
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
 	g_clear_error (&error);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	testsuite_check_passed ();
 }
 
@@ -1048,7 +1048,7 @@ test_content_encoding_consumers (void)
 	g_assert_cmpstr (testsuite_header_raw_text (header), ==, raw);
 	g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_free (raw);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (output);
 	g_object_unref (content);
 	g_object_unref (source);
@@ -1416,7 +1416,7 @@ test_write_to_stream (const char *datadir, const char *output, GMimeContentEncod
 error:
 	g_byte_array_free (expected, TRUE);
 	g_byte_array_free (actual, TRUE);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_free (path);
 }
 
@@ -1800,7 +1800,7 @@ test_part_prepare (void)
 			}
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	testsuite_check_passed ();
 }
 

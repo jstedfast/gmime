@@ -18,7 +18,7 @@ serialize (GMimeMessage *message)
 	bytes = g_byte_array_ref (g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream));
 	FUZZ_CHECK (written >= 0 && (guint64) written == bytes->len, "Serialization failed or returned an incorrect byte count");
 	g_object_unref (stream);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	return bytes;
 }
 
@@ -75,7 +75,7 @@ check_roundtrip (GMimeMessage *message)
 	}
 	g_byte_array_unref (first);
 	g_byte_array_unref (second);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static GString *
@@ -162,7 +162,7 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 		g_byte_array_unref (last_bytes);
 	}
 	g_string_free (checker.trace, TRUE);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	return result;
 }
 

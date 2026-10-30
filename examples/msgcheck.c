@@ -112,7 +112,7 @@ check_msg_file (const gchar *filename)
 		options = g_mime_parser_options_new ();
 		g_mime_parser_options_set_warning_callback (options, parser_issue, NULL);
 		message = g_mime_parser_construct_message (parser, options, &error);
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		g_object_unref (parser);
 		g_object_unref (stream);
 		if (error != NULL) {

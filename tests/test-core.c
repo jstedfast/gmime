@@ -321,7 +321,7 @@ test_header_list_loading (void)
 		check (!strcmp (testsuite_header_raw_text (g_mime_header_list_get_header (headers, "X-Folded")),
 				" one\r\n\ttwo\r\n"), "standalone parsing preserves header folding");
 		g_mime_parser_options_set_charset_encoding (options, "windows-1252", NULL);
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		g_object_unref (parser);
 		g_object_unref (input);
 		g_object_unref (stream);
@@ -491,7 +491,7 @@ test_header_list_loading_errors (void)
 			g_object_unref (failure);
 		}
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -533,7 +533,7 @@ test_header_list_file_loading (void)
 	check (g_mime_parser_options_set_charset_encoding (options, "windows-1251", NULL),
 	       "set file-loaded header fallback charset");
 	headers = g_mime_header_list_load_file (options, filename, &error);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	check (headers != NULL && error == NULL && g_mime_header_list_get_count (headers) == 4,
 	       "filename header loading accepts UTF-8 paths and retains all headers, not the body");
 	g_assert_cmpint (g_unlink (filename), ==, 0);
@@ -588,7 +588,7 @@ test_header_list_file_loading (void)
 		g_clear_object (&headers);
 		g_clear_error (&error);
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	g_assert_cmpint (g_unlink (filename), ==, 0);
 	g_assert_cmpint (g_rmdir (directory), ==, 0);
 	g_free (missing);
@@ -703,7 +703,7 @@ test_header_list_separators (void)
 		}
 		g_object_unref (parser);
 	}
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static char *
@@ -821,7 +821,7 @@ test_header_list_writing_errors (void)
 	g_free (text);
 	g_object_unref (message);
 	g_object_unref (headers);
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -892,7 +892,7 @@ test_entity_header_separators (void)
 	check (!strcmp (fields, ""), "a body-less message's get_headers does not acquire a separator");
 	g_free (fields);
 	g_object_unref (message);
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -994,11 +994,11 @@ test_mixed_header_charsets (void)
 	g_mime_format_options_set_allow_mixed_charsets (options, FALSE);
 	check (g_mime_format_options_get_allow_mixed_charsets (clone),
 	       "format option clones retain an independent mixed-charset policy");
-	g_mime_format_options_free (clone);
+	g_mime_format_options_unref (clone);
 	clone = g_mime_format_options_clone (NULL);
 	check (!g_mime_format_options_get_allow_mixed_charsets (clone),
 	       "cloning the default preserves the disabled mixed-charset policy");
-	g_mime_format_options_free (clone);
+	g_mime_format_options_unref (clone);
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*options != NULL*");
 	g_mime_format_options_set_allow_mixed_charsets (NULL, TRUE);
 	g_test_assert_expected_messages ();
@@ -1044,7 +1044,7 @@ test_mixed_header_charsets (void)
 			g_object_unref (copy);
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1163,7 +1163,7 @@ test_phrase_groups (void)
 			}
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1231,7 +1231,7 @@ test_rfc2047_word_merging (void)
 			}
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -1320,7 +1320,7 @@ test_rfc2047_charset_aliases (void)
 			}
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 
 	check (!strcmp (g_mime_charset_canon_name ("cp1251"), "windows-cp1251"),
 	       "canonical Windows code-page lookup is case insensitive");
@@ -1482,7 +1482,7 @@ test_rfc2047_token_recovery (void)
 	folded = g_mime_utils_structured_header_fold (options, NULL, raw);
 	check (!strcmp (folded, raw), "phrase recovery preserves raw encoded-word spelling when folding");
 	g_free (folded);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -1588,7 +1588,7 @@ test_rfc2047_charset_selection (void)
 		}
 	}
 
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -2915,7 +2915,7 @@ test_message_resent_addresses (void)
 		testsuite_header_set_raw_text (g_mime_header_list_get_header_at (headers, 0), " another-local\n");
 		check (g_mime_internet_address_list_length (list) == 1,
 		       "resent raw-header edits retain message parser options");
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		g_object_unref (message);
 		g_object_unref (parser);
 		g_object_unref (stream);
@@ -4843,7 +4843,7 @@ test_rfc2047_alias_runs (void)
 	folded = g_mime_utils_structured_header_fold (options, NULL, raw);
 	check (!strcmp (folded, raw), "alias-aware decoding does not rewrite raw structured headers");
 	g_free (folded);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -4937,7 +4937,7 @@ test_rfc2047_token_splitting (void)
 		g_free (decoded);
 		g_free (encoded);
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -5338,7 +5338,7 @@ test_header_parsing (void)
 	g_assert_no_error (error);
 	g_assert_nonnull (header);
 	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "utf-8", &error));
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	clone = g_mime_header_clone (header);
 	g_object_unref (header);
 	check (!strcmp (g_mime_parser_options_get_charset_encoding (clone->options), "windows-1251") &&
@@ -5721,7 +5721,7 @@ test_checked_header_assignment (void)
 	g_test_assert_expected_messages ();
 	g_clear_error (&error);
 	g_object_unref (header);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -6299,7 +6299,7 @@ test_header_charset_value (void)
 	testsuite_header_set_raw_text (header, " caf\351\r\n");
 	clone = g_mime_header_clone (header);
 	g_object_unref (headers);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	value = g_mime_header_get_value_with_charset (clone, "windows-1251", &error);
 	check (!g_strcmp0 (value, "caf\320\271") && clone->value == NULL,
 	       "explicit header decoding honors a clone's owned options after the source list is released");
@@ -6497,8 +6497,8 @@ test_header_raw_bytes (void)
 	check (changes == 4, "raw byte assignment preserves sharing owners after another owner is destroyed");
 	g_bytes_unref (bytes);
 	g_object_unref (shared);
-	g_mime_format_options_free (format);
-	g_mime_parser_options_free (options);
+	g_mime_format_options_unref (format);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -6570,7 +6570,7 @@ test_header_cloning (void)
 		g_free (raw);
 		g_object_unref (copy);
 	}
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -6623,7 +6623,7 @@ test_header_clone_formatting (void)
 		g_free (wire);
 		g_object_unref (clone);
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 
 	headers = g_mime_header_list_new (NULL);
 	g_mime_header_list_append (headers, "X-Placeholder", NULL, NULL);
@@ -6841,8 +6841,8 @@ test_international_text_headers (void)
 		g_free (wire);
 		g_object_unref (message);
 	}
-	g_mime_format_options_free (copy);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (copy);
+	g_mime_format_options_unref (options);
 	g_string_free (value, TRUE);
 	g_string_free (expected, TRUE);
 }
@@ -6910,7 +6910,7 @@ check_parsed_international_header (const char *input, const char *expected, GMim
 		g_free (raw);
 		g_object_unref (header);
 	}
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -6959,7 +6959,7 @@ test_parsed_international_headers (void)
 	g_mime_parser_options_set_charset_encoding (options, "windows-1251", NULL);
 	check_parsed_international_header ("Subject: \317\360\350\342\345\362\n",
 					  "Subject: \320\237\321\200\320\270\320\262\320\265\321\202\n", options);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 
 	g_mime_format_options_set_allow_international (format, TRUE);
 	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_UNIX);
@@ -6985,7 +6985,7 @@ test_parsed_international_headers (void)
 	g_free (wire);
 	g_free (raw);
 	g_object_unref (part);
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -7144,8 +7144,8 @@ test_mailing_list_headers (void)
 	check_parsed_international_header ("List-Help: (\317\360\350\342\345\362) <a>\n",
 					  "List-Help: (\320\237\321\200\320\270\320\262\320\265\321\202) <a>\n",
 					  parser_options);
-	g_mime_parser_options_free (parser_options);
-	g_mime_format_options_free (options);
+	g_mime_parser_options_unref (parser_options);
+	g_mime_format_options_unref (options);
 	g_string_free (value, TRUE);
 	g_string_free (expected, TRUE);
 }
@@ -7296,7 +7296,7 @@ test_signature_headers (void)
 		g_object_unref (parser);
 		g_object_unref (stream);
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_string_free (expected, TRUE);
 	g_string_free (value, TRUE);
 }
@@ -8079,7 +8079,7 @@ test_header_list_instances (void)
 	g_object_unref (message);
 	g_object_unref (parser);
 	g_object_unref (stream);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	header = g_object_ref (g_mime_header_list_get_header_at (headers, 0));
 	g_object_unref (headers);
 	check (!strcmp (g_mime_header_get_value (header), "\320\237\321\200\320\270\320\262\320\265\321\202\tworld"),
@@ -8259,7 +8259,7 @@ test_header_list_replace (void)
 	g_object_unref (message);
 	g_object_unref (parser);
 	g_object_unref (stream);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	check (!strcmp (g_mime_header_get_value (g_mime_header_list_get_header_at (headers, 0)),
 			"\320\237\321\200\320\270\320\262\320\265\321\202"),
 	       "replacement snapshots source parser options for decoding after the source is destroyed");
@@ -8427,7 +8427,7 @@ test_header_list_set_header_at (void)
 	g_object_unref (message);
 	g_object_unref (parser);
 	g_object_unref (stream);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	check (!strcmp (g_mime_header_get_value (g_mime_header_list_get_header_at (headers, 0)),
 			"\320\237\321\200\320\270\320\262\320\265\321\202"),
 	       "indexed assignment snapshots parser options before the source is destroyed");
@@ -9688,7 +9688,7 @@ test_compressed_data (void)
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	stream = g_mime_stream_mem_new ();
 	g_mime_entity_write_to_stream (GMIME_ENTITY (binary), options, stream);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	original = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
 	compressed = g_mime_application_pkcs7_mime_compress (GMIME_ENTITY (binary), &error);
 	g_assert_no_error (error);
@@ -9780,6 +9780,136 @@ test_authenveloped_data (void)
 	g_object_unref (parsed);
 }
 
+typedef struct {
+	GMimeParserOptions *parser;
+	GMimeFormatOptions *format;
+} OptionReferences;
+
+static gpointer
+ref_options_thread (gpointer user_data)
+{
+	OptionReferences *options = user_data;
+	guint i;
+
+	for (i = 0; i < 10000; i++) {
+		g_mime_parser_options_unref (g_mime_parser_options_ref (options->parser));
+		g_mime_format_options_unref (g_mime_format_options_ref (options->format));
+	}
+
+	return NULL;
+}
+
+static void
+options_destroy_notify (gpointer user_data)
+{
+	(*(guint *) user_data)++;
+}
+
+static void
+test_options_references (void)
+{
+	GMimeParserOptions *parser = g_mime_parser_options_new ();
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	OptionReferences options = { parser, format };
+	GMimeParserOptions *parser_ref, *parser_boxed, *parser_clone;
+	GMimeFormatOptions *format_ref, *format_boxed, *format_clone;
+	GMimeHeaderList *headers;
+	GValue value = G_VALUE_INIT;
+	GThread *threads[4];
+	guint destroyed = 0, i;
+
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		threads[i] = g_thread_new ("options-ref", ref_options_thread, &options);
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		g_thread_join (threads[i]);
+
+	g_mime_parser_options_set_warning_callback_full (parser, NULL, &destroyed, options_destroy_notify);
+	g_mime_parser_options_set_max_mime_depth (parser, 123);
+	check (g_mime_parser_options_set_charset_encoding (parser, "windows-1252", NULL),
+	       "set reference-counted parser charset");
+	parser_ref = g_mime_parser_options_ref (parser);
+	parser_boxed = g_boxed_copy (GMIME_TYPE_PARSER_OPTIONS, parser);
+	g_value_init (&value, GMIME_TYPE_PARSER_OPTIONS);
+	g_value_set_boxed (&value, parser);
+	check (parser_ref == parser && parser_boxed == parser && g_value_get_boxed (&value) == parser,
+	       "parser references and boxed copies share identity");
+	parser_clone = g_mime_parser_options_clone (parser);
+	headers = g_mime_header_list_new (parser);
+	g_mime_parser_options_set_max_mime_depth (parser_ref, 456);
+	check (g_mime_parser_options_set_charset_encoding (parser_ref, "utf-8", NULL),
+	       "change shared parser charset");
+	check (g_mime_parser_options_get_max_mime_depth (parser) == 456 &&
+	       g_mime_parser_options_get_max_mime_depth (parser_clone) == 123 &&
+	       g_mime_parser_options_get_max_mime_depth (headers->options) == 123,
+	       "explicit and internal parser clones remain independent");
+	g_mime_parser_options_unref (parser);
+	g_mime_parser_options_unref (parser_ref);
+	g_boxed_free (GMIME_TYPE_PARSER_OPTIONS, parser_boxed);
+	check (destroyed == 0, "boxed value retains parser callback ownership");
+	parser_ref = g_value_dup_boxed (&value);
+	g_value_unset (&value);
+	check (destroyed == 0 && g_mime_parser_options_get_max_mime_depth (parser_ref) == 456,
+	       "duplicated boxed value retains live parser settings");
+	g_mime_parser_options_unref (parser_ref);
+	check (destroyed == 1, "parser destroy notification runs on final unref");
+	check (!strcmp (g_mime_parser_options_get_charset_encoding (parser_clone), "windows-1252") &&
+	       !strcmp (g_mime_parser_options_get_charset_encoding (headers->options),
+			"windows-1252"), "parser clones retain their own charset storage");
+	g_mime_parser_options_unref (parser_clone);
+	g_object_unref (headers);
+	check (destroyed == 1, "parser clones do not take ownership of callback data");
+
+	g_mime_format_options_set_max_line_length (format, 92);
+	g_mime_format_options_add_hidden_header (format, "X-Secret");
+	format_ref = g_mime_format_options_ref (format);
+	format_boxed = g_boxed_copy (GMIME_TYPE_FORMAT_OPTIONS, format);
+	g_value_init (&value, GMIME_TYPE_FORMAT_OPTIONS);
+	g_value_set_boxed (&value, format);
+	check (format_ref == format && format_boxed == format && g_value_get_boxed (&value) == format,
+	       "format references and boxed copies share identity");
+	format_clone = g_mime_format_options_clone (format);
+	g_mime_format_options_remove_hidden_header (format_ref, "X-Secret");
+	g_mime_format_options_set_max_line_length (format_ref, 60);
+	check (!g_mime_format_options_is_hidden_header (format, "X-Secret") &&
+	       g_mime_format_options_is_hidden_header (format_clone, "X-Secret") &&
+	       g_mime_format_options_get_max_line_length (format_clone) == 92,
+	       "format clones retain independent settings and hidden headers");
+	g_mime_format_options_unref (format);
+	g_mime_format_options_unref (format_ref);
+	g_boxed_free (GMIME_TYPE_FORMAT_OPTIONS, format_boxed);
+	format_ref = g_value_dup_boxed (&value);
+	g_value_unset (&value);
+	check (g_mime_format_options_get_max_line_length (format_ref) == 60,
+	       "duplicated boxed value retains live format settings");
+	g_mime_format_options_unref (format_ref);
+	check (g_mime_format_options_is_hidden_header (format_clone, "X-Secret"),
+	       "format clone outlives the original settings");
+	g_mime_format_options_unref (format_clone);
+}
+
+static void
+test_options_default_references (void)
+{
+	GMimeParserOptions *parser = g_mime_parser_options_ref (g_mime_parser_options_get_default ());
+	GMimeFormatOptions *format = g_mime_format_options_ref (g_mime_format_options_get_default ());
+	char *charset = g_strdup (g_mime_parser_options_get_charset_encoding (parser));
+	guint maxline = g_mime_format_options_get_max_line_length (format);
+	guint destroyed = 0;
+
+	g_mime_parser_options_set_warning_callback_full (parser, NULL, &destroyed, options_destroy_notify);
+	g_mime_shutdown ();
+	check (destroyed == 0 && !strcmp (g_mime_parser_options_get_charset_encoding (parser), charset) &&
+	       g_mime_format_options_get_max_line_length (format) == maxline,
+	       "retained default options survive library shutdown");
+	g_mime_init ();
+	check (g_mime_parser_options_get_default () != parser && g_mime_format_options_get_default () != format,
+	       "reinitialization owns fresh default options");
+	g_mime_parser_options_unref (parser);
+	g_mime_format_options_unref (format);
+	check (destroyed == 1, "retained default parser data is destroyed on final unref");
+	g_free (charset);
+}
+
 static void
 test_options (void)
 {
@@ -9809,7 +9939,7 @@ test_options (void)
 	clone = g_mime_parser_options_clone (options);
 	g_mime_parser_options_set_respect_content_length (options, FALSE);
 	check (g_mime_parser_options_get_respect_content_length (clone), "independent cloned Content-Length option");
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 
 	check (g_mime_parser_options_get_max_address_group_depth (clone) == 1, "cloned address group depth");
 	check (g_mime_parser_options_get_max_mime_depth (clone) == 2, "cloned MIME depth");
@@ -9817,7 +9947,7 @@ test_options (void)
 	check (!g_mime_parser_options_get_allow_unquoted_commas_in_addresses (clone), "cloned unquoted commas");
 	check (!g_mime_parser_options_get_allow_addresses_without_domain (clone), "cloned local addresses");
 	check (g_mime_parser_options_get_respect_content_length (clone), "cloned Content-Length option");
-	g_mime_parser_options_free (clone);
+	g_mime_parser_options_unref (clone);
 }
 
 static void
@@ -9892,7 +10022,7 @@ test_charset_encoding (void)
 	clone = g_mime_parser_options_clone (options);
 	check (g_mime_parser_options_set_charset_encoding (options, NULL, &error), "NULL resets charset encoding");
 	check (!strcmp (g_mime_parser_options_get_charset_encoding (options), "utf-8"), "reset charset encoding is UTF-8");
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	check (!strcmp (g_mime_parser_options_get_charset_encoding (clone), "windows-1251"),
 	       "cloned charset owns an independent name");
 	options = clone;
@@ -9937,13 +10067,13 @@ test_charset_encoding (void)
 	clone = g_mime_parser_options_clone (NULL);
 	check (!strcmp (g_mime_parser_options_get_charset_encoding (clone), "windows-1252"),
 	       "NULL clone copies the configured default charset");
-	g_mime_parser_options_free (clone);
+	g_mime_parser_options_unref (clone);
 	decoded = g_mime_utils_decode_8bit (options, "\x80", 1);
 	check (g_strcmp0 (decoded, "\xd0\x82") == 0, "explicit charset overrides global defaults");
 	g_free (decoded);
 	check (g_mime_parser_options_set_charset_encoding (defaults, saved, &error), "default charset is restored");
 	g_free (saved);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	g_clear_error (&error);
 }
 
@@ -10078,12 +10208,12 @@ test_content_length (void)
 	g_mime_parser_options_set_respect_content_length (defaults, TRUE);
 	clone = g_mime_parser_options_clone (NULL);
 	check (g_mime_parser_options_get_respect_content_length (clone), "cloned default Content-Length option");
-	g_mime_parser_options_free (clone);
+	g_mime_parser_options_unref (clone);
 	check_content_length (headers, NULL, GMIME_FORMAT_MBOX, 2, TRUE, FALSE);
 	g_mime_parser_options_set_respect_content_length (options, FALSE);
 	check_content_length (headers, options, GMIME_FORMAT_MBOX, 3, TRUE, FALSE);
 	g_mime_parser_options_set_respect_content_length (defaults, saved_default);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	g_free (headers);
 }
 
@@ -10126,7 +10256,7 @@ test_content_length_per_message (void)
 	g_object_unref (parser);
 	g_object_unref (input);
 	g_object_unref (stream);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	g_free (text);
 	g_free (body);
 }
@@ -10157,7 +10287,7 @@ test_content_length_offset_overflow (void)
 	g_clear_error (&error);
 	g_object_unref (parser);
 	g_object_unref (input);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -10231,7 +10361,7 @@ test_address_depth (void)
 	if (list != NULL)
 		g_object_unref (list);
 
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -10315,7 +10445,7 @@ test_mime_depth (gboolean multipart, gboolean onebyte)
 		g_object_unref (parser);
 	}
 
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -10397,7 +10527,7 @@ test_depth_siblings (gboolean multipart, gboolean onebyte, gboolean persist)
 	if (parsed != NULL)
 		g_object_unref (parsed);
 	g_object_unref (parser);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -10476,7 +10606,7 @@ test_address_commas (void)
 		}
 	}
 
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -10526,7 +10656,7 @@ check_header_length (const char *text, int limit, gboolean message, gboolean one
 	g_clear_error (&error);
 	g_object_unref (parser);
 	if (options != NULL)
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 }
 
 static void
@@ -10810,7 +10940,7 @@ test_parser_errors (void)
 		}
 	}
 
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -10884,7 +11014,7 @@ test_format_line_length (void)
 	check (g_mime_format_options_get_max_line_length (options) == 78, "new formatting line length");
 	clone = g_mime_format_options_clone (NULL);
 	check (g_mime_format_options_get_max_line_length (clone) == 78, "cloned default line length");
-	g_mime_format_options_free (clone);
+	g_mime_format_options_unref (clone);
 
 	g_mime_format_options_set_max_line_length (options, 120);
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
@@ -10894,13 +11024,13 @@ test_format_line_length (void)
 	check (g_mime_format_options_get_max_line_length (clone) == 120 &&
 	       g_mime_format_options_get_newline_format (clone) == GMIME_NEWLINE_FORMAT_DOS,
 	       "clone independently retains line length and newline format");
-	g_mime_format_options_free (clone);
+	g_mime_format_options_unref (clone);
 
 	g_mime_format_options_set_max_line_length (options, 998);
 	check (g_mime_format_options_get_max_line_length (options) == 998, "maximum formatting line length");
 	clone = g_boxed_copy (GMIME_TYPE_FORMAT_OPTIONS, options);
 	check (g_mime_format_options_get_max_line_length (clone) == 998, "boxed copy retains line length");
-	g_mime_format_options_free (clone);
+	g_mime_format_options_unref (clone);
 
 	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*max_line_length >= 60*");
@@ -10915,7 +11045,7 @@ test_format_line_length (void)
 	g_mime_format_options_set_max_line_length (g_mime_format_options_get_default (), 120);
 	g_test_assert_expected_messages ();
 	check (g_mime_format_options_get_max_line_length (NULL) == 78, "formatting defaults remain immutable");
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static GMimeEntity *
@@ -10942,7 +11072,7 @@ parse_core_entity (const char *text, int limit, gboolean onebyte, guint *warning
 	g_assert_nonnull (entity);
 	g_object_unref (parser);
 	g_object_unref (input);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	return entity;
 }
 
@@ -11499,7 +11629,7 @@ test_disposition_notification (void)
 		g_object_unref (entity);
 		g_object_unref (parser);
 		g_object_unref (stream);
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		g_free (text);
 		g_free (value);
 	}
@@ -11908,7 +12038,7 @@ test_delivery_status (void)
 		g_object_unref (entity);
 		g_object_unref (parser);
 		g_object_unref (stream);
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		g_free (text);
 		g_free (value);
 
@@ -13151,6 +13281,7 @@ main (int argc, char **argv)
 	testsuite_end ();
 
 	testsuite_start ("parser depth options");
+	test_options_references ();
 	test_options ();
 	test_address_depth ();
 	test_mime_depth (FALSE, FALSE);
@@ -13205,6 +13336,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("header-list collections");
 	test_header_list_collection ();
+	testsuite_end ();
+
+	testsuite_start ("default options lifetime");
+	test_options_default_references ();
 	testsuite_end ();
 
 	g_mime_shutdown ();

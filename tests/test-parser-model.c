@@ -179,7 +179,7 @@ serialize_headers (GMimeHeaderList *headers, gboolean international)
 		g_assert_cmpint (g_mime_header_write_to_stream (g_mime_header_list_get_header_at (headers, i),
 							      options, stream), >=, 0);
 	bytes = g_mime_stream_block_to_byte_array (GMIME_STREAM_BLOCK (stream), NULL);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (stream);
 
 	return bytes;
@@ -541,7 +541,7 @@ test_model_metadata (void)
 
 	testsuite_check ("Reader-backed model caches use first headers and preserve binary content");
 	g_mime_parser_options_set_max_header_length (options, 1);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	entity = _g_mime_parser_reader_construct_part (reader, &error);
 	g_assert_no_error (error);
 	g_assert_true (GMIME_IS_TEXT_PART (entity));
@@ -793,7 +793,7 @@ test_message_depth (void)
 
 		g_mime_parser_options_set_max_mime_depth (options, limit);
 		reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		entity = _g_mime_parser_reader_construct_part (reader, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (entity);
@@ -1103,7 +1103,7 @@ test_mailbox_models (void)
 			input->nonseekable = (mode & 1) != 0;
 			g_mime_parser_options_set_respect_content_length (options, (mode & 4) != 0);
 			reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, (mode & 2) != 0);
-			g_mime_parser_options_free (options);
+			g_mime_parser_options_unref (options);
 			g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input, GMIME_FORMAT_MBOX);
 			while (!g_mime_reader_eos (reader)) {
 				GMimeMessage *message = _g_mime_parser_reader_construct_message (reader, &error);
@@ -1519,7 +1519,7 @@ test_multipart_collection_bounds (void)
 					g_byte_array_unref (before[i]);
 					g_byte_array_unref (after);
 				}
-				g_mime_format_options_free (options);
+				g_mime_format_options_unref (options);
 				g_object_unref (multipart);
 				g_ptr_array_unref (children);
 				g_object_unref (candidate);
@@ -1570,7 +1570,7 @@ test_multipart_collection_bounds (void)
 				g_byte_array_unref (actual);
 				g_string_free (expected, TRUE);
 			}
-			g_mime_format_options_free (options);
+			g_mime_format_options_unref (options);
 		}
 		removed = g_mime_multipart_remove_at (multipart, count + 1);
 		g_assert_true (removed == weak);
@@ -1705,7 +1705,7 @@ test_multipart_boundary_validation (void)
 		g_assert_true (multipart_priv2->raw_trailing_boundary == trailing);
 		g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart) + 1);
 		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "hanged");
-		g_mime_format_options_free (options);
+		g_mime_format_options_unref (options);
 		g_object_unref (multipart);
 	}
 	g_ptr_array_unref (invalid);
@@ -1743,7 +1743,7 @@ test_multipart_boundary_validation (void)
 			g_free (marker);
 		}
 		g_ptr_array_unref (valid);
-		g_mime_format_options_free (options);
+		g_mime_format_options_unref (options);
 		g_object_unref (multipart);
 	}
 	testsuite_check_passed ();
@@ -1828,7 +1828,7 @@ test_multipart_text_views (void)
 				g_assert_no_error (error);
 			}
 			entity = g_mime_entity_load_with_storage (options, input, persistent, &error);
-			g_mime_parser_options_free (options);
+			g_mime_parser_options_unref (options);
 			g_assert_no_error (error);
 			g_assert_true (GMIME_IS_MULTIPART (entity));
 			multipart = (GMimeMultipart *) entity;
@@ -2003,7 +2003,7 @@ test_multipart_text_folding (void)
 				g_byte_array_unref (actual);
 				g_string_free (expected, TRUE);
 			}
-			g_mime_format_options_free (output_options);
+			g_mime_format_options_unref (output_options);
 			g_object_unref (multipart);
 		}
 	}
@@ -2130,7 +2130,7 @@ test_multipart_output (void)
 			}
 			g_byte_array_unref (bytes);
 			g_object_unref (stream);
-			g_mime_format_options_free (options);
+			g_mime_format_options_unref (options);
 		}
 		g_object_unref (multipart);
 	}
@@ -2155,7 +2155,7 @@ test_multipart_output (void)
 				g_byte_array_unref (bytes);
 			}
 			g_object_unref (multipart);
-			g_mime_format_options_free (options);
+			g_mime_format_options_unref (options);
 			g_strfreev (lines);
 			g_free (wire);
 		}
@@ -2513,7 +2513,7 @@ test_public_parser_warnings (void)
 			g_assert_cmpuint (counts[GMIME_WARN_TRUNCATED_MESSAGE], ==,
 					  cases[i].warning == GMIME_WARN_TRUNCATED_MESSAGE);
 			g_object_unref (message);
-			g_mime_parser_options_free (options);
+			g_mime_parser_options_unref (options);
 			g_object_unref (parser);
 			g_object_unref (input);
 		}
@@ -2537,7 +2537,7 @@ test_public_parser_warnings (void)
 			g_assert_cmpuint (counts[GMIME_WARN_DUPLICATED_HEADER], ==, !i);
 			g_assert_cmpuint (counts[GMIME_CRIT_CONFLICTING_HEADER], ==, i);
 			g_object_unref (message);
-			g_mime_parser_options_free (options);
+			g_mime_parser_options_unref (options);
 			g_object_unref (parser);
 			g_object_unref (input);
 		}
@@ -2756,7 +2756,7 @@ test_parser_compliance_models (void)
 					g_object_unref (model);
 					g_object_unref (parser);
 					g_object_unref (input);
-					g_mime_parser_options_free (options);
+					g_mime_parser_options_unref (options);
 				}
 				g_assert_cmpuint (issues->len, ==, expected->len);
 				for (i = 0; i < expected->len; i++)
@@ -2951,7 +2951,7 @@ test_parser_compliance_errors (void)
 			g_assert_cmpuint (logger.destroyed, ==, 0);
 			g_object_unref (parser);
 			g_assert_cmpuint (logger.destroyed, ==, 1);
-			g_mime_parser_options_free (options);
+			g_mime_parser_options_unref (options);
 			g_object_unref (input);
 		}
 	}
@@ -3123,7 +3123,7 @@ serialize_verify_content (GMimeEntity *entity)
 	bytes = g_byte_array_ref (g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream));
 	g_assert_cmpint (written, ==, bytes->len);
 	g_object_unref (stream);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	return bytes;
 }
 
@@ -3463,7 +3463,7 @@ test_writer_depth (void)
 			g_byte_array_unref (flags);
 			g_byte_array_unref (leaf_bytes);
 			g_object_unref (output);
-			g_mime_format_options_free (options);
+			g_mime_format_options_unref (options);
 			g_string_free (expected, TRUE);
 			g_free (multipart_prefix);
 			g_free (message_prefix);
@@ -4037,7 +4037,7 @@ test_writer_dispatch (void)
 	g_object_unref (type);
 	g_object_unref (content);
 	g_object_unref (stream);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -4278,7 +4278,7 @@ test_message_header_writing (void)
 		g_object_unref (body);
 	}
 	testsuite_check_passed ();
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 typedef struct {
@@ -4543,7 +4543,7 @@ test_file_writing (void)
 	g_object_unref (content);
 	g_object_unref (content_stream);
 	g_object_unref (custom);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 #ifdef __linux__
@@ -4824,8 +4824,8 @@ test_loading (void)
 	g_free (filename);
 	g_free (missing);
 	g_free (directory);
-	g_mime_format_options_free (format);
-	g_mime_parser_options_free (options);
+	g_mime_format_options_unref (format);
+	g_mime_parser_options_unref (options);
 }
 
 static void
@@ -5011,7 +5011,7 @@ test_loading_storage (void)
 			}
 			g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
 			g_object_unref (input);
-			g_mime_parser_options_free (options);
+			g_mime_parser_options_unref (options);
 		}
 	}
 	testsuite_check_passed ();
@@ -5096,7 +5096,7 @@ test_loading_storage (void)
 		}
 	}
 	testsuite_check_passed ();
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -5514,8 +5514,8 @@ test_content_type_load (void)
 		}
 	}
 	testsuite_check_passed ();
-	g_mime_parser_options_free (options);
-	g_mime_format_options_free (format);
+	g_mime_parser_options_unref (options);
+	g_mime_format_options_unref (format);
 }
 
 static void
@@ -5547,10 +5547,10 @@ test_ensure_newline (void)
 	g_mime_format_options_set_ensure_newline (options, FALSE);
 	g_assert_true (g_mime_format_options_get_ensure_newline (clone));
 	g_assert_false (g_mime_format_options_get_ensure_newline (options));
-	g_mime_format_options_free (clone);
+	g_mime_format_options_unref (clone);
 	clone = g_mime_format_options_clone (NULL);
 	g_assert_false (g_mime_format_options_get_ensure_newline (clone));
-	g_mime_format_options_free (clone);
+	g_mime_format_options_unref (clone);
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*options != NULL*");
 	g_mime_format_options_set_ensure_newline (NULL, TRUE);
 	g_test_assert_expected_messages ();
@@ -5630,7 +5630,7 @@ test_ensure_newline (void)
 		}
 	}
 	testsuite_check_passed ();
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 }
 
 int

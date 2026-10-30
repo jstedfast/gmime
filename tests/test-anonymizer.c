@@ -221,7 +221,7 @@ test_masking (void)
 		g_object_unref (stream);
 		g_object_unref (headers);
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (anonymizer);
 }
 
@@ -252,7 +252,7 @@ test_writing (void)
 	g_assert_no_error (error);
 	assert_output (stream, "Subject: \0\xff\v\f A\nSubject: keep me\n", sizeof expected - 1);
 	g_object_unref (stream);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (headers);
 	g_object_unref (anonymizer);
 }
@@ -344,7 +344,7 @@ test_formatting (void)
 	g_object_unref (output);
 	g_object_unref (header);
 	g_object_unref (headers);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (anonymizer);
 }
 
@@ -449,7 +449,7 @@ test_entities (void)
 			g_object_unref (input);
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (anonymizer);
 }
 
@@ -642,7 +642,7 @@ test_generated_boundaries (void)
 			g_free (separator);
 		}
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (anonymizer);
 }
 
@@ -710,7 +710,7 @@ test_binary_raw_boundaries (void)
 		g_free (child_headers);
 		g_free (separator);
 	}
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 	g_object_unref (anonymizer);
 }
 
@@ -756,7 +756,7 @@ test_deep_entities (void)
 	g_object_unref (entity);
 	g_object_unref (input);
 	g_object_unref (output);
-	g_mime_parser_options_free (parser_options);
+	g_mime_parser_options_unref (parser_options);
 	g_string_free (wire, TRUE);
 	g_string_free (expected, TRUE);
 	g_object_unref (anonymizer);
