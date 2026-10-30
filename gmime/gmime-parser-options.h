@@ -77,8 +77,19 @@ typedef enum {
  * @GMIME_WARN_PART_WITHOUT_CONTENT: A MIME part's headers were terminated by a boundary marker.
  * @GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT: A MIME part was encountered without any headers -or- content. This is very likely to be an attempt to exploit the MIME parser.
  *
- * Issues the @GMimeParser detects. Note that the `GMIME_CRIT_*` issues indicate that some parts of the @GMimeParser input may
+ * Issues the #GMimeParser detects. Note that the `GMIME_CRIT_*` issues indicate that some parts of the #GMimeParser input may
  * be ignored or will be interpreted differently by other software products.
+ *
+ * New applications should prefer the #GMimeComplianceViolation reporting APIs.
+ * Register a logger with g_mime_parser_set_compliance_logger() or
+ * g_mime_reader_set_compliance_logger() to receive structured
+ * #GMimeComplianceIssue diagnostics with more detailed input positions.
+ *
+ * The two reporting mechanisms have different coverage. Parser warning
+ * callbacks remain supported for diagnostics not currently provided by the
+ * compliance APIs, including parameter-level warnings. They are not deprecated
+ * and may be used alongside compliance reporting; installing a compliance
+ * logger does not replace or disable a parser warning callback.
  **/
 typedef enum {
 	GMIME_WARN_DUPLICATED_HEADER = 1U,
@@ -117,6 +128,9 @@ typedef struct _GMimeParserOptions GMimeParserOptions;
  * @user_data: User-supplied callback data.
  *
  * The function signature for a callback to g_mime_parser_options_set_warning_callback().
+ *
+ * Prefer #GMimeComplianceIssueFunc for new compliance reporting code. See
+ * #GMimeParserWarning for guidance on when this callback is still useful.
  **/
 typedef void (*GMimeParserWarningFunc) (gint64 offset, GMimeParserWarning errcode, const gchar *item, gpointer user_data);
 

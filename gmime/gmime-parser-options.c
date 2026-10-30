@@ -709,6 +709,10 @@ g_mime_parser_options_get_warning_callback (GMimeParserOptions *options)
  * @user_data: data passed to the warning callback function
  *
  * Registers the callback function being called if the parser detects any issues.
+ *
+ * New applications should prefer g_mime_parser_set_compliance_logger() or
+ * g_mime_reader_set_compliance_logger(). Warning callbacks remain supported
+ * for diagnostics outside the compliance APIs' coverage; see #GMimeParserWarning.
  **/
 void
 g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data)
@@ -724,6 +728,10 @@ g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimePa
  * @notify: callback function ran on destruction
  *
  * Registers the callback function being called if the parser detects any issues.
+ *
+ * New applications should prefer g_mime_parser_set_compliance_logger() or
+ * g_mime_reader_set_compliance_logger(). Warning callbacks remain supported
+ * for diagnostics outside the compliance APIs' coverage; see #GMimeParserWarning.
  **/
 void
 g_mime_parser_options_set_warning_callback_full (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data, GDestroyNotify notify)
