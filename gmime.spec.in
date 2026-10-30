@@ -51,6 +51,7 @@ the Multipurpose Internet Mail Extension (MIME).
 %doc AUTHORS NEWS README.md PORTING.md STATUS.md
 %{_libdir}/libgmime-@GMIME_API_VERSION@.so*
 %{_libdir}/pkgconfig/gmime-@GMIME_API_VERSION@.pc
+%{_libdir}/pkgconfig/gmime-gpgme-@GMIME_API_VERSION@.pc
 %{_libdir}/girepository-1.0/GMime-@GMIME_API_VERSION@.typelib
 %{_datadir}/gir-1.0/GMime-@GMIME_API_VERSION@.gir
 %{_includedir}/gmime-@GMIME_API_VERSION@/

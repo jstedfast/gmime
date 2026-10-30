@@ -18,10 +18,17 @@
  *  02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string.h>
 #include <gmime/gmime.h>
 
 #include "testsuite.h"
+#ifdef ENABLE_CRYPTO
+#include "test-crypto.h"
+#endif
 
 static const char *padding[] = {
 	"\302\240", "\342\200\210", "\343\200\200", "\v", "\f"
@@ -274,44 +281,11 @@ test_parameter_whitespace (void)
 	}
 }
 
-typedef GMimeCryptoContext WhitespaceCryptoContext;
-typedef GMimeCryptoContextClass WhitespaceCryptoContextClass;
-
-G_DEFINE_TYPE (WhitespaceCryptoContext, whitespace_crypto_context, GMIME_TYPE_CRYPTO_CONTEXT)
-
-static const char *
-whitespace_signature_protocol (GMimeCryptoContext *ctx)
-{
-	return "application/x-whitespace-signature";
-}
-
-static const char *
-whitespace_encryption_protocol (GMimeCryptoContext *ctx)
-{
-	return "application/x-whitespace-encrypted";
-}
-
-static void
-whitespace_crypto_context_class_init (WhitespaceCryptoContextClass *klass)
-{
-	klass->get_signature_protocol = whitespace_signature_protocol;
-	klass->get_encryption_protocol = whitespace_encryption_protocol;
-}
-
-static void
-whitespace_crypto_context_init (WhitespaceCryptoContext *ctx)
-{
-}
-
-static GMimeCryptoContext *
-whitespace_crypto_context_new (void)
-{
-	return g_object_new (whitespace_crypto_context_get_type (), NULL);
-}
-
+#ifdef ENABLE_CRYPTO
 static void
 test_protocol_whitespace (void)
 {
+	gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
 	GMimeMultipartSigned *signed_part = g_mime_multipart_signed_new ();
 	GMimeMultipartEncrypted *encrypted = g_mime_multipart_encrypted_new ();
 	GMimePart *part = g_mime_part_new ();
@@ -320,8 +294,7 @@ test_protocol_whitespace (void)
 	const char *space;
 	guint i;
 
-	g_mime_crypto_context_register (whitespace_signature_protocol (NULL), whitespace_crypto_context_new);
-	g_mime_crypto_context_register (whitespace_encryption_protocol (NULL), whitespace_crypto_context_new);
+
 	g_mime_multipart_add (GMIME_MULTIPART (signed_part), GMIME_ENTITY (part));
 	g_mime_multipart_add (GMIME_MULTIPART (signed_part), GMIME_ENTITY (part));
 	g_mime_multipart_add (GMIME_MULTIPART (encrypted), GMIME_ENTITY (part));
@@ -329,17 +302,17 @@ test_protocol_whitespace (void)
 	for (i = 0; i <= G_N_ELEMENTS (padding); i++) {
 		testsuite_check ("Crypto protocols accept only ASCII linear padding [%u]", i);
 		space = i < G_N_ELEMENTS (padding) ? padding[i] : " \t\r\n";
-		value = g_strconcat (space, whitespace_signature_protocol (NULL), space, NULL);
+		value = g_strconcat (space, "application/pgp-signature", space, NULL);
 		g_mime_entity_set_content_type_parameter (GMIME_ENTITY (signed_part), "protocol", value);
-		g_assert_null (g_mime_multipart_signed_verify (signed_part, GMIME_VERIFY_NONE, &error));
+		g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, NULL, &error));
 		g_assert_error (error, GMIME_ERROR, (i < G_N_ELEMENTS (padding) ?
 				GMIME_ERROR_PROTOCOL_ERROR : GMIME_ERROR_PARSE_ERROR));
 		g_clear_error (&error);
 		g_assert_cmpstr (g_mime_entity_get_content_type_parameter (GMIME_ENTITY (signed_part), "protocol"), ==, value);
 		g_free (value);
-		value = g_strconcat (space, whitespace_encryption_protocol (NULL), space, NULL);
+		value = g_strconcat (space, "application/pgp-encrypted", space, NULL);
 		g_mime_entity_set_content_type_parameter (GMIME_ENTITY (encrypted), "protocol", value);
-		g_assert_null (g_mime_multipart_encrypted_decrypt (encrypted, GMIME_DECRYPT_NONE, NULL, NULL, &error));
+		g_assert_null (g_mime_multipart_encrypted_decrypt (encrypted, ctx, NULL, NULL, &error));
 		g_assert_error (error, GMIME_ERROR, (i < G_N_ELEMENTS (padding) ?
 				GMIME_ERROR_PROTOCOL_ERROR : GMIME_ERROR_PARSE_ERROR));
 		g_clear_error (&error);
@@ -350,7 +323,9 @@ test_protocol_whitespace (void)
 	g_object_unref (part);
 	g_object_unref (encrypted);
 	g_object_unref (signed_part);
+	gpgme_release (ctx);
 }
+#endif
 
 int
 main (int argc, char **argv)
@@ -362,7 +337,9 @@ main (int argc, char **argv)
 	test_token_whitespace ();
 	test_address_whitespace ();
 	test_parameter_whitespace ();
+#ifdef ENABLE_CRYPTO
 	test_protocol_whitespace ();
+#endif
 	testsuite_end ();
 	g_mime_shutdown ();
 	return testsuite_exit ();

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) 2000-2026 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -38,6 +38,7 @@
 #include "gmime-internal.h"
 #include "gmime-parser.h"
 #include "gmime-error.h"
+#include "gmime-gpgme-private.h"
 #include "gmime-part.h"
 
 #ifdef ENABLE_DEBUG
@@ -135,6 +136,8 @@ g_mime_multipart_signed_new (void)
 }
 
 
+#ifdef ENABLE_CRYPTO
+
 /**
  * sign_prepare:
  * @mime_part: MIME part
@@ -181,42 +184,45 @@ sign_prepare (GMimeEntity *mime_part)
 
 
 /**
- * g_mime_multipart_signed_sign:
- * @ctx: a #GMimeCryptoContext
+ * g_mime_multipart_signed_sign: (skip)
+ * @ctx: a borrowed GPGME OpenPGP or CMS context
  * @entity: MIME part to sign
- * @userid: user id to sign with
+ * @result: (out) (optional): a retained native signing result
  * @err: a #GError
  *
- * Attempts to sign the @content MIME part with @userid's private key
- * using the @ctx signing context. If successful, a new multipart/signed
- * object is returned.
+ * Signs @entity using the context's configured signers. Prepares the input
+ * entity's transfer encodings for signing and returns a new multipart/signed
+ * object. Temporarily selects MIME armor/text settings, restoring them on
+ * success and failure. See the GPGME integration ownership contract.
  *
  * Returns: (nullable) (transfer full): a new #GMimeMultipartSigned object on success
  * or %NULL on fail. If signing fails, an exception will be set on @err to provide
  * information as to why the failure occurred.
  **/
 GMimeMultipartSigned *
-g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeEntity *entity,
-			      const char *userid, GError **err)
+g_mime_multipart_signed_sign (gpgme_ctx_t ctx, GMimeEntity *entity,
+			      gpgme_sign_result_t *result, GError **err)
 {
 	GMimeStream *stream, *filtered, *sigstream;
+	gpgme_sign_result_t signed_result = NULL;
 	GMimeContentType *content_type;
-	GMimeContent *content;
 	GMimeMultipartSigned *mps;
+	GMimeContent *content;
 	GMimePart *signature;
 	GMimeFilter *filter;
 	GMimeParser *parser;
 	const char *protocol;
-	const char *micalg;
-	int algo;
-	
-	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
+	int armor, textmode;
+	gboolean success;
+	char *micalg;
+
+	if (result)
+		*result = NULL;
+
 	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
 	
-	if (!(protocol = g_mime_crypto_context_get_signature_protocol (ctx))) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("Signing not supported."));
+	if (!(protocol = _g_mime_gpgme_signature_protocol (ctx, err)))
 		return NULL;
-	}
 	
 	/* Prepare all the parts for signing... */
 	sign_prepare (entity);
@@ -236,9 +242,15 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeEntity *entity,
 	g_object_unref (filter);
 	
 	/* write the entity out to the stream */
-	g_mime_entity_write_to_stream (entity, NULL, filtered);
-	g_mime_stream_flush (filtered);
-	g_mime_stream_reset (stream);
+	errno = 0;
+	if (g_mime_entity_write_to_stream (entity, NULL, filtered) < 0 ||
+	    g_mime_stream_flush (filtered) < 0 || g_mime_stream_reset (stream) < 0) {
+		_g_mime_gpgme_io_error (err);
+		g_object_unref (filtered);
+		g_object_unref (stream);
+		return NULL;
+	}
+
 	g_object_unref (filtered);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 - we do this *after* writing out
@@ -251,9 +263,33 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeEntity *entity,
 	
 	/* construct the signature stream */
 	sigstream = g_mime_stream_mem_new ();
+
+	/* capture the current context settings */
+	armor = gpgme_get_armor (ctx);
+	textmode = gpgme_get_textmode (ctx);
+
+	/* override the context settings */
+	gpgme_set_armor (ctx, gpgme_get_protocol (ctx) == GPGME_PROTOCOL_OpenPGP);
+	gpgme_set_textmode (ctx, FALSE);
 	
 	/* sign the content stream */
-	if ((algo = g_mime_crypto_context_sign (ctx, TRUE, userid, filtered, sigstream, err)) == -1) {
+	success = g_mime_gpgme_sign (ctx, GPGME_SIG_MODE_DETACH, filtered, sigstream, &signed_result, err);
+
+	/* restore the original context settings */
+	gpgme_set_textmode (ctx, textmode);
+	gpgme_set_armor (ctx, armor);
+
+	if (result && signed_result) {
+		*result = signed_result;
+		gpgme_result_ref (signed_result);
+	}
+
+	micalg = success ? _g_mime_gpgme_micalg (ctx, signed_result, err) : NULL;
+
+	if (signed_result)
+		gpgme_result_unref (signed_result);
+
+	if (!micalg) {
 		g_object_unref (sigstream);
 		g_object_unref (filtered);
 		g_object_unref (stream);
@@ -275,6 +311,7 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeEntity *entity,
 			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 					     _("Cannot sign MIME part: failed to parse canonicalized content."));
 		g_object_unref (sigstream);
+		g_free (micalg);
 		return NULL;
 	}
 	
@@ -289,9 +326,6 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeEntity *entity,
 	g_object_unref (sigstream);
 	g_object_unref (content);
 	
-	/* FIXME: temporary hack, this info should probably be set in
-	 * the CryptoContext class - maybe ::sign can take/output a
-	 * GMimePart instead. */
 	if (!g_ascii_strcasecmp (protocol, "application/pkcs7-signature")) {
 		g_mime_part_set_content_encoding (signature, GMIME_CONTENT_ENCODING_BASE64);
 		g_mime_part_set_filename (signature, "smime.p7m");
@@ -305,9 +339,9 @@ g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeEntity *entity,
 	g_object_unref (entity);
 	
 	/* set the multipart/signed protocol and micalg */
-	micalg = g_mime_crypto_context_digest_name (ctx, (GMimeDigestAlgo) algo);
 	g_mime_entity_set_content_type_parameter ((GMimeEntity *) mps, "protocol", protocol);
 	g_mime_entity_set_content_type_parameter ((GMimeEntity *) mps, "micalg", micalg);
+	g_free (micalg);
 	g_mime_multipart_set_boundary ((GMimeMultipart *) mps, NULL);
 	
 	return mps;
@@ -348,73 +382,67 @@ mime_types_equal (const char *mime_type, const char *official_type)
 }
 
 /**
- * g_mime_multipart_signed_verify:
+ * g_mime_multipart_signed_verify: (skip)
  * @mps: a #GMimeMultipartSigned
- * @flags: a #GMimeVerifyFlags
+ * @ctx: a borrowed GPGME context matching the signature protocol
+ * @result: (out) (optional): a retained native verification result
  * @err: a #GError
  *
  * Attempts to verify the signed MIME part contained within the
  * multipart/signed object @mps. Only surrounding ASCII linear whitespace
  * is removed from the protocol parameter.
  *
- * Returns: (nullable) (transfer full): a new #GMimeSignatureList object on
- * success or %NULL on fail. If the verification fails, an exception
- * will be set on @err to provide information as to why the failure
- * occurred.
+ * Returns: TRUE if verification completed, not an assertion of signature
+ * validity. Inspect the returned signatures. On failure, @err is set.
  **/
-GMimeSignatureList *
-g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)
+gboolean
+g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, gpgme_ctx_t ctx,
+				gpgme_verify_result_t *result, GError **err)
 {
-	GMimeEntityPrivate *signature_priv;
-	const char *supported, *value;
-	GMimeEntity *content, *signature;
 	GMimeStream *stream = NULL, *sigstream = NULL;
-	GMimeSignatureList *signatures = NULL;
+	GMimeEntityPrivate *signature_priv;
+	GMimeEntity *content, *signature;
+	const char *supported, *value;
 	GMimeFormatOptions *options;
-	GMimeContent *wrapper;
-	GMimeCryptoContext *ctx;
 	char *mime_type, *protocol;
+	gboolean success = FALSE;
+	GMimeContent *wrapper;
 	ssize_t written;
 	int errsv;
 	
-	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);
+	if (result)
+		*result = NULL;
+
+	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), FALSE);
+
+	if (!(supported = _g_mime_gpgme_signature_protocol (ctx, err)))
+		return FALSE;
 	
 	if (g_mime_multipart_get_count ((GMimeMultipart *) mps) < 2) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot verify multipart/signed part due to missing subparts."));
-		return NULL;
+		return FALSE;
 	}
 	
 	value = g_mime_entity_get_content_type_parameter ((GMimeEntity *) mps, "protocol");
 	protocol = g_mime_strdup_trim (value);
+
 	if (!protocol || !*protocol) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 				     _("Cannot verify multipart/signed part: unspecified signature protocol."));
 		
 		g_free (protocol);
-		return NULL;
+		return FALSE;
 	}
-	
-	if (!(ctx = g_mime_crypto_context_new (protocol))) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot verify multipart/signed part: unregistered signature protocol '%s'."),
-			     protocol);
-		
-		g_free (protocol);
-		return NULL;
-	}
-	
-	supported = g_mime_crypto_context_get_signature_protocol (ctx);
 	
 	/* make sure the protocol matches the crypto sign protocol */
 	if (!mime_types_equal (protocol, supported)) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 			     _("Cannot verify multipart/signed part: unsupported signature protocol '%s'."),
 			     protocol);
-		g_object_unref (ctx);
 		g_free (protocol);
 		
-		return NULL;
+		return FALSE;
 	}
 
 	g_free (protocol);
@@ -424,8 +452,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	if (!GMIME_IS_PART (signature) || !(wrapper = g_mime_part_get_content ((GMimePart *) signature))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot verify multipart/signed part: signature content is missing."));
-		g_object_unref (ctx);
-		return NULL;
+		return FALSE;
 	}
 	
 	/* make sure the protocol matches the signature content-type */
@@ -435,10 +462,9 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	if (!mime_types_equal (mime_type, supported)) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot verify multipart/signed part: signature content-type does not match protocol."));
-		g_object_unref (ctx);
 		g_free (mime_type);
 		
-		return NULL;
+		return FALSE;
 	}
 
 	g_free (mime_type);
@@ -455,6 +481,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 	errno = 0;
 	written = _g_mime_writer_write_for_signature (content, options, stream);
 	g_mime_format_options_free (options);
+
 	if (written < 0)
 		goto io_error;
 
@@ -473,7 +500,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 		goto io_error;
 	
 	/* verify the signature */
-	signatures = g_mime_crypto_context_verify (ctx, flags, stream, sigstream, NULL, err);
+	success = g_mime_gpgme_verify (ctx, stream, sigstream, NULL, result, err);
 	
 	d({
 		GMimeStreamMemPrivate *priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
@@ -492,7 +519,8 @@ io_error:
 done:
 	g_clear_object (&sigstream);
 	g_clear_object (&stream);
-	g_object_unref (ctx);
 	
-	return signatures;
+	return success;
 }
+
+#endif /* ENABLE_CRYPTO */

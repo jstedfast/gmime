@@ -41,6 +41,14 @@ $ cc `pkg-config --cflags --libs gmime-4.0` hello.c -o hello
 </programlisting>
 </para>
 
+<para>
+For native cryptography, include <literal>gmime/gmime-gpgme.h</literal>
+and use <literal>pkg-config --cflags --libs gmime-gpgme-4.0</literal>.
+This integration package is installed only when cryptography is enabled.
+Contexts, keys, and results use native GPGME types; they are not GObjects
+and these methods are not exposed through GObject introspection.
+</para>
+
 </refsect1>
 
 </refentry>

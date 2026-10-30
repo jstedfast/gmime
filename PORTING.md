@@ -112,16 +112,16 @@ In particular, use `g_mime_stream_mem_get_byte_array()` for a memory stream's
 buffer and `g_mime_stream_null_get_written()` /
 `g_mime_stream_null_get_newlines()` for null-stream statistics.
 
-MIME entities, streams, filters, addresses, content, readers, visitors, and
-the crypto-context base remain derivable. Their public class structs expose
+MIME entities, streams, filters, addresses, content, readers, and visitors
+remain derivable. Their public class structs expose
 virtual methods for subclasses, not an alternative calling API: invoke
 public functions to retain validation and dispatch. Reserved class slots
 are private and must not be used by applications.
 
-Data objects and utilities (headers, parameters, collections, certificates,
-signatures, results, content types/dispositions, parsers, body builders,
+Data objects and utilities (headers, parameters, collections,
+content types/dispositions, parsers, body builders,
 anonymizers, iterators, and Received models) are opaque, final types.
-The existing opaque codec, yEnc, and built-in crypto backend types are also
+The existing opaque codec and yEnc types are also
 final. Use composition rather than deriving from these types.
 
 Stream implementations can use `g_mime_stream_get_position()` /
@@ -306,13 +306,8 @@ Computing does not modify headers. It reads decoded content, with canonical
 CRLF normalization for text, and can reposition the source. Content-MD5 is
 an interoperability feature, not a modern security primitive.
 
-Certificate and signature creation/expiration accessors now use `GDateTime *`
-instead of `time_t`. Getters return borrowed, nullable values; setters retain
-a reference. NULL means unknown. The UTC date
-`9999-12-31 23:59:59.999999` means never expires. The Unix epoch is an ordinary
-date, not a sentinel. Removed `get_created64()` / `get_expires64()` calls
-should use the corresponding date getter and `g_date_time_to_unix()`, after
-checking for NULL and any never-expires policy.
+Certificate and signature wrappers have been removed. Native GPGME key and
+signature timestamps retain GPGME's types and sentinel conventions.
 
 Message dates already used `GDateTime` in 3.x; do not change them unnecessarily.
 
@@ -363,29 +358,83 @@ limit. Parser factories may create specialized multipart/report subclasses.
 Prefer `GMIME_IS_*` inheritance checks to exact `G_OBJECT_TYPE()` comparisons
 unless an exact concrete type is truly required.
 
-Cryptography remains backed by GPGME/GnuPG. This migration does not introduce
-the managed cryptography backend or DKIM/ARC signing and verification.
-Verification, decryption, and encryption reject undefined flag bits with
-`GMIME_ERROR_NOT_SUPPORTED` before invoking the backend. Pass only flags
-defined for that operation; do not rely on unknown bits being ignored.
-
-GPGME-aware C applications can borrow the backend context through
-`g_mime_gpg_context_get_gpgme_ctx()` or
-`g_mime_pkcs7_context_get_gpgme_ctx()`. Certificates returned by GPGME-backed
-verification or decryption retain their backend key when available;
-`g_mime_certificate_get_gpgme_key()` exposes it for inspecting all user IDs,
-per-identity validity, and subkeys. These accessors return `gpointer`, require
-no GPGME types in GMime's public headers, and are excluded from introspection.
-Do not release borrowed contexts or keys. A key remains valid for the
-certificate's lifetime, independently of the context; use `gpgme_key_ref()`
-to keep it longer. Accessors return `NULL` when the backend handle is
-unavailable. Existing certificate getters keep their single-identity behavior.
-
 The new body builder, attachment collection, visitor, and report helpers are
 optional conveniences; a working explicit MIME tree need not be rewritten
 to use them.
 
-## 8. Validate the migrated application
+## 8. Migrate cryptography to native GPGME
+
+Include `<gmime/gmime-gpgme.h>` and use the `gmime-gpgme-4.0` pkg-config
+dependency. It is installed only with cryptography enabled. Ordinary
+`<gmime/gmime.h>` and `gmime-4.0` users do not need GPGME headers.
+
+`GMimeCryptoContext`, `GMimeGpgContext`, `GMimePkcs7Context`,
+`GMimeCertificate`, `GMimeCertificateList`, `GMimeSignature`,
+`GMimeSignatureList`, and `GMimeDecryptResult` have been removed, along
+with their headers, registration APIs, enums, and password callbacks.
+There is no replacement GObject context or backend registry.
+
+| Former API | Replacement |
+|---|---|
+| Context constructors | `gpgme_new()` and `gpgme_set_protocol()` |
+| Password callbacks, engine and network settings | Native GPGME context configuration |
+| User ID signing arguments | `gpgme_get_key()` and `gpgme_signers_add()` |
+| Recipient string arrays | NULL-terminated `gpgme_key_t` arrays |
+| `g_mime_crypto_context_sign/verify/encrypt/decrypt()` | `g_mime_gpgme_sign/verify/encrypt/decrypt()` |
+| Key import/export | `gpgme_op_import/export()` with `g_mime_gpgme_data_new()` |
+| Certificate/signature lists | Native keys and result-linked lists |
+| GMime encrypt/verify/decrypt flags | Native encryption flags and context settings |
+| Session-key argument/export flag | GPGME `override-session-key` / `export-session-key` context flags |
+
+All MIME crypto functions now take an explicit, caller-owned `gpgme_ctx_t`.
+Create and configure it before calling; release it with `gpgme_release()`,
+not `g_object_unref()`. Call `g_mime_init()` before creating contexts
+(it initializes GPGME in crypto-enabled builds). Use
+`GPGME_PROTOCOL_OpenPGP` for PGP/MIME and existing inline helpers,
+`GPGME_PROTOCOL_CMS` for S/MIME, and the protocol matching the received
+MIME `protocol` parameter for detached verification. GMime validates the
+match; it does not switch protocols or create a context automatically.
+
+Configure signing keys with `gpgme_signers_add()`. GMime preserves the
+signer list, callbacks, engine and policy settings; with no configured
+signers, GPGME's default-key behavior applies. Recipient keys are borrowed
+for the call. Applications resolve and validate keys using GPGME.
+Session-key and other optional context flags require a GPGME version
+supporting those flags; always check native configuration errors.
+
+Calls are synchronous and require exclusive use of the context. Low-level
+stream helpers honor its armor and textmode settings. MIME helpers
+temporarily override those two settings to produce the required wire format
+and restore them on success or failure. They do not silently enable network
+access, trust bypasses, session-key export, or passphrase handling.
+
+Verify now returns `gboolean` for **operational success**, not signature
+validity. Inspect each `gpgme_signature_t` in the verification result for
+status, summary, validity and application trust policy. A bad signature may
+accompany successful verification. Decrypting OpenPGP can return separate
+native decrypt and verification results; CMS signed-data verification
+returns an extracted entity through an output parameter.
+
+Optional native result outputs are initialized to NULL and independently
+retained with `gpgme_result_ref()`. Release every non-NULL result with
+`gpgme_result_unref()`, even when the operation fails: diagnostic results
+may still be returned. They survive the next operation and context release.
+Nested signature/recipient nodes are borrowed from their parent result.
+For keys that must outlive a lookup/result, follow GPGME's key-ref rules.
+Never use `g_object_unref()` on native keys or results.
+
+The stream adapter holds a reference to its `GMimeStream` until
+`gpgme_data_release()`. It starts at the current stream position and neither
+rewinds nor closes it. Discard partial output when an operation fails.
+Existing inline helpers still mutate a part's content on success; new
+non-mutating multi-block inline-PGP processing is separate work.
+
+Native crypto methods are deliberately excluded from GIR/Vala. Ordinary
+MIME objects, compression, OpenPGP detection and parsing remain available
+to GNOME bindings, including builds without cryptography. Binding clients
+that need crypto must supply GPGME and integration bindings themselves.
+
+## 9. Validate the migrated application
 
 1. Build with warnings enabled and verify all binaries/bindings load GMime 4.
 2. Search for old type names, function prefixes, macros, headers, and package

@@ -36,8 +36,6 @@
             <link linkend="GMimeFilterMd5">GMimeFilterMd5</link>
             <link linkend="GMimeFilterPassThrough">GMimeFilterPassThrough</link>
             <link linkend="GMimeFilterStrip">GMimeFilterStrip</link>
-        <link linkend="GMimeCipherContext">GMimeCipherContext</link>
-            <link linkend="GMimeGpgContext">GMimeGpgContext</link>
         <link linkend="GMimeSession">GMimeSession</link>
             <link linkend="GMimeSessionSimple">GMimeSessionSimple</link>
         <link linkend="GMimeInternetAddress">GMimeInternetAddress</link>

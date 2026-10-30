@@ -1,3 +1,4 @@
+gmime_gpgme_sources = files('gmime-gpgme.c')
 gmime_sources = files(
   'gmime.c',
   'gmime-application-pkcs7-mime.c',
@@ -6,12 +7,10 @@ gmime_sources = files(
   'gmime-attachment-collection.c',
   'gmime-body-builder.c',
   'gmime-autocrypt.c',
-  'gmime-certificate.c',
   'gmime-charset.c',
   'gmime-common.c',
   'gmime-compliance.c',
   'gmime-content-type.c',
-  'gmime-crypto-context.c',
   'gmime-content.c',
   'gmime-codec-simd.c',
   'gmime-base64-encoder.c',
@@ -56,8 +55,6 @@ gmime_sources = files(
   'gmime-filter-unix2dos.c',
   'gmime-filter-windows.c',
   'gmime-format-options.c',
-  'gmime-gpg-context.c',
-  'gmime-gpgme-utils.c',
   'gmime-header.c',
   'gmime-header-list-collection.c',
   'gmime-iconv.c',
@@ -88,9 +85,7 @@ gmime_sources = files(
   'gmime-received.c',
   'gmime-part.c',
   'gmime-part-iter.c',
-  'gmime-pkcs7-context.c',
   'gmime-message-id-list.c',
-  'gmime-signature.c',
   'gmime-stream.c',
   'gmime-stream-block.c',
   'gmime-stream-buffer.c',
@@ -121,10 +116,8 @@ gmime_headers = files(
   'gmime-attachment-collection.h',
   'gmime-body-builder.h',
   'gmime-autocrypt.h',
-  'gmime-certificate.h',
   'gmime-charset.h',
   'gmime-content-type.h',
-  'gmime-crypto-context.h',
   'gmime-content.h',
   'gmime-codecs.h',
   'gmime-yenc.h',
@@ -153,7 +146,6 @@ gmime_headers = files(
   'gmime-filter-unix2dos.h',
   'gmime-filter-windows.h',
   'gmime-format-options.h',
-  'gmime-gpg-context.h',
   'gmime-header.h',
   'gmime-header-list-collection.h',
   'gmime-iconv.h',
@@ -181,9 +173,7 @@ gmime_headers = files(
   'gmime-received.h',
   'gmime-part.h',
   'gmime-part-iter.h',
-  'gmime-pkcs7-context.h',
   'gmime-message-id-list.h',
-  'gmime-signature.h',
   'gmime-stream.h',
   'gmime-stream-block.h',
   'gmime-stream-buffer.h',
@@ -219,7 +209,7 @@ install_headers(gmime_headers, subdir: 'gmime-@0@/gmime'.format(api_version))
 
 libgmime = library(
   'gmime-@0@'.format(api_version),
-  gmime_sources, version_header, iconv_header,
+  gmime_sources, gmime_gpgme_sources, version_header, iconv_header,
   include_directories: gmime_inc,
   dependencies: gmime_deps,
   link_whole: util_lib,
@@ -243,6 +233,19 @@ pkgconfig.generate(
   requires: public_deps,
 )
 
+if have_crypto
+  install_headers('gmime-gpgme.h', subdir: 'gmime-@0@/gmime'.format(api_version))
+  meson.override_dependency('gmime-gpgme-@0@'.format(api_version), gmime_dep)
+  pkgconfig.generate(
+    name: 'GMime GPGME',
+    filebase: 'gmime-gpgme-@0@'.format(api_version),
+    description: 'GMime integration with caller-owned GPGME contexts',
+    version: meson.project_version(),
+    subdirs: [],
+    requires: ['gmime-@0@'.format(api_version), gpgme_dep, gpg_error_dep],
+  )
+endif
+
 executable('gen-table', 'gen-table.c', build_by_default: false)
 executable(
   'charset-map', 'charset-map.c',
@@ -255,7 +258,7 @@ executable(
 if have_introspection
   gmime_gir = gnome.generate_gir(
     libgmime,
-    sources: [gmime_headers, gmime_sources, version_header],
+    sources: [gmime_headers, gmime_sources, gmime_gpgme_sources, version_header],
     namespace: 'GMime',
     nsversion: api_version,
     identifier_prefix: 'GMime',

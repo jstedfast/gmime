@@ -23,7 +23,6 @@
 #define __GMIME_MULTIPART_SIGNED_H__
 
 #include <gmime/gmime-multipart.h>
-#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -52,11 +51,6 @@ struct _GMimeMultipartSignedClass {
 
 
 GMimeMultipartSigned *g_mime_multipart_signed_new (void);
-
-GMimeMultipartSigned *g_mime_multipart_signed_sign (GMimeCryptoContext *ctx, GMimeEntity *entity,
-						    const char *userid, GError **err);
-
-GMimeSignatureList *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err);
 
 G_END_DECLS
 

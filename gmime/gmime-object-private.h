@@ -77,29 +77,6 @@ struct _GMimeBodyBuilder {
 	char *body_encoding;
 };
 
-struct _GMimeCertificate {
-	GObject parent_instance;
-
-	GMimePubKeyAlgo pubkey_algo;
-	GMimeDigestAlgo digest_algo;
-	GMimeTrust trust;
-	char *issuer_serial;
-	char *issuer_name;
-	char *fingerprint;
-	GDateTime *created;
-	GDateTime *expires;
-	char *keyid;
-	char *email;
-	char *name;
-	char *user_id;
-	GMimeValidity id_validity;
-};
-
-struct _GMimeCertificateList {
-	GObject parent_instance;
-	GPtrArray *array;
-};
-
 struct _GMimeContentType {
 	GObject parent_instance;
 
@@ -127,29 +104,6 @@ _g_mime_content_get_private (GMimeContent *object)
 G_GNUC_INTERNAL GMimeContentPrivate *_g_mime_content_get_private (GMimeContent *object) G_GNUC_CONST;
 #endif
 
-typedef struct {
-	GMimePasswordRequestFunc request_passwd;
-} GMimeCryptoContextPrivate;
-
-#ifdef GMIME_PRIVATE_TESTS
-static inline GMimeCryptoContextPrivate *
-_g_mime_crypto_context_get_private (GMimeCryptoContext *object)
-{
-	return g_type_instance_get_private ((GTypeInstance *) object, GMIME_TYPE_CRYPTO_CONTEXT);
-}
-#else
-G_GNUC_INTERNAL GMimeCryptoContextPrivate *_g_mime_crypto_context_get_private (GMimeCryptoContext *object) G_GNUC_CONST;
-#endif
-
-struct _GMimeDecryptResult {
-	GObject parent_instance;
-
-	GMimeCertificateList *recipients;
-	GMimeSignatureList *signatures;
-	GMimeCipherAlgo cipher;
-	GMimeDigestAlgo mdc;
-	char *session_key;
-};
 
 struct _GMimeContentDisposition {
 	GObject parent_instance;
@@ -736,21 +690,6 @@ struct _GMimeReceived {
 
 	GDateTime *date_time;
 	char *date_time_str;
-};
-
-struct _GMimeSignature {
-	GObject parent_instance;
-
-	GMimeSignatureStatus status;
-	GMimeCertificate *cert;
-	GDateTime *created;
-	GDateTime *expires;
-};
-
-struct _GMimeSignatureList {
-	GObject parent_instance;
-
-	GPtrArray *array;
 };
 
 typedef struct {

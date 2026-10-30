@@ -36,13 +36,16 @@
 #include <gmime/gmime-table-private.h>
 
 #include "testsuite.h"
+#ifdef ENABLE_CRYPTO
+#include "test-crypto.h"
+#endif
 
 static GByteArray *serialize_writer (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only);
 
 typedef struct {
 	TestStreamOneByte parent_instance;
 	gsize chunk, bytes_read, fail_after;
-	gboolean nonseekable, fail_seek, fail_substream, unset_errno;
+	gboolean nonseekable, fail_seek, fail_substream, unset_errno, zero_read;
 	gint64 origin;
 	guint reads, seeks, views, resets, fail_reset_after;
 } ModelInput;
@@ -58,6 +61,8 @@ model_input_read (GMimeStream *stream, char *buffer, size_t length)
 	ssize_t nread;
 
 	input->reads++;
+	if (input->zero_read)
+		return 0;
 	if (input->bytes_read == input->fail_after) {
 		errno = input->unset_errno ? 0 : EIO;
 		return -1;
@@ -2954,66 +2959,105 @@ test_parser_compliance_errors (void)
 	testsuite_check_passed ();
 }
 
-typedef GMimeCryptoContext ModelVerifyContext;
-typedef GMimeCryptoContextClass ModelVerifyContextClass;
-
-static GByteArray *verify_content_bytes, *verify_signature_bytes;
-static GMimeVerifyFlags verify_flags;
-static guint verify_calls;
-
-G_DEFINE_TYPE (ModelVerifyContext, model_verify_context, GMIME_TYPE_CRYPTO_CONTEXT)
-
-static const char *
-model_verify_protocol (GMimeCryptoContext *ctx)
+#ifdef ENABLE_CRYPTO
+static void
+test_gpgme_adapter_errors (void)
 {
-	return "application/x-model-signature";
+	guint mode;
+
+	gpgme_check_version (NULL);
+	testsuite_check ("GPGME stream adapters propagate short I/O, EOF and missing errno failures");
+	for (mode = 0; mode < 3; mode++) {
+		ModelInput *input = new_input ("data", 4, 1);
+		ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+		gpgme_data_t data;
+		GError *error = NULL;
+		char buffer[4];
+
+		input->fail_after = 0;
+		input->unset_errno = mode == 1;
+		input->zero_read = mode == 2;
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) input, &data, &error));
+		g_assert_no_error (error);
+		errno = 0;
+		g_assert_cmpint (gpgme_data_read (data, buffer, sizeof (buffer)), ==, -1);
+		g_assert_cmpint (errno, ==, EIO);
+		gpgme_data_release (data);
+		g_object_unref (input);
+
+		output->limit = 0;
+		output->unset_errno = mode == 1;
+		output->zero_write = mode == 2;
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) output, &data, &error));
+		g_assert_no_error (error);
+		errno = 0;
+		g_assert_cmpint (gpgme_data_write (data, "data", 4), ==, -1);
+		g_assert_cmpint (errno, ==, EIO);
+		gpgme_data_release (data);
+		g_object_unref (output);
+	}
+	{
+		ModelInput *input = new_input ("data", 4, 1);
+		ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+		gpgme_data_t data;
+		GError *error = NULL;
+		char buffer[4];
+		guint i;
+
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) input, &data, &error));
+		for (i = 0; i < 4; i++) {
+			g_assert_cmpint (gpgme_data_read (data, buffer, sizeof (buffer)), ==, 1);
+			g_assert_cmpint (buffer[0], ==, "data"[i]);
+		}
+		g_assert_cmpint (gpgme_data_read (data, buffer, sizeof (buffer)), ==, 0);
+		g_assert_cmpint (gpgme_data_seek (data, 0, SEEK_SET), ==, 0);
+		input->fail_seek = TRUE;
+		errno = 0;
+		g_assert_cmpint (gpgme_data_seek (data, 0, SEEK_SET), ==, -1);
+		g_assert_cmpint (errno, ==, EIO);
+		gpgme_data_release (data);
+		g_object_unref (input);
+		output->chunk = 1;
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) output, &data, &error));
+		g_assert_cmpint (gpgme_data_write (data, "data", 4), ==, 1);
+		g_assert_cmpuint (output->written, ==, 1);
+		gpgme_data_release (data);
+		g_object_unref (output);
+		g_assert_no_error (error);
+	}
+	testsuite_check_passed ();
 }
 
+static GByteArray *verify_content_bytes, *verify_signature_bytes;
+static guint verify_calls;
+
 static GByteArray *
-capture_verify_stream (GMimeStream *stream)
+capture_verify_data (gpgme_data_t data)
 {
 	GByteArray *bytes = g_byte_array_new ();
 	char buffer[127];
 	ssize_t nread;
 
-	g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
-	while ((nread = g_mime_stream_read (stream, buffer, sizeof (buffer))) > 0)
+	g_assert_cmpint (gpgme_data_seek (data, 0, SEEK_CUR), ==, 0);
+	while ((nread = gpgme_data_read (data, buffer, sizeof (buffer))) > 0)
 		g_byte_array_append (bytes, (const guint8 *) buffer, nread);
 	g_assert_cmpint (nread, ==, 0);
 	return bytes;
 }
 
-static GMimeSignatureList *
-model_verify (GMimeCryptoContext *ctx, GMimeVerifyFlags flags, GMimeStream *istream,
-	      GMimeStream *sigstream, GMimeStream *ostream, GError **error)
+/* The private test adapter calls this instead of native verification. Capture
+ * its exact inputs, then fail: these synthetic signatures never authenticate. */
+gpgme_error_t
+gmime_test_op_verify (gpgme_ctx_t ctx, gpgme_data_t signature, gpgme_data_t signed_text,
+		      gpgme_data_t plaintext)
 {
+	g_assert_cmpint (gpgme_get_offline (ctx), ==, 1);
 	verify_calls++;
-	verify_flags = flags;
 	g_clear_pointer (&verify_content_bytes, g_byte_array_unref);
 	g_clear_pointer (&verify_signature_bytes, g_byte_array_unref);
-	verify_content_bytes = capture_verify_stream (istream);
-	verify_signature_bytes = capture_verify_stream (sigstream);
-
-	/* Capture the verification inputs; this backend does not verify cryptography. */
-	return g_mime_signature_list_new ();
-}
-
-static void
-model_verify_context_class_init (ModelVerifyContextClass *klass)
-{
-	klass->get_signature_protocol = model_verify_protocol;
-	klass->verify = model_verify;
-}
-
-static void
-model_verify_context_init (ModelVerifyContext *ctx)
-{
-}
-
-static GMimeCryptoContext *
-new_model_verify_context (void)
-{
-	return g_object_new (model_verify_context_get_type (), NULL);
+	verify_content_bytes = capture_verify_data (signed_text);
+	verify_signature_bytes = capture_verify_data (signature);
+	return gpgme_error (GPG_ERR_NO_DATA);
 }
 
 typedef struct {
@@ -3051,12 +3095,12 @@ static GMimeMultipartSigned *
 new_model_signed (GMimeEntity *content)
 {
 	GMimeMultipartSigned *signed_part = g_mime_multipart_signed_new ();
-	GMimePart *signature = g_mime_part_new_with_type ("application", "x-model-signature");
+	GMimePart *signature = g_mime_part_new_with_type ("application", "pgp-signature");
 	GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("c2lnAGJ5dGVz", 12);
 	GMimeContent *wrapper = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BASE64);
 
 	g_mime_part_set_content (signature, wrapper);
-	g_mime_entity_set_content_type_parameter ((GMimeEntity *) signed_part, "protocol", "application/x-model-signature");
+	g_mime_entity_set_content_type_parameter ((GMimeEntity *) signed_part, "protocol", "application/pgp-signature");
 	g_mime_multipart_add ((GMimeMultipart *) signed_part, content);
 	g_mime_multipart_add ((GMimeMultipart *) signed_part, (GMimeEntity *) signature);
 	g_object_unref (wrapper);
@@ -3107,7 +3151,7 @@ test_signature_markers (void)
 	};
 	guint slot_index, i, mode;
 
-	g_mime_crypto_context_register ("application/x-model-signature", new_model_verify_context);
+	gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
 	g_mime_entity_register_type ("multipart", "x-model-verify", model_verify_multipart_get_type ());
 	testsuite_check ("Verification canonicalizes only raw marker LF and preserves binary data and ordinary output");
 	for (slot_index = 0; slot_index < 3; slot_index++) {
@@ -3119,7 +3163,7 @@ test_signature_markers (void)
 				GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
 				GMimeEntity *entity;
 				GMimeMultipartSigned *signed_part;
-				GMimeSignatureList *signatures;
+				gpgme_verify_result_t signatures = NULL;
 				GMimeMultipart *multipart;
 				GByteArray *expected, *before, *after;
 				GBytes **slot;
@@ -3142,18 +3186,19 @@ test_signature_markers (void)
 				*slot = g_bytes_new_static (markers[i].raw, markers[i].raw_length);
 				before = serialize_verify_content (entity);
 				signed_part = new_model_signed (entity);
-				signatures = g_mime_multipart_signed_verify (signed_part, GMIME_VERIFY_ENABLE_KEYSERVER_LOOKUPS, &error);
-				g_assert_no_error (error);
-				g_assert_nonnull (signatures);
+				g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+				g_assert_nonnull (error);
+				g_clear_error (&error);
+				g_assert_null (signatures);
 				g_assert_cmpmem (verify_content_bytes->data, verify_content_bytes->len, expected->data, expected->len);
 				g_assert_cmpmem (verify_signature_bytes->data, verify_signature_bytes->len, "sig\0bytes", 9);
-				g_assert_cmpint (verify_flags, ==, GMIME_VERIFY_ENABLE_KEYSERVER_LOOKUPS);
+
 				after = serialize_verify_content (entity);
 				g_assert_cmpmem (after->data, after->len, before->data, before->len);
 				g_byte_array_unref (after);
 				g_byte_array_unref (before);
 				g_byte_array_unref (expected);
-				g_object_unref (signatures);
+
 				g_object_unref (signed_part);
 				g_object_unref (entity);
 				g_object_unref (parser);
@@ -3173,7 +3218,7 @@ test_signature_markers (void)
 		GMimeEntity *entity = g_mime_parser_construct_part (parser, NULL, &error);
 		GMimeContent *content;
 		GMimeMultipartSigned *signed_part;
-		GMimeSignatureList *signatures;
+		gpgme_verify_result_t signatures = NULL;
 		GByteArray *expected, *after;
 
 		g_assert_no_error (error);
@@ -3187,9 +3232,10 @@ test_signature_markers (void)
 			g_mime_part_set_content_encoding ((GMimePart *) entity, GMIME_CONTENT_ENCODING_BASE64);
 		expected = serialize_verify_content (entity);
 		signed_part = new_model_signed (entity);
-		signatures = g_mime_multipart_signed_verify (signed_part, GMIME_VERIFY_NONE, &error);
-		g_assert_no_error (error);
-		g_assert_nonnull (signatures);
+		g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+		g_assert_nonnull (error);
+		g_clear_error (&error);
+		g_assert_null (signatures);
 		if (mode == 3 || mode == 4)
 			g_assert_cmpmem (verify_content_bytes->data, verify_content_bytes->len, raw, sizeof (raw) - 1);
 		else
@@ -3198,7 +3244,7 @@ test_signature_markers (void)
 		g_assert_cmpmem (after->data, after->len, expected->data, expected->len);
 		g_byte_array_unref (after);
 		g_byte_array_unref (expected);
-		g_object_unref (signatures);
+
 		g_object_unref (signed_part);
 		g_object_unref (entity);
 		g_object_unref (parser);
@@ -3211,20 +3257,21 @@ test_signature_markers (void)
 		ModelVerifyMultipart *multipart = (ModelVerifyMultipart *) parse_multipart (
 			"Content-Type: multipart/x-model-verify; boundary=b\n\n--b\n--b\n\nbody\n--b--\n");
 		GMimeMultipartSigned *signed_part = new_model_signed ((GMimeEntity *) multipart);
-		GMimeSignatureList *signatures;
+		gpgme_verify_result_t signatures = NULL;
 		GError *error = NULL;
 		gsize offset, length, marker_start, marker_end;
 		const char *marker;
 
-		signatures = g_mime_multipart_signed_verify (signed_part, GMIME_VERIFY_NONE, &error);
-		g_assert_no_error (error);
-		g_assert_nonnull (signatures);
+		g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+		g_assert_nonnull (error);
+		g_clear_error (&error);
+		g_assert_null (signatures);
 		length = verify_content_bytes->len;
 		marker = g_strstr_len ((const char *) verify_content_bytes->data, length, "\r\n\r\n");
 		g_assert_nonnull (marker);
 		marker_start = marker - (const char *) verify_content_bytes->data + 4;
 		marker_end = marker_start + strlen ("--b\r\n--b\r\n");
-		g_object_unref (signatures);
+
 		for (mode = 0; mode < 3; mode++) {
 			for (offset = 0; offset <= length; offset++) {
 				ModelOutput *output;
@@ -3241,18 +3288,19 @@ test_signature_markers (void)
 				output->short_end = marker_end;
 				output->zero_write = mode == 2;
 				multipart->output = (GMimeStream *) output;
-				signatures = g_mime_multipart_signed_verify (signed_part, GMIME_VERIFY_NONE, &error);
+				g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
 				if (offset < length) {
 					g_assert_null (signatures);
 					g_assert_error (error, GMIME_ERROR, EIO);
 					g_assert_cmpuint (verify_calls, ==, calls);
 					g_clear_error (&error);
 				} else {
-					g_assert_no_error (error);
-					g_assert_nonnull (signatures);
+					g_assert_nonnull (error);
+					g_clear_error (&error);
+					g_assert_null (signatures);
 					g_assert_cmpuint (verify_calls, ==, calls + 1);
 					g_assert_cmpuint (output->written, ==, length);
-					g_object_unref (signatures);
+
 				}
 				multipart->output = NULL;
 				g_object_unref (output);
@@ -3270,7 +3318,7 @@ test_signature_markers (void)
 		GMimeEntity *signature = g_mime_multipart_get_part ((GMimeMultipart *) signed_part, 1);
 		ModelInput *input = new_input ("data", 4, 1);
 		GMimeContent *content = g_mime_content_new_with_stream ((GMimeStream *) input, GMIME_CONTENT_ENCODING_UNSPECIFIED);
-		GMimeSignatureList *signatures;
+		gpgme_verify_result_t signatures = NULL;
 		GError *error = NULL;
 		guint calls = verify_calls;
 		int code = GMIME_ERROR_PARSE_ERROR;
@@ -3294,7 +3342,7 @@ test_signature_markers (void)
 			g_mime_part_set_content ((fault & 1) ? (GMimePart *) signature : part, content);
 			code = input->unset_errno ? GMIME_ERROR_GENERAL : EIO;
 		}
-		signatures = g_mime_multipart_signed_verify (signed_part, GMIME_VERIFY_NONE, &error);
+		g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
 		g_assert_null (signatures);
 		g_assert_error (error, GMIME_ERROR, code);
 		g_assert_cmpuint (verify_calls, ==, calls);
@@ -3307,7 +3355,10 @@ test_signature_markers (void)
 	testsuite_check_passed ();
 	g_clear_pointer (&verify_content_bytes, g_byte_array_unref);
 	g_clear_pointer (&verify_signature_bytes, g_byte_array_unref);
+	gpgme_release (ctx);
 }
+#endif
+
 
 static GByteArray *
 serialize_writer (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only)
@@ -5616,7 +5667,10 @@ main (int argc, char **argv)
 	test_parser_compliance_lifetime ();
 	test_parser_compliance_errors ();
 	test_public_long_header_names ();
+#ifdef ENABLE_CRYPTO
+	test_gpgme_adapter_errors ();
 	test_signature_markers ();
+#endif
 	test_writer_depth ();
 	test_destruction_depth ();
 	test_destruction_ownership ();

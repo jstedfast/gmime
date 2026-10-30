@@ -3,9 +3,26 @@ tests_private_args = ['-DGMIME_PRIVATE_TESTS']
 testsuite_lib = static_library(
   'testsuite', 'testsuite.c',
   include_directories: gmime_inc,
-  dependencies: gmime_dep,
+  dependencies: gmime_deps,
   c_args: ['-DG_LOG_DOMAIN="gmime-tests"'],
 )
+
+if have_crypto
+  # Capture canonicalized verification input without platform-specific interposition.
+  verify_test_lib = static_library(
+    'gmime-verify-test', gmime_gpgme_sources,
+    objects: libgmime.extract_objects(gmime_sources),
+    include_directories: gmime_inc,
+    dependencies: gmime_deps,
+    link_whole: util_lib,
+    c_args: ['-DG_LOG_DOMAIN="gmime"', '-Dgpgme_op_verify=gmime_test_op_verify'],
+  )
+  verify_test_dep = declare_dependency(
+    link_with: verify_test_lib,
+    include_directories: gmime_inc,
+    dependencies: gmime_deps,
+  )
+endif
 
 normal_tests = [
   'test-stream-block', 'test-substreams',
@@ -33,6 +50,7 @@ test_programs = {
 }
 foreach name : normal_tests
   sources = [name + '.c']
+  test_dep = have_crypto and name == 'test-parser-model' ? verify_test_dep : gmime_dep
   if name == 'test-core'
     sources += ['../gmime/gmime-events.c']
   elif name == 'test-rfc2231'
@@ -41,7 +59,7 @@ foreach name : normal_tests
   test_programs += {name: executable(
     name, sources,
     include_directories: gmime_inc,
-    dependencies: gmime_dep,
+    dependencies: test_dep,
     link_with: testsuite_lib,
     c_args: ['-DG_LOG_DOMAIN="gmime-tests"'] + tests_private_args,
   )}

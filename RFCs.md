@@ -49,8 +49,8 @@ they do not enforce every mandatory field, field grammar, or report policy.
 | RFC | Specification and implemented scope |
 |---|---|
 | [1847](rfc/rfc1847.txt) | multipart/signed and multipart/encrypted MIME containers. |
-| [3156](rfc/rfc3156.txt) | OpenPGP/MIME signing, verification, encryption, and decryption using `GMimeGpgContext` and the security multipart classes. |
-| [5751](rfc/rfc5751.txt) | S/MIME MIME packaging and signing, verification, encryption, decryption, and certificate-only messages through `GMimePkcs7Context` and `GMimeApplicationPkcs7Mime`. |
+| [3156](rfc/rfc3156.txt) | OpenPGP/MIME signing, verification, encryption, and decryption using native GPGME OpenPGP contexts and the security multipart classes. |
+| [5751](rfc/rfc5751.txt) | S/MIME MIME packaging and signing, verification, encryption and decryption through native GPGME CMS contexts and `GMimeApplicationPkcs7Mime`. |
 | [5652](rfc/rfc5652.txt) | Cryptographic Message Syntax payloads handled by the S/MIME backend, not by an independent GMime CMS implementation. |
 
 Cryptographic operations require the optional

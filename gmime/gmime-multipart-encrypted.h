@@ -23,7 +23,6 @@
 #define __GMIME_MULTIPART_ENCRYPTED_H__
 
 #include <gmime/gmime-multipart.h>
-#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -52,17 +51,6 @@ struct _GMimeMultipartEncryptedClass {
 
 
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
-
-GMimeMultipartEncrypted *g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeEntity *entity,
-							     gboolean sign, const char *userid,
-							     GMimeEncryptFlags flags, GPtrArray *recipients,
-							     GError **err);
-
-GMimeEntity *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted,
-						 GMimeDecryptFlags flags,
-						 const char *session_key,
-						 GMimeDecryptResult **result,
-						 GError **err);
 
 G_END_DECLS
 

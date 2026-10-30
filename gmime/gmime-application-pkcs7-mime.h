@@ -25,7 +25,6 @@
 #include <glib.h>
 
 #include <gmime/gmime-part.h>
-#include <gmime/gmime-pkcs7-context.h>
 
 G_BEGIN_DECLS
 
@@ -74,18 +73,6 @@ GMimeSecureMimeType g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicati
 GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err);
 GMimeEntity *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 						       size_t max_size, GError **err);
-
-GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_encrypt (GMimeEntity *entity, GMimeEncryptFlags flags,
-								  GPtrArray *recipients, GError **err);
-
-GMimeEntity *g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
-						    GMimeDecryptFlags flags, const char *session_key,
-						    GMimeDecryptResult **result, GError **err);
-
-GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_sign (GMimeEntity *entity, const char *userid, GError **err);
-
-GMimeSignatureList *g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags,
-							  GMimeEntity **entity, GError **err);
 
 G_END_DECLS
 
