@@ -24,6 +24,7 @@
 
 #include "gmime-compliance.h"
 #include "gmime-compliance-data-private.h"
+#include "gmime-internal.h"
 
 /**
  * SECTION: gmime-compliance
@@ -36,15 +37,31 @@
  **/
 
 struct _GMimeComplianceOptions {
+	gatomicrefcount ref_count;
 	GMimeComplianceContext context;
 	GMimeComplianceValidators validators;
 	guint limit;
 };
 
+static GMimeComplianceOptions *default_options = NULL;
+
 G_DEFINE_BOXED_TYPE (GMimeComplianceOptions, g_mime_compliance_options,
-		    g_mime_compliance_options_clone, g_mime_compliance_options_free)
+		    g_mime_compliance_options_ref, g_mime_compliance_options_unref)
 G_DEFINE_BOXED_TYPE (GMimeComplianceIssue, g_mime_compliance_issue,
 		    g_mime_compliance_issue_copy, g_mime_compliance_issue_free)
+
+void
+g_mime_compliance_options_init (void)
+{
+	if (default_options == NULL)
+		default_options = g_mime_compliance_options_new ();
+}
+
+void
+g_mime_compliance_options_shutdown (void)
+{
+	g_clear_pointer (&default_options, g_mime_compliance_options_unref);
+}
 
 static gboolean
 valid_violation (GMimeComplianceViolation violation)
@@ -64,13 +81,14 @@ metadata_index (GMimeComplianceViolation violation)
  *
  * Enables all validators in transport context, without a reporting limit.
  *
- * Returns: (transfer full): new compliance options.
+ * Returns: (transfer full): new compliance options with one reference.
  **/
 GMimeComplianceOptions *
 g_mime_compliance_options_new (void)
 {
 	GMimeComplianceOptions *options = g_new0 (GMimeComplianceOptions, 1);
 
+	g_atomic_ref_count_init (&options->ref_count);
 	options->validators = GMIME_COMPLIANCE_VALIDATOR_ALL;
 	return options;
 }
@@ -81,25 +99,23 @@ g_mime_compliance_options_new (void)
  * Gets application-wide defaults. Configure these once at startup, before
  * creating readers; concurrent mutation is not supported.
  *
- * Returns: (transfer none): the shared default options; do not free.
+ * The returned reference belongs to GMime. Use g_mime_compliance_options_ref()
+ * to retain it independently, or g_mime_compliance_options_clone() for a copy.
+ *
+ * Returns: (transfer none): the shared default options.
  **/
 GMimeComplianceOptions *
 g_mime_compliance_options_get_default (void)
 {
-	static GMimeComplianceOptions *defaults;
-	static gsize initialized;
-
-	if (g_once_init_enter (&initialized)) {
-		defaults = g_mime_compliance_options_new ();
-		g_once_init_leave (&initialized, 1);
-	}
-
-	return defaults;
+	return default_options;
 }
 
 /**
  * g_mime_compliance_options_clone:
  * @options: (nullable): options to copy, or %NULL for defaults
+ *
+ * Copies the settings independently. Unlike g_mime_compliance_options_ref()
+ * or g_boxed_copy(), this does not share settings.
  *
  * Returns: (transfer full): an independent copy.
  **/
@@ -108,20 +124,48 @@ g_mime_compliance_options_clone (GMimeComplianceOptions *options)
 {
 	GMimeComplianceOptions *copy = g_mime_compliance_options_new ();
 
-	*copy = *(options ? options : g_mime_compliance_options_get_default ());
+	if (options == NULL)
+		options = default_options;
+
+	copy->context = options->context;
+	copy->validators = options->validators;
+	copy->limit = options->limit;
 	return copy;
 }
 
 /**
- * g_mime_compliance_options_free:
- * @options: (nullable): options to free
+ * g_mime_compliance_options_ref:
+ * @options: a #GMimeComplianceOptions
  *
- * Releases the options.
+ * Atomically acquires a reference to @options. This shares the same settings;
+ * concurrent changes to the settings still require external synchronization.
+ *
+ * Returns: (transfer full): @options with an additional reference.
+ **/
+GMimeComplianceOptions *
+g_mime_compliance_options_ref (GMimeComplianceOptions *options)
+{
+	g_return_val_if_fail (options != NULL, NULL);
+
+	g_atomic_ref_count_inc (&options->ref_count);
+
+	return options;
+}
+
+/**
+ * g_mime_compliance_options_unref:
+ * @options: (transfer full): a #GMimeComplianceOptions
+ *
+ * Atomically releases a reference to @options. The options are destroyed
+ * when the last reference is released.
  **/
 void
-g_mime_compliance_options_free (GMimeComplianceOptions *options)
+g_mime_compliance_options_unref (GMimeComplianceOptions *options)
 {
-	g_free (options);
+	g_return_if_fail (options != NULL);
+
+	if (g_atomic_ref_count_dec (&options->ref_count))
+		g_free (options);
 }
 
 /**

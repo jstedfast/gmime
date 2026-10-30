@@ -13,11 +13,25 @@ This is an incremental migration, not yet a declaration of feature parity.
 - GLib 2.88.0 or newer is required for building and using GMime 4.
   This is the GLib API baseline packaged by Ubuntu 26.04 LTS.
 
-- `GMimeParserOptions` and `GMimeFormatOptions` are atomically reference-counted
-  boxed types. `ref()`/`unref()` replace `free()` ownership; boxed copies share
-  the instance, while explicit clones and internal snapshots remain independent.
+- `GMimeParserOptions`, `GMimeFormatOptions`, and `GMimeComplianceOptions` are
+  atomically reference-counted boxed types. `ref()`/`unref()` replace `free()`
+  ownership; boxed copies share the instance, while explicit clones and
+  internal snapshots remain independent.
   Defaults remain borrowed, with GMime releasing its reference at shutdown.
   Parser clones still borrow warning callback data without its destroy notify.
+
+- Parser `get/set_persist_stream()` accessors are removed. Choose memory or
+  source-backed content with the explicit-storage constructor or stream
+  initializer. Reinitialization discards buffered input; it does not change
+  storage in the middle of an active mailbox parse. Basic stream construction
+  keeps its existing automatic seekable-source/nonseekable-memory behavior.
+
+- GMime 4.0.0 excludes async/cancellation APIs, parser-options-local MIME type
+  registration, TNEF, standalone text conversion, and DKIM/ARC/DMARC.
+  Sender and Resent-Sender remain address lists. The existing global MIME
+  type registry is unchanged. Raw multipart boundary access stays private
+  unless users explicitly request it. Deferred features may be considered
+  for later 4.x releases; they are not 4.0.0 release requirements.
 
 - Meson >= 1.3.0 replaces Autotools. Use `meson setup _build`,
   `meson compile -C _build`, and `meson test -C _build`. Autogen, configure,
@@ -773,9 +787,12 @@ This is an incremental migration, not yet a declaration of feature parity.
 
 The first implementation scope is MIME parsing and writing, headers,
 addresses, parameters, transfer encodings, and the message object model.
-TNEF and standalone text conversion utilities remain deferred. The structured
-MIME compliance framework is now implemented on GMimeReader and exposed by
-GMimeParser; remaining work is tracked in the migration roadmap below.
+TNEF, standalone text conversion, and DKIM/ARC/DMARC are excluded from 4.0.0
+and may be considered for later 4.x releases. Async/cancellation and a
+parser-options-local MIME type registry are also outside the 4.0.0 scope.
+The structured MIME compliance framework is now implemented on GMimeReader
+and exposed by GMimeParser; remaining work is tracked in the migration
+roadmap below.
 
 The minimum dependency is GLib 2.88.0, matching
 Ubuntu 26.04 LTS's packaged GLib API baseline rather than requiring a
@@ -4631,11 +4648,11 @@ malformed MIME is distinct from I/O failure and must not hide the latter.
 Intentional differences from MimeKit must be documented and covered by
 regression cases.
 
-### Asynchronous APIs
+### Synchronous API scope
 
-The synchronous port comes first. GIO's GCancellable, GAsyncResult, and
-GTask are the intended building blocks for future cancellation and async
-APIs; neither capability is implemented by the initial type renames.
+GMime 4.0.0 will not add cancellation or asynchronous APIs. Keep synchronous
+operation signatures without GCancellable; neither GAsyncResult/GTask
+wrappers nor cancellable overloads are release requirements.
 
 ### SIMD acceleration and differential validation
 
@@ -4987,32 +5004,35 @@ ports.
 ### Application-facing API completion
 
 - Add decoded message TextBody, HtmlBody and GetTextBody(format) equivalents.
-  Reuse specialized multipart selection and add flowed-text handling; the
-  legacy get_body() entity-selection helper is not the decoded-text API.
+  Reuse specialized multipart selection; the legacy get_body() entity-selection
+  helper is not the decoded-text API. Flowed-text conversion is deferred with
+  the standalone text utilities.
 - Complete TextPart encoding detection: detected charset and confidence,
   HTML meta charset discovery, and reporting the charset used by decoding.
   Explicit charset conversion and BOM detection already exist.
-- Add parser-option-local MIME type registration and cloning semantics;
-  the existing entity type registry is global.
 - Port the public SMTP and SMTPUTF8 address validators and their options and
   error models. The reader's MIME address compliance validator is a different
   API, not a replacement for these utilities.
 - Add AuthenticationResults, AuthenticationMethodResult and
   AuthenticationMethodProperty. These models belong to MimeKit.Core despite
   their Cryptography namespace; they do not require a new crypto backend.
-- Add a typed message MIME-Version accessor. Resolve Sender/ResentSender
-  single-mailbox versus native address-list semantics before freezing the API.
+- Add a typed message MIME-Version accessor. Sender and Resent-Sender
+  intentionally remain address lists, not single-mailbox properties.
 
-### API contract and asynchronous operations
+### API contract and settled 4.0.0 decisions
 
 - Continue aligning public APIs while retaining intentional, documented native
-  differences. Resolve body accessor naming, stream close/ownership and legacy
-  persistence accessors before the GMime 4 API/ABI is frozen.
-- Add consistent GCancellable support to synchronous stream, parser, writer,
-  content-copy and attachment operations, followed by GAsyncResult/GTask-based
-  asynchronous APIs. Preserve explicit errors and shared-source lifetimes.
-- Decide whether multipart raw boundary-marker access needs a public API.
-  Internal byte-preserving marker storage and serialization already exist.
+  differences. Resolve body accessor naming and review stream close/ownership
+  contracts before the GMime 4 API/ABI is frozen.
+- Legacy parser persistence accessors are removed in favor of explicit content
+  storage at construction or stream reinitialization. Internal snapshots remain
+  independent despite reference-counted parser, format, and compliance options.
+- Skip cancellation and asynchronous APIs for 4.0.0. Preserve existing
+  synchronous error reporting and shared-source lifetimes.
+- Skip parser-options-local MIME type registration; retain the existing global
+  entity type registry unchanged.
+- Keep raw multipart boundary markers private unless users explicitly request
+  public access. Internal byte-preserving storage and serialization remain.
 
 Managed collection CopyTo(T[] array, int offset) convenience APIs, including
 Multipart.CopyTo(), are intentionally excluded from the port. Stream and
@@ -5020,11 +5040,12 @@ content copying APIs are unaffected.
 
 ### Deferred subsystems and release integration
 
-- Port standalone text utilities as a separate increment: flowed text,
+- Exclude standalone text utilities from 4.0.0: flowed text,
   HTML parsing/conversion/filtering, text previews and RTF conversion.
+  These may be considered for a later 4.x release.
   Existing HTML/enriched filters cover only part of this scope.
-- Port TNEF reading/writing, properties, attachment extraction, MIME/calendar
-  conversion and compressed RTF when that deferred scope is undertaken.
+- Exclude TNEF reading/writing, properties, attachment extraction, MIME/calendar
+  conversion and compressed RTF from 4.0.0; reconsider in a later 4.x release.
 - Promote the broader historical actual-source differential comparisons into
   reproducible repository tooling with pinned reference revisions and explicit
   expected differences. The checked-in reader reference generator and
@@ -5039,5 +5060,5 @@ content copying APIs are unaffected.
   performance work, with scalar equivalence and workload benchmarks required.
 
 GPGME remains the OpenPGP/S/MIME backend; porting MimeKit.Cryptography's
-implementations is out of scope. DKIM/ARC/DMARC would be a separate scope
-decision rather than a prerequisite for the current core port.
+implementations is out of scope. DKIM/ARC/DMARC are excluded from 4.0.0 and
+may be considered for later 4.x releases.

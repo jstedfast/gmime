@@ -1904,8 +1904,8 @@ test_compliance_options_and_issues (void)
 	g_mime_compliance_options_set_context (defaults, g_mime_compliance_options_get_context (saved));
 	g_mime_compliance_options_set_enabled_validators (defaults, g_mime_compliance_options_get_enabled_validators (saved));
 	g_mime_compliance_options_set_max_issues_per_violation (defaults, g_mime_compliance_options_get_max_issues_per_violation (saved));
-	g_mime_compliance_options_free (options);
-	g_mime_compliance_options_free (saved);
+	g_mime_compliance_options_unref (options);
+	g_mime_compliance_options_unref (saved);
 	g_object_unref (reader);
 	g_object_unref (input);
 
@@ -1964,7 +1964,7 @@ changing_logger (const GMimeComplianceIssue *issue, gpointer user_data)
 		g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_NONE);
 		g_mime_compliance_options_set_max_issues_per_violation (options, 1);
 		g_mime_reader_set_compliance_options (logger->reader, options);
-		g_mime_compliance_options_free (options);
+		g_mime_compliance_options_unref (options);
 		g_mime_reader_set_compliance_logger (logger->reader, collect_compliance, logger->issues, NULL);
 	}
 }
@@ -2087,7 +2087,7 @@ test_compliance_logging (void)
 		g_object_unref (reader);
 		g_object_unref (input);
 	}
-	g_mime_compliance_options_free (options);
+	g_mime_compliance_options_unref (options);
 	g_array_unref (issues);
 }
 

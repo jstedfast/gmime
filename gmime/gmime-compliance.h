@@ -327,8 +327,10 @@ typedef void (*GMimeComplianceIssueFunc) (const GMimeComplianceIssue *issue, gpo
 /**
  * GMimeComplianceOptions:
  *
- * Boxed, cloneable diagnostic options. Reader operations snapshot these
- * values; changing them never changes the parsing policy.
+ * Reference-counted boxed diagnostic options. References and boxed copies
+ * share settings; explicit clones and internal snapshots remain independent.
+ * Reader operations snapshot these values; changing them never changes the
+ * parsing policy.
  **/
 typedef struct _GMimeComplianceOptions GMimeComplianceOptions;
 
@@ -339,7 +341,8 @@ GType g_mime_compliance_options_get_type (void);
 GMimeComplianceOptions *g_mime_compliance_options_new (void);
 GMimeComplianceOptions *g_mime_compliance_options_get_default (void);
 GMimeComplianceOptions *g_mime_compliance_options_clone (GMimeComplianceOptions *options);
-void g_mime_compliance_options_free (GMimeComplianceOptions *options);
+GMimeComplianceOptions *g_mime_compliance_options_ref (GMimeComplianceOptions *options);
+void g_mime_compliance_options_unref (GMimeComplianceOptions *options);
 GMimeComplianceContext g_mime_compliance_options_get_context (GMimeComplianceOptions *options);
 void g_mime_compliance_options_set_context (GMimeComplianceOptions *options, GMimeComplianceContext context);
 GMimeComplianceValidators g_mime_compliance_options_get_enabled_validators (GMimeComplianceOptions *options);

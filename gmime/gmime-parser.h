@@ -73,9 +73,6 @@ void g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream);
 gboolean g_mime_parser_init_with_stream_and_storage (GMimeParser *parser, GMimeStream *stream,
 						    GMimeFormat format, GMimeContentStorage storage, GError **error);
 
-gboolean g_mime_parser_get_persist_stream (GMimeParser *parser);
-void g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist);
-
 GMimeFormat g_mime_parser_get_format (GMimeParser *parser);
 void g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format);
 

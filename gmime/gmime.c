@@ -111,6 +111,7 @@ g_mime_init (void)
 	
 	g_mime_format_options_init ();
 	g_mime_parser_options_init ();
+	g_mime_compliance_options_init ();
 	g_mime_charset_map_init ();
 	
 #ifdef ENABLE_CRYPTO
@@ -220,5 +221,6 @@ g_mime_shutdown (void)
 	g_mime_entity_type_registry_shutdown ();
 	g_mime_format_options_shutdown ();
 	g_mime_parser_options_shutdown ();
+	g_mime_compliance_options_shutdown ();
 	g_mime_charset_map_shutdown ();
 }

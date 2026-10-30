@@ -101,7 +101,7 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 		GMimeComplianceOptions *compliance = fuzz_compliance_options (&checker);
 
 		g_mime_parser_set_compliance_options (parser, compliance);
-		g_mime_compliance_options_free (compliance);
+		g_mime_compliance_options_unref (compliance);
 		g_mime_parser_set_compliance_logger (parser, fuzz_compliance_report, &checker, NULL);
 	}
 	do {

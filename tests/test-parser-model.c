@@ -2298,7 +2298,7 @@ test_public_parser_models (void)
 	const gsize chunks[] = { 1, 7, 4096 };
 	guint mode, chunk;
 
-	testsuite_check ("Public parser retains one buffer across headers, formats, persistence and mailbox reads");
+	testsuite_check ("Public parser retains one buffer across headers, formats and mailbox reads in both storage modes");
 	for (mode = 0; mode < 4; mode++) {
 		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
 			GMimeMessagePrivate *first_priv;
@@ -2312,8 +2312,11 @@ test_public_parser_models (void)
 			char *marker;
 
 			input->nonseekable = (mode & 1) != 0;
-			parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
-			g_mime_parser_set_persist_stream (parser, (mode & 2) != 0);
+			parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+				GMIME_FORMAT_MESSAGE, (mode & 2) && !(mode & 1) ?
+				GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (parser);
 			headers = g_mime_parser_construct_headers (parser, NULL, &error);
 			g_assert_no_error (error);
 			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
@@ -2338,7 +2341,6 @@ test_public_parser_models (void)
 			g_byte_array_unref (bytes);
 			if ((mode & 2) && !(mode & 1))
 				g_assert_cmpint (g_mime_stream_seek ((GMimeStream *) input, 0, GMIME_STREAM_SEEK_SET), ==, 0);
-			g_mime_parser_set_persist_stream (parser, FALSE);
 			second = g_mime_parser_construct_message (parser, NULL, &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (second);
@@ -2581,7 +2583,7 @@ parser_log_issue (const GMimeComplianceIssue *issue, gpointer user_data)
 		g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_NONE);
 		g_mime_compliance_options_set_max_issues_per_violation (options, 1);
 		g_mime_parser_set_compliance_options (logger->parser, options);
-		g_mime_compliance_options_free (options);
+		g_mime_compliance_options_unref (options);
 		g_mime_parser_set_compliance_logger (logger->parser, logger->next ? parser_log_issue : NULL,
 			logger->next, logger->next ? parser_logger_destroyed : NULL);
 		g_assert_cmpuint (logger->destroyed, ==, 0);
@@ -2629,7 +2631,6 @@ test_parser_compliance_options (void)
 	testsuite_check ("Parser compliance settings work before input and survive stream replacement");
 	g_assert_cmpint (g_mime_parser_tell (parser), ==, -1);
 	g_assert_true (g_mime_parser_eos (parser));
-	g_assert_false (g_mime_parser_get_persist_stream (parser));
 	g_assert_null (g_mime_parser_get_mbox_marker (parser));
 	g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
 	g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, -1);
@@ -2659,16 +2660,13 @@ test_parser_compliance_options (void)
 	g_assert_cmpint (g_mime_compliance_options_get_context (borrowed), ==, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
 	g_mime_compliance_options_set_max_issues_per_violation (borrowed, 3);
 	g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
-	g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
-	g_mime_parser_set_persist_stream (parser, FALSE);
-	g_mime_parser_init_with_stream (parser, input);
+	g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+		GMIME_FORMAT_MBOX, GMIME_CONTENT_STORAGE_MEMORY, NULL));
 	g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MBOX);
-	g_assert_false (g_mime_parser_get_persist_stream (parser));
 	g_assert_cmpint (g_mime_parser_tell (parser), ==, 0);
 	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
 	g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
 		GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, NULL));
-	g_assert_true (g_mime_parser_get_persist_stream (parser));
 	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
 	g_assert_cmpuint (g_mime_compliance_options_get_max_issues_per_violation (borrowed), ==, 3);
 	g_assert_cmpuint (logger.destroyed, ==, 0);
@@ -2677,7 +2675,7 @@ test_parser_compliance_options (void)
 	g_object_unref (parser);
 	g_assert_cmpuint (logger.destroyed, ==, 1);
 	g_object_unref (input);
-	g_mime_compliance_options_free (options);
+	g_mime_compliance_options_unref (options);
 	parser = g_mime_parser_new ();
 	logger.parser = parser;
 	logger.destroyed = 0;
@@ -2766,7 +2764,7 @@ test_parser_compliance_models (void)
 				g_byte_array_unref (baseline);
 				g_array_unref (issues);
 				g_array_unref (expected);
-				g_mime_compliance_options_free (compliance);
+				g_mime_compliance_options_unref (compliance);
 			}
 		}
 	}
@@ -3160,7 +3158,7 @@ test_signature_markers (void)
 				const char *text = slot_index == 2 ? trailing : wire;
 				gsize length = slot_index == 2 ? sizeof (trailing) - 1 : sizeof (wire) - 1;
 				ModelInput *input = new_input (text, length, mode ? 4096 : 1);
-				GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+				GMimeParser *parser;
 				GMimeEntity *entity;
 				GMimeMultipartSigned *signed_part;
 				gpgme_verify_result_t signatures = NULL;
@@ -3169,7 +3167,11 @@ test_signature_markers (void)
 				GBytes **slot;
 				GError *error = NULL;
 
-				g_mime_parser_set_persist_stream (parser, mode != 0);
+				parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+					GMIME_FORMAT_MESSAGE, mode ? GMIME_CONTENT_STORAGE_SOURCE :
+					GMIME_CONTENT_STORAGE_MEMORY, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (parser);
 				entity = g_mime_parser_construct_part (parser, NULL, &error);
 				g_assert_no_error (error);
 				g_assert_true (GMIME_IS_MULTIPART (entity));
@@ -4072,8 +4074,9 @@ test_message_header_writing (void)
 		GMimeParser *parser = g_mime_parser_new ();
 		GMimeMessage *message;
 
-		g_mime_parser_set_persist_stream (parser, FALSE);
-		g_mime_parser_init_with_stream (parser, input);
+		g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+		g_assert_no_error (error);
 		message = g_mime_parser_construct_message (parser, NULL, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (message);
@@ -4162,8 +4165,9 @@ test_message_header_writing (void)
 				GByteArray *full;
 				char *expected, *headers;
 
-				g_mime_parser_set_persist_stream (parser, FALSE);
-				g_mime_parser_init_with_stream (parser, input);
+				g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+					GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+				g_assert_no_error (error);
 				message = g_mime_parser_construct_message (parser, NULL, &error);
 				g_assert_no_error (error);
 				if (prepend) {
@@ -4388,8 +4392,9 @@ test_file_writing (void)
 			GMimeParser *parser = g_mime_parser_new ();
 			GMimeEntity *entity;
 
-			g_mime_parser_set_persist_stream (parser, FALSE);
-			g_mime_parser_init_with_stream (parser, input);
+			g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+				GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+			g_assert_no_error (error);
 			entity = message ? (GMimeEntity *) g_mime_parser_construct_message (parser, NULL, &error) :
 				g_mime_parser_construct_part (parser, NULL, &error);
 			g_assert_no_error (error);
@@ -5150,7 +5155,6 @@ test_parser_storage (void)
 				g_assert_cmpuint (input->seeks, ==, storage == GMIME_CONTENT_STORAGE_SOURCE ? 1 : 0);
 				g_assert_cmpint (g_mime_parser_tell (parser), ==, 4);
 				g_assert_cmpint (g_mime_parser_get_format (parser), ==, format);
-				g_assert_cmpint (g_mime_parser_get_persist_stream (parser), ==, storage == GMIME_CONTENT_STORAGE_SOURCE);
 				for (i = 0; i < count; i++) {
 					GMimeMessagePrivate *messages_priv;
 					GByteArray *bytes;
@@ -5229,7 +5233,6 @@ test_parser_storage (void)
 				g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, end);
 				g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, marker_offset);
 				g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MBOX);
-				g_assert_cmpint (g_mime_parser_get_persist_stream (parser), ==, storage == GMIME_CONTENT_STORAGE_SOURCE);
 				marker = g_mime_parser_get_mbox_marker (parser);
 				g_assert_cmpstr (marker, ==, "From first");
 				g_free (marker);
@@ -5245,7 +5248,6 @@ test_parser_storage (void)
 				GMIME_FORMAT_MESSAGE, next_storage, &error));
 			g_assert_no_error (error);
 			g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MESSAGE);
-			g_assert_cmpint (g_mime_parser_get_persist_stream (parser), ==, next_storage == GMIME_CONTENT_STORAGE_SOURCE);
 			g_assert_cmpint (g_mime_parser_tell (parser), ==, 0);
 			g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, -1);
 			g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, -1);
@@ -5566,12 +5568,16 @@ test_ensure_newline (void)
 			for (persist = 0; persist < 2; persist++) {
 				GMimeEntityPrivate *body_priv;
 				ModelInput *input = new_input (cases[i].wire, strlen (cases[i].wire), 1);
-				GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+				GMimeParser *parser;
 				GMimeEntity *entity, *body;
 				GError *error = NULL;
 				gboolean body_ensure;
 
-				g_mime_parser_set_persist_stream (parser, persist);
+				parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+					GMIME_FORMAT_MESSAGE, persist ? GMIME_CONTENT_STORAGE_SOURCE :
+					GMIME_CONTENT_STORAGE_MEMORY, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (parser);
 				entity = cases[i].message ? (GMimeEntity *) g_mime_parser_construct_message (parser, NULL, &error) :
 					g_mime_parser_construct_part (parser, NULL, &error);
 				g_assert_no_error (error);

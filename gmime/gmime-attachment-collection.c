@@ -185,15 +185,22 @@ create_attachment (GMimeAttachmentCollection *collection, const char *path, GMim
 		mime_type = g_mime_types_get_mime_type (path);
 		type = g_mime_content_type_parse_full (NULL, mime_type, -1, error);
 		g_free (mime_type);
+
 		if (!type)
 			return NULL;
 	}
 
 	if (g_mime_content_type_is_type (type, "message", "rfc822")) {
 		position = g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_CUR);
-		parser = g_mime_parser_new_with_stream (stream);
+
 		/* The caller may close the stream immediately after adding the attachment. */
-		g_mime_parser_set_persist_stream (parser, FALSE);
+		parser = g_mime_parser_new_with_stream_and_storage (stream, GMIME_FORMAT_MESSAGE,
+								 GMIME_CONTENT_STORAGE_MEMORY, &local_error);
+		if (!parser) {
+			g_propagate_error (error, local_error);
+			goto done;
+		}
+
 		message = g_mime_parser_construct_message (parser, NULL, &local_error);
 		g_object_unref (parser);
 
@@ -204,6 +211,7 @@ create_attachment (GMimeAttachmentCollection *collection, const char *path, GMim
 			if (!local_error)
 				g_set_error_literal (&local_error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 						     "No message found in attachment content");
+
 			if (auto_detected && position != -1 &&
 			    (g_error_matches (local_error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) ||
 			     g_error_matches (local_error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG))) {
@@ -211,7 +219,9 @@ create_attachment (GMimeAttachmentCollection *collection, const char *path, GMim
 				 * fall back to attaching this content as a generic stream. */
 				g_clear_error (&local_error);
 				g_object_unref (type);
+
 				type = g_mime_content_type_new ("application", "octet-stream");
+
 				errno = 0;
 				if (g_mime_stream_seek (stream, position, GMIME_STREAM_SEEK_SET) == -1) {
 					set_io_error (error, "rewind");
@@ -240,6 +250,7 @@ create_attachment (GMimeAttachmentCollection *collection, const char *path, GMim
 
 	separator = strrchr (path, G_DIR_SEPARATOR);
 	file_name = g_strdup (separator && separator > path ? separator + 1 : path);
+
 	if (collection->linked && (g_uri_peek_scheme (file_name) || !_g_mime_is_content_uri (file_name, FALSE))) {
 		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     "Attachment file name is not a valid relative Content-Location");
@@ -247,11 +258,14 @@ create_attachment (GMimeAttachmentCollection *collection, const char *path, GMim
 		g_clear_object (&attachment);
 		goto done;
 	}
+
 	g_mime_entity_set_disposition (attachment, collection->linked ? GMIME_DISPOSITION_INLINE : GMIME_DISPOSITION_ATTACHMENT);
 	g_mime_entity_set_content_disposition_parameter (attachment, "filename", file_name);
 	g_mime_entity_set_content_type_parameter (attachment, "name", file_name);
+
 	if (collection->linked)
 		g_mime_entity_set_content_location (attachment, file_name);
+
 	g_free (file_name);
 	g_ptr_array_add (collection->array, g_object_ref (attachment));
 
@@ -388,9 +402,11 @@ g_mime_attachment_collection_add_data (GMimeAttachmentCollection *collection, co
 		g_set_error_literal (error, GMIME_ERROR, EOVERFLOW, "Attachment data exceeds the native memory stream limit");
 		return NULL;
 	}
+
 	stream = g_mime_stream_mem_new_with_buffer (data ? (const char *) data : "", length);
 	attachment = create_attachment (collection, file_name, stream, content_type, FALSE, error);
 	g_object_unref (stream);
+
 	return attachment;
 }
 
@@ -463,8 +479,10 @@ g_mime_attachment_collection_add_file (GMimeAttachmentCollection *collection, co
 
 	if (!(stream = g_mime_stream_fs_open (file_name, O_RDONLY, 0, error)))
 		return NULL;
+
 	attachment = create_attachment (collection, file_name, stream, content_type, TRUE, error);
 	g_object_unref (stream);
+
 	return attachment;
 }
 
@@ -550,7 +568,9 @@ g_mime_attachment_collection_remove (GMimeAttachmentCollection *collection, GMim
 
 	if ((index = g_mime_attachment_collection_index_of (collection, attachment)) == -1)
 		return FALSE;
+
 	g_ptr_array_remove_index (collection->array, index);
+
 	return TRUE;
 }
 

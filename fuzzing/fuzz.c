@@ -184,7 +184,7 @@ fuzz_compliance_attach (FuzzCompliance *checker, GMimeReader *reader)
 	GMimeComplianceOptions *options = fuzz_compliance_options (checker);
 
 	g_mime_reader_set_compliance_options (reader, options);
-	g_mime_compliance_options_free (options);
+	g_mime_compliance_options_unref (options);
 	g_mime_reader_set_compliance_logger (reader, fuzz_compliance_report, checker, NULL);
 }
 

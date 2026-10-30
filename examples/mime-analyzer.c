@@ -466,7 +466,7 @@ analyze_file (const char *filename, const Options *options, DiagnosticWriter *wr
 	g_mime_reader_set_compliance_logger (reader, collect_issue, &collector, NULL);
 
 	success = g_mime_reader_read_message (reader, &error);
-	g_mime_compliance_options_free (compliance);
+	g_mime_compliance_options_unref (compliance);
 	g_object_unref (reader);
 
 	if (!success) {
