@@ -51,6 +51,11 @@
  *
  * #GMimeEntity is an abstract class from which all message and MIME
  * parts are derived.
+ *
+ * Containers release their child references iteratively to avoid stack
+ * overflow with deeply nested messages. Descendant releases may be deferred
+ * until the outermost release completes. Subclass finalizers must not rely
+ * on descendants having finalized when chaining to their parent finalizer.
  **/
 
 struct _type_bucket {
@@ -89,6 +94,29 @@ static void content_disposition_changed (GMimeContentDisposition *disposition, g
 static GHashTable *type_hash = NULL;
 
 static GObjectClass *parent_class = NULL;
+
+static GPrivate pending_entity_unrefs = G_PRIVATE_INIT (NULL);
+
+void
+_g_mime_entity_unref (GMimeEntity *entity)
+{
+	GQueue *pending = g_private_get (&pending_entity_unrefs);
+	GQueue queue = G_QUEUE_INIT;
+
+	if (pending) {
+		/* Transfer the container's reference, without disposing shared children. */
+		g_queue_push_tail (pending, entity);
+		return;
+	}
+
+	g_private_set (&pending_entity_unrefs, &queue);
+	g_object_unref (entity);
+
+	while ((entity = g_queue_pop_head (&queue)))
+		g_object_unref (entity);
+
+	g_private_set (&pending_entity_unrefs, NULL);
+}
 
 static void
 object_accept (GMimeEntity *object, GMimeVisitor *visitor)

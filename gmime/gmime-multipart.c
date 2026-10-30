@@ -158,7 +158,7 @@ g_mime_multipart_finalize (GObject *object)
 	g_clear_pointer (&priv->raw_boundaries, g_ptr_array_unref);
 	
 	for (i = 0; i < priv->children->len; i++)
-		g_object_unref (priv->children->pdata[i]);
+		_g_mime_entity_unref (priv->children->pdata[i]);
 	
 	g_ptr_array_free (priv->children, TRUE);
 	

@@ -106,7 +106,7 @@ g_mime_message_part_finalize (GObject *object)
 	GMimeMessagePartPrivate *priv = _g_mime_message_part_get_private (part);
 
 	if (priv->message)
-		g_object_unref (priv->message);
+		_g_mime_entity_unref ((GMimeEntity *) priv->message);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }

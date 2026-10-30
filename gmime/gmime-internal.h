@@ -108,6 +108,7 @@ G_GNUC_INTERNAL ssize_t _g_mime_stream_write_all (GMimeStream *stream, const cha
 G_GNUC_INTERNAL ssize_t _g_mime_stream_filter_get_written (GMimeStreamFilter *stream);
 
 /* GMimeEntity */
+G_GNUC_INTERNAL void _g_mime_entity_unref (GMimeEntity *entity);
 G_GNUC_INTERNAL gboolean _g_mime_is_content_uri (const char *uri, gboolean absolute);
 G_GNUC_INTERNAL void _g_mime_entity_block_header_list_changed (GMimeEntity *object);
 G_GNUC_INTERNAL void _g_mime_entity_unblock_header_list_changed (GMimeEntity *object);

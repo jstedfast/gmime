@@ -254,7 +254,7 @@ g_mime_message_finalize (GObject *object)
 	
 	/* unref child mime part */
 	if (priv->mime_part)
-		g_object_unref (priv->mime_part);
+		_g_mime_entity_unref (priv->mime_part);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }

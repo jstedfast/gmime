@@ -2992,8 +2992,6 @@ test_writer_depth (void)
 				g_assert_cmpint (priv->ensure_newline, ==, flags->data[i]);
 			}
 
-			/* Keep each descendant alive until its parent has been released:
-			 * model finalizers, unlike the writer, still recurse. */
 			for (i = entities->len; i > 0; i--)
 				g_object_unref (entities->pdata[i - 1]);
 			g_ptr_array_unref (entities);
@@ -3007,6 +3005,418 @@ test_writer_depth (void)
 			g_free (ending);
 		}
 	}
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	guint objects, destroyed, containers, entered, exited, active, max_active;
+} ModelDestruction;
+
+typedef struct {
+	GMimeMultipart parent_instance;
+	ModelDestruction *state;
+} ModelDestructionMultipart;
+
+typedef GMimeMultipartClass ModelDestructionMultipartClass;
+
+typedef struct {
+	GMimeMessagePart parent_instance;
+	ModelDestruction *state;
+} ModelDestructionMessagePart;
+
+typedef GMimeMessagePartClass ModelDestructionMessagePartClass;
+
+typedef struct {
+	GMimeMessage parent_instance;
+	ModelDestruction *state;
+} ModelDestructionMessage;
+
+typedef GMimeMessageClass ModelDestructionMessageClass;
+
+G_DEFINE_TYPE (ModelDestructionMultipart, model_destruction_multipart, GMIME_TYPE_MULTIPART)
+G_DEFINE_TYPE (ModelDestructionMessagePart, model_destruction_message_part, GMIME_TYPE_MESSAGE_PART)
+G_DEFINE_TYPE (ModelDestructionMessage, model_destruction_message, GMIME_TYPE_MESSAGE)
+
+static void
+model_destruction_finalize (GObject *object, ModelDestruction *state, GObjectClass *parent)
+{
+	state->entered++;
+	state->active++;
+	state->max_active = MAX (state->max_active, state->active);
+	g_assert_cmpuint (state->active, <=, 2);
+	parent->finalize (object);
+	state->active--;
+	state->exited++;
+}
+
+static void
+model_destruction_multipart_finalize (GObject *object)
+{
+	ModelDestructionMultipart *multipart = (ModelDestructionMultipart *) object;
+
+	model_destruction_finalize (object, multipart->state, G_OBJECT_CLASS (model_destruction_multipart_parent_class));
+}
+
+static void
+model_destruction_multipart_class_init (ModelDestructionMultipartClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_destruction_multipart_finalize;
+}
+
+static void
+model_destruction_multipart_init (ModelDestructionMultipart *multipart)
+{
+}
+
+static void
+model_destruction_message_part_finalize (GObject *object)
+{
+	ModelDestructionMessagePart *part = (ModelDestructionMessagePart *) object;
+
+	model_destruction_finalize (object, part->state, G_OBJECT_CLASS (model_destruction_message_part_parent_class));
+}
+
+static void
+model_destruction_message_part_class_init (ModelDestructionMessagePartClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_destruction_message_part_finalize;
+}
+
+static void
+model_destruction_message_part_init (ModelDestructionMessagePart *part)
+{
+}
+
+static void
+model_destruction_message_finalize (GObject *object)
+{
+	ModelDestructionMessage *message = (ModelDestructionMessage *) object;
+
+	model_destruction_finalize (object, message->state, G_OBJECT_CLASS (model_destruction_message_parent_class));
+}
+
+static void
+model_destruction_message_class_init (ModelDestructionMessageClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_destruction_message_finalize;
+}
+
+static void
+model_destruction_message_init (ModelDestructionMessage *message)
+{
+}
+
+static void
+model_destruction_notify (gpointer data, GObject *object)
+{
+	ModelDestruction *state = data;
+
+	state->destroyed++;
+}
+
+static void
+track_destruction (ModelDestruction *state, gpointer object)
+{
+	state->objects++;
+	g_object_weak_ref (object, model_destruction_notify, state);
+}
+
+static gpointer
+new_destruction_container (GType type, ModelDestruction *state)
+{
+	GObject *object = g_object_new (type, NULL);
+	GMimeContentType *content_type = NULL;
+
+	if (type == model_destruction_multipart_get_type ()) {
+		((ModelDestructionMultipart *) object)->state = state;
+		content_type = g_mime_content_type_new ("multipart", "mixed");
+	} else if (type == model_destruction_message_part_get_type ()) {
+		((ModelDestructionMessagePart *) object)->state = state;
+		content_type = g_mime_content_type_new ("message", "rfc822");
+	} else {
+		g_assert_cmpuint (type, ==, model_destruction_message_get_type ());
+		((ModelDestructionMessage *) object)->state = state;
+	}
+	if (content_type) {
+		g_mime_entity_set_content_type ((GMimeEntity *) object, content_type);
+		g_object_unref (content_type);
+	}
+	if (GMIME_IS_MULTIPART (object))
+		g_mime_multipart_set_boundary ((GMimeMultipart *) object, "lifetime");
+	state->containers++;
+	track_destruction (state, object);
+	return object;
+}
+
+static GMimeEntity *
+new_destruction_tree (guint kind, guint depth, ModelDestruction *state)
+{
+	GMimePart *leaf = g_mime_part_new_with_type ("application", "octet-stream");
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("A\0B\nC\rD", 7);
+	GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+	GMimeEntity *root = (GMimeEntity *) leaf;
+	guint i;
+
+	track_destruction (state, leaf);
+	track_destruction (state, content);
+	track_destruction (state, stream);
+	g_mime_part_set_content (leaf, content);
+	g_mime_part_set_content_encoding (leaf, GMIME_CONTENT_ENCODING_BINARY);
+	g_object_unref (content);
+	g_object_unref (stream);
+	for (i = 0; i < depth; i++) {
+		GMimeEntity *child = root;
+
+		if (kind == 0 || (kind == 2 && (i & 1))) {
+			GMimeMultipart *multipart = new_destruction_container (model_destruction_multipart_get_type (), state);
+
+			g_mime_multipart_add (multipart, child);
+			root = (GMimeEntity *) multipart;
+		} else {
+			GMimeMessage *message = new_destruction_container (model_destruction_message_get_type (), state);
+			GMimeMessagePart *part = new_destruction_container (model_destruction_message_part_get_type (), state);
+
+			g_mime_message_set_mime_part (message, child);
+			g_mime_message_part_set_message (part, message);
+			g_object_unref (message);
+			root = (GMimeEntity *) part;
+		}
+		g_object_unref (child);
+	}
+	return root;
+}
+
+static void
+assert_destruction_complete (ModelDestruction *state)
+{
+	g_assert_cmpuint (state->destroyed, ==, state->objects);
+	g_assert_cmpuint (state->entered, ==, state->containers);
+	g_assert_cmpuint (state->exited, ==, state->containers);
+	g_assert_cmpuint (state->active, ==, 0);
+	g_assert_cmpuint (state->max_active, <=, 2);
+}
+
+static void
+test_destruction_depth (void)
+{
+	static const guint depths[] = { 10000, 100000, 20000 };
+	guint kind, message_root;
+
+	testsuite_check ("Root-only deep MIME destruction bounds subclass finalizer nesting and releases every object");
+	for (kind = 0; kind < G_N_ELEMENTS (depths); kind++) {
+		for (message_root = 0; message_root < 2; message_root++) {
+			ModelDestruction state = { 0 };
+			GMimeEntity *root = new_destruction_tree (kind, depths[kind], &state);
+
+			if (message_root) {
+				GMimeMessage *message = new_destruction_container (model_destruction_message_get_type (), &state);
+
+				g_mime_message_set_mime_part (message, root);
+				g_object_unref (root);
+				root = (GMimeEntity *) message;
+			}
+			g_assert_cmpuint (state.destroyed, ==, 0);
+			g_object_unref (root);
+			assert_destruction_complete (&state);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_destruction_ownership (void)
+{
+	GType types[] = { model_destruction_multipart_get_type (), model_destruction_message_get_type (),
+			  model_destruction_message_part_get_type () };
+	guint kind, retained;
+
+	testsuite_check ("Destruction preserves retained and shared subtrees, including duplicate child references");
+	for (kind = 0; kind < 3; kind++) {
+		for (retained = 0; retained < 2; retained++) {
+			ModelDestruction state = { 0 };
+			GMimeEntity *root = new_destruction_tree (kind, 128, &state);
+			GMimeEntity *first = new_destruction_container (types[kind], &state);
+			GMimeEntity *second = new_destruction_container (types[kind], &state);
+			GMimeMultipart *holder = g_mime_multipart_new ();
+			GByteArray *before, *after;
+
+			if (kind == 0) {
+				g_mime_multipart_add ((GMimeMultipart *) first, root);
+				g_mime_multipart_add ((GMimeMultipart *) first, root);
+				g_mime_multipart_add ((GMimeMultipart *) second, root);
+			} else if (kind == 1) {
+				g_mime_message_set_mime_part ((GMimeMessage *) first, root);
+				g_mime_message_set_mime_part ((GMimeMessage *) second, root);
+			} else {
+				GMimeMessage *message = new_destruction_container (model_destruction_message_get_type (), &state);
+
+				g_mime_message_set_mime_part (message, root);
+				g_object_unref (root);
+				root = (GMimeEntity *) message;
+				g_mime_message_part_set_message ((GMimeMessagePart *) first, message);
+				g_mime_message_part_set_message ((GMimeMessagePart *) second, message);
+			}
+			before = serialize_writer (root, NULL, FALSE);
+			if (!retained)
+				g_object_unref (root);
+			g_mime_multipart_add (holder, first);
+			g_object_unref (first);
+			g_object_unref (holder);
+			g_assert_cmpuint (state.destroyed, ==, 1);
+			if (kind == 0)
+				g_assert_true (g_mime_multipart_get_part ((GMimeMultipart *) second, 0) == root);
+			else if (kind == 1)
+				g_assert_true (g_mime_message_get_mime_part ((GMimeMessage *) second) == root);
+			else
+				g_assert_true ((GMimeEntity *) g_mime_message_part_get_message ((GMimeMessagePart *) second) == root);
+			after = serialize_writer (root, NULL, FALSE);
+			g_assert_cmpmem (before->data, before->len, after->data, after->len);
+			g_byte_array_unref (after);
+			g_object_unref (second);
+			if (retained) {
+				g_assert_cmpuint (state.destroyed, ==, 2);
+				after = serialize_writer (root, NULL, FALSE);
+				g_assert_cmpmem (before->data, before->len, after->data, after->len);
+				g_byte_array_unref (after);
+				g_object_unref (root);
+			}
+			g_byte_array_unref (before);
+			assert_destruction_complete (&state);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Clearing, removing and replacing deep children completes destruction before returning");
+	for (kind = 0; kind < 4; kind++) {
+		ModelDestruction state = { 0 };
+		GMimeEntity *root = new_destruction_tree (2, 2048, &state);
+		GObject *holder;
+
+		if (kind < 2) {
+			GMimeMultipart *multipart = g_mime_multipart_new ();
+
+			g_mime_multipart_add (multipart, root);
+			g_object_unref (root);
+			if (kind == 0)
+				g_mime_multipart_clear (multipart);
+			else
+				g_assert_true (g_mime_multipart_remove (multipart, root));
+			g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 0);
+			holder = (GObject *) multipart;
+		} else if (kind == 2) {
+			GMimeMessage *message = g_mime_message_new (FALSE);
+			GMimePart *replacement = g_mime_part_new ();
+
+			g_mime_message_set_mime_part (message, root);
+			g_object_unref (root);
+			g_mime_message_set_mime_part (message, (GMimeEntity *) replacement);
+			g_assert_true (g_mime_message_get_mime_part (message) == (GMimeEntity *) replacement);
+			g_object_unref (replacement);
+			holder = (GObject *) message;
+		} else {
+			GMimeMessage *message = g_mime_message_new (FALSE);
+			GMimeMessagePart *part = g_mime_message_part_new_with_message ("rfc822", message);
+
+			g_mime_message_set_mime_part (message, root);
+			g_object_unref (root);
+			g_object_unref (message);
+			g_mime_message_part_set_message (part, NULL);
+			g_assert_null (g_mime_message_part_get_message (part));
+			holder = (GObject *) part;
+		}
+		assert_destruction_complete (&state);
+		g_object_unref (holder);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+destruction_reenter (gpointer data, GObject *object)
+{
+	GMimeEntity **other = data;
+
+	g_assert_nonnull (*other);
+	g_object_unref (*other);
+	*other = NULL;
+}
+
+static void
+test_destruction_reentrancy (void)
+{
+	ModelDestruction state = { 0 };
+	GMimeEntity *root = new_destruction_tree (0, 2048, &state);
+	GMimeEntity *other = new_destruction_tree (2, 2048, &state);
+	GMimeEntity *child = g_mime_multipart_get_part ((GMimeMultipart *) root, 0);
+	GType types[] = { model_destruction_multipart_get_type (), model_destruction_message_part_get_type (),
+			  model_destruction_message_get_type () };
+	guint i;
+
+	testsuite_check ("Reentrant weak notifications and later independent releases drain all pending children");
+	g_object_weak_ref (G_OBJECT (child), destruction_reenter, &other);
+	g_object_unref (root);
+	g_assert_null (other);
+	assert_destruction_complete (&state);
+	root = new_destruction_tree (2, 2048, &state);
+	g_object_unref (root);
+	for (i = 0; i < G_N_ELEMENTS (types); i++)
+		g_object_unref (new_destruction_container (types[i], &state));
+	assert_destruction_complete (&state);
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMutex mutex;
+	GCond cond;
+	guint waiting;
+} DestructionBarrier;
+
+static void
+destruction_barrier (gpointer data, GObject *object)
+{
+	DestructionBarrier *barrier = data;
+	gint64 deadline = g_get_monotonic_time () + 30 * G_TIME_SPAN_SECOND;
+
+	g_mutex_lock (&barrier->mutex);
+	if (++barrier->waiting == 3)
+		g_cond_broadcast (&barrier->cond);
+	while (barrier->waiting < 3)
+		g_assert_true (g_cond_wait_until (&barrier->cond, &barrier->mutex, deadline));
+	g_mutex_unlock (&barrier->mutex);
+}
+
+static gpointer
+destruction_thread (gpointer data)
+{
+	DestructionBarrier *barrier = data;
+	ModelDestruction state = { 0 };
+	GMimeEntity *root = new_destruction_tree (2, 2048, &state);
+	GMimeMultipart *holder = g_mime_multipart_new ();
+
+	g_mime_multipart_add (holder, root);
+	g_object_weak_ref (G_OBJECT (root), destruction_barrier, barrier);
+	g_object_unref (root);
+	g_object_unref (holder);
+	assert_destruction_complete (&state);
+	return NULL;
+}
+
+static void
+test_destruction_threads (void)
+{
+	DestructionBarrier barrier = { 0 };
+	GThread *threads[3];
+	guint i;
+
+	testsuite_check ("Concurrent MIME destruction keeps independent per-thread release queues");
+	g_mutex_init (&barrier.mutex);
+	g_cond_init (&barrier.cond);
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		threads[i] = g_thread_new ("mime-destruction", destruction_thread, &barrier);
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		g_thread_join (threads[i]);
+	g_assert_cmpuint (barrier.waiting, ==, G_N_ELEMENTS (threads));
+	g_cond_clear (&barrier.cond);
+	g_mutex_clear (&barrier.mutex);
 	testsuite_check_passed ();
 }
 
@@ -4790,6 +5200,10 @@ main (int argc, char **argv)
 	test_public_long_header_names ();
 	test_signature_markers ();
 	test_writer_depth ();
+	test_destruction_depth ();
+	test_destruction_ownership ();
+	test_destruction_reentrancy ();
+	test_destruction_threads ();
 	test_writer_dispatch ();
 	test_message_header_writing ();
 	test_file_writing ();
