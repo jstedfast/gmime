@@ -31,12 +31,13 @@ G_BEGIN_DECLS
 /**
  * GMimeIterator:
  *
- * A depth-first iterator over the entities in a message.
+ * A depth-first iterator over a message body or an entity subtree.
  **/
 G_DECLARE_FINAL_TYPE (GMimeIterator, g_mime_iterator, GMIME, ITERATOR, GObject)
 
 
 GMimeIterator *g_mime_iterator_new (GMimeMessage *message);
+GMimeIterator *g_mime_iterator_new_for_entity (GMimeEntity *entity);
 GMimeMessage *g_mime_iterator_get_message (GMimeIterator *iter);
 gboolean g_mime_iterator_is_valid (GMimeIterator *iter);
 GMimeEntity *g_mime_iterator_get_current (GMimeIterator *iter);

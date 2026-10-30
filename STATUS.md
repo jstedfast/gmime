@@ -592,8 +592,13 @@ This is an incremental migration, not yet a declaration of feature parity.
   retained, so removing entities during traversal does not invalidate
   current pointers; collections and containing-message assignments remain
   live, not snapshotted. Borrowed entities must be retained across navigation.
-  The legacy boxed GMimePartIter remains unchanged, including its distinct
-  initialization, path, backward traversal and editing behavior.
+  new_for_entity() also traverses a retained entity subtree, including its
+  root, with root-relative paths and depths. Multipart roots are path 0;
+  other roots are path 1. No containing message is inferred, so message
+  accessors may return NULL outside encapsulated messages. Supplying a
+  message is equivalent to new(message). GMimePartIter has been removed;
+  backward traversal, cursor cloning and iterator editing are not carried
+  forward. See PORTING.md for changed initialization and path conventions.
 
 - `GMimeVisitor` is an abstract GObject visitor with virtual type-specific
   visit methods and traversal hooks. Subclass it and call
@@ -2944,8 +2949,7 @@ leaves without entering their embedded messages. Attachment enumeration
 filters these same leaves by their current Content-Disposition. Marking a
 multipart as an attachment neither returns that container nor suppresses
 traversal of its children. An absent body or empty multipart returns an
-empty, non-NULL array. The legacy body-guessing and traversal APIs are
-unchanged.
+empty, non-NULL array. The legacy body-guessing APIs are unchanged.
 
 try_get_entity(path_specifier, &entity) now provides direct MimeKit-style
 MIME-path lookup without enumerating siblings. It returns TRUE with a
@@ -2957,7 +2961,7 @@ of the message in part 3, and "3.1" its first child. A 0 component is valid
 only for a multipart message body and only at the end of the path.
 Components accept ASCII digits and leading zeros, without signs or
 whitespace, and reject values above 2147483647. Navigation is iterative.
-The legacy GMimePartIter API and its path conventions are unchanged.
+GMimeIterator uses the same path conventions; it replaces GMimePartIter.
 
 ### Packed entity state
 

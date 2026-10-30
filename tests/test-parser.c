@@ -122,38 +122,19 @@ print_mime_part_info (const char *path, GMimeEntity *object)
 static void
 print_mime_struct_iter (GMimeMessage *message)
 {
-	//const char *jump_to = "4.2.2.2";
-	GMimePartIter *iter;
-	GMimeEntity *parent;
+	GMimeIterator *iter;
 	GMimeEntity *part;
 	char *path;
 	
-	iter = g_mime_part_iter_new ((GMimeEntity *) message);
-	if (g_mime_part_iter_is_valid (iter)) {
-		if ((parent = g_mime_part_iter_get_parent (iter)))
-			print_mime_part_info ("TEXT", parent);
-		
-		do {
-			part = g_mime_part_iter_get_current (iter);
-			path = g_mime_part_iter_get_path (iter);
-			print_mime_part_info (parent ? path : "TEXT", part);
-			g_free (path);
-		} while (g_mime_part_iter_next (iter));
-		
-#if 0
-		fprintf (stdout, "Jumping to %s\n", jump_to);
-		if (g_mime_part_iter_jump_to (iter, jump_to)) {
-			part = g_mime_part_iter_get_current (iter);
-			path = g_mime_part_iter_get_path (iter);
-			print_mime_part_info (path, part);
-			g_free (path);
-		} else {
-			fprintf (stdout, "Failed to jump to %s\n", jump_to);
-		}
-#endif
+	iter = g_mime_iterator_new (message);
+	while (g_mime_iterator_move_next (iter)) {
+		part = g_mime_iterator_get_current (iter);
+		path = g_mime_iterator_get_path_specifier (iter);
+		print_mime_part_info (path, part);
+		g_free (path);
 	}
 	
-	g_mime_part_iter_free (iter);
+	g_object_unref (iter);
 }
 #endif /* PRINT_MIME_STRUCT_ITER */
 

@@ -24,7 +24,6 @@
 <!ENTITY GMimeMultipartSigned SYSTEM "xml/gmime-multipart-signed.xml">
 <!ENTITY GMimePart SYSTEM "xml/gmime-part.xml">
 <!ENTITY GMimeTextPart SYSTEM "xml/gmime-text-part.xml">
-<!ENTITY GMimePartIter SYSTEM "xml/gmime-part-iter.xml">
 <!ENTITY GMimeIterator SYSTEM "xml/gmime-iterator.xml">
 <!ENTITY GMimeVisitor SYSTEM "xml/gmime-visitor.xml">
 <!ENTITY GMimeMessage SYSTEM "xml/gmime-message.xml">
@@ -295,7 +294,6 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeMessageDeliveryStatus;
       &GMimeMessageFeedbackReport;
       &GMimeMessagePartial;
-      &GMimePartIter;
       &GMimeIterator;
       &GMimeVisitor;
     </chapter>

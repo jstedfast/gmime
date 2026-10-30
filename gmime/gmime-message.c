@@ -2461,7 +2461,7 @@ g_mime_message_get_attachments (GMimeMessage *message)
  * @entity. The returned entity is borrowed from the message tree.
  *
  * Lookup is iterative and follows only the specified path, not siblings.
- * The existing #GMimePartIter path conventions are unchanged.
+ * Path specifiers use the same numbering as #GMimeIterator.
  *
  * Returns: %TRUE if the entity exists, or %FALSE otherwise.
  **/
