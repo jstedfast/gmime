@@ -21,6 +21,15 @@ typedef struct {
 
 typedef void (*FuzzRun) (const guint8 *data, gsize length);
 
+typedef struct {
+	const char *name;
+	FuzzRun run;
+	gsize max_length;
+} FuzzTarget;
+
+extern const FuzzTarget fuzz_targets[];
+extern const gsize fuzz_target_count;
+
 void fuzz_init (void);
 guint64 fuzz_hash (const guint8 *data, gsize length, guint64 hash);
 guint32 fuzz_selector (const guint8 *data, gsize length);
@@ -36,5 +45,8 @@ void fuzz_compliance_attach (FuzzCompliance *checker, GMimeReader *reader);
 void fuzz_compliance_report (const GMimeComplianceIssue *issue, gpointer user_data);
 void fuzz_mime_reader (const guint8 *data, gsize length);
 void fuzz_mime_parser (const guint8 *data, gsize length);
+void fuzz_encoders (const guint8 *data, gsize length);
+void fuzz_decoders (const guint8 *data, gsize length);
+void fuzz_rfc2047 (const guint8 *data, gsize length);
 
 #endif

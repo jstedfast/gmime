@@ -51,24 +51,24 @@ compare_paths (gconstpointer first, gconstpointer second)
 int
 main (int argc, char **argv)
 {
-	static const char *names[] = { "mime-reader", "mime-parser" };
-	static const FuzzRun targets[] = { fuzz_mime_reader, fuzz_mime_parser };
 	GPtrArray *files;
 	guint i, j, count = 0, skipped = 0;
 	int arg;
-	gboolean all;
+	gboolean all, found = FALSE;
 
 	if (argc == 2 && !strcmp (argv[1], "--list")) {
-		for (i = 0; i < G_N_ELEMENTS (names); i++)
-			g_print ("%s\t%d\n", names[i], FUZZ_MAX_LENGTH);
+		for (i = 0; i < fuzz_target_count; i++)
+			g_print ("%s\t%" G_GSIZE_FORMAT "\n", fuzz_targets[i].name, fuzz_targets[i].max_length);
 		return 0;
 	}
 	if (argc < 4 || strcmp (argv[1], "--replay")) {
-		g_printerr ("Usage: gmime-fuzz --list | --replay <mime-reader|mime-parser|all> <file|directory>...\n");
+		g_printerr ("Usage: gmime-fuzz --list | --replay <target|all> <file|directory>...\n");
 		return 2;
 	}
 	all = !strcmp (argv[2], "all");
-	if (!all && strcmp (argv[2], names[0]) && strcmp (argv[2], names[1])) {
+	for (i = 0; i < fuzz_target_count; i++)
+		found |= !strcmp (argv[2], fuzz_targets[i].name);
+	if (!all && !found) {
 		g_printerr ("Unknown fuzz target: %s\n", argv[2]);
 		return 2;
 	}
@@ -81,8 +81,10 @@ main (int argc, char **argv)
 	}
 	g_ptr_array_sort (files, compare_paths);
 	fuzz_init ();
-	for (i = 0; i < G_N_ELEMENTS (names); i++) {
-		if (!all && strcmp (argv[2], names[i]))
+	for (i = 0; i < fuzz_target_count; i++) {
+		const FuzzTarget *target = &fuzz_targets[i];
+
+		if (!all && strcmp (argv[2], target->name))
 			continue;
 		for (j = 0; j < files->len; j++) {
 			const char *file = files->pdata[j];
@@ -98,16 +100,16 @@ main (int argc, char **argv)
 				g_mime_shutdown ();
 				return 2;
 			}
-			if (length > FUZZ_MAX_LENGTH) {
+			if (length > target->max_length) {
 				skipped++;
 				g_free (data);
 				continue;
 			}
-			g_print ("REPLAY %s %s\n", names[i], file);
+			g_print ("REPLAY %s %s\n", target->name, file);
 			start = g_get_monotonic_time ();
-			targets[i] ((const guint8 *) data, length);
+			target->run ((const guint8 *) data, length);
 			if (g_get_monotonic_time () - start > 2 * G_TIME_SPAN_SECOND)
-				g_print ("SLOW %s %s\n", names[i], file);
+				g_print ("SLOW %s %s\n", target->name, file);
 			g_free (data);
 			count++;
 		}

@@ -14,7 +14,7 @@ LLVMFuzzerInitialize (int *argc, char ***argv)
 int
 LLVMFuzzerTestOneInput (const uint8_t *data, size_t length)
 {
-	if (length <= FUZZ_MAX_LENGTH)
+	if (length <= FUZZ_MAX_INPUT_LENGTH)
 		FUZZ_TARGET (data, length);
 	return 0;
 }

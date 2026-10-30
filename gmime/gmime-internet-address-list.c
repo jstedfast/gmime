@@ -552,8 +552,10 @@ g_mime_internet_address_list_equal (GMimeInternetAddressList *list, GMimeInterne
 
 	if (list == other)
 		return TRUE;
+
 	if (list->array->len != other->array->len)
 		return FALSE;
+
 	for (i = 0; i < list->array->len; i++) {
 		if (!g_mime_internet_address_equal (list->array->pdata[i], other->array->pdata[i]))
 			return FALSE;
@@ -825,6 +827,7 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 			while (*inptr == '\\' && inptr[1] == '@') {
 				escaped_at = TRUE;
 				inptr += 2;
+
 				if (!skip_atom (&inptr))
 					break;
 			}
@@ -833,10 +836,12 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 		if (!g_utf8_validate (word, inptr - word, NULL)) {
 			if (mode == GMIME_RFC_COMPLIANCE_STRICT)
 				goto error;
+
 			utf8 = g_convert (word, inptr - word, "UTF-8", "ISO-8859-1", NULL, NULL, NULL);
 		} else {
 			utf8 = g_strndup (word, inptr - word);
 		}
+
 		if (escaped_at) {
 			char **parts = g_strsplit (utf8, "\\@", -1);
 			char *replaced = g_strjoinv ("%40", parts);
@@ -847,6 +852,7 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 		} else {
 			g_string_append (localpart, utf8);
 		}
+
 		g_free (utf8);
 
 		cfws = inptr;
@@ -861,9 +867,11 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 
 		do {
 			g_string_append_c (localpart, *inptr++);
+
 			if (!skip_cfws (&inptr) || !*inptr)
 				goto error;
 		} while (mode == GMIME_RFC_COMPLIANCE_LOOSER && *inptr == '.');
+
 		if (mode == GMIME_RFC_COMPLIANCE_LOOSER && *inptr == '@')
 			break;
 	} while (TRUE);
@@ -1167,10 +1175,12 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			goto error;
 
 		localpart = g_string_new (NULL);
+
 		if (!localpart_parse (localpart, &inptr, mode, FALSE)) {
 			g_string_free (localpart, TRUE);
 			goto error;
 		}
+
 		addrspec = g_string_free (localpart, FALSE);
 
 		skip_lwsp (&inptr);
@@ -1250,6 +1260,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		retval = group_parse (group, options, flags & INTERNAL, &inptr, group_depth + 1, offset);
 		if (!retval)
 			g_clear_object (address);
+
 		*in = inptr;
 
 		return retval;
@@ -1504,14 +1515,17 @@ g_mime_internet_address_list_parse_full (GMimeParserOptions *options, const char
 
 	if (!(copy = _g_mime_internet_address_copy_text (str, length, error)))
 		return NULL;
+
 	inptr = copy;
 	list = g_mime_internet_address_list_new ();
+
 	if (!address_list_parse (list, options, ALLOW_ANY, &inptr, FALSE, 0, -1) ||
 	    !skip_cfws (&inptr) || *inptr || !list->array->len) {
 		g_clear_object (&list);
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 			     "Invalid address list at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - copy));
 	}
+
 	g_free (copy);
 
 	return list;

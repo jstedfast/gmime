@@ -6,6 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+const FuzzTarget fuzz_targets[] = {
+	{ "mime-reader", fuzz_mime_reader, FUZZ_MAX_LENGTH },
+	{ "mime-parser", fuzz_mime_parser, FUZZ_MAX_LENGTH },
+	{ "encoders", fuzz_encoders, 256 * 1024 },
+	{ "decoders", fuzz_decoders, FUZZ_MAX_LENGTH },
+	{ "rfc2047", fuzz_rfc2047, 64 * 1024 },
+};
+const gsize fuzz_target_count = G_N_ELEMENTS (fuzz_targets);
+
 typedef struct {
 	GMimeStreamMem parent_instance;
 	gsize chunk;

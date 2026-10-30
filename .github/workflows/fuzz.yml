@@ -14,7 +14,7 @@ on:
         description: 'Fuzz target'
         default: all
         type: choice
-        options: [all, mime-reader, mime-parser]
+        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047]
 
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
-          targets = ["mime-reader", "mime-parser"]
+          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047"]
           target = os.environ["TARGET"]
           duration = os.environ["DURATION"]
           if target != "all" and target not in targets:
@@ -97,8 +97,14 @@ jobs:
 
       - name: Fuzz
         run: |
+          case "$TARGET" in
+            encoders) max_len=262144; dictionary=codecs ;;
+            decoders) max_len=1048576; dictionary=codecs ;;
+            rfc2047) max_len=65536; dictionary=mime ;;
+            *) max_len=1048576; dictionary=mime ;;
+          esac
           "_build-fuzz/fuzzing/fuzz-$TARGET" \
-            -dict=fuzzing/mime.dict -max_len=1048576 -timeout=10 \
+            -dict="fuzzing/$dictionary.dict" -max_len="$max_len" -timeout=10 \
             -rss_limit_mb=2048 -max_total_time="$DURATION" -print_final_stats=1 \
             -artifact_prefix="_build-fuzz/artifacts/$TARGET/crashes/" \
             "$CORPUS_PATH" 2>&1 | tee "_build-fuzz/artifacts/$TARGET/fuzz.log"

@@ -4967,8 +4967,9 @@ anonymization and message/partial reconstruction are implemented. MIME
 compliance diagnostics, options, budgets and reader/parser callbacks are
 implemented.
 Runtime-dispatched content scanners and selected transfer-encoding kernels,
-scalar fallbacks, reader reference fixtures and parser/reader fuzz targets
-also exist. These are not outstanding whole-subsystem ports.
+scalar fallbacks, reader reference fixtures and parser/reader, codec and
+RFC 2047 fuzz targets also exist. These are not outstanding whole-subsystem
+ports.
 
 ### Application-facing API completion
 
@@ -5017,7 +5018,10 @@ content copying APIs are unaffected.
   round-trip fixtures are a foundation, not the entire parity harness.
 - Add native Windows full-library integration. Preserve Linux/macOS,
   optional-feature, sanitizer, installed C, GIR and Vala integration coverage.
-- Extend fuzzing beyond the current reader/parser targets as appropriate.
+- Extend fuzzing beyond the reader/parser, encoder/decoder and RFC 2047
+  targets as appropriate. The codec targets cover chunking, clone/reset,
+  exact output bounds, scalar-sized equivalence and stream-filter round trips;
+  all five targets have corpus replay and nightly libFuzzer integration.
   Additional ARM64/wider codec kernels and fused header scans remain
   performance work, with scalar equivalence and workload benchmarks required.
 
