@@ -215,7 +215,10 @@ writer_push (GMimeWriter *writer, GMimeMultipart *multipart, GMimeFormatOptions 
 	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) multipart);
 	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 	gboolean is_signed = g_mime_content_type_is_type (entity_priv->content_type, "multipart", "signed");
-	const char *boundary = priv->reader_model ? g_mime_multipart_get_boundary (multipart) :
+	/* Generating a boundary would discard an empty parsed multipart's
+	 * truncation marker and invent a closing delimiter. */
+	const char *boundary = priv->reader_model && (priv->children->len || !multipart_is_truncated (multipart)) ?
+		g_mime_multipart_get_boundary (multipart) :
 		g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary");
 	MultipartFrame frame;
 
@@ -227,7 +230,7 @@ writer_push (GMimeWriter *writer, GMimeMultipart *multipart, GMimeFormatOptions 
 	frame.multipart = multipart;
 	frame.ensure_newline = ensure;
 	frame.index = 0;
-	frame.boundary = g_strdup_printf ("--%s%s", boundary, g_mime_format_options_get_newline (frame.options));
+	frame.boundary = boundary ? g_strdup_printf ("--%s%s", boundary, g_mime_format_options_get_newline (frame.options)) : NULL;
 
 	g_array_append_val (writer->frames, frame);
 }

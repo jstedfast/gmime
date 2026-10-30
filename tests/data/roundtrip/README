@@ -1,0 +1,18 @@
+These fixtures are copied without modification from MimeKit's committed
+UnitTests/TestData corpus at dd2c6f10. See LICENSE for its MIT license.
+
+The selection matches MimeParserTests.RoundTripMessageFiles:
+  messages/*.eml and messages/*.txt
+  compliance/*.eml
+  partial/*.eml
+  openpgp/*.eml
+  dkim/*.msg
+  smime/*-signed.txt
+
+Only committed fixtures are included (68 files). Local MimeReader changes,
+diagnostic-location changes, and the untracked 80k-participants.eml fixture
+are not imported.
+
+test-roundtrip checks exact original bytes using both memory-backed and
+source-backed content. As in MimeKit, it omits a leading UTF-8 BOM from
+the expected serialization and restores an initial mbox marker.

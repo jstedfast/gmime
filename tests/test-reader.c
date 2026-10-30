@@ -1713,6 +1713,137 @@ collect_compliance (const GMimeComplianceIssue *issue, gpointer user_data)
 }
 
 static void
+collect_repeated_headers (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	if (issue->violation >= GMIME_COMPLIANCE_REPEATED_DATE &&
+	    issue->violation <= GMIME_COMPLIANCE_REPEATED_RESENT_MESSAGE_ID)
+		collect_compliance (issue, user_data);
+}
+
+static void
+check_repeated_headers (const char *name, const char *text, GMimeComplianceViolation violation,
+			guint first_line, guint second_line)
+{
+	static const guint chunks[] = { 1, 2, 7, 4096 };
+	guint dos, chunk, i, count = (first_line != 0) + (second_line != 0);
+	char **lines = g_strsplit (text, "\r\n", -1);
+
+	for (dos = 0; dos < 2; dos++) {
+		char *wire = g_strjoinv (dos ? "\r\n" : "\n", lines);
+
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			ReaderInput *input = new_input (wire, strlen (wire), chunks[chunk]);
+			GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+			GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+			GError *error = NULL;
+
+			testsuite_check ("Repeated headers: %s (%s, chunk %u)", name, dos ? "CRLF" : "LF", chunks[chunk]);
+			g_mime_reader_set_compliance_logger (reader, collect_repeated_headers, issues, NULL);
+			g_assert_true (g_mime_reader_read_message (reader, &error));
+			g_assert_no_error (error);
+			g_assert_cmpuint (issues->len, ==, count);
+			for (i = 0; i < count; i++) {
+				const GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+				guint line, expected_line = i ? second_line : first_line;
+				const char *start = wire;
+
+				for (line = 1; line < expected_line; line++) {
+					start = strchr (start, '\n');
+					g_assert_nonnull (start);
+					start++;
+				}
+				g_assert_cmpint (issue->violation, ==, violation);
+				g_assert_cmpint (issue->stream_offset, ==, start - wire);
+				g_assert_cmpuint (issue->line_number, ==, expected_line);
+				g_assert_cmpuint (issue->column_number, ==, 1);
+				g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			}
+			g_array_unref (issues);
+			g_object_unref (reader);
+			g_object_unref (input);
+			testsuite_check_passed ();
+		}
+		g_free (wire);
+	}
+	g_strfreev (lines);
+}
+
+/* Ported from MimeKit's committed MimeComplianceRepeatedHeaderTests.
+ * The upstream MIT license is in data/roundtrip/LICENSE. */
+static void
+test_repeated_headers (void)
+{
+	static const struct {
+		const char *name, *text;
+		GMimeComplianceViolation violation;
+		guint first_line, second_line;
+	} cases[] = {
+		{ "From position", "From: one@example.com\r\nTo: two@example.com\r\nFrom: three@example.com\r\n\r\nbody\r\n",
+		  GMIME_COMPLIANCE_REPEATED_FROM, 3, 0 },
+		{ "every repetition", "From: one@example.com\r\nFrom: two@example.com\r\nFrom: three@example.com\r\n\r\nbody\r\n",
+		  GMIME_COMPLIANCE_REPEATED_FROM, 2, 3 },
+		{ "repeatable fields", "Received: by a\r\nReceived: by b\r\nComments: x\r\nComments: y\r\n"
+		  "Keywords: a\r\nKeywords: b\r\nFrom: one@example.com\r\n\r\nbody\r\n", GMIME_COMPLIANCE_NONE, 0, 0 },
+		{ "resent block", "From: one@example.com\r\nResent-From: a@example.com\r\n"
+		  "Resent-Date: Mon, 1 Jan 2024 00:00:00 +0000\r\nResent-From: b@example.com\r\n\r\nbody\r\n",
+		  GMIME_COMPLIANCE_REPEATED_RESENT_FROM, 4, 0 },
+		{ "separated resent blocks", "Resent-From: b@example.com\r\nResent-To: y@example.com\r\n"
+		  "Received: by relay\r\nResent-From: a@example.com\r\nResent-To: x@example.com\r\n"
+		  "From: one@example.com\r\n\r\nbody\r\n", GMIME_COMPLIANCE_NONE, 0, 0 },
+		{ "adjacent resent blocks", "Resent-From: b@example.com\r\nResent-From: a@example.com\r\n"
+		  "From: one@example.com\r\n\r\nbody\r\n", GMIME_COMPLIANCE_REPEATED_RESENT_FROM, 2, 0 },
+		{ "message counts survive resent block", "From: one@example.com\r\nResent-From: a@example.com\r\n"
+		  "From: two@example.com\r\n\r\nbody\r\n", GMIME_COMPLIANCE_REPEATED_FROM, 3, 0 },
+		{ "truncated header", "From: a@example.com\r\nFrom: b@example.com",
+		  GMIME_COMPLIANCE_REPEATED_FROM, 2, 0 },
+		{ "truncated message", "From: a@example.com\r\nFrom: b@example.com\r\n",
+		  GMIME_COMPLIANCE_REPEATED_FROM, 2, 0 },
+		{ "entity fields", "From: one@example.com\r\nContent-Type: multipart/mixed; boundary=\"b\"\r\n\r\n"
+		  "--b\r\nTo: x@example.com\r\nTo: y@example.com\r\nSubject: a\r\nSubject: b\r\n\r\ncontent\r\n--b--\r\n",
+		  GMIME_COMPLIANCE_NONE, 0, 0 },
+		{ "embedded message fields", "From: one@example.com\r\nContent-Type: message/rfc822\r\n\r\n"
+		  "From: a@example.com\r\nFrom: b@example.com\r\n\r\nbody\r\n", GMIME_COMPLIANCE_REPEATED_FROM, 5, 0 },
+		{ "independent embedded message counts", "From: one@example.com\r\nContent-Type: message/rfc822\r\n\r\n"
+		  "From: a@example.com\r\nSubject: inner\r\n\r\nbody\r\n", GMIME_COMPLIANCE_NONE, 0, 0 }
+	};
+	static const struct {
+		const char *field;
+		GMimeComplianceViolation violation;
+	} fields[] = {
+		{ "Date", GMIME_COMPLIANCE_REPEATED_DATE },
+		{ "Sender", GMIME_COMPLIANCE_REPEATED_SENDER },
+		{ "Reply-To", GMIME_COMPLIANCE_REPEATED_REPLY_TO },
+		{ "To", GMIME_COMPLIANCE_REPEATED_TO },
+		{ "Cc", GMIME_COMPLIANCE_REPEATED_CC },
+		{ "Bcc", GMIME_COMPLIANCE_REPEATED_BCC },
+		{ "Message-Id", GMIME_COMPLIANCE_REPEATED_MESSAGE_ID },
+		{ "In-Reply-To", GMIME_COMPLIANCE_REPEATED_IN_REPLY_TO },
+		{ "References", GMIME_COMPLIANCE_REPEATED_REFERENCES },
+		{ "Subject", GMIME_COMPLIANCE_REPEATED_SUBJECT },
+		{ "Return-Path", GMIME_COMPLIANCE_REPEATED_RETURN_PATH },
+		{ "Resent-Date", GMIME_COMPLIANCE_REPEATED_RESENT_DATE },
+		{ "Resent-From", GMIME_COMPLIANCE_REPEATED_RESENT_FROM },
+		{ "Resent-Sender", GMIME_COMPLIANCE_REPEATED_RESENT_SENDER },
+		{ "Resent-To", GMIME_COMPLIANCE_REPEATED_RESENT_TO },
+		{ "Resent-Cc", GMIME_COMPLIANCE_REPEATED_RESENT_CC },
+		{ "Resent-Bcc", GMIME_COMPLIANCE_REPEATED_RESENT_BCC },
+		{ "Resent-Message-Id", GMIME_COMPLIANCE_REPEATED_RESENT_MESSAGE_ID }
+	};
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++)
+		check_repeated_headers (cases[i].name, cases[i].text, cases[i].violation,
+					cases[i].first_line, cases[i].second_line);
+	for (i = 0; i < G_N_ELEMENTS (fields); i++) {
+		char *wire = g_strdup_printf ("From: one@example.com\r\n%s: x\r\n%s: y\r\n\r\nbody\r\n",
+					     fields[i].field, fields[i].field);
+
+		check_repeated_headers (fields[i].field, wire, fields[i].violation, 3, 0);
+		g_free (wire);
+	}
+}
+
+static void
 test_compliance_options_and_issues (void)
 {
 	GMimeComplianceOptions *defaults = g_mime_compliance_options_get_default ();
@@ -2102,6 +2233,7 @@ main (int argc, char **argv)
 	test_compliance_failures ();
 	test_long_mailbox_marker ();
 	testsuite_check_passed ();
+	test_repeated_headers ();
 	testsuite_check ("Header limits, callback failures and input errors");
 	test_reader_limits_and_errors ();
 	testsuite_check_passed ();

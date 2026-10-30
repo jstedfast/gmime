@@ -2078,6 +2078,11 @@ test_multipart_text_folding (void)
 static void
 test_multipart_output (void)
 {
+	static const char *boundaryless[] = {
+		"Content-Type: multipart/mixed\n\n",
+		"Content-Type: multipart/mixed\n\npreamble",
+		"Content-Type: multipart/mixed\n\npreamble\n"
+	};
 	static const char *wires[] = {
 		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\n\nbody\n--b--\nepilogue",
 		"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody",
@@ -2123,6 +2128,32 @@ test_multipart_output (void)
 			g_mime_format_options_free (options);
 		}
 		g_object_unref (multipart);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Boundaryless parsed multipart output does not invent delimiters or mutate headers");
+	for (i = 0; i < G_N_ELEMENTS (boundaryless); i++) {
+		for (newline = 0; newline < 2; newline++) {
+			GMimeFormatOptions *options = g_mime_format_options_new ();
+			char **lines = g_strsplit (boundaryless[i], "\n", -1);
+			char *wire = g_strjoinv (newline ? "\r\n" : "\n", lines);
+			GMimeMultipart *multipart = parse_multipart (wire);
+			guint pass;
+
+			g_mime_format_options_set_newline_format (options,
+				newline ? GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			for (pass = 0; pass < 2; pass++) {
+				GByteArray *bytes = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+
+				g_assert_cmpmem (bytes->data, bytes->len, wire, strlen (wire));
+				g_assert_null (g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary"));
+				g_byte_array_unref (bytes);
+			}
+			g_object_unref (multipart);
+			g_mime_format_options_free (options);
+			g_strfreev (lines);
+			g_free (wire);
+		}
 	}
 	testsuite_check_passed ();
 }
