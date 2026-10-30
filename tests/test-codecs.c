@@ -457,6 +457,74 @@ test_recovery_modes (void)
 }
 
 static void
+check_base64_mime_tail (const guint8 *input, gsize length)
+{
+	static const gsize chunks[] = { 31, 32, 33, 77, 78, 100, G_MAXSIZE };
+	GMimeDecoder *decoder = new_decoder (0), *inplace_decoder = new_decoder (0);
+	GByteArray *expected = decode_chunks (decoder, input, length, 1);
+	guint8 output[512], inplace[512];
+	gsize offset, total, count, capacity, written, n;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (chunks); i++) {
+		g_mime_decoder_reset (decoder);
+		g_mime_decoder_reset (inplace_decoder);
+		total = 0;
+		for (offset = 0; offset < length; offset += count) {
+			count = MIN (chunks[i], length - offset);
+			capacity = g_mime_decoder_estimate_output_length (decoder, count);
+			g_assert_cmpuint (MAX (count, capacity) + 1, <=, sizeof (output));
+			memset (output, 0xa5, sizeof (output));
+			memset (inplace, 0xa5, sizeof (inplace));
+			memcpy (inplace, input + offset, count);
+			written = g_mime_decoder_decode (decoder, input + offset, count, output, capacity);
+			n = g_mime_decoder_decode (inplace_decoder, inplace, count, inplace, capacity);
+			g_assert_cmpuint (total + written, <=, expected->len);
+			g_assert_cmpmem (output, written, expected->data + total, written);
+			g_assert_cmpmem (inplace, n, output, written);
+			assert_padding (output, written, capacity);
+			if (written < count)
+				g_assert_cmpmem (inplace + written, count - written, input + offset + written, count - written);
+			assert_padding (inplace, MAX (count, written), MAX (count, capacity));
+			total += written;
+		}
+		g_assert_cmpuint (total, ==, expected->len);
+	}
+
+	g_byte_array_unref (expected);
+	g_object_unref (inplace_decoder);
+	g_object_unref (decoder);
+}
+
+static void
+test_base64_mime_tails (void)
+{
+	guint8 input[228], encoded[512];
+	GMimeEncoder *encoder;
+	GByteArray *original;
+	guint i, format, value, position, start;
+
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i * 31;
+	for (format = 0; format < 2; format++) {
+		encoder = new_encoder_with_newline_format (0, format, 76);
+		original = encode_chunks (encoder, input, sizeof (input), sizeof (input));
+		g_object_unref (encoder);
+		g_byte_array_append (original, (const guint8 *) "TQ==TWE=TWFu", 12);
+		for (value = 0; value < 256; value++) {
+			for (position = 64; position < 77 + format; position++) {
+				memcpy (encoded, original->data, original->len);
+				encoded[position] = value;
+				/* Also begin directly at a tail, without preceding vector blocks. */
+				for (start = 0; start <= 64; start += 64)
+					check_base64_mime_tail (encoded + start, original->len - start);
+			}
+		}
+		g_byte_array_unref (original);
+	}
+}
+
+static void
 test_overlap (void)
 {
 	guint8 original[129], output[2048], scratch[512];
@@ -873,7 +941,7 @@ test_guard_pages (void)
 	guint8 *inmap, *outmap, *input, *output;
 	GMimeEncoder *encoder;
 	GMimeDecoder *decoder;
-	guint kind;
+	guint kind, layout, i;
 
 	inmap = mmap (NULL, page * 3, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	outmap = mmap (NULL, page * 3, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
@@ -899,11 +967,98 @@ test_guard_pages (void)
 		g_object_unref (encoder);
 		g_object_unref (decoder);
 	}
+	decoder = new_decoder (0);
+	for (layout = 0; layout < 4; layout++) {
+		for (length = 0; length < 260; length++) {
+			input = inmap + 2 * page - length;
+			memset (input, 'A', length);
+			for (i = layout < 2 ? 12 : 76; i < length; i += 77 + (layout & 1)) {
+				input[i] = layout & 1 ? '\r' : '\n';
+				if ((layout & 1) && i + 1 < length)
+					input[i + 1] = '\n';
+			}
+			g_mime_decoder_reset (decoder);
+			capacity = g_mime_decoder_estimate_output_length (decoder, length);
+			output = outmap + 2 * page - capacity;
+			n = g_mime_decoder_decode (decoder, input, length, output, capacity);
+			g_assert_cmpuint (n, <=, capacity);
+		}
+	}
+	g_object_unref (decoder);
 	g_assert_cmpint (munmap (inmap, page * 3), ==, 0);
 	g_assert_cmpint (munmap (outmap, page * 3), ==, 0);
 #else
 	g_test_skip ("Guard pages require mmap");
 #endif
+}
+
+static int
+benchmark_base64 (void)
+{
+	static const struct {
+		const char *name, *separator;
+		gsize line_length, length;
+	} layouts[] = {
+		{ "unwrapped", "", G_MAXSIZE, 65536 },
+		{ "MIME CRLF", "\r\n", 76, 65536 },
+		{ "MIME LF", "\n", 76, 65536 },
+		{ "short lines", " \t\r\n", 7, 65536 },
+		{ "garbage", "!? \t\r\n", 23, 65536 },
+		{ "small", "", G_MAXSIZE, 48 }
+	};
+	const gsize chunk = 4096;
+	GMimeDecoder *decoder = new_decoder (0);
+	guint8 input[65536], output[3076];
+	guint i, j, iteration, iterations;
+	gsize offset, count, written, total, length;
+	GString *encoded;
+	char *base64;
+	gint64 start;
+
+	for (i = 0; i < sizeof (input); i++)
+		input[i] = i * 31;
+	for (i = 0; i < G_N_ELEMENTS (layouts); i++) {
+		base64 = g_base64_encode (input, layouts[i].length);
+		length = strlen (base64);
+		encoded = g_string_new (NULL);
+		for (offset = 0; offset < length; offset += count) {
+			count = MIN (layouts[i].line_length, length - offset);
+			g_string_append_len (encoded, base64 + offset, count);
+			g_string_append (encoded, layouts[i].separator);
+		}
+		g_free (base64);
+		g_mime_decoder_reset (decoder);
+		total = 0;
+		for (offset = 0; offset < encoded->len; offset += count) {
+			count = MIN (chunk, encoded->len - offset);
+			written = g_mime_decoder_decode (decoder, (guint8 *) encoded->str + offset,
+							count, output, sizeof (output));
+			g_assert_cmpuint (total + written, <=, layouts[i].length);
+			g_assert_cmpmem (output, written, input + total, written);
+			total += written;
+		}
+		g_assert_cmpuint (total, ==, layouts[i].length);
+		iterations = layouts[i].length == 48 ? 1000000 : 1024;
+		for (j = 0; j < 3; j++) {
+			start = g_get_monotonic_time ();
+			for (iteration = 0; iteration < iterations; iteration++) {
+				g_mime_decoder_reset (decoder);
+				total = 0;
+				for (offset = 0; offset < encoded->len; offset += count) {
+					count = MIN (chunk, encoded->len - offset);
+					total += g_mime_decoder_decode (decoder, (guint8 *) encoded->str + offset,
+								       count, output, sizeof (output));
+				}
+				g_assert_cmpuint (total, ==, layouts[i].length);
+			}
+			g_print ("base64 %-11s streaming: %.2f MiB/s\n", layouts[i].name,
+				 (double) layouts[i].length * iterations * 1000000.0 /
+				 (1024 * 1024 * (g_get_monotonic_time () - start)));
+		}
+		g_string_free (encoded, TRUE);
+	}
+	g_object_unref (decoder);
+	return 0;
 }
 
 static int
@@ -951,6 +1106,8 @@ benchmark (void)
 int
 main (int argc, char **argv)
 {
+	if (argc > 1 && !strcmp (argv[1], "--benchmark-base64"))
+		return benchmark_base64 ();
 	if (argc > 1 && !strcmp (argv[1], "--benchmark"))
 		return benchmark ();
 	g_test_init (&argc, &argv, NULL);
@@ -961,6 +1118,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/codecs/empty-operations", test_empty_operations);
 	g_test_add_func ("/codecs/constructors", test_constructors);
 	g_test_add_func ("/codecs/recovery-modes", test_recovery_modes);
+	g_test_add_func ("/codecs/base64-mime-tails", test_base64_mime_tails);
 	g_test_add_func ("/codecs/overlap", test_overlap);
 	g_test_add_func ("/codecs/line-lengths", test_line_lengths);
 	g_test_add_func ("/codecs/newline-vectors", test_newline_vectors);

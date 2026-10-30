@@ -68,6 +68,7 @@ codec_encode_triplet (const guint8 *input, guint8 *output, gboolean uu)
 G_GNUC_INTERNAL gsize _g_mime_codec_encode_blocks (const guint8 *input, gsize length,
 						  guint8 *output, guint quartets, gboolean uu);
 G_GNUC_INTERNAL gsize _g_mime_codec_decode_block (const guint8 *input, guint8 *output, gboolean uu);
+G_GNUC_INTERNAL gsize _g_mime_codec_decode_base64_blocks (const guint8 **input, gsize length, guint8 *output);
 
 typedef struct {
 	gsize alphabet_count;

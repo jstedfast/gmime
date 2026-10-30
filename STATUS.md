@@ -4639,13 +4639,20 @@ chunk boundaries, vector-width tails, unaligned input, and exact buffer
 bounds. Benchmark representative MIME workloads to verify that the
 accelerated paths improve performance.
 
-Base64 and uuencode currently have runtime-selected x86/x64 SSSE3 kernels
-and portable scalar fallbacks. SIMD loads require sixteen readable input
-bytes; decoding stores only the twelve result bytes, never vector padding.
+Base64 and uuencode have runtime-selected x86/x64 SSSE3 kernels and
+portable scalar fallbacks. Base64 decoding also has an AVX2 loop ported
+from MimeKit: 32 input characters produce 24 bytes, and the twelve-character
+tails of 76-character MIME lines produce nine bytes without leaving the
+loop for LF or CRLF handling. Loads require a full readable vector; stores
+write only result bytes, never vector padding. Other whitespace, garbage,
+padding, and incomplete quartets retain scalar recovery behavior.
 test-codecs and test-codecs-scalar run the same codec regressions against
-the dispatched and scalar implementations, including guard-page bounds.
+the dispatched and scalar implementations, including exhaustive MIME-tail
+byte mutations, streaming and in-place decoding, and guard-page bounds.
 Both accept --benchmark for the same one-MiB Base64/uuencode workload.
-AVX2, AVX-512 and ARM64 codec kernels remain subsequent SIMD work.
+The --benchmark-base64 mode compares 4096-byte streaming chunks across
+unwrapped, MIME LF/CRLF, short-line, garbage-containing, and small inputs.
+AVX2 encoding, AVX-512 and ARM64 codec kernels remain subsequent SIMD work.
 MIME content scanning now has SSE2, AVX2 and ARM NEON kernels, as described
 in the synchronous reader section above. Fused header byte searches remain
 deferred.

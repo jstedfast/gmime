@@ -21,7 +21,29 @@
 /*
  * SIMD codec and validator primitives ported from MimeKit. The Base64 kernels
  * derive from .NET Core's Base64EncoderHelper/Base64DecoderHelper and the
- * base64simd algorithms of Wojciech Mula.
+ * base64simd algorithms of Wojciech Mula. The AVX2 MIME-line tail fast path
+ * follows MimeKit's Base64Decoder optimization.
+ *
+ * Portions adapted from MimeKit:
+ * Copyright (c) 2013-2026 .NET Foundation and Contributors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -68,12 +90,14 @@ index_of_qp_special_scalar (const guint8 *input, gsize length)
     (((defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))) || \
      (defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64))))
 #define HAVE_SSSE3_CODEC 1
-#include <tmmintrin.h>
+#include <immintrin.h>
 #ifdef _MSC_VER
 #include <intrin.h>
 #define SSSE3_TARGET
+#define AVX2_TARGET
 #else
 #define SSSE3_TARGET __attribute__((target("ssse3")))
+#define AVX2_TARGET __attribute__((target("avx2")))
 #endif
 
 static guint
@@ -261,6 +285,104 @@ decode_block_ssse3 (const guint8 *input, guint8 *output, gboolean uu)
 	memcpy (output, bytes, 12);
 	return 12;
 }
+
+static SSSE3_TARGET gsize
+decode_base64_blocks_ssse3 (const guint8 **input, gsize length, guint8 *output)
+{
+	gsize written = 0;
+
+	while (length >= 16 && decode_block_ssse3 (*input, output + written, FALSE)) {
+		*input += 16;
+		length -= 16;
+		written += 12;
+	}
+
+	return written;
+}
+
+static AVX2_TARGET gsize
+decode_base64_blocks_avx2 (const guint8 **input, gsize length, guint8 *output)
+{
+	const __m128i lut_hi128 = _mm_set_epi32 (0x10101010, 0x10101010, 0x08040804, 0x02011010);
+	const __m128i lut_lo128 = _mm_set_epi32 (0x1a1b1b1b, 0x1a131111, 0x11111111, 0x11111115);
+	const __m128i lut_shift128 = _mm_set_epi32 (0, 0, 0xb9b9bfbf, 0x04131000);
+	const __m128i pack128 = _mm_set_epi32 (-1, 0x0c0d0e08, 0x090a0405, 0x06000102);
+	const __m256i lut_hi = _mm256_broadcastsi128_si256 (lut_hi128);
+	const __m256i lut_lo = _mm256_broadcastsi128_si256 (lut_lo128);
+	const __m256i lut_shift = _mm256_broadcastsi128_si256 (lut_shift128);
+	const __m256i pack = _mm256_broadcastsi128_si256 (pack128);
+	const __m256i lanes = _mm256_setr_epi32 (0, 1, 2, 4, 5, 6, -1, -1);
+	const __m256i mask = _mm256_set1_epi8 (0x2f);
+	const guint8 *inptr = *input;
+	gsize written = 0;
+	guint consumed;
+	__m256i str, hi_nibbles, hi, lo, shift;
+	__m128i tail, invalid;
+
+	while (length >= 32) {
+		str = _mm256_loadu_si256 ((const __m256i *) inptr);
+		hi_nibbles = _mm256_and_si256 (_mm256_srli_epi32 (str, 4), mask);
+		hi = _mm256_shuffle_epi8 (lut_hi, hi_nibbles);
+		lo = _mm256_shuffle_epi8 (lut_lo, _mm256_and_si256 (str, mask));
+
+		if (!_mm256_testz_si256 (lo, hi)) {
+			consumed = inptr[12] == '\n' ? 13 : inptr[12] == '\r' && inptr[13] == '\n' ? 14 : 0;
+			invalid = _mm256_castsi256_si128 (_mm256_and_si256 (lo, hi));
+			if (!consumed || (_mm_movemask_epi8 (_mm_cmpeq_epi8 (invalid, _mm_setzero_si128 ())) & 0xfff) != 0xfff)
+				break;
+
+			/* A 76-character MIME line leaves twelve characters after two vectors.
+			 * Decode them without returning to scalar line-break handling. */
+			tail = _mm256_castsi256_si128 (str);
+			tail = _mm_add_epi8 (tail, _mm_shuffle_epi8 (lut_shift128,
+				_mm_add_epi8 (_mm256_castsi256_si128 (hi_nibbles),
+					      _mm_cmpeq_epi8 (tail, _mm_set1_epi8 ('/')))));
+			tail = _mm_maddubs_epi16 (tail, _mm_set1_epi32 (0x01400140));
+			tail = _mm_madd_epi16 (tail, _mm_set1_epi32 (0x00011000));
+			tail = _mm_shuffle_epi8 (tail, pack128);
+
+			/* Exact stores preserve output canaries and unconsumed in-place input. */
+			_mm_storel_epi64 ((__m128i *) (output + written), tail);
+			output[written + 8] = (guint8) _mm_cvtsi128_si32 (_mm_srli_si128 (tail, 8));
+			written += 9;
+			inptr += consumed;
+			length -= consumed;
+			continue;
+		}
+
+		shift = _mm256_shuffle_epi8 (lut_shift,
+			_mm256_add_epi8 (hi_nibbles, _mm256_cmpeq_epi8 (str, mask)));
+		str = _mm256_add_epi8 (str, shift);
+		str = _mm256_maddubs_epi16 (str, _mm256_set1_epi32 (0x01400140));
+		str = _mm256_madd_epi16 (str, _mm256_set1_epi32 (0x00011000));
+		str = _mm256_permutevar8x32_epi32 (_mm256_shuffle_epi8 (str, pack), lanes);
+		_mm_storeu_si128 ((__m128i *) (output + written), _mm256_castsi256_si128 (str));
+		_mm_storel_epi64 ((__m128i *) (output + written + 16), _mm256_extracti128_si256 (str, 1));
+		inptr += 32;
+		length -= 32;
+		written += 24;
+	}
+
+	*input = inptr;
+	return written + decode_base64_blocks_ssse3 (input, length, output + written);
+}
+
+static gboolean
+codec_avx2_supported (void)
+{
+#ifdef _MSC_VER
+	int registers[4];
+
+	__cpuid (registers, 1);
+	/* Require CPU support and OS preservation of both XMM and YMM state. */
+	if ((registers[2] & 0x1c000000) != 0x1c000000 || (_xgetbv (0) & 6) != 6)
+		return FALSE;
+	__cpuidex (registers, 7, 0);
+	return (registers[1] & (1 << 5)) != 0;
+#else
+	return __builtin_cpu_supports ("avx2");
+#endif
+}
 #endif
 
 static gsize
@@ -275,8 +397,15 @@ decode_block_scalar (const guint8 *input, guint8 *output, gboolean uu)
 	return 0;
 }
 
+static gsize
+decode_base64_blocks_scalar (const guint8 **input, gsize length, guint8 *output)
+{
+	return 0;
+}
+
 static gsize (*encode_blocks) (const guint8 *, gsize, guint8 *, guint, gboolean) = encode_blocks_scalar;
 static gsize (*decode_block) (const guint8 *, guint8 *, gboolean) = decode_block_scalar;
+static gsize (*decode_base64_blocks) (const guint8 **, gsize, guint8 *) = decode_base64_blocks_scalar;
 static gsize (*scan_base64) (const guint8 *, gsize, GMimeCodecScan *) = scan_base64_scalar;
 static gsize (*index_of_qp_special) (const guint8 *, gsize) = index_of_qp_special_scalar;
 
@@ -296,6 +425,7 @@ codec_dispatch_init (void)
 #endif
 			encode_blocks = encode_blocks_ssse3;
 			decode_block = decode_block_ssse3;
+			decode_base64_blocks = codec_avx2_supported () ? decode_base64_blocks_avx2 : decode_base64_blocks_ssse3;
 			scan_base64 = scan_base64_ssse3;
 			index_of_qp_special = index_of_qp_special_ssse3;
 		}
@@ -316,6 +446,13 @@ _g_mime_codec_decode_block (const guint8 *input, guint8 *output, gboolean uu)
 {
 	codec_dispatch_init ();
 	return decode_block (input, output, uu);
+}
+
+gsize
+_g_mime_codec_decode_base64_blocks (const guint8 **input, gsize length, guint8 *output)
+{
+	codec_dispatch_init ();
+	return decode_base64_blocks (input, length, output);
 }
 
 gsize

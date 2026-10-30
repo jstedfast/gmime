@@ -104,20 +104,19 @@ base64_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 		       guint8 *output, gsize capacity)
 {
 	Base64DecoderState *state = &GMIME_BASE64_DECODER (decoder)->state;
+	const guint8 *start;
 	gsize written = 0;
 	guint8 c;
 	gint rank;
 
 	while (length) {
-		if (!state->nsaved && length >= 16 &&
-		    _g_mime_codec_decode_block (input, output + written, FALSE)) {
-			/* Keep the same accepted-character history as the scalar path. */
-			state->previous = ((guint32) input[12] << 24) | ((guint32) input[13] << 16) |
-				((guint32) input[14] << 8) | input[15];
-			input += 16;
-			length -= 16;
-			written += 12;
-			continue;
+		if (!state->nsaved && length >= 16) {
+			start = input;
+			written += _g_mime_codec_decode_base64_blocks (&input, length, output + written);
+			length -= input - start;
+			/* Complete quartets replace previous before it is inspected again. */
+			if (!length)
+				break;
 		}
 
 		c = *input++;
