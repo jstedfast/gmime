@@ -119,7 +119,8 @@ The API reference is optional: configure with `-Dgtk_doc=true` and build the
 `gmime-doc` target. This requires gtk-doc and DocBook tools. Tests and examples
 are built by default; disable them with `-Dtests=false` or `-Dexamples=false`.
 Crypto tests additionally require GnuPG and the supplied test keys.
-Test fixtures should retain their repository line endings.
+Test fixtures are excluded from Git's line-ending conversion so messages,
+byte offsets, and expected output retain their exact repository bytes.
 
 Meson's standard options provide static libraries (`-Ddefault_library=static`),
 coverage (`-Db_coverage=true`), and sanitizers (`-Db_sanitize=address,undefined`).
