@@ -85,8 +85,10 @@ g_mime_internet_address_list_init (GMimeInternetAddressList *list)
 }
 
 static void
-address_changed (GMimeInternetAddress *ia, gpointer args, GMimeInternetAddressList *list)
+address_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeInternetAddressList *list = user_data;
+
 	g_mime_event_emit (list->changed, NULL);
 }
 

@@ -71,19 +71,19 @@ static ssize_t message_write_to_stream (GMimeEntity *object, GMimeFormatOptions 
 static gboolean message_prepare (GMimeEntity *object, GMimeEncodingConstraint constraint,
 				 guint max_line_length, GError **error);
 
-static void sender_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void from_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void reply_to_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void to_list_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void cc_list_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void bcc_list_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_from_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_reply_to_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_to_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_cc_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_bcc_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void resent_sender_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message);
-static void references_changed (GMimeMessageIdList *list, gpointer args, GMimeMessage *message);
+static void sender_changed (gpointer sender, gpointer args, gpointer user_data);
+static void from_changed (gpointer sender, gpointer args, gpointer user_data);
+static void reply_to_changed (gpointer sender, gpointer args, gpointer user_data);
+static void to_list_changed (gpointer sender, gpointer args, gpointer user_data);
+static void cc_list_changed (gpointer sender, gpointer args, gpointer user_data);
+static void bcc_list_changed (gpointer sender, gpointer args, gpointer user_data);
+static void resent_from_changed (gpointer sender, gpointer args, gpointer user_data);
+static void resent_reply_to_changed (gpointer sender, gpointer args, gpointer user_data);
+static void resent_to_changed (gpointer sender, gpointer args, gpointer user_data);
+static void resent_cc_changed (gpointer sender, gpointer args, gpointer user_data);
+static void resent_bcc_changed (gpointer sender, gpointer args, gpointer user_data);
+static void resent_sender_changed (gpointer sender, gpointer args, gpointer user_data);
+static void references_changed (gpointer sender, gpointer args, gpointer user_data);
 
 static GMimeEntityClass *parent_class = NULL;
 
@@ -1409,8 +1409,10 @@ g_mime_message_get_resent_sender (GMimeMessage *message)
 }
 
 static void
-references_changed (GMimeMessageIdList *list, gpointer args, GMimeMessage *message)
+references_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeMessageIdList *list = sender;
+	GMimeMessage *message = user_data;
 	size_t maxline = g_mime_format_options_get_max_line_length (NULL);
 	const char *newline = g_mime_format_options_get_newline (NULL);
 	GMimeEntity *entity = (GMimeEntity *) message;
@@ -1496,75 +1498,75 @@ sync_address_header (GMimeMessage *message, GMimeAddressType type)
 }
 
 static void
-sender_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+sender_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_SENDER);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_SENDER);
 }
 
 static void
-from_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+from_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_FROM);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_FROM);
 }
 
 static void
-reply_to_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+reply_to_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_REPLY_TO);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_REPLY_TO);
 }
 
 static void
-to_list_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+to_list_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_TO);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_TO);
 }
 
 static void
-cc_list_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+cc_list_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_CC);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_CC);
 }
 
 static void
-bcc_list_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+bcc_list_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_BCC);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_BCC);
 }
 
 static void
-resent_from_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+resent_from_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_FROM);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_RESENT_FROM);
 }
 
 static void
-resent_reply_to_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+resent_reply_to_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_RESENT_REPLY_TO);
 }
 
 static void
-resent_to_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+resent_to_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_TO);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_RESENT_TO);
 }
 
 static void
-resent_cc_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+resent_cc_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_CC);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_RESENT_CC);
 }
 
 static void
-resent_bcc_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+resent_bcc_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_BCC);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_RESENT_BCC);
 }
 
 static void
-resent_sender_changed (GMimeInternetAddressList *list, gpointer args, GMimeMessage *message)
+resent_sender_changed (gpointer sender, gpointer args, gpointer user_data)
 {
-	sync_address_header (message, GMIME_ADDRESS_TYPE_RESENT_SENDER);
+	sync_address_header (user_data, GMIME_ADDRESS_TYPE_RESENT_SENDER);
 }
 
 

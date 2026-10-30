@@ -1,0 +1,123 @@
+name: Fuzz
+
+on:
+  schedule:
+    # Match MimeKit's nightly schedule.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Seconds to fuzz each target (1-14400)'
+        default: '600'
+        type: string
+      target:
+        description: 'Fuzz target'
+        default: all
+        type: choice
+        options: [all, mime-reader, mime-parser]
+
+permissions:
+  contents: read
+
+jobs:
+  targets:
+    runs-on: ubuntu-26.04
+    outputs:
+      matrix: ${{ steps.targets.outputs.matrix }}
+    steps:
+      - name: Select targets and validate duration
+        id: targets
+        env:
+          TARGET: ${{ inputs.target || 'all' }}
+          DURATION: ${{ inputs.duration || '600' }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          targets = ["mime-reader", "mime-parser"]
+          target = os.environ["TARGET"]
+          duration = os.environ["DURATION"]
+          if target != "all" and target not in targets:
+              raise SystemExit("Unknown fuzz target")
+          if not duration.isascii() or not duration.isdecimal() or not 1 <= int(duration) <= 14400:
+              raise SystemExit("Duration must be an integer from 1 to 14400 seconds")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+              output.write("matrix=" + json.dumps(targets if target == "all" else [target]) + "\n")
+          PY
+
+  fuzz:
+    needs: targets
+    runs-on: ubuntu-26.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ${{ fromJSON(needs.targets.outputs.matrix) }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      CC: clang
+      TARGET: ${{ matrix.target }}
+      DURATION: ${{ inputs.duration || '600' }}
+      CORPUS_PATH: _build-fuzz/artifacts/${{ matrix.target }}/corpus
+      ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:abort_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1:print_stacktrace=1
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libclang-rt-dev meson ninja-build \
+            pkg-config libglib2.0-dev zlib1g-dev
+
+      # Caches are immutable: restore the newest corpus, then save a new key.
+      - name: Restore corpus
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.CORPUS_PATH }}
+          key: gmime-fuzz-v1-${{ matrix.target }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: gmime-fuzz-v1-${{ matrix.target }}-${{ github.ref_name }}-
+
+      - name: Configure and build
+        run: |
+          clang --version
+          meson setup _build-fuzz --buildtype=debugoptimized \
+            -Dfuzzing=libfuzzer -Ddefault_library=static \
+            -Db_sanitize=address,undefined -Db_ndebug=false \
+            -Dcrypto=disabled -Dlibidn=disabled -Dintrospection=disabled \
+            -Dvapi=disabled -Dgtk_doc=false -Dexamples=false -Dtests=false
+          meson compile -C _build-fuzz
+
+      - name: Replay regression seeds
+        run: meson test -C _build-fuzz --suite fuzzing --print-errorlogs "fuzz-replay-$TARGET"
+
+      - name: Merge seeds into working corpus
+        run: python3 fuzzing/seed-corpora.py _build-fuzz/artifacts --target "$TARGET"
+
+      - name: Fuzz
+        run: |
+          "_build-fuzz/fuzzing/fuzz-$TARGET" \
+            -dict=fuzzing/mime.dict -max_len=1048576 -timeout=10 \
+            -rss_limit_mb=2048 -max_total_time="$DURATION" -print_final_stats=1 \
+            -artifact_prefix="_build-fuzz/artifacts/$TARGET/crashes/" \
+            "$CORPUS_PATH" 2>&1 | tee "_build-fuzz/artifacts/$TARGET/fuzz.log"
+
+      - name: Save corpus
+        if: always()
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CORPUS_PATH }}
+          key: gmime-fuzz-v1-${{ matrix.target }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload crashes and failure logs
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzz-${{ matrix.target }}-crashes
+          path: |
+            _build-fuzz/artifacts/${{ matrix.target }}/crashes/
+            _build-fuzz/artifacts/${{ matrix.target }}/fuzz.log
+            _build-fuzz/meson-logs/
+          if-no-files-found: ignore
+          retention-days: 30

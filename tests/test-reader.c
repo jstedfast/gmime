@@ -1972,7 +1972,7 @@ changing_logger (const GMimeComplianceIssue *issue, gpointer user_data)
 static void
 test_compliance_logging (void)
 {
-	static const char wire[] = "X: a\nX: b\n\n\xff\0body\nmore\nlast\n";
+	static const char wire[] = "X: a\nX: b\n\nprefix\xff" "middle\0body\nmore\nlast\n";
 	static const char encoded[] = "Content-Transfer-Encoding: base64\n\n!!!!\n";
 	static const char mailbox[] = "From a\nX: a\nX: b\n\nbody\nmore\n"
 		"From b\nX: a\nX: b\n\nbody\nmore\n";
@@ -2002,6 +2002,15 @@ test_compliance_logging (void)
 				g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_EXACT);
 			} else {
 				g_assert_cmpuint (++counts[issue->violation], ==, 1);
+				if (issue->violation == GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY ||
+				    issue->violation == GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY) {
+					gboolean eightbit = issue->violation == GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY;
+
+					g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_EXACT);
+					g_assert_cmpint (issue->stream_offset, ==, eightbit ? 17 : 24);
+					g_assert_cmpuint (issue->line_number, ==, 4);
+					g_assert_cmpuint (issue->column_number, ==, eightbit ? 7 : 14);
+				}
 			}
 		}
 		g_assert_cmpuint (truncated, ==, 1);

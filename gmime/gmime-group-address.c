@@ -110,8 +110,9 @@ g_mime_group_address_class_init (GMimeGroupAddressClass *klass)
 }
 
 static void
-members_changed (GMimeInternetAddressList *members, gpointer args, GMimeInternetAddress *group)
+members_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeInternetAddress *group = user_data;
 	GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (((GMimeInternetAddress *) group));
 
 	g_mime_event_emit (priv->changed, NULL);

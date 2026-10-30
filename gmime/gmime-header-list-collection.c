@@ -39,7 +39,7 @@
  **/
 
 static void collection_finalize (GObject *object);
-static void group_changed (GMimeHeaderList *group, gpointer args, GMimeHeaderListCollection *collection);
+static void group_changed (gpointer sender, gpointer args, gpointer user_data);
 
 G_DEFINE_FINAL_TYPE (GMimeHeaderListCollection, g_mime_header_list_collection, G_TYPE_OBJECT)
 
@@ -73,8 +73,10 @@ collection_finalize (GObject *object)
 }
 
 static void
-group_changed (GMimeHeaderList *group, gpointer args, GMimeHeaderListCollection *collection)
+group_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeHeaderListCollection *collection = user_data;
+
 	g_mime_event_emit (collection->changed, NULL);
 }
 

@@ -52,7 +52,7 @@ static void g_mime_content_disposition_class_init (GMimeContentDispositionClass 
 static void g_mime_content_disposition_init (GMimeContentDisposition *disposition);
 static void g_mime_content_disposition_finalize (GObject *object);
 
-static void param_list_changed (GMimeParamList *list, gpointer args, GMimeContentDisposition *disposition);
+static void param_list_changed (gpointer sender, gpointer args, gpointer user_data);
 
 
 static GObjectClass *parent_class = NULL;
@@ -96,8 +96,10 @@ g_mime_content_disposition_finalize (GObject *object)
 
 
 static void
-param_list_changed (GMimeParamList *list, gpointer args, GMimeContentDisposition *disposition)
+param_list_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeContentDisposition *disposition = user_data;
+
 	g_mime_event_emit (disposition->changed, NULL);
 }
 

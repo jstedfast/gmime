@@ -12,6 +12,15 @@ pkgconfig = import('pkgconfig')
 add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
 add_project_arguments(cc.get_supported_arguments('-fno-strict-aliasing'), language: 'c')
 
+if get_option('fuzzing') == 'libfuzzer'
+  if cc.get_id() != 'clang' or not cc.has_argument('-fsanitize=fuzzer-no-link')
+    error('libFuzzer requires Clang with -fsanitize=fuzzer-no-link support')
+  endif
+  # Instrument the library as well as the harness, without adding a fuzzer main.
+  add_project_arguments('-fsanitize=fuzzer-no-link', language: 'c')
+  add_project_link_arguments('-fsanitize=fuzzer-no-link', language: 'c')
+endif
+
 api_version = '4.0'
 version_parts = meson.project_version().split('.')
 interface_age = 0
@@ -120,6 +129,9 @@ subdir('util')
 subdir('gmime')
 if get_option('tests')
   subdir('tests')
+endif
+if get_option('fuzzing') != 'disabled'
+  subdir('fuzzing')
 endif
 if get_option('examples') and host_machine.system() != 'windows'
   subdir('examples')

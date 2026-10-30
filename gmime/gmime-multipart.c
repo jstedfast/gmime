@@ -73,7 +73,7 @@ static void multipart_set_boundary (GMimeMultipart *multipart, const char *bound
 static const char *multipart_get_boundary (GMimeMultipart *multipart);
 static gboolean multipart_try_get_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
 static void multipart_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
-static void multipart_boundary_changed (GMimeContentType *content_type, gpointer args, GMimeMultipart *multipart);
+static void multipart_boundary_changed (gpointer sender, gpointer args, gpointer user_data);
 
 
 static GMimeEntityClass *parent_class = NULL;
@@ -166,8 +166,10 @@ g_mime_multipart_finalize (GObject *object)
 }
 
 static void
-multipart_boundary_changed (GMimeContentType *content_type, gpointer args, GMimeMultipart *multipart)
+multipart_boundary_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeContentType *content_type = sender;
+	GMimeMultipart *multipart = user_data;
 	const char *boundary = g_mime_content_type_get_parameter (content_type, "boundary");
 	GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
 

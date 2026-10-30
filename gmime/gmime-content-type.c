@@ -64,7 +64,7 @@ static void g_mime_content_type_class_init (GMimeContentTypeClass *klass);
 static void g_mime_content_type_init (GMimeContentType *content_type);
 static void g_mime_content_type_finalize (GObject *object);
 
-static void param_list_changed (GMimeParamList *list, gpointer args, GMimeContentType *content_type);
+static void param_list_changed (gpointer sender, gpointer args, gpointer user_data);
 
 
 static GObjectClass *parent_class = NULL;
@@ -110,8 +110,10 @@ g_mime_content_type_finalize (GObject *object)
 
 
 static void
-param_list_changed (GMimeParamList *list, gpointer args, GMimeContentType *content_type)
+param_list_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeContentType *content_type = user_data;
+
 	g_mime_event_emit (content_type->changed, NULL);
 }
 

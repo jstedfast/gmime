@@ -1,0 +1,99 @@
+GMime MIME fuzzing
+=================
+
+Adapted from MimeKit's Fuzzing/Targets/MimeReaderTarget.cs,
+MimeParserTarget.cs, Helpers/{Fuzz,RecordingMimeReader,MimeComplianceChecker,
+MimeRoundTrip}.cs and corpus-seeding/replay scripts. The six hand-written
+MIME seeds and mime.dict are copied byte-for-byte from MimeKit's Fuzzing
+directory. These files retain their upstream MIT license in LICENSE.
+No MimeKit reader implementation or changed diagnostic locations are imported.
+
+Targets
+-------
+
+mime-reader checks callback ranges and normalized callback traces with and
+without a compliance logger, and with fragmented input. Consecutive read
+callbacks are folded into FNV-1a hashes plus lengths, as in MimeKit, so
+legitimate buffer segmentation does not cause false mismatches. It also checks
+diagnostic positions, contexts, metadata and per-violation budgets, comparing
+diagnostic multisets per message across chunk sizes (independent validators'
+delivery order may vary with buffering). Both standalone messages and mbox
+are scanned.
+
+mime-parser compares byte-exact serialized output from memory-backed,
+source-backed/fragmented, and logged parsing. GMime has no async parser API,
+so storage and chunking comparisons replace MimeKit's sync/async comparisons.
+The logged run uses GMimeParser's private model builder because the public
+parser does not expose a logger setter; the other runs use the public parser.
+Checks include mbox markers/progress, repeated writes, retained source-content
+lifetimes and parse/write fixed points. Like MimeKit, the latter permits
+convergence solely by removal of bare CRs in malformed input.
+
+The whole-input selector leaves MIME prefixes unchanged. Inputs are limited
+to 1 MiB, MIME depth to 16, address-group depth to 4, and mailbox operations
+to 10,000 messages per run. Reaching the mailbox work budget is recorded in
+the compared traces, not misreported as a parser defect. Only documented
+parse/header-limit failures are accepted; other errors and GLib
+warnings/criticals terminate the process.
+
+Build and replay (Linux shell commands)
+--------------------------------------
+
+Any supported C compiler can build the replay harness:
+
+  meson setup _build-replay -Dfuzzing=replay
+  meson compile -C _build-replay
+  meson test -C _build-replay --suite fuzzing --print-errorlogs
+  _build-replay/fuzzing/gmime-fuzz --list
+  _build-replay/fuzzing/gmime-fuzz --replay all fuzzing/corpus
+
+Replay accepts files and recursively enumerated directories, reports slow
+inputs (over two seconds), and fails on unreadable/missing paths or when
+no eligible inputs were replayed. A failing input aborts immediately; its
+path is printed before execution. Oversized files are counted as skipped.
+
+Coverage-guided fuzzing
+----------------------
+
+Use a separate Clang build. Coverage instrumentation is applied to GMime
+itself, not just the harness. These binaries are for testing, not installation.
+Clang's compiler-rt/libFuzzer runtime must be installed.
+
+  CC=clang meson setup _build-fuzz -Dfuzzing=libfuzzer \
+    -Ddefault_library=static \
+    -Db_sanitize=address,undefined -Db_ndebug=false \
+    -Dcrypto=disabled -Dlibidn=disabled -Dintrospection=disabled \
+    -Dvapi=disabled -Dgtk_doc=false -Dexamples=false -Dtests=false
+  meson compile -C _build-fuzz
+  meson test -C _build-fuzz --suite fuzzing --print-errorlogs
+  python3 fuzzing/seed-corpora.py _build-fuzz/artifacts
+
+The seeder merges the hand-written seeds, existing round-trip fixtures and
+up to 200 messages per test mailbox, deduplicated by SHA-256. It never deletes
+an existing working corpus. Keep generated corpora and crash artifacts out
+of the source tree (build directories are already ignored).
+
+Run each target separately, substituting mime-reader or mime-parser:
+
+  ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
+  UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+  _build-fuzz/fuzzing/fuzz-mime-reader \
+    -dict=fuzzing/mime.dict -max_len=1048576 -timeout=10 \
+    -rss_limit_mb=2048 -max_total_time=600 -print_final_stats=1 \
+    -artifact_prefix=_build-fuzz/artifacts/mime-reader/crashes/ \
+    _build-fuzz/artifacts/mime-reader/corpus
+
+Replay a crash using the matching executable and crash filename, without
+a corpus directory, or use gmime-fuzz --replay. libFuzzer's -minimize_crash=1
+can reduce it before adding a permanent regression test. Preserve the seed,
+command, compiler/sanitizer configuration and failure output when triaging.
+
+GitHub Actions
+--------------
+
+.github/workflows/fuzz.yml follows MimeKit's nightly/manual fuzz workflow.
+It runs both targets nightly at 03:17 UTC for 600 seconds each. Manual runs
+can select one target and a duration from 1 to 14,400 seconds. Each job
+replays the regression seeds, restores and extends a target/branch-specific
+corpus cache, then saves a new immutable cache even after a failure.
+Crashing inputs, fuzzer output and Meson logs are uploaded on failure.

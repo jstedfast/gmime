@@ -45,7 +45,7 @@
  **/
 
 static void status_finalize (GObject *object);
-static void groups_changed (GMimeHeaderListCollection *groups, gpointer args, GMimeMessageDeliveryStatus *status);
+static void groups_changed (gpointer sender, gpointer args, gpointer user_data);
 
 
 G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessageDeliveryStatus, g_mime_message_delivery_status, GMIME_TYPE_PART)
@@ -92,8 +92,10 @@ status_finalize (GObject *object)
 }
 
 static void
-groups_changed (GMimeHeaderListCollection *groups, gpointer args, GMimeMessageDeliveryStatus *status)
+groups_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeHeaderListCollection *groups = sender;
+	GMimeMessageDeliveryStatus *status = user_data;
 	GMimeStream *stream = g_mime_stream_mem_new ();
 	GMimeContent *content;
 	int i, errsv;

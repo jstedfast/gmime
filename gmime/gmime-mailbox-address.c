@@ -83,8 +83,9 @@ g_mime_mailbox_address_class_init (GMimeMailboxAddressClass *klass)
 }
 
 static void
-route_changed (GMimeDomainList *route, gpointer args, GMimeMailboxAddress *mailbox)
+route_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeMailboxAddress *mailbox = user_data;
 	GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (&mailbox->parent_instance);
 
 	g_mime_event_emit (priv->changed, NULL);

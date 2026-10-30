@@ -1820,15 +1820,20 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 
 				if (i < length) {
 					report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY,
-						   offset, priv->line_number, column, GMIME_COMPLIANCE_POSITION_EXACT);
+						   offset + i, priv->line_number, column + i, GMIME_COMPLIANCE_POSITION_EXACT);
 					detect_8bit = FALSE;
 				}
 			}
 
-			if (detect_null && memchr (start, 0, length)) {
-				report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY,
-					   offset, priv->line_number, column, GMIME_COMPLIANCE_POSITION_EXACT);
-				detect_null = FALSE;
+			if (detect_null) {
+				const guint8 *nul = memchr (start, 0, length);
+
+				if (nul) {
+					i = nul - start;
+					report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY,
+						   offset + i, priv->line_number, column + i, GMIME_COMPLIANCE_POSITION_EXACT);
+					detect_null = FALSE;
+				}
 			}
 		}
 

@@ -38,7 +38,7 @@
  **/
 
 static void report_finalize (GObject *object);
-static void fields_changed (GMimeHeaderList *fields, gpointer args, GMimeMessageFeedbackReport *report);
+static void fields_changed (gpointer sender, gpointer args, gpointer user_data);
 
 
 G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessageFeedbackReport, g_mime_message_feedback_report, GMIME_TYPE_PART)
@@ -85,8 +85,11 @@ report_finalize (GObject *object)
 }
 
 static void
-fields_changed (GMimeHeaderList *fields, gpointer args, GMimeMessageFeedbackReport *report)
+fields_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeHeaderList *fields = sender;
+	GMimeMessageFeedbackReport *report = user_data;
+
 	/* Fields cannot be NULL while this handler is registered to their Changed event. */
 	_g_mime_part_serialize_fields ((GMimePart *) report, fields, "feedback report");
 }

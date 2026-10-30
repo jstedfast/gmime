@@ -86,9 +86,9 @@ static char *object_get_headers (GMimeEntity *object, GMimeFormatOptions *option
 static ssize_t object_write_to_stream (GMimeEntity *object, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream);
 static void object_accept (GMimeEntity *object, GMimeVisitor *visitor);
 
-static void header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *args, GMimeEntity *object);
-static void content_type_changed (GMimeContentType *content_type, gpointer args, GMimeEntity *object);
-static void content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeEntity *object);
+static void header_list_changed (gpointer sender, gpointer event_args, gpointer user_data);
+static void content_type_changed (gpointer sender, gpointer args, gpointer user_data);
+static void content_disposition_changed (gpointer sender, gpointer args, gpointer user_data);
 
 
 static GHashTable *type_hash = NULL;
@@ -377,8 +377,11 @@ object_headers_cleared (GMimeEntity *object)
 }
 
 static void
-header_list_changed (GMimeHeaderList *headers, GMimeHeaderListChangedEventArgs *args, GMimeEntity *object)
+header_list_changed (gpointer sender, gpointer event_args, gpointer user_data)
 {
+	GMimeHeaderListChangedEventArgs *args = event_args;
+	GMimeEntity *object = user_data;
+
 	// FIXME: add a header_inserted() API so that header_added() can be better optimized. See gmime-message.c:message_header_added()/process_header().
 	switch (args->action) {
 	case GMIME_HEADER_LIST_CHANGED_ACTION_ADDED:
@@ -414,8 +417,10 @@ _g_mime_entity_unblock_header_list_changed (GMimeEntity *object)
 }
 
 static void
-content_type_changed (GMimeContentType *content_type, gpointer args, GMimeEntity *object)
+content_type_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeContentType *content_type = sender;
+	GMimeEntity *object = user_data;
 	GMimeEntityPrivate *priv;
 	char *raw_value;
 	
@@ -430,8 +435,10 @@ content_type_changed (GMimeContentType *content_type, gpointer args, GMimeEntity
 }
 
 static void
-content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeEntity *object)
+content_disposition_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeContentDisposition *disposition = sender;
+	GMimeEntity *object = user_data;
 	GMimeEntityPrivate *priv;
 	char *raw_value;
 	

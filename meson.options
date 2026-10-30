@@ -6,3 +6,4 @@ option('gtk_doc', type: 'boolean', value: false, description: 'Build and install
 option('tests', type: 'boolean', value: true, description: 'Build the test programs')
 option('examples', type: 'boolean', value: true, description: 'Build the example programs')
 option('mime_warnings', type: 'boolean', value: false, description: 'Log warnings for malformed MIME')
+option('fuzzing', type: 'combo', choices: ['disabled', 'replay', 'libfuzzer'], value: 'disabled', description: 'Build corpus replay or Clang libFuzzer targets')

@@ -40,7 +40,7 @@
  **/
 
 static void notification_finalize (GObject *object);
-static void fields_changed (GMimeHeaderList *fields, gpointer args, GMimeMessageDispositionNotification *notification);
+static void fields_changed (gpointer sender, gpointer args, gpointer user_data);
 
 
 G_DEFINE_TYPE_WITH_PRIVATE (GMimeMessageDispositionNotification, g_mime_message_disposition_notification, GMIME_TYPE_PART)
@@ -87,8 +87,11 @@ notification_finalize (GObject *object)
 }
 
 static void
-fields_changed (GMimeHeaderList *fields, gpointer args, GMimeMessageDispositionNotification *notification)
+fields_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeHeaderList *fields = sender;
+	GMimeMessageDispositionNotification *notification = user_data;
+
 	/* Fields cannot be NULL while this handler is registered to their Changed event. */
 	_g_mime_part_serialize_fields ((GMimePart *) notification, fields, "disposition notification");
 }

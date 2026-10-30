@@ -448,8 +448,10 @@ g_mime_param_set_always_quote (GMimeParam *param, gboolean always_quote)
 
 
 static void
-param_changed (GMimeParam *param, gpointer args, GMimeParamList *list)
+param_changed (gpointer sender, gpointer args, gpointer user_data)
 {
+	GMimeParamList *list = user_data;
+
 	g_mime_event_emit (list->changed, NULL);
 }
 

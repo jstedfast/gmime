@@ -2314,8 +2314,10 @@ g_mime_header_format_default (GMimeHeader *header, GMimeFormatOptions *options, 
 
 
 static void
-header_changed (GMimeHeader *header, gpointer user_args, GMimeHeaderList *list)
+header_changed (gpointer sender, gpointer user_args, gpointer user_data)
 {
+	GMimeHeader *header = sender;
+	GMimeHeaderList *list = user_data;
 	GMimeHeaderListChangedEventArgs args;
 	
 	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_CHANGED;
