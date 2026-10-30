@@ -309,7 +309,7 @@ g_mime_compliance_issue_to_string (const GMimeComplianceIssue *issue)
 
 	g_return_val_if_fail (issue != NULL && valid_violation (issue->violation), NULL);
 
-	name = compliance_metadata[metadata_index (issue->violation)].name;
+	name = g_mime_compliance_violation_get_name (issue->violation);
 	if (issue->column_number) {
 		return g_strdup_printf ("%s at line %" G_GUINT64_FORMAT ", column %" G_GUINT64_FORMAT
 					" (offset %" G_GINT64_FORMAT ")", name, issue->line_number,
@@ -354,6 +354,20 @@ g_mime_compliance_violation_get_categories (GMimeComplianceViolation violation)
 	g_return_val_if_fail (valid_violation (violation), GMIME_COMPLIANCE_CATEGORY_NONE);
 
 	return compliance_metadata[metadata_index (violation)].categories;
+}
+
+/**
+ * g_mime_compliance_violation_get_name:
+ * @violation: a diagnostic identity, excluding NONE
+ *
+ * Returns: (transfer none): the static diagnostic name, matching MimeKit.
+ **/
+const char *
+g_mime_compliance_violation_get_name (GMimeComplianceViolation violation)
+{
+	g_return_val_if_fail (valid_violation (violation), NULL);
+
+	return compliance_metadata[metadata_index (violation)].name;
 }
 
 /**

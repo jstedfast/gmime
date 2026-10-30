@@ -8,3 +8,5 @@ imap-example
 uuencode
 uudecode
 msgcheck
+mime-analyzer
+test-mime-analyzer

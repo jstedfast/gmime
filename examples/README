@@ -43,6 +43,63 @@ routines). You'll likely find that this program outperforms GNU's
 implementation of uudecode.
 
 
+Example: mime-analyzer.c
+------------------------
+
+A C port of MimeKit's MimeAnalyzer sample. It uses GMimeReader's
+compliance logger to scan messages without constructing a MIME object
+tree, and reports compiler-style diagnostics with source lines, carets,
+optional explanations and per-file summaries.
+
+Build the mime-analyzer target with Meson (examples are enabled by
+default on non-Windows hosts), then run:
+
+  mime-analyzer [options] file.eml [file.eml ...]
+  mime-analyzer --remarks message.eml
+  mime-analyzer --context storage --severity major message.eml
+  mime-analyzer --category security --werror message.eml
+  mime-analyzer --max-issues 100 --max-per-violation 5 message.eml
+
+Each input is a single message, not an mbox. Options:
+
+  -c, --context transport|storage   Severity context (default: transport).
+  -s, --severity minor|major|critical
+                                   Minimum severity (default: minor).
+      --category LIST              Comma-separated interoperability
+                                   (or interop), dataloss, security.
+  -r, --remarks                    Explain issues and their categories.
+  -W, --werror                     Treat every reported issue as an error.
+      --max-issues N               Collector limit (default: 1000).
+      --max-per-violation N        Parser reporting limit per violation
+                                   (default: 0, unlimited).
+      --no-caret                   Do not quote source lines.
+      --no-color                   Disable terminal colors.
+  -q, --quiet                      Print only summaries.
+  -h, --help                       Show help and exit.
+
+Critical issues are errors, major issues warnings, and minor issues
+notes. Filters apply before counting and --werror promotion. A filtered
+report with no findings says "no matching compliance issues" rather
+than claiming the message is clean. Reporting limits are independent
+of these filters: reaching either limit produces a truncation note,
+even when all collected findings are filtered out. The parser's
+TooManyComplianceIssues signal is not counted as a message defect.
+
+Source positions refer to raw input bytes, not decoded text. Tabs use
+eight-column stops; control and non-ASCII bytes appear as \xNN. Carets
+account for these expansions, and long lines are elided around the
+caret to fit the terminal (100 source columns when redirected). Where
+possible, approximate positions are refined to the offending byte,
+including bytes in folded headers. Unknown columns have no caret.
+Colors are automatically disabled for redirected output or when the
+NO_COLOR environment variable is set.
+
+Exit status is 0 if no reported issue is an error, 1 for error-level
+issues or input/output failures (including an empty input that cannot
+be parsed), and 2 for invalid command lines. Multiple files are scanned
+independently, and processing continues after an input failure.
+
+
 Don't forget to take a look at any test programs that came bundled
 with this distribution (they will be in tests/), as they will also
 provide you with samples that you may find useful.

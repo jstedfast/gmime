@@ -198,7 +198,7 @@ typedef enum {
  * @GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES: reporting budget was exceeded
  *
  * Append-only diagnostic identities matching MimeKit. Use the violation
- * metadata functions for descriptions, remarks and context-specific severity.
+ * metadata functions for names, descriptions, remarks and context-specific severity.
  **/
 typedef enum {
 	GMIME_COMPLIANCE_NONE = 0,
@@ -356,6 +356,7 @@ gboolean g_mime_compliance_issue_equal (const GMimeComplianceIssue *a, const GMi
 char *g_mime_compliance_issue_to_string (const GMimeComplianceIssue *issue);
 GMimeComplianceSeverity g_mime_compliance_violation_get_severity (GMimeComplianceViolation violation, GMimeComplianceContext context);
 GMimeComplianceCategories g_mime_compliance_violation_get_categories (GMimeComplianceViolation violation);
+const char *g_mime_compliance_violation_get_name (GMimeComplianceViolation violation);
 const char *g_mime_compliance_violation_get_description (GMimeComplianceViolation violation);
 const char *g_mime_compliance_violation_get_remarks (GMimeComplianceViolation violation);
 
