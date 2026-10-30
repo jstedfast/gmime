@@ -3,7 +3,6 @@
  * Distributed under the MIT license; see LICENSE. */
 
 #include "fuzz.h"
-#include <gmime/gmime-parser-reader-private.h>
 #include <string.h>
 
 static GByteArray *
@@ -85,8 +84,7 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 {
 	GMimeParserOptions *options = fuzz_parser_options ();
 	GMimeStream *stream = fuzz_stream_new (data, length, chunk);
-	GMimeParser *parser = NULL;
-	GMimeReader *reader = NULL;
+	GMimeParser *parser;
 	GMimeMessage *last_message = NULL;
 	GByteArray *last_bytes = NULL;
 	GString *result = g_string_new (NULL);
@@ -96,16 +94,15 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 	guint count = 0;
 
 	fuzz_compliance_init (&checker, length, fuzz_selector (data, length));
+	parser = g_mime_parser_new_with_stream_and_storage (stream, format,
+		source ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+	FUZZ_CHECK (parser && error == NULL, "Failed to construct parser for a memory stream");
 	if (logged) {
-		/* GMimeParser has no public logger setter; use its same model builder
-		 * to verify logging invariance against the public parser below. */
-		reader = _g_mime_parser_reader_new (options, stream, source);
-		g_mime_reader_set_stream_with_format (reader, stream, format);
-		fuzz_compliance_attach (&checker, reader);
-	} else {
-		parser = g_mime_parser_new_with_stream_and_storage (stream, format,
-			source ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
-		FUZZ_CHECK (parser && error == NULL, "Failed to construct parser for a memory stream");
+		GMimeComplianceOptions *compliance = fuzz_compliance_options (&checker);
+
+		g_mime_parser_set_compliance_options (parser, compliance);
+		g_mime_compliance_options_free (compliance);
+		g_mime_parser_set_compliance_logger (parser, fuzz_compliance_report, &checker, NULL);
 	}
 	do {
 		GMimeMessage *message;
@@ -114,18 +111,15 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 		gboolean eos;
 
 		fuzz_compliance_begin (&checker);
-		message = reader ? _g_mime_parser_reader_construct_message (reader, &error) :
-			g_mime_parser_construct_message (parser, options, &error);
-		after = reader ? g_mime_reader_tell (reader) : g_mime_parser_tell (parser);
-		eos = reader ? g_mime_reader_eos (reader) : g_mime_parser_eos (parser);
+		message = g_mime_parser_construct_message (parser, options, &error);
+		after = g_mime_parser_tell (parser);
+		eos = g_mime_parser_eos (parser);
 		FUZZ_CHECK (after >= before && (guint64) after <= length, "Parser position outside input");
 		g_string_append_printf (result, "RESULT:%d:%" G_GINT64_FORMAT ":%d\n",
 					message != NULL, error ? -1 : after, !error && eos);
 		if (error) {
 			fuzz_check_error (error);
 			FUZZ_CHECK (message == NULL, "Parser returned a model with an error");
-			/* The public wrapper maps the reader's header-limit parse error
-			 * to HEADER_TOO_LONG; both paths must retain the same message. */
 			g_string_append_printf (result, "ERROR:%s\n", error->message);
 			g_clear_error (&error);
 			break;
@@ -137,22 +131,8 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 		FUZZ_CHECK (after > before || eos, "Parser did not advance");
 		before = after;
 		if (format == GMIME_FORMAT_MBOX) {
-			gint64 offset;
-			char *marker;
-
-			if (reader) {
-				GBytes *raw = _g_mime_parser_reader_get_mbox_marker (reader);
-				gsize size;
-				gconstpointer buffer;
-
-				FUZZ_CHECK (raw != NULL, "Missing mailbox marker");
-				buffer = g_bytes_get_data (raw, &size);
-				marker = g_strndup (buffer, size);
-				offset = _g_mime_parser_reader_get_mbox_marker_offset (reader);
-			} else {
-				marker = g_mime_parser_get_mbox_marker (parser);
-				offset = g_mime_parser_get_mbox_marker_offset (parser);
-			}
+			gint64 offset = g_mime_parser_get_mbox_marker_offset (parser);
+			char *marker = g_mime_parser_get_mbox_marker (parser);
 			FUZZ_CHECK (marker && offset >= 0 && (guint64) offset <= length, "Invalid mailbox marker");
 			g_string_append_printf (result, "M:%" G_GINT64_FORMAT ":%s\n", offset, marker);
 			g_free (marker);
@@ -170,7 +150,6 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 	if (count == FUZZ_MAX_MESSAGES)
 		g_string_append (result, "BUDGET\n");
 	g_clear_object (&parser);
-	g_clear_object (&reader);
 	g_object_unref (stream);
 	if (last_message) {
 		GByteArray *again = serialize (last_message);

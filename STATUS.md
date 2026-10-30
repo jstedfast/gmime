@@ -757,8 +757,9 @@ This is an incremental migration, not yet a declaration of feature parity.
 
 The first implementation scope is MIME parsing and writing, headers,
 addresses, parameters, transfer encodings, and the message object model.
-TNEF, standalone text conversion utilities, and the complete structured
-compliance framework are deferred.
+TNEF and standalone text conversion utilities remain deferred. The structured
+MIME compliance framework is now implemented on GMimeReader and exposed by
+GMimeParser; remaining work is tracked in the migration roadmap below.
 
 The minimum dependency is GLib 2.88.0, matching
 Ubuntu 26.04 LTS's packaged GLib API baseline rather than requiring a
@@ -4911,23 +4912,108 @@ The WSL Meson build and dedicated whitespace suite pass. Of 46 suites,
 same failures against unchanged HEAD. Native Windows execution remains
 unvalidated.
 
+## Public parser compliance
+
+GMimeParser exposes get_compliance_options(), set_compliance_options() and
+set_compliance_logger() for header, entity and message construction. These
+forward to the existing reader's diagnostic engine and follow its native
+notified callback API.
+
+The options getter returns borrowed mutable settings, available before input
+is assigned and valid until options are replaced or the parser is released.
+The setter copies settings, supports self-assignment and restores defaults
+when passed NULL. Input replacement preserves options and logger while clearing
+buffered input, parsing errors and model metadata. Failed checked replacement
+preserves existing state; format and content-storage changes also retain the
+compliance configuration.
+
+Each construction operation snapshots its options and logger. Callback changes
+apply to the next operation, and replaced logger data survives until the active
+operation ends. Diagnostic budgets reset per operation/message. Disabling
+reporting requires NULL callback, data and destroy notifier. Without a logger,
+compliance validation is skipped. Reporting does not change model construction,
+legacy warnings or fatal syntax, header-limit and I/O error handling.
+
+Callbacks may inspect the parser, change compliance settings or release their
+parser reference. Reentrant parsing, input replacement and manipulation of the
+underlying stream during callbacks remain prohibited. One private model reader
+is retained across input replacement to preserve configuration and callback
+ownership, without changing no-input position, EOF or storage behavior.
+The parser fuzz target now exercises this public API for its logged path
+rather than bypassing the wrapper through the private model builder.
+
 ## Remaining migration phases
+
+This roadmap supersedes the original phase list. It reflects a source-level
+comparison of GMime 28aec310 with MimeKit.Core 20ab449e, not a declaration of
+complete member-by-member or behavioral parity. Earlier sections retain
+historical implementation decisions and validation results; their pending-work
+and failure notes may have been superseded by later changes.
+
+### Completed foundations
+
+The public parser already uses the explicit-stack reader and model builder;
+synchronous serialization uses the iterative writer. Specialized alternative,
+related and report multiparts, delivery/disposition/feedback reports,
+text/rfc822-headers, attachment collections, body building, Received models,
+anonymization and message/partial reconstruction are implemented. MIME
+compliance diagnostics, options, budgets and reader/parser callbacks are
+implemented.
+Runtime-dispatched content scanners and selected transfer-encoding kernels,
+scalar fallbacks, reader reference fixtures and parser/reader fuzz targets
+also exist. These are not outstanding whole-subsystem ports.
+
+### Application-facing API completion
+
+- Add decoded message TextBody, HtmlBody and GetTextBody(format) equivalents.
+  Reuse specialized multipart selection and add flowed-text handling; the
+  legacy get_body() entity-selection helper is not the decoded-text API.
+- Complete TextPart encoding detection: detected charset and confidence,
+  HTML meta charset discovery, and reporting the charset used by decoding.
+  Explicit charset conversion and BOM detection already exist.
+- Add parser-option-local MIME type registration and cloning semantics;
+  the existing entity type registry is global.
+- Port the public SMTP and SMTPUTF8 address validators and their options and
+  error models. The reader's MIME address compliance validator is a different
+  API, not a replacement for these utilities.
+- Add AuthenticationResults, AuthenticationMethodResult and
+  AuthenticationMethodProperty. These models belong to MimeKit.Core despite
+  their Cryptography namespace; they do not require a new crypto backend.
+- Add a typed message MIME-Version accessor. Resolve Sender/ResentSender
+  single-mailbox versus native address-list semantics before freezing the API.
+
+### API contract and asynchronous operations
+
+- Continue aligning public APIs while retaining intentional, documented native
+  differences. Resolve body accessor naming, stream close/ownership and legacy
+  persistence accessors before the GMime 4 API/ABI is frozen.
+- Add consistent GCancellable support to synchronous stream, parser, writer,
+  content-copy and attachment operations, followed by GAsyncResult/GTask-based
+  asynchronous APIs. Preserve explicit errors and shared-source lifetimes.
+- Decide whether multipart raw boundary-marker access needs a public API.
+  Internal byte-preserving marker storage and serialization already exist.
 
 Managed collection CopyTo(T[] array, int offset) convenience APIs, including
 Multipart.CopyTo(), are intentionally excluded from the port. Stream and
 content copying APIs are unaffected.
 
-- Continue aligning public APIs with MimeKit while retaining the GPGME
-  backend.
-- Decide whether to migrate multipart raw boundary-marker APIs.
-- Build a shared-fixture differential harness against the reference
-  MimeKit revision, recording intentional behavioral differences.
-- Port the remaining parser controls and header/address/parameter parsing
-  primitives.
-- Port SIMD scanning and transfer-encoding kernels with runtime CPU
-  dispatch, scalar fallbacks, differential coverage, and benchmarks.
-- Replace recursive MIME parsing with an explicit-stack GMimeReader and
-  construct the message model on top of it.
-- Complete remaining formatting controls and async/cancellation support.
-- Add the missing specialized multipart, report, notification, and
-  header-only entity types and message-model helpers.
+### Deferred subsystems and release integration
+
+- Port standalone text utilities as a separate increment: flowed text,
+  HTML parsing/conversion/filtering, text previews and RTF conversion.
+  Existing HTML/enriched filters cover only part of this scope.
+- Port TNEF reading/writing, properties, attachment extraction, MIME/calendar
+  conversion and compressed RTF when that deferred scope is undertaken.
+- Promote the broader historical actual-source differential comparisons into
+  reproducible repository tooling with pinned reference revisions and explicit
+  expected differences. The checked-in reader reference generator and
+  round-trip fixtures are a foundation, not the entire parity harness.
+- Add native Windows full-library integration. Preserve Linux/macOS,
+  optional-feature, sanitizer, installed C, GIR and Vala integration coverage.
+- Extend fuzzing beyond the current reader/parser targets as appropriate.
+  Additional ARM64/wider codec kernels and fused header scans remain
+  performance work, with scalar equivalence and workload benchmarks required.
+
+GPGME remains the OpenPGP/S/MIME backend; porting MimeKit.Cryptography's
+implementations is out of scope. DKIM/ARC/DMARC would be a separate scope
+decision rather than a prerequisite for the current core port.

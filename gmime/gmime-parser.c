@@ -40,6 +40,9 @@
  *
  * A #GMimeParser builds headers, MIME entities and messages using a single
  * buffered #GMimeReader. Mbox and MMDF streams support successive messages.
+ * Optional compliance reporting is enabled with
+ * g_mime_parser_set_compliance_logger(), independently of legacy parser
+ * warnings. Diagnostic settings never change how input is parsed.
  **/
 
 struct _GMimeParserPrivate {
@@ -53,6 +56,8 @@ struct _GMimeParserPrivate {
 };
 
 G_DEFINE_FINAL_TYPE (GMimeParser, g_mime_parser, G_TYPE_OBJECT)
+
+static gboolean parser_header_read (GMimeHeader *header, gboolean toplevel, gpointer user_data, GError **error);
 
 static void
 g_mime_parser_finalize (GObject *object)
@@ -77,6 +82,8 @@ g_mime_parser_init (GMimeParser *parser)
 	parser->priv = g_new0 (struct _GMimeParserPrivate, 1);
 	parser->priv->format = GMIME_FORMAT_MESSAGE;
 	parser->priv->persist_stream = TRUE;
+	parser->priv->reader = _g_mime_parser_reader_new (NULL, NULL, TRUE);
+	_g_mime_parser_reader_set_header_callback (parser->priv->reader, parser_header_read, parser);
 }
 
 static gboolean
@@ -220,7 +227,8 @@ g_mime_parser_new_with_stream_and_storage (GMimeStream *stream, GMimeFormat form
  *
  * Replaces the input at its current position, discarding buffered data,
  * metadata and any previous error. Neither stream is reset or closed.
- * Parser format, persistence and header-regex settings are retained.
+ * Parser format, persistence, header-regex settings, compliance options
+ * and the compliance logger are retained.
  *
  * Do not read, write, seek or reset @stream while parsing. Persistent part
  * content may be read between operations: its physical source position is
@@ -231,17 +239,12 @@ g_mime_parser_new_with_stream_and_storage (GMimeStream *stream, GMimeFormat form
 void
 g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
 {
-	GMimeReader *reader;
-
 	g_return_if_fail (GMIME_IS_PARSER (parser));
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	g_return_if_fail (!parser->priv->reading);
 
-	reader = _g_mime_parser_reader_new (NULL, stream, parser->priv->persist_stream);
-	_g_mime_reader_set_format (reader, parser->priv->format);
-	_g_mime_parser_reader_set_header_callback (reader, parser_header_read, parser);
-	g_clear_object (&parser->priv->reader);
-	parser->priv->reader = reader;
+	_g_mime_parser_reader_set_stream (parser->priv->reader, stream, parser->priv->format);
+	_g_mime_parser_reader_set_persist (parser->priv->reader, parser->priv->persist_stream);
 }
 
 /**
@@ -253,7 +256,8 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
  * @error: return location for a #GError, or %NULL
  *
  * Replaces the input, format and storage, discarding buffered data, metadata
- * and any previous parsing error. Header-regex settings are retained.
+ * and any previous parsing error. Header-regex settings, compliance options
+ * and the compliance logger are retained.
  * Neither stream is reset or closed. Previously returned models retain
  * their content and are unaffected by stream replacement.
  *
@@ -303,7 +307,7 @@ g_mime_parser_get_persist_stream (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
 
-	return parser->priv->persist_stream && parser->priv->reader &&
+	return parser->priv->persist_stream && _g_mime_reader_get_stream (parser->priv->reader) &&
 		g_mime_stream_tell (_g_mime_reader_get_stream (parser->priv->reader)) >= 0;
 }
 
@@ -324,8 +328,7 @@ g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
 	g_return_if_fail (!parser->priv->reading);
 
 	parser->priv->persist_stream = persist;
-	if (parser->priv->reader)
-		_g_mime_parser_reader_set_persist (parser->priv->reader, persist);
+	_g_mime_parser_reader_set_persist (parser->priv->reader, persist);
 }
 
 /**
@@ -358,8 +361,77 @@ g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format)
 	g_return_if_fail (!parser->priv->reading);
 
 	parser->priv->format = format;
-	if (parser->priv->reader)
-		_g_mime_reader_set_format (parser->priv->reader, format);
+	_g_mime_reader_set_format (parser->priv->reader, format);
+}
+
+/**
+ * g_mime_parser_get_compliance_options:
+ * @parser: a #GMimeParser context
+ *
+ * Gets the parser's mutable compliance settings, including before a stream
+ * is assigned. Changes apply to the next construction operation, not to
+ * an active operation. The settings survive stream replacement.
+ *
+ * Returns: (transfer none): the parser's compliance settings, valid until
+ * replaced by g_mime_parser_set_compliance_options() or the parser is released.
+ **/
+GMimeComplianceOptions *
+g_mime_parser_get_compliance_options (GMimeParser *parser)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
+
+	return g_mime_reader_get_compliance_options (parser->priv->reader);
+}
+
+/**
+ * g_mime_parser_set_compliance_options:
+ * @parser: a #GMimeParser context
+ * @options: (nullable): settings to copy, or %NULL for defaults
+ *
+ * Copies @options for subsequent header, entity and message construction.
+ * Assigning the parser's own settings is safe. Changes made from callbacks
+ * apply to the next operation; the active operation retains its snapshot.
+ * Settings survive stream replacement and do not enable reporting unless
+ * a logger is also assigned. They never change parsing policy.
+ **/
+void
+g_mime_parser_set_compliance_options (GMimeParser *parser, GMimeComplianceOptions *options)
+{
+	g_return_if_fail (GMIME_IS_PARSER (parser));
+
+	g_mime_reader_set_compliance_options (parser->priv->reader, options);
+}
+
+/**
+ * g_mime_parser_set_compliance_logger:
+ * @parser: a #GMimeParser context
+ * @report: (nullable) (scope notified) (closure user_data) (destroy destroy): diagnostic callback
+ * @user_data: (nullable): application data
+ * @destroy: (nullable): releases @user_data
+ *
+ * Enables structured MIME compliance reporting during header, entity and
+ * message construction, or disables it when @report is %NULL. When disabling,
+ * @user_data and @destroy must also be %NULL. Without a logger, compliance
+ * validation is skipped; legacy parser warning callbacks are unaffected.
+ *
+ * The logger may be configured before assigning input and survives stream
+ * replacement. Replacing or disabling it from a parsing callback takes effect
+ * at the next operation. The previous data is released once no active operation
+ * uses it, or when the parser is released if the logger remains installed.
+ * Diagnostic budgets reset for each construction operation/message.
+ *
+ * Callbacks receive borrowed issues and may inspect the parser, change its
+ * compliance settings or release their parser reference. They must not start
+ * another parse, replace input, or manipulate the underlying stream. Concurrent
+ * use of a parser is not supported.
+ **/
+void
+g_mime_parser_set_compliance_logger (GMimeParser *parser, GMimeComplianceIssueFunc report,
+				    gpointer user_data, GDestroyNotify destroy)
+{
+	g_return_if_fail (GMIME_IS_PARSER (parser));
+
+	g_mime_reader_set_compliance_logger (parser->priv->reader, report, user_data, destroy);
 }
 
 /**
@@ -411,7 +483,7 @@ g_mime_parser_construct_headers (GMimeParser *parser, GMimeParserOptions *option
 	GError *failure = NULL;
 
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	g_return_val_if_fail (parser->priv->reader != NULL, NULL);
+	g_return_val_if_fail (_g_mime_reader_get_stream (parser->priv->reader) != NULL, NULL);
 	g_return_val_if_fail (!parser->priv->reading, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -464,7 +536,7 @@ g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options, 
 	GError *failure = NULL;
 
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	g_return_val_if_fail (parser->priv->reader != NULL, NULL);
+	g_return_val_if_fail (_g_mime_reader_get_stream (parser->priv->reader) != NULL, NULL);
 	g_return_val_if_fail (!parser->priv->reading, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -504,7 +576,7 @@ g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *option
 	GError *failure = NULL;
 
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
-	g_return_val_if_fail (parser->priv->reader != NULL, NULL);
+	g_return_val_if_fail (_g_mime_reader_get_stream (parser->priv->reader) != NULL, NULL);
 	g_return_val_if_fail (!parser->priv->reading, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
@@ -622,7 +694,7 @@ g_mime_parser_tell (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
 
-	return parser->priv->reader ? g_mime_reader_tell (parser->priv->reader) : -1;
+	return _g_mime_reader_get_stream (parser->priv->reader) ? g_mime_reader_tell (parser->priv->reader) : -1;
 }
 
 /**
@@ -636,7 +708,7 @@ g_mime_parser_eos (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), TRUE);
 
-	return !parser->priv->reader || _g_mime_reader_input_eos (parser->priv->reader);
+	return !_g_mime_reader_get_stream (parser->priv->reader) || _g_mime_reader_input_eos (parser->priv->reader);
 }
 
 /**

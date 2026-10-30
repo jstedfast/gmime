@@ -157,14 +157,23 @@ fuzz_compliance_end (FuzzCompliance *checker)
 	g_strfreev (issues);
 }
 
-void
-fuzz_compliance_attach (FuzzCompliance *checker, GMimeReader *reader)
+GMimeComplianceOptions *
+fuzz_compliance_options (FuzzCompliance *checker)
 {
 	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
 
 	g_mime_compliance_options_set_context (options, checker->context);
 	g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_ALL);
 	g_mime_compliance_options_set_max_issues_per_violation (options, checker->cap);
+
+	return options;
+}
+
+void
+fuzz_compliance_attach (FuzzCompliance *checker, GMimeReader *reader)
+{
+	GMimeComplianceOptions *options = fuzz_compliance_options (checker);
+
 	g_mime_reader_set_compliance_options (reader, options);
 	g_mime_compliance_options_free (options);
 	g_mime_reader_set_compliance_logger (reader, fuzz_compliance_report, checker, NULL);

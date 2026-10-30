@@ -31,6 +31,7 @@
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-header.h>
 #include <gmime/gmime-parser-options.h>
+#include <gmime/gmime-compliance.h>
 #include <gmime/gmime-stream.h>
 
 G_BEGIN_DECLS
@@ -77,6 +78,11 @@ void g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist);
 
 GMimeFormat g_mime_parser_get_format (GMimeParser *parser);
 void g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format);
+
+GMimeComplianceOptions *g_mime_parser_get_compliance_options (GMimeParser *parser);
+void g_mime_parser_set_compliance_options (GMimeParser *parser, GMimeComplianceOptions *options);
+void g_mime_parser_set_compliance_logger (GMimeParser *parser, GMimeComplianceIssueFunc report,
+					gpointer user_data, GDestroyNotify destroy);
 
 void g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 				     GMimeParserHeaderRegexFunc header_cb,

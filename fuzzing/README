@@ -23,8 +23,8 @@ are scanned.
 mime-parser compares byte-exact serialized output from memory-backed,
 source-backed/fragmented, and logged parsing. GMime has no async parser API,
 so storage and chunking comparisons replace MimeKit's sync/async comparisons.
-The logged run uses GMimeParser's private model builder because the public
-parser does not expose a logger setter; the other runs use the public parser.
+All runs use the public GMimeParser, including its compliance options and
+logger APIs for the logged run.
 Checks include mbox markers/progress, repeated writes, retained source-content
 lifetimes and parse/write fixed points. Like MimeKit, the latter permits
 convergence solely by removal of bare CRs in malformed input.

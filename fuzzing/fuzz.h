@@ -31,6 +31,7 @@ void fuzz_check_error (GError *error);
 void fuzz_compliance_init (FuzzCompliance *checker, gsize length, guint32 selector);
 void fuzz_compliance_begin (FuzzCompliance *checker);
 void fuzz_compliance_end (FuzzCompliance *checker);
+GMimeComplianceOptions *fuzz_compliance_options (FuzzCompliance *checker);
 void fuzz_compliance_attach (FuzzCompliance *checker, GMimeReader *reader);
 void fuzz_compliance_report (const GMimeComplianceIssue *issue, gpointer user_data);
 void fuzz_mime_reader (const guint8 *data, gsize length);

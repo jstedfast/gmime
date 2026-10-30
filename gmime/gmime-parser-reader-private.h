@@ -29,8 +29,9 @@
 G_BEGIN_DECLS
 
 /* Shared model builder for GMimeParser. All operations retain one reader's
- * buffered input. Stream replacement uses the inherited reader setters. */
+ * buffered input. A NULL initial stream allows configuration before input. */
 GMimeReader *_g_mime_parser_reader_new (GMimeParserOptions *options, GMimeStream *stream, gboolean persist);
+void _g_mime_parser_reader_set_stream (GMimeReader *reader, GMimeStream *stream, GMimeFormat format);
 void _g_mime_parser_reader_set_persist (GMimeReader *reader, gboolean persist);
 void _g_mime_parser_reader_set_header_callback (GMimeReader *reader,
 					      gboolean (*callback) (GMimeHeader *, gboolean, gpointer, GError **), gpointer user_data);

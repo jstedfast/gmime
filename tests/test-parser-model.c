@@ -2540,6 +2540,420 @@ test_public_parser_warnings (void)
 	testsuite_check_passed ();
 }
 
+typedef struct _ParserLogger ParserLogger;
+struct _ParserLogger {
+	GMimeParser *parser;
+	GArray *issues;
+	ParserLogger *next;
+	guint destroyed;
+	gboolean replace, release;
+};
+
+static void
+collect_parser_issue (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	g_array_append_val ((GArray *) user_data, *issue);
+}
+
+static void
+parser_logger_destroyed (gpointer user_data)
+{
+	((ParserLogger *) user_data)->destroyed++;
+}
+
+static void
+parser_log_issue (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	ParserLogger *logger = user_data;
+
+	g_assert_cmpuint (logger->destroyed, ==, 0);
+	collect_parser_issue (issue, logger->issues);
+	if (logger->replace) {
+		GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+
+		logger->replace = FALSE;
+		g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+		g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_NONE);
+		g_mime_compliance_options_set_max_issues_per_violation (options, 1);
+		g_mime_parser_set_compliance_options (logger->parser, options);
+		g_mime_compliance_options_free (options);
+		g_mime_parser_set_compliance_logger (logger->parser, logger->next ? parser_log_issue : NULL,
+			logger->next, logger->next ? parser_logger_destroyed : NULL);
+		g_assert_cmpuint (logger->destroyed, ==, 0);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
+		g_assert_null (g_mime_parser_construct_message (logger->parser, NULL, NULL));
+		g_test_assert_expected_messages ();
+	}
+	if (logger->release) {
+		logger->release = FALSE;
+		g_object_unref (logger->parser);
+	}
+}
+
+static guint
+count_parser_issue (GArray *issues, GMimeComplianceViolation violation)
+{
+	guint i, count = 0;
+
+	for (i = 0; i < issues->len; i++)
+		count += g_array_index (issues, GMimeComplianceIssue, i).violation == violation;
+
+	return count;
+}
+
+static GObject *
+construct_compliance_model (GMimeParser *parser, GMimeParserOptions *options, guint operation, GError **error)
+{
+	switch (operation) {
+	case 0: return (GObject *) g_mime_parser_construct_headers (parser, options, error);
+	case 1: return (GObject *) g_mime_parser_construct_part (parser, options, error);
+	default: return (GObject *) g_mime_parser_construct_message (parser, options, error);
+	}
+}
+
+static void
+test_parser_compliance_options (void)
+{
+	GMimeParser *parser = g_mime_parser_new ();
+	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+	GMimeComplianceOptions *borrowed;
+	GMimeStream *input = g_mime_stream_mem_new ();
+	ParserLogger logger = { .parser = parser };
+	guint operation;
+
+	testsuite_check ("Parser compliance settings work before input and survive stream replacement");
+	g_assert_cmpint (g_mime_parser_tell (parser), ==, -1);
+	g_assert_true (g_mime_parser_eos (parser));
+	g_assert_false (g_mime_parser_get_persist_stream (parser));
+	g_assert_null (g_mime_parser_get_mbox_marker (parser));
+	g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
+	g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, -1);
+	g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, -1);
+	for (operation = 0; operation < 3; operation++) {
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*_g_mime_reader_get_stream*");
+		g_assert_null (construct_compliance_model (parser, NULL, operation, NULL));
+		g_test_assert_expected_messages ();
+	}
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_assert_nonnull (borrowed);
+	g_assert_true (borrowed != g_mime_compliance_options_get_default ());
+	g_assert_cmpint (g_mime_compliance_options_get_context (borrowed), ==, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+	g_assert_cmpint (g_mime_compliance_options_get_enabled_validators (borrowed), ==, GMIME_COMPLIANCE_VALIDATOR_ALL);
+	g_assert_cmpuint (g_mime_compliance_options_get_max_issues_per_violation (borrowed), ==, 0);
+	g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+	g_mime_parser_set_compliance_options (parser, options);
+	g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_assert_true (borrowed != options);
+	g_assert_cmpint (g_mime_compliance_options_get_context (borrowed), ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+	g_mime_parser_set_compliance_options (parser, borrowed);
+	g_assert_cmpint (g_mime_compliance_options_get_context (g_mime_parser_get_compliance_options (parser)),
+			 ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+	g_mime_parser_set_compliance_options (parser, NULL);
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_assert_cmpint (g_mime_compliance_options_get_context (borrowed), ==, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+	g_mime_compliance_options_set_max_issues_per_violation (borrowed, 3);
+	g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+	g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
+	g_mime_parser_set_persist_stream (parser, FALSE);
+	g_mime_parser_init_with_stream (parser, input);
+	g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MBOX);
+	g_assert_false (g_mime_parser_get_persist_stream (parser));
+	g_assert_cmpint (g_mime_parser_tell (parser), ==, 0);
+	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
+	g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+		GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, NULL));
+	g_assert_true (g_mime_parser_get_persist_stream (parser));
+	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
+	g_assert_cmpuint (g_mime_compliance_options_get_max_issues_per_violation (borrowed), ==, 3);
+	g_assert_cmpuint (logger.destroyed, ==, 0);
+	g_mime_parser_set_compliance_logger (parser, NULL, NULL, NULL);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	g_object_unref (parser);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	g_object_unref (input);
+	g_mime_compliance_options_free (options);
+	parser = g_mime_parser_new ();
+	logger.parser = parser;
+	logger.destroyed = 0;
+	g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+	g_object_unref (parser);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	testsuite_check_passed ();
+}
+
+static void
+test_parser_compliance_models (void)
+{
+	static const char wire[] = "Subject: a\nSubject: a\nContent-Transfer-Encoding: base64\n\n!!!!\n";
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint operation, mode, chunk, logged, i;
+
+	testsuite_check ("Public header, entity and message diagnostics match the reader without changing models or warnings");
+	for (operation = 0; operation < 3; operation++) {
+		for (mode = 0; mode < 3; mode++) {
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GArray *expected = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+				GMimeReader *reader = g_mime_reader_new (NULL, (GMimeStream *) input);
+				GMimeComplianceOptions *compliance = g_mime_compliance_options_new ();
+				GByteArray *baseline = NULL;
+				GError *error = NULL;
+
+				g_mime_compliance_options_set_max_issues_per_violation (compliance, 1);
+				g_mime_reader_set_compliance_options (reader, compliance);
+				g_mime_reader_set_compliance_logger (reader, collect_parser_issue, expected, NULL);
+				if (operation == 0)
+					g_assert_true (_g_mime_reader_read_headers_to_separator (reader, &error));
+				else if (operation == 1)
+					g_assert_true (g_mime_reader_read_entity (reader, &error));
+				else
+					g_assert_true (g_mime_reader_read_message (reader, &error));
+				g_assert_no_error (error);
+				g_assert_cmpuint (expected->len, >, 0);
+				g_object_unref (reader);
+				g_object_unref (input);
+
+				for (logged = 0; logged < 2; logged++) {
+					GMimeParserOptions *options = g_mime_parser_options_new ();
+					guint warnings[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+					GMimeParser *parser;
+					GObject *model;
+					GByteArray *bytes;
+
+					input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+					input->nonseekable = mode == 2;
+					parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input, GMIME_FORMAT_MESSAGE,
+						mode == 1 ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+					g_assert_no_error (error);
+					g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+					g_mime_parser_set_compliance_options (parser, compliance);
+					if (logged)
+						g_mime_parser_set_compliance_logger (parser, collect_parser_issue, issues, NULL);
+					model = construct_compliance_model (parser, options, operation, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (model);
+					g_assert_cmpuint (warnings[GMIME_WARN_DUPLICATED_HEADER], ==, operation != 0);
+					if (operation == 0) {
+						g_assert_cmpint (g_mime_parser_tell (parser), ==, sizeof (wire) - 6);
+						bytes = serialize_headers (GMIME_HEADER_LIST (model), FALSE);
+					} else {
+						bytes = serialize_writer (GMIME_ENTITY (model), NULL, FALSE);
+					}
+					if (logged) {
+						g_assert_cmpmem (bytes->data, bytes->len, baseline->data, baseline->len);
+						g_byte_array_unref (bytes);
+					} else {
+						baseline = bytes;
+						g_assert_cmpuint (issues->len, ==, 0);
+					}
+					g_object_unref (model);
+					g_object_unref (parser);
+					g_object_unref (input);
+					g_mime_parser_options_free (options);
+				}
+				g_assert_cmpuint (issues->len, ==, expected->len);
+				for (i = 0; i < expected->len; i++)
+					g_assert_true (g_mime_compliance_issue_equal (&g_array_index (expected, GMimeComplianceIssue, i),
+						&g_array_index (issues, GMimeComplianceIssue, i)));
+				g_assert_cmpuint (count_parser_issue (issues, GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER), ==, operation != 0);
+				g_byte_array_unref (baseline);
+				g_array_unref (issues);
+				g_array_unref (expected);
+				g_mime_compliance_options_free (compliance);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_parser_compliance_lifetime (void)
+{
+	static const char encoded[] = "Content-Transfer-Encoding: base64\n\n!!!!\nmore\n";
+	char *mailbox = g_strconcat ("From a\n", encoded, "From b\n", encoded, "From c\n", encoded, NULL);
+	ModelInput *input = new_input (mailbox, strlen (mailbox), 4096);
+	GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+	GArray *first = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	GArray *second = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	ParserLogger next = { .parser = parser, .issues = second };
+	ParserLogger logger = { .parser = parser, .issues = first, .next = &next, .replace = TRUE };
+	GMimeComplianceOptions *borrowed;
+	GMimeMessage *message;
+	GError *error = NULL;
+	guint i, count;
+
+	testsuite_check ("Parser logger replacements snapshot settings, reset mailbox budgets and retain data through callbacks");
+	g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
+	g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (message);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	g_assert_cmpuint (second->len, ==, 0);
+	g_assert_cmpuint (count_parser_issue (first, GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER), >, 0);
+	for (i = 0; i < first->len; i++)
+		g_assert_cmpint (g_array_index (first, GMimeComplianceIssue, i).context, ==, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+
+	for (i = 0, count = 0; i < 2; i++) {
+		g_array_set_size (second, 0);
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		g_object_unref (message);
+		g_assert_cmpuint (count_parser_issue (second, GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER), ==, 0);
+		g_assert_cmpuint (count_parser_issue (second, GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY), ==, 1);
+		g_assert_cmpuint (count_parser_issue (second, GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES), ==, 1);
+		if (i == 0)
+			count = second->len;
+		else
+			g_assert_cmpuint (second->len, ==, count);
+	}
+	for (i = 0; i < second->len; i++)
+		g_assert_cmpint (g_array_index (second, GMimeComplianceIssue, i).context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_object_unref (input);
+	input = new_input (encoded, sizeof (encoded) - 1, 1);
+	g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) input,
+		GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+	g_assert_no_error (error);
+	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
+	g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, -1);
+	g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, -1);
+	g_assert_null (g_mime_parser_get_mbox_marker (parser));
+	g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
+	g_assert_cmpuint (next.destroyed, ==, 0);
+	g_array_set_size (second, 0);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (message);
+	g_assert_cmpuint (second->len, >, 0);
+	g_mime_parser_set_compliance_logger (parser, NULL, NULL, NULL);
+	g_assert_cmpuint (next.destroyed, ==, 1);
+	g_object_unref (input);
+	input = new_input (encoded, sizeof (encoded) - 1, 1);
+	g_mime_parser_init_with_stream (parser, (GMimeStream *) input);
+	g_array_set_size (second, 0);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (message);
+	g_assert_cmpuint (second->len, ==, 0);
+	g_object_unref (parser);
+	g_assert_cmpuint (next.destroyed, ==, 1);
+	g_object_unref (input);
+	g_free (mailbox);
+	testsuite_check_passed ();
+
+	testsuite_check ("Compliance callbacks may disable reporting and release the parser during every construction operation");
+	for (i = 0; i < 3; i++) {
+		GMimeParser *weak;
+		GObject *model;
+
+		input = new_input (encoded, sizeof (encoded) - 1, 1);
+		parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+		weak = parser;
+		logger = (ParserLogger) { .parser = parser, .issues = first, .replace = TRUE, .release = TRUE };
+		g_array_set_size (first, 0);
+		g_object_add_weak_pointer (G_OBJECT (parser), (gpointer *) &weak);
+		g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+		model = construct_compliance_model (parser, NULL, i, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (model);
+		g_assert_null (weak);
+		g_assert_cmpuint (logger.destroyed, ==, 1);
+		g_assert_cmpuint (first->len, >, 1);
+		g_object_unref (model);
+		g_object_unref (input);
+	}
+	g_array_unref (first);
+	g_array_unref (second);
+	testsuite_check_passed ();
+}
+
+static void
+test_parser_compliance_errors (void)
+{
+	static const char wire[] = "Subject: a\nContent-Transfer-Encoding: base64\n\n!!!!\n";
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	guint operation, offset;
+
+	testsuite_check ("Parser compliance preserves sticky I/O errors and settings through failed and successful input replacement");
+	for (operation = 0; operation < 3; operation++) {
+		gsize length = operation == 0 ? sizeof (wire) - 6 : sizeof (wire) - 1;
+
+		for (offset = 0; offset < length; offset++) {
+			ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+			ModelInput *replacement = new_input (wire, sizeof (wire) - 1, 1);
+			GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+			ParserLogger logger = { .parser = parser, .issues = issues };
+			GObject *model;
+			GError *error = NULL;
+			guint count, reads;
+
+			g_array_set_size (issues, 0);
+			input->fail_after = offset;
+			g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+			g_assert_null (construct_compliance_model (parser, NULL, operation, &error));
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			count = issues->len;
+			reads = input->reads;
+			replacement->fail_seek = TRUE;
+			g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
+				GMIME_FORMAT_MBOX, GMIME_CONTENT_STORAGE_SOURCE, &error));
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MESSAGE);
+			g_assert_null (construct_compliance_model (parser, NULL, operation, &error));
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			g_assert_cmpuint (issues->len, ==, count);
+			g_assert_cmpuint (input->reads, ==, reads);
+			g_assert_cmpuint (logger.destroyed, ==, 0);
+			replacement->fail_seek = FALSE;
+			g_mime_parser_init_with_stream (parser, (GMimeStream *) replacement);
+			g_array_set_size (issues, 0);
+			model = construct_compliance_model (parser, NULL, operation, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (model);
+			g_assert_cmpuint (issues->len, >, 0);
+			g_object_unref (model);
+			g_object_unref (parser);
+			g_assert_cmpuint (logger.destroyed, ==, 1);
+			g_object_unref (input);
+			g_object_unref (replacement);
+		}
+		for (offset = 0; offset < 2; offset++) {
+			const char *invalid = offset ? wire : "invalid";
+			int code = offset ? GMIME_ERROR_HEADER_TOO_LONG : GMIME_ERROR_PARSE_ERROR;
+			GMimeStream *input = g_mime_stream_mem_new_with_buffer (invalid, strlen (invalid));
+			GMimeParser *parser = g_mime_parser_new_with_stream (input);
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			ParserLogger logger = { .parser = parser, .issues = issues };
+			GError *error = NULL;
+
+			if (offset)
+				g_mime_parser_options_set_max_header_length (options, 1);
+			g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+			g_assert_null (construct_compliance_model (parser, options, operation, &error));
+			g_assert_error (error, GMIME_ERROR, code);
+			g_clear_error (&error);
+			g_assert_cmpuint (logger.destroyed, ==, 0);
+			g_object_unref (parser);
+			g_assert_cmpuint (logger.destroyed, ==, 1);
+			g_mime_parser_options_free (options);
+			g_object_unref (input);
+		}
+	}
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
 typedef GMimeCryptoContext ModelVerifyContext;
 typedef GMimeCryptoContextClass ModelVerifyContextClass;
 
@@ -5197,6 +5611,10 @@ main (int argc, char **argv)
 	test_model_errors ();
 	test_public_parser_models ();
 	test_public_parser_warnings ();
+	test_parser_compliance_options ();
+	test_parser_compliance_models ();
+	test_parser_compliance_lifetime ();
+	test_parser_compliance_errors ();
 	test_public_long_header_names ();
 	test_signature_markers ();
 	test_writer_depth ();

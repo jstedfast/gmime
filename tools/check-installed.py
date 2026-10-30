@@ -44,6 +44,20 @@ def main():
 #include <gmime/gmime.h>
 #include <string.h>
 
+static guint diagnostics, logger_destroyed;
+
+static void report_issue (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+    g_assert_nonnull (issue);
+    (*(guint *) user_data)++;
+}
+
+static void destroy_logger (gpointer user_data)
+{
+    g_assert_true (user_data == &diagnostics);
+    logger_destroyed++;
+}
+
 int main (void)
 {
     const char wire[] = "Subject: installed\nContent-Transfer-Encoding: base64\n\nSGVsbG8K\n";
@@ -54,6 +68,8 @@ int main (void)
     GMimeYencHeader *header;
     GMimeYencWriter *writer;
     GMimeYencReader *reader;
+    GMimeParser *parser;
+    GMimeComplianceOptions *compliance;
     GByteArray *decoded;
     GError *error = NULL;
 
@@ -69,6 +85,27 @@ int main (void)
     decoded = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
     g_assert_cmpmem (decoded->data, decoded->len, "Hello\n", 6);
     g_object_unref (output);
+    g_object_unref (message);
+    g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
+    parser = g_mime_parser_new ();
+    compliance = g_mime_compliance_options_new ();
+    g_mime_compliance_options_set_max_issues_per_violation (compliance, 1);
+    g_mime_parser_set_compliance_options (parser, compliance);
+    g_mime_compliance_options_free (compliance);
+    g_assert_cmpuint (g_mime_compliance_options_get_max_issues_per_violation (
+        g_mime_parser_get_compliance_options (parser)), ==, 1);
+    g_mime_parser_set_compliance_logger (parser, report_issue, &diagnostics, destroy_logger);
+    g_mime_parser_init_with_stream (parser, input);
+    message = g_mime_parser_construct_message (parser, NULL, &error);
+    g_assert_no_error (error);
+    g_assert_nonnull (message);
+    g_assert_cmpuint (diagnostics, >, 0);
+    g_assert_cmpuint (logger_destroyed, ==, 0);
+    g_mime_parser_set_compliance_logger (parser, NULL, NULL, NULL);
+    g_assert_cmpuint (logger_destroyed, ==, 1);
+    g_mime_parser_set_compliance_options (parser, NULL);
+    g_object_unref (parser);
+    g_assert_cmpuint (logger_destroyed, ==, 1);
     g_object_unref (message);
     g_object_unref (input);
 
@@ -110,14 +147,34 @@ int main (void)
                              "share/vala/vapi/gmime-4.0.vapi"):
                 if not (prefix / relative).is_file():
                     raise RuntimeError(f"Missing installed binding artifact: {relative}")
-            run(["python3", "-c",
-                 "import gi; gi.require_version('GMime', '4.0'); "
-                 "from gi.repository import GMime; GMime.init(); "
-                 "m = GMime.Message.new(False); m.set_subject('installed', 'utf-8'); "
-                 "assert m.get_subject() == 'installed'; "
-                 "o = GMime.YencOptions.new(); assert o.get_max_line_length() == 16384; "
-                 "h = GMime.YencHeader.new('installed.bin', 0, 128, 0, 0, 0, 0); "
-                 "assert h.get_filename() == 'installed.bin'; GMime.shutdown()"], env)
+            run(["python3", "-c", r'''
+import gi
+gi.require_version('GMime', '4.0')
+from gi.repository import GMime
+GMime.init()
+m = GMime.Message.new(False)
+m.set_subject('installed', 'utf-8')
+assert m.get_subject() == 'installed'
+o = GMime.YencOptions.new()
+assert o.get_max_line_length() == 16384
+h = GMime.YencHeader.new('installed.bin', 0, 128, 0, 0, 0, 0)
+assert h.get_filename() == 'installed.bin'
+p = GMime.Parser.new()
+o = GMime.ComplianceOptions.new()
+o.set_max_issues_per_violation(1)
+p.set_compliance_options(o)
+assert p.get_compliance_options().get_max_issues_per_violation() == 1
+issues = []
+p.set_compliance_logger(lambda issue: issues.append(issue.copy()))
+stream = GMime.StreamMem.new_with_buffer(b'Subject: installed\n\nbody\n')
+p.init_with_stream(stream)
+assert p.construct_message(None).get_subject() == 'installed'
+assert len(issues) > 0
+p.set_compliance_logger(None)
+p.set_compliance_options(None)
+assert p.get_compliance_options().get_max_issues_per_violation() == 0
+GMime.shutdown()
+'''], env)
             vala = work / "consumer.vala"
             vala.write_text('''
 int main () {
@@ -127,7 +184,22 @@ int main () {
     assert (message.get_subject () == "installed");
     var options = new GMime.YencOptions ();
     assert (options.get_max_line_length () == 16384);
+    var parser = new GMime.Parser ();
+    var compliance = new GMime.ComplianceOptions ();
+    compliance.set_max_issues_per_violation (1);
+    parser.set_compliance_options (compliance);
+    assert (parser.get_compliance_options ().get_max_issues_per_violation () == 1);
+    uint issues = 0;
+    parser.set_compliance_logger ((issue) => { issues++; });
+    var input = new GMime.StreamMem.with_buffer ("Subject: installed\\n\\nbody\\n".data);
+    parser.init_with_stream (input);
     try {
+        var parsed = parser.construct_message (null);
+        assert (parsed.get_subject () == "installed");
+        assert (issues > 0);
+        parser.set_compliance_logger (null);
+        parser.set_compliance_options (null);
+        assert (parser.get_compliance_options ().get_max_issues_per_violation () == 0);
         var header = new GMime.YencHeader ("installed.bin", 0, 128, 0, 0, 0, 0);
         assert (header.get_filename () == "installed.bin");
     } catch (GLib.Error error) {

@@ -705,16 +705,29 @@ _g_mime_parser_reader_new (GMimeParserOptions *options, GMimeStream *stream, gbo
 {
 	GMimeParserReader *reader;
 
-	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
+	g_return_val_if_fail (stream == NULL || GMIME_IS_STREAM (stream), NULL);
 
 	reader = g_object_new (g_mime_parser_reader_get_type (), NULL);
-	reader->stream = g_object_ref (stream);
 	reader->persist = persist;
-	reader->persistent = persist && g_mime_stream_tell (stream) >= 0;
 	g_mime_reader_set_options ((GMimeReader *) reader, options);
-	g_mime_reader_set_stream ((GMimeReader *) reader, stream);
+	if (stream)
+		_g_mime_parser_reader_set_stream ((GMimeReader *) reader, stream, GMIME_FORMAT_MESSAGE);
 
 	return (GMimeReader *) reader;
+}
+
+void
+_g_mime_parser_reader_set_stream (GMimeReader *base, GMimeStream *stream, GMimeFormat format)
+{
+	GMimeParserReader *reader = (GMimeParserReader *) base;
+
+	g_mime_reader_set_stream_with_format (base, stream, format);
+	parser_reader_reset (reader);
+	g_clear_pointer (&reader->marker, g_bytes_unref);
+	reader->marker_offset = -1;
+	reader->headers_begin = reader->headers_end = -1;
+	g_set_object (&reader->stream, stream);
+	reader->persistent = reader->persist && g_mime_stream_tell (stream) >= 0;
 }
 
 void
@@ -723,7 +736,7 @@ _g_mime_parser_reader_set_persist (GMimeReader *base, gboolean persist)
 	GMimeParserReader *reader = (GMimeParserReader *) base;
 
 	reader->persist = persist;
-	reader->persistent = persist && g_mime_stream_tell (reader->stream) >= 0;
+	reader->persistent = persist && reader->stream && g_mime_stream_tell (reader->stream) >= 0;
 }
 
 void

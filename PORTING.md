@@ -226,6 +226,19 @@ is required; consult each API rather than assuming legacy parse calls became
 strict. Compliance logging and the streaming `GMimeReader` API are optional
 new facilities, not prerequisites for migrating an ordinary parser.
 
+To collect structured diagnostics while building a message, use
+`g_mime_parser_set_compliance_logger(parser, callback, user_data, destroy)`.
+The callback receives a borrowed `GMimeComplianceIssue`; copy it to retain it.
+Configure checks and per-violation budgets through the borrowed mutable
+`g_mime_parser_get_compliance_options()` result, or pass settings to
+`g_mime_parser_set_compliance_options()` to copy them (NULL restores defaults).
+These settings and the logger survive input replacement and may be assigned
+before input. Callback changes take effect at the next construction operation;
+old logger data stays alive until its active operation finishes.
+Passing NULL for the callback, data and destroy notifier disables reporting.
+Compliance reporting neither changes parsing policy nor replaces legacy
+warning callbacks or `GError` handling.
+
 ## 5. Treat raw headers as bytes, not C strings
 
 `g_mime_header_get_raw_name()` and `g_mime_header_get_raw_value()` now return
