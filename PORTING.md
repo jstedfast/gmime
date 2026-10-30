@@ -87,6 +87,7 @@ Direct include replacements:
 | `gmime/gmime-data-wrapper.h` | `gmime/gmime-content.h` |
 | `gmime/internet-address.h` | `gmime/gmime-internet-address.h` |
 | `gmime/gmime-references.h` | `gmime/gmime-message-id-list.h` |
+| `gmime/gmime-part-iter.h` | `gmime/gmime-iterator.h` |
 
 Additional replacements:
 
@@ -103,6 +104,53 @@ Additional replacements:
 
 Do not perform an unchecked global substring replacement: distinguish a
 GMime type macro from unrelated GObject or application identifiers.
+
+### MIME tree iteration
+
+`GMimePartIter` has been removed. Use the GObject-based `GMimeIterator`:
+`g_mime_iterator_new(message)` traverses a message's live body;
+`g_mime_iterator_new_for_entity(entity)` traverses an entity subtree, including
+its root. Passing a message to the latter is equivalent to `new(message)`.
+Release iterators with `g_object_unref()`.
+
+New and reset iterators are positioned **before** the first entity:
+
+```c
+GMimeIterator *iter = g_mime_iterator_new (message);
+
+while (g_mime_iterator_move_next (iter)) {
+    GMimeEntity *entity = g_mime_iterator_get_current (iter);
+    /* Process entity. */
+}
+
+g_object_unref (iter);
+```
+
+Replace `next()` with `move_next()`, `jump_to()` with `move_to(path, error)`,
+and `get_path()` with `get_path_specifier()`. Current/parent access and
+`is_valid()` remain available under the new prefix. Accessors for the current
+position require a successful move. `get_message()` returns the original
+message; there is no `get_toplevel()` replacement for entity roots, so retain
+the supplied root separately if needed.
+
+Paths are not universally interchangeable with the old iterator's paths.
+A non-multipart root is `1`; a multipart root is `0`, with children numbered
+`1`, `2`, etc. Multipart bodies inside attached messages are visited explicitly
+(for example, `3.0`), with children at `3.1`, `3.2`, etc. For entity-root
+iterators, paths and depths are relative to the supplied root. The root has
+no parent. The containing message is not inferred: `get_message()` is NULL,
+and `get_current_message()` is NULL outside encapsulated messages.
+
+Malformed paths set `GMIME_ERROR_PARSE_ERROR` and preserve the cursor;
+well-formed missing paths exhaust it without an error. Exhaustion persists
+until reset or navigation. `skip_children()` prunes the current subtree.
+
+There are no backward-navigation, replace/remove, or clone methods.
+`g_object_ref()` shares the cursor, not an independent traversal position.
+Use a separate iterator for an independent cursor. For tree edits, collect
+referenced entities and their owners, then use message/multipart APIs after
+traversal. The iterator retains its active ancestry, but external edits do not
+repair stored indexes; reset or seek before relying on them.
 
 ### Instance state and subclassing
 

@@ -33,7 +33,7 @@
  * SECTION: gmime-iterator
  * @title: GMimeIterator
  * @short_description: Depth-first MIME tree traversal and path navigation
- * @see_also: #GMimeMessage, #GMimeVisitor, #GMimePartIter
+ * @see_also: #GMimeMessage, #GMimeEntity, #GMimeVisitor
  *
  * Traverses a message's body, multipart children and encapsulated message
  * bodies in depth-first order, without visiting message objects themselves.
@@ -44,16 +44,19 @@
  * Path specifiers follow MimeKit's IMAP numbering: a message's single-part
  * body is part 1; multipart children are numbered from 1. A multipart body
  * has no part number of its own and is represented by a terminal 0.
+ * g_mime_iterator_new_for_entity() traverses an entity subtree, including
+ * its root, using the same numbering as if that root were a message body.
+ * Paths and depths are relative to that root, not its containing message.
  *
- * Traversal observes live collections. The iterator retains the message
+ * Traversal observes live collections. The iterator retains the message or root
  * and every entity in its current ancestry, keeping removed entities alive
  * until their frames are discarded. It does not snapshot or renumber frames
  * after external edits. Use g_mime_iterator_skip_children() to prune the
  * current subtree.
  * Cyclic MIME trees are not supported.
  *
- * This GObject API ports MimeKit's MimeIterator. The older boxed
- * #GMimePartIter retains its distinct traversal and editing semantics.
+ * This GObject API ports MimeKit's MimeIterator and also supports entity roots.
+ * It does not provide backward traversal, editing, or cursor cloning.
  **/
 
 /* Each frame represents one level of the path from the message body to the current entity.
@@ -100,6 +103,7 @@ iterator_finalize (GObject *object)
 
 	g_array_unref (iter->frames);
 	g_clear_object (&iter->message);
+	g_clear_object (&iter->root);
 	G_OBJECT_CLASS (g_mime_iterator_parent_class)->finalize (object);
 }
 
@@ -115,6 +119,12 @@ static void
 push_message_body (GMimeIterator *iter, GMimeEntity *body)
 {
 	push_frame (iter, body, GMIME_IS_MULTIPART (body) ? -1 : 0);
+}
+
+static GMimeEntity *
+get_root_entity (GMimeIterator *iter)
+{
+	return iter->message ? g_mime_message_get_mime_part (iter->message) : iter->root;
 }
 
 /**
@@ -139,10 +149,44 @@ g_mime_iterator_new (GMimeMessage *message)
 }
 
 /**
+ * g_mime_iterator_new_for_entity:
+ * @entity: (transfer none): the entity subtree to traverse
+ *
+ * Creates an iterator positioned before @entity and retains it. Traversal
+ * includes @entity and its descendants. Paths are relative to @entity:
+ * a multipart root is "0", its children are "1", "2", etc.; any other root
+ * is "1". The root has depth 0, index -1, and no parent.
+ *
+ * The entity's containing message is not inferred. g_mime_iterator_get_message()
+ * returns %NULL, and g_mime_iterator_get_current_message() returns %NULL unless
+ * positioned inside an encapsulated message. If @entity is itself a
+ * #GMimeMessage, this is equivalent to g_mime_iterator_new(): traversal starts
+ * at its live body, not the message object.
+ *
+ * Returns: (transfer full): a new iterator.
+ **/
+GMimeIterator *
+g_mime_iterator_new_for_entity (GMimeEntity *entity)
+{
+	GMimeIterator *iter;
+
+	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
+
+	if (GMIME_IS_MESSAGE (entity))
+		return g_mime_iterator_new ((GMimeMessage *) entity);
+
+	iter = g_object_new (GMIME_TYPE_ITERATOR, NULL);
+	iter->root = g_object_ref (entity);
+
+	return iter;
+}
+
+/**
  * g_mime_iterator_get_message:
  * @iter: a #GMimeIterator
  *
- * Returns: (transfer none): the top-level message.
+ * Returns: (transfer none) (nullable): the top-level message, or %NULL for an
+ * entity-root iterator.
  **/
 GMimeMessage *
 g_mime_iterator_get_message (GMimeIterator *iter)
@@ -190,7 +234,7 @@ g_mime_iterator_get_current (GMimeIterator *iter)
  * @iter: a positioned #GMimeIterator
  *
  * Returns: (transfer none) (nullable): the current entity's parent multipart
- * or message part, or %NULL for the top-level body. Borrowed until navigation.
+ * or message part, or %NULL for the traversal root. Borrowed until navigation.
  **/
 GMimeEntity *
 g_mime_iterator_get_parent (GMimeIterator *iter)
@@ -234,7 +278,7 @@ g_mime_iterator_get_path_specifier (GMimeIterator *iter)
  * g_mime_iterator_get_depth:
  * @iter: a positioned #GMimeIterator
  *
- * Returns: the current entity's depth; the top-level body has depth 0.
+ * Returns: the current entity's depth; the traversal root has depth 0.
  **/
 int
 g_mime_iterator_get_depth (GMimeIterator *iter)
@@ -250,7 +294,7 @@ g_mime_iterator_get_depth (GMimeIterator *iter)
  * @iter: a positioned #GMimeIterator
  *
  * Returns: the current entity's zero-based index in its parent multipart,
- * or -1 if it is a message body rather than a multipart child.
+ * or -1 if it is the traversal root or a message body rather than a multipart child.
  **/
 int
 g_mime_iterator_get_index (GMimeIterator *iter)
@@ -268,8 +312,9 @@ g_mime_iterator_get_index (GMimeIterator *iter)
  * g_mime_iterator_get_current_message:
  * @iter: a positioned #GMimeIterator
  *
- * Returns: (transfer none): the nearest containing encapsulated message,
- * or the top-level message. This reflects live message-part assignments.
+ * Returns: (transfer none) (nullable): the nearest containing encapsulated
+ * message, or the top-level message. For an entity-root iterator outside an
+ * encapsulated message, returns %NULL. This reflects live message-part assignments.
  **/
 GMimeMessage *
 g_mime_iterator_get_current_message (GMimeIterator *iter)
@@ -329,11 +374,11 @@ g_mime_iterator_move_next (GMimeIterator *iter)
 	int index;
 
 	g_return_val_if_fail (GMIME_IS_ITERATOR (iter), FALSE);
-	g_return_val_if_fail (GMIME_IS_MESSAGE (iter->message), FALSE);
+	g_return_val_if_fail (iter->message != NULL || iter->root != NULL, FALSE);
 
 	if (iter->move_first) {
 		iter->move_first = FALSE;
-		body = g_mime_message_get_mime_part (iter->message);
+		body = get_root_entity (iter);
 		if (!body)
 			return FALSE;
 
@@ -421,7 +466,7 @@ parse_path (const char *path, GArray *indexes)
 static gboolean
 try_navigate (GMimeIterator *iter, GArray *indexes)
 {
-	GMimeEntity *body = g_mime_message_get_mime_part (iter->message);
+	GMimeEntity *body = get_root_entity (iter);
 	GMimeEntity *entity;
 	GMimeMessage *message;
 	IteratorFrame frame;
@@ -499,7 +544,7 @@ g_mime_iterator_move_to (GMimeIterator *iter, const char *path_specifier, GError
 	gboolean found;
 
 	g_return_val_if_fail (GMIME_IS_ITERATOR (iter), FALSE);
-	g_return_val_if_fail (GMIME_IS_MESSAGE (iter->message), FALSE);
+	g_return_val_if_fail (iter->message != NULL || iter->root != NULL, FALSE);
 	g_return_val_if_fail (path_specifier != NULL && *path_specifier != '\0', FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
@@ -527,7 +572,7 @@ g_mime_iterator_move_to (GMimeIterator *iter, const char *path_specifier, GError
  *
  * Releases the current ancestry, cancels a pending skip and positions @iter
  * before the first entity. The next g_mime_iterator_move_next() reads the
- * message's live body.
+ * message's live body or revisits the retained entity root.
  **/
 void
 g_mime_iterator_reset (GMimeIterator *iter)

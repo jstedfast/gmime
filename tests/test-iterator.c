@@ -419,6 +419,169 @@ test_lifetime_and_live_messages (void)
 }
 
 static void
+test_entity_subtree (void)
+{
+	const char *paths[] = { "0", "1", "2", "2.0", "2.1", "2.2", "2.2.1", "2.2.2" };
+	const char *parents[] = { "-", "four", "four", "deep-rfc822", "deep", "deep", "alternative", "alternative" };
+	const int depths[] = { 0, 1, 1, 2, 3, 3, 4, 4 };
+	const int indexes[] = { -1, 0, 1, -1, 0, 1, 0, 1 };
+	GMimeMessage *message = iterator_message ();
+	GMimeMultipart *body = (GMimeMultipart *) g_mime_message_get_mime_part (message);
+	GMimeEntity *root = g_mime_multipart_get_part (body, 3), *current;
+	GMimeIterator *iter = g_mime_iterator_new_for_entity (root);
+	GMimeIterator *seek = g_mime_iterator_new_for_entity (root);
+	gpointer weak_message = message, weak_root = root, weak_current;
+	GError *error = NULL;
+	guint i, pass;
+
+	g_object_add_weak_pointer (G_OBJECT (message), &weak_message);
+	g_object_add_weak_pointer (G_OBJECT (root), &weak_root);
+	g_object_unref (message);
+	g_assert_null (weak_message);
+	g_assert_nonnull (weak_root);
+	g_assert_null (g_mime_iterator_get_message (iter));
+	g_assert_false (g_mime_iterator_is_valid (iter));
+
+	for (pass = 0; pass < 2; pass++) {
+		i = 0;
+		while (g_mime_iterator_move_next (iter)) {
+			g_assert_cmpuint (i, <, G_N_ELEMENTS (paths));
+			assert_path (iter, paths[i]);
+			g_assert_cmpint (g_mime_iterator_get_depth (iter), ==, depths[i]);
+			g_assert_cmpint (g_mime_iterator_get_index (iter), ==, indexes[i]);
+			g_assert_cmpstr (entity_name (g_mime_iterator_get_parent (iter)), ==, parents[i]);
+			g_assert_cmpstr (entity_name (g_mime_iterator_get_current_message (iter)), ==,
+					i < 3 ? "-" : "message42");
+			if (depths[i] > 0)
+				g_assert_true (g_mime_iterator_get_ancestor (iter, depths[i]) == root);
+			assert_move_to (seek, paths[i], TRUE);
+			g_assert_true (g_mime_iterator_get_current (seek) == g_mime_iterator_get_current (iter));
+			assert_path (seek, paths[i]);
+			i++;
+		}
+		g_assert_cmpuint (i, ==, G_N_ELEMENTS (paths));
+		g_assert_false (g_mime_iterator_move_next (iter));
+		g_mime_iterator_reset (iter);
+	}
+	g_object_unref (seek);
+
+	assert_move_to (iter, "4.2", FALSE);
+	assert_move_to (iter, "0.1", FALSE);
+	g_assert_false (g_mime_iterator_move_next (iter));
+	assert_move_to (iter, "2", TRUE);
+	g_mime_iterator_skip_children (iter);
+	g_assert_false (g_mime_iterator_move_to (iter, "2.", &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	assert_path (iter, "2");
+	g_assert_false (g_mime_iterator_move_next (iter));
+	g_mime_iterator_reset (iter);
+	g_assert_true (g_mime_iterator_move_next (iter));
+	g_mime_iterator_skip_children (iter);
+	g_assert_false (g_mime_iterator_move_next (iter));
+
+	assert_move_to (iter, "2.2.2", TRUE);
+	current = g_mime_iterator_get_current (iter);
+	weak_current = current;
+	g_object_add_weak_pointer (G_OBJECT (current), &weak_current);
+	g_mime_multipart_clear ((GMimeMultipart *) root);
+	g_assert_nonnull (weak_current);
+	assert_path (iter, "2.2.2");
+	g_mime_iterator_reset (iter);
+	g_assert_null (weak_current);
+	g_assert_nonnull (weak_root);
+	g_assert_true (g_mime_iterator_move_next (iter));
+	assert_path (iter, "0");
+	g_assert_false (g_mime_iterator_move_next (iter));
+	add_child ((GMimeMultipart *) root, (GMimeEntity *) g_mime_text_part_new (), "appended");
+	g_assert_false (g_mime_iterator_move_next (iter));
+	assert_move_to (iter, "1", TRUE);
+	g_assert_cmpstr (entity_name (g_mime_iterator_get_current (iter)), ==, "appended");
+	g_object_unref (iter);
+	g_assert_null (weak_root);
+}
+
+static void
+test_entity_root_kinds (void)
+{
+	GMimeTextPart *text = g_mime_text_part_new ();
+	GMimeMultipart *multipart = g_mime_multipart_new ();
+	GMimeMessagePart *part = embedded_message ((GMimeEntity *) text, "nested");
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GMimeIterator *iter = g_mime_iterator_new_for_entity ((GMimeEntity *) text);
+	gpointer weak_text = text, weak_message = message;
+
+	g_object_add_weak_pointer (G_OBJECT (text), &weak_text);
+	g_object_unref (text);
+	g_assert_true (g_mime_iterator_move_next (iter));
+	assert_path (iter, "1");
+	g_assert_cmpint (g_mime_iterator_get_depth (iter), ==, 0);
+	g_assert_cmpint (g_mime_iterator_get_index (iter), ==, -1);
+	g_assert_null (g_mime_iterator_get_parent (iter));
+	g_assert_null (g_mime_iterator_get_current_message (iter));
+	g_assert_false (g_mime_iterator_move_next (iter));
+	assert_move_to (iter, "0", FALSE);
+	assert_move_to (iter, "1.1", FALSE);
+	assert_move_to (iter, "1", TRUE);
+	g_object_unref (iter);
+
+	iter = g_mime_iterator_new_for_entity ((GMimeEntity *) part);
+	g_assert_true (g_mime_iterator_move_next (iter));
+	assert_path (iter, "1");
+	g_assert_null (g_mime_iterator_get_message (iter));
+	g_assert_null (g_mime_iterator_get_current_message (iter));
+	g_assert_true (g_mime_iterator_move_next (iter));
+	assert_path (iter, "1.1");
+	g_assert_true (g_mime_iterator_get_current (iter) == (GMimeEntity *) text);
+	g_assert_true (g_mime_iterator_get_parent (iter) == (GMimeEntity *) part);
+	g_assert_true (g_mime_iterator_get_current_message (iter) == g_mime_message_part_get_message (part));
+	g_assert_cmpint (g_mime_iterator_get_index (iter), ==, -1);
+	g_assert_false (g_mime_iterator_move_next (iter));
+	assert_move_to (iter, "1.1", TRUE);
+	assert_move_to (iter, "1.0", FALSE);
+	g_mime_message_set_mime_part (g_mime_message_part_get_message (part), (GMimeEntity *) multipart);
+	g_assert_null (weak_text);
+	assert_move_to (iter, "1.0", TRUE);
+	g_assert_true (g_mime_iterator_get_current (iter) == (GMimeEntity *) multipart);
+	g_mime_message_part_set_message (part, NULL);
+	g_assert_null (g_mime_iterator_get_current_message (iter));
+	g_mime_iterator_reset (iter);
+	g_assert_true (g_mime_iterator_move_next (iter));
+	g_assert_false (g_mime_iterator_move_next (iter));
+	assert_move_to (iter, "1.0", FALSE);
+	g_object_unref (part);
+	g_object_unref (iter);
+
+	iter = g_mime_iterator_new_for_entity ((GMimeEntity *) multipart);
+	g_object_unref (multipart);
+	g_assert_true (g_mime_iterator_move_next (iter));
+	assert_path (iter, "0");
+	g_assert_false (g_mime_iterator_move_next (iter));
+	assert_move_to (iter, "1", FALSE);
+	assert_move_to (iter, "0", TRUE);
+	g_object_unref (iter);
+
+	iter = g_mime_iterator_new_for_entity ((GMimeEntity *) message);
+	g_object_add_weak_pointer (G_OBJECT (message), &weak_message);
+	g_assert_true (g_mime_iterator_get_message (iter) == message);
+	g_assert_false (g_mime_iterator_move_next (iter));
+	text = g_mime_text_part_new ();
+	g_mime_message_set_mime_part (message, (GMimeEntity *) text);
+	g_object_unref (text);
+	g_object_unref (message);
+	g_assert_nonnull (weak_message);
+	g_assert_false (g_mime_iterator_move_next (iter));
+	g_mime_iterator_reset (iter);
+	g_assert_true (g_mime_iterator_move_next (iter));
+	assert_path (iter, "1");
+	g_assert_true (g_mime_iterator_get_current (iter) == (GMimeEntity *) text);
+	g_assert_true (g_mime_iterator_get_current_message (iter) == message);
+	assert_move_to (iter, "1", TRUE);
+	g_object_unref (iter);
+	g_assert_null (weak_message);
+}
+
+static void
 test_preconditions (void)
 {
 	GMimeMessage *message = iterator_message ();
@@ -427,6 +590,9 @@ test_preconditions (void)
 
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE (message)*");
 	g_assert_null (g_mime_iterator_new (NULL));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_ENTITY (entity)*");
+	g_assert_null (g_mime_iterator_new_for_entity (NULL));
 	g_test_assert_expected_messages ();
 	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*frames->len > 0*");
 	g_assert_null (g_mime_iterator_get_current (iter));
@@ -523,6 +689,8 @@ main (int argc, char **argv)
 	test_navigation_and_skipping ();
 	test_empty_single_and_headers ();
 	test_lifetime_and_live_messages ();
+	test_entity_subtree ();
+	test_entity_root_kinds ();
 	test_preconditions ();
 	test_deep_traversal ();
 	testsuite_end ();

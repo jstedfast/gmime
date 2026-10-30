@@ -362,34 +362,45 @@ As an example, if you wanted to rip out all of the attachments of a message, you
 something like this:
 
 ```c
-GMimePartIter *iter = g_mime_part_iter_new (message);
-GPtrArray *attachments = g_ptr_array_new ();
-GPtrArray *multiparts = g_ptr_array_new ();
+GMimeIterator *iter = g_mime_iterator_new (message);
+GPtrArray *attachments = g_ptr_array_new_with_free_func (g_object_unref);
+GPtrArray *multiparts = g_ptr_array_new_with_free_func (g_object_unref);
 
 /* collect our list of attachments and their parent multiparts */
-while (g_mime_part_iter_next (iter)) {
-    GMimeEntity *current = g_mime_part_iter_get_current (iter);
-    GMimeEntity *parent = g_mime_part_iter_get_parent (iter);
+while (g_mime_iterator_move_next (iter)) {
+    GMimeEntity *current = g_mime_iterator_get_current (iter);
+    GMimeEntity *parent = g_mime_iterator_get_parent (iter);
 
     if (GMIME_IS_MULTIPART (parent) && GMIME_IS_PART (current)) {
         GMimePart *part = (GMimePart *) current;
 
         if (g_mime_part_is_attachment (part)) {
             /* keep track of each attachment's parent multipart */
-            g_ptr_array_add (multiparts, parent);
-            g_ptr_array_add (attachments, part);
+            g_ptr_array_add (multiparts, g_object_ref (parent));
+            g_ptr_array_add (attachments, g_object_ref (part));
         }
     }
 }
 
-/* now remove each attachment its parent multipart... */
+g_object_unref (iter);
+
+/* now remove each attachment from its parent multipart... */
 for (int i = 0; i < attachments->len; i++) {
     GMimeMultipart *multipart = (GMimeMultipart *) multiparts->pdata[i];
     GMimeEntity *attachment = (GMimeEntity *) attachments->pdata[i];
 
     g_mime_multipart_remove (multipart, attachment);
 }
+
+g_ptr_array_unref (attachments);
+g_ptr_array_unref (multiparts);
 ```
+
+For a MIME subtree, use `g_mime_iterator_new_for_entity (entity)`. Iteration
+includes the root and starts before it; always call `move_next()` before reading
+the current entity. Subtree paths are relative to that root: a multipart root
+is `0`, its children are `1`, `2`, etc., and a non-multipart root is `1`.
+Use `skip_children()` to prune traversal and `move_to()` to navigate by path.
 
 ### Creating a Simple Message
 

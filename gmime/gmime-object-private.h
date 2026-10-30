@@ -496,6 +496,7 @@ struct _GMimeIterator {
 	GObject parent_instance;
 
 	GMimeMessage *message;
+	GMimeEntity *root;
 	GArray *frames;
 	gboolean move_first;
 	gboolean skip_requested;

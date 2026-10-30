@@ -1062,6 +1062,7 @@ GMimePartClass
 <FILE>gmime-iterator</FILE>
 GMimeIterator
 g_mime_iterator_new
+g_mime_iterator_new_for_entity
 g_mime_iterator_get_message
 g_mime_iterator_is_valid
 g_mime_iterator_get_current
@@ -1083,31 +1084,6 @@ g_mime_iterator_get_type
 GMIME_TYPE_ITERATOR
 GMIME_ITERATOR
 GMIME_IS_ITERATOR
-</SECTION>
-
-<SECTION>
-<FILE>gmime-part-iter</FILE>
-GMimePartIter
-g_mime_part_iter_new
-g_mime_part_iter_free
-g_mime_part_iter_clone
-g_mime_part_iter_reset
-g_mime_part_iter_jump_to
-g_mime_part_iter_is_valid
-g_mime_part_iter_next
-g_mime_part_iter_prev
-g_mime_part_iter_get_toplevel
-g_mime_part_iter_get_current
-g_mime_part_iter_get_parent
-g_mime_part_iter_get_path
-g_mime_part_iter_replace
-g_mime_part_iter_remove
-
-<SUBSECTION Private>
-g_mime_part_iter_get_type
-
-<SUBSECTION Standard>
-GMIME_TYPE_PART_ITER
 </SECTION>
 
 <SECTION>
