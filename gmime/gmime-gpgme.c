@@ -507,11 +507,12 @@ _g_mime_gpgme_serialize (GMimeEntity *entity, GError **error)
 GMimeEntity *
 _g_mime_gpgme_parse (GMimeStream *stream, GError **error)
 {
-	GMimeStream *filtered = g_mime_stream_filter_new (normalized);
 	GMimeFilter *filter = g_mime_filter_dos2unix_new (FALSE);
 	GMimeStream *normalized = g_mime_stream_mem_new ();
+	GMimeStream *filtered;
 	GMimeEntity *entity = NULL;
 
+	filtered = g_mime_stream_filter_new (normalized);
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
 	g_object_unref (filter);
 
@@ -532,6 +533,120 @@ _g_mime_gpgme_parse (GMimeStream *stream, GError **error)
 	g_object_unref (normalized);
 
 	return entity;
+}
+
+static gboolean
+check_openpgp_block (GMimeOpenPGPBlock *block, gpgme_ctx_t ctx, gboolean decrypt, GError **error)
+{
+	GMimeOpenPGPBlockKind kind = g_mime_openpgp_block_get_kind (block);
+
+	if (!_g_mime_gpgme_check_protocol (ctx, GPGME_PROTOCOL_OpenPGP, error))
+		return FALSE;
+
+	if (g_mime_openpgp_block_get_status (block) != GMIME_OPENPGP_BLOCK_COMPLETE) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot process an incomplete or malformed OpenPGP block."));
+		return FALSE;
+	}
+
+	if (kind != GMIME_OPENPGP_BLOCK_MESSAGE && (decrypt || kind != GMIME_OPENPGP_BLOCK_SIGNED_MESSAGE)) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("This OpenPGP block kind does not support the requested operation."));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+/**
+ * g_mime_openpgp_block_verify: (skip)
+ * @block: a complete clear-signed or PGP MESSAGE block
+ * @ctx: a borrowed GPGME OpenPGP context
+ * @output: stream for extracted bytes
+ * @result: (out) (optional): a retained native verification result
+ * @error: return location for an error
+ *
+ * Verifies one block without modifying it, its source part, or caller
+ * settings. PGP MESSAGE armor may contain opaque signed data; the engine
+ * determines whether verification is possible. Standalone signatures and
+ * keys are not supported. No key is automatically imported.
+ *
+ * Inspect every signature's status and validity; successful completion
+ * does not authenticate surrounding text or neighboring blocks. Discard
+ * partial output on failure. Release every non-NULL result with
+ * gpgme_result_unref(), including diagnostic results returned on failure.
+ *
+ * Returns: %TRUE if the operation completed, not a signature-validity flag.
+ **/
+gboolean
+g_mime_openpgp_block_verify (GMimeOpenPGPBlock *block, gpgme_ctx_t ctx, GMimeStream *output,
+			     gpgme_verify_result_t *result, GError **error)
+{
+	GMimeStream *input;
+	gboolean success;
+
+	if (result)
+		*result = NULL;
+
+	g_return_val_if_fail (GMIME_IS_OPENPGP_BLOCK (block), FALSE);
+	g_return_val_if_fail (GMIME_IS_STREAM (output), FALSE);
+
+	if (!check_openpgp_block (block, ctx, FALSE, error))
+		return FALSE;
+
+	input = g_mime_openpgp_block_open_stream (block);
+	success = g_mime_gpgme_verify (ctx, input, NULL, output, result, error);
+	g_object_unref (input);
+
+	return success;
+}
+
+/**
+ * g_mime_openpgp_block_decrypt: (skip)
+ * @block: a complete PGP MESSAGE block
+ * @ctx: a borrowed GPGME OpenPGP context
+ * @output: stream for decrypted bytes
+ * @decrypt_result: (out) (optional): a retained decryption result
+ * @verify_result: (out) (optional): a retained verification result
+ * @error: return location for an error
+ *
+ * Decrypts and verifies embedded signatures for this block only. Neither
+ * the snapshot nor the source part is modified. Caller context settings,
+ * including session-key flags and passphrase handling, are preserved.
+ * Output is not interpreted as MIME, HTML, or another inline-PGP document.
+ *
+ * Decryption alone does not authenticate a sender. Inspect native signature
+ * results and keep each output associated with its source block. Discard
+ * partial output on failure; release all returned results using
+ * gpgme_result_unref(), even if the operation failed.
+ *
+ * Returns: %TRUE if the operation completed.
+ **/
+gboolean
+g_mime_openpgp_block_decrypt (GMimeOpenPGPBlock *block, gpgme_ctx_t ctx, GMimeStream *output,
+			      gpgme_decrypt_result_t *decrypt_result, gpgme_verify_result_t *verify_result,
+			      GError **error)
+{
+	GMimeStream *input;
+	gboolean success;
+
+	if (decrypt_result)
+		*decrypt_result = NULL;
+
+	if (verify_result)
+		*verify_result = NULL;
+
+	g_return_val_if_fail (GMIME_IS_OPENPGP_BLOCK (block), FALSE);
+	g_return_val_if_fail (GMIME_IS_STREAM (output), FALSE);
+
+	if (!check_openpgp_block (block, ctx, TRUE, error))
+		return FALSE;
+
+	input = g_mime_openpgp_block_open_stream (block);
+	success = g_mime_gpgme_decrypt (ctx, TRUE, input, output, decrypt_result, verify_result, error);
+	g_object_unref (input);
+
+	return success;
 }
 
 #endif /* ENABLE_CRYPTO */

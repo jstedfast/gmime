@@ -85,6 +85,7 @@
 <!ENTITY GMimeFilterUnix2Dos SYSTEM "xml/gmime-filter-unix2dos.xml">
 <!ENTITY GMimeFilterWindows SYSTEM "xml/gmime-filter-windows.xml">
 <!ENTITY gmime-gpgme SYSTEM "xml/gmime-gpgme.xml">
+<!ENTITY gmime-openpgp SYSTEM "xml/gmime-openpgp.xml">
 <!ENTITY GMimeAutocrypt SYSTEM "xml/gmime-autocrypt.xml">
 
 <!ENTITY index-Class-Tree SYSTEM "tree_index.sgml">
@@ -310,6 +311,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     <chapter id="GPGMEIntegration">
       <title>GPGME Integration</title>
       &gmime-gpgme;
+      &gmime-openpgp;
     </chapter>
   </part>
 </book>

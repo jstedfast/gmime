@@ -76,6 +76,12 @@ GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMess
 								     GDateTime *now, gpgme_ctx_t ctx,
 								     GError **err);
 
+gboolean g_mime_openpgp_block_verify (GMimeOpenPGPBlock *block, gpgme_ctx_t ctx,
+				     GMimeStream *output, gpgme_verify_result_t *result, GError **error);
+gboolean g_mime_openpgp_block_decrypt (GMimeOpenPGPBlock *block, gpgme_ctx_t ctx,
+				      GMimeStream *output, gpgme_decrypt_result_t *decrypt_result,
+				      gpgme_verify_result_t *verify_result, GError **error);
+
 G_END_DECLS
 
 #endif /* __GMIME_GPGME_H__ */

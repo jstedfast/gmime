@@ -29,6 +29,7 @@ normal_tests = [
   'test-received-clauses', 'test-received',
   'test-anonymizer',
   'test-content-type',
+  'test-openpgp',
   'test-reader', 'test-parser-model', 'test-roundtrip',
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',
   'test-encodings', 'test-codecs', 'test-yenc', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
@@ -106,6 +107,9 @@ endforeach
 
 foreach name, program : test_programs
   data_name = name.substring(5)
+  if name == 'test-openpgp'
+    data_name = 'pgp'
+  endif
   if name in ['test-streams', 'test-cat']
     data_dir = 'data' / data_name
   else
@@ -119,7 +123,7 @@ foreach name, program : test_programs
     workdir: meson.current_build_dir(),
     is_parallel: not serial,
     timeout: 180,
-    suite: (have_crypto and name in crypto_tests + ['test-autocrypt']) ? 'crypto' : 'core',
+    suite: (have_crypto and name in crypto_tests + ['test-autocrypt', 'test-openpgp']) ? 'crypto' : 'core',
   )
 endforeach
 

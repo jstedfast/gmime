@@ -426,8 +426,14 @@ Never use `g_object_unref()` on native keys or results.
 The stream adapter holds a reference to its `GMimeStream` until
 `gpgme_data_release()`. It starts at the current stream position and neither
 rewinds nor closes it. Discard partial output when an operation fails.
-Existing inline helpers still mutate a part's content on success; new
-non-mutating multi-block inline-PGP processing is separate work.
+Existing inline helpers still mutate a part's content on success.
+For non-mutating multi-block receiving, use `g_mime_part_scan_openpgp()`
+and process each `GMimeOpenPGPBlock` independently with
+`g_mime_openpgp_block_verify()` or `g_mime_openpgp_block_decrypt()`.
+The document retains all decoded bytes, including unprotected gaps;
+large snapshots automatically spill to temporary files. Discovery works
+without crypto and is introspectable. See InlinePGP.md for recovery,
+stream lifetimes, and authentication boundaries.
 
 Native crypto methods are deliberately excluded from GIR/Vala. Ordinary
 MIME objects, compression, OpenPGP detection and parsing remain available
