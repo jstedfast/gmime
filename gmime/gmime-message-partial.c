@@ -85,12 +85,12 @@ message_partial_get_integer (GMimeMessagePartial *partial, const char *name)
 	if (!content_type || !(value = g_mime_content_type_get_parameter (content_type, name)))
 		return -1;
 
-	value += strspn (value, " \t\r\n\v\f");
+	skip_lwsp (&value);
 
 	if (!_g_mime_parse_int32 (&value, &number))
 		return -1;
 
-	value += strspn (value, " \t\r\n\v\f");
+	skip_lwsp (&value);
 
 	return *value ? -1 : number;
 }
@@ -170,7 +170,7 @@ g_mime_message_partial_get_id (GMimeMessagePartial *partial)
  *
  * Returns: the message/partial part number or %-1 if absent, malformed,
  * or outside the nonnegative 32-bit integer range. Surrounding ASCII
- * whitespace is allowed, but signs and trailing non-whitespace are not.
+ * linear whitespace is allowed, but signs and trailing non-whitespace are not.
  **/
 int
 g_mime_message_partial_get_number (GMimeMessagePartial *partial)
@@ -190,7 +190,7 @@ g_mime_message_partial_get_number (GMimeMessagePartial *partial)
  *
  * Returns: the total number of message/partial parts needed to
  * reconstruct the original message or %-1 if absent, malformed, or outside
- * the nonnegative 32-bit integer range. Surrounding ASCII whitespace is
+ * the nonnegative 32-bit integer range. Surrounding ASCII linear whitespace is
  * allowed, but signs and trailing non-whitespace are not.
  **/
 int

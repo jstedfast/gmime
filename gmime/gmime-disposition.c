@@ -239,7 +239,8 @@ _g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str,
 		inptr++;
 	
 	value = g_strndup (str, (size_t) (inptr - str));
-	disposition->disposition = g_strstrip (value);
+	disposition->disposition = g_mime_strdup_trim (value);
+	g_free (value);
 	
 	/* parse the parameters, if any */
 	if (*inptr++ == ';' && *inptr && (params = _g_mime_param_list_parse (options, inptr, offset))) {

@@ -987,7 +987,8 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
  * @boundary: a valid MIME boundary (1 to 70 ASCII characters), or %NULL to autogenerate one
  *
  * Sets @boundary as the boundary on the multipart. If @boundary is
- * %NULL, then a boundary will be auto-generated for you.
+ * %NULL, then a boundary will be auto-generated for you. Valid boundary
+ * values are preserved without trimming, including leading spaces.
  **/
 void
 g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)

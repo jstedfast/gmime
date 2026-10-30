@@ -2375,11 +2375,11 @@ test_message_priorities (void)
 		{ " normal\n", 1, 1, 3 },
 		{ " urgent\n", 1, 2, 3 },
 		{ " NON-URGENT\n", 1, 0, 3 },
-		{ " \302\240HIGH\342\200\203\n", 2, 1, 3 },
-		{ "\vlow\f\n", 0, 1, 3 },
+		{ " \302\240HIGH\342\200\203\n", 1, 1, 3 },
+		{ "\vlow\f\n", 1, 1, 3 },
 		{ " =?utf-8?q?high?=\n", 2, 1, 3 },
 		{ " =?utf-8?q?urgent?=\n", 1, 2, 3 },
-		{ " =?utf-8?q?=C2=A0HIGH=E2=80=83?=\n", 2, 1, 3 },
+		{ " =?utf-8?q?=C2=A0HIGH=E2=80=83?=\n", 1, 1, 3 },
 		{ " =\r\n?utf-8?q?high?=\n", 1, 1, 3 },
 		{ " =?utf-8?q?high?\r=\n", 1, 1, 3 },
 		{ " =?utf-8?q?ur=0D=0Agent?=\n", 1, 2, 3 },
@@ -3660,11 +3660,15 @@ test_text_part_formats (void)
 
 	part = g_mime_text_part_new ();
 	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		gboolean linear = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+			whitespace[i] == '\r' || whitespace[i] == '\n';
+
 		encoded[g_unichar_to_utf8 (whitespace[i], encoded)] = '\0';
 		parameter = g_strconcat (encoded, "FlOwEd", encoded, NULL);
 		g_mime_entity_set_content_type_parameter (GMIME_ENTITY (part), "format", parameter);
-		check (g_mime_text_part_is_flowed (part) && g_mime_text_part_get_format (part) == GMIME_TEXT_FORMAT_FLOWED,
-		       "flowed text accepts surrounding .NET Unicode whitespace");
+		check (g_mime_text_part_is_flowed (part) == linear &&
+		       g_mime_text_part_get_format (part) == (linear ? GMIME_TEXT_FORMAT_FLOWED : GMIME_TEXT_FORMAT_PLAIN),
+		       "flowed text accepts only surrounding ASCII linear whitespace");
 		g_free (parameter);
 	}
 	g_mime_entity_set_header (GMIME_ENTITY (part), "Content-Type", "text/html; format=flowed", NULL);
@@ -8727,7 +8731,7 @@ test_content_md5_errors (void)
 	GError *error = NULL;
 	char *digest, *raw;
 	guint i;
-	const char *blank[] = { NULL, "", " \t\r\n", "\f" };
+	const char *blank[] = { NULL, "", " \t\r\n" };
 
 	check (g_mime_part_compute_content_md5 (part, &error) == NULL &&
 	       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION),

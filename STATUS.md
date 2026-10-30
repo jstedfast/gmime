@@ -80,8 +80,8 @@ This is an incremental migration, not yet a declaration of feature parity.
   unwrapped base64 digest without changing headers or content.
   g_mime_part_set_content_md5(part, NULL) now removes every matching header
   instead of generating a digest; compute and assign explicitly when needed.
-  Part-property trimming uses g_strstrip() for ASCII whitespace; generic
-  header decoding is unchanged. Empty values are retained, and unchanged
+  Part-property trimming removes only ASCII linear whitespace (SP, HTAB,
+  CR and LF), as does header unfolding. Empty values are retained, and unchanged
   assignments preserve existing raw headers.
   g_mime_part_verify_content_md5() now takes a final GError ** argument:
   absent/blank values, missing content and mismatches return FALSE without
@@ -1201,8 +1201,8 @@ comment names retain literal quotes, backslashes, and embedded newlines.
 Direct phrase encoding, general string unquoting, interior whitespace in
 programmatically assigned names, and untouched raw headers retain tabs.
 Address constructors and the name setter trim only leading and trailing
-ASCII linear whitespace (SP, HTAB, CR and LF), intentionally differing
-from MimeKit. VT, FF, Unicode whitespace and interior whitespace are
+ASCII linear whitespace (SP, HTAB, CR and LF), matching current MimeKit.
+VT, FF, Unicode whitespace and interior whitespace are
 preserved, and NULL remains distinct from an empty name.
 Setting an equivalent normalized name does not emit a change event
 or regenerate its owning header, preserving untouched raw folding.
@@ -1866,9 +1866,9 @@ Native Windows execution remains unvalidated.
 ### Linear-whitespace header unfolding
 
 `g_mime_header_unfold()` ports MimeKit's public `Header.Unfold()` for
-NUL-terminated UTF-8 text, intentionally restricting edge trimming to
-linear whitespace (SP, HTAB, CR and LF) instead of MimeKit's Unicode
-whitespace. NULL and linear-whitespace-only inputs return an owned empty
+NUL-terminated UTF-8 text, restricting edge trimming to linear whitespace
+(SP, HTAB, CR and LF), matching current MimeKit.
+NULL and linear-whitespace-only inputs return an owned empty
 string. VT, FF, Unicode whitespace and internal whitespace are retained,
 and CR/LF characters are removed everywhere.
 Encoded words are not decoded by this standalone display helper.
@@ -1879,8 +1879,8 @@ reuse this implementation instead of their private normalization helper.
 The ordinary decoded-value getter uses the same unfolding. NBSP, NEL and
 other Unicode whitespace remain at decoded boundaries, including
 whitespace from encoded words. Non-whitespace characters such as BOM and
-zero-width space also remain intact. The existing shared Unicode
-whitespace classifier is retained for other consumers.
+zero-width space also remain intact. MIME token normalization now uses
+the same ASCII linear-whitespace classification.
 
 Raw GBytes, parser options and notification behavior are unchanged, and
 decoded NULs still become U+FFFD before unfolding. The legacy
@@ -1892,7 +1892,7 @@ boundaries, getter caches, raw preservation, source/clone lifetimes,
 checked construction and assignment, encoded-word whitespace, binary
 values, NULL inputs and non-whitespace controls.
 The earlier MimeKit differential covered the superseded Unicode-trimming
-policy; it does not apply to this intentional whitespace divergence.
+policy; current MimeKit now also uses ASCII linear whitespace.
 Native Windows execution is unvalidated.
 
 ### Common header identifiers
@@ -2618,8 +2618,8 @@ As with other native string APIs, inputs are NUL-terminated, not counted.
 Reassigning the current cached ID preserves its raw header; aliased inputs
 are safe. Message-ID remains non-nullable. A NULL Content-ID clears the
 cache and removes all matching headers, including malformed duplicates.
-Header, address-name, and ID setters trim only native linear whitespace,
-rather than .NET's broader Unicode whitespace classification.
+Header, address-name, and ID setters trim only ASCII linear whitespace,
+matching current MimeKit rather than .NET's broader whitespace classification.
 
 GMimeMessage now exposes In-Reply-To and Resent-Message-Id accessors.
 Both setters reuse complete msg-id assignment validation, normalization,
@@ -2656,7 +2656,7 @@ GMimeMessage now exposes independent Importance, Priority, and X-Priority
 properties through GMimeMessageImportance, GMimeMessagePriority, and
 GMimeXMessagePriority. Missing or unrecognized headers yield normal values.
 Importance and Priority compare decoded text case-insensitively after
-trimming Unicode whitespace. X-Priority reads an unsigned Int32 decimal
+trimming ASCII linear whitespace. X-Priority reads an unsigned Int32 decimal
 prefix after ASCII folding whitespace, clamps valid numbers to 1 through 5,
 and treats overflow or missing digits as normal. It does not skip comments,
 decode encoded words, or accept signs.
@@ -2760,7 +2760,7 @@ GMimeTextPart exposes get_format() and is_plain(), is_flowed(), is_html(),
 is_enriched(), and is_rich_text(). These inspect the current Content-Type
 without modifying headers or decoding content. Predicates ignore ASCII case;
 enriched includes text/richtext, and RTF includes application/rtf. Flowed
-text remains plain text and trims surrounding Unicode whitespace from the
+text remains plain text and trims surrounding ASCII linear whitespace from the
 format parameter before comparison.
 
 Classification preserves MimeKit's fallback to Plain for unrecognized
@@ -2876,9 +2876,9 @@ GMimePart.content_location field must migrate to these accessors.
 
 Getters lazily read the first matching decoded header and trim surrounding
 ASCII linear whitespace (SP, HTAB, CR and LF), not VT, FF or Unicode
-whitespace. Generic header decoding remains Unicode-aware and can remove
-padding before the URI loader runs. Remaining whitespace is subject to
-the existing URI validation rules. Invalid first values return NULL without
+whitespace. Generic header decoding preserves this non-linear padding.
+Remaining whitespace is subject to the existing URI validation rules.
+Invalid first values return NULL without
 trying duplicates.
 Reads preserve raw headers; matching edits, insertions, removals, indexed
 replacement, and clearing invalidate the cache. Setters replace duplicate
@@ -2959,9 +2959,8 @@ Nonnegative values are durations in seconds, including zero.
 The getter parses only the first decoded Content-Duration header, accepting
 ASCII decimal digits with surrounding ASCII linear whitespace (SP, HTAB, CR
 and LF) and leading zeros up to 2147483647. VT, FF and Unicode whitespace in
-the decoded value are not skipped. Generic header decoding still performs
-Unicode-aware unfolding, so raw header padding may already have been removed
-before this parser runs. Signs, comments, fractions, and overflow are invalid.
+the decoded value are not skipped. Generic header decoding preserves this
+non-linear padding. Signs, comments, fractions, and overflow are invalid.
 A malformed first header does not fall back to later duplicates. Reads
 preserve raw bytes; matching header edits, including later duplicates, invalidate the
 lazy cache. This applies to GMimeTextPart as well as ordinary GMimePart.
@@ -2976,14 +2975,15 @@ until matching headers change. Header clearing resets the lazy cache.
 ### Content description
 
 GMimePart's Content-Description property uses MimeKit's lazy
-first-header lookup with ASCII whitespace trimming. Reads preserve raw
+first-header lookup with ASCII linear whitespace trimming. Reads preserve raw
 headers, and matching header edits, removals, additions, or clearing
 invalidate the cache. Later duplicates do not override the first header.
 The getter returns a borrowed UTF-8 string, or NULL for an absent header;
-values empty after g_strstrip() return an empty string.
+values empty after trimming return an empty string.
 
 The setter accepts NULL to remove all matching headers and trims ASCII
-whitespace from non-NULL assignments with g_strstrip(). An assignment
+linear whitespace from non-NULL assignments. VT, FF and Unicode whitespace
+are preserved. An assignment
 equal to the current cached value preserves raw headers and duplicates;
 before the first read, assignment replaces duplicates even when the first
 value is already equal.
@@ -3799,8 +3799,8 @@ diagnostic before virtual dispatch and leave headers, boundary parameters
 and parsed markers unchanged. Values are not trimmed; valid leading and
 internal spaces are retained. Empty strings, control bytes, non-ASCII values
 and overlength boundaries are rejected. This deliberately resolves
-MimeKit's validation TODO rather than retaining its permissive Unicode
-assignment and trimming behavior.
+MimeKit's validation TODO rather than retaining its permissive assignment
+behavior.
 
 The reader's existing boundary validator is shared with the setter without
 changing tolerant parsing or compliance reporting. Low-level Content-Type
@@ -3814,10 +3814,9 @@ so borrowed boundary strings and substrings remain safe.
 Writer and anonymizer generated markers use the boundary's bytes directly.
 Their Unicode ASCII-replacement and UTF-16 byte-cast paths are unnecessary
 for validated ASCII boundaries and have been removed. The boundary Unicode
-trim helper has also been removed; part-header and filename trimming is
-private to GMimePart and uses g_strstrip() on an owned copy, preserving
-Unicode whitespace and vertical tabs. Generic decoded-header whitespace
-handling is unchanged. Raw opening, closing and trailing markers remain
+trim helper has also been removed. Part headers use the shared ASCII
+linear-whitespace trimmer; filename lookup preserves parameter values
+without trimming. Raw opening, closing and trailing markers remain
 length-aware and byte-preserving, including NUL and non-UTF-8 bytes.
 Truncation, epilogue and closing-newline policies
 and applicable source comments are unchanged.
@@ -4387,16 +4386,16 @@ retain their existing behavior.
 ### Part filename property
 
 GMimePart's get_filename()/set_filename() use MimeKit's FileName parameter
-selection and assignment semantics, with ASCII-only edge trimming.
+selection and assignment semantics without edge trimming.
 The getter selects Content-Disposition's filename
 parameter before Content-Type's name, falling back only when filename is
-absent. It trims surrounding ASCII whitespace without modifying the
-parameters or raw headers. Filenames empty after g_strstrip() return ""
-and do not trigger the fallback. Filenames remain untrusted and are not
+absent. It preserves the exact parameter value without modifying the
+parameters or raw headers. Empty and all-whitespace filenames do not
+trigger the fallback. Filenames remain untrusted and are not
 sanitized for filesystem use.
 
 The native getter still returns a borrowed UTF-8 string. It refreshes an
-owned trimmed copy from the live models on each lookup, including direct
+owned copy from the live models on each lookup, including direct
 parameter edits and model/header replacements. Equal results preserve the
 borrowed pointer; a different result or part finalization invalidates it.
 
@@ -4414,10 +4413,11 @@ These semantics apply to GMimeTextPart as well as GMimePart.
 
 GMimePart's get_content_md5()/set_content_md5() now follow MimeKit's
 ContentMd5 property's lazy first-header lookup and assignment semantics.
-Reads trim surrounding ASCII whitespace without rewriting raw headers.
+Reads trim surrounding ASCII linear whitespace without rewriting raw headers.
 Matching header additions, edits, removals and clearing invalidate the
 cache; later duplicates never override the first value. An absent header
-returns NULL, while values empty after g_strstrip() return "".
+returns NULL, while values empty after trimming return "". VT, FF and
+Unicode whitespace are preserved.
 
 Assignments compare against the loaded cache before trimming. Equal
 assignments preserve raw headers and duplicates; assignment before a read
@@ -4439,8 +4439,8 @@ g_mime_content_encoding_from_string() now ports MimeUtils.TryParse() for
 Content-Transfer-Encoding names. It skips leading ASCII linear whitespace
 (SP, HTAB, CR and LF) and matches the first token case-insensitively,
 stopping at linear whitespace or a semicolon. VT, FF and Unicode whitespace
-are not skipped or accepted as delimiters, intentionally differing from
-MimeKit. Trailing text after either delimiter is ignored,
+are not skipped or accepted as delimiters, matching current MimeKit.
+Trailing text after either delimiter is ignored,
 including the semicolon suffix sometimes added by Google Docs. Comments
 are not skipped; "base64 (comment)" is recognized, but "base64(comment)"
 and "(comment) base64" are not.
@@ -4453,8 +4453,8 @@ spellings; emitted encoding names remain canonical.
 NULL, empty names and unrecognized tokens return
 UNSPECIFIED. The internal parser scans bytes within the supplied length;
 non-ASCII and malformed UTF-8 bytes before a delimiter cannot match a
-supported name. Generic header decoding remains Unicode-aware and can
-remove padding before decoded-header consumers call this helper.
+supported name. Generic header decoding preserves non-linear padding
+before decoded-header consumers call this helper.
 Named encoder/decoder filter factories now reuse this shared
 helper instead of allocating and parsing a temporary token.
 This applies to legacy parser consumers of the shared helper.
@@ -4680,8 +4680,8 @@ number >= 1, and total >= number. The getters read live Content-Type
 parameters, including direct parameter edits and header/type replacement.
 The id is borrowed; absent or invalid numeric values return -1 instead of
 MimeKit's nullable integer. Zero remains valid when reading parameters.
-Integer parsing accepts decimal digits and surrounding SP, HTAB, CR, LF,
-VT, or FF, but rejects signs, Unicode whitespace, trailing garbage, and
+Integer parsing accepts decimal digits and surrounding SP, HTAB, CR or LF,
+but rejects signs, VT, FF, Unicode whitespace, trailing garbage, and
 values above Int32.MaxValue without changing the parameter or raw header.
 
 The obsolete public id/number/total cache fields were removed from the
@@ -4872,6 +4872,34 @@ leak detection disabled for the previously documented unchanged leaks.
 Live Python GI verifies the new API round trip, identity, nullable
 ids/content, header offsets, unchanged caller order, errors and independent
 body lifetime. Native C validation remains under WSL, not native Windows.
+
+## ASCII MIME whitespace normalization
+
+Ports MimeKit commit 20ab449ec5ee334efd6c5d909424ee61971267d5.
+Shared trimming and token comparison recognize only SP, HTAB, CR and LF.
+Content-Description, Content-MD5, decoded address names, disposition text,
+flowed format, message priority and cryptographic protocol lookup preserve
+VT, FF and Unicode whitespace rather than treating them as padding.
+Message/partial numbers reject non-linear padding, retaining unsigned
+Int32 parsing and live parameter reads. Filename lookup preserves the exact
+Content-Disposition filename or fallback Content-Type name without trimming.
+
+Existing header unfolding, message-ID normalization, URI and duration
+parsing, transfer-encoding names, report types and international address
+folding already use the required linear-whitespace rules. Persistent
+regressions cover these surfaces, filename/boundary round trips and protocol
+lookup without rewriting its source parameter.
+
+GMime retains RFC 2046 boundary validation and NULL-to-generate behavior,
+including preservation of valid leading spaces. Its permissive disposition
+parser still retains arbitrary disposition text rather than adopting
+MimeKit's invalid-token fallback. There is no native TNEF converter or
+Authentication-Results model to update in this increment.
+
+The WSL Meson build and dedicated whitespace suite pass. Of 46 suites,
+42 pass; the reader, partial-message, mbox and PGP suites reproduce their
+same failures against unchanged HEAD. Native Windows execution remains
+unvalidated.
 
 ## Remaining migration phases
 

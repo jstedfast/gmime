@@ -545,8 +545,8 @@ g_mime_part_new_with_content_type_string (GMimeParserOptions *options, const cha
  * @mime_part: a #GMimePart object
  * @description: (nullable): a UTF-8 description, or %NULL to remove it
  *
- * Sets Content-Description, trimming surrounding ASCII whitespace with
- * g_strstrip().
+ * Sets Content-Description, trimming surrounding ASCII linear whitespace
+ * (SP, HTAB, CR and LF). Other whitespace is preserved.
  * Empty descriptions are allowed; %NULL removes all matching headers.
  * Assigning the current cached value preserves raw headers and duplicates.
  * Assignment before the first read replaces matching duplicates even if
@@ -570,7 +570,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 	
 	/* Compare before trimming, as MimeKit does, but copy before freeing:
 	 * description may point into the getter's borrowed cached value. */
-	value = description ? g_strstrip (g_strdup (description)) : NULL;
+	value = g_mime_strdup_trim (description);
 	g_free (priv->content_description);
 	priv->content_description = value;
 	priv->content_description_loaded = TRUE;
@@ -593,7 +593,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
  * @mime_part: a #GMimePart object
  *
  * Gets the first Content-Description value, trimming surrounding ASCII
- * whitespace without changing the header. Matching header changes
+ * linear whitespace without changing the header. Matching header changes
  * invalidate the cached value; duplicate headers do not override the first.
  *
  * Returns: (nullable): the borrowed content description, or %NULL if absent.
@@ -618,7 +618,7 @@ g_mime_part_get_content_description (GMimePart *mime_part)
 
 		if (header) {
 			value = g_mime_header_get_value (header);
-			priv->content_description = value ? g_strstrip (g_strdup (value)) : NULL;
+			priv->content_description = g_mime_strdup_trim (value);
 		}
 
 		priv->content_description_loaded = TRUE;
@@ -763,8 +763,8 @@ g_mime_part_get_content_id (GMimePart *mime_part)
  * @mime_part: a #GMimePart object
  * @content_md5: (nullable): the UTF-8 digest value, or %NULL to remove it
  *
- * Sets the Content-MD5 header, trimming leading and trailing ASCII
- * whitespace with g_strstrip(). Empty values are allowed. This does not
+ * Sets the Content-MD5 header, trimming leading and trailing ASCII linear
+ * whitespace (SP, HTAB, CR and LF). Empty values are allowed. This does not
  * read the content or compute a digest; use
  * g_mime_part_compute_content_md5() separately.
  * Assigning the current cached value preserves raw headers and duplicates.
@@ -789,7 +789,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 
 	/* Compare before trimming, but copy before freeing: callers may pass
 	 * the getter's borrowed value or a substring back to this setter. */
-	value = content_md5 ? g_strstrip (g_strdup (content_md5)) : NULL;
+	value = g_mime_strdup_trim (content_md5);
 	g_free (priv->content_md5);
 	priv->content_md5 = value;
 	priv->content_md5_loaded = TRUE;
@@ -955,10 +955,10 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part, GError **error)
  * g_mime_part_get_content_md5:
  * @mime_part: a #GMimePart object
  *
- * Gets the first Content-MD5 value, trimming surrounding ASCII whitespace
+ * Gets the first Content-MD5 value, trimming surrounding ASCII linear whitespace
  * without changing raw headers. Matching header changes invalidate the
  * cached value; later duplicates do not override the first header.
- * Missing headers return %NULL; values empty after g_strstrip() return "".
+ * Missing headers return %NULL; values empty after trimming return "".
  *
  * Returns: (nullable) (transfer none): the borrowed, trimmed digest value.
  **/
@@ -981,7 +981,7 @@ g_mime_part_get_content_md5 (GMimePart *mime_part)
 		header = g_mime_header_list_get_header (entity_priv->headers, "Content-Md5");
 		if (header) {
 			value = g_mime_header_get_value (header);
-			priv->content_md5 = value ? g_strstrip (g_strdup (value)) : NULL;
+			priv->content_md5 = g_mime_strdup_trim (value);
 		}
 
 		priv->content_md5_loaded = TRUE;
@@ -1391,9 +1391,9 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
  * @mime_part: a #GMimePart object
  *
  * Gets the Content-Disposition filename, falling back to the Content-Type
- * name only if the filename parameter is absent. Trims surrounding ASCII
- * whitespace without changing either parameter or the raw headers. Empty
- * and all-whitespace filenames do not trigger the fallback.
+ * name only if the filename parameter is absent. Parameter values are
+ * preserved without trimming or changing the raw headers. Empty and
+ * all-whitespace filenames do not trigger the fallback.
  *
  * The returned filename is untrusted and is not sanitized for filesystem use.
  *
@@ -1416,8 +1416,8 @@ g_mime_part_get_filename (GMimePart *mime_part)
 		filename = g_mime_entity_get_content_type_parameter (entity, "name");
 
 	/* Re-read the live models on every lookup, including direct parameter
-	 * edits. Keep a trimmed copy to preserve the native borrowed-string API. */
-	value = filename ? g_strstrip (g_strdup (filename)) : NULL;
+	 * edits. Keep a copy to preserve the native borrowed-string API. */
+	value = g_strdup (filename);
 	priv = _g_mime_part_get_private (mime_part);
 
 	if (g_strcmp0 (priv->filename, value)) {

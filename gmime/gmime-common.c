@@ -94,13 +94,13 @@ g_mime_strcase_hash (gconstpointer key)
 
 /**
  * g_mime_strdup_trim:
- * @str: The string to duplicate and trim
+ * @str: (nullable): The string to duplicate and trim
  *
  * Duplicates the given input string while also trimming leading and
- * trailing whitespace.
+ * trailing ASCII linear whitespace (SP, HTAB, CR and LF).
  *
- * Returns a duplicate string, minus any leading and trailing
- * whitespace that the original string may have contained.
+ * Returns: (nullable) (transfer full): a duplicate string without leading
+ * or trailing linear whitespace, or %NULL if @str is %NULL.
  **/
 char *
 g_mime_strdup_trim (const char *str)
@@ -108,6 +108,9 @@ g_mime_strdup_trim (const char *str)
 	register const char *inptr = str;
 	register const char *end;
 	const char *start;
+
+	if (!str)
+		return NULL;
 	
 	while (is_lwsp (*inptr))
 		inptr++;
@@ -139,23 +142,6 @@ _g_mime_is_valid_boundary (const char *boundary)
 	return TRUE;
 }
 
-static const char *
-skip_unicode_whitespace (const char *value)
-{
-	gunichar c;
-
-	while (*value) {
-		c = g_utf8_get_char (value);
-
-		if (!g_unichar_isspace (c) && c != 0x0b && c != 0x85)
-			break;
-
-		value = g_utf8_next_char (value);
-	}
-
-	return value;
-}
-
 gboolean
 _g_mime_strcase_equal_trimmed (const char *value, const char *token)
 {
@@ -164,14 +150,16 @@ _g_mime_strcase_equal_trimmed (const char *value, const char *token)
 	if (!value || !g_utf8_validate (value, -1, NULL))
 		return FALSE;
 
-	value = skip_unicode_whitespace (value);
+	while (is_lwsp (*value))
+		value++;
 
 	if (g_ascii_strncasecmp (value, token, length))
 		return FALSE;
 
 	value += length;
 
-	value = skip_unicode_whitespace (value);
+	while (is_lwsp (*value))
+		value++;
 
 	return *value == '\0';
 }

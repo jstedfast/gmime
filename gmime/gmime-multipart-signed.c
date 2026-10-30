@@ -26,6 +26,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "gmime-common.h"
 #include "gmime-multipart-signed.h"
 #include "gmime-multipart-encrypted.h"
 #include "gmime-message-part.h"
@@ -353,7 +354,8 @@ mime_types_equal (const char *mime_type, const char *official_type)
  * @err: a #GError
  *
  * Attempts to verify the signed MIME part contained within the
- * multipart/signed object @mps.
+ * multipart/signed object @mps. Only surrounding ASCII linear whitespace
+ * is removed from the protocol parameter.
  *
  * Returns: (nullable) (transfer full): a new #GMimeSignatureList object on
  * success or %NULL on fail. If the verification fails, an exception
@@ -364,14 +366,14 @@ GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flags, GError **err)
 {
 	GMimeEntityPrivate *signature_priv;
-	const char *supported, *protocol;
+	const char *supported, *value;
 	GMimeEntity *content, *signature;
 	GMimeStream *stream = NULL, *sigstream = NULL;
 	GMimeSignatureList *signatures = NULL;
 	GMimeFormatOptions *options;
 	GMimeContent *wrapper;
 	GMimeCryptoContext *ctx;
-	char *mime_type;
+	char *mime_type, *protocol;
 	ssize_t written;
 	int errsv;
 	
@@ -383,10 +385,13 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 		return NULL;
 	}
 	
-	if (!(protocol = g_mime_entity_get_content_type_parameter ((GMimeEntity *) mps, "protocol"))) {
+	value = g_mime_entity_get_content_type_parameter ((GMimeEntity *) mps, "protocol");
+	protocol = g_mime_strdup_trim (value);
+	if (!protocol || !*protocol) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 				     _("Cannot verify multipart/signed part: unspecified signature protocol."));
 		
+		g_free (protocol);
 		return NULL;
 	}
 	
@@ -395,6 +400,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 			     _("Cannot verify multipart/signed part: unregistered signature protocol '%s'."),
 			     protocol);
 		
+		g_free (protocol);
 		return NULL;
 	}
 	
@@ -406,9 +412,12 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeVerifyFlags flag
 			     _("Cannot verify multipart/signed part: unsupported signature protocol '%s'."),
 			     protocol);
 		g_object_unref (ctx);
+		g_free (protocol);
 		
 		return NULL;
 	}
+
+	g_free (protocol);
 	
 	signature = g_mime_multipart_get_part ((GMimeMultipart *) mps, GMIME_MULTIPART_SIGNED_SIGNATURE);
 

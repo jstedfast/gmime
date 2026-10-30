@@ -137,7 +137,7 @@ test_content_type_constructors (void)
 		g_assert_null (g_mime_part_get_content (first));
 		g_assert_null (g_mime_entity_get_content_disposition (entity));
 		g_assert_cmpint (g_mime_part_get_content_encoding (first), ==, GMIME_CONTENT_ENCODING_UNSPECIFIED);
-		g_assert_cmpstr (g_mime_part_get_filename (first), ==, "caf\303\251.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (first), ==, " caf\303\251.txt ");
 		headers = g_mime_entity_get_header_list (entity);
 		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
 		g_assert_true (g_mime_param_list_get_parameter (g_mime_content_type_get_parameters (type), "name") == param);
@@ -222,7 +222,7 @@ test_filename_property (void)
 	char *type_raw, *disposition_raw;
 	guint text;
 
-	testsuite_check ("Filename lookup trims live parameters without changing raw headers");
+	testsuite_check ("Filename lookup preserves live parameters without changing raw headers");
 	for (text = 0; text < 2; text++) {
 		part = text ? GMIME_PART (g_mime_text_part_new ()) : g_mime_part_new ();
 		entity = GMIME_ENTITY (part);
@@ -240,7 +240,7 @@ test_filename_property (void)
 		g_mime_content_type_set_name (type, " \302\240fallback.txt\342\200\257 ");
 		type_raw = g_strdup (testsuite_header_raw_text (header));
 		stored = g_mime_part_get_filename (part);
-		g_assert_cmpstr (stored, ==, "\302\240fallback.txt\342\200\257");
+		g_assert_cmpstr (stored, ==, " \302\240fallback.txt\342\200\257 ");
 		g_assert_true (g_mime_part_get_filename (part) == stored);
 		g_assert_cmpstr (g_mime_content_type_get_name (type), ==, " \302\240fallback.txt\342\200\257 ");
 		g_assert_cmpstr (testsuite_header_raw_text (header), ==, type_raw);
@@ -252,7 +252,7 @@ test_filename_property (void)
 		g_assert_true (g_mime_part_is_attachment (part));
 		g_assert_cmpstr (g_mime_content_type_get_name (type), ==, filename);
 		g_assert_cmpstr (g_mime_content_disposition_get_filename (disposition), ==, filename);
-		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "\302\205caf\303\251.txt\343\200\200");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, filename);
 		g_mime_entity_set_disposition (entity, "inline");
 		g_mime_content_disposition_set_parameter (disposition, "keep", "stable");
 		param = g_mime_param_list_get_parameter (g_mime_content_disposition_get_parameters (disposition), "filename");
@@ -293,7 +293,7 @@ test_filename_property (void)
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "\v\302\205\343\200\200");
 		g_mime_part_set_filename (part, "\t\n\f\r ");
 		g_mime_content_type_set_name (type, "fallback.txt");
-		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "\t\n\f\r ");
 		g_mime_content_disposition_set_filename (disposition, "");
 		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "");
 		g_mime_content_disposition_set_filename (disposition, NULL);
@@ -302,15 +302,15 @@ test_filename_property (void)
 		g_mime_content_type_set_name (replacement, " replacement.txt ");
 		g_mime_entity_set_content_type (entity, replacement);
 		g_object_unref (replacement);
-		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "replacement.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, " replacement.txt ");
 		header = g_mime_header_list_get_header (headers, "Content-Type");
 		testsuite_header_set_raw_text (header, " text/plain; name=\" raw fallback.txt \"\n");
-		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw fallback.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, " raw fallback.txt ");
 		header = g_mime_header_list_get_header (headers, "Content-Disposition");
 		testsuite_header_set_raw_text (header, " attachment; filename=\" raw primary.txt \"\n");
-		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw primary.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, " raw primary.txt ");
 		g_mime_header_list_remove (headers, "Content-Disposition");
-		g_assert_cmpstr (g_mime_part_get_filename (part), ==, "raw fallback.txt");
+		g_assert_cmpstr (g_mime_part_get_filename (part), ==, " raw fallback.txt ");
 		g_object_unref (part);
 	}
 	testsuite_check_passed ();
@@ -570,7 +570,7 @@ test_content_md5_assignment (void)
 	char *value, *raw;
 
 	testsuite_check ("Content-Md5 assignment, ASCII trimming, aliasing and duplicate removal");
-	value = g_strconcat ("\t\f ", digest, "\r\n", NULL);
+	value = g_strconcat ("\t ", digest, "\r\n", NULL);
 	g_mime_part_set_content_md5 (part, value);
 	g_free (value);
 	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, digest);
@@ -597,6 +597,8 @@ test_content_md5_assignment (void)
 	g_mime_part_set_content_md5 (part, "\v\302\205\343\200\200");
 	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "\v\302\205\343\200\200");
 	g_mime_part_set_content_md5 (part, "\t\n\f\r ");
+	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "\f");
+	g_mime_part_set_content_md5 (part, "\t\n\r ");
 	g_assert_cmpstr (g_mime_part_get_content_md5 (part), ==, "");
 	g_assert_nonnull (g_mime_entity_get_header (entity, "Content-Md5"));
 	g_mime_part_set_content_md5 (part, NULL);
@@ -735,7 +737,6 @@ test_content_md5_lazy_verification (void)
 static void
 test_content_description_assignment (void)
 {
-	/* GLib trims the first five entries, but preserves vertical tabs. */
 	static const char *whitespace[] = {
 		"\t", "\n", "\f", "\r", " ", "\v", "\302\205", "\302\240",
 		"\341\232\200", "\342\200\200", "\342\200\201", "\342\200\202",
@@ -754,7 +755,7 @@ test_content_description_assignment (void)
 	testsuite_check ("Content-Description ASCII trimming preserves Unicode whitespace, nullable assignment and aliasing");
 	g_assert_null (g_mime_part_get_content_description (part));
 	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
-		char *expected = i < 5 ? g_strdup ("r\303\251sum\303\251") :
+		char *expected = strspn (whitespace[i], " \t\r\n") == strlen (whitespace[i]) ? g_strdup ("r\303\251sum\303\251") :
 			g_strconcat (whitespace[i], "r\303\251sum\303\251", whitespace[i], NULL);
 
 		value = g_strconcat (" \t", whitespace[i], "r\303\251sum\303\251", whitespace[i], "\r\n", NULL);
@@ -771,6 +772,8 @@ test_content_description_assignment (void)
 	g_mime_part_set_content_description (part, "\v\302\205\343\200\200");
 	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "\v\302\205\343\200\200");
 	g_mime_part_set_content_description (part, "\t\n\f\r ");
+	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "\f");
+	g_mime_part_set_content_description (part, "\t\n\r ");
 	g_assert_cmpstr (g_mime_part_get_content_description (part), ==, "");
 	g_assert_nonnull (g_mime_entity_get_header (entity, "Content-Description"));
 	g_mime_part_set_content_description (part, NULL);

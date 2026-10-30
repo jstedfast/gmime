@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "gmime-common.h"
 #include "gmime-multipart-encrypted.h"
 #include "gmime-filter-dos2unix.h"
 #include "gmime-stream-filter.h"
@@ -44,7 +45,6 @@
 #endif
 
 #define _(x) x
-
 
 #include "gmime-object-private.h"
 
@@ -222,7 +222,8 @@ g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeEntity *entity
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
- * multipart/encrypted object @encrypted.
+ * multipart/encrypted object @encrypted. Only surrounding ASCII linear
+ * whitespace is removed from the protocol parameter.
  *
  * When non-%NULL, @session_key should be a %NULL-terminated string,
  * such as the one returned by g_mime_decrypt_result_get_session_key()
@@ -245,7 +246,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 {
 	GMimeEntity *decrypted, *version_part, *encrypted_part;
 	GMimeStream *filtered, *stream, *ciphertext;
-	const char *protocol, *supported;
+	const char *value, *supported;
 	GMimeContentType *content_type;
 	GMimeEntityPrivate *priv;
 	GMimeDecryptResult *res;
@@ -253,17 +254,21 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 	GMimeContent *content;
 	GMimeFilter *filter;
 	GMimeParser *parser;
-	char *mime_type;
+	char *mime_type, *protocol;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (encrypted), NULL);
 	
 	if (result)
 		*result = NULL;
 	
-	if (!(protocol = g_mime_entity_get_content_type_parameter ((GMimeEntity *) encrypted, "protocol"))) {
+	value = g_mime_entity_get_content_type_parameter ((GMimeEntity *) encrypted, "protocol");
+	protocol = g_mime_strdup_trim (value);
+
+	if (!protocol || !*protocol) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: unspecified encryption protocol."));
 		
+		g_free (protocol);
 		return NULL;
 	}
 	
@@ -272,6 +277,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 			     _("Cannot decrypt multipart/encrypted part: unregistered encryption protocol '%s'."),
 			     protocol);
 		
+		g_free (protocol);
 		return NULL;
 	}
 	
@@ -283,6 +289,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 			     _("Cannot decrypt multipart/encrypted part: unsupported encryption protocol '%s'."),
 			     protocol);
 		g_object_unref (ctx);
+		g_free (protocol);
 		
 		return NULL;
 	}
@@ -299,11 +306,13 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, GMimeDec
 		
 		g_object_unref (ctx);
 		g_free (mime_type);
+		g_free (protocol);
 		
 		return NULL;
 	}
 
 	g_free (mime_type);
+	g_free (protocol);
 	
 	/* get the encrypted part and check that it is of type application/octet-stream */
 	encrypted_part = g_mime_multipart_get_part ((GMimeMultipart *) encrypted, GMIME_MULTIPART_ENCRYPTED_CONTENT);

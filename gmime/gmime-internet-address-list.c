@@ -715,7 +715,7 @@ static char *
 decode_name (GMimeParserOptions *options, const char *name, size_t len, gboolean unquote,
 	     const char **charset, gint64 offset)
 {
-	char *value, *buf = NULL;
+	char *value, *decoded, *buf = NULL;
 
 	if (!g_utf8_validate (name, len, NULL)) {
 		/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
@@ -736,8 +736,9 @@ decode_name (GMimeParserOptions *options, const char *name, size_t len, gboolean
 
 	/* Normalize literal tabs before decoding so encoded tabs are preserved. */
 	g_strdelimit (buf, "\t", ' ');
-	value = _g_mime_utils_header_decode_phrase (options, buf, strlen (buf), charset, offset);
-	g_strstrip (value);
+	decoded = _g_mime_utils_header_decode_phrase (options, buf, strlen (buf), charset, offset);
+	value = g_mime_strdup_trim (decoded);
+	g_free (decoded);
 	g_free (buf);
 
 	return value;

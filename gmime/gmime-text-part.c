@@ -183,7 +183,7 @@ g_mime_text_part_new_with_format (GMimeTextFormat format)
  * includes text/richtext; RTF includes application/rtf.
  *
  * Flowed text is text/plain with a format parameter equal to "flowed",
- * ignoring ASCII case and surrounding Unicode whitespace in the parameter.
+ * ignoring ASCII case and surrounding ASCII linear whitespace in the parameter.
  * Compressed rich text is not inferred from the Content-Type header.
  *
  * Returns: the text format.
@@ -243,7 +243,7 @@ g_mime_text_part_is_plain (GMimeTextPart *mime_part)
  * @mime_part: a #GMimeTextPart
  *
  * Tests for text/plain with a format parameter equal to "flowed",
- * ignoring ASCII case and surrounding Unicode whitespace.
+ * ignoring ASCII case and surrounding ASCII linear whitespace.
  *
  * Returns: %TRUE for flowed text, otherwise %FALSE.
  **/
