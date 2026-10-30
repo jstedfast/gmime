@@ -1001,14 +1001,14 @@ param_encoding_method (GMimeParam *param, GMimeFormatOptions *options)
 }
 
 static char *
-convert_param_chunk (const char *value, gsize length, GIConv cd, gsize *written, GError **error)
+convert_param_chunk (const char *value, gsize length, iconv_t cd, gsize *written, GError **error)
 {
-	if (g_iconv (cd, NULL, NULL, NULL, NULL) == (gsize) -1) {
+	if (g_mime_iconv (cd, NULL, NULL, NULL, NULL) == (size_t) -1) {
 		g_set_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_FAILED, "Cannot reset converter: %s", g_strerror (errno));
 		return NULL;
 	}
 
-	return g_convert_with_iconv (value, length, cd, NULL, written, error);
+	return _g_mime_iconv_convert_with_iconv (value, length, cd, written, error);
 }
 
 static gboolean
@@ -1023,7 +1023,7 @@ encode_rfc2047_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 	GError *error = NULL;
 	GString *out, *word;
 	gsize length;
-	GIConv cd;
+	iconv_t cd;
 
 	/* Validate a lossless charset for the entire value before splitting it.
 	 * Discard these bytes and their length: each chunk is converted independently. */
@@ -1038,9 +1038,9 @@ encode_rfc2047_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 	else if (!g_ascii_strcasecmp (charset, "utf-32"))
 		conversion_charset = "utf-32le";
 
-	cd = g_iconv_open (g_mime_charset_iconv_name (conversion_charset), g_mime_charset_iconv_name ("UTF-8"));
+	cd = g_mime_iconv_open (conversion_charset, "UTF-8");
 
-	if (cd == (GIConv) -1) {
+	if (cd == (iconv_t) -1) {
 		g_warning ("Cannot open parameter charset '%s': %s", charset, g_strerror (errno));
 		g_free (mime_charset);
 		return FALSE;
@@ -1154,7 +1154,7 @@ done:
 	g_free (mime_charset);
 	g_string_free (word, TRUE);
 	g_string_free (out, TRUE);
-	g_iconv_close (cd);
+	g_mime_iconv_close (cd);
 
 	return success;
 }
@@ -1179,7 +1179,7 @@ g_string_append_len_quoted (GString *str, const char *text, size_t len)
 }
 
 static char *
-encode_rfc2231_chunk (const char *value, gsize length, GIConv cd, gsize bom_length, const char *declaration,
+encode_rfc2231_chunk (const char *value, gsize length, iconv_t cd, gsize bom_length, const char *declaration,
 		     gboolean international, gboolean *encoded, gsize *byte_count, GError **error)
 {
 	gboolean quote = FALSE;
@@ -1259,7 +1259,7 @@ encode_rfc2231_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 	gsize count, bom_length = 0;
 	GError *error = NULL;
 	GString *out;
-	GIConv cd;
+	iconv_t cd;
 
 	if (international && !param_value_needs_encoding (param->value, options) && !(param->lang && *param->lang)) {
 		/* Unencoded international continuations must contain UTF-8, not the preferred legacy charset. */
@@ -1286,9 +1286,9 @@ encode_rfc2231_param (GMimeParam *param, GMimeFormatOptions *options, gboolean f
 	}
 
 	charset = mime_charset;
-	cd = g_iconv_open (g_mime_charset_iconv_name (charset), g_mime_charset_iconv_name ("UTF-8"));
+	cd = g_mime_iconv_open (charset, "UTF-8");
 
-	if (cd == (GIConv) -1) {
+	if (cd == (iconv_t) -1) {
 		g_warning ("Cannot open parameter charset '%s': %s", charset, g_strerror (errno));
 		g_free (mime_charset);
 		return FALSE;
@@ -1443,7 +1443,7 @@ done:
 	g_free (declaration);
 	g_free (mime_charset);
 	g_string_free (out, TRUE);
-	g_iconv_close (cd);
+	g_mime_iconv_close (cd);
 
 	return success;
 }

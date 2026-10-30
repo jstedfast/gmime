@@ -843,7 +843,7 @@ _g_mime_charset_encode_text (const char *charset, const char *text, gsize *lengt
 		return NULL;
 
 	/* Explicit-endian encoders omit the preamble, like Encoding.GetBytes. */
-	bytes = g_convert (text, -1, _g_mime_charset_get_text_converter (name), "UTF-8", NULL, length, error);
+	bytes = _g_mime_iconv_convert (text, -1, _g_mime_charset_get_text_converter (name), "UTF-8", length, error);
 	if (bytes)
 		*mime_name = name;
 	else
@@ -852,10 +852,10 @@ _g_mime_charset_encode_text (const char *charset, const char *text, gsize *lengt
 	return bytes;
 }
 
-GIConv
+iconv_t
 _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error)
 {
-	GIConv decoder;
+	iconv_t decoder;
 	const char *converter;
 	char *name;
 	int errsv;
@@ -863,15 +863,15 @@ _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, G
 	if (encoding)
 		*encoding = NULL;
 	if (!(name = _g_mime_charset_get_text_name (charset, error)))
-		return (GIConv) -1;
+		return (iconv_t) -1;
 
 	converter = _g_mime_charset_get_text_converter (name);
 	errno = 0;
-	decoder = g_iconv_open ("UTF-8", converter);
+	decoder = iconv_open ("UTF-8", converter);
 	errsv = errno;
 	g_free (name);
 
-	if (decoder == (GIConv) -1) {
+	if (decoder == (iconv_t) -1) {
 		g_set_error (error, G_CONVERT_ERROR, errsv == EINVAL ? G_CONVERT_ERROR_NO_CONVERSION : G_CONVERT_ERROR_FAILED,
 			     "Cannot decode text using charset '%s': %s",
 			     charset, errsv ? g_strerror (errsv) : "unknown conversion error");

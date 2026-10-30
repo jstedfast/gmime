@@ -43,7 +43,9 @@
  * @short_description: High-level routines for converting text from one charset to another
  * @see_also:
  *
- * Charset conversion utility functions.
+ * Charset conversion utility functions. Valid conversion descriptors passed
+ * to these functions must come from g_mime_iconv_open(), not GLib or another
+ * iconv backend.
  **/
 
 

@@ -837,7 +837,7 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 			if (mode == GMIME_RFC_COMPLIANCE_STRICT)
 				goto error;
 
-			utf8 = g_convert (word, inptr - word, "UTF-8", "ISO-8859-1", NULL, NULL, NULL);
+			utf8 = _g_mime_iconv_convert (word, inptr - word, "UTF-8", "ISO-8859-1", NULL, NULL);
 		} else {
 			utf8 = g_strndup (word, inptr - word);
 		}

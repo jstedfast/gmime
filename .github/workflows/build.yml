@@ -98,7 +98,7 @@ jobs:
     - name: Install macOS dependencies
       if: runner.os == 'macOS'
       run: |
-        brew install meson ninja pkgconf glib libidn2 gpgme gnupg
+        brew install meson ninja pkgconf glib libidn2 gpgme gnupg libiconv
         echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig:$(brew --prefix)/share/pkgconfig" >> "$GITHUB_ENV"
     - name: Verify architecture and report toolchain
       run: |
@@ -122,6 +122,9 @@ jobs:
         if [[ '${{ matrix.static }}' == 'true' ]]; then
           extra+=(-Ddefault_library=static)
         fi
+        if [[ '${{ runner.os }}' == 'macOS' ]]; then
+          extra+=("-Diconv_prefix=$(brew --prefix libiconv)")
+        fi
         meson setup _build --buildtype=debugoptimized -Db_ndebug=false \
           --prefix="$RUNNER_TEMP/gmime-prefix" --libdir=lib \
           -Dcrypto='${{ matrix.features }}' -Dlibidn='${{ matrix.features }}' "${extra[@]}"
@@ -138,7 +141,7 @@ jobs:
       if: matrix.integration
       run: meson dist -C _build
     - name: Stage and verify installation
-      if: matrix.integration || matrix.static
+      if: matrix.integration || matrix.static || runner.os == 'macOS'
       run: |
         meson install -C _build --destdir "$RUNNER_TEMP/gmime-stage"
         test -f "$RUNNER_TEMP/gmime-stage$RUNNER_TEMP/gmime-prefix/include/gmime-4.0/gmime/gmime.h"

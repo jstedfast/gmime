@@ -32,8 +32,8 @@ iconv_t g_mime_iconv_open (const char *to, const char *from);
 int g_mime_iconv_close (iconv_t cd);
 
 /**
- * g_mime_iconv:
- * @cd: iconv_t conversion descriptor
+ * g_mime_iconv: (skip)
+ * @cd: (type gpointer): iconv conversion descriptor
  * @inbuf: input buffer
  * @inleft: number of bytes left in @inbuf
  * @outbuf: output buffer
@@ -94,7 +94,7 @@ int g_mime_iconv_close (iconv_t cd);
  * during this call; reversible conversions are not counted. In case
  * of error, it sets errno and returns (size_t)(-1).
  **/
-#define g_mime_iconv(cd,inbuf,inleft,outbuf,outleft) iconv (cd, inbuf, inleft, outbuf, outleft)
+size_t g_mime_iconv (iconv_t cd, char **inbuf, size_t *inleft, char **outbuf, size_t *outleft);
 
 G_END_DECLS
 

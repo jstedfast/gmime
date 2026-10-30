@@ -33,6 +33,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef G_OS_UNIX
+#include <sys/un.h>
+#endif
 
 #include "testsuite.h"
 
@@ -540,21 +543,29 @@ testsuite_setup_gpghome (const char *gpg, const char *name)
 {
 	static gboolean cleanup_registered = FALSE;
 	char *argv[] = { (char *) gpg, "--list-keys", NULL };
-	GError *error = NULL;
-	char *template;
+	char *template, *basename;
 
 	g_return_val_if_fail (name != NULL, EXIT_FAILURE);
 	g_return_val_if_fail (gnupg_home == NULL, EXIT_FAILURE);
 
-	template = g_strdup_printf ("gmime-%s-XXXXXX", name);
-	gnupg_home = g_dir_make_tmp (template, &error);
-	g_free (template);
-
+	basename = g_strdup_printf ("gmime-%s-XXXXXX", name);
+	template = g_build_filename (g_get_tmp_dir (), basename, NULL);
+#ifdef G_OS_UNIX
+	/* Nested test TMPDIRs can exceed the agent's Unix-domain socket limit. */
+	if (strlen (template) + sizeof ("/S.gpg-agent.browser") > sizeof (((struct sockaddr_un *) 0)->sun_path)) {
+		g_free (template);
+		template = g_build_filename ("/tmp", basename, NULL);
+	}
+#endif
+	g_free (basename);
+	gnupg_home = g_mkdtemp (template);
 	if (!gnupg_home) {
-		fprintf (stderr, "Cannot create a test GnuPG home: %s\n", error->message);
-		g_error_free (error);
+		fprintf (stderr, "Cannot create a test GnuPG home in %s: %s\n", template, g_strerror (errno));
+		g_free (template);
 		return EXIT_FAILURE;
 	}
+	gnupg_home = g_strdup (gnupg_home);
+	g_free (template);
 
 	saved_gnupg_home = g_strdup (g_getenv ("GNUPGHOME"));
 	g_setenv ("GNUPGHOME", gnupg_home, TRUE);

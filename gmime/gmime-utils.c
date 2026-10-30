@@ -2081,11 +2081,11 @@ _g_mime_utils_convert_from_utf8 (const char *text, gsize length, const char **ch
 	/* A requested charset may not represent newly added characters. Check that
 	 * conversion is lossless instead of silently replacing them; otherwise use UTF-8. */
 	name = g_mime_charset_iconv_name (*charset);
-	converted = g_convert (text, length, name, utf8, NULL, converted_length, &error);
+	converted = _g_mime_iconv_convert (text, length, name, utf8, converted_length, &error);
 
 	if (converted) {
 		if (*converted_length <= G_MAXSSIZE) {
-			roundtrip = g_convert (converted, *converted_length, utf8, name, NULL, &roundtrip_len, &error);
+			roundtrip = _g_mime_iconv_convert (converted, *converted_length, utf8, name, &roundtrip_len, &error);
 			if (roundtrip && roundtrip_len == length && !memcmp (roundtrip, text, length)) {
 				g_free (roundtrip);
 				return converted;
@@ -2248,9 +2248,11 @@ rfc2047_character_byte_count (const char *charset, const char *start, const char
 	}
 
 	/* Size estimates allow replacement, but emitted words remain lossless. */
-	converted = g_convert_with_fallback (start, length, g_mime_charset_iconv_name (charset),
-					    g_mime_charset_iconv_name ("utf-8"),
-					    c > 0xffff ? "??" : "?", NULL, &length, &error);
+	converted = _g_mime_iconv_convert (start, length, charset, "UTF-8", &length, &error);
+	if (!converted && g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE)) {
+		g_clear_error (&error);
+		converted = _g_mime_iconv_convert (c > 0xffff ? "??" : "?", -1, charset, "UTF-8", &length, &error);
+	}
 	if (!converted) {
 		g_clear_error (&error);
 		length = end - start;

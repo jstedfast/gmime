@@ -30,8 +30,12 @@ static inline gpgme_key_t
 test_crypto_key (gpgme_ctx_t ctx, const char *userid, gboolean secret)
 {
 	gpgme_key_t key = NULL;
+	gpgme_error_t status;
 
-	g_assert_cmpuint (gpgme_get_key (ctx, userid, &key, secret), ==, 0);
+	status = gpgme_get_key (ctx, userid, &key, secret);
+	if (status)
+		g_error ("Cannot find %s key '%s': %s (%s)", secret ? "secret" : "public",
+			 userid, gpgme_strerror (status), gpgme_strsource (status));
 	g_assert_nonnull (key);
 	return key;
 }
@@ -78,13 +82,28 @@ test_crypto_import (gpgme_ctx_t ctx, GMimeStream *stream, GError **error)
 {
 	gpgme_data_t data;
 	gpgme_error_t status;
+	gpgme_import_result_t result;
+	gpgme_import_status_t imported;
 
 	if (!g_mime_gpgme_data_new (stream, &data, error))
 		return;
 	status = gpgme_op_import (ctx, data);
 	gpgme_data_release (data);
-	if (status)
+	if (status) {
 		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_GENERAL, gpgme_strerror (status));
+		return;
+	}
+	result = gpgme_op_import_result (ctx);
+	g_assert_nonnull (result);
+	for (imported = result->imports; imported; imported = imported->next) {
+		if (imported->result) {
+			g_set_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL, "Cannot import key '%s': %s",
+				     imported->fpr ? imported->fpr : "(unknown)", gpgme_strerror (imported->result));
+			return;
+		}
+	}
+	if (result->not_imported)
+		g_set_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL, "%d fixture keys were not imported", result->not_imported);
 }
 
 static inline void
