@@ -206,6 +206,72 @@ error:
 }
 
 static void
+assert_enriched_output (const char *input, size_t length, const char *expected)
+{
+	GMimeFilter *filter = g_mime_filter_enriched_new (0);
+	char *bounded = g_memdup2 (input, length), *out;
+	size_t split, outlen, prespace, i, count = length > 512 ? 3 : length + 1;
+	GString *actual = g_string_new (NULL);
+
+	for (i = 0; i < count; i++) {
+		split = length > 512 ? (i == 2 ? length : i * (length / 2)) : i;
+		g_mime_filter_reset (filter);
+		g_string_truncate (actual, 0);
+		g_mime_filter_filter (filter, bounded, split, 0, &out, &outlen, &prespace);
+		if (outlen)
+			g_string_append_len (actual, out, outlen);
+		g_mime_filter_complete (filter, bounded + split, length - split, 0, &out, &outlen, &prespace);
+		if (outlen)
+			g_string_append_len (actual, out, outlen);
+
+		testsuite_check ("Enriched tag conversion (%zu bytes, split %zu)", length, split);
+		if (actual->len == strlen (expected) && !memcmp (actual->str, expected, actual->len))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("expected=\"%.300s\", actual=\"%.300s\"", expected, actual->str);
+	}
+
+	g_string_free (actual, TRUE);
+	g_object_unref (filter);
+	g_free (bounded);
+}
+
+static void
+test_enriched_tags (void)
+{
+	static const char nul_tag[] = "a<bold\0ignored>x</bold\0ignored>b<bold>c</bold>";
+	static const struct {
+		const char *input, *expected;
+	} cases[] = {
+		{ "a<BoLd>b</bOlD>", "a<b>b</b>" },
+		{ "<boldly>x</boldly><unknown>y</unknown>", "xy" },
+		{ "<COLOR><param>red</param>x</COLOR>", "<font color=\"red\">x</font>" },
+		{ "<fontfamily><param>serif</param>x</fontfamily>", "<font face=\"serif\">x</font>" },
+		{ "<lang><param>en</param>x</lang>", "<span lang=\"en\">x</span>" },
+		{ "<paraindent><param>left,in</param>x</paraindent>",
+		  "<p style=\"margin-left:4em; margin:4em\">x</p>" }
+	};
+	GString *input = g_string_new ("<");
+	char *tag = g_strnfill (16 * 1024 * 1024, 'x');
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++)
+		assert_enriched_output (cases[i].input, strlen (cases[i].input), cases[i].expected);
+	assert_enriched_output (nul_tag, sizeof (nul_tag) - 1, "axb<b>c</b>");
+
+	g_string_append (input, tag);
+	g_string_append (input, "><bold>x</bold>");
+	assert_enriched_output (input->str, input->len, "<b>x</b>");
+	g_free (tag);
+
+	g_string_truncate (input, 0);
+	for (i = 0; i < 600000; i++)
+		g_string_append (input, "<unknown>");
+	assert_enriched_output (input->str, input->len, "");
+	g_string_free (input, TRUE);
+}
+
+static void
 test_gzip (const char *datadir, const char *filename)
 {
 	char *name = g_strdup_printf ("%s.gz", filename);
@@ -2554,6 +2620,7 @@ int main (int argc, char **argv)
 	test_charset_conversion (datadir, "japanese", "shift-jis", "utf-8");
 	
 	test_enriched (datadir, "enriched.txt", "enriched.html");
+	test_enriched_tags ();
 	
 	test_gzip (datadir, "lorem-ipsum.txt");
 	test_gunzip (datadir, "lorem-ipsum.txt");

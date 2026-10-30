@@ -2029,7 +2029,7 @@ rfc2184_param_charset (const char **in, char **langp)
 {
 	const char *inptr = *in;
 	const char *start = *in;
-	const char *lang;
+	const char *lang, *name;
 	char *charset;
 	size_t len;
 	
@@ -2042,9 +2042,6 @@ rfc2184_param_charset (const char **in, char **langp)
 	}
 	
 	len = (size_t) (inptr - start);
-	charset = g_alloca (len + 1);
-	memcpy (charset, start, len);
-	charset[len] = '\0';
 	
 	lang = ++inptr;
 	while (*inptr && *inptr != '\'')
@@ -2060,7 +2057,11 @@ rfc2184_param_charset (const char **in, char **langp)
 	
 	*in = inptr;
 	
-	return g_mime_charset_canon_name (charset);
+	charset = g_strndup (start, len);
+	name = g_mime_charset_canon_name (charset);
+	g_free (charset);
+
+	return name;
 }
 
 static size_t

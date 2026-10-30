@@ -503,25 +503,12 @@ is_shift_jis (const char *name)
 	return FALSE;
 }
 
-static const char *
-strdown (char *str)
-{
-	register char *s = str;
-	
-	while (*s) {
-		if (*s >= 'A' && *s <= 'Z')
-			*s += 0x20;
-		s++;
-	}
-	
-	return str;
-}
-
 /**
  * g_mime_charset_iconv_name:
  * @charset: charset name
  *
  * Attempts to find an iconv-friendly charset name for @charset.
+ * ISO numbers outside the unsigned-int range are left unnormalized.
  *
  * Returns: an iconv-friendly charset name for @charset.
  **/
@@ -533,55 +520,56 @@ g_mime_charset_iconv_name (const char *charset)
 	if (charset == NULL)
 		return NULL;
 	
-	name = g_alloca (strlen (charset) + 1);
-	strcpy (name, charset);
-	strdown (name);
+	name = g_ascii_strdown (charset, -1);
 	
 	CHARSET_LOCK ();
 	
 	iconv_name = g_hash_table_lookup (iconv_charsets, name);
 	if (iconv_name) {
 		CHARSET_UNLOCK ();
+		g_free (name);
 		return iconv_name;
 	}
 	
 	if (!strncmp (name, "iso", 3)) {
-		int iso, codepage;
+		guint64 iso, codepage;
 		char *p;
 		
 		buf = name + 3;
 		if (*buf == '-' || *buf == '_')
 			buf++;
 		
-		iso = strtoul (buf, &p, 10);
+		iso = g_ascii_strtoull (buf, &p, 10);
 		
-		if (iso == 10646) {
+		if (!g_ascii_isdigit (*buf) || iso > G_MAXUINT) {
+			iconv_name = g_strdup (name);
+		} else if (iso == 10646) {
 			/* they all become ICONV_10646 */
 			iconv_name = g_strdup (ICONV_10646);
-		} else if (p > buf) {
+		} else {
 			buf = p;
 			if (*buf == '-' || *buf == '_')
 				buf++;
 			
-			codepage = strtoul (buf, &p, 10);
+			codepage = g_ascii_strtoull (buf, &p, 10);
 			
 			if (p > buf) {
 				/* codepage is numeric */
+				if (!g_ascii_isdigit (*buf) || codepage > G_MAXUINT) {
+					iconv_name = g_strdup (name);
+				} else {
 #ifdef __aix__
-				if (codepage == 13)
-					iconv_name = g_strdup ("IBM-921");
-				else
+					if (codepage == 13)
+						iconv_name = g_strdup ("IBM-921");
+					else
 #endif /* __aix__ */
-					iconv_name = g_strdup_printf (ICONV_ISO_INT_FORMAT,
-								      iso, codepage);
+						iconv_name = g_strdup_printf (ICONV_ISO_INT_FORMAT,
+									      (guint) iso, (guint) codepage);
+				}
 			} else {
 				/* codepage is a string - probably iso-2022-jp or something */
-				iconv_name = g_strdup_printf (ICONV_ISO_STR_FORMAT, iso, p);
+				iconv_name = g_strdup_printf (ICONV_ISO_STR_FORMAT, (guint) iso, p);
 			}
-		} else {
-			/* p == buf, which probably means we've
-			   encountered an invalid iso charset name */
-			iconv_name = g_strdup (name);
 		}
 	} else if (!strncmp (name, "windows-", 8)) {
 		buf = name + 8;
@@ -602,7 +590,7 @@ g_mime_charset_iconv_name (const char *charset)
 		iconv_name = g_strdup (charset);
 	}
 	
-	g_hash_table_insert (iconv_charsets, g_strdup (name), iconv_name);
+	g_hash_table_insert (iconv_charsets, name, iconv_name);
 	
 	CHARSET_UNLOCK ();
 	

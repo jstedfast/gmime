@@ -64,6 +64,56 @@ test_codepages (void)
 }
 
 static void
+test_large_names (void)
+{
+	const gsize length = 16 * 1024 * 1024;
+	char *name = g_strnfill (length, 'x');
+	const char *converter;
+
+	g_mime_charset_map_init ();
+	converter = g_mime_charset_iconv_name (name);
+	g_assert_cmpuint (strlen (converter), ==, length);
+	g_assert_cmpint (memcmp (converter, name, length), ==, 0);
+	name[0] = 'X';
+	g_assert_true (g_mime_charset_iconv_name (name) == converter);
+	g_free (name);
+	g_assert_cmpint (converter[0], ==, 'x');
+	g_assert_cmpint (converter[length - 1], ==, 'x');
+	g_mime_charset_map_shutdown ();
+}
+
+static void
+test_iso_number_bounds (void)
+{
+	static const char *invalid[] = {
+		"iso-4294976155-1", "iso-8859-4294967297",
+		"iso-18446744073709551616-1", "iso-8859-18446744073709551616",
+		"iso--18446744073709542757-1", "iso-8859--18446744073709551615"
+	};
+	char *limit = g_strdup_printf ("%u", G_MAXUINT);
+	char *name = g_strdup_printf ("iso-%s-%s", limit, limit);
+	char *overflow = g_strdup_printf ("iso-%" G_GUINT64_FORMAT "-1", (guint64) G_MAXUINT + 1);
+	const char *converter;
+	guint i;
+
+	g_mime_charset_map_init ();
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++)
+		g_assert_cmpstr (g_mime_charset_iconv_name (invalid[i]), ==, invalid[i]);
+	g_assert_cmpstr (g_mime_charset_iconv_name (overflow), ==, overflow);
+	converter = g_mime_charset_iconv_name (name);
+	g_assert_nonnull (strstr (converter, limit));
+	g_assert_true (g_str_has_suffix (converter, limit));
+	g_assert_cmpstr (g_mime_charset_iconv_name ("ISO_8859_01"), ==,
+			g_mime_charset_iconv_name ("iso-8859-1"));
+	g_assert_cmpstr (g_mime_charset_iconv_name ("ISO_2022_JP"), ==,
+			g_mime_charset_iconv_name ("iso-2022-jp"));
+	g_mime_charset_map_shutdown ();
+	g_free (overflow);
+	g_free (name);
+	g_free (limit);
+}
+
+static void
 test_text_converters (void)
 {
 	static const struct {
@@ -226,6 +276,8 @@ main (int argc, char **argv)
 {
 	g_test_init (&argc, &argv, NULL);
 	g_test_add_func ("/charsets/codepages", test_codepages);
+	g_test_add_func ("/charsets/large-names", test_large_names);
+	g_test_add_func ("/charsets/iso-number-bounds", test_iso_number_bounds);
 	g_test_add_func ("/charsets/text-converters", test_text_converters);
 	g_test_add_func ("/charsets/native-aliases", test_native_aliases);
 	g_test_add_func ("/charsets/native-identities", test_native_identities);

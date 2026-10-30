@@ -369,6 +369,46 @@ test_parsed_parameters (void)
 }
 
 static void
+test_large_parameter_charsets (void)
+{
+	char *charset = g_strnfill (16 * 1024 * 1024, 'x');
+	char *text;
+	GMimeParamList *list;
+	GMimeParam *param;
+	guint i;
+
+	for (i = 0; i < 3; i++) {
+		if (i == 0)
+			text = g_strconcat ("filename*=", charset, "'en'caf%E9.txt", NULL);
+		else if (i == 1)
+			text = g_strconcat ("filename*0*=", charset, "'en'caf%E9; filename*1*=.txt", NULL);
+		else
+			text = g_strconcat ("filename*=", charset, "'en", NULL);
+
+		list = g_mime_param_list_parse (NULL, text);
+		g_assert_nonnull (list);
+		param = g_mime_param_list_get_parameter (list, "filename");
+		g_assert_nonnull (param);
+		if (i < 2) {
+			check (!strcmp (g_mime_param_get_value (param), "caf\303\251.txt") &&
+			       !strcmp (g_mime_param_get_lang (param), "en") &&
+			       !strcmp (g_mime_param_get_charset (param), "iso-8859-1"),
+			       "oversized unknown parameter charsets retain fallback decoding and language");
+		} else {
+			const char *value = g_mime_param_get_value (param);
+
+			check (strlen (value) == strlen (charset) + 3 &&
+			       !memcmp (value, charset, strlen (charset)) && g_str_has_suffix (value, "'en") &&
+			       g_mime_param_get_lang (param) == NULL,
+			       "missing second charset delimiter retains the original parameter value");
+		}
+		g_object_unref (list);
+		g_free (text);
+	}
+	g_free (charset);
+}
+
+static void
 test_checked_parsing (void)
 {
 	static const struct {
@@ -1914,6 +1954,7 @@ main (int argc, char **argv)
 	test_ownership ();
 	test_headers ();
 	test_parsed_parameters ();
+	test_large_parameter_charsets ();
 	test_checked_parsing ();
 	test_checked_parse_errors ();
 	test_checked_parse_bounds ();

@@ -469,18 +469,16 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					goto backup;
 				}
 			} else {
-				const char *fmt, *html_tag = NULL;
-				char *enriched_tag;
+				const char *fmt, *html_tag = NULL, *enriched_tag = NULL;
 				size_t len;
 				guint i;
 				
 				len = inptr - tag;
-				enriched_tag = g_alloca (len + 1);
-				memcpy (enriched_tag, tag, len);
-				enriched_tag[len] = '\0';
 				
 				for (i = 0; i < G_N_ELEMENTS (enriched_tags); i++) {
-					if (!g_ascii_strcasecmp (enriched_tag, enriched_tags[i].enriched)) {
+					if (strlen (enriched_tags[i].enriched) == len &&
+					    !g_ascii_strncasecmp (tag, enriched_tags[i].enriched, len)) {
+						enriched_tag = enriched_tags[i].enriched;
 						html_tag = enriched_tags[i].html;
 						break;
 					}

@@ -2,6 +2,10 @@
 
 * Modernized MIME parsing, content handling, header formatting, and address APIs.
 * Added streaming readers, body/attachment helpers, report types, and SIMD scans.
+* Removed input-sized stack allocations from charset, parameter, and enriched
+  text handling, and prevented oversized ISO charset numbers from wrapping.
+* Treat enriched text tags containing embedded NULs as unrecognized tags.
+* Fixed a PKCS7 context leak when GPGME key-list configuration fails.
 * Replaced Autotools with Meson; GLib 2.88 or newer is required.
 * This release breaks API/ABI compatibility; see PORTING.md for migration.
 
