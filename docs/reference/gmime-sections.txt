@@ -2301,4 +2301,37 @@ g_mime_gpgme_sign
 g_mime_gpgme_verify
 g_mime_gpgme_encrypt
 g_mime_gpgme_decrypt
+g_mime_openpgp_block_verify
+g_mime_openpgp_block_decrypt
+</SECTION>
+
+<SECTION>
+<FILE>gmime-openpgp</FILE>
+<TITLE>Inline OpenPGP</TITLE>
+GMimeOpenPGPDocument
+GMimeOpenPGPBlock
+GMimeOpenPGPBlockKind
+GMimeOpenPGPBlockStatus
+g_mime_part_scan_openpgp
+g_mime_openpgp_document_get_length
+g_mime_openpgp_document_get_count
+g_mime_openpgp_document_get_block
+g_mime_openpgp_document_open_stream
+g_mime_openpgp_block_get_kind
+g_mime_openpgp_block_get_status
+g_mime_openpgp_block_get_offset
+g_mime_openpgp_block_get_length
+g_mime_openpgp_block_open_stream
+<SUBSECTION Standard>
+GMIME_TYPE_OPENPGP_DOCUMENT
+GMIME_OPENPGP_DOCUMENT
+GMIME_IS_OPENPGP_DOCUMENT
+GMimeOpenPGPDocumentClass
+GMIME_TYPE_OPENPGP_BLOCK
+GMIME_OPENPGP_BLOCK
+GMIME_IS_OPENPGP_BLOCK
+GMimeOpenPGPBlockClass
+<SUBSECTION Private>
+g_mime_openpgp_document_get_type
+g_mime_openpgp_block_get_type
 </SECTION>

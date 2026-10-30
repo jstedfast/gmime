@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) 2000-2026 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -23,8 +23,10 @@
 #include <config.h>
 #endif
 
-#include "gmime-filter-openpgp.h"
+#include <string.h>
 
+#include "gmime-filter-openpgp.h"
+#include "gmime-internal.h"
 
 #include "gmime-object-private.h"
 
@@ -50,6 +52,20 @@ const GMimeOpenPGPMarker g_mime_openpgp_markers[9] = {
 };
 
 #define NUM_OPENPGP_MARKERS G_N_ELEMENTS (g_mime_openpgp_markers)
+
+const GMimeOpenPGPMarker *
+_g_mime_openpgp_match_marker (const char *line, size_t length)
+{
+	guint i;
+
+	for (i = 0; i < NUM_OPENPGP_MARKERS; i++) {
+		if (length == g_mime_openpgp_markers[i].len &&
+		    memcmp (line, g_mime_openpgp_markers[i].marker, length) == 0)
+			return &g_mime_openpgp_markers[i];
+	}
+
+	return NULL;
+}
 
 static void g_mime_filter_openpgp_class_init (GMimeFilterOpenPGPClass *klass);
 static void g_mime_filter_openpgp_init (GMimeFilterOpenPGP *filter);
@@ -112,29 +128,21 @@ filter_copy (GMimeFilter *filter)
 static gboolean
 is_marker (const char *input, const char *inend, const GMimeOpenPGPMarker *marker, gboolean *cr)
 {
-	const char *markerend = marker->marker + marker->len;
-	const char *markerptr = marker->marker;
-	const char *inptr = input;
-	
+	const char *inptr;
+
 	*cr = FALSE;
-	
-	while (inptr < inend && markerptr < markerend) {
-		if (*inptr != *markerptr)
-			return FALSE;
-		
-		markerptr++;
-		inptr++;
-	}
-	
-	if (markerptr < markerend)
+
+	if ((size_t) (inend - input) <= marker->len ||
+	    _g_mime_openpgp_match_marker (input, marker->len) != marker)
 		return FALSE;
-	
+
+	inptr = input + marker->len;
 	if (inptr < inend && *inptr == '\r') {
 		*cr = TRUE;
 		inptr++;
 	}
 	
-	return *inptr == '\n';
+	return inptr < inend && *inptr == '\n';
 }
 
 static gboolean

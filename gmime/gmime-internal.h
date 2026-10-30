@@ -23,6 +23,7 @@
 #define __GMIME_INTERNAL_H__
 
 #include <gmime/gmime-format-options.h>
+#include <gmime/gmime-filter-openpgp.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-parser.h>
 #include <gmime/gmime-entity.h>
@@ -33,6 +34,9 @@
 #include <gmime/gmime-multipart.h>
 
 G_BEGIN_DECLS
+
+/* GMimeFilterOpenPGP */
+G_GNUC_INTERNAL const GMimeOpenPGPMarker *_g_mime_openpgp_match_marker (const char *line, size_t length);
 
 typedef enum {
 	GMIME_HEADER_LIST_CHANGED_ACTION_ADDED,

@@ -26,8 +26,12 @@ This is an incremental migration, not yet a declaration of feature parity.
   `gmime-gpgme-4.0` for crypto. Core headers and GNOME bindings remain
   GPGME-independent; native crypto calls require application-supplied
   bindings. See PORTING.md for ownership, configuration and error handling.
-  Existing MIME and mutating inline operations are migrated; non-mutating
-  multi-block inline-PGP support remains separate follow-up work.
+  Existing MIME and mutating inline operations are migrated. Multi-block
+  inline-PGP discovery now returns an immutable, transfer-decoded document
+  with ordered blocks and preserved unprotected gaps. Large snapshots
+  automatically spill to temporary files. Non-mutating per-block native
+  verification/decryption returns independent results; discovery remains
+  available to GNOME bindings and without crypto. See InlinePGP.md.
   Manual S/MIME programs compile, but runtime roundtrips remain unverified:
   the current headless GPGME 2.0.1 CMS engine fails PKCS#12 import in
   Pinentry despite the context's loopback setting. The committed S/MIME

@@ -159,6 +159,8 @@ g_mime_init (void)
 	g_mime_parser_get_type ();
 	g_mime_message_get_type ();
 	g_mime_content_get_type ();
+	g_mime_openpgp_block_get_type ();
+	g_mime_openpgp_document_get_type ();
 	
 	g_mime_internet_address_get_type ();
 	g_mime_internet_address_list_get_type ();

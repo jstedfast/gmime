@@ -1,6 +1,7 @@
 gmime_gpgme_sources = files('gmime-gpgme.c')
 gmime_sources = files(
   'gmime.c',
+  'gmime-openpgp.c',
   'gmime-application-pkcs7-mime.c',
   'gmime-address-validator.c',
   'gmime-anonymizer.c',
@@ -110,6 +111,7 @@ gmime_sources = files(
 )
 
 gmime_headers = files(
+  'gmime-openpgp.h',
   'gmime.h',
   'gmime-anonymizer.h',
   'gmime-application-pkcs7-mime.h',
