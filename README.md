@@ -130,7 +130,9 @@ platform charset aliases instead of running the iconv alias detector.
 ### Continuous integration and reference tests
 
 CI builds optimized, assertion-enabled configurations on native Linux x64
-and ARM64 and macOS ARM64, with optional features enabled and disabled.
+and ARM64 and macOS 15 and 26 ARM64, with optional features enabled and
+disabled. Both macOS versions retain the full test suite so native iconv
+behavior can be compared without dropping older-system coverage.
 Linux additionally checks Clang ASan/UBSan, static linking, source
 distributions, documentation, and installed C/GIR/Vala consumers.
 The SIMD test reports available and unavailable backends; CI explicitly

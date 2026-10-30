@@ -37,14 +37,26 @@ jobs:
             cc: gcc
             features: enabled
             backend: NEON
-          - name: macOS ARM64 Clang
+          - name: macOS 15 ARM64 Clang
             os: macos-15
             arch: arm64
             cc: clang
             features: enabled
             backend: NEON
-          - name: macOS ARM64 Clang / minimal
+          - name: macOS 15 ARM64 Clang / minimal
             os: macos-15
+            arch: arm64
+            cc: clang
+            features: disabled
+            backend: NEON
+          - name: macOS 26 ARM64 Clang
+            os: macos-26
+            arch: arm64
+            cc: clang
+            features: enabled
+            backend: NEON
+          - name: macOS 26 ARM64 Clang / minimal
+            os: macos-26
             arch: arm64
             cc: clang
             features: disabled
