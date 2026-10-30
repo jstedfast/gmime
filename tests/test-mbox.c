@@ -512,7 +512,7 @@ int main (int argc, char **argv)
 	
 	testsuite_end ();
 	
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	g_mime_shutdown ();
 	
 	return testsuite_exit ();

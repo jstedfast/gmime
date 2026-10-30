@@ -13,6 +13,8 @@
 * Added non-mutating multi-block inline-PGP discovery and per-block native
   verification/decryption, with stable read-only snapshots, malformed-block
   recovery, preserved unprotected text, and automatic temporary-file spill.
+* Made parser and format options reference-counted, replacing free() with
+  ref()/unref(). Explicit clones and internal snapshots remain independent.
 * This release breaks API/ABI compatibility; see PORTING.md for migration.
 
 ### GMime 3.2.15

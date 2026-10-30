@@ -325,7 +325,7 @@ g_mime_header_finalize (GObject *object)
 	
 	g_mime_event_free (header->changed);
 	if (header->owns_options)
-		g_mime_parser_options_free (header->options);
+		g_mime_parser_options_unref (header->options);
 	g_clear_pointer (&header->raw_value, g_bytes_unref);
 	g_clear_pointer (&header->raw_name, g_bytes_unref);
 	g_free (header->charset);
@@ -877,7 +877,7 @@ g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, 
 
 	options = g_mime_parser_options_clone (header->options);
 	if (!g_mime_parser_options_set_charset_encoding (options, encoding, error)) {
-		g_mime_parser_options_free (options);
+		g_mime_parser_options_unref (options);
 		return NULL;
 	}
 
@@ -885,7 +885,7 @@ g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, 
 		bytes = g_bytes_get_data (header->raw_value, &length);
 
 	decoded = _g_mime_utils_header_decode_text_full (options, bytes, length, header->offset);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 
 	if (!decoded)
 		return NULL;
@@ -2373,7 +2373,7 @@ g_mime_header_list_finalize (GObject *object)
 	
 	g_ptr_array_free (headers->array, TRUE);
 	
-	g_mime_parser_options_free (headers->options);
+	g_mime_parser_options_unref (headers->options);
 	g_hash_table_destroy (headers->hash);
 	g_mime_event_free (headers->changed);
 	
@@ -2512,7 +2512,7 @@ _g_mime_header_list_get_options (GMimeHeaderList *headers)
 void
 _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options)
 {
-	g_mime_parser_options_free (headers->options);
+	g_mime_parser_options_unref (headers->options);
 	headers->options = g_mime_parser_options_clone (options);
 }
 

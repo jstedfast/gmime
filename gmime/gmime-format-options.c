@@ -42,6 +42,7 @@
 
 
 struct _GMimeFormatOptions {
+	gatomicrefcount ref_count;
 	GMimeParamEncodingMethod method;
 	GMimeNewLineFormat newline;
 	gboolean mixed_charsets;
@@ -55,7 +56,7 @@ struct _GMimeFormatOptions {
 
 static GMimeFormatOptions *default_options = NULL;
 
-G_DEFINE_BOXED_TYPE (GMimeFormatOptions, g_mime_format_options, g_mime_format_options_clone, g_mime_format_options_free);
+G_DEFINE_BOXED_TYPE (GMimeFormatOptions, g_mime_format_options, g_mime_format_options_ref, g_mime_format_options_unref);
 
 void
 g_mime_format_options_init (void)
@@ -67,17 +68,7 @@ g_mime_format_options_init (void)
 void
 g_mime_format_options_shutdown (void)
 {
-	guint i;
-	
-	if (default_options == NULL)
-		return;
-	
-	for (i = 0; i < default_options->hidden->len; i++)
-		g_free (default_options->hidden->pdata[i]);
-	
-	g_ptr_array_free (default_options->hidden, TRUE);
-	g_slice_free (GMimeFormatOptions, default_options);
-	default_options = NULL;
+	g_clear_pointer (&default_options, g_mime_format_options_unref);
 }
 
 
@@ -86,7 +77,10 @@ g_mime_format_options_shutdown (void)
  *
  * Gets the default format options.
  *
- * Returns: the default format options.
+ * The returned reference belongs to GMime. Use g_mime_format_options_ref()
+ * to retain it independently, or g_mime_format_options_clone() for a copy.
+ *
+ * Returns: (transfer none): the default format options.
  **/
 GMimeFormatOptions *
 g_mime_format_options_get_default (void)
@@ -100,7 +94,7 @@ g_mime_format_options_get_default (void)
  *
  * Creates a new set of #GMimeFormatOptions.
  *
- * Returns: a newly allocated set of #GMimeFormatOptions with the default values.
+ * Returns: (transfer full): new options with the default values and one reference.
  **/
 GMimeFormatOptions *
 g_mime_format_options_new (void)
@@ -108,6 +102,7 @@ g_mime_format_options_new (void)
 	GMimeFormatOptions *options;
 	
 	options = g_slice_new (GMimeFormatOptions);
+	g_atomic_ref_count_init (&options->ref_count);
 	options->method = GMIME_PARAM_ENCODING_METHOD_RFC2231;
 	options->newline = GMIME_NEWLINE_FORMAT_UNIX;
 	options->hidden = g_ptr_array_new ();
@@ -141,6 +136,7 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 		options = default_options;
 	
 	clone = g_slice_new (GMimeFormatOptions);
+	g_atomic_ref_count_init (&clone->ref_count);
 	clone->method = options->method;
 	clone->newline = options->newline;
 	clone->mixed_charsets = options->mixed_charsets;
@@ -164,7 +160,9 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
  * g_mime_format_options_clone:
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
- * Clones a #GMimeFormatOptions.
+ * Creates an independent copy of the settings in @options, including hidden
+ * headers. Unlike g_mime_format_options_ref() or g_boxed_copy(), this does not
+ * share settings.
  *
  * Returns: (transfer full): a newly allocated #GMimeFormatOptions.
  **/
@@ -176,19 +174,40 @@ g_mime_format_options_clone (GMimeFormatOptions *options)
 
 
 /**
- * g_mime_format_options_free:
+ * g_mime_format_options_ref:
  * @options: a #GMimeFormatOptions
  *
- * Frees a set of #GMimeFormatOptions.
+ * Atomically acquires a reference to @options. This shares the same settings;
+ * concurrent changes to the settings still require external synchronization.
+ *
+ * Returns: (transfer full): @options with an additional reference.
+ **/
+GMimeFormatOptions *
+g_mime_format_options_ref (GMimeFormatOptions *options)
+{
+	g_return_val_if_fail (options != NULL, NULL);
+
+	g_atomic_ref_count_inc (&options->ref_count);
+
+	return options;
+}
+
+
+/**
+ * g_mime_format_options_unref:
+ * @options: (transfer full): a #GMimeFormatOptions
+ *
+ * Atomically releases a reference to @options. The options and their owned
+ * data are destroyed when the last reference is released.
  **/
 void
-g_mime_format_options_free (GMimeFormatOptions *options)
+g_mime_format_options_unref (GMimeFormatOptions *options)
 {
 	guint i;
 	
 	g_return_if_fail (options != NULL);
 	
-	if (options != default_options) {
+	if (g_atomic_ref_count_dec (&options->ref_count)) {
 		for (i = 0; i < options->hidden->len; i++)
 			g_free (options->hidden->pdata[i]);
 		g_ptr_array_free (options->hidden, TRUE);

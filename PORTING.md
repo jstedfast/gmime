@@ -176,6 +176,25 @@ Revisit subclass chaining and test both raw and decoded output.
 
 ## 4. Handle parser errors and options
 
+`GMimeParserOptions` and `GMimeFormatOptions` are reference-counted boxed
+types, not GObjects. Replace `g_mime_parser_options_free()` and
+`g_mime_format_options_free()` with the corresponding `*_unref()` functions.
+`new()` and `clone()` return one owned reference; `ref()` retains the same
+instance. Boxed copies (including `GValue` copies and binding-owned copies)
+now share the instance instead of cloning its settings.
+
+Use `clone()` when you need independent settings. Existing internal cloning
+is unchanged, including parser/header snapshots and scoped writer options.
+Parser clones still borrow warning callback data and do not copy its destroy
+notification; keep that data alive for all users of the clones.
+Reference counting is atomic, but concurrent setting changes require external
+synchronization.
+
+`get_default()` returns a borrowed reference owned by GMime. Do not unref
+that borrowed reference; acquire your own reference to retain it. Shutdown
+releases GMime's reference rather than invalidating independently held
+references. Clone the defaults before changing settings.
+
 `g_mime_parser_construct_part()` and `g_mime_parser_construct_message()` now
 take a final `GError **`. Do not treat every NULL result as clean EOF:
 

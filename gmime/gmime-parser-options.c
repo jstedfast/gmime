@@ -43,6 +43,7 @@
 
 
 struct _GMimeParserOptions {
+	gatomicrefcount ref_count;
 	GMimeRfcComplianceMode addresses;
 	GMimeRfcComplianceMode parameters;
 	GMimeRfcComplianceMode rfc2047;
@@ -61,7 +62,7 @@ struct _GMimeParserOptions {
 
 static GMimeParserOptions *default_options = NULL;
 
-G_DEFINE_BOXED_TYPE (GMimeParserOptions, g_mime_parser_options, g_mime_parser_options_clone, g_mime_parser_options_free);
+G_DEFINE_BOXED_TYPE (GMimeParserOptions, g_mime_parser_options, g_mime_parser_options_ref, g_mime_parser_options_unref);
 
 void
 g_mime_parser_options_init (void)
@@ -73,15 +74,7 @@ g_mime_parser_options_init (void)
 void
 g_mime_parser_options_shutdown (void)
 {
-	if (default_options == NULL)
-		return;
-	
-	if (default_options->notify)
-		default_options->notify (default_options->warning_user_data);
-	
-	g_free (default_options->charset_encoding);
-	g_slice_free (GMimeParserOptions, default_options);
-	default_options = NULL;
+	g_clear_pointer (&default_options, g_mime_parser_options_unref);
 }
 
 void
@@ -107,7 +100,10 @@ _g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, guint e
  *
  * Gets the default parser options.
  *
- * Returns: the default parser options.
+ * The returned reference belongs to GMime. Use g_mime_parser_options_ref()
+ * to retain it independently, or g_mime_parser_options_clone() for a copy.
+ *
+ * Returns: (transfer none): the default parser options.
  **/
 GMimeParserOptions *
 g_mime_parser_options_get_default (void)
@@ -121,7 +117,7 @@ g_mime_parser_options_get_default (void)
  *
  * Creates a new set of #GMimeParserOptions.
  *
- * Returns: a newly allocated set of #GMimeParserOptions with the default values.
+ * Returns: (transfer full): new options with the default values and one reference.
  **/
 GMimeParserOptions *
 g_mime_parser_options_new (void)
@@ -129,6 +125,7 @@ g_mime_parser_options_new (void)
 	GMimeParserOptions *options;
 	
 	options = g_slice_new (GMimeParserOptions);
+	g_atomic_ref_count_init (&options->ref_count);
 	options->addresses = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->parameters = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
@@ -154,7 +151,10 @@ g_mime_parser_options_new (void)
  * g_mime_parser_options_clone:
  * @options: (nullable): a #GMimeParserOptions or %NULL
  *
- * Clones a #GMimeParserOptions.
+ * Creates an independent copy of the settings in @options. Unlike
+ * g_mime_parser_options_ref() or g_boxed_copy(), this does not share settings.
+ * Warning callback data remains borrowed; the clone does not copy its
+ * destroy notification. The data must remain valid while the clone uses it.
  *
  * Returns: (transfer full): a newly allocated #GMimeParserOptions.
  **/
@@ -167,6 +167,7 @@ g_mime_parser_options_clone (GMimeParserOptions *options)
 		options = default_options;
 	
 	clone = g_slice_new (GMimeParserOptions);
+	g_atomic_ref_count_init (&clone->ref_count);
 	clone->allow_no_domain = options->allow_no_domain;
 	clone->allow_unquoted_commas = options->allow_unquoted_commas;
 	clone->respect_content_length = options->respect_content_length;
@@ -190,17 +191,38 @@ g_mime_parser_options_clone (GMimeParserOptions *options)
 
 
 /**
- * g_mime_parser_options_free:
+ * g_mime_parser_options_ref:
  * @options: a #GMimeParserOptions
  *
- * Frees a set of #GMimeParserOptions.
+ * Atomically acquires a reference to @options. This shares the same settings;
+ * concurrent changes to the settings still require external synchronization.
+ *
+ * Returns: (transfer full): @options with an additional reference.
+ **/
+GMimeParserOptions *
+g_mime_parser_options_ref (GMimeParserOptions *options)
+{
+	g_return_val_if_fail (options != NULL, NULL);
+
+	g_atomic_ref_count_inc (&options->ref_count);
+
+	return options;
+}
+
+
+/**
+ * g_mime_parser_options_unref:
+ * @options: (transfer full): a #GMimeParserOptions
+ *
+ * Atomically releases a reference to @options. The options and their owned
+ * data are destroyed when the last reference is released.
  **/
 void
-g_mime_parser_options_free (GMimeParserOptions *options)
+g_mime_parser_options_unref (GMimeParserOptions *options)
 {
 	g_return_if_fail (options != NULL);
 	
-	if (options != default_options) {
+	if (g_atomic_ref_count_dec (&options->ref_count)) {
 		if (options->notify)
 			options->notify (options->warning_user_data);
 		

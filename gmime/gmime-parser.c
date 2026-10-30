@@ -501,7 +501,7 @@ g_mime_parser_construct_headers (GMimeParser *parser, GMimeParserOptions *option
 		for (i = 0; i < count; i++) {
 			GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
 
-			g_mime_parser_options_free (header->options);
+			g_mime_parser_options_unref (header->options);
 			header->options = headers->options;
 			header->owns_options = FALSE;
 		}

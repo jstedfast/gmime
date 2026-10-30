@@ -729,7 +729,7 @@ g_mime_entity_load_with_content_type (GMimeParserOptions *options, GMimeContentT
 	header = g_strdup_printf ("Content-Type:%s\r\n", encoded);
 	stream = g_mime_stream_mem_new_with_buffer (header, strlen (header));
 	errsv = errno;
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 	g_free (encoded);
 	g_free (header);
 

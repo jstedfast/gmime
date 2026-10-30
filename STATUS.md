@@ -13,6 +13,12 @@ This is an incremental migration, not yet a declaration of feature parity.
 - GLib 2.88.0 or newer is required for building and using GMime 4.
   This is the GLib API baseline packaged by Ubuntu 26.04 LTS.
 
+- `GMimeParserOptions` and `GMimeFormatOptions` are atomically reference-counted
+  boxed types. `ref()`/`unref()` replace `free()` ownership; boxed copies share
+  the instance, while explicit clones and internal snapshots remain independent.
+  Defaults remain borrowed, with GMime releasing its reference at shutdown.
+  Parser clones still borrow warning callback data without its destroy notify.
+
 - Meson >= 1.3.0 replaces Autotools. Use `meson setup _build`,
   `meson compile -C _build`, and `meson test -C _build`. Autogen, configure,
   and the Automake files are no longer provided. See README.md for build

@@ -226,7 +226,7 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 		g_mime_header_list_add (priv->headers, header);
 
 		if (header->owns_options)
-			g_mime_parser_options_free (header->options);
+			g_mime_parser_options_unref (header->options);
 
 		header->options = priv->headers->options;
 		header->owns_options = FALSE;

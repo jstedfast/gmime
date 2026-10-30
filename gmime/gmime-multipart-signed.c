@@ -480,7 +480,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, gpgme_ctx_t ctx,
 	
 	errno = 0;
 	written = _g_mime_writer_write_for_signature (content, options, stream);
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 
 	if (written < 0)
 		goto io_error;

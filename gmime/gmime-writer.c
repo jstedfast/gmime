@@ -205,7 +205,7 @@ multipart_frame_clear (gpointer data)
 	MultipartFrame *frame = data;
 
 	g_object_unref (frame->multipart);
-	g_mime_format_options_free (frame->options);
+	g_mime_format_options_unref (frame->options);
 	g_free (frame->boundary);
 }
 
@@ -389,7 +389,7 @@ writer_custom (GMimeWriter *writer, GMimeEntity *entity, GMimeFormatOptions *opt
 	errsv = errno;
 
 	g_private_set (&dispatch_writer, previous);
-	g_mime_format_options_free (format);
+	g_mime_format_options_unref (format);
 	errno = errsv;
 
 	return writer_add (writer, written);
@@ -481,7 +481,7 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 							GMimeFormatOptions *format = _g_mime_format_options_clone (options, TRUE);
 
 							g_mime_format_options_set_ensure_newline (format, ensure);
-							g_clear_pointer (&temporary, g_mime_format_options_free);
+							g_clear_pointer (&temporary, g_mime_format_options_unref);
 							options = temporary = format;
 						}
 
@@ -514,7 +514,7 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 			continue;
 		}
 
-		g_clear_pointer (&temporary, g_mime_format_options_free);
+		g_clear_pointer (&temporary, g_mime_format_options_unref);
 
 		if (!writer.frames->len)
 			break;
@@ -572,7 +572,7 @@ writer_run (GMimeEntity *root, GMimeFormatOptions *options, gboolean content_onl
 fail:
 	errsv = errno;
 	g_clear_object (&entity);
-	g_clear_pointer (&temporary, g_mime_format_options_free);
+	g_clear_pointer (&temporary, g_mime_format_options_unref);
 	g_array_unref (writer.frames);
 	errno = errsv;
 

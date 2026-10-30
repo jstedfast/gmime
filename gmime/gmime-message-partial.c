@@ -548,12 +548,12 @@ g_mime_message_partial_split (GMimeMessage *message, size_t max_size, size_t *np
 		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
 			     "Failed to serialize the message: %s",
 			     errsv ? g_strerror (errsv) : "unknown I/O error");
-		g_mime_format_options_free (options);
+		g_mime_format_options_unref (options);
 		g_object_unref (stream);
 		return NULL;
 	}
 
-	g_mime_format_options_free (options);
+	g_mime_format_options_unref (options);
 
 	g_mime_stream_reset (stream);
 	

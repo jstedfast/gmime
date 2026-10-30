@@ -653,7 +653,7 @@ test_split_message_clones (void)
 	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "iso-8859-1", &error));
 	g_assert_no_error (error);
 	message = parse_split_message (wire, sizeof (wire) - 1, options);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	original = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 	source = g_mime_header_list_get_header (original, "X-CaSe");
 	g_assert_cmpint (g_mime_header_get_offset (source), >=, 0);
@@ -925,7 +925,7 @@ test_join_headers (void)
 		g_object_unref (parts[i]);
 	}
 	g_object_unref (envelope);
-	g_mime_parser_options_free (options);
+	g_mime_parser_options_unref (options);
 	output = g_mime_stream_mem_new ();
 	g_assert_cmpint (g_mime_content_decode_to_stream (g_mime_part_get_content (GMIME_PART (priv->mime_part)), output), ==, 13);
 	buffer = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
