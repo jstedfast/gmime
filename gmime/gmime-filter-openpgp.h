@@ -50,7 +50,7 @@ typedef enum {
 
 
 /**
- * GMimeOpenPGPPrivate:
+ * GMimeOpenPGPState:
  * @GMIME_OPENPGP_NONE: No OpenPGP markers have been found (yet).
  * @GMIME_OPENPGP_BEGIN_PGP_MESSAGE: The "-----BEGIN PGP MESSAGE-----" marker has been found.
  * @GMIME_OPENPGP_END_PGP_MESSAGE: The "-----END PGP MESSAGE-----" marker has been found.
@@ -77,15 +77,15 @@ typedef enum {
 	GMIME_OPENPGP_END_PGP_PUBLIC_KEY_BLOCK    = (1 << 6) | (1 << 5),
 	GMIME_OPENPGP_BEGIN_PGP_PRIVATE_KEY_BLOCK = (1 << 7),
 	GMIME_OPENPGP_END_PGP_PRIVATE_KEY_BLOCK   = (1 << 8) | (1 << 7)
-} GMimeOpenPGPPrivate;
+} GMimeOpenPGPState;
 
 
 /**
  * GMimeOpenPGPMarker:
  * @marker: The OpenPGP marker.
  * @len: The length of the OpenPGP marker.
- * @before: The #GMimeOpenPGPPrivate that the state machine must be in before encountering this marker.
- * @after: The #GMimeOpenPGPPrivate that the state machine will transition into once this marker is found.
+ * @before: The #GMimeOpenPGPState that the state machine must be in before encountering this marker.
+ * @after: The #GMimeOpenPGPState that the state machine will transition into once this marker is found.
  * @is_end_marker: %TRUE if the marker is an end marker; otherwise, %FALSE.
  *
  * An OpenPGP marker for use with GMime's internal state machines used for detecting OpenPGP blocks.
@@ -95,8 +95,8 @@ typedef enum {
 typedef struct {
 	const char *marker;
 	size_t len;
-	GMimeOpenPGPPrivate before;
-	GMimeOpenPGPPrivate after;
+	GMimeOpenPGPState before;
+	GMimeOpenPGPState after;
 	gboolean is_end_marker;
 } GMimeOpenPGPMarker;
 

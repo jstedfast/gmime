@@ -346,7 +346,7 @@ G_GNUC_INTERNAL GMimeFilterHTMLPrivate *_g_mime_filter_html_get_private (GMimeFi
 #endif
 
 typedef struct {
-	GMimeOpenPGPPrivate state;
+	GMimeOpenPGPState state;
 	gboolean seen_end_marker;
 	gboolean midline;
 	gint64 begin_offset;
