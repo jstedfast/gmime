@@ -125,7 +125,7 @@ typedef struct {
 	guint stage, fail_stage, release_stage;
 	gboolean no_error, error_on_success, release;
 	GMimeReaderNewLineFormat newline_format;
-	gboolean trace_newlines;
+	gboolean trace_newlines, trace_reads;
 } TestReader;
 
 typedef GMimeReaderClass TestReaderClass;
@@ -225,6 +225,12 @@ test_entity_end (GMimeReader *reader, GMimeReaderEntityType type, GMimeContentTy
 	g_string_append_printf (test->trace, "O:%d:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ":%"
 				G_GINT64_FORMAT ":%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ";",
 				type, begin, line, headers_end, end, lines);
+	if (test->trace_reads) {
+		char *mime = g_mime_content_type_get_mime_type (content_type);
+
+		g_string_append_printf (test->trace, "T:%s;", mime);
+		g_free (mime);
+	}
 	return record_callback (test, error);
 }
 
@@ -246,6 +252,12 @@ test_content_read (GMimeReader *reader, GMimeReaderContentType type, const guint
 	g_byte_array_append (test->content, buffer, length);
 	test->content_chunks++;
 	test->max_chunk = MAX (test->max_chunk, length);
+	if (test->trace_reads) {
+		char *encoded = g_base64_encode (buffer, length);
+
+		g_string_append_printf (test->trace, "R:%d:%s;", type, encoded);
+		g_free (encoded);
+	}
 	return record_callback (test, error);
 }
 
@@ -285,6 +297,13 @@ test_boundary_read (GMimeReader *reader, gboolean final, const guint8 *buffer, g
 	TestReader *test = (TestReader *) reader;
 
 	g_byte_array_append (test->boundary, buffer, length);
+	if (test->trace_reads) {
+		char *encoded = g_base64_encode (buffer, length);
+
+		g_string_append_printf (test->trace, "Q:%d:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT
+					":%s;", final, begin, line, encoded);
+		g_free (encoded);
+	}
 	return record_callback (test, error);
 }
 
@@ -338,6 +357,12 @@ test_marker_read (GMimeReader *reader, const guint8 *buffer, gsize length, GErro
 
 	test->max_chunk = MAX (test->max_chunk, length);
 	g_byte_array_append (test->boundary, buffer, length);
+	if (test->trace_reads) {
+		char *encoded = g_base64_encode (buffer, length);
+
+		g_string_append_printf (test->trace, "U:%s;", encoded);
+		g_free (encoded);
+	}
 	return record_callback (test, error);
 }
 
@@ -2176,6 +2201,250 @@ test_mimekit_reference (const char *datadir)
 	g_free (path);
 }
 
+static void
+ignore_compliance (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+}
+
+static char *
+record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chunk, gboolean fast)
+{
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	ReaderInput *input = new_input (data, length, chunk);
+	TestReader *test;
+	GMimeReader *reader;
+	GError *error = NULL;
+	gboolean success;
+	char *trace;
+
+	g_mime_parser_options_set_max_header_length (options, 16 * 1024 * 1024);
+	test = new_reader (input, options);
+	reader = (GMimeReader *) test;
+	test->trace_newlines = test->trace_reads = TRUE;
+	g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input, format);
+	if (!fast)
+		g_mime_reader_set_compliance_logger (reader, ignore_compliance, NULL, NULL);
+	do {
+		gint64 before = g_mime_reader_tell (reader);
+
+		success = g_mime_reader_read_message (reader, &error);
+		g_string_append_printf (test->trace, "RESULT:%d:%" G_GINT64_FORMAT ":%d;",
+					success, g_mime_reader_tell (reader), g_mime_reader_eos (reader));
+		if (!success) {
+			g_assert_nonnull (error);
+			g_string_append_printf (test->trace, "ERROR:%s:%d:%s;",
+						g_quark_to_string (error->domain), error->code, error->message);
+			g_clear_error (&error);
+			break;
+		}
+		g_assert_no_error (error);
+		g_assert_cmpint (g_mime_reader_tell (reader), >, before);
+	} while (format == GMIME_FORMAT_MBOX && !g_mime_reader_eos (reader));
+	trace = g_strdup (test->trace->str);
+	g_object_unref (reader);
+	g_object_unref (input);
+	g_mime_parser_options_free (options);
+	return trace;
+}
+
+static void
+check_scan_equivalence (const char *name, const char *data, gsize length, GMimeFormat format, gsize chunk)
+{
+	char *expected, *actual;
+	gsize offset;
+
+	testsuite_check ("Fast/per-line scan: %s (%" G_GSIZE_FORMAT " bytes, format %d, chunk %" G_GSIZE_FORMAT ")",
+			 name, length, format, chunk);
+	expected = record_scan_trace (data, length, format, chunk, FALSE);
+	actual = record_scan_trace (data, length, format, chunk, TRUE);
+	for (offset = 0; expected[offset] && expected[offset] == actual[offset]; offset++)
+		;
+	if (expected[offset] != actual[offset]) {
+		g_printerr ("%s (%" G_GSIZE_FORMAT " bytes, format %d, chunk %" G_GSIZE_FORMAT
+			    "): trace differs at byte %" G_GSIZE_FORMAT "\nper-line: %.160s\nfast:     %.160s\n",
+			    name, length, format, chunk, offset, expected + offset, actual + offset);
+		testsuite_check_failed ("Fast and per-line reader traces differ");
+	} else {
+		testsuite_check_passed ();
+	}
+	g_free (actual);
+	g_free (expected);
+}
+
+/* Adapted from MimeKit's committed MimeReaderScanContentTests.
+ * The upstream MIT license is in data/roundtrip/LICENSE. */
+static void
+test_scan_corpus (const char *datadir)
+{
+	static const char *directories[][2] = {
+		{ "roundtrip", "messages" }, { "roundtrip", "compliance" },
+		{ "roundtrip", "partial" }, { "roundtrip", "openpgp" },
+		{ "roundtrip", "dkim" }, { "roundtrip", "smime" }, { "mbox", "input" }
+	};
+	static const gsize chunks[] = { 1021, 4096 };
+	guint i, j, count = 0, mailboxes = 0;
+
+	for (i = 0; i < G_N_ELEMENTS (directories); i++) {
+		char *directory = g_build_filename (datadir, "..", directories[i][0], directories[i][1], NULL);
+		GError *error = NULL;
+		GDir *dir = g_dir_open (directory, 0, &error);
+		GList *files = NULL, *node;
+		const char *name;
+
+		g_assert_no_error (error);
+		g_assert_nonnull (dir);
+		while ((name = g_dir_read_name (dir)))
+			files = g_list_insert_sorted (files, g_strdup (name), (GCompareFunc) strcmp);
+		g_dir_close (dir);
+		for (node = files; node; node = node->next) {
+			char *path = g_build_filename (directory, node->data, NULL);
+			char *label = g_build_filename (directories[i][0], directories[i][1], node->data, NULL);
+			GMimeFormat format;
+			char *data;
+			gsize length, bom;
+
+			g_assert_true (g_file_get_contents (path, &data, &length, &error));
+			g_assert_no_error (error);
+			bom = length >= 3 && !memcmp (data, "\357\273\277", 3) ? 3 : 0;
+			format = !strcmp (directories[i][0], "mbox") ||
+				(length >= bom + 5 && !memcmp (data + bom, "From ", 5)) ?
+				GMIME_FORMAT_MBOX : GMIME_FORMAT_MESSAGE;
+			if (format == GMIME_FORMAT_MBOX)
+				mailboxes++;
+			for (j = 0; j < G_N_ELEMENTS (chunks); j++)
+				check_scan_equivalence (label, data, length, format, chunks[j]);
+			g_free (data);
+			g_free (label);
+			g_free (path);
+			count++;
+		}
+		g_list_free_full (files, g_free);
+		g_free (directory);
+	}
+	g_assert_cmpuint (count, ==, 70);
+	g_assert_cmpuint (mailboxes, >=, 2);
+}
+
+static const char *
+scan_newline (GRand *random)
+{
+	return g_rand_int_range (random, 0, 8) ? "\r\n" : "\n";
+}
+
+static void
+append_scan_body (GString *wire, GRand *random)
+{
+	static const char *lines[] = {
+		"", "a", "-", "--", "---", "-x", "--x", "--b", "--b--", "--b ", "--b--  ",
+		"--bb", "--inner", "--inner--", "From ", "From someone@example.com", ">From escaped",
+		"Fr", "F", "From",
+		"YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXphYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5emFiY2RlZmdoaWprbG1u",
+		"short line of text", "trailing\r", "\r"
+	};
+	static const guint lengths[] = { 31, 32, 63, 997, 1100 };
+	static const char fills[] = { 'x', 'y', 'z', 'w', 'v' };
+	guint i, count = g_rand_int_range (random, 0, 40);
+
+	for (i = 0; i < count; i++) {
+		if (!g_rand_int_range (random, 0, 3)) {
+			guint index = g_rand_int_range (random, 0, G_N_ELEMENTS (lines) + G_N_ELEMENTS (lengths));
+
+			if (index < G_N_ELEMENTS (lines)) {
+				g_string_append (wire, lines[index]);
+			} else {
+				char *line;
+
+				index -= G_N_ELEMENTS (lines);
+				line = g_strnfill (lengths[index], fills[index]);
+				g_string_append (wire, line);
+				g_free (line);
+			}
+		} else {
+			g_string_append_len (wire, lines[20], g_rand_int_range (random, 0, strlen (lines[20])));
+		}
+		g_string_append (wire, scan_newline (random));
+	}
+}
+
+static void
+append_scan_message (GString *wire, GRand *random, guint depth, gboolean message)
+{
+	const char *newline = scan_newline (random);
+
+	if (message)
+		g_string_append_printf (wire, "From: mimekit@example.org%s", newline);
+	if (depth < 2 && g_rand_int_range (random, 0, 3)) {
+		const char *boundary = depth ? "inner" : "b";
+		guint i, parts;
+
+		g_string_append_printf (wire, "Content-Type: multipart/mixed; boundary=\"%s\"%s%s",
+					boundary, newline, newline);
+		append_scan_body (wire, random);
+		parts = g_rand_int_range (random, 0, 4);
+		for (i = 0; i < parts; i++) {
+			const char *spaces = g_rand_int_range (random, 0, 4) ? "" : "  ";
+			const char *marker_newline = scan_newline (random);
+
+			g_string_append_printf (wire, "--%s%s%s", boundary, spaces, marker_newline);
+			if (!g_rand_int_range (random, 0, 4)) {
+				g_string_append_printf (wire, "Content-Type: message/rfc822%s%s", newline, newline);
+				append_scan_message (wire, random, depth + 1, TRUE);
+			} else if (!g_rand_int_range (random, 0, 3)) {
+				append_scan_message (wire, random, depth + 1, FALSE);
+			} else {
+				g_string_append_printf (wire, "Content-Type: text/plain%s%s", newline, newline);
+				append_scan_body (wire, random);
+			}
+		}
+		if (g_rand_int_range (random, 0, 4)) {
+			g_string_append_printf (wire, "--%s--%s", boundary, scan_newline (random));
+			append_scan_body (wire, random);
+		}
+	} else {
+		g_string_append_printf (wire, "Content-Type: text/plain%s%s", newline, newline);
+		append_scan_body (wire, random);
+	}
+}
+
+static void
+test_generated_scans (void)
+{
+	static const gsize chunks[] = { 1, 2, 3, 7, 31, 33, 64, 4096 };
+	static const GMimeFormat formats[] = { GMIME_FORMAT_MESSAGE, GMIME_FORMAT_MBOX };
+	guint format, i;
+
+	for (format = 0; format < G_N_ELEMENTS (formats); format++) {
+		guint seed = formats[format] == GMIME_FORMAT_MBOX ? 4242 : 2424;
+		GRand *random = g_rand_new_with_seed (seed);
+		guint truncated = 0;
+
+		for (i = 0; i < 300; i++) {
+			GString *wire = g_string_new (NULL);
+			guint message, count = format ? g_rand_int_range (random, 1, 4) : 1;
+			char *name;
+
+			for (message = 0; message < count; message++) {
+				if (format)
+					g_string_append_printf (wire, "From mimekit@example.org Fri Jan  1 00:00:00 2026%s",
+								scan_newline (random));
+				append_scan_message (wire, random, 0, TRUE);
+			}
+			if (!g_rand_int_range (random, 0, 4)) {
+				gsize length = g_rand_int_range (random, 0, wire->len + 1);
+
+				truncated += length < wire->len;
+				g_string_truncate (wire, length);
+			}
+			name = g_strdup_printf ("generated seed %u case %u", seed, i);
+			check_scan_equivalence (name, wire->str, wire->len, formats[format], chunks[i % G_N_ELEMENTS (chunks)]);
+			g_free (name);
+			g_string_free (wire, TRUE);
+		}
+		g_assert_cmpuint (truncated, >, 0);
+		g_rand_free (random);
+	}
+}
+
 int
 main (int argc, char **argv)
 {
@@ -2234,6 +2503,8 @@ main (int argc, char **argv)
 	test_long_mailbox_marker ();
 	testsuite_check_passed ();
 	test_repeated_headers ();
+	test_scan_corpus (datadir);
+	test_generated_scans ();
 	testsuite_check ("Header limits, callback failures and input errors");
 	test_reader_limits_and_errors ();
 	testsuite_check_passed ();
