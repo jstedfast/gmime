@@ -161,6 +161,65 @@ The harness compiles the reference sources without modifying their checkout.
 The six empty-input cases explicitly retain GMime's documented EOS-on-success
 contract: unlike MimeKit, a failed empty read does not report successful EOS.
 
+### Static analysis
+
+The `Static analysis` workflow runs CodeQL and Cppcheck independently on pushes
+and pull requests targeting `master` or `v4.0-dev`. It also supports manual runs
+and a weekly schedule. GitHub only runs scheduled workflows from the default
+branch, so the schedule takes effect once the workflow is on `master`.
+
+Both jobs build the Linux x64 library with assertions, GPGME, and libidn2
+enabled. Tests, examples, documentation, and language bindings are excluded.
+This is not coverage of every platform, SIMD backend, or optional-feature
+configuration.
+
+CodeQL uses a clean, manual Meson build and the `security-extended` query suite.
+Results appear in GitHub's **Security > Code scanning** view and in the
+`codeql` workflow artifact as SARIF. Code scanning alerts do not themselves
+fail the analysis job; merge enforcement requires repository code scanning
+rules.
+
+Cppcheck reads Meson's compilation database after the build has generated all
+headers. It scans `gmime/gmime*.c` and `util/*.c`, using the bundled `gtk`
+(GLib/GObject) and `posix` library models. Maintenance generators are not in
+this scope; in particular, the GTK model's global `TRUE`/`FALSE` definitions
+conflict with the standalone `gen-table.c` enum. Error, warning, performance,
+and portability diagnostics are retained without blanket suppressions.
+Findings are initially advisory while the baseline is triaged; build failures,
+tool failures, and reported parser/internal analysis errors fail the job.
+The job summary shows diagnostic counts, and the `cppcheck` artifact contains
+the XML findings, active-checker report, and analysis log.
+
+Artifacts are retained for 30 days and include the analyzed commit, tool and
+dependency versions, compilation database, and Meson configuration. Tools
+follow the runner's distribution packages and the CodeQL action release;
+versions are recorded, not frozen. Archive reports separately if they are
+needed as long-term release evidence.
+
+To reproduce the Cppcheck scan, install Cppcheck and the normal build
+dependencies, then run:
+
+```sh
+meson setup _build-cppcheck --buildtype=debug -Db_ndebug=false \
+  -Dcrypto=enabled -Dlibidn=enabled -Dintrospection=disabled \
+  -Dvapi=disabled -Dgtk_doc=false -Dtests=false -Dexamples=false
+meson compile -C _build-cppcheck
+mkdir -p _build-cppcheck/cppcheck-cache _build-cppcheck/reports
+cppcheck --project=_build-cppcheck/compile_commands.json \
+  --file-filter='*/gmime/gmime*.c' --file-filter='*/util/*.c' \
+  --cppcheck-build-dir=_build-cppcheck/cppcheck-cache \
+  --library=gtk --library=posix \
+  --enable=warning,performance,portability --check-level=normal \
+  --checkers-report=_build-cppcheck/reports/checkers.txt \
+  --error-exitcode=2 --xml \
+  --output-file=_build-cppcheck/reports/cppcheck.xml -j 2
+```
+
+Exit status 2 means diagnostics were reported and need review. These scans
+complement testing and fuzzing; they do not establish MISRA C or CERT C
+compliance. Formal conformance requires a defined standard/version and scope,
+rule-coverage assessment, manual review, and documented finding dispositions.
+
 ## Using GMime
 
 ### Parsing Messages
