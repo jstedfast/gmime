@@ -366,12 +366,10 @@ int main (int argc, char **argv)
 				mstream = g_mime_stream_fs_new (fd);
 #endif
 				
-				parser = g_mime_parser_new_with_stream (istream);
-				g_mime_parser_set_persist_stream (parser, TRUE);
-				g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
-				
-				if (!g_mime_parser_get_persist_stream (parser))
-					throw (exception_new ("persist stream check failed"));
+				parser = g_mime_parser_new_with_stream_and_storage (istream, GMIME_FORMAT_MBOX,
+										 GMIME_CONTENT_STORAGE_SOURCE, NULL);
+				if (!parser)
+					throw (exception_new ("source storage parser construction failed"));
 				
 				if (g_mime_parser_get_format (parser) != GMIME_FORMAT_MBOX)
 					throw (exception_new ("format check failed"));

@@ -265,7 +265,7 @@ g_mime_reader_finalize (GObject *object)
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 
 	g_mime_parser_options_unref (priv->options);
-	g_mime_compliance_options_free (priv->compliance_options);
+	g_mime_compliance_options_unref (priv->compliance_options);
 	logger_unref (priv->logger);
 	g_byte_array_unref (priv->header);
 	g_clear_object (&priv->stream);
@@ -508,7 +508,7 @@ g_mime_reader_set_compliance_options (GMimeReader *reader, GMimeComplianceOption
 	copy = g_mime_compliance_options_clone (options);
 	priv = _g_mime_reader_get_private (reader);
 
-	g_mime_compliance_options_free (priv->compliance_options);
+	g_mime_compliance_options_unref (priv->compliance_options);
 	priv->compliance_options = copy;
 }
 

@@ -224,15 +224,17 @@ Revisit subclass chaining and test both raw and decoded output.
 
 ## 4. Handle parser errors and options
 
-`GMimeParserOptions` and `GMimeFormatOptions` are reference-counted boxed
-types, not GObjects. Replace `g_mime_parser_options_free()` and
-`g_mime_format_options_free()` with the corresponding `*_unref()` functions.
+`GMimeParserOptions`, `GMimeFormatOptions`, and `GMimeComplianceOptions` are
+reference-counted boxed types, not GObjects. Replace
+`g_mime_parser_options_free()`, `g_mime_format_options_free()`, and
+`g_mime_compliance_options_free()` with the corresponding `*_unref()` functions.
 `new()` and `clone()` return one owned reference; `ref()` retains the same
 instance. Boxed copies (including `GValue` copies and binding-owned copies)
 now share the instance instead of cloning its settings.
 
 Use `clone()` when you need independent settings. Existing internal cloning
-is unchanged, including parser/header snapshots and scoped writer options.
+is unchanged, including parser/header snapshots, reader/parser compliance
+settings, and scoped writer options.
 Parser clones still borrow warning callback data and do not copy its destroy
 notification; keep that data alive for all users of the clones.
 Reference counting is atomic, but concurrent setting changes require external
@@ -242,6 +244,19 @@ synchronization.
 that borrowed reference; acquire your own reference to retain it. Shutdown
 releases GMime's reference rather than invalidating independently held
 references. Clone the defaults before changing settings.
+
+`g_mime_parser_get_persist_stream()` and `g_mime_parser_set_persist_stream()`
+are removed. Choose `GMIME_CONTENT_STORAGE_MEMORY` (copy content) or
+`GMIME_CONTENT_STORAGE_SOURCE` (retain source-backed content) using
+`g_mime_parser_new_with_stream_and_storage()` or
+`g_mime_parser_init_with_stream_and_storage()`. Source storage requires working
+tell, seek, and substream operations; it reports errors rather than silently
+falling back to memory. Keep the backing input open and unchanged while
+source-backed content is in use. Memory storage does not require seeking.
+Reinitialization discards buffered input, so it is not a replacement for
+changing storage between messages in an active mailbox parse.
+The basic stream constructor retains its existing automatic behavior:
+source-backed content for seekable streams, memory for nonseekable streams.
 
 `g_mime_parser_construct_part()` and `g_mime_parser_construct_message()` now
 take a final `GError **`. Do not treat every NULL result as clean EOF:

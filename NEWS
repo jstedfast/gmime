@@ -13,8 +13,10 @@
 * Added non-mutating multi-block inline-PGP discovery and per-block native
   verification/decryption, with stable read-only snapshots, malformed-block
   recovery, preserved unprotected text, and automatic temporary-file spill.
-* Made parser and format options reference-counted, replacing free() with
-  ref()/unref(). Explicit clones and internal snapshots remain independent.
+* Made parser, format, and compliance options reference-counted, replacing
+  free() with ref()/unref(). Explicit clones and internal snapshots remain independent.
+* Removed parser get/set_persist_stream(); select explicit content storage
+  when constructing or reinitializing a parser.
 * Consolidated MIME traversal on GMimeIterator, with message and entity roots.
   Removed GMimePartIter; backward traversal, editing, and cloning are not retained.
 * This release breaks API/ABI compatibility; see PORTING.md for migration.

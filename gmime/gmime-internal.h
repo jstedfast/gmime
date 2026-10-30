@@ -51,6 +51,10 @@ typedef struct {
 	GMimeHeader *header;
 } GMimeHeaderListChangedEventArgs;
 
+/* GMimeComplianceOptions */
+G_GNUC_INTERNAL void g_mime_compliance_options_init (void);
+G_GNUC_INTERNAL void g_mime_compliance_options_shutdown (void);
+
 /* GMimeFormatOptions */
 G_GNUC_INTERNAL void g_mime_format_options_init (void);
 G_GNUC_INTERNAL void g_mime_format_options_shutdown (void);

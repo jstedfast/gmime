@@ -744,12 +744,11 @@ g_mime_entity_load_with_content_type (GMimeParserOptions *options, GMimeContentT
 	g_mime_stream_cat_add_source ((GMimeStreamCat *) chained, content);
 	g_object_unref (stream);
 
-	parser = g_mime_parser_new ();
-	g_mime_parser_set_persist_stream (parser, FALSE);
-	g_mime_parser_init_with_stream (parser, chained);
-	entity = g_mime_parser_construct_part (parser, options, error);
+	parser = g_mime_parser_new_with_stream_and_storage (chained, GMIME_FORMAT_MESSAGE,
+							 GMIME_CONTENT_STORAGE_MEMORY, error);
+	entity = parser ? g_mime_parser_construct_part (parser, options, error) : NULL;
 	errsv = errno;
-	g_object_unref (parser);
+	g_clear_object (&parser);
 	g_object_unref (chained);
 	errno = errsv;
 

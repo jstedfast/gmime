@@ -166,6 +166,10 @@ g_mime_parser_new (void)
  *
  * Creates a parser at the current position of @stream.
  *
+ * Content is retained on seekable sources and copied into memory for
+ * nonseekable streams. Use g_mime_parser_new_with_stream_and_storage() to
+ * choose a storage mode explicitly.
+ *
  * Returns: (transfer full): a new parser object.
  **/
 GMimeParser *
@@ -291,44 +295,6 @@ g_mime_parser_init_with_stream_and_storage (GMimeParser *parser, GMimeStream *st
 	g_mime_parser_init_with_stream (parser, stream);
 
 	return TRUE;
-}
-
-/**
- * g_mime_parser_get_persist_stream:
- * @parser: a #GMimeParser context
- *
- * Gets whether content is retained on the seekable source stream rather
- * than copied into memory.
- *
- * Returns: %TRUE if persistence is enabled and the stream is seekable.
- **/
-gboolean
-g_mime_parser_get_persist_stream (GMimeParser *parser)
-{
-	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
-
-	return parser->priv->persist_stream && _g_mime_reader_get_stream (parser->priv->reader) &&
-		g_mime_stream_tell (_g_mime_reader_get_stream (parser->priv->reader)) >= 0;
-}
-
-/**
- * g_mime_parser_set_persist_stream:
- * @parser: a #GMimeParser context
- * @persist: whether to retain content on the source
- *
- * Changes persistence for subsequent construction operations without
- * discarding buffered input. Enabled by default, but ignored for
- * nonseekable streams. Previously returned content is unaffected.
- * Must not be called from a parsing callback.
- **/
-void
-g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
-{
-	g_return_if_fail (GMIME_IS_PARSER (parser));
-	g_return_if_fail (!parser->priv->reading);
-
-	parser->priv->persist_stream = persist;
-	_g_mime_parser_reader_set_persist (parser->priv->reader, persist);
 }
 
 /**

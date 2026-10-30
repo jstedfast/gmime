@@ -9783,6 +9783,7 @@ test_authenveloped_data (void)
 typedef struct {
 	GMimeParserOptions *parser;
 	GMimeFormatOptions *format;
+	GMimeComplianceOptions *compliance;
 } OptionReferences;
 
 static gpointer
@@ -9794,6 +9795,7 @@ ref_options_thread (gpointer user_data)
 	for (i = 0; i < 10000; i++) {
 		g_mime_parser_options_unref (g_mime_parser_options_ref (options->parser));
 		g_mime_format_options_unref (g_mime_format_options_ref (options->format));
+		g_mime_compliance_options_unref (g_mime_compliance_options_ref (options->compliance));
 	}
 
 	return NULL;
@@ -9810,10 +9812,14 @@ test_options_references (void)
 {
 	GMimeParserOptions *parser = g_mime_parser_options_new ();
 	GMimeFormatOptions *format = g_mime_format_options_new ();
-	OptionReferences options = { parser, format };
+	GMimeComplianceOptions *compliance = g_mime_compliance_options_new ();
+	OptionReferences options = { parser, format, compliance };
 	GMimeParserOptions *parser_ref, *parser_boxed, *parser_clone;
 	GMimeFormatOptions *format_ref, *format_boxed, *format_clone;
+	GMimeComplianceOptions *compliance_ref, *compliance_boxed, *compliance_clone, *snapshot;
 	GMimeHeaderList *headers;
+	GMimeStream *input;
+	GMimeReader *reader;
 	GValue value = G_VALUE_INIT;
 	GThread *threads[4];
 	guint destroyed = 0, i;
@@ -9885,6 +9891,49 @@ test_options_references (void)
 	check (g_mime_format_options_is_hidden_header (format_clone, "X-Secret"),
 	       "format clone outlives the original settings");
 	g_mime_format_options_unref (format_clone);
+
+	g_mime_compliance_options_set_context (compliance, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+	g_mime_compliance_options_set_enabled_validators (compliance, GMIME_COMPLIANCE_VALIDATOR_ADDRESS);
+	g_mime_compliance_options_set_max_issues_per_violation (compliance, 7);
+	compliance_ref = g_mime_compliance_options_ref (compliance);
+	compliance_boxed = g_boxed_copy (GMIME_TYPE_COMPLIANCE_OPTIONS, compliance);
+	g_value_init (&value, GMIME_TYPE_COMPLIANCE_OPTIONS);
+	g_value_set_boxed (&value, compliance);
+	check (compliance_ref == compliance && compliance_boxed == compliance &&
+	       g_value_get_boxed (&value) == compliance, "compliance references and boxed copies share identity");
+	compliance_clone = g_mime_compliance_options_clone (compliance);
+	input = g_mime_stream_mem_new ();
+	reader = g_mime_reader_new (NULL, input);
+	g_object_unref (input);
+	g_mime_reader_set_compliance_options (reader, compliance);
+	snapshot = g_mime_compliance_options_ref (g_mime_reader_get_compliance_options (reader));
+	g_mime_compliance_options_set_context (compliance_ref, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+	g_mime_compliance_options_set_enabled_validators (compliance_ref, GMIME_COMPLIANCE_VALIDATOR_ALL);
+	g_mime_compliance_options_set_max_issues_per_violation (compliance_ref, 3);
+	check (g_mime_compliance_options_get_context (compliance) == GMIME_COMPLIANCE_CONTEXT_TRANSPORT &&
+	       g_mime_compliance_options_get_context (compliance_clone) == GMIME_COMPLIANCE_CONTEXT_STORAGE &&
+	       g_mime_compliance_options_get_enabled_validators (compliance_clone) == GMIME_COMPLIANCE_VALIDATOR_ADDRESS &&
+	       g_mime_compliance_options_get_max_issues_per_violation (compliance_clone) == 7 &&
+	       g_mime_compliance_options_get_context (snapshot) == GMIME_COMPLIANCE_CONTEXT_STORAGE &&
+	       g_mime_compliance_options_get_enabled_validators (snapshot) == GMIME_COMPLIANCE_VALIDATOR_ADDRESS &&
+	       g_mime_compliance_options_get_max_issues_per_violation (snapshot) == 7,
+	       "explicit and internal compliance clones retain independent settings");
+	g_mime_reader_set_compliance_options (reader, NULL);
+	g_object_unref (reader);
+	check (g_mime_compliance_options_get_max_issues_per_violation (snapshot) == 7,
+	       "retained compliance snapshot outlives replacement and its reader");
+	g_mime_compliance_options_unref (snapshot);
+	g_mime_compliance_options_unref (compliance);
+	g_mime_compliance_options_unref (compliance_ref);
+	g_boxed_free (GMIME_TYPE_COMPLIANCE_OPTIONS, compliance_boxed);
+	compliance_ref = g_value_dup_boxed (&value);
+	g_value_unset (&value);
+	check (g_mime_compliance_options_get_max_issues_per_violation (compliance_ref) == 3,
+	       "duplicated boxed value retains live compliance settings");
+	g_mime_compliance_options_unref (compliance_ref);
+	check (g_mime_compliance_options_get_max_issues_per_violation (compliance_clone) == 7,
+	       "compliance clone outlives the original settings");
+	g_mime_compliance_options_unref (compliance_clone);
 }
 
 static void
@@ -9892,20 +9941,26 @@ test_options_default_references (void)
 {
 	GMimeParserOptions *parser = g_mime_parser_options_ref (g_mime_parser_options_get_default ());
 	GMimeFormatOptions *format = g_mime_format_options_ref (g_mime_format_options_get_default ());
+	GMimeComplianceOptions *compliance = g_mime_compliance_options_ref (g_mime_compliance_options_get_default ());
 	char *charset = g_strdup (g_mime_parser_options_get_charset_encoding (parser));
 	guint maxline = g_mime_format_options_get_max_line_length (format);
 	guint destroyed = 0;
 
 	g_mime_parser_options_set_warning_callback_full (parser, NULL, &destroyed, options_destroy_notify);
+	g_mime_compliance_options_set_max_issues_per_violation (compliance, 17);
 	g_mime_shutdown ();
 	check (destroyed == 0 && !strcmp (g_mime_parser_options_get_charset_encoding (parser), charset) &&
-	       g_mime_format_options_get_max_line_length (format) == maxline,
+	       g_mime_format_options_get_max_line_length (format) == maxline &&
+	       g_mime_compliance_options_get_max_issues_per_violation (compliance) == 17,
 	       "retained default options survive library shutdown");
 	g_mime_init ();
-	check (g_mime_parser_options_get_default () != parser && g_mime_format_options_get_default () != format,
+	check (g_mime_parser_options_get_default () != parser && g_mime_format_options_get_default () != format &&
+	       g_mime_compliance_options_get_default () != compliance &&
+	       g_mime_compliance_options_get_max_issues_per_violation (g_mime_compliance_options_get_default ()) == 0,
 	       "reinitialization owns fresh default options");
 	g_mime_parser_options_unref (parser);
 	g_mime_format_options_unref (format);
+	g_mime_compliance_options_unref (compliance);
 	check (destroyed == 1, "retained default parser data is destroyed on final unref");
 	g_free (charset);
 }
@@ -10122,9 +10177,10 @@ check_content_length (const char *headers, GMimeParserOptions *options, GMimeFor
 		expected = g_strdup (body);
 	stream = g_mime_stream_mem_new_with_buffer (text, strlen (text));
 	input = onebyte ? test_stream_onebyte_new (stream) : g_object_ref (stream);
-	parser = g_mime_parser_new_with_stream (input);
-	g_mime_parser_set_format (parser, format);
-	g_mime_parser_set_persist_stream (parser, persist);
+	parser = g_mime_parser_new_with_stream_and_storage (input, format,
+		persist ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (parser);
 	while (count < 4) {
 		message = g_mime_parser_construct_message (parser, options, &error);
 		check (error == NULL, "Content-Length parsing succeeds");
@@ -10276,9 +10332,10 @@ test_content_length_offset_overflow (void)
 	input->fail_after = G_MAXSIZE;
 	input->position_offset = G_MAXINT64 - 1024;
 	g_mime_stream_construct (GMIME_STREAM (input), input->position_offset, -1);
-	parser = g_mime_parser_new_with_stream (GMIME_STREAM (input));
-	g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
-	g_mime_parser_set_persist_stream (parser, FALSE);
+	parser = g_mime_parser_new_with_stream_and_storage (GMIME_STREAM (input), GMIME_FORMAT_MBOX,
+		GMIME_CONTENT_STORAGE_MEMORY, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (parser);
 	g_mime_parser_options_set_respect_content_length (options, TRUE);
 	message = g_mime_parser_construct_message (parser, options, &error);
 	check (message == NULL && error && error->domain == GMIME_ERROR &&
@@ -10483,9 +10540,10 @@ test_depth_siblings (gboolean multipart, gboolean onebyte, gboolean persist)
 		g_object_unref (input);
 		input = stream;
 	}
-	parser = g_mime_parser_new_with_stream (input);
+	parser = g_mime_parser_new_with_stream_and_storage (input, GMIME_FORMAT_MESSAGE,
+		persist ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, NULL);
+	g_assert_nonnull (parser);
 	g_object_unref (input);
-	g_mime_parser_set_persist_stream (parser, persist);
 
 	/* A cutoff must not select a container via the fallback type registry. */
 	g_mime_entity_register_type ("application", "octet-stream", GMIME_TYPE_MESSAGE_PART);
@@ -10628,8 +10686,10 @@ check_header_length (const char *text, int limit, gboolean message, gboolean one
 		g_object_unref (input);
 		input = stream;
 	}
-	parser = g_mime_parser_new_with_stream (input);
-	g_mime_parser_set_persist_stream (parser, message != onebyte);
+	parser = g_mime_parser_new_with_stream_and_storage (input, GMIME_FORMAT_MESSAGE,
+		message != onebyte ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (parser);
 	g_object_unref (input);
 
 	if (message)
@@ -10783,8 +10843,11 @@ test_parser_read_errors (void)
 					failure->nonseekable = onebyte;
 					stream = (GMimeStream *) failure;
 					g_mime_stream_construct (stream, 0, -1);
-					parser = g_mime_parser_new_with_stream (stream);
-					g_mime_parser_set_persist_stream (parser, message);
+					parser = g_mime_parser_new_with_stream_and_storage (stream, GMIME_FORMAT_MESSAGE,
+						message && !onebyte ? GMIME_CONTENT_STORAGE_SOURCE :
+						GMIME_CONTENT_STORAGE_MEMORY, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (parser);
 					if (message)
 						entity = (GMimeEntity *) g_mime_parser_construct_message (parser, NULL, &error);
 					else
@@ -11065,8 +11128,10 @@ parse_core_entity (const char *text, int limit, gboolean onebyte, guint *warning
 	g_mime_parser_options_set_max_mime_depth (options, limit);
 	if (warnings)
 		g_mime_parser_options_set_warning_callback (options, count_warning, warnings);
-	parser = g_mime_parser_new_with_stream (input);
-	g_mime_parser_set_persist_stream (parser, !onebyte);
+	parser = g_mime_parser_new_with_stream_and_storage (input, GMIME_FORMAT_MESSAGE,
+		onebyte ? GMIME_CONTENT_STORAGE_MEMORY : GMIME_CONTENT_STORAGE_SOURCE, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (parser);
 	entity = g_mime_parser_construct_part (parser, options, &error);
 	g_assert_no_error (error);
 	g_assert_nonnull (entity);
