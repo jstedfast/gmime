@@ -24,6 +24,9 @@
 
 #include <glib.h>
 #include <gmime/gmime.h>
+#ifdef ENABLE_CRYPTO
+#include <gmime/gmime-gpgme.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,20 +127,39 @@ count_parts_in_message (GMimeMessage *message)
 }
 
 #ifndef G_OS_WIN32
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 static void
 verify_foreach_callback (GMimeEntity *parent, GMimeEntity *part, gpointer user_data)
 {
 	if (GMIME_IS_MULTIPART_SIGNED (part)) {
 		/* this is a multipart/signed part, so we can verify the pgp signature */
 		GMimeMultipartSigned *mps = (GMimeMultipartSigned *) part;
-		GMimeSignatureList *signatures;
-		GMimeSignature *sig;
+		gpgme_verify_result_t signatures = NULL;
+		gpgme_signature_t sig;
+		gpgme_ctx_t ctx = NULL;
+		gpgme_error_t status;
 		GError *err = NULL;
+		const char *protocol;
 		const char *str;
-		int i;
+
+		gpgme_check_version (NULL);
+		status = gpgme_new (&ctx);
+		if (!status) {
+			protocol = g_mime_entity_get_content_type_parameter (part, "protocol");
+			status = gpgme_set_protocol (ctx, protocol &&
+				(!g_ascii_strcasecmp (protocol, "application/pkcs7-signature") ||
+				 !g_ascii_strcasecmp (protocol, "application/x-pkcs7-signature")) ?
+				GPGME_PROTOCOL_CMS : GPGME_PROTOCOL_OpenPGP);
+		}
+		if (status) {
+			fprintf (stderr, "Failed to create crypto context: %s\n", gpgme_strerror (status));
+			if (ctx)
+				gpgme_release (ctx);
+			return;
+		}
+		gpgme_set_offline (ctx, 1);
 		
-		if (!(signatures = g_mime_multipart_signed_verify (mps, GMIME_VERIFY_NONE, &err))) {
+		if (!g_mime_multipart_signed_verify (mps, ctx, &signatures, &err)) {
 			/* an error occurred - probably couldn't start gpg? */
 			
 			/* for more information about GError, see:
@@ -148,19 +170,22 @@ verify_foreach_callback (GMimeEntity *parent, GMimeEntity *part, gpointer user_d
 			g_error_free (err);
 		} else {
 			/* print out validity info - GOOD vs BAD and "why" */
-			for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
-				sig = g_mime_signature_list_get_signature (signatures, i);
+			for (sig = signatures ? signatures->signatures : NULL; sig; sig = sig->next) {
 				
-				if ((sig->status & GMIME_SIGNATURE_STATUS_RED) != 0)
+				if (sig->status || (sig->summary & GPGME_SIGSUM_RED))
 					str = "Bad";
-				else if ((sig->status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
+				else if (sig->summary & (GPGME_SIGSUM_GREEN | GPGME_SIGSUM_VALID))
 					str = "Good";
 				else
-					str = "Error";
+					str = "Valid signature, untrusted key";
+				printf ("Signature %s: %s\n", sig->fpr ? sig->fpr : "(unknown)", str);
 			}
-			
-			g_object_unref (signatures);
+			if (!signatures || !signatures->signatures)
+				fputs ("No signature found; message is not authenticated.\n", stderr);
 		}
+		if (signatures)
+			gpgme_result_unref (signatures);
+		gpgme_release (ctx);
 	}
 }
 
@@ -277,7 +302,7 @@ int main (int argc, char **argv)
 	count_parts_in_message (message);
 	
 #ifndef G_OS_WIN32
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	/* verify any signed parts */
 	verify_signed_parts (message);
 #endif

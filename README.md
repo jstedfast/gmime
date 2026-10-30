@@ -87,7 +87,7 @@ The following packages are RECOMMENDED:
     Domain Names. Libidn2 sources may be obtained from:
       https://www.gnu.org/software/libidn/#downloading
 
-  - GPGME >= 1.8.0 (will build with 1.6.0, but will be missing some functionality)
+  - GPGME >= 1.6.0 (newer native features require a supporting GPGME version)
 
     GPGME (GnuPG Made Easy) provides high-level crypto APIs needed for
     encryption, decryption, signing and signature verification for both
@@ -521,367 +521,111 @@ g_mime_message_set_mime_part (message, (GMimeEntity *) mixed);
 g_object_unref (mixed);
 ```
 
-### Encrypting Messages with S/MIME
+### OpenPGP and S/MIME
 
-S/MIME uses an `application/pkcs7-mime` MIME part to encapsulate encrypted content (as well as other things).
+Include `<gmime/gmime-gpgme.h>` and use the `gmime-gpgme-4.0` pkg-config
+package. GMime borrows native GPGME contexts and keys; it handles MIME
+canonicalization and packaging, not key selection or application trust
+policy. Native crypto methods are not exposed through introspection.
+See [PORTING.md](PORTING.md#8-migrate-cryptography-to-native-gpgme) for
+migration and ownership details.
+
+After `g_mime_init()`, create a context and choose OpenPGP or CMS (S/MIME).
+Always check configuration errors:
 
 ```c
-GMimeApplicationPkcs7Mime *encrypted;
-GMimeMessage *message;
-GError *err = NULL;
-GMimeEntity *body;
-GPtrArray *rcpts;
+gpgme_ctx_t ctx;
+gpgme_error_t rc;
 
-message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
-g_mime_message_set_subject (message, "How you doin?", NULL);
-
-/* create our message body (perhaps a multipart/mixed with the message text and some
- * image attachments, for example) */
-body = CreateMessageBody ();
-
-/* create a list of key ids to encrypt to */
-rcpts = g_ptr_array_new ();
-g_ptr_array_add (rcpts, "alice@wonderland.com"); // or use her fingerprint
-
-/* now to encrypt our message body */
-if (!(encrypted = g_mime_application_pkcs7_mime_encrypt (body, GMIME_ENCRYPT_NONE, rcpts, &err))) {
-    fprintf (stderr, "encrypt failed: %s\n", err->message);
-    g_object_unref (body);
-    g_error_free (err);
+if ((rc = gpgme_new (&ctx))) {
+    fprintf (stderr, "context creation failed: %s\n", gpgme_strerror (rc));
     return;
 }
-
-g_object_unref (body);
-
-g_mime_message_set_mime_part (message, encrypted);
-g_object_unref (encrypted);
-```
-
-### Decrypting S/MIME Messages
-
-As mentioned earlier, S/MIME uses an `application/pkcs7-mime` part with an "smime-type" parameter with a value of
-"enveloped-data" to encapsulate the encrypted content.
-
-The first thing you must do is find the `GMimeApplicationPkcs7Mime` part (see the section on traversing MIME parts).
-
-```c
-if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
-    GMimeApplicationPkcs7Mime *pkcs7 = (GMimeApplicationPkcs7Mime *) entity;
-    GMimeSecureMimeType smime_type;
-    GError *err = NULL;
-
-    smime_type = g_mime_application_pkcs7_mime_get_smime_type (pkcs7_mime);
-    if (smime_type == GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA)
-        return g_mime_application_pkcs7_mime_decrypt (pkcs7, 0, NULL, NULL, &err);
+if ((rc = gpgme_set_protocol (ctx, GPGME_PROTOCOL_OpenPGP))) {
+    fprintf (stderr, "protocol selection failed: %s\n", gpgme_strerror (rc));
+    gpgme_release (ctx);
+    return;
 }
 ```
 
-### Encrypting Messages with PGP/MIME
+Configure callbacks, engine paths, network policy and signers through GPGME.
+Use `gpgme_get_key()` to resolve recipient keys; signing uses the context's
+`gpgme_signers_add()` list. GMime preserves that list and restores any
+temporary MIME-specific armor/textmode settings. Do not concurrently share
+a context between operations.
 
-Unlike S/MIME, PGP/MIME uses `multipart/encrypted` to encapsulate its encrypted data.
+### Encrypting and decrypting MIME content
+
+PGP/MIME uses `multipart/encrypted`. Given an OpenPGP context, a borrowed
+recipient key selected by the application, and the message's body:
 
 ```c
+gpgme_key_t recipients[] = { recipient_key, NULL };
+GError *error = NULL;
 GMimeMultipartEncrypted *encrypted;
-GMimeCryptoContext *ctx;
-GMimeMessage *message;
-GError *err = NULL;
-GMimeEntity *body;
-GPtrArray *rcpts;
 
-message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
-g_mime_message_set_subject (message, "How you doin?", NULL);
-
-/* create our message body (perhaps a multipart/mixed with the message text and some
- * image attachments, for example) */
-body = CreateMessageBody ();
-
-/* create a list of key ids to encrypt to */
-rcpts = g_ptr_array_new ();
-g_ptr_array_add (rcpts, "alice@wonderland.com"); // or use her fingerprint
-
-/* now to encrypt our message body */
-ctx = g_mime_gpg_context_new ();
-
-encrypted = g_mime_multipart_encrypted_encrypt (ctx, body, FALSE, NULL, GMIME_ENCRYPT_NONE, rcpts, &err);
-g_ptr_array_free (rcpts, TRUE);
-g_object_unref (body);
-g_object_unref (ctx);
-
-if (encrypted == NULL) {
-    fprintf (stderr, "encrypt failed: %s\n", err->message);
-    g_error_free (err);
-    return;
-}
-
-g_mime_message_set_mime_part (message, (GMimeEntity *) encrypted);
-g_object_unref (encrypted);
-```
-
-### Decrypting PGP/MIME Messages
-
-As mentioned earlier, PGP/MIME uses a `multipart/encrypted` part to encapsulate the encrypted content.
-
-A `multipart/encrypted` contains exactly 2 parts: the first `GMimeEntity` is the version information while the
-second `GMimeEntity` is the actual encrypted content and will typically be an `application/octet-stream`.
-
-The first thing you must do is find the `GMimeMultipartEncrypted` part (see the section on traversing MIME parts).
-
-```c
-if (GMIME_IS_MULTIPART_ENCRYPTED (entity)) {
-    GMimeMultipartEncrypted *encrypted = (GMimeMultipartEncrypted *) entity;
-    GMimeDecryptResult *result = NULL;
-    GError *err = NULL;
-
-    return g_mime_multipart_encrypted_decrypt (encrypted, GMIME_DECRYPT_NONE, NULL, &result, &err);
+encrypted = g_mime_multipart_encrypted_encrypt (
+    ctx, body, FALSE, 0, recipients, NULL, NULL, &error);
+if (encrypted) {
+    g_mime_message_set_mime_part (message, GMIME_ENTITY (encrypted));
+    g_object_unref (encrypted);
+} else {
+    fprintf (stderr, "encryption failed: %s\n", error->message);
+    g_clear_error (&error);
 }
 ```
 
-### Digitally Signing Messages with S/MIME or PGP/MIME
+Decrypt with `g_mime_multipart_encrypted_decrypt(encrypted, ctx,
+&decrypt_result, &verify_result, &error)`. It returns an owned MIME entity,
+or NULL on failure. Inspect any verification result before treating the
+extracted content as authenticated.
 
-Both S/MIME and PGP/MIME use a `multipart/signed` to contain the signed content and the detached signature data.
+S/MIME instead uses an `application/pkcs7-mime` part. With a CMS context,
+call `g_mime_application_pkcs7_mime_encrypt(ctx, body, flags, recipients,
+&result, &error)` or
+`g_mime_application_pkcs7_mime_decrypt(part, ctx, &result, &error)`.
+Signed content inside a decrypted CMS entity requires separate verification.
 
-Here's how you might digitally sign a message using S/MIME:
+### Signing and verifying MIME content
 
-```c
-GMimeApplicationPkcs7Mime *pkcs7;
-GMimeMessage *message;
-GError *err = NULL;
-GMimeEntity *body;
-
-message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
-g_mime_message_set_subject (message, "How you doin?", NULL);
-
-/* create our message body (perhaps a multipart/mixed with the message text and some
- * image attachments, for example) */
-body = CreateMessageBody ();
-
-/* now to sign our message body */
-if (!(pkcs7 = g_mime_application_pkcs7_mime_sign (body, "joey@friends.com", &err))) {
-    fprintf (stderr, "sign failed: %s\n", err->message);
-    g_object_unref (body);
-    g_error_free (err);
-    return;
-}
-
-g_object_unref (body);
-
-g_mime_message_set_mime_part (message, (GMimeEntity *) pkcs7);
-g_object_unref (pkcs7);
-```
-
-S/MIME also gives you the option of using a `multipart/signed` method of signing a message.
+Both protocols support detached `multipart/signed` signatures:
+`g_mime_multipart_signed_sign(ctx, body, &result, &error)` uses the
+context's configured signers. To verify, supply a context matching the
+received MIME `protocol` parameter:
 
 ```c
-GMimeMultipartSigned *ms;
-GMimeCryptoContext *ctx;
-GMimeMessage *message;
-GError *err = NULL;
-GMimeEntity *body;
+gpgme_verify_result_t result = NULL;
+GError *error = NULL;
 
-message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
-g_mime_message_set_subject (message, "How you doin?", NULL);
-
-/* create our message body (perhaps a multipart/mixed with the message text and some
- * image attachments, for example) */
-body = CreateMessageBody ();
-
-/* create our crypto context - needed because multipart/signed works for both S/MIME and PGP/MIME */
-ctx = g_mime_pkcs7_context_new ();
-
-/* now to sign our message body */
-if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", &err))) {
-    fprintf (stderr, "sign failed: %s\n", err->message);
-    g_object_unref (body);
-    g_object_unref (ctx);
-    g_error_free (err);
-    return;
-}
-
-g_object_unref (body);
-g_object_unref (ctx);
-
-g_mime_message_set_mime_part (message, (GMimeEntity *) ms);
-g_object_unref (ms);
-```
-
-If you'd prefer to use PGP instead of S/MIME, things work almost exactly the same except that you
-would use the `GMimeGpgContext`.
-
-```c
-GMimeMultipartSigned *ms;
-GMimeCryptoContext *ctx;
-GMimeMessage *message;
-GError *err = NULL;
-GMimeEntity *body;
-
-message = g_mime_message_new (TRUE);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_FROM, "Joey", "joey@friends.com", NULL);
-g_mime_message_add_mailbox (message, GMIME_ADDRESS_TYPE_TO, "Alice", "alice@wonderland.com", NULL);
-g_mime_message_set_subject (message, "How you doin?", NULL);
-
-/* create our message body (perhaps a multipart/mixed with the message text and some
- * image attachments, for example) */
-body = CreateMessageBody ();
-
-/* create our crypto context - needed because multipart/signed works for both S/MIME and PGP/MIME */
-ctx = g_mime_gpg_context_new ();
-
-/* now to sign our message body */
-if (!(ms = g_mime_multipart_signed_sign (ctx, body, "joey@friends.com", &err))) {
-    fprintf (stderr, "sign failed: %s\n", err->message);
-    g_object_unref (body);
-    g_object_unref (ctx);
-    g_error_free (err);
-    return;
-}
-
-g_object_unref (body);
-g_object_unref (ctx);
-
-g_mime_message_set_mime_part (message, (GMimeEntity *) ms);
-g_object_unref (ms);
-```
-
-### Verifying S/MIME and PGP/MIME Digital Signatures
-
-As mentioned earlier, both S/MIME and PGP/MIME typically use a `multipart/signed` part to contain the
-signed content and the detached signature data.
-
-A `multipart/signed` contains exactly 2 parts: the first `GMimeEntity` is the signed content while the second
-`GMimeEntity` is the detached signature and, by default, will either be a `GMimeApplicationPgpSignature` part
-or a `GMimeApplicationPkcs7Signature` part (depending on whether the sending client signed using OpenPGP or
-S/MIME).
-
-Because the `multipart/signed` part may have been signed by multiple signers, the
-`g_mime_multipart_signed_verify()` function returns a `GMimeSignatureList` which contains a list of
-digital signatures (one for each signer) that each contain their own metadata describing who that
-signer is and what the status of their signature is.
-
-```c
-if (GMIME_IS_MULTIPART_SIGNED (entity)) {
-    GMimeMultipartSigned *ms = (GMimeMultipartSigned *) entity;
-    GMimeSignatureList *signatures;
-    GError *err = NULL;
-    int i, count;
-
-    if (!(signatures = g_mime_multipart_signed_verify (ms, GMIME_VERIFY_ENABLE_KEYSERVER_LOOKUPS, &err))) {
-        fprintf (stderr, "verify failed: %s\n", err->message);
-        g_error_free (err);
-        return;
-    }
-
-    fputs ("\nSignatures:\n", stdout);
-    count = g_mime_signature_list_length (signatures);
-    for (i = 0; i < count; i++) {
-        GMimeSignature *sig = g_mime_signature_list_get_signature (signatures, i);
-        GMimeSignatureStatus status = g_mime_signature_get_status (sig);
-        GMimeCertificate *cert = g_mime_signature_get_certificate (sig);
-        time_t created = g_mime_signature_get_created (sig);
-        time_t expires = g_mime_signature_get_expires (sig);
-
-        fprintf (stdout, "\tName: %s\n", g_mime_certificate_get_name (cert));
-        fprintf (stdout, "\tKeyId: %s\n", g_mime_certificate_get_key_id (cert));
-        fprintf (stdout, "\tFingerprint: %s\n", g_mime_certificate_get_fingerprint (cert));
-
-        fprintf (stdout, "\tTrust: ");
-        switch (g_mime_certificate_get_trust (cert)) {
-        case GMIME_TRUST_UNKNOWN:   fputs ("Unknown\n", stdout); break;
-        case GMIME_TRUST_NEVER:     fputs ("Never\n", stdout); break;
-        case GMIME_TRUST_UNDEFINED: fputs ("Undefined\n", stdout); break;
-        case GMIME_TRUST_MARGINAL:  fputs ("Marginal\n", stdout); break;
-        case GMIME_TRUST_FULL:      fputs ("Full\n", stdout); break;
-        case GMIME_TRUST_ULTIMATE:  fputs ("Ultimate\n", stdout); break;
-        }
-
-        fprintf (stdout, "\tStatus: ");
-        if (status & GMIME_SIGNATURE_STATUS_RED)
-            fputs ("BAD\n", stdout);
-        else if (status & GMIME_SIGNATURE_STATUS_GREEN)
-            fputs ("GOOD\n", stdout);
-        else if (status & GMIME_SIGNATURE_STATUS_VALID)
-            fputs ("VALID\n", stdout);
-        else
-            fputs ("UNKNOWN\n", stdout);
-
-        fprintf (stdout, "\tSignature made on %s", ctime (&created));
-        if (expires != (time_t) 0)
-            fprintf (stdout, "\tSignature expires on %s", ctime (&expires));
-        else
-            fprintf (stdout, "\tSignature never expires\n");
-	
-        fprintf (stdout, "\tErrors: ");
-        if (status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
-            fputs ("Key Revoked, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_KEY_EXPIRED)
-            fputs ("Key Expired, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_SIG_EXPIRED)
-            fputs ("Sig Expired, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_KEY_MISSING)
-            fputs ("Key Missing, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_CRL_MISSING)
-            fputs ("CRL Missing, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_CRL_TOO_OLD)
-            fputs ("CRL Too Old, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_BAD_POLICY)
-            fputs ("Bad Policy, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_SYS_ERROR)
-            fputs ("System Error, ", stdout);
-        if (status & GMIME_SIGNATURE_STATUS_TOFU_CONFLICT)
-            fputs ("Tofu Conflict", stdout);
-        if ((status & GMIME_SIGNATURE_STATUS_ERROR_MASK) == 0)
-            fputs ("None", stdout);
-        fputs ("\n\n", stdout);
-    }
-
-    g_object_unref (signatures);
-}
-```
-
-It should be noted, however, that while most S/MIME clients will use the preferred `multipart/signed`
-approach, it is possible that you may encounter an `application/pkcs7-mime` part with an "smime-type"
-parameter set to "signed-data". Luckily, GMime can handle this format as well:
-
-```c
-if (GMIME_IS_APPLICATION_PKCS7_MIME (entity)) {
-    GMimeApplicationPkcs7Mime *pkcs7 = (GMimeApplicationPkcs7Mime *) entity;
-    GMimeSecureMimeType smime_type;
-
-    smime_type = g_mime_application_pkcs7_mime_get_smime_type (pkcs7);
-
-    if (smime_type == GMIME_SECURE_MIME_TYPE_SIGNED_DATA) {
-        /* extract the original content and get a list of signatures */
-        GMimeSignatureList *signatures;
-        GMimeEntity *extracted;
-        GError *err = NULL;
-        int i, count;
-
-        /* Note: if you are rendering the message, you'll want to render the
-         * extracted mime part rather than the application/pkcs7-mime part. */
-
-        if (!(signatures = g_mime_application_pkcs7_mime_verify (pkcs7, GMIME_VERIFY_NONE, &extracted, &err))) {
-            fprintf (stderr, "verify failed: %s\n", err->message);
-            g_error_free (err);
-            return;
-        }
-
-        count = g_mime_signature_list_length (signatures);
-        for (i = 0; i < count; i++) {
-            GMimeSignature *sig = g_mime_signature_list_get_signature (signatures, i);
-            /* ... */
-        }
-
-        g_object_unref (signatures);
+if (!g_mime_multipart_signed_verify (signed_part, ctx, &result, &error)) {
+    fprintf (stderr, "verification failed: %s\n", error->message);
+    g_clear_error (&error);
+} else if (result) {
+    for (gpgme_signature_t sig = result->signatures; sig; sig = sig->next) {
+        fprintf (stdout, "%s: %s (validity %d)\n",
+                 sig->fpr ? sig->fpr : "(unknown)",
+                 gpgme_strerror (sig->status), sig->validity);
     }
 }
+if (result)
+    gpgme_result_unref (result);
 ```
+
+**Operational success does not imply a valid or trusted signature.**
+Evaluate each native signature's status, summary and validity against
+application policy, including the absence of signatures. Results can also
+be returned on failure for diagnostics: release every non-NULL result with
+`gpgme_result_unref()`. Returned results remain valid after another operation
+or context release; nested list nodes are borrowed from their result.
+
+CMS also supports opaque signed-data parts through
+`g_mime_application_pkcs7_mime_sign(ctx, body, &result, &error)` and
+`g_mime_application_pkcs7_mime_verify(part, ctx, &extracted, &result, &error)`.
+The latter returns operational success and an owned extracted MIME entity.
+
+Release application-owned keys with `gpgme_key_unref()` and contexts with
+`gpgme_release()`, never with GObject functions. For raw streams and key
+import/export, see `g_mime_gpgme_*()` and `g_mime_gpgme_data_new()`.
 
 ## Understanding Memory Management in GMime
 

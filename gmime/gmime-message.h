@@ -32,7 +32,6 @@
 #include <gmime/gmime-message-id-list.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-autocrypt.h>
-#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -199,7 +198,6 @@ GPtrArray *g_mime_message_get_attachments (GMimeMessage *message);
 gboolean g_mime_message_try_get_entity (GMimeMessage *message, const char *path_specifier, GMimeEntity **entity);
 
 GMimeAutocryptHeader *g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now);
-GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message, GDateTime *now, GMimeDecryptFlags flags, const char *session_key, GError **err);
 GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeEntity *inner_part);
 
 /* convenience functions */

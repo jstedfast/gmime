@@ -43,6 +43,9 @@
 #include "gmime-internal.h"
 #include "gmime-events.h"
 
+#ifdef ENABLE_CRYPTO
+#include "gmime-gpgme.h"
+#endif
 
 #include "gmime-object-private.h"
 
@@ -2796,23 +2799,23 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
 }
 
 
+#ifdef ENABLE_CRYPTO
+
 /**
- * g_mime_message_get_autocrypt_gossip_headers:
+ * g_mime_message_get_autocrypt_gossip_headers: (skip)
  * @message: a #GMimeMessage object, which is expected to be encrypted.
  * @now: (nullable): a #GDateTime object, or %NULL
- * @flags: a #GMimeDecryptFlags, to be used during decryption
- * @session_key: (nullable): session key to use or %NULL
+ * @ctx: a borrowed GPGME OpenPGP context
  * @err: a #GError (can be %NULL)
  *
  * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
  * given type based on the recipient(s) of an e-mail message.
  * 
  * Returns the same object as
- * #g_mime_message_get_autocrypt_gossip_headers_with_inner_part , but
+ * g_mime_message_get_autocrypt_gossip_headers_from_inner_part(), but
  * handles decryption and cleanup automatically.
  *
- * @flags and @session_key are passed through to
- * #g_mime_multipart_encrypted_decrypt, as needed.
+ * Configure network and session-key policy on @ctx before calling.
  *
  * If the message is not actually an encrypted message, returns %NULL:
  * it should be ignored for purposes of evaluating gossip.
@@ -2826,8 +2829,7 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
  **/
 GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMessage *message,
 								       GDateTime *now,
-								       GMimeDecryptFlags flags,
-								       const char *session_key,
+								       gpgme_ctx_t ctx,
 								       GError **err)
 {
 	GMimeAutocryptHeaderList *ret = NULL;
@@ -2842,9 +2844,7 @@ GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMess
 		return NULL;
 
 	inner_part = g_mime_multipart_encrypted_decrypt (GMIME_MULTIPART_ENCRYPTED (top_level),
-							 flags,
-							 session_key,
-							 NULL, /* we do not care about decryptresult */
+							 ctx, NULL, NULL,
 							 err);
 
 	if (inner_part) {
@@ -2854,3 +2854,5 @@ GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers (GMimeMess
 
 	return ret;
 }
+
+#endif /* ENABLE_CRYPTO */

@@ -33,144 +33,14 @@
 #include <errno.h>
 
 #include <gmime/gmime.h>
-#include <gmime/gmime-pkcs7-context.h>
+
 
 #include "testsuite.h"
+#include "test-crypto.h"
 
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
-
-#if 0
-static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, GError **err)
-{
-	g_mime_stream_write_string (response, "no.secret\n");
-	
-	return TRUE;
-}
-#endif
-
-static GMimeSignatureStatus
-get_sig_status (GMimeSignatureList *signatures)
-{
-	GMimeSignatureStatus status = 0;
-	GMimeSignature *sig;
-	int i;
-	
-	if (!signatures || signatures->array->len == 0)
-		return GMIME_SIGNATURE_STATUS_RED;
-	
-	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
-		sig = g_mime_signature_list_get_signature (signatures, i);
-		status |= g_mime_signature_get_status (sig);
-	}
-	
-	return status;
-}
-
-static void
-print_verify_results (GMimeSignatureList *signatures)
-{
-	GMimeSignatureStatus status;
-	GMimeSignature *sig;
-	char *date;
-	int count, i;
-	
-	status = get_sig_status (signatures);
-	
-	fputs ("Overall status: ", stdout);
-	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
-		fputs ("BAD\n", stdout);
-	else if ((status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
-		fputs ("GOOD\n", stdout);
-	else if ((status & GMIME_SIGNATURE_STATUS_VALID) != 0)
-		fputs ("VALID\n", stdout);
-	else
-		fputs ("UNKNOWN\n", stdout);
-	
-	fputs ("\nSignatures:\n", stdout);
-	count = g_mime_signature_list_length (signatures);
-	for (i = 0; i < count; i++) {
-		sig = g_mime_signature_list_get_signature (signatures, i);
-		
-		fprintf (stdout, "\tName: %s\n", sig->cert->name ? sig->cert->name : "(null)");
-		fprintf (stdout, "\tKeyId: %s\n", sig->cert->keyid ? sig->cert->keyid : "(null)");
-		fprintf (stdout, "\tUserID: %s\n", sig->cert->user_id ? sig->cert->user_id : "(null)");
-		fprintf (stdout, "\tFingerprint: %s\n", sig->cert->fingerprint ? sig->cert->fingerprint : "(null)");
-		fprintf (stdout, "\tTrust: ");
-		
-		switch (sig->cert->trust) {
-		case GMIME_TRUST_UNKNOWN:
-			fputs ("Unknown\n", stdout);
-			break;
-		case GMIME_TRUST_NEVER:
-			fputs ("Never\n", stdout);
-			break;
-		case GMIME_TRUST_UNDEFINED:
-			fputs ("Undefined\n", stdout);
-			break;
-		case GMIME_TRUST_MARGINAL:
-			fputs ("Marginal\n", stdout);
-			break;
-		case GMIME_TRUST_FULL:
-			fputs ("Full\n", stdout);
-			break;
-		case GMIME_TRUST_ULTIMATE:
-			fputs ("Ultimate\n", stdout);
-			break;
-		}
-		
-		fprintf (stdout, "\tStatus: ");
-		if ((sig->status & GMIME_SIGNATURE_STATUS_RED) != 0)
-			fputs ("BAD\n", stdout);
-		else if ((sig->status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
-			fputs ("GOOD\n", stdout);
-		else if ((sig->status & GMIME_SIGNATURE_STATUS_VALID) != 0)
-			fputs ("VALID\n", stdout);
-		else
-			fputs ("UNKNOWN\n", stdout);
-		
-		date = sig->created ? g_date_time_format_iso8601 (sig->created) : NULL;
-		fprintf (stdout, "\tSignature made on %s\n", date ? date : "(unknown)");
-		g_free (date);
-		if (!sig->expires) {
-			fprintf (stdout, "\tSignature expiration unknown\n");
-		} else if (g_date_time_to_unix_usec (sig->expires) == G_GINT64_CONSTANT (253402300799999999)) {
-			fprintf (stdout, "\tSignature never expires\n");
-		} else {
-			date = g_date_time_format_iso8601 (sig->expires);
-			fprintf (stdout, "\tSignature expires on %s\n", date);
-			g_free (date);
-		}
-		
-		fprintf (stdout, "\tErrors: ");
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
-			fputs ("Key Revoked, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_EXPIRED)
-			fputs ("Key Expired, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_SIG_EXPIRED)
-			fputs ("Sig Expired, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_MISSING)
-			fputs ("Key Missing, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_CRL_MISSING)
-			fputs ("CRL Missing, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_CRL_TOO_OLD)
-			fputs ("CRL Too Old, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_BAD_POLICY)
-			fputs ("Bad Policy, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_SYS_ERROR)
-			fputs ("System Error, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_TOFU_CONFLICT)
-			fputs ("Tofu Conflict", stdout);
-		if ((sig->status & GMIME_SIGNATURE_STATUS_ERROR_MASK) == 0)
-			fputs ("None", stdout);
-		fputc ('\n', stdout);
-		
-		if (i + 1 < count)
-			fputc ('\n', stdout);
-	}
-}
 
 static GMimeMessage *
 create_message (GMimeEntity *body)
@@ -230,10 +100,10 @@ that GMime properly treats MIME part content as opaque.\nIf this still verifies 
 then we have ourselves a winner I guess...\n"
 
 static void
-test_multipart_signed (GMimeCryptoContext *ctx)
+test_multipart_signed (gpgme_ctx_t ctx)
 {
 	GMimeMessagePrivate *priv;
-	GMimeSignatureList *signatures;
+	gpgme_verify_result_t signatures = NULL;
 	GMimeMultipartSigned *mps;
 	GMimeMessage *message;
 	GMimeTextPart *part;
@@ -244,7 +114,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
 	
 	/* sign the part */
-	mps = g_mime_multipart_signed_sign (ctx, (GMimeEntity *) part, "mimekit@example.com", &err);
+	mps = g_mime_multipart_signed_sign (ctx, (GMimeEntity *) part, NULL, &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -266,14 +136,21 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	
 	mps = (GMimeMultipartSigned *) priv->mime_part;
 	
-	if (!(signatures = g_mime_multipart_signed_verify (mps, 0, &err))) {
+	if (!g_mime_multipart_signed_verify (mps, ctx, &signatures, &err)) {
+		g_clear_pointer (&signatures, gpgme_result_unref);
 		ex = exception_new ("%s", err->message);
+		g_object_unref (message);
 		g_error_free (err);
 		throw (ex);
 	}
 	
+	if (get_sig_status (signatures) & GPGME_SIGSUM_RED) {
+		gpgme_result_unref (signatures);
+		g_object_unref (message);
+		throw (exception_new ("signature status was BAD"));
+	}
 	v(print_verify_results (signatures));
-	g_object_unref (signatures);
+	gpgme_result_unref (signatures);
 	
 	g_object_unref (message);
 }
@@ -281,13 +158,13 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 #define SIGNED_CONTENT "This is a test of application/pkcs7-mime; smime-type=signed-data.\n"
 
 static void
-test_pkcs7_mime_sign (void)
+test_pkcs7_mime_sign (gpgme_ctx_t ctx)
 {
 	GMimeMessagePrivate *priv;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
-	GMimeSignatureList *signatures;
+	gpgme_verify_result_t signatures = NULL;
 	GMimeMessage *message;
-	GMimeEntity *entity;
+	GMimeEntity *entity = NULL;
 	GMimeTextPart *part;
 	GError *err = NULL;
 	Exception *ex;
@@ -296,7 +173,7 @@ test_pkcs7_mime_sign (void)
 	part = g_mime_text_part_new ();
 	g_mime_text_part_set_text (part, SIGNED_CONTENT);
 	
-	pkcs7_mime = g_mime_application_pkcs7_mime_sign ((GMimeEntity *) part, "mimekit@example.com", &err);
+	pkcs7_mime = g_mime_application_pkcs7_mime_sign (ctx, (GMimeEntity *) part, NULL, &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -318,15 +195,23 @@ test_pkcs7_mime_sign (void)
 	
 	pkcs7_mime = (GMimeApplicationPkcs7Mime *) priv->mime_part;
 	
-	if (!(signatures = g_mime_application_pkcs7_mime_verify (pkcs7_mime, 0, &entity, &err))) {
+	if (!g_mime_application_pkcs7_mime_verify (pkcs7_mime, ctx, &entity, &signatures, &err)) {
+		g_clear_pointer (&signatures, gpgme_result_unref);
+		g_clear_object (&entity);
 		ex = exception_new ("verify failed: %s", err->message);
 		g_object_unref (message);
 		g_error_free (err);
 		throw (ex);
 	}
 	
+	if (get_sig_status (signatures) & GPGME_SIGSUM_RED) {
+		gpgme_result_unref (signatures);
+		g_object_unref (message);
+		g_object_unref (entity);
+		throw (exception_new ("signature status was BAD"));
+	}
 	v(print_verify_results (signatures));
-	g_object_unref (signatures);
+	gpgme_result_unref (signatures);
 	g_object_unref (message);
 	
 	/* TODO: verify extracted content... */
@@ -350,12 +235,12 @@ test_pkcs7_mime_sign (void)
 #define ENCRYPTED_CONTENT "This is a test of application/pkcs7-mime; smime-type=enveloped-data.\n"
 
 static void
-test_pkcs7_mime_encrypt (void)
+test_pkcs7_mime_encrypt (gpgme_ctx_t ctx)
 {
 	GMimeMessagePrivate *priv;
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
-	GMimeDecryptResult *result;
-	GPtrArray *recipients;
+	gpgme_decrypt_result_t result = NULL;
+	gpgme_key_t recipients[2] = { NULL, NULL };
 	GMimeMessage *message;
 	GMimeEntity *entity;
 	GMimeTextPart *part;
@@ -366,11 +251,10 @@ test_pkcs7_mime_encrypt (void)
 	part = g_mime_text_part_new ();
 	g_mime_text_part_set_text (part, ENCRYPTED_CONTENT);
 	
-	recipients = g_ptr_array_new ();
-	g_ptr_array_add (recipients, "mimekit@example.com");
+	recipients[0] = test_crypto_key (ctx, "mimekit@example.com", FALSE);
 	
-	pkcs7_mime = g_mime_application_pkcs7_mime_encrypt ((GMimeEntity *) part, GMIME_ENCRYPT_ALWAYS_TRUST, recipients, &err);
-	g_ptr_array_free (recipients, TRUE);
+	pkcs7_mime = g_mime_application_pkcs7_mime_encrypt (ctx, (GMimeEntity *) part, GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, &err);
+	gpgme_key_unref (recipients[0]);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -392,7 +276,8 @@ test_pkcs7_mime_encrypt (void)
 	
 	pkcs7_mime = (GMimeApplicationPkcs7Mime *) priv->mime_part;
 	
-	if (!(entity = g_mime_application_pkcs7_mime_decrypt (pkcs7_mime, 0, NULL, &result, &err))) {
+	if (!(entity = g_mime_application_pkcs7_mime_decrypt (pkcs7_mime, ctx, &result, &err))) {
+		g_clear_pointer (&result, gpgme_result_unref);
 		ex = exception_new ("decrypt failed: %s", err->message);
 		g_object_unref (message);
 		g_error_free (err);
@@ -401,12 +286,8 @@ test_pkcs7_mime_encrypt (void)
 	
 	g_object_unref (message);
 	
-	if (result->signatures) {
-		g_object_unref (result);
-		throw (exception_new ("signature status expected to be NONE"));
-	}
 	
-	g_object_unref (result);
+	gpgme_result_unref (result);
 	
 	/* TODO: verify decrypted content... */
 	if (!GMIME_IS_TEXT_PART (entity)) {
@@ -428,7 +309,7 @@ test_pkcs7_mime_encrypt (void)
 }
 
 static void
-import_key (GMimeCryptoContext *ctx, const char *path)
+import_key (gpgme_ctx_t ctx, const char *path)
 {
 	GMimeStream *stream;
 	GError *err = NULL;
@@ -439,7 +320,7 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 		throw (exception_new ("open() failed: %s", g_strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_crypto_context_import_keys (ctx, stream, &err);
+	test_crypto_import (ctx, stream, &err);
 	g_object_unref (stream);
 	
 	if (err != NULL) {
@@ -452,9 +333,9 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 int main (int argc, char *argv[])
 {
 	const char *datadir = "data/smime";
-	GMimeCryptoContext *ctx;
+	gpgme_ctx_t ctx;
 	struct stat st;
-	char *key;
+	char *volatile key;
 	int i;
 	
 	g_mime_init ();
@@ -476,10 +357,10 @@ int main (int argc, char *argv[])
 	
 	testsuite_start ("S/MIME implementation");
 	
-	ctx = g_mime_pkcs7_context_new ();
-	//g_mime_crypto_context_set_request_password (ctx, request_passwd);
+	ctx = test_crypto_context (GPGME_PROTOCOL_CMS);
+
 	
-	testsuite_check ("GMimePkcs7Context::import");
+	testsuite_check ("GPGME CMS::import");
 	try {
 		key = g_build_filename (datadir, "certificate-authority.crt", NULL);
 		import_key (ctx, key);
@@ -491,10 +372,18 @@ int main (int argc, char *argv[])
 		
 		testsuite_check_passed ();
 	} catch (ex) {
-		testsuite_check_failed ("GMimePkcs7Context::import failed: %s", ex->message);
+		testsuite_check_failed ("GPGME CMS::import failed: %s", ex->message);
+		exception_free (ex);
+		g_free (key);
+		gpgme_release (ctx);
+		testsuite_end ();
+		g_mime_shutdown ();
+		testsuite_destroy_gpghome ();
 		return EXIT_FAILURE;
 	} finally;
 	
+	test_crypto_signer (ctx, "mimekit@example.com");
+
 	testsuite_check ("multipart/signed");
 	try {
 		test_multipart_signed (ctx);
@@ -505,7 +394,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("application/pkcs7-mime; smime-type=signed-data");
 	try {
-		test_pkcs7_mime_sign ();
+		test_pkcs7_mime_sign (ctx);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
@@ -513,13 +402,13 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("application/pkcs7-mime; smime-type=enveloped-data");
 	try {
-		test_pkcs7_mime_encrypt ();
+		test_pkcs7_mime_encrypt (ctx);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
 	} finally;
 	
-	g_object_unref (ctx);
+	gpgme_release (ctx);
 	
 	testsuite_end ();
 	

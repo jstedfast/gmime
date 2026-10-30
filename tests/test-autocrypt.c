@@ -29,6 +29,9 @@
 #include <stdlib.h>
 
 #include "testsuite.h"
+#ifdef ENABLE_CRYPTO
+#include "test-crypto.h"
+#endif
 
 extern int verbose;
 
@@ -207,11 +210,13 @@ struct _ah_inject_test {
 	const char *inner_after;
 };
 
+#ifdef ENABLE_CRYPTO
 static const char * local_recipients[] =
 	{
 		"0x0D211DC5D9F4567271AC0582D8DECFBFC9346CD4",
 		NULL,
 	};
+#endif
 
 const static struct _ah_gen_test alice_addr =
 	{ .addr = "alice@example.org",
@@ -255,6 +260,7 @@ const static struct _ah_gen_test *bob_and_carol[] = {
 	NULL,
 };
 
+#ifdef ENABLE_CRYPTO
 const static struct _ah_inject_test inject_test_data[] = {
 	{ .name = "simple",
 	  .acheader = &alice_addr,
@@ -304,6 +310,8 @@ const static struct _ah_inject_test inject_test_data[] = {
 	  "Isn't it a lovely day?\n",
 	},
 };
+
+#endif
 
 const static struct _ah_parse_test parse_test_data[] = {
 	{ .name = "simple",
@@ -718,6 +726,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 
 
 
+#ifdef ENABLE_CRYPTO
 static void
 test_ah_injection (void)
 {
@@ -773,17 +782,21 @@ test_ah_injection (void)
 					g_object_unref (ahl);
 				}
 				
-				GMimeCryptoContext *ctx = g_mime_gpg_context_new ();
-				GPtrArray *recip = g_ptr_array_new ();
+				gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
+				gpgme_key_t *recip;
+				for (r = 0; test->encrypt_to[r]; r++);
+				recip = g_new0 (gpgme_key_t, r + 1);
 				
 				for (r = 0; test->encrypt_to[r]; r++)
-					g_ptr_array_add (recip, (gpointer) test->encrypt_to[r]);
+					recip[r] = test_crypto_key (ctx, test->encrypt_to[r], FALSE);
 				
-				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, FALSE, NULL,
-										GMIME_ENCRYPT_ALWAYS_TRUST,
-										recip, &err);
-				g_ptr_array_free (recip, TRUE);
-				g_object_unref (ctx);
+				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, FALSE,
+										GPGME_ENCRYPT_ALWAYS_TRUST,
+										recip, NULL, NULL, &err);
+				for (r = 0; recip[r]; r++)
+					gpgme_key_unref (recip[r]);
+				g_free (recip);
+				gpgme_release (ctx);
 				
 				if (!encrypted)
 					throw (exception_new ("failed to encrypt: %s", err->message));
@@ -813,9 +826,9 @@ test_ah_injection (void)
 				if (!encrypted)
 					throw (exception_new ("inner_after, but no encrypted part!\n"));
 				
-				GMimeEntity *cleartext = g_mime_multipart_encrypted_decrypt (encrypted,
-											     GMIME_DECRYPT_NONE,
-											     NULL, NULL, &err);
+				gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
+				GMimeEntity *cleartext = g_mime_multipart_encrypted_decrypt (encrypted, ctx, NULL, NULL, &err);
+				gpgme_release (ctx);
 				if (!cleartext)
 					throw (exception_new ("decryption failed: %s!\n", err->message));
 				
@@ -848,7 +861,7 @@ test_ah_injection (void)
 		str = NULL;
 	}
 }
-
+#endif
 
 /* returns a non-NULL error if they're not the same */
 char *
@@ -878,7 +891,6 @@ _acheaderlists_compare (GMimeAutocryptHeaderList *expected, GMimeAutocryptHeader
 	}
 	return NULL;
 }
-
 static void
 test_ah_message_parse (void)
 {
@@ -932,7 +944,9 @@ test_ah_message_parse (void)
 				if (GMIME_IS_MULTIPART_ENCRYPTED (obj)) {
 #ifdef ENABLE_CRYPTO
 					GError *err = NULL;
-					gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, NULL, GMIME_DECRYPT_NONE, NULL, &err);
+					gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
+					gossip_got = g_mime_message_get_autocrypt_gossip_headers (message, NULL, ctx, &err);
+					gpgme_release (ctx);
 					if (!gossip_got && err) {
 						fprintf (stderr, "%s", test->msg);
 						Exception *ex;
@@ -1071,15 +1085,15 @@ import_secret_key (void)
 		"=HQjA\n"
 		"-----END PGP PRIVATE KEY BLOCK-----\n"
 		;
-	GMimeCryptoContext *ctx = g_mime_gpg_context_new ();
+	gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
 	GMimeStream *stream = g_mime_stream_mem_new_with_buffer (secret_key, sizeof(secret_key));
 	GError *err = NULL;
 
 	testsuite_check ("Importing secret key");
 	
-	g_mime_crypto_context_import_keys (ctx, stream, &err);
+	test_crypto_import (ctx, stream, &err);
 	g_object_unref (stream);
-	g_object_unref (ctx);
+	gpgme_release (ctx);
 
 	if (err != NULL) {
 		Exception *ex;
@@ -1093,7 +1107,9 @@ import_secret_key (void)
 
 int main (int argc, char **argv)
 {
+#ifdef ENABLE_CRYPTO
 	char *gpg;
+#endif
 	
 	g_mime_init ();
 	

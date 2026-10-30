@@ -33,10 +33,6 @@
 #include "gmime.h"
 #include "gmime-internal.h"
 
-#ifdef ENABLE_CRYPTOGRAPHY
-#include "gmime-pkcs7-context.h"
-#include "gmime-gpg-context.h"
-#endif
 
 
 /**
@@ -48,7 +44,6 @@
  * Initialization, shutdown, and version-check functions.
  **/
 
-extern void g_mime_crypto_context_shutdown (void);
 
 GQuark gmime_gpgme_error_quark;
 GQuark gmime_error_quark;
@@ -127,16 +122,6 @@ g_mime_init (void)
 	gmime_error_quark = g_quark_from_static_string ("gmime");
 
 	/* register our GObject types with the GType system */
-	g_mime_crypto_context_get_type ();
-	g_mime_decrypt_result_get_type ();
-	g_mime_certificate_list_get_type ();
-	g_mime_signature_list_get_type ();
-	g_mime_certificate_get_type ();
-	g_mime_signature_get_type ();
-#ifdef ENABLE_CRYPTO
-	g_mime_gpg_context_get_type ();
-	g_mime_pkcs7_context_get_type ();
-#endif
 	
 	g_mime_filter_get_type ();
 	g_mime_filter_anonymize_get_type ();
@@ -216,18 +201,6 @@ g_mime_init (void)
 	g_mime_entity_register_type ("message", "disposition-notification", g_mime_message_disposition_notification_get_type ());
 	g_mime_entity_register_type ("message", "global-disposition-notification", g_mime_message_disposition_notification_get_type ());
 	g_mime_entity_register_type ("message", "feedback-report", g_mime_message_feedback_report_get_type ());
-	
-	g_mime_crypto_context_register ("application/x-pgp-signature", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-signature", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/x-pgp-encrypted", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-encrypted", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-keys", g_mime_gpg_context_new);
-	
-	g_mime_crypto_context_register ("application/x-pkcs7-signature", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-signature", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/x-pkcs7-mime", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-mime", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-keys", g_mime_pkcs7_context_new);
 }
 
 
@@ -243,7 +216,6 @@ g_mime_shutdown (void)
 		return;
 	
 	g_mime_entity_type_registry_shutdown ();
-	g_mime_crypto_context_shutdown ();
 	g_mime_format_options_shutdown ();
 	g_mime_parser_options_shutdown ();
 	g_mime_charset_map_shutdown ();

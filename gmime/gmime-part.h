@@ -30,7 +30,6 @@
 #include <gmime/gmime-filter-best.h>
 #include <gmime/gmime-filter-openpgp.h>
 #include <gmime/gmime-content.h>
-#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -101,14 +100,6 @@ GMimeContent *g_mime_part_get_content (GMimePart *mime_part);
 
 void g_mime_part_set_openpgp_data (GMimePart *mime_part, GMimeOpenPGPData data);
 GMimeOpenPGPData g_mime_part_get_openpgp_data (GMimePart *mime_part);
-
-gboolean g_mime_part_openpgp_encrypt (GMimePart *mime_part, gboolean sign, const char *userid,
-				      GMimeEncryptFlags flags, GPtrArray *recipients, GError **err);
-GMimeDecryptResult *g_mime_part_openpgp_decrypt (GMimePart *mime_part, GMimeDecryptFlags flags,
-						 const char *session_key, GError **err);
-
-gboolean g_mime_part_openpgp_sign (GMimePart *mime_part, const char *userid, GError **err);
-GMimeSignatureList *g_mime_part_openpgp_verify (GMimePart *mime_part, GMimeVerifyFlags flags, GError **err);
 
 G_END_DECLS
 

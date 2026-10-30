@@ -19,18 +19,19 @@ This is an incremental migration, not yet a declaration of feature parity.
   options and optional dependencies. Installed headers, pkg-config, GIR,
   and Vala packages retain their GMime 4.0 names.
 
-- GMimeCertificate and GMimeSignature creation/expiration fields and
-  accessors now use GDateTime instead of time_t. Setters retain a reference;
-  getters return a borrowed, nullable reference. NULL means unknown.
-  An expiration date of 9999-12-31 23:59:59.999999 UTC means never expires;
-  construct it with g_date_time_new_utc (9999, 12, 31, 23, 59, 59.999999).
-  The Unix epoch is an ordinary date, not a sentinel. Supplied timezones
-  and microseconds are preserved; GPGME timestamps are converted to UTC.
-  GPGME creation timestamp 0 means unknown and expiration timestamp 0
-  means never expires. Invalid or out-of-range backend timestamps now
-  fail verification/decryption with a GError rather than wrapping dates.
-  The get_created64() and get_expires64() accessors have been removed;
-  use g_date_time_to_unix() after checking for NULL instead.
+- Crypto now borrows caller-owned `gpgme_ctx_t` contexts and returns
+  independently retained native results. The context hierarchy and
+  certificate/signature/decryption wrappers are removed; native timestamps
+  retain GPGME semantics. Include `gmime/gmime-gpgme.h` and depend on
+  `gmime-gpgme-4.0` for crypto. Core headers and GNOME bindings remain
+  GPGME-independent; native crypto calls require application-supplied
+  bindings. See PORTING.md for ownership, configuration and error handling.
+  Existing MIME and mutating inline operations are migrated; non-mutating
+  multi-block inline-PGP support remains separate follow-up work.
+  Manual S/MIME programs compile, but runtime roundtrips remain unverified:
+  the current headless GPGME 2.0.1 CMS engine fails PKCS#12 import in
+  Pinentry despite the context's loopback setting. The committed S/MIME
+  certificates also expired in 2018.
 
 - `GMimeObject` is now `GMimeEntity`. Replace `g_mime_object_*` with
   `g_mime_entity_*`, `GMIME_OBJECT*` with `GMIME_ENTITY*`, `GMIME_IS_OBJECT*` with
@@ -779,11 +780,9 @@ not only in this migration document or API documentation.
 
 ### Dates and cryptography
 
-Public dates use GDateTime, including certificate and signature
-creation/expiration accessors and public structure members. Document
-ownership, timezone, and missing-date semantics for new APIs as well.
-Integer timestamps may remain internal where required for backend
-interoperability.
+GMime-owned public dates use GDateTime. Native GPGME keys and results use
+GPGME timestamps and sentinel values, without implicit conversion.
+Document ownership, timezone, and missing-date semantics for new APIs.
 
 Retain the existing GPGME-backed OpenPGP and S/MIME functionality,
 including GMimeMultipartSigned, GMimeApplicationPkcs7Mime, and

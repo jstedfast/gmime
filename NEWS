@@ -5,7 +5,10 @@
 * Removed input-sized stack allocations from charset, parameter, and enriched
   text handling, and prevented oversized ISO charset numbers from wrapping.
 * Treat enriched text tags containing embedded NULs as unrecognized tags.
-* Fixed a PKCS7 context leak when GPGME key-list configuration fails.
+* Replaced crypto contexts and certificate/signature/decryption wrappers
+  with caller-owned GPGME contexts, native keys and retained native results.
+  Crypto applications now use gmime-gpgme-4.0 and gmime/gmime-gpgme.h;
+  native crypto operations are not exposed through GObject introspection.
 * Replaced Autotools with Meson; GLib 2.88 or newer is required.
 * This release breaks API/ABI compatibility; see PORTING.md for migration.
 
