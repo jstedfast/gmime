@@ -271,7 +271,7 @@ g_mime_yenc_options_get_filename_charset (GMimeYencOptions *options)
 gboolean
 g_mime_yenc_options_set_filename_charset (GMimeYencOptions *options, const char *charset, GError **error)
 {
-	GIConv to, from;
+	iconv_t to, from;
 	char *copy;
 
 	g_return_val_if_fail (options != NULL, FALSE);
@@ -283,16 +283,16 @@ g_mime_yenc_options_set_filename_charset (GMimeYencOptions *options, const char 
 		return FALSE;
 	}
 
-	to = g_iconv_open ("UTF-8", charset);
-	from = g_iconv_open (charset, "UTF-8");
+	to = iconv_open ("UTF-8", g_mime_charset_iconv_name (charset));
+	from = iconv_open (g_mime_charset_iconv_name (charset), "UTF-8");
 
-	if (to != (GIConv) -1)
-		g_iconv_close (to);
+	if (to != (iconv_t) -1)
+		g_mime_iconv_close (to);
 
-	if (from != (GIConv) -1)
-		g_iconv_close (from);
+	if (from != (iconv_t) -1)
+		g_mime_iconv_close (from);
 
-	if (to == (GIConv) -1 || from == (GIConv) -1) {
+	if (to == (iconv_t) -1 || from == (iconv_t) -1) {
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, "Unsupported yEnc filename charset: %s", charset);
 		return FALSE;
 	}
@@ -751,7 +751,7 @@ yenc_set_header (GMimeYencReader *reader, GHashTable *fields, GHashTable *part, 
 	if (part && !number)
 		return yenc_error (error, "Invalid yEnc part number.");
 
-	if (!(filename = g_convert (raw_name, -1, "UTF-8", reader->options->filename_charset, NULL, &filename_length, error)))
+	if (!(filename = _g_mime_iconv_convert (raw_name, -1, "UTF-8", reader->options->filename_charset, &filename_length, error)))
 		return FALSE;
 
 	if (memchr (filename, 0, filename_length)) {
@@ -1199,7 +1199,7 @@ yenc_create_header (GMimeYencWriter *writer, GMimeYencHeader *header, const guin
 
 	g_string_append_printf (text, "line=%u size=%" G_GINT64_FORMAT " name=", header->line_length, header->size);
 
-	if (!(name = g_convert (header->filename, -1, writer->options->filename_charset, "UTF-8", NULL, &name_length, error)))
+	if (!(name = _g_mime_iconv_convert (header->filename, -1, writer->options->filename_charset, "UTF-8", &name_length, error)))
 		goto done;
 
 	if (name_length > writer->options->max_line_length ||

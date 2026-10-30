@@ -36,7 +36,30 @@ gobject_dep = dependency('gobject-2.0', version: glib_version)
 gio_dep = dependency('gio-2.0', version: glib_version)
 gthread_dep = dependency('gthread-2.0', version: glib_version)
 zlib_dep = dependency('zlib')
-iconv_dep = dependency('iconv')
+iconv_prefix = get_option('iconv_prefix')
+if iconv_prefix != ''
+  iconv_dep = declare_dependency(
+    dependencies: cc.find_library('iconv', dirs: iconv_prefix / 'lib'),
+    compile_args: ['-I' + (iconv_prefix / 'include')],
+  )
+else
+  iconv_dep = dependency('iconv')
+endif
+if host_machine.system() == 'darwin'
+  # Apple's compatibility header claims GNU libiconv 1.11, but uses Citrus.
+  if not cc.links('''
+      #include <iconv.h>
+      #if !defined(_LIBICONV_VERSION) || _LIBICONV_VERSION < 0x010c
+      #error GNU libiconv >= 1.12 is required
+      #endif
+      int main(void) {
+        iconv_t cd = iconv_open("UTF-8", "ISO-2022-JP");
+        return cd == (iconv_t) -1 ? 1 : iconv_close(cd);
+      }
+    ''', dependencies: iconv_dep, name: 'GNU libiconv (not Apple system iconv)')
+    error('macOS requires GNU libiconv >= 1.12. Install libiconv and configure with -Diconv_prefix=<prefix>; see README.md.')
+  endif
+endif
 public_deps = [glib_dep, gobject_dep, gio_dep]
 private_deps = [gthread_dep, zlib_dep, iconv_dep]
 

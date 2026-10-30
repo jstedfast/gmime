@@ -5052,6 +5052,11 @@ content copying APIs are unaffected.
   round-trip fixtures are a foundation, not the entire parity harness.
 - Add native Windows full-library integration. Preserve Linux/macOS,
   optional-feature, sanitizer, installed C, GIR and Vala integration coverage.
+- Require GNU libiconv >= 1.12 on macOS, including for checked conversions
+  previously delegated to GLib. Both macOS CI versions use the selected GNU
+  backend and check installed C consumers; Apple's native converter is not
+  a supported macOS backend. GnuPG test homes use short paths when nested
+  temporary directories would exceed Unix-domain socket limits.
 - Extend fuzzing beyond the reader/parser, encoder/decoder and RFC 2047
   targets as appropriate. The codec targets cover chunking, clone/reset,
   exact output bounds, scalar-sized equivalence and stream-filter round trips;

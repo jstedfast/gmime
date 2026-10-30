@@ -864,16 +864,16 @@ g_mime_header_get_value_with_charset (GMimeHeader *header, const char *charset, 
 	const char *bytes = NULL, *encoding;
 	char *decoded, *value;
 	gsize length = 0;
-	GIConv decoder;
+	iconv_t decoder;
 
 	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
 	g_return_val_if_fail (charset != NULL, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if ((decoder = _g_mime_charset_open_text_decoder (charset, &encoding, error)) == (GIConv) -1)
+	if ((decoder = _g_mime_charset_open_text_decoder (charset, &encoding, error)) == (iconv_t) -1)
 		return NULL;
 
-	g_iconv_close (decoder);
+	g_mime_iconv_close (decoder);
 
 	options = g_mime_parser_options_clone (header->options);
 	if (!g_mime_parser_options_set_charset_encoding (options, encoding, error)) {

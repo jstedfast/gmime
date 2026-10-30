@@ -32,6 +32,7 @@
 #include <gmime/gmime-stream-filter.h>
 #include <gmime/gmime-text-part.h>
 #include <gmime/gmime-multipart.h>
+#include <gmime/gmime-iconv.h>
 
 G_BEGIN_DECLS
 
@@ -155,8 +156,14 @@ G_GNUC_INTERNAL char *_g_mime_charset_encode_text (const char *charset, const ch
 						 char **mime_name, GError **error);
 G_GNUC_INTERNAL char *_g_mime_charset_get_text_name (const char *charset, GError **error);
 G_GNUC_INTERNAL const char *_g_mime_charset_get_text_converter (const char *name);
-G_GNUC_INTERNAL GIConv _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error);
+G_GNUC_INTERNAL iconv_t _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error);
 G_GNUC_INTERNAL int _g_mime_charset_get_codepage (const char *charset);
+
+/* Checked conversions must use the same backend as g_mime_iconv_open(), not GLib's. */
+G_GNUC_INTERNAL char *_g_mime_iconv_convert (const char *text, gssize length, const char *to, const char *from,
+					  gsize *written, GError **error);
+G_GNUC_INTERNAL char *_g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd,
+						     gsize *written, GError **error);
 
 /* utils */
 G_GNUC_INTERNAL GDateTime *_g_mime_utils_header_decode_date (const char *text, gsize length);

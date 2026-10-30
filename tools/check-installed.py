@@ -72,8 +72,24 @@ int main (void)
     GMimeComplianceOptions *compliance;
     GByteArray *decoded;
     GError *error = NULL;
+    iconv_t cd;
+    char *in, *out, buffer[16];
+    size_t inleft, outleft;
 
     g_mime_init ();
+    /* This consumer deliberately uses only installed pkg-config flags.
+     * Its iconv header need not belong to GMime's conversion backend. */
+    cd = g_mime_iconv_open ("BIG5-HKSCS", "UTF-8");
+    g_assert_true (cd != (iconv_t) -1);
+    in = "\360\240\200\241";
+    inleft = 4;
+    out = buffer;
+    outleft = sizeof buffer;
+    g_assert_cmpuint (g_mime_iconv (cd, &in, &inleft, &out, &outleft), ==, 0);
+    g_assert_cmpuint (inleft, ==, 0);
+    g_assert_cmpmem (buffer, (out - buffer), "\234\161", 2);
+    g_assert_cmpint (g_mime_iconv_close (cd), ==, 0);
+
     input = g_mime_stream_mem_new_with_buffer (wire, sizeof wire - 1);
     message = g_mime_message_load (NULL, input, &error);
     g_assert_no_error (error);
@@ -91,7 +107,7 @@ int main (void)
     compliance = g_mime_compliance_options_new ();
     g_mime_compliance_options_set_max_issues_per_violation (compliance, 1);
     g_mime_parser_set_compliance_options (parser, compliance);
-    g_mime_compliance_options_free (compliance);
+    g_mime_compliance_options_unref (compliance);
     g_assert_cmpuint (g_mime_compliance_options_get_max_issues_per_violation (
         g_mime_parser_get_compliance_options (parser)), ==, 1);
     g_mime_parser_set_compliance_logger (parser, report_issue, &diagnostics, destroy_logger);

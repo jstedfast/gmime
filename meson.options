@@ -1,5 +1,6 @@
 option('crypto', type: 'feature', value: 'auto', description: 'OpenPGP and S/MIME support using GPGME')
 option('libidn', type: 'feature', value: 'auto', description: 'Use libidn2 instead of GLib for IDN conversion')
+option('iconv_prefix', type: 'string', value: '', description: 'Installation prefix of an external iconv (e.g. keg-only GNU libiconv on macOS)')
 option('introspection', type: 'feature', value: 'auto', description: 'Generate GObject introspection data')
 option('vapi', type: 'feature', value: 'auto', description: 'Generate Vala bindings (requires introspection)')
 option('gtk_doc', type: 'boolean', value: false, description: 'Build and install the API reference')

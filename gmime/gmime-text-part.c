@@ -321,6 +321,7 @@ g_mime_text_part_is_rich_text (GMimeTextPart *mime_part)
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
 
 	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+
 	return g_mime_content_type_is_type (content_type, "text", "rtf") ||
 		g_mime_content_type_is_type (content_type, "application", "rtf");
 }
@@ -492,9 +493,9 @@ g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *ch
 	g_return_val_if_fail (text != NULL, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	bytes = _g_mime_charset_encode_text (charset, text, &length, &name, error);
-	if (!bytes)
+	if (!(bytes = _g_mime_charset_encode_text (charset, text, &length, &name, error)))
 		return FALSE;
+
 	if (length > G_MAXUINT) {
 		g_set_error_literal (error, GMIME_ERROR, EOVERFLOW, "Text content exceeds the native memory stream limit");
 		g_free (bytes);
@@ -506,10 +507,13 @@ g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *ch
 	 * borrowed from the part, and conversion failures must leave it intact. */
 	stream = g_mime_stream_mem_new_with_buffer (bytes, length);
 	g_free (bytes);
+
 	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_object_unref (stream);
+
 	g_mime_text_part_set_charset (mime_part, name);
 	g_free (name);
+
 	g_mime_part_set_content ((GMimePart *) mime_part, content);
 	g_object_unref (content);
 
@@ -546,13 +550,13 @@ g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *ch
 char *
 g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *charset, GError **error)
 {
+	char *text, *output, *normalized;
+	size_t outlen, prespace;
 	GMimeContent *content;
 	GMimeStream *stream;
 	GMimeFilter *filter;
 	GByteArray *buffer;
-	GIConv decoder;
-	char *text, *output, *normalized;
-	size_t outlen, prespace;
+	iconv_t decoder;
 	gsize length;
 	int errsv;
 
@@ -562,14 +566,16 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
 
 	/* Resolve the override even for absent content, before reading any
 	 * bytes. A bad charset must not become an empty success or an I/O error. */
-	if ((decoder = _g_mime_charset_open_text_decoder (charset, NULL, error)) == (GIConv) -1)
+	if ((decoder = _g_mime_charset_open_text_decoder (charset, NULL, error)) == (iconv_t) -1)
 		return NULL;
+
 	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part))) {
-		g_iconv_close (decoder);
+		g_mime_iconv_close (decoder);
 		return g_strdup ("");
 	}
+
 	if (!g_mime_content_get_stream (content)) {
-		g_iconv_close (decoder);
+		g_mime_iconv_close (decoder);
 		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
 				     "Cannot decode text content without a backing stream");
 		return NULL;
@@ -577,10 +583,11 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
 
 	stream = g_mime_stream_mem_new ();
 	errno = 0;
+
 	if (g_mime_content_decode_to_stream (content, stream) == -1) {
 		errsv = errno;
 		g_object_unref (stream);
-		g_iconv_close (decoder);
+		g_mime_iconv_close (decoder);
 		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
 			     "Failed to decode text content: %s",
 			     errsv ? g_strerror (errsv) : "unknown I/O error");
@@ -590,18 +597,21 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
 	/* The legacy charset filter skips malformed bytes. Use checked
 	 * conversion here so a valid prefix cannot hide an invalid suffix. */
 	buffer = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
-	text = g_convert_with_iconv (buffer->len ? (const char *) buffer->data : "", buffer->len,
-				     decoder, NULL, &length, error);
-	g_iconv_close (decoder);
+	text = _g_mime_iconv_convert_with_iconv (buffer->len ? (const char *) buffer->data : "", buffer->len,
+					       decoder, &length, error);
+	g_mime_iconv_close (decoder);
 	g_object_unref (stream);
+
 	if (!text)
 		return NULL;
+
 	if (memchr (text, '\0', length)) {
 		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
 				     "Decoded text contains an embedded NUL character");
 		g_free (text);
 		return NULL;
 	}
+
 	if (!length)
 		return text;
 

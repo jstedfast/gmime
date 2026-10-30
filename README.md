@@ -79,6 +79,10 @@ are REQUIRED:
 
   - iconv (provided by the C library on some platforms, or GNU libiconv)
 
+    macOS requires GNU libiconv >= 1.12 rather than Apple's system iconv,
+    whose conversion behavior and bugs vary between OS releases. GMime uses
+    its selected backend throughout; GLib itself does not need rebuilding.
+
 The following packages are RECOMMENDED:
 
   - Libidn2 >= 2.0.0
@@ -127,12 +131,27 @@ coverage (`-Db_coverage=true`), and sanitizers (`-Db_sanitize=address,undefined`
 When cross-compiling without an executable wrapper, GMime uses its built-in
 platform charset aliases instead of running the iconv alias detector.
 
+### macOS
+
+Homebrew's GNU libiconv is keg-only. Select its headers and library when
+configuring a new build directory:
+
+```sh
+brew install meson ninja pkgconf glib libiconv
+meson setup _build -Diconv_prefix="$(brew --prefix libiconv)"
+meson compile -C _build
+meson test -C _build --print-errorlogs
+```
+
+GMime rejects Apple's compatibility header at configuration time. Applications
+must use `g_mime_iconv()` and `g_mime_iconv_close()` with descriptors returned by
+`g_mime_iconv_open()`; passing them to GLib or another iconv backend is invalid.
+
 ### Continuous integration and reference tests
 
 CI builds optimized, assertion-enabled configurations on native Linux x64
 and ARM64 and macOS 15 and 26 ARM64, with optional features enabled and
-disabled. Both macOS versions retain the full test suite so native iconv
-behavior can be compared without dropping older-system coverage.
+disabled. Both macOS versions use GNU libiconv and retain the full test suite.
 Linux additionally checks Clang ASan/UBSan, static linking, source
 distributions, documentation, and installed C/GIR/Vala consumers.
 The SIMD test reports available and unavailable backends; CI explicitly

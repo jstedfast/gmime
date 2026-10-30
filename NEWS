@@ -10,6 +10,8 @@
   Crypto applications now use gmime-gpgme-4.0 and gmime/gmime-gpgme.h;
   native crypto operations are not exposed through GObject introspection.
 * Replaced Autotools with Meson; GLib 2.88 or newer is required.
+* Require GNU libiconv on macOS and use the selected backend consistently for
+  checked text conversion, MIME formatting, filters, and public iconv wrappers.
 * Added non-mutating multi-block inline-PGP discovery and per-block native
   verification/decryption, with stable read-only snapshots, malformed-block
   recovery, preserved unprotected text, and automatic temporary-file spill.

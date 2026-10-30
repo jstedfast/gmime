@@ -15,6 +15,12 @@ validation; it is not an application migration checklist.
 
 GMime now uses Meson >= 1.3.0, a C11 compiler, and GLib/GObject/GIO >= 2.88.0.
 Autotools support has been removed. zlib and iconv are required.
+On macOS, GNU libiconv >= 1.12 is required instead of Apple's system iconv;
+see the macOS build instructions in [README.md](README.md).
+
+`g_mime_iconv()` is now a library function, not a macro calling the application's
+iconv backend. Use only GMime's conversion/close wrappers with descriptors from
+`g_mime_iconv_open()`, never GLib's or system iconv functions.
 
 ```sh
 meson setup _build --buildtype=debugoptimized

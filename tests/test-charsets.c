@@ -136,7 +136,7 @@ test_text_converters (void)
 		char *decoded;
 
 		g_assert_cmpstr (converter, ==, cases[i].converter);
-		decoded = g_convert (cases[i].bytes, cases[i].length, "UTF-8", converter, NULL, NULL, &error);
+		decoded = _g_mime_iconv_convert (cases[i].bytes, cases[i].length, "UTF-8", converter, NULL, &error);
 		g_assert_no_error (error);
 		g_assert_cmpstr (decoded, ==, "caf\303\251");
 		g_free (decoded);
@@ -168,11 +168,99 @@ test_native_aliases (void)
 
 		g_assert_cmpstr (converter, ==, cases[i].converter);
 		g_assert_cmpstr (g_mime_charset_language (converter), ==, cases[i].language);
-		decoded = g_convert (cases[i].bytes, -1, "UTF-8", converter, NULL, NULL, &error);
+		decoded = _g_mime_iconv_convert (cases[i].bytes, -1, "UTF-8", converter, NULL, &error);
 		g_assert_no_error (error);
 		g_assert_cmpstr (decoded, ==, cases[i].text);
 		g_free (decoded);
 	}
+	g_mime_charset_map_shutdown ();
+}
+
+static void
+test_checked_conversion (void)
+{
+	static const struct {
+		const char *text, *to;
+		GConvertError code;
+	} invalid[] = {
+		{ "prefix\377", "UTF-8", G_CONVERT_ERROR_ILLEGAL_SEQUENCE },
+		{ "prefix\342\202", "UTF-8", G_CONVERT_ERROR_PARTIAL_INPUT },
+		{ "\360\237\230\200", "US-ASCII", G_CONVERT_ERROR_ILLEGAL_SEQUENCE },
+		{ "", "x-gmime-unsupported", G_CONVERT_ERROR_NO_CONVERSION },
+		{ "", "x-unknown", G_CONVERT_ERROR_NO_CONVERSION }
+	};
+	GString *text = g_string_new (NULL), *expected = g_string_new (NULL);
+	GError *error = NULL;
+	char *converted, *decoded;
+	gsize length, decoded_length;
+	iconv_t cd;
+	guint i;
+
+	g_mime_charset_map_init ();
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		converted = _g_mime_iconv_convert (invalid[i].text, -1, invalid[i].to, "UTF-8", &length, &error);
+		g_assert_null (converted);
+		g_assert_error (error, G_CONVERT_ERROR, invalid[i].code);
+		g_assert_cmpuint (length, ==, 0);
+		g_clear_error (&error);
+	}
+
+	converted = _g_mime_iconv_convert ("", 0, "UTF-8", "UTF-8", &length, &error);
+	g_assert_no_error (error);
+	g_assert_cmpuint (length, ==, 0);
+	g_assert_cmpmem (converted, 4, "\0\0\0\0", 4);
+	g_free (converted);
+	converted = _g_mime_iconv_convert ("A\0B", 3, "UTF-32LE", "UTF-8", &length, &error);
+	g_assert_no_error (error);
+	g_assert_cmpmem (converted, length, "A\0\0\0\0\0\0\0B\0\0\0", 12);
+	g_assert_cmpmem (converted + length, 4, "\0\0\0\0", 4);
+	decoded = _g_mime_iconv_convert (converted, length, "UTF-8", "UTF-32LE", &decoded_length, &error);
+	g_assert_no_error (error);
+	g_assert_cmpmem (decoded, decoded_length, "A\0B", 3);
+	g_free (decoded);
+	g_free (converted);
+
+	for (i = 0; i < 512; i++) {
+		g_string_append (text, "\346\227\245ABC");
+		g_string_append (expected, "\033$BF|\033(BABC");
+	}
+	converted = _g_mime_iconv_convert (text->str, text->len, "ISO-2022-JP", "UTF-8", &length, &error);
+	g_assert_no_error (error);
+	g_assert_cmpmem (converted, length, expected->str, expected->len);
+	decoded = _g_mime_iconv_convert (converted, length, "UTF-8", "ISO-2022-JP", &decoded_length, &error);
+	g_assert_no_error (error);
+	g_assert_cmpmem (decoded, decoded_length, text->str, text->len);
+	g_free (converted);
+	g_free (decoded);
+	g_string_free (expected, TRUE);
+	g_string_free (text, TRUE);
+
+	/* Exactly fill the first output buffer, leaving the reset sequence to grow it. */
+	text = g_string_new (NULL);
+	for (i = 0; i < 55; i++)
+		g_string_append_c (text, 'a');
+	g_string_append (text, "\346\227\245\346\227\245\346\227\245");
+	converted = _g_mime_iconv_convert (text->str, text->len, "ISO-2022-JP", "UTF-8", &length, &error);
+	g_assert_no_error (error);
+	g_assert_cmpuint (length, ==, 67);
+	g_assert_cmpmem (converted, 55, text->str, 55);
+	g_assert_cmpmem (converted + 55, 12, "\033$BF|F|F|\033(B", 12);
+	g_free (converted);
+	g_string_free (text, TRUE);
+
+	cd = g_mime_iconv_open ("ISO-2022-JP", "UTF-8");
+	g_assert_true (cd != (iconv_t) -1);
+	for (i = 0; i < 2; i++) {
+		converted = _g_mime_iconv_convert_with_iconv ("\346\227\245", 3, cd, &length, &error);
+		g_assert_no_error (error);
+		g_assert_cmpmem (converted, length, "\033$BF|\033(B", 8);
+		g_free (converted);
+	}
+	converted = _g_mime_iconv_convert_with_iconv ("", G_MAXSIZE, cd, &length, &error);
+	g_assert_null (converted);
+	g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_MEMORY);
+	g_clear_error (&error);
+	g_mime_iconv_close (cd);
 	g_mime_charset_map_shutdown ();
 }
 
@@ -280,6 +368,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/charsets/iso-number-bounds", test_iso_number_bounds);
 	g_test_add_func ("/charsets/text-converters", test_text_converters);
 	g_test_add_func ("/charsets/native-aliases", test_native_aliases);
+	g_test_add_func ("/charsets/checked-conversion", test_checked_conversion);
 	g_test_add_func ("/charsets/native-identities", test_native_identities);
 	g_test_add_func ("/charsets/lifetime", test_lifetime);
 	g_test_add_func ("/charsets/threads", test_threads);
