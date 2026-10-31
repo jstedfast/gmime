@@ -14,6 +14,10 @@
 * Report InvalidParameter for malformed names, missing equals signs or values,
   and unterminated quoted strings or comments. Parameter recovery and decoding
   remain unchanged; this check does not validate encoded RFC 2231 value contents.
+* Report InvalidRfc2231Parameter for missing charset/language delimiters, invalid
+  percent escapes, or invalid raw encoded data. Validate each segment without
+  assembling values or looking up charsets; retain tolerant quoted values,
+  empty charset/language fields, and mixed encoded/plain continuations.
 * Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
 * Fixed RFC 2231 parameters with empty charset fields, including continuations.
   Comments after unquoted parameter values are ignored, including folded
