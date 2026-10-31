@@ -27,8 +27,9 @@ G_BEGIN_DECLS
 
 /* Validates a raw, length-delimited value without constructing an address model.
  * The callback borrows each issue synchronously. Coordinates identify buffer[0];
- * lines and columns are one-based, and all emitted positions are exact. */
-G_GNUC_INTERNAL void _g_mime_address_validate (const guint8 *buffer, gsize length,
+ * lines and columns are one-based. Address syntax uses Exact positions and
+ * encoded-word diagnostics use ElementStart. The two validators are independent. */
+G_GNUC_INTERNAL void _g_mime_address_validate (const guint8 *buffer, gsize length, GMimeComplianceValidators validators,
 	GMimeComplianceIssueFunc report, gpointer user_data, GMimeComplianceContext context,
 	gint64 stream_offset, guint64 line_number, guint64 column_number);
 

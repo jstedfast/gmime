@@ -35,6 +35,7 @@
 #include "gmime-parse-utils.h"
 #include "gmime-encoding-validator-private.h"
 #include "gmime-address-validator-private.h"
+#include "gmime-encoded-word-validator-private.h"
 #include "gmime-parameter-validator-private.h"
 #include "gmime-reader-simd-private.h"
 
@@ -836,9 +837,20 @@ check_header_semantics (GMimeReader *reader, gsize name_length, gsize field_leng
 		report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER, begin, line, 1,
 			   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 
-	if (address && length && (priv->validators & GMIME_COMPLIANCE_VALIDATOR_ADDRESS))
-		_g_mime_address_validate (value, length, report_issue, reader, priv->context,
+	if (address && length && (priv->validators & (GMIME_COMPLIANCE_VALIDATOR_ADDRESS | GMIME_COMPLIANCE_VALIDATOR_ENCODED_WORDS)))
+		_g_mime_address_validate (value, length, priv->validators, report_issue, reader, priv->context,
 					 begin + field_length + 1, line, field_length + 2);
+
+	if (!invalid && !address && (priv->validators & GMIME_COMPLIANCE_VALIDATOR_ENCODED_WORDS) &&
+	    (header_is (data, name_length, "Subject") || header_is (data, name_length, "Comments") ||
+	     header_is (data, name_length, "Content-Description") ||
+	     (name_length >= 2 && g_ascii_tolower (data[0]) == 'x' && data[1] == '-'))) {
+		GMimeEncodedWordValidator words;
+
+		_g_mime_encoded_word_validator_init (&words, value, length, report_issue, reader, priv->context,
+						    begin + field_length + 1, line, field_length + 2);
+		_g_mime_encoded_word_validator_validate (&words, length, GMIME_ENCODED_WORD_CONTEXT_TEXT);
+	}
 
 	if (!invalid && (priv->validators & GMIME_COMPLIANCE_VALIDATOR_PARAMETERS)) {
 		gboolean content_type = header_is (data, name_length, "Content-Type");

@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include "gmime-address-validator-private.h"
+#include "gmime-encoded-word-validator-private.h"
 
 /*
  * A strict RFC 5322/RFC 6532 validator, deliberately independent of the tolerant
@@ -77,11 +78,14 @@ typedef struct {
 	GArray *line_starts;
 	gssize *phrase_ends, *unquoted_ats;
 	gssize name_addr_from;
+	GMimeEncodedWordValidator encoded_words;
 
 	// Note: From here down must remain all boolean bit fields */
 	gboolean name_addr_follows : 1;
 	gboolean skipped_comment : 1;
 	gboolean phrase_simple : 1;
+	gboolean validate_syntax : 1;
+	gboolean validate_encoded_words : 1;
 
 	// Note: Whether the address currently being scanned was cut short by a damaged local-part.
 	// Set by LogDamagedLocalPart and cleared at the start of each address, it tells the list loops
@@ -186,6 +190,9 @@ av_log (AddressValidator *v, GMimeComplianceViolation violation, gssize at)
 	gssize end = MIN (at, v->end_index);
 	guint64 line;
 	gssize line_begin;
+
+	if (!v->validate_syntax)
+		return;
 
 	for (gssize i = v->scan_index; i < end; i++) {
 		if (v->text[i] == '\n') {
@@ -1469,6 +1476,14 @@ av_validate_group_list (AddressValidator *v)
 	av_log (v, GMIME_COMPLIANCE_MISSING_GROUP_TERMINATOR, v->end_index);
 }
 
+static void
+av_validate_encoded_words_to (AddressValidator *v, gssize end, GMimeEncodedWordContext location)
+{
+	/* Classify finalized ranges, not speculative phrase scans. */
+	if (v->validate_encoded_words)
+		_g_mime_encoded_word_validator_validate (&v->encoded_words, end, location);
+}
+
 /*
  * Validate a single address, returning false if the remainder of the value
  * has been consumed and scanning cannot usefully continue.
@@ -1483,6 +1498,8 @@ av_validate_address (AddressValidator *v, gboolean inGroup)
 	gboolean hasContent = TRUE;
 	gssize specialIndex = -1;
 
+	av_validate_encoded_words_to (v, start, GMIME_ENCODED_WORD_CONTEXT_FORBIDDEN);
+
 	if (start < v->phrase_end && av_try_get_phrase_end (v, start, &end)) {
 		v->index = end;
 	} else if (!av_try_scan_phrase (v, &unquotedSpecial, &specialIndex, &hasContent) && !av_scan_phrase (v, &unquotedSpecial, &specialIndex, &hasContent)) {
@@ -1495,12 +1512,15 @@ av_validate_address (AddressValidator *v, gboolean inGroup)
 
 		v->index = start;
 		av_validate_addrspec (v, FALSE, confirmed);
+		av_validate_encoded_words_to (v, v->index, GMIME_ENCODED_WORD_CONTEXT_FORBIDDEN);
 		return TRUE;
 	}
 
 	guint8 c = v->text[v->index];
 
 	if (c == ':') {
+		av_validate_encoded_words_to (v, v->index, GMIME_ENCODED_WORD_CONTEXT_PHRASE);
+
 		// Note: rfc5322 does not permit a group inside a group (a group-list is a mailbox-list).
 		if (inGroup)
 			av_log (v, GMIME_COMPLIANCE_NESTED_ADDRESS_GROUP, start);
@@ -1532,6 +1552,8 @@ av_validate_address (AddressValidator *v, gboolean inGroup)
 	}
 
 	if (c == '<') {
+		av_validate_encoded_words_to (v, v->index, GMIME_ENCODED_WORD_CONTEXT_PHRASE);
+
 		if (unquotedSpecial)
 			av_log (v, GMIME_COMPLIANCE_UNQUOTED_DISPLAY_NAME, specialIndex);
 
@@ -1541,6 +1563,7 @@ av_validate_address (AddressValidator *v, gboolean inGroup)
 		av_check_null_bytes_in_display_name (v, start, v->index);
 
 		av_validate_angle_addr (v);
+		av_validate_encoded_words_to (v, v->index, GMIME_ENCODED_WORD_CONTEXT_FORBIDDEN);
 		return TRUE;
 	}
 
@@ -1567,6 +1590,7 @@ av_validate_address (AddressValidator *v, gboolean inGroup)
 
 	v->index = start;
 	av_validate_addrspec (v, FALSE, hasAt);
+	av_validate_encoded_words_to (v, v->index, GMIME_ENCODED_WORD_CONTEXT_FORBIDDEN);
 
 	return TRUE;
 }
@@ -1840,7 +1864,7 @@ av_validate_address_list (AddressValidator *v)
 }
 
 void
-_g_mime_address_validate (const guint8 *buffer, gsize length, GMimeComplianceIssueFunc report,
+_g_mime_address_validate (const guint8 *buffer, gsize length, GMimeComplianceValidators validators, GMimeComplianceIssueFunc report,
 			 gpointer user_data, GMimeComplianceContext context, gint64 stream_offset,
 			 guint64 line_number, guint64 column_number)
 {
@@ -1849,6 +1873,7 @@ _g_mime_address_validate (const guint8 *buffer, gsize length, GMimeComplianceIss
 
 	g_return_if_fail (buffer != NULL || length == 0);
 	g_return_if_fail (length <= G_MAXSSIZE);
+
 	if (!report || !length)
 		return;
 
@@ -1868,23 +1893,33 @@ _g_mime_address_validate (const guint8 *buffer, gsize length, GMimeComplianceIss
 	v->phrase_end = -1;
 	v->phrase_at = -2;
 	v->name_addr_from = -1;
+	v->validate_syntax = (validators & GMIME_COMPLIANCE_VALIDATOR_ADDRESS) != 0;
+	v->validate_encoded_words = (validators & GMIME_COMPLIANCE_VALIDATOR_ENCODED_WORDS) != 0;
+
+	if (v->validate_encoded_words)
+		_g_mime_encoded_word_validator_init (&v->encoded_words, buffer, length, report, user_data, context,
+						    stream_offset, line_number, column_number);
 
 	// Note: The raw value still carries the line terminator that ended the header (and any
 	// trailing folding whitespace). That is not part of the address list, and leaving it in
 	// makes a trailing token look as though it were followed by folding whitespace.
 	while (v->end_index > 0 && is_whitespace (buffer[v->end_index - 1]))
 		v->end_index--;
+
 	if (v->end_index == 0)
 		return;
 
-	av_scan_for_control_characters (v);
+	if (v->validate_syntax) {
+		av_scan_for_control_characters (v);
 
-	// Note: rfc6532 extends the address grammar to UTF-8 and to nothing else, so any 8-bit
-	// content that is not valid UTF-8 has no defined interpretation.
-	if (!valid_utf8 (buffer, length))
-		av_log (v, GMIME_COMPLIANCE_INVALID_8BIT_ADDRESS, 0);
+		// Note: rfc6532 extends the address grammar to UTF-8 and to nothing else, so any 8-bit
+		// content that is not valid UTF-8 has no defined interpretation.
+		if (!valid_utf8 (buffer, length))
+			av_log (v, GMIME_COMPLIANCE_INVALID_8BIT_ADDRESS, 0);
+	}
 
 	av_validate_address_list (v);
+	av_validate_encoded_words_to (v, v->end_index, GMIME_ENCODED_WORD_CONTEXT_FORBIDDEN);
 
 	// Note: These have to run after the parse, because until then there is no telling which of
 	// the recorded ISO-2022 sequences landed in a local-part, or which null bytes landed in a
