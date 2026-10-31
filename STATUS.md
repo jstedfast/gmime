@@ -3450,13 +3450,27 @@ Header/entity reads do not seek initial mailbox markers.
 
 The optional compliance logger receives boxed GMimeComplianceIssue values
 with original wire offsets, 64-bit physical line/column numbers, position
-kinds, contexts, severity and category metadata. All 90 diagnostic identities
+kinds, contexts, severity and category metadata. All 94 diagnostic identities
 and the truncation marker retain MimeKit's descriptions and remarks.
-GMimeComplianceOptions selects transport/storage context, address/Base64/
+GMimeComplianceOptions selects transport/storage context, parameter/address/Base64/
 quoted-printable/UU validators, and per-violation budgets (zero is unlimited).
 Generic header/body/structure checks remain active whenever a logger is
 installed, independently of the specialized-validator flags. Without a
 logger all compliance checking is skipped.
+
+The raw parameter validator reports repeated boundary, filename, and other
+parameter declarations on every Content-Type and Content-Disposition header,
+including headers ignored by model precedence. Names are case-insensitive;
+competing RFC 2231 representations and repeated continuation indices are
+diagnosed, but distinct continuation segments are not. Content-Type `name`
+and Content-Disposition `filename` allow one ordinary fallback alongside one
+extended or continued representation. Positions identify the repeated name
+in the original folded bytes. Duplicate Content-Disposition headers are a
+generic check, independent of the parameter-validator flag. Logging leaves
+model values and serialization unchanged. The unreleased violation enum has
+been renumbered to match MimeKit's added diagnostics (Parameters flag = 16,
+All = 31); stored numeric values from earlier 4.0 development builds must not
+be treated as stable.
 
 Each read snapshots the settings and logger. Replacing either from a
 callback affects the next operation, not the current one; the previous

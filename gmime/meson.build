@@ -4,6 +4,7 @@ gmime_sources = files(
   'gmime-openpgp.c',
   'gmime-application-pkcs7-mime.c',
   'gmime-address-validator.c',
+  'gmime-parameter-validator.c',
   'gmime-anonymizer.c',
   'gmime-attachment-collection.c',
   'gmime-body-builder.c',

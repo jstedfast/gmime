@@ -1,0 +1,15 @@
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=b; BOUNDARY=b; boundary*=utf-8''b
+Content-Disposition: inline
+
+--b
+Content-Type: text/plain; name=a; name*=utf-8''a;
+ name*2147483647=x; NAME*2147483647=y; name*2147483648=ignored;
+ charset=utf-8; CHARSET=us-ascii
+Content-Disposition: attachment; filename=a; filename*0*=utf-8''b;
+ filename*1=c; FILENAME*00*=d; filename=a
+Content-Disposition: inline; filename="a; filename=ignored";
+ filename=b (nested (filename=ignored)); size=1; size*=us-ascii''2
+
+body
+--b--
