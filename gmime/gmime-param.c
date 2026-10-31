@@ -1638,11 +1638,30 @@ decode_quoted_string (const char **in, gboolean unquote)
 	return out;
 }
 
+static void
+param_unfold_value (char *value)
+{
+	const char *inptr = value;
+	char *outptr = value;
+
+	while (*inptr) {
+		if (*inptr != '\r' && *inptr != '\n')
+			*outptr++ = *inptr;
+		inptr++;
+	}
+
+	while (outptr > value && is_lwsp (outptr[-1]))
+		outptr--;
+
+	*outptr = '\0';
+}
+
 static char *
 decode_token (GMimeRfcComplianceMode mode, const char **in)
 {
 	const char *inptr = *in;
 	const char *start;
+	char *value;
 	
 	skip_cfws (&inptr);
 	
@@ -1651,10 +1670,8 @@ decode_token (GMimeRfcComplianceMode mode, const char **in)
 		while (is_ttoken (*inptr))
 			inptr++;
 	} else {
-		/* Broken mail clients like to make our lives difficult. Scan
-		 * for a ';' instead of trusting that the client followed the
-		 * specification. */
-		while (*inptr && *inptr != ';')
+		/* Accept unquoted spaces and folds, but stop at comments or separators. */
+		while (*inptr && *inptr != ';' && *inptr != '(')
 			inptr++;
 		
 		/* Scan backwards over any trailing lwsp */
@@ -1665,7 +1682,9 @@ decode_token (GMimeRfcComplianceMode mode, const char **in)
 	if (inptr > start) {
 		*in = inptr;
 
-		return g_strndup (start, (size_t) (inptr - start));
+		value = g_strndup (start, (size_t) (inptr - start));
+		param_unfold_value (value);
+		return value;
 	} else {
 		return NULL;
 	}
@@ -1848,7 +1867,7 @@ decode_param_full (GMimeParserOptions *options, const char *text, const char **i
 {
 	GMimeRfcComplianceMode mode = g_mime_parser_options_get_parameter_compliance_mode (options);
 	const char *inptr = *in, *start = inptr, *name_end, *value_start;
-	char *value, *outptr;
+	char *value;
 	gboolean quoted;
 	int number = 0, digit;
 	gsize length;
@@ -1923,8 +1942,8 @@ decode_param_full (GMimeParserOptions *options, const char *text, const char **i
 			inptr++;
 	} else {
 		/* Google Docs and other mailers send unquoted filenames with spaces,
-		 * sometimes folded across lines. Recover through the next semicolon. */
-		while (*inptr && *inptr != ';')
+		 * sometimes folded across lines. Stop at comments or separators. */
+		while (*inptr && *inptr != ';' && *inptr != '(')
 			inptr++;
 	}
 
@@ -1932,20 +1951,7 @@ decode_param_full (GMimeParserOptions *options, const char *text, const char **i
 	value = g_strndup (value_start, length);
 
 	if (!quoted) {
-		const char *p = value;
-
-		outptr = value;
-		while (*p) {
-			if (*p != '\r' && *p != '\n')
-				*outptr++ = *p;
-			p++;
-		}
-
-		/* Broken mailers may leave whitespace after an unquoted filename. */
-		while (outptr > value && is_lwsp (outptr[-1]))
-			outptr--;
-
-		*outptr = '\0';
+		param_unfold_value (value);
 	} else if (*encoded) {
 		/* Some mailers quote RFC 2231 encoded values even though the syntax forbids it. */
 		memmove (value, value + 1, length - 2);
@@ -2036,7 +2042,7 @@ rfc2184_param_charset (const char **in, char **langp)
 	while (*inptr && *inptr != '\'')
 		inptr++;
 	
-	if (*inptr != '\'' || inptr == start) {
+	if (*inptr != '\'') {
 		*langp = NULL;
 		return NULL;
 	}
@@ -2056,6 +2062,9 @@ rfc2184_param_charset (const char **in, char **langp)
 	inptr++;
 	
 	*in = inptr;
+
+	if (len == 0)
+		return NULL;
 	
 	charset = g_strndup (start, len);
 	name = g_mime_charset_canon_name (charset);
@@ -2475,6 +2484,8 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
  * Parses the input string into a parameter list using best-effort recovery.
  * Duplicate names are retained and malformed suffixes may be ignored. Use
  * g_mime_param_list_parse_full() for all-or-nothing parsing.
+ * Comments after unquoted values are ignored; literal parentheses must be
+ * quoted or encoded.
  *
  * Returns: (transfer full): a new #GMimeParamList.
  **/
@@ -2498,8 +2509,9 @@ g_mime_param_list_parse (GMimeParserOptions *options, const char *str)
  *
  * Strict parameter compliance requires semicolon separators. Loose modes
  * also accept missing separators after quoted values and unquoted values
- * containing spaces. Unterminated comments and quoted values are errors in
- * every mode.
+ * containing spaces. Comments after unquoted values are ignored; literal
+ * parentheses must be quoted or encoded. Unterminated comments and quoted
+ * values are errors in every mode.
  *
  * Names are matched case-insensitively. The first ordinary value wins, but
  * an RFC 2231 value overrides it. Repeated standalone RFC 2231 values use

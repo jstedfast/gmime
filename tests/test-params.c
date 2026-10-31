@@ -539,6 +539,88 @@ test_checked_parsing (void)
 }
 
 static void
+test_parameter_comments_and_empty_charsets (void)
+{
+	/* Regression cases inspired by https://github.com/noxxi/mime-is-broken. */
+	static const struct {
+		const char *text, *value;
+		gboolean loose;
+	} cases[] = {
+		{ "name*=''file.zip", "file.zip", FALSE },
+		{ "name*='en'file%2Ezip", "file.zip", FALSE },
+		{ "name*=''caf%E9%27s%20file.zip", "caf\303\251's file.zip", FALSE },
+		{ "name*=''", "", FALSE },
+		{ "name*='en'", "", FALSE },
+		{ "name*0*=''file; name*1*=%2Ezip", "file.zip", FALSE },
+		{ "name*0*='en'file; name*1=.zip", "file.zip", FALSE },
+		{ "name*0*=''; name*1*=file%2Ezip", "file.zip", FALSE },
+		{ "name*0*='en'caf%E9; name*1*=%27s%20file.zip", "caf\303\251's file.zip", FALSE },
+		{ "name*=\"''file%2Ezip\"", "file.zip", FALSE },
+		{ "name*='file%2Ezip", "'file.zip", FALSE },
+		{ "name=value(comment)", "value", FALSE },
+		{ "name=value (comment) (another)", "value", FALSE },
+		{ "name=value(nested (comment); ignored=yes)", "value", FALSE },
+		{ "name=value(escaped \\) comment)", "value", FALSE },
+		{ "name=value(comment\r\n\tcontinued)", "value", FALSE },
+		{ "name=value\r\n\t(comment)", "value", FALSE },
+		{ "name=\"value(literal)\"(comment)", "value(literal)", FALSE },
+		{ "name*=us-ascii''value%28literal%29(comment)", "value(literal)", FALSE },
+		{ "name*0=value(comment); name*1=.zip(other)", "value.zip", FALSE },
+		{ "name*0*=''value(comment); name*1*=%2Ezip(other)", "value.zip", FALSE },
+		{ "name=Test Name.pdf (comment)", "Test Name.pdf", TRUE },
+		{ "name=Test\r\n\tName.pdf(comment)", "Test\tName.pdf", TRUE },
+		{ "name=Test Name.pdf\r\n\t(comment)", "Test Name.pdf", TRUE },
+		{ "name=Test\r\n\tName.pdf\r\n\t(comment)", "Test\tName.pdf", TRUE }
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeParamList *list;
+	GMimeParam *param;
+	GError *error = NULL;
+	guint mode, i, suffix, api;
+	char *text;
+	gsize length;
+
+	for (mode = GMIME_RFC_COMPLIANCE_LOOSE; mode <= GMIME_RFC_COMPLIANCE_LOOSER; mode++) {
+		g_mime_parser_options_set_parameter_compliance_mode (options, mode);
+		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+			if (cases[i].loose && mode == GMIME_RFC_COMPLIANCE_STRICT)
+				continue;
+			for (suffix = 0; suffix < 2; suffix++) {
+				for (api = 0; api < 3; api++) {
+					if (api == 2 && mode == GMIME_RFC_COMPLIANCE_LOOSER)
+						continue;
+					length = strlen (cases[i].text) + (suffix ? strlen ("; next=ok") : 0);
+					text = g_strconcat ("prefix", cases[i].text, suffix ? "; next=ok" : "",
+							    api == 0 ? "; ignored=yes" : "", NULL);
+					if (api == 0)
+						list = g_mime_param_list_parse_full (options, text + 6, length, &error);
+					else if (api == 1)
+						list = g_mime_param_list_parse_full (options, text + 6, -1, NULL);
+					else
+						list = g_mime_param_list_parse (options, text + 6);
+					check (list != NULL && error == NULL, cases[i].text);
+					if (list) {
+						check (g_mime_param_list_length (list) == (int) suffix + 1, cases[i].text);
+						param = g_mime_param_list_get_parameter (list, "name");
+						check_string (param ? g_strdup (g_mime_param_get_value (param)) : NULL,
+							      cases[i].value, cases[i].text);
+						if (suffix) {
+							param = g_mime_param_list_get_parameter (list, "next");
+							check_string (param ? g_strdup (g_mime_param_get_value (param)) : NULL,
+								      "ok", cases[i].text);
+						}
+						g_object_unref (list);
+					}
+					g_clear_error (&error);
+					g_free (text);
+				}
+			}
+		}
+	}
+	g_mime_parser_options_unref (options);
+}
+
+static void
 test_checked_parse_errors (void)
 {
 	static const struct {
@@ -563,6 +645,8 @@ test_checked_parse_errors (void)
 		{ "name*0(comment", 14 },
 		{ "name*0*(comment", 15 },
 		{ "name=(comment", 13 },
+		{ "name=value(comment", 18 },
+		{ "name=value\r\n\t(comment", 21 },
 		{ "name=\"unterminated", 18 },
 		{ "name=\"escape\\", 13 },
 		{ "name=\"value\"(comment", 20 },
@@ -1956,6 +2040,7 @@ main (int argc, char **argv)
 	test_parsed_parameters ();
 	test_large_parameter_charsets ();
 	test_checked_parsing ();
+	test_parameter_comments_and_empty_charsets ();
 	test_checked_parse_errors ();
 	test_checked_parse_bounds ();
 	test_checked_content_fields ();

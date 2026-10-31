@@ -3,6 +3,9 @@
 * Modernized MIME parsing, content handling, header formatting, and address APIs.
 * Added streaming readers, body/attachment helpers, report types, and SIMD scans.
 * Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
+* Fixed RFC 2231 parameters with empty charset fields, including continuations.
+  Comments after unquoted parameter values are ignored, including folded
+  values; literal parentheses must be quoted or encoded.
 * Removed input-sized stack allocations from charset, parameter, and enriched
   text handling, and prevented oversized ISO charset numbers from wrapping.
 * Treat enriched text tags containing embedded NULs as unrecognized tags.

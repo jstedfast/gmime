@@ -4597,6 +4597,72 @@ close_loaded_file_on_warning (gint64 offset, GMimeParserWarning warning, const c
 #endif
 
 static void
+test_commented_parameter_messages (void)
+{
+	/* Boundary variants inspired by https://github.com/noxxi/mime-is-broken. */
+	static const struct {
+		const char *parameter, *delimiter, *boundary;
+		guint count;
+	} cases[] = {
+		{ "boundary*=''audit", "audit", "audit", 1 },
+		{ "boundary*='en'audit", "audit", "audit", 1 },
+		{ "boundary*0*=''; boundary*1*=audit", "audit", "audit", 1 },
+		{ "boundary=audit(comment)", "audit", "audit", 1 },
+		{ "boundary=audit\r\n\t(nested (comment); ignored=yes)", "audit", "audit", 1 },
+		{ "boundary=\"audit(comment)\"", "audit(comment)", "audit(comment)", 1 },
+		{ "boundary=audit(comment)", "audit(comment)", "audit", 0 },
+		{ "boundary*=us-ascii''audit%28comment%29", "audit(comment)", "audit(comment)", 1 }
+	};
+	static const gsize chunks[] = { 1, 2, 7, 4096 };
+	guint i, chunk, nonseekable;
+
+	testsuite_check ("Commented and empty-charset parameters preserve chunked multipart structure and content");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		char *wire = g_strdup_printf ("From: sender@example.com\r\n"
+			"Date: Sat, 31 Oct 2026 10:00:00 -0400\r\nMIME-Version: 1.0\r\n"
+			"Content-Type: multipart/mixed; %s\r\n\r\n"
+			"--%s\r\nContent-Type: application/octet-stream; name=file.zip(comment)\r\n"
+			"Content-Disposition: attachment; filename*=''file%%2Ezip(comment)\r\n"
+			"Content-Transfer-Encoding: base64\r\n\r\naGVsbG8=\r\n--%s--\r\n",
+			cases[i].parameter, cases[i].delimiter, cases[i].delimiter);
+
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			for (nonseekable = 0; nonseekable < 2; nonseekable++) {
+				ModelInput *input = new_input (wire, strlen (wire), chunks[chunk]);
+				GMimeMessage *message;
+				GMimeEntity *body, *part;
+				GMimeMultipart *multipart;
+				GByteArray *decoded;
+				GError *error = NULL;
+
+				input->nonseekable = nonseekable;
+				message = g_mime_message_load (NULL, (GMimeStream *) input, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				body = g_mime_message_get_mime_part (message);
+				g_assert_true (GMIME_IS_MULTIPART (body));
+				multipart = GMIME_MULTIPART (body);
+				g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, cases[i].boundary);
+				g_assert_cmpuint (g_mime_multipart_get_count (multipart), ==, cases[i].count);
+				if (cases[i].count) {
+					part = g_mime_multipart_get_part (multipart, 0);
+					g_assert_true (GMIME_IS_PART (part));
+					g_assert_cmpstr (g_mime_entity_get_content_type_parameter (part, "name"), ==, "file.zip");
+					g_assert_cmpstr (g_mime_entity_get_content_disposition_parameter (part, "filename"), ==, "file.zip");
+					decoded = read_content (g_mime_part_get_content (GMIME_PART (part)), TRUE);
+					g_assert_cmpmem (decoded->data, decoded->len, "hello", 5);
+					g_byte_array_unref (decoded);
+				}
+				g_object_unref (message);
+				g_object_unref (input);
+			}
+		}
+		g_free (wire);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_loading (void)
 {
 	static const char binary[] = "Content-Type: application/octet-stream\nContent-Transfer-Encoding: binary\n\nA\0B\nC\rD";
@@ -5685,6 +5751,7 @@ main (int argc, char **argv)
 	test_writer_dispatch ();
 	test_message_header_writing ();
 	test_file_writing ();
+	test_commented_parameter_messages ();
 	test_loading ();
 	test_loading_storage ();
 	test_parser_storage ();
