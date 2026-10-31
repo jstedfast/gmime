@@ -1091,6 +1091,14 @@ Strict compliance requires semicolon separators and quoted non-token
 values. Both loose modes recover missing separators after quoted values,
 unfold unquoted values, and trim trailing whitespace.
 
+Checked and recovery parameter parsing now consume RFC 2231 prefixes with
+an empty charset, including continuations, while retaining the Latin-1
+fallback and language metadata. Unquoted values stop at comments, including
+nested and folded comments, without losing loose-mode support for spaces
+and folded filenames. Literal parentheses must be quoted or percent-encoded.
+Regressions cover bounded parameter parsing and chunked multipart messages,
+including attachment names, decoded content, and quoted/encoded boundaries.
+
 Checked parsing uses case-insensitive names and MimeKit's duplicate
 precedence: the first ordinary value wins, RFC 2231 values override ordinary
 values, and the last standalone RFC 2231 value wins. The first occurrence
