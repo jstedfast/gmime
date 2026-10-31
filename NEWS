@@ -11,6 +11,9 @@
 * Report InvalidContentType for unexpected text after a recognizable media type,
   without changing tolerant parsing or treating parameter syntax failures as
   media-type errors.
+* Report InvalidParameter for malformed names, missing equals signs or values,
+  and unterminated quoted strings or comments. Parameter recovery and decoding
+  remain unchanged; this check does not validate encoded RFC 2231 value contents.
 * Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
 * Fixed RFC 2231 parameters with empty charset fields, including continuations.
   Comments after unquoted parameter values are ignored, including folded
