@@ -3450,10 +3450,11 @@ Header/entity reads do not seek initial mailbox markers.
 
 The optional compliance logger receives boxed GMimeComplianceIssue values
 with original wire offsets, 64-bit physical line/column numbers, position
-kinds, contexts, severity and category metadata. All 98 diagnostic identities
+kinds, contexts, severity and category metadata. All 100 diagnostic identities
 and the truncation marker retain MimeKit's descriptions and remarks.
-GMimeComplianceOptions selects transport/storage context, parameter/address/Base64/
-quoted-printable/UU validators, and per-violation budgets (zero is unlimited).
+GMimeComplianceOptions selects transport/storage context, parameter/address/
+encoded-word/Base64/quoted-printable/UU validators, and per-violation budgets
+(zero is unlimited).
 Generic header/body/structure checks remain active whenever a logger is
 installed, independently of the specialized-validator flags. Without a
 logger all compliance checking is skipped.
@@ -3469,7 +3470,7 @@ in the original folded bytes. Duplicate Content-Disposition headers are a
 generic check, independent of the parameter-validator flag. Logging leaves
 model values and serialization unchanged. The unreleased violation enum has
 been renumbered to match MimeKit's added diagnostics (Parameters flag = 16,
-All = 31); stored numeric values from earlier 4.0 development builds must not
+EncodedWords = 32, All = 63); stored numeric values from earlier 4.0 development builds must not
 be treated as stable.
 
 Missing RFC 2231 continuation segments are reported once per parameter after
@@ -3508,6 +3509,22 @@ encodings, or decode/assemble RFC 2231 values. Malformed RFC 2231 syntax and
 encoded-word usage can both be reported, with independent budgets. This
 diagnoses forbidden encoded-word usage in parameters, not malformed encoded
 words in other headers, and leaves native decoding and serialization unchanged.
+
+InvalidEncodedWord (51) and InvalidEncodedWordPlacement (52) are controlled by
+the independent EncodedWords flag, enabled by default with compliance logging.
+Address headers, Subject, Comments, Content-Description, and case-insensitive
+X- headers are checked, including ignored duplicates. Syntax validation covers
+delimiters, charset tokens, B/Q markers and payloads, the 75-byte limit, and
+separation from adjacent text. Address phrases and comments have additional
+payload restrictions; complete envelopes in quoted strings and addr-specs are
+reported as misplaced, independently of malformed payloads. Incomplete
+lookalikes in addr-specs remain ordinary text. Address grammar diagnostics can
+be disabled while retaining word validation: only finalized address ranges
+determine word context. The forward-only scanner uses constant scratch space
+and at most 75 bytes of lookahead per candidate, without charset lookup or
+decoding. Positions identify each candidate's ElementStart, and both identities
+have independent budgets. Parameter encoded-word usage remains controlled by
+Parameters; native tolerant models and serialization are unchanged.
 
 InvalidContentType also covers unexpected text after a recognizable type/subtype
 and before any parameter separator, including folded values and comments.

@@ -21,6 +21,10 @@
 * Report EncodedWordInParameter for recognizable RFC 2047 B/Q encoded words
   in MIME parameter values, including quoted pairs. Scan without charset lookup,
   payload decoding, or continuation assembly; preserve tolerant model behavior.
+* Add independent EncodedWords validation for address headers, Subject, Comments,
+  Content-Description, and X- headers. Report malformed RFC 2047 syntax and
+  prohibited address placement without charset lookup or decoding. Preserve
+  tolerant parsing, with bounded lookahead and original candidate positions.
 * Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
 * Fixed RFC 2231 parameters with empty charset fields, including continuations.
   Comments after unquoted parameter values are ignored, including folded

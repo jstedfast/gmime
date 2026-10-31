@@ -30,7 +30,7 @@ normal_tests = [
   'test-anonymizer',
   'test-content-type',
   'test-openpgp',
-  'test-reader', 'test-parser-model', 'test-roundtrip', 'test-parameter-validator',
+  'test-reader', 'test-parser-model', 'test-roundtrip', 'test-parameter-validator', 'test-encoded-word-validator',
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',
   'test-encodings', 'test-codecs', 'test-yenc', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
   'test-mime-part', 'test-mime-whitespace', 'test-partial', 'test-mbox', 'test-autocrypt', 'test-mime', 'test-types',
@@ -58,6 +58,8 @@ foreach name : normal_tests
     sources += ['../gmime/gmime-rfc2231-encoder.c', '../gmime/gmime-rfc2231-decoder.c']
   elif name == 'test-parameter-validator'
     sources += ['../gmime/gmime-parameter-validator.c']
+  elif name == 'test-encoded-word-validator'
+    sources += ['../gmime/gmime-encoded-word-validator.c', '../gmime/gmime-address-validator.c']
   endif
   test_programs += {name: executable(
     name, sources,
@@ -69,7 +71,7 @@ foreach name : normal_tests
 endforeach
 
 standalone_sources = {
-  'address-validator': ['../gmime/gmime-address-validator.c'],
+  'address-validator': ['../gmime/gmime-address-validator.c', '../gmime/gmime-encoded-word-validator.c'],
   'reader-simd': ['../gmime/gmime-reader-simd.c'],
   'codecs': [
     '../gmime/gmime-encoder.c', '../gmime/gmime-decoder.c', '../gmime/gmime-codec-simd.c',
