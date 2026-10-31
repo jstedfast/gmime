@@ -4676,12 +4676,22 @@ tails of 76-character MIME lines produce nine bytes without leaving the
 loop for LF or CRLF handling. Loads require a full readable vector; stores
 write only result bytes, never vector padding. Other whitespace, garbage,
 padding, and incomplete quartets retain scalar recovery behavior.
+Base64 encoding also handles nine-byte line/input tails with SSSE3, ported
+from MimeKit. An overlapping load/store re-encodes the preceding triplet
+only when it was vectorized in the same call and line. This removes the
+scalar tail from standard 76-column MIME lines and 60-column lines without
+changing streaming state, padding, LF/CRLF output, or uuencoding.
 test-codecs and test-codecs-scalar run the same codec regressions against
 the dispatched and scalar implementations, including exhaustive MIME-tail
 byte mutations, streaming and in-place decoding, and guard-page bounds.
+Encoder-tail coverage includes both newline formats, 60-76-column widths,
+every first-line chunk split, empty calls, clones, and output canaries.
 Both accept --benchmark for the same one-MiB Base64/uuencode workload.
 The --benchmark-base64 mode compares 4096-byte streaming chunks across
 unwrapped, MIME LF/CRLF, short-line, garbage-containing, and small inputs.
+The --benchmark-base64-encoder mode uses preallocated buffers to compare
+MIME LF/CRLF, 60-76-column lines, bulk and small chunks, and short inputs,
+checking output against an independent reference before timing.
 AVX2 encoding, AVX-512 and ARM64 codec kernels remain subsequent SIMD work.
 MIME content scanning now has SSE2, AVX2 and ARM NEON kernels, as described
 in the synchronous reader section above. Fused header byte searches remain

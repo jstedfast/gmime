@@ -2,6 +2,7 @@
 
 * Modernized MIME parsing, content handling, header formatting, and address APIs.
 * Added streaming readers, body/attachment helpers, report types, and SIMD scans.
+* Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
 * Removed input-sized stack allocations from charset, parameter, and enriched
   text handling, and prevented oversized ISO charset numbers from wrapping.
 * Treat enriched text tags containing embedded NULs as unrecognized tags.
