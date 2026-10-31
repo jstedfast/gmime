@@ -30,13 +30,18 @@
 /* Ported from MimeKit's ParameterValidator: inspect raw declarations rather
  * than the decoded model, whose precedence rules hide competing values. */
 typedef struct {
-	GHashTable *segments;
+	GMimeComplianceIssue missing_segment_issue;
+	GTree *segments;
+	int highest_segment;
 	gboolean extended, plain;
 } ParameterState;
 
 typedef struct {
 	const guint8 *text;
-	gsize length, index;
+	gsize length, index, scan_index;
+	GMimeComplianceContext context;
+	gint64 stream_offset;
+	guint64 line_number, column_number;
 } ParameterValidator;
 
 static void
@@ -44,8 +49,16 @@ parameter_state_free (gpointer data)
 {
 	ParameterState *state = data;
 
-	g_clear_pointer (&state->segments, g_hash_table_destroy);
+	g_clear_pointer (&state->segments, g_tree_destroy);
 	g_free (state);
+}
+
+static gint
+compare_segments (gconstpointer a, gconstpointer b)
+{
+	int x = GPOINTER_TO_INT (a), y = GPOINTER_TO_INT (b);
+
+	return (x > y) - (x < y);
 }
 
 static gboolean
@@ -54,12 +67,20 @@ parameter_state_add (ParameterState *state, int segment, gboolean encoded, gbool
 	gboolean repeated;
 
 	if (segment >= 0) {
+		gint count;
+
 		repeated = FALSE;
 		if (!state->segments) {
-			state->segments = g_hash_table_new (g_direct_hash, g_direct_equal);
+			/* Balanced insertion avoids adversarial integer hash collisions. */
+			state->segments = g_tree_new (compare_segments);
 			repeated = state->extended || (state->plain && !allow_fallback);
 		}
-		return !g_hash_table_add (state->segments, GINT_TO_POINTER (segment)) || repeated;
+
+		state->highest_segment = MAX (state->highest_segment, segment);
+		count = g_tree_nnodes (state->segments);
+		g_tree_insert (state->segments, GINT_TO_POINTER (segment), NULL);
+
+		return count == g_tree_nnodes (state->segments) || repeated;
 	}
 
 	if (encoded) {
@@ -69,7 +90,34 @@ parameter_state_add (ParameterState *state, int segment, gboolean encoded, gbool
 		repeated = state->plain || (!allow_fallback && (state->extended || state->segments));
 		state->plain = TRUE;
 	}
+
 	return repeated;
+}
+
+static GMimeComplianceIssue
+create_issue (ParameterValidator *v, GMimeComplianceViolation violation, gsize at,
+	      GMimeCompliancePositionKind kind)
+{
+	GMimeComplianceIssue issue;
+
+	/* Capture positions monotonically, even when reporting is deferred. */
+	while (v->scan_index < at) {
+		if (v->text[v->scan_index++] == '\n') {
+			v->line_number++;
+			v->column_number = 1;
+		} else {
+			v->column_number++;
+		}
+	}
+
+	issue.context = v->context;
+	issue.violation = violation;
+	issue.stream_offset = v->stream_offset + at;
+	issue.line_number = v->line_number;
+	issue.column_number = v->column_number;
+	issue.position_kind = kind;
+
+	return issue;
 }
 
 static gboolean
@@ -79,8 +127,10 @@ skip_comment (ParameterValidator *v)
 	guint8 c;
 
 	v->index++;
+
 	while (v->index < v->length) {
 		c = v->text[v->index++];
+
 		if (c == '\\') {
 			if (v->index < v->length)
 				v->index++;
@@ -90,6 +140,7 @@ skip_comment (ParameterValidator *v)
 			return TRUE;
 		}
 	}
+
 	return FALSE;
 }
 
@@ -99,8 +150,10 @@ skip_quoted (ParameterValidator *v)
 	guint8 c;
 
 	v->index++;
+
 	while (v->index < v->length) {
 		c = v->text[v->index++];
+
 		if (c == '\\') {
 			if (v->index < v->length)
 				v->index++;
@@ -108,6 +161,7 @@ skip_quoted (ParameterValidator *v)
 			return TRUE;
 		}
 	}
+
 	return FALSE;
 }
 
@@ -124,6 +178,7 @@ skip_cfws (ParameterValidator *v)
 			break;
 		}
 	}
+
 	return TRUE;
 }
 
@@ -148,6 +203,7 @@ skip_to_next_parameter (ParameterValidator *v)
 			break;
 		}
 	}
+
 	return FALSE;
 }
 
@@ -159,18 +215,21 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 
 	*segment = -1;
 	*encoded = FALSE;
+
 	if (!skip_cfws (v))
 		return FALSE;
 
 	*start = v->index;
 	while (v->index < v->length && is_attrchar (v->text[v->index]))
 		v->index++;
+
 	length = v->index - *start;
 	if (!length || !skip_cfws (v) || v->index == v->length)
 		return FALSE;
 
 	if (v->text[v->index] == '*') {
 		v->index++;
+
 		if (!skip_cfws (v) || v->index == v->length)
 			return FALSE;
 		if (g_ascii_isdigit (v->text[v->index])) {
@@ -181,9 +240,12 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 				number = number * 10 + digit;
 				v->index++;
 			} while (v->index < v->length && g_ascii_isdigit (v->text[v->index]));
+
 			*segment = number;
+
 			if (!skip_cfws (v) || v->index == v->length)
 				return FALSE;
+
 			if (v->text[v->index] == '*') {
 				v->index++;
 				*encoded = TRUE;
@@ -191,6 +253,7 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 		} else {
 			*encoded = TRUE;
 		}
+
 		if (!skip_cfws (v) || v->index == v->length)
 			return FALSE;
 	}
@@ -200,6 +263,7 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 
 	v->index++;
 	*name = g_ascii_strdown ((const char *) v->text + *start, length);
+
 	return TRUE;
 }
 
@@ -216,12 +280,14 @@ skip_value (ParameterValidator *v)
 		while (v->index < v->length && v->text[v->index] != ';' && v->text[v->index] != '(')
 			v->index++;
 	}
+
 	if (!skip_cfws (v) || v->index == v->length)
 		return FALSE;
 
 	/* Loose parsing permits missing separators after quotes and comments. */
 	if (v->text[v->index] == ';')
 		v->index++;
+
 	return v->index < v->length;
 }
 
@@ -230,21 +296,26 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 			    GMimeComplianceIssueFunc report, gpointer user_data, GMimeComplianceContext context,
 			    gint64 stream_offset, guint64 line_number, guint64 column_number)
 {
-	ParameterValidator v = { buffer, length, 0 };
+	ParameterValidator v = { buffer, length, 0, 0, context, stream_offset, line_number, column_number };
 	GHashTable *parameters;
+	GPtrArray *states;
 	ParameterState *state;
-	gsize start, scan_index = 0;
+	gsize start;
 	gboolean encoded, filename;
 	char *name;
 	int segment;
+	guint i;
 
 	g_return_if_fail (buffer != NULL || length == 0);
 	g_return_if_fail (length <= G_MAXSSIZE);
+
 	if (!report || !length || !skip_to_next_parameter (&v))
 		return;
 
 	/* The reader's header-length limit bounds the declarations retained here. */
 	parameters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, parameter_state_free);
+	states = g_ptr_array_new ();
+
 	while (v.index < v.length) {
 		if (!parse_parameter (&v, &name, &segment, &encoded, &start)) {
 			if (!skip_to_next_parameter (&v))
@@ -254,35 +325,43 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 
 		filename = !strcmp (name, content_type ? "name" : "filename");
 		state = g_hash_table_lookup (parameters, name);
+
 		if (!state) {
 			state = g_new0 (ParameterState, 1);
+			state->highest_segment = -1;
 			g_hash_table_insert (parameters, g_strdup (name), state);
+			g_ptr_array_add (states, state);
 		}
+
+		if (segment >= 0 && !state->segments)
+			state->missing_segment_issue = create_issue (&v, GMIME_COMPLIANCE_MISSING_PARAMETER_SEGMENT,
+								    start, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+
 		if (parameter_state_add (state, segment, encoded, filename)) {
 			GMimeComplianceIssue issue;
-
-			/* Diagnostics advance monotonically, so position tracking is linear. */
-			while (scan_index < start) {
-				if (buffer[scan_index++] == '\n') {
-					line_number++;
-					column_number = 1;
-				} else {
-					column_number++;
-				}
-			}
-			issue.context = context;
-			issue.violation = content_type && !strcmp (name, "boundary") ?
+			GMimeComplianceViolation violation = content_type && !strcmp (name, "boundary") ?
 				GMIME_COMPLIANCE_REPEATED_BOUNDARY_PARAMETER : filename ?
 				GMIME_COMPLIANCE_REPEATED_FILENAME_PARAMETER : GMIME_COMPLIANCE_REPEATED_PARAMETER;
-			issue.stream_offset = stream_offset + start;
-			issue.line_number = line_number;
-			issue.column_number = column_number;
-			issue.position_kind = GMIME_COMPLIANCE_POSITION_EXACT;
+
+			issue = create_issue (&v, violation, start, GMIME_COMPLIANCE_POSITION_EXACT);
 			report (&issue, user_data);
 		}
+
 		g_free (name);
+
 		if (!skip_value (&v))
 			break;
 	}
+
+	/* Preserve parameter declaration order when applying reporting budgets. */
+	for (i = 0; i < states->len; i++) {
+		state = g_ptr_array_index (states, i);
+
+		/* Distinct nonnegative indices cover 0..n-1 iff their maximum is n-1. */
+		if (state->segments && state->highest_segment != g_tree_nnodes (state->segments) - 1)
+			report (&state->missing_segment_issue, user_data);
+	}
+
+	g_ptr_array_unref (states);
 	g_hash_table_destroy (parameters);
 }

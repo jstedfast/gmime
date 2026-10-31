@@ -5,6 +5,9 @@
 * Added optional compliance diagnostics for repeated Content-Disposition headers
   and MIME parameters, including competing RFC 2231 representations. The new
   parameter validator is enabled by default when compliance logging is active.
+* Report missing RFC 2231 continuation segments once per parameter, at its
+  first continuation declaration. Track indices in a balanced tree to avoid
+  adversarial hash collisions and resource use proportional to index values.
 * Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
 * Fixed RFC 2231 parameters with empty charset fields, including continuations.
   Comments after unquoted parameter values are ignored, including folded
