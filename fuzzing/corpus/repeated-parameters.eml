@@ -33,4 +33,11 @@ Content-Disposition: attachment; filename*0*=utf-8''caf%C;
 Content-Disposition: inline; filename*="''bad%GG"
 
 encoded
+--b
+Content-Type: text/plain; name*0="=?utf-8?Q?file?="; name*1=.txt;
+ title="=?utf-8?Q?broken=?utf-8?B?ZmlsZQ==?="
+Content-Disposition: attachment; filename="=\?utf-8?Q?file=2Etxt?\=";
+ filename*="utf-8''=?utf-8?Q?file?="; ignored=(=?utf-8?Q?comment?=) plain
+
+encoded words
 --b--

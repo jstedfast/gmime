@@ -29,7 +29,8 @@ G_BEGIN_DECLS
  * Coordinates identify buffer[0]; callbacks borrow issues. Missing segments
  * are reported after scanning, at the first continuation's element start.
  * Malformed declarations/fragments use ElementStart positions. RFC 2231 encoded
- * syntax is checked per segment without charset lookup or value assembly. */
+ * syntax is checked per segment without charset lookup or value assembly.
+ * Encoded-word detection handles quoted pairs without decoding payloads. */
 G_GNUC_INTERNAL void _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content_type,
 	GMimeComplianceIssueFunc report, gpointer user_data, GMimeComplianceContext context,
 	gint64 stream_offset, guint64 line_number, guint64 column_number);

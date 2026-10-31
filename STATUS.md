@@ -3450,7 +3450,7 @@ Header/entity reads do not seek initial mailbox markers.
 
 The optional compliance logger receives boxed GMimeComplianceIssue values
 with original wire offsets, 64-bit physical line/column numbers, position
-kinds, contexts, severity and category metadata. All 97 diagnostic identities
+kinds, contexts, severity and category metadata. All 98 diagnostic identities
 and the truncation marker retain MimeKit's descriptions and remarks.
 GMimeComplianceOptions selects transport/storage context, parameter/address/Base64/
 quoted-printable/UU validators, and per-violation budgets (zero is unlimited).
@@ -3479,7 +3479,7 @@ observed index without gaps. A balanced tree tracks only observed indices,
 avoiding adversarial integer hash collisions; gap detection compares the
 highest index with the distinct count instead of scanning or allocating by
 index. Fallback values do not hide gaps, and tolerant value assembly remains
-unchanged. MissingParameterSegment is 49 in the unreleased enum.
+unchanged. MissingParameterSegment is 50 in the unreleased enum.
 
 InvalidParameter (44) reports missing or invalid names, missing equals signs or
 values, and unterminated quotes/comments at the malformed declaration or
@@ -3499,6 +3499,15 @@ decoding. Validation does not assemble values, look up charsets or registered
 language tags, or validate decoded characters. Both syntax diagnostics have
 independent reporting budgets. The new identity shifts subsequent unreleased
 numeric values by one while retaining their metadata.
+
+EncodedWordInParameter (46) reports recognizable RFC 2047 B/Q encoded-word
+syntax once per syntactically valid declaration, at ElementStart. The
+allocation-free, linear scan handles quoted pairs, embedded words, and nested
+candidate prefixes. It does not validate word lengths, charsets, or payload
+encodings, or decode/assemble RFC 2231 values. Malformed RFC 2231 syntax and
+encoded-word usage can both be reported, with independent budgets. This
+diagnoses forbidden encoded-word usage in parameters, not malformed encoded
+words in other headers, and leaves native decoding and serialization unchanged.
 
 InvalidContentType also covers unexpected text after a recognizable type/subtype
 and before any parameter separator, including folded values and comments.
