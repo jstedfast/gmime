@@ -27,6 +27,18 @@
 #include "gmime-parameter-validator-private.h"
 #include "gmime-table-private.h"
 
+typedef enum {
+	ENCODED_WORD_TEXT,
+	ENCODED_WORD_EQUALS,
+	ENCODED_WORD_CHARSET_START,
+	ENCODED_WORD_CHARSET,
+	ENCODED_WORD_ENCODING,
+	ENCODED_WORD_SEPARATOR,
+	ENCODED_WORD_PAYLOAD_START,
+	ENCODED_WORD_PAYLOAD,
+	ENCODED_WORD_QUESTION
+} EncodedWordState;
+
 /* Ported from MimeKit's ParameterValidator: inspect raw declarations rather
  * than the decoded model, whose precedence rules hide competing values. */
 typedef struct {
@@ -359,6 +371,94 @@ validate_encoded_value (ParameterValidator *v, gsize start, gsize end, gboolean 
 	return TRUE;
 }
 
+static gboolean
+is_encoded_word_token (guint8 c)
+{
+	return c < 127 && is_ttoken (c) && c != '.';
+}
+
+static gboolean
+contains_encoded_word (ParameterValidator *v, gsize start, gsize end)
+{
+	gboolean quoted = end - start >= 2 && v->text[start] == '"' && v->text[end - 1] == '"';
+	EncodedWordState state = ENCODED_WORD_TEXT;
+	gboolean payload_ends_with_equals = FALSE;
+
+	if (quoted) {
+		start++;
+		end--;
+	}
+
+	for (; start < end; start++) {
+		guint8 c = v->text[start];
+
+		if (quoted && c == '\\' && start + 1 < end)
+			c = v->text[++start];
+
+		switch (state) {
+		case ENCODED_WORD_EQUALS:
+			if (c == '?') {
+				state = ENCODED_WORD_CHARSET_START;
+				continue;
+			}
+			break;
+		case ENCODED_WORD_CHARSET_START:
+		case ENCODED_WORD_CHARSET:
+			if (state == ENCODED_WORD_CHARSET && c == '?') {
+				state = ENCODED_WORD_ENCODING;
+				continue;
+			}
+
+			if (is_encoded_word_token (c) && (state == ENCODED_WORD_CHARSET || c != '*')) {
+				state = ENCODED_WORD_CHARSET;
+				continue;
+			}
+			break;
+		case ENCODED_WORD_ENCODING:
+			if (c == 'B' || c == 'b' || c == 'Q' || c == 'q') {
+				state = ENCODED_WORD_SEPARATOR;
+				continue;
+			}
+			break;
+		case ENCODED_WORD_SEPARATOR:
+			if (c == '?') {
+				state = ENCODED_WORD_PAYLOAD_START;
+				continue;
+			}
+			break;
+		case ENCODED_WORD_PAYLOAD_START:
+		case ENCODED_WORD_PAYLOAD:
+			if (state == ENCODED_WORD_PAYLOAD && c == '?') {
+				state = ENCODED_WORD_QUESTION;
+				continue;
+			}
+
+			if (c > 32 && c < 127 && c != '?') {
+				payload_ends_with_equals = c == '=';
+				state = ENCODED_WORD_PAYLOAD;
+				continue;
+			}
+			break;
+		case ENCODED_WORD_QUESTION:
+			if (c == '=')
+				return TRUE;
+
+			/* Resume at a nested word's charset without rescanning its prefix. */
+			if (payload_ends_with_equals && c != '*' && is_encoded_word_token (c)) {
+				state = ENCODED_WORD_CHARSET;
+				continue;
+			}
+			break;
+		default:
+			break;
+		}
+
+		state = c == '=' ? ENCODED_WORD_EQUALS : ENCODED_WORD_TEXT;
+	}
+
+	return FALSE;
+}
+
 void
 _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content_type,
 			    GMimeComplianceIssueFunc report, gpointer user_data, GMimeComplianceContext context,
@@ -455,6 +555,12 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 			report (&issue, user_data);
 		} else if (encoded && !validate_encoded_value (&v, value_start, value_end, segment <= 0)) {
 			issue = create_issue (&v, GMIME_COMPLIANCE_INVALID_RFC2231_PARAMETER, start,
+					      GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			report (&issue, user_data);
+		}
+
+		if (!invalid && contains_encoded_word (&v, value_start, value_end)) {
+			issue = create_issue (&v, GMIME_COMPLIANCE_ENCODED_WORD_IN_PARAMETER, start,
 					      GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 			report (&issue, user_data);
 		}
