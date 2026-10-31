@@ -26,6 +26,8 @@
 #include "gmime-compliance-data-private.h"
 #include "gmime-internal.h"
 
+G_STATIC_ASSERT (G_N_ELEMENTS (compliance_metadata) == GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 2);
+
 /**
  * SECTION: gmime-compliance
  * @title: MIME compliance
@@ -73,7 +75,8 @@ valid_violation (GMimeComplianceViolation violation)
 static guint
 metadata_index (GMimeComplianceViolation violation)
 {
-	return violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES ? 91 : (guint) violation;
+	return violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES ?
+		GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1 : (guint) violation;
 }
 
 /**

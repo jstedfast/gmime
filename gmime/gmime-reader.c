@@ -35,6 +35,7 @@
 #include "gmime-parse-utils.h"
 #include "gmime-encoding-validator-private.h"
 #include "gmime-address-validator-private.h"
+#include "gmime-parameter-validator-private.h"
 #include "gmime-reader-simd-private.h"
 
 #include "gmime-object-private.h"
@@ -90,7 +91,7 @@ struct _GMimeReaderPrivate {
 	ComplianceLogger *logger, *active_logger;
 	GMimeComplianceValidators validators;
 	GMimeComplianceContext context;
-	guint issue_counts[91], issue_limit;
+	guint issue_counts[GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1], issue_limit;
 	GMimeEncodingValidator *validator;
 
 	GMimeParserOptions *options;
@@ -125,6 +126,7 @@ struct _GMimeReaderPrivate {
 	unsigned int reported_depth : 1;
 	unsigned int message_headers : 1;
 	unsigned int seen_mime_version : 1;
+	unsigned int seen_content_disposition : 1;
 	unsigned int header_limit_exceeded : 1;
 	unsigned int stop_at_separator : 1;
 	unsigned int mailbox_boundary : 1;
@@ -838,6 +840,14 @@ check_header_semantics (GMimeReader *reader, gsize name_length, gsize field_leng
 		_g_mime_address_validate (value, length, report_issue, reader, priv->context,
 					 begin + field_length + 1, line, field_length + 2);
 
+	if (!invalid && (priv->validators & GMIME_COMPLIANCE_VALIDATOR_PARAMETERS)) {
+		gboolean content_type = header_is (data, name_length, "Content-Type");
+
+		if (content_type || header_is (data, name_length, "Content-Disposition"))
+			_g_mime_parameter_validate (value, length, content_type, report_issue, reader, priv->context,
+						   begin + field_length + 1, line, field_length + 2);
+	}
+
 	if (invalid || !priv->message_headers)
 		return;
 
@@ -1024,6 +1034,11 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 		}
 
 		g_free (text);
+	} else if (header_is (header, name_length, "Content-Disposition")) {
+		if (priv->seen_content_disposition)
+			report_at (reader, GMIME_COMPLIANCE_REPEATED_CONTENT_DISPOSITION, begin, line, 1,
+				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+		priv->seen_content_disposition = TRUE;
 	} else if (header_is (header, name_length, "Content-Transfer-Encoding")) {
 		gsize i = 0;
 
@@ -1220,6 +1235,7 @@ step_headers (GMimeReader *reader, gboolean message)
 	priv->encoding_offset = -1;
 	priv->seen_message = priv->seen_resent = 0;
 	priv->seen_mime_version = FALSE;
+	priv->seen_content_disposition = FALSE;
 	priv->message_headers = message;
 	priv->content_length = -1;
 

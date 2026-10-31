@@ -1909,8 +1909,9 @@ test_compliance_options_and_issues (void)
 	g_object_unref (reader);
 	g_object_unref (input);
 
-	for (i = 1; i <= 91; i++) {
-		GMimeComplianceViolation violation = i == 91 ? GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES : i;
+	for (i = 1; i <= GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1; i++) {
+		GMimeComplianceViolation violation = i > GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT ?
+			GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES : i;
 
 		issue = g_mime_compliance_issue_new (GMIME_COMPLIANCE_CONTEXT_STORAGE, violation, G_MAXINT64,
 						   (guint64) G_MAXUINT + 1, (guint64) G_MAXUINT + 2,
@@ -1985,7 +1986,7 @@ test_compliance_logging (void)
 		ReaderInput *input = new_input (wire, sizeof (wire) - 1, chunk);
 		TestReader *reader = new_reader (input, NULL);
 		GMimeReader *base = (GMimeReader *) reader;
-		guint counts[91] = { 0 }, truncated = 0;
+		guint counts[GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1] = { 0 }, truncated = 0;
 
 		g_array_set_size (issues, 0);
 		g_mime_compliance_options_set_max_issues_per_violation (options, 1);

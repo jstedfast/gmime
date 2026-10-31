@@ -345,13 +345,14 @@ test_metadata (void)
 	GMimeComplianceViolation violation;
 	guint i;
 
-	for (i = 1; i <= 91; i++) {
+	for (i = 1; i <= GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1; i++) {
 		GMimeComplianceIssue issue = { GMIME_COMPLIANCE_CONTEXT_TRANSPORT, 0, 0, 1, 1,
 					      GMIME_COMPLIANCE_POSITION_EXACT };
 		const char *name;
 		char *text;
 
-		violation = i == 91 ? GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES : i;
+		violation = i > GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT ?
+			GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES : i;
 		name = g_mime_compliance_violation_get_name (violation);
 		g_assert_nonnull (name);
 		g_assert_cmpstr (name, !=, "");
