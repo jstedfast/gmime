@@ -3450,7 +3450,7 @@ Header/entity reads do not seek initial mailbox markers.
 
 The optional compliance logger receives boxed GMimeComplianceIssue values
 with original wire offsets, 64-bit physical line/column numbers, position
-kinds, contexts, severity and category metadata. All 96 diagnostic identities
+kinds, contexts, severity and category metadata. All 97 diagnostic identities
 and the truncation marker retain MimeKit's descriptions and remarks.
 GMimeComplianceOptions selects transport/storage context, parameter/address/Base64/
 quoted-printable/UU validators, and per-violation budgets (zero is unlimited).
@@ -3459,10 +3459,10 @@ installed, independently of the specialized-validator flags. Without a
 logger all compliance checking is skipped.
 
 The raw parameter validator reports malformed declarations and repeated boundary,
-filename, and other parameter declarations on every Content-Type and Content-Disposition header,
-including headers ignored by model precedence. Names are case-insensitive;
-competing RFC 2231 representations and repeated continuation indices are
-diagnosed, but distinct continuation segments are not. Content-Type `name`
+filename, and other parameter declarations on every Content-Type and
+Content-Disposition header, including headers ignored by model precedence.
+Names are case-insensitive; competing RFC 2231 representations and repeated
+continuation indices are diagnosed, but distinct continuation segments are not. Content-Type `name`
 and Content-Disposition `filename` allow one ordinary fallback alongside one
 extended or continued representation. Positions identify the repeated name
 in the original folded bytes. Duplicate Content-Disposition headers are a
@@ -3479,16 +3479,26 @@ observed index without gaps. A balanced tree tracks only observed indices,
 avoiding adversarial integer hash collisions; gap detection compares the
 highest index with the distinct count instead of scanning or allocating by
 index. Fallback values do not hide gaps, and tolerant value assembly remains
-unchanged. MissingParameterSegment is 48 in the unreleased enum.
+unchanged. MissingParameterSegment is 49 in the unreleased enum.
 
 InvalidParameter (44) reports missing or invalid names, missing equals signs or
 values, and unterminated quotes/comments at the malformed declaration or
 fragment's ElementStart. Recovery honors quotes and nested comments; empty
 parameter slots, quoted empty values, and loose unquoted values remain accepted.
 Declarations with missing values still participate in duplicate and continuation
-tracking. This does not validate RFC 2231 charset/language prefixes, percent
-escapes, or encoded contents. The new identity shifts subsequent unreleased
-numeric values by one while retaining their metadata and reporting budgets.
+tracking. Encoded RFC 2231 values are checked by a separate diagnostic.
+
+InvalidRfc2231Parameter (45) checks charset/language delimiters on initial
+encoded values, complete percent-encoded octets within each segment, and raw
+attribute characters. It reports once per malformed declaration at ElementStart,
+only when declaration syntax is otherwise valid. Empty charset/language fields,
+outer quotes, and empty encoded continuation segments after index zero are
+accepted. Mixed encoded/plain segments and multibyte characters spanning segments
+remain supported; split percent escapes are diagnosed without changing tolerant
+decoding. Validation does not assemble values, look up charsets or registered
+language tags, or validate decoded characters. Both syntax diagnostics have
+independent reporting budgets. The new identity shifts subsequent unreleased
+numeric values by one while retaining their metadata.
 
 InvalidContentType also covers unexpected text after a recognizable type/subtype
 and before any parameter separator, including folded values and comments.

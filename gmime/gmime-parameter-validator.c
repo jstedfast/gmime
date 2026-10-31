@@ -268,25 +268,36 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 }
 
 static gboolean
-skip_value (ParameterValidator *v, gboolean *invalid)
+skip_value (ParameterValidator *v, gboolean allow_empty, gboolean *invalid, gsize *value_start, gsize *value_end)
 {
 	*invalid = TRUE;
+	*value_start = *value_end = v->index;
 
-	if (!skip_cfws (v) || v->index == v->length)
+	if (!skip_cfws (v))
 		return FALSE;
+
+	*value_start = *value_end = v->index;
+
+	if (v->index == v->length) {
+		*invalid = !allow_empty;
+		return FALSE;
+	}
 
 	if (v->text[v->index] == '"') {
 		if (!skip_quoted (v))
 			return FALSE;
 
+		*value_end = v->index;
 		*invalid = FALSE;
 	} else {
-		gsize start = v->index;
-
 		while (v->index < v->length && v->text[v->index] != ';' && v->text[v->index] != '(')
 			v->index++;
 
-		*invalid = v->index == start;
+		*value_end = v->index;
+		while (*value_end > *value_start && is_lwsp (v->text[*value_end - 1]))
+			(*value_end)--;
+
+		*invalid = *value_end == *value_start && !allow_empty;
 	}
 
 	if (!skip_cfws (v)) {
@@ -302,6 +313,50 @@ skip_value (ParameterValidator *v, gboolean *invalid)
 		v->index++;
 
 	return v->index < v->length;
+}
+
+static gboolean
+validate_encoded_value (ParameterValidator *v, gsize start, gsize end, gboolean initial)
+{
+	guint field;
+
+	/* Match the decoder's tolerance for quoted extended values. */
+	if (end - start >= 2 && v->text[start] == '"' && v->text[end - 1] == '"') {
+		start++;
+		end--;
+	}
+
+	if (initial) {
+		for (field = 0; field < 2; field++) {
+			while (start < end && v->text[start] != '\'') {
+				if (v->text[start] <= 32 || v->text[start] >= 127)
+					return FALSE;
+				start++;
+			}
+
+			if (start == end)
+				return FALSE;
+
+			start++;
+		}
+	}
+
+	/* RFC 2231 ext-octets must be complete within each segment,
+	 * although multibyte characters may span several segments. */
+	while (start < end) {
+		if (v->text[start] == '%') {
+			if (end - start < 3 || !g_ascii_isxdigit (v->text[start + 1]) ||
+			    !g_ascii_isxdigit (v->text[start + 2]))
+				return FALSE;
+			start += 3;
+		} else {
+			if (!is_attrchar (v->text[start]))
+				return FALSE;
+			start++;
+		}
+	}
+
+	return TRUE;
 }
 
 void
@@ -332,6 +387,7 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 	while (v.index < v.length) {
 		GMimeComplianceIssue issue;
 		gboolean invalid, more;
+		gsize value_start, value_end;
 
 		while (v.index < v.length && is_lwsp (v.text[v.index]))
 			v.index++;
@@ -391,10 +447,14 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 
 		g_free (name);
 
-		more = skip_value (&v, &invalid);
+		more = skip_value (&v, encoded && segment > 0, &invalid, &value_start, &value_end);
 
 		if (invalid) {
 			issue = create_issue (&v, GMIME_COMPLIANCE_INVALID_PARAMETER, start,
+					      GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			report (&issue, user_data);
+		} else if (encoded && !validate_encoded_value (&v, value_start, value_end, segment <= 0)) {
+			issue = create_issue (&v, GMIME_COMPLIANCE_INVALID_RFC2231_PARAMETER, start,
 					      GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 			report (&issue, user_data);
 		}
