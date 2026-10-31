@@ -3450,7 +3450,7 @@ Header/entity reads do not seek initial mailbox markers.
 
 The optional compliance logger receives boxed GMimeComplianceIssue values
 with original wire offsets, 64-bit physical line/column numbers, position
-kinds, contexts, severity and category metadata. All 94 diagnostic identities
+kinds, contexts, severity and category metadata. All 95 diagnostic identities
 and the truncation marker retain MimeKit's descriptions and remarks.
 GMimeComplianceOptions selects transport/storage context, parameter/address/Base64/
 quoted-printable/UU validators, and per-violation budgets (zero is unlimited).
@@ -3471,6 +3471,16 @@ model values and serialization unchanged. The unreleased violation enum has
 been renumbered to match MimeKit's added diagnostics (Parameters flag = 16,
 All = 31); stored numeric values from earlier 4.0 development builds must not
 be treated as stable.
+
+Missing RFC 2231 continuation segments are reported once per parameter after
+scanning the header, at the first continuation declaration (ElementStart).
+Indices may arrive out of order, but must cover zero through the highest
+observed index without gaps. A balanced tree tracks only observed indices,
+avoiding adversarial integer hash collisions; gap detection compares the
+highest index with the distinct count instead of scanning or allocating by
+index. Fallback values do not hide gaps, and tolerant value assembly remains
+unchanged. MissingParameterSegment is 47 in the unreleased enum, shifting
+subsequent values by one.
 
 Each read snapshots the settings and logger. Replacing either from a
 callback affects the next operation, not the current one; the previous

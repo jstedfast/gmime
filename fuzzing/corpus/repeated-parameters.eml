@@ -12,4 +12,10 @@ Content-Disposition: inline; filename="a; filename=ignored";
  filename=b (nested (filename=ignored)); size=1; size*=us-ascii''2
 
 body
+--b
+Content-Type: text/plain; name*1=b; name*0=a
+Content-Disposition: attachment; filename*0=file.; filename*2=txt
+Content-Disposition: inline; filename*1=x
+
+continued
 --b--

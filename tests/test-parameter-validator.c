@@ -28,6 +28,7 @@
 #define FILENAME GMIME_COMPLIANCE_REPEATED_FILENAME_PARAMETER
 #define PARAMETER GMIME_COMPLIANCE_REPEATED_PARAMETER
 #define DISPOSITION GMIME_COMPLIANCE_REPEATED_CONTENT_DISPOSITION
+#define MISSING_SEGMENT GMIME_COMPLIANCE_MISSING_PARAMETER_SEGMENT
 #define NONE GMIME_COMPLIANCE_NONE
 
 static void
@@ -193,6 +194,82 @@ assert_position (const char *wire, const char *marker, GMimeComplianceIssue *iss
 }
 
 static void
+assert_continuations (GArray *issues, guint missing, guint repeated)
+{
+	guint i;
+
+	g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, missing);
+	for (i = 0; i < issues->len; i++) {
+		GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+		if (issue->violation == MISSING_SEGMENT)
+			g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+	}
+	assert_parameters (issues, FILENAME, repeated);
+}
+
+static void
+test_continuations (void)
+{
+	/* MimeKit continuation-gap regressions inspired by mime-is-broken. */
+	static const struct {
+		const char *parameters;
+		guint missing, repeated;
+	} cases[] = {
+		{ "filename*0=a", 0, 0 },
+		{ "filename*0=a; filename*1=b", 0, 0 },
+		{ "filename*1=b; filename*0=a", 0, 0 },
+		{ "filename*2=c; filename*0=a; filename*1=b", 0, 0 },
+		{ "filename*1=a; filename*2=b", 1, 0 },
+		{ "filename*0=a; filename*2=b", 1, 0 },
+		{ "filename*0=a; filename*0=b; filename*1=c", 0, 1 },
+		{ "filename*1=a; filename*1=b; filename*3=c", 1, 1 },
+		{ "filename*0=a; filename*2147483647=b", 1, 0 },
+		{ "filename*2147483647=a; filename*2147483647=b", 1, 1 },
+		{ "filename*0000=a; filename*0001=b", 0, 0 },
+		{ "filename=fallback; filename*1=b", 1, 0 },
+		{ "filename*1=b; filename=fallback", 1, 0 },
+		{ "filename*=us-ascii''fallback; filename*1=b", 1, 1 },
+		{ "filename*1=b; filename*=us-ascii''fallback", 1, 1 },
+		{ "filename*1*=b; filename*0*=us-ascii''a", 0, 0 },
+		{ "filename*0*=us-ascii''a; filename*2=b", 1, 0 },
+		{ "filename*0=a; filename*0*=b", 0, 1 },
+		{ "filename*2147483648=a; filename*1=b", 1, 0 },
+		{ "filename*9999999999999999999999=a; filename*0=b", 0, 0 },
+		{ "filename*=us-ascii''a", 0, 0 },
+		{ "filename*0=a; other*1=b; filename*2=c", 2, 0 },
+		{ "filename*2=a; other*1=b; filename*0=c; other*0=d", 1, 0 },
+		{ "boundary*0=a; boundary*2=b", 1, 0 },
+		{ "filename*1=", 1, 0 },
+		{ "filename*1=\"unterminated; filename*0=a", 1, 0 },
+		{ "filename*1=a (unterminated; filename*0=b", 1, 0 }
+	};
+	guint i, content_type, chunked;
+
+	testsuite_check ("Missing continuation segments in either header, independent of order and fallback");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (content_type = 0; content_type < 2; content_type++) {
+			GString *parameters = g_string_new (cases[i].parameters);
+			char *wire;
+
+			if (content_type)
+				g_string_replace (parameters, "filename", "name", 0);
+			wire = g_strdup_printf ("%s; %s\r\n\r\nbody\r\n", content_type ?
+				"Content-Type: text/plain" : "Content-Disposition: attachment", parameters->str);
+			for (chunked = 0; chunked < 2; chunked++) {
+				GArray *issues = read_issues (wire, chunked, NULL);
+
+				assert_continuations (issues, cases[i].missing, cases[i].repeated);
+				g_array_unref (issues);
+			}
+			g_string_free (parameters, TRUE);
+			g_free (wire);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_positions_and_gating (void)
 {
 	const char *wire = "X-Prefix: \303\251\r\nContent-Type \t: text/plain; charset=utf-8;\r\n"
@@ -233,18 +310,68 @@ test_positions_and_gating (void)
 }
 
 static void
+test_continuation_positions_and_gating (void)
+{
+	const char *folded = "Content-Type: text/plain; z*0=a;\r\n\tname=fallback;\r\n"
+		"\t(\303\251) name*2=b; z*0=c;\r\n\tother*1=x; name*4=d; other*3=y\r\n\r\nbody\r\n";
+	const char *separate = "Content-Type: text/plain; name*0=a\r\n"
+		"Content-Type: text/plain; name*1=b\r\n"
+		"Content-Disposition: attachment; filename*0=a\r\n"
+		"Content-Disposition: attachment; filename*1=b\r\n\r\nbody\r\n";
+	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+	guint chunked, enabled, i, found;
+
+	testsuite_check ("Gap positions survive later diagnostics; segments do not cross header boundaries");
+	for (chunked = 0; chunked < 2; chunked++) {
+		GArray *issues = read_issues (folded, chunked, NULL);
+
+		g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 2);
+		g_assert_cmpuint (count_issues (issues, PARAMETER), ==, 1);
+		for (i = 0, found = 0; i < issues->len; i++) {
+			GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+			if (issue->violation == MISSING_SEGMENT)
+				assert_position (folded, found++ ? "other*1=" : "name*2=", issue,
+						 GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			else if (issue->violation == PARAMETER)
+				assert_position (folded, "z*0=c", issue, GMIME_COMPLIANCE_POSITION_EXACT);
+		}
+		g_array_unref (issues);
+		for (enabled = 0; enabled < 3; enabled++) {
+			g_mime_compliance_options_set_enabled_validators (options, enabled == 0 ?
+				GMIME_COMPLIANCE_VALIDATOR_NONE : enabled == 1 ?
+				GMIME_COMPLIANCE_VALIDATOR_PARAMETERS : GMIME_COMPLIANCE_VALIDATOR_ALL);
+			issues = read_issues (separate, chunked, options);
+			assert_continuations (issues, enabled ? 2 : 0, 0);
+			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, 1);
+			g_assert_cmpuint (count_issues (issues, GMIME_COMPLIANCE_REPEATED_CONTENT_TYPE), ==, 1);
+			for (i = 0, found = 0; i < issues->len; i++) {
+				GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+				if (issue->violation == MISSING_SEGMENT)
+					assert_position (separate, found++ ? "filename*1=b" : "name*1=b", issue,
+							 GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			}
+			g_array_unref (issues);
+		}
+	}
+	g_mime_compliance_options_unref (options);
+	testsuite_check_passed ();
+}
+
+static void
 test_resets_and_budgets (void)
 {
 	const char *nested = "Content-Type: multipart/mixed; boundary=b\r\nContent-Disposition: inline\r\n\r\n"
-		"--b\r\nContent-Type: text/plain; name=a\r\nContent-Disposition: inline; filename=a\r\n\r\none\r\n"
+		"--b\r\nContent-Type: text/plain; name*0=a\r\nContent-Disposition: inline; filename*0=a\r\n\r\none\r\n"
 		"--b\r\nContent-Type: message/rfc822\r\nContent-Disposition: inline\r\n\r\n"
-		"Content-Type: text/plain; name=a\r\nContent-Disposition: inline; filename=a\r\n"
+		"Content-Type: text/plain; name*0=a\r\nContent-Disposition: inline; filename*0=a\r\n"
 		"Content-Disposition: attachment; filename=a\r\n\r\ntwo\r\n--b--\r\n";
-	const char *mbox = "From sender\nContent-Type: text/plain; name=a\nContent-Disposition: inline\n\none\n"
-		"From sender\nContent-Type: text/plain; name=a\nContent-Disposition: inline\n\n two\n";
+	const char *mbox = "From sender\nContent-Type: text/plain; name*0=a\nContent-Disposition: inline\n\none\n"
+		"From sender\nContent-Type: text/plain; name*0=a\nContent-Disposition: inline\n\n two\n";
 	const char *budget = "Content-Type: text/plain; boundary=a; boundary=b; boundary=c;\r\n"
 		" name=a; name=b; name=c; x=1; x=2; x=3\r\n"
-		"Content-Disposition: inline\r\nContent-Disposition: inline\r\n"
+		"Content-Disposition: inline; a=fallback; b*3=y; a*1=x\r\nContent-Disposition: inline\r\n"
 		"Content-Disposition: attachment\r\n\r\nbody\r\n";
 	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
 	guint chunked, i, operation;
@@ -257,6 +384,7 @@ test_resets_and_budgets (void)
 		GError *error = NULL;
 
 		assert_parameters (issues, NONE, 0);
+		g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 0);
 		g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, 1);
 		g_array_set_size (issues, 0);
 		g_mime_reader_set_compliance_logger (reader, collect_issue, issues, NULL);
@@ -265,6 +393,7 @@ test_resets_and_budgets (void)
 			g_assert_no_error (error);
 		}
 		assert_parameters (issues, NONE, 0);
+		g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 0);
 		g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, 0);
 		g_object_unref (reader);
 		g_object_unref (stream);
@@ -289,10 +418,15 @@ test_resets_and_budgets (void)
 			g_assert_cmpuint (count_issues (issues, FILENAME), ==, 1);
 			g_assert_cmpuint (count_issues (issues, PARAMETER), ==, 1);
 			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, 1);
+			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 1);
 			g_assert_cmpuint (count_issues (issues, GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES), ==, 1);
-			for (i = 0; i < issues->len; i++)
+			for (i = 0; i < issues->len; i++) {
 				g_assert_cmpint (g_array_index (issues, GMimeComplianceIssue, i).context,
 						 ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+				if (g_array_index (issues, GMimeComplianceIssue, i).violation == MISSING_SEGMENT)
+					assert_position (budget, "a*1=x", &g_array_index (issues, GMimeComplianceIssue, i),
+							 GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			}
 			g_object_unref (reader);
 			g_object_unref (stream);
 			g_array_unref (issues);
@@ -354,11 +488,81 @@ test_bounded_validation (void)
 }
 
 static void
+test_continuation_bounds (void)
+{
+	const char slice[] = "xxtext/plain; name*2=x;\r\n name*2=yyy";
+	const char complete[] = "text/plain; name*1=b; name*0=a";
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	gsize length = sizeof (slice) - 5;
+	guint8 *buffer = g_memdup2 (slice + 2, length);
+	guint repeat, sparse, i;
+
+	testsuite_check ("Continuation snapshots reset between bounded calls; tracking depends on declaration count");
+	for (repeat = 0; repeat < 2; repeat++) {
+		GMimeComplianceIssue *missing, *duplicate;
+
+		_g_mime_parameter_validate (buffer, length, TRUE, collect_issue, issues,
+			GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+		assert_continuations (issues, 1, 1);
+		g_assert_cmpuint (issues->len, ==, 2);
+		duplicate = &g_array_index (issues, GMimeComplianceIssue, 0);
+		missing = &g_array_index (issues, GMimeComplianceIssue, 1);
+		g_assert_cmpint (duplicate->violation, ==, FILENAME);
+		g_assert_cmpuint (duplicate->line_number, ==, 6);
+		g_assert_cmpuint (duplicate->column_number, ==, 2);
+		g_assert_cmpint (missing->violation, ==, MISSING_SEGMENT);
+		g_assert_cmpint (missing->stream_offset, ==, 100 + (strstr (slice, "name*2") - (slice + 2)));
+		g_assert_cmpuint (missing->line_number, ==, 5);
+		g_assert_cmpuint (missing->column_number, ==, 7 + (strstr (slice, "name*2") - (slice + 2)));
+		g_assert_cmpint (missing->context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+		g_array_set_size (issues, 0);
+		_g_mime_parameter_validate ((const guint8 *) complete, sizeof (complete) - 1, TRUE, collect_issue, issues,
+			GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+		g_assert_cmpuint (issues->len, ==, 0);
+	}
+	g_free (buffer);
+	for (sparse = 0; sparse < 2; sparse++) {
+		GString *text = g_string_new ("attachment");
+		gint64 start;
+		int last = 0;
+
+		for (i = 0; i < 4096; i++) {
+			last = sparse ? G_MAXINT32 - (int) i * 9059 : 4095 - (int) i;
+			g_string_append_printf (text, "; filename*%d=x", last);
+		}
+		g_string_append_printf (text, "; filename*%d=y", last);
+		start = g_get_monotonic_time ();
+		_g_mime_parameter_validate ((const guint8 *) text->str, text->len, FALSE, collect_issue, issues,
+			GMIME_COMPLIANCE_CONTEXT_TRANSPORT, 0, 1, 1);
+		g_assert_cmpint (g_get_monotonic_time () - start, <, 5 * G_USEC_PER_SEC);
+		assert_continuations (issues, sparse ? 1 : 0, 1);
+		g_array_set_size (issues, 0);
+		g_string_free (text, TRUE);
+	}
+	{
+		GString *text = g_string_new ("text/plain; name*0=0");
+		gint64 start;
+
+		for (i = 0; i < 16384; i++)
+			g_string_append (text, ";\r\n name*0=1");
+		start = g_get_monotonic_time ();
+		_g_mime_parameter_validate ((const guint8 *) text->str, text->len, TRUE, collect_issue, issues,
+			GMIME_COMPLIANCE_CONTEXT_TRANSPORT, 0, 1, 1);
+		g_assert_cmpint (g_get_monotonic_time () - start, <, 5 * G_USEC_PER_SEC);
+		assert_continuations (issues, 0, 16384);
+		g_assert_cmpuint (g_array_index (issues, GMimeComplianceIssue, issues->len - 1).line_number, ==, 16385);
+		g_string_free (text, TRUE);
+	}
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
+static void
 test_header_limits_and_linearity (void)
 {
 	GMimeParserOptions *options = g_mime_parser_options_new ();
 	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
-	GString *wire = g_string_new ("Content-Type: text/plain; x=0");
+	GString *wire = g_string_new ("Content-Type: text/plain; name*1=a; x=0");
 	GMimeStream *stream;
 	GMimeReader *reader;
 	GMimeComplianceIssue *last = NULL;
@@ -381,11 +585,13 @@ test_header_limits_and_linearity (void)
 			g_assert_nonnull (error);
 			g_clear_error (&error);
 			assert_parameters (issues, NONE, 0);
+			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 0);
 		} else {
 			g_assert_true (g_mime_reader_read_message (reader, &error));
 			g_assert_no_error (error);
 			g_assert_cmpint (g_get_monotonic_time () - start, <, 5 * G_USEC_PER_SEC);
 			assert_parameters (issues, PARAMETER, 16384);
+			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 1);
 			for (i = 0; i < issues->len; i++) {
 				if (g_array_index (issues, GMimeComplianceIssue, i).violation == PARAMETER)
 					last = &g_array_index (issues, GMimeComplianceIssue, i);
@@ -405,9 +611,12 @@ test_header_limits_and_linearity (void)
 }
 
 static void
-test_model_preservation (void)
+test_model_preservation (gboolean continued)
 {
-	const char *wire = "Content-Type: text/plain; charset=utf-8; charset=us-ascii\r\n"
+	const char *wire = continued ?
+		"Content-Type: text/plain; charset=utf-8\r\n"
+		"Content-Disposition: attachment; filename*0=file.; filename*2=txt\r\n\r\nbody\r\n" :
+		"Content-Type: text/plain; charset=utf-8; charset=us-ascii\r\n"
 		"Content-Type: application/octet-stream; name=a; name=b\r\n"
 		"Content-Disposition: attachment; filename=a; filename=b\r\n"
 		"Content-Disposition: inline; filename=c; filename=d\r\n\r\nbody\r\n";
@@ -440,7 +649,7 @@ test_model_preservation (void)
 			g_assert_true (g_mime_content_type_is_type (g_mime_entity_get_content_type (part), "text", "plain"));
 			g_assert_null (g_mime_entity_get_content_type_parameter (part, "name"));
 			g_assert_cmpstr (g_mime_entity_get_content_type_parameter (part, "charset"), ==, "utf-8");
-			g_assert_cmpstr (g_mime_part_get_filename (GMIME_PART (part)), ==, "a");
+			g_assert_cmpstr (g_mime_part_get_filename (GMIME_PART (part)), ==, continued ? "file.txt" : "a");
 			g_assert_true (GMIME_IS_TEXT_PART (part));
 			text = g_mime_text_part_get_text (GMIME_TEXT_PART (part));
 			g_assert_cmpstr (text, ==, "body\r\n");
@@ -451,9 +660,10 @@ test_model_preservation (void)
 				g_assert_cmpmem (bytes->data, bytes->len, baseline->data, baseline->len);
 			else
 				baseline = g_byte_array_ref (bytes);
-			g_assert_cmpuint (count_issues (issues, PARAMETER), ==, mode == 2 ? 1 : 0);
-			g_assert_cmpuint (count_issues (issues, FILENAME), ==, mode == 2 ? 3 : 0);
-			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, mode ? 1 : 0);
+			g_assert_cmpuint (count_issues (issues, PARAMETER), ==, mode == 2 && !continued ? 1 : 0);
+			g_assert_cmpuint (count_issues (issues, FILENAME), ==, mode == 2 && !continued ? 3 : 0);
+			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, mode && !continued ? 1 : 0);
+			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, mode == 2 && continued ? 1 : 0);
 			g_array_unref (issues);
 			g_object_unref (message);
 			g_object_unref (parser);
@@ -477,14 +687,15 @@ test_metadata (void)
 		{ DISPOSITION, 13, "RepeatedContentDisposition" },
 		{ BOUNDARY, 44, "RepeatedBoundaryParameter" },
 		{ FILENAME, 45, "RepeatedFilenameParameter" },
-		{ PARAMETER, 46, "RepeatedParameter" }
+		{ PARAMETER, 46, "RepeatedParameter" },
+		{ MISSING_SEGMENT, 47, "MissingParameterSegment" }
 	};
 	guint i, context;
 
 	testsuite_check ("MimeKit diagnostic identities, flag values and metadata");
 	g_assert_cmpuint (GMIME_COMPLIANCE_VALIDATOR_PARAMETERS, ==, 16);
 	g_assert_cmpuint (GMIME_COMPLIANCE_VALIDATOR_ALL, ==, 31);
-	g_assert_cmpuint (GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT, ==, 94);
+	g_assert_cmpuint (GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT, ==, 95);
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		g_assert_cmpuint (cases[i].violation, ==, cases[i].value);
 		g_assert_cmpstr (g_mime_compliance_violation_get_name (cases[i].violation), ==, cases[i].name);
@@ -504,11 +715,15 @@ main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	testsuite_start ("MIME parameter compliance");
 	test_repeated_parameters ();
+	test_continuations ();
 	test_positions_and_gating ();
+	test_continuation_positions_and_gating ();
 	test_resets_and_budgets ();
 	test_bounded_validation ();
+	test_continuation_bounds ();
 	test_header_limits_and_linearity ();
-	test_model_preservation ();
+	test_model_preservation (FALSE);
+	test_model_preservation (TRUE);
 	test_metadata ();
 	testsuite_end ();
 	g_mime_shutdown ();
