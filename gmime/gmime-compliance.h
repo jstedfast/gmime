@@ -144,7 +144,8 @@ typedef enum {
  * @GMIME_COMPLIANCE_MISSING_FROM: missing message From
  * @GMIME_COMPLIANCE_MISSING_MESSAGE_ID: missing message Message-Id
  * @GMIME_COMPLIANCE_MISSING_MIME_VERSION: MIME headers without MIME-Version
- * @GMIME_COMPLIANCE_INVALID_CONTENT_TYPE: unintelligible media type
+ * @GMIME_COMPLIANCE_INVALID_CONTENT_TYPE: malformed media type, including unexpected
+ *   text after type/subtype and before any parameter separator
  * @GMIME_COMPLIANCE_INVALID_CONTENT_TRANSFER_ENCODING: unrecognized transfer encoding
  * @GMIME_COMPLIANCE_ILLEGAL_MESSAGE_RFC822_CONTENT_TRANSFER_ENCODING: encoded message container
  * @GMIME_COMPLIANCE_ILLEGAL_MULTIPART_CONTENT_TRANSFER_ENCODING: illegal multipart encoding

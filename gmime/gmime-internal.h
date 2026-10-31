@@ -139,6 +139,8 @@ G_GNUC_INTERNAL void _g_mime_part_serialize_fields (GMimePart *part, GMimeHeader
 
 /* GMimeContentType */
 G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64 offset);
+G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length,
+								gboolean *invalid_media_type, GError **error);
 
 /* GMimeParamList */
 G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_clone (GMimeParamList *list);
