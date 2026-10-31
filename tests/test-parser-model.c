@@ -2772,6 +2772,151 @@ test_parser_compliance_models (void)
 }
 
 static void
+check_content_type_syntax (const char *value, gboolean invalid, const char *mime_type, const char *charset,
+			  GMimeParserOptions *options, gsize chunk)
+{
+	static const char prefix[] = "Subject: content-type syntax\r\n";
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	char *wire = g_strdup_printf ("%sContent-Type: %s\r\n\r\nbody\r\n", prefix, value);
+	guint logging, validators, operation;
+
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_DOS);
+	for (logging = 0; logging < 2; logging++) {
+		for (validators = 0; validators < 2; validators++) {
+			GMimeComplianceOptions *compliance = g_mime_compliance_options_new ();
+
+			g_mime_compliance_options_set_enabled_validators (compliance, validators ?
+				GMIME_COMPLIANCE_VALIDATOR_ALL : GMIME_COMPLIANCE_VALIDATOR_NONE);
+			for (operation = 0; operation < 4; operation++) {
+				ModelInput *input = new_input (wire, strlen (wire), chunk);
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				GError *error = NULL;
+				guint i;
+
+				if (operation == 0) {
+					GMimeReader *reader = g_mime_reader_new (options, (GMimeStream *) input);
+
+					g_mime_reader_set_compliance_options (reader, compliance);
+					if (logging)
+						g_mime_reader_set_compliance_logger (reader, collect_parser_issue, issues, NULL);
+					g_assert_true (g_mime_reader_read_message (reader, &error));
+					g_assert_no_error (error);
+					g_object_unref (reader);
+				} else {
+					GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+					GByteArray *bytes;
+					GObject *model;
+
+					g_mime_parser_set_compliance_options (parser, compliance);
+					if (logging)
+						g_mime_parser_set_compliance_logger (parser, collect_parser_issue, issues, NULL);
+					model = construct_compliance_model (parser, options, operation - 1, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (model);
+					if (operation == 1) {
+						GMimeStream *stream = g_mime_stream_mem_new ();
+
+						g_assert_cmpint (g_mime_header_list_write_to_stream (
+							GMIME_HEADER_LIST (model), format, stream), >=, 0);
+						bytes = g_byte_array_ref (g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream)));
+						g_object_unref (stream);
+						g_assert_cmpmem (bytes->data, bytes->len, wire, strlen (wire) - 6);
+					} else {
+						GMimeEntity *part = operation == 3 ?
+							g_mime_message_get_mime_part (GMIME_MESSAGE (model)) : GMIME_ENTITY (model);
+						GMimeContentType *type = g_mime_entity_get_content_type (part);
+						char *actual = g_mime_content_type_get_mime_type (type);
+
+						g_assert_true (GMIME_IS_PART (part));
+						g_assert_cmpstr (actual, ==, mime_type);
+						g_assert_cmpstr (g_mime_content_type_get_charset (type), ==, charset);
+						g_assert_cmpint (g_mime_param_list_length (g_mime_content_type_get_parameters (type)),
+								==, charset ? 1 : 0);
+						g_free (actual);
+						bytes = read_content (g_mime_part_get_content (GMIME_PART (part)), TRUE);
+						g_assert_cmpmem (bytes->data, bytes->len, "body\r\n", 6);
+						g_byte_array_unref (bytes);
+						bytes = serialize_writer (GMIME_ENTITY (model), format, FALSE);
+						g_assert_cmpmem (bytes->data, bytes->len, wire, strlen (wire));
+					}
+					g_byte_array_unref (bytes);
+					g_object_unref (model);
+					g_object_unref (parser);
+				}
+
+				g_assert_cmpuint (count_parser_issue (issues, GMIME_COMPLIANCE_INVALID_CONTENT_TYPE),
+						 ==, invalid && logging);
+				if (!logging)
+					g_assert_cmpuint (issues->len, ==, 0);
+				for (i = 0; i < issues->len; i++) {
+					GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+					if (issue->violation != GMIME_COMPLIANCE_INVALID_CONTENT_TYPE)
+						continue;
+					g_assert_cmpint (issue->stream_offset, ==, sizeof (prefix) - 1);
+					g_assert_cmpuint (issue->line_number, ==, 2);
+					g_assert_cmpuint (issue->column_number, ==, 1);
+					g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+				}
+				g_array_unref (issues);
+				g_object_unref (input);
+			}
+			g_mime_compliance_options_unref (compliance);
+		}
+	}
+	g_mime_format_options_unref (format);
+	g_free (wire);
+}
+
+static void
+test_content_type_syntax (void)
+{
+	static const struct {
+		const char *value;
+		gboolean invalid;
+		const char *mime_type, *charset;
+	} cases[] = {
+		{ "text/plain junk", TRUE, "text/plain", NULL },
+		{ "text/plain junk; charset=utf-8", TRUE, "text/plain", NULL },
+		{ "text/plain charset=utf-8", TRUE, "text/plain", NULL },
+		{ "text/plain (comment; charset=ignored) junk", TRUE, "text/plain", NULL },
+		{ "text/plain\r\n\tjunk", TRUE, "text/plain", NULL },
+		{ "\r\n\ttext/plain (comment)\r\n\tjunk; charset=utf-8", TRUE, "text/plain", NULL },
+		{ "text/plain, text/html", TRUE, "text/plain", NULL },
+		{ "text/plain\"junk\"", TRUE, "text/plain", NULL },
+		{ "text/plain", FALSE, "text/plain", NULL },
+		{ "text/plain (comment; junk)", FALSE, "text/plain", NULL },
+		{ "text/plain (comment); charset=utf-8", FALSE, "text/plain", "utf-8" },
+		{ "text/plain;\r\n\tcharset=\"utf-8\"", FALSE, "text/plain", "utf-8" },
+		{ "text/plain;", FALSE, "text/plain", NULL },
+		{ "text/plain; charset", FALSE, "text/plain", NULL },
+		{ "text/plain; charset=utf-8; broken", FALSE, "text/plain", NULL },
+		{ "text/plain; (unterminated", FALSE, "text/plain", NULL },
+		{ "text/x/y; charset=utf-8", FALSE, "text/x/y", "utf-8" },
+		{ "text/x/y; charset", FALSE, "text/x", NULL },
+		{ "text/x/y junk", TRUE, "text/x", NULL },
+		/* Keep GMime's existing fallback models for these malformed values. */
+		{ "text/plain (unterminated", TRUE, "text/plain", NULL },
+		{ "garbage; charset=utf-8", TRUE, "application/octet-stream", NULL }
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	const gsize chunks[] = { 1, 4096 };
+	guint i, mode, chunk;
+
+	testsuite_check ("Content-Type syntax diagnostics preserve models and distinguish malformed parameters");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (mode = GMIME_RFC_COMPLIANCE_LOOSE; mode <= GMIME_RFC_COMPLIANCE_LOOSER; mode++) {
+			g_mime_parser_options_set_parameter_compliance_mode (options, mode);
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++)
+				check_content_type_syntax (cases[i].value, cases[i].invalid, cases[i].mime_type,
+							  cases[i].charset, options, chunks[chunk]);
+		}
+	}
+	g_mime_parser_options_unref (options);
+	testsuite_check_passed ();
+}
+
+static void
 test_parser_compliance_lifetime (void)
 {
 	static const char encoded[] = "Content-Transfer-Encoding: base64\n\n!!!!\nmore\n";
@@ -5736,6 +5881,7 @@ main (int argc, char **argv)
 	test_public_parser_warnings ();
 	test_parser_compliance_options ();
 	test_parser_compliance_models ();
+	test_content_type_syntax ();
 	test_parser_compliance_lifetime ();
 	test_parser_compliance_errors ();
 	test_public_long_header_names ();

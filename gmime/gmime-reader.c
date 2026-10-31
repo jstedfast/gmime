@@ -1002,6 +1002,7 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 
 	if (header_is (header, name_length, "Content-Type")) {
 		char *text = g_strndup (value, length);
+		gboolean invalid_media_type;
 
 		if (priv->content_type) {
 			report_at (reader, GMIME_COMPLIANCE_REPEATED_CONTENT_TYPE, begin, line, 1,
@@ -1015,18 +1016,22 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 
 		/* MimeReader retains an intelligible media type on parse failure,
 		 * but only installs parameters when the complete list parses. */
-		priv->content_type = g_mime_content_type_parse_full (priv->options, value, length, NULL);
+		priv->content_type = _g_mime_content_type_parse_full (priv->options, value, length, &invalid_media_type, NULL);
 
 		if (!priv->content_type) {
 			const char *cursor = text;
 			char *media, *subtype;
 
 			if (!g_mime_parse_content_type (&cursor, &media, &subtype)) {
-				report_at (reader, GMIME_COMPLIANCE_INVALID_CONTENT_TYPE, begin, line, 1,
-					   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+				invalid_media_type = TRUE;
 			} else {
 				g_free (media);
 				g_free (subtype);
+			}
+
+			if (invalid_media_type) {
+				report_at (reader, GMIME_COMPLIANCE_INVALID_CONTENT_TYPE, begin, line, 1,
+					   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 			}
 
 			priv->content_type = g_mime_content_type_parse (priv->options, text);
@@ -1038,6 +1043,7 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 		if (priv->seen_content_disposition)
 			report_at (reader, GMIME_COMPLIANCE_REPEATED_CONTENT_DISPOSITION, begin, line, 1,
 				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+
 		priv->seen_content_disposition = TRUE;
 	} else if (header_is (header, name_length, "Content-Transfer-Encoding")) {
 		gsize i = 0;

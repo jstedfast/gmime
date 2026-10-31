@@ -203,6 +203,13 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 GMimeContentType *
 g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error)
 {
+	return _g_mime_content_type_parse_full (options, str, length, NULL, error);
+}
+
+GMimeContentType *
+_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length,
+			       gboolean *invalid_media_type, GError **error)
+{
 	GMimeContentType *content_type = NULL;
 	const char *inptr, *type, *type_end, *subtype, *subtype_end;
 	GMimeParamList *params;
@@ -212,9 +219,14 @@ g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gs
 	g_return_val_if_fail (length >= -1, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
+	/* Input validation failures are not necessarily media-type errors. */
+	if (invalid_media_type)
+		*invalid_media_type = FALSE;
 	if (!(text = _g_mime_parse_text (str, length, error)))
 		return NULL;
 
+	if (invalid_media_type)
+		*invalid_media_type = TRUE;
 	inptr = text;
 	if (!_g_mime_parse_cfws (text, &inptr, error))
 		goto done;
@@ -259,6 +271,8 @@ g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gs
 		goto done;
 	}
 
+	if (invalid_media_type)
+		*invalid_media_type = FALSE;
 	if (*inptr)
 		inptr++;
 

@@ -3482,6 +3482,12 @@ index. Fallback values do not hide gaps, and tolerant value assembly remains
 unchanged. MissingParameterSegment is 47 in the unreleased enum, shifting
 subsequent values by one.
 
+InvalidContentType also covers unexpected text after a recognizable type/subtype
+and before any parameter separator, including folded values and comments.
+Malformed parameters after a valid media type do not trigger this diagnostic.
+The check is independent of specialized-validator flags and reports the header
+start (ElementStart), without changing tolerant model fallback or serialization.
+
 Each read snapshots the settings and logger. Replacing either from a
 callback affects the next operation, not the current one; the previous
 logger's data remains alive until the active snapshot is released. Budgets
