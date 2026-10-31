@@ -87,7 +87,8 @@ typedef enum {
  *
  * The two reporting mechanisms have different coverage. Parser warning
  * callbacks remain supported for diagnostics not currently provided by the
- * compliance APIs, including parameter-level warnings. They are not deprecated
+ * compliance APIs, including value-conflict distinctions and encoded-word
+ * warnings. They are not deprecated
  * and may be used alongside compliance reporting; installing a compliance
  * logger does not replace or disable a parser warning callback.
  **/

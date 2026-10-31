@@ -18,4 +18,11 @@ Content-Disposition: attachment; filename*0=file.; filename*2=txt
 Content-Disposition: inline; filename*1=x
 
 continued
+--b
+Content-Type: text/plain; broken; name*0=; name*2=x
+Content-Disposition: attachment; "bad; ignored=1"=x; filename=;
+ filename=good; filename=again; size="unterminated
+Content-Disposition: inline; (unterminated
+
+malformed
 --b--

@@ -29,6 +29,7 @@
 #define PARAMETER GMIME_COMPLIANCE_REPEATED_PARAMETER
 #define DISPOSITION GMIME_COMPLIANCE_REPEATED_CONTENT_DISPOSITION
 #define MISSING_SEGMENT GMIME_COMPLIANCE_MISSING_PARAMETER_SEGMENT
+#define INVALID GMIME_COMPLIANCE_INVALID_PARAMETER
 #define NONE GMIME_COMPLIANCE_NONE
 
 static void
@@ -167,6 +168,114 @@ test_repeated_parameters (void)
 			g_array_unref (issues);
 			g_free (wire);
 		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+assert_invalid_parameters (GArray *issues, guint count)
+{
+	guint i;
+
+	g_assert_cmpuint (count_issues (issues, INVALID), ==, count);
+	for (i = 0; i < issues->len; i++) {
+		GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+		if (issue->violation == INVALID)
+			g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+	}
+}
+
+static void
+test_invalid_parameters (void)
+{
+	static const struct {
+		const char *parameters;
+		guint invalid;
+	} cases[] = {
+		{ "", 0 },
+		{ " ; ; (comment)", 0 },
+		{ "(nested (comment; filename=ignored))", 0 },
+		{ "filename=\"\"", 0 },
+		{ "filename=(comment) \"file.txt\"", 0 },
+		{ "filename=unquoted file.txt", 0 },
+		{ "filename=unquoted\r\n\tfile.txt", 0 },
+		{ "filename=\"file.txt\" filename=other.txt", 0 },
+		{ "filename=file.txt(comment)filename=other.txt", 0 },
+		{ "filename=\"file; \\\"name\\\".txt\"; size=1", 0 },
+		{ "filename*=''file.txt", 0 },
+		{ "filename*=utf-8''%GG", 0 },
+		{ "filename*=no-prefix", 0 },
+		{ "filename*0=file; filename*2=.txt", 0 },
+		{ "filename", 1 },
+		{ "filename value", 1 },
+		{ "filename (comment)", 1 },
+		{ "=file.txt", 1 },
+		{ "\"filename\"=file.txt", 1 },
+		{ "file/name=file.txt", 1 },
+		{ "filenam\303\251=file.txt", 1 },
+		{ "filename*", 1 },
+		{ "filename*0", 1 },
+		{ "filename*0x=file.txt", 1 },
+		{ "filename**=file.txt", 1 },
+		{ "filename*2147483648=file.txt", 1 },
+		{ "filename=", 1 },
+		{ "filename= \t ; size=1", 1 },
+		{ "filename=(comment)", 1 },
+		{ "filename=(comment); size=1", 1 },
+		{ "filename=\"unterminated; size=1", 1 },
+		{ "filename=file(comment", 1 },
+		{ "filename (comment", 1 },
+		{ "(unterminated", 1 },
+		{ "filename=\"file\".zip", 1 },
+		{ "filename; =bad; size=1", 2 },
+		{ "\"bad; ignored=1\"=x; filename=file.txt", 1 },
+		{ "broken (comment; ignored=1); filename=a; filename=b", 1 },
+		{ "filename=; filename=good; filename=again", 1 },
+		{ "filename*0=; filename*2=x", 1 }
+	};
+	static const struct {
+		const char *header;
+		guint invalid;
+	} headers[] = {
+		{ "X-Parameters: attachment; broken", 0 },
+		{ "Content-Type: text/plain junk", 0 },
+		{ "Content-Disposition: \"attachment; broken\"", 0 },
+		{ "Content-Disposition: attachment (comment; broken)", 0 },
+		{ "Content-Disposition: attachment (comment; broken); filename", 1 }
+	};
+	guint i, content_type, chunked;
+
+	testsuite_check ("Malformed parameter syntax and recovery preserve tolerant tokenization");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (content_type = 0; content_type < 2; content_type++) {
+			GString *parameters = g_string_new (cases[i].parameters);
+			char *wire;
+
+			if (content_type)
+				g_string_replace (parameters, "filename", "name", 0);
+			wire = g_strdup_printf ("%s; %s\r\n\r\nbody\r\n", content_type ?
+				"Content-Type: text/plain" : "Content-Disposition: attachment", parameters->str);
+			for (chunked = 0; chunked < 2; chunked++) {
+				GArray *issues = read_issues (wire, chunked, NULL);
+
+				assert_invalid_parameters (issues, cases[i].invalid);
+				g_array_unref (issues);
+			}
+			g_string_free (parameters, TRUE);
+			g_free (wire);
+		}
+	}
+	for (i = 0; i < G_N_ELEMENTS (headers); i++) {
+		char *wire = g_strdup_printf ("%s\r\n\r\nbody\r\n", headers[i].header);
+
+		for (chunked = 0; chunked < 2; chunked++) {
+			GArray *issues = read_issues (wire, chunked, NULL);
+
+			assert_invalid_parameters (issues, headers[i].invalid);
+			g_array_unref (issues);
+		}
+		g_free (wire);
 	}
 	testsuite_check_passed ();
 }
@@ -360,6 +469,68 @@ test_continuation_positions_and_gating (void)
 }
 
 static void
+test_invalid_positions_and_gating (void)
+{
+	const char *folded = "X-Prefix: \303\251\r\nContent-Type: text/plain; z*2=x;\r\n"
+		"\t(\303\251) name;\r\n\tz*2=y; filename=;\r\n\tsize=\"unterminated\r\n\r\nbody\r\n";
+	const char *ignored = "Content-Type: text/plain\r\nContent-Type: text/html; name\r\n"
+		"Content-Disposition: attachment; filename=a\r\n"
+		"Content-Disposition: inline; filename=\r\n\r\nbody\r\n";
+	const char *comments = "Content-Type: text/plain;\r\n\t(good) (unterminated\r\n\r\nbody\r\n";
+	const char *markers[] = { "name;", "filename=", "size=" };
+	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+	guint chunked, enabled, i, found;
+
+	testsuite_check ("Malformed positions survive folds and deferred gaps; ignored headers and flags are honored");
+	for (chunked = 0; chunked < 2; chunked++) {
+		GArray *issues = read_issues (folded, chunked, NULL);
+
+		assert_invalid_parameters (issues, 3);
+		assert_parameters (issues, PARAMETER, 1);
+		g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 1);
+		for (i = 0, found = 0; i < issues->len; i++) {
+			GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+			if (issue->violation == INVALID)
+				assert_position (folded, markers[found++], issue, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			else if (issue->violation == PARAMETER)
+				assert_position (folded, "z*2=y", issue, GMIME_COMPLIANCE_POSITION_EXACT);
+			else if (issue->violation == MISSING_SEGMENT)
+				assert_position (folded, "z*2=x", issue, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+		}
+		g_array_unref (issues);
+		issues = read_issues (comments, chunked, NULL);
+		assert_invalid_parameters (issues, 1);
+		for (i = 0; i < issues->len; i++) {
+			GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+			if (issue->violation == INVALID)
+				assert_position (comments, "(good)", issue, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+		}
+		g_array_unref (issues);
+		for (enabled = 0; enabled < 3; enabled++) {
+			g_mime_compliance_options_set_enabled_validators (options, enabled == 0 ?
+				GMIME_COMPLIANCE_VALIDATOR_NONE : enabled == 1 ?
+				GMIME_COMPLIANCE_VALIDATOR_PARAMETERS : GMIME_COMPLIANCE_VALIDATOR_ALL);
+			issues = read_issues (ignored, chunked, options);
+			assert_invalid_parameters (issues, enabled ? 2 : 0);
+			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, 1);
+			g_assert_cmpuint (count_issues (issues, GMIME_COMPLIANCE_REPEATED_CONTENT_TYPE), ==, 1);
+			for (i = 0, found = 0; i < issues->len; i++) {
+				GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+				if (issue->violation == INVALID)
+					assert_position (ignored, found++ ? "filename=\r\n" : "name\r\n", issue,
+							 GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			}
+			g_array_unref (issues);
+		}
+	}
+	g_mime_compliance_options_unref (options);
+	testsuite_check_passed ();
+}
+
+static void
 test_resets_and_budgets (void)
 {
 	const char *nested = "Content-Type: multipart/mixed; boundary=b\r\nContent-Disposition: inline\r\n\r\n"
@@ -371,7 +542,7 @@ test_resets_and_budgets (void)
 		"From sender\nContent-Type: text/plain; name*0=a\nContent-Disposition: inline\n\n two\n";
 	const char *budget = "Content-Type: text/plain; boundary=a; boundary=b; boundary=c;\r\n"
 		" name=a; name=b; name=c; x=1; x=2; x=3\r\n"
-		"Content-Disposition: inline; a=fallback; b*3=y; a*1=x\r\nContent-Disposition: inline\r\n"
+		"Content-Disposition: inline; a=fallback; b*3=y; a*1=x; bad; broken=\r\nContent-Disposition: inline\r\n"
 		"Content-Disposition: attachment\r\n\r\nbody\r\n";
 	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
 	guint chunked, i, operation;
@@ -419,6 +590,7 @@ test_resets_and_budgets (void)
 			g_assert_cmpuint (count_issues (issues, PARAMETER), ==, 1);
 			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, 1);
 			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 1);
+			assert_invalid_parameters (issues, 1);
 			g_assert_cmpuint (count_issues (issues, GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES), ==, 1);
 			for (i = 0; i < issues->len; i++) {
 				g_assert_cmpint (g_array_index (issues, GMimeComplianceIssue, i).context,
@@ -558,11 +730,62 @@ test_continuation_bounds (void)
 }
 
 static void
+test_invalid_bounds (void)
+{
+	const char slice[] = "xxtext/plain; broken;\r\n x=yy";
+	const char valid[] = "text/plain; x=\"\"";
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	gsize length = sizeof (slice) - 5;
+	guint8 *buffer = g_memdup2 (slice + 2, length);
+	guint repeat, mode, i;
+
+	testsuite_check ("Malformed diagnostics reset between bounded slices and scale with declaration count");
+	for (repeat = 0; repeat < 2; repeat++) {
+		_g_mime_parameter_validate (buffer, length, TRUE, collect_issue, issues,
+			GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+		assert_invalid_parameters (issues, 2);
+		g_assert_cmpuint (issues->len, ==, 2);
+		for (i = 0; i < 2; i++) {
+			GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+			gsize offset = strstr (slice, i ? "x=" : "broken") - (slice + 2);
+
+			g_assert_cmpint (issue->stream_offset, ==, 100 + offset);
+			g_assert_cmpuint (issue->line_number, ==, i ? 6 : 5);
+			g_assert_cmpuint (issue->column_number, ==, i ? 2 : 7 + offset);
+			g_assert_cmpint (issue->context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+		}
+		g_array_set_size (issues, 0);
+		_g_mime_parameter_validate ((const guint8 *) valid, sizeof (valid) - 1, TRUE, collect_issue, issues,
+			GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+		g_assert_cmpuint (issues->len, ==, 0);
+	}
+	g_free (buffer);
+	for (mode = 0; mode < 2; mode++) {
+		GString *text = g_string_new ("text/plain");
+		gint64 start;
+
+		for (i = 0; i < 16384; i++)
+			g_string_append (text, mode ? ";\r\n x=" : ";\r\n broken");
+		start = g_get_monotonic_time ();
+		_g_mime_parameter_validate ((const guint8 *) text->str, text->len, TRUE, collect_issue, issues,
+			GMIME_COMPLIANCE_CONTEXT_TRANSPORT, 0, 1, 1);
+		g_assert_cmpint (g_get_monotonic_time () - start, <, 5 * G_USEC_PER_SEC);
+		assert_invalid_parameters (issues, 16384);
+		assert_parameters (issues, PARAMETER, mode ? 16383 : 0);
+		g_assert_cmpuint (g_array_index (issues, GMimeComplianceIssue, issues->len - 1).line_number, ==, 16385);
+		g_array_set_size (issues, 0);
+		g_string_free (text, TRUE);
+	}
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
+static void
 test_header_limits_and_linearity (void)
 {
 	GMimeParserOptions *options = g_mime_parser_options_new ();
 	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
-	GString *wire = g_string_new ("Content-Type: text/plain; name*1=a; x=0");
+	GString *wire = g_string_new ("Content-Type: text/plain; broken; name*1=a; x=0");
 	GMimeStream *stream;
 	GMimeReader *reader;
 	GMimeComplianceIssue *last = NULL;
@@ -586,12 +809,14 @@ test_header_limits_and_linearity (void)
 			g_clear_error (&error);
 			assert_parameters (issues, NONE, 0);
 			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 0);
+			assert_invalid_parameters (issues, 0);
 		} else {
 			g_assert_true (g_mime_reader_read_message (reader, &error));
 			g_assert_no_error (error);
 			g_assert_cmpint (g_get_monotonic_time () - start, <, 5 * G_USEC_PER_SEC);
 			assert_parameters (issues, PARAMETER, 16384);
 			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, 1);
+			assert_invalid_parameters (issues, 1);
 			for (i = 0; i < issues->len; i++) {
 				if (g_array_index (issues, GMimeComplianceIssue, i).violation == PARAMETER)
 					last = &g_array_index (issues, GMimeComplianceIssue, i);
@@ -611,15 +836,22 @@ test_header_limits_and_linearity (void)
 }
 
 static void
-test_model_preservation (gboolean continued)
+test_model_preservation (guint scenario)
 {
-	const char *wire = continued ?
-		"Content-Type: text/plain; charset=utf-8\r\n"
-		"Content-Disposition: attachment; filename*0=file.; filename*2=txt\r\n\r\nbody\r\n" :
+	const char *wires[] = {
 		"Content-Type: text/plain; charset=utf-8; charset=us-ascii\r\n"
 		"Content-Type: application/octet-stream; name=a; name=b\r\n"
 		"Content-Disposition: attachment; filename=a; filename=b\r\n"
-		"Content-Disposition: inline; filename=c; filename=d\r\n\r\nbody\r\n";
+		"Content-Disposition: inline; filename=c; filename=d\r\n\r\nbody\r\n",
+		"Content-Type: text/plain; charset=utf-8\r\n"
+		"Content-Disposition: attachment; filename*0=file.; filename*2=txt\r\n\r\nbody\r\n",
+		"Content-Type: text/plain; name\r\n"
+		"Content-Disposition: attachment; filename=a\r\n\r\nbody\r\n",
+		"Content-Type: text/plain\r\nContent-Type: text/html; name\r\n"
+		"Content-Disposition: attachment; filename=a\r\n"
+		"Content-Disposition: inline; filename=\r\n\r\nbody\r\n"
+	};
+	const char *wire = wires[scenario];
 	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
 	guint chunked, mode;
 
@@ -648,8 +880,8 @@ test_model_preservation (gboolean continued)
 			part = g_mime_message_get_mime_part (message);
 			g_assert_true (g_mime_content_type_is_type (g_mime_entity_get_content_type (part), "text", "plain"));
 			g_assert_null (g_mime_entity_get_content_type_parameter (part, "name"));
-			g_assert_cmpstr (g_mime_entity_get_content_type_parameter (part, "charset"), ==, "utf-8");
-			g_assert_cmpstr (g_mime_part_get_filename (GMIME_PART (part)), ==, continued ? "file.txt" : "a");
+			g_assert_cmpstr (g_mime_entity_get_content_type_parameter (part, "charset"), ==, scenario < 2 ? "utf-8" : NULL);
+			g_assert_cmpstr (g_mime_part_get_filename (GMIME_PART (part)), ==, scenario == 1 ? "file.txt" : "a");
 			g_assert_true (GMIME_IS_TEXT_PART (part));
 			text = g_mime_text_part_get_text (GMIME_TEXT_PART (part));
 			g_assert_cmpstr (text, ==, "body\r\n");
@@ -660,10 +892,11 @@ test_model_preservation (gboolean continued)
 				g_assert_cmpmem (bytes->data, bytes->len, baseline->data, baseline->len);
 			else
 				baseline = g_byte_array_ref (bytes);
-			g_assert_cmpuint (count_issues (issues, PARAMETER), ==, mode == 2 && !continued ? 1 : 0);
-			g_assert_cmpuint (count_issues (issues, FILENAME), ==, mode == 2 && !continued ? 3 : 0);
-			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, mode && !continued ? 1 : 0);
-			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, mode == 2 && continued ? 1 : 0);
+			g_assert_cmpuint (count_issues (issues, PARAMETER), ==, mode == 2 && scenario == 0 ? 1 : 0);
+			g_assert_cmpuint (count_issues (issues, FILENAME), ==, mode == 2 && scenario == 0 ? 3 : 0);
+			g_assert_cmpuint (count_issues (issues, DISPOSITION), ==, mode && (scenario == 0 || scenario == 3) ? 1 : 0);
+			g_assert_cmpuint (count_issues (issues, MISSING_SEGMENT), ==, mode == 2 && scenario == 1 ? 1 : 0);
+			assert_invalid_parameters (issues, mode == 2 && scenario >= 2 ? scenario - 1 : 0);
 			g_array_unref (issues);
 			g_object_unref (message);
 			g_object_unref (parser);
@@ -685,17 +918,18 @@ test_metadata (void)
 		const char *name;
 	} cases[] = {
 		{ DISPOSITION, 13, "RepeatedContentDisposition" },
-		{ BOUNDARY, 44, "RepeatedBoundaryParameter" },
-		{ FILENAME, 45, "RepeatedFilenameParameter" },
-		{ PARAMETER, 46, "RepeatedParameter" },
-		{ MISSING_SEGMENT, 47, "MissingParameterSegment" }
+		{ INVALID, 44, "InvalidParameter" },
+		{ BOUNDARY, 45, "RepeatedBoundaryParameter" },
+		{ FILENAME, 46, "RepeatedFilenameParameter" },
+		{ PARAMETER, 47, "RepeatedParameter" },
+		{ MISSING_SEGMENT, 48, "MissingParameterSegment" }
 	};
 	guint i, context;
 
 	testsuite_check ("MimeKit diagnostic identities, flag values and metadata");
 	g_assert_cmpuint (GMIME_COMPLIANCE_VALIDATOR_PARAMETERS, ==, 16);
 	g_assert_cmpuint (GMIME_COMPLIANCE_VALIDATOR_ALL, ==, 31);
-	g_assert_cmpuint (GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT, ==, 95);
+	g_assert_cmpuint (GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT, ==, 96);
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		g_assert_cmpuint (cases[i].violation, ==, cases[i].value);
 		g_assert_cmpstr (g_mime_compliance_violation_get_name (cases[i].violation), ==, cases[i].name);
@@ -715,15 +949,20 @@ main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	testsuite_start ("MIME parameter compliance");
 	test_repeated_parameters ();
+	test_invalid_parameters ();
 	test_continuations ();
 	test_positions_and_gating ();
 	test_continuation_positions_and_gating ();
+	test_invalid_positions_and_gating ();
 	test_resets_and_budgets ();
 	test_bounded_validation ();
 	test_continuation_bounds ();
+	test_invalid_bounds ();
 	test_header_limits_and_linearity ();
-	test_model_preservation (FALSE);
-	test_model_preservation (TRUE);
+	test_model_preservation (0);
+	test_model_preservation (1);
+	test_model_preservation (2);
+	test_model_preservation (3);
 	test_metadata ();
 	testsuite_end ();
 	g_mime_shutdown ();

@@ -216,9 +216,6 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 	*segment = -1;
 	*encoded = FALSE;
 
-	if (!skip_cfws (v))
-		return FALSE;
-
 	*start = v->index;
 	while (v->index < v->length && is_attrchar (v->text[v->index]))
 		v->index++;
@@ -232,11 +229,13 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 
 		if (!skip_cfws (v) || v->index == v->length)
 			return FALSE;
+
 		if (g_ascii_isdigit (v->text[v->index])) {
 			do {
 				digit = v->text[v->index] - '0';
 				if (number > (G_MAXINT32 - digit) / 10)
 					return FALSE;
+
 				number = number * 10 + digit;
 				v->index++;
 			} while (v->index < v->length && g_ascii_isdigit (v->text[v->index]));
@@ -262,26 +261,40 @@ parse_parameter (ParameterValidator *v, char **name, int *segment, gboolean *enc
 		return FALSE;
 
 	v->index++;
+
 	*name = g_ascii_strdown ((const char *) v->text + *start, length);
 
 	return TRUE;
 }
 
 static gboolean
-skip_value (ParameterValidator *v)
+skip_value (ParameterValidator *v, gboolean *invalid)
 {
+	*invalid = TRUE;
+
 	if (!skip_cfws (v) || v->index == v->length)
 		return FALSE;
 
 	if (v->text[v->index] == '"') {
 		if (!skip_quoted (v))
 			return FALSE;
+
+		*invalid = FALSE;
 	} else {
+		gsize start = v->index;
+
 		while (v->index < v->length && v->text[v->index] != ';' && v->text[v->index] != '(')
 			v->index++;
+
+		*invalid = v->index == start;
 	}
 
-	if (!skip_cfws (v) || v->index == v->length)
+	if (!skip_cfws (v)) {
+		*invalid = TRUE;
+		return FALSE;
+	}
+
+	if (v->index == v->length)
 		return FALSE;
 
 	/* Loose parsing permits missing separators after quotes and comments. */
@@ -317,9 +330,38 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 	states = g_ptr_array_new ();
 
 	while (v.index < v.length) {
+		GMimeComplianceIssue issue;
+		gboolean invalid, more;
+
+		while (v.index < v.length && is_lwsp (v.text[v.index]))
+			v.index++;
+
+		start = v.index;
+
+		if (!skip_cfws (&v)) {
+			issue = create_issue (&v, GMIME_COMPLIANCE_INVALID_PARAMETER, start,
+					      GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			report (&issue, user_data);
+			break;
+		}
+
+		if (v.index == v.length)
+			break;
+
+		/* Empty parameter slots are also ignored by the tolerant decoder. */
+		if (v.text[v.index] == ';') {
+			v.index++;
+			continue;
+		}
+
 		if (!parse_parameter (&v, &name, &segment, &encoded, &start)) {
+			issue = create_issue (&v, GMIME_COMPLIANCE_INVALID_PARAMETER, start,
+					      GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			report (&issue, user_data);
+
 			if (!skip_to_next_parameter (&v))
 				break;
+
 			continue;
 		}
 
@@ -329,6 +371,7 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 		if (!state) {
 			state = g_new0 (ParameterState, 1);
 			state->highest_segment = -1;
+
 			g_hash_table_insert (parameters, g_strdup (name), state);
 			g_ptr_array_add (states, state);
 		}
@@ -338,7 +381,6 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 								    start, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 
 		if (parameter_state_add (state, segment, encoded, filename)) {
-			GMimeComplianceIssue issue;
 			GMimeComplianceViolation violation = content_type && !strcmp (name, "boundary") ?
 				GMIME_COMPLIANCE_REPEATED_BOUNDARY_PARAMETER : filename ?
 				GMIME_COMPLIANCE_REPEATED_FILENAME_PARAMETER : GMIME_COMPLIANCE_REPEATED_PARAMETER;
@@ -349,7 +391,15 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 
 		g_free (name);
 
-		if (!skip_value (&v))
+		more = skip_value (&v, &invalid);
+
+		if (invalid) {
+			issue = create_issue (&v, GMIME_COMPLIANCE_INVALID_PARAMETER, start,
+					      GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			report (&issue, user_data);
+		}
+
+		if (!more)
 			break;
 	}
 
