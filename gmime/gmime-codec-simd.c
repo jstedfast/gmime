@@ -21,8 +21,8 @@
 /*
  * SIMD codec and validator primitives ported from MimeKit. The Base64 kernels
  * derive from .NET Core's Base64EncoderHelper/Base64DecoderHelper and the
- * base64simd algorithms of Wojciech Mula. The AVX2 MIME-line tail fast path
- * follows MimeKit's Base64Decoder optimization.
+ * base64simd algorithms of Wojciech Mula. The MIME-line tail fast paths
+ * follow MimeKit's Base64Encoder (SSSE3) and Base64Decoder (AVX2).
  *
  * Portions adapted from MimeKit:
  * Copyright (c) 2013-2026 .NET Foundation and Contributors
@@ -190,53 +190,72 @@ index_of_qp_special_ssse3 (const guint8 *input, gsize length)
 	return consumed;
 }
 
+static inline SSSE3_TARGET __m128i
+encode_vector_ssse3 (__m128i str, __m128i shuffle, gboolean uu)
+{
+	const __m128i lut = _mm_set_epi32 (0x0000f0ed, 0xfcfcfcfc, 0xfcfcfcfc, 0xfcfc4741);
+	__m128i a, b, indices;
+
+	/* Reshuffle each input triplet a,b,c into b,c,a,b (MSB to LSB).
+	 * Masks and 16-bit multiplies then redistribute its bits into four sextets:
+	 *   0000bbbb CC000000 AAAAAA00 00000000
+	 *   00000000 00cccccc 000000aa BBBB0000
+	 * yielding:
+	 *   00cccccc 00bbbbCC 00aaBBBB 00AAAAAA */
+	str = _mm_shuffle_epi8 (str, shuffle);
+	a = _mm_mulhi_epu16 (_mm_and_si128 (str, _mm_set1_epi32 (0x0fc0fc00)), _mm_set1_epi32 (0x04000040));
+	b = _mm_mullo_epi16 (_mm_and_si128 (str, _mm_set1_epi32 (0x003f03f0)), _mm_set1_epi32 (0x01000010));
+	str = _mm_or_si128 (a, b);
+	if (uu) {
+		/* UU maps zero to '`' (0x60), and 1..63 to 0x21..0x5f. */
+		a = _mm_cmpeq_epi8 (str, _mm_setzero_si128 ());
+		str = _mm_add_epi8 (str, _mm_set1_epi8 (32));
+		str = _mm_add_epi8 (str, _mm_and_si128 (a, _mm_set1_epi8 (64)));
+	} else {
+		/* Translate sextets by adding the offset selected from lut:
+		 *   values    offset   lut index   alphabet
+		 *    0..25      +65        0        A..Z
+		 *   26..51      +71        1        a..z
+		 *   52..61       -4       2..11     0..9
+		 *       62      -19       12        +
+		 *       63      -16       13        /
+		 * Saturating subtraction leaves non-uppercase indices one too small;
+		 * subtracting the comparison mask (-1) corrects them. */
+		indices = _mm_subs_epu8 (str, _mm_set1_epi8 (51));
+		indices = _mm_sub_epi8 (indices, _mm_cmpgt_epi8 (str, _mm_set1_epi8 (25)));
+		str = _mm_add_epi8 (str, _mm_shuffle_epi8 (lut, indices));
+	}
+	return str;
+}
+
 static SSSE3_TARGET gsize
 encode_blocks_ssse3 (const guint8 *input, gsize length, guint8 *output, guint quartets, gboolean uu)
 {
 	const __m128i shuffle = _mm_set_epi32 (0x0a0b090a, 0x07080607, 0x04050304, 0x01020001);
-	const __m128i lut = _mm_set_epi32 (0x0000f0ed, 0xfcfcfcfc, 0xfcfcfcfc, 0xfcfc4741);
 	gsize consumed = 0;
-	__m128i str, a, b, indices;
+	__m128i str;
 
 	/* Each vector consumes 12 input bytes but loads 16. Require a full readable
-	 * vector and four quartets of line space; leave the tail to the scalar encoder. */
+	 * vector and four quartets of line space. */
 	while (length >= 16 && quartets >= 4) {
 		str = _mm_loadu_si128 ((const __m128i *) input);
-		/* Reshuffle each input triplet a,b,c into b,c,a,b (MSB to LSB).
-		 * Masks and 16-bit multiplies then redistribute its bits into four sextets:
-		 *   0000bbbb CC000000 AAAAAA00 00000000
-		 *   00000000 00cccccc 000000aa BBBB0000
-		 * yielding:
-		 *   00cccccc 00bbbbCC 00aaBBBB 00AAAAAA */
-		str = _mm_shuffle_epi8 (str, shuffle);
-		a = _mm_mulhi_epu16 (_mm_and_si128 (str, _mm_set1_epi32 (0x0fc0fc00)), _mm_set1_epi32 (0x04000040));
-		b = _mm_mullo_epi16 (_mm_and_si128 (str, _mm_set1_epi32 (0x003f03f0)), _mm_set1_epi32 (0x01000010));
-		str = _mm_or_si128 (a, b);
-		if (uu) {
-			/* UU maps zero to '`' (0x60), and 1..63 to 0x21..0x5f. */
-			a = _mm_cmpeq_epi8 (str, _mm_setzero_si128 ());
-			str = _mm_add_epi8 (str, _mm_set1_epi8 (32));
-			str = _mm_add_epi8 (str, _mm_and_si128 (a, _mm_set1_epi8 (64)));
-		} else {
-			/* Translate sextets by adding the offset selected from lut:
-			 *   values    offset   lut index   alphabet
-			 *    0..25      +65        0        A..Z
-			 *   26..51      +71        1        a..z
-			 *   52..61       -4       2..11     0..9
-			 *       62      -19       12        +
-			 *       63      -16       13        /
-			 * Saturating subtraction leaves non-uppercase indices one too small;
-			 * subtracting the comparison mask (-1) corrects them. */
-			indices = _mm_subs_epu8 (str, _mm_set1_epi8 (51));
-			indices = _mm_sub_epi8 (indices, _mm_cmpgt_epi8 (str, _mm_set1_epi8 (25)));
-			str = _mm_add_epi8 (str, _mm_shuffle_epi8 (lut, indices));
-		}
+		str = encode_vector_ssse3 (str, shuffle, uu);
 		_mm_storeu_si128 ((__m128i *) output, str);
 		input += 12;
 		output += 16;
 		length -= 12;
 		consumed += 12;
 		quartets -= 4;
+	}
+	if (!uu && quartets >= 3 && length >= 9 && (quartets == 3 || length == 9) && consumed) {
+		const __m128i tail_shuffle = _mm_set_epi32 (0x0e0f0d0e, 0x0b0c0a0b, 0x08090708, 0x05060405);
+
+		/* Re-encode the preceding triplet along with the nine-byte tail.
+		 * The preceding vector belongs to this call and the same output line. */
+		str = _mm_loadu_si128 ((const __m128i *) (input - 7));
+		str = encode_vector_ssse3 (str, tail_shuffle, FALSE);
+		_mm_storeu_si128 ((__m128i *) (output - 4), str);
+		consumed += 9;
 	}
 	return consumed;
 }
