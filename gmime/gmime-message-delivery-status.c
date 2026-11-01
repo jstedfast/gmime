@@ -158,7 +158,7 @@ parse_status_groups (GMimeStream *stream, GError **error)
 	while ((group = parse_status_group (parser, &local_error))) {
 		g_mime_header_list_collection_add (groups, group);
 		header = g_mime_header_list_get_header (group, "Content-Transfer-Encoding");
-		encoding = header ? g_mime_content_encoding_from_string (g_mime_header_get_value (header)) :
+		encoding = header ? _g_mime_header_get_content_encoding (header) :
 			GMIME_CONTENT_ENCODING_UNSPECIFIED;
 		g_object_unref (group);
 
@@ -172,18 +172,20 @@ parse_status_groups (GMimeStream *stream, GError **error)
 		/* 7bit, 8bit and binary need no decoding; continue with the same parser. */
 		encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
 	}
+
 	if (local_error)
 		goto done;
 
 	if (encoding != GMIME_CONTENT_ENCODING_UNSPECIFIED) {
-		raw = _g_mime_parser_read_to_eos (parser, &local_error);
-		if (!raw)
+		if (!(raw = _g_mime_parser_read_to_eos (parser, &local_error)))
 			goto done;
+
 		filtered = g_mime_stream_filter_new (raw);
 		filter = g_mime_filter_basic_new (encoding, FALSE);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 		g_object_unref (filter);
 		g_object_unref (raw);
+
 		g_mime_parser_init_with_stream (parser, filtered);
 		g_object_unref (filtered);
 
@@ -231,6 +233,7 @@ g_mime_message_delivery_status_new (void)
 	content_type = g_mime_content_type_new ("message", "delivery-status");
 	g_mime_entity_set_content_type ((GMimeEntity *) status, content_type);
 	g_object_unref (content_type);
+
 	return status;
 }
 

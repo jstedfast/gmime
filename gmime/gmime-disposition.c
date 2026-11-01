@@ -137,7 +137,7 @@ g_mime_content_disposition_new (void)
 GMimeContentDisposition *
 g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
 {
-	return _g_mime_content_disposition_parse (options, str, -1);
+	return _g_mime_content_disposition_parse (options, str, str ? strlen (str) : 0, -1);
 }
 
 /**
@@ -164,23 +164,26 @@ GMimeContentDisposition *
 g_mime_content_disposition_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error)
 {
 	GMimeContentDisposition *disposition = NULL;
-	const char *inptr, *start, *end;
+	const char *inptr, *inend, *start, *end;
 	GMimeParamList *params;
-	char *text, *p;
+	const char *text = str;
+	char *p;
 
 	g_return_val_if_fail (str != NULL, NULL);
 	g_return_val_if_fail (length >= -1, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	if (!(text = _g_mime_parse_text (str, length, error)))
+	if (!_g_mime_parse_validate_text (str, &length, error))
 		return NULL;
 
 	inptr = text;
-	if (!_g_mime_parse_cfws (text, &inptr, error))
+	inend = text + length;
+
+	if (!_g_mime_parse_cfws (text, &inptr, inend, error))
 		goto done;
 
 	start = inptr;
-	while (is_atom (*inptr))
+	while (inptr < inend && is_atom (*inptr))
 		inptr++;
 
 	if (inptr == start) {
@@ -189,18 +192,18 @@ g_mime_content_disposition_parse_full (GMimeParserOptions *options, const char *
 	}
 
 	end = inptr;
-	if (!_g_mime_parse_cfws (text, &inptr, error))
+	if (!_g_mime_parse_cfws (text, &inptr, inend, error))
 		goto done;
 
-	if (*inptr && *inptr != ';') {
+	if (inptr < inend && *inptr != ';') {
 		_g_mime_parse_error (error, text, inptr, "Expected parameter list separator");
 		goto done;
 	}
 
-	if (*inptr)
+	if (inptr < inend)
 		inptr++;
 
-	if (!(params = _g_mime_param_list_parse_full (options, text, inptr, error)))
+	if (!(params = _g_mime_param_list_parse_full (options, text, inptr, inend, error)))
 		goto done;
 
 	disposition = g_object_new (GMIME_TYPE_CONTENT_DISPOSITION, NULL);
@@ -215,35 +218,39 @@ g_mime_content_disposition_parse_full (GMimeParserOptions *options, const char *
 	disposition->params = params;
 
 done:
-	g_free (text);
 	return disposition;
 }
 
 GMimeContentDisposition *
-_g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str, gint64 offset)
+_g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset)
 {
 	GMimeContentDisposition *disposition;
 	const char *inptr = str;
+	const char *inend;
 	GMimeParamList *params;
 	char *value;
 	
 	if (str == NULL)
 		return g_mime_content_disposition_new ();
+
+	g_return_val_if_fail (length <= G_MAXINT, NULL);
+
+	inend = str + length;
 	
 	disposition = g_object_new (GMIME_TYPE_CONTENT_DISPOSITION, NULL);
 	
 	/* get content disposition part */
 	
-	/* find ; or \0 */
-	while (*inptr && *inptr != ';')
+	while (inptr < inend && *inptr != ';')
 		inptr++;
 	
-	value = g_strndup (str, (size_t) (inptr - str));
+	value = _g_mime_utils_decode_8bit_text (options, str, inptr - str);
 	disposition->disposition = g_mime_strdup_trim (value);
 	g_free (value);
 	
 	/* parse the parameters, if any */
-	if (*inptr++ == ';' && *inptr && (params = _g_mime_param_list_parse (options, inptr, offset))) {
+	if (inptr < inend && *inptr++ == ';' && inptr < inend &&
+	    (params = _g_mime_param_list_parse (options, inptr, inend - inptr, offset))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, disposition);
 		g_object_unref (disposition->params);
 		disposition->params = params;

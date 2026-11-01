@@ -140,6 +140,58 @@ This is an incremental migration, not yet a declaration of feature parity.
   reader and reader-backed model adapter. Synchronous entity/message
   serialization uses the private iterative writer described below.
 
+- Shared comment, whitespace, quoted-string, atom, domain, integer and
+  message-id scanning helpers now take explicit end pointers. Address,
+  mailbox, group and source-route parsing preserves buffer bounds throughout,
+  without a temporary terminated copy for checked input. Raw address headers
+  replace embedded NUL bytes with U+FFFD in the parsed model and retain the
+  original bytes for diagnostics and serialization. Checked address/domain
+  APIs still reject embedded NULs.
+
+- Parameter, Content-Type and Content-Disposition parsing also preserves
+  explicit bounds, including quoted values and RFC 2231 continuation data.
+  Checked APIs parse bounded input directly and still reject embedded NULs.
+  Reader and entity header handoffs use complete raw values; parsed parameter
+  values replace NULs after charset decoding without changing the wire bytes.
+  Parameter syntax is parsed before decoding values so encoded delimiters
+  remain data rather than introducing additional parameters.
+
+- Message-ID, Resent-Message-ID, In-Reply-To, References and Content-ID model
+  handoffs retain raw header bytes and pass explicit bounds to the shared
+  identifier scanners. NULs inside local parts, domains and domain literals
+  become U+FFFD in parsed identifiers without truncating subsequent references
+  or altering raw headers. Other invalid UTF-8 is still rejected. Content-ID
+  is parsed as identifier syntax rather than RFC 2047 text; property-assignment
+  validation remains unchanged.
+
+- MIME-Version checking during message preparation scans the raw header's
+  explicit byte range without making a terminated copy. Embedded NULs no
+  longer hide invalid suffixes; NULs inside complete comments are skipped.
+  X-Priority also parses raw bytes directly, retaining its numeric-prefix
+  recovery and clamping behavior without a temporary string copy.
+
+- Date and Resent-Date pass raw bytes and lengths directly to the shared date
+  decoder, preserving its recovery rules without truncating at embedded NULs.
+  Content-Duration and Content-Transfer-Encoding also parse raw bounded syntax,
+  without RFC 2047 decoding. Transfer-encoding parsing is shared by the reader
+  model, part property and delivery-status recovery. Duration requires a complete
+  value; transfer encodings retain first-token delimiter recovery. Raw bytes and
+  cache invalidation are preserved. Importance/Priority retain decoded-text
+  semantics. Secondary and legacy string-based consumers remain for later passes.
+
+- International reformatting passes raw header bytes and explicit lengths to
+  address, Content-Type and Content-Disposition parsers without a temporary
+  terminated copy. Protected fields and failed parses retain the original
+  `GBytes` by reference; binary raw headers still bypass reformatting.
+
+- Autocrypt and Autocrypt-Gossip intentionally retain whole-header RFC 2047
+  decoding before attribute parsing. The decoded-string parser scans bounded
+  attribute slices and passes the keydata slice directly to the Base64 decoder,
+  rather than splitting and joining temporary strings. Existing whitespace,
+  duplicate-attribute, address-validation and tolerant Base64 behavior remains
+  unchanged, including the text decoder's NUL replacement. Stored raw headers
+  are preserved.
+
 - `GMimeMultipartReport` is a `GMimeMultipart` subclass for multipart/report.
   Its constructor requires a UTF-8 report type; get/set_report_type()
   access the Content-Type report-type parameter. The getter is borrowed
@@ -3009,11 +3061,11 @@ native Content-Disposition size API, -1 represents absence and removes
 all matching headers when assigned; values below -1 are programming errors.
 Nonnegative values are durations in seconds, including zero.
 
-The getter parses only the first decoded Content-Duration header, accepting
+The getter parses only the first raw Content-Duration header, accepting
 ASCII decimal digits with surrounding ASCII linear whitespace (SP, HTAB, CR
 and LF) and leading zeros up to 2147483647. VT, FF and Unicode whitespace in
-the decoded value are not skipped. Generic header decoding preserves this
-non-linear padding. Signs, comments, fractions, and overflow are invalid.
+the raw value are not skipped. RFC 2047 encoded words are not decoded.
+Signs, comments, fractions, embedded NULs and overflow are invalid.
 A malformed first header does not fall back to later duplicates. Reads
 preserve raw bytes; matching header edits, including later duplicates, invalidate the
 lazy cache. This applies to GMimeTextPart as well as ordinary GMimePart.
@@ -4641,7 +4693,8 @@ MimeKit's ContentTransferEncoding property semantics. The getter lazily
 selects only the first matching header; an unrecognized first value does
 not fall back to later duplicates. Matching header events invalidate the
 cache, while reads preserve raw headers. The 7-bit and 8-bit compatibility
-aliases described above remain supported.
+aliases described above remain supported. The raw first token is parsed
+without RFC 2047 decoding or whole-header unfolding, matching reader parsing.
 
 Assignments use canonical names and replace later duplicate headers.
 UNSPECIFIED removes all matching headers. Assigning the cached value

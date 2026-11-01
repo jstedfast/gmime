@@ -113,12 +113,14 @@ GMimeMessageIdList *
 g_mime_message_id_list_parse (GMimeParserOptions *options, const char *text)
 {
 	GMimeMessageIdList *list;
+	const char *end;
 	char *id;
 
 	g_return_val_if_fail (text != NULL, NULL);
 
 	list = g_mime_message_id_list_new ();
-	while ((id = _g_mime_parse_reference (&text)))
+	end = text + strlen (text);
+	while ((id = _g_mime_parse_reference (&text, end)))
 		g_ptr_array_add (list->array, id);
 
 	return list;

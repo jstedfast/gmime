@@ -254,9 +254,9 @@ validate_value (GMimeReceivedClauseId id, const char *value, GError **error)
 {
 	GMimeInternetAddress *mailbox;
 	const unsigned char *p;
-	const char *end;
-	char *msgid;
+	const char *end, *inend;
 	gboolean valid;
+	char *msgid;
 
 	if (!*value || !g_utf8_validate (value, -1, NULL))
 		return invalid_clause (error, "Received clause value must be nonempty UTF-8.");
@@ -275,8 +275,10 @@ validate_value (GMimeReceivedClauseId id, const char *value, GError **error)
 		}
 
 		end = value;
-		msgid = decode_msgid (&end);
-		valid = msgid && skip_cfws (&end) && !*end;
+		inend = value + strlen (value);
+
+		msgid = decode_msgid (&end, inend);
+		valid = msgid && skip_cfws (&end, inend) && !*end;
 		g_free (msgid);
 
 		if (!valid)

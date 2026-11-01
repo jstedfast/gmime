@@ -79,18 +79,19 @@ message_partial_get_integer (GMimeMessagePartial *partial, const char *name)
 {
 	GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) partial);
 	GMimeContentType *content_type = priv->content_type;
-	const char *value;
+	const char *value, *end;
 	gint32 number;
 
 	if (!content_type || !(value = g_mime_content_type_get_parameter (content_type, name)))
 		return -1;
 
-	skip_lwsp (&value);
+	end = value + strlen (value);
+	skip_lwsp (&value, end);
 
-	if (!_g_mime_parse_int32 (&value, &number))
+	if (!_g_mime_parse_int32 (&value, end, &number))
 		return -1;
 
-	skip_lwsp (&value);
+	skip_lwsp (&value, end);
 
 	return *value ? -1 : number;
 }

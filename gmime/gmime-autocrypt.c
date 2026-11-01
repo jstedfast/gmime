@@ -103,10 +103,12 @@ g_mime_autocrypt_header_new (void)
 
 /**
  * g_mime_autocrypt_header_new_from_string:
- * @string: The raw string value of an Autocrypt header
+ * @string: The decoded string value of an Autocrypt header
  *
  * Creates a new #GMimeAutocryptHeader object based on the value of an
  * Autocrypt: header.
+ * RFC 2047 encoded words must be decoded before calling this function.
+ * Message and entity Autocrypt extraction performs that decoding.
  *
  * Note that this will not have an @effective_date set, since the
  * @effective_date is derived from the Date: line in the same block of
@@ -119,84 +121,85 @@ g_mime_autocrypt_header_new (void)
 GMimeAutocryptHeader *
 g_mime_autocrypt_header_new_from_string (const char *string)
 {
-	GMimeAutocryptHeader *ret = NULL;
-	GBytes *newkeydata = NULL;
-	gchar **ksplit = NULL;
-	gchar *kjoined = NULL;
-	
-	if (string == NULL)
-		return NULL;
-	
-	/* TODO: this doesn't deal with quoting or RFC 2047 encoding,
-	   both of which might happen to mails in transit. So this
-	   could be improved.  It's also probably not currently the
-	   most efficient implementation. */
-	
-	struct _attr { char *val; const char *name; size_t sz; int count; };
+	struct _attr { const char *val, *name; size_t sz, length; };
 #define attr(n, str) struct _attr n = { .name = str, .sz = sizeof(str)-1 }
 	attr(k, "keydata");
 	attr(p, "prefer-encrypt");
 	attr(a, "addr");
 #undef attr
 	struct _attr *attrs[] = { &k, &p, &a };
-	
-	gchar **vals = g_strsplit (string, ";", -1);
-	gchar **x;
-	for (x = vals; *x; x++) {
+	GMimeAutocryptPreferEncrypt newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE;
+	GMimeAutocryptHeader *ret;
+	const char *inptr, *inend, *start, *end;
+	GBytes *newkeydata;
+	guchar *decoded;
+	gsize decodedlen;
+	char *address;
+	guint save = 0;
+	int state = 0;
+
+	if (string == NULL)
+		return NULL;
+
+	inptr = string;
+	inend = string + strlen (string);
+
+	do {
 		gboolean known = FALSE;
 		int i;
-		g_strstrip (*x);
+
+		start = inptr;
+		while (inptr < inend && *inptr != ';')
+			inptr++;
+		end = inptr;
+
+		while (start < end && g_ascii_isspace (*start))
+			start++;
+		while (end > start && g_ascii_isspace (end[-1]))
+			end--;
 		
 		for (i = 0; i < G_N_ELEMENTS(attrs); i++) {
-			if (g_ascii_strncasecmp (attrs[i]->name, *x, attrs[i]->sz) == 0 &&
-			    (*x)[attrs[i]->sz] == '=') {
-				attrs[i]->val = (*x) + attrs[i]->sz+1;
-				attrs[i]->count++;
+			if ((gsize) (end - start) > attrs[i]->sz &&
+			    g_ascii_strncasecmp (attrs[i]->name, start, attrs[i]->sz) == 0 && start[attrs[i]->sz] == '=') {
+				if (attrs[i]->val)
+					return NULL;
+				attrs[i]->val = start + attrs[i]->sz + 1;
+				attrs[i]->length = end - attrs[i]->val;
 				known = TRUE;
 				break;
 			}
 		}
-		if (!known) {
-			/* skip a line that has a critical element we
-			   do not understnd */
-			if ((*x)[0] != '_') 
-				goto done;
-			
-		}
-	}
+
+		if (!known && (start == end || *start != '_'))
+			return NULL;
+
+		if (inptr == inend)
+			break;
+		inptr++;
+	} while (TRUE);
 	
-	if (k.count != 1)
-		goto done;
-	if (a.count != 1)
-		goto done;
-	if (p.count > 1)
-		goto done;
-	GMimeAutocryptPreferEncrypt newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE;
-	
-	if (p.count && (g_ascii_strcasecmp ("mutual", p.val) == 0))
+	if (!k.val || !a.val)
+		return NULL;
+
+	if (p.val && p.length == 6 && g_ascii_strncasecmp ("mutual", p.val, p.length) == 0)
 		newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL;
 	
 	ret = g_object_new (GMIME_TYPE_AUTOCRYPT_HEADER, NULL);
-	if (!g_mime_autocrypt_header_set_address_from_string (ret, a.val, NULL)) {
+	address = g_strndup (a.val, a.length);
+	if (!g_mime_autocrypt_header_set_address_from_string (ret, address, NULL))
 		g_clear_object (&ret);
-		goto done;
-	}
+	g_free (address);
+
+	if (!ret)
+		return NULL;
+
 	g_mime_autocrypt_header_set_prefer_encrypt (ret, newpref);
-	ksplit = g_strsplit_set (k.val, " \r\n\t", -1);
-	kjoined = g_strjoinv ("", ksplit);
-	gsize decodedlen = 0;
-	g_base64_decode_inplace (kjoined, &decodedlen);
-	newkeydata = g_bytes_new_take ((guint8 *) kjoined, decodedlen);
-	kjoined = NULL;
+	decoded = g_malloc (MAX (k.length, 1));
+	decodedlen = g_base64_decode_step (k.val, k.length, decoded, &state, &save);
+	newkeydata = g_bytes_new_take (decoded, decodedlen);
 	g_mime_autocrypt_header_set_keydata (ret, newkeydata);
-	
- done:
-	g_strfreev (vals);
-	if (ksplit)
-		g_strfreev (ksplit);
-	if (newkeydata)
-		g_bytes_unref (newkeydata);
-	g_free (kjoined);
+	g_bytes_unref (newkeydata);
+
 	return ret;
 }
 
@@ -221,6 +224,7 @@ g_mime_autocrypt_header_set_address_from_string (GMimeAutocryptHeader *ah, const
 
 	if (!(mailbox = g_mime_mailbox_address_new (NULL, address, error)))
 		return FALSE;
+
 	if (ah->address)
 		g_object_unref (ah->address);
 	
@@ -244,8 +248,10 @@ g_mime_autocrypt_header_set_address (GMimeAutocryptHeader *ah, GMimeMailboxAddre
 	g_return_if_fail (GMIME_IS_MAILBOX_ADDRESS (address));
 	
 	g_object_ref (address);
+
 	if (ah->address)
 		g_object_unref (ah->address);
+
 	ah->address = address;
 }
 
@@ -449,11 +455,14 @@ char *
 g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 {
 	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
+
 	if (!g_mime_autocrypt_header_is_complete (ah))
 		return NULL;
+
 	char *pe = "";
 	if (!gossip && ah->prefer_encrypt == GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL)
 		pe = "prefer-encrypt=mutual; ";
+
 	const char *addr = g_mime_mailbox_address_get_addrspec (ah->address);
 	GPtrArray *lines = g_ptr_array_new_with_free_func (g_free);
 	gchar *first = g_strdup_printf ("addr=%s; %skeydata=", addr, pe);
@@ -463,17 +472,23 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 	gsize offset = 0;
 	gsize ksz = 0;
 	const guchar *kp = g_bytes_get_data (ah->keydata, &ksz);
+
 	if (n < firstline) {
-		gsize firstlinekeylen = ((firstline - n)/4)*3;
+		gsize firstlinekeylen = ((firstline - n) / 4) * 3;
+
 		if (firstlinekeylen > ksz)
 			firstlinekeylen = ksz;
+
 		gchar *kdata = g_base64_encode (kp, firstlinekeylen);
 		gchar *newfirst = g_strconcat (first, kdata, NULL);
+
 		g_free (first);
 		g_free (kdata);
+
 		first = newfirst;
 		offset = firstlinekeylen;
 	}
+
 	g_ptr_array_add (lines, first);
 	
 	while (offset < ksz) {
@@ -486,6 +501,7 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 	
 	char *ret = g_strjoinv (" ", (gchar**)(lines->pdata));
 	g_ptr_array_unref (lines);
+
 	return ret;
 }
 

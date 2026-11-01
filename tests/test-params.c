@@ -1118,6 +1118,253 @@ test_content_cloning (void)
 	}
 }
 
+static GObject *
+parse_bounded_model (guint api, GMimeParserOptions *options, const char *text, gssize length, GError **error)
+{
+	if (api == 0)
+		return (GObject *) g_mime_param_list_parse_full (options, text, length, error);
+
+	return parse_content_field (api == 1, options, text, length, error);
+}
+
+static char *
+snapshot_parameter_model (guint api, GObject *object)
+{
+	GMimeParamList *params;
+	GString *snapshot;
+	GMimeParam *param;
+	char *text;
+	int i;
+
+	if (!object)
+		return NULL;
+
+	params = api == 0 ? GMIME_PARAM_LIST (object) : content_field_parameters (api == 1, object);
+	text = api == 0 ? g_mime_param_list_to_string (params) : content_field_to_string (api == 1, object);
+	snapshot = g_string_new (text);
+	g_free (text);
+	for (i = 0; i < g_mime_param_list_length (params); i++) {
+		param = g_mime_param_list_get_parameter_at (params, i);
+		g_string_append_printf (snapshot, "\n%s:%s:%s:%d:%d", g_mime_param_get_name (param),
+					g_mime_param_get_charset (param) ? g_mime_param_get_charset (param) : "",
+					g_mime_param_get_lang (param) ? g_mime_param_get_lang (param) : "",
+					g_mime_param_get_encoding_method (param), g_mime_param_get_always_quote (param));
+	}
+	return g_string_free (snapshot, FALSE);
+}
+
+static void
+bounded_parameter_warning (gint64 offset, GMimeParserWarning code, const char *item, gpointer user_data)
+{
+	g_string_append_printf (user_data, "%" G_GINT64_FORMAT ":%d:%s\n", offset, code, item ? item : "");
+}
+
+static void
+test_parameter_slices (void)
+{
+	static const char *inputs[] = {
+		"", " ", " (a(b)c)", " (unfinished\\", "name=x", "name=\"a\\\"b\"",
+		"name=\"unterminated\\", "name=x; name=y", "name*0*=utf-8'en'%E2%; name*1*=82%AC",
+		"name*2147483648*=x", "name*0=\"a\\\"\"; name*1=\"b\"", "name*=utf-16le''a%00b%00",
+		"text/plain", "text/ (comment) plain; x=y; name=\"caf\351\"",
+		"text/plain; name=\"=?utf-8?q?=E2=82=AC?=\"",
+		"attachment; name*=iso-8859-1'en'%E9", "attachment; x=\"\"; broken=",
+		"attachment; name*0=one; name*1=two", "attachment (unterminated"
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GString *warnings = g_string_new (NULL);
+	GObject *expected, *actual;
+	GMimePart *part;
+	GMimeHeader *header;
+	GBytes *raw;
+	GError *error = NULL, *expected_error = NULL;
+	char *allocation, *slice, *terminated, *snapshot, *expected_warnings, *raw_value;
+	gsize length, total;
+	guint mode, i, api;
+
+	g_mime_parser_options_set_warning_callback (options, bounded_parameter_warning, warnings);
+	for (mode = 0; mode < 3; mode++) {
+		g_mime_parser_options_set_parameter_compliance_mode (options, mode == 0 ?
+			GMIME_RFC_COMPLIANCE_STRICT : mode == 1 ? GMIME_RFC_COMPLIANCE_LOOSE : GMIME_RFC_COMPLIANCE_LOOSER);
+		for (i = 0; i < G_N_ELEMENTS (inputs); i++) {
+			total = strlen (inputs[i]);
+			for (length = 0; length <= total; length++) {
+				allocation = g_malloc (MAX (length, 1));
+				slice = length ? allocation : allocation + 1;
+				memcpy (slice, inputs[i], length);
+				terminated = g_strndup (inputs[i], length);
+				for (api = 0; api < 3; api++) {
+					g_string_truncate (warnings, 0);
+					expected = parse_bounded_model (api, options, terminated, -1, &expected_error);
+					snapshot = snapshot_parameter_model (api, expected);
+					expected_warnings = g_strdup (warnings->str);
+					g_string_truncate (warnings, 0);
+					actual = parse_bounded_model (api, options, slice, length, &error);
+					check_string (snapshot_parameter_model (api, actual), snapshot,
+						      "exact-boundary parsing preserves the parameter model and metadata");
+					check ((error != NULL) == (expected_error != NULL), "bounded parsing preserves failure status");
+					if (error && expected_error)
+						check (error->domain == expected_error->domain && error->code == expected_error->code &&
+						       !strcmp (error->message, expected_error->message), "bounded parsing preserves error offsets");
+					check (!strcmp (warnings->str, expected_warnings), "bounded parsing preserves warning payloads");
+					g_clear_object (&actual);
+					g_clear_object (&expected);
+					g_clear_error (&error);
+					g_clear_error (&expected_error);
+					g_free (expected_warnings);
+					g_free (snapshot);
+				}
+				if (mode == 1) {
+					part = g_mime_part_new ();
+					g_mime_entity_set_header (GMIME_ENTITY (part), "Content-Disposition", "attachment", NULL);
+					raw_value = g_malloc (length + 1);
+					memcpy (raw_value, slice, length);
+					raw_value[length] = '\n';
+					raw = g_bytes_new_take (raw_value, length + 1);
+					for (api = 1; api < 3; api++) {
+						header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (part)),
+										       api == 1 ? "Content-Type" : "Content-Disposition");
+						g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+						g_assert_no_error (error);
+					}
+					g_object_unref (part);
+					g_bytes_unref (raw);
+				}
+				g_free (terminated);
+				g_free (allocation);
+			}
+		}
+	}
+	g_string_free (warnings, TRUE);
+	g_mime_parser_options_unref (options);
+}
+
+#define RAW_PARAMETER(text, value) { text, sizeof (text) - 1, value }
+
+static void
+test_raw_parameter_nuls (void)
+{
+	static const struct {
+		const char *text;
+		gsize length;
+		const char *value;
+	} cases[] = {
+		RAW_PARAMETER ("name=\"a\0b\"", "a\357\277\275b"),
+		RAW_PARAMETER ("name=a\0b", "a\357\277\275b"),
+		RAW_PARAMETER ("name=\"caf\351\0.txt\"", "caf\303\251\357\277\275.txt"),
+		RAW_PARAMETER ("name=\"a\\\0b\"", "a\357\277\275b"),
+		RAW_PARAMETER ("name=\"a\n b \"", "a b "),
+		RAW_PARAMETER ("name=\"a\\\n b\"", "a b"),
+		RAW_PARAMETER ("name=\"a\0=?utf-8?q?b?=\"", "a\357\277\275b"),
+		RAW_PARAMETER ("name=\"=?utf-8?q?a=22=3B_injected=3Dyes?=\"", "a\"; injected=yes"),
+		RAW_PARAMETER ("name*=iso-8859-1'en'caf%E9\0.txt", "caf\303\251\357\277\275.txt"),
+		RAW_PARAMETER ("name*=utf-8''a%00b", "a\357\277\275b"),
+		RAW_PARAMETER ("name*0=\"a\0\"; name*1=\"b\"", "a\357\277\275b"),
+		RAW_PARAMETER ("name*0*=utf-8''a\0%E2; name*1*=%82%AC", "a\357\277\275\342\202\254"),
+		RAW_PARAMETER ("name*0*=utf-16le''a%00%00; name*1*=%00b%00", "a\357\277\275b"),
+		RAW_PARAMETER ("(comment\0) name=x", "x")
+	};
+	static const char replacement[] = "name=\"new\0value\"; tail=kept\n";
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeStream *stream, *output;
+	GMimeEntity *entity;
+	GMimeHeader *header;
+	GMimeParamList *params;
+	GObject *parsed;
+	GBytes *raw, *after;
+	GByteArray *bytes;
+	GString *wire;
+	GError *error = NULL;
+	const char *value;
+	guint mode, i, api;
+
+	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "iso-8859-1", &error));
+	for (mode = 0; mode < 3; mode++) {
+		g_mime_parser_options_set_parameter_compliance_mode (options, mode == 0 ?
+			GMIME_RFC_COMPLIANCE_STRICT : mode == 1 ? GMIME_RFC_COMPLIANCE_LOOSE : GMIME_RFC_COMPLIANCE_LOOSER);
+		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+			for (api = 0; api < 2; api++) {
+				wire = g_string_new (api ? "Content-Type: application/octet-stream; " : "Content-Disposition: attachment; ");
+				g_string_append_len (wire, cases[i].text, cases[i].length);
+				g_string_append (wire, "; tail=kept\n\nbody");
+				stream = g_mime_stream_mem_new_with_buffer (wire->str, wire->len);
+				entity = g_mime_entity_load (options, stream, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (entity);
+				params = api ? g_mime_content_type_get_parameters (g_mime_entity_get_content_type (entity)) :
+					g_mime_content_disposition_get_parameters (g_mime_entity_get_content_disposition (entity));
+				value = g_mime_param_list_get_parameter (params, "name") ?
+					g_mime_param_get_value (g_mime_param_list_get_parameter (params, "name")) : NULL;
+				check_string (g_strdup (value), cases[i].value, "raw parameter decoding preserves text across NULs");
+				check (g_mime_param_list_get_parameter (params, "tail") != NULL, "parameters after a NUL survive parsing");
+				check (g_mime_param_list_length (params) == 2, "decoded delimiters do not introduce parameters");
+				output = g_mime_stream_mem_new ();
+				g_assert_cmpint (g_mime_entity_write_to_stream (entity, NULL, output), >=, 0);
+				bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+				g_assert_cmpmem (bytes->data, bytes->len, wire->str, wire->len);
+				g_object_unref (output);
+
+				if (memchr (cases[i].text, 0, cases[i].length)) {
+					parsed = parse_content_field (api, options, wire->str + (api ? 13 : 20),
+								     wire->len - (api ? 13 : 20) - 5, &error);
+					check (parsed == NULL && error != NULL, "checked content fields reject raw NULs");
+					g_clear_object (&parsed);
+					g_clear_error (&error);
+					parsed = (GObject *) g_mime_param_list_parse_full (options, cases[i].text, cases[i].length, &error);
+					check (parsed == NULL && error != NULL, "checked parameter lists reject raw NULs");
+					g_clear_object (&parsed);
+					g_clear_error (&error);
+				}
+
+				header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity),
+								       api ? "Content-Type" : "Content-Disposition");
+				g_string_assign (wire, api ? " application/octet-stream; " : " attachment; ");
+				g_string_append_len (wire, replacement, sizeof (replacement) - 1);
+				raw = g_bytes_new_take (g_memdup2 (wire->str, wire->len), wire->len);
+				g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+				g_assert_no_error (error);
+				value = api ? g_mime_entity_get_content_type_parameter (entity, "name") :
+					g_mime_entity_get_content_disposition_parameter (entity, "name");
+				check_string (g_strdup (value), "new\357\277\275value",
+					      "raw header replacement rebuilds parameters with complete bytes");
+				after = g_mime_header_get_raw_value (header);
+				g_assert_true (g_bytes_equal (raw, after));
+				g_bytes_unref (after);
+				g_bytes_unref (raw);
+				g_object_unref (entity);
+				g_object_unref (stream);
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	g_mime_parser_options_unref (options);
+}
+
+#undef RAW_PARAMETER
+
+static void
+test_boundary_after_parameter_nul (void)
+{
+	static const char wire[] = "Content-Type: multipart/mixed; name=\"a\0b\"; boundary=bound\n\n"
+		"--bound\nContent-Type: text/plain\n\nchild\n--bound--\n";
+	GMimeStream *input = g_mime_stream_mem_new_with_buffer (wire, sizeof (wire) - 1);
+	GMimeStream *output = g_mime_stream_mem_new ();
+	GError *error = NULL;
+	GMimeEntity *entity = g_mime_entity_load (NULL, input, &error);
+	GByteArray *bytes;
+
+	g_assert_no_error (error);
+	g_assert_true (GMIME_IS_MULTIPART (entity));
+	check (g_mime_multipart_get_count (GMIME_MULTIPART (entity)) == 1,
+	       "a NUL in another parameter does not hide the multipart boundary");
+	g_assert_cmpint (g_mime_entity_write_to_stream (entity, NULL, output), >=, 0);
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+	g_assert_cmpmem (bytes->data, bytes->len, wire, sizeof (wire) - 1);
+	g_object_unref (entity);
+	g_object_unref (output);
+	g_object_unref (input);
+}
+
 static void
 test_content_display (void)
 {
@@ -2043,6 +2290,9 @@ main (int argc, char **argv)
 	test_parameter_comments_and_empty_charsets ();
 	test_checked_parse_errors ();
 	test_checked_parse_bounds ();
+	test_parameter_slices ();
+	test_raw_parameter_nuls ();
+	test_boundary_after_parameter_nul ();
 	test_checked_content_fields ();
 	test_checked_content_errors ();
 	test_checked_content_bounds ();

@@ -280,7 +280,7 @@ static struct {
 static void g_mime_header_class_init (GMimeHeaderClass *klass);
 static void g_mime_header_init (GMimeHeader *header);
 static void g_mime_header_finalize (GObject *object);
-static char *reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options);
+static GBytes *reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options);
 static char *fold_international_text (GMimeFormatOptions *options, size_t field_length, const char *value);
 static char *format_mailing_list_command (GMimeFormatOptions *options, size_t field_length,
 					const char *value, const char *charset);
@@ -569,9 +569,9 @@ g_mime_header_unfold (const char *text)
 	g_return_val_if_fail (g_utf8_validate (text, -1, NULL), NULL);
 
 	start = text;
-	skip_lwsp (&start);
+	end = text + strlen (text);
+	skip_lwsp (&start, end);
 
-	end = start + strlen (start);
 	while (end > start && is_lwsp (end[-1]))
 		end--;
 
@@ -904,21 +904,10 @@ _g_mime_header_get_content_encoding (GMimeHeader *header)
 		gsize length;
 		const char *bytes = g_bytes_get_data (header->raw_value, &length);
 
-		if (length && memchr (bytes, 0, length)) {
-			GMimeContentEncoding encoding;
-			char *text;
-
-			/* Preserve token delimiters before literal NULs instead of
-			 * removing them when unfolding the decoded value. */
-			text = _g_mime_utils_header_decode_text (header->options, bytes, length, NULL, header->offset);
-			encoding = _g_mime_content_encoding_parse (text, strlen (text));
-			g_free (text);
-
-			return encoding;
-		}
+		return _g_mime_content_encoding_parse (bytes, length);
 	}
 
-	return g_mime_content_encoding_from_string (g_mime_header_get_value (header));
+	return GMIME_CONTENT_ENCODING_UNSPECIFIED;
 }
 
 
@@ -1085,6 +1074,7 @@ g_mime_header_set_value_full (GMimeHeader *header, GMimeFormatOptions *options, 
 	previous = header->raw_value;
 	g_free (header->charset);
 	g_free (header->value);
+
 	header->raw_value = header_bytes_take_string (raw_value);
 	header->charset = encoding;
 	header->value = text;
@@ -1271,8 +1261,8 @@ GBytes *
 _g_mime_header_get_formatted_value (GMimeHeader *header, GMimeFormatOptions *options)
 {
 	GMimeHeaderRawValueFormatter formatter;
+	GBytes *formatted;
 	gboolean reformat;
-	char *raw_value = NULL;
 	const char *bytes;
 	gsize length;
 
@@ -1289,17 +1279,17 @@ _g_mime_header_get_formatted_value (GMimeHeader *header, GMimeFormatOptions *opt
 	if (reformat) {
 		if (header->reformat) {
 			formatter = header->formatter ? header->formatter : g_mime_header_format_default;
-			raw_value = formatter (header, options, header->value, header->charset);
+			formatted = header_bytes_take_string (formatter (header, options, header->value, header->charset));
 		} else {
-			raw_value = reformat_international_header (header, options);
+			formatted = reformat_international_header (header, options);
 		}
 
-		if (!raw_value) {
+		if (!formatted) {
 			errno = EINVAL;
 			return NULL;
 		}
 
-		return header_bytes_take_string (raw_value);
+		return formatted;
 	}
 
 	return g_bytes_ref (header->raw_value);
@@ -1576,7 +1566,7 @@ g_mime_header_format_addrlist (GMimeHeader *header, GMimeFormatOptions *options,
 }
 
 
-static char *
+static GBytes *
 reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options)
 {
 	GMimeHeaderRawValueFormatter formatter = header->formatter;
@@ -1584,38 +1574,43 @@ reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options)
 	GMimeInternetAddressList *addresses;
 	GMimeContentType *content_type;
 	GBytes *field;
-	char *raw_value, *text = _g_mime_header_dup_raw_value (header);
+	const char *text;
+	char *raw_value;
+	gsize length;
+
+	if (!(text = g_bytes_get_data (header->raw_value, &length)))
+		text = "";
 
 	if (formatter == g_mime_header_format_addrlist) {
-		if (!(addresses = g_mime_internet_address_list_parse_full (header->options, text, -1, NULL)))
-			return text;
+		if (length > G_MAXINT ||
+		    !(addresses = g_mime_internet_address_list_parse_full (header->options, text, length, NULL)))
+			return g_bytes_ref (header->raw_value);
 
 		field = g_bytes_new_static (header->name, strlen (header->name));
 		raw_value = format_address_list (field, options, addresses);
 		g_bytes_unref (field);
 		g_object_unref (addresses);
-		g_free (text);
-		return raw_value;
+		return header_bytes_take_string (raw_value);
 	}
 
 	if (formatter == g_mime_header_format_content_type) {
-		if (!(content_type = g_mime_content_type_parse_full (header->options, text, -1, NULL)))
-			return text;
+		if (length > G_MAXINT ||
+		    !(content_type = g_mime_content_type_parse_full (header->options, text, length, NULL)))
+			return g_bytes_ref (header->raw_value);
 
 		raw_value = g_mime_content_type_encode (content_type, options);
 		g_object_unref (content_type);
-		g_free (text);
-		return raw_value;
+		return header_bytes_take_string (raw_value);
 	}
 
 	if (formatter == g_mime_header_format_content_disposition) {
-		if (!(disposition = g_mime_content_disposition_parse_full (header->options, text, -1, NULL)))
-			return text;
+		if (length > G_MAXINT ||
+		    !(disposition = g_mime_content_disposition_parse_full (header->options, text, length, NULL)))
+			return g_bytes_ref (header->raw_value);
 
 		raw_value = g_mime_content_disposition_encode (disposition, options);
 		g_object_unref (disposition);
-		g_free (text);
-		return raw_value;
+		return header_bytes_take_string (raw_value);
 	}
 
 	/* Received headers must not be reformatted. These other structured fields
@@ -1627,14 +1622,14 @@ reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options)
 	    formatter == g_mime_header_format_dkim_signature ||
 	    !g_ascii_strcasecmp (header->name, "Authentication-Results") ||
 	    !g_ascii_strcasecmp (header->name, "ARC-Authentication-Results"))
-		return text;
-
-	g_free (text);
+		return g_bytes_ref (header->raw_value);
 
 	if (formatter == g_mime_header_format_mailing_list_command)
-		return format_mailing_list_command (options, strlen (header->name), g_mime_header_get_value (header), "utf-8");
+		raw_value = format_mailing_list_command (options, strlen (header->name), g_mime_header_get_value (header), "utf-8");
+	else
+		raw_value = fold_international_text (options, strlen (header->name), g_mime_header_get_value (header));
 
-	return fold_international_text (options, strlen (header->name), g_mime_header_get_value (header));
+	return header_bytes_take_string (raw_value);
 }
 
 
@@ -1650,14 +1645,14 @@ received_skip_token (const char **in)
 }
 
 static void
-received_skip_cfws (const char **in)
+received_skip_cfws (const char **in, const char *end)
 {
-	skip_lwsp (in);
+	skip_lwsp (in, end);
 
 	while (**in == '(') {
 		/* Unlike skip_cfws(), retain the consumed position for incomplete comments. */
-		skip_comment (in);
-		skip_lwsp (in);
+		skip_comment (in, end);
+		skip_lwsp (in, end);
 	}
 }
 
@@ -1701,7 +1696,7 @@ append_received_token (GString *str, const char *start, const char *end,
 char *
 g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options, const char *value, const char *charset)
 {
-	const char *inptr, *start, *newline;
+	const char *inptr, *inend, *start, *newline;
 	size_t line, maxline;
 	char *unfolded;
 	GString *str;
@@ -1710,17 +1705,19 @@ g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options,
 	maxline = g_mime_format_options_get_max_line_length (options);
 	line = g_bytes_get_size (header->raw_name) + 1;
 	str = g_string_new (NULL);
+
 	inptr = unfolded = g_mime_utils_header_unfold (value);
+	inend = inptr + strlen (inptr);
 
 	/* Leading comments are independent tokens, not part of the first clause. */
 	while (*inptr) {
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, inend);
 
 		if (*inptr != '(')
 			break;
 
 		start = inptr;
-		skip_comment (&inptr);
+		skip_comment (&inptr, inend);
 		append_received_token (str, start, inptr, newline, maxline, &line);
 	}
 
@@ -1729,11 +1726,11 @@ g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options,
 		start = inptr;
 
 		received_skip_token (&inptr);
-		received_skip_cfws (&inptr);
+		received_skip_cfws (&inptr, inend);
 
 		if (*inptr && *inptr != ';') {
 			received_skip_token (&inptr);
-			received_skip_cfws (&inptr);
+			received_skip_cfws (&inptr, inend);
 		}
 
 		append_received_token (str, start, inptr, newline, maxline, &line);
@@ -1743,7 +1740,7 @@ g_mime_header_format_received (GMimeHeader *header, GMimeFormatOptions *options,
 		start = inptr++;
 
 		append_received_token (str, start, inptr, newline, maxline, &line);
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, inend);
 
 		/* The date-time contains whitespace but must be folded as a single token. */
 		if (*inptr)
@@ -1939,7 +1936,7 @@ char *
 g_mime_header_format_dkim_signature (GMimeHeader *header, GMimeFormatOptions *options,
 				    const char *value, const char *charset)
 {
-	const char *inptr, *start, *name_end, *newline;
+	const char *inptr, *inend, *start, *name_end, *newline;
 	size_t line, maxline, length, name_length;
 	gboolean signature, list;
 	GString *str, *token;
@@ -1953,10 +1950,12 @@ g_mime_header_format_dkim_signature (GMimeHeader *header, GMimeFormatOptions *op
 	line = g_bytes_get_size (header->raw_name) + 1;
 	str = g_string_new (NULL);
 	token = g_string_new (NULL);
+
 	inptr = unfolded = g_mime_utils_header_unfold (value);
+	inend = inptr + strlen (inptr);
 
 	while (*inptr) {
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, inend);
 
 		start = inptr;
 		while (*inptr && *inptr != '=')
@@ -2081,7 +2080,7 @@ append_mailing_list_comment (GString *str, const char *comment, const char *newl
 			inptr = g_utf8_next_char (inptr);
 
 		append_mailing_list_word (str, start, inptr, newline, maxline, line);
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, end);
 	}
 }
 
@@ -2093,17 +2092,18 @@ format_mailing_list_command (GMimeFormatOptions *options, size_t field_length,
 	size_t maxline = g_mime_format_options_get_max_line_length (options);
 	char *unfolded, *comment, *text, *encoded;
 	size_t line = field_length + 1, length;
-	const char *inptr, *start;
+	const char *inptr, *inend, *start;
 	GString *str;
 
 	g_return_val_if_fail (value != NULL, NULL);
 	g_return_val_if_fail (g_utf8_validate (value, -1, NULL), NULL);
 
 	inptr = unfolded = g_mime_utils_header_unfold (value);
+	inend = inptr + strlen (inptr);
 	str = g_string_new (NULL);
 
 	while (*inptr) {
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, inend);
 
 		if (!*inptr)
 			break;
@@ -2133,7 +2133,7 @@ format_mailing_list_command (GMimeFormatOptions *options, size_t field_length,
 				continue;
 			}
 		} else if (*inptr == '(') {
-			if (skip_comment (&inptr)) {
+			if (skip_comment (&inptr, inend)) {
 				if (g_mime_format_options_get_allow_international (options)) {
 					comment = g_strndup (start, inptr - start);
 				} else {

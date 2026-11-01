@@ -451,23 +451,23 @@ _g_mime_internet_address_decode_domain (const char *domain)
 	return g_strdup (domain);
 }
 
-char *
-_g_mime_internet_address_copy_text (const char *str, gssize length, GError **error)
+gboolean
+_g_mime_internet_address_validate_text (const char *str, gssize *length, GError **error)
 {
-	g_return_val_if_fail (str != NULL, NULL);
-	g_return_val_if_fail (length >= -1, NULL);
-	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+	g_return_val_if_fail (str != NULL, FALSE);
+	g_return_val_if_fail (*length >= -1, FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	if (length < 0)
-		length = strlen (str);
+	if (*length < 0)
+		*length = strlen (str);
 
-	if (length > G_MAXINT || memchr (str, '\0', length)) {
+	if (*length > G_MAXINT || memchr (str, '\0', *length)) {
 		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     "Address text contains a NUL byte or exceeds the supported length.");
-		return NULL;
+		return FALSE;
 	}
 
-	return g_strndup (str, length);
+	return TRUE;
 }
 
 /**
@@ -478,6 +478,8 @@ _g_mime_internet_address_copy_text (const char *str, gssize length, GError **err
  * @error: (nullable): return location for a #GError
  *
  * Parses exactly one mailbox or group, allowing trailing comments and whitespace.
+ * Explicitly bounded input need not be NUL-terminated but cannot contain
+ * embedded NUL bytes.
  *
  * Returns: (nullable) (transfer full): the address, or %NULL on error.
  **/

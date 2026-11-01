@@ -721,7 +721,7 @@ decode_name (GMimeParserOptions *options, const char *name, size_t len, gboolean
 
 	if (!g_utf8_validate (name, len, NULL)) {
 		/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
-		buf = g_mime_utils_decode_8bit (options, name, len);
+		buf = _g_mime_utils_decode_8bit_text (options, name, len);
 	} else {
 		buf = g_strndup (name, len);
 	}
@@ -755,12 +755,12 @@ typedef enum {
 } AddressParserFlags;
 
 GMimeDomainList *
-_g_mime_domain_list_parse (const char **in)
+_g_mime_domain_list_parse (const char **in, const char *inend)
 {
 	GMimeDomainList *route = g_mime_domain_list_new ();
 	const char *inptr = *in;
 
-	if (!skip_cfws (&inptr) || *inptr != '@')
+	if (!skip_cfws (&inptr, inend) || inptr == inend || *inptr != '@')
 		goto error;
 
 	do {
@@ -768,7 +768,7 @@ _g_mime_domain_list_parse (const char **in)
 		gboolean valid;
 
 		inptr++;
-		valid = _g_mime_parse_domain (domain, &inptr, ",:");
+		valid = _g_mime_parse_domain (domain, &inptr, inend, ",:", TRUE);
 
 		if (!valid) {
 			g_string_free (domain, TRUE);
@@ -777,17 +777,17 @@ _g_mime_domain_list_parse (const char **in)
 
 		g_ptr_array_add (route->array, g_string_free (domain, FALSE));
 
-		if (!skip_cfws (&inptr))
+		if (!skip_cfws (&inptr, inend))
 			goto error;
 
 		/* The obsolete source-route grammar permits null domains between commas. */
-		while (*inptr == ',') {
+		while (inptr < inend && *inptr == ',') {
 			inptr++;
 
-			if (!skip_cfws (&inptr))
+			if (!skip_cfws (&inptr, inend))
 				goto error;
 		}
-	} while (*inptr == '@');
+	} while (inptr < inend && *inptr == '@');
 
 	*in = inptr;
 
@@ -801,7 +801,28 @@ _g_mime_domain_list_parse (const char **in)
 }
 
 static gboolean
-localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mode, gboolean skip_trailing_cfws)
+skip_address_atom (const char **in, const char *inend)
+{
+	const char *start = *in;
+
+	while (*in < inend && (is_atom (**in) || **in == '\0'))
+		(*in)++;
+
+	return *in > start;
+}
+
+static gboolean
+skip_address_word (const char **in, const char *inend)
+{
+	if (*in < inend && **in == '"')
+		return skip_quoted (in, inend);
+
+	return skip_address_atom (in, inend);
+}
+
+static gboolean
+localpart_parse (GString *localpart, const char **in, const char *inend,
+		 GMimeRfcComplianceMode mode, gboolean skip_trailing_cfws)
 {
 	const char *inptr = *in;
 	const char *word, *cfws;
@@ -813,33 +834,45 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 
 		word = inptr;
 
-		if (!skip_word (&inptr))
+		if (!skip_address_word (&inptr, inend))
 			goto error;
 
 		if (*word == '"') {
 			for (p = word; p < inptr; p++) {
-				if (((guchar) *p < 32 && *p != '\t') || *p == 127)
+				if (((guchar) *p < 32 && *p != '\t' && *p != '\0') || *p == 127)
 					goto error;
 			}
 		} else if (mode == GMIME_RFC_COMPLIANCE_LOOSER) {
 			/* Accept escaped '@' in local-parts without mistaking it for the domain separator.
 			 * See https://github.com/jstedfast/MimeKit/issues/1043 */
-			while (*inptr == '\\' && inptr[1] == '@') {
+			while (inend - inptr >= 2 && *inptr == '\\' && inptr[1] == '@') {
 				escaped_at = TRUE;
 				inptr += 2;
 
-				if (!skip_atom (&inptr))
+				if (!skip_address_atom (&inptr, inend))
 					break;
 			}
 		}
 
-		if (!g_utf8_validate (word, inptr - word, NULL)) {
+		/* Validate UTF-8 across raw NULs before choosing the legacy charset fallback. */
+		p = word;
+		while (p < inptr && !g_utf8_validate (p, inptr - p, &p) && *p == '\0')
+			p++;
+
+		if (p < inptr) {
+			char *decoded;
+			gsize length;
+
 			if (mode == GMIME_RFC_COMPLIANCE_STRICT)
 				goto error;
 
-			utf8 = _g_mime_iconv_convert (word, inptr - word, "UTF-8", "ISO-8859-1", NULL, NULL);
+			if (!(decoded = _g_mime_iconv_convert (word, inptr - word, "UTF-8", "ISO-8859-1", &length, NULL)))
+				goto error;
+
+			utf8 = g_utf8_make_valid (decoded, length);
+			g_free (decoded);
 		} else {
-			utf8 = g_strndup (word, inptr - word);
+			utf8 = g_utf8_make_valid (word, inptr - word);
 		}
 
 		if (escaped_at) {
@@ -856,10 +889,10 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 		g_free (utf8);
 
 		cfws = inptr;
-		if (!skip_cfws (&inptr))
+		if (!skip_cfws (&inptr, inend))
 			goto error;
 
-		if (*inptr != '.') {
+		if (inptr == inend || *inptr != '.') {
 			if (!skip_trailing_cfws)
 				inptr = cfws;
 			break;
@@ -868,7 +901,7 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 		do {
 			g_string_append_c (localpart, *inptr++);
 
-			if (!skip_cfws (&inptr) || !*inptr)
+			if (!skip_cfws (&inptr, inend) || inptr == inend)
 				goto error;
 		} while (mode == GMIME_RFC_COMPLIANCE_LOOSER && *inptr == '.');
 
@@ -889,7 +922,7 @@ localpart_parse (GString *localpart, const char **in, GMimeRfcComplianceMode mod
 #define COMMA_GREATER_THAN_OR_SEMICOLON ",>;"
 
 gboolean
-_g_mime_internet_address_parse_addrspec (const char **in, const char *sentinels, GMimeRfcComplianceMode mode,
+_g_mime_internet_address_parse_addrspec (const char **in, const char *inend, const char *sentinels, GMimeRfcComplianceMode mode,
 				      char **addrspec, int *at)
 {
 	const char *inptr = *in;
@@ -897,10 +930,10 @@ _g_mime_internet_address_parse_addrspec (const char **in, const char *sentinels,
 
 	str = g_string_new ("");
 
-	if (!localpart_parse (str, &inptr, mode, TRUE))
+	if (!localpart_parse (str, &inptr, inend, mode, TRUE))
 		goto error;
 
-	if (*inptr == '\0' || strchr (sentinels, *inptr)) {
+	if (inptr == inend || (*inptr && strchr (sentinels, *inptr))) {
 		*addrspec = g_string_free (str, FALSE);
 		*in = inptr;
 		*at = -1;
@@ -913,16 +946,16 @@ _g_mime_internet_address_parse_addrspec (const char **in, const char *sentinels,
 	*at = str->len;
 	g_string_append_c (str, *inptr++);
 
-	if (*inptr == '\0')
+	if (inptr == inend)
 		goto error;
 
-	if (!skip_cfws (&inptr))
+	if (!skip_cfws (&inptr, inend))
 		goto error;
 
-	if (*inptr == '\0')
+	if (inptr == inend)
 		goto error;
 
-	if (!_g_mime_parse_domain (str, &inptr, sentinels))
+	if (!_g_mime_parse_domain (str, &inptr, inend, sentinels, TRUE))
 		goto error;
 
 	/* Preserve the domain's original IDN representation; callers can convert it explicitly. */
@@ -942,7 +975,8 @@ _g_mime_internet_address_parse_addrspec (const char **in, const char *sentinels,
 
 // TODO: rename to angleaddr_parse??
 static gboolean
-mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, GMimeInternetAddress **address)
+mailbox_parse (GMimeParserOptions *options, const char **in, const char *inend,
+	       const char *name, GMimeInternetAddress **address)
 {
 	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
 	const char *inptr = *in;
@@ -954,31 +988,31 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, G
 	inptr++;
 
 	/* Note: check for excessive angle brackets like the example described in section 7.1.2 of rfc7103... */
-	if (*inptr == '<') {
+	if (inptr < inend && *inptr == '<') {
 		if (mode == GMIME_RFC_COMPLIANCE_STRICT)
 			goto error;
 
 		do {
 			inptr++;
-		} while (*inptr == '<');
+		} while (inptr < inend && *inptr == '<');
 	}
 
-	if (*inptr == '\0')
+	if (inptr == inend)
 		goto error;
 
-	if (!skip_cfws (&inptr))
+	if (!skip_cfws (&inptr, inend) || inptr == inend)
 		goto error;
 
 	if (*inptr == '@') {
-		if (!(route = _g_mime_domain_list_parse (&inptr)))
+		if (!(route = _g_mime_domain_list_parse (&inptr, inend)))
 			goto error;
 
-		if (*inptr != ':')
+		if (inptr == inend || *inptr != ':')
 			goto error;
 
 		inptr++;
 
-		if (!skip_cfws (&inptr))
+		if (!skip_cfws (&inptr, inend))
 			goto error;
 	}
 
@@ -987,13 +1021,13 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, G
 	// ';' as well in case the mailbox is within a group address.
 	//
 	// Example: <third@example.net, fourth@example.net>
-	if (!_g_mime_internet_address_parse_addrspec (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, mode, &addrspec, &at))
+	if (!_g_mime_internet_address_parse_addrspec (&inptr, inend, COMMA_GREATER_THAN_OR_SEMICOLON, mode, &addrspec, &at))
 		goto error;
 
-	if (!skip_cfws (&inptr))
+	if (!skip_cfws (&inptr, inend))
 		goto error;
 
-	if (*inptr != '>') {
+	if (inptr == inend || *inptr != '>') {
 		if (mode == GMIME_RFC_COMPLIANCE_STRICT)
 			goto error;
 	} else {
@@ -1001,13 +1035,13 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, G
 		inptr++;
 
 		/* Note: check for excessive angle brackets like the example described in section 7.1.2 of rfc7103... */
-		if (*inptr == '>') {
+		if (inptr < inend && *inptr == '>') {
 			if (mode == GMIME_RFC_COMPLIANCE_STRICT)
 				goto error;
 
 			do {
 				inptr++;
-			} while (*inptr == '>');
+			} while (inptr < inend && *inptr == '>');
 		}
 	}
 
@@ -1028,11 +1062,11 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, G
 }
 
 static gboolean address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options, AddressParserFlags flags,
-				    const char **in, gboolean is_group, int group_depth, gint64 offset);
+				    const char **in, const char *inend, gboolean is_group, int group_depth, gint64 offset);
 
 static gboolean
 group_parse (GMimeGroupAddress *group, GMimeParserOptions *options, AddressParserFlags flags,
-	     const char **in, int group_depth, gint64 offset)
+	     const char **in, const char *inend, int group_depth, gint64 offset)
 {
 	GMimeGroupAddressPrivate *priv = _g_mime_group_address_get_private (group);
 	const char *inptr = *in;
@@ -1042,10 +1076,10 @@ group_parse (GMimeGroupAddress *group, GMimeParserOptions *options, AddressParse
 	inptr++;
 
 	/* ignore superfluous colons (and whitespace) */
-	while (*inptr == ':' || is_lwsp (*inptr))
+	while (inptr < inend && (*inptr == ':' || is_lwsp (*inptr)))
 		inptr++;
 
-	valid = address_list_parse (priv->members, options, flags | ALLOW_ANY, &inptr, TRUE, group_depth, offset);
+	valid = address_list_parse (priv->members, options, flags | ALLOW_ANY, &inptr, inend, TRUE, group_depth, offset);
 
 	if (!valid) {
 		if (!(flags & INTERNAL)) {
@@ -1056,13 +1090,13 @@ group_parse (GMimeGroupAddress *group, GMimeParserOptions *options, AddressParse
 		g_mime_internet_address_list_clear (priv->members);
 	}
 
-	if (*inptr != ';') {
+	if (inptr == inend || *inptr != ';') {
 		if (!(flags & INTERNAL) && g_mime_parser_options_get_address_compliance_mode (options) == GMIME_RFC_COMPLIANCE_STRICT) {
 			*in = inptr;
 			return FALSE;
 		}
 
-		while (*inptr && *inptr != ';')
+		while (inptr < inend && *inptr != ';')
 			inptr++;
 	} else {
 		inptr++;
@@ -1074,18 +1108,28 @@ group_parse (GMimeGroupAddress *group, GMimeParserOptions *options, AddressParse
 }
 
 static gboolean
-skip_phrase_atom (const char **in)
+skip_phrase_atom (const char **in, const char *inend)
 {
 	const char *start = *in;
 
-	while (is_atom (**in) || **in == '[' || **in == ']' || **in == ')')
+	while (*in < inend && (is_atom (**in) || **in == '\0' || **in == '[' || **in == ']' || **in == ')'))
 		(*in)++;
 
 	return *in > start;
 }
 
+static void
+warn_invalid_address (GMimeParserOptions *options, const char *text, const char *end, gint64 offset)
+{
+	char *item = g_strndup (text, end - text);
+
+	_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_LIST, item);
+	g_free (item);
+}
+
 static gboolean
-address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char **charset, GMimeInternetAddress **address, int group_depth, gint64 offset)
+address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char *inend,
+	       const char **charset, GMimeInternetAddress **address, int group_depth, gint64 offset)
 {
 	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
 	gboolean trim_leading_quote = FALSE;
@@ -1093,46 +1137,46 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 	const char *start;
 	size_t length;
 
-	if (!skip_cfws (&inptr) || *inptr == '\0')
+	if (!skip_cfws (&inptr, inend) || inptr == inend)
 		goto error;
 
 	/* keep track of the start & length of the phrase */
 	start = inptr;
 	length = 0;
 
-	while (*inptr) {
+	while (inptr < inend) {
 		gboolean quoted = *inptr == '"';
 
 		if (mode == GMIME_RFC_COMPLIANCE_STRICT) {
-			if (!skip_word (&inptr))
+			if (!skip_address_word (&inptr, inend))
 				break;
 		} else if (*inptr == '"') {
 			const char *qstring = inptr;
 
-			if (!skip_quoted (&inptr)) {
+			if (!skip_quoted (&inptr, inend)) {
 				inptr = qstring + 1;
 
-				skip_lwsp (&inptr);
+				skip_lwsp (&inptr, inend);
 
-				if (!skip_phrase_atom (&inptr))
+				if (!skip_phrase_atom (&inptr, inend))
 					break;
 
 				if (start == qstring)
 					trim_leading_quote = TRUE;
 			}
 		} else {
-			if (!skip_phrase_atom (&inptr))
+			if (!skip_phrase_atom (&inptr, inend))
 				break;
 		}
 
 		length = (size_t) (inptr - start);
 
 		do {
-			if (!skip_cfws (&inptr))
+			if (!skip_cfws (&inptr, inend))
 				goto error;
 
 			/* Note: some clients don't quote dots in the name */
-			if (*inptr != '.')
+			if (inptr == inend || *inptr != '.')
 				break;
 
 			inptr++;
@@ -1141,26 +1185,27 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		} while (TRUE);
 
 		/* Note: some clients don't quote commas in the name */
-		if (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (options) && *inptr == ',' && !quoted) {
+		if (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (options) &&
+		    inptr < inend && *inptr == ',' && !quoted) {
 			inptr++;
 
 			length = (size_t) (inptr - start);
 
-			if (!skip_cfws (&inptr))
+			if (!skip_cfws (&inptr, inend))
 				goto error;
 		}
 	}
 
-	if (!skip_cfws (&inptr))
+	if (!skip_cfws (&inptr, inend))
 		goto error;
 
 	// specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
 	//             /  "," / ";" / ":" / "\" / <">  ;  string, to use
 	//             /  "." / "[" / "]"              ;  within a word.
 
-	if (*inptr == '\0' || *inptr == ',' || *inptr == '>' || *inptr == ';') {
+	if (inptr == inend || *inptr == ',' || *inptr == '>' || *inptr == ';') {
 		/* we've completely gobbled up an addr-spec w/o a domain */
-		char sentinel = *inptr ? *inptr : ',';
+		char sentinel = inptr < inend ? *inptr : ',';
 		char *name, *addrspec;
 		GString *localpart;
 		int at = -1;
@@ -1176,19 +1221,19 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 
 		localpart = g_string_new (NULL);
 
-		if (!localpart_parse (localpart, &inptr, mode, FALSE)) {
+		if (!localpart_parse (localpart, &inptr, inend, mode, FALSE)) {
 			g_string_free (localpart, TRUE);
 			goto error;
 		}
 
 		addrspec = g_string_free (localpart, FALSE);
 
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, inend);
 
-		if (*inptr == '(') {
+		if (inptr < inend && *inptr == '(') {
 			const char *comment = inptr;
 
-			if (!skip_comment (&inptr)) {
+			if (!skip_comment (&inptr, inend)) {
 				g_free (addrspec);
 				goto error;
 			}
@@ -1196,7 +1241,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			comment++;
 
 			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment), FALSE, charset, offset);
-			if (!skip_cfws (&inptr)) {
+			if (!skip_cfws (&inptr, inend)) {
 				g_free (addrspec);
 				g_free (name);
 				goto error;
@@ -1205,7 +1250,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			name = g_strdup ("");
 		}
 
-		if (*inptr == '>') {
+		if (inptr < inend && *inptr == '>') {
 			if (mode == GMIME_RFC_COMPLIANCE_STRICT) {
 				g_free (addrspec);
 				g_free (name);
@@ -1215,7 +1260,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			inptr++;
 		}
 
-		if (*inptr && *inptr != sentinel) {
+		if (inptr < inend && *inptr != sentinel) {
 			g_free (addrspec);
 			g_free (name);
 			goto error;
@@ -1257,7 +1302,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		*address = (GMimeInternetAddress *) group;
 		g_free (name);
 
-		retval = group_parse (group, options, flags & INTERNAL, &inptr, group_depth + 1, offset);
+		retval = group_parse (group, options, flags & INTERNAL, &inptr, inend, group_depth + 1, offset);
 		if (!retval)
 			g_clear_object (address);
 
@@ -1278,15 +1323,15 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		/* rewind back to the beginning of the local-part */
 		inptr = start;
 
-		if (!_g_mime_internet_address_parse_addrspec (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, mode, &addrspec, &at))
+		if (!_g_mime_internet_address_parse_addrspec (&inptr, inend, COMMA_GREATER_THAN_OR_SEMICOLON, mode, &addrspec, &at))
 			goto error;
 
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, inend);
 
-		if (*inptr == '(') {
+		if (inptr < inend && *inptr == '(') {
 			const char *comment = inptr;
 
-			if (!skip_comment (&inptr)) {
+			if (!skip_comment (&inptr, inend)) {
 				g_free (addrspec);
 				goto error;
 			}
@@ -1298,13 +1343,13 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			name = g_strdup ("");
 		}
 
-		if (!skip_cfws (&inptr)) {
+		if (!skip_cfws (&inptr, inend)) {
 			g_free (addrspec);
 			g_free (name);
 			goto error;
 		}
 
-		if (*inptr == '\0') {
+		if (inptr == inend) {
 			*address = _g_mime_mailbox_address_new (name, addrspec, at, NULL);
 			g_free (addrspec);
 			g_free (name);
@@ -1373,7 +1418,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			name = g_strdup ("");
 		}
 
-		retval = mailbox_parse (options, &inptr, name, address);
+		retval = mailbox_parse (options, &inptr, inend, name, address);
 		g_free (name);
 		*in = inptr;
 
@@ -1382,7 +1427,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 
  error:
 	if (g_mime_parser_options_get_warning_callback (options) != NULL)
-		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_LIST, *in);
+		warn_invalid_address (options, *in, inend, offset);
 
 	*address = NULL;
 	*in = inptr;
@@ -1392,22 +1437,22 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 
 static gboolean
 address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options, AddressParserFlags flags,
-		    const char **in, gboolean is_group, int group_depth, gint64 offset)
+		    const char **in, const char *inend, gboolean is_group, int group_depth, gint64 offset)
 {
 	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	GMimeInternetAddress *address;
 	const char *charset;
 	const char *inptr;
 
-	if (!skip_cfws (in))
+	if (!skip_cfws (in, inend))
 		return FALSE;
 
 	inptr = *in;
 
-	if (*inptr == '\0')
+	if (inptr == inend)
 		return FALSE;
 
-	while (*inptr) {
+	while (inptr < inend) {
 		gboolean separator_between_addrs = FALSE;
 		const char *start = inptr;
 
@@ -1416,7 +1461,7 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 
 		charset = NULL;
 
-		if (!address_parse (options, flags, &inptr, &charset, &address, group_depth, offset)) {
+		if (!address_parse (options, flags, &inptr, inend, &charset, &address, group_depth, offset)) {
 			if (!(flags & INTERNAL)) {
 				*in = inptr;
 				return FALSE;
@@ -1426,11 +1471,11 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 
 			/* Resynchronize without treating separators inside quotes or comments as
 			 * address boundaries. Leave the actual separator for the list/group parser. */
-			while (*inptr && *inptr != ',' && (!is_group || *inptr != ';')) {
+			while (inptr < inend && *inptr != ',' && (!is_group || *inptr != ';')) {
 				if (*inptr == '"')
-					skip_quoted (&inptr);
+					skip_quoted (&inptr, inend);
 				else if (*inptr == '(')
-					skip_comment (&inptr);
+					skip_comment (&inptr, inend);
 				else
 					inptr++;
 			}
@@ -1446,24 +1491,24 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 
 		/* Note: we loop here in case there are any null addresses between commas */
 		do {
-			if (!skip_cfws (&inptr)) {
+			if (!skip_cfws (&inptr, inend)) {
 				*in = inptr;
 
 				return FALSE;
 			}
 
-			if (*inptr != ',')
+			if (inptr == inend || *inptr != ',')
 				break;
 
 			separator_between_addrs = TRUE;
 			inptr++;
 		} while (TRUE);
 
-		if (can_warn && !(separator_between_addrs || (*inptr == '\0') || (is_group && *inptr == ';')))
-			_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_ADDRESS_LIST, *in);
+		if (can_warn && !(separator_between_addrs || inptr == inend || (is_group && *inptr == ';')))
+			warn_invalid_address (options, *in, inend, offset);
 
 		if (g_mime_parser_options_get_address_compliance_mode (options) == GMIME_RFC_COMPLIANCE_STRICT &&
-		    !separator_between_addrs && *inptr && !(is_group && *inptr == ';')) {
+		    !separator_between_addrs && inptr < inend && !(is_group && *inptr == ';')) {
 			*in = inptr;
 			return FALSE;
 		}
@@ -1490,7 +1535,9 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 GMimeInternetAddressList *
 g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *str)
 {
-	return _g_mime_internet_address_list_parse (options, str, -1);
+	g_return_val_if_fail (str != NULL, NULL);
+
+	return _g_mime_internet_address_list_parse (options, str, strlen (str), -1);
 }
 
 /**
@@ -1503,6 +1550,9 @@ g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *str
  * Parses the complete input without skipping malformed entries. Strict
  * compliance requires comma separators and terminated groups. Loose modes
  * retain address-recovery rules within individual mailboxes.
+ * Explicitly bounded input need not be NUL-terminated; embedded NUL bytes
+ * are rejected. Message header parsing instead represents raw NULs as U+FFFD
+ * in the address model without changing the stored header bytes.
  *
  * Returns: (nullable) (transfer full): the parsed list, or %NULL on error.
  **/
@@ -1510,23 +1560,21 @@ GMimeInternetAddressList *
 g_mime_internet_address_list_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error)
 {
 	GMimeInternetAddressList *list;
-	const char *inptr;
-	char *copy;
+	const char *inptr, *inend;
 
-	if (!(copy = _g_mime_internet_address_copy_text (str, length, error)))
+	if (!_g_mime_internet_address_validate_text (str, &length, error))
 		return NULL;
 
-	inptr = copy;
+	inptr = str;
+	inend = str + length;
 	list = g_mime_internet_address_list_new ();
 
-	if (!address_list_parse (list, options, ALLOW_ANY, &inptr, FALSE, 0, -1) ||
-	    !skip_cfws (&inptr) || *inptr || !list->array->len) {
+	if (!address_list_parse (list, options, ALLOW_ANY, &inptr, inend, FALSE, 0, -1) ||
+	    !skip_cfws (&inptr, inend) || inptr != inend || !list->array->len) {
 		g_clear_object (&list);
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-			     "Invalid address list at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - copy));
+			     "Invalid address list at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - str));
 	}
-
-	g_free (copy);
 
 	return list;
 }
@@ -1536,10 +1584,9 @@ _g_mime_internet_address_parse (GMimeParserOptions *options, const char *str, gs
 {
 	GMimeInternetAddress *address = NULL;
 	AddressParserFlags flags = ALLOW_ANY;
-	const char *inptr, *charset = NULL;
-	char *copy;
+	const char *inptr, *inend, *charset = NULL;
 
-	if (!(copy = _g_mime_internet_address_copy_text (str, length, error)))
+	if (!_g_mime_internet_address_validate_text (str, &length, error))
 		return NULL;
 
 	if (type == GMIME_TYPE_MAILBOX_ADDRESS)
@@ -1547,51 +1594,56 @@ _g_mime_internet_address_parse (GMimeParserOptions *options, const char *str, gs
 	else if (type == GMIME_TYPE_GROUP_ADDRESS)
 		flags = ALLOW_GROUP;
 
-	inptr = copy;
+	inptr = str;
+	inend = str + length;
 
-	if (!address_parse (options, flags, &inptr, &charset, &address, 0, -1) || !skip_cfws (&inptr) || *inptr) {
+	if (!address_parse (options, flags, &inptr, inend, &charset, &address, 0, -1) ||
+	    !skip_cfws (&inptr, inend) || inptr != inend) {
 		g_clear_object (&address);
 
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-			     "Invalid address at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - copy));
+			     "Invalid address at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - str));
 	} else if (charset) {
 		GMimeInternetAddressPrivate *priv = _g_mime_internet_address_get_private (address);
 
 		priv->charset = g_strdup (charset);
 	}
 
-	g_free (copy);
-
 	return address;
 }
 
 GMimeInternetAddressList *
-_g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *str, gint64 offset)
+_g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset)
 {
 	GMimeInternetAddressList *list;
-	const char *inptr = str;
+	const char *inptr, *inend;
 
-	g_return_val_if_fail (str != NULL, NULL);
+	g_return_val_if_fail (str != NULL || length == 0, NULL);
+	g_return_val_if_fail (length <= G_MAXINT, NULL);
 
+	if (length == 0)
+		return NULL;
+
+	inptr = str;
+	inend = str + length;
 	list = g_mime_internet_address_list_new ();
 
-	if (!address_list_parse (list, options, ALLOW_ANY | INTERNAL, &inptr, FALSE, 0, offset) || list->array->len == 0) {
-		g_object_unref (list);
-		return NULL;
-	}
+	if (!address_list_parse (list, options, ALLOW_ANY | INTERNAL, &inptr, inend, FALSE, 0, offset) || list->array->len == 0)
+		g_clear_object (&list);
 
 	return list;
 }
 
 void
-_g_mime_internet_address_list_append_parse (GMimeInternetAddressList *list, GMimeParserOptions *options, const char *str, gint64 offset)
+_g_mime_internet_address_list_append_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
+					  const char *str, gsize length, gint64 offset)
 {
 	GMimeInternetAddressList *parsed;
 
 	g_return_if_fail (GMIME_IS_INTERNET_ADDRESS_LIST (list));
-	g_return_if_fail (str != NULL);
+	g_return_if_fail (str != NULL || length == 0);
 
-	if ((parsed = _g_mime_internet_address_list_parse (options, str, offset))) {
+	if ((parsed = _g_mime_internet_address_list_parse (options, str, length, offset))) {
 		g_mime_internet_address_list_append (list, parsed);
 		g_object_unref (parsed);
 	}
@@ -1613,5 +1665,5 @@ g_mime_internet_address_list_append_parse (GMimeInternetAddressList *list, GMime
 	g_return_if_fail (GMIME_IS_INTERNET_ADDRESS_LIST (list));
 	g_return_if_fail (str != NULL);
 
-	_g_mime_internet_address_list_append_parse (list, options, str, -1);
+	_g_mime_internet_address_list_append_parse (list, options, str, strlen (str), -1);
 }

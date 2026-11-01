@@ -871,7 +871,7 @@ g_mime_utils_decode_message_id (const char *message_id)
 {
 	g_return_val_if_fail (message_id != NULL, NULL);
 	
-	return decode_msgid (&message_id);
+	return decode_msgid (&message_id, message_id + strlen (message_id));
 }
 
 static gboolean
