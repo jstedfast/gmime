@@ -26,7 +26,7 @@
   native crypto operations are not exposed through GObject introspection.
 * Added non-mutating discovery, verification, and decryption of multiple
   inline OpenPGP blocks while preserving surrounding unprotected text.
-* Replaced Autotools with Meson. A C11 compiler and GLib 2.88 or newer are
+* Replaced Autotools with Meson. A C11 compiler and GLib 2.70.2 or newer are
   required; macOS builds require GNU libiconv.
 
 ### GMime 3.2.15

@@ -68,7 +68,7 @@ Building GMime requires a C compiler, Meson >= 1.3.0, Ninja, and pkg-config.
 For proper compilation and functionality of GMime, the following packages
 are REQUIRED:
 
-  - GLib version >= 2.88.0
+  - GLib version >= 2.70.2
 
     Glib provides a number of portability-enhancing functions and types.
     Glib is included in most GMime-supported operating system

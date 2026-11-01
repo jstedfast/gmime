@@ -31,6 +31,13 @@ jobs:
             cc: gcc
             features: disabled
             backend: AVX2
+          - name: Linux x64 GCC / GLib 2.70.2
+            os: ubuntu-22.04
+            arch: x86_64
+            cc: gcc
+            features: enabled
+            backend: AVX2
+            minimum_glib: true
           - name: Linux ARM64 GCC
             os: ubuntu-26.04-arm
             arch: aarch64
@@ -95,6 +102,29 @@ jobs:
           sudo apt-get -y install gtk-doc-tools valac gobject-introspection \
             libgirepository1.0-dev python3-gi
         fi
+        if [[ '${{ matrix.minimum_glib }}' == 'true' ]]; then
+          sudo apt-get -y install libpcre3-dev libffi-dev python3-venv
+          python3 -m venv "$RUNNER_TEMP/meson-env"
+          "$RUNNER_TEMP/meson-env/bin/pip" install 'meson==1.3.2'
+          echo "$RUNNER_TEMP/meson-env/bin" >> "$GITHUB_PATH"
+        fi
+    - name: Build minimum supported GLib
+      if: matrix.minimum_glib
+      run: |
+        cd "$RUNNER_TEMP"
+        curl --fail --location --retry 3 \
+          https://download.gnome.org/sources/glib/2.70/glib-2.70.2.tar.xz \
+          -o glib-2.70.2.tar.xz
+        echo '0551459c85cd3da3d58ddc9016fd28be5af503f5e1615a71ba5b512ac945806f  glib-2.70.2.tar.xz' | sha256sum --check
+        tar -xf glib-2.70.2.tar.xz
+        meson setup glib-build glib-2.70.2 --prefix="$RUNNER_TEMP/glib-prefix" \
+          --libdir=lib --buildtype=release --wrap-mode=nofallback \
+          -Dtests=false -Dinstalled_tests=false -Dgtk_doc=false -Dman=false \
+          -Dselinux=disabled -Dlibmount=disabled
+        meson compile -C glib-build -j 2
+        meson install -C glib-build
+        echo "PKG_CONFIG_PATH=$RUNNER_TEMP/glib-prefix/lib/pkgconfig" >> "$GITHUB_ENV"
+        echo "LD_LIBRARY_PATH=$RUNNER_TEMP/glib-prefix/lib" >> "$GITHUB_ENV"
     - name: Install macOS dependencies
       if: runner.os == 'macOS'
       run: |
@@ -108,6 +138,11 @@ jobs:
         meson --version
         ninja --version
         pkg-config --modversion glib-2.0 gobject-2.0 gio-2.0 zlib gpgme libidn2
+        if [[ '${{ matrix.minimum_glib }}' == 'true' ]]; then
+          for package in glib-2.0 gobject-2.0 gio-2.0 gthread-2.0; do
+            test "$(pkg-config --modversion "$package")" = '2.70.2'
+          done
+        fi
         gpg --version
     - name: Configure optimized build with assertions
       run: |
@@ -161,4 +196,5 @@ jobs:
           _build/meson-logs/
           _build/meson-private/dist-build/meson-logs/
           _build/meson-dist/
+          ${{ runner.temp }}/glib-build/meson-logs/
         if-no-files-found: ignore

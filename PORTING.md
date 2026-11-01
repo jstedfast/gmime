@@ -13,7 +13,7 @@ validation; it is not an application migration checklist.
 
 ## 1. Update the build and dependencies
 
-GMime now uses Meson >= 1.3.0, a C11 compiler, and GLib/GObject/GIO >= 2.88.0.
+GMime now uses Meson >= 1.3.0, a C11 compiler, and GLib/GObject/GIO >= 2.70.2.
 Autotools support has been removed. zlib and iconv are required.
 On macOS, GNU libiconv >= 1.12 is required instead of Apple's system iconv;
 see the macOS build instructions in [README.md](README.md).

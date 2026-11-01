@@ -30,7 +30,12 @@ lt_age = binary_age - interface_age
 library_soversion = (lt_current - lt_age).to_string()
 library_version = '@0@.@1@.@2@'.format(library_soversion, lt_age, interface_age)
 
-glib_version = '>= 2.88.0'
+glib_version = '>= 2.70.2'
+add_project_arguments(
+  '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_2_70',
+  '-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_2_70',
+  language: 'c',
+)
 glib_dep = dependency('glib-2.0', version: glib_version)
 gobject_dep = dependency('gobject-2.0', version: glib_version)
 gio_dep = dependency('gio-2.0', version: glib_version)
