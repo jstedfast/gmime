@@ -20,6 +20,8 @@
 
 #include <config.h>
 
+#include <string.h>
+
 #include "gmime-encoded-word-validator-private.h"
 #include "gmime-table-private.h"
 
@@ -33,7 +35,7 @@ _g_mime_encoded_word_validator_init (GMimeEncodedWordValidator *v, const guint8 
 	g_return_if_fail (length <= G_MAXSSIZE);
 
 	*v = (GMimeEncodedWordValidator) {
-		buffer, length, 0, 0, report, user_data, context, stream_offset, line, column, FALSE, FALSE
+		buffer, length, 0, 0, 0, report, user_data, context, stream_offset, line, column, FALSE, FALSE
 	};
 }
 
@@ -127,6 +129,20 @@ is_boundary (GMimeEncodedWordValidator *v, gsize at, GMimeEncodedWordContext loc
 static void
 log_issue (GMimeEncodedWordValidator *v, GMimeComplianceViolation violation)
 {
+	while (v->scan_index < v->index) {
+		const guint8 *newline = memchr (v->text + v->scan_index, '\n', v->index - v->scan_index);
+
+		if (!newline) {
+			v->column += v->index - v->scan_index;
+			v->scan_index = v->index;
+			break;
+		}
+
+		v->scan_index = newline - v->text + 1;
+		v->line++;
+		v->column = 1;
+	}
+
 	GMimeComplianceIssue issue = {
 		v->context, violation, v->stream_offset + (gint64) v->index, v->line, v->column,
 		GMIME_COMPLIANCE_POSITION_ELEMENT_START
@@ -135,17 +151,22 @@ log_issue (GMimeEncodedWordValidator *v, GMimeComplianceViolation violation)
 	v->report (&issue, v->user_data);
 }
 
-static void
-advance (GMimeEncodedWordValidator *v, gsize end)
+static gboolean
+contains_word_marker (const guint8 *text, gsize length)
 {
-	while (v->index < end) {
-		if (v->text[v->index++] == '\n') {
-			v->line++;
-			v->column = 1;
-		} else {
-			v->column++;
-		}
+	gsize at = 0;
+
+	while (at + 1 < length) {
+		const guint8 *next = memchr (text + at, '=', length - at - 1);
+
+		if (!next)
+			return FALSE;
+		if (next[1] == '?')
+			return TRUE;
+		at = next - text + 1;
 	}
+
+	return FALSE;
 }
 
 void
@@ -157,18 +178,35 @@ _g_mime_encoded_word_validator_validate (GMimeEncodedWordValidator *v, gsize end
 	if (!v->report)
 		return;
 
+	if (v->index == 0 && end > 0 && !contains_word_marker (v->text, v->length)) {
+		v->index = v->length;
+		return;
+	}
+
 	while (v->index < end) {
 		GMimeEncodedWordContext word_context = location;
 		guint8 c = v->text[v->index];
 
-		if (location != GMIME_ENCODED_WORD_CONTEXT_TEXT) {
+		if (location == GMIME_ENCODED_WORD_CONTEXT_TEXT) {
+			if (c != '=') {
+				const guint8 *next = memchr (v->text + v->index, '=', end - v->index);
+
+				if (!next) {
+					v->index = end;
+					return;
+				}
+
+				v->index = next - v->text;
+				c = v->text[v->index];
+			}
+		} else {
 			if (v->comment_depth > 0)
 				word_context = GMIME_ENCODED_WORD_CONTEXT_COMMENT;
 			else if (v->quoted || v->literal)
 				word_context = GMIME_ENCODED_WORD_CONTEXT_FORBIDDEN;
 
 			if (c == '\\' && (v->comment_depth > 0 || v->quoted || v->literal)) {
-				advance (v, MIN (v->index + 2, v->length));
+				v->index = MIN (v->index + 2, v->length);
 				continue;
 			}
 
@@ -203,11 +241,11 @@ _g_mime_encoded_word_validator_validate (GMimeEncodedWordValidator *v, gsize end
 			}
 
 			if (complete) {
-				advance (v, word_end);
+				v->index = word_end;
 				continue;
 			}
 		}
 
-		advance (v, v->index + 1);
+		v->index++;
 	}
 }

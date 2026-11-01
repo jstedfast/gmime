@@ -983,6 +983,60 @@ test_bounded_validation (void)
 }
 
 static void
+test_continuation_families_and_reuse (void)
+{
+	const char value[] = "text/plain; first*2=a;\r\n second*1=b; third*3=c;\r\n FIRST*2=d; SECOND*1=e";
+	const char *markers[] = { "FIRST*2=d", "SECOND*1=e", "first*2=a", "second*1=b", "third*3=c" };
+	const char *clean[] = {
+		"text/plain",
+		"text/plain; first*0=a; second*0=b; FIRST*1=c; SECOND*1=d",
+		"text/plain; charset=utf-8",
+		"text/plain; first*0=a; FIRST*1=b",
+		"text/plain; ; (comment)"
+	};
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	char *slice = g_strdup_printf ("xx%syy", value);
+	guint run, i;
+
+	testsuite_check ("First-name and dictionary continuation families preserve ordering, case folding and reuse");
+	for (run = 0; run < 2; run++) {
+		_g_mime_parameter_validate ((const guint8 *) slice + 2, sizeof (value) - 1, TRUE,
+			collect_issue, issues, GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+		g_assert_cmpuint (issues->len, ==, G_N_ELEMENTS (markers));
+		for (i = 0; i < issues->len; i++) {
+			GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+			gsize offset = strstr (value, markers[i]) - value;
+			guint64 line = 5, column = 7;
+
+			for (gsize at = 0; at < offset; at++) {
+				if (value[at] == '\n') {
+					line++;
+					column = 1;
+				} else {
+					column++;
+				}
+			}
+			g_assert_cmpint (issue->violation, ==, i < 2 ? PARAMETER : MISSING_SEGMENT);
+			g_assert_cmpint (issue->stream_offset, ==, 100 + offset);
+			g_assert_cmpuint (issue->line_number, ==, line);
+			g_assert_cmpuint (issue->column_number, ==, column);
+			g_assert_cmpint (issue->context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+			g_assert_cmpint (issue->position_kind, ==,
+				i < 2 ? GMIME_COMPLIANCE_POSITION_EXACT : GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+		}
+		for (i = 0; i < G_N_ELEMENTS (clean); i++) {
+			g_array_set_size (issues, 0);
+			_g_mime_parameter_validate ((const guint8 *) clean[i], strlen (clean[i]), TRUE,
+				collect_issue, issues, GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+			g_assert_cmpuint (issues->len, ==, 0);
+		}
+	}
+	g_free (slice);
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
+static void
 test_continuation_bounds (void)
 {
 	const char slice[] = "xxtext/plain; name*2=x;\r\n name*2=yyy";
@@ -1531,6 +1585,7 @@ main (int argc, char **argv)
 	test_encoded_word_positions ();
 	test_resets_and_budgets ();
 	test_bounded_validation ();
+	test_continuation_families_and_reuse ();
 	test_continuation_bounds ();
 	test_invalid_bounds ();
 	test_encoded_bounds ();

@@ -3526,6 +3526,25 @@ decoding. Positions identify each candidate's ElementStart, and both identities
 have independent budgets. Parameter encoded-word usage remains controlled by
 Parameters; native tolerant models and serialization are unchanged.
 
+MimeKit's `39b1110` compliance optimizations are ported. A bounded initial
+marker search skips encoded-word scanning entirely for buffers without `=?`;
+unstructured text runs use bulk searches, and line/column tracking advances
+only when an issue is reported. Incremental address context and diagnostic
+positions remain unchanged. The parameter validator was already stack-based;
+it now also keeps the first parameter family's state on the stack and creates
+lookup/order tables only for additional distinct names. Balanced continuation
+tracking and declaration-order gap reporting are preserved.
+
+The focused `benchmark-compliance-validators` target covers the 22 upstream
+scenarios. Build it with `meson compile -C <build> -j 2
+benchmark-compliance-validators`, then run `meson test -C <build> --benchmark
+--no-rebuild compliance-validators`. Five paired local release-build runs against
+the pre-port validators showed median improvements of about 3.2x for a single
+charset parameter, 4.2x for a plain display name, 22x for sparse encoded words,
+and 87x for a long plain header. Many-name parameter performance was roughly
+unchanged. These are validator microbenchmarks, not whole-message throughput
+claims; timings depend on the machine and input.
+
 InvalidContentType also covers unexpected text after a recognizable type/subtype
 and before any parameter separator, including folded values and comments.
 Malformed parameters after a valid media type do not trigger this diagnostic.

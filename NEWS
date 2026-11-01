@@ -26,6 +26,9 @@
   prohibited address placement without charset lookup or decoding. Preserve
   tolerant parsing, with bounded lookahead and original candidate positions.
 * Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
+* Reduced encoded-word and MIME parameter compliance overhead by skipping plain
+  text, tracking encoded-word coordinates only for diagnostics, and deferring
+  parameter lookup tables until a second distinct name. Diagnostics are unchanged.
 * Fixed RFC 2231 parameters with empty charset fields, including continuations.
   Comments after unquoted parameter values are ignored, including folded
   values; literal parentheses must be quoted or encoded.
