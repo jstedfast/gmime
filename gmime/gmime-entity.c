@@ -263,6 +263,8 @@ object_header_changed (GMimeEntity *object, GMimeHeader *header)
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
 	const char *name, *value;
+	GBytes *raw;
+	gsize length;
 	guint i;
 	
 	name = g_mime_header_get_name (header);
@@ -281,21 +283,30 @@ object_header_changed (GMimeEntity *object, GMimeHeader *header)
 	
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
-		value = g_mime_header_get_value (header);
-		disposition = _g_mime_content_disposition_parse (options, value, header->offset);
+		raw = g_mime_header_get_raw_value (header);
+		value = raw ? g_bytes_get_data (raw, &length) : NULL;
+		disposition = _g_mime_content_disposition_parse (options, value, raw ? length : 0, header->offset);
+		g_clear_pointer (&raw, g_bytes_unref);
 		_g_mime_entity_set_content_disposition (object, disposition);
 		g_object_unref (disposition);
 		break;
 	case HEADER_CONTENT_TYPE:
-		value = g_mime_header_get_value (header);
-		content_type = _g_mime_content_type_parse (options, value, header->offset);
+		raw = g_mime_header_get_raw_value (header);
+		value = raw ? g_bytes_get_data (raw, &length) : NULL;
+		content_type = _g_mime_content_type_parse (options, value ? value : "", raw ? length : 0, header->offset);
+		g_clear_pointer (&raw, g_bytes_unref);
 		_g_mime_entity_set_content_type (object, content_type);
 		g_object_unref (content_type);
 		break;
 	case HEADER_CONTENT_ID:
-		value = g_mime_header_get_value (header);
-		g_free (priv->content_id);
-		priv->content_id = g_mime_utils_decode_message_id (value);
+		g_clear_pointer (&priv->content_id, g_free);
+		if ((raw = g_mime_header_get_raw_value (header))) {
+			value = g_bytes_get_data (raw, &length);
+			if (!value)
+				value = "";
+			priv->content_id = decode_msgid (&value, value + length);
+			g_bytes_unref (raw);
+		}
 		break;
 	case HEADER_CONTENT_BASE:
 		g_clear_pointer (&priv->content_base, g_free);
@@ -1917,6 +1928,7 @@ g_mime_entity_get_autocrypt_headers (GMimeEntity *mime_part, GDateTime *effectiv
 	for (i = 0; i < g_mime_header_list_get_count (headers); i++) {
 		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
 		if (g_ascii_strcasecmp (matchheader, header->name) == 0) {
+			/* Autocrypt attributes are parsed after RFC 2047 decoding. */
 			GMimeAutocryptHeader *ah = g_mime_autocrypt_header_new_from_string (g_mime_header_get_value (header));
 			if (!ah || ! g_mime_autocrypt_header_is_complete (ah))
 				goto done;

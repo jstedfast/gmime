@@ -1018,13 +1018,11 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 		return;
 
 	if (header_is (header, name_length, "Content-Type")) {
-		char *text = g_strndup (value, length);
 		gboolean invalid_media_type;
 
 		if (priv->content_type) {
 			report_at (reader, GMIME_COMPLIANCE_REPEATED_CONTENT_TYPE, begin, line, 1,
 				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
-			g_free (text);
 			return;
 		}
 
@@ -1036,10 +1034,10 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 		priv->content_type = _g_mime_content_type_parse_full (priv->options, value, length, &invalid_media_type, NULL);
 
 		if (!priv->content_type) {
-			const char *cursor = text;
+			const char *cursor = value;
 			char *media, *subtype;
 
-			if (!g_mime_parse_content_type (&cursor, &media, &subtype)) {
+			if (!g_mime_parse_content_type (&cursor, value + length, &media, &subtype)) {
 				invalid_media_type = TRUE;
 			} else {
 				g_free (media);
@@ -1051,11 +1049,10 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 					   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 			}
 
-			priv->content_type = g_mime_content_type_parse (priv->options, text);
+			priv->content_type = _g_mime_content_type_parse (priv->options, value, length, -1);
 			g_mime_param_list_clear (g_mime_content_type_get_parameters (priv->content_type));
 		}
 
-		g_free (text);
 	} else if (header_is (header, name_length, "Content-Disposition")) {
 		if (priv->seen_content_disposition)
 			report_at (reader, GMIME_COMPLIANCE_REPEATED_CONTENT_DISPOSITION, begin, line, 1,

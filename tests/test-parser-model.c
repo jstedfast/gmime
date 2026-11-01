@@ -466,7 +466,11 @@ test_binary_encoding_headers (void)
 		{ " =?us-ascii?q?base64?=\0x\n", sizeof (" =?us-ascii?q?base64?=\0x\n") - 1,
 		  GMIME_CONTENT_ENCODING_UNSPECIFIED },
 		{ " =?us-ascii?q?base64?= \0x\n", sizeof (" =?us-ascii?q?base64?= \0x\n") - 1,
-		  GMIME_CONTENT_ENCODING_BASE64 },
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ " =?us-ascii?q?base64?=\n", sizeof (" =?us-ascii?q?base64?=\n") - 1,
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ " base64\rignored\n", sizeof (" base64\rignored\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
+		{ " ba\rse64\n", sizeof (" ba\rse64\n") - 1, GMIME_CONTENT_ENCODING_UNSPECIFIED },
 	};
 	guint i, mode;
 

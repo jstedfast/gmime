@@ -179,7 +179,8 @@ mailbox_equal (GMimeInternetAddress *ia, GMimeInternetAddress *other)
 static gboolean
 parse_mailbox_addr (const char *addr, char **parsed, int *at, GError **error)
 {
-	const char *inptr = addr;
+	gsize length = strlen (addr);
+	const char *inptr = addr, *end = addr + length;
 
 	*parsed = NULL;
 	*at = -1;
@@ -189,9 +190,9 @@ parse_mailbox_addr (const char *addr, char **parsed, int *at, GError **error)
 		return TRUE;
 	}
 
-	if (strlen (addr) <= G_MAXINT && g_utf8_validate (addr, -1, NULL) &&
-	    _g_mime_internet_address_parse_addrspec (&inptr, "", g_mime_parser_options_get_address_compliance_mode (NULL), parsed, at) &&
-	    skip_cfws (&inptr) && !*inptr)
+	if (length <= G_MAXINT && g_utf8_validate (addr, length, NULL) &&
+	    _g_mime_internet_address_parse_addrspec (&inptr, end, "", g_mime_parser_options_get_address_compliance_mode (NULL), parsed, at) &&
+	    skip_cfws (&inptr, end) && inptr == end)
 		return TRUE;
 
 	g_clear_pointer (parsed, g_free);
@@ -484,7 +485,7 @@ convert_addrspec (const char *addr, gboolean encode)
 
 	g_return_val_if_fail (addr != NULL, NULL);
 
-	if (!*addr || !_g_mime_internet_address_parse_addrspec (&inptr, "", GMIME_RFC_COMPLIANCE_LOOSER, &parsed, &at))
+	if (!*addr || !_g_mime_internet_address_parse_addrspec (&inptr, addr + strlen (addr), "", GMIME_RFC_COMPLIANCE_LOOSER, &parsed, &at))
 		return g_strdup (addr);
 
 	if (at < 0)

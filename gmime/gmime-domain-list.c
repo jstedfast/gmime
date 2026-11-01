@@ -317,7 +317,7 @@ g_mime_domain_list_to_string (GMimeDomainList *list, GMimeFormatOptions *options
 		domain = list->array->pdata[i];
 
 		p = domain;
-		skip_lwsp (&p);
+		skip_lwsp (&p, domain + strlen (domain));
 
 		if (!*p)
 			continue;
@@ -342,6 +342,8 @@ g_mime_domain_list_to_string (GMimeDomainList *list, GMimeFormatOptions *options
  *
  * Parses a complete domain list, allowing comments and empty comma entries.
  * Unlike mailbox source-route syntax, @str must not include a trailing colon.
+ * Explicitly bounded input need not be NUL-terminated but cannot contain
+ * embedded NUL bytes.
  *
  * Returns: (nullable) (transfer full): the domains, or %NULL on error.
  **/
@@ -349,20 +351,18 @@ GMimeDomainList *
 g_mime_domain_list_parse (const char *str, gssize length, GError **error)
 {
 	GMimeDomainList *list;
-	const char *inptr;
-	char *copy;
+	const char *inptr, *end;
 
-	copy = _g_mime_internet_address_copy_text (str, length, error);
-	if (!copy)
+	if (!_g_mime_internet_address_validate_text (str, &length, error))
 		return NULL;
-	inptr = copy;
-	list = _g_mime_domain_list_parse (&inptr);
-	if (!list || !skip_cfws (&inptr) || *inptr) {
+	inptr = str;
+	end = str + length;
+	list = _g_mime_domain_list_parse (&inptr, end);
+	if (!list || !skip_cfws (&inptr, end) || inptr != end) {
 		g_clear_object (&list);
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-			     "Invalid domain list at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - copy));
+			     "Invalid domain list at byte offset %" G_GSIZE_FORMAT ".", (gsize) (inptr - str));
 	}
-	g_free (copy);
 
 	return list;
 }

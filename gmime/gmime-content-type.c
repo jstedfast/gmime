@@ -177,7 +177,9 @@ g_mime_content_type_new (const char *type, const char *subtype)
 GMimeContentType *
 g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 {
-	return _g_mime_content_type_parse (options, str, -1);
+	g_return_val_if_fail (str != NULL, NULL);
+
+	return _g_mime_content_type_parse (options, str, strlen (str), -1);
 }
 
 /**
@@ -203,36 +205,41 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 GMimeContentType *
 g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error)
 {
-	return _g_mime_content_type_parse_full (options, str, length, NULL, error);
-}
-
-GMimeContentType *
-_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length,
-			       gboolean *invalid_media_type, GError **error)
-{
-	GMimeContentType *content_type = NULL;
-	const char *inptr, *type, *type_end, *subtype, *subtype_end;
-	GMimeParamList *params;
-	char *text;
-
 	g_return_val_if_fail (str != NULL, NULL);
 	g_return_val_if_fail (length >= -1, NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	/* Input validation failures are not necessarily media-type errors. */
-	if (invalid_media_type)
-		*invalid_media_type = FALSE;
-	if (!(text = _g_mime_parse_text (str, length, error)))
+	if (!_g_mime_parse_validate_text (str, &length, error))
 		return NULL;
+
+	return _g_mime_content_type_parse_full (options, str, length, NULL, error);
+}
+
+/* Raw headers may contain NULs in parameter values; the public wrapper rejects them. */
+GMimeContentType *
+_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gsize length,
+			       gboolean *invalid_media_type, GError **error)
+{
+	GMimeContentType *content_type = NULL;
+	const char *inptr, *inend, *type, *type_end, *subtype, *subtype_end;
+	GMimeParamList *params;
+	const char *text = str;
+
+	g_return_val_if_fail (str != NULL, NULL);
+	g_return_val_if_fail (length <= G_MAXINT, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
 	if (invalid_media_type)
 		*invalid_media_type = TRUE;
+
 	inptr = text;
-	if (!_g_mime_parse_cfws (text, &inptr, error))
+	inend = text + length;
+
+	if (!_g_mime_parse_cfws (text, &inptr, inend, error))
 		goto done;
 
 	type = inptr;
-	while ((guchar) *inptr < 128 && is_atom (*inptr) && *inptr != '/')
+	while (inptr < inend && (guchar) *inptr < 128 && is_atom (*inptr) && *inptr != '/')
 		inptr++;
 
 	if (inptr == type) {
@@ -241,20 +248,20 @@ _g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, g
 	}
 
 	type_end = inptr;
-	if (!_g_mime_parse_cfws (text, &inptr, error))
+	if (!_g_mime_parse_cfws (text, &inptr, inend, error))
 		goto done;
 
-	if (*inptr != '/') {
+	if (inptr == inend || *inptr != '/') {
 		_g_mime_parse_error (error, text, inptr, "Expected media type slash");
 		goto done;
 	}
 
 	inptr++;
-	if (!_g_mime_parse_cfws (text, &inptr, error))
+	if (!_g_mime_parse_cfws (text, &inptr, inend, error))
 		goto done;
 
 	subtype = inptr;
-	while ((guchar) *inptr < 127 && (is_ttoken (*inptr) || *inptr == '/'))
+	while (inptr < inend && (guchar) *inptr < 127 && (is_ttoken (*inptr) || *inptr == '/'))
 		inptr++;
 
 	if (inptr == subtype) {
@@ -263,20 +270,20 @@ _g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, g
 	}
 
 	subtype_end = inptr;
-	if (!_g_mime_parse_cfws (text, &inptr, error))
+	if (!_g_mime_parse_cfws (text, &inptr, inend, error))
 		goto done;
 
-	if (*inptr && *inptr != ';') {
+	if (inptr < inend && *inptr != ';') {
 		_g_mime_parse_error (error, text, inptr, "Expected parameter list separator");
 		goto done;
 	}
 
 	if (invalid_media_type)
 		*invalid_media_type = FALSE;
-	if (*inptr)
+	if (inptr < inend)
 		inptr++;
 
-	if (!(params = _g_mime_param_list_parse_full (options, text, inptr, error)))
+	if (!(params = _g_mime_param_list_parse_full (options, text, inptr, inend, error)))
 		goto done;
 
 	content_type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
@@ -287,22 +294,38 @@ _g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, g
 	content_type->params = params;
 
 done:
-	g_free (text);
 	return content_type;
 }
 
+static void
+warn_invalid_content_type (GMimeParserOptions *options, const char *str, gsize length, gint64 offset)
+{
+	char *text;
+
+	if (!g_mime_parser_options_get_warning_callback (options))
+		return;
+
+	text = g_strndup (str, length);
+	_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_CONTENT_TYPE, text);
+	g_free (text);
+}
+
 GMimeContentType *
-_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64 offset)
+_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset)
 {
 	GMimeContentType *content_type;
 	const char *inptr = str;
+	const char *inend;
 	GMimeParamList *params;
 	char *type, *subtype;
 	
 	g_return_val_if_fail (str != NULL, NULL);
+	g_return_val_if_fail (length <= G_MAXINT, NULL);
+
+	inend = str + length;
 	
-	if (!g_mime_parse_content_type (&inptr, &type, &subtype)) {
-		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_CONTENT_TYPE, str);
+	if (!g_mime_parse_content_type (&inptr, inend, &type, &subtype)) {
+		warn_invalid_content_type (options, str, length, offset);
 		return g_mime_content_type_new ("application", "octet-stream");
 	}
 	
@@ -311,14 +334,15 @@ _g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64
 	content_type->type = type;
 	
 	/* skip past any remaining junk that shouldn't be here... */
-	skip_cfws (&inptr);
-	if (*inptr && *inptr != ';') {
-		_g_mime_parser_options_warn (options, offset, GMIME_WARN_INVALID_CONTENT_TYPE, str);
-		while (*inptr && *inptr != ';')
+	skip_cfws (&inptr, inend);
+	if (inptr < inend && *inptr != ';') {
+		warn_invalid_content_type (options, str, length, offset);
+		while (inptr < inend && *inptr != ';')
 			inptr++;
 	}
 	
-	if (*inptr++ == ';' && *inptr && (params = _g_mime_param_list_parse (options, inptr, offset))) {
+	if (inptr < inend && *inptr++ == ';' && inptr < inend &&
+	    (params = _g_mime_param_list_parse (options, inptr, inend - inptr, offset))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
 		g_object_unref (content_type->params);
 		content_type->params = params;

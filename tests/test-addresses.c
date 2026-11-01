@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <gmime/gmime-object-private.h>
+#include <gmime/gmime-parse-utils.h>
 #include <gmime/gmime.h>
 
 #include "testsuite.h"
@@ -624,6 +625,201 @@ test_parsing (void)
 }
 
 static void
+collect_parse_warning (gint64 offset, GMimeParserWarning code, const char *item, gpointer user_data)
+{
+	g_string_append_printf (user_data, "%" G_GINT64_FORMAT ":%d:%s\n", offset, code, item ? item : "");
+}
+
+static void
+check_slice_result (char *actual, char *expected, GError **error, GError **expected_error,
+		    GString *warnings, const char *expected_warnings)
+{
+	check_string (actual, expected, "bounded parsing matches terminated input");
+	check ((*error != NULL) == (*expected_error != NULL), "bounded parsing preserves error status");
+	if (*error && *expected_error) {
+		check ((*error)->domain == (*expected_error)->domain && (*error)->code == (*expected_error)->code &&
+		       !strcmp ((*error)->message, (*expected_error)->message), "bounded parsing preserves error offsets");
+	}
+	check (!strcmp (warnings->str, expected_warnings), "bounded parsing preserves terminated warning text");
+	g_clear_error (expected_error);
+	g_clear_error (error);
+	g_free (expected);
+}
+
+static void
+test_bounded_parsing (void)
+{
+	static const char *inputs[] = {
+		"a@b", "a@b.", "a@[127.0.0.1]", "a@[", "a@ \t", "a\\@b..@example.com",
+		"\"a\\\"b\"@example.com", "\"a\\", "(nested (comment)) a@b (tail)",
+		"local (Display Name)", "<@one,,@two:a@host>", "<<a@b>>",
+		"Team: a@b, Nested: c@d;;", "Team:;", "a@b, @bad, c@d",
+		"\"Display \303\251\" <a@b>", "\377@b", "@one,,@two.", "\"",
+		" ", "a (unterminated\\", "=?utf-8?q?Name?= <a@b>"
+	};
+	static GMimeInternetAddress *(*parsers[]) (GMimeParserOptions *, const char *, gssize, GError **) = {
+		g_mime_internet_address_parse, g_mime_mailbox_address_parse, g_mime_group_address_parse
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GString *warnings = g_string_new (NULL);
+	GError *error = NULL, *expected_error = NULL;
+	GMimeInternetAddressList *list;
+	GMimeInternetAddress *address;
+	GMimeDomainList *domains;
+	char *allocation, *slice, *terminated, *expected, *actual, *expected_warnings;
+	gsize length;
+	guint i, mode, parser;
+
+	g_mime_parser_options_set_warning_callback (options, collect_parse_warning, warnings);
+	for (mode = 0; mode < 3; mode++) {
+		g_mime_parser_options_set_address_compliance_mode (options, mode == 0 ?
+			GMIME_RFC_COMPLIANCE_STRICT : mode == 1 ? GMIME_RFC_COMPLIANCE_LOOSE : GMIME_RFC_COMPLIANCE_LOOSER);
+		for (i = 0; i < G_N_ELEMENTS (inputs); i++) {
+			for (length = 0; length <= strlen (inputs[i]); length++) {
+				/* Every slice ends at its allocation boundary, including the empty slice. */
+				allocation = g_malloc (MAX (length, 1));
+				slice = length ? allocation : allocation + 1;
+				memcpy (slice, inputs[i], length);
+				terminated = g_strndup (inputs[i], length);
+
+				g_string_truncate (warnings, 0);
+				list = g_mime_internet_address_list_parse_full (options, terminated, -1, &expected_error);
+				expected = list ? g_mime_internet_address_list_to_string (list, NULL, FALSE) : NULL;
+				g_clear_object (&list);
+				expected_warnings = g_strdup (warnings->str);
+				g_string_truncate (warnings, 0);
+				list = g_mime_internet_address_list_parse_full (options, slice, length, &error);
+				actual = list ? g_mime_internet_address_list_to_string (list, NULL, FALSE) : NULL;
+				g_clear_object (&list);
+				check_slice_result (actual, expected, &error, &expected_error, warnings, expected_warnings);
+				g_free (expected_warnings);
+
+				for (parser = 0; parser < G_N_ELEMENTS (parsers); parser++) {
+					g_string_truncate (warnings, 0);
+					address = parsers[parser] (options, terminated, -1, &expected_error);
+					expected = address ? g_mime_internet_address_to_string (address, NULL, FALSE) : NULL;
+					g_clear_object (&address);
+					expected_warnings = g_strdup (warnings->str);
+					g_string_truncate (warnings, 0);
+					address = parsers[parser] (options, slice, length, &error);
+					actual = address ? g_mime_internet_address_to_string (address, NULL, FALSE) : NULL;
+					g_clear_object (&address);
+					check_slice_result (actual, expected, &error, &expected_error, warnings, expected_warnings);
+					g_free (expected_warnings);
+				}
+
+				g_string_truncate (warnings, 0);
+				domains = g_mime_domain_list_parse (terminated, -1, &expected_error);
+				expected = domains ? g_mime_domain_list_to_string (domains, NULL, FALSE) : NULL;
+				g_clear_object (&domains);
+				domains = g_mime_domain_list_parse (slice, length, &error);
+				actual = domains ? g_mime_domain_list_to_string (domains, NULL, FALSE) : NULL;
+				g_clear_object (&domains);
+				check_slice_result (actual, expected, &error, &expected_error, warnings, "");
+				g_free (terminated);
+				g_free (allocation);
+			}
+		}
+	}
+	g_mime_parser_options_unref (options);
+	g_string_free (warnings, TRUE);
+}
+
+static void
+test_bounded_helpers (void)
+{
+	static const struct {
+		gboolean (*skip) (const char **in, const char *end);
+		const char *text;
+		gsize length, consumed;
+		gboolean valid;
+	} cases[] = {
+		{ g_mime_skip_comment, "", 0, 0, FALSE },
+		{ g_mime_skip_comment, "(a\0b)", 5, 5, TRUE },
+		{ g_mime_skip_comment, "(a\\)", 4, 4, FALSE },
+		{ g_mime_skip_comment, "(a\\", 3, 3, FALSE },
+		{ g_mime_skip_quoted, "", 0, 0, FALSE },
+		{ g_mime_skip_quoted, "\"a\0b\"", 5, 5, TRUE },
+		{ g_mime_skip_quoted, "\"a\\", 3, 3, FALSE },
+		{ g_mime_skip_cfws, " (a\0b)", 6, 6, TRUE },
+		{ g_mime_skip_cfws, " (", 2, 0, FALSE },
+		{ g_mime_skip_cfws, "", 0, 0, TRUE },
+		{ g_mime_skip_lwsp, " \t", 2, 2, TRUE },
+		{ g_mime_skip_lwsp, " \0 ", 3, 1, TRUE },
+		{ g_mime_skip_atom, "atom", 4, 4, TRUE },
+		{ g_mime_skip_atom, "", 0, 0, FALSE },
+		{ g_mime_skip_word, "", 0, 0, FALSE },
+		{ g_mime_skip_word, "\"a\"", 3, 3, TRUE }
+	};
+#define ID_SLICE(text) { text, sizeof (text) - 1 }
+	static const struct {
+		const char *text;
+		gsize length;
+	} ids[] = {
+		ID_SLICE ("<a@b>"), ID_SLICE ("(c) <a@[127.0.0.1]>"), ID_SLICE ("\"a b\"@c"),
+		ID_SLICE ("<a@@b@c>"), ID_SLICE ("junk <a@b> <c@d>"),
+		ID_SLICE ("<a\0b@ho\0st>"), ID_SLICE ("<\"a\\\0b\"@[127.\0.1]>"),
+		ID_SLICE ("(c\0) <a@b>\0<c@d>"), ID_SLICE ("<a\0\377@b> <c@d>"),
+		ID_SLICE ("<\"a\\"), ID_SLICE ("<a@(c\\"), ID_SLICE ("<a@\0.>")
+	};
+#undef ID_SLICE
+	char *allocation, *text, *terminated, *expected, *actual;
+	const char *p, *q;
+	gint32 value;
+	gsize length;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		length = cases[i].length;
+		allocation = g_malloc (MAX (length, 1));
+		text = length ? allocation : allocation + 1;
+		memcpy (text, cases[i].text, length);
+		p = text;
+		check (cases[i].skip (&p, text + length) == cases[i].valid && p == text + cases[i].consumed,
+		       "shared scanner honors its bound and does not mistake NUL for end of input");
+		g_free (allocation);
+	}
+
+	for (i = 0; i < G_N_ELEMENTS (ids); i++) {
+		for (length = 0; length <= ids[i].length; length++) {
+			allocation = g_malloc (MAX (length, 1));
+			text = length ? allocation : allocation + 1;
+			memcpy (text, ids[i].text, length);
+			terminated = g_malloc (length + 1);
+			memcpy (terminated, ids[i].text, length);
+			terminated[length] = '\0';
+			p = text;
+			q = terminated;
+			expected = g_mime_decode_msgid (&q, terminated + length);
+			actual = g_mime_decode_msgid (&p, text + length);
+			check_string (actual, expected, "bounded message-id helper matches terminated input");
+			check (p - text == q - terminated, "bounded message-id helper preserves consumed length");
+			g_free (expected);
+			p = text;
+			do {
+				actual = _g_mime_parse_reference (&p, text + length);
+				check (p >= text && p <= text + length, "reference scanning stays within the slice");
+				if (!actual)
+					break;
+				g_free (actual);
+			} while (p < text + length);
+			g_free (terminated);
+			g_free (allocation);
+		}
+	}
+	text = g_memdup2 ("2147483647", 10);
+	p = text;
+	check (_g_mime_parse_int32 (&p, text + 10, &value) && value == G_MAXINT32 && p == text + 10,
+	       "bounded integer accepts Int32 maximum without a terminator");
+	check (!_g_mime_parse_int32 (&p, text + 10, &value), "bounded integer rejects an empty slice");
+	g_free (text);
+	text = g_memdup2 ("2147483648", 10);
+	p = text;
+	check (!_g_mime_parse_int32 (&p, text + 10, &value), "bounded integer rejects overflow");
+	g_free (text);
+}
+
+static void
 test_international_formatting (void)
 {
 	GMimeFormatOptions *options = g_mime_format_options_new ();
@@ -762,6 +958,155 @@ test_header_recovery (void)
 	g_mime_parser_options_unref (options);
 }
 
+#define RAW_ADDRESS(text, name, addr) { text, sizeof (text) - 1, name, addr }
+
+static void
+test_raw_address_tokens (void)
+{
+	static const struct {
+		const char *text;
+		gsize length;
+		const char *name, *addrspec;
+	} cases[] = {
+		RAW_ADDRESS ("To: Andr\351\0 Smith <a@b>\n\n", "Andr\303\251\357\277\275 Smith", "a@b"),
+		RAW_ADDRESS ("To: \"Andr\351\\\0 Smith\" <a@b>\n\n", "Andr\303\251\357\277\275 Smith", "a@b"),
+		RAW_ADDRESS ("To: a@b (Andr\351\0 Smith)\n\n", "Andr\303\251\357\277\275 Smith", "a@b"),
+		RAW_ADDRESS ("To: a@[127.\0.0.1]\n\n", "", "a@[127.\357\277\275.0.1]"),
+		RAW_ADDRESS ("To: \0a\0@\0b\0\n\n", "", "\357\277\275a\357\277\275@\357\277\275b\357\277\275"),
+		RAW_ADDRESS ("To: a@\0\0b (comment\0)\n\n", "comment\357\277\275", "a@\357\277\275\357\277\275b"),
+		RAW_ADDRESS ("To: (comment\0) a@b, next@c\n\n", "", "a@b"),
+		RAW_ADDRESS ("To: =?utf-8?q?A=00B?= <a@b>\n\n", "A\357\277\275B", "a@b"),
+		RAW_ADDRESS ("To: \351\0@b\n\n", "", "\303\251\357\277\275@b")
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeInternetAddressList *list;
+	GMimeInternetAddress *address;
+	GMimeStream *stream, *output;
+	GMimeParser *parser;
+	GMimeMessage *message;
+	GByteArray *bytes;
+	GError *error = NULL;
+	guint i, mode;
+
+	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "iso-8859-1", &error));
+	for (mode = 0; mode < 3; mode++) {
+		g_mime_parser_options_set_address_compliance_mode (options, mode == 0 ?
+			GMIME_RFC_COMPLIANCE_STRICT : mode == 1 ? GMIME_RFC_COMPLIANCE_LOOSE : GMIME_RFC_COMPLIANCE_LOOSER);
+		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+			stream = g_mime_stream_mem_new_with_buffer (cases[i].text, cases[i].length);
+			parser = g_mime_parser_new_with_stream (stream);
+			message = g_mime_parser_construct_message (parser, options, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			list = g_mime_message_get_to (message);
+			if (mode == 0 && i == G_N_ELEMENTS (cases) - 1) {
+				check (g_mime_internet_address_list_length (list) == 0,
+				       "strict raw parsing still rejects non-UTF-8 local parts");
+			} else {
+				g_assert_cmpint (g_mime_internet_address_list_length (list), >, 0);
+				address = g_mime_internet_address_list_get_address (list, 0);
+				check (!g_strcmp0 (g_mime_internet_address_get_name (address), cases[i].name),
+				       "raw display-name decoding replaces NUL after charset conversion");
+				check (!g_strcmp0 (g_mime_mailbox_address_get_addrspec (GMIME_MAILBOX_ADDRESS (address)),
+						  cases[i].addrspec), "raw addr-spec decoding replaces NUL without truncation");
+			}
+			output = g_mime_stream_mem_new ();
+			g_assert_cmpint (g_mime_entity_write_to_stream (GMIME_ENTITY (message), NULL, output), >=, 0);
+			bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+			g_assert_cmpmem (bytes->data, bytes->len, cases[i].text, cases[i].length);
+			g_object_unref (output);
+			g_object_unref (message);
+			g_object_unref (parser);
+			g_object_unref (stream);
+
+			if (memchr (cases[i].text, 0, cases[i].length)) {
+				list = g_mime_internet_address_list_parse_full (options, cases[i].text + 4, cases[i].length - 4, &error);
+				check (list == NULL && error != NULL, "checked parsing continues to reject raw NUL bytes");
+				g_clear_object (&list);
+				g_clear_error (&error);
+			}
+		}
+	}
+	g_mime_parser_options_unref (options);
+}
+
+#undef RAW_ADDRESS
+
+static void
+test_raw_address_nuls (void)
+{
+	static const char input[] =
+		"To: A\0B <lo\0cal@exa\0mple.com>, next@example.com\r\n"
+		"To: Group\0: \"qu\0oted\"@example.com;\r\n"
+		"\r\n";
+	static const char replacement[] = " Changed\0Name <new\0local@example.com>, last@example.com\r\n";
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	GMimeInternetAddressList *list, *members;
+	GMimeInternetAddress *address;
+	GMimeStream *stream, *output;
+	GMimeParser *parser;
+	GMimeMessage *message;
+	GMimeHeader *header;
+	GByteArray *bytes;
+	GBytes *raw, *after;
+	GError *error = NULL;
+	guint mode;
+
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_DOS);
+	for (mode = 0; mode < 3; mode++) {
+		g_mime_parser_options_set_address_compliance_mode (options, mode == 0 ?
+			GMIME_RFC_COMPLIANCE_STRICT : mode == 1 ? GMIME_RFC_COMPLIANCE_LOOSE : GMIME_RFC_COMPLIANCE_LOOSER);
+		stream = g_mime_stream_mem_new_with_buffer (input, sizeof (input) - 1);
+		parser = g_mime_parser_new_with_stream (stream);
+		message = g_mime_parser_construct_message (parser, options, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		list = g_mime_message_get_to (message);
+		g_assert_cmpint (g_mime_internet_address_list_length (list), ==, 3);
+		address = g_mime_internet_address_list_get_address (list, 0);
+		g_assert_cmpstr (g_mime_internet_address_get_name (address), ==, "A\357\277\275B");
+		g_assert_cmpstr (g_mime_mailbox_address_get_addrspec (GMIME_MAILBOX_ADDRESS (address)),
+				==, "lo\357\277\275cal@exa\357\277\275mple.com");
+		address = g_mime_internet_address_list_get_address (list, 1);
+		g_assert_cmpstr (g_mime_mailbox_address_get_addrspec (GMIME_MAILBOX_ADDRESS (address)), ==, "next@example.com");
+		address = g_mime_internet_address_list_get_address (list, 2);
+		g_assert_true (GMIME_IS_GROUP_ADDRESS (address));
+		g_assert_cmpstr (g_mime_internet_address_get_name (address), ==, "Group\357\277\275");
+		members = g_mime_group_address_get_members (GMIME_GROUP_ADDRESS (address));
+		g_assert_cmpint (g_mime_internet_address_list_length (members), ==, 1);
+		address = g_mime_internet_address_list_get_address (members, 0);
+		g_assert_cmpstr (g_mime_mailbox_address_get_addrspec (GMIME_MAILBOX_ADDRESS (address)),
+				==, "\"qu\357\277\275oted\"@example.com");
+
+		output = g_mime_stream_mem_new ();
+		g_assert_cmpint (g_mime_entity_write_to_stream (GMIME_ENTITY (message), format, output), >=, 0);
+		bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+		g_assert_cmpmem (bytes->data, bytes->len, input, sizeof (input) - 1);
+		g_object_unref (output);
+
+		header = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (message)), "To");
+		raw = g_bytes_new_static (replacement, sizeof (replacement) - 1);
+		g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+		g_assert_no_error (error);
+		list = g_mime_message_get_to (message);
+		g_assert_cmpint (g_mime_internet_address_list_length (list), ==, 3);
+		address = g_mime_internet_address_list_get_address (list, 0);
+		g_assert_cmpstr (g_mime_internet_address_get_name (address), ==, "Changed\357\277\275Name");
+		g_assert_cmpstr (g_mime_mailbox_address_get_addrspec (GMIME_MAILBOX_ADDRESS (address)),
+				==, "new\357\277\275local@example.com");
+		after = g_mime_header_get_raw_value (header);
+		g_assert_true (g_bytes_equal (raw, after));
+		g_bytes_unref (after);
+		g_bytes_unref (raw);
+		g_object_unref (message);
+		g_object_unref (parser);
+		g_object_unref (stream);
+	}
+	g_mime_parser_options_unref (options);
+	g_mime_format_options_unref (format);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -776,9 +1121,13 @@ main (int argc, char **argv)
 	test_ordering ();
 	test_collections ();
 	test_parsing ();
+	test_bounded_parsing ();
+	test_bounded_helpers ();
 	test_international_formatting ();
 	test_notifications ();
 	test_header_recovery ();
+	test_raw_address_nuls ();
+	test_raw_address_tokens ();
 	testsuite_end ();
 	g_mime_shutdown ();
 

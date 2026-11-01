@@ -151,6 +151,146 @@ test_ah_generation (void)
 
 
 static void
+test_ah_attribute_parsing (void)
+{
+	static const struct {
+		const char *text, *decoded;
+		gboolean mutual;
+	} cases[] = {
+		{ "addr=alice@example.org; keydata=YWJj", "abc", FALSE },
+		{ " KEYDATA=YWJj ; ADDR=alice@example.org ; PREFER-ENCRYPT=MUTUAL ", "abc", TRUE },
+		{ "\faddr=alice@example.org;\tkeydata=Y W\r\n\tJj\f", "abc", FALSE },
+		{ "\vaddr=alice@example.org; keydata=YWJj", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YW\vJj", "abc", FALSE },
+		{ "addr=alice@example.org; keydata=YW!Jj; _extension=ignored; _extension=again", "abc", FALSE },
+		{ "addr=alice@example.org; keydata=YW\357\277\275Jj; _", "abc", FALSE },
+		{ "addr=alice@example.org; keydata=; prefer-encrypt=mutual", "", TRUE },
+		{ "addr=alice@example.org; keydata=YQ==", "a", FALSE },
+		{ "addr=alice@example.org; keydata=YWI=", "ab", FALSE },
+		{ "addr=alice@example.org; keydata=Y", "", FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt= mutual", "abc", FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt=mutual-extra", "abc", FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt=", "abc", FALSE },
+		{ "", NULL, FALSE },
+		{ "addr", NULL, FALSE },
+		{ "addr=alice@example.org", NULL, FALSE },
+		{ "keydata=YWJj", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YWJj;", NULL, FALSE },
+		{ ";addr=alice@example.org; keydata=YWJj", NULL, FALSE },
+		{ "addr=alice@example.org;; keydata=YWJj", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; unknown=value", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; addr=alice@example.org", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; KEYDATA=", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt=; prefer-encrypt=mutual", NULL, FALSE },
+		{ "addr=alice@example.org; keydata =YWJj", NULL, FALSE },
+		{ "addr=<alice@example.org>; keydata=YWJj", NULL, FALSE }
+	};
+	guint i;
+
+	g_assert_null (g_mime_autocrypt_header_new_from_string (NULL));
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GMimeAutocryptHeader *ah;
+		const char *data;
+		gsize length;
+		char *text = g_strdup (cases[i].text);
+
+		testsuite_check ("Autocrypt attribute parsing [%u]", i);
+		ah = g_mime_autocrypt_header_new_from_string (text);
+		g_assert_cmpstr (text, ==, cases[i].text);
+		g_free (text);
+		if (cases[i].decoded) {
+			g_assert_nonnull (ah);
+			g_assert_cmpstr (g_mime_autocrypt_header_get_address_as_string (ah), ==, "alice@example.org");
+			g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (ah), ==,
+					cases[i].mutual ? GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL : GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE);
+			data = g_bytes_get_data (g_mime_autocrypt_header_get_keydata (ah), &length);
+			g_assert_cmpmem (data, length, cases[i].decoded, strlen (cases[i].decoded));
+		} else {
+			g_assert_null (ah);
+		}
+		g_clear_object (&ah);
+		testsuite_check_passed ();
+	}
+}
+
+static void
+test_ah_decoded_headers (void)
+{
+	static const struct {
+		const char *text;
+		gsize length;
+		gboolean valid;
+	} cases[] = {
+#define RAW(text, valid) { text, sizeof (text) - 1, valid }
+		RAW (" addr=alice@example.org;\n\tkeydata=YWJj; prefer-encrypt=mutual\n", TRUE),
+		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B?=\n"
+		     "\t=?us-ascii?q?_keydata=3DYWJj=3B_prefer-encrypt=3Dmutual?=\n", TRUE),
+		RAW (" addr=alice@example.org; keydata=YW\0Jj; prefer-encrypt=mutual\n", TRUE),
+		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B?=\n"
+		     "\t=?us-ascii?q?_keydata=3DYW=00Jj=3B_prefer-encrypt=3Dmutual?=\n", TRUE),
+		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B_keydata=3DYWJj=3B_bad=3D1?=\n", FALSE),
+		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B_keydata=3DYWJj=3B?=\n"
+		     "\t=?us-ascii?q?_addr=3Dalice=40example.org?=\n", FALSE),
+		RAW (" addr=alice@example.org; keydata=YW\0Jj; bad=1\n", FALSE)
+#undef RAW
+	};
+	GDateTime *now = g_date_time_new_utc (2025, 1, 1, 0, 0, 0);
+	guint i, gossip;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (gossip = 0; gossip < 2; gossip++) {
+			GMimeMessage *message = g_mime_message_new (FALSE);
+			GMimePart *part = g_mime_part_new ();
+			GMimeEntity *entity = gossip ? GMIME_ENTITY (part) : GMIME_ENTITY (message);
+			const char *name = gossip ? "Autocrypt-Gossip" : "Autocrypt";
+			GMimeAutocryptHeaderList *list = NULL;
+			GMimeAutocryptHeader *ah = NULL;
+			GMimeHeader *header;
+			GBytes *raw, *after;
+			GError *error = NULL;
+
+			testsuite_check ("Decoded %s header [%u]", name, i);
+			g_mime_entity_set_header (GMIME_ENTITY (message), "From", "alice@example.org", NULL);
+			g_mime_entity_set_header (GMIME_ENTITY (message), "To", "alice@example.org", NULL);
+			g_mime_entity_set_header (entity, name, "", NULL);
+			header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), name);
+			raw = g_bytes_new_take (g_memdup2 (cases[i].text, cases[i].length), cases[i].length);
+			g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+			g_assert_no_error (error);
+
+			if (gossip) {
+				list = g_mime_message_get_autocrypt_gossip_headers_from_inner_part (message, now, entity);
+				g_assert_nonnull (list);
+				g_assert_cmpint (g_mime_autocrypt_header_list_get_count (list), ==, cases[i].valid ? 1 : 0);
+				if (cases[i].valid)
+					ah = g_object_ref (g_mime_autocrypt_header_list_get_header_at (list, 0));
+			} else {
+				ah = g_mime_message_get_autocrypt_header (message, now);
+				g_assert_nonnull (ah);
+				g_assert_cmpint (g_mime_autocrypt_header_is_complete (ah), ==, cases[i].valid);
+			}
+			if (cases[i].valid) {
+				gsize length;
+				const char *data = g_bytes_get_data (g_mime_autocrypt_header_get_keydata (ah), &length);
+
+				g_assert_cmpmem (data, length, "abc", 3);
+				g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (ah), ==, GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL);
+			}
+			after = g_mime_header_get_raw_value (header);
+			g_assert_true (g_bytes_equal (raw, after));
+			g_bytes_unref (after);
+			g_bytes_unref (raw);
+			g_clear_object (&ah);
+			g_clear_object (&list);
+			g_object_unref (part);
+			g_object_unref (message);
+			testsuite_check_passed ();
+		}
+	}
+	g_date_time_unref (now);
+}
+
+static void
 test_ah_idn_addresses (void)
 {
 	const struct _ah_gen_test unicode = {
@@ -1131,6 +1271,7 @@ int main (int argc, char **argv)
 	testsuite_start ("Autocrypt: generate headers");
 	test_ah_generation ();
 	test_ah_idn_addresses ();
+	test_ah_attribute_parsing ();
 	testsuite_end ();
 	
 #ifdef ENABLE_CRYPTO
@@ -1141,6 +1282,7 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("Autocrypt: parse messages");
 	test_ah_message_parse ();
+	test_ah_decoded_headers ();
 	testsuite_end ();
 	
 #ifdef ENABLE_CRYPTO

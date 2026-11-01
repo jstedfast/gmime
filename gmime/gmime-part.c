@@ -680,10 +680,10 @@ g_mime_part_set_content_duration (GMimePart *mime_part, int duration)
  * @mime_part: a #GMimePart
  *
  * Gets the duration in seconds from the first Content-Duration header.
- * After header decoding, only a complete nonnegative decimal Int32 value
+ * Only a complete nonnegative decimal Int32 value in the raw header
  * with optional surrounding ASCII linear whitespace is accepted. Signs,
  * comments, fractions, and overflow are invalid; an invalid first header
- * does not fall back to duplicates.
+ * does not fall back to duplicates. RFC 2047 encoded words are not decoded.
  * Reads preserve raw headers. Matching header changes invalidate the cache.
  *
  * Returns: the duration in seconds, or -1 if the header is missing or invalid.
@@ -693,7 +693,8 @@ g_mime_part_get_content_duration (GMimePart *mime_part)
 {
 	GMimePartPrivate *priv;
 	GMimeHeader *header;
-	const char *value;
+	const char *value, *end;
+	gsize length;
 	gint32 duration;
 
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), -1);
@@ -706,13 +707,18 @@ g_mime_part_get_content_duration (GMimePart *mime_part)
 		header = g_mime_header_list_get_header (entity_priv->headers, "Content-Duration");
 		priv->content_duration = -1;
 
-		if (header && (value = g_mime_header_get_value (header))) {
-			skip_lwsp (&value);
+		if (header && header->raw_value) {
+			value = g_bytes_get_data (header->raw_value, &length);
+			if (!value)
+				value = "";
+			end = value + length;
 
-			if (_g_mime_parse_int32 (&value, &duration)) {
-				skip_lwsp (&value);
+			skip_lwsp (&value, end);
 
-				if (!*value)
+			if (_g_mime_parse_int32 (&value, end, &duration)) {
+				skip_lwsp (&value, end);
+
+				if (value == end)
 					priv->content_duration = duration;
 			}
 		}
@@ -1080,7 +1086,8 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
  * without rewriting raw headers. A missing or unrecognized first value
  * returns %GMIME_CONTENT_ENCODING_UNSPECIFIED, without falling back to
  * later duplicates. Matching header edits invalidate the lazy cache.
- * The legacy 7-bit and 8-bit aliases remain supported.
+ * The raw value is parsed without RFC 2047 decoding. The legacy 7-bit and
+ * 8-bit aliases remain supported.
  *
  * Returns: the content encoding for the specified mime part.
  **/

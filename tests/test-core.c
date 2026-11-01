@@ -1703,6 +1703,110 @@ test_message_id_parsing (void)
 }
 
 static void
+check_raw_message_ids (GMimeMessage *message, const char *single, const char *reference)
+{
+	GMimeMessageIdList *refs = g_mime_message_get_references (message);
+
+	check (!g_strcmp0 (g_mime_message_get_message_id (message), single),
+	       "Message-ID parses complete raw bytes");
+	check (!g_strcmp0 (g_mime_message_get_resent_message_id (message), single),
+	       "Resent-Message-ID parses complete raw bytes");
+	check (!g_strcmp0 (g_mime_entity_get_content_id (g_mime_message_get_mime_part (message)), single),
+	       "Content-ID parses raw identifier syntax before text decoding");
+	check (!g_strcmp0 (g_mime_message_get_in_reply_to (message), reference ? reference : "tail@host"),
+	       "In-Reply-To recovers the first bracketed identifier across NULs");
+	g_assert_cmpint (g_mime_message_id_list_length (refs), ==, reference ? 2 : 1);
+	check (!g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), reference ? reference : "tail@host"),
+	       "References preserves the first recovered identifier");
+	check (!strcmp (g_mime_message_id_list_get_message_id (refs, reference ? 1 : 0), "tail@host"),
+	       "References preserves identifiers following NULs and malformed IDs");
+}
+
+static void
+test_raw_message_ids (void)
+{
+#define RAW_ID(text, single, reference) { text, sizeof (text) - 1, single, reference }
+	static const struct {
+		const char *text;
+		gsize length;
+		const char *single, *reference;
+	} cases[] = {
+		RAW_ID ("<a\0b@host>", "a\357\277\275b@host", "a\357\277\275b@host"),
+		RAW_ID ("<\"a\\\0b\"@host>", "\"a\\\357\277\275b\"@host", "\"a\\\357\277\275b\"@host"),
+		RAW_ID ("<a@ho\0st>", "a@ho\357\277\275st", "a@ho\357\277\275st"),
+		RAW_ID ("<a@[127.\0.1]>", "a@[127.\357\277\275.1]", "a@[127.\357\277\275.1]"),
+		RAW_ID ("<\0\0@\0>", "\357\277\275\357\277\275@\357\277\275", "\357\277\275\357\277\275@\357\277\275"),
+		RAW_ID ("(a\0b) <id@host>", "id@host", "id@host"),
+		RAW_ID ("<\303\251\0@\344\276\213.example>", "\303\251\357\277\275@\344\276\213.example",
+			"\303\251\357\277\275@\344\276\213.example"),
+		RAW_ID ("bare\0id@host", "bare\357\277\275id@host", NULL),
+		RAW_ID ("<a\0\377@host>", NULL, NULL),
+		RAW_ID ("<a@b\0\377>", NULL, NULL),
+		RAW_ID ("<a@bad..domain>", NULL, NULL),
+		RAW_ID ("<id@host>\0", "id@host", "id@host"),
+		RAW_ID ("<=?utf-8?q?literal?=@host>", "=?utf-8?q?literal?=@host", "=?utf-8?q?literal?=@host"),
+		RAW_ID ("", NULL, NULL)
+	};
+#undef RAW_ID
+	static const char *names[] = { "Message-ID", "Resent-Message-ID", "Content-ID", "In-Reply-To", "References" };
+	GMimeMessage *message;
+	GMimeHeaderList *headers;
+	GMimeHeader *header;
+	GMimeStream *input, *output;
+	GByteArray *bytes;
+	GBytes *raw, *after;
+	GString *wire, *value;
+	GError *error = NULL;
+	guint i, j;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		wire = g_string_new (NULL);
+		for (j = 0; j < G_N_ELEMENTS (names); j++) {
+			g_string_append_printf (wire, "%s: ", names[j]);
+			g_string_append_len (wire, cases[i].text, cases[i].length);
+			if (j >= 3)
+				g_string_append (wire, " <tail@host>");
+			g_string_append_c (wire, '\n');
+		}
+		g_string_append (wire, "\nbody\n");
+		input = g_mime_stream_mem_new_with_buffer (wire->str, wire->len);
+		message = g_mime_message_load (NULL, input, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		check_raw_message_ids (message, cases[i].single, cases[i].reference);
+
+		output = g_mime_stream_mem_new ();
+		g_assert_cmpint (g_mime_entity_write_to_stream (GMIME_ENTITY (message), NULL, output), >=, 0);
+		bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+		g_assert_cmpmem (bytes->data, bytes->len, wire->str, wire->len);
+		g_object_unref (output);
+
+		for (j = 0; j < G_N_ELEMENTS (names); j++) {
+			headers = g_mime_entity_get_header_list (j == 2 ? g_mime_message_get_mime_part (message) : GMIME_ENTITY (message));
+			g_mime_header_list_set (headers, names[j], "<stale@host>", NULL);
+			header = g_mime_header_list_get_header (headers, names[j]);
+			value = g_string_new (" ");
+			g_string_append_len (value, cases[i].text, cases[i].length);
+			if (j >= 3)
+				g_string_append (value, " <tail@host>");
+			g_string_append_c (value, '\n');
+			raw = g_bytes_new_take (g_memdup2 (value->str, value->len), value->len);
+			g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+			g_assert_no_error (error);
+			after = g_mime_header_get_raw_value (header);
+			g_assert_true (g_bytes_equal (raw, after));
+			g_bytes_unref (after);
+			g_bytes_unref (raw);
+			g_string_free (value, TRUE);
+		}
+		check_raw_message_ids (message, cases[i].single, cases[i].reference);
+		g_object_unref (message);
+		g_object_unref (input);
+		g_string_free (wire, TRUE);
+	}
+}
+
+static void
 test_message_id_assignment (void)
 {
 	static const struct {
@@ -2454,6 +2558,33 @@ test_message_priorities (void)
 				g_mime_message_get_x_priority (message), cases[i].importance, cases[i].priority, cases[i].xpriority);
 	}
 
+	{
+#define RAW_PRIORITY(text, priority) { text, sizeof (text) - 1, priority }
+			static const struct {
+				const char *text;
+				gsize length;
+				int priority;
+			} bounded[] = {
+				RAW_PRIORITY (" 2\0ignored\n", 2), RAW_PRIORITY (" \0 1\n", 3),
+				RAW_PRIORITY (" 0\0\n", 1), RAW_PRIORITY (" 9\0\n", 5),
+				RAW_PRIORITY (" 2147483648\0\n", 3), RAW_PRIORITY (" \t\n", 3)
+			};
+#undef RAW_PRIORITY
+			GBytes *bytes, *after;
+
+			header = g_mime_header_list_get_header (headers, "X-Priority");
+			for (i = 0; i < G_N_ELEMENTS (bounded); i++) {
+				bytes = g_bytes_new_take (g_memdup2 (bounded[i].text, bounded[i].length), bounded[i].length);
+				g_assert_true (g_mime_header_set_raw_value (header, bytes, &error));
+				g_assert_no_error (error);
+				g_assert_cmpint (g_mime_message_get_x_priority (message), ==, bounded[i].priority);
+				after = g_mime_header_get_raw_value (header);
+				g_assert_true (g_bytes_equal (bytes, after));
+				g_bytes_unref (after);
+				g_bytes_unref (bytes);
+			}
+	}
+
 	for (type = 0; type < G_N_ELEMENTS (names); type++) {
 		g_mime_header_list_clear (headers);
 		first = type == 2 ? 1 : 0;
@@ -2591,6 +2722,48 @@ test_message_dates (void)
 			check (!strcmp (testsuite_header_raw_text (header), cases[i].raw),
 			       "date getters do not rewrite raw headers");
 			g_clear_pointer (&expected, g_date_time_unref);
+		}
+		{
+			static const char value[] = " (before\0after) Fri, 28 Feb 2025 09:00:00 +0530\n";
+			GBytes *bytes = g_bytes_new_take (g_memdup2 (value, sizeof (value) - 1), sizeof (value) - 1);
+			GString *wire = g_string_new (properties[type].name);
+			GMimeMessage *parsed;
+			GMimeHeader *parsed_header;
+			GBytes *after;
+
+			g_assert_true (g_mime_header_set_raw_value (header, bytes, &error));
+			g_assert_no_error (error);
+			date = properties[type].get (message);
+			expected = g_date_time_new_from_iso8601 ("2025-02-28T09:00:00+05:30", NULL);
+			g_assert_nonnull (date);
+			g_assert_true (g_date_time_equal (date, expected));
+			g_assert_cmpint (g_date_time_get_utc_offset (date), ==, g_date_time_get_utc_offset (expected));
+			after = g_mime_header_get_raw_value (header);
+			g_assert_true (g_bytes_equal (bytes, after));
+			g_bytes_unref (after);
+
+			g_string_append_c (wire, ':');
+			g_string_append_len (wire, value, sizeof (value) - 1);
+			g_string_append (wire, "\nbody");
+			stream = g_mime_stream_mem_new_with_buffer (wire->str, wire->len);
+			parser = g_mime_parser_new_with_stream (stream);
+			parsed = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (parsed);
+			date = properties[type].get (parsed);
+			g_assert_nonnull (date);
+			g_assert_true (g_date_time_equal (date, expected));
+			parsed_header = g_mime_header_list_get_header (
+				g_mime_entity_get_header_list (GMIME_ENTITY (parsed)), properties[type].name);
+			after = g_mime_header_get_raw_value (parsed_header);
+			g_assert_true (g_bytes_equal (bytes, after));
+			g_bytes_unref (after);
+			g_object_unref (parsed);
+			g_object_unref (parser);
+			g_object_unref (stream);
+			g_string_free (wire, TRUE);
+			g_bytes_unref (bytes);
+			g_date_time_unref (expected);
 		}
 		testsuite_header_set_raw_text (header, first);
 		g_mime_header_list_append (headers, properties[type].name, second, NULL);
@@ -3189,7 +3362,8 @@ test_part_content_duration (void)
 		{ " \342\200\2037\n", -1 },
 		{ " 7\302\2400\n", -1 },
 		{ " \357\274\227\n", -1 },
-		{ " =?us-ascii?q?7?=\n", 7 }
+		{ " =?us-ascii?q?7?=\n", -1 },
+		{ " 7\r0\n", -1 }
 	};
 	GMimePart *part;
 	GMimeEntity *entity;
@@ -3200,6 +3374,33 @@ test_part_content_duration (void)
 	GError *error = NULL;
 	char *wire;
 	guint i, side, type;
+
+	{
+		static const char value[] = " 7\0ignored\n";
+
+		part = g_mime_part_new ();
+		g_mime_entity_set_header (GMIME_ENTITY (part), "Content-Duration", "7", NULL);
+		first = g_mime_header_list_get_header (g_mime_entity_get_header_list (GMIME_ENTITY (part)), "Content-Duration");
+		for (i = 0; i < sizeof (value); i++) {
+			char *prefix = g_malloc (i + 1);
+			GBytes *bytes, *after;
+
+			memcpy (prefix, value, i);
+			prefix[i] = '\n';
+			bytes = g_bytes_new_take (prefix, i + 1);
+			testsuite_header_set_raw_text (first, " 7\n");
+			g_assert_cmpint (g_mime_part_get_content_duration (part), ==, 7);
+			g_assert_true (g_mime_header_set_raw_value (first, bytes, &error));
+			g_assert_no_error (error);
+			g_assert_cmpint (g_mime_part_get_content_duration (part), ==, i == 2 ? 7 : -1);
+			g_assert_cmpint (g_mime_part_get_content_duration (part), ==, i == 2 ? 7 : -1);
+			after = g_mime_header_get_raw_value (first);
+			g_assert_true (g_bytes_equal (bytes, after));
+			g_bytes_unref (after);
+			g_bytes_unref (bytes);
+		}
+		g_object_unref (part);
+	}
 
 	for (type = 0; type < 2; type++) {
 		part = type ? GMIME_PART (g_mime_text_part_new ()) : g_mime_part_new ();
@@ -3216,16 +3417,18 @@ test_part_content_duration (void)
 							  side != 0 ? buffer : "", "\r\n", NULL);
 				char *raw;
 
-				g_mime_header_list_set (headers, "Content-Duration", value, NULL);
+				g_mime_header_list_set (headers, "Content-Duration", "", NULL);
 				first = g_mime_header_list_get_header (headers, "Content-Duration");
+				testsuite_header_set_raw_text (first, value);
 				raw = g_strdup (testsuite_header_raw_text (first));
-				testsuite_check ("Decoded Content-Duration whitespace U+%04X [%u/%u]", whitespace[i], type, side);
+				testsuite_check ("Raw Content-Duration whitespace U+%04X [%u/%u]", whitespace[i], type, side);
 				if (g_mime_part_get_content_duration (part) == expected &&
 				    g_mime_part_get_content_duration (part) == expected &&
 				    !strcmp (testsuite_header_raw_text (first), raw))
 					testsuite_check_passed ();
 				else
-					testsuite_check_failed ("unexpected duration or raw-header mutation");
+					testsuite_check_failed ("duration=%d, expected=%d, raw=[%s]",
+							       g_mime_part_get_content_duration (part), expected, raw);
 				g_free (raw);
 				g_free (value);
 			}
@@ -6858,6 +7061,7 @@ check_parsed_international_header (const char *input, const char *expected, GMim
 	GError *error = NULL;
 	const char *stored;
 	char *raw, *wire;
+	gsize length;
 	gboolean terminated;
 	int cached;
 
@@ -6869,6 +7073,10 @@ check_parsed_international_header (const char *input, const char *expected, GMim
 		g_object_unref (stream);
 		g_assert_nonnull (headers);
 		header = g_mime_header_list_get_header_at (headers, 0);
+		stored = g_bytes_get_data (header->raw_value, &length);
+		bytes = g_bytes_new_take (g_memdup2 (stored, length), length);
+		g_bytes_unref (header->raw_value);
+		header->raw_value = bytes;
 		if (cached)
 			g_mime_header_get_value (header);
 		stored = testsuite_header_raw_text (header);
@@ -6925,15 +7133,25 @@ test_parsed_international_headers (void)
 		{ "X-Empty: \t\n", "X-Empty: \n" },
 		{ "From: =?utf-8?q?Last=2C_First?= <user@example.com>\n",
 		  "From: \"Last, First\" <user@example.com>\n" },
+		{ "From: =?utf-8?q?caf=C3=A9?= <user@example.com>",
+		  "From: caf\303\251 <user@example.com>\n" },
 		{ "To: Group: =?utf-8?q?caf=C3=A9?= <user@example.com>;\n",
 		  "To: Group: caf\303\251 <user@example.com>;\n" },
 		{ "Reply-To: bad <\n", "Reply-To: bad <\n" },
+		{ "Reply-To: bad <", "Reply-To: bad <" },
 		{ "To: \t\n", "To: \t\n" },
+		{ "To:", "To:" },
 		{ "Content-Type: text/plain; name*=utf-8''caf%C3%A9.txt\n",
 		  "Content-Type: text/plain; name=\"caf\303\251.txt\"\n" },
+		{ "Content-Type: text/plain; name*=utf-8''caf%C3%A9.txt",
+		  "Content-Type: text/plain; name=\"caf\303\251.txt\"\n" },
 		{ "Content-Type: invalid\n", "Content-Type: invalid\n" },
+		{ "Content-Type:", "Content-Type:" },
 		{ "Content-Disposition: attachment; filename*=utf-8''caf%C3%A9.txt\n",
 		  "Content-Disposition: attachment; filename=\"caf\303\251.txt\"\n" },
+		{ "Content-Disposition: attachment; filename*=utf-8''caf%C3%A9.txt",
+		  "Content-Disposition: attachment; filename=\"caf\303\251.txt\"\n" },
+		{ "Content-Disposition:", "Content-Disposition:" },
 		{ "Content-Disposition: \t\n", "Content-Disposition: \t\n" }
 	};
 	static const char *protected[] = {
@@ -9197,15 +9415,21 @@ test_entity_prepare (void)
 static void
 test_message_prepare_versions (void)
 {
+#define VERSION(raw, valid) { raw, sizeof (raw) - 1, valid }
 	static const struct {
 		const char *raw;
+		gsize length;
 		gboolean valid;
 	} cases[] = {
-		{ NULL, FALSE }, { " invalid\n", FALSE }, { " 1.0\n", TRUE },
-		{ " (old) 2 (a) . (b) 3 (end)\n", TRUE }, { " 1.2.3.4\n", TRUE },
-		{ " 1.0 (incomplete\n", FALSE }, { " 2147483648.0\n", FALSE },
-		{ " 1.2.3.4.5\n", FALSE }, { " 1.0.", TRUE }, { " 1.0.\n", FALSE }
+		{ NULL, 0, FALSE }, VERSION (" invalid\n", FALSE), VERSION (" 1.0\n", TRUE),
+		VERSION (" (old) 2 (a) . (b) 3 (end)\n", TRUE), VERSION (" 1.2.3.4\n", TRUE),
+		VERSION (" 1.0 (incomplete\n", FALSE), VERSION (" 2147483648.0\n", FALSE),
+		VERSION (" 1.2.3.4.5\n", FALSE), VERSION (" 1.0.", TRUE), VERSION (" 1.0.\n", FALSE),
+		VERSION (" 1.0\0junk\n", FALSE), VERSION (" 1\0.0\n", FALSE),
+		VERSION (" 1.0.\0\n", FALSE), VERSION (" 1.0 (a\0b)\n", TRUE),
+		VERSION (" 1.0 (a\0b\n", FALSE), VERSION (" \n", FALSE)
 	};
+#undef VERSION
 	GMimeMessage *message;
 	GMimePart *body;
 	GMimeHeaderList *headers;
@@ -9237,16 +9461,26 @@ test_message_prepare_versions (void)
 			headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 			g_mime_header_list_clear (headers);
 			if (cases[i].raw) {
-				char *wire = g_strdup_printf ("MIME-Version:%s", cases[i].raw);
-				GMimeStream *stream = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
-				GMimeHeaderList *parsed = g_mime_header_list_load (NULL, stream, &error);
+				GString *wire = g_string_new ("MIME-Version:");
+				GMimeStream *stream;
+				GMimeHeaderList *parsed;
+
+				g_string_append_len (wire, cases[i].raw, cases[i].length);
+				stream = g_mime_stream_mem_new_with_buffer (wire->str, wire->len);
+				parsed = g_mime_header_list_load (NULL, stream, &error);
 
 				g_assert_no_error (error);
 				header = g_mime_header_list_get_header (parsed, "MIME-Version");
+				if (cases[i].length && cases[i].raw[cases[i].length - 1] == '\n') {
+					GBytes *raw = g_bytes_new_take (g_memdup2 (cases[i].raw, cases[i].length), cases[i].length);
+					g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+					g_assert_no_error (error);
+					g_bytes_unref (raw);
+				}
 				g_mime_header_list_add (headers, header);
 				g_object_unref (parsed);
 				g_object_unref (stream);
-				g_free (wire);
+				g_string_free (wire, TRUE);
 				g_mime_header_list_append (headers, "MIME-Version", "9.9", NULL);
 			}
 			g_assert_true (g_mime_entity_prepare (GMIME_ENTITY (message), GMIME_ENCODING_CONSTRAINT_7BIT, &error));
@@ -9255,7 +9489,9 @@ test_message_prepare_versions (void)
 			if (clear && !cases[i].raw) {
 				g_assert_null (header);
 			} else if (clear || cases[i].valid) {
-				g_assert_cmpstr (testsuite_header_raw_text (header), ==, cases[i].raw);
+				GBytes *raw = g_mime_header_get_raw_value (header);
+				g_assert_cmpmem (g_bytes_get_data (raw, NULL), g_bytes_get_size (raw), cases[i].raw, cases[i].length);
+				g_bytes_unref (raw);
 				g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 2);
 			} else {
 				g_assert_cmpstr (g_mime_header_get_value (header), ==, "1.0");
@@ -12007,7 +12243,10 @@ test_delivery_status (void)
 	}
 
 	{
-		const char *values[] = { "7bit", "8bit", "binary", "unknown", "7bit\nContent-Transfer-Encoding: base64" };
+		const char *values[] = {
+			"7bit", "8bit", "binary", "unknown", "7bit\nContent-Transfer-Encoding: base64",
+			"=?us-ascii?q?base64?=", "=?us-ascii?q?quoted-printable?="
+		};
 		for (i = 0; i < G_N_ELEMENTS (values); i++) {
 			text = g_strdup_printf ("Content-Type: message/delivery-status\n\n"
 						"Content-Transfer-Encoding: %s\n\n%s", values[i], recipient);
@@ -13126,6 +13365,7 @@ main (int argc, char **argv)
 
 	testsuite_start ("Message-ID parsing and reference recovery");
 	test_message_id_parsing ();
+	test_raw_message_ids ();
 	test_message_id_assignment ();
 	test_message_id_whitespace ();
 	test_message_reply_ids ();

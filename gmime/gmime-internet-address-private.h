@@ -36,8 +36,8 @@ enum {
 G_GNUC_INTERNAL gboolean _g_mime_internet_address_set_name (GMimeInternetAddress *ia, const char *name);
 G_GNUC_INTERNAL char *_g_mime_internet_address_encode_domain (const char *domain);
 G_GNUC_INTERNAL char *_g_mime_internet_address_decode_domain (const char *domain);
-G_GNUC_INTERNAL GMimeDomainList *_g_mime_domain_list_parse (const char **in);
-G_GNUC_INTERNAL char *_g_mime_internet_address_copy_text (const char *str, gssize length, GError **error);
+G_GNUC_INTERNAL GMimeDomainList *_g_mime_domain_list_parse (const char **in, const char *end);
+G_GNUC_INTERNAL gboolean _g_mime_internet_address_validate_text (const char *str, gssize *length, GError **error);
 G_GNUC_INTERNAL GMimeInternetAddress *_g_mime_internet_address_parse (GMimeParserOptions *options, const char *str,
 								    gssize length, GType type, GError **error);
 G_GNUC_INTERNAL char *_g_mime_internet_address_encode_name (GMimeFormatOptions *options, const char *raw,
@@ -51,7 +51,7 @@ G_GNUC_INTERNAL void _g_mime_internet_address_list_to_string (const GMimeInterne
 G_GNUC_INTERNAL GMimeInternetAddress *_g_mime_mailbox_address_new (const char *name, const char *addr, int at,
 								 GMimeDomainList *route);
 G_GNUC_INTERNAL char *_g_mime_mailbox_address_get_hashable_addrspec (GMimeMailboxAddress *mailbox);
-G_GNUC_INTERNAL gboolean _g_mime_internet_address_parse_addrspec (const char **in, const char *sentinels,
+G_GNUC_INTERNAL gboolean _g_mime_internet_address_parse_addrspec (const char **in, const char *end, const char *sentinels,
 								GMimeRfcComplianceMode mode, char **addrspec, int *at);
 
 G_END_DECLS

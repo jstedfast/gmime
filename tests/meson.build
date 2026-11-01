@@ -64,6 +64,8 @@ foreach name : normal_tests
   test_dep = have_crypto and name == 'test-parser-model' ? verify_test_dep : gmime_dep
   if name == 'test-core'
     sources += ['../gmime/gmime-events.c']
+  elif name == 'test-addresses'
+    sources += ['../gmime/gmime-parse-utils.c']
   elif name == 'test-rfc2231'
     sources += ['../gmime/gmime-rfc2231-encoder.c', '../gmime/gmime-rfc2231-decoder.c']
   elif name == 'test-parameter-validator'

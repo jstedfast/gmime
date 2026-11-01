@@ -138,19 +138,19 @@ G_GNUC_INTERNAL GMimeHeaderList *_g_mime_part_load_fields (GMimePart *part, cons
 G_GNUC_INTERNAL void _g_mime_part_serialize_fields (GMimePart *part, GMimeHeaderList *fields, const char *name);
 
 /* GMimeContentType */
-G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64 offset);
-G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length,
+G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
+G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gsize length,
 								gboolean *invalid_media_type, GError **error);
 
 /* GMimeParamList */
 G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_clone (GMimeParamList *list);
-G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_parse (GMimeParserOptions *options, const char *str, gint64 offset);
+G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
 G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_parse_full (GMimeParserOptions *options, const char *text,
-							     const char *in, GError **error);
+							     const char *in, const char *end, GError **error);
 
 /* GMimeContentDisposition */
 G_GNUC_INTERNAL GMimeContentDisposition *_g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str,
-									    gint64 offset);
+									    gsize length, gint64 offset);
 
 /* GMimeCharset */
 G_GNUC_INTERNAL char *_g_mime_charset_get_mime_name (const char *charset);
@@ -188,8 +188,8 @@ G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *op
 							  const char **charset, gint64 offset);
 
 /* GMimeInternetAddressList */
-G_GNUC_INTERNAL GMimeInternetAddressList *_g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *str, gint64 offset);
-G_GNUC_INTERNAL void _g_mime_internet_address_list_append_parse (GMimeInternetAddressList *list, GMimeParserOptions *options, const char *str, gint64 offset);
+G_GNUC_INTERNAL GMimeInternetAddressList *_g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_internet_address_list_append_parse (GMimeInternetAddressList *list, GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
 
 G_END_DECLS
 
