@@ -378,7 +378,7 @@ static const struct {
 	  GMIME_COMPLIANCE_SEVERITY_MAJOR, GMIME_COMPLIANCE_SEVERITY_MAJOR, GMIME_COMPLIANCE_CATEGORY_DATA_LOSS | GMIME_COMPLIANCE_CATEGORY_SECURITY },
 	{ "InvalidBase64Padding",
 	  "The base64 encoded content of a MIME part contained invalid padding.",
-	  "Invalid padding within base64 content can lead to decoding issues and inconsistent behavior among different MIME parser implementations. Some base64 decoders will ignore extraneous '=' padding characters if any are found within the middle of the base64 encoded block while others will treat decode it as 6 bits of 0's and may stop decoding as soon as they are encountered.",
+	  "Invalid padding within base64 content can lead to decoding issues and inconsistent behavior among different MIME parser implementations. Some base64 decoders will ignore extraneous '=' padding characters if any are found within the middle of the base64 encoded block while others will treat decode it as 6 bits of 0's and may stop decoding as soon as they are encountered. This also includes nonzero unused bits in the alphabet character before padding. These bits must be zero for a canonical encoding; permissive decoders ignore them, while strict decoders may reject them. Nonzero pad bits are reported at the first '=' padding character.",
 	  GMIME_COMPLIANCE_SEVERITY_MAJOR, GMIME_COMPLIANCE_SEVERITY_MAJOR, GMIME_COMPLIANCE_CATEGORY_DATA_LOSS },
 	{ "Base64CharactersAfterPadding",
 	  "The base64 encoded content of a MIME part contained characters after the padding.",

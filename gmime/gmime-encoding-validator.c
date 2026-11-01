@@ -94,6 +94,7 @@ typedef struct {
 	ValidatorContext context;
 	guint32 total;
 	guint padding;
+	guint8 last_alphabet;
 	gboolean invalid;
 	/* Latch each violation once per line to prevent hostile input from flooding
 	 * the report. These must survive write calls that split a malformed line. */
@@ -116,11 +117,26 @@ base64_get_encoding (GMimeEncodingValidator *validator)
 	return GMIME_CONTENT_ENCODING_BASE64;
 }
 
+/* Recover the last alphabet byte only at padding or a partial chunk end. */
+static guint8
+base64_last_alphabet (GMimeBase64Validator *base64, const guint8 *input, gsize length)
+{
+	while (length > 0) {
+		guint8 c = input[--length];
+
+		if (c != '=' && codec_base64_rank (c) < 64)
+			return c;
+	}
+
+	return base64->last_alphabet;
+}
+
 static void
 base64_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 {
 	GMimeBase64Validator *base64 = (GMimeBase64Validator *) validator;
 	ValidatorContext *context = &base64->context;
+	guint32 total = base64->total;
 	gsize i = 0;
 	guint8 c;
 
@@ -166,6 +182,13 @@ base64_write (GMimeEncodingValidator *validator, const guint8 *input, gsize leng
 							  context->stream_offset + i - 1);
 					base64->invalid = TRUE;
 				} else {
+					guint mask = base64->total % 4 == 2 ? 0x0f : 0x03;
+					guint8 last = base64_last_alphabet (base64, input, i - 1);
+
+					if (codec_base64_rank (last) & mask)
+						validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING,
+								  context->stream_offset + i - 1);
+
 					base64->padding = 1;
 					base64->total++;
 				}
@@ -205,6 +228,9 @@ base64_write (GMimeEncodingValidator *validator, const guint8 *input, gsize leng
 			base64->invalid = TRUE;
 		}
 	}
+	if (base64->total % 4 >= 2 && base64->padding == 0 && base64->total != total)
+		base64->last_alphabet = base64_last_alphabet (base64, input, i);
+
 	context->stream_offset += length;
 }
 

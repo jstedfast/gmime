@@ -29,6 +29,9 @@
   Content-Description, and X- headers. Report malformed RFC 2047 syntax and
   prohibited address placement without charset lookup or decoding. Preserve
   tolerant parsing, with bounded lookahead and original candidate positions.
+* Report nonzero Base64 pad bits as InvalidEncodedWord in encoded words and
+  InvalidBase64Padding in MIME content. Preserve tolerant decoding and later
+  structural diagnostics, including across chunk boundaries.
 * Ported MimeKit's SSSE3 Base64 encoder optimization for nine-byte MIME-line tails.
 * Reduced encoded-word and MIME parameter compliance overhead by skipping plain
   text, tracking encoded-word coordinates only for diagnostics, and deferring

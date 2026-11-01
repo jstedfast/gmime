@@ -125,6 +125,10 @@ test_syntax (void)
 		{ "=?utf-8?B?YQ==?=", 0 },
 		{ "=?utf-8?b?YWI=?=", 0 },
 		{ "=?utf-8?B?YWJj?=", 0 },
+		{ "=?utf-8?B?Zh==?=", 1 },
+		{ "=?utf-8?b?Zm9=?=", 1 },
+		{ "=?utf-8?B?AAA/?=", 0 },
+		{ "=?utf-8?Q?Zh=3D=3D?=", 0 },
 		{ "=?x-unknown*en?Q?hello?=", 0 },
 		{ "=?utf-8*?Q?hello?=", 0 },
 		{ "=?utf-8?Q?first?=\r\n\t=?utf-8?Q?second?=", 0 },
@@ -191,6 +195,12 @@ test_addresses (void)
 	} cases[] = {
 		{ "=?utf-8?Q?hello_world?= <a@example.com>", 0, 0 },
 		{ "=?utf-8?B?YQ==?= <a@example.com>", 0, 0 },
+		{ "=?utf-8?B?Zh==?= <a@example.com>", 1, 0 },
+		{ "=?utf-8?B?Zm9=?= <a@example.com>", 1, 0 },
+		{ "a@example.com (=?utf-8?B?Zh==?=)", 1, 0 },
+		{ "a@example.com (=?utf-8?B?Zm9=?=)", 1, 0 },
+		{ "\"=?utf-8?B?Zh==?=\" <a@example.com>", 1, 1 },
+		{ "\"=?utf-8?B?Zm9=?=\" <a@example.com>", 1, 1 },
 		{ "=?utf-8?Q?group?= : a@example.com;", 0, 0 },
 		{ "a@example.com (=?utf-8?Q?hello?=)", 0, 0 },
 		{ "(outer (=?utf-8?Q?hello?=)) a@example.com", 0, 0 },
@@ -243,6 +253,115 @@ test_addresses (void)
 		assert_header (fields[i], "=?utf-8?Q?bad=GG?= <a@example.com>", 1, 0);
 	for (i = 0; i < G_N_ELEMENTS (excluded); i++)
 		assert_header (excluded[i], "=?utf-8?Q?bad=GG?=", 0, 0);
+	testsuite_check_passed ();
+}
+
+static void
+test_base64_pad_bits (void)
+{
+	const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+	testsuite_check ("Encoded-word Base64 pad bits cover every sextet with bounded slices and original positions");
+	for (guint padding = 1; padding <= 2; padding++) {
+		for (guint rank = 0; rank < 64; rank++) {
+			char *wire = g_strdup_printf ("xx=?utf-8?B?%s%c%s?=yy",
+				padding == 2 ? "A" : "AA", alphabet[rank], padding == 2 ? "==" : "=");
+			GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+			GMimeEncodedWordValidator validator;
+			gboolean canonical = rank % (padding == 2 ? 16 : 4) == 0;
+
+			_g_mime_encoded_word_validator_init (&validator, (const guint8 *) wire + 2, strlen (wire) - 4,
+				collect_issue, issues, GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+			_g_mime_encoded_word_validator_validate (&validator, strlen (wire) - 4, GMIME_ENCODED_WORD_CONTEXT_TEXT);
+			assert_words (issues, canonical ? 0 : 1, 0);
+			g_assert_cmpuint (issues->len, ==, canonical ? 0 : 1);
+			if (!canonical) {
+				GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, 0);
+
+				g_assert_cmpint (issue->context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+				g_assert_cmpint (issue->stream_offset, ==, 100);
+				g_assert_cmpuint (issue->line_number, ==, 5);
+				g_assert_cmpuint (issue->column_number, ==, 7);
+			}
+			g_array_unref (issues);
+			g_free (wire);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_base64_pad_bits_gating (void)
+{
+	const char wire[] = "Subject: =?utf-8?B?Zh==?=\r\nTo: =?utf-8?B?Zm9=?= <a@example.com>\r\n"
+		"Content-Type: application/octet-stream\r\nContent-Transfer-Encoding: base64\r\n\r\nZm9=\r\n";
+	const GMimeComplianceValidators flags[] = {
+		GMIME_COMPLIANCE_VALIDATOR_NONE, GMIME_COMPLIANCE_VALIDATOR_BASE64, WORDS, GMIME_COMPLIANCE_VALIDATOR_ALL,
+		GMIME_COMPLIANCE_VALIDATOR_ALL & ~GMIME_COMPLIANCE_VALIDATOR_BASE64, GMIME_COMPLIANCE_VALIDATOR_ALL & ~WORDS
+	};
+	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+	GByteArray *baseline = NULL;
+
+	testsuite_check ("Base64 pad-bit flags and logging preserve decoded headers, content and serialization");
+	for (guint chunked = 0; chunked < 2; chunked++) {
+		for (guint flag = 0; flag < G_N_ELEMENTS (flags); flag++) {
+			g_mime_compliance_options_set_enabled_validators (options, flags[flag]);
+			for (guint logging = 0; logging < 2; logging++) {
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				GMimeStream *input = new_input (wire, chunked), *output = g_mime_stream_mem_new ();
+				GMimeStream *decoded = g_mime_stream_mem_new ();
+				GMimeParser *parser = g_mime_parser_new_with_stream (input);
+				GMimeMessage *message;
+				GMimeInternetAddress *address;
+				GMimeEntity *part;
+				GByteArray *bytes;
+				GError *error = NULL;
+				gboolean words = logging && (flags[flag] & WORDS);
+				gboolean body = logging && (flags[flag] & GMIME_COMPLIANCE_VALIDATOR_BASE64);
+
+				g_mime_parser_set_compliance_options (parser, options);
+				if (logging)
+					g_mime_parser_set_compliance_logger (parser, collect_issue, issues, NULL);
+				message = g_mime_parser_construct_message (parser, NULL, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				g_assert_cmpstr (g_mime_message_get_subject (message), ==, "f");
+				address = g_mime_internet_address_list_get_address (g_mime_message_get_to (message), 0);
+				g_assert_true (GMIME_IS_MAILBOX_ADDRESS (address));
+				g_assert_cmpstr (g_mime_internet_address_get_name (address), ==, "fo");
+				part = g_mime_message_get_mime_part (message);
+				g_assert_true (GMIME_IS_PART (part));
+				g_assert_cmpint (g_mime_content_decode_to_stream (g_mime_part_get_content (GMIME_PART (part)), decoded), ==, 2);
+				bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (decoded));
+				g_assert_cmpmem (bytes->data, bytes->len, "fo", 2);
+				g_assert_cmpint (g_mime_entity_write_to_stream (GMIME_ENTITY (message), NULL, output), >, 0);
+				bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+				if (!baseline)
+					baseline = g_byte_array_ref (bytes);
+				g_assert_cmpmem (bytes->data, bytes->len, baseline->data, baseline->len);
+				assert_words (issues, words ? 2 : 0, 0);
+				g_assert_cmpuint (count_issues (issues, GMIME_COMPLIANCE_INVALID_BASE64_PADDING), ==, body ? 1 : 0);
+				for (guint i = 0; i < issues->len; i++) {
+					GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+					if (issue->violation == GMIME_COMPLIANCE_INVALID_BASE64_PADDING) {
+						g_assert_cmpint (issue->stream_offset, ==, strrchr (wire, '=') - wire);
+						g_assert_cmpuint (issue->line_number, ==, 6);
+						g_assert_cmpuint (issue->column_number, ==, 4);
+						g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_EXACT);
+					}
+				}
+				g_array_unref (issues);
+				g_object_unref (message);
+				g_object_unref (parser);
+				g_object_unref (input);
+				g_object_unref (output);
+				g_object_unref (decoded);
+			}
+		}
+	}
+	g_byte_array_unref (baseline);
+	g_mime_compliance_options_unref (options);
 	testsuite_check_passed ();
 }
 
@@ -622,6 +741,8 @@ main (int argc, char **argv)
 	testsuite_start ("Encoded-word compliance");
 	test_syntax ();
 	test_addresses ();
+	test_base64_pad_bits ();
+	test_base64_pad_bits_gating ();
 	test_gating_and_preservation ();
 	test_positions_and_budgets ();
 	test_bounds_and_reuse ();
