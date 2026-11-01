@@ -427,6 +427,97 @@ test_bounds_and_reuse (void)
 }
 
 static void
+test_incremental_positions (void)
+{
+	const char *values[] = {
+		"ordinary text\r\n =?utf-8?Q?valid?=\r\n\t=?utf-8?Q?bad\r\n value?=\r\n =?utf-8?B?YQ?=",
+		"=?utf-8?Q?valid?= (escaped \\) \\\" text\r\n =?utf-8?Q?bad=GG?=)\r\n \"=?utf-8?Q?bad=G?=\""
+	};
+	const char *markers[][3] = {
+		{ "=?utf-8?Q?bad\r\n value?=", "=?utf-8?B?YQ?=", NULL },
+		{ "=?utf-8?Q?bad=GG?=", "=?utf-8?Q?bad=G?=", "=?utf-8?Q?bad=G?=" }
+	};
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	guint address, incremental, i;
+
+	testsuite_check ("Lazy coordinates match whole and incremental scans across folds and quoted pairs");
+	for (address = 0; address < 2; address++) {
+		gsize length = strlen (values[address]);
+		char *slice = g_strdup_printf ("xx%syy", values[address]);
+
+		for (incremental = 0; incremental < 2; incremental++) {
+			GMimeEncodedWordValidator words;
+			GMimeEncodedWordContext context = address ? GMIME_ENCODED_WORD_CONTEXT_PHRASE : GMIME_ENCODED_WORD_CONTEXT_TEXT;
+
+			_g_mime_encoded_word_validator_init (&words, (const guint8 *) slice + 2, length,
+				collect_issue, issues, GMIME_COMPLIANCE_CONTEXT_STORAGE, 100, 5, 7);
+			if (incremental) {
+				for (gsize end = 0; end <= length; end++)
+					_g_mime_encoded_word_validator_validate (&words, end, context);
+			} else {
+				_g_mime_encoded_word_validator_validate (&words, length, context);
+			}
+			g_assert_cmpuint (issues->len, ==, address ? 3 : 2);
+			for (i = 0; i < issues->len; i++) {
+				GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+				gsize offset = strstr (values[address], markers[address][i]) - values[address];
+				guint64 line = 5, column = 7;
+
+				for (gsize at = 0; at < offset; at++) {
+					if (values[address][at] == '\n') {
+						line++;
+						column = 1;
+					} else {
+						column++;
+					}
+				}
+				g_assert_cmpint (issue->violation, ==, address && i == 1 ? PLACEMENT : INVALID);
+				g_assert_cmpint (issue->stream_offset, ==, 100 + offset);
+				g_assert_cmpuint (issue->line_number, ==, line);
+				g_assert_cmpuint (issue->column_number, ==, column);
+				g_assert_cmpint (issue->context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+				g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			}
+			g_array_set_size (issues, 0);
+		}
+		g_free (slice);
+	}
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
+static void
+test_plain_slices (void)
+{
+	const char *values[] = { "", "=", "plain = text\r\n without words", "plain text =", "====" };
+	const char *outside = "=?utf-8?Q?bad=GG?=";
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	GMimeEncodedWordValidator words;
+	guint address, i;
+
+	testsuite_check ("Whole-buffer marker probes respect slices, empty ranges and trailing equals");
+	for (address = 0; address < 2; address++) {
+		GMimeEncodedWordContext context = address ? GMIME_ENCODED_WORD_CONTEXT_PHRASE : GMIME_ENCODED_WORD_CONTEXT_TEXT;
+
+		for (i = 0; i < G_N_ELEMENTS (values); i++) {
+			gsize length = strlen (values[i]);
+			char *slice = g_strdup_printf ("%s%s%s", outside, values[i], outside);
+
+			_g_mime_encoded_word_validator_init (&words, (const guint8 *) slice + strlen (outside), length,
+				collect_issue, issues, GMIME_COMPLIANCE_CONTEXT_TRANSPORT, 0, 1, 1);
+			for (gsize end = 0; end <= length; end++)
+				_g_mime_encoded_word_validator_validate (&words, end, context);
+			g_assert_cmpuint (issues->len, ==, 0);
+			g_assert_cmpuint (words.index, ==, length);
+			g_assert_cmpuint (words.scan_index, ==, 0);
+			g_free (slice);
+		}
+	}
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
+static void
 count_issue (const GMimeComplianceIssue *issue, gpointer user_data)
 {
 	guint *count = user_data;
@@ -534,6 +625,8 @@ main (int argc, char **argv)
 	test_gating_and_preservation ();
 	test_positions_and_budgets ();
 	test_bounds_and_reuse ();
+	test_incremental_positions ();
+	test_plain_slices ();
 	test_limits_and_scale ();
 	test_metadata ();
 	testsuite_end ();

@@ -465,8 +465,10 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 			    gint64 stream_offset, guint64 line_number, guint64 column_number)
 {
 	ParameterValidator v = { buffer, length, 0, 0, context, stream_offset, line_number, column_number };
-	GHashTable *parameters;
-	GPtrArray *states;
+	GHashTable *parameters = NULL;
+	GPtrArray *states = NULL;
+	ParameterState first_state = { .highest_segment = -1 };
+	char *first_name = NULL;
 	ParameterState *state;
 	gsize start;
 	gboolean encoded, filename;
@@ -479,10 +481,6 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 
 	if (!report || !length || !skip_to_next_parameter (&v))
 		return;
-
-	/* The reader's header-length limit bounds the declarations retained here. */
-	parameters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, parameter_state_free);
-	states = g_ptr_array_new ();
 
 	while (v.index < v.length) {
 		GMimeComplianceIssue issue;
@@ -522,14 +520,27 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 		}
 
 		filename = !strcmp (name, content_type ? "name" : "filename");
-		state = g_hash_table_lookup (parameters, name);
 
-		if (!state) {
-			state = g_new0 (ParameterState, 1);
-			state->highest_segment = -1;
+		if (!first_name)
+			first_name = g_strdup (name);
 
-			g_hash_table_insert (parameters, g_strdup (name), state);
-			g_ptr_array_add (states, state);
+		/* Keep the common single-name case outside the lookup/order tables. */
+		if (!strcmp (name, first_name)) {
+			state = &first_state;
+		} else {
+			if (!parameters) {
+				parameters = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, parameter_state_free);
+				states = g_ptr_array_new ();
+			}
+
+			state = g_hash_table_lookup (parameters, name);
+			if (!state) {
+				state = g_new0 (ParameterState, 1);
+				state->highest_segment = -1;
+
+				g_hash_table_insert (parameters, g_strdup (name), state);
+				g_ptr_array_add (states, state);
+			}
 		}
 
 		if (segment >= 0 && !state->segments)
@@ -570,14 +581,16 @@ _g_mime_parameter_validate (const guint8 *buffer, gsize length, gboolean content
 	}
 
 	/* Preserve parameter declaration order when applying reporting budgets. */
-	for (i = 0; i < states->len; i++) {
-		state = g_ptr_array_index (states, i);
+	for (i = 0; i < 1 + (states ? states->len : 0); i++) {
+		state = i == 0 ? &first_state : g_ptr_array_index (states, i - 1);
 
 		/* Distinct nonnegative indices cover 0..n-1 iff their maximum is n-1. */
 		if (state->segments && state->highest_segment != g_tree_nnodes (state->segments) - 1)
 			report (&state->missing_segment_issue, user_data);
 	}
 
-	g_ptr_array_unref (states);
-	g_hash_table_destroy (parameters);
+	g_clear_pointer (&first_state.segments, g_tree_destroy);
+	g_free (first_name);
+	g_clear_pointer (&states, g_ptr_array_unref);
+	g_clear_pointer (&parameters, g_hash_table_destroy);
 }

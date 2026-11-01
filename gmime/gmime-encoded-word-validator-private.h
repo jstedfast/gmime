@@ -34,7 +34,7 @@ typedef enum {
 
 typedef struct {
 	const guint8 *text;
-	gsize length, index, comment_depth;
+	gsize length, index, scan_index, comment_depth;
 	GMimeComplianceIssueFunc report;
 	gpointer user_data;
 	GMimeComplianceContext context;
@@ -44,8 +44,9 @@ typedef struct {
 } GMimeEncodedWordValidator;
 
 /* Borrows the buffer and callback data. Coordinates identify buffer[0].
- * Forward-only ranges may look ahead by at most 75 bytes within the buffer;
- * a complete word can advance past a range end. No decoding or allocation. */
+ * The initial marker search spans the full buffer. Forward-only ranges may
+ * inspect a candidate's next 75 bytes; a complete word can advance past a range
+ * end. Coordinates are tracked only when reporting. No decoding or allocation. */
 G_GNUC_INTERNAL void _g_mime_encoded_word_validator_init (GMimeEncodedWordValidator *validator,
 	const guint8 *buffer, gsize length, GMimeComplianceIssueFunc report, gpointer user_data,
 	GMimeComplianceContext context, gint64 stream_offset, guint64 line, guint64 column);
