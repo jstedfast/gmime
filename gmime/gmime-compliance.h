@@ -208,7 +208,8 @@ typedef enum {
  * @GMIME_COMPLIANCE_MIME_DEPTH_LIMIT_EXCEEDED: container flattened at the depth limit
  * @GMIME_COMPLIANCE_INCOMPLETE_BASE64_QUANTUM: incomplete base64 quantum
  * @GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER: invalid base64 byte
- * @GMIME_COMPLIANCE_INVALID_BASE64_PADDING: invalid base64 padding
+ * @GMIME_COMPLIANCE_INVALID_BASE64_PADDING: invalid base64 padding, including
+ *   nonzero unused bits before padding, reported at the first '='
  * @GMIME_COMPLIANCE_BASE64_CHARACTERS_AFTER_PADDING: base64 data after padding
  * @GMIME_COMPLIANCE_OBSOLETE_BASE64_COMMENT: obsolete base64 comment
  * @GMIME_COMPLIANCE_INVALID_QUOTED_PRINTABLE_ENCODING: malformed quoted-printable escape

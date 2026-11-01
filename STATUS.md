@@ -3526,6 +3526,18 @@ decoding. Positions identify each candidate's ElementStart, and both identities
 have independent budgets. Parameter encoded-word usage remains controlled by
 Parameters; native tolerant models and serialization are unchanged.
 
+Base64 pad bits are validated in both encoded words and MIME content, matching
+MimeKit's `3376ca9`. The unused low four bits before `==`, or low two bits
+before `=`, must be zero. Encoded words report InvalidEncodedWord at the
+candidate's ElementStart; MIME content reports InvalidBase64Padding (89) at
+the first `=` with an Exact position. The respective EncodedWords and Base64
+flags gate these checks independently. Noncanonical bits do not suppress later
+incomplete-quantum, excess-padding, or characters-after-padding diagnostics.
+Both checks share the decoder's rank lookup. The streaming validator recovers
+the last alphabet byte only at padding or eligible partial-quantum chunk ends,
+including intervening whitespace or invalid bytes, without adding per-byte or
+per-vector tracking. Tolerant decoding and serialization are unchanged.
+
 RepeatedContentId (14) reports each additional Content-Id header within an
 entity, including empty, malformed, and identical values. It is a structural
 check independent of specialized-validator flags, with ElementStart positions

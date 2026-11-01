@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "gmime-encoded-word-validator-private.h"
+#include "gmime-codec-private.h"
 #include "gmime-table-private.h"
 
 void
@@ -84,6 +85,13 @@ read_word (GMimeEncodedWordValidator *v, GMimeEncodedWordContext location, gsize
 
 			if (at == payload || hex != 0 || (base64 && ((at - payload) % 4 != 0 || padding > 2)))
 				valid = FALSE;
+
+			if (valid && base64 && padding > 0) {
+				guint mask = padding == 2 ? 0x0f : 0x03;
+
+				if (codec_base64_rank (v->text[at - padding - 1]) & mask)
+					valid = FALSE;
+			}
 
 			return valid;
 		}

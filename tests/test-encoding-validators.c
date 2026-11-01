@@ -127,6 +127,23 @@ test_base64 (void)
 		{ "AA==\r\n*", 1, {{ GMIME_ENCODING_VIOLATION_BASE64_CHARACTERS_AFTER_PADDING, 6, 2, 1 }} },
 		{ "AAA", 1, {{ GMIME_ENCODING_VIOLATION_INCOMPLETE_BASE64_QUANTUM, 3, 1, 4 }} },
 		{ "AA=\n", 1, {{ GMIME_ENCODING_VIOLATION_INCOMPLETE_BASE64_QUANTUM, 4, 2, 1 }} },
+		{ "Zh=", 2, {
+			{ GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 2, 1, 3 },
+			{ GMIME_ENCODING_VIOLATION_INCOMPLETE_BASE64_QUANTUM, 3, 1, 4 }
+		} },
+		{ "Zh==!", 2, {
+			{ GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 2, 1, 3 },
+			{ GMIME_ENCODING_VIOLATION_BASE64_CHARACTERS_AFTER_PADDING, 4, 1, 5 }
+		} },
+		{ "Zh===", 2, {
+			{ GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 2, 1, 3 },
+			{ GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 4, 1, 5 }
+		} },
+		{ "Zh%*\r\n==", 3, {
+			{ GMIME_ENCODING_VIOLATION_INVALID_BASE64_CHARACTER, 2, 1, 3 },
+			{ GMIME_ENCODING_VIOLATION_OBSOLETE_BASE64_COMMENT, 3, 1, 4 },
+			{ GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 6, 2, 1 }
+		} },
 		{ "TWFu*\n?", 2, {
 			{ GMIME_ENCODING_VIOLATION_OBSOLETE_BASE64_COMMENT, 4, 1, 5 },
 			{ GMIME_ENCODING_VIOLATION_INVALID_BASE64_CHARACTER, 6, 2, 1 }
@@ -136,6 +153,116 @@ test_base64 (void)
 
 	for (i = 0; i < G_N_ELEMENTS (cases); i++)
 		check_case (0, &cases[i]);
+}
+
+static void
+test_base64_pad_bits (void)
+{
+	static const char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	static const guint prefixes[] = { 0, 12, 28, 60 };
+	static const gsize chunks[] = { 1, 2, 3, 15, 16, 17, 31, 32, 33, 4096 };
+	guint padding, rank, prefix, whitespace, chunk;
+
+	for (padding = 1; padding <= 2; padding++) {
+		for (rank = 0; rank < 64; rank++) {
+			for (prefix = 0; prefix < G_N_ELEMENTS (prefixes); prefix++) {
+				for (whitespace = 0; whitespace < 2; whitespace++) {
+					GString *wire = g_string_new (NULL);
+					GMimeEncodingIssue expected = { GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 0, 1, 1 };
+					gboolean canonical = rank % (padding == 2 ? 16 : 4) == 0;
+
+					for (guint i = 0; i < prefixes[prefix] + 3 - padding; i++)
+						g_string_append_c (wire, 'A');
+					g_string_append_c (wire, alphabet[rank]);
+					if (whitespace) {
+						g_string_append (wire, " \t\r\n");
+						for (guint i = 0; i < 64; i++)
+							g_string_append_c (wire, ' ');
+						g_string_append (wire, "\r\n\t");
+					}
+					expected.stream_offset = wire->len;
+					expected.line_number = whitespace ? 3 : 1;
+					expected.column_number = whitespace ? 2 : wire->len + 1;
+					for (guint i = 0; i < padding; i++)
+						g_string_append_c (wire, '=');
+					for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+						IssueLog log = { 0 };
+						GMimeEncodingValidator *validator = new_validator (0, &log, 100, 7);
+
+						for (gsize at = 0; at < wire->len; at += chunks[chunk])
+							_g_mime_encoding_validator_write (validator, (const guint8 *) wire->str + at,
+								MIN (chunks[chunk], wire->len - at));
+						_g_mime_encoding_validator_flush (validator);
+						g_assert_cmpuint (log.length, ==, canonical ? 0 : 1);
+						if (!canonical)
+							assert_issue (&log.issues[0], &expected, 100, 7);
+						g_object_unref (validator);
+					}
+					g_string_free (wire, TRUE);
+				}
+			}
+		}
+	}
+}
+
+static void
+test_base64_pad_bits_slices (void)
+{
+	const char *tails[] = { "Zg", "Zh" };
+	const guint8 whitespace[] = "B \t\r\n A", padding[] = "B \r\n==A";
+	const GMimeEncodingIssue expected = { GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 110, 9, 1 };
+
+	for (guint i = 0; i < G_N_ELEMENTS (tails); i++) {
+		IssueLog log = { 0 };
+		GMimeEncodingValidator *validator = new_validator (0, &log, 100, 7);
+
+		_g_mime_encoding_validator_write (validator, (const guint8 *) tails[i], 2);
+		_g_mime_encoding_validator_write (validator, whitespace + 1, 5);
+		_g_mime_encoding_validator_write (validator, NULL, 0);
+		_g_mime_encoding_validator_write (validator, padding + 1, 5);
+		_g_mime_encoding_validator_flush (validator);
+		g_assert_cmpuint (log.length, ==, i);
+		if (i)
+			assert_issue (&log.issues[0], &expected, 0, 1);
+		g_object_unref (validator);
+	}
+}
+
+static void
+test_base64_pad_bits_guard_pages (void)
+{
+#ifdef G_OS_UNIX
+	const guint8 wire[] = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" "Zh \r\n==";
+	const gsize chunks[] = { 1, 2, 15, 16, 17, 31, 32, 33, 64, sizeof wire - 1 };
+	const GMimeEncodingIssue expected = { GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING, 65, 2, 1 };
+	gsize page = (gsize) sysconf (_SC_PAGESIZE);
+	guint8 *map = mmap (NULL, page * 3, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+	g_assert_true (map != MAP_FAILED);
+	for (guint align_end = 0; align_end < 2; align_end++) {
+		for (guint chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			IssueLog log = { 0 };
+			GMimeEncodingValidator *validator = new_validator (0, &log, 0, 1);
+
+			for (gsize at = 0; at < sizeof wire - 1; at += chunks[chunk]) {
+				gsize length = MIN (chunks[chunk], sizeof wire - 1 - at);
+				guint8 *input = map + page + (align_end ? page - length : 0);
+
+				g_assert_cmpint (mprotect (map + page, page, PROT_READ | PROT_WRITE), ==, 0);
+				memcpy (input, wire + at, length);
+				g_assert_cmpint (mprotect (map + page, page, PROT_READ), ==, 0);
+				_g_mime_encoding_validator_write (validator, input, length);
+			}
+			_g_mime_encoding_validator_flush (validator);
+			g_assert_cmpuint (log.length, ==, 1);
+			assert_issue (&log.issues[0], &expected, 0, 1);
+			g_object_unref (validator);
+		}
+	}
+	g_assert_cmpint (munmap (map, page * 3), ==, 0);
+#else
+	g_test_skip ("Guard pages require mmap");
+#endif
 }
 
 static void
@@ -560,6 +687,9 @@ main (int argc, char **argv)
 {
 	g_test_init (&argc, &argv, NULL);
 	g_test_add_func ("/encoding-validators/base64", test_base64);
+	g_test_add_func ("/encoding-validators/base64-pad-bits", test_base64_pad_bits);
+	g_test_add_func ("/encoding-validators/base64-pad-bits-slices", test_base64_pad_bits_slices);
+	g_test_add_func ("/encoding-validators/base64-pad-bits-guard-pages", test_base64_pad_bits_guard_pages);
 	g_test_add_func ("/encoding-validators/quoted-printable", test_quoted_printable);
 	g_test_add_func ("/encoding-validators/uuencode", test_uuencode);
 	g_test_add_func ("/encoding-validators/uu-file-mode", test_uu_file_mode);
