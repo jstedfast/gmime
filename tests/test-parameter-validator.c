@@ -1541,20 +1541,20 @@ test_metadata (void)
 		const char *name;
 	} cases[] = {
 		{ DISPOSITION, 13, "RepeatedContentDisposition" },
-		{ INVALID, 44, "InvalidParameter" },
-		{ INVALID_ENCODED, 45, "InvalidRfc2231Parameter" },
-		{ ENCODED_WORD, 46, "EncodedWordInParameter" },
-		{ BOUNDARY, 47, "RepeatedBoundaryParameter" },
-		{ FILENAME, 48, "RepeatedFilenameParameter" },
-		{ PARAMETER, 49, "RepeatedParameter" },
-		{ MISSING_SEGMENT, 50, "MissingParameterSegment" }
+		{ INVALID, 45, "InvalidParameter" },
+		{ INVALID_ENCODED, 46, "InvalidRfc2231Parameter" },
+		{ ENCODED_WORD, 47, "EncodedWordInParameter" },
+		{ BOUNDARY, 48, "RepeatedBoundaryParameter" },
+		{ FILENAME, 49, "RepeatedFilenameParameter" },
+		{ PARAMETER, 50, "RepeatedParameter" },
+		{ MISSING_SEGMENT, 51, "MissingParameterSegment" }
 	};
 	guint i, context;
 
 	testsuite_check ("MimeKit diagnostic identities, flag values and metadata");
 	g_assert_cmpuint (GMIME_COMPLIANCE_VALIDATOR_PARAMETERS, ==, 16);
 	g_assert_cmpuint (GMIME_COMPLIANCE_VALIDATOR_ALL, ==, 63);
-	g_assert_cmpuint (GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT, ==, 100);
+	g_assert_cmpuint (GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT, ==, 101);
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 		g_assert_cmpuint (cases[i].violation, ==, cases[i].value);
 		g_assert_cmpstr (g_mime_compliance_violation_get_name (cases[i].violation), ==, cases[i].name);

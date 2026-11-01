@@ -1732,6 +1732,85 @@ test_status_reader_helpers (void)
 }
 
 static void
+test_content_length_range (void)
+{
+	static const struct {
+		const char *length;
+		guint messages;
+	} cases[] = {
+		{ "0", 2 }, { "-1", 2 }, { "2147483647", 1 }, { "2147483648", 2 },
+		{ "2147483648\r\nContent-Length: 2147483647", 1 },
+		{ "0\r\nContent-Length: 2147483647", 2 }
+	};
+	const char *marker = "From sender@example.com Mon Jan 1 00:00:00 2024\r\n";
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	guint i, chunked, wide;
+
+	g_mime_parser_options_set_respect_content_length (options, TRUE);
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		char *wire = g_strdup_printf ("%sSubject: first\r\nContent-Length: %s\r\n\r\nbody\r\n"
+			"%sSubject: second\r\n\r\nbody\r\n", marker, cases[i].length, marker);
+
+		for (chunked = 0; chunked < 2; chunked++) {
+			for (wide = 0; wide < 2; wide++) {
+				ReaderInput *input = new_input (wire, strlen (wire), chunked ? 1 : G_MAXSIZE);
+				TestReader *reader;
+				GMimeReader *base;
+				GError *error = NULL;
+				gint64 end = -1;
+				guint n = 0;
+				char **events;
+
+				input->origin = wide ? G_GINT64_CONSTANT (7000000000) : 0;
+				reader = new_reader (input, options);
+				base = GMIME_READER (reader);
+				g_mime_reader_set_stream_with_format (base, GMIME_STREAM (input), GMIME_FORMAT_MBOX);
+				for (guint j = 0; j < cases[i].messages; j++) {
+					g_assert_false (g_mime_reader_eos (base));
+					g_assert_true (g_mime_reader_read_message (base, &error));
+					g_assert_no_error (error);
+				}
+				g_assert_true (g_mime_reader_eos (base));
+				g_assert_cmpint (g_mime_reader_tell (base), ==, input->origin + strlen (wire));
+				events = g_strsplit (reader->trace->str, ";", -1);
+				for (guint j = 0; events[j]; j++) {
+					if (g_str_has_prefix (events[j], "N:")) {
+						char **fields = g_strsplit (events[j], ":", -1);
+
+						end = g_ascii_strtoll (fields[4], NULL, 10);
+						n++;
+						g_strfreev (fields);
+					}
+				}
+				g_assert_cmpuint (n, ==, cases[i].messages);
+				g_assert_cmpint (end, ==, input->origin + strlen (wire));
+				g_strfreev (events);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+		}
+		g_free (wire);
+	}
+	{
+		const char wire[] = "From sender\r\nContent-Length: 2147483647\r\n\r\nbody\r\n";
+		ReaderInput *input = new_input (wire, sizeof (wire) - 1, 1);
+		GMimeReader *reader;
+		GError *error = NULL;
+
+		input->origin = G_MAXINT64 - sizeof (wire) - 1024;
+		reader = g_mime_reader_new (options, GMIME_STREAM (input));
+		g_mime_reader_set_stream_with_format (reader, GMIME_STREAM (input), GMIME_FORMAT_MBOX);
+		g_assert_false (g_mime_reader_read_message (reader, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_assert_cmpstr (error->message, ==, "Content-Length exceeds the stream offset range.");
+		g_clear_error (&error);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	g_mime_parser_options_unref (options);
+}
+
+static void
 collect_compliance (const GMimeComplianceIssue *issue, gpointer user_data)
 {
 	g_array_append_val ((GArray *) user_data, *issue);
@@ -1865,7 +1944,276 @@ test_repeated_headers (void)
 
 		check_repeated_headers (fields[i].field, wire, fields[i].violation, 3, 0);
 		g_free (wire);
+
+		if (g_str_has_prefix (fields[i].field, "Resent-")) {
+			wire = g_strdup_printf (
+				"Date: Mon, 1 Jan 2024 00:00:00 +0000\r\nMessage-Id: <test@example.com>\r\n"
+				"From: one@example.com\r\nReturn-Path: <one@example.com>\r\n"
+				"%s: x\r\n%s: y\r\nReceived: by relay\r\n%s: z\r\n"
+				"Subject: separator\r\n%s: a\r\n%s: b\r\n"
+				"From: two@example.com\r\nReturn-Path: <two@example.com>\r\n\r\nbody\r\n",
+				fields[i].field, fields[i].field, fields[i].field, fields[i].field, fields[i].field);
+			for (guint chunked = 0; chunked < 2; chunked++) {
+				ReaderInput *input = new_input (wire, strlen (wire), chunked ? 1 : G_MAXSIZE);
+				GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+				GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				GError *error = NULL;
+				const guint lines[] = { 6, 11, 12, 13 };
+
+				g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_NONE);
+				g_mime_reader_set_compliance_options (reader, options);
+				g_mime_reader_set_compliance_logger (reader, collect_compliance, issues, NULL);
+				g_assert_true (g_mime_reader_read_message (reader, &error));
+				g_assert_no_error (error);
+				g_assert_cmpuint (issues->len, ==, 4);
+				for (guint j = 0; j < 4; j++) {
+					GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, j);
+
+					g_assert_cmpint (issue->violation, ==, j < 2 ? fields[i].violation :
+						j == 2 ? GMIME_COMPLIANCE_REPEATED_FROM : GMIME_COMPLIANCE_REPEATED_RETURN_PATH);
+					g_assert_cmpuint (issue->line_number, ==, lines[j]);
+				}
+				g_array_unref (issues);
+				g_mime_compliance_options_unref (options);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+			g_free (wire);
+		}
 	}
+}
+
+static void
+assert_content_ids (const char *wire, GArray *issues, const guint *lines, guint count)
+{
+	guint found = 0;
+
+	for (guint i = 0; i < issues->len; i++) {
+		GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+		const char *start = wire;
+
+		if (issue->violation != GMIME_COMPLIANCE_REPEATED_CONTENT_ID)
+			continue;
+		g_assert_cmpuint (found, <, count);
+		for (guint line = 1; line < lines[found]; line++) {
+			start = strchr (start, '\n');
+			g_assert_nonnull (start);
+			start++;
+		}
+		g_assert_cmpint (issue->stream_offset, ==, start - wire);
+		g_assert_cmpuint (issue->line_number, ==, lines[found++]);
+		g_assert_cmpuint (issue->column_number, ==, 1);
+		g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+	}
+	g_assert_cmpuint (found, ==, count);
+}
+
+static void
+test_repeated_content_ids (void)
+{
+	static const struct {
+		const char *wire;
+		guint count, lines[3];
+	} cases[] = {
+		{ "Content-Id: <same@example.com>\r\nContent-Id: <same@example.com>\r\n\r\nbody\r\n", 1, { 2 } },
+		{ "X-Prefix: \303\251\r\nContent-ID:\r\n <first@example.com>\r\ncOnTeNt-Id: <second@example.com>\r\n"
+		  "Content-Id: <third@example.com>\r\n\r\nbody\r\n", 2, { 4, 5 } },
+		{ "Content-Id:\r\nContent-Id: <second@example.com>\r\n\r\nbody\r\n", 1, { 2 } },
+		{ "Content-Id: invalid\r\nContent-Id: <second@example.com>\r\n\r\nbody\r\n", 1, { 2 } },
+		{ "Content-Id: <first@example.com>\r\nContent-Id: invalid", 1, { 2 } },
+		{ "Content-Id: <first@example.com>\r\nContent-Id:\r\n", 1, { 2 } },
+		{ "Content-Id: <first@example.com>\r\nContent-Id", 0, { 0 } },
+		{ "Content-Id: <first@example.com>\r\n\tContent-Id: <second@example.com>\r\n\r\nbody\r\n", 0, { 0 } },
+		{ "Content-Id: <first@example.com>\r\n\r\nbody\r\n", 0, { 0 } },
+		{ "Content-Type: multipart/mixed; boundary=b\r\n"
+		  "Content-Id: <same@example.com>\r\nContent-Id: <outer@example.com>\r\n\r\n"
+		  "--b\r\nContent-Id: <same@example.com>\r\n\r\none\r\n"
+		  "--b\r\nContent-Type: multipart/alternative; boundary=c\r\nContent-Id: <same@example.com>\r\n\r\n"
+		  "--c\r\nContent-Id: <same@example.com>\r\nContent-Id: <child@example.com>\r\n\r\ntwo\r\n--c--\r\n"
+		  "--b\r\nContent-Type: message/rfc822\r\nContent-Id: <same@example.com>\r\n\r\n"
+		  "Content-Id: <same@example.com>\r\nContent-Id: <inner@example.com>\r\n\r\nthree\r\n"
+		  "--b\r\nContent-Id: <same@example.com>\r\n\r\nfour\r\n--b--\r\n", 3, { 3, 15, 24 } }
+	};
+	const char *limited = "Content-Id: <first@example.com>\r\nContent-Id: <second@example.com>\r\n"
+		"Content-Id: <third@example.com>\r\nContent-Id: <fourth@example.com>\r\n"
+		"Content-Disposition: inline\r\nContent-Disposition: attachment\r\n\r\nbody\r\n";
+	const char *mbox_message = "From sender@example.com Mon Jan 1 00:00:00 2024\r\n"
+		"Content-Id: <same@example.com>\r\n\r\nbody\r\n";
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	guint i, chunked, entity;
+
+	g_assert_cmpuint (GMIME_COMPLIANCE_REPEATED_CONTENT_ID, ==, 14);
+	g_assert_cmpstr (g_mime_compliance_violation_get_name (GMIME_COMPLIANCE_REPEATED_CONTENT_ID), ==, "RepeatedContentId");
+	g_assert_cmpstr (g_mime_compliance_violation_get_description (GMIME_COMPLIANCE_REPEATED_CONTENT_ID), ==,
+		"A MIME part contained multiple Content-Id headers.");
+	g_assert_cmpstr (g_mime_compliance_violation_get_remarks (GMIME_COMPLIANCE_REPEATED_CONTENT_ID), ==,
+		"Repeated Content-Id headers can cause MIME parsers to disagree about a part's identifier and which content a reference to that identifier selects. Each header after the first is reported, even when its value is identical or invalid. The check is per MIME part, not a comparison of identifiers across different parts.");
+	g_assert_cmpuint (g_mime_compliance_violation_get_categories (GMIME_COMPLIANCE_REPEATED_CONTENT_ID), ==,
+		GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_SECURITY);
+	for (i = GMIME_COMPLIANCE_CONTEXT_TRANSPORT; i <= GMIME_COMPLIANCE_CONTEXT_STORAGE; i++)
+		g_assert_cmpint (g_mime_compliance_violation_get_severity (GMIME_COMPLIANCE_REPEATED_CONTENT_ID, i), ==,
+			GMIME_COMPLIANCE_SEVERITY_MAJOR);
+
+	testsuite_check ("Repeated Content-Id is per entity, independent of values, folding and nested messages");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (chunked = 0; chunked < 2; chunked++) {
+			for (entity = 0; entity < 2; entity++) {
+				ReaderInput *input = new_input (cases[i].wire, strlen (cases[i].wire), chunked ? 1 : G_MAXSIZE);
+				GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+				GError *error = NULL;
+
+				g_mime_reader_set_compliance_logger (reader, collect_compliance, issues, NULL);
+				g_assert_true (entity ? g_mime_reader_read_entity (reader, &error) : g_mime_reader_read_message (reader, &error));
+				g_assert_no_error (error);
+				assert_content_ids (cases[i].wire, issues, cases[i].lines, cases[i].count);
+				g_array_set_size (issues, 0);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Content-Id state resets across mailbox messages and replacement streams");
+	for (chunked = 0; chunked < 2; chunked++) {
+		char *wire = g_strdup_printf ("%s%sFrom sender\r\nContent-Id: <same@example.com>\r\n"
+			"Content-Id: <other@example.com>\r\n\r\nbody\r\n", mbox_message, mbox_message);
+		ReaderInput *input = new_input (wire, strlen (wire), chunked ? 1 : G_MAXSIZE);
+		GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+		GError *error = NULL;
+		const guint lines[] = { 11 };
+		ReaderInput *replacement;
+
+		g_mime_reader_set_stream_with_format (reader, GMIME_STREAM (input), GMIME_FORMAT_MBOX);
+		g_mime_reader_set_compliance_logger (reader, collect_compliance, issues, NULL);
+		for (i = 0; i < 3; i++) {
+			g_assert_true (g_mime_reader_read_message (reader, &error));
+			g_assert_no_error (error);
+		}
+		g_assert_true (g_mime_reader_eos (reader));
+		assert_content_ids (wire, issues, lines, 1);
+		g_array_set_size (issues, 0);
+		replacement = new_input (cases[8].wire, strlen (cases[8].wire), chunked ? 1 : G_MAXSIZE);
+		g_mime_reader_set_stream_with_format (reader, GMIME_STREAM (replacement), GMIME_FORMAT_MESSAGE);
+		g_assert_true (g_mime_reader_read_message (reader, &error));
+		g_assert_no_error (error);
+		assert_content_ids (cases[8].wire, issues, NULL, 0);
+		g_array_set_size (issues, 0);
+		g_object_unref (replacement);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_free (wire);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Content-Id header-only reporting, independent limits and validator gating");
+	for (chunked = 0; chunked < 2; chunked++) {
+		for (guint budget = 0; budget < 2; budget++) {
+			ReaderInput *input = new_input (limited, strlen (limited), chunked ? 1 : G_MAXSIZE);
+			GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+			GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+			GError *error = NULL;
+			const guint lines[] = { 2, 3, 4 };
+			guint truncated = 0, dispositions = 0;
+
+			g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_NONE);
+			g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+			g_mime_compliance_options_set_max_issues_per_violation (options, budget);
+			g_mime_reader_set_compliance_options (reader, options);
+			g_mime_reader_set_compliance_logger (reader, collect_compliance, issues, NULL);
+			g_assert_true (budget ? g_mime_reader_read_message (reader, &error) : g_mime_reader_read_headers (reader, &error));
+			g_assert_no_error (error);
+			assert_content_ids (limited, issues, lines, budget ? 1 : 3);
+			for (i = 0; i < issues->len; i++) {
+				GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+				g_assert_cmpint (issue->context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+				if (issue->violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES) {
+					truncated++;
+					g_assert_cmpint (issue->stream_offset, ==, strstr (limited, "Content-Id: <third") - limited);
+				} else if (issue->violation == GMIME_COMPLIANCE_REPEATED_CONTENT_DISPOSITION) {
+					dispositions++;
+				}
+			}
+			g_assert_cmpuint (dispositions, ==, 1);
+			g_assert_cmpuint (truncated, ==, budget);
+			g_array_set_size (issues, 0);
+			g_mime_compliance_options_unref (options);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+	}
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
+static void
+test_content_id_model_preservation (void)
+{
+	const char wire[] = "Content-Type: text/plain\r\nContent-Id: <first@example.com>\r\n"
+		"Content-Id: <second@example.com>\r\n\r\nbody\r\n";
+	const guint lines[] = { 3 };
+	GByteArray *baseline = NULL;
+	guint chunked, enabled, logging;
+
+	testsuite_check ("Content-Id diagnostics leave identifier selection, retained headers and serialization unchanged");
+	for (chunked = 0; chunked < 2; chunked++) {
+		for (enabled = 0; enabled < 2; enabled++) {
+			for (logging = 0; logging < 2; logging++) {
+				ReaderInput *input = new_input (wire, sizeof (wire) - 1, chunked ? 1 : G_MAXSIZE);
+				GMimeParser *parser;
+				GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				GMimeStream *output = g_mime_stream_mem_new ();
+				GMimeMessage *message;
+				GMimeEntity *part;
+				GMimeHeaderList *headers;
+				GByteArray *bytes;
+				GError *error = NULL;
+				guint ids = 0;
+
+				parser = g_mime_parser_new_with_stream_and_storage (GMIME_STREAM (input),
+					GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (parser);
+				g_mime_compliance_options_set_enabled_validators (options,
+					enabled ? GMIME_COMPLIANCE_VALIDATOR_ALL : GMIME_COMPLIANCE_VALIDATOR_NONE);
+				g_mime_parser_set_compliance_options (parser, options);
+				if (logging)
+					g_mime_parser_set_compliance_logger (parser, collect_compliance, issues, NULL);
+				message = g_mime_parser_construct_message (parser, NULL, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				part = g_mime_message_get_mime_part (message);
+				g_assert_cmpstr (g_mime_entity_get_content_id (part), ==, "first@example.com");
+				headers = g_mime_entity_get_header_list (part);
+				for (int i = 0; i < g_mime_header_list_get_count (headers); i++) {
+					GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
+
+					if (!g_ascii_strcasecmp (g_mime_header_get_name (header), "Content-Id"))
+						ids++;
+				}
+				g_assert_cmpuint (ids, ==, 2);
+				g_assert_cmpint (g_mime_entity_write_to_stream (GMIME_ENTITY (message), NULL, output), >, 0);
+				bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+				if (!baseline) {
+					baseline = g_byte_array_new ();
+					g_byte_array_append (baseline, bytes->data, bytes->len);
+				}
+				g_assert_cmpmem (bytes->data, bytes->len, baseline->data, baseline->len);
+				assert_content_ids (wire, issues, lines, logging);
+				g_object_unref (message);
+				g_object_unref (output);
+				g_array_unref (issues);
+				g_mime_compliance_options_unref (options);
+				g_object_unref (parser);
+				g_object_unref (input);
+			}
+		}
+	}
+	g_byte_array_unref (baseline);
+	testsuite_check_passed ();
 }
 
 static void
@@ -2503,6 +2851,7 @@ main (int argc, char **argv)
 	testsuite_check_passed ();
 	testsuite_check ("Mailbox markers, repeated messages and Content-Length framing");
 	test_mailboxes ();
+	test_content_length_range ();
 	test_mailbox_failures ();
 	test_status_reader_helpers ();
 	testsuite_check_passed ();
@@ -2513,6 +2862,8 @@ main (int argc, char **argv)
 	test_long_mailbox_marker ();
 	testsuite_check_passed ();
 	test_repeated_headers ();
+	test_repeated_content_ids ();
+	test_content_id_model_preservation ();
 	test_scan_corpus (datadir);
 	test_generated_scans ();
 	testsuite_check ("Header limits, callback failures and input errors");

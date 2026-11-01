@@ -117,9 +117,10 @@ struct _GMimeReaderPrivate {
 
 	GMimeContentType *content_type;
 	GMimeContentEncoding encoding;
-	gint64 content_length, content_end;
+	gint32 content_length;
+	gint64 content_end;
 
-	guint32 seen_message, seen_resent;
+	guint32 seen_headers;
 	gint64 header_begin, type_offset, encoding_offset;
 	guint64 header_line, type_line, encoding_line, encoding_column;
 
@@ -128,6 +129,7 @@ struct _GMimeReaderPrivate {
 	unsigned int message_headers : 1;
 	unsigned int seen_mime_version : 1;
 	unsigned int seen_content_disposition : 1;
+	unsigned int seen_content_id : 1;
 	unsigned int header_limit_exceeded : 1;
 	unsigned int stop_at_separator : 1;
 	unsigned int mailbox_boundary : 1;
@@ -759,6 +761,9 @@ header_is (const guint8 *header, gsize length, const char *name)
 	return strlen (name) == length && g_ascii_strncasecmp ((const char *) header, name, length) == 0;
 }
 
+#define FIRST_RESENT_HEADER_INDEX 12
+#define MESSAGE_HEADERS_MASK ((1u << FIRST_RESENT_HEADER_INDEX) - 1)
+
 static gint
 repeat_header_index (const guint8 *header, gsize length)
 {
@@ -865,18 +870,18 @@ check_header_semantics (GMimeReader *reader, gsize name_length, gsize field_leng
 
 	index = repeat_header_index (data, name_length);
 
-	if (index < 12)
-		priv->seen_resent = 0;
+	/* Lower bits survive when a non-resent field ends the current block. */
+	if (index < FIRST_RESENT_HEADER_INDEX)
+		priv->seen_headers &= MESSAGE_HEADERS_MASK;
 
 	if (index >= 0) {
-		guint32 *seen = index < 12 ? &priv->seen_message : &priv->seen_resent;
 		guint32 bit = 1u << index;
 
-		if (*seen & bit)
+		if (priv->seen_headers & bit)
 			report_at (reader, GMIME_COMPLIANCE_REPEATED_DATE + index, begin, line, 1,
 				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 
-		*seen |= bit;
+		priv->seen_headers |= bit;
 	}
 
 	if (header_is (data, name_length, "MIME-Version"))
@@ -893,13 +898,13 @@ check_missing_headers (GMimeReader *reader, gint64 offset, guint64 line, gboolea
 	if (!priv->active_logger || !priv->message_headers || !priv->toplevel)
 		return;
 
-	if (!(priv->seen_message & 1u))
+	if (!(priv->seen_headers & 1u))
 		report_at (reader, GMIME_COMPLIANCE_MISSING_DATE, offset, line, column, kind);
 
-	if (!(priv->seen_message & 2u))
+	if (!(priv->seen_headers & 2u))
 		report_at (reader, GMIME_COMPLIANCE_MISSING_FROM, offset, line, column, kind);
 
-	if (!(priv->seen_message & (1u << 7)))
+	if (!(priv->seen_headers & (1u << 7)))
 		report_at (reader, GMIME_COMPLIANCE_MISSING_MESSAGE_ID, offset, line, column, kind);
 
 	if (!priv->seen_mime_version && (priv->content_type || priv->seen_encoding))
@@ -1057,6 +1062,12 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
 
 		priv->seen_content_disposition = TRUE;
+	} else if (header_is (header, name_length, "Content-Id")) {
+		if (priv->seen_content_id)
+			report_at (reader, GMIME_COMPLIANCE_REPEATED_CONTENT_ID, begin, line, 1,
+				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+
+		priv->seen_content_id = TRUE;
 	} else if (header_is (header, name_length, "Content-Transfer-Encoding")) {
 		gsize i = 0;
 
@@ -1111,7 +1122,7 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 				return;
 		} while (i < length && g_ascii_isdigit (value[i]));
 
-		priv->content_length = parsed;
+		priv->content_length = (gint32) parsed;
 	}
 }
 
@@ -1251,9 +1262,10 @@ step_headers (GMimeReader *reader, gboolean message)
 	priv->header_line = begin_line_number;
 	priv->type_offset = -1;
 	priv->encoding_offset = -1;
-	priv->seen_message = priv->seen_resent = 0;
+	priv->seen_headers = 0;
 	priv->seen_mime_version = FALSE;
 	priv->seen_content_disposition = FALSE;
+	priv->seen_content_id = FALSE;
 	priv->message_headers = message;
 	priv->content_length = -1;
 

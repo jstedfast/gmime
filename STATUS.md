@@ -3480,16 +3480,16 @@ observed index without gaps. A balanced tree tracks only observed indices,
 avoiding adversarial integer hash collisions; gap detection compares the
 highest index with the distinct count instead of scanning or allocating by
 index. Fallback values do not hide gaps, and tolerant value assembly remains
-unchanged. MissingParameterSegment is 50 in the unreleased enum.
+unchanged. MissingParameterSegment is 51 in the unreleased enum.
 
-InvalidParameter (44) reports missing or invalid names, missing equals signs or
+InvalidParameter (45) reports missing or invalid names, missing equals signs or
 values, and unterminated quotes/comments at the malformed declaration or
 fragment's ElementStart. Recovery honors quotes and nested comments; empty
 parameter slots, quoted empty values, and loose unquoted values remain accepted.
 Declarations with missing values still participate in duplicate and continuation
 tracking. Encoded RFC 2231 values are checked by a separate diagnostic.
 
-InvalidRfc2231Parameter (45) checks charset/language delimiters on initial
+InvalidRfc2231Parameter (46) checks charset/language delimiters on initial
 encoded values, complete percent-encoded octets within each segment, and raw
 attribute characters. It reports once per malformed declaration at ElementStart,
 only when declaration syntax is otherwise valid. Empty charset/language fields,
@@ -3501,7 +3501,7 @@ language tags, or validate decoded characters. Both syntax diagnostics have
 independent reporting budgets. The new identity shifts subsequent unreleased
 numeric values by one while retaining their metadata.
 
-EncodedWordInParameter (46) reports recognizable RFC 2047 B/Q encoded-word
+EncodedWordInParameter (47) reports recognizable RFC 2047 B/Q encoded-word
 syntax once per syntactically valid declaration, at ElementStart. The
 allocation-free, linear scan handles quoted pairs, embedded words, and nested
 candidate prefixes. It does not validate word lengths, charsets, or payload
@@ -3510,7 +3510,7 @@ encoded-word usage can both be reported, with independent budgets. This
 diagnoses forbidden encoded-word usage in parameters, not malformed encoded
 words in other headers, and leaves native decoding and serialization unchanged.
 
-InvalidEncodedWord (51) and InvalidEncodedWordPlacement (52) are controlled by
+InvalidEncodedWord (52) and InvalidEncodedWordPlacement (53) are controlled by
 the independent EncodedWords flag, enabled by default with compliance logging.
 Address headers, Subject, Comments, Content-Description, and case-insensitive
 X- headers are checked, including ignored duplicates. Syntax validation covers
@@ -3525,6 +3525,23 @@ and at most 75 bytes of lookahead per candidate, without charset lookup or
 decoding. Positions identify each candidate's ElementStart, and both identities
 have independent budgets. Parameter encoded-word usage remains controlled by
 Parameters; native tolerant models and serialization are unchanged.
+
+RepeatedContentId (14) reports each additional Content-Id header within an
+entity, including empty, malformed, and identical values. It is a structural
+check independent of specialized-validator flags, with ElementStart positions
+at the repeated header name. State resets for every MIME header block and
+message; shared identifiers on separate parts are not repetitions. Headers-only,
+entity, and message reads share this behavior, and model parsing retains its
+first identifier, all raw headers, and unchanged serialization. Subsequent
+unreleased identities shift by one to match MimeKit, through
+IncompleteUUEncodedContent (101).
+
+Message and resent-header presence now share one 32-bit mask. Non-resent fields
+clear only the upper, resent-block bits, preserving whole-message presence.
+Content-Length uses a signed 32-bit value with -1 for absence, matching the
+existing accepted range; content-end calculations and overflow checks remain
+64-bit. Out-of-range values do not block later valid declarations, while the
+first accepted value (including zero) retains precedence.
 
 MimeKit's `39b1110` compliance optimizations are ported. A bounded initial
 marker search skips encoded-word scanning entirely for buffers without `=?`;

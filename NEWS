@@ -5,6 +5,10 @@
 * Added optional compliance diagnostics for repeated Content-Disposition headers
   and MIME parameters, including competing RFC 2231 representations. The new
   parameter validator is enabled by default when compliance logging is active.
+* Report repeated Content-Id headers per entity, including identical or invalid
+  values, without comparing identifiers across parts or changing identifier
+  selection. Compact reader header tracking and Content-Length state while
+  retaining 64-bit stream offsets and existing parsing behavior.
 * Report missing RFC 2231 continuation segments once per parameter, at its
   first continuation declaration. Track indices in a balanced tree to avoid
   adversarial hash collisions and resource use proportional to index values.
