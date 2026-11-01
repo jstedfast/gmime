@@ -601,7 +601,7 @@ test_metadata (void)
 	g_assert_cmpuint (GMIME_COMPLIANCE_VALIDATOR_ALL, ==, 63);
 	g_assert_cmpuint (g_mime_compliance_options_get_enabled_validators (options), ==, GMIME_COMPLIANCE_VALIDATOR_ALL);
 	for (i = 0; i < G_N_ELEMENTS (violations); i++) {
-		g_assert_cmpuint (violations[i], ==, 51 + i);
+		g_assert_cmpuint (violations[i], ==, 52 + i);
 		g_assert_cmpstr (g_mime_compliance_violation_get_name (violations[i]), ==, names[i]);
 		g_assert_nonnull (g_mime_compliance_violation_get_description (violations[i]));
 		g_assert_nonnull (g_mime_compliance_violation_get_remarks (violations[i]));
