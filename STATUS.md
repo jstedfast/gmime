@@ -10,8 +10,9 @@ GMime 4 is being developed as a C/GObject port of MimeKit.Core. The initial
 reference revision is MimeKit 04f17021, with GMime 211a0608 as the baseline.
 This is an incremental migration, not yet a declaration of feature parity.
 
-- GLib 2.88.0 or newer is required for building and using GMime 4.
-  This is the GLib API baseline packaged by Ubuntu 26.04 LTS.
+- GLib 2.70.2 or newer is required for building and using GMime 4.
+  Final GObject type definitions require the 2.70 API baseline; the 2.70.2
+  URI dot-segment normalization fix preserves related-resource lookup behavior.
 
 - `GMimeParserOptions`, `GMimeFormatOptions`, and `GMimeComplianceOptions` are
   atomically reference-counted boxed types. `ref()`/`unref()` replace `free()`
@@ -794,10 +795,13 @@ The structured MIME compliance framework is now implemented on GMimeReader
 and exposed by GMimeParser; remaining work is tracked in the migration
 roadmap below.
 
-The minimum dependency is GLib 2.88.0, matching
-Ubuntu 26.04 LTS's packaged GLib API baseline rather than requiring a
-newer upstream patch release. Build and package requirements,
-documentation, and supported build environments use the same baseline.
+The minimum dependency is GLib 2.70.2. Final GObject type definitions and
+`g_spawn_check_wait_status()` require 2.70 APIs; 2.70.2 also fixes URI
+dot-segment normalization used by related-resource lookup. Builds set
+`GLIB_VERSION_MIN_REQUIRED` and `GLIB_VERSION_MAX_ALLOWED` to 2.70 so newer
+installed headers diagnose accidental use of newer APIs. Build and package
+requirements and documentation use the same baseline. CI includes a build
+against GLib 2.70.2 in an isolated prefix, with crypto and IDN enabled.
 
 Public APIs should mirror MimeKit's types, members, and behavior as
 closely as practical, expressed using GMime naming and C/GObject

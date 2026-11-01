@@ -36,6 +36,7 @@
 #include <errno.h>
 
 #include <gmime/gmime.h>
+#include <glib/gstdio.h>
 
 #include "testsuite.h"
 
@@ -293,8 +294,9 @@ check_stream_fs (const char *input, const char *output, const char *filename, gi
 		goto cleanup;
 	}
 	
-	g_mime_stream_reset (streams[0]);
-	if (g_mime_stream_eos (streams[0])) {
+	if (g_mime_stream_reset (streams[0]) != 0 ||
+	    g_mime_stream_tell (streams[0]) != start ||
+	    g_mime_stream_eos (streams[0]) != (start == end)) {
 		ex = exception_new ("GMimeStreamFs did not properly reset `%s'", filename);
 		goto cleanup;
 	}
@@ -354,8 +356,9 @@ check_stream_file (const char *input, const char *output, const char *filename, 
 		goto cleanup;
 	}
 	
-	g_mime_stream_reset (streams[0]);
-	if (g_mime_stream_eos (streams[0])) {
+	if (g_mime_stream_reset (streams[0]) != 0 ||
+	    g_mime_stream_tell (streams[0]) != start ||
+	    g_mime_stream_eos (streams[0]) != (start == end)) {
 		ex = exception_new ("GMimeStreamFile did not properly reset `%s'", filename);
 		goto cleanup;
 	}
@@ -404,7 +407,8 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 		throw (ex);
 	}
 	
-	streams[1] = g_mime_stream_mmap_new (fd[1], PROT_READ, MAP_PRIVATE);
+	/* The reference file may be empty, which cannot be mmap'd. */
+	streams[1] = g_mime_stream_fs_new (fd[1]);
 	
 	if (!streams_match (streams, filename)) {
 		ex = exception_new ("GMimeStreamMmap streams did not match for `%s'", filename);
@@ -416,8 +420,9 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 		goto cleanup;
 	}
 	
-	g_mime_stream_reset (streams[0]);
-	if (g_mime_stream_eos (streams[0])) {
+	if (g_mime_stream_reset (streams[0]) != 0 ||
+	    g_mime_stream_tell (streams[0]) != start ||
+	    g_mime_stream_eos (streams[0]) != (start == end)) {
 		ex = exception_new ("GMimeStreamMmap did not properly reset `%s'", filename);
 		goto cleanup;
 	}
@@ -459,6 +464,10 @@ check_stream_buffer (const char *input, const char *output, const char *filename
 	
 	if (!streams_match (streams, filename))
 		ex = exception_new ("GMimeStreamBuffer (Block Mode) streams did not match for `%s'", filename);
+	else if (g_mime_stream_reset (streams[0]) != 0 ||
+		 g_mime_stream_tell (streams[0]) != start ||
+		 g_mime_stream_eos (streams[0]) != (start == end))
+		ex = exception_new ("GMimeStreamBuffer (Block Mode) did not properly reset `%s'", filename);
 	
 	g_object_unref (streams[0]);
 	g_object_unref (streams[1]);
@@ -515,8 +524,9 @@ check_stream_gio (const char *input, const char *output, const char *filename, g
 		goto cleanup;
 	}
 	
-	g_mime_stream_reset (streams[0]);
-	if (g_mime_stream_eos (streams[0])) {
+	if (g_mime_stream_reset (streams[0]) != 0 ||
+	    g_mime_stream_tell (streams[0]) != start ||
+	    g_mime_stream_eos (streams[0]) != (start == end)) {
 		ex = exception_new ("GMimeStreamGIO did not properly reset `%s'", filename);
 		goto cleanup;
 	}
@@ -547,6 +557,59 @@ static struct {
 	{ "GMimeStreamBuffer", check_stream_buffer },
 	{ "GMimeStreamGIO",    check_stream_gio    },
 };
+
+static void
+test_stream_reset_bounds (void)
+{
+	static const char data[] = "0123456789";
+	static const struct {
+		gint64 start, end;
+	} bounds[] = {
+		{ 0, 0 }, { 5, 5 }, { 10, 10 },
+		{ 0, 1 }, { 4, 9 }, { 9, 10 },
+		{ 0, -1 }, { 5, -1 }, { 10, -1 },
+	};
+	GError *error = NULL;
+	char *directory, *input, *output;
+	gint64 start, end, length;
+	guint i, j;
+
+	directory = g_dir_make_tmp ("gmime-stream-reset-XXXXXX", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (directory);
+	input = g_build_filename (directory, "input", NULL);
+	output = g_build_filename (directory, "output", NULL);
+	g_assert_true (g_file_set_contents (input, data, sizeof (data) - 1, &error));
+	g_assert_no_error (error);
+
+	for (i = 0; i < G_N_ELEMENTS (bounds); i++) {
+		start = bounds[i].start;
+		end = bounds[i].end;
+		length = (end == -1 ? (gint64) sizeof (data) - 1 : end) - start;
+		g_assert_true (g_file_set_contents (output, data + start, length, &error));
+		g_assert_no_error (error);
+
+		for (j = 0; j < G_N_ELEMENTS (checks); j++) {
+			testsuite_check ("%s reset with bounds %" G_GINT64_FORMAT ",%" G_GINT64_FORMAT,
+					 checks[j].what, start, end);
+			try {
+				if (!checks[j].check (input, output, "reset bounds", start, end))
+					throw (exception_new ("could not open stream fixtures"));
+				testsuite_check_passed ();
+			} catch (ex) {
+				testsuite_check_failed ("%s", ex->message);
+			} finally;
+		}
+	}
+
+	g_assert_cmpint (g_unlink (input), ==, 0);
+	g_assert_cmpint (g_unlink (output), ==, 0);
+	g_assert_cmpint (g_rmdir (directory), ==, 0);
+	g_free (input);
+	g_free (output);
+	g_free (directory);
+}
+
 
 static void
 test_streams (GDir *dir, const char *datadir, const char *filename)
@@ -1095,6 +1158,7 @@ int main (int argc, char **argv)
 	}
 	
 	testsuite_start ("Stream tests");
+	test_stream_reset_bounds ();
 	
 	p = g_stpcpy (path, datadir);
 	*p++ = G_DIR_SEPARATOR;
