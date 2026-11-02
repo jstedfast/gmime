@@ -1615,6 +1615,7 @@ test_text_decode_with_charset (void)
 	} invalid[] = {
 		{ "utf-8", "valid\377", 6, G_CONVERT_ERROR_ILLEGAL_SEQUENCE },
 		{ "utf-8", "valid\303", 6, G_CONVERT_ERROR_PARTIAL_INPUT },
+		{ "utf-8", "\370\210\200\200\200", 5, G_CONVERT_ERROR_ILLEGAL_SEQUENCE },
 		{ "us-ascii", "\377", 1, G_CONVERT_ERROR_ILLEGAL_SEQUENCE },
 		{ "utf-16", "a", 1, G_CONVERT_ERROR_PARTIAL_INPUT },
 		{ "utf-8", "a\0b", 3, G_CONVERT_ERROR_EMBEDDED_NUL },

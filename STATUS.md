@@ -2899,6 +2899,51 @@ in Format: text/PLAIN; format=flowed reports Plain, although is_flowed()
 returns TRUE. Existing text-content APIs and legacy body guessing are
 unchanged.
 
+### Decoded message bodies
+
+GMimeMessage now exposes get_text_body(), get_html_body(), and
+get_text_body_with_format(), corresponding to MimeKit's TextBody, HtmlBody
+and GetTextBody(format). Results are allocated UTF-8 strings with GError
+reporting: no matching body returns NULL without an error; selected empty
+content returns an empty string. The legacy entity-returning get_body()
+and unchecked TextPart.get_text() retain their existing behavior.
+
+Selection reuses the multipart virtual methods, including reverse alternative
+preference, related roots, base multipart stopping rules and their attachment
+semantics. Standalone text attachments and embedded messages are excluded.
+Plain also matches flowed; unknown and compressed-RTF formats have no match.
+
+Checked content reading, charset conversion and newline normalization are
+shared with TextPart.get_text_with_charset(). Automatic decoding uses a
+supported declared charset, otherwise a decoded UTF-8/UTF-16 BOM, then UTF-8.
+Declared charsets and UTF-16 BOMs replace malformed sequences (U+FFFD for
+Unicode, '?' otherwise), preserving valid surrounding text. Default and BOM
+UTF-8 decoding remain strict; malformed input retries buffered bytes as Latin-1,
+without rereading the source. Charset mappings remain native iconv mappings,
+not managed best-fit tables. Explicit charset decoding stays strict.
+Incomplete final characters are finalized rather than dropped: the reference
+MimeKit revision (e607255b) skips decoder flushing when its final input is empty.
+GMime intentionally does not reproduce that data loss. Obsolete five/six-byte
+UTF-8 is rejected or replaced, even when the native iconv accepts it.
+I/O and converter setup failures never fall back or return partial
+text; decoded NULs remain native string errors. Bare CRs and Unicode BOMs
+are preserved. HTML-meta charset detection, public detection/confidence and
+used-charset reporting remain outstanding. Flowed conversion and markup
+conversion/sanitization remain outside these accessors.
+
+Native and ASan/UBSan core, MIME-part, body-builder, parameter and parameter
+validator suites pass. Regressions include content callbacks that replace the
+selected body during decoding. GIR, typelib, Vala and reference documentation
+generation pass; generated ownership/error metadata and live Python GI calls
+cover missing, empty, plain and HTML bodies, format selection and GError
+propagation.
+
+An actual-source MimeKit comparison covers 78,234 charset/BOM and malformed
+Unicode cases: 77,257 match fully finalized managed decoding, and 977 report
+intentional native embedded-NUL errors, with no unexpected differences.
+Of these cases, 5,474 expose the reference revision's incomplete-finalization
+bug; GMime is compared against correctly finalized output, not that data loss.
+
 ### Multipart text-body selection
 
 g_mime_multipart_try_get_value(format, &body) now implements MimeKit's
@@ -3280,7 +3325,8 @@ mean no match, while read failures return a GError rather than masquerading
 as missing marks. Detection works on nonseekable streams.
 
 These primitives do not change the legacy TextPart.get_text() behavior.
-Automatic charset selection, HTML meta-charset detection and the checked
+The message-body accessors now use them for automatic charset selection.
+HTML meta-charset detection and the checked
 TextPart.TryDetectEncoding()/GetText(out Encoding) APIs remain unported.
 
 ### Reader header foundation and opt-in OpenPGP detection
@@ -5214,7 +5260,8 @@ The public parser already uses the explicit-stack reader and model builder;
 synchronous serialization uses the iterative writer. Specialized alternative,
 related and report multiparts, delivery/disposition/feedback reports,
 text/rfc822-headers, attachment collections, body building, Received models,
-anonymization and message/partial reconstruction are implemented. MIME
+anonymization, decoded message-body accessors and message/partial
+reconstruction are implemented. MIME
 compliance diagnostics, options, budgets and reader/parser callbacks are
 implemented.
 Runtime-dispatched content scanners and selected transfer-encoding kernels,
@@ -5224,13 +5271,10 @@ ports.
 
 ### Application-facing API completion
 
-- Add decoded message TextBody, HtmlBody and GetTextBody(format) equivalents.
-  Reuse specialized multipart selection; the legacy get_body() entity-selection
-  helper is not the decoded-text API. Flowed-text conversion is deferred with
-  the standalone text utilities.
 - Complete TextPart encoding detection: detected charset and confidence,
   HTML meta charset discovery, and reporting the charset used by decoding.
-  Explicit charset conversion and BOM detection already exist.
+  Explicit charset conversion, BOM detection and checked automatic decoding
+  for the message-body accessors already exist.
 - Port the public SMTP and SMTPUTF8 address validators and their options and
   error models. The reader's MIME address compliance validator is a different
   API, not a replacement for these utilities.
@@ -5243,7 +5287,7 @@ ports.
 ### API contract and settled 4.0.0 decisions
 
 - Continue aligning public APIs while retaining intentional, documented native
-  differences. Resolve body accessor naming and review stream close/ownership
+  differences. Body accessor naming is settled; review stream close/ownership
   contracts before the GMime 4 API/ABI is frozen.
 - Legacy parser persistence accessors are removed in favor of explicit content
   storage at construction or stream reinitialization. Internal snapshots remain

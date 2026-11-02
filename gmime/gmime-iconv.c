@@ -105,14 +105,18 @@ g_mime_iconv (iconv_t cd, char **inbuf, size_t *inleft, char **outbuf, size_t *o
 }
 
 
-char *
-_g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd, gsize *written, GError **error)
+static char *
+iconv_convert (const char *text, gsize length, iconv_t cd, const char *charset, const char *replacement,
+	       gsize *written, GError **error)
 {
 	size_t inleft = length, outleft, status;
+	gsize replacement_length = replacement ? strlen (replacement) : 0, n;
 	gsize capacity = MAX (length, 64), used = 0;
 	char *buffer = NULL, *expanded, *out;
 	char *in = (char *) text;
-	gboolean flushing = FALSE;
+	const char *invalid;
+	gboolean flushing = FALSE, recover;
+	gboolean utf8 = charset && (!g_ascii_strcasecmp (charset, "UTF-8") || !g_ascii_strcasecmp (charset, "UTF8"));
 	GConvertError code;
 	int errsv;
 
@@ -126,10 +130,35 @@ _g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd, gs
 		out = buffer + used;
 		outleft = capacity - used;
 
-		status = g_mime_iconv (cd, flushing ? NULL : &in, flushing ? NULL : &inleft, &out, &outleft);
-
-		errsv = errno;
+		if (utf8 && !flushing) {
+			/* Some iconv implementations accept obsolete five/six-byte
+			 * UTF-8. Replacement must instead follow Unicode boundaries. */
+			g_utf8_validate_len (in, inleft, &invalid);
+			n = invalid - in;
+			if (n > outleft) {
+				status = (size_t) -1;
+				errsv = E2BIG;
+			} else {
+				memcpy (out, in, n);
+				out += n;
+				outleft -= n;
+				in += n;
+				inleft -= n;
+				if (inleft && !*in) {
+					g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
+							     "Decoded text contains an embedded NUL character");
+					goto fail;
+				}
+				status = inleft ? (size_t) -1 : 0;
+				errsv = inleft ? EILSEQ : 0;
+			}
+		} else {
+			status = g_mime_iconv (cd, flushing ? NULL : &in, flushing ? NULL : &inleft, &out, &outleft);
+			errsv = errno;
+		}
 		used = out - buffer;
+		recover = status == (size_t) -1 && replacement && !flushing && inleft > 0 &&
+			(errsv == EILSEQ || errsv == EINVAL);
 
 		if (status != (size_t) -1) {
 			if (status != 0) {
@@ -142,7 +171,7 @@ _g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd, gs
 				break;
 
 			flushing = TRUE;
-		} else if (errsv == E2BIG) {
+		} else if (errsv == E2BIG || (recover && outleft < replacement_length)) {
 			if (capacity > (G_MAXSIZE - 4) / 2)
 				goto no_memory;
 
@@ -152,6 +181,14 @@ _g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd, gs
 				goto no_memory;
 
 			buffer = expanded;
+		} else if (recover) {
+			n = _g_mime_charset_invalid_length (charset, (const unsigned char *) in, inleft, errsv);
+			memcpy (buffer + used, replacement, replacement_length);
+			used += replacement_length;
+			in += n;
+			inleft -= n;
+			if (!inleft)
+				flushing = TRUE;
 		} else {
 			code = errsv == EINVAL ? G_CONVERT_ERROR_PARTIAL_INPUT :
 				errsv == EILSEQ ? G_CONVERT_ERROR_ILLEGAL_SEQUENCE : G_CONVERT_ERROR_FAILED;
@@ -175,6 +212,26 @@ no_memory:
 fail:
 	g_free (buffer);
 	return NULL;
+}
+
+char *
+_g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd, gsize *written, GError **error)
+{
+	return iconv_convert (text, length, cd, NULL, NULL, written, error);
+}
+
+char *
+_g_mime_iconv_decode_with_fallback (const char *text, gsize length, iconv_t cd, const char *charset,
+				   gsize *written, GError **error)
+{
+	const char *replacement = "?";
+
+	if (!g_ascii_strcasecmp (charset, "UTF-8") || !g_ascii_strcasecmp (charset, "UTF8") ||
+	    !g_ascii_strncasecmp (charset, "UTF-16", 6) || !g_ascii_strncasecmp (charset, "UTF-32", 6) ||
+	    !g_ascii_strncasecmp (charset, "UCS-2", 5) || !g_ascii_strncasecmp (charset, "UCS-4", 5))
+		replacement = "\357\277\275";
+
+	return iconv_convert (text, length, cd, charset, replacement, written, error);
 }
 
 
