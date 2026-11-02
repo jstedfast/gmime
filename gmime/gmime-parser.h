@@ -48,22 +48,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GMimeParser, g_mime_parser, GMIME, PARSER, GObject)
 
 
-/**
- * GMimeParserHeaderRegexFunc:
- * @parser: The #GMimeParser object.
- * @header: The header field matched.
- * @value: The header field value.
- * @offset: The header field offset.
- * @user_data: The user-supplied callback data.
- *
- * Function signature for the callback to
- * g_mime_parser_set_header_regex().
- **/
-typedef void (* GMimeParserHeaderRegexFunc) (GMimeParser *parser, const char *header,
-					     const char *value, gint64 offset,
-					     gpointer user_data);
-
-
 GMimeParser *g_mime_parser_new (void);
 GMimeParser *g_mime_parser_new_with_stream (GMimeStream *stream);
 GMimeParser *g_mime_parser_new_with_stream_and_storage (GMimeStream *stream, GMimeFormat format,
@@ -80,10 +64,6 @@ GMimeComplianceOptions *g_mime_parser_get_compliance_options (GMimeParser *parse
 void g_mime_parser_set_compliance_options (GMimeParser *parser, GMimeComplianceOptions *options);
 void g_mime_parser_set_compliance_logger (GMimeParser *parser, GMimeComplianceIssueFunc report,
 					gpointer user_data, GDestroyNotify destroy);
-
-void g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
-				     GMimeParserHeaderRegexFunc header_cb,
-				     gpointer user_data);
 
 GMimeHeaderList *g_mime_parser_construct_headers (GMimeParser *parser, GMimeParserOptions *options, GError **error);
 GMimeEntity *g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options, GError **error);

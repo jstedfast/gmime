@@ -2076,7 +2076,6 @@ GMIME_TYPE_PARSER_OPTIONS
 <FILE>gmime-parser</FILE>
 GMimeParser
 GMimeFormat
-GMimeParserHeaderRegexFunc
 g_mime_parser_new
 g_mime_parser_new_with_stream
 g_mime_parser_new_with_stream_and_storage
@@ -2087,7 +2086,6 @@ g_mime_parser_set_format
 g_mime_parser_get_compliance_options
 g_mime_parser_set_compliance_options
 g_mime_parser_set_compliance_logger
-g_mime_parser_set_header_regex
 g_mime_parser_tell
 g_mime_parser_eos
 g_mime_parser_construct_headers

@@ -96,11 +96,6 @@ print_mime_struct (GMimeStream *stream, GMimeEntity *part, int depth)
 }
 
 static void
-xevcb (GMimeParser *parser, const char *header, const char *value, gint64 offset, gpointer user_data)
-{
-}
-
-static void
 test_parser (GMimeParser *parser, GMimeParserOptions *options, GMimeStream *mbox, GMimeStream *summary)
 {
 	gint64 message_begin, message_end, headers_begin, headers_end;
@@ -385,8 +380,6 @@ int main (int argc, char **argv)
 					if (g_mime_parser_options_get_respect_content_length (options))
 						throw (exception_new ("respect content-length check failed"));
 				}
-				
-				g_mime_parser_set_header_regex (parser, "^X-Evolution", xevcb, NULL);
 				
 				pstream = g_mime_stream_mem_new ();
 				test_parser (parser, options, mstream, pstream);
