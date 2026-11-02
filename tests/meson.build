@@ -35,7 +35,7 @@ if have_crypto
 endif
 
 normal_tests = [
-  'test-stream-block', 'test-substreams',
+  'test-stream-block', 'test-substreams', 'test-stream-close',
   'test-received-clauses', 'test-received',
   'test-anonymizer',
   'test-authentication-results',

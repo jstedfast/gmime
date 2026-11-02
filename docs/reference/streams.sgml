@@ -16,6 +16,33 @@
     lseek(), etc) with some additional niceties such as a printf-like 
     function.</para>
 
+    <para>Explicit close and object lifetime are distinct.
+    g_mime_stream_close() does not release the caller's object reference;
+    g_object_unref() only finalizes a stream when its last reference is
+    released. A retained reference does not prevent another caller from
+    explicitly closing shared resources. Flush and close writers explicitly
+    and check return values and errno: finalization cannot report I/O
+    failures, and a failed close may already have released its backend.</para>
+
+    <para>GMimeStreamBuffer discards unflushed output on close or
+    finalization, releasing its source reference without explicitly closing
+    it. GMimeStreamCat likewise releases children without flushing or
+    explicitly closing them. GMimeStreamFilter completes writes on explicit
+    close and closes its source only when its owner flag is enabled;
+    finalization does neither, but releases its source reference.
+    Releasing the last reference can still finalize the source.
+    Flushing a filter completes its output without flushing its source:
+    flush downstream buffering separately.</para>
+
+    <para>GMimeStreamGIO constructors take ownership of the supplied GFile
+    reference. Pass an additional reference to retain the file independently.
+    The owner flag controls releasing the GFile, not the input/output streams
+    opened by the wrapper, which are always closed and released. Close
+    attempts both internal streams, reports the first error through errno,
+    and leaves the wrapper closed even on failure. Substreams borrow their
+    parent's GFile and retain the parent object; finish using them before
+    explicitly closing an owning parent.</para>
+
     <para>The three (3) basic stream types are: GMimeStreamFile,
     GMimeStreamFs and GMimeStreamMem. You can manipulate all three
     streams using the GMimeStream interfaces. In addition, some of

@@ -250,6 +250,39 @@ and obtain the writable buffer, capacity, and prespace using
 own private state. Rebuild all subclasses: parent instance and class layouts
 have changed.
 
+### Stream ownership and explicit close
+
+Streams retain native reference-counted lifetime rules, not managed `Dispose`
+semantics. `g_mime_stream_close()` does not unref the wrapper, and an extra
+reference does not prevent another caller from explicitly closing a shared
+resource. Flush and close explicitly, checking return values and `errno`;
+finalization cannot report delayed I/O failures. A failed close may already
+have released its backend, so do not assume the resource is available to retry.
+
+| Wrapper | Explicit close | Finalization |
+|---|---|---|
+| `GMimeStreamBuffer` | Discards unflushed output and releases its source reference | Same |
+| `GMimeStreamCat` | Releases its child references without flushing or explicitly closing them | Same |
+| `GMimeStreamFilter` | Completes writes; closes its source only if owner is true | Releases its source reference without completing writes or explicitly closing it |
+
+Releasing the final reference can still finalize a source and release its
+resources. Filter ownership defaults to false. Flushing a filter completes its
+output but does not flush its source; flush downstream buffering separately.
+Retained parents keep borrowed Fs/File/Mmap/GIO substreams alive under normal
+unref, but do not explicitly close an owning parent while its views are needed.
+Memory and block substreams retain their shared storage independently.
+
+Both `GMimeStreamGIO` constructors consume the supplied `GFile` reference,
+as before; their introspection annotations now explicitly say `transfer full`.
+C callers retaining the file must pass `g_object_ref(file)`. The owner flag
+controls releasing that reference, not closing the wrapper's internal GIO
+streams, which are always closed and released. Changing owner to false transfers
+responsibility for the existing reference back to the caller; it does not
+change reference counts. Language bindings should retain default ownership.
+GIO close now returns -1 and sets `errno` on failure, preserving the first error
+while closing and releasing both internal streams. The wrapper is closed even
+on failure, and a subsequent close does not retry its released resources.
+
 ## 3. Preserve decoded-content behavior explicitly
 
 **This is the most important behavioral change after renaming.**

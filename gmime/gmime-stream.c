@@ -240,7 +240,9 @@ stream_flush (GMimeStream *stream)
  * g_mime_stream_flush:
  * @stream: a #GMimeStream
  *
- * Sync's the stream to disk.
+ * Flushes output according to the backend's contract. This does not uniformly
+ * imply durable storage or flushing every underlying stream. In particular,
+ * #GMimeStreamFilter completes its filters without flushing its source.
  *
  * Returns: %0 on success or %-1 on fail.
  **/
@@ -265,7 +267,17 @@ stream_close (GMimeStream *stream)
  * g_mime_stream_close:
  * @stream: a #GMimeStream
  *
- * Closes the stream.
+ * Closes the stream according to the backend's ownership policy. This does
+ * not release the caller's object reference and is not equivalent to
+ * g_object_unref(). Retaining an object reference does not protect a shared
+ * resource from an explicit close.
+ *
+ * Flush buffered output explicitly and check errors before closing.
+ * #GMimeStreamBuffer and #GMimeStreamCat release their source references
+ * without explicitly closing them; #GMimeStreamBuffer discards any unflushed
+ * output. #GMimeStreamFilter completes writes and closes its source only
+ * when its owner flag is enabled. Finalization cannot report I/O failures.
+ * A failed close may already have released the backend resource.
  *
  * Returns: %0 on success or %-1 on fail.
  **/
