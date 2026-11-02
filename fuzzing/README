@@ -3,6 +3,7 @@ GMime fuzzing
 
 Adapted from MimeKit's Fuzzing/Targets/MimeReaderTarget.cs,
 MimeParserTarget.cs, EncodersTarget.cs, DecodersTarget.cs, Rfc2047Target.cs,
+AddressParserTarget.cs, HeaderValuesTarget.cs,
 Helpers/{Fuzz,RecordingMimeReader,MimeComplianceChecker,
 MimeRoundTrip}.cs and corpus-seeding/replay scripts. The six hand-written
 MIME seeds and mime.dict are copied byte-for-byte from MimeKit's Fuzzing
@@ -57,10 +58,36 @@ GMime's existing all-space pass-through behavior is preserved.
 Literal NULs are mapped to spaces for GMime's public C-string APIs so the
 remaining input is still exercised; encoded NULs remain unmodified.
 
+structured-headers directly exercises checked address/list/mailbox/group,
+source-route, parameter, Content-Type and Content-Disposition parsers, their
+private raw-header recovery paths, and Message-ID/References scanners.
+Each input and selected prefix/suffix slices are copied into exact-size
+allocations, with no added terminator (even empty slices end at the allocation
+boundary). Results are compared with the same bounded bytes followed by an
+out-of-range suffix, and checked NUL-free inputs also with C-string parsing.
+Comparisons include display text, parameter values and formatting metadata,
+errors, warning payloads and identifier cursor positions. Round-trip checks
+adapt MimeKit's AddressParserTarget and HeaderValuesTarget (e607255b): encoded
+addresses must converge with only display-name whitespace/IDNA normalization,
+and content fields may take one extra round to settle encoded-word charsets
+without changing parameter names or values. Address convergence allows eight
+non-shrinking rounds; shrinking rounds remain bounded by the output length.
+Plausible identifiers must survive angle-bracket formatting, and dates must
+retain both their instant and UTC offset. These checks do not impose strict
+round trips on the identifier parser's deliberately malformed recovery output.
+The target also checks input preservation, reference progress and identifier
+UTF-8. Literal NULs are preserved: checked APIs must reject them, while raw
+recovery still processes the complete range. A whole-input selector varies all
+three address/parameter
+compliance modes, domainless/unquoted-comma address options and strict/loose
+RFC 2047 decoding without consuming syntax. Round-trip formatting uses LF.
+The harness reuses production GMime objects to reach private parsers without
+exporting them, including when the normal library is shared.
+
 Reader/parser whole-input selectors leave MIME prefixes unchanged. Input
 limits are 1 MiB for reader/parser/decoders, 256 KiB for encoders and 64 KiB
-for rfc2047. Both replay and libFuzzer enforce them. MIME depth is limited
-to 16, address-group depth to 4, and mailbox operations
+for rfc2047/structured-headers. Both replay and libFuzzer enforce them. MIME
+depth is limited to 16, address-group depth to 4, and mailbox operations
 to 10,000 messages per run. Reaching the mailbox work budget is recorded in
 the compared traces, not misreported as a parser defect. Only documented
 parse/header-limit failures are accepted; other errors and GLib
@@ -107,6 +134,12 @@ of the source tree (build directories are already ignored).
 Codec seeds cover all decoder selector bits, encoder options, binary payloads,
 SIMD/line/chunk boundaries, malformed escapes and MIME line tails. Header seeds
 include MimeKit's five RFC 2047 examples and UTF-8, whitespace and NUL edges.
+Structured-header seeds cover comments, escaped quotes, groups, source routes,
+RFC 2231 continuations and charsets, encoded words, malformed identifiers,
+literal/decoded NULs, every prefix of the syntax examples and allocation-size
+edges through the 64 KiB limit. The full seeder also extracts folded structured
+and address header values from message/mbox fixtures, following MimeKit's
+fuzz-seed-corpora.ps1 without decoding or truncating embedded NULs.
 Meson generates these deterministic regression seeds at build time; the full
 seeder additionally imports tests/data/encodings fixtures with codec prefixes.
 
@@ -121,7 +154,8 @@ Run each target separately:
     _build-fuzz/artifacts/mime-reader/corpus
 
 For encoders/decoders use codecs.dict instead of mime.dict. Use -max_len=262144
-for encoders and -max_len=65536 for rfc2047; other targets use 1048576.
+for encoders and -max_len=65536 for rfc2047/structured-headers; other targets use
+1048576. Use structured-headers.dict for the structured-headers target.
 gmime-fuzz --list prints each target's input limit.
 
 Replay a crash using the matching executable and crash filename, without
@@ -133,7 +167,7 @@ GitHub Actions
 --------------
 
 .github/workflows/fuzz.yml follows MimeKit's nightly/manual fuzz workflow.
-It runs all five targets nightly at 03:17 UTC for 600 seconds each. Manual runs
+It runs all six targets nightly at 03:17 UTC for 600 seconds each. Manual runs
 can select one target and a duration from 1 to 14,400 seconds. Each job
 replays the regression seeds, restores and extends a target/branch-specific
 corpus cache, then saves a new immutable cache even after a failure.
