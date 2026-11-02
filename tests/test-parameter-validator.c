@@ -1452,9 +1452,9 @@ test_encoded_model_preservation (gboolean content_type)
 		{ "filename=\"=?utf-8?Q?file?=\r\n\t=?utf-8?Q?.txt?=\"", "file.txt", 0, 1 },
 		{ "filename=\"=\\?utf-8?Q?file=2Etxt?\\=\"", "file.txt", 0, 1 },
 		{ "filename=\"=?x-unknown?Q?file.txt?=\"", "file.txt", 0, 1 },
-		/* Content-Disposition uses decoded header text; Content-Type retains raw continuations. */
+		/* RFC 2231 continuations retain encoded-word text in both content headers. */
 		{ "filename*0=\"=?utf-8?Q?file?=\"; filename*1=.txt",
-		  content_type ? "=?utf-8?Q?file?=.txt" : "file.txt", 0, 1 },
+		  "=?utf-8?Q?file?=.txt", 0, 1 },
 		{ "filename*=utf-8''%3D%3Futf-8%3FQ%3Ffile%3F%3D", "=?utf-8?Q?file?=", 0, 0 }
 	};
 	GMimeParserOptions *parser_options = g_mime_parser_options_new ();
