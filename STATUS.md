@@ -154,7 +154,10 @@ This is an incremental migration, not yet a declaration of feature parity.
   Reader and entity header handoffs use complete raw values; parsed parameter
   values replace NULs after charset decoding without changing the wire bytes.
   Parameter syntax is parsed before decoding values so encoded delimiters
-  remain data rather than introducing additional parameters.
+  remain data rather than introducing additional parameters. RFC 2047-looking
+  text inside RFC 2231 continuations remains literal in both Content-Type and
+  Content-Disposition, matching MimeKit; ordinary parameter values still
+  decode encoded words.
 
 - Message-ID, Resent-Message-ID, In-Reply-To, References and Content-ID model
   handoffs retain raw header bytes and pass explicit bounds to the shared
