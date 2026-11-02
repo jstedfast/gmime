@@ -42,6 +42,7 @@
 <!ENTITY gmime-yenc SYSTEM "xml/gmime-yenc.xml">
 <!ENTITY GMimeInternetAddress SYSTEM "xml/gmime-internet-address.xml">
 <!ENTITY GMimeDomainList SYSTEM "xml/gmime-domain-list.xml">
+<!ENTITY gmime-smtp-address-validator SYSTEM "xml/gmime-smtp-address-validator.xml">
 <!ENTITY GMimeGroupAddress SYSTEM "xml/gmime-group-address.xml">
 <!ENTITY GMimeMailboxAddress SYSTEM "xml/gmime-mailbox-address.xml">
 <!ENTITY GMimeInternetAddressList SYSTEM "xml/gmime-internet-address-list.xml">
@@ -271,6 +272,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeMailboxAddress;
       &GMimeInternetAddressList;
       &GMimeDomainList;
+      &gmime-smtp-address-validator;
     </chapter>
 
     <chapter id="MimeParts">

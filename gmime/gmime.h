@@ -59,6 +59,7 @@
 #include <gmime/gmime-message-partial.h>
 #include <gmime/gmime-visitor.h>
 #include <gmime/gmime-internet-address.h>
+#include <gmime/gmime-smtp-address-validator.h>
 #include <gmime/gmime-domain-list.h>
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-codecs.h>

@@ -5286,6 +5286,51 @@ ownership, without changing no-input position, EOF or storage behavior.
 The parser fuzz target now exercises this public API for its logged path
 rather than bypassing the wrapper through the private model builder.
 
+## SMTP and SMTPUTF8 address validators
+
+Implemented the public `g_mime_smtp_address_try_validate()` and
+`g_mime_smtp_utf8_address_try_validate()` utilities, their mailbox conveniences,
+separate option flags and detailed result enums. A NULL result pointer provides
+the boolean-only equivalent of MimeKit's `IsValid()`. The string APIs accept an
+explicit byte length or -1; invalid UTF-8 and embedded NUL bytes report syntax
+errors. They do not replace or change the MIME address compliance validator.
+
+The port preserves bare-mailbox syntax, SMTP-specific IPv4/IPv6/general
+literals, the opt-in ISO-2022-JP quoted-local extension, optional octet limits,
+error precedence, canonical raw Punycode decoding, PRECIS, NFC, contextual
+rules, whole-address script policy and per-segment ASCII-as-Latin checks.
+Mailbox validation uses the stored addr-spec without display-name/route
+validation, IDNA conversion or mutation.
+
+Unicode 18.0.0 class/script/joining and normalization tables are pinned to
+MimeKit `bbccea7630ba9475d03a2a09a1c5046924d8bf3f`. Native normalization and
+Punycode avoid host Unicode/IDNA version differences. Regenerate the checked-in
+tables and imported test vectors with
+`python tools\generate-smtp-unicode.py C:\src\MimeKit` at that revision; the
+generator verifies source provenance and table structure and preserves the
+upstream license. Consumers do not need Python, .NET, MimeKit or Unicode data
+downloads to build GMime.
+
+Coverage includes 356 imported SMTP/SMTPUTF8 vectors, bounded non-terminated
+input, invalid byte sequences, length boundaries and precedence, mailbox
+conveniences, and large combining/contextual inputs. The permanent scalar
+regression checks all 1,112,064 Unicode scalars with all twelve option
+combinations against an actual-source reference digest. A broader differential
+run also covered 127,491 structured/random/UAX #15-derived addresses:
+all 14,874,660 results matched the pinned MimeKit source.
+
+The `smtp-address-validator` replay/libFuzzer target checks all options,
+determinism, bounded/string equivalence, input preservation and option
+monotonicity. It includes imported and truncated vectors, malformed UTF-8/NUL,
+ISO-2022-JP, Punycode and NFC seeds, plus nightly/manual CI integration.
+
+Validation: native and ASan/UBSan SMTP/address suites and sanitizer regression
+replay passed. A 10,000-run libFuzzer smoke test included mutations beyond seed
+initialization and completed without failures. GIR, typelib, Vala and reference
+documentation were generated; live Python GI, a compiled/running Vala consumer,
+and standalone public-header C compilation passed. The imported tables and
+vectors regenerate byte-for-byte.
+
 ## Remaining migration phases
 
 This roadmap supersedes the original phase list. It reflects a source-level
@@ -5311,9 +5356,6 @@ ports.
 
 ### Application-facing API completion
 
-- Port the public SMTP and SMTPUTF8 address validators and their options and
-  error models. The reader's MIME address compliance validator is a different
-  API, not a replacement for these utilities.
 - Add AuthenticationResults, AuthenticationMethodResult and
   AuthenticationMethodProperty. These models belong to MimeKit.Core despite
   their Cryptography namespace; they do not require a new crypto backend.

@@ -6,6 +6,7 @@
 """Merge byte-exact, content-addressed seeds into persistent working corpora."""
 
 import argparse
+import ast
 import base64
 import hashlib
 from pathlib import Path
@@ -14,7 +15,22 @@ import re
 MAX_LENGTH = 1024 * 1024
 LIMITS = {"mime-reader": MAX_LENGTH, "mime-parser": MAX_LENGTH,
           "encoders": 256 * 1024, "decoders": MAX_LENGTH, "rfc2047": 64 * 1024,
-          "structured-headers": 64 * 1024}
+          "structured-headers": 64 * 1024, "smtp-address-validator": 4096}
+
+
+def smtp_inputs():
+    vectors = Path(__file__).resolve().parent.parent / "tests" / "smtp-address-vectors.h"
+    inputs = [ast.literal_eval('b"' + literal + '"')
+              for literal in re.findall(r'\{ "([^"]*)",', vectors.read_text(encoding="ascii"))]
+    inputs += [b"a@b\0tail", b"\xed\xa0\x80@b", b"\xf4\x90\x80\x80@b",
+               b'"a\x1b$BF|\x1b(B"@example.jp',
+               b"a" * 64 + b"@example", b"a" * 65 + b"@example",
+               b"u@" + b"a" * 63, b"u@" + b"a" * 64,
+               b"a" + b"\xcc\x81" * 1000 + b"@example",
+               b"\xc3\xa1" + b"\xcc\x81" * 1000 + b"@example",
+               b"a" * LIMITS["smtp-address-validator"]]
+    return inputs + [data[:end] for data in inputs if len(data) < 128
+                     for end in range(len(data))]
 
 
 def structured_header_inputs():
@@ -128,7 +144,7 @@ def regression_inputs():
         b"\xff\xfe\xc0\x80\xed\xa0\x80", b"\xff" * LIMITS["rfc2047"],
     ]
     return {"encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,
-            "structured-headers": structured_header_inputs()}
+            "structured-headers": structured_header_inputs(), "smtp-address-validator": smtp_inputs()}
 
 
 def main():

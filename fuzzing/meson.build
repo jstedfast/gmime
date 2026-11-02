@@ -1,6 +1,6 @@
 fuzz_support = static_library(
   'fuzz-support', ['fuzz.c', 'mime-reader.c', 'mime-parser.c', 'codecs.c', 'rfc2047.c',
-                   'structured-headers.c'],
+                   'structured-headers.c', 'smtp-address-validator.c'],
   # Reuse production objects to reach private parsers in shared-library builds too.
   objects: libgmime.extract_objects(gmime_sources, gmime_gpgme_sources),
   include_directories: gmime_inc,
@@ -18,6 +18,7 @@ fuzz_replay = executable(
 regression_seeds = custom_target(
   'fuzz-regression-seeds',
   input: 'seed-corpora.py',
+  depend_files: files('../tests/smtp-address-vectors.h'),
   output: 'seeds.stamp',
   command: [find_program('python3'), '@INPUT@', meson.current_build_dir() / 'seeds',
             '--regressions-only', '--stamp', '@OUTPUT@'],
@@ -25,7 +26,7 @@ regression_seeds = custom_target(
 
 foreach target, max_length : {'mime-reader': 1048576, 'mime-parser': 1048576,
                              'encoders': 262144, 'decoders': 1048576, 'rfc2047': 65536,
-                             'structured-headers': 65536}
+                             'structured-headers': 65536, 'smtp-address-validator': 4096}
   corpus_args = [meson.current_build_dir() / 'seeds' / target / 'corpus']
   if target in ['mime-reader', 'mime-parser']
     corpus_args = [meson.current_source_dir() / 'corpus']

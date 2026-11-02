@@ -1875,6 +1875,19 @@ GMIME_TYPE_INTERNET_ADDRESS_LIST
 </SECTION>
 
 <SECTION>
+<FILE>gmime-smtp-address-validator</FILE>
+<TITLE>SMTP address validation</TITLE>
+GMimeSmtpAddressValidationOptions
+GMimeSmtpUtf8AddressValidationOptions
+GMimeSmtpAddressError
+GMimeSmtpUtf8AddressError
+g_mime_smtp_address_try_validate
+g_mime_smtp_address_try_validate_mailbox
+g_mime_smtp_utf8_address_try_validate
+g_mime_smtp_utf8_address_try_validate_mailbox
+</SECTION>
+
+<SECTION>
 <FILE>gmime-domain-list</FILE>
 GMimeDomainList
 g_mime_domain_list_new

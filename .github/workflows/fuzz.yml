@@ -14,7 +14,7 @@ on:
         description: 'Fuzz target'
         default: all
         type: choice
-        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers]
+        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers, smtp-address-validator]
 
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
-          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers"]
+          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers", "smtp-address-validator"]
           target = os.environ["TARGET"]
           duration = os.environ["DURATION"]
           if target != "all" and target not in targets:
@@ -102,6 +102,7 @@ jobs:
             decoders) max_len=1048576; dictionary=codecs ;;
             rfc2047) max_len=65536; dictionary=mime ;;
             structured-headers) max_len=65536; dictionary=structured-headers ;;
+            smtp-address-validator) max_len=4096; dictionary=smtp-address-validator ;;
             *) max_len=1048576; dictionary=mime ;;
           esac
           "_build-fuzz/fuzzing/fuzz-$TARGET" \

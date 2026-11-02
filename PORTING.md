@@ -158,6 +158,35 @@ referenced entities and their owners, then use message/multipart APIs after
 traversal. The iterator retains its active ancestry, but external edits do not
 repair stored indexes; reset or seek before relying on them.
 
+### SMTP envelope address validation
+
+`g_mime_smtp_address_try_validate(address, length, options, &result)` checks a
+bare RFC 5321 mailbox; `g_mime_smtp_utf8_address_try_validate()` adds MimeKit's
+Unicode/NFC/context/script policy. These are not MIME header parsers or the
+reader's compliance validator. They do not trim, normalize, rewrite or accept
+display names. SMTPUTF8 policy is stricter than transport syntax and does not
+guarantee protection against every spoof.
+
+Pass a byte length or `-1` for a NUL-terminated string. Invalid UTF-8 and embedded
+NULs are syntax errors. The boolean result and optional `GMimeSmtpAddressError`
+or `GMimeSmtpUtf8AddressError` output describe validity; these are not `GError`
+domains. Pass NULL for the output when only a boolean is needed.
+
+Length limits are opt-in. Local-parts and complete addresses use their original
+UTF-8 byte lengths, including quoting; domain limits use raw Punycode A-label
+lengths. SMTP's ISO-2022-JP option only extends quoted local-parts. SMTPUTF8's
+`DECODE_IDN` permits canonical domain A-labels, not local-part A-label atoms;
+`ASCII_IS_LATIN` additionally rejects Latin/non-Latin mixtures within a
+local-part or domain label. Unicode 18.0.0 validation tables are bundled, so
+results do not depend on the installed GLib/IDNA implementation.
+
+The corresponding `*_try_validate_mailbox()` functions validate
+`g_mime_mailbox_address_get_addrspec()` as stored, ignoring display names and
+routes. Use an explicitly IDN-encoded address from
+`g_mime_mailbox_address_get_address(mailbox, TRUE)` if that is what will be
+sent via non-international SMTP; validation itself does not perform that
+conversion.
+
 ### Instance state and subclassing
 
 GObject instance state is now private. Use public getters, setters, and
