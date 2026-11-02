@@ -3,7 +3,7 @@ GMime fuzzing
 
 Adapted from MimeKit's Fuzzing/Targets/MimeReaderTarget.cs,
 MimeParserTarget.cs, EncodersTarget.cs, DecodersTarget.cs, Rfc2047Target.cs,
-AddressParserTarget.cs, HeaderValuesTarget.cs,
+AddressParserTarget.cs, HeaderValuesTarget.cs, SmtpUtf8ValidatorTarget.cs,
 Helpers/{Fuzz,RecordingMimeReader,MimeComplianceChecker,
 MimeRoundTrip}.cs and corpus-seeding/replay scripts. The six hand-written
 MIME seeds and mime.dict are copied byte-for-byte from MimeKit's Fuzzing
@@ -84,9 +84,17 @@ RFC 2047 decoding without consuming syntax. Round-trip formatting uses LF.
 The harness reuses production GMime objects to reach private parsers without
 exporting them, including when the normal library is shared.
 
+smtp-address-validator checks the public SMTP and SMTPUTF8 validators with all
+twelve option combinations. It compares exact-size non-terminated input with
+bounded and NUL-terminated copies, verifies boolean/error agreement and input
+preservation, and checks that length limits, ASCII-as-Latin and IDN decoding
+only change results as documented. Raw invalid UTF-8 and NUL bytes remain
+unmodified, replacing MimeKit's UTF-16/lone-surrogate input path.
+
 Reader/parser whole-input selectors leave MIME prefixes unchanged. Input
 limits are 1 MiB for reader/parser/decoders, 256 KiB for encoders and 64 KiB
-for rfc2047/structured-headers. Both replay and libFuzzer enforce them. MIME
+for rfc2047/structured-headers, and 4 KiB for smtp-address-validator.
+Both replay and libFuzzer enforce them. MIME
 depth is limited to 16, address-group depth to 4, and mailbox operations
 to 10,000 messages per run. Reaching the mailbox work budget is recorded in
 the compared traces, not misreported as a parser defect. Only documented
@@ -142,6 +150,8 @@ and address header values from message/mbox fixtures, following MimeKit's
 fuzz-seed-corpora.ps1 without decoding or truncating embedded NULs.
 Meson generates these deterministic regression seeds at build time; the full
 seeder additionally imports tests/data/encodings fixtures with codec prefixes.
+SMTP seeds include the checked-in MimeKit test vectors and every short prefix,
+malformed UTF-8/NULs, ISO-2022-JP, length boundaries and long combining sequences.
 
 Run each target separately:
 
@@ -155,7 +165,9 @@ Run each target separately:
 
 For encoders/decoders use codecs.dict instead of mime.dict. Use -max_len=262144
 for encoders and -max_len=65536 for rfc2047/structured-headers; other targets use
-1048576. Use structured-headers.dict for the structured-headers target.
+1048576 except smtp-address-validator, which uses -max_len=4096.
+Use structured-headers.dict for the structured-headers target, and
+smtp-address-validator.dict for smtp-address-validator.
 gmime-fuzz --list prints each target's input limit.
 
 Replay a crash using the matching executable and crash filename, without
@@ -167,7 +179,7 @@ GitHub Actions
 --------------
 
 .github/workflows/fuzz.yml follows MimeKit's nightly/manual fuzz workflow.
-It runs all six targets nightly at 03:17 UTC for 600 seconds each. Manual runs
+It runs all seven targets nightly at 03:17 UTC for 600 seconds each. Manual runs
 can select one target and a duration from 1 to 14,400 seconds. Each job
 replays the regression seeds, restores and extends a target/branch-specific
 corpus cache, then saves a new immutable cache even after a failure.

@@ -39,6 +39,7 @@ normal_tests = [
   'test-received-clauses', 'test-received',
   'test-anonymizer',
   'test-content-type',
+  'test-smtp-address-validator',
   'test-openpgp',
   'test-reader', 'test-parser-model', 'test-roundtrip', 'test-parameter-validator', 'test-encoded-word-validator',
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',

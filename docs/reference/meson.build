@@ -11,6 +11,7 @@ gmime_doc = gnome.gtkdoc(
   ignore_headers: [
     'gmime-internet-address-private.h', 'gmime-codec-private.h',
     'gmime-rfc2047-private.h', 'gmime-encoding-validator-private.h',
+    'gmime-smtp-unicode-private.h',
     'gmime-charset-map-private.h', 'gmime-table-private.h', 'gmime-parse-utils.h',
     'gmime-gpgme-private.h', 'gmime-internal.h', 'gmime-common.h', 'gmime-events.h',
     'gmime-parser-reader-private.h', 'gmime-object-private.h',
