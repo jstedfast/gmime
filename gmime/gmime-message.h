@@ -31,6 +31,7 @@
 #include <gmime/gmime-header.h>
 #include <gmime/gmime-message-id-list.h>
 #include <gmime/gmime-stream.h>
+#include <gmime/gmime-text-part.h>
 #include <gmime/gmime-autocrypt.h>
 
 G_BEGIN_DECLS
@@ -206,6 +207,10 @@ void g_mime_message_foreach (GMimeMessage *message, GMimeEntityForeachFunc callb
 			     gpointer user_data);
 
 GMimeEntity *g_mime_message_get_body (GMimeMessage *message);
+
+char *g_mime_message_get_text_body (GMimeMessage *message, GError **error);
+char *g_mime_message_get_html_body (GMimeMessage *message, GError **error);
+char *g_mime_message_get_text_body_with_format (GMimeMessage *message, GMimeTextFormat format, GError **error);
 
 G_END_DECLS
 

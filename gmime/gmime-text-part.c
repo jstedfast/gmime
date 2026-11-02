@@ -197,8 +197,10 @@ g_mime_text_part_get_format (GMimeTextPart *mime_part)
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), GMIME_TEXT_FORMAT_PLAIN);
 
 	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+
 	if (!g_ascii_strcasecmp (g_mime_content_type_get_media_type (content_type), "text")) {
 		subtype = g_mime_content_type_get_media_subtype (content_type);
+
 		if (!g_ascii_strcasecmp (subtype, "plain")) {
 			if (g_mime_text_part_is_flowed (mime_part))
 				return GMIME_TEXT_FORMAT_FLOWED;
@@ -234,6 +236,7 @@ g_mime_text_part_is_plain (GMimeTextPart *mime_part)
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
 
 	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+
 	return g_mime_content_type_is_type (content_type, "text", "plain");
 }
 
@@ -258,6 +261,7 @@ g_mime_text_part_is_flowed (GMimeTextPart *mime_part)
 		return FALSE;
 
 	format = g_mime_entity_get_content_type_parameter ((GMimeEntity *) mime_part, "format");
+
 	return _g_mime_strcase_equal_trimmed (format, "flowed");
 }
 
@@ -278,6 +282,7 @@ g_mime_text_part_is_html (GMimeTextPart *mime_part)
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
 
 	content_type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
+
 	return g_mime_content_type_is_type (content_type, "text", "html");
 }
 
@@ -521,6 +526,88 @@ g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *ch
 }
 
 
+static GMimeStream *
+text_part_decode_content (GMimeTextPart *mime_part, GError **error)
+{
+	GMimeContent *content;
+	GMimeStream *stream;
+	int errsv;
+
+	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part)))
+		return g_mime_stream_mem_new ();
+
+	if (!g_mime_content_get_stream (content)) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     "Cannot decode text content without a backing stream");
+		return NULL;
+	}
+
+	g_object_ref (content);
+	stream = g_mime_stream_mem_new ();
+	errno = 0;
+
+	if (g_mime_content_decode_to_stream (content, stream) == -1) {
+		errsv = errno;
+		g_object_unref (content);
+		g_object_unref (stream);
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to decode text content: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return NULL;
+	}
+
+	g_object_unref (content);
+	return stream;
+}
+
+static char *
+text_part_decode_text (GByteArray *buffer, iconv_t decoder, const char *fallback_charset, GError **error)
+{
+	char *text, *output, *normalized;
+	size_t outlen, prespace;
+	GMimeFilter *filter;
+	gsize length;
+
+	/* The legacy charset filter silently skips malformed bytes. Explicit
+	 * decoding is strict; automatic decoding can request replacement. */
+	if (fallback_charset)
+		text = _g_mime_iconv_decode_with_fallback (buffer->len ? (const char *) buffer->data : "", buffer->len,
+							 decoder, fallback_charset, &length, error);
+	else
+		text = _g_mime_iconv_convert_with_iconv (buffer->len ? (const char *) buffer->data : "", buffer->len,
+						       decoder, &length, error);
+
+	if (!text)
+		return NULL;
+
+	if (memchr (text, '\0', length)) {
+		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
+				     "Decoded text contains an embedded NUL character");
+		g_free (text);
+		return NULL;
+	}
+
+	if (!g_utf8_validate_len (text, length, NULL)) {
+		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE,
+				     "Decoded text contains an invalid Unicode sequence");
+		g_free (text);
+		return NULL;
+	}
+
+	if (!length)
+		return text;
+
+	/* Newline conversion belongs after charset decoding: CR/LF byte values
+	 * inside UTF-16/32 characters must never be treated as line endings. */
+	filter = g_mime_format_options_create_newline_filter (NULL, FALSE);
+	g_mime_filter_complete (filter, text, length, 0, &output, &outlen, &prespace);
+	normalized = g_strndup (output, outlen);
+	g_object_unref (filter);
+	g_free (text);
+
+	return normalized;
+}
+
 /**
  * g_mime_text_part_get_text_with_charset:
  * @mime_part: a #GMimeTextPart
@@ -550,15 +637,9 @@ g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *ch
 char *
 g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *charset, GError **error)
 {
-	char *text, *output, *normalized;
-	size_t outlen, prespace;
-	GMimeContent *content;
 	GMimeStream *stream;
-	GMimeFilter *filter;
-	GByteArray *buffer;
 	iconv_t decoder;
-	gsize length;
-	int errsv;
+	char *text = NULL;
 
 	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), NULL);
 	g_return_val_if_fail (charset != NULL, NULL);
@@ -569,61 +650,77 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
 	if ((decoder = _g_mime_charset_open_text_decoder (charset, NULL, error)) == (iconv_t) -1)
 		return NULL;
 
-	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part))) {
-		g_mime_iconv_close (decoder);
-		return g_strdup ("");
-	}
-
-	if (!g_mime_content_get_stream (content)) {
-		g_mime_iconv_close (decoder);
-		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
-				     "Cannot decode text content without a backing stream");
-		return NULL;
-	}
-
-	stream = g_mime_stream_mem_new ();
-	errno = 0;
-
-	if (g_mime_content_decode_to_stream (content, stream) == -1) {
-		errsv = errno;
+	if ((stream = text_part_decode_content (mime_part, error))) {
+		text = text_part_decode_text (g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream), decoder, NULL, error);
 		g_object_unref (stream);
-		g_mime_iconv_close (decoder);
-		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
-			     "Failed to decode text content: %s",
-			     errsv ? g_strerror (errsv) : "unknown I/O error");
-		return NULL;
 	}
 
-	/* The legacy charset filter skips malformed bytes. Use checked
-	 * conversion here so a valid prefix cannot hide an invalid suffix. */
-	buffer = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
-	text = _g_mime_iconv_convert_with_iconv (buffer->len ? (const char *) buffer->data : "", buffer->len,
-					       decoder, &length, error);
 	g_mime_iconv_close (decoder);
-	g_object_unref (stream);
 
-	if (!text)
-		return NULL;
+	return text;
+}
 
-	if (memchr (text, '\0', length)) {
-		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
-				     "Decoded text contains an embedded NUL character");
-		g_free (text);
+char *
+_g_mime_text_part_get_text (GMimeTextPart *part, GError **error)
+{
+	GMimeContentType *type;
+	GError *local_error = NULL;
+	const char *encoding, *converter;
+	GMimeStream *stream;
+	GByteArray *buffer;
+	iconv_t decoder;
+	gboolean replace;
+	char *charset, *text = NULL;
+
+	if (!g_mime_part_get_content ((GMimePart *) part))
+		return g_strdup ("");
+
+	type = g_mime_entity_get_content_type ((GMimeEntity *) part);
+	charset = g_mime_content_type_get_charset_encoding (type, &local_error);
+
+	if (local_error) {
+		g_propagate_error (error, local_error);
 		return NULL;
 	}
 
-	if (!length)
-		return text;
+	if (!(stream = text_part_decode_content (part, error))) {
+		g_free (charset);
+		return NULL;
+	}
 
-	/* Newline conversion belongs after charset decoding: CR/LF byte values
-	 * inside UTF-16/32 characters must never be treated as line endings. */
-	filter = g_mime_format_options_create_newline_filter (NULL, FALSE);
-	g_mime_filter_complete (filter, text, length, 0, &output, &outlen, &prespace);
-	normalized = g_strndup (output, outlen);
-	g_object_unref (filter);
-	g_free (text);
+	buffer = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
+	encoding = charset;
+	replace = charset != NULL;
 
-	return normalized;
+	if (!encoding && !g_mime_charset_try_get_bom_encoding (buffer->data, buffer->len, &encoding))
+		encoding = "utf-8";
+	else if (!charset)
+		replace = strcmp (encoding, "utf-8") != 0;
+
+	if ((decoder = _g_mime_charset_open_text_decoder (encoding, &converter, &local_error)) != (iconv_t) -1) {
+		text = text_part_decode_text (buffer, decoder, replace ? converter : NULL, &local_error);
+		g_mime_iconv_close (decoder);
+
+		/* Declared charsets and UTF-16 BOMs use replacement. Only the strict
+		 * UTF-8 default or BOM decoder can trigger MimeKit's Latin-1 retry. */
+		if (!replace && (g_error_matches (local_error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE) ||
+				 g_error_matches (local_error, G_CONVERT_ERROR, G_CONVERT_ERROR_PARTIAL_INPUT))) {
+			g_clear_error (&local_error);
+
+			if ((decoder = _g_mime_charset_open_text_decoder ("iso-8859-1", NULL, &local_error)) != (iconv_t) -1) {
+				text = text_part_decode_text (buffer, decoder, NULL, &local_error);
+				g_mime_iconv_close (decoder);
+			}
+		}
+	}
+
+	g_object_unref (stream);
+	g_free (charset);
+
+	if (local_error)
+		g_propagate_error (error, local_error);
+
+	return text;
 }
 
 

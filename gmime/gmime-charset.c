@@ -852,6 +852,39 @@ _g_mime_charset_encode_text (const char *charset, const char *text, gsize *lengt
 	return bytes;
 }
 
+gsize
+_g_mime_charset_invalid_length (const char *charset, const unsigned char *in, gsize len, int error)
+{
+	gsize n, width;
+
+	if (!g_ascii_strncasecmp (charset, "UTF-16", 6) || !g_ascii_strncasecmp (charset, "UCS-2", 5))
+		return MIN (len, 2);
+
+	if (!g_ascii_strncasecmp (charset, "UTF-32", 6) || !g_ascii_strncasecmp (charset, "UCS-4", 5))
+		return MIN (len, 4);
+
+	if (error == EINVAL)
+		return len;
+
+	if (g_ascii_strcasecmp (charset, "UTF-8") && g_ascii_strcasecmp (charset, "UTF8"))
+		return 1;
+
+	if (in[0] < 0xc2 || in[0] > 0xf4 || len < 2)
+		return 1;
+
+	width = in[0] < 0xe0 ? 2 : in[0] < 0xf0 ? 3 : 4;
+	if (in[1] < 0x80 || in[1] > 0xbf ||
+	    (in[0] == 0xe0 && in[1] < 0xa0) || (in[0] == 0xed && in[1] >= 0xa0) ||
+	    (in[0] == 0xf0 && in[1] < 0x90) || (in[0] == 0xf4 && in[1] >= 0x90))
+		return 1;
+
+	/* Replace a maximal valid UTF-8 prefix once, not once per byte. */
+	for (n = 2; n < MIN (width, len) && in[n] >= 0x80 && in[n] <= 0xbf; n++)
+		;
+
+	return n;
+}
+
 iconv_t
 _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error)
 {

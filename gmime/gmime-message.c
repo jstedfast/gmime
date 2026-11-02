@@ -2647,6 +2647,107 @@ g_mime_message_get_body (GMimeMessage *message)
 	return NULL;
 }
 
+/**
+ * g_mime_message_get_text_body:
+ * @message: a #GMimeMessage
+ * @error: return location for an error, or %NULL
+ *
+ * Gets the decoded plain-text body using
+ * g_mime_message_get_text_body_with_format() with %GMIME_TEXT_FORMAT_PLAIN.
+ * Flowed text matches plain text, but its flow and space-stuffing are not
+ * converted to fixed text.
+ *
+ * Returns: (nullable) (transfer full): UTF-8 text, or %NULL if no body matches
+ * or decoding fails. An empty body returns an allocated empty string.
+ **/
+char *
+g_mime_message_get_text_body (GMimeMessage *message, GError **error)
+{
+	return g_mime_message_get_text_body_with_format (message, GMIME_TEXT_FORMAT_PLAIN, error);
+}
+
+/**
+ * g_mime_message_get_html_body:
+ * @message: a #GMimeMessage
+ * @error: return location for an error, or %NULL
+ *
+ * Gets the decoded HTML body using g_mime_message_get_text_body_with_format()
+ * with %GMIME_TEXT_FORMAT_HTML. No markup conversion or sanitization is done.
+ *
+ * Returns: (nullable) (transfer full): UTF-8 HTML, or %NULL if no body matches
+ * or decoding fails. An empty body returns an allocated empty string.
+ **/
+char *
+g_mime_message_get_html_body (GMimeMessage *message, GError **error)
+{
+	return g_mime_message_get_text_body_with_format (message, GMIME_TEXT_FORMAT_HTML, error);
+}
+
+/**
+ * g_mime_message_get_text_body_with_format:
+ * @message: a #GMimeMessage
+ * @format: the requested text format
+ * @error: return location for an error, or %NULL
+ *
+ * Selects and decodes a text body without modifying the MIME tree. Multipart
+ * selection uses g_mime_multipart_try_get_value(), including alternative and
+ * related overrides. A standalone text body must match @format and must not
+ * be an attachment. Embedded messages are not searched. Unknown formats and
+ * %GMIME_TEXT_FORMAT_COMPRESSED_RICH_TEXT have no match.
+ *
+ * Transfer encoding is decoded before charset conversion. A supported
+ * Content-Type charset takes precedence; otherwise a UTF-8/UTF-16 BOM is used,
+ * then UTF-8. Declared charsets and UTF-16 BOMs use replacement decoding:
+ * malformed Unicode sequences become U+FFFD, other malformed input becomes
+ * '?'. The default UTF-8 and UTF-8 BOM decoders are strict and retry the
+ * whole body as ISO-8859-1 on malformed input, like MimeKit. Charset mappings
+ * follow native iconv rather than managed codepage best-fit tables.
+ * Incomplete final characters are also handled, unlike MimeKit versions
+ * whose charset filter omits decoder finalization at EOF.
+ * HTML meta charset detection is not yet supported. Newlines follow the
+ * default #GMimeFormatOptions; bare CRs and Unicode BOMs are retained.
+ * No final newline is added. Flowed text is not unflowed, and formats are
+ * neither converted nor sanitized.
+ *
+ * Missing bodies return %NULL without an error. Selected text parts with
+ * absent or empty content return an allocated empty string. Decoded NULs
+ * report %G_CONVERT_ERROR_EMBEDDED_NUL, other conversion failures report
+ * %G_CONVERT_ERROR, and content/stream failures report %GMIME_ERROR. No error
+ * returns partial text. Source-backed content must remain open and unchanged;
+ * successful decoding rewinds its stream, but failures may leave it advanced.
+ *
+ * Returns: (nullable) (transfer full): UTF-8 text, or %NULL if no body matches
+ * or decoding fails.
+ **/
+char *
+g_mime_message_get_text_body_with_format (GMimeMessage *message, GMimeTextFormat format, GError **error)
+{
+	GMimeMessagePrivate *priv;
+	GMimeTextPart *body = NULL;
+	char *text;
+
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	priv = _g_mime_message_get_private (message);
+	if (GMIME_IS_MULTIPART (priv->mime_part)) {
+		if (!g_mime_multipart_try_get_value ((GMimeMultipart *) priv->mime_part, format, &body))
+			return NULL;
+	} else if (GMIME_IS_TEXT_PART (priv->mime_part) &&
+		   !g_mime_entity_is_attachment (priv->mime_part) &&
+		   _g_mime_text_part_is_format ((GMimeTextPart *) priv->mime_part, format)) {
+		body = (GMimeTextPart *) priv->mime_part;
+	} else {
+		return NULL;
+	}
+
+	g_object_ref (body);
+	text = _g_mime_text_part_get_text (body, error);
+	g_object_unref (body);
+
+	return text;
+}
+
 
 /**
  * g_mime_message_get_autocrypt_header:

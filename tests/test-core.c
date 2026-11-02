@@ -177,6 +177,7 @@ typedef struct {
 	guint write_calls;
 	guint decode_calls;
 	gboolean fail_decode;
+	GMimeMessage *detach_message;
 } TestContent;
 
 typedef GMimeContentClass TestContentClass;
@@ -199,6 +200,12 @@ test_content_decode_to_stream (GMimeContent *content, GMimeStream *stream)
 	if (custom->fail_decode) {
 		errno = 0;
 		return -1;
+	}
+	if (custom->detach_message) {
+		GMimePart *replacement = g_mime_part_new ();
+
+		g_mime_message_set_mime_part (custom->detach_message, GMIME_ENTITY (replacement));
+		g_object_unref (replacement);
 	}
 	return GMIME_CONTENT_CLASS (test_content_parent_class)->decode_to_stream (content, stream);
 }
@@ -3891,13 +3898,324 @@ test_text_part_formats (void)
 }
 
 static void
+check_message_text_value (GMimeMessage *message, GMimeTextFormat format, const char *expected, const char *description)
+{
+	GMimeEntity *legacy_body = g_mime_message_get_body (message);
+	GError *error = NULL;
+	char *text;
+
+	text = g_mime_message_get_text_body_with_format (message, format, &error);
+	g_assert_no_error (error);
+	check (!g_strcmp0 (text, expected), description);
+	g_free (text);
+	if (format == GMIME_TEXT_FORMAT_PLAIN || format == GMIME_TEXT_FORMAT_HTML) {
+		text = format == GMIME_TEXT_FORMAT_PLAIN ?
+			g_mime_message_get_text_body (message, &error) : g_mime_message_get_html_body (message, &error);
+		g_assert_no_error (error);
+		check (!g_strcmp0 (text, expected), "plain and HTML convenience accessors agree with format selection");
+		g_free (text);
+	}
+	check (g_mime_message_get_body (message) == legacy_body, "decoded accessors leave legacy entity selection unchanged");
+}
+
+static void
+test_message_text_bodies (void)
+{
+	static const GMimeTextFormat formats[] = {
+		GMIME_TEXT_FORMAT_PLAIN, GMIME_TEXT_FORMAT_FLOWED, GMIME_TEXT_FORMAT_HTML,
+		GMIME_TEXT_FORMAT_ENRICHED, GMIME_TEXT_FORMAT_RICH_TEXT
+	};
+	static const char wire[] = "Content-Type: multipart/alternative; boundary=x\r\n\r\n"
+		"--x\r\nContent-Type: text/plain; charset=latin1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\ncaf=E9\r\n"
+		"--x\r\nContent-Type: text/html; charset=utf-8\r\nContent-Transfer-Encoding: base64\r\n\r\nPHA+Y2Fmw6k8L3A+\r\n"
+		"--x--\r\n";
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GMimeMessagePart *attached = g_mime_message_part_new ("rfc822");
+	GMimePart *text_like = g_mime_part_new_with_type ("text", "plain");
+	GMimeTextPart *part;
+	GMimeParser *parser;
+	GMimeStream *stream;
+	GError *error = NULL;
+	char *text;
+	guint i;
+	int format;
+
+	check_message_text_value (message, GMIME_TEXT_FORMAT_PLAIN, NULL, "a missing body is not an empty text body");
+	check_message_text_value (message, GMIME_TEXT_FORMAT_HTML, NULL, "a missing body has no HTML");
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (text_like));
+	check_message_text_value (message, GMIME_TEXT_FORMAT_PLAIN, NULL, "selection requires a text-part class, not just text/plain");
+	g_object_unref (text_like);
+
+	for (i = 0; i < G_N_ELEMENTS (formats); i++) {
+		part = g_mime_text_part_new_with_format (formats[i]);
+		g_mime_message_set_mime_part (message, GMIME_ENTITY (part));
+		check_message_text_value (message, formats[i], "", "a selected part without content returns an allocated empty string");
+		g_mime_text_part_set_text (part, " From \r\n> quoted \r\ncontinued\r");
+		if (formats[i] == GMIME_TEXT_FORMAT_FLOWED)
+			g_mime_entity_set_content_type_parameter (GMIME_ENTITY (part), "delsp", "yes");
+		for (format = -1; format <= 6; format++) {
+			gboolean matches = format == formats[i] ||
+				(format == GMIME_TEXT_FORMAT_PLAIN && formats[i] == GMIME_TEXT_FORMAT_FLOWED);
+
+			check_message_text_value (message, (GMimeTextFormat) format,
+						  matches ? " From \n> quoted \ncontinued\r" : NULL,
+						  "direct selection honors text formats without converting markup or flowed text");
+		}
+		g_mime_entity_set_is_attachment (GMIME_ENTITY (part), TRUE);
+		check_message_text_value (message, formats[i], NULL, "standalone attached text is never the body");
+		g_object_unref (part);
+	}
+
+	part = g_mime_text_part_new ();
+	g_mime_text_part_set_text (part, "embedded body");
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (part));
+	g_object_unref (part);
+	g_mime_message_part_set_message (attached, message);
+	g_object_unref (message);
+	message = g_mime_message_new (FALSE);
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (attached));
+	check_message_text_value (message, GMIME_TEXT_FORMAT_PLAIN, NULL, "decoded body accessors do not enter embedded messages");
+	g_object_unref (attached);
+	g_object_unref (message);
+
+	for (i = 0; i < 2; i++) {
+		stream = g_mime_stream_mem_new_with_buffer (wire, sizeof (wire) - 1);
+		parser = g_mime_parser_new_with_stream_and_storage (stream, GMIME_FORMAT_MESSAGE,
+								  i ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+		g_assert_no_error (error);
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_object_unref (parser);
+		g_object_unref (stream);
+		check_message_text_value (message, GMIME_TEXT_FORMAT_PLAIN, "caf\303\251", "parsed plain bodies survive parser and source reference release");
+		check_message_text_value (message, GMIME_TEXT_FORMAT_HTML, "<p>caf\303\251</p>", "parsed HTML bodies retain markup after transfer decoding");
+		text = g_mime_message_get_text_body (message, &error);
+		g_assert_no_error (error);
+		g_object_unref (message);
+		check (text && !strcmp (text, "caf\303\251"), "returned body strings outlive their message");
+		g_free (text);
+	}
+}
+
+static void
+test_message_text_decoding (void)
+{
+	static const struct {
+		const char *charset, *bytes, *expected;
+		gsize length;
+	} cases[] = {
+		{ NULL, "", "", 0 },
+		{ "unknown-charset", "", "", 0 },
+		{ NULL, "caf\303\251\r\nlast\r", "caf\303\251\nlast\r", 12 },
+		{ NULL, "caf\351", "caf\303\251", 4 },
+		{ "utf-8", "valid\377", "valid\357\277\275", 6 },
+		{ "utf-8", "valid\303", "valid\357\277\275", 6 },
+		{ "utf-8", "caf\303\251\377", "caf\303\251\357\277\275", 6 },
+		{ "utf-8", "\342\202X", "\357\277\275X", 3 },
+		{ "utf-8", "\355\240\200", "\357\277\275\357\277\275\357\277\275", 3 },
+		{ "utf-8", "\370\210\200\200\200", "\357\277\275\357\277\275\357\277\275\357\277\275\357\277\275", 5 },
+		{ NULL, "\370\210\200\200\200", "\303\270\302\210\302\200\302\200\302\200", 5 },
+		{ "us-ascii", "\377", "?", 1 },
+		{ "us-ascii", "caf\351", "caf?", 4 },
+		{ "latin1", "caf\351", "caf\303\251", 4 },
+		{ "CP1252", "\200", "\342\202\254", 1 },
+		{ "utf-16", "\r\1\n\1", "\304\215\304\212", 4 },
+		{ "utf-32", "A\0\0\0", "A", 4 },
+		{ "Unicode", "caf\303\251", "caf\303\251", 5 },
+		{ "utf-16", "a", "\357\277\275", 1 },
+		{ "utf-16", "\0\330A\0", "\357\277\275A", 4 },
+		{ "utf-16be", "\330\0\0A", "\357\277\275A", 4 },
+		{ "utf-32", "\0\330\0\0", "\357\277\275", 4 },
+		{ "unknown-charset", "caf\303\251", "caf\303\251", 5 },
+		{ "utf-8//IGNORE", "a\377", "a\303\277", 2 },
+		{ NULL, "\357\273\277text", "\357\273\277text", 7 },
+		{ "unknown-charset", "\377\376A\0", "\357\273\277A", 4 },
+		{ NULL, "\376\377\0A", "\357\273\277A", 4 },
+		{ NULL, "\377\376\0\330A\0", "\357\273\277\357\277\275A", 6 },
+		{ NULL, "\357\273\277\377", "\303\257\302\273\302\277\303\277", 4 },
+		{ "utf-8", "\357\273\277\377", "\357\273\277\357\277\275", 4 },
+		{ "latin1", "\357\273\277A", "\303\257\302\273\302\277A", 4 },
+		{ "utf-8", "a\0b", NULL, 3 },
+		{ "utf-16", "A\0\0\0B\0", NULL, 6 },
+		{ NULL, "\377\0", NULL, 2 },
+	};
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GMimeTextPart *part = g_mime_text_part_new ();
+	GMimeContentType *type = g_mime_entity_get_content_type (GMIME_ENTITY (part));
+	GMimeContent *content;
+	GMimeStream *stream;
+	GError *error = NULL;
+	char *text, *encoded, *headers, *after;
+	guint i, encoding;
+
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (part));
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		g_mime_content_type_set_charset (type, cases[i].charset);
+		headers = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+		for (encoding = 0; encoding < 2; encoding++) {
+			if (encoding) {
+				encoded = g_base64_encode ((const guchar *) cases[i].bytes, cases[i].length);
+				stream = g_mime_stream_mem_new_with_buffer (encoded, strlen (encoded));
+				g_free (encoded);
+			} else {
+				stream = g_mime_stream_mem_new_with_buffer (cases[i].bytes, cases[i].length);
+			}
+			content = g_mime_content_new_with_stream (stream, encoding ? GMIME_CONTENT_ENCODING_BASE64 : GMIME_CONTENT_ENCODING_UNSPECIFIED);
+			g_mime_part_set_content (GMIME_PART (part), content);
+			g_object_unref (content);
+			if (cases[i].expected) {
+				check_message_text_value (message, GMIME_TEXT_FORMAT_PLAIN, cases[i].expected,
+							  "body decoding honors charset replacement, decoded BOM, and strict UTF-8/Latin-1 fallback");
+			} else {
+				g_assert_null (g_mime_message_get_text_body (message, &error));
+				g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL);
+				g_clear_error (&error);
+				g_assert_null (g_mime_message_get_text_body (message, NULL));
+			}
+			g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+			g_object_unref (stream);
+			after = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+			check (!strcmp (after, headers), "automatic decoding leaves the original charset and raw headers unchanged");
+			g_free (after);
+		}
+		g_free (headers);
+	}
+	g_mime_part_set_content (GMIME_PART (part), NULL);
+	g_mime_content_type_set_charset (type, "unknown-charset");
+	text = g_mime_message_get_text_body (message, &error);
+	g_assert_no_error (error);
+	check (text && !*text, "missing text content does not require a supported declared charset");
+	g_free (text);
+	g_object_unref (part);
+	g_object_unref (message);
+}
+
+static void
+test_message_text_errors (void)
+{
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GMimeTextPart *part = g_mime_text_part_new ();
+	GMimeTextPart *weak = part;
+	GMimeContent *content = g_mime_content_new ();
+	TestStreamFailure *failure;
+	TestContent *custom;
+	GMimeStream *stream;
+	GError *error = NULL;
+	guint offset, unset_error;
+	char *text;
+
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (part));
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	g_assert_null (g_mime_message_get_text_body (message, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	check_message_text_value (message, GMIME_TEXT_FORMAT_HTML, NULL, "unselected broken content is not decoded");
+	g_mime_content_type_set_media_subtype (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "html");
+	g_assert_null (g_mime_message_get_html_body (message, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_mime_content_type_set_media_subtype (g_mime_entity_get_content_type (GMIME_ENTITY (part)), "plain");
+
+	for (unset_error = 0; unset_error < 2; unset_error++) {
+		for (offset = 0; offset <= 8; offset++) {
+			failure = g_object_new (test_stream_failure_get_type (), NULL);
+			failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ("SGVsbG8=", 8);
+			failure->fail_after = offset;
+			failure->onebyte = TRUE;
+			failure->unset_error = unset_error;
+			g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+			content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BASE64);
+			g_mime_part_set_content (GMIME_PART (part), content);
+			g_object_unref (content);
+			g_assert_null (g_mime_message_get_text_body (message, &error));
+			g_assert_error (error, GMIME_ERROR, (unset_error ? GMIME_ERROR_GENERAL : EIO));
+			g_clear_error (&error);
+			g_assert_cmpuint (failure->bytes_read, ==, offset);
+			g_assert_cmpuint (failure->reset_calls, ==, 1);
+			g_assert_cmpuint (failure->close_calls, ==, 0);
+
+			failure->fail_after = G_MAXSIZE;
+			failure->fail_reset_on = failure->reset_calls + 1;
+			g_assert_null (g_mime_message_get_text_body (message, &error));
+			g_assert_error (error, GMIME_ERROR, (unset_error ? GMIME_ERROR_GENERAL : ESPIPE));
+			g_clear_error (&error);
+			failure->bytes_read = 0;
+			check_message_text_value (message, GMIME_TEXT_FORMAT_PLAIN, "Hello", "body decoding can be retried after an I/O failure");
+
+			failure->bytes_read = 0;
+			failure->fail_reset_on = failure->reset_calls + 2;
+			g_assert_null (g_mime_message_get_text_body (message, &error));
+			g_assert_error (error, GMIME_ERROR, (unset_error ? GMIME_ERROR_GENERAL : ESPIPE));
+			g_clear_error (&error);
+			g_object_unref (failure);
+		}
+	}
+
+	failure = g_object_new (test_stream_failure_get_type (), NULL);
+	failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ("/w==", 4);
+	failure->fail_after = G_MAXSIZE;
+	failure->onebyte = TRUE;
+	g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+	content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BASE64);
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	text = g_mime_message_get_text_body (message, &error);
+	g_assert_no_error (error);
+	check (text && !strcmp (text, "\303\277") && failure->bytes_read == 4 && failure->reset_calls == 2,
+	       "charset fallback decodes buffered bytes without rereading the source");
+	g_free (text);
+	g_object_unref (failure);
+
+	stream = g_mime_stream_mem_new_with_buffer ("ignored", 7);
+	custom = g_object_new (test_content_get_type (), NULL);
+	g_mime_content_set_stream (GMIME_CONTENT (custom), stream);
+	g_object_unref (stream);
+	g_mime_content_set_encoding (GMIME_CONTENT (custom), GMIME_CONTENT_ENCODING_BASE64);
+	g_mime_part_set_content (GMIME_PART (part), GMIME_CONTENT (custom));
+	text = g_mime_message_get_text_body (message, &error);
+	g_assert_no_error (error);
+	check (text && !strcmp (text, "Cat") && custom->decode_calls == 1 && custom->write_calls == 1,
+	       "message text honors custom content decode and stream-copy overrides");
+	g_free (text);
+	custom->fail_decode = TRUE;
+	g_assert_null (g_mime_message_get_text_body (message, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL);
+	g_clear_error (&error);
+	g_assert_null (g_mime_message_get_text_body (message, NULL));
+	custom->fail_decode = FALSE;
+	custom->detach_message = message;
+	g_object_add_weak_pointer (G_OBJECT (part), (gpointer *) &weak);
+	g_object_unref (custom);
+	g_object_unref (part);
+	text = g_mime_message_get_text_body (message, &error);
+	g_assert_no_error (error);
+	check (text && !strcmp (text, "Cat") && weak == NULL &&
+	       !GMIME_IS_TEXT_PART (g_mime_message_get_mime_part (message)),
+	       "decoding retains the selected part and content across custom callbacks that detach the body");
+	g_free (text);
+	g_object_unref (message);
+}
+
+static void
 check_multipart_text_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart *expected, const char *description)
 {
+	GMimeMessage *message = g_mime_message_new (FALSE);
 	GMimeTextPart *sentinel = g_mime_text_part_new ();
 	GMimeTextPart *body = sentinel;
 	gboolean found = g_mime_multipart_try_get_value (multipart, format, &body);
+	GError *error = NULL;
+	char *text = NULL;
 
 	check (found == (expected != NULL) && body == expected, description);
+	if (expected) {
+		text = g_mime_text_part_get_text_with_charset (expected, "utf-8", &error);
+		g_assert_no_error (error);
+	}
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (multipart));
+	check_message_text_value (message, format, text, description);
+	g_free (text);
+	g_object_unref (message);
 	g_object_unref (sentinel);
 }
 
@@ -3930,6 +4248,13 @@ test_multipart_text_selection (void)
 	GMimeHeader *header;
 	char *raw;
 	int i;
+
+	g_mime_text_part_set_text (plain, "first plain");
+	g_mime_text_part_set_text (last, "last plain");
+	g_mime_text_part_set_text (html, "<p>html</p>");
+	g_mime_text_part_set_text (flowed, "flowed \ntext");
+	g_mime_text_part_set_text (rtf, "{\\rtf1 text}");
+	g_mime_text_part_set_text (enriched, "<bold>enriched</bold>");
 
 	check (GMIME_IS_MULTIPART_ALTERNATIVE (alternative) &&
 	       !strcmp (G_OBJECT_TYPE_NAME (alternative), "GMimeMultipartAlternative") &&
@@ -13396,6 +13721,12 @@ main (int argc, char **argv)
 
 	testsuite_start ("multipart text-body selection");
 	test_multipart_text_selection ();
+	testsuite_end ();
+
+	testsuite_start ("decoded message text bodies");
+	test_message_text_bodies ();
+	test_message_text_decoding ();
+	test_message_text_errors ();
 	testsuite_end ();
 
 	testsuite_start ("multipart related roots");

@@ -127,6 +127,7 @@ G_GNUC_INTERNAL void _g_mime_entity_append_header (GMimeEntity *object, const ch
 
 /* GMimeTextPart */
 G_GNUC_INTERNAL gboolean _g_mime_text_part_is_format (GMimeTextPart *part, GMimeTextFormat format);
+G_GNUC_INTERNAL char *_g_mime_text_part_get_text (GMimeTextPart *part, GError **error);
 
 /* GMimeMultipart */
 G_GNUC_INTERNAL void _g_mime_multipart_initialize_from_reader (GMimeMultipart *multipart);
@@ -160,12 +161,15 @@ G_GNUC_INTERNAL char *_g_mime_charset_get_text_name (const char *charset, GError
 G_GNUC_INTERNAL const char *_g_mime_charset_get_text_converter (const char *name);
 G_GNUC_INTERNAL iconv_t _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error);
 G_GNUC_INTERNAL int _g_mime_charset_get_codepage (const char *charset);
+G_GNUC_INTERNAL gsize _g_mime_charset_invalid_length (const char *charset, const unsigned char *in, gsize length, int error);
 
 /* Checked conversions must use the same backend as g_mime_iconv_open(), not GLib's. */
 G_GNUC_INTERNAL char *_g_mime_iconv_convert (const char *text, gssize length, const char *to, const char *from,
 					  gsize *written, GError **error);
 G_GNUC_INTERNAL char *_g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd,
 						     gsize *written, GError **error);
+G_GNUC_INTERNAL char *_g_mime_iconv_decode_with_fallback (const char *text, gsize length, iconv_t cd, const char *charset,
+						       gsize *written, GError **error);
 
 /* utils */
 G_GNUC_INTERNAL GDateTime *_g_mime_utils_header_decode_date (const char *text, gsize length);
