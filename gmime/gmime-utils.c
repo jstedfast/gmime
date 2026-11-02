@@ -1859,7 +1859,7 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
 				outlen += len;
 			} while (token != next);
 
-			g_mime_decoder_reset (decoder);
+			outlen += g_mime_decoder_flush (decoder, NULL, 0, outbuf + outlen, outcap - outlen);
 			outptr = outbuf;
 			
 			/* convert the raw decoded text into UTF-8 */

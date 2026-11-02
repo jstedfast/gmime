@@ -203,6 +203,16 @@ uudecode (const char *progname, int argc, char **argv)
 			}
 		}
 		
+		n = g_mime_decoder_flush (decoder, NULL, 0, (guint8 *) outbuf, sizeof (outbuf));
+		if (fwrite (outbuf, 1, n, fout) != n) {
+			fprintf (stderr, "%s: %s: %s\n", progname, output_path,
+				 g_strerror (ferror (fout)));
+			fclose (fout);
+			fclose (fin);
+			g_clear_object (&decoder);
+			return -1;
+		}
+
 		fflush (fout);
 		fclose (fout);
 		

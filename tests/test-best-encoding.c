@@ -70,6 +70,8 @@ check_splits (const char *data, size_t length, guint max_line_length, GMimeConte
 		feed (filter, data, split, FALSE);
 		feed (filter, data + split, length - split, TRUE);
 		check_encodings (GMIME_FILTER_BEST (filter), max_line_length, seven, eight, binary);
+		feed (filter, "", 0, TRUE);
+		check_encodings (GMIME_FILTER_BEST (filter), max_line_length, seven, eight, binary);
 	}
 	g_object_unref (filter);
 }
@@ -78,12 +80,13 @@ static void
 test_markers_and_bytes (void)
 {
 	static const char *plain[] = {
-		"", "\n", "\r\n", "\n\n", "Hello, world!", "From ", "From x",
+		"", "\n", "\r\n", "\n\n", "Hello, world!", "From", "x\nFro",
 		"From\t\n", "Fromx\n", "xFrom \n", "x\rFrom \n", "From\n",
 	};
 	static const char *markers[] = {
 		"From \n", "From x\r\n", "x\nFrom \n", "\r\nFrom x\n",
 		"\n\nFrom \r\n", "From x\nFrom y\n",
+		"From ", "From x", "x\nFrom ", "\r\nFrom x", "From \r",
 	};
 	char density[100];
 	guint i;
@@ -256,6 +259,13 @@ test_part_integration (void)
 	g_object_unref (stream);
 	g_free (encoded);
 
+	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, NULL), ==,
+			 GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+	stream = g_mime_stream_mem_new_with_buffer ("RnJvbSA", 7);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BASE64);
+	g_mime_part_set_content (part, content);
+	g_object_unref (content);
+	g_object_unref (stream);
 	g_assert_cmpint (g_mime_part_get_best_content_encoding (part, GMIME_ENCODING_CONSTRAINT_7BIT, NULL), ==,
 			 GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
 	content_type = g_mime_content_type_new ("message", "rfc822");

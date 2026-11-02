@@ -1625,6 +1625,7 @@ g_mime_decoder_get_encoding
 g_mime_decoder_clone
 g_mime_decoder_estimate_output_length
 g_mime_decoder_decode
+g_mime_decoder_flush
 g_mime_decoder_reset
 <SUBSECTION Standard>
 GMimeDecoderInterface

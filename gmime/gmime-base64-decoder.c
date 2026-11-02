@@ -77,7 +77,7 @@ base64_decoder_clone (GMimeDecoder *decoder)
 static gsize
 base64_decoder_estimate (GMimeDecoder *decoder, gsize length)
 {
-	return (length / 4) * 3 + 3;
+	return (length / 4) * 3 + 4;
 }
 
 static gsize
@@ -128,6 +128,31 @@ base64_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 	return written;
 }
 
+static gsize
+base64_decoder_flush (GMimeDecoder *decoder, const guint8 *input, gsize length,
+		      guint8 *output, gsize capacity)
+{
+	Base64DecoderState *state = &GMIME_BASE64_DECODER (decoder)->state;
+	gsize written = base64_decoder_decode (decoder, input, length, output, capacity);
+	guint first, second;
+
+	if (state->nsaved >= 2) {
+		first = (state->previous >> ((state->nsaved - 1) * 8)) & 0xff;
+		second = (state->previous >> ((state->nsaved - 2) * 8)) & 0xff;
+
+		if (first != '=' && second != '=') {
+			output[written++] = state->saved >> ((state->nsaved - 2) * 6 + 4);
+
+			if (state->nsaved == 3 && (state->previous & 0xff) != '=')
+				output[written++] = state->saved >> 2;
+		}
+	}
+
+	base64_decoder_reset (decoder);
+
+	return written;
+}
+
 static void
 base64_decoder_iface_init (GMimeDecoderInterface *iface)
 {
@@ -136,6 +161,7 @@ base64_decoder_iface_init (GMimeDecoderInterface *iface)
 	iface->estimate_output_length = base64_decoder_estimate;
 	iface->decode = base64_decoder_decode;
 	iface->reset = base64_decoder_reset;
+	iface->flush = base64_decoder_flush;
 }
 
 /**

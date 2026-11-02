@@ -54,6 +54,9 @@ new_decoder (guint kind)
 	case 1: return GMIME_DECODER (g_mime_quoted_printable_decoder_new (FALSE));
 	case 2: return GMIME_DECODER (g_mime_uu_decoder_new (TRUE));
 	case 4: return GMIME_DECODER (g_mime_yenc_decoder_new (TRUE));
+	case 5: return GMIME_DECODER (g_mime_quoted_printable_decoder_new (TRUE));
+	case 6: return GMIME_DECODER (g_mime_uu_decoder_new (FALSE));
+	case 7: return GMIME_DECODER (g_mime_yenc_decoder_new (FALSE));
 	default: return GMIME_DECODER (g_mime_pass_through_decoder_new (GMIME_CONTENT_ENCODING_BASE64));
 	}
 }
@@ -132,6 +135,143 @@ decode_chunks (GMimeDecoder *decoder, const guint8 *input, gsize length, gsize c
 	assert_padding (output, 0, capacity);
 	g_free (output);
 	return result;
+}
+
+static guint32 reference_crc32 (const guint8 *input, gsize length);
+
+static gsize
+decode_final_chunk (GMimeDecoder *decoder, const guint8 *input, gsize length, gboolean flush, GByteArray *result)
+{
+	gsize capacity = g_mime_decoder_estimate_output_length (decoder, length);
+	guint8 *output = g_malloc (capacity + 1);
+	gsize written;
+
+	memset (output, 0xa5, capacity + 1);
+	written = flush ? g_mime_decoder_flush (decoder, input, length, output, capacity) :
+		g_mime_decoder_decode (decoder, input, length, output, capacity);
+	assert_padding (output, written, capacity);
+	g_byte_array_append (result, output, written);
+	g_free (output);
+	return written;
+}
+
+static void
+test_decoder_flush (void)
+{
+#define FLUSH_CASE(kind, input, output) { kind, input, output, sizeof (input) - 1, sizeof (output) - 1 }
+	static const struct {
+		guint kind;
+		const char *input, *output;
+		gsize length, output_length;
+	} cases[] = {
+		FLUSH_CASE (0, "", ""),
+		FLUSH_CASE (0, "T", ""),
+		FLUSH_CASE (0, "TQ", "M"),
+		FLUSH_CASE (0, "TWE", "Ma"),
+		FLUSH_CASE (0, "TQ=", "M"),
+		FLUSH_CASE (0, "TWE=", "Ma"),
+		FLUSH_CASE (0, "TWFu", "Man"),
+		FLUSH_CASE (0, "TWFuTQ", "ManM"),
+		FLUSH_CASE (0, "TQ==TWE", "MMa"),
+		FLUSH_CASE (0, "T W\r\nE", "Ma"),
+		FLUSH_CASE (0, "=Q", ""),
+		FLUSH_CASE (0, "T=", ""),
+		FLUSH_CASE (0, "T=Q", ""),
+		FLUSH_CASE (0, "TW=", "M"),
+		FLUSH_CASE (0, "====TQ", "M"),
+		FLUSH_CASE (0, "TWFuTWFuTWFuTWFuTWFuTQ", "ManManManManManM"),
+		FLUSH_CASE (1, "", ""),
+		FLUSH_CASE (1, "abc=", "abc="),
+		FLUSH_CASE (1, "abc=4", "abc=4"),
+		FLUSH_CASE (1, "abc=\r", "abc=\r"),
+		FLUSH_CASE (1, "abc=\r\n", "abc"),
+		FLUSH_CASE (1, "==", "=="),
+		FLUSH_CASE (1, "=Q", "=Q"),
+		FLUSH_CASE (1, "abc=4G", "abc=4G"),
+		FLUSH_CASE (1, "=41", "A"),
+		FLUSH_CASE (5, "_=4", " =4"),
+		FLUSH_CASE (2, "", ""),
+		FLUSH_CASE (2, "#3", ""),
+		FLUSH_CASE (2, "#36", "M"),
+		FLUSH_CASE (2, "#36%", "Ma"),
+		FLUSH_CASE (2, "#36%N", "Man"),
+		FLUSH_CASE (2, "!36%", "M"),
+		FLUSH_CASE (2, "\"36%", "Ma"),
+		FLUSH_CASE (2, "`\n", ""),
+		FLUSH_CASE (6, "begin", ""),
+		FLUSH_CASE (6, "begin 644 file\n#36%", "Ma"),
+		FLUSH_CASE (4, "", ""),
+		FLUSH_CASE (4, "*=", "\0"),
+		FLUSH_CASE (4, "=J", "\340"),
+		FLUSH_CASE (4, "*=\r", "\0"),
+		FLUSH_CASE (7, "=ybegin line=128 size=1 name=file\n=", ""),
+		FLUSH_CASE (7, "=ybegin line=128 size=1 name=file\n*=", "\0"),
+		FLUSH_CASE (3, "a\0\r\n=", "a\0\r\n=")
+	};
+#undef FLUSH_CASE
+	GMimeDecoder *decoder, *clone;
+	GByteArray *result, *tail, *copy;
+	guint8 buffer[256], before[256];
+	gsize split, capacity, written, i, j;
+	guint32 checksum;
+	int delta;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (split = 0; split <= cases[i].length; split++) {
+			decoder = new_decoder (cases[i].kind);
+			result = g_byte_array_new ();
+			tail = g_byte_array_new ();
+			copy = g_byte_array_new ();
+			decode_final_chunk (decoder, (const guint8 *) cases[i].input, split, FALSE, result);
+			g_assert_cmpuint (decode_final_chunk (decoder, NULL, 0, FALSE, result), ==, 0);
+			clone = g_mime_decoder_clone (decoder);
+			capacity = g_mime_decoder_estimate_output_length (decoder, cases[i].length - split);
+			if (capacity) {
+				g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*output_capacity >= estimate*");
+				g_assert_cmpuint (g_mime_decoder_flush (decoder, (const guint8 *) cases[i].input + split,
+								      cases[i].length - split, buffer, capacity - 1), ==, 0);
+				g_test_assert_expected_messages ();
+			}
+			decode_final_chunk (decoder, (const guint8 *) cases[i].input + split, cases[i].length - split, TRUE, tail);
+			decode_final_chunk (clone, (const guint8 *) cases[i].input + split, cases[i].length - split, TRUE, copy);
+			g_assert_cmpmem (tail->data, tail->len, copy->data, copy->len);
+			g_byte_array_append (result, tail->data, tail->len);
+			g_assert_cmpmem (result->data, result->len, cases[i].output, cases[i].output_length);
+			checksum = GMIME_IS_YENC_DECODER (decoder) ?
+				g_mime_yenc_decoder_get_checksum (GMIME_YENC_DECODER (decoder)) : 0;
+			if (GMIME_IS_YENC_DECODER (decoder))
+				g_assert_cmphex (checksum, ==, reference_crc32 ((const guint8 *) cases[i].output,
+									      cases[i].output_length));
+			g_assert_cmpuint (decode_final_chunk (decoder, NULL, 0, TRUE, result), ==, 0);
+			if (GMIME_IS_YENC_DECODER (decoder))
+				g_assert_cmpuint (g_mime_yenc_decoder_get_checksum (GMIME_YENC_DECODER (decoder)), ==, checksum);
+			g_mime_decoder_reset (decoder);
+			g_byte_array_set_size (result, 0);
+			decode_final_chunk (decoder, (const guint8 *) cases[i].input, cases[i].length, TRUE, result);
+			g_assert_cmpmem (result->data, result->len, cases[i].output, cases[i].output_length);
+			for (delta = -1; delta <= 1; delta++) {
+				g_mime_decoder_reset (decoder);
+				g_byte_array_set_size (result, 0);
+				decode_final_chunk (decoder, (const guint8 *) cases[i].input, split, FALSE, result);
+				capacity = g_mime_decoder_estimate_output_length (decoder, cases[i].length - split);
+				memset (buffer, 0xa5, sizeof (buffer));
+				memcpy (buffer + 32, cases[i].input + split, cases[i].length - split);
+				memcpy (before, buffer, sizeof (buffer));
+				written = g_mime_decoder_flush (decoder, buffer + 32, cases[i].length - split,
+								buffer + 32 + delta, capacity);
+				g_assert_cmpmem (buffer + 32 + delta, written, tail->data, tail->len);
+				for (j = 0; j < sizeof (buffer); j++) {
+					if (j < (gsize) (32 + delta) || j >= 32 + delta + written)
+						g_assert_cmpuint (buffer[j], ==, before[j]);
+				}
+			}
+			g_byte_array_unref (result);
+			g_byte_array_unref (tail);
+			g_byte_array_unref (copy);
+			g_object_unref (clone);
+			g_object_unref (decoder);
+		}
+	}
 }
 
 static void
@@ -276,8 +416,22 @@ test_preconditions (void)
 		g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*output != NULL*");
 		g_mime_decoder_decode (decoder, input + 1, 3, NULL, sizeof (a));
 		g_test_assert_expected_messages ();
-		n = g_mime_decoder_decode (decoder, input + 1, 3, a, sizeof (a));
-		m = g_mime_decoder_decode (dec_copy, input + 1, 3, b, sizeof (b));
+		g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*input != NULL*");
+		g_mime_decoder_flush (decoder, NULL, 1, a, sizeof (a));
+		g_test_assert_expected_messages ();
+		g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*output != NULL*");
+		g_mime_decoder_flush (decoder, input + 1, 3, NULL, sizeof (a));
+		g_test_assert_expected_messages ();
+		g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*GMIME_IS_DECODER*");
+		g_mime_decoder_flush (NULL, NULL, 0, a, sizeof (a));
+		g_test_assert_expected_messages ();
+		if (kind == 1) {
+			g_test_expect_message (CODEC_LOG_DOMAIN, G_LOG_LEVEL_CRITICAL, "*estimate != G_MAXSIZE*");
+			g_mime_decoder_flush (decoder, input, G_MAXSIZE, a, sizeof (a));
+			g_test_assert_expected_messages ();
+		}
+		n = g_mime_decoder_flush (decoder, input + 1, 3, a, sizeof (a));
+		m = g_mime_decoder_flush (dec_copy, input + 1, 3, b, sizeof (b));
 		g_assert_cmpmem (a, n, b, m);
 		if (kind == 4)
 			g_assert_cmphex (g_mime_yenc_decoder_get_checksum (GMIME_YENC_DECODER (decoder)), ==,
@@ -1033,6 +1187,15 @@ test_guard_pages (void)
 			output = outmap + 2 * page - capacity;
 			n = g_mime_decoder_decode (decoder, input, length, output, capacity);
 			g_assert_cmpuint (n, <=, capacity);
+			capacity = g_mime_decoder_estimate_output_length (decoder, 0);
+			output = outmap + 2 * page - capacity;
+			n = g_mime_decoder_flush (decoder, NULL, 0, output, capacity);
+			g_assert_cmpuint (n, <=, capacity);
+			g_mime_decoder_reset (decoder);
+			capacity = g_mime_decoder_estimate_output_length (decoder, length);
+			output = outmap + 2 * page - capacity;
+			n = g_mime_decoder_flush (decoder, input, length, output, capacity);
+			g_assert_cmpuint (n, <=, capacity);
 		}
 		g_object_unref (encoder);
 		g_object_unref (decoder);
@@ -1273,6 +1436,7 @@ main (int argc, char **argv)
 		return benchmark ();
 	g_test_init (&argc, &argv, NULL);
 	g_test_add_func ("/codecs/roundtrip", test_roundtrip);
+	g_test_add_func ("/codecs/decoder-flush", test_decoder_flush);
 	g_test_add_func ("/codecs/clone-reset", test_clone_reset);
 	g_test_add_func ("/codecs/decoder-mode-clones", test_decoder_mode_clones);
 	g_test_add_func ("/codecs/preconditions", test_preconditions);

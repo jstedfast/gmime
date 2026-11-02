@@ -558,6 +558,22 @@ Message dates already used `GDateTime` in 3.x; do not change them unnecessarily.
 
 ## 7. Review formatting, codecs, and subclasses
 
+Finish every encoded stream with `g_mime_decoder_flush()`, including when
+the final input is empty. Empty `g_mime_decoder_decode()` calls are not EOF.
+Allocate the capacity reported by `g_mime_decoder_estimate_output_length()`
+before either operation; it includes buffered bytes. Repeated empty flushes
+emit nothing. Call `g_mime_decoder_reset()` before decoding another stream.
+Custom `GMimeDecoder` implementations must provide the new `flush` virtual
+and estimates covering both decode and flush. The native bounded-buffer API
+is retained.
+
+EOF recovery now emits complete bytes from partial Base64/uuencode groups
+and preserves incomplete quoted-printable and RFC 2231 percent escapes
+literally. yEnc discards dangling escapes while preserving its running CRC.
+Decoder filters, decoded content, encoded-word runs, and encoded parameter
+runs finalize automatically. An unencoded parameter segment ends the
+preceding encoded run, even when that segment is empty.
+
 Default formatting options are immutable. Allocate options with
 `g_mime_format_options_new()` or clone them before changing settings.
 The default maximum line length is 78; valid configured lengths are 60..998.

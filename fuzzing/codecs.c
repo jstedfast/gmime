@@ -47,11 +47,12 @@ encode (GMimeEncoder *encoder, const guint8 *input, gsize length, gboolean flush
 }
 
 static void
-decode (GMimeDecoder *decoder, const guint8 *input, gsize length, GByteArray *result)
+decode (GMimeDecoder *decoder, const guint8 *input, gsize length, gboolean flush, GByteArray *result)
 {
 	gsize capacity = g_mime_decoder_estimate_output_length (decoder, length);
 	guint8 *buffer = guarded_buffer (capacity);
-	gsize written = g_mime_decoder_decode (decoder, input, length, buffer + GUARD_LENGTH, capacity);
+	gsize written = flush ? g_mime_decoder_flush (decoder, input, length, buffer + GUARD_LENGTH, capacity) :
+		g_mime_decoder_decode (decoder, input, length, buffer + GUARD_LENGTH, capacity);
 
 	check_guard (buffer, capacity, written, G_OBJECT_TYPE_NAME (decoder));
 	g_byte_array_append (result, buffer + GUARD_LENGTH, written);
@@ -354,7 +355,7 @@ fuzz_encoders (const guint8 *data, gsize length)
 	equal (whole, scalar, "Whole vs seven-byte encoding");
 	check_lines (kind, option, data, length, whole);
 	decoder = matching_decoder (kind);
-	decode (decoder, whole->data, whole->len, decoded);
+	decode (decoder, whole->data, whole->len, TRUE, decoded);
 	equal (expected, decoded, "Encoder/decoder round trip");
 	filter_roundtrip (encoder, kind, data, length, whole, expected, state);
 	g_object_unref (decoder);
@@ -390,24 +391,28 @@ fuzz_decoders (const guint8 *data, gsize length)
 	tail = g_byte_array_new ();
 	cloned = g_byte_array_new ();
 	scalar = g_byte_array_new ();
-	decode (decoder, data, length, whole);
+	decode (decoder, data, length, TRUE, whole);
+	decode (decoder, NULL, 0, TRUE, tail);
+	FUZZ_CHECK (tail->len == 0, "Repeated decoder flush emitted bytes");
 	g_mime_decoder_reset (decoder);
-	decode (decoder, data, length, again);
+	decode (decoder, data, length, TRUE, again);
 	equal (whole, again, "Decoding after reset");
 	g_mime_decoder_reset (decoder);
-	decode (decoder, data, split, chunked);
+	decode (decoder, data, split, FALSE, chunked);
 	clone = g_mime_decoder_clone (decoder);
-	decode (decoder, NULL, 0, tail);
-	decode (decoder, data + split, length - split, tail);
-	decode (clone, data + split, length - split, cloned);
+	decode (decoder, NULL, 0, FALSE, tail);
+	FUZZ_CHECK (tail->len == 0, "Empty decode finalized buffered input");
+	decode (decoder, data + split, length - split, TRUE, tail);
+	decode (clone, data + split, length - split, TRUE, cloned);
 	equal (tail, cloned, "Cloned decoder");
 	g_byte_array_append (chunked, tail->data, tail->len);
 	equal (whole, chunked, "Whole vs split decoding");
 	g_mime_decoder_reset (decoder);
 	for (offset = 0; offset < length; offset += count) {
 		count = MIN (7, length - offset);
-		decode (decoder, data + offset, count, scalar);
+		decode (decoder, data + offset, count, FALSE, scalar);
 	}
+	decode (decoder, NULL, 0, TRUE, scalar);
 	equal (whole, scalar, "SIMD vs scalar-sized decoding");
 	g_object_unref (decoder);
 	g_object_unref (clone);
@@ -419,7 +424,7 @@ fuzz_decoders (const guint8 *data, gsize length)
 		encode (encoder, data, split, FALSE, encoded);
 		encode (encoder, data + split, length - split, TRUE, encoded);
 		g_byte_array_set_size (again, 0);
-		decode (decoder, encoded->data, encoded->len, again);
+		decode (decoder, encoded->data, encoded->len, TRUE, again);
 		equal (expected, again, "Split encode/flush round trip");
 		g_byte_array_unref (expected);
 		g_byte_array_unref (encoded);

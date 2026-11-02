@@ -33,6 +33,8 @@ Encoder
 Decoder
   .decode.input ctype="const guint8*"
   .decode.output out=false
+  .flush.input ctype="const guint8*"
+  .flush.output out=false
 Reader
   .header_read.buffer ctype="const guint8*"
   .content_read.buffer ctype="const guint8*"

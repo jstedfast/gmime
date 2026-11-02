@@ -259,6 +259,19 @@ yenc_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 	return written;
 }
 
+static gsize
+yenc_decoder_flush (GMimeDecoder *decoder, const guint8 *input, gsize length,
+		    guint8 *output, gsize capacity)
+{
+	YencDecoderState *state = &GMIME_YENC_DECODER (decoder)->state;
+	gsize written = yenc_decoder_decode (decoder, input, length, output, capacity);
+
+	state->mode = Y_ENDED;
+	state->escaped = FALSE;
+
+	return written;
+}
+
 static void
 yenc_decoder_iface_init (GMimeDecoderInterface *iface)
 {
@@ -267,6 +280,7 @@ yenc_decoder_iface_init (GMimeDecoderInterface *iface)
 	iface->estimate_output_length = yenc_decoder_estimate;
 	iface->decode = yenc_decoder_decode;
 	iface->reset = yenc_decoder_reset;
+	iface->flush = yenc_decoder_flush;
 }
 
 /**

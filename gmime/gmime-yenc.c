@@ -983,6 +983,7 @@ g_mime_yenc_reader_decode_to (GMimeYencReader *reader, GMimeStream *destination,
 
 	while ((result = yenc_read_line (reader, error)) > 0) {
 		if (yenc_marker (reader, "=yend ")) {
+			g_mime_decoder_flush (GMIME_DECODER (decoder), NULL, 0, NULL, 0);
 			success = yenc_validate_trailer (reader, decoder, error);
 			goto done;
 		}
