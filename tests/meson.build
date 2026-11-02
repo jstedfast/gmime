@@ -44,7 +44,7 @@ normal_tests = [
   'test-openpgp',
   'test-reader', 'test-parser-model', 'test-roundtrip', 'test-parameter-validator', 'test-encoded-word-validator',
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',
-  'test-encodings', 'test-codecs', 'test-yenc', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
+  'test-encodings', 'test-codecs', 'test-decoder-flush', 'test-yenc', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
   'test-mime-part', 'test-mime-whitespace', 'test-partial', 'test-mbox', 'test-autocrypt', 'test-mime', 'test-types',
 ]
 crypto_tests = ['test-pgp', 'test-pgpmime']

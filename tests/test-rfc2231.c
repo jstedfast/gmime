@@ -149,6 +149,37 @@ test_recovery (void)
 }
 
 static void
+test_flush (void)
+{
+	static const char *inputs[] = { "", "%", "%4", "%q", "%4Z", "%41%A" };
+	static const char *expected[] = { "", "%", "%4", "%q", "%4Z", "A%A" };
+	GMimeDecoder *decoder = _g_mime_rfc2231_decoder_new (), *clone;
+	guint8 prefix[16], output[16], copy[16];
+	gsize i, split, length, capacity, written, n, m;
+
+	for (i = 0; i < G_N_ELEMENTS (inputs); i++) {
+		length = strlen (inputs[i]);
+		for (split = 0; split <= length; split++) {
+			g_mime_decoder_reset (decoder);
+			written = g_mime_decoder_decode (decoder, (const guint8 *) inputs[i], split, prefix, sizeof (prefix));
+			g_assert_cmpuint (g_mime_decoder_decode (decoder, NULL, 0, output, sizeof (output)), ==, 0);
+			clone = g_mime_decoder_clone (decoder);
+			capacity = g_mime_decoder_estimate_output_length (decoder, length - split);
+			memset (output, 0xa5, sizeof (output));
+			n = g_mime_decoder_flush (decoder, (const guint8 *) inputs[i] + split, length - split, output, capacity);
+			assert_padding (output, n, capacity);
+			m = g_mime_decoder_flush (clone, (const guint8 *) inputs[i] + split, length - split, copy, capacity);
+			g_assert_cmpmem (output, n, copy, m);
+			memcpy (prefix + written, output, n);
+			g_assert_cmpmem (prefix, written + n, expected[i], strlen (expected[i]));
+			g_assert_cmpuint (g_mime_decoder_flush (decoder, NULL, 0, NULL, 0), ==, 0);
+			g_object_unref (clone);
+		}
+	}
+	g_object_unref (decoder);
+}
+
+static void
 test_estimates_and_preconditions (void)
 {
 	GMimeDecoder *rfc2231 = _g_mime_rfc2231_decoder_new ();
@@ -272,6 +303,7 @@ main (int argc, char **argv)
 	g_test_init (&argc, &argv, NULL);
 	g_test_add_func ("/rfc2231/octets", test_octets);
 	g_test_add_func ("/rfc2231/recovery-clone-reset", test_recovery);
+	g_test_add_func ("/rfc2231/flush", test_flush);
 	g_test_add_func ("/rfc2231/estimates-preconditions", test_estimates_and_preconditions);
 	g_test_add_func ("/rfc2231/overlap", test_overlap);
 	g_test_add_func ("/rfc2231/guard-pages", test_guard_pages);

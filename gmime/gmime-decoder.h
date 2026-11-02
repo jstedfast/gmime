@@ -37,9 +37,11 @@ G_DECLARE_INTERFACE (GMimeDecoder, g_mime_decoder, GMIME, DECODER, GObject)
  * @estimate_output_length: estimates the output capacity
  * @decode: incrementally decodes input
  * @reset: resets the state
+ * @flush: decodes final input and emits recoverable buffered bytes
  *
  * Interface for incremental MIME decoders. Incomplete input is retained
- * until a subsequent decode or reset; decoders have no flush operation.
+ * until a subsequent decode, flush or reset. Implementations must provide
+ * both decode and flush, and estimate capacity for either operation.
  **/
 struct _GMimeDecoderInterface {
 	GTypeInterface parent_iface;
@@ -49,9 +51,11 @@ struct _GMimeDecoderInterface {
 	gsize (*decode) (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
 			 guint8 *output, gsize output_capacity);
 	void (*reset) (GMimeDecoder *decoder);
+	gsize (*flush) (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
+		       guint8 *output, gsize output_capacity);
 
 	/*< private >*/
-	gpointer reserved[8];
+	gpointer reserved[7];
 };
 
 GMimeContentEncoding g_mime_decoder_get_encoding (GMimeDecoder *decoder);
@@ -60,6 +64,8 @@ gsize g_mime_decoder_estimate_output_length (GMimeDecoder *decoder, gsize input_
 gsize g_mime_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
 			    guint8 *output, gsize output_capacity);
 void g_mime_decoder_reset (GMimeDecoder *decoder);
+gsize g_mime_decoder_flush (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
+			   guint8 *output, gsize output_capacity);
 
 G_END_DECLS
 #endif

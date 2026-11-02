@@ -161,16 +161,13 @@ filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace
 	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	size_t nwritten, len;
 
-	if (!basic->encoder) {
-		filter_filter (filter, inbuf, inlen, prespace, outbuf, outlen, outprespace);
-		return;
-	}
-
-	len = g_mime_encoder_estimate_output_length (basic->encoder, inlen);
+	len = basic->encoder ? g_mime_encoder_estimate_output_length (basic->encoder, inlen) :
+		g_mime_decoder_estimate_output_length (basic->decoder, inlen);
 	g_mime_filter_set_size (filter, len, FALSE);
 
-	nwritten = g_mime_encoder_flush (basic->encoder, (const guint8 *) inbuf, inlen,
-					(guint8 *) priv->outbuf, len);
+	nwritten = basic->encoder ?
+		g_mime_encoder_flush (basic->encoder, (const guint8 *) inbuf, inlen, (guint8 *) priv->outbuf, len) :
+		g_mime_decoder_flush (basic->decoder, (const guint8 *) inbuf, inlen, (guint8 *) priv->outbuf, len);
 	g_assert (nwritten <= len);
 	
 	*outprespace = priv->outpre;
@@ -178,7 +175,6 @@ filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace
 	*outlen = nwritten;
 }
 
-/* should this 'flush' outstanding state/data bytes? */
 static void
 filter_reset (GMimeFilter *filter)
 {

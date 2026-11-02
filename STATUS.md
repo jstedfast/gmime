@@ -614,8 +614,8 @@ This is an incremental migration, not yet a declaration of feature parity.
   g_mime_filter_best_encoding_with_max_line_length() accepts 60 through 998.
   CRLF terminators are excluded even across input buffers, and unterminated
   lines are included in queries without requiring a flush. From-lines are
-  recognized on LF, matching MimeKit; an unterminated final From-line is
-  not recognized as a marker. Plain ASCII now returns explicit 7bit, and
+  recognized as soon as the initial five bytes match, including an
+  unterminated final From-line. Plain ASCII now returns explicit 7bit, and
   high-bit data can return 8bit under the 8bit or binary constraints.
   The binary constraint still encodes long lines and From-lines when needed.
   Native counters are 64-bit rather than MimeKit's signed 32-bit counters;
@@ -909,8 +909,8 @@ flush API with GMimeEncoder and GMimeDecoder GObject interfaces modeled
 on MimeKit's IMimeEncoder and IMimeDecoder, and corresponding concrete
 codec types. Both interfaces expose the content encoding, state-preserving
 cloning, output-length estimation, and reset. Encoders provide encode and
-flush operations; decoders provide decode. Preserve MimeKit's incremental
-semantics while expressing buffer bounds, ownership, and errors safely
+flush operations; decoders provide decode and flush. Preserve MimeKit's
+incremental semantics while expressing buffer bounds, ownership, and errors safely
 in C. Adapt content and filter consumers to these interfaces rather than
 retaining the legacy encoding API as the new public contract.
 
@@ -946,11 +946,38 @@ Encoder flush accepts final input and resets the standard MIME codec state.
 Base64 empty flush emits nothing when no line or input is pending.
 Quoted-printable flush now follows MimeKit: a final unterminated content
 line is followed by "=\n", even when it does not end in whitespace.
-Decoders have no flush; incomplete sequences remain buffered until more
-input or reset. UUEncoder emits payload and a zero-length line, not
+Decoder flush accepts final input, recovers buffered bytes, and discards
+unrecoverable fragments. Empty decode is nonfinal; flush is required at EOF
+even when no input remains. Repeated empty flushes emit nothing; reset before
+decoding another stream. UUEncoder emits payload and a zero-length line, not
 begin/end markers. UUDecoder accepts a payload-only mode; otherwise it
 finds a begin-line and owns that scanning state, including markers split
 across input chunks.
+
+Decoder EOF handling follows MimeKit 48f1e35c. Base64 and uuencode recover
+complete bytes from partial groups; quoted-printable and the private
+RFC 2231 decoder preserve incomplete escapes literally. yEnc discards a
+dangling escape or incomplete framing and preserves its running CRC.
+All concrete decoders implement the required flush virtual. Decoder filter
+completion, RFC 2047 runs, RFC 2231 runs, uudecode, and yEnc block completion
+use it. The native bounded buffers and exact-store guarantees are retained.
+The unterminated From-line fix follows MimeKit 6b00b465; its RTF dictionary
+reset remains deferred with TNEF. MimeKit bbccea76 needs no charset-filter
+port: native completion already flushes iconv on empty input, retaining
+GMime's existing malformed-character policy.
+
+Targeted native and ASan/UBSan suites pass, covering every split of the
+EOF vectors, clone/reset, overlap, rejected arguments, exact output stores,
+guard pages, yEnc CRC preservation, read/write filters (including one-byte
+reads), header/parameter runs, and part encoding selection. Codec coverage
+runs both dispatched and scalar-only implementations. Decoder, encoder,
+RFC 2047, and structured-header regression corpus replays pass. GIR,
+typelib, Vala, and API documentation regenerate; live GI filter/header
+consumers and a compiled Vala consumer exercise finalization. The Vala
+metadata retains caller-allocated output buffers for the new operation.
+Instrumented libFuzzer campaigns completed 46,490 decoder and 19,310
+RFC 2047 executions, including active mutation, without failures.
+The uudecode example recovers truncated Base64 and uuencode payloads.
 
 GMimeYencEncoder/Decoder implement MimeKit's yEnc codec contracts and report
 the default content encoding, since yEnc is not a MIME transfer encoding.
@@ -1025,10 +1052,10 @@ literal plus signs remain plus signs rather than becoming spaces.
 Parameter encoding and decoding now use these helpers. Continuations are
 sorted before interpreting charset/language metadata and percent-decoding.
 Decoder state spans adjacent encoded segments, so a percent triplet may
-cross segment boundaries. An unencoded segment resets the percent state.
+cross segment boundaries. An unencoded segment finalizes the percent state.
 Malformed complete triplets pass through literally as three bytes rather
 than retrying an embedded percent sign. A final incomplete triplet is
-discarded, as in MimeKit; this intentionally changes GMime 3.x recovery.
+preserved literally, including at encoded-to-unencoded segment boundaries.
 
 RFC 2231 charset conversion now follows MimeKit's segment boundaries.
 Adjacent encoded segments share both percent-decoder and charset state;
@@ -2659,7 +2686,7 @@ accept pre-encoded content without introducing another encoding layer.
 Header payload decoding now uses GMimeBase64Decoder and the RFC 2047 mode
 of GMimeQuotedPrintableDecoder. Matching encoded-word runs retain decoder
 state and combine raw octets before charset conversion; other tokens,
-charsets, and encodings end the run and discard incomplete codec state.
+charsets, and encodings end the run and finalize buffered codec state.
 Temporary buffers use checked decoder estimates with gsize capacities.
 This intentionally adopts MimeKit's Q recovery: malformed complete
 triplets pass through literally without reinterpreting nested equals or
@@ -2708,7 +2735,7 @@ word's native converter.
 GB2312, GBK, and EUC-CN share identity 936, preserving GMime's existing
 GB2312-to-GBK compatibility mapping.
 Different charset identities, transfer encodings, and intervening plain
-text still end the run and discard incomplete codec state. Raw encoded-word
+text still end the run and finalize buffered codec state. Raw encoded-word
 spelling and the selected charset metadata are unchanged.
 Native-only aliases such as eucJP remain supported, and distinct unknown
 charset names retain separate runs rather than sharing .NET's unknown-codepage

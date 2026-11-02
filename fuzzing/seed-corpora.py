@@ -123,6 +123,8 @@ def regression_inputs():
                  b"A" * 998, b" " * 80, b"\r", b"\n", b"\t"]
     encoded = base64.b64encode(bytes(range(228)))
     malformed = [
+        b"TQ", b"TWE", b"TQ=", b"TWFuTQ", b"abc=", b"abc=4", b"abc=\r",
+        b"#36", b"#36%", b"begin 644 file\n#36%", b"*=",
         b"TQ==TWE=TWFu", b"!?T=W=F=u==\xff\0", b"=3D=0D=0A=\r\n= \t=\n=QZ=",
         b"begin 644 file\n#0V%T\n`\nend\n",
         b"=ybegin line=128 size=3 file=x\r\nklm\r\n=yend size=3 crc32=0\r\n",
@@ -148,6 +150,7 @@ def regression_inputs():
         b"", b" ", b"  plain  text  ", b"=?utf-8?q?=00?=", b"\0after-nul",
         bytes(range(256)), b"caf\xc3\xa9 " * 40, b"\xf0\x9f\x98\x80" * 40,
         b"  literal =?utf-8?q?word?=  ", b"\r\n\tfolded\r\ntext",
+        b"=?utf-8?b?TQ?=", b"=?utf-8?q?abc=?= =?utf-8?b?TQ?=",
         b"\xff\xfe\xc0\x80\xed\xa0\x80", b"\xff" * LIMITS["rfc2047"],
     ]
     return {"encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,

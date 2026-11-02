@@ -43,8 +43,10 @@ reference checks its output instead.
 
 decoders checks malformed Base64, quoted-printable body/header modes, full-block
 and payload-only uuencode/yEnc, and pass-through input. It compares whole,
-split, cloned, reset and seven-byte scalar-sized decoding, checks output
-guards, and round-trips through four matching encoders. The low three bits
+split, cloned, reset and seven-byte scalar-sized decoding including explicit
+EOF flush, checks repeated empty flushes and exact output guards, and
+round-trips through four matching encoders. Empty Decode remains nonfinal.
+The low three bits
 of the first byte select the decoder and the upper five select the split.
 GMime's private RFC 2231 and one-shot RFC 2047 payload codecs are not invoked
 directly; the public header utilities exercise RFC 2047 payload encoding.

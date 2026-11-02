@@ -76,7 +76,6 @@ pass_through_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize l
 static void
 pass_through_decoder_reset (GMimeDecoder *decoder)
 {
-	(void) decoder;
 }
 
 static void
@@ -87,6 +86,7 @@ pass_through_decoder_iface_init (GMimeDecoderInterface *iface)
 	iface->estimate_output_length = pass_through_decoder_estimate;
 	iface->decode = pass_through_decoder_decode;
 	iface->reset = pass_through_decoder_reset;
+	iface->flush = pass_through_decoder_decode;
 }
 
 /**

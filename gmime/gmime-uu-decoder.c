@@ -118,15 +118,19 @@ uu_scan_begin (UUDecoderState *state, const guint8 *input, gsize length)
 			}
 		} else if (state->state == UU_EXPECT_BEGIN) {
 			c = input[i++];
+
 			if (state->nsaved == '\n' && c == 'b')
 				state->state = UU_B;
+
 			state->nsaved = c;
 		} else {
 			c = input[i++];
+
 			if (c == marker[state->state])
 				state->state++;
 			else
 				state->state = UU_EXPECT_BEGIN;
+
 			state->nsaved = c;
 		}
 	}
@@ -189,6 +193,7 @@ uu_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 			b = ((state->saved >> 16) - 32) & 63;
 			c = ((state->saved >> 8) - 32) & 63;
 			d = (state->saved - 32) & 63;
+
 			count = MIN (state->uulen, 3);
 			output[written++] = (a << 2) | (b >> 4);
 
@@ -206,6 +211,31 @@ uu_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 	return written;
 }
 
+static gsize
+uu_decoder_flush (GMimeDecoder *decoder, const guint8 *input, gsize length,
+		  guint8 *output, gsize capacity)
+{
+	UUDecoderState *state = &GMIME_UU_DECODER (decoder)->state;
+	gsize written = uu_decoder_decode (decoder, input, length, output, capacity);
+	guint shift, first, second;
+
+	if (state->state == UU_PAYLOAD && state->nsaved >= 2 && state->uulen > 0) {
+		shift = (state->nsaved - 2) * 8;
+		first = ((state->saved >> (shift + 8)) - 32) & 63;
+		second = ((state->saved >> shift) - 32) & 63;
+
+		output[written++] = (first << 2) | (second >> 4);
+
+		if (state->nsaved == 3 && state->uulen > 1)
+			output[written++] = (second << 4) | (((state->saved - 32) & 63) >> 2);
+	}
+
+	state->state = UU_ENDED;
+	state->nsaved = state->saved = state->uulen = 0;
+
+	return written;
+}
+
 static void
 uu_decoder_iface_init (GMimeDecoderInterface *iface)
 {
@@ -214,6 +244,7 @@ uu_decoder_iface_init (GMimeDecoderInterface *iface)
 	iface->estimate_output_length = uu_decoder_estimate;
 	iface->decode = uu_decoder_decode;
 	iface->reset = uu_decoder_reset;
+	iface->flush = uu_decoder_flush;
 }
 
 /**

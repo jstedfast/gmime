@@ -138,6 +138,8 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 
 				if (!priv->hadfrom && priv->fromlen < 5)
 					priv->frombuf[priv->fromlen++] = c;
+				if (!priv->hadfrom && priv->fromlen == 5 && !memcmp (priv->frombuf, "From ", 5))
+					priv->hadfrom = TRUE;
 
 				priv->linelen++;
 			} else {
@@ -146,10 +148,6 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 
 				priv->maxline = MAX (priv->maxline, priv->linelen);
 				priv->linelen = 0;
-
-				/* Check our from-save buffer for "From ". */
-				if (!priv->hadfrom && priv->fromlen == 5 && !memcmp (priv->frombuf, "From ", 5))
-					priv->hadfrom = TRUE;
 
 				priv->fromlen = 0;
 			}

@@ -2068,7 +2068,7 @@ rfc2184_sort_cb (const void *v0, const void *v1)
 }
 
 static char *
-rfc2231_decode (GMimeDecoder *rfc2231, const char *value, gsize input_length, gsize *length)
+rfc2231_decode (GMimeDecoder *rfc2231, const char *value, gsize input_length, gsize *length, gboolean flush)
 {
 	gsize capacity;
 	char *decoded;
@@ -2078,8 +2078,9 @@ rfc2231_decode (GMimeDecoder *rfc2231, const char *value, gsize input_length, gs
 	g_assert (capacity < G_MAXSIZE);
 
 	decoded = g_malloc (capacity + 1);
-	*length = g_mime_decoder_decode (rfc2231, (const guint8 *) value, input_length,
-				       (guint8 *) decoded, capacity);
+	*length = flush ? g_mime_decoder_flush (rfc2231, (const guint8 *) value, input_length,
+					       (guint8 *) decoded, capacity) :
+		g_mime_decoder_decode (rfc2231, (const guint8 *) value, input_length, (guint8 *) decoded, capacity);
 	decoded[*length] = '\0';
 
 	return decoded;
@@ -2206,7 +2207,7 @@ rfc2184_decode (const char *value, gsize length, char **charsetp, char **langp)
 	size_t len;
 
 	charset = rfc2184_param_charset (&inptr, value + length, langp);
-	decoded = rfc2231_decode (rfc2231, inptr, value + length - inptr, &len);
+	decoded = rfc2231_decode (rfc2231, inptr, value + length - inptr, &len, TRUE);
 	g_object_unref (rfc2231);
 
 	charset_convert (&charset, decoded, len, out);
@@ -2419,6 +2420,9 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
 			part = rfc2184->parts->pdata[i];
 
 			if (part->encoded) {
+				gboolean flush = i + 1 == rfc2184->parts->len ||
+					!((struct _rfc2184_part *) rfc2184->parts->pdata[i + 1])->encoded;
+
 				inptr = part->value;
 
 				if (!have_charset) {
@@ -2426,12 +2430,11 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
 					have_charset = TRUE;
 				}
 
-				decoded = rfc2231_decode (rfc2231, inptr, part->value + part->length - inptr, &length);
+				decoded = rfc2231_decode (rfc2231, inptr, part->value + part->length - inptr, &length, flush);
 				g_string_append_len (octets, decoded, length);
 				g_free (decoded);
 
-				if (i + 1 == rfc2184->parts->len ||
-				    !((struct _rfc2184_part *) rfc2184->parts->pdata[i + 1])->encoded) {
+				if (flush) {
 					charset_convert (&rfc2184->charset, octets->str, octets->len, buf);
 					g_string_truncate (octets, 0);
 				}

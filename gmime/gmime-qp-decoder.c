@@ -110,7 +110,6 @@ qp_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 	guint8 c;
 	gint rank;
 
-	(void) capacity;
 	for (i = 0; i < length; i++) {
 		c = input[i];
 		switch (state->state) {
@@ -134,6 +133,7 @@ qp_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 					output[written++] = '=';
 					output[written++] = c;
 				}
+
 				state->state = QP_PASS_THROUGH;
 			}
 			break;
@@ -144,6 +144,7 @@ qp_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 				output[written++] = '\r';
 				output[written++] = c;
 			}
+
 			state->state = QP_PASS_THROUGH;
 			break;
 		case QP_DECODE_BYTE:
@@ -155,10 +156,33 @@ qp_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 				output[written++] = state->saved;
 				output[written++] = c;
 			}
+
 			state->state = QP_PASS_THROUGH;
 			break;
 		}
 	}
+
+	return written;
+}
+
+static gsize
+qp_decoder_flush (GMimeDecoder *decoder, const guint8 *input, gsize length,
+		  guint8 *output, gsize capacity)
+{
+	QPDecoderState *state = &GMIME_QUOTED_PRINTABLE_DECODER (decoder)->state;
+	gsize written = qp_decoder_decode (decoder, input, length, output, capacity);
+
+	if (state->state != QP_PASS_THROUGH) {
+		output[written++] = '=';
+
+		if (state->state == QP_DECODE_BYTE)
+			output[written++] = state->saved;
+		else if (state->state == QP_SOFT_BREAK)
+			output[written++] = '\r';
+	}
+
+	qp_decoder_reset (decoder);
+
 	return written;
 }
 
@@ -170,6 +194,7 @@ qp_decoder_iface_init (GMimeDecoderInterface *iface)
 	iface->estimate_output_length = qp_decoder_estimate;
 	iface->decode = qp_decoder_decode;
 	iface->reset = qp_decoder_reset;
+	iface->flush = qp_decoder_flush;
 }
 
 /**
@@ -184,5 +209,6 @@ g_mime_quoted_printable_decoder_new (gboolean rfc2047)
 	GMimeQuotedPrintableDecoder *decoder = g_object_new (GMIME_TYPE_QUOTED_PRINTABLE_DECODER, NULL);
 
 	decoder->state.rfc2047 = rfc2047;
+
 	return decoder;
 }

@@ -32,6 +32,8 @@
  * Decoders retain incomplete sequences between calls. Malformed encoded input
  * follows MimeKit's tolerant recovery rather than reporting argument errors.
  * Overlapping buffers are supported, copying the input when necessary.
+ * Complete each encoded stream with g_mime_decoder_flush(), even when no
+ * input remains. Reset before decoding a new stream.
  **/
 
 G_DEFINE_INTERFACE (GMimeDecoder, g_mime_decoder, G_TYPE_OBJECT)
@@ -72,7 +74,7 @@ g_mime_decoder_clone (GMimeDecoder *decoder)
  * @decoder: a decoder
  * @input_length: number of input bytes
  *
- * Includes buffered input without changing the state.
+ * Includes buffered input emitted by decode or flush without changing state.
  *
  * Returns: the required capacity, or %G_MAXSIZE if it is not representable.
  **/
@@ -81,6 +83,36 @@ g_mime_decoder_estimate_output_length (GMimeDecoder *decoder, gsize input_length
 {
 	g_return_val_if_fail (GMIME_IS_DECODER (decoder), 0);
 	return GMIME_DECODER_GET_IFACE (decoder)->estimate_output_length (decoder, input_length);
+}
+
+static gsize
+decoder_convert (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
+		 guint8 *output, gsize output_capacity, gboolean flush)
+{
+	GMimeDecoderInterface *iface;
+	guint8 *copy = NULL;
+	gsize estimate, written;
+
+	g_return_val_if_fail (GMIME_IS_DECODER (decoder), 0);
+	g_return_val_if_fail (input != NULL || input_length == 0, 0);
+	g_return_val_if_fail (output != NULL || output_capacity == 0, 0);
+
+	iface = GMIME_DECODER_GET_IFACE (decoder);
+	g_return_val_if_fail (flush ? iface->flush != NULL : iface->decode != NULL, 0);
+	estimate = iface->estimate_output_length (decoder, input_length);
+	g_return_val_if_fail (estimate != G_MAXSIZE, 0);
+	g_return_val_if_fail (output_capacity >= estimate, 0);
+
+	if (!GMIME_IS_PASS_THROUGH_DECODER (decoder) &&
+	    codec_buffers_overlap (input, input_length, output, estimate)) {
+		copy = g_memdup2 (input, input_length);
+		input = copy;
+	}
+
+	written = flush ? iface->flush (decoder, input, input_length, output, output_capacity) :
+		iface->decode (decoder, input, input_length, output, output_capacity);
+	g_free (copy);
+	return written;
 }
 
 /**
@@ -92,7 +124,8 @@ g_mime_decoder_estimate_output_length (GMimeDecoder *decoder, gsize input_length
  * @output_capacity: capacity, at least the estimated output length
  *
  * Argument violations are programming errors checked before changing state.
- * This does not finalize incomplete sequences.
+ * Empty input does not finalize incomplete sequences; use
+ * g_mime_decoder_flush() at the end of the encoded stream.
  *
  * Returns: the number of bytes written.
  **/
@@ -100,28 +133,35 @@ gsize
 g_mime_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
 		       guint8 *output, gsize output_capacity)
 {
-	GMimeDecoderInterface *iface;
-	guint8 *copy = NULL;
-	gsize estimate, written;
+	return decoder_convert (decoder, input, input_length, output, output_capacity, FALSE);
+}
 
-	g_return_val_if_fail (GMIME_IS_DECODER (decoder), 0);
-	g_return_val_if_fail (input != NULL || input_length == 0, 0);
-	g_return_val_if_fail (output != NULL || output_capacity == 0, 0);
-
-	iface = GMIME_DECODER_GET_IFACE (decoder);
-	estimate = iface->estimate_output_length (decoder, input_length);
-	g_return_val_if_fail (estimate != G_MAXSIZE, 0);
-	g_return_val_if_fail (output_capacity >= estimate, 0);
-
-	if (!GMIME_IS_PASS_THROUGH_DECODER (decoder) &&
-	    codec_buffers_overlap (input, input_length, output, estimate)) {
-		copy = g_memdup2 (input, input_length);
-		input = copy;
-	}
-
-	written = iface->decode (decoder, input, input_length, output, output_capacity);
-	g_free (copy);
-	return written;
+/**
+ * g_mime_decoder_flush:
+ * @decoder: a decoder
+ * @input: (nullable) (array length=input_length): final input bytes
+ * @input_length: input length, or zero to complete previously decoded input
+ * @output: (out caller-allocates) (array length=output_capacity): writable output buffer
+ * @output_capacity: capacity, at least the estimated output length
+ *
+ * Decodes final input and emits recoverable buffered bytes. Base64 and
+ * uuencode recover complete bytes from partial groups; quoted-printable
+ * preserves incomplete escapes literally. Fragments that cannot produce
+ * a byte are discarded. yEnc discards dangling escapes and incomplete
+ * framing, preserving its running checksum.
+ *
+ * Call even when the final input is empty. Repeated empty flushes produce
+ * no more output. Reset before decoding another stream. Buffer overlap and
+ * argument checks follow g_mime_decoder_decode(); capacity must include
+ * buffered input as reported by g_mime_decoder_estimate_output_length().
+ *
+ * Returns: the number of bytes written.
+ **/
+gsize
+g_mime_decoder_flush (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
+		      guint8 *output, gsize output_capacity)
+{
+	return decoder_convert (decoder, input, input_length, output, output_capacity, TRUE);
 }
 
 /**

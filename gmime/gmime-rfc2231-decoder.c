@@ -131,6 +131,25 @@ rfc2231_decoder_reset (GMimeDecoder *decoder)
 	rfc2231->saved = 0;
 }
 
+static gsize
+rfc2231_decoder_flush (GMimeDecoder *decoder, const guint8 *input, gsize length,
+		       guint8 *output, gsize capacity)
+{
+	GMimeRfc2231Decoder *rfc2231 = (GMimeRfc2231Decoder *) decoder;
+	gsize written = rfc2231_decoder_decode (decoder, input, length, output, capacity);
+
+	if (rfc2231->state != RFC2231_PASS_THROUGH) {
+		output[written++] = '%';
+
+		if (rfc2231->state == RFC2231_DECODE_BYTE)
+			output[written++] = rfc2231->saved;
+	}
+
+	rfc2231_decoder_reset (decoder);
+
+	return written;
+}
+
 static void
 rfc2231_decoder_iface_init (GMimeDecoderInterface *iface)
 {
@@ -139,6 +158,7 @@ rfc2231_decoder_iface_init (GMimeDecoderInterface *iface)
 	iface->estimate_output_length = rfc2231_decoder_estimate;
 	iface->decode = rfc2231_decoder_decode;
 	iface->reset = rfc2231_decoder_reset;
+	iface->flush = rfc2231_decoder_flush;
 }
 
 GMimeDecoder *
