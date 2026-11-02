@@ -11116,14 +11116,6 @@ test_parser_read_errors (void)
 }
 
 static void
-count_header (GMimeParser *parser, const char *name, const char *value, gint64 offset, gpointer user_data)
-{
-	guint *count = user_data;
-
-	(*count)++;
-}
-
-static void
 test_parser_errors (void)
 {
 	static const struct {
@@ -11152,7 +11144,7 @@ test_parser_errors (void)
 	GMimeEntity *entity;
 	GMimeMessage *message;
 	GError *error = NULL;
-	guint i, count;
+	guint i;
 	char *text, *value;
 	int onebyte, part;
 
@@ -11212,18 +11204,14 @@ test_parser_errors (void)
 			g_object_unref (input);
 			g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
 			g_mime_parser_options_set_max_header_length (options, 64);
-			count = 0;
-			g_mime_parser_set_header_regex (parser, ".*", count_header, &count);
 			message = g_mime_parser_construct_message (parser, options, &error);
 			check (message != NULL && error == NULL, "mbox message before oversized header is preserved");
 			g_clear_object (&message);
-			check (count == 1, "accepted header invokes callback once");
 			message = g_mime_parser_construct_message (parser, options, &error);
 			check (message == NULL && g_error_matches (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG),
 			       "next mbox message reports oversized header");
 			check (g_mime_parser_get_headers_begin (parser) == strstr (text, "X: ") - text,
 			       "header failure retains absolute mbox header offset");
-			check (count == 1, "oversized header is not exposed through callbacks");
 			g_clear_object (&message);
 			g_clear_error (&error);
 			entity = g_mime_parser_construct_part (parser, options, NULL);

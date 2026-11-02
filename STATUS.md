@@ -206,6 +206,12 @@ This is an incremental migration, not yet a declaration of feature parity.
   message and mailbox fixtures. Corpus replay and nightly
   libFuzzer integration use the same 64 KiB input limit.
 
+- The legacy parser header-regex callback API has been removed, eliminating
+  its temporary NUL-terminated raw-value copies. Streaming consumers can
+  override `GMimeReaderClass::header_read`; model consumers can inspect
+  `GMimeHeader` names, raw `GBytes` values and original stream offsets.
+  Migration details are in `PORTING.md`.
+
 - `GMimeMultipartReport` is a `GMimeMultipart` subclass for multipart/report.
   Its constructor requires a UTF-8 report type; get/set_report_type()
   access the Content-Type report-type parameter. The getter is borrowed
@@ -4153,13 +4159,13 @@ Successive header/entity/message operations, format changes and persistence
 changes keep one reader and its buffered input. Stream replacement discards
 buffered data, errors and metadata without resetting or closing either input.
 
-The compatibility wrapper retains per-operation option snapshots, header
-regex callbacks, sticky errors, header byte-limit error codes, root header
-offsets and mbox marker metadata. Header callbacks can unregister themselves
-or release their parser reference; reentrant reads and stream/settings
-replacement during parsing are rejected. Public header-only loading stops
-at the separator without an additional body/EOF probe, while the raw reader
-retains MimeKit's original read-ahead behavior. Clean entity/message EOF
+The compatibility wrapper retains per-operation option snapshots, sticky
+errors, header byte-limit error codes, root header offsets and mbox marker
+metadata. The legacy header-regex callback API has since been removed;
+compliance callbacks may release their parser reference, while reentrant
+reads and stream replacement during parsing are rejected. Public header-only
+loading stops at the separator without an additional body/EOF probe, while
+the raw reader retains MimeKit's original read-ahead behavior. Clean entity/message EOF
 returns NULL without an error. Nonseekable logical positions start at zero.
 Previously returned persistent content remains usable after subsequent reads,
 including when persistence is disabled after that content moves the source.
@@ -4566,7 +4572,8 @@ Substream failures are reported while parsing content. Stream replacement
 validates before discarding anything: failure preserves the old input,
 buffered bytes, sticky error, positions, mailbox metadata, format and
 storage. Success replaces the input, format and storage, clears parsing
-state and retains header-regex settings. Neither stream is reset or closed.
+state and retains compliance options and the compliance logger.
+Neither stream is reset or closed.
 
 Previously parsed models retain their original content across parser
 replacement or destruction. Source-backed content retains its old input,

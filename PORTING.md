@@ -332,6 +332,24 @@ Passing NULL for the callback, data and destroy notifier disables reporting.
 Compliance reporting neither changes parsing policy nor replaces legacy
 warning callbacks or `GError` handling.
 
+### Header inspection
+
+`GMimeParserHeaderRegexFunc` and `g_mime_parser_set_header_regex()` have been
+removed. For streaming inspection, subclass `GMimeReader` and override
+`GMimeReaderClass::header_read`. It supplies the complete raw header, explicit
+field-name/value boundaries, and the stream offset. Filter header names in the
+application; the borrowed bytes are not NUL-terminated and must be copied if
+retained after the callback. Skip headers marked invalid if matching the old
+callback's valid-header-only behavior.
+
+Applications that also need a constructed message can instead inspect its
+`GMimeHeaderList` through `g_mime_entity_get_header_list()`. Use
+`g_mime_header_get_name()`, `g_mime_header_get_offset()` and
+`g_mime_header_get_raw_value()` to obtain the name, original stream offset and
+raw value. Inspect nested entities/messages explicitly if their headers matter;
+the old regex callback observed those as well. `GMimeParser` remains final and
+does not accept an application-supplied reader subclass.
+
 ## 5. Treat raw headers as bytes, not C strings
 
 `g_mime_header_get_raw_name()` and `g_mime_header_get_raw_value()` now return

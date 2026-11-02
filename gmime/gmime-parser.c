@@ -48,9 +48,6 @@
 struct _GMimeParserPrivate {
 	GMimeReader *reader;
 	GMimeFormat format;
-	GRegex *regex;
-	GMimeParserHeaderRegexFunc header_cb;
-	gpointer user_data;
 	gboolean persist_stream;
 	gboolean reading;
 };
@@ -65,7 +62,6 @@ g_mime_parser_finalize (GObject *object)
 	GMimeParser *parser = (GMimeParser *) object;
 
 	g_clear_object (&parser->priv->reader);
-	g_clear_pointer (&parser->priv->regex, g_regex_unref);
 	g_free (parser->priv);
 	G_OBJECT_CLASS (g_mime_parser_parent_class)->finalize (object);
 }
@@ -83,14 +79,12 @@ g_mime_parser_init (GMimeParser *parser)
 	parser->priv->format = GMIME_FORMAT_MESSAGE;
 	parser->priv->persist_stream = TRUE;
 	parser->priv->reader = _g_mime_parser_reader_new (NULL, NULL, TRUE);
-	_g_mime_parser_reader_set_header_callback (parser->priv->reader, parser_header_read, parser);
+	_g_mime_parser_reader_set_header_callback (parser->priv->reader, parser_header_read, NULL);
 }
 
 static gboolean
 parser_header_read (GMimeHeader *header, gboolean toplevel, gpointer user_data, GError **error)
 {
-	GMimeParser *parser = user_data;
-	struct _GMimeParserPrivate *priv = parser->priv;
 	gconstpointer field;
 	gsize length;
 
@@ -102,13 +96,6 @@ parser_header_read (GMimeHeader *header, gboolean toplevel, gpointer user_data, 
 		g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 			     "Failed to parse header at offset %" G_GINT64_FORMAT ".", header->offset);
 		return FALSE;
-	}
-
-	if (!header->invalid && priv->regex && g_regex_match (priv->regex, header->name, 0, NULL)) {
-		char *value = _g_mime_header_dup_raw_value (header);
-
-		priv->header_cb (parser, header->name, value, header->offset, priv->user_data);
-		g_free (value);
 	}
 
 	return TRUE;
@@ -231,8 +218,8 @@ g_mime_parser_new_with_stream_and_storage (GMimeStream *stream, GMimeFormat form
  *
  * Replaces the input at its current position, discarding buffered data,
  * metadata and any previous error. Neither stream is reset or closed.
- * Parser format, persistence, header-regex settings, compliance options
- * and the compliance logger are retained.
+ * Parser format, persistence, compliance options and the compliance logger
+ * are retained.
  *
  * Do not read, write, seek or reset @stream while parsing. Persistent part
  * content may be read between operations: its physical source position is
@@ -260,8 +247,8 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
  * @error: return location for a #GError, or %NULL
  *
  * Replaces the input, format and storage, discarding buffered data, metadata
- * and any previous parsing error. Header-regex settings, compliance options
- * and the compliance logger are retained.
+ * and any previous parsing error. Compliance options and the compliance
+ * logger are retained.
  * Neither stream is reset or closed. Previously returned models retain
  * their content and are unaffected by stream replacement.
  *
@@ -398,30 +385,6 @@ g_mime_parser_set_compliance_logger (GMimeParser *parser, GMimeComplianceIssueFu
 	g_return_if_fail (GMIME_IS_PARSER (parser));
 
 	g_mime_reader_set_compliance_logger (parser->priv->reader, report, user_data, destroy);
-}
-
-/**
- * g_mime_parser_set_header_regex: (skip)
- * @parser: a #GMimeParser context
- * @regex: (nullable): regular expression, or %NULL to unregister
- * @header_cb: callback function
- * @user_data: user data
- *
- * Calls @header_cb for each valid header whose name matches @regex,
- * including headers of nested entities. Values retain their raw folding.
- **/
-void
-g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
-				GMimeParserHeaderRegexFunc header_cb, gpointer user_data)
-{
-	g_return_if_fail (GMIME_IS_PARSER (parser));
-
-	g_clear_pointer (&parser->priv->regex, g_regex_unref);
-	parser->priv->header_cb = header_cb;
-	parser->priv->user_data = user_data;
-
-	if (regex && header_cb)
-		parser->priv->regex = g_regex_new (regex, G_REGEX_RAW | G_REGEX_EXTENDED | G_REGEX_CASELESS, 0, NULL);
 }
 
 /**

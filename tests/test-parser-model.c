@@ -2270,30 +2270,6 @@ test_empty_headers (void)
 }
 
 static void
-release_public_parser (GMimeParser *parser, const char *name, const char *value, gint64 offset, gpointer user_data)
-{
-	guint *calls = user_data;
-	ModelInput *replacement = new_input ("", 0, 1);
-
-	(*calls)++;
-	g_assert_cmpstr (name, ==, "Subject");
-	g_assert_cmpstr (value, ==, " retained\n");
-	g_assert_cmpint (offset, ==, 0);
-	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
-	g_assert_null (g_mime_parser_construct_part (parser, NULL, NULL));
-	g_test_assert_expected_messages ();
-	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
-	g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
-		GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, NULL));
-	g_test_assert_expected_messages ();
-	g_assert_cmpuint (replacement->seeks, ==, 0);
-	g_assert_cmpuint (replacement->reads, ==, 0);
-	g_object_unref (replacement);
-	g_mime_parser_set_header_regex (parser, NULL, NULL, NULL);
-	g_object_unref (parser);
-}
-
-static void
 test_public_parser_models (void)
 {
 	static const char wire[] = "X-Skip: first\n\n"
@@ -2401,24 +2377,42 @@ test_public_parser_models (void)
 	}
 	testsuite_check_passed ();
 
-	testsuite_check ("Public header callbacks may unregister and release the parser without reentrant reads");
-	{
-		ModelInput *input = new_input ("Subject: retained\nX: ignored\n\nbody", 34, 1);
+	testsuite_check ("Public message headers expose raw values and offsets without streaming callbacks");
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		static const char status[] = "Status: RO\n";
+		static const char x_status[] = "X-Status: F\0A\n";
+		static const char wire[] = "Status: RO\nX-Status: F\0A\nMIME-Version: 1.0\n"
+			"Content-Type: message/rfc822\n\nStatus: R\n\nbody";
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
 		GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
-		GMimeParser *weak = parser;
+		GMimeHeaderList *headers;
+		GMimeHeader *header;
 		GMimeMessage *message;
 		GError *error = NULL;
-		guint calls = 0;
+		GBytes *raw;
+		gconstpointer data;
+		gsize length;
 
-		g_object_add_weak_pointer (G_OBJECT (parser), (gpointer *) &weak);
-		g_mime_parser_set_header_regex (parser, "^subject$", release_public_parser, &calls);
 		message = g_mime_parser_construct_message (parser, NULL, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (message);
-		g_assert_cmpuint (calls, ==, 1);
-		g_assert_null (weak);
-		g_assert_cmpstr (g_mime_message_get_subject (message), ==, "retained");
+		headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+		header = g_mime_header_list_get_header (headers, "Status");
+		g_assert_nonnull (header);
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, 0);
+		g_assert_cmpstr (g_mime_header_get_value (header), ==, "RO");
+		header = g_mime_header_list_get_header (headers, "X-Status");
+		g_assert_nonnull (header);
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, sizeof (status) - 1);
+		raw = g_mime_header_get_raw_value (header);
+		data = g_bytes_get_data (raw, &length);
+		g_assert_cmpmem (data, length, " F\0A\n", 5);
+		g_bytes_unref (raw);
+		header = g_mime_header_list_get_header (headers, "MIME-Version");
+		g_assert_nonnull (header);
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, sizeof (status) + sizeof (x_status) - 2);
 		g_object_unref (message);
+		g_object_unref (parser);
 		g_object_unref (input);
 	}
 	testsuite_check_passed ();
@@ -2581,6 +2575,7 @@ parser_log_issue (const GMimeComplianceIssue *issue, gpointer user_data)
 	collect_parser_issue (issue, logger->issues);
 	if (logger->replace) {
 		GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+		ModelInput *replacement = new_input ("", 0, 1);
 
 		logger->replace = FALSE;
 		g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_STORAGE);
@@ -2594,6 +2589,13 @@ parser_log_issue (const GMimeComplianceIssue *issue, gpointer user_data)
 		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
 		g_assert_null (g_mime_parser_construct_message (logger->parser, NULL, NULL));
 		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
+		g_assert_false (g_mime_parser_init_with_stream_and_storage (logger->parser, (GMimeStream *) replacement,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, NULL));
+		g_test_assert_expected_messages ();
+		g_assert_cmpuint (replacement->seeks, ==, 0);
+		g_assert_cmpuint (replacement->reads, ==, 0);
+		g_object_unref (replacement);
 	}
 	if (logger->release) {
 		logger->release = FALSE;
@@ -5320,15 +5322,6 @@ test_loading_storage (void)
 }
 
 static void
-count_parser_storage_header (GMimeParser *parser, const char *name, const char *value, gint64 offset, gpointer user_data)
-{
-	guint *calls = user_data;
-
-	g_assert_cmpstr (name, ==, "Subject");
-	(*calls)++;
-}
-
-static void
 test_parser_storage (void)
 {
 	static const char first[] = "Subject: first\nContent-Type: text/plain\n\none";
@@ -5414,7 +5407,7 @@ test_parser_storage (void)
 			GMimeMessage *old[2], *message;
 			GByteArray *bytes;
 			gpointer alive;
-			guint calls = 0, i;
+			guint i;
 			gint64 position, begin, end, marker_offset;
 
 			g_string_append_printf (wire, "%s\nFrom second\n%s", first, second);
@@ -5423,7 +5416,6 @@ test_parser_storage (void)
 			g_object_add_weak_pointer (G_OBJECT (input), &alive);
 			parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
 				GMIME_FORMAT_MBOX, storage, &error);
-			g_mime_parser_set_header_regex (parser, "^Subject$", count_parser_storage_header, &calls);
 			old[0] = g_mime_parser_construct_message (parser, NULL, &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (old[0]);
@@ -5456,7 +5448,6 @@ test_parser_storage (void)
 			old[1] = g_mime_parser_construct_message (parser, NULL, &error);
 			g_assert_no_error (error);
 			g_assert_cmpstr (g_mime_message_get_subject (old[1]), ==, "second");
-			g_assert_cmpuint (calls, ==, 2);
 			replacement = new_input (first, sizeof (first) - 1, 1);
 			replacement->nonseekable = next_storage == GMIME_CONTENT_STORAGE_MEMORY;
 			g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
@@ -5473,7 +5464,6 @@ test_parser_storage (void)
 			message = g_mime_parser_construct_message (parser, NULL, &error);
 			g_assert_no_error (error);
 			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "first");
-			g_assert_cmpuint (calls, ==, 3);
 			g_object_unref (parser);
 			for (i = 0; i < 2; i++) {
 				GMimeMessagePrivate *old_priv = _g_mime_message_get_private (old[i]);
