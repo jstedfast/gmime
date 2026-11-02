@@ -1483,6 +1483,7 @@ GMimeMessagePartialClass
 <FILE>gmime-text-part</FILE>
 GMimeTextPart
 GMimeTextFormat
+GMimeTextEncodingConfidence
 g_mime_text_part_new
 g_mime_text_part_new_with_subtype
 g_mime_text_part_new_with_format
@@ -1494,7 +1495,9 @@ g_mime_text_part_is_enriched
 g_mime_text_part_is_rich_text
 g_mime_text_part_get_charset
 g_mime_text_part_set_charset
+g_mime_text_part_try_detect_encoding
 g_mime_text_part_get_text
+g_mime_text_part_get_text_with_encoding
 g_mime_text_part_set_text
 
 <SUBSECTION Private>

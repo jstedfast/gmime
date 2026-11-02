@@ -2742,7 +2742,7 @@ g_mime_message_get_text_body_with_format (GMimeMessage *message, GMimeTextFormat
 	}
 
 	g_object_ref (body);
-	text = _g_mime_text_part_get_text (body, error);
+	text = g_mime_text_part_get_text_with_encoding (body, NULL, error);
 	g_object_unref (body);
 
 	return text;

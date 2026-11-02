@@ -609,6 +609,111 @@ text_part_decode_text (GByteArray *buffer, iconv_t decoder, const char *fallback
 }
 
 /**
+ * g_mime_text_part_try_detect_encoding:
+ * @mime_part: a #GMimeTextPart
+ * @charset: (out) (nullable) (transfer full): the detected charset, or %NULL
+ * @confidence: (out) (optional): confidence in the detected charset
+ * @error: return location for an error, or %NULL
+ *
+ * Resolves the Content-Type charset, then looks for a UTF-8 or UTF-16 BOM in
+ * transfer-decoded content. A supported declared charset takes precedence
+ * over a BOM; either gives %GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN. Missing,
+ * invalid and unsupported declarations are ignored. No content gives
+ * "us-ascii" with %GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT, even if a charset
+ * is declared. Empty content is not the same as absent content.
+ *
+ * Without a declaration or BOM, returns %FALSE with %NULL @charset and
+ * %GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED. This does not guess UTF-8 or
+ * Latin-1, validate the entire content, or inspect HTML meta tags.
+ * Tentative detection is reserved for a later release.
+ *
+ * A declared charset or absent content requires no I/O. Otherwise this opens
+ * a decoded reader with g_mime_content_open() and makes one read of up to
+ * three decoded bytes. The decoder may read ahead in the backing stream;
+ * short reads are not retried. The reader is released without closing or
+ * rewinding the backing stream. This path uses the backing stream, not the
+ * content's decode-to-stream override. Source-backed content must remain
+ * open and unchanged.
+ *
+ * Stream failures report %GMIME_ERROR; operational charset resolution
+ * failures report %G_CONVERT_ERROR. Both outputs are cleared on failure.
+ * Neither headers nor content bytes are modified. Free @charset with g_free().
+ *
+ * Returns: %TRUE if an encoding was detected, otherwise %FALSE.
+ **/
+gboolean
+g_mime_text_part_try_detect_encoding (GMimeTextPart *mime_part, char **charset,
+				    GMimeTextEncodingConfidence *confidence, GError **error)
+{
+	GError *local_error = NULL;
+	GMimeContent *content;
+	GMimeStream *stream;
+	const char *bom;
+	gboolean found;
+	int errsv;
+
+	g_return_val_if_fail (charset != NULL, FALSE);
+
+	*charset = NULL;
+	if (confidence)
+		*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED;
+
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part))) {
+		*charset = g_strdup ("us-ascii");
+		if (confidence)
+			*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT;
+		return TRUE;
+	}
+
+	*charset = g_mime_content_type_get_charset_encoding (
+		g_mime_entity_get_content_type ((GMimeEntity *) mime_part), &local_error);
+
+	if (local_error) {
+		g_propagate_error (error, local_error);
+		return FALSE;
+	}
+
+	if (*charset) {
+		if (confidence)
+			*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN;
+		return TRUE;
+	}
+
+	if (!g_mime_content_get_stream (content)) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     "Cannot detect text encoding without a backing stream");
+		return FALSE;
+	}
+
+	g_object_ref (content);
+	errno = 0;
+	stream = g_mime_content_open (content);
+	errsv = errno;
+	g_object_unref (content);
+
+	if (!stream) {
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to open text content: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return FALSE;
+	}
+
+	found = g_mime_charset_try_get_bom_encoding_from_stream (stream, &bom, error);
+	g_object_unref (stream);
+
+	if (found) {
+		*charset = g_strdup (bom);
+		if (confidence)
+			*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN;
+	}
+
+	return found;
+}
+
+/**
  * g_mime_text_part_get_text_with_charset:
  * @mime_part: a #GMimeTextPart
  * @charset: a nonempty MIME charset name
@@ -660,8 +765,40 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
 	return text;
 }
 
+/**
+ * g_mime_text_part_get_text_with_encoding:
+ * @mime_part: a #GMimeTextPart
+ * @used_charset: (out) (optional) (nullable) (transfer full): the charset actually used
+ * @error: return location for an error, or %NULL
+ *
+ * Gets checked, automatically decoded UTF-8 text and optionally reports its
+ * source charset. Uses the same decoding policy as
+ * g_mime_message_get_text_body_with_format(): supported declared charsets and
+ * UTF-16 BOMs use replacement, while UTF-8 BOMs and the UTF-8 default use
+ * strict decoding and retry malformed input as ISO-8859-1. Incomplete final
+ * characters are handled rather than dropped. HTML-meta detection is deferred.
+ *
+ * Reports the charset used by the successful conversion, including Latin-1
+ * after fallback, not merely the detected or declared charset. Missing content
+ * gives an allocated empty string and "us-ascii"; empty content is decoded
+ * using the normal charset selection. @used_charset is %NULL on any error.
+ *
+ * Transfer-decoded bytes are read once, honoring content decode-to-stream
+ * overrides. The complete buffered prefix is used for BOM detection, even
+ * when the source produces short reads. Newlines follow the default
+ * #GMimeFormatOptions. BOMs and bare CRs are retained; no final newline is
+ * added. No flowed-text conversion or markup conversion is done.
+ *
+ * I/O and conversion failures never return partial text. Embedded decoded NULs
+ * report %G_CONVERT_ERROR_EMBEDDED_NUL. Source-backed content must remain open
+ * and unchanged; successful decoding rewinds its stream, while failures may
+ * leave it advanced. Headers and content bytes remain unchanged.
+ * Free both the returned text and @used_charset with g_free().
+ *
+ * Returns: (nullable) (transfer full): UTF-8 text, or %NULL on failure.
+ **/
 char *
-_g_mime_text_part_get_text (GMimeTextPart *part, GError **error)
+g_mime_text_part_get_text_with_encoding (GMimeTextPart *mime_part, char **used_charset, GError **error)
 {
 	GMimeContentType *type;
 	GError *local_error = NULL;
@@ -672,10 +809,19 @@ _g_mime_text_part_get_text (GMimeTextPart *part, GError **error)
 	gboolean replace;
 	char *charset, *text = NULL;
 
-	if (!g_mime_part_get_content ((GMimePart *) part))
-		return g_strdup ("");
+	if (used_charset)
+		*used_charset = NULL;
 
-	type = g_mime_entity_get_content_type ((GMimeEntity *) part);
+	g_return_val_if_fail (GMIME_IS_TEXT_PART (mime_part), NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (!g_mime_part_get_content ((GMimePart *) mime_part)) {
+		if (used_charset)
+			*used_charset = g_strdup ("us-ascii");
+		return g_strdup ("");
+	}
+
+	type = g_mime_entity_get_content_type ((GMimeEntity *) mime_part);
 	charset = g_mime_content_type_get_charset_encoding (type, &local_error);
 
 	if (local_error) {
@@ -683,7 +829,7 @@ _g_mime_text_part_get_text (GMimeTextPart *part, GError **error)
 		return NULL;
 	}
 
-	if (!(stream = text_part_decode_content (part, error))) {
+	if (!(stream = text_part_decode_content (mime_part, error))) {
 		g_free (charset);
 		return NULL;
 	}
@@ -706,13 +852,17 @@ _g_mime_text_part_get_text (GMimeTextPart *part, GError **error)
 		if (!replace && (g_error_matches (local_error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE) ||
 				 g_error_matches (local_error, G_CONVERT_ERROR, G_CONVERT_ERROR_PARTIAL_INPUT))) {
 			g_clear_error (&local_error);
+			encoding = "iso-8859-1";
 
-			if ((decoder = _g_mime_charset_open_text_decoder ("iso-8859-1", NULL, &local_error)) != (iconv_t) -1) {
+			if ((decoder = _g_mime_charset_open_text_decoder (encoding, NULL, &local_error)) != (iconv_t) -1) {
 				text = text_part_decode_text (buffer, decoder, NULL, &local_error);
 				g_mime_iconv_close (decoder);
 			}
 		}
 	}
+
+	if (text && used_charset)
+		*used_charset = g_strdup (encoding);
 
 	g_object_unref (stream);
 	g_free (charset);
