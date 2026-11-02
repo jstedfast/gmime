@@ -18,7 +18,7 @@ fuzz_replay = executable(
 regression_seeds = custom_target(
   'fuzz-regression-seeds',
   input: 'seed-corpora.py',
-  depend_files: files('../tests/smtp-address-vectors.h'),
+  depend_files: files('../tests/smtp-address-vectors.h', '../tests/data/authentication-results/vectors.tsv'),
   output: 'seeds.stamp',
   command: [find_program('python3'), '@INPUT@', meson.current_build_dir() / 'seeds',
             '--regressions-only', '--stamp', '@OUTPUT@'],

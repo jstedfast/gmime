@@ -5331,6 +5331,50 @@ documentation were generated; live Python GI, a compiled/running Vala consumer,
 and standalone public-header C compilation passed. The imported tables and
 vectors regenerate byte-for-byte.
 
+## Authentication-Results models
+
+Implemented `GMimeAuthenticationResults`, `GMimeAuthenticationMethodResult`
+and `GMimeAuthenticationMethodProperty` as final GObjects, with GMime's standard
+license headers. The models have ordered, retaining result/property collections,
+nullable instance/version accessors and allocated string serialization.
+
+The bounded parser handles Authentication-Results and ARC-Authentication-Results,
+Office365's missing and method-specific service identifiers, dotted methods,
+comments, reasons/actions, and permissive property values. It preserves parsed
+property quoting and quotes empty values, with the upstream fixes for comment
+escapes adjacent to folded or trailing whitespace. Shared bounded CFWS,
+quoted-string and checked Int32 parsing helpers are reused.
+
+Both header names now use token-aware formatting, with the existing default
+formatter as the malformed-value fallback. Stored raw headers and their
+international serialization remain unchanged. Native differences are documented:
+byte offsets/lengths and UTF-8 octet folding, GLib invalid-UTF-8 replacement,
+embedded-NUL rejection, explicit optional integers, and reference ownership.
+These models report header claims; they do not verify authentication or trust.
+
+Reference coverage uses MimeKit `bbccea7630ba9475d03a2a09a1c5046924d8bf3f`:
+177 permanent upstream-derived/edge-case input vectors compare acceptance,
+every model field, canonical serialization and folding at 60/78 columns.
+A further 21,270 structured, truncated and deterministic random reference
+inputs matched the actual-source implementation. Native tests also cover
+nonterminated ranges, out-of-range suffixes, Office365 subrange rewind,
+malformed text, deep comments, collection lifetimes, aliases and raw headers.
+The structured-header fuzz target now includes these models and their seeds.
+
+Native authentication/header/anonymizer tests and ASan/UBSan authentication,
+header and structured-header regression replay passed. The 21,270-input
+reference comparison also passed under ASan/UBSan. Native UTF-8 folding is
+covered separately. GIR, typelib, Vala and reference documentation generated;
+live Python GI and a compiled/running Vala consumer exercised the new APIs.
+A focused ASan/UBSan libFuzzer harness completed 100,000 executions, including
+actual mutations, checking model and folded-header round trips.
+
+Broader structured-header mutation testing stopped after over 12,000 executions
+at an existing Message-ID round-trip assertion, not the authentication parser.
+The reproducer contains embedded NULs in a domain literal (base64:
+`CQ0KKGMpIDxhQFsxMjcuAAAAADFdPg==`). The Message-ID parser and assertion are
+unchanged by this port; the reproducer is retained for separate investigation.
+
 ## Remaining migration phases
 
 This roadmap supersedes the original phase list. It reflects a source-level
@@ -5356,9 +5400,6 @@ ports.
 
 ### Application-facing API completion
 
-- Add AuthenticationResults, AuthenticationMethodResult and
-  AuthenticationMethodProperty. These models belong to MimeKit.Core despite
-  their Cryptography namespace; they do not require a new crypto backend.
 - Add a typed message MIME-Version accessor. Sender and Resent-Sender
   intentionally remain address lists, not single-mailbox properties.
 

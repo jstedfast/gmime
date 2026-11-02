@@ -11,6 +11,7 @@
 
 enum {
 	ADDRESS_LIST, ADDRESS, MAILBOX, GROUP, DOMAINS, PARAMETERS, CONTENT_TYPE, DISPOSITION,
+	AUTHENTICATION_RESULTS,
 	RAW_ADDRESS_LIST, RAW_PARAMETERS, RAW_CONTENT_TYPE, RAW_DISPOSITION, PARSER_COUNT
 };
 
@@ -52,6 +53,8 @@ parse_model (guint parser, GMimeParserOptions *options, const char *text, gssize
 		return (GObject *) g_mime_content_type_parse_full (options, text, length, error);
 	case DISPOSITION:
 		return (GObject *) g_mime_content_disposition_parse_full (options, text, length, error);
+	case AUTHENTICATION_RESULTS:
+		return (GObject *) g_mime_authentication_results_parse (text, length, error);
 	case RAW_ADDRESS_LIST:
 		return (GObject *) _g_mime_internet_address_list_parse (options, text, length, 0);
 	case RAW_PARAMETERS:
@@ -261,6 +264,8 @@ snapshot_model (GObject *model, GError *error, const char *warnings)
 		} else if (GMIME_IS_CONTENT_DISPOSITION (model)) {
 			params = g_mime_content_disposition_get_parameters (GMIME_CONTENT_DISPOSITION (model));
 			text = g_mime_content_disposition_to_string (GMIME_CONTENT_DISPOSITION (model));
+		} else if (GMIME_IS_AUTHENTICATION_RESULTS (model)) {
+			text = g_mime_authentication_results_to_string (GMIME_AUTHENTICATION_RESULTS (model));
 		} else {
 			g_assert_not_reached ();
 		}
@@ -407,6 +412,19 @@ check_slice (GMimeParserOptions *options, GMimeFormatOptions *format, const guin
 				check_address_round_trip (options, format, model);
 			else if (parser == CONTENT_TYPE || parser == DISPOSITION)
 				check_content_round_trip (parser, options, format, model);
+			else if (parser == AUTHENTICATION_RESULTS) {
+				GMimeAuthenticationResults *again;
+				char *text = g_mime_authentication_results_to_string (GMIME_AUTHENTICATION_RESULTS (model));
+				char *next;
+
+				again = g_mime_authentication_results_parse (text, -1, &error);
+				FUZZ_CHECK (again && !error, "Authentication-Results rejected its output: %s", text);
+				next = g_mime_authentication_results_to_string (again);
+				FUZZ_CHECK (!strcmp (text, next), "Authentication-Results serialization did not stabilize");
+				g_object_unref (again);
+				g_free (next);
+				g_free (text);
+			}
 		}
 		g_clear_object (&model);
 		g_clear_error (&error);

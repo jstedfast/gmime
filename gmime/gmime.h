@@ -26,6 +26,7 @@
 #include <gmime/gmime-version.h>
 #include <gmime/gmime-error.h>
 #include <gmime/gmime-anonymizer.h>
+#include <gmime/gmime-authentication-results.h>
 #include <gmime/gmime-charset.h>
 #include <gmime/gmime-iconv.h>
 #include <gmime/gmime-iconv-utils.h>

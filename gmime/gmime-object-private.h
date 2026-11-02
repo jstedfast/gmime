@@ -67,6 +67,35 @@ struct _GMimeAutocryptHeaderList {
 	GPtrArray *array;
 };
 
+struct _GMimeAuthenticationResults {
+	GObject parent_instance;
+
+	char *authserv_id;
+	GPtrArray *results;
+	int instance, version;
+	gboolean has_instance, has_version;
+};
+
+struct _GMimeAuthenticationMethodResult {
+	GObject parent_instance;
+
+	char *method, *result, *authserv_id;
+	char *comment, *reason, *action;
+	GPtrArray *properties;
+	int version;
+	gboolean has_version;
+};
+
+struct _GMimeAuthenticationMethodProperty {
+	GObject parent_instance;
+
+	char *ptype, *property, *value;
+	int quoted;
+};
+
+G_GNUC_INTERNAL char *_g_mime_authentication_results_encode (GMimeAuthenticationResults *results,
+							   GMimeFormatOptions *options, gsize field_length);
+
 struct _GMimeBodyBuilder {
 	GObject parent_instance;
 
