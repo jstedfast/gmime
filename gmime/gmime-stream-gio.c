@@ -40,6 +40,12 @@
  *
  * A simple #GMimeStream implementation that sits on top of GLib's GIO
  * input and output streams.
+ *
+ * Constructors take ownership of the supplied #GFile reference. The owner
+ * flag controls releasing that reference, not closing the input/output streams
+ * opened by this wrapper. Explicit close attempts both streams and reports the
+ * first error through errno, even though the wrapper is closed afterward.
+ * Finalization releases resources but cannot report close failures.
  **/
 
 
@@ -297,15 +303,25 @@ stream_close (GMimeStream *stream)
 {
 	GMimeStreamGIO *gio = (GMimeStreamGIO *) stream;
 	GMimeStreamGIOPrivate *priv = _g_mime_stream_gio_get_private (gio);
+	GError *err = NULL;
+	int saved_errno = 0;
 
 	if (priv->istream) {
-		g_input_stream_close (priv->istream, NULL, NULL);
+		if (!g_input_stream_close (priv->istream, NULL, &err)) {
+			set_errno (err);
+			saved_errno = errno ? errno : EIO;
+			err = NULL;
+		}
 		g_object_unref (priv->istream);
 		priv->istream = NULL;
 	}
 	
 	if (priv->ostream) {
-		g_output_stream_close (priv->ostream, NULL, NULL);
+		if (!g_output_stream_close (priv->ostream, NULL, &err)) {
+			set_errno (err);
+			if (!saved_errno)
+				saved_errno = errno ? errno : EIO;
+		}
 		g_object_unref (priv->ostream);
 		priv->ostream = NULL;
 	}
@@ -315,6 +331,11 @@ stream_close (GMimeStream *stream)
 	
 	priv->file = NULL;
 	
+	if (saved_errno) {
+		errno = saved_errno;
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -645,9 +666,10 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 
 /**
  * g_mime_stream_gio_new:
- * @file: a #GFile
+ * @file: (transfer full): a #GFile reference to take ownership of
  *
  * Creates a new #GMimeStreamGIO wrapper around a #GFile object.
+ * Pass an additional reference if the caller also needs to retain @file.
  *
  * Returns: (transfer full): a stream using @file.
  **/
@@ -660,12 +682,13 @@ g_mime_stream_gio_new (GFile *file)
 
 /**
  * g_mime_stream_gio_new_with_bounds:
- * @file: a #GFile
+ * @file: (transfer full): a #GFile reference to take ownership of
  * @start: start boundary
  * @end: end boundary
  *
  * Creates a new #GMimeStreamGIO stream around a #GFile with bounds
- * @start and @end.
+ * @start and @end. Pass an additional reference if the caller also needs
+ * to retain @file.
  *
  * Returns: (transfer full): a stream using @file with bounds @start
  * and @end.
@@ -717,10 +740,14 @@ g_mime_stream_gio_get_owner (GMimeStreamGIO *stream)
  * @stream: a #GMimeStreamGIO stream
  * @owner: %TRUE if this stream should own the #GFile or %FALSE otherwise
  *
- * Sets whether or not @stream owns the backend GIO pointer.
+ * Sets whether close or finalization releases the supplied #GFile reference.
+ * Changing this flag does not acquire or release a reference immediately.
  *
- * Note: @owner should be %TRUE if the stream should close() the
- * backend file descriptor when destroyed or %FALSE otherwise.
+ * With @owner set to %FALSE, the caller must keep the #GFile alive and release
+ * its reference after the wrapper is no longer needed. Input and output
+ * streams opened by the wrapper are always closed and released, regardless
+ * of this flag. Substreams borrow the parent's #GFile; do not explicitly
+ * close an owning parent while its substreams still need it.
  **/
 void
 g_mime_stream_gio_set_owner (GMimeStreamGIO *stream, gboolean owner)

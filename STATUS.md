@@ -5375,6 +5375,33 @@ The reproducer contains embedded NULs in a domain literal (base64:
 `CQ0KKGMpIDxhQFsxMjcuAAAAADFdPg==`). The Message-ID parser and assertion are
 unchanged by this port; the reproducer is retained for separate investigation.
 
+## Stream close and ownership contracts: GIO and wrappers
+
+The first close-contract review preserves the established native lifetime
+model rather than introducing managed disposal state. Buffer and concatenation
+wrappers release retained sources without explicitly closing them; buffered
+output must be flushed explicitly. Filter close completes writes and honors
+its owner flag, whereas finalization only releases references. Reference and
+porting documentation now describe these differences and borrowed-view limits.
+
+`GMimeStreamGIO` now reports input/output close failures instead of silently
+returning success. It attempts both streams, releases all its resources once,
+and preserves the first mapped errno across subsequent cleanup. Failure leaves
+the wrapper closed; another close or finalization does not retry its resources.
+Both constructors now annotate the existing GFile reference transfer correctly.
+The owner flag controls that reference, not closure of internal GIO streams.
+
+The new LGPL-headered `test-stream-close` covers successful and failing closes,
+first-error preservation across cleanup, both owner settings, finalization,
+repeated close, retained parent lifetimes and the existing wrapper contracts.
+All six targeted native and ASan/UBSan stream suites passed. GIR, typelib,
+Vala bindings and reference documentation generated. Live GI ownership checks
+and a compiled/running Vala consumer exercised both constructors.
+
+This does not settle every descriptor-backend failure policy: the existing
+Fs/Pipe/Mmap close-on-EINTR behavior, Pipe's failed-close state and Mmap's
+unmap-error handling remain for a separate focused review before API freeze.
+
 ## Remaining migration phases
 
 This roadmap supersedes the original phase list. It reflects a source-level
@@ -5398,13 +5425,12 @@ scalar fallbacks, reader reference fixtures and parser/reader, codec and
 RFC 2047 fuzz targets also exist. These are not outstanding whole-subsystem
 ports.
 
-### Application-facing API completion
-
-- Add a typed message MIME-Version accessor. Sender and Resent-Sender
-  intentionally remain address lists, not single-mailbox properties.
-
 ### API contract and settled 4.0.0 decisions
 
+- Skip a typed MIME-Version accessor: 1.0 is the only defined MIME version.
+  Keep raw header access and existing preparation/serialization behavior.
+  Sender and Resent-Sender intentionally remain address lists, not
+  single-mailbox properties.
 - Continue aligning public APIs while retaining intentional, documented native
   differences. Body accessor naming is settled; review stream close/ownership
   contracts before the GMime 4 API/ABI is frozen.

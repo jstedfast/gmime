@@ -727,6 +727,8 @@ g_mime_stream_cat_new (void)
  * Adds a reference to @source to the @cat without seeking or resetting it.
  * Reading starts at the source's current position. Adding a source after
  * end-of-stream makes that source available to subsequent reads.
+ * Close and finalization release the retained references without explicitly
+ * flushing or closing the sources. Flush output explicitly before closing.
  *
  * Returns: %0 on success or %-1 on fail.
  **/

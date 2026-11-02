@@ -496,6 +496,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  * @mode: buffering mode
  *
  * Creates a new GMimeStreamBuffer object.
+ * The wrapper retains @source. Close and finalization release that reference
+ * without explicitly closing @source, and discard unflushed buffered output.
+ * Call g_mime_stream_flush() and check its result before closing a writer.
  *
  * Returns: a new buffer stream with source @source and mode @mode.
  **/
