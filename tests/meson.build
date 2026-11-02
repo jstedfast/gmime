@@ -38,6 +38,7 @@ normal_tests = [
   'test-stream-block', 'test-substreams',
   'test-received-clauses', 'test-received',
   'test-anonymizer',
+  'test-authentication-results',
   'test-content-type',
   'test-smtp-address-validator',
   'test-openpgp',

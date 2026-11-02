@@ -187,6 +187,37 @@ routes. Use an explicitly IDN-encoded address from
 sent via non-international SMTP; validation itself does not perform that
 conversion.
 
+### Authentication-Results models
+
+`GMimeAuthenticationResults`, `GMimeAuthenticationMethodResult` and
+`GMimeAuthenticationMethodProperty` are final, reference-counted GObjects.
+They model both Authentication-Results and ARC-Authentication-Results; no
+cryptography backend is needed. They describe claims made by a header, not
+verified authentication or a trusted authentication service.
+
+`g_mime_authentication_results_parse(text, length, &error)` accepts an explicit
+byte range or `-1` for a C string. Malformed input returns NULL with
+`GMIME_ERROR_PARSE_ERROR` and a relative byte offset. Embedded NULs are rejected;
+invalid UTF-8 in value/comment text uses GLib replacement characters. Token
+names remain ASCII. Office365's missing or method-specific service IDs,
+dotted methods, empty properties and unquoted property tspecials are retained.
+
+Nullable instance/version values use boolean getters with optional integer
+outputs, setters, and explicit clear methods; absent outputs are zero. Like
+MimeKit, setters do not range-check numbers, although parsing only accepts
+nonnegative Int32 values. Result/property collections retain references,
+permit duplicates, use identity comparisons and preserve insertion order.
+Returned child objects and strings are borrowed.
+
+Constructors and text setters copy UTF-8 strings without syntax validation.
+Comments are inner comment syntax, not automatically escaped plain text.
+Parsed properties retain quoting, except empty values are always quoted.
+`*_to_string()` returns allocated model text without a field name or newline.
+Both header names use a structured formatter, falling back to the default
+formatter for unparseable values; existing raw headers remain unchanged.
+Folding counts native UTF-8 octets rather than .NET UTF-16 code units and does
+not split indivisible quoted strings, comments or tokens.
+
 ### Instance state and subclassing
 
 GObject instance state is now private. Use public getters, setters, and

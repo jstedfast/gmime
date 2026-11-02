@@ -241,6 +241,8 @@ static struct {
 	const char *name;
 	GMimeHeaderRawValueFormatter formatter;
 } formatters[] = {
+	{ "Authentication-Results",      g_mime_header_format_authentication_results },
+	{ "ARC-Authentication-Results",  g_mime_header_format_authentication_results },
 	{ "Received",                    g_mime_header_format_received            },
 	{ "Sender",                      g_mime_header_format_addrlist            },
 	{ "From",                        g_mime_header_format_addrlist            },
@@ -1632,6 +1634,36 @@ reformat_international_header (GMimeHeader *header, GMimeFormatOptions *options)
 	return header_bytes_take_string (raw_value);
 }
 
+
+/**
+ * g_mime_header_format_authentication_results:
+ * @header: a #GMimeHeader
+ * @options: (nullable): formatting options
+ * @value: the header value
+ * @charset: (nullable): unused
+ *
+ * Folds parsed Authentication-Results or ARC-Authentication-Results at
+ * syntactic token boundaries. Unparseable values use the default formatter.
+ * Existing raw headers are not changed until explicitly reformatted.
+ *
+ * Returns: (transfer full): the formatted raw header value.
+ **/
+char *
+g_mime_header_format_authentication_results (GMimeHeader *header, GMimeFormatOptions *options,
+					    const char *value, const char *charset)
+{
+	GMimeAuthenticationResults *results;
+	char *raw;
+
+	g_return_val_if_fail (GMIME_IS_HEADER (header), NULL);
+	g_return_val_if_fail (value != NULL, NULL);
+
+	if (!(results = g_mime_authentication_results_parse (value, -1, NULL)))
+		return g_mime_header_format_default (header, options, value, charset);
+	raw = _g_mime_authentication_results_encode (results, options, strlen (header->name) + 1);
+	g_object_unref (results);
+	return raw;
+}
 
 static void
 received_skip_token (const char **in)

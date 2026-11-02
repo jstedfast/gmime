@@ -59,7 +59,8 @@ Literal NULs are mapped to spaces for GMime's public C-string APIs so the
 remaining input is still exercised; encoded NULs remain unmodified.
 
 structured-headers directly exercises checked address/list/mailbox/group,
-source-route, parameter, Content-Type and Content-Disposition parsers, their
+source-route, parameter, Content-Type, Content-Disposition and
+Authentication-Results parsers, their
 private raw-header recovery paths, and Message-ID/References scanners.
 Each input and selected prefix/suffix slices are copied into exact-size
 allocations, with no added terminator (even empty slices end at the allocation
@@ -75,6 +76,8 @@ non-shrinking rounds; shrinking rounds remain bounded by the output length.
 Plausible identifiers must survive angle-bracket formatting, and dates must
 retain both their instant and UTC offset. These checks do not impose strict
 round trips on the identifier parser's deliberately malformed recovery output.
+Authentication-Results canonical serialization must parse again and stabilize;
+its reference vectors and malformed-byte/deep-comment cases are seeded too.
 The target also checks input preservation, reference progress and identifier
 UTF-8. Literal NULs are preserved: checked APIs must reject them, while raw
 recovery still processes the complete range. A whole-input selector varies all

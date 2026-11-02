@@ -66,7 +66,13 @@ def structured_header_inputs():
     truncated = [data[:end] for data in inputs for end in range(len(data) + 1)]
     edges = [b"a" * length for length in (15, 16, 17, 31, 32, 33, 4095, 4096, 4097,
                                          LIMITS["structured-headers"])]
-    return inputs + truncated + edges
+    vectors = Path(__file__).resolve().parent.parent / "tests" / "data" / "authentication-results" / "vectors.tsv"
+    authentication = [base64.b64decode(line.split("\t")[0])
+                      for line in vectors.read_text(encoding="ascii").splitlines()
+                      if line and not line.startswith("#")]
+    authentication += [b'x; m=pass header.d=\xff', b'x; m=pass\0; n=fail',
+                       b'x; m=pass (' + b'(' * 1000 + b')' * 1001]
+    return inputs + truncated + edges + authentication
 
 
 def structured_headers(messages):
@@ -76,6 +82,7 @@ def structured_headers(messages):
         b"disposition-notification-to", b"content-type", b"content-disposition",
         b"date", b"resent-date", b"message-id", b"resent-message-id", b"content-id",
         b"references", b"in-reply-to", b"received",
+        b"authentication-results", b"arc-authentication-results",
     }
     for message in messages:
         headers = re.split(rb"\r?\n\r?\n", message, maxsplit=1)[0]
