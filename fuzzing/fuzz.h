@@ -48,5 +48,6 @@ void fuzz_mime_parser (const guint8 *data, gsize length);
 void fuzz_encoders (const guint8 *data, gsize length);
 void fuzz_decoders (const guint8 *data, gsize length);
 void fuzz_rfc2047 (const guint8 *data, gsize length);
+void fuzz_structured_headers (const guint8 *data, gsize length);
 
 #endif

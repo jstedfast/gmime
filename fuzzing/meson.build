@@ -1,13 +1,17 @@
 fuzz_support = static_library(
-  'fuzz-support', ['fuzz.c', 'mime-reader.c', 'mime-parser.c', 'codecs.c', 'rfc2047.c'],
+  'fuzz-support', ['fuzz.c', 'mime-reader.c', 'mime-parser.c', 'codecs.c', 'rfc2047.c',
+                   'structured-headers.c'],
+  # Reuse production objects to reach private parsers in shared-library builds too.
+  objects: libgmime.extract_objects(gmime_sources, gmime_gpgme_sources),
   include_directories: gmime_inc,
-  dependencies: gmime_dep,
+  dependencies: gmime_deps,
+  link_whole: util_lib,
 )
 
 fuzz_replay = executable(
   'gmime-fuzz', 'replay.c',
   include_directories: gmime_inc,
-  dependencies: gmime_dep,
+  dependencies: gmime_deps,
   link_with: fuzz_support,
 )
 
@@ -20,7 +24,8 @@ regression_seeds = custom_target(
 )
 
 foreach target, max_length : {'mime-reader': 1048576, 'mime-parser': 1048576,
-                             'encoders': 262144, 'decoders': 1048576, 'rfc2047': 65536}
+                             'encoders': 262144, 'decoders': 1048576, 'rfc2047': 65536,
+                             'structured-headers': 65536}
   corpus_args = [meson.current_build_dir() / 'seeds' / target / 'corpus']
   if target in ['mime-reader', 'mime-parser']
     corpus_args = [meson.current_source_dir() / 'corpus']
@@ -39,7 +44,7 @@ foreach target, max_length : {'mime-reader': 1048576, 'mime-parser': 1048576,
     executable(
       'fuzz-' + target, 'libfuzzer.c',
       include_directories: gmime_inc,
-      dependencies: gmime_dep,
+      dependencies: gmime_deps,
       link_with: fuzz_support,
       c_args: ['-DFUZZ_TARGET=fuzz_' + target.replace('-', '_'),
                '-DFUZZ_MAX_INPUT_LENGTH=' + max_length.to_string()],

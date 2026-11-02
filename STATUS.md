@@ -192,6 +192,20 @@ This is an incremental migration, not yet a declaration of feature parity.
   unchanged, including the text decoder's NUL replacement. Stored raw headers
   are preserved.
 
+- The structured-header fuzz target directly exercises bounded checked and raw
+  address/parameter/content-field parsers and Message-ID/References scanners.
+  Exact allocations and selected truncated slices are compared with padded
+  inputs; NUL-free checked parsing is also compared with the C-string APIs.
+  Model/parameter metadata, errors, warnings, identifier cursor bounds and
+  progress, UTF-8 identifiers and input preservation are checked. Seeds retain
+  embedded NULs and cover malformed syntax, charset/continuation recovery,
+  token truncation and allocation boundaries. MimeKit-inspired round-trip
+  checks cover address whitespace/IDNA convergence, content-field charset
+  normalization without parameter-value loss, plausible identifiers and dates.
+  Full corpus generation also extracts structured/address values from existing
+  message and mailbox fixtures. Corpus replay and nightly
+  libFuzzer integration use the same 64 KiB input limit.
+
 - `GMimeMultipartReport` is a `GMimeMultipart` subclass for multipart/report.
   Its constructor requires a UTF-8 report type; get/set_report_type()
   access the Content-Type report-type parameter. The getter is borrowed
@@ -5254,10 +5268,10 @@ content copying APIs are unaffected.
   backend and check installed C consumers; Apple's native converter is not
   a supported macOS backend. GnuPG test homes use short paths when nested
   temporary directories would exceed Unix-domain socket limits.
-- Extend fuzzing beyond the reader/parser, encoder/decoder and RFC 2047
-  targets as appropriate. The codec targets cover chunking, clone/reset,
-  exact output bounds, scalar-sized equivalence and stream-filter round trips;
-  all five targets have corpus replay and nightly libFuzzer integration.
+- Extend fuzzing beyond the reader/parser, encoder/decoder, RFC 2047 and
+  structured-header targets as appropriate. The codec targets cover chunking,
+  clone/reset, exact output bounds, scalar-sized equivalence and stream-filter round trips;
+  all six targets have corpus replay and nightly libFuzzer integration.
   Additional ARM64/wider codec kernels and fused header scans remain
   performance work, with scalar equivalence and workload benchmarks required.
 

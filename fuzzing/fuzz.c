@@ -12,6 +12,7 @@ const FuzzTarget fuzz_targets[] = {
 	{ "encoders", fuzz_encoders, 256 * 1024 },
 	{ "decoders", fuzz_decoders, FUZZ_MAX_LENGTH },
 	{ "rfc2047", fuzz_rfc2047, 64 * 1024 },
+	{ "structured-headers", fuzz_structured_headers, 64 * 1024 },
 };
 const gsize fuzz_target_count = G_N_ELEMENTS (fuzz_targets);
 

@@ -13,7 +13,59 @@ import re
 
 MAX_LENGTH = 1024 * 1024
 LIMITS = {"mime-reader": MAX_LENGTH, "mime-parser": MAX_LENGTH,
-          "encoders": 256 * 1024, "decoders": MAX_LENGTH, "rfc2047": 64 * 1024}
+          "encoders": 256 * 1024, "decoders": MAX_LENGTH, "rfc2047": 64 * 1024,
+          "structured-headers": 64 * 1024}
+
+
+def structured_header_inputs():
+    inputs = [
+        b"", b" ", b"\t\r\n", bytes(range(256)),
+        b"a@b", b"a@[127.0.0.1]", b'"a\\"b"@example.com',
+        b"(nested (comment)) Name <a@b> (tail)", b"local (Display Name)",
+        b"<@one,,@two:a@host>", b"@one,,@two.", b"<<a@b>>",
+        b"Team: a@b, Nested: c@d;;", b"Team:;", b"a@b, @bad, c@d",
+        b"=?utf-8?q?Name?= <a@b>", b'"Display \xc3\xa9" <a@b>', b"\xff@b",
+        b"name=x", b'name="a\\"b"', b"name=x; name=y",
+        b"name*0*=utf-8'en'%E2%; name*1*=82%AC",
+        b"name*2147483648*=x", b"name*=utf-16le''a%00b%00",
+        b"text/ (comment) plain; x=y; name=\"caf\xe9\"",
+        b'text/plain; name="=?utf-8?q?=E2=82=AC?="',
+        b"attachment; name*=iso-8859-1'en'%E9",
+        b"attachment; x=\"\"; broken=", b"attachment; name*0=one; name*1=two",
+        b'<a@b>', b'(c) <a@[127.0.0.1]>', b'"a b"@c',
+        b"<a@@b@c>", b"junk <a@b> <c@d>", b"<a@domain1@domain2>",
+        b"<a\0b@ho\0st>", b'<"a\\\0b"@[127.\0.1]>',
+        b"(c\0) <a@b>\0<c@d>", b"<a\0\xff@b> <c@d>",
+        b"before\0after@example.com, tail@example.com",
+        b'text/plain; name="before\0after"; tail=value',
+        b"attachment; filename*=utf-8''before%00after",
+        b'attachment; filename="=?utf-8?q?before=00after?="',
+        b"Fri, 21 Nov 1997 09:55:06 -0600", b"21 Nov 97 15:55 GMT",
+        b"Fri, 21 Nov 1997 09:55:06 (before\0after) +0530",
+        b'Name <local@example.com>, "Last, First" <second@example.net>',
+        b"User <local@b\xc3\xbccher.example>", b"User <local@example.com.\xe2\x80\x8b>",
+        b'text/plain; name="=?iso-8859-1?q?caf=E9?= =?utf-8?q?=E2=82=AC?="',
+    ]
+    # Every token boundary is a permanent regression, not just a random mutation.
+    truncated = [data[:end] for data in inputs for end in range(len(data) + 1)]
+    edges = [b"a" * length for length in (15, 16, 17, 31, 32, 33, 4095, 4096, 4097,
+                                         LIMITS["structured-headers"])]
+    return inputs + truncated + edges
+
+
+def structured_headers(messages):
+    names = {
+        b"from", b"to", b"cc", b"bcc", b"reply-to", b"sender", b"resent-from",
+        b"resent-to", b"resent-cc", b"resent-bcc", b"resent-sender", b"return-path",
+        b"disposition-notification-to", b"content-type", b"content-disposition",
+        b"date", b"resent-date", b"message-id", b"resent-message-id", b"content-id",
+        b"references", b"in-reply-to", b"received",
+    }
+    for message in messages:
+        headers = re.split(rb"\r?\n\r?\n", message, maxsplit=1)[0]
+        for match in re.finditer(rb"(?m)^([!-9;-~]+)[ \t]*:[ \t]*([^\r\n]*(?:\r?\n[ \t][^\r\n]*)*)", headers):
+            if match[1].lower() in names:
+                yield match[2]
 
 
 def mime_inputs(root):
@@ -75,7 +127,8 @@ def regression_inputs():
         b"  literal =?utf-8?q?word?=  ", b"\r\n\tfolded\r\ntext",
         b"\xff\xfe\xc0\x80\xed\xa0\x80", b"\xff" * LIMITS["rfc2047"],
     ]
-    return {"encoders": encoders, "decoders": decoders, "rfc2047": rfc2047}
+    return {"encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,
+            "structured-headers": structured_header_inputs()}
 
 
 def main():
@@ -87,13 +140,15 @@ def main():
     parser.add_argument("--stamp", type=Path, help="write a build stamp after successful seeding")
     args = parser.parse_args()
     if args.regressions_only and args.target.startswith("mime-"):
-        parser.error("--regressions-only generates encoder, decoder and RFC 2047 seeds")
+        parser.error("--regressions-only generates codec and header seeds")
     root = Path(__file__).resolve().parent.parent
     targets = tuple(LIMITS) if args.target == "all" else (args.target,)
     inputs = regression_inputs()
     if not args.regressions_only:
-        if any(target.startswith("mime-") for target in targets):
-            inputs["mime-reader"] = inputs["mime-parser"] = mime_inputs(root)
+        if any(target.startswith("mime-") or target == "structured-headers" for target in targets):
+            messages = mime_inputs(root)
+            inputs["mime-reader"] = inputs["mime-parser"] = messages
+            inputs["structured-headers"] += structured_headers(messages)
         for path in sorted((root / "tests" / "data" / "encodings").iterdir()):
             if path.is_file() and path.stat().st_size < LIMITS["encoders"] - 2:
                 data = path.read_bytes()
