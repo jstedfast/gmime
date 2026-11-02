@@ -52,6 +52,23 @@ typedef enum {
 } GMimeTextFormat;
 
 /**
+ * GMimeTextEncodingConfidence:
+ * @GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED: No encoding was detected.
+ * @GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE: An encoding was tentatively detected.
+ * @GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN: An explicit charset or BOM was found.
+ * @GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT: The part has no content.
+ *
+ * Confidence in a detected text encoding, not a statistical probability.
+ * Tentative detection is reserved for future HTML-meta charset support.
+ **/
+typedef enum {
+	GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED,
+	GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE,
+	GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN,
+	GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT
+} GMimeTextEncodingConfidence;
+
+/**
  * GMimeTextPart:
  *
  * A text MIME part object.
@@ -81,11 +98,15 @@ gboolean g_mime_text_part_is_rich_text (GMimeTextPart *mime_part);
 void g_mime_text_part_set_charset (GMimeTextPart *mime_part, const char *charset);
 const char *g_mime_text_part_get_charset (GMimeTextPart *mime_part);
 
+gboolean g_mime_text_part_try_detect_encoding (GMimeTextPart *mime_part, char **charset,
+					      GMimeTextEncodingConfidence *confidence, GError **error);
+
 void g_mime_text_part_set_text (GMimeTextPart *mime_part, const char *text);
 gboolean g_mime_text_part_set_text_with_charset (GMimeTextPart *mime_part, const char *charset,
 					       const char *text, GError **error);
 char *g_mime_text_part_get_text (GMimeTextPart *mime_part);
 char *g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *charset, GError **error);
+char *g_mime_text_part_get_text_with_encoding (GMimeTextPart *mime_part, char **used_charset, GError **error);
 
 G_END_DECLS
 

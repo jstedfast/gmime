@@ -127,7 +127,6 @@ G_GNUC_INTERNAL void _g_mime_entity_append_header (GMimeEntity *object, const ch
 
 /* GMimeTextPart */
 G_GNUC_INTERNAL gboolean _g_mime_text_part_is_format (GMimeTextPart *part, GMimeTextFormat format);
-G_GNUC_INTERNAL char *_g_mime_text_part_get_text (GMimeTextPart *part, GError **error);
 
 /* GMimeMultipart */
 G_GNUC_INTERNAL void _g_mime_multipart_initialize_from_reader (GMimeMultipart *multipart);

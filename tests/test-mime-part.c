@@ -1713,6 +1713,172 @@ test_text_decode_with_charset (void)
 }
 
 static void
+test_text_encoding_detection (void)
+{
+	static const struct {
+		const char *declared, *bytes;
+		gsize length;
+		const char *detected, *used, *text;
+	} cases[] = {
+		{ NULL, "", 0, NULL, "utf-8", "" },
+		{ "us-ascii", "", 0, "us-ascii", "us-ascii", "" },
+		{ NULL, "Cat", 3, NULL, "utf-8", "Cat" },
+		{ NULL, "caf\351", 4, NULL, "iso-8859-1", "caf\303\251" },
+		{ NULL, "caf\303", 4, NULL, "iso-8859-1", "caf\303\203" },
+		{ "UTF8", "caf\351", 4, "utf-8", "utf-8", "caf\357\277\275" },
+		{ "us-ascii", "caf\351", 4, "us-ascii", "us-ascii", "caf?" },
+		{ "latin1", "caf\351", 4, "iso-8859-1", "iso-8859-1", "caf\303\251" },
+		{ "CP1252", "\200", 1, "windows-1252", "windows-1252", "\342\202\254" },
+		{ "utf-16le", "A\0", 2, "utf-16le", "utf-16le", "A" },
+		{ "utf-16le", "A", 1, "utf-16le", "utf-16le", "\357\277\275" },
+		{ NULL, "\357\273\277A", 4, "utf-8", "utf-8", "\357\273\277A" },
+		{ NULL, "\357\273\277\377", 4, "utf-8", "iso-8859-1", "\303\257\302\273\302\277\303\277" },
+		{ NULL, "\357\273", 2, NULL, "iso-8859-1", "\303\257\302\273" },
+		{ NULL, "\377\376A\0", 4, "utf-16le", "utf-16le", "\357\273\277A" },
+		{ NULL, "\376\377\0A", 4, "utf-16be", "utf-16be", "\357\273\277A" },
+		{ "unknown-charset", "\377\376A\0", 4, "utf-16le", "utf-16le", "\357\273\277A" },
+		{ "", "\357\273\277A", 4, "utf-8", "utf-8", "\357\273\277A" },
+		{ "utf-8//IGNORE", "\357\273\277A", 4, "utf-8", "utf-8", "\357\273\277A" },
+		{ "UTF8", "\377\376", 2, "utf-8", "utf-8", "\357\277\275\357\277\275" },
+		{ "unknown-charset", "Cat", 3, NULL, "utf-8", "Cat" },
+	};
+	static const struct {
+		const char *bytes;
+		GMimeContentEncoding encoding;
+	} encoded[] = {
+		{ "=EF=BB=BFCat", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE },
+		{ "77u/Q2F0", GMIME_CONTENT_ENCODING_BASE64 },
+		{ "begin 644 text.txt\n&[[N_0V%T\n`\nend\n", GMIME_CONTENT_ENCODING_UUENCODE },
+	};
+	static const char html[] = "<html><head><meta charset=windows-1252></head><body>Cat</body></html>";
+	GMimeTextPart *part = g_mime_text_part_new ();
+	GMimeContentType *type = g_mime_entity_get_content_type (GMIME_ENTITY (part));
+	GMimeTextEncodingConfidence confidence;
+	GMimeContent *content;
+	GMimeStream *stream;
+	GError *error = NULL;
+	char *detected, *used, *text, *base64, *before, *after;
+	char sentinel[] = "output sentinel";
+	guint i, encoding;
+
+	testsuite_check ("Absent text content has irrelevant ASCII encoding, regardless of its header");
+	g_mime_text_part_set_charset (part, "utf-16le");
+	g_assert_true (g_mime_text_part_try_detect_encoding (part, &detected, &confidence, &error));
+	g_assert_no_error (error);
+	g_assert_cmpstr (detected, ==, "us-ascii");
+	g_assert_cmpint (confidence, ==, GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT);
+	text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (text, ==, "");
+	g_assert_cmpstr (used, ==, "us-ascii");
+	g_free (detected);
+	g_free (used);
+	g_free (text);
+	testsuite_check_passed ();
+
+	testsuite_check ("Text detection distinguishes header/BOM confidence from the charset used after fallback");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		g_mime_content_type_set_charset (type, cases[i].declared);
+		before = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+		for (encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED; encoding <= GMIME_CONTENT_ENCODING_BASE64; encoding++) {
+			if (encoding == GMIME_CONTENT_ENCODING_BASE64) {
+				base64 = g_base64_encode ((const guchar *) cases[i].bytes, cases[i].length);
+				stream = g_mime_stream_mem_new_with_buffer (base64, strlen (base64));
+				g_free (base64);
+			} else {
+				stream = g_mime_stream_mem_new_with_buffer (cases[i].bytes, cases[i].length);
+			}
+			content = g_mime_content_new_with_stream (stream, encoding);
+			g_mime_part_set_content (GMIME_PART (part), content);
+			g_object_unref (content);
+			detected = sentinel;
+			confidence = GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE;
+			g_assert_cmpint (g_mime_text_part_try_detect_encoding (part, &detected, &confidence, &error),
+					==, cases[i].detected != NULL);
+			g_assert_no_error (error);
+			g_assert_cmpstr (detected, ==, cases[i].detected);
+			g_assert_cmpint (confidence, ==, cases[i].detected ?
+					GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN : GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED);
+			g_free (detected);
+			text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (text, ==, cases[i].text);
+			g_assert_cmpstr (used, ==, cases[i].used);
+			g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+			g_free (text);
+			g_free (used);
+			text = g_mime_text_part_get_text_with_encoding (part, NULL, NULL);
+			g_assert_cmpstr (text, ==, cases[i].text);
+			g_free (text);
+			after = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+			g_assert_cmpstr (before, ==, after);
+			g_free (after);
+			g_object_unref (stream);
+		}
+		g_free (before);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Detection inspects decoded BOM bytes for each transfer encoding");
+	g_mime_content_type_set_charset (type, NULL);
+	for (i = 0; i < G_N_ELEMENTS (encoded); i++) {
+		stream = g_mime_stream_mem_new_with_buffer (encoded[i].bytes, strlen (encoded[i].bytes));
+		content = g_mime_content_new_with_stream (stream, encoded[i].encoding);
+		g_mime_part_set_content (GMIME_PART (part), content);
+		g_object_unref (content);
+		g_object_unref (stream);
+		g_assert_true (g_mime_text_part_try_detect_encoding (part, &detected, NULL, &error));
+		g_assert_no_error (error);
+		g_assert_cmpstr (detected, ==, "utf-8");
+		text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (text, ==, "\357\273\277Cat");
+		g_assert_cmpstr (used, ==, "utf-8");
+		g_free (detected);
+		g_free (used);
+		g_free (text);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Encoding outputs are cleared on decoding failure, while detection does not validate text");
+	stream = g_mime_stream_mem_new_with_buffer ("\377\376\0\0", 4);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	g_object_unref (stream);
+	g_assert_true (g_mime_text_part_try_detect_encoding (part, &detected, &confidence, &error));
+	g_assert_no_error (error);
+	g_assert_cmpstr (detected, ==, "utf-16le");
+	g_free (detected);
+	used = sentinel;
+	g_assert_null (g_mime_text_part_get_text_with_encoding (part, &used, &error));
+	g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL);
+	g_assert_null (used);
+	g_clear_error (&error);
+	testsuite_check_passed ();
+
+	testsuite_check ("HTML meta charset detection remains deferred");
+	g_mime_content_type_set_media_subtype (type, "html");
+	stream = g_mime_stream_mem_new_with_buffer (html, sizeof (html) - 1);
+	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	g_object_unref (stream);
+	g_assert_false (g_mime_text_part_try_detect_encoding (part, &detected, &confidence, &error));
+	g_assert_no_error (error);
+	g_assert_null (detected);
+	g_assert_cmpint (confidence, ==, GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED);
+	text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (text, ==, html);
+	g_assert_cmpstr (used, ==, "utf-8");
+	g_free (text);
+	g_free (used);
+	g_object_unref (part);
+	testsuite_check_passed ();
+}
+
+static void
 test_part_prepare (void)
 {
 	static const guint limits[] = { 60, 61, 76, 78, 998 };
@@ -1907,6 +2073,7 @@ int main (int argc, char **argv)
 	test_text_part (datadir, "french-fable.txt", "iso-8859-1");
 	test_text_with_charset ();
 	test_text_decode_with_charset ();
+	test_text_encoding_detection ();
 	
 	testsuite_end ();
 

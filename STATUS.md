@@ -2927,9 +2927,10 @@ GMime intentionally does not reproduce that data loss. Obsolete five/six-byte
 UTF-8 is rejected or replaced, even when the native iconv accepts it.
 I/O and converter setup failures never fall back or return partial
 text; decoded NULs remain native string errors. Bare CRs and Unicode BOMs
-are preserved. HTML-meta charset detection, public detection/confidence and
-used-charset reporting remain outstanding. Flowed conversion and markup
-conversion/sanitization remain outside these accessors.
+are preserved. Public detection/confidence and used-charset reporting are
+described below; HTML-meta charset detection is deferred beyond 4.0.
+Flowed conversion and markup conversion/sanitization remain outside these
+accessors.
 
 Native and ASan/UBSan core, MIME-part, body-builder, parameter and parameter
 validator suites pass. Regressions include content callbacks that replace the
@@ -3326,8 +3327,47 @@ as missing marks. Detection works on nonseekable streams.
 
 These primitives do not change the legacy TextPart.get_text() behavior.
 The message-body accessors now use them for automatic charset selection.
-HTML meta-charset detection and the checked
-TextPart.TryDetectEncoding()/GetText(out Encoding) APIs remain unported.
+The public TextPart detection and checked decoding APIs below reuse these
+helpers; HTML meta-charset detection is deferred beyond 4.0.
+
+### TextPart encoding detection and reporting
+
+g_mime_text_part_try_detect_encoding() exposes the supported declared charset
+or decoded UTF-8/UTF-16 BOM as an owned name, with
+GMimeTextEncodingConfidence. A declaration takes precedence over a BOM;
+both have Certain confidence. Missing content returns us-ascii with
+Irrelevant confidence, regardless of the header. Empty content is distinct:
+without a declaration or BOM, detection returns FALSE, NULL and Undefined.
+Tentative remains reserved for future HTML-meta detection. This is not a
+statistical detector and does not validate content or guess UTF-8.
+
+Absent content and supported declarations require no I/O. Otherwise detection
+opens a decoded content reader and attempts one read of up to three decoded
+bytes, preserving the existing single-read BOM contract. The decoder may
+read ahead; the backing stream is neither closed nor rewound afterward.
+Read/open failures report GMIME_ERROR, and operational charset-resolution
+failures report G_CONVERT_ERROR, with cleared output values.
+
+g_mime_text_part_get_text_with_encoding() promotes the checked automatic
+decoder used by message-body accessors to a public API. It optionally returns
+the charset actually used, including Latin-1 after strict UTF-8 fallback.
+Missing content returns empty text and us-ascii; failures return neither text
+nor a charset. It honors content decoding overrides, detects BOMs from the
+buffered body even across short source reads, and retains the existing
+replacement, finalization, newline, embedded-NUL and I/O error policies.
+Headers, the legacy unchecked getter and explicit strict decoding are unchanged.
+
+HTML tokenization and meta-charset discovery are explicitly deferred to a
+later 4.x release rather than adding an HTML tokenizer for 4.0.
+
+Native and ASan/UBSan core and MIME-part suites pass, including declaration/BOM
+precedence, all supported transfer encodings, confidence and fallback output,
+absent versus empty content, short/zero reads, bounded detection, missing
+streams, read/reset errors and unchanged headers. GIR, typelib, Vala and
+reference documentation generation pass with the existing scanner/link
+warnings. Live Python GI checks cover owned output strings, confidence,
+fallback and GError propagation; standalone C header/signature compilation
+also passes.
 
 ### Reader header foundation and opt-in OpenPGP detection
 
@@ -5271,10 +5311,6 @@ ports.
 
 ### Application-facing API completion
 
-- Complete TextPart encoding detection: detected charset and confidence,
-  HTML meta charset discovery, and reporting the charset used by decoding.
-  Explicit charset conversion, BOM detection and checked automatic decoding
-  for the message-body accessors already exist.
 - Port the public SMTP and SMTPUTF8 address validators and their options and
   error models. The reader's MIME address compliance validator is a different
   API, not a replacement for these utilities.
@@ -5309,6 +5345,9 @@ content copying APIs are unaffected.
   HTML parsing/conversion/filtering, text previews and RTF conversion.
   These may be considered for a later 4.x release.
   Existing HTML/enriched filters cover only part of this scope.
+- Defer HTML-meta charset detection and its tokenizer to a later 4.x release.
+  TextPart declaration/BOM detection, confidence and used-charset reporting
+  are implemented without it.
 - Exclude TNEF reading/writing, properties, attachment extraction, MIME/calendar
   conversion and compressed RTF from 4.0.0; reconsider in a later 4.x release.
 - Promote the broader historical actual-source differential comparisons into

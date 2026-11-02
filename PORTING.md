@@ -251,6 +251,29 @@ HTML-meta charset detection and flowed-text conversion remain deferred;
 HTML is not sanitized. Existing `g_mime_message_get_body()` still returns a
 borrowed entity, and the legacy `g_mime_text_part_get_text()` is unchanged.
 
+### Text encoding detection and reporting
+
+`g_mime_text_part_try_detect_encoding(part, &charset, &confidence, error)`
+returns an owned charset name and `GMimeTextEncodingConfidence`. A supported
+Content-Type charset or decoded UTF-8/UTF-16 BOM gives `CERTAIN`; absent
+content gives `"us-ascii"` and `IRRELEVANT`. Empty content is not absent.
+No match returns FALSE, NULL and `UNDEFINED`, without an error. Detection
+does not validate the whole body or guess UTF-8. HTML-meta detection is
+deferred beyond 4.0, so `TENTATIVE` is reserved.
+
+Without a usable declaration, detection opens a decoded reader and makes
+one read of up to three bytes; short reads are not retried. The backing
+stream may be read ahead and is not closed or rewound afterward. Unlike
+checked decoding, this uses the backing stream, not content copy overrides.
+
+Use `g_mime_text_part_get_text_with_encoding(part, &used_charset, error)` for
+checked automatic decoding and the charset actually used, including Latin-1
+after fallback. It shares the message-body decoding policy above, honors
+content decoding overrides, and does not change headers or the legacy getter.
+It uses buffered bytes for BOM detection, including across short source reads.
+The charset output is optional and is NULL on failure. Free both returned
+strings with `g_free()`. The explicit `get_text_with_charset()` remains strict.
+
 ## 4. Handle parser errors and options
 
 `GMimeParserOptions`, `GMimeFormatOptions`, and `GMimeComplianceOptions` are

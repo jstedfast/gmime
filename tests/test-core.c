@@ -4198,6 +4198,104 @@ test_message_text_errors (void)
 }
 
 static void
+test_text_encoding_errors (void)
+{
+	GMimeTextPart *part = g_mime_text_part_new ();
+	GMimeTextEncodingConfidence confidence;
+	GMimeContent *content = g_mime_content_new ();
+	TestStreamFailure *failure;
+	GError *error = NULL;
+	char sentinel[] = "output sentinel";
+	char buffer[8192], *charset, *text;
+	guint mode, unset_error, reads, resets;
+
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	charset = sentinel;
+	confidence = GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN;
+	g_assert_false (g_mime_text_part_try_detect_encoding (part, &charset, &confidence, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_assert_null (charset);
+	g_assert_cmpint (confidence, ==, GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED);
+	g_clear_error (&error);
+	g_assert_null (g_mime_text_part_get_text_with_encoding (part, &charset, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_assert_null (charset);
+	g_clear_error (&error);
+
+	memset (buffer, 'A', sizeof (buffer));
+	memcpy (buffer, "\357\273\277", 3);
+	for (unset_error = 0; unset_error < 2; unset_error++) {
+		for (mode = 0; mode < 5; mode++) {
+			failure = g_object_new (test_stream_failure_get_type (), NULL);
+			failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (buffer, sizeof (buffer));
+			failure->fail_after = mode == 4 ? 0 : G_MAXSIZE;
+			failure->onebyte = mode == 1;
+			failure->zero_read = mode == 2;
+			failure->fail_reset_on = mode == 3 ? 1 : 0;
+			failure->unset_error = unset_error;
+			g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+			content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BINARY);
+			g_mime_part_set_content (GMIME_PART (part), content);
+			g_object_unref (content);
+			g_mime_text_part_set_charset (part, "unknown-charset");
+			charset = sentinel;
+			confidence = GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT;
+			g_assert_cmpint (g_mime_text_part_try_detect_encoding (part, &charset, &confidence, &error), ==, mode == 0);
+			if (mode >= 3) {
+				g_assert_error (error, GMIME_ERROR, (unset_error ? GMIME_ERROR_GENERAL : mode == 3 ? ESPIPE : EIO));
+				g_clear_error (&error);
+			} else {
+				g_assert_no_error (error);
+			}
+			g_assert_cmpstr (charset, ==, mode == 0 ? "utf-8" : NULL);
+			g_assert_cmpint (confidence, ==, mode == 0 ?
+					GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN : GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED);
+			g_assert_cmpuint (failure->reset_calls, ==, 1);
+			g_assert_cmpuint (failure->read_calls, ==, mode == 3 ? 0 : 1);
+			g_assert_cmpuint (failure->bytes_read, <, sizeof (buffer));
+			g_assert_cmpuint (failure->close_calls, ==, 0);
+			g_free (charset);
+			if (mode == 1)
+				g_assert_cmpuint (failure->bytes_read, ==, 1);
+
+			reads = failure->read_calls;
+			resets = failure->reset_calls;
+			g_mime_text_part_set_charset (part, "UTF8");
+			g_assert_true (g_mime_text_part_try_detect_encoding (part, &charset, &confidence, &error));
+			g_assert_no_error (error);
+			g_assert_cmpstr (charset, ==, "utf-8");
+			g_assert_cmpint (confidence, ==, GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN);
+			g_assert_cmpuint (failure->read_calls, ==, reads);
+			g_assert_cmpuint (failure->reset_calls, ==, resets);
+			g_free (charset);
+
+			g_mime_text_part_set_charset (part, NULL);
+			failure->bytes_read = 0;
+			failure->fail_after = G_MAXSIZE;
+			failure->fail_reset_on = failure->reset_calls + 1;
+			charset = sentinel;
+			g_assert_null (g_mime_text_part_get_text_with_encoding (part, &charset, &error));
+			g_assert_error (error, GMIME_ERROR, (unset_error ? GMIME_ERROR_GENERAL : ESPIPE));
+			g_assert_null (charset);
+			g_clear_error (&error);
+			failure->fail_reset_on = 0;
+			text = g_mime_text_part_get_text_with_encoding (part, &charset, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (charset, ==, "utf-8");
+			g_assert_cmpuint (strlen (text), ==, sizeof (buffer));
+			g_assert_cmpmem (text, sizeof (buffer), buffer, sizeof (buffer));
+			g_free (text);
+			g_free (charset);
+			g_assert_cmpuint (failure->close_calls, ==, 0);
+			g_object_unref (failure);
+		}
+	}
+	g_object_unref (part);
+	check (TRUE, "text encoding detection preserves bounded-read, error, ownership and output contracts");
+}
+
+static void
 check_multipart_text_value (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart *expected, const char *description)
 {
 	GMimeMessage *message = g_mime_message_new (FALSE);
@@ -13727,6 +13825,7 @@ main (int argc, char **argv)
 	test_message_text_bodies ();
 	test_message_text_decoding ();
 	test_message_text_errors ();
+	test_text_encoding_errors ();
 	testsuite_end ();
 
 	testsuite_start ("multipart related roots");
