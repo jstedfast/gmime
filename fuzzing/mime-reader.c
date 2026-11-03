@@ -3,6 +3,7 @@
  * and Contributors. Distributed under the MIT license; see LICENSE. */
 
 #include "fuzz.h"
+#include <gmime/gmime-reader-simd-private.h>
 
 typedef struct {
 	GMimeReader parent_instance;
@@ -335,12 +336,42 @@ read_input (const guint8 *data, gsize length, GMimeFormat format, gsize chunk, F
 	return trace;
 }
 
+static void
+check_byte_scanners (const guint8 *data, gsize length)
+{
+	GMimeReaderLineScanFunc scalar = _g_mime_reader_scan_line_get_backend (GMIME_READER_SCAN_SCALAR);
+	gsize invalid = _g_mime_reader_utf8_get_backend (GMIME_READER_UTF8_SCALAR) (data, length);
+	guint backend, flags;
+
+	for (backend = 0; backend < 5; backend++) {
+		GMimeReaderUtf8Func utf8 = backend == 4 ? _g_mime_reader_utf8_invalid_index :
+			_g_mime_reader_utf8_get_backend (backend);
+		GMimeReaderLineScanFunc line = backend == 4 ? _g_mime_reader_scan_line :
+			_g_mime_reader_scan_line_get_backend (backend);
+
+		if (utf8)
+			FUZZ_CHECK (utf8 (data, length) == invalid, "UTF-8 backend %u disagrees with scalar", backend);
+		if (!line)
+			continue;
+		for (flags = 0; flags < 4; flags++) {
+			GMimeReaderLineScan expected = scalar (data, length, flags & 1, flags & 2);
+			GMimeReaderLineScan actual = line (data, length, flags & 1, flags & 2);
+
+			FUZZ_CHECK (actual.length == expected.length && actual.null_index == expected.null_index &&
+				    actual.eight_bit_index == expected.eight_bit_index,
+				    "Line scanner backend %u disagrees with scalar (flags %u)", backend, flags);
+		}
+	}
+}
+
 void
 fuzz_mime_reader (const guint8 *data, gsize length)
 {
 	static const gsize chunks[] = { 1, 7, 31, 4096 };
 	guint32 selector = fuzz_selector (data, length);
 	GMimeFormat format;
+
+	check_byte_scanners (data, length);
 
 	for (format = GMIME_FORMAT_MESSAGE; format <= GMIME_FORMAT_MBOX; format++) {
 		FuzzCompliance first, second;

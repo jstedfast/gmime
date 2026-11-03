@@ -3852,6 +3852,57 @@ core failures were introduced. Native Windows validation remains pending.
 OpenPGP marker detection remains the opt-in legacy-parser extension, not an
 always-on reader scan.
 
+### Precise header diagnostics and compliance-enabled SIMD scanning
+
+MimeKit `0eb76c01` and `be783d00` are ported to the synchronous native reader.
+Header NUL diagnostics identify the first NUL in each header; malformed UTF-8
+diagnostics identify the leading byte of the first malformed sequence, including
+truncated sequences and invalid continuation bytes. Both use exact stream
+offsets, physical lines and byte columns across folded headers, short reads,
+initial BOMs and invalid field names. Valid UTF-8 before a later error is not
+mistaken for the offending byte. Address headers retain specialized diagnostics
+instead of the generic UTF-8 warning. The analyzer and public remarks now use
+the precise positions rather than heuristically relocating header warnings.
+
+Bounded line scanners combine LF, first-NUL and first-high-bit detection using
+scalar word loads, SSE2, AVX2 or NEON. Header scanning records the first high-bit
+buffer index, and compliance-enabled body scanning uses the same kernels.
+Transfer-encoding gates, first-only reporting, issue order and raw content
+delivery are unchanged. GMime retains its existing exact body-byte positions
+rather than adopting upstream's less precise scan-start positions.
+
+Private UTF-8 validation dispatches to AVX2, SSSE3/SSE4.1 or little-endian ARM64
+NEON for inputs of at least 128 bytes, with scalar fallback for shorter inputs
+and unsupported hardware. Bounded vector loads and scalar finishing preserve
+exact malformed-sequence positions without sentinels or alignment requirements.
+Embedded NUL is valid UTF-8 and is diagnosed separately. The adapted SimdUnicode
+lookup algorithm retains its MIT notice alongside GMime's LGPL source header.
+
+Persistent coverage includes every available direct backend and dispatch,
+scalar-only builds, independent GLib UTF-8 comparisons, all two-byte inputs,
+unaligned/vector-boundary sequences, substitutions, randomized inputs, guard
+pages and empty spans. Reader regressions cover encoding-specific body checks,
+folded/BOM/EOF header diagnostics and byte preservation across short reads.
+The reader fuzz target also compares byte scanners and UTF-8 backends. CI
+requires the new kernels as well as the existing multi-line scanner on AVX2
+and ARM64 NEON, including debug and optimized macOS ARM64 lanes.
+
+The ten focused reader/kernel/parser/roundtrip/analyzer and reader/parser
+corpus-replay suites pass in native and ASan/UBSan builds. GIR, typelib, Vala
+and reference documentation build. An isolated ASan/UBSan kernel campaign
+completed 770,506 mutations without a mismatch. Local GCC `-O3` 4 KiB kernel
+benchmarks measured 6.5x faster combined scanning than separate LF/NUL/high-bit
+passes and 6.2-11.7x faster UTF-8 validation than scalar, depending on character
+width; these are not end-to-end parser throughput guarantees. Native ARM64 and
+Windows execution remain CI/platform follow-up, not locally verified results.
+
+The broader reader mutation campaign exposed a pre-existing chunk-dependent
+`TooManyComplianceIssues` position in a malformed mbox input. Substituting the
+unchanged HEAD reader reproduces the same offset difference (623 versus 279);
+the new header positions and byte kernels are not its cause. The reproducer
+and baseline traces are retained in session artifacts. That separate issue
+is not changed or masked by this port.
+
 ### Reader-backed header and leaf model foundation
 
 A private GMimeReader subclass now ports MimeParser's header and root-leaf

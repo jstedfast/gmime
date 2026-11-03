@@ -53,5 +53,34 @@ G_GNUC_INTERNAL GMimeReaderScan _g_mime_reader_scan_lines_scalar (const guint8 *
 /* NULL means that this backend is not compiled in or cannot run on this CPU/OS. */
 G_GNUC_INTERNAL GMimeReaderScanFunc _g_mime_reader_scan_lines_get_backend (GMimeReaderScanBackend backend);
 
+typedef struct {
+	gsize length;
+	gsize null_index;
+	gsize eight_bit_index;
+} GMimeReaderLineScan;
+
+typedef GMimeReaderLineScan (*GMimeReaderLineScanFunc) (const guint8 *input, gsize length,
+						      gboolean detect_null, gboolean detect_eight_bit);
+
+/* length stops before the first LF, or at the end of input. Special-byte
+ * indices precede that LF and are G_MAXSIZE when absent or not requested. */
+G_GNUC_INTERNAL GMimeReaderLineScan _g_mime_reader_scan_line (const guint8 *input, gsize length,
+							    gboolean detect_null, gboolean detect_eight_bit);
+G_GNUC_INTERNAL GMimeReaderLineScanFunc _g_mime_reader_scan_line_get_backend (GMimeReaderScanBackend backend);
+
+typedef enum {
+	GMIME_READER_UTF8_SCALAR,
+	GMIME_READER_UTF8_SSE41,
+	GMIME_READER_UTF8_AVX2,
+	GMIME_READER_UTF8_NEON
+} GMimeReaderUtf8Backend;
+
+typedef gsize (*GMimeReaderUtf8Func) (const guint8 *input, gsize length);
+
+/* Return the first malformed sequence's leading-byte index, or length for
+ * valid UTF-8. Embedded NUL is valid; no sentinel or alignment is required. */
+G_GNUC_INTERNAL gsize _g_mime_reader_utf8_invalid_index (const guint8 *input, gsize length);
+G_GNUC_INTERNAL GMimeReaderUtf8Func _g_mime_reader_utf8_get_backend (GMimeReaderUtf8Backend backend);
+
 G_END_DECLS
 #endif

@@ -155,11 +155,9 @@ source_locate_issue (const SourceText *source, const GMimeComplianceIssue *issue
 	}
 
 	switch (issue->violation) {
-	case GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER:
 	case GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY:
 		non_ascii = TRUE;
 		break;
-	case GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER:
 	case GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY:
 		non_ascii = FALSE;
 		break;

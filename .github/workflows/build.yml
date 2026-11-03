@@ -50,12 +50,13 @@ jobs:
             cc: clang
             features: enabled
             backend: NEON
-          - name: macOS 15 ARM64 Clang / minimal
+          - name: macOS 15 ARM64 Clang / minimal debug
             os: macos-15
             arch: arm64
             cc: clang
             features: disabled
             backend: NEON
+            buildtype: debug
           - name: macOS 26 ARM64 Clang
             os: macos-26
             arch: arm64
@@ -144,7 +145,7 @@ jobs:
           done
         fi
         gpg --version
-    - name: Configure optimized build with assertions
+    - name: Configure build with assertions
       run: |
         extra=(-Dintrospection=disabled -Dvapi=disabled -Dgtk_doc=false)
         if [[ '${{ matrix.integration }}' == 'true' ]]; then
@@ -160,13 +161,13 @@ jobs:
         if [[ '${{ runner.os }}' == 'macOS' ]]; then
           extra+=("-Diconv_prefix=$(brew --prefix libiconv)")
         fi
-        meson setup _build --buildtype=debugoptimized -Db_ndebug=false \
+        meson setup _build --buildtype='${{ matrix.buildtype || 'debugoptimized' }}' -Db_ndebug=false \
           --prefix="$RUNNER_TEMP/gmime-prefix" --libdir=lib \
           -Dcrypto='${{ matrix.features }}' -Dlibidn='${{ matrix.features }}' "${extra[@]}"
     - name: Build
       run: meson compile -C _build
     - name: Report and require native SIMD coverage
-      run: meson test -C _build --no-rebuild --verbose test-reader-simd test-reader-simd-scalar
+      run: meson test -C _build --no-rebuild --verbose test-reader-simd test-reader-simd-scalar test-reader-bytes test-reader-bytes-scalar
     - name: Test
       run: meson test -C _build --print-errorlogs
     - name: Build documentation

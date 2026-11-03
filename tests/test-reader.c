@@ -2440,6 +2440,186 @@ test_compliance_logging (void)
 	g_array_unref (issues);
 }
 
+typedef struct {
+	GMimeComplianceViolation violation;
+	gsize offset;
+} ByteIssue;
+
+static void
+check_byte_issues (const char *wire, gsize length, const ByteIssue *expected, guint count,
+		   gboolean ordered, gsize body_offset)
+{
+	static const guint chunks[] = { 1, 2, 3, 7, 15, 16, 31, 32, 33, 64, 127, 128, 129, 4096, G_MAXUINT };
+	guint chunk;
+
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		ReaderInput *input = new_input (wire, length, chunks[chunk]);
+		TestReader *reader = new_reader (input, NULL);
+		GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+		GError *error = NULL;
+		guint i, found = 0;
+		gboolean *seen = g_new0 (gboolean, count);
+
+		g_mime_reader_set_compliance_logger ((GMimeReader *) reader, collect_compliance, issues, NULL);
+		g_assert_true (g_mime_reader_read_message ((GMimeReader *) reader, &error));
+		g_assert_no_error (error);
+		for (i = 0; i < issues->len; i++) {
+			const GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+			guint j;
+			guint64 line = 1, column = 1;
+			gsize offset;
+
+			if (issue->violation != GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER &&
+			    issue->violation != GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER &&
+			    issue->violation != GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY &&
+			    issue->violation != GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY)
+				continue;
+			for (j = 0; j < count; j++) {
+				if (expected[j].violation == issue->violation && expected[j].offset == (guint64) issue->stream_offset)
+					break;
+			}
+			g_assert_cmpuint (j, <, count);
+			g_assert_false (seen[j]);
+			seen[j] = TRUE;
+			if (ordered || chunks[chunk] == G_MAXUINT)
+				g_assert_cmpuint (j, ==, found);
+			found++;
+			for (offset = 0; offset < expected[j].offset; offset++) {
+				if (wire[offset] == '\n') {
+					line++;
+					column = 1;
+				} else {
+					column++;
+				}
+			}
+			g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_EXACT);
+			g_assert_cmpuint (issue->line_number, ==, line);
+			g_assert_cmpuint (issue->column_number, ==, column);
+		}
+		g_assert_cmpuint (found, ==, count);
+		if (body_offset != G_MAXSIZE)
+			g_assert_cmpmem (reader->content->data, reader->content->len, wire + body_offset, length - body_offset);
+		g_free (seen);
+		g_array_unref (issues);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+}
+
+static void
+test_header_byte_positions (void)
+{
+	static const guint padding[] = { 0, 15, 31, 63, 127, 4090 };
+	static const char *newlines[] = { "\n", "\r\n" };
+	static const struct {
+		const char *wire;
+		gsize length;
+		gssize null1, bad1, null2, bad2;
+	} cases[] = {
+#define HEADER_CASE(wire, n1, b1, n2, b2) { wire, sizeof (wire) - 1, n1, b1, n2, b2 }
+		HEADER_CASE ("Subject: \0\xff", 9, 10, -1, -1),
+		HEADER_CASE ("\xef\xbb\xbfSubject: \0\xff\r\n\r\n", 12, 13, -1, -1),
+		HEADER_CASE ("\xef\xbb\xbfSubject: caf\xc3\xa9\r\n \xff\r\n\r\n", -1, 20, -1, -1),
+		HEADER_CASE ("A: x\0\xff\0\xfe\r\nB: y\0\xfe\0\xff\r\n\r\n", 4, 5, 14, 15),
+		HEADER_CASE ("A: ok\r\nBad\0\xff: value\r\n\r\n", 10, 11, -1, -1),
+		HEADER_CASE ("Subject: \xc3\xa9\0\xf0\x9f\x98\x80\r\n\r\n", 11, -1, -1, -1),
+		HEADER_CASE ("Subject: \xc3\xa9\r\n \xff\r\n\r\n", -1, 14, -1, -1),
+		HEADER_CASE ("Subject: \xc3\xa9 \xf0\x9f\x80\r\n\r\n", -1, 12, -1, -1),
+		HEADER_CASE ("Subject: \xc3\xa9 \xed\xa0\x80\r\n\r\n", -1, 12, -1, -1),
+		HEADER_CASE ("Subject: \xe2\r\n \x82\xac\r\n\r\n", -1, 9, -1, -1),
+		HEADER_CASE ("From: a@\xff.example\r\n\r\n", -1, -1, -1, -1),
+		HEADER_CASE ("From: a@\0\xff.example\r\n\r\n", 8, -1, -1, -1),
+#undef HEADER_CASE
+	};
+	guint newline, folded, pad, i;
+
+	for (newline = 0; newline < G_N_ELEMENTS (newlines); newline++) {
+		for (folded = 0; folded < 2; folded++) {
+			for (pad = 0; pad < G_N_ELEMENTS (padding); pad++) {
+				GString *wire = g_string_new ("X-First: ascii");
+				ByteIssue expected[2];
+				gsize body_offset;
+
+				g_string_append_printf (wire, "%sSubject: ", newlines[newline]);
+				for (i = 0; i < padding[pad]; i++)
+					g_string_append_c (wire, 'a');
+				if (folded)
+					g_string_append_printf (wire, "%s\t", newlines[newline]);
+				expected[0] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER, wire->len };
+				expected[1] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER, wire->len + 6 };
+				g_string_append_len (wire, "\0hello\xffworld\0\xfe", 14);
+				g_string_append_printf (wire, "%sX-Last: ascii%s%s", newlines[newline], newlines[newline], newlines[newline]);
+				body_offset = wire->len;
+				g_string_append (wire, "body");
+				check_byte_issues (wire->str, wire->len, expected, 2, TRUE, body_offset);
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		ByteIssue expected[4];
+		guint count = 0;
+
+		if (cases[i].null1 >= 0)
+			expected[count++] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER, cases[i].null1 };
+		if (cases[i].bad1 >= 0)
+			expected[count++] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER, cases[i].bad1 };
+		if (cases[i].null2 >= 0)
+			expected[count++] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER, cases[i].null2 };
+		if (cases[i].bad2 >= 0)
+			expected[count++] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER, cases[i].bad2 };
+		check_byte_issues (cases[i].wire, cases[i].length, expected, count, TRUE, G_MAXSIZE);
+	}
+}
+
+static void
+test_body_byte_scanning (void)
+{
+	static const guint padding[] = { 0, 15, 16, 31, 32, 63, 64, 997, 4095 };
+	static const char *encodings[] = { "7bit", "8bit", "binary" };
+	guint encoding, pad, reverse, i, line;
+
+	for (encoding = 0; encoding < G_N_ELEMENTS (encodings); encoding++) {
+		for (pad = 0; pad < G_N_ELEMENTS (padding); pad++) {
+			for (reverse = 0; reverse < 2; reverse++) {
+				GString *wire = g_string_new ("Content-Transfer-Encoding: ");
+				ByteIssue expected[2];
+				gsize body_offset;
+				guint count = 0;
+
+				g_string_append_printf (wire, "%s\r\n\r\n", encodings[encoding]);
+				body_offset = wire->len;
+				for (line = 0; line < 3; line++) {
+					for (i = 0; i < padding[pad]; i++)
+						g_string_append_c (wire, 'a');
+					if (line) {
+						gboolean eightbit = (line == 1) != reverse;
+
+						if (eightbit && encoding == 0)
+							expected[count++] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY, wire->len };
+						if (!eightbit && encoding < 2)
+							expected[count++] = (ByteIssue) { GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY, wire->len };
+						g_string_append_c (wire, eightbit ? '\xff' : 0);
+					}
+					g_string_append (wire, "\r\n");
+				}
+				g_string_append_len (wire, "repeat\0\xff\0\xfe", 10);
+				check_byte_issues (wire->str, wire->len, expected, count, TRUE, body_offset);
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	{
+		static const char wire[] = "X: a\r\n\r\n\0\xff\0\xfe";
+		const ByteIssue expected[] = {
+			{ GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY, 9 },
+			{ GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY, 8 }
+		};
+		/* The two issues are ordered by scan, not by their byte offsets. */
+		check_byte_issues (wire, sizeof (wire) - 1, expected, 2, FALSE, 8);
+	}
+}
+
 static void
 test_compliance_failures (void)
 {
@@ -2858,6 +3038,8 @@ main (int argc, char **argv)
 	testsuite_check ("Compliance defaults, boxed diagnostics, logger snapshots and per-violation budgets");
 	test_compliance_options_and_issues ();
 	test_compliance_logging ();
+	test_header_byte_positions ();
+	test_body_byte_scanning ();
 	test_compliance_failures ();
 	test_long_mailbox_marker ();
 	testsuite_check_passed ();

@@ -802,31 +802,37 @@ address_header (const guint8 *header, gsize length)
 	return FALSE;
 }
 
-static gboolean
-valid_utf8_bytes (const guint8 *bytes, gsize length)
+static void
+check_header_encoding (GMimeReader *reader, gint64 begin, guint64 line, guint64 column, gsize first_eight_bit)
 {
-	while (length) {
-		const guint8 *nul = memchr (bytes, 0, length);
-		gsize count = nul ? (gsize) (nul - bytes) : length;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+	const guint8 *data = priv->header->data;
+	gsize length = priv->header->len, invalid, i;
 
-		/* Embedded NUL is valid UTF-8, even though g_utf8_validate()
-		 * treats it as the end of a C string. It is diagnosed separately. */
-		if (!g_utf8_validate ((const char *) bytes, count, NULL))
-			return FALSE;
+	if (first_eight_bit == G_MAXSIZE)
+		return;
 
-		if (!nul)
-			break;
+	invalid = first_eight_bit + _g_mime_reader_utf8_invalid_index (data + first_eight_bit, length - first_eight_bit);
 
-		bytes += count + 1;
-		length -= count + 1;
+	if (invalid == length)
+		return;
+
+	for (i = 0; i < invalid; i++) {
+		if (data[i] == '\n') {
+			line++;
+			column = 1;
+		} else {
+			column++;
+		}
 	}
 
-	return TRUE;
+	report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER, begin + invalid, line, column,
+		   GMIME_COMPLIANCE_POSITION_EXACT);
 }
 
 static void
 check_header_semantics (GMimeReader *reader, gsize name_length, gsize field_length,
-			gboolean invalid, gint64 begin, guint64 line)
+			gboolean invalid, gint64 begin, guint64 line, guint64 column, gsize first_eight_bit)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	const guint8 *data = priv->header->data;
@@ -838,9 +844,8 @@ check_header_semantics (GMimeReader *reader, gsize name_length, gsize field_leng
 	if (!priv->active_logger)
 		return;
 
-	if (!address && !valid_utf8_bytes (value, length))
-		report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER, begin, line, 1,
-			   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+	if (!address)
+		check_header_encoding (reader, begin, line, column, first_eight_bit);
 
 	if (address && length && (priv->validators & (GMIME_COMPLIANCE_VALIDATOR_ADDRESS | GMIME_COMPLIANCE_VALIDATOR_ENCODED_WORDS)))
 		_g_mime_address_validate (value, length, priv->validators, report_issue, reader, priv->context,
@@ -1171,10 +1176,11 @@ typedef struct {
 	gboolean first_line, blank_line;
 	gint64 cr_offset;
 	guint64 cr_line, cr_column;
+	gsize first_eight_bit;
 } HeaderDetection;
 
 static void
-check_header_span (GMimeReader *reader, HeaderDetection *detection, const guint8 *data, gsize length)
+check_header_span (GMimeReader *reader, HeaderDetection *detection, const guint8 *data, gsize length, gsize null_index)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
@@ -1190,9 +1196,9 @@ check_header_span (GMimeReader *reader, HeaderDetection *detection, const guint8
 		detection->cr_reported = TRUE;
 	}
 
-	if (!detection->null_reported && memchr (data, 0, length)) {
+	if (!detection->null_reported && null_index != G_MAXSIZE) {
 		report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER,
-			   priv->line_begin, priv->line_number, 1, GMIME_COMPLIANCE_POSITION_LINE_START);
+			   begin + null_index, priv->line_number, column + null_index, GMIME_COMPLIANCE_POSITION_EXACT);
 		detection->null_reported = TRUE;
 	}
 
@@ -1281,9 +1287,10 @@ step_headers (GMimeReader *reader, gboolean message)
 		return FALSE;
 
 	do {
-		HeaderDetection detection = { FALSE, FALSE, FALSE, TRUE, FALSE, 0, 0, 0 };
+		HeaderDetection detection = { FALSE, FALSE, FALSE, TRUE, FALSE, 0, 0, 0, G_MAXSIZE };
 		guint64 line_number = priv->line_number;
 		gint64 offset = g_mime_reader_tell (reader);
+		guint64 column_number = (guint64) (offset - priv->line_begin) + 1;
 		gsize left = priv->input_end - priv->input_index;
 		gsize field_length, name_length;
 		gsize field_prefix = 0;
@@ -1440,13 +1447,27 @@ step_headers (GMimeReader *reader, gboolean message)
 			inptr = start;
 
 			while (inptr < end && (midline || is_blank (*inptr))) {
-				const guint8 *lf = memchr (inptr, '\n', end - inptr);
-				gsize count = lf ? (gsize) (lf - inptr + 1) : (gsize) (end - inptr);
+				GMimeReaderLineScan scan = { end - inptr, G_MAXSIZE, G_MAXSIZE };
+				const guint8 *lf;
+				gsize count;
+
+				if (priv->active_logger && (!detection.null_reported || detection.first_eight_bit == G_MAXSIZE)) {
+					scan = _g_mime_reader_scan_line (inptr, end - inptr, !detection.null_reported,
+									detection.first_eight_bit == G_MAXSIZE);
+					lf = scan.length < (gsize) (end - inptr) ? inptr + scan.length : NULL;
+
+					if (scan.eight_bit_index != G_MAXSIZE)
+						detection.first_eight_bit = priv->header->len + scan.eight_bit_index;
+				} else {
+					lf = memchr (inptr, '\n', end - inptr);
+				}
+
+				count = lf ? (gsize) (lf - inptr + 1) : (gsize) (end - inptr);
 
 				if (!append_header (reader, inptr, count, offset))
 					return FALSE;
 
-				check_header_span (reader, &detection, inptr, count);
+				check_header_span (reader, &detection, inptr, count, scan.null_index);
 				consume_input (reader, count);
 
 				if (!lf) {
@@ -1502,7 +1523,8 @@ step_headers (GMimeReader *reader, gboolean message)
 		}
 
 		if (invalid) {
-			check_header_semantics (reader, name_length, field_length, TRUE, offset, line_number);
+			check_header_semantics (reader, name_length, field_length, TRUE, offset, line_number,
+						column_number, detection.first_eight_bit);
 			name_length = field_length = priv->header->len;
 			_g_mime_parser_options_warn (priv->options, offset, GMIME_CRIT_INVALID_HEADER_NAME, NULL);
 		} else {
@@ -1513,7 +1535,8 @@ step_headers (GMimeReader *reader, gboolean message)
 					name_length--;
 			}
 			field_length += field_prefix;
-			check_header_semantics (reader, name_length, field_length, FALSE, offset, line_number);
+			check_header_semantics (reader, name_length, field_length, FALSE, offset, line_number,
+						column_number, detection.first_eight_bit);
 			update_header_state (reader, name_length, field_length, offset, line_number);
 		}
 
@@ -1801,6 +1824,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	while (!priv->boundary && !priv->mailbox_boundary && !priv->boundary_eos) {
 		gsize atleast = boundary_read_ahead (reader);
 		GMimeReaderScan scan = { 0 };
+		GMimeReaderLineScan line_scan = { 0, G_MAXSIZE, G_MAXSIZE };
 		const guint8 *start, *lf;
 		gsize left, length;
 
@@ -1842,7 +1866,12 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 				priv->format == GMIME_FORMAT_MBOX ? 'F' : priv->format == GMIME_FORMAT_MMDF ? '\1' : '-',
 				priv->format == GMIME_FORMAT_MBOX ? 'r' : priv->format == GMIME_FORMAT_MMDF ? '\1' : '-');
 
-		lf = memchr (start, '\n', left);
+		if (priv->active_logger && (detect_null || detect_8bit)) {
+			line_scan = _g_mime_reader_scan_line (start, left, detect_null, detect_8bit);
+			lf = line_scan.length < left ? start + line_scan.length : NULL;
+		} else {
+			lf = memchr (start, '\n', left);
+		}
 
 		if (scan.length) {
 			lf = start + scan.length - 1;
@@ -1855,28 +1884,19 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 		if (priv->active_logger) {
 			gint64 offset = g_mime_reader_tell (reader);
 			guint64 column = (guint64) (offset - priv->line_begin) + 1;
-			gsize i;
+			gsize i = line_scan.eight_bit_index;
 
-			if (detect_8bit) {
-				for (i = 0; i < length && start[i] < 128; i++)
-					;
-
-				if (i < length) {
-					report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY,
-						   offset + i, priv->line_number, column + i, GMIME_COMPLIANCE_POSITION_EXACT);
-					detect_8bit = FALSE;
-				}
+			if (i != G_MAXSIZE) {
+				report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY,
+					   offset + i, priv->line_number, column + i, GMIME_COMPLIANCE_POSITION_EXACT);
+				detect_8bit = FALSE;
 			}
 
-			if (detect_null) {
-				const guint8 *nul = memchr (start, 0, length);
-
-				if (nul) {
-					i = nul - start;
-					report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY,
-						   offset + i, priv->line_number, column + i, GMIME_COMPLIANCE_POSITION_EXACT);
-					detect_null = FALSE;
-				}
+			i = line_scan.null_index;
+			if (i != G_MAXSIZE) {
+				report_at (reader, GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY,
+					   offset + i, priv->line_number, column + i, GMIME_COMPLIANCE_POSITION_EXACT);
+				detect_null = FALSE;
 			}
 		}
 
