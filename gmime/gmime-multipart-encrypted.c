@@ -127,6 +127,7 @@ g_mime_multipart_encrypted_new (void)
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @flags: native GPGME encryption flags
  * @recipients: (nullable): borrowed NULL-terminated recipient keys
+ * @hidden_recipients: (nullable): borrowed NULL-terminated hidden recipient keys
  * @encrypt_result: (out) (optional): a retained encryption result
  * @sign_result: (out) (optional): a retained signing result
  * @err: a #GError
@@ -134,6 +135,8 @@ g_mime_multipart_encrypted_new (void)
  * Attempts to encrypt (and conditionally sign) the @entity MIME part
  * to the public keys of @recipients using the @ctx encryption
  * context. If successful, a new multipart/encrypted object is returned.
+ * Hidden recipients receive the same content without exposing their key IDs.
+ * See g_mime_gpgme_encrypt() for recipient-array and encryption-flag semantics.
  *
  * Returns: (nullable) (transfer full): a new #GMimeMultipartEncrypted object on success
  * or %NULL on fail. If encrypting fails, an exception will be set on @err to provide
@@ -141,7 +144,7 @@ g_mime_multipart_encrypted_new (void)
  **/
 GMimeMultipartEncrypted *
 g_mime_multipart_encrypted_encrypt (gpgme_ctx_t ctx, GMimeEntity *entity, gboolean sign,
-				    gpgme_encrypt_flags_t flags, gpgme_key_t *recipients,
+				    gpgme_encrypt_flags_t flags, gpgme_key_t *recipients, gpgme_key_t *hidden_recipients,
 				    gpgme_encrypt_result_t *encrypt_result, gpgme_sign_result_t *sign_result,
 				    GError **err)
 {
@@ -181,7 +184,7 @@ g_mime_multipart_encrypted_encrypt (gpgme_ctx_t ctx, GMimeEntity *entity, gboole
 	gpgme_set_textmode (ctx, FALSE);
 
 	/* encrypt the content stream */
-	success = g_mime_gpgme_encrypt (ctx, sign, flags, recipients, stream, ciphertext,
+	success = g_mime_gpgme_encrypt (ctx, sign, flags, recipients, hidden_recipients, stream, ciphertext,
 				       encrypt_result, sign_result, err);
 
 	/* restore the original context settings */

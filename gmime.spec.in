@@ -20,7 +20,7 @@ BuildRequires: pkgconfig(gobject-2.0) >= 2.70.2
 BuildRequires: pkgconfig(gio-2.0) >= 2.70.2
 BuildRequires: pkgconfig(gthread-2.0) >= 2.70.2
 BuildRequires: pkgconfig(zlib)
-BuildRequires: pkgconfig(gpgme) >= 1.6.0
+BuildRequires: pkgconfig(gpgme) >= 1.11.0
 BuildRequires: pkgconfig(gpg-error)
 BuildRequires: pkgconfig(libidn2) >= 2.0.0
 BuildRequires: pkgconfig(gobject-introspection-1.0)

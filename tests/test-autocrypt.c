@@ -932,7 +932,7 @@ test_ah_injection (void)
 				
 				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, FALSE,
 										GPGME_ENCRYPT_ALWAYS_TRUST,
-										recip, NULL, NULL, &err);
+										recip, NULL, NULL, NULL, &err);
 				for (r = 0; recip[r]; r++)
 					gpgme_key_unref (recip[r]);
 				g_free (recip);

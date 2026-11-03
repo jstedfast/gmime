@@ -91,7 +91,7 @@ The following packages are RECOMMENDED:
     Domain Names. Libidn2 sources may be obtained from:
       https://www.gnu.org/software/libidn/#downloading
 
-  - GPGME >= 1.6.0 (newer native features require a supporting GPGME version)
+  - GPGME >= 1.11.0 (newer native features require a supporting GPGME version)
 
     GPGME (GnuPG Made Easy) provides high-level crypto APIs needed for
     encryption, decryption, signing and signature verification for both
@@ -595,7 +595,7 @@ GError *error = NULL;
 GMimeMultipartEncrypted *encrypted;
 
 encrypted = g_mime_multipart_encrypted_encrypt (
-    ctx, body, FALSE, 0, recipients, NULL, NULL, &error);
+    ctx, body, FALSE, 0, recipients, NULL, NULL, NULL, &error);
 if (encrypted) {
     g_mime_message_set_mime_part (message, GMIME_ENTITY (encrypted));
     g_object_unref (encrypted);
@@ -604,6 +604,14 @@ if (encrypted) {
     g_clear_error (&error);
 }
 ```
+
+The argument after `recipients` is a second borrowed, NULL-terminated key
+array, `hidden_recipients`. Use it for Bcc keys whose IDs must not appear in
+the encrypted content; pass NULL when not needed. The two lists must not
+overlap. `GPGME_ENCRYPT_THROW_KEYIDS` still hides every recipient ID.
+Passing NULL for both arrays selects native symmetric encryption. The stream and inline
+OpenPGP encryption APIs accept the same two arrays; hidden recipients are
+not supported for CMS. This does not remove Bcc headers from MIME content.
 
 Decrypt with `g_mime_multipart_encrypted_decrypt(encrypted, ctx,
 &decrypt_result, &verify_result, &error)`. It returns an owned MIME entity,

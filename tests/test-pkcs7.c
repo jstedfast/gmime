@@ -143,7 +143,7 @@ test_encrypt (gpgme_ctx_t ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 	
 	recipients[0] = test_crypto_key (ctx, "mimekit@example.com", FALSE);
 	
-	g_mime_gpgme_encrypt (ctx, FALSE, 0, recipients, cleartext, ciphertext, NULL, NULL, &err);
+	g_mime_gpgme_encrypt (ctx, FALSE, 0, recipients, NULL, cleartext, ciphertext, NULL, NULL, &err);
 	
 	gpgme_key_unref (recipients[0]);
 	

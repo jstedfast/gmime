@@ -186,7 +186,7 @@ create_encrypted_message (gpgme_ctx_t ctx, gboolean sign,
 	/* encrypt the part */
 	recipients[0] = test_crypto_key (ctx, "no.user@no.domain", FALSE);
 	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeEntity *) part, sign,
-						  GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, NULL, &err);
+						  GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, NULL, NULL, &err);
 	gpgme_key_unref (recipients[0]);
 	g_object_unref (part);
 	
@@ -475,7 +475,7 @@ test_openpgp_encrypt (gpgme_ctx_t ctx, gboolean sign)
 	original = priv_priv->stream;
 	g_object_ref (original);
 	
-	if (!g_mime_part_openpgp_encrypt (mime_part, ctx, sign, GPGME_ENCRYPT_ALWAYS_TRUST, rcpts, NULL, NULL, &err)) {
+	if (!g_mime_part_openpgp_encrypt (mime_part, ctx, sign, GPGME_ENCRYPT_ALWAYS_TRUST, rcpts, NULL, NULL, NULL, &err)) {
 		ex = exception_new ("encrypting failed: %s", err->message);
 		gpgme_key_unref (rcpts[0]);
 		g_object_unref (mime_part);
@@ -619,7 +619,7 @@ test_context_settings (gpgme_ctx_t ctx)
 			}
 			g_object_unref (signed_part);
 			encrypted = g_mime_multipart_encrypted_encrypt (ctx, GMIME_ENTITY (part), TRUE,
-								      GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, NULL, &error);
+								      GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, NULL, NULL, &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (encrypted);
 			assert_context (ctx, armor, textmode, key->subkeys->fpr);
@@ -659,7 +659,7 @@ test_context_settings (gpgme_ctx_t ctx)
 			gpgme_result_unref (verified);
 			assert_context (ctx, armor, textmode, key->subkeys->fpr);
 			g_assert_true (g_mime_part_openpgp_encrypt (part, ctx, FALSE, GPGME_ENCRYPT_ALWAYS_TRUST,
-								 recipients, NULL, NULL, &error));
+								 recipients, NULL, NULL, NULL, &error));
 			g_assert_no_error (error);
 			assert_context (ctx, armor, textmode, key->subkeys->fpr);
 			g_assert_true (g_mime_part_openpgp_decrypt (part, ctx, NULL, NULL, &error));
@@ -721,7 +721,7 @@ test_crypto_errors (gpgme_ctx_t ctx)
 	g_assert_null (signed_result);
 	g_clear_error (&error);
 	g_assert_null (g_mime_multipart_encrypted_encrypt (cms, GMIME_ENTITY (part), FALSE,
-							 0, NULL, NULL, NULL, &error));
+							 0, NULL, NULL, NULL, NULL, &error));
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR);
 	g_clear_error (&error);
 	g_assert_null (g_mime_application_pkcs7_mime_sign (ctx, GMIME_ENTITY (part), &signed_result, &error));

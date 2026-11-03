@@ -47,6 +47,11 @@ This is an incremental migration, not yet a declaration of feature parity.
   `gmime-gpgme-4.0` for crypto. Core headers and GNOME bindings remain
   GPGME-independent; native crypto calls require application-supplied
   bindings. See PORTING.md for ownership, configuration and error handling.
+  Stream, PGP/MIME and inline OpenPGP encryption accept separate visible and
+  hidden recipient-key arrays, resolving #45 without exposing backend
+  recipient-string syntax. Overlapping lists are rejected and the global
+  throw-keyids flag still hides all recipients. Crypto builds require
+  GPGME 1.11.0 or later; CMS does not support hidden recipients.
   Existing MIME and mutating inline operations are migrated. Multi-block
   inline-PGP discovery now returns an immutable, transfer-decoded document
   with ordered blocks and preserved unprotected gaps. Large snapshots

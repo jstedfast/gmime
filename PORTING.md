@@ -669,6 +669,16 @@ Configure signing keys with `gpgme_signers_add()`. GMime preserves the
 signer list, callbacks, engine and policy settings; with no configured
 signers, GPGME's default-key behavior applies. Recipient keys are borrowed
 for the call. Applications resolve and validate keys using GPGME.
+Stream, PGP/MIME and inline OpenPGP encryption take a second NULL-terminated
+key array, `hidden_recipients`, immediately after `recipients`. Pass NULL
+to retain ordinary encryption, or supply Bcc keys to hide only their key IDs.
+The arrays must not overlap. Passing NULL for both selects native symmetric encryption.
+With hidden recipients, keys must have valid OpenPGP fingerprints. GMime
+constructs GPGME's recipient string internally, retaining native encryption
+subkey selection. `GPGME_ENCRYPT_THROW_KEYIDS` still hides all recipients.
+Hidden recipients are rejected for CMS; the S/MIME convenience API is unchanged.
+Applications remain responsible for removing Bcc headers before sending.
+Crypto-enabled builds now require GPGME 1.11.0 or later.
 Session-key and other optional context flags require a GPGME version
 supporting those flags; always check native configuration errors.
 

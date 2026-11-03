@@ -1635,18 +1635,21 @@ g_mime_part_get_openpgp_data (GMimePart *mime_part)
  * @sign: %TRUE if the content should also be signed; otherwise, %FALSE
  * @flags: native GPGME encryption flags
  * @recipients: (nullable): borrowed NULL-terminated recipient keys
+ * @hidden_recipients: (nullable): borrowed NULL-terminated hidden recipient keys
  * @encrypt_result: (out) (optional): a retained encryption result
  * @sign_result: (out) (optional): a retained signing result
  * @err: a #GError
  *
  * Encrypts (and optionally signs) the content of the @mime_part and then replaces
  * the content with the new, encrypted, content.
+ * Hidden recipients receive the same content without exposing their key IDs.
+ * See g_mime_gpgme_encrypt() for recipient-array and encryption-flag semantics.
  *
  * Returns: %TRUE on success or %FALSE on error.
  **/
 gboolean
 g_mime_part_openpgp_encrypt (GMimePart *mime_part, gpgme_ctx_t ctx, gboolean sign,
-			     gpgme_encrypt_flags_t flags, gpgme_key_t *recipients,
+			     gpgme_encrypt_flags_t flags, gpgme_key_t *recipients, gpgme_key_t *hidden_recipients,
 			     gpgme_encrypt_result_t *encrypt_result, gpgme_sign_result_t *sign_result, GError **err)
 {
 	GMimeStream *istream, *encrypted;
@@ -1681,7 +1684,7 @@ g_mime_part_openpgp_encrypt (GMimePart *mime_part, gpgme_ctx_t ctx, gboolean sig
 	gpgme_set_textmode (ctx, FALSE);
 
 	/* encrypt the content */
-	success = g_mime_gpgme_encrypt (ctx, sign, flags, recipients, istream, encrypted,
+	success = g_mime_gpgme_encrypt (ctx, sign, flags, recipients, hidden_recipients, istream, encrypted,
 				       encrypt_result, sign_result, err);
 
 	/* restore the context settings */
