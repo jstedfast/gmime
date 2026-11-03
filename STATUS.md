@@ -3896,12 +3896,13 @@ passes and 6.2-11.7x faster UTF-8 validation than scalar, depending on character
 width; these are not end-to-end parser throughput guarantees. Native ARM64 and
 Windows execution remain CI/platform follow-up, not locally verified results.
 
-The broader reader mutation campaign exposed a pre-existing chunk-dependent
-`TooManyComplianceIssues` position in a malformed mbox input. Substituting the
-unchanged HEAD reader reproduces the same offset difference (623 versus 279);
-the new header positions and byte kernels are not its cause. The reproducer
-and baseline traces are retained in session artifacts. That separate issue
-is not changed or masked by this port.
+The broader reader mutation campaign exposed an overly strict fuzz invariant:
+`TooManyComplianceIssues` inherits the first suppressed issue's position,
+which can differ across read chunks as independent validators run. GMime
+preserves MimeKit's immediate reporting behavior. Reader/parser fuzz comparisons
+ignore only the summary marker's position, retaining its validity, uniqueness
+and budget checks and full positions for ordinary diagnostics. A minimized
+nine-byte regression is generated and replayed by both MIME fuzz targets.
 
 ### Reader-backed header and leaf model foundation
 

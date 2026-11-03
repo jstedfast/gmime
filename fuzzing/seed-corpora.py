@@ -116,6 +116,8 @@ def mime_inputs(root):
 
 
 def regression_inputs():
+    # The first suppressed issue differs with one-byte versus buffered reads.
+    mime = [b"F:\r\r\0\n\rq\0"]
     lengths = (0, 1, 2, 3, 15, 16, 17, 31, 32, 33, 45, 57, 64, 76, 77, 78,
                127, 128, 129, 255, 256, 257, 4095, 4096, 4097)
     payloads = [bytes((i * 31) & 255 for i in range(length)) for length in lengths]
@@ -153,7 +155,8 @@ def regression_inputs():
         b"=?utf-8?b?TQ?=", b"=?utf-8?q?abc=?= =?utf-8?b?TQ?=",
         b"\xff\xfe\xc0\x80\xed\xa0\x80", b"\xff" * LIMITS["rfc2047"],
     ]
-    return {"encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,
+    return {"mime-reader": mime, "mime-parser": mime,
+            "encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,
             "structured-headers": structured_header_inputs(), "smtp-address-validator": smtp_inputs()}
 
 
@@ -162,18 +165,17 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--target", choices=("all", *LIMITS), default="all")
     parser.add_argument("--regressions-only", action="store_true",
-                        help="generate deterministic codec/header seeds without scanning fixture directories")
+                        help="generate deterministic regression seeds without scanning fixture directories")
     parser.add_argument("--stamp", type=Path, help="write a build stamp after successful seeding")
     args = parser.parse_args()
-    if args.regressions_only and args.target.startswith("mime-"):
-        parser.error("--regressions-only generates codec and header seeds")
     root = Path(__file__).resolve().parent.parent
     targets = tuple(LIMITS) if args.target == "all" else (args.target,)
     inputs = regression_inputs()
     if not args.regressions_only:
         if any(target.startswith("mime-") or target == "structured-headers" for target in targets):
             messages = mime_inputs(root)
-            inputs["mime-reader"] = inputs["mime-parser"] = messages
+            for target in ("mime-reader", "mime-parser"):
+                inputs[target] = inputs[target] + messages
             inputs["structured-headers"] += structured_headers(messages)
         for path in sorted((root / "tests" / "data" / "encodings").iterdir()):
             if path.is_file() and path.stat().st_size < LIMITS["encoders"] - 2:
