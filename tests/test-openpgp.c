@@ -439,7 +439,7 @@ test_crypto (const char *datadir)
 	recipients[1] = NULL;
 	input = g_mime_stream_mem_new_with_buffer (expected[2], strlen (expected[2]));
 	output = g_mime_stream_mem_new ();
-	g_assert_true (g_mime_gpgme_encrypt (ctx, TRUE, GPGME_ENCRYPT_ALWAYS_TRUST, recipients,
+	g_assert_true (g_mime_gpgme_encrypt (ctx, TRUE, GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL,
 					    input, output, NULL, NULL, &error));
 	g_assert_no_error (error);
 	append_stream (text, output);

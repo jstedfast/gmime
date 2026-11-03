@@ -890,7 +890,7 @@ g_mime_application_pkcs7_mime_encrypt (gpgme_ctx_t ctx, GMimeEntity *entity, gpg
 	gpgme_set_textmode (ctx, FALSE);
 
 	/* encrypt the content stream */
-	success = g_mime_gpgme_encrypt (ctx, FALSE, flags, recipients, stream, ciphertext, result, NULL, err);
+	success = g_mime_gpgme_encrypt (ctx, FALSE, flags, recipients, NULL, stream, ciphertext, result, NULL, err);
 
 	/* restore the original context settings */
 	gpgme_set_textmode (ctx, textmode);

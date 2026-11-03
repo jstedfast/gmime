@@ -47,7 +47,7 @@ normal_tests = [
   'test-encodings', 'test-codecs', 'test-decoder-flush', 'test-yenc', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
   'test-mime-part', 'test-mime-whitespace', 'test-partial', 'test-mbox', 'test-autocrypt', 'test-mime', 'test-types',
 ]
-crypto_tests = ['test-pgp', 'test-pgpmime']
+crypto_tests = ['test-pgp', 'test-pgpmime', 'test-hidden-recipients']
 if have_crypto
   normal_tests += crypto_tests
 endif

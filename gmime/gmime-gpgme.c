@@ -279,31 +279,104 @@ g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeStream *input, GMimeStream *signature
 	return check_error (status, error);
 }
 
+static char *
+build_recipient_string (gpgme_key_t *recipients, gpgme_key_t *hidden_recipients, GError **error)
+{
+	GHashTable *visible = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	GString *spec = g_string_new (NULL);
+	guint group, i;
+
+	for (group = 0; group < 2; group++) {
+		gpgme_key_t *keys = group ? hidden_recipients : recipients;
+
+		g_string_append (spec, group ? "--hidden\n" : "--no-hidden\n");
+
+		for (i = 0; keys && keys[i]; i++) {
+			const char *p, *fpr = keys[i]->subkeys ? keys[i]->subkeys->fpr : NULL;
+			char *normalized;
+			gsize length;
+
+			if (keys[i]->protocol != GPGME_PROTOCOL_OpenPGP || !fpr || !*fpr)
+				goto invalid;
+
+			/* Full v3, v4 or v5/v6 fingerprints, never short key IDs. */
+			length = strlen (fpr);
+
+			if (length != 32 && length != 40 && length != 64)
+				goto invalid;
+
+			/* Only fingerprints may enter the backend's directive language. */
+			for (p = fpr; *p; p++) {
+				if (!g_ascii_isxdigit (*p))
+					goto invalid;
+			}
+
+			normalized = g_ascii_strup (fpr, -1);
+
+			if (group && g_hash_table_contains (visible, normalized)) {
+				g_free (normalized);
+				g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+						     _("A recipient cannot be both visible and hidden."));
+				goto fail;
+			}
+
+			g_string_append_printf (spec, "%s\n", normalized);
+
+			if (group)
+				g_free (normalized);
+			else
+				g_hash_table_add (visible, normalized);
+		}
+	}
+
+	g_hash_table_destroy (visible);
+
+	return g_string_free (spec, FALSE);
+
+invalid:
+	g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+			     _("Recipient keys must have a valid OpenPGP fingerprint."));
+fail:
+	g_hash_table_destroy (visible);
+	g_string_free (spec, TRUE);
+
+	return NULL;
+}
+
 /**
  * g_mime_gpgme_encrypt: (skip)
  * @ctx: a caller-owned OpenPGP or CMS context
  * @sign: whether to sign using the configured signers
  * @flags: native GPGME encryption flags
  * @recipients: (nullable): borrowed NULL-terminated recipient keys
+ * @hidden_recipients: (nullable): borrowed NULL-terminated hidden recipient keys (OpenPGP only)
  * @input: plaintext stream
  * @output: ciphertext stream
  * @encrypt_result: (out) (optional): a retained encryption result
  * @sign_result: (out) (optional): a retained signing result
  * @error: return location for an error
  *
- * Encrypts using native keys and context settings. NULL recipients request
- * GPGME's symmetric-encryption behavior. Combined signing and encryption
- * requires OpenPGP; use nested signed/encrypted MIME entities for CMS.
+ * Encrypts using native keys and context settings. Passing NULL for both
+ * recipient arrays requests GPGME's symmetric-encryption behavior; empty arrays
+ * are not treated as NULL. Hidden recipients
+ * receive the same content without exposing their key IDs. Keys must not
+ * appear in both arrays. GPGME_ENCRYPT_THROW_KEYIDS hides all recipient IDs,
+ * including those in @recipients. With @hidden_recipients set, all keys must
+ * have valid OpenPGP fingerprints; GPGME selects the encryption subkeys.
+ * Combined signing and encryption requires OpenPGP; use nested signed/encrypted
+ * MIME entities for CMS.
  *
  * Returns: TRUE if encryption completed.
  **/
 gboolean
-g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, gpgme_encrypt_flags_t flags, gpgme_key_t *recipients,
+g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, gpgme_encrypt_flags_t flags,
+		      gpgme_key_t *recipients, gpgme_key_t *hidden_recipients,
 		      GMimeStream *input, GMimeStream *output, gpgme_encrypt_result_t *encrypt_result,
 		      gpgme_sign_result_t *sign_result, GError **error)
 {
 	gpgme_data_t in, out;
 	gpgme_error_t status;
+	char *recpstring = NULL;
 
 	if (encrypt_result)
 		*encrypt_result = NULL;
@@ -320,16 +393,34 @@ g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, gpgme_encrypt_flags_t flag
 		return FALSE;
 	}
 
-	if (!g_mime_gpgme_data_new (input, &in, error))
-		return FALSE;
+	if (hidden_recipients) {
+		if (!_g_mime_gpgme_check_protocol (ctx, GPGME_PROTOCOL_OpenPGP, error))
+			return FALSE;
 
-	if (!g_mime_gpgme_data_new (output, &out, error)) {
-		gpgme_data_release (in);
+		if (!(recpstring = build_recipient_string (recipients, hidden_recipients, error)))
+			return FALSE;
+	}
+
+	if (!g_mime_gpgme_data_new (input, &in, error)) {
+		g_free (recpstring);
 		return FALSE;
 	}
 
-	status = sign ? gpgme_op_encrypt_sign (ctx, recipients, flags, in, out) :
-		gpgme_op_encrypt (ctx, recipients, flags, in, out);
+	if (!g_mime_gpgme_data_new (output, &out, error)) {
+		gpgme_data_release (in);
+		g_free (recpstring);
+		return FALSE;
+	}
+
+	if (recpstring) {
+		status = sign ? gpgme_op_encrypt_sign_ext (ctx, NULL, recpstring, flags, in, out) :
+			gpgme_op_encrypt_ext (ctx, NULL, recpstring, flags, in, out);
+	} else {
+		status = sign ? gpgme_op_encrypt_sign (ctx, recipients, flags, in, out) :
+			gpgme_op_encrypt (ctx, recipients, flags, in, out);
+	}
+
+	g_free (recpstring);
 
 	if (encrypt_result && (*encrypt_result = gpgme_op_encrypt_result (ctx)))
 		gpgme_result_ref (*encrypt_result);
@@ -426,6 +517,7 @@ _g_mime_gpgme_micalg (gpgme_ctx_t ctx, gpgme_sign_result_t result, GError **erro
 		if (g_hash_table_add (seen, token)) {
 			if (algorithms->len)
 				g_string_append_c (algorithms, ',');
+
 			g_string_append_printf (algorithms, "%s%s", prefix, token);
 		}
 	}

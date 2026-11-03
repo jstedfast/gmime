@@ -68,7 +68,7 @@ endif
 public_deps = [glib_dep, gobject_dep, gio_dep]
 private_deps = [gthread_dep, zlib_dep, iconv_dep]
 
-gpgme_dep = dependency('gpgme', version: '>= 1.6.0', required: get_option('crypto'))
+gpgme_dep = dependency('gpgme', version: '>= 1.11.0', required: get_option('crypto'))
 gpg_error_dep = dependency('gpg-error', required: get_option('crypto'))
 have_crypto = gpgme_dep.found() and gpg_error_dep.found()
 if have_crypto

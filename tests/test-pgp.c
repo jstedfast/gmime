@@ -151,7 +151,7 @@ test_encrypt (gpgme_ctx_t ctx, gboolean sign, GMimeStream *cleartext, GMimeStrea
 	
 	recipients[0] = test_crypto_key (ctx, "no.user@no.domain", FALSE);
 	
-	g_mime_gpgme_encrypt (ctx, sign, GPGME_ENCRYPT_ALWAYS_TRUST, recipients, cleartext, ciphertext, NULL, NULL, &err);
+	g_mime_gpgme_encrypt (ctx, sign, GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, cleartext, ciphertext, NULL, NULL, &err);
 	
 	gpgme_key_unref (recipients[0]);
 	
@@ -338,7 +338,7 @@ test_gpgme_handles (void)
 
 	g_mime_stream_reset (input);
 	g_assert_true (g_mime_gpgme_encrypt (ctx, TRUE, GPGME_ENCRYPT_ALWAYS_TRUST,
-					   recipients, input, encrypted, &encrypted_result, &encrypted_sign, &error));
+					   recipients, NULL, input, encrypted, &encrypted_result, &encrypted_sign, &error));
 	g_assert_no_error (error);
 	g_mime_stream_reset (encrypted);
 	g_assert_true (g_mime_gpgme_decrypt (ctx, TRUE, encrypted, output,

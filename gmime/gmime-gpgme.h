@@ -29,7 +29,8 @@ gboolean g_mime_gpgme_sign (gpgme_ctx_t ctx, gpgme_sig_mode_t mode,
 gboolean g_mime_gpgme_verify (gpgme_ctx_t ctx, GMimeStream *input, GMimeStream *signature,
 			     GMimeStream *output, gpgme_verify_result_t *result, GError **error);
 gboolean g_mime_gpgme_encrypt (gpgme_ctx_t ctx, gboolean sign, gpgme_encrypt_flags_t flags,
-			      gpgme_key_t *recipients, GMimeStream *input, GMimeStream *output,
+			      gpgme_key_t *recipients, gpgme_key_t *hidden_recipients,
+			      GMimeStream *input, GMimeStream *output,
 			      gpgme_encrypt_result_t *encrypt_result, gpgme_sign_result_t *sign_result,
 			      GError **error);
 gboolean g_mime_gpgme_decrypt (gpgme_ctx_t ctx, gboolean verify, GMimeStream *input, GMimeStream *output,
@@ -43,7 +44,7 @@ gboolean g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, gpgme_ctx_t 
 
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_encrypt (gpgme_ctx_t ctx, GMimeEntity *entity,
 							     gboolean sign, gpgme_encrypt_flags_t flags,
-							     gpgme_key_t *recipients,
+							     gpgme_key_t *recipients, gpgme_key_t *hidden_recipients,
 							     gpgme_encrypt_result_t *encrypt_result,
 							     gpgme_sign_result_t *sign_result, GError **err);
 GMimeEntity *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted, gpgme_ctx_t ctx,
@@ -61,7 +62,7 @@ gboolean g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_
 					     GMimeEntity **entity, gpgme_verify_result_t *result, GError **err);
 
 gboolean g_mime_part_openpgp_encrypt (GMimePart *mime_part, gpgme_ctx_t ctx, gboolean sign,
-				     gpgme_encrypt_flags_t flags, gpgme_key_t *recipients,
+				     gpgme_encrypt_flags_t flags, gpgme_key_t *recipients, gpgme_key_t *hidden_recipients,
 				     gpgme_encrypt_result_t *encrypt_result, gpgme_sign_result_t *sign_result,
 				     GError **err);
 gboolean g_mime_part_openpgp_decrypt (GMimePart *mime_part, gpgme_ctx_t ctx,

@@ -60,8 +60,10 @@ The public helpers are:
   handle retains the stream until `gpgme_data_release()`.
 - `g_mime_gpgme_sign()` accepts a native signature mode and configured signers.
 - `g_mime_gpgme_verify()` handles detached and embedded signatures.
-- `g_mime_gpgme_encrypt()` accepts native encryption flags and recipient keys,
-  with optional combined OpenPGP signing.
+- `g_mime_gpgme_encrypt()` accepts native encryption flags and separate visible
+  and hidden recipient-key arrays, with optional combined OpenPGP signing.
+  Hidden recipients are OpenPGP-only; GMime constructs the backend recipient
+  string internally and rejects keys shared by both arrays.
 - `g_mime_gpgme_decrypt()` optionally verifies embedded OpenPGP signatures
   and returns separate native results.
 

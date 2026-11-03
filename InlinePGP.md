@@ -130,6 +130,10 @@ receiving calls are excluded from introspection, matching the rest of the
 Existing `g_mime_part_openpgp_sign()` and `g_mime_part_openpgp_encrypt()`
 already support sending with native contexts and retain their mutating,
 whole-part semantics. Existing verify/decrypt helpers are also unchanged.
+The inline and stream encryption functions take separate visible and hidden
+recipient-key arrays; pass NULL for the hidden array when it is not needed.
+See [PORTING.md](PORTING.md#8-migrate-cryptography-to-native-gpgme) for the
+recipient contract and GPGME version requirement.
 `GMimeFilterOpenPGP` and the part's single-value classification still describe
 the first detected block; they do not silently become multi-block APIs.
 
