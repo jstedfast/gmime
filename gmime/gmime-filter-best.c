@@ -275,7 +275,7 @@ g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeEncodingConstraint cons
  * @max_line_length: maximum line length, excluding CRLF, from 60 through 998
  *
  * Selects a transfer encoding using MimeKit's best-encoding rules. NUL bytes,
- * high-bit byte density, long lines, and newline-terminated lines beginning
+ * high-bit byte density, long lines, and lines beginning
  * with "From " affect the choice. The binary constraint permits binary data
  * but still selects base64 or quoted-printable for long or From-lines.
  *

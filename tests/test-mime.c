@@ -724,8 +724,8 @@ static const struct {
 	{ "=?UTF-8?Q?" "?=", "", FALSE },
 	{ "=?UTF-8?B?" "?=", "", FALSE },
 	{ "=?UTF-8?Q?a_b=5Fc?=", "a b_c", FALSE },
-	{ "=?UTF-8?Q?abc=?=", "abc", FALSE },
-	{ "=?UTF-8?Q?abc=4?=", "abc", FALSE },
+	{ "=?UTF-8?Q?abc=?=", "abc=", FALSE },
+	{ "=?UTF-8?Q?abc=4?=", "abc=4", FALSE },
 	{ "=?UTF-8?Q?=4Z?=", "=4Z", FALSE },
 	{ "=?UTF-8?Q?=A_?=", "=A_", FALSE },
 	{ "=?UTF-8?Q?=__?=", "=_ ", FALSE },
@@ -737,9 +737,9 @@ static const struct {
 	{ "=?UTF-8?Q?=C3?= =?UTF-8?Q?=A9?=", "\xc3\xa9", FALSE },
 	{ "=?UTF-8?Q?=C?= =?UTF-8?Q?3=A?= =?UTF-8?Q?9?=", "\xc3\xa9", FALSE },
 	{ "=?utf-8?q?=4?= =?UTF-8?Q?1?=", "A", FALSE },
-	{ "=?UTF-8?Q?=4?= =?UTF-8?B?MQ==?= =?UTF-8?Q?1?=", "11", FALSE },
-	{ "=?UTF-8?Q?=4?= =?US-ASCII?Q?1?= =?UTF-8?Q?1?=", "11", FALSE },
-	{ "=?UTF-8?Q?=4?= raw =?UTF-8?Q?1?=", " raw 1", FALSE },
+	{ "=?UTF-8?Q?=4?= =?UTF-8?B?MQ==?= =?UTF-8?Q?1?=", "=411", FALSE },
+	{ "=?UTF-8?Q?=4?= =?US-ASCII?Q?1?= =?UTF-8?Q?1?=", "=411", FALSE },
+	{ "=?UTF-8?Q?=4?= raw =?UTF-8?Q?1?=", "=4 raw 1", FALSE },
 	{ "=?UTF-8?B?QQ==Qg==Qw==?=", "ABC", FALSE },
 	{ "=?UTF-8?B?Q!Q==Qg==?=", "AB", FALSE },
 	{ "=?UTF-8?B?Q===QQ==?=", "A", FALSE },
@@ -762,21 +762,16 @@ check_rfc2047_decoded (GMimeParserOptions *options, const char *input, const cha
 	guint phrase;
 
 	for (phrase = 0; phrase < 2; phrase++) {
-		char *decoded = NULL;
+		char *decoded;
 
 		testsuite_check ("rfc2047 %s decoding: %s", phrase ? "phrase" : "text", input);
-		try {
-			if (phrase)
-				decoded = g_mime_utils_header_decode_phrase (options, input);
-			else
-				decoded = g_mime_utils_header_decode_text (options, input);
-			if (strcmp (decoded, expected) != 0)
-				throw (exception_new ("decoded value does not match: actual=\"%s\", expected=\"%s\"",
-						      decoded, expected));
+		decoded = phrase ? g_mime_utils_header_decode_phrase (options, input) :
+			g_mime_utils_header_decode_text (options, input);
+		if (!strcmp (decoded, expected))
 			testsuite_check_passed ();
-		} catch (ex) {
-			testsuite_check_failed ("rfc2047 decoding: %s", ex->message);
-		} finally;
+		else
+			testsuite_check_failed ("decoded value does not match: actual=\"%s\", expected=\"%s\"",
+						decoded, expected);
 		g_free (decoded);
 	}
 }
@@ -790,7 +785,7 @@ test_rfc2047_decoding (GMimeParserOptions *options)
 		char encoding;
 	} splits[] = {
 		{ "alpha_=E2=82=AC_==41_=4=41_=A__=_omega=4",
-		  "alpha \xe2\x82\xac =A =4=41 =A_ =_omega", 'Q' },
+		  "alpha \xe2\x82\xac =A =4=41 =A_ =_omega=4", 'Q' },
 		{ "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5",
 		  "abcdefghijklmnopqrstuvwxyz0123456789", 'B' },
 	};
