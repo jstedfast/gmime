@@ -471,6 +471,15 @@ Passing NULL for the callback, data and destroy notifier disables reporting.
 Compliance reporting neither changes parsing policy nor replaces legacy
 warning callbacks or `GError` handling.
 
+`UnexpectedNullBytesInHeader` identifies the first NUL in each header.
+`Unexpected8BitBytesInHeader` identifies the leading byte of the first malformed
+UTF-8 sequence, not the first non-ASCII byte. Both now report `EXACT` positions,
+including physical lines and byte columns across folded headers and initial
+BOMs. Consumers of earlier GMime 4 development builds should remove heuristic
+relocation of these diagnostics. Generic UTF-8 warnings remain suppressed for
+address headers in favor of their specialized diagnostics. Body-byte positions
+remain exact and unchanged.
+
 ### Header inspection
 
 `GMimeParserHeaderRegexFunc` and `g_mime_parser_set_header_regex()` have been

@@ -282,8 +282,9 @@ test_folded_headers (void)
 	free_result (&result);
 	path = write_file ("mixed-utf8.eml", HEADERS "Subject: ascii\r\n\tcaf\303\251 \377\r\n\r\nbody\r\n", -1);
 	result = run_analyzer (0, path, NULL);
-	assert_contains (result.output, ":6:5: note:");
+	assert_contains (result.output, ":6:8: note:");
 	assert_contains (result.output, "6 |         caf\\xC3\\xA9 \\xFF\n");
+	assert_contains (result.output, "  |                     ^\n");
 	free_result (&result);
 	path = write_file ("blank-continuation.eml", HEADERS "Subject: one\r\n \t \r\n\r\nbody\r\n", -1);
 	result = run_analyzer (0, path, NULL);
@@ -364,6 +365,14 @@ test_metadata (void)
 	}
 	g_assert_cmpstr (g_mime_compliance_violation_get_name (GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER),
 			 ==, "Unexpected8BitBytesInHeader");
+	assert_contains (g_mime_compliance_violation_get_remarks (GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER),
+			 "sequence's leading byte");
+	assert_contains (g_mime_compliance_violation_get_remarks (GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER),
+			 "exact stream offset and byte column");
+	assert_contains (g_mime_compliance_violation_get_remarks (GMIME_COMPLIANCE_NULL_BYTE_IN_ADDRESS),
+			 "first null byte in the header");
+	assert_contains (g_mime_compliance_violation_get_remarks (GMIME_COMPLIANCE_NULL_BYTE_IN_DISPLAY_NAME),
+			 "first null byte in the header");
 }
 
 int

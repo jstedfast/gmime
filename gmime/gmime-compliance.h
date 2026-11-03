@@ -117,9 +117,12 @@ typedef enum {
  * @GMIME_COMPLIANCE_BARE_LINEFEED_IN_HEADER: bare LF in a header
  * @GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY: bare LF in a body
  * @GMIME_COMPLIANCE_OVERSIZED_LINE: physical line exceeds 1000 bytes
- * @GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER: invalid UTF-8 header bytes
+ * @GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_HEADER: invalid UTF-8 header bytes,
+ *   at the exact stream offset and byte column of the first malformed sequence's
+ *   leading byte, including missing or invalid continuation bytes
  * @GMIME_COMPLIANCE_UNEXPECTED_8BIT_BYTES_IN_BODY: non-ASCII bytes in 7-bit content
- * @GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER: NUL in a header
+ * @GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_HEADER: first NUL in each header,
+ *   at its exact stream offset and byte column
  * @GMIME_COMPLIANCE_UNEXPECTED_NULL_BYTES_IN_BODY: NUL in nonbinary content
  * @GMIME_COMPLIANCE_INVALID_HEADER: invalid header syntax
  * @GMIME_COMPLIANCE_INCOMPLETE_HEADER: unterminated header at EOF

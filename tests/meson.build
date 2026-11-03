@@ -87,6 +87,7 @@ endforeach
 standalone_sources = {
   'address-validator': ['../gmime/gmime-address-validator.c', '../gmime/gmime-encoded-word-validator.c'],
   'reader-simd': ['../gmime/gmime-reader-simd.c'],
+  'reader-bytes': ['../gmime/gmime-reader-simd.c'],
   'codecs': [
     '../gmime/gmime-encoder.c', '../gmime/gmime-decoder.c', '../gmime/gmime-codec-simd.c',
     '../gmime/gmime-base64-encoder.c', '../gmime/gmime-base64-decoder.c',
