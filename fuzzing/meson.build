@@ -29,7 +29,7 @@ foreach target, max_length : {'mime-reader': 1048576, 'mime-parser': 1048576,
                              'structured-headers': 65536, 'smtp-address-validator': 4096}
   corpus_args = [meson.current_build_dir() / 'seeds' / target / 'corpus']
   if target in ['mime-reader', 'mime-parser']
-    corpus_args = [meson.current_source_dir() / 'corpus']
+    corpus_args += [meson.current_source_dir() / 'corpus']
     foreach directory : ['messages', 'compliance', 'partial', 'openpgp', 'dkim', 'smime']
       corpus_args += [meson.project_source_root() / 'tests' / 'data' / 'roundtrip' / directory]
     endforeach

@@ -214,6 +214,9 @@ fuzz_compliance_report (const GMimeComplianceIssue *issue, gpointer user_data)
 	if (violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES) {
 		FUZZ_CHECK (checker->cap && checker->reached_cap && !checker->truncated, "Invalid compliance truncation report");
 		checker->truncated = TRUE;
+		/* The immediate marker inherits the first suppressed issue's position,
+		 * which depends on independent validators' ordering across chunks. */
+		g_string_append_printf (checker->trace, "%d\n", violation);
 	} else {
 		guint count = ++checker->counts[violation];
 
@@ -222,7 +225,7 @@ fuzz_compliance_report (const GMimeComplianceIssue *issue, gpointer user_data)
 			if (count == checker->cap)
 				checker->reached_cap = TRUE;
 		}
+		g_string_append_printf (checker->trace, "%d:%d:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ":%" G_GUINT64_FORMAT "\n",
+					violation, issue->position_kind, issue->stream_offset, issue->line_number, issue->column_number);
 	}
-	g_string_append_printf (checker->trace, "%d:%d:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ":%" G_GUINT64_FORMAT "\n",
-				violation, issue->position_kind, issue->stream_offset, issue->line_number, issue->column_number);
 }
