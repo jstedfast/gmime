@@ -556,6 +556,12 @@ g_mime_reader_set_compliance_logger (GMimeReader *reader, GMimeComplianceIssueFu
 	logger_unref (previous);
 }
 
+static inline gint64
+input_offset (GMimeReaderPrivate *priv)
+{
+	return priv->position - (priv->input_end - priv->input_index);
+}
+
 /**
  * g_mime_reader_tell:
  * @reader: a #GMimeReader
@@ -573,7 +579,7 @@ g_mime_reader_tell (GMimeReader *reader)
 
 	priv = _g_mime_reader_get_private (reader);
 
-	return priv->position - (priv->input_end - priv->input_index);
+	return input_offset (priv);
 }
 
 /**
@@ -758,7 +764,7 @@ consume_input (GMimeReader *reader, gsize length)
 	advance_input (priv, length);
 
 	if (priv->previous[1] == '\n') {
-		end = priv->position - (priv->input_end - priv->input_index);
+		end = input_offset (priv);
 
 		if (priv->active_logger && end - priv->line_begin > 1000)
 			report_at (reader, GMIME_COMPLIANCE_OVERSIZED_LINE, priv->line_begin,
@@ -1738,7 +1744,7 @@ static void
 consume_scanned_lines (GMimeReader *reader, const GMimeReaderScan *scan)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 begin = g_mime_reader_tell (reader);
+	gint64 begin = input_offset (priv);
 
 	/* Update line state in bulk, not with another per-byte pass that would
 	 * erase the benefit of vectorized scanning. The previous two bytes
@@ -1807,7 +1813,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	GMimeReaderNewLineFormat newline_format = GMIME_READER_NEWLINE_UNKNOWN;
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gboolean refill = TRUE, fast_skip = TRUE, validate = FALSE;
-	gint64 begin = g_mime_reader_tell (reader), delivered = 0;
+	gint64 begin = input_offset (priv), delivered = 0;
 	gsize npending = 0, content_index = priv->input_index;
 	guint64 begin_line = priv->line_number;
 	EntityFrame *frame = g_ptr_array_index (priv->frames, priv->frames->len - 1);
@@ -1890,7 +1896,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 				options.detect_null = detect_null;
 				options.detect_eight_bit = detect_8bit;
 				options.midline_cr = midline && priv->previous_count && priv->previous[1] == '\r';
-				options.line_length = (guint64) (g_mime_reader_tell (reader) - priv->line_begin);
+				options.line_length = (guint64) (input_offset (priv) - priv->line_begin);
 				options.encoding = validate ? frame->encoding : GMIME_CONTENT_ENCODING_UNSPECIFIED;
 				options.remaining = remaining;
 
@@ -1949,7 +1955,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 		length = lf ? (gsize) (lf - start) : left;
 
 		if (priv->active_logger) {
-			gint64 offset = g_mime_reader_tell (reader);
+			gint64 offset = input_offset (priv);
 			guint64 column = (guint64) (offset - priv->line_begin) + 1;
 			gsize i = line_scan.eight_bit_index;
 
@@ -1990,8 +1996,8 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 
 			if (!cr) {
 				report_at (reader, GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY,
-					   g_mime_reader_tell (reader) + length, priv->line_number,
-					   (guint64) (g_mime_reader_tell (reader) + length - priv->line_begin) + 1,
+					   input_offset (priv) + length, priv->line_number,
+					   (guint64) (input_offset (priv) + length - priv->line_begin) + 1,
 					   GMIME_COMPLIANCE_POSITION_EXACT);
 
 				if (priv->active_logger)
@@ -2003,7 +2009,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 
 			length++;
 		} else if (priv->active_logger && priv->input_eos &&
-			   g_mime_reader_tell (reader) + length - priv->line_begin > 1000) {
+			   input_offset (priv) + length - priv->line_begin > 1000) {
 			report_at (reader, GMIME_COMPLIANCE_OVERSIZED_LINE, priv->line_begin,
 				   priv->line_number, 1, GMIME_COMPLIANCE_POSITION_LINE_START);
 		}

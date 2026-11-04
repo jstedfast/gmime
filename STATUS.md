@@ -3492,7 +3492,10 @@ Line positions and the last two consumed bytes are retained independently
 of buffer movement. Already-scanned newline-free spans and individual lines
 advance in constant time, using their last bytes instead of rescanning the
 input. Oversized-line reporting retains its threshold and callback cursor,
-including across split CRLFs. In contrast to the source's short-read-sensitive
+including across split CRLFs. The internal content loop reads its logical
+cursor directly instead of repeating public API type checks for each line;
+the public cursor getter retains its argument validation.
+In contrast to the source's short-read-sensitive
 lookbehind in malformed/empty nested header blocks, end offsets therefore
 consistently exclude the newline before a boundary even after a refill.
 An immediate embedded-message delimiter is fully probed before deciding
@@ -5044,10 +5047,13 @@ unlike MimeKit's byte-sized counter, it cannot wrap after 255 digits and
 accidentally accept an overlong mode or move its diagnostic. Overlong
 modes consistently report the fifth digit regardless of write boundaries.
 Base64 validation and quoted-printable literal scanning use runtime-selected
-x86/x64 SSSE3 kernels with portable scalar fallbacks. Base64 scans count
+x86/x64 AVX2 and SSSE3 kernels with portable scalar fallbacks. Base64 scans count
 alphabet bytes and line feeds up to the next special byte; quoted-printable
-scans find the next equals sign or LF. Loads require sixteen readable bytes,
-and scalar tails preserve exact diagnostics and per-line latch resets.
+scans find the next equals sign or LF. AVX2 loads require 32 readable bytes,
+then fall back to 16-byte SSSE3 and scalar tails. Runtime dispatch checks
+CPU and OS support without requiring a global AVX2 compiler flag.
+Prefix masks exclude the first special byte and all subsequent bytes from
+the counts, preserving exact diagnostics and per-line latch resets.
 The public compliance framework and reader wiring are described in the
 synchronous reader-completion section above. Public parser integration and
 its warning compatibility are described separately above.
