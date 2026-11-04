@@ -577,30 +577,31 @@ check_scans (const guint8 *input, gsize length)
 static void
 test_scan_kernels (void)
 {
-	guint8 storage[96], *input;
+	guint8 storage[160], *input;
 	guint value, lane, alignment, i;
 	gsize length;
 
 	check_scans (NULL, 0);
 	for (value = 0; value < 256; value++) {
-		input = storage + value % 16;
-		for (lane = 0; lane < 32; lane++) {
-			memset (input, 'A', 80);
+		input = storage + value % 32;
+		for (lane = 0; lane < 128; lane++) {
+			memset (input, 'A', 128);
+			input[127] = '?';
 			input[lane] = (guint8) value;
-			input[lane + 1] = '\n';
-			input[79] = '?';
-			check_scans (input, 80);
+			if (lane < 127)
+				input[lane + 1] = '\n';
+			check_scans (input, 128);
 		}
 
-		for (i = 0; i < 80; i++)
+		for (i = 0; i < 128; i++)
 			input[i] = value & (1u << (i % 8)) ? '\n' : 'A';
-		check_scans (input, 80);
+		check_scans (input, 128);
 	}
-	for (alignment = 0; alignment < 16; alignment++) {
+	for (alignment = 0; alignment < 32; alignment++) {
 		input = storage + alignment;
-		for (i = 0; i < 80; i++)
+		for (i = 0; i < 128; i++)
 			input[i] = "Ab9+/\r\n \t"[i % 9];
-		for (length = 0; length <= 80; length++)
+		for (length = 0; length <= 128; length++)
 			check_scans (input, length);
 	}
 }
@@ -653,7 +654,7 @@ test_guard_pages (void)
 	g_assert_cmpint (mprotect (map, page, PROT_READ), ==, 0);
 	g_assert_cmpint (mprotect (map + page, page, PROT_NONE), ==, 0);
 	for (kind = 0; kind < 2; kind++) {
-		for (length = 0; length <= 65; length++) {
+		for (length = 0; length <= 129; length++) {
 			IssueLog log = { 0 };
 			GMimeEncodingValidator *validator = new_validator (kind, &log, 0, 1);
 
@@ -668,13 +669,19 @@ test_guard_pages (void)
 			g_object_unref (validator);
 		}
 	}
-	for (length = 0; length <= 80; length++)
+	for (length = 0; length <= 129; length++)
 		check_scans (map + page - length, length);
 	g_assert_cmpint (mprotect (map, page, PROT_READ | PROT_WRITE), ==, 0);
-	for (length = 0; length < 80; length++)
-		map[page - 80 + length] = (guint8) length;
+	for (length = 0; length < 129; length++)
+		map[page - 129 + length] = "Ab9+/\r\n \t"[length % 9];
 	g_assert_cmpint (mprotect (map, page, PROT_READ), ==, 0);
-	for (length = 0; length <= 80; length++)
+	for (length = 0; length <= 129; length++)
+		check_scans (map + page - length, length);
+	g_assert_cmpint (mprotect (map, page, PROT_READ | PROT_WRITE), ==, 0);
+	for (length = 0; length < 129; length++)
+		map[page - 129 + length] = (guint8) length;
+	g_assert_cmpint (mprotect (map, page, PROT_READ), ==, 0);
+	for (length = 0; length <= 129; length++)
 		check_scans (map + page - length, length);
 	g_assert_cmpint (munmap (map, page * 2), ==, 0);
 #else

@@ -54,11 +54,12 @@
 static gsize
 scan_base64_scalar (const guint8 *input, gsize length, GMimeCodecScan *scan)
 {
-	gsize i;
 	guint8 c;
+	gsize i;
 
 	for (i = 0; i < length; i++) {
 		c = input[i];
+
 		if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
 		    (c >= '0' && c <= '9') || c == '+' || c == '/') {
 			scan->alphabet_count++;
@@ -111,10 +112,10 @@ mask_popcount (guint mask)
 static SSSE3_TARGET gsize
 scan_base64_ssse3 (const guint8 *input, gsize length, GMimeCodecScan *scan)
 {
+	__m128i block, letters, digits, alphabet, line_feed, whitespace;
+	guint alphabet_mask, line_feed_mask, valid, count, prefix;
 	gsize consumed = 0, tail_length;
 	GMimeCodecScan tail = { 0 };
-	guint alphabet_mask, line_feed_mask, valid, count, prefix;
-	__m128i block, letters, digits, alphabet, line_feed, whitespace;
 
 	while (length - consumed >= 16) {
 		block = _mm_loadu_si128 ((const __m128i *) (input + consumed));
@@ -128,6 +129,7 @@ scan_base64_ssse3 (const guint8 *input, gsize length, GMimeCodecScan *scan)
 					_mm_or_si128 (_mm_cmpeq_epi8 (block, _mm_set1_epi8 ('+')),
 						      _mm_cmpeq_epi8 (block, _mm_set1_epi8 ('/'))));
 		alphabet_mask = (guint) _mm_movemask_epi8 (alphabet);
+
 		if (alphabet_mask == 0xffff) {
 			scan->alphabet_count += 16;
 			consumed += 16;
@@ -139,6 +141,7 @@ scan_base64_ssse3 (const guint8 *input, gsize length, GMimeCodecScan *scan)
 					  _mm_or_si128 (_mm_cmpeq_epi8 (block, _mm_set1_epi8 (' ')),
 							_mm_cmpeq_epi8 (block, _mm_set1_epi8 ('\t'))));
 		valid = (guint) _mm_movemask_epi8 (_mm_or_si128 (alphabet, _mm_or_si128 (line_feed, whitespace)));
+
 		/* Consume only the prefix before padding, a comment marker or invalid input;
 		 * the scalar validator must inspect the first special byte itself. */
 		count = valid == 0xffff ? 16 : (guint) g_bit_nth_lsf (~valid & 0xffff, -1);
@@ -146,11 +149,14 @@ scan_base64_ssse3 (const guint8 *input, gsize length, GMimeCodecScan *scan)
 		alphabet_mask &= prefix;
 		line_feed_mask = (guint) _mm_movemask_epi8 (line_feed) & prefix;
 		scan->alphabet_count += mask_popcount (alphabet_mask);
+
 		if (line_feed_mask) {
 			scan->line_feed_count += mask_popcount (line_feed_mask);
 			scan->line_begin_offset = consumed + g_bit_storage (line_feed_mask);
 		}
+
 		consumed += count;
+
 		if (count < 16)
 			return consumed;
 	}
@@ -159,8 +165,10 @@ scan_base64_ssse3 (const guint8 *input, gsize length, GMimeCodecScan *scan)
 		tail_length = scan_base64_scalar (input + consumed, length - consumed, &tail);
 		scan->alphabet_count += tail.alphabet_count;
 		scan->line_feed_count += tail.line_feed_count;
+
 		if (tail.line_feed_count)
 			scan->line_begin_offset = consumed + tail.line_begin_offset;
+
 		consumed += tail_length;
 	}
 
@@ -170,8 +178,8 @@ scan_base64_ssse3 (const guint8 *input, gsize length, GMimeCodecScan *scan)
 static SSSE3_TARGET gsize
 index_of_qp_special_ssse3 (const guint8 *input, gsize length)
 {
-	gsize consumed = 0;
 	__m128i block, special;
+	gsize consumed = 0;
 	guint mask;
 
 	while (length - consumed >= 16) {
@@ -179,13 +187,108 @@ index_of_qp_special_ssse3 (const guint8 *input, gsize length)
 		special = _mm_or_si128 (_mm_cmpeq_epi8 (block, _mm_set1_epi8 ('=')),
 				       _mm_cmpeq_epi8 (block, _mm_set1_epi8 ('\n')));
 		mask = (guint) _mm_movemask_epi8 (special);
+
 		if (mask)
 			return consumed + g_bit_nth_lsf (mask, -1);
+
 		consumed += 16;
 	}
 
 	if (consumed < length)
 		consumed += index_of_qp_special_scalar (input + consumed, length - consumed);
+
+	return consumed;
+}
+
+static AVX2_TARGET gsize
+scan_base64_avx2 (const guint8 *input, gsize length, GMimeCodecScan *scan)
+{
+	__m256i block, letters, digits, alphabet, line_feed, whitespace;
+	guint alphabet_mask, line_feed_mask, valid, count, prefix;
+	gsize consumed = 0, tail_length;
+	GMimeCodecScan tail = { 0 };
+
+	while (length - consumed >= 32) {
+		block = _mm256_loadu_si256 ((const __m256i *) (input + consumed));
+		letters = _mm256_cmpgt_epi8 (_mm256_set1_epi8 (-128 + 26),
+					    _mm256_add_epi8 (_mm256_or_si256 (block, _mm256_set1_epi8 (0x20)),
+							     _mm256_set1_epi8 (0x80 - 'a')));
+		digits = _mm256_cmpgt_epi8 (_mm256_set1_epi8 (-128 + 10),
+					   _mm256_add_epi8 (block, _mm256_set1_epi8 (0x80 - '0')));
+		alphabet = _mm256_or_si256 (_mm256_or_si256 (letters, digits),
+					   _mm256_or_si256 (_mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ('+')),
+							    _mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ('/'))));
+		alphabet_mask = (guint) _mm256_movemask_epi8 (alphabet);
+
+		if (alphabet_mask == G_MAXUINT32) {
+			scan->alphabet_count += 32;
+			consumed += 32;
+			continue;
+		}
+
+		line_feed = _mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ('\n'));
+		whitespace = _mm256_or_si256 (_mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ('\r')),
+					     _mm256_or_si256 (_mm256_cmpeq_epi8 (block, _mm256_set1_epi8 (' ')),
+							      _mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ('\t'))));
+		valid = (guint) _mm256_movemask_epi8 (_mm256_or_si256 (alphabet, _mm256_or_si256 (line_feed, whitespace)));
+		line_feed_mask = (guint) _mm256_movemask_epi8 (line_feed);
+		count = 32;
+
+		if (valid != G_MAXUINT32) {
+			count = (guint) g_bit_nth_lsf (~valid, -1);
+			prefix = (1u << count) - 1;
+			alphabet_mask &= prefix;
+			line_feed_mask &= prefix;
+		}
+
+		scan->alphabet_count += mask_popcount (alphabet_mask);
+
+		if (line_feed_mask) {
+			scan->line_feed_count += mask_popcount (line_feed_mask);
+			scan->line_begin_offset = consumed + g_bit_storage (line_feed_mask);
+		}
+
+		consumed += count;
+
+		if (count < 32)
+			return consumed;
+	}
+
+	if (consumed < length) {
+		tail_length = scan_base64_ssse3 (input + consumed, length - consumed, &tail);
+		scan->alphabet_count += tail.alphabet_count;
+		scan->line_feed_count += tail.line_feed_count;
+
+		if (tail.line_feed_count)
+			scan->line_begin_offset = consumed + tail.line_begin_offset;
+
+		consumed += tail_length;
+	}
+
+	return consumed;
+}
+
+static AVX2_TARGET gsize
+index_of_qp_special_avx2 (const guint8 *input, gsize length)
+{
+	__m256i block, special;
+	gsize consumed = 0;
+	guint mask;
+
+	while (length - consumed >= 32) {
+		block = _mm256_loadu_si256 ((const __m256i *) (input + consumed));
+		special = _mm256_or_si256 (_mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ('=')),
+					  _mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ('\n')));
+		mask = (guint) _mm256_movemask_epi8 (special);
+
+		if (mask)
+			return consumed + g_bit_nth_lsf (mask, -1);
+
+		consumed += 32;
+	}
+
+	if (consumed < length)
+		consumed += index_of_qp_special_ssse3 (input + consumed, length - consumed);
 
 	return consumed;
 }
@@ -206,6 +309,7 @@ encode_vector_ssse3 (__m128i str, __m128i shuffle, gboolean uu)
 	a = _mm_mulhi_epu16 (_mm_and_si128 (str, _mm_set1_epi32 (0x0fc0fc00)), _mm_set1_epi32 (0x04000040));
 	b = _mm_mullo_epi16 (_mm_and_si128 (str, _mm_set1_epi32 (0x003f03f0)), _mm_set1_epi32 (0x01000010));
 	str = _mm_or_si128 (a, b);
+
 	if (uu) {
 		/* UU maps zero to '`' (0x60), and 1..63 to 0x21..0x5f. */
 		a = _mm_cmpeq_epi8 (str, _mm_setzero_si128 ());
@@ -225,6 +329,7 @@ encode_vector_ssse3 (__m128i str, __m128i shuffle, gboolean uu)
 		indices = _mm_sub_epi8 (indices, _mm_cmpgt_epi8 (str, _mm_set1_epi8 (25)));
 		str = _mm_add_epi8 (str, _mm_shuffle_epi8 (lut, indices));
 	}
+
 	return str;
 }
 
@@ -241,12 +346,14 @@ encode_blocks_ssse3 (const guint8 *input, gsize length, guint8 *output, guint qu
 		str = _mm_loadu_si128 ((const __m128i *) input);
 		str = encode_vector_ssse3 (str, shuffle, uu);
 		_mm_storeu_si128 ((__m128i *) output, str);
+
 		input += 12;
 		output += 16;
 		length -= 12;
 		consumed += 12;
 		quartets -= 4;
 	}
+
 	if (!uu && quartets >= 3 && length >= 9 && (quartets == 3 || length == 9) && consumed) {
 		const __m128i tail_shuffle = _mm_set_epi32 (0x0e0f0d0e, 0x0b0c0a0b, 0x08090708, 0x05060405);
 
@@ -257,6 +364,7 @@ encode_blocks_ssse3 (const guint8 *input, gsize length, guint8 *output, guint qu
 		_mm_storeu_si128 ((__m128i *) (output - 4), str);
 		consumed += 9;
 	}
+
 	return consumed;
 }
 
@@ -267,17 +375,20 @@ decode_block_ssse3 (const guint8 *input, guint8 *output, gboolean uu)
 	const __m128i lut_lo = _mm_set_epi32 (0x1a1b1b1b, 0x1a131111, 0x11111111, 0x11111115);
 	const __m128i lut_shift = _mm_set_epi32 (0, 0, 0xb9b9bfbf, 0x04131000);
 	const __m128i pack = _mm_set_epi32 (-1, 0x0c0d0e08, 0x090a0405, 0x06000102);
-	guint8 bytes[16];
 	__m128i str, hi, lo, invalid, shift, merged;
+	guint8 bytes[16];
 
 	str = _mm_loadu_si128 ((const __m128i *) input);
+
 	if (uu) {
 		/* Every non-newline byte maps to a UU sextet as (c - 0x20) & 0x3f.
 		 * CR and LF need the scalar decoder's line handling. */
 		invalid = _mm_or_si128 (_mm_cmpeq_epi8 (str, _mm_set1_epi8 ('\r')),
 				       _mm_cmpeq_epi8 (str, _mm_set1_epi8 ('\n')));
+
 		if (_mm_movemask_epi8 (invalid))
 			return 0;
+
 		str = _mm_and_si128 (_mm_sub_epi8 (str, _mm_set1_epi8 (32)), _mm_set1_epi8 (63));
 	} else {
 		/* A Base64 byte is valid iff the AND of its high/low nibble lookups is zero.
@@ -286,22 +397,27 @@ decode_block_ssse3 (const guint8 *input, guint8 *output, gboolean uu)
 		hi = _mm_and_si128 (_mm_srli_epi32 (str, 4), _mm_set1_epi8 (0x2f));
 		lo = _mm_and_si128 (str, _mm_set1_epi8 (0x2f));
 		invalid = _mm_and_si128 (_mm_shuffle_epi8 (lut_hi, hi), _mm_shuffle_epi8 (lut_lo, lo));
+
 		if (_mm_movemask_epi8 (_mm_cmpeq_epi8 (invalid, _mm_setzero_si128 ())) != 0xffff)
 			return 0;
+
 		/* The perfect hash (c >> 4) - (c == '/') selects the ASCII-to-sextet offset:
 		 * '+' +19, '/' +16, digits +4, uppercase -65, lowercase -71. */
 		shift = _mm_shuffle_epi8 (lut_shift, _mm_add_epi8 (hi, _mm_cmpeq_epi8 (str, _mm_set1_epi8 ('/'))));
 		str = _mm_add_epi8 (str, shift);
 	}
+
 	/* Merge adjacent sextets a,b into (a << 6) | b, then each quartet into
 	 * (a << 18) | (b << 12) | (c << 6) | d. Shuffle the three meaningful
 	 * bytes of each 32-bit word into big-endian order and pack them together. */
 	merged = _mm_maddubs_epi16 (str, _mm_set1_epi32 (0x01400140));
 	str = _mm_madd_epi16 (merged, _mm_set1_epi32 (0x00011000));
 	str = _mm_shuffle_epi8 (str, pack);
+
 	/* Store only the twelve decoded bytes, never SIMD padding. */
 	_mm_storeu_si128 ((__m128i *) bytes, str);
 	memcpy (output, bytes, 12);
+
 	return 12;
 }
 
@@ -333,10 +449,10 @@ decode_base64_blocks_avx2 (const guint8 **input, gsize length, guint8 *output)
 	const __m256i lanes = _mm256_setr_epi32 (0, 1, 2, 4, 5, 6, -1, -1);
 	const __m256i mask = _mm256_set1_epi8 (0x2f);
 	const guint8 *inptr = *input;
-	gsize written = 0;
-	guint consumed;
 	__m256i str, hi_nibbles, hi, lo, shift;
 	__m128i tail, invalid;
+	gsize written = 0;
+	guint consumed;
 
 	while (length >= 32) {
 		str = _mm256_loadu_si256 ((const __m256i *) inptr);
@@ -347,6 +463,7 @@ decode_base64_blocks_avx2 (const guint8 **input, gsize length, guint8 *output)
 		if (!_mm256_testz_si256 (lo, hi)) {
 			consumed = inptr[12] == '\n' ? 13 : inptr[12] == '\r' && inptr[13] == '\n' ? 14 : 0;
 			invalid = _mm256_castsi256_si128 (_mm256_and_si256 (lo, hi));
+
 			if (!consumed || (_mm_movemask_epi8 (_mm_cmpeq_epi8 (invalid, _mm_setzero_si128 ())) & 0xfff) != 0xfff)
 				break;
 
@@ -383,6 +500,7 @@ decode_base64_blocks_avx2 (const guint8 **input, gsize length, guint8 *output)
 	}
 
 	*input = inptr;
+
 	return written + decode_base64_blocks_ssse3 (input, length, output + written);
 }
 
@@ -444,9 +562,15 @@ codec_dispatch_init (void)
 #endif
 			encode_blocks = encode_blocks_ssse3;
 			decode_block = decode_block_ssse3;
-			decode_base64_blocks = codec_avx2_supported () ? decode_base64_blocks_avx2 : decode_base64_blocks_ssse3;
+			decode_base64_blocks = decode_base64_blocks_ssse3;
 			scan_base64 = scan_base64_ssse3;
 			index_of_qp_special = index_of_qp_special_ssse3;
+
+			if (codec_avx2_supported ()) {
+				decode_base64_blocks = decode_base64_blocks_avx2;
+				scan_base64 = scan_base64_avx2;
+				index_of_qp_special = index_of_qp_special_avx2;
+			}
 		}
 #endif
 		g_once_init_leave (&initialized, 1);
