@@ -2757,6 +2757,106 @@ ignore_compliance (const GMimeComplianceIssue *issue, gpointer user_data)
 {
 }
 
+typedef struct {
+	GMimeReader *reader;
+	const char *wire;
+	gsize length;
+	guint oversized;
+} ConsumedLineState;
+
+static void
+check_consumed_line_issue (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	ConsumedLineState *state = user_data;
+	const char *lf;
+	guint64 line = 1;
+	gsize i;
+
+	if (issue->violation != GMIME_COMPLIANCE_OVERSIZED_LINE)
+		return;
+
+	g_assert_cmpint (issue->stream_offset, >=, 0);
+	g_assert_cmpuint (issue->stream_offset, <, state->length);
+	for (i = 0; i < (gsize) issue->stream_offset; i++)
+		line += state->wire[i] == '\n';
+	g_assert_true (i == 0 || state->wire[i - 1] == '\n');
+	lf = memchr (state->wire + i, '\n', state->length - i);
+	g_assert_nonnull (lf);
+	g_assert_cmpuint (lf - state->wire + 1 - i, >, 1000);
+	g_assert_cmpuint (issue->line_number, ==, line);
+	g_assert_cmpuint (issue->column_number, ==, 1);
+	g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_LINE_START);
+	g_assert_cmpint (g_mime_reader_tell (state->reader), ==, lf - state->wire + 1);
+	state->oversized++;
+}
+
+static void
+test_consumed_line_state (void)
+{
+	static const guint widths[] = { 999, 1000, 1001, 4095, 4096, 4097 };
+	static const guint chunks[] = { 1, 2, 127, 128, 129, 4096, G_MAXUINT };
+	GString *wire = g_string_new (NULL);
+	guint dos, width, chunk, logging, i, line;
+
+	testsuite_check ("Consumed spans preserve oversized-line thresholds, callback positions and raw content");
+	for (dos = 0; dos < 2; dos++) {
+		const char *newline = dos ? "\r\n" : "\n";
+		gsize newline_length = strlen (newline);
+
+		for (width = 0; width < G_N_ELEMENTS (widths); width++) {
+			gsize body_offset;
+
+			g_string_assign (wire, "Subject: ");
+			for (i = wire->len; i < widths[width] - newline_length; i++)
+				g_string_append_c (wire, 'h');
+			g_string_append (wire, newline);
+			g_string_append_c (wire, '\t');
+			for (i = 1; i < widths[width] - newline_length; i++)
+				g_string_append_c (wire, 'h');
+			g_string_append (wire, newline);
+			g_string_append (wire, "Content-Transfer-Encoding: binary");
+			g_string_append (wire, newline);
+			g_string_append (wire, newline);
+			body_offset = wire->len;
+			for (line = 0; line < 2; line++) {
+				for (i = 0; i < widths[width] - newline_length; i++)
+					g_string_append_c (wire, i % 127 ? 'b' : '\0');
+				g_string_append (wire, newline);
+			}
+			g_string_append (wire, "tail\r");
+
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				for (logging = 0; logging < 2; logging++) {
+					ReaderInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+					TestReader *reader = new_reader (input, NULL);
+					ConsumedLineState state = { (GMimeReader *) reader, wire->str, wire->len, 0 };
+					GError *error = NULL;
+
+					if (logging) {
+						GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+
+						g_mime_compliance_options_set_max_issues_per_violation (options, 0);
+						g_mime_reader_set_compliance_options ((GMimeReader *) reader, options);
+						g_mime_compliance_options_unref (options);
+						g_mime_reader_set_compliance_logger ((GMimeReader *) reader,
+										    check_consumed_line_issue, &state, NULL);
+					}
+					g_assert_true (g_mime_reader_read_message ((GMimeReader *) reader, &error));
+					g_assert_no_error (error);
+					g_assert_cmpint (g_mime_reader_tell ((GMimeReader *) reader), ==, wire->len);
+					g_assert_cmpuint (state.oversized, ==, logging && widths[width] > 1000 ? 4 : 0);
+					g_assert_cmpmem (reader->content->data, reader->content->len,
+							wire->str + body_offset, wire->len - body_offset);
+					g_object_unref (reader);
+					g_object_unref (input);
+				}
+			}
+		}
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
 static char *
 record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chunk, gboolean fast,
 		   gint backend, guint budget, GArray *issues)
@@ -3272,6 +3372,7 @@ main (int argc, char **argv)
 	test_repeated_headers ();
 	test_repeated_content_ids ();
 	test_content_id_model_preservation ();
+	test_consumed_line_state ();
 	test_scan_corpus (datadir);
 	test_generated_scans ();
 	test_content_input_slices ();

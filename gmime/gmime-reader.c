@@ -734,30 +734,39 @@ is_blank (guint8 c)
 }
 
 static void
+advance_input (GMimeReaderPrivate *priv, gsize length)
+{
+	const guint8 *data = priv->input + priv->input_index;
+
+	priv->previous[0] = length > 1 ? data[length - 2] : priv->previous[1];
+	priv->previous[1] = data[length - 1];
+	priv->previous_count = MIN (2, priv->previous_count + length);
+	priv->input_index += length;
+}
+
+static void
 consume_input (GMimeReader *reader, gsize length)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 offset = g_mime_reader_tell (reader);
-	gsize i;
+	gint64 end;
 
-	/* Keep line positions and the last two bytes outside the input buffer:
-	 * refilling may move or discard the bytes before the logical cursor. */
-	for (i = 0; i < length; i++) {
-		guint8 c = priv->input[priv->input_index++];
+	if (!length)
+		return;
 
-		priv->previous[0] = priv->previous[1];
-		priv->previous[1] = c;
-		priv->previous_count = MIN (priv->previous_count + 1, 2);
+	/* Callers have already scanned a newline-free span or a single line
+	 * ending in LF. Preserve the last two wire bytes without rescanning. */
+	advance_input (priv, length);
 
-		if (c == '\n') {
-			if (priv->active_logger && offset + i + 1 - priv->line_begin > 1000)
-				report_at (reader, GMIME_COMPLIANCE_OVERSIZED_LINE, priv->line_begin,
-					   priv->line_number, 1, GMIME_COMPLIANCE_POSITION_LINE_START);
+	if (priv->previous[1] == '\n') {
+		end = priv->position - (priv->input_end - priv->input_index);
 
-			priv->prev_line_begin = priv->line_begin;
-			priv->line_begin = offset + i + 1;
-			priv->line_number++;
-		}
+		if (priv->active_logger && end - priv->line_begin > 1000)
+			report_at (reader, GMIME_COMPLIANCE_OVERSIZED_LINE, priv->line_begin,
+				   priv->line_number, 1, GMIME_COMPLIANCE_POSITION_LINE_START);
+
+		priv->prev_line_begin = priv->line_begin;
+		priv->line_begin = end;
+		priv->line_number++;
 	}
 }
 
@@ -1730,7 +1739,6 @@ consume_scanned_lines (GMimeReader *reader, const GMimeReaderScan *scan)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
-	const guint8 *data = priv->input + priv->input_index;
 
 	/* Update line state in bulk, not with another per-byte pass that would
 	 * erase the benefit of vectorized scanning. The previous two bytes
@@ -1738,10 +1746,7 @@ consume_scanned_lines (GMimeReader *reader, const GMimeReaderScan *scan)
 	priv->prev_line_begin = scan->lines > 1 ? begin + scan->previous_line : priv->line_begin;
 	priv->line_begin = begin + scan->length;
 	priv->line_number += scan->lines;
-	priv->previous[0] = scan->length > 1 ? data[scan->length - 2] : priv->previous[1];
-	priv->previous[1] = data[scan->length - 1];
-	priv->previous_count = MIN (2, priv->previous_count + scan->length);
-	priv->input_index += scan->length;
+	advance_input (priv, scan->length);
 }
 
 static gboolean
