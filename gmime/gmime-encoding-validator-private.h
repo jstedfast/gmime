@@ -63,6 +63,9 @@ struct _GMimeEncodingValidatorInterface {
 	GMimeContentEncoding (*get_encoding) (GMimeEncodingValidator *validator);
 	void (*write) (GMimeEncodingValidator *validator, const guint8 *input, gsize length);
 	void (*flush) (GMimeEncodingValidator *validator);
+	gboolean (*can_consume_clean_content) (GMimeEncodingValidator *validator, gint *remaining);
+	void (*consume_clean_content) (GMimeEncodingValidator *validator, const guint8 *input,
+				      gsize length, guint32 alphabet_count, guint64 lines);
 };
 
 G_GNUC_INTERNAL GMimeContentEncoding _g_mime_encoding_validator_get_encoding (GMimeEncodingValidator *validator);
@@ -70,6 +73,16 @@ G_GNUC_INTERNAL void _g_mime_encoding_validator_write (GMimeEncodingValidator *v
 						      const guint8 *input, gsize length);
 /* Flush reports incomplete input without resetting or closing the validator. */
 G_GNUC_INTERNAL void _g_mime_encoding_validator_flush (GMimeEncodingValidator *validator);
+
+/* remaining is the UU payload count, or -1 at the start of a UU line.
+ * Other encodings set it to zero. Clean prefixes must end immediately after
+ * LF; consuming them advances state without reporting any diagnostics. */
+G_GNUC_INTERNAL gboolean _g_mime_encoding_validator_can_consume_clean_content (
+	GMimeEncodingValidator *validator, gint *remaining);
+G_GNUC_INTERNAL void _g_mime_encoding_validator_consume_clean_content (
+	GMimeEncodingValidator *validator, const guint8 *input, gsize length,
+	guint32 alphabet_count, guint64 lines);
+G_GNUC_INTERNAL gboolean _g_mime_quoted_printable_is_line_valid (const guint8 *input, gsize length);
 
 /* Nonnegative byte offsets; one-based line/column numbers start at this position. */
 G_GNUC_INTERNAL GMimeEncodingValidator *_g_mime_base64_validator_new (GMimeEncodingIssueFunc report,

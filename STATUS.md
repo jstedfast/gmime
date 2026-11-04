@@ -3919,6 +3919,43 @@ delivered before validator finalization, matching MimeKit's ordering.
 Regressions verify input-buffer pointer identity, binary byte preservation,
 split CRLFs and EOF callback/finalization order.
 
+### Fused content scanning and transfer-encoding validation
+
+MimeKit `03097f04` is ported to the synchronous native reader. With compliance
+logging enabled, bounded SSE2, AVX2 and NEON kernels combine structural checks
+with Base64, quoted-printable or UU payload validation. Clean CRLF prefixes
+advance the incremental validators without rescanning every byte. A portable
+scalar implementation remains available on other targets.
+
+Base64 preserves quantum counts and the final alphabet byte needed for pad-bit
+diagnostics. Quoted-printable checks hex escapes and CRLF soft breaks; rejected
+boundary candidates and valid LF soft breaks can still advance its clean
+prefix without suppressing bare-LF diagnostics. UU scanning handles partial
+payload quartets across reads and leaves wrappers, length errors and end
+markers to the ordinary validator.
+
+Malformed encodings, special bytes, oversized lines, bare LF and possible
+MIME/mbox/MMDF boundaries retain the existing fallback behavior. Structural
+diagnostics still precede exceptional encoding diagnostics and raw callbacks
+within each buffered batch. Exact positions, diagnostic budgets, raw content
+bytes, physical line counts and boundary-owned newline trimming are preserved.
+The private clean-prefix interface and backend selector add no public API.
+
+Persistent tests compare complete callback traces and ordered issues against
+the original per-line reader, including corpus messages, generated MIME,
+short reads, issue budgets, false delimiters, Base64 pad bits, QP escape bytes
+and UU payload bytes. Kernel checks cover scalar and each available SIMD
+backend, unaligned inputs, vector edges, line limits, guard pages and clean-path
+progress. Validator tests compare clean-prefix advancement with ordinary
+incremental writes at every split. The scanner's optional `--benchmark` mode
+also measures the fused kernels; kernel throughput is not an end-to-end
+parser speedup guarantee.
+
+The twelve focused reader/kernel/validator/parser/roundtrip/analyzer and MIME
+fuzz-replay suites pass in native and ASan/UBSan builds. GIR, typelib, Vala and
+reference documentation build. Scalar, SSE2 and AVX2 kernels are exercised
+locally; native Windows and NEON execution remain CI/platform follow-up.
+
 ### Reader-backed header and leaf model foundation
 
 A private GMimeReader subclass now ports MimeParser's header and root-leaf

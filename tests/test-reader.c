@@ -2758,7 +2758,8 @@ ignore_compliance (const GMimeComplianceIssue *issue, gpointer user_data)
 }
 
 static char *
-record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chunk, gboolean fast)
+record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chunk, gboolean fast,
+		   gint backend, guint budget, GArray *issues)
 {
 	GMimeParserOptions *options = g_mime_parser_options_new ();
 	ReaderInput *input = new_input (data, length, chunk);
@@ -2773,8 +2774,22 @@ record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chu
 	reader = (GMimeReader *) test;
 	test->trace_newlines = test->trace_reads = TRUE;
 	g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input, format);
-	if (!fast)
-		g_mime_reader_set_compliance_logger (reader, ignore_compliance, NULL, NULL);
+	if ((!fast || backend >= 0) && !_g_mime_reader_set_content_scan_backend (reader,
+			fast ? (GMimeReaderScanBackend) backend : GMIME_READER_SCAN_SCALAR)) {
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_mime_parser_options_unref (options);
+		return NULL;
+	}
+	if (!fast || issues) {
+		GMimeComplianceOptions *compliance = g_mime_compliance_options_new ();
+
+		g_mime_compliance_options_set_enabled_validators (compliance, GMIME_COMPLIANCE_VALIDATOR_ALL);
+		g_mime_compliance_options_set_max_issues_per_violation (compliance, budget);
+		g_mime_reader_set_compliance_options (reader, compliance);
+		g_mime_compliance_options_unref (compliance);
+		g_mime_reader_set_compliance_logger (reader, issues ? collect_compliance : ignore_compliance, issues, NULL);
+	}
 	do {
 		gint64 before = g_mime_reader_tell (reader);
 
@@ -2790,7 +2805,7 @@ record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chu
 		}
 		g_assert_no_error (error);
 		g_assert_cmpint (g_mime_reader_tell (reader), >, before);
-	} while (format == GMIME_FORMAT_MBOX && !g_mime_reader_eos (reader));
+	} while ((format == GMIME_FORMAT_MBOX || format == GMIME_FORMAT_MMDF) && !g_mime_reader_eos (reader));
 	trace = g_strdup (test->trace->str);
 	g_object_unref (reader);
 	g_object_unref (input);
@@ -2806,8 +2821,8 @@ check_scan_equivalence (const char *name, const char *data, gsize length, GMimeF
 
 	testsuite_check ("Fast/per-line scan: %s (%" G_GSIZE_FORMAT " bytes, format %d, chunk %" G_GSIZE_FORMAT ")",
 			 name, length, format, chunk);
-	expected = record_scan_trace (data, length, format, chunk, FALSE);
-	actual = record_scan_trace (data, length, format, chunk, TRUE);
+	expected = record_scan_trace (data, length, format, chunk, FALSE, -1, 0, NULL);
+	actual = record_scan_trace (data, length, format, chunk, TRUE, -1, 0, NULL);
 	for (offset = 0; expected[offset] && expected[offset] == actual[offset]; offset++)
 		;
 	if (expected[offset] != actual[offset]) {
@@ -2820,6 +2835,39 @@ check_scan_equivalence (const char *name, const char *data, gsize length, GMimeF
 	}
 	g_free (actual);
 	g_free (expected);
+}
+
+static void
+check_validated_scan (const char *data, gsize length, GMimeFormat format, gsize chunk, guint budget)
+{
+	GArray *expected_issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	GArray *actual_issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	char *expected = record_scan_trace (data, length, format, chunk, FALSE, -1, budget, expected_issues);
+	gint backend;
+	guint i;
+
+	for (backend = -1; backend <= GMIME_READER_SCAN_NEON; backend++) {
+		char *actual;
+
+		if (backend == GMIME_READER_SCAN_SCALAR)
+			continue;
+		g_array_set_size (actual_issues, 0);
+		actual = record_scan_trace (data, length, format, chunk, TRUE, backend, budget, actual_issues);
+		if (!actual)
+			continue;
+		if (strcmp (actual, expected) || actual_issues->len != expected_issues->len)
+			g_printerr ("Fused scan mismatch: backend %d, chunk %" G_GSIZE_FORMAT ", budget %u, input length %"
+				    G_GSIZE_FORMAT "\n", backend, chunk, budget, length);
+		g_assert_cmpstr (actual, ==, expected);
+		g_assert_cmpuint (actual_issues->len, ==, expected_issues->len);
+		for (i = 0; i < actual_issues->len; i++)
+			g_assert_true (g_mime_compliance_issue_equal (&g_array_index (actual_issues, GMimeComplianceIssue, i),
+								    &g_array_index (expected_issues, GMimeComplianceIssue, i)));
+		g_free (actual);
+	}
+	g_free (expected);
+	g_array_unref (actual_issues);
+	g_array_unref (expected_issues);
 }
 
 /* Adapted from MimeKit's committed MimeReaderScanContentTests.
@@ -2862,8 +2910,10 @@ test_scan_corpus (const char *datadir)
 				GMIME_FORMAT_MBOX : GMIME_FORMAT_MESSAGE;
 			if (format == GMIME_FORMAT_MBOX)
 				mailboxes++;
-			for (j = 0; j < G_N_ELEMENTS (chunks); j++)
+			for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
 				check_scan_equivalence (label, data, length, format, chunks[j]);
+				check_validated_scan (data, length, format, chunks[j], j);
+			}
 			g_free (data);
 			g_free (label);
 			g_free (path);
@@ -2988,6 +3038,7 @@ test_generated_scans (void)
 			}
 			name = g_strdup_printf ("generated seed %u case %u", seed, i);
 			check_scan_equivalence (name, wire->str, wire->len, formats[format], chunks[i % G_N_ELEMENTS (chunks)]);
+			check_validated_scan (wire->str, wire->len, formats[format], chunks[i % G_N_ELEMENTS (chunks)], i % 2);
 			g_free (name);
 			g_string_free (wire, TRUE);
 		}
@@ -3052,6 +3103,108 @@ test_content_input_slices (void)
 		}
 	}
 	g_string_free (body, TRUE);
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_fused_content_scanning (void)
+{
+	static const char *encodings[] = { "7bit", "8bit", "binary", "base64", "quoted-printable", "x-uuencode" };
+	static const guint widths[] = { 0, 1, 14, 15, 16, 30, 31, 32, 76, 997, 998, 999, 1000, 4095 };
+	static const guint chunks[] = { 1, 33, 64, 1021, 4096 };
+	static const char *tails[] = { "", "\r", "\n", "\r\n--b--\r\n", "AB==\r\n", "AAB=\r\n",
+		"AA==\r\nAAAA\r\n", "* comment *\r\n", "=0G\r\n", "=\rX\r\n", "=", "=A",
+		"---=20value\r\n", "---=\n", "Fromage=20value\r\n" };
+	static const char faults[] = "\0\xff\r\n=0G\r\n---\r\n=\rX\r\n";
+	GString *wire = g_string_new (NULL);
+	guint encoding, width, tail, chunk, i, value;
+
+	testsuite_check ("Fused content scans preserve callbacks and ordered diagnostics across encodings and read splits");
+	for (encoding = 0; encoding < G_N_ELEMENTS (encodings); encoding++) {
+		for (width = 0; width < G_N_ELEMENTS (widths); width++) {
+			for (tail = 0; tail < G_N_ELEMENTS (tails); tail++) {
+				g_string_printf (wire, "Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\n"
+					"Content-Type: text/plain\r\nContent-Transfer-Encoding: %s\r\n\r\n", encodings[encoding]);
+				if (encoding == 5)
+					g_string_append (wire, "begin 644 file.bin\r\n");
+				for (i = 0; i < 80; i++)
+					g_string_append (wire, encoding == 5 ?
+						"M!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n" :
+						encoding == 4 ? "literal=20text=3Dvalue=c3=a9=\r\n" :
+						"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\r\n");
+				for (i = 0; i < widths[width]; i++)
+					g_string_append_c (wire, 'A');
+				g_string_append (wire, tails[tail]);
+				g_string_append_len (wire, faults, sizeof (faults) - 1);
+				g_string_append (wire, encoding == 5 ? "`\r\nend\r\n--b--\r\n" : "--b--\r\n");
+				for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+					/* Byte-at-a-time input is covered once per tail, not at every width. */
+					if (chunk == 0 && width != 0)
+						continue;
+					check_validated_scan (wire->str, wire->len, GMIME_FORMAT_MESSAGE, chunks[chunk], tail % 2);
+				}
+			}
+		}
+	}
+
+	/* Exercise every QP escape byte and every UU payload byte at vector edges. */
+	for (encoding = 4; encoding <= 5; encoding++) {
+		for (value = 0; value < 256; value++) {
+			g_string_printf (wire, "Content-Transfer-Encoding: %s\r\n\r\n", encodings[encoding]);
+			if (encoding == 5)
+				g_string_append (wire, "begin 644 file.bin\r\n");
+			for (i = 0; i < 128; i++) {
+				guint pad, position = i % 60;
+
+				if (encoding == 5)
+					g_string_append_c (wire, 'M');
+				for (pad = 0; pad < position; pad++)
+					g_string_append_c (wire, 'A');
+				if (encoding == 4)
+					g_string_append_c (wire, '=');
+				g_string_append_c (wire, value);
+				for (pad = position + 1; pad < 60; pad++)
+					g_string_append_c (wire, 'A');
+				g_string_append (wire, "\r\n");
+			}
+			g_string_append (wire, encoding == 5 ? "`\r\nend\r\n" : "=A");
+			check_validated_scan (wire->str, wire->len, GMIME_FORMAT_MESSAGE, 4096, value % 2);
+		}
+	}
+
+	for (encoding = 3; encoding <= 5; encoding++) {
+		for (width = 0; width < 32; width++) {
+			g_string_truncate (wire, 0);
+			for (i = 0; i < 2; i++) {
+				guint line, pad;
+
+				g_string_append (wire, "From sender@example.com Fri Jan  1 00:00:00 2026\r\n");
+				g_string_append_printf (wire, "Content-Transfer-Encoding: %s\r\n\r\n", encodings[encoding]);
+				if (encoding == 5)
+					g_string_append (wire, "begin 644 file.bin\r\n");
+				for (line = 0; line < 120; line++)
+					g_string_append (wire, encoding == 5 ?
+						"M!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n" :
+						encoding == 4 ? "---=20value=\r\nFromage=20value\r\n" : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdef\r\n");
+				for (pad = 0; pad < width; pad++)
+					g_string_append_c (wire, 'A');
+				g_string_append (wire, encoding == 5 ? "\r\n`\r\nend\r\n" : "\r\n");
+			}
+			check_validated_scan (wire->str, wire->len, GMIME_FORMAT_MBOX, 1021, width % 2);
+			check_validated_scan (wire->str, wire->len, GMIME_FORMAT_MBOX, 4096, width % 2);
+		}
+	}
+	for (width = 0; width < 32; width++) {
+		g_string_assign (wire, "\1\1\1\1\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
+		for (i = 0; i < 120; i++)
+			g_string_append (wire, "literal=20text=\r\n\1\1X=20value\r\n---=20value\r\n");
+		for (i = 0; i < width; i++)
+			g_string_append_c (wire, 'A');
+		g_string_append (wire, "\r\n\1\1\1\1\r\n\1\1\1\1\r\n\r\nlast\r\n\1\1\1\1\r\n");
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++)
+			check_validated_scan (wire->str, wire->len, GMIME_FORMAT_MMDF, chunks[chunk], width % 2);
+	}
 	g_string_free (wire, TRUE);
 	testsuite_check_passed ();
 }
@@ -3122,6 +3275,7 @@ main (int argc, char **argv)
 	test_scan_corpus (datadir);
 	test_generated_scans ();
 	test_content_input_slices ();
+	test_fused_content_scanning ();
 	testsuite_check ("Header limits, callback failures and input errors");
 	test_reader_limits_and_errors ();
 	testsuite_check_passed ();
