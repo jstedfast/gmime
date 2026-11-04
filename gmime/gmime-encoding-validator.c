@@ -30,7 +30,6 @@ G_DEFINE_INTERFACE (GMimeEncodingValidator, _g_mime_encoding_validator, G_TYPE_O
 static void
 _g_mime_encoding_validator_default_init (GMimeEncodingValidatorInterface *iface)
 {
-	(void) iface;
 }
 
 GMimeContentEncoding
@@ -56,6 +55,26 @@ _g_mime_encoding_validator_flush (GMimeEncodingValidator *validator)
 	g_return_if_fail (GMIME_IS_ENCODING_VALIDATOR (validator));
 
 	GMIME_ENCODING_VALIDATOR_GET_IFACE (validator)->flush (validator);
+}
+
+gboolean
+_g_mime_encoding_validator_can_consume_clean_content (GMimeEncodingValidator *validator, gint *remaining)
+{
+	g_return_val_if_fail (GMIME_IS_ENCODING_VALIDATOR (validator), FALSE);
+	g_return_val_if_fail (remaining != NULL, FALSE);
+
+	return GMIME_ENCODING_VALIDATOR_GET_IFACE (validator)->can_consume_clean_content (validator, remaining);
+}
+
+void
+_g_mime_encoding_validator_consume_clean_content (GMimeEncodingValidator *validator, const guint8 *input,
+						gsize length, guint32 alphabet_count, guint64 lines)
+{
+	g_return_if_fail (GMIME_IS_ENCODING_VALIDATOR (validator));
+	g_return_if_fail (input != NULL && length > 0 && input[length - 1] == '\n');
+	g_return_if_fail (lines > 0);
+
+	GMIME_ENCODING_VALIDATOR_GET_IFACE (validator)->consume_clean_content (validator, input, length, alphabet_count, lines);
 }
 
 typedef struct {
@@ -160,11 +179,15 @@ base64_write (GMimeEncodingValidator *validator, const guint8 *input, gsize leng
 					base64->reported_invalid_character = FALSE;
 					base64->reported_comment = FALSE;
 				}
+
 				i += consumed;
+
 				if (i == length)
 					break;
 			}
+
 			c = input[i++];
+
 			if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
 			    (c >= '0' && c <= '9') || c == '+' || c == '/') {
 				base64->total++;
@@ -212,11 +235,13 @@ base64_write (GMimeEncodingValidator *validator, const guint8 *input, gsize leng
 
 	while (!base64->invalid && i < length) {
 		c = input[i++];
+
 		if (c == '\n') {
 			context->line_begin_offset = context->stream_offset + i;
 			context->line_number++;
 		} else if (c == '=') {
 			base64->total++;
+
 			if (++base64->padding > 2) {
 				validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_BASE64_PADDING,
 						  context->stream_offset + i - 1);
@@ -228,6 +253,7 @@ base64_write (GMimeEncodingValidator *validator, const guint8 *input, gsize leng
 			base64->invalid = TRUE;
 		}
 	}
+
 	if (base64->total % 4 >= 2 && base64->padding == 0 && base64->total != total)
 		base64->last_alphabet = base64_last_alphabet (base64, input, i);
 
@@ -244,24 +270,55 @@ base64_flush (GMimeEncodingValidator *validator)
 				  base64->context.stream_offset);
 }
 
+static gboolean
+base64_can_consume_clean_content (GMimeEncodingValidator *validator, gint *remaining)
+{
+	GMimeBase64Validator *base64 = (GMimeBase64Validator *) validator;
+
+	*remaining = 0;
+
+	return !base64->invalid && base64->padding == 0;
+}
+
+static void
+base64_consume_clean_content (GMimeEncodingValidator *validator, const guint8 *input, gsize length,
+			     guint32 alphabet_count, guint64 lines)
+{
+	GMimeBase64Validator *base64 = (GMimeBase64Validator *) validator;
+	ValidatorContext *context = &base64->context;
+
+	g_return_if_fail (length <= (guint64) (G_MAXINT64 - context->stream_offset));
+
+	base64->total += alphabet_count;
+
+	if (base64->total % 4 >= 2 && alphabet_count)
+		base64->last_alphabet = base64_last_alphabet (base64, input, length);
+
+	context->stream_offset += length;
+	context->line_begin_offset = context->stream_offset;
+	context->line_number += lines;
+	base64->reported_invalid_character = FALSE;
+	base64->reported_comment = FALSE;
+}
+
 static void
 base64_validator_interface_init (GMimeEncodingValidatorInterface *iface)
 {
 	iface->get_encoding = base64_get_encoding;
 	iface->write = base64_write;
 	iface->flush = base64_flush;
+	iface->can_consume_clean_content = base64_can_consume_clean_content;
+	iface->consume_clean_content = base64_consume_clean_content;
 }
 
 static void
 _g_mime_base64_validator_class_init (GMimeBase64ValidatorClass *klass)
 {
-	(void) klass;
 }
 
 static void
 _g_mime_base64_validator_init (GMimeBase64Validator *base64)
 {
-	(void) base64;
 }
 
 GMimeEncodingValidator *
@@ -307,7 +364,6 @@ G_DEFINE_TYPE_WITH_CODE (GMimeQuotedPrintableValidator, _g_mime_quoted_printable
 static GMimeContentEncoding
 qp_get_encoding (GMimeEncodingValidator *validator)
 {
-	(void) validator;
 	return GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 }
 
@@ -332,6 +388,7 @@ qp_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 
 	while (i < length) {
 		c = input[i];
+
 		switch (qp->state) {
 		case QP_PASS_THROUGH: {
 			/* Heavily encoded text has short literal runs; scan a small prefix
@@ -340,27 +397,34 @@ qp_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 
 			while (i < scan_end) {
 				c = input[i++];
+
 				if (c == '=') {
 					qp->state = QP_EQUAL_SIGN;
 					break;
 				}
+
 				if (c == '\n')
 					qp_newline (qp, i);
 			}
+
 			if (qp->state != QP_PASS_THROUGH)
 				break;
 
 			/* Literal content needs no inspection until the next '=' or LF. */
 			while (i < length) {
 				i += _g_mime_codec_index_of_qp_special (input + i, length - i);
+
 				if (i == length)
 					break;
+
 				if (input[i++] == '=') {
 					qp->state = QP_EQUAL_SIGN;
 					break;
 				}
+
 				qp_newline (qp, i);
 			}
+
 			break;
 		}
 		case QP_EQUAL_SIGN:
@@ -376,8 +440,10 @@ qp_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 					validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_QUOTED_PRINTABLE_ENCODING,
 							  context->stream_offset + i);
 				}
+
 				qp->state = QP_PASS_THROUGH;
 			}
+
 			i++;
 			break;
 		case QP_SOFT_BREAK:
@@ -388,6 +454,7 @@ qp_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 				validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_QUOTED_PRINTABLE_SOFT_BREAK,
 						  context->stream_offset + i);
 			}
+
 			/* A malformed soft break leaves this octet to be processed again. */
 			qp->state = QP_PASS_THROUGH;
 			break;
@@ -398,14 +465,17 @@ qp_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 					validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_QUOTED_PRINTABLE_ENCODING,
 							  context->stream_offset + i);
 				}
+
 				if (c == '\n')
 					qp_newline (qp, i + 1);
 			}
+
 			qp->state = QP_PASS_THROUGH;
 			i++;
 			break;
 		}
 	}
+
 	context->stream_offset += length;
 }
 
@@ -424,24 +494,80 @@ qp_flush (GMimeEncodingValidator *validator)
 				  qp->context.stream_offset);
 }
 
+gboolean
+_g_mime_quoted_printable_is_line_valid (const guint8 *input, gsize length)
+{
+	gsize offset = 0;
+
+	if (!length || input[length - 1] != '\n')
+		return FALSE;
+
+	while (offset < length) {
+		const guint8 *equal = memchr (input + offset, '=', length - offset);
+
+		if (!equal)
+			return TRUE;
+
+		offset = equal - input;
+
+		if (length - offset == 2 && equal[1] == '\n')
+			return TRUE;
+
+		if (length - offset < 3 ||
+		    !((g_ascii_isxdigit (equal[1]) && g_ascii_isxdigit (equal[2])) ||
+		      (equal[1] == '\r' && equal[2] == '\n')))
+			return FALSE;
+
+		offset += 3;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+qp_can_consume_clean_content (GMimeEncodingValidator *validator, gint *remaining)
+{
+	GMimeQuotedPrintableValidator *qp = (GMimeQuotedPrintableValidator *) validator;
+
+	*remaining = 0;
+
+	return qp->state == QP_PASS_THROUGH;
+}
+
+static void
+qp_consume_clean_content (GMimeEncodingValidator *validator, const guint8 *input, gsize length,
+			 guint32 alphabet_count, guint64 lines)
+{
+	GMimeQuotedPrintableValidator *qp = (GMimeQuotedPrintableValidator *) validator;
+	ValidatorContext *context = &qp->context;
+
+	g_return_if_fail (length <= (guint64) (G_MAXINT64 - context->stream_offset));
+
+	context->stream_offset += length;
+	context->line_begin_offset = context->stream_offset;
+	context->line_number += lines;
+	qp->reported_invalid_encoding = FALSE;
+	qp->reported_invalid_soft_break = FALSE;
+}
+
 static void
 qp_validator_interface_init (GMimeEncodingValidatorInterface *iface)
 {
 	iface->get_encoding = qp_get_encoding;
 	iface->write = qp_write;
 	iface->flush = qp_flush;
+	iface->can_consume_clean_content = qp_can_consume_clean_content;
+	iface->consume_clean_content = qp_consume_clean_content;
 }
 
 static void
 _g_mime_quoted_printable_validator_class_init (GMimeQuotedPrintableValidatorClass *klass)
 {
-	(void) klass;
 }
 
 static void
 _g_mime_quoted_printable_validator_init (GMimeQuotedPrintableValidator *qp)
 {
-	(void) qp;
 }
 
 GMimeEncodingValidator *
@@ -504,7 +630,6 @@ G_DEFINE_TYPE_WITH_CODE (GMimeUUValidator, _g_mime_uu_validator, G_TYPE_OBJECT,
 static GMimeContentEncoding
 uu_get_encoding (GMimeEncodingValidator *validator)
 {
-	(void) validator;
 	return GMIME_CONTENT_ENCODING_UUENCODE;
 }
 
@@ -520,10 +645,12 @@ uu_read_byte (GMimeUUValidator *uu, const guint8 *input, gsize *position)
 	guint8 c = input[(*position)++];
 
 	uu->context.stream_offset++;
+
 	if (c == '\n') {
 		uu->context.line_begin_offset = uu->context.stream_offset;
 		uu->context.line_number++;
 	}
+
 	return c;
 }
 
@@ -563,23 +690,30 @@ uu_scan_begin (GMimeUUValidator *uu, const guint8 *input, gsize length, gsize *p
 		if (uu->state == UU_EXPECT_BEGIN) {
 			if (uu->nsaved != '\n') {
 				uu_skip_to_line_feed (uu, input, length, position);
+
 				if (*position == length) {
 					uu->nsaved = input[*position - 1];
 					break;
 				}
+
 				uu->nsaved = uu_read_byte (uu, input, position);
+
 				if (*position == length)
 					break;
 			}
+
 			uu->nsaved = uu_read_byte (uu, input, position);
+
 			if (uu->nsaved != 'b') {
 				if (!uu_is_whitespace (uu->nsaved))
 					uu_report_pretext (uu);
 				continue;
 			}
+
 			uu->state = UU_B;
 		} else if (uu->state >= UU_B && uu->state <= UU_BEGIN) {
 			uu->nsaved = uu_read_byte (uu, input, position);
+
 			if (uu->nsaved != (guint8) "egin "[uu->state - UU_B]) {
 				uu_report_pretext (uu);
 				uu->state = UU_EXPECT_BEGIN;
@@ -597,38 +731,51 @@ uu_scan_begin (GMimeUUValidator *uu, const guint8 *input, gsize length, gsize *p
 				uu->nsaved++;
 				(*position)++;
 			}
+
 			if (uu->nsaved > 4)
 				uu_report_file_mode (uu, uu->context.stream_offset - (gint64) uu->nsaved + 4);
+
 			if (*position == length)
 				break;
+
 			if (uu->nsaved < 3)
 				uu_report_file_mode (uu, uu->context.stream_offset);
+
 			while (*position < length && input[*position] != ' ') {
 				uu_report_file_mode (uu, uu->context.stream_offset);
+
 				if (input[*position] == '\n')
 					break;
+
 				uu->context.stream_offset++;
 				(*position)++;
 			}
+
 			if (*position == length)
 				break;
+
 			if (input[*position] != '\n') {
 				uu->context.stream_offset++;
 				(*position)++;
 			}
+
 			uu->state = UU_FILE_NAME;
 			uu->nsaved = 0;
 		} else if (uu->state == UU_FILE_NAME) {
 			uu_skip_to_line_feed (uu, input, length, position);
+
 			if (*position == length)
 				break;
+
 			uu_read_byte (uu, input, position);
 			uu->state = UU_PAYLOAD;
 			uu->eoln = TRUE;
 			uu->nsaved = 0;
+
 			return TRUE;
 		}
 	}
+
 	return FALSE;
 }
 
@@ -644,34 +791,41 @@ uu_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 
 	if (uu->state == UU_INVALID)
 		return;
+
 	if (uu->state < UU_PAYLOAD && !uu_scan_begin (uu, input, length, &position))
 		return;
 
 	while (uu->state == UU_PAYLOAD && position < length) {
 		c = input[position];
+
 		if (c == '\r') {
 			uu_read_byte (uu, input, &position);
 		} else if (c == '\n') {
 			if (uu->uulen > 0)
 				validator_report (context, GMIME_ENCODING_VIOLATION_INCOMPLETE_UUENCODED_LINE,
 						  context->stream_offset);
+
 			uu_read_byte (uu, input, &position);
 			uu->eoln = TRUE;
 		} else if (uu->eoln) {
 			uu->eoln = FALSE;
 			uu->reported_invalid_content = FALSE;
 			uu->reported_extra_data = FALSE;
+
 			if (c == '`') {
 				uu->state = UU_ENDED;
 			} else {
 				uu->uulen = (c - 32) & 63;
+
 				if (uu->uulen > 45)
 					validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_UUENCODED_LINE_LENGTH,
 							  context->stream_offset);
 			}
+
 			uu_read_byte (uu, input, &position);
 		} else {
 			uu_read_byte (uu, input, &position);
+
 			/* Octets beyond the declared length are extra data, not payload.
 			 * Do not report two violations on the same trailing garbage byte. */
 			if (uu->uulen > 0) {
@@ -680,6 +834,7 @@ uu_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 					validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_UUENCODED_CONTENT,
 							  context->stream_offset - 1);
 				}
+
 				if (++uu->nsaved == 4) {
 					uu->uulen -= MIN (uu->uulen, 3);
 					uu->nsaved = 0;
@@ -694,13 +849,17 @@ uu_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 
 	while (uu->state == UU_ENDED && position < length) {
 		c = input[position];
+
 		if (!uu_is_whitespace (c))
 			validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_UUENCODE_END_MARKER,
 					  context->stream_offset);
+
 		uu_read_byte (uu, input, &position);
+
 		if (c == '\n')
 			uu->state = UU_ENDED_NEWLINE;
 	}
+
 	while (uu->state >= UU_ENDED_NEWLINE && uu->state < UU_END && position < length) {
 		if (input[position] != (guint8) "end"[uu->state - UU_ENDED_NEWLINE]) {
 			validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_UUENCODE_END_MARKER,
@@ -708,9 +867,11 @@ uu_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 			uu->state = UU_INVALID;
 			return;
 		}
+
 		uu->state++;
 		uu_read_byte (uu, input, &position);
 	}
+
 	while (uu->state == UU_END && position < length) {
 		if (!uu_is_whitespace (input[position])) {
 			validator_report (context, GMIME_ENCODING_VIOLATION_INVALID_UUENCODE_END_MARKER,
@@ -718,6 +879,7 @@ uu_write (GMimeEncodingValidator *validator, const guint8 *input, gsize length)
 			uu->state = UU_INVALID;
 			return;
 		}
+
 		uu_read_byte (uu, input, &position);
 	}
 }
@@ -732,18 +894,54 @@ uu_flush (GMimeEncodingValidator *validator)
 				  uu->context.stream_offset);
 }
 
+static gboolean
+uu_can_consume_clean_content (GMimeEncodingValidator *validator, gint *remaining)
+{
+	GMimeUUValidator *uu = (GMimeUUValidator *) validator;
+
+	*remaining = 0;
+
+	if (uu->state != UU_PAYLOAD || uu->uulen > 45 ||
+	    (uu->nsaved != 0 && (uu->eoln || uu->uulen == 0)))
+		return FALSE;
+
+	*remaining = uu->eoln ? -1 : 4 * ((uu->uulen + 2) / 3) - (gint) uu->nsaved;
+
+	return TRUE;
+}
+
+static void
+uu_consume_clean_content (GMimeEncodingValidator *validator, const guint8 *input, gsize length,
+			 guint32 alphabet_count, guint64 lines)
+{
+	GMimeUUValidator *uu = (GMimeUUValidator *) validator;
+	ValidatorContext *context = &uu->context;
+
+	g_return_if_fail (length <= (guint64) (G_MAXINT64 - context->stream_offset));
+
+	context->stream_offset += length;
+	context->line_begin_offset = context->stream_offset;
+	context->line_number += lines;
+	uu->eoln = TRUE;
+	uu->nsaved = 0;
+	uu->uulen = 0;
+	uu->reported_invalid_content = FALSE;
+	uu->reported_extra_data = FALSE;
+}
+
 static void
 uu_validator_interface_init (GMimeEncodingValidatorInterface *iface)
 {
 	iface->get_encoding = uu_get_encoding;
 	iface->write = uu_write;
 	iface->flush = uu_flush;
+	iface->can_consume_clean_content = uu_can_consume_clean_content;
+	iface->consume_clean_content = uu_consume_clean_content;
 }
 
 static void
 _g_mime_uu_validator_class_init (GMimeUUValidatorClass *klass)
 {
-	(void) klass;
 }
 
 static void

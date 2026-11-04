@@ -94,6 +94,7 @@ struct _GMimeReaderPrivate {
 	GMimeComplianceContext context;
 	guint issue_counts[GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1], issue_limit;
 	GMimeEncodingValidator *validator;
+	GMimeReaderContentScanFunc content_scanner;
 
 	GMimeParserOptions *options;
 	GMimeStream *stream;
@@ -302,6 +303,7 @@ g_mime_reader_init (GMimeReader *reader)
 	priv->input_end = READ_AHEAD_SIZE;
 	priv->line_number = 1;
 	priv->initial = TRUE;
+	priv->content_scanner = _g_mime_reader_scan_content;
 }
 
 /**
@@ -1796,13 +1798,13 @@ deliver_content_batch (GMimeReader *reader, GMimeReaderContentType type, gsize c
 static gboolean
 scan_content (GMimeReader *reader, GMimeReaderContentType type)
 {
-	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 begin = g_mime_reader_tell (reader), delivered = 0;
-	guint64 begin_line = priv->line_number;
-	gsize npending = 0, content_index = priv->input_index;
-	GMimeReaderNewLineFormat newline_format = GMIME_READER_NEWLINE_UNKNOWN;
 	gboolean midline = FALSE, incomplete = FALSE, trim = type != GMIME_READER_CONTENT_PREAMBLE;
-	gboolean refill = TRUE;
+	GMimeReaderNewLineFormat newline_format = GMIME_READER_NEWLINE_UNKNOWN;
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+	gboolean refill = TRUE, fast_skip = TRUE, validate = FALSE;
+	gint64 begin = g_mime_reader_tell (reader), delivered = 0;
+	gsize npending = 0, content_index = priv->input_index;
+	guint64 begin_line = priv->line_number;
 	EntityFrame *frame = g_ptr_array_index (priv->frames, priv->frames->len - 1);
 	gboolean detect_8bit = frame->encoding != GMIME_CONTENT_ENCODING_BINARY &&
 		frame->encoding != GMIME_CONTENT_ENCODING_8BIT;
@@ -1822,11 +1824,12 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	}
 
 	while (!priv->boundary && !priv->mailbox_boundary && !priv->boundary_eos) {
-		gsize atleast = boundary_read_ahead (reader);
-		GMimeReaderScan scan = { 0 };
 		GMimeReaderLineScan line_scan = { 0, G_MAXSIZE, G_MAXSIZE };
+		gsize atleast = boundary_read_ahead (reader);
+		gsize left, length, examined = 0;
+		GMimeReaderScan scan = { 0 };
 		const guint8 *start, *lf;
-		gsize left, length;
+		gint remaining = 0;
 
 		if (incomplete)
 			atleast = MAX (atleast, priv->input_end - priv->input_index + 1);
@@ -1848,6 +1851,9 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 		if (refill) {
 			content_index = priv->input_index - npending;
 			validator_start = priv->input_index;
+			fast_skip = priv->content_scanner != NULL;
+			validate = fast_skip && priv->validator &&
+				_g_mime_encoding_validator_can_consume_clean_content (priv->validator, &remaining);
 		}
 
 		refill = FALSE;
@@ -1862,21 +1868,75 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 
 		start = priv->input + priv->input_index;
 
-		if (!priv->active_logger && !midline && start[0] != '-' &&
-		    start[0] != (priv->format == GMIME_FORMAT_MBOX ? 'F' : priv->format == GMIME_FORMAT_MMDF ? '\1' : '-'))
-			scan = _g_mime_reader_scan_lines (start, left,
-				priv->format == GMIME_FORMAT_MBOX ? 'F' : priv->format == GMIME_FORMAT_MMDF ? '\1' : '-',
-				priv->format == GMIME_FORMAT_MBOX ? 'r' : priv->format == GMIME_FORMAT_MMDF ? '\1' : '-');
+		if (fast_skip && ((midline && priv->active_logger) || (!midline && start[0] != '-' &&
+		    start[0] != (priv->format == GMIME_FORMAT_MBOX ? 'F' : priv->format == GMIME_FORMAT_MMDF ? '\1' : '-')))) {
+			guint8 first = priv->format == GMIME_FORMAT_MBOX ? 'F' : priv->format == GMIME_FORMAT_MMDF ? '\1' : '-';
+			guint8 second = priv->format == GMIME_FORMAT_MBOX ? 'r' : first;
+
+			if (priv->active_logger) {
+				GMimeReaderContentScanOptions options;
+				GMimeReaderContentScan content;
+
+				if (validate)
+					_g_mime_encoding_validator_can_consume_clean_content (priv->validator, &remaining);
+
+				options.first = first;
+				options.second = second;
+				options.detect_null = detect_null;
+				options.detect_eight_bit = detect_8bit;
+				options.midline_cr = midline && priv->previous_count && priv->previous[1] == '\r';
+				options.line_length = (guint64) (g_mime_reader_tell (reader) - priv->line_begin);
+				options.encoding = validate ? frame->encoding : GMIME_CONTENT_ENCODING_UNSPECIFIED;
+				options.remaining = remaining;
+
+				content = priv->content_scanner (start, left, &options);
+				examined = content.examined - content.scan.length;
+
+				if (content.scan.length) {
+					if (validate) {
+						_g_mime_encoding_validator_consume_clean_content (priv->validator, start,
+							content.scan.length, content.alphabet_count, content.scan.lines);
+
+						validator_start += content.scan.length;
+					}
+
+					consume_scanned_lines (reader, &content.scan);
+
+					if (type == GMIME_READER_CONTENT_PART)
+						newline_format |= GMIME_READER_NEWLINE_DOS;
+
+					midline = FALSE;
+					left -= content.scan.length;
+					start += content.scan.length;
+
+					if (!left) {
+						refill = TRUE;
+						continue;
+					}
+				}
+			} else {
+				scan = _g_mime_reader_scan_lines (start, left, first, second);
+			}
+		}
 
 		if (priv->active_logger && (detect_null || detect_8bit)) {
-			line_scan = _g_mime_reader_scan_line (start, left, detect_null, detect_8bit);
+			line_scan = _g_mime_reader_scan_line (start + examined, left - examined, detect_null, detect_8bit);
+			line_scan.length += examined;
+
+			if (line_scan.null_index != G_MAXSIZE)
+				line_scan.null_index += examined;
+
+			if (line_scan.eight_bit_index != G_MAXSIZE)
+				line_scan.eight_bit_index += examined;
+
 			lf = line_scan.length < left ? start + line_scan.length : NULL;
 		} else {
-			lf = memchr (start, '\n', left);
+			lf = memchr (start + examined, '\n', left - examined);
 		}
 
 		if (scan.length) {
 			lf = start + scan.length - 1;
+
 			if (type == GMIME_READER_CONTENT_PART)
 				newline_format |= scan.formats;
 		}
@@ -1923,11 +1983,15 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 			gboolean cr = length ? start[length - 1] == '\r' :
 					(midline && priv->previous_count && priv->previous[1] == '\r');
 
-			if (!cr)
+			if (!cr) {
 				report_at (reader, GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY,
 					   g_mime_reader_tell (reader) + length, priv->line_number,
 					   (guint64) (g_mime_reader_tell (reader) + length - priv->line_begin) + 1,
 					   GMIME_COMPLIANCE_POSITION_EXACT);
+
+				if (priv->active_logger)
+					fast_skip = FALSE;
+			}
 
 			if (type == GMIME_READER_CONTENT_PART)
 				newline_format |= cr ? GMIME_READER_NEWLINE_DOS : GMIME_READER_NEWLINE_UNIX;
@@ -1940,6 +2004,18 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 		}
 
 		midline = !lf && !priv->input_eos;
+
+		/* Keep a clean QP prefix after rejecting a possible delimiter, without
+		 * moving encoding diagnostics ahead of the batch's structural checks. */
+		if (validate) {
+			if (lf && frame->encoding == GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE &&
+			    _g_mime_quoted_printable_is_line_valid (start, length)) {
+				_g_mime_encoding_validator_consume_clean_content (priv->validator, start, length, 0, 1);
+				validator_start += length;
+			} else {
+				validate = FALSE;
+			}
+		}
 
 		if (scan.length)
 			consume_scanned_lines (reader, &scan);
@@ -1964,6 +2040,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	if (npending && priv->boundary_eos) {
 		if (!READER_CALLBACK (reader, priv, content_read, type, priv->input + priv->input_index - npending, npending))
 			return FALSE;
+
 		delivered += npending;
 	}
 
@@ -1976,8 +2053,8 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader);
-	guint64 line = priv->line_number;
 	gboolean final = priv->final_boundary;
+	guint64 line = priv->line_number;
 
 	if (!READER_CALLBACK (reader, priv, boundary_begin, final, begin, line))
 		return FALSE;
@@ -1994,6 +2071,7 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 				report_at (reader, GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY, offset + length,
 					   line, (guint64) (offset + length - priv->line_begin) + 1,
 					   GMIME_COMPLIANCE_POSITION_EXACT);
+
 			length++;
 		} else if (lf && length && start[length - 1] == '\r') {
 			length--;
@@ -2001,6 +2079,7 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 
 		if (length) {
 			consume_input (reader, length);
+
 			if (!READER_CALLBACK (reader, priv, boundary_read, final, start, length, offset, line))
 				return FALSE;
 		}
@@ -2613,6 +2692,23 @@ _g_mime_reader_set_format (GMimeReader *reader, GMimeFormat format)
 	g_return_if_fail (!priv->reading);
 
 	priv->format = format;
+}
+
+gboolean
+_g_mime_reader_set_content_scan_backend (GMimeReader *reader, GMimeReaderScanBackend backend)
+{
+	GMimeReaderPrivate *priv;
+	GMimeReaderContentScanFunc scanner;
+
+	g_return_val_if_fail (GMIME_IS_READER (reader), FALSE);
+	priv = _g_mime_reader_get_private (reader);
+	g_return_val_if_fail (!priv->reading, FALSE);
+
+	scanner = _g_mime_reader_scan_content_get_backend (backend);
+	if (!scanner)
+		return FALSE;
+	priv->content_scanner = backend == GMIME_READER_SCAN_SCALAR ? NULL : scanner;
+	return TRUE;
 }
 
 /* Public model construction returns NULL without an error at EOF, unlike

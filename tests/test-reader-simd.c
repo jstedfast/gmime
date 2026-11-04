@@ -29,6 +29,7 @@
 #endif
 
 static GMimeReaderScanFunc scanners[5];
+static GMimeReaderContentScanFunc content_scanners[5];
 static const char *scanner_names[5];
 static guint scanner_count;
 
@@ -43,6 +44,7 @@ init_scanners (void)
 #endif
 
 	scanner_names[scanner_count] = "dispatched";
+	content_scanners[scanner_count] = _g_mime_reader_scan_content;
 	scanners[scanner_count++] = _g_mime_reader_scan_lines;
 	for (backend = GMIME_READER_SCAN_SCALAR; backend <= GMIME_READER_SCAN_NEON; backend++) {
 		GMimeReaderScanFunc scanner = _g_mime_reader_scan_lines_get_backend (backend);
@@ -50,6 +52,8 @@ init_scanners (void)
 		if (scanner) {
 			g_print ("Checking MIME scanner backend: %s\n", names[backend]);
 			scanner_names[scanner_count] = names[backend];
+			content_scanners[scanner_count] = _g_mime_reader_scan_content_get_backend (backend);
+			g_assert_nonnull (content_scanners[scanner_count]);
 			scanners[scanner_count++] = scanner;
 		}
 		else {
@@ -156,6 +160,176 @@ check_vector_edges (void)
 }
 
 static void
+check_content (const guint8 *data, gsize length, const GMimeReaderContentScanOptions *options)
+{
+	GMimeReaderContentScanFunc scalar = _g_mime_reader_scan_content_get_backend (GMIME_READER_SCAN_SCALAR);
+	GMimeReaderContentScan limit = scalar (data, length, options);
+	guint backend;
+
+	for (backend = 0; backend < scanner_count; backend++) {
+		GMimeReaderContentScan actual = content_scanners[backend] (data, length, options);
+		GMimeReaderContentScan expected = scalar (data, actual.scan.length, options);
+		gsize i;
+
+		g_assert_cmpuint (actual.scan.length, <=, limit.scan.length);
+		if (options->encoding == GMIME_CONTENT_ENCODING_UUENCODE)
+			g_assert_cmpuint (actual.scan.length, ==, limit.scan.length);
+		g_assert_cmpuint (actual.examined, >=, actual.scan.length);
+		g_assert_cmpuint (actual.examined, <=, length);
+		g_assert_cmpuint (actual.scan.length, ==, expected.scan.length);
+		g_assert_cmpuint (actual.scan.previous_line, ==, expected.scan.previous_line);
+		g_assert_cmpuint (actual.scan.lines, ==, expected.scan.lines);
+		g_assert_cmpuint (actual.scan.formats, ==, expected.scan.formats);
+		g_assert_cmpuint (actual.alphabet_count, ==, expected.alphabet_count);
+		for (i = actual.scan.length; i < actual.examined; i++) {
+			g_assert_cmpuint (data[i], !=, '\n');
+			if (options->detect_null)
+				g_assert_cmpuint (data[i], !=, 0);
+			if (options->detect_eight_bit)
+				g_assert_cmpuint (data[i], <, 128);
+		}
+	}
+}
+
+static void
+check_content_edges (void)
+{
+	static const GMimeContentEncoding encodings[] = {
+		GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_CONTENT_ENCODING_BASE64,
+		GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE
+	};
+	static const char *patterns[] = { "ABCDEF\r\n", "=41=ab=\r\n", "\r\n", "A\r\n--b\r\n", "A\r\nFrom a\r\n" };
+	static const guint columns[] = { 0, 1, 970, 998, 999, 1000, 4096 };
+	GMimeReaderContentScanOptions options = { '-', '-', TRUE, TRUE, FALSE, 0, 0, 0 };
+	guint8 storage[320];
+	guint kind, pattern, alignment, value, lane, column, flags;
+	gsize length, i;
+
+	for (kind = 0; kind < G_N_ELEMENTS (encodings); kind++) {
+		options.encoding = encodings[kind];
+		check_content (NULL, 0, &options);
+		for (alignment = 0; alignment < 32; alignment++) {
+			guint8 *data = storage + alignment;
+
+			for (pattern = 0; pattern < G_N_ELEMENTS (patterns); pattern++) {
+				gsize size = strlen (patterns[pattern]);
+
+				for (i = 0; i < 256; i++)
+					data[i] = patterns[pattern][i % size];
+				for (length = 0; length <= 256; length++) {
+					options.midline_cr = (length & 1) != 0;
+					options.first = length & 2 ? 'F' : '-';
+					options.second = length & 2 ? 'r' : '-';
+					check_content (data, length, &options);
+				}
+			}
+		}
+		options.first = options.second = '-';
+		for (value = 0; value < 256; value++) {
+			for (lane = 0; lane < 64; lane++) {
+				for (i = 0; i < sizeof storage; i++)
+					storage[i] = "AAAAAA\r\n"[i % 8];
+				storage[64 + lane] = value;
+				if (kind == 2 && lane)
+					storage[63 + lane] = '=';
+				check_content (storage, sizeof storage, &options);
+			}
+		}
+		for (column = 0; column < G_N_ELEMENTS (columns); column++) {
+			options.line_length = columns[column];
+			for (flags = 0; flags < 4; flags++) {
+				options.detect_null = flags & 1;
+				options.detect_eight_bit = flags & 2;
+				memset (storage, 'A', sizeof storage);
+				storage[33] = '\r';
+				storage[34] = '\n';
+				storage[100] = 0;
+				storage[200] = 0xff;
+				check_content (storage, sizeof storage, &options);
+			}
+		}
+		options.line_length = 0;
+		options.detect_null = options.detect_eight_bit = TRUE;
+	}
+
+	options.encoding = GMIME_CONTENT_ENCODING_UUENCODE;
+	for (value = 1; value <= 45; value++) {
+		gsize count = 4 * ((value + 2) / 3);
+
+		storage[0] = 32 + value;
+		memset (storage + 1, '!', count);
+		storage[count + 1] = '\r';
+		storage[count + 2] = '\n';
+		memcpy (storage + count + 3, storage, count + 3);
+		for (lane = 0; lane <= count + 2; lane++) {
+			options.remaining = lane ? count - (lane - 1) : -1;
+			options.midline_cr = lane == count + 2;
+			options.line_length = lane;
+			check_content (storage + lane, 2 * (count + 3) - lane, &options);
+		}
+	}
+	options.remaining = -1;
+	options.midline_cr = FALSE;
+	options.line_length = 0;
+	for (value = 0; value < 256; value++) {
+		for (lane = 0; lane < 60; lane++) {
+			storage[0] = 'M';
+			memset (storage + 1, '!', 60);
+			storage[61] = '\r';
+			storage[62] = '\n';
+			memcpy (storage + 63, storage, 63);
+			storage[1 + lane] = value;
+			check_content (storage, 126, &options);
+		}
+	}
+}
+
+static void
+check_content_progress (gboolean benchmark)
+{
+	static const GMimeContentEncoding encodings[] = {
+		GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_CONTENT_ENCODING_BASE64,
+		GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, GMIME_CONTENT_ENCODING_UUENCODE
+	};
+	static const char *lines[] = {
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\r\n",
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/\r\n",
+		"plain=20text=3Dvalue=c3=a9=\r\n",
+		"M!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
+	};
+	GMimeReaderContentScanOptions options = { '-', '-', TRUE, TRUE, FALSE, 0, 0, -1 };
+	guint8 data[8192];
+	guint kind, backend;
+	gsize size, length;
+
+	for (kind = 0; kind < G_N_ELEMENTS (encodings); kind++) {
+		options.encoding = encodings[kind];
+		size = strlen (lines[kind]);
+		for (length = 0; length + size <= sizeof data; length += size)
+			memcpy (data + length, lines[kind], size);
+		check_content (data, length, &options);
+		for (backend = 0; backend < scanner_count; backend++) {
+			GMimeReaderContentScan scan = content_scanners[backend] (data, length, &options);
+
+			g_assert_cmpuint (scan.scan.length, >, length - size - 32);
+			g_assert_cmpuint (scan.scan.lines, >, 100);
+			if (benchmark) {
+				guint64 total = 0;
+				gint64 start = g_get_monotonic_time (), elapsed;
+				guint repeat;
+
+				for (repeat = 0; repeat < 20000; repeat++)
+					total += content_scanners[backend] (data, length, &options).scan.length;
+				elapsed = g_get_monotonic_time () - start;
+				g_assert_cmpuint (total, >, 0);
+				g_print ("Fused content scanning (encoding %d, %s): %.1f MB/s\n",
+					 encodings[kind], scanner_names[backend], length * 20000.0 / MAX (elapsed, 1));
+			}
+		}
+	}
+}
+
+static void
 benchmark (void)
 {
 	static const char *names[] = { "short lines", "80-byte lines", "incomplete line", "dense newlines" };
@@ -200,10 +374,13 @@ main (int argc, char **argv)
 
 	init_scanners ();
 	if (argc > 1 && strcmp (argv[1], "--benchmark") == 0) {
+		check_content_progress (TRUE);
 		benchmark ();
 		return 0;
 	}
 	check_vector_edges ();
+	check_content_edges ();
+	check_content_progress (FALSE);
 	for (pass = 0; pass < 8; pass++) {
 		for (i = 0; i < sizeof storage; i++) {
 			random = random * 1664525u + 1013904223u;
@@ -228,14 +405,18 @@ main (int argc, char **argv)
 		memset (pages + page, 'a', page);
 		for (length = 0; length <= MIN (page, 4096); length++) {
 			guint8 *data = pages + page * 2 - length;
+			GMimeReaderContentScanOptions options = { '-', '-', TRUE, TRUE, FALSE, 0,
+				GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, 0 };
 
 			check (data, length, 'F', 'r');
+			check_content (data, length, &options);
 			if (length) {
 				data[0] = '\n';
 				check (data, length, 'F', 'r');
 				data[0] = 'a';
 				data[length - 1] = '\n';
 				check (data, length, 'F', 'r');
+				check_content (data, length, &options);
 				data[length - 1] = '-';
 				if (length > 1)
 					data[length - 2] = '\n';
@@ -245,6 +426,9 @@ main (int argc, char **argv)
 				for (i = 0; i < length; i++)
 					data[i] = i & 1 ? '\n' : '\r';
 				check (data, length, 'F', 'r');
+				check_content (data, length, &options);
+				data[length - 1] = '=';
+				check_content (data, length, &options);
 				memset (data, 'a', length);
 			}
 		}

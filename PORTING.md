@@ -485,6 +485,11 @@ is still limited to the callback. Copy bytes that must survive it. A trailing
 lone CR at EOF is delivered before encoding-validator finalization, matching
 MimeKit; withheld LF/CRLF sequences at EOF are delivered afterward.
 
+Compliance-enabled content scanning now combines structural and transfer-encoding
+checks for clean Base64, quoted-printable and UU content. This is an internal
+optimization: logger setup, diagnostic positions and ordering, issue budgets,
+and raw content callbacks are unchanged. No application migration is required.
+
 ### Header inspection
 
 `GMimeParserHeaderRegexFunc` and `g_mime_parser_set_header_regex()` have been

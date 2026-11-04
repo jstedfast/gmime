@@ -682,6 +682,131 @@ test_guard_pages (void)
 #endif
 }
 
+static void
+test_clean_content (void)
+{
+	static const struct {
+		guint kind;
+		const char *clean, *suffix;
+	} cases[] = {
+		{ 0, "A\r\n \t\r\n", "==\r\n?" },
+		{ 0, "AB\r\n \t\r\n", "==\r\n?" },
+		{ 0, "AAB\r\n \t\r\n", "=\r\n*" },
+		{ 0, "AAAA\r\nAB\r\n", "==\r\n" },
+		{ 0, "AAAA\r\nAAB\r\n", "=\r\n" },
+		{ 0, "AAAA\r\n", "AB" },
+		{ 1, "literal=20data=\r\n--bX=3dvalue=\n\r\n", "=0G\r\n=\rX\r\n=" },
+		{ 1, "=c3=a9\r\n", "=A" },
+		{ 2, "begin 644 file.bin\r\nM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
+		     "#!!!!\r\n", "`\r\nend\r\n" },
+		{ 2, "begin 644 file.bin\r\n!AAAA\r\n", "#!!!\r\n`\r\nend\r\n" }
+	};
+	guint test;
+
+	for (test = 0; test < G_N_ELEMENTS (cases); test++) {
+		const guint8 *clean = (const guint8 *) cases[test].clean;
+		gsize length = strlen (cases[test].clean), split;
+		guint consumed = 0;
+
+		for (split = 0; split < length; split++) {
+			IssueLog expected_log = { 0 }, actual_log = { 0 };
+			GMimeEncodingValidator *expected = new_validator (cases[test].kind, &expected_log, 100, 7);
+			GMimeEncodingValidator *actual = new_validator (cases[test].kind, &actual_log, 100, 7);
+			guint32 alphabet = 0;
+			guint64 lines = 0;
+			gint remaining;
+			gsize i;
+
+			_g_mime_encoding_validator_write (expected, clean, length);
+			_g_mime_encoding_validator_write (actual, clean, split);
+			if (_g_mime_encoding_validator_can_consume_clean_content (actual, &remaining)) {
+				for (i = split; i < length; i++) {
+					alphabet += g_ascii_isalnum (clean[i]) || clean[i] == '+' || clean[i] == '/';
+					lines += clean[i] == '\n';
+				}
+				_g_mime_encoding_validator_consume_clean_content (actual, clean + split, length - split, alphabet, lines);
+				consumed++;
+			} else {
+				_g_mime_encoding_validator_write (actual, clean + split, length - split);
+			}
+			_g_mime_encoding_validator_write (expected, (const guint8 *) cases[test].suffix, strlen (cases[test].suffix));
+			_g_mime_encoding_validator_write (actual, (const guint8 *) cases[test].suffix, strlen (cases[test].suffix));
+			_g_mime_encoding_validator_flush (expected);
+			_g_mime_encoding_validator_flush (actual);
+			if (actual_log.length != expected_log.length)
+				g_test_message ("Clean-content case %u split %" G_GSIZE_FORMAT, test, split);
+			g_assert_cmpuint (actual_log.length, ==, expected_log.length);
+			for (i = 0; i < actual_log.length; i++)
+				assert_issue (&actual_log.issues[i], &expected_log.issues[i], 0, 1);
+			g_object_unref (expected);
+			g_object_unref (actual);
+		}
+		g_assert_cmpuint (consumed, >, 0);
+	}
+}
+
+static void
+test_clean_eligibility (void)
+{
+	static const struct {
+		guint kind;
+		const char *input;
+		gboolean eligible;
+		gint remaining;
+	} cases[] = {
+		{ 0, "", TRUE, 0 }, { 0, "AB", TRUE, 0 }, { 0, "AB==", FALSE, 0 },
+		{ 0, "*", TRUE, 0 }, { 0, "?", TRUE, 0 },
+		{ 1, "", TRUE, 0 }, { 1, "=", FALSE, 0 }, { 1, "=A", FALSE, 0 },
+		{ 1, "=\r", FALSE, 0 }, { 1, "=\n", TRUE, 0 }, { 1, "=AB", TRUE, 0 },
+		{ 2, "", FALSE, 0 }, { 2, "begin ", FALSE, 0 }, { 2, "begin 644 file.bin\r\n", TRUE, -1 },
+		{ 2, "begin 644 file.bin\r\nM", TRUE, 60 },
+		{ 2, "begin 644 file.bin\r\nM!", TRUE, 59 },
+		{ 2, "begin 644 file.bin\r\nM!!!", TRUE, 57 },
+		{ 2, "begin 644 file.bin\r\nM!!!!", TRUE, 56 },
+		{ 2, "begin 644 file.bin\r\n#!!!!", TRUE, 0 },
+		{ 2, "begin 644 file.bin\r\n#!!!!\r", TRUE, 0 },
+		{ 2, "begin 644 file.bin\r\n#!!!!\r\n", TRUE, -1 },
+		{ 2, "begin 644 file.bin\r\n#!!!\r\n", FALSE, 0 },
+		{ 2, "begin 644 file.bin\r\nN", FALSE, 0 },
+		{ 2, "begin 644 file.bin\r\n`\r\n", FALSE, 0 }
+	};
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		IssueLog log = { 0 };
+		GMimeEncodingValidator *validator = new_validator (cases[i].kind, &log, 0, 1);
+		gint remaining = 123;
+
+		_g_mime_encoding_validator_write (validator, (const guint8 *) cases[i].input, strlen (cases[i].input));
+		g_assert_cmpint (_g_mime_encoding_validator_can_consume_clean_content (validator, &remaining), ==, cases[i].eligible);
+		g_assert_cmpint (remaining, ==, cases[i].remaining);
+		g_object_unref (validator);
+	}
+}
+
+static void
+test_qp_clean_line (void)
+{
+	static const char *valid[] = { "\n", "\r\n", "=\n", "=\r\n", "---=20value\n",
+		"--b--X=\n", "Fromage=3dvalue=\r\n", "=09=AB=cd\n" };
+	static const char *invalid[] = { "", "=", "=A", "=\r", "=A\n", "=0G\n",
+		"=0G\r\n", "=\rX\n", "==\n", "===\r\n" };
+	guint i, value;
+
+	for (i = 0; i < G_N_ELEMENTS (valid); i++)
+		g_assert_true (_g_mime_quoted_printable_is_line_valid ((const guint8 *) valid[i], strlen (valid[i])));
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++)
+		g_assert_false (_g_mime_quoted_printable_is_line_valid ((const guint8 *) invalid[i], strlen (invalid[i])));
+	for (value = 0; value < 256; value++) {
+		guint8 input[] = { '=', value, 'A', '\r', '\n' };
+
+		g_assert_cmpint (_g_mime_quoted_printable_is_line_valid (input, sizeof input), ==, !!g_ascii_isxdigit (value));
+		input[1] = 'A';
+		input[2] = value;
+		g_assert_cmpint (_g_mime_quoted_printable_is_line_valid (input, sizeof input), ==, !!g_ascii_isxdigit (value));
+	}
+}
+
 int
 main (int argc, char **argv)
 {
@@ -700,5 +825,8 @@ main (int argc, char **argv)
 	g_test_add_func ("/encoding-validators/vector-diagnostics", test_vector_diagnostics);
 	g_test_add_func ("/encoding-validators/guard-pages", test_guard_pages);
 	g_test_add_func ("/encoding-validators/uu-guard-pages", test_uu_guard_pages);
+	g_test_add_func ("/encoding-validators/clean-content", test_clean_content);
+	g_test_add_func ("/encoding-validators/clean-eligibility", test_clean_eligibility);
+	g_test_add_func ("/encoding-validators/qp-clean-line", test_qp_clean_line);
 	return g_test_run ();
 }

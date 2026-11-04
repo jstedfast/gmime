@@ -397,6 +397,486 @@ _g_mime_reader_scan_lines (const guint8 *input, gsize length, guint8 first, guin
 	return scanner (input, length, first, second);
 }
 
+static gboolean
+is_base64_alphabet (guint8 c)
+{
+	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+		(c >= '0' && c <= '9') || c == '+' || c == '/';
+}
+
+static GMimeReaderContentScan
+scan_content_scalar (const guint8 *input, gsize length, const GMimeReaderContentScanOptions *options)
+{
+	GMimeReaderContentScan result = { 0 };
+	guint32 alphabet = 0;
+	guint64 line_length = options->line_length;
+	gsize i = 0;
+
+	while (i < length) {
+		guint8 c = input[i];
+
+		if ((options->detect_null && c == 0) || (options->detect_eight_bit && c >= 128))
+			break;
+
+		if (options->encoding == GMIME_CONTENT_ENCODING_BASE64) {
+			if (is_base64_alphabet (c))
+				alphabet++;
+			else if (c != ' ' && c != '\t' && c != '\r' && c != '\n')
+				break;
+		} else if (options->encoding == GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE && c == '=') {
+			if (length - i < 3 ||
+			    !((g_ascii_isxdigit (input[i + 1]) && g_ascii_isxdigit (input[i + 2])) ||
+			      (input[i + 1] == '\r' && input[i + 2] == '\n')))
+				break;
+		}
+
+		if (line_length + i + 1 - result.scan.length > 1000)
+			break;
+
+		if (c == '\n') {
+			gboolean boundary;
+
+			if (!(i ? input[i - 1] == '\r' : options->midline_cr))
+				break;
+
+			result.alphabet_count = alphabet;
+			line_length = 0;
+
+			boundary = complete_line (input, length, i++, options->first, options->second, &result.scan);
+			result.scan.formats = 2;
+
+			if (boundary)
+				break;
+		} else {
+			i++;
+		}
+	}
+
+	result.examined = MAX (i, result.scan.length);
+
+	return result;
+}
+
+#if defined(HAVE_READER_SSE2) || defined(HAVE_READER_NEON)
+static inline gboolean
+qp_escapes_valid (const guint8 *input, gsize length, guint32 equals, guint32 hex,
+		  guint32 cr, guint32 lf, guint width)
+{
+	guint32 tail = equals & ((guint32) 3 << (width - 2));
+	guint32 valid = ((hex >> 1) & (hex >> 2)) | ((cr >> 1) & (lf >> 2));
+
+	if (equals & ~tail & ~valid)
+		return FALSE;
+
+	while (tail) {
+		guint i = first_bit (tail);
+
+		if (length - i < 3 ||
+		    !((g_ascii_isxdigit (input[i + 1]) && g_ascii_isxdigit (input[i + 2])) ||
+		      (input[i + 1] == '\r' && input[i + 2] == '\n')))
+			return FALSE;
+
+		tail &= tail - 1;
+	}
+
+	return TRUE;
+}
+
+/* Each instantiation has a constant encoding: no encoding dispatch or
+ * indirect classification calls occur inside the vector loop. */
+#define DEFINE_CONTENT_SCAN(name, target, width, vector, load, prefix, mode) \
+static target GMimeReaderContentScan \
+name (const guint8 *input, gsize length, const GMimeReaderContentScanOptions *options) \
+{ \
+	GMimeReaderContentScan result = { 0 }; \
+	guint64 line_length = options->line_length; \
+	guint32 carry = options->midline_cr, alphabet_total = 0; \
+	const guint32 all = G_MAXUINT32 >> (32 - width); \
+	gsize i = 0; \
+ \
+	while (length - i >= width + 2) { \
+		vector block = load (input + i); \
+		guint32 alphabet = mode == GMIME_CONTENT_ENCODING_BASE64 ? prefix##_alphabet (block) : 0; \
+		guint32 lf, cr, candidates = 0; \
+ \
+		if (mode != GMIME_CONTENT_ENCODING_BASE64 && \
+		    ((options->detect_null && prefix##_equal (block, 0)) || \
+		     (options->detect_eight_bit && prefix##_high (block)))) \
+			break; \
+ \
+		if (mode == GMIME_CONTENT_ENCODING_BASE64 && alphabet == all) { \
+			if (line_length + i + width - result.scan.length > 1000) \
+				break; \
+ \
+			alphabet_total += width; \
+			i += width; \
+			carry = 0; \
+			continue; \
+		} \
+ \
+		lf = prefix##_equal (block, '\n'); \
+		cr = prefix##_equal (block, '\r'); \
+ \
+		if (mode == GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE) { \
+			guint32 equals = prefix##_equal (block, '='); \
+ \
+			if (equals && !qp_escapes_valid (input + i, length - i, equals, prefix##_hex (block), cr, lf, width)) \
+				break; \
+		} \
+ \
+		if (mode == GMIME_CONTENT_ENCODING_BASE64 && \
+		    (alphabet | lf | cr | prefix##_equal (block, ' ') | prefix##_equal (block, '\t')) != all) \
+			break; \
+ \
+		if (lf) { \
+			if ((lf & ~((cr << 1) | carry)) || \
+			    line_length + i + first_bit (lf) + 1 - result.scan.length > 1000) \
+				break; \
+ \
+			if (mode != GMIME_CONTENT_ENCODING_BASE64 || options->first != '-') { \
+				vector n1 = load (input + i + 1), n2 = load (input + i + 2); \
+				candidates = lf & ((prefix##_equal (n1, '-') & prefix##_equal (n2, '-')) | \
+					(prefix##_equal (n1, options->first) & prefix##_equal (n2, options->second))); \
+			} \
+ \
+			if (candidates) \
+				lf &= G_MAXUINT32 >> (31 - first_bit (candidates)); \
+ \
+			if (mode == GMIME_CONTENT_ENCODING_BASE64) \
+				result.alphabet_count = alphabet_total + mask_popcount (alphabet & (G_MAXUINT32 >> (31 - last_bit (lf)))); \
+ \
+			record_lines (&result.scan, i, lf, lf, 0); \
+			line_length = 0; \
+ \
+			if (candidates) \
+				break; \
+		} else if (line_length + i + width - result.scan.length > 1000) { \
+			break; \
+		} \
+ \
+		carry = cr >> (width - 1); \
+		alphabet_total += mask_popcount (alphabet); \
+		i += width; \
+	} \
+ \
+	result.examined = MAX (i, result.scan.length); \
+ \
+	return result; \
+}
+#endif
+
+#ifdef HAVE_READER_SSE2
+static inline SSE2_TARGET __m128i
+content_sse2_load (const guint8 *input)
+{
+	return _mm_loadu_si128 ((const __m128i *) input);
+}
+
+static inline SSE2_TARGET guint32
+content_sse2_equal (__m128i block, guint8 c)
+{
+	return (guint32) _mm_movemask_epi8 (_mm_cmpeq_epi8 (block, _mm_set1_epi8 ((char) c)));
+}
+
+static inline SSE2_TARGET guint32
+content_sse2_high (__m128i block)
+{
+	return (guint32) _mm_movemask_epi8 (block);
+}
+
+static inline SSE2_TARGET guint32
+content_sse2_range (__m128i block, guint8 first, guint8 count)
+{
+	return (guint32) _mm_movemask_epi8 (_mm_cmplt_epi8 (
+		_mm_add_epi8 (block, _mm_set1_epi8 ((char) (128 - first))),
+		_mm_set1_epi8 ((char) (-128 + count))));
+}
+
+static inline SSE2_TARGET guint32
+content_sse2_alphabet (__m128i block)
+{
+	return content_sse2_range (_mm_or_si128 (block, _mm_set1_epi8 (32)), 'a', 26) |
+		content_sse2_range (block, '0', 10) | content_sse2_equal (block, '+') | content_sse2_equal (block, '/');
+}
+
+static inline SSE2_TARGET guint32
+content_sse2_hex (__m128i block)
+{
+	return content_sse2_range (_mm_or_si128 (block, _mm_set1_epi8 (32)), 'a', 6) |
+		content_sse2_range (block, '0', 10);
+}
+
+static inline AVX2_TARGET __m256i
+content_avx2_load (const guint8 *input)
+{
+	return _mm256_loadu_si256 ((const __m256i *) input);
+}
+
+static inline AVX2_TARGET guint32
+content_avx2_equal (__m256i block, guint8 c)
+{
+	return (guint32) _mm256_movemask_epi8 (_mm256_cmpeq_epi8 (block, _mm256_set1_epi8 ((char) c)));
+}
+
+static inline AVX2_TARGET guint32
+content_avx2_high (__m256i block)
+{
+	return (guint32) _mm256_movemask_epi8 (block);
+}
+
+static inline AVX2_TARGET guint32
+content_avx2_range (__m256i block, guint8 first, guint8 count)
+{
+	return (guint32) _mm256_movemask_epi8 (_mm256_cmpgt_epi8 (_mm256_set1_epi8 ((char) (-128 + count)),
+		_mm256_add_epi8 (block, _mm256_set1_epi8 ((char) (128 - first)))));
+}
+
+static inline AVX2_TARGET guint32
+content_avx2_alphabet (__m256i block)
+{
+	return content_avx2_range (_mm256_or_si256 (block, _mm256_set1_epi8 (32)), 'a', 26) |
+		content_avx2_range (block, '0', 10) | content_avx2_equal (block, '+') | content_avx2_equal (block, '/');
+}
+
+static inline AVX2_TARGET guint32
+content_avx2_hex (__m256i block)
+{
+	return content_avx2_range (_mm256_or_si256 (block, _mm256_set1_epi8 (32)), 'a', 6) |
+		content_avx2_range (block, '0', 10);
+}
+
+DEFINE_CONTENT_SCAN (scan_clean_sse2, SSE2_TARGET, 16, __m128i, content_sse2_load, content_sse2, GMIME_CONTENT_ENCODING_UNSPECIFIED)
+DEFINE_CONTENT_SCAN (scan_base64_sse2, SSE2_TARGET, 16, __m128i, content_sse2_load, content_sse2, GMIME_CONTENT_ENCODING_BASE64)
+DEFINE_CONTENT_SCAN (scan_qp_sse2, SSE2_TARGET, 16, __m128i, content_sse2_load, content_sse2, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE)
+DEFINE_CONTENT_SCAN (scan_clean_avx2, AVX2_TARGET, 32, __m256i, content_avx2_load, content_avx2, GMIME_CONTENT_ENCODING_UNSPECIFIED)
+DEFINE_CONTENT_SCAN (scan_base64_avx2, AVX2_TARGET, 32, __m256i, content_avx2_load, content_avx2, GMIME_CONTENT_ENCODING_BASE64)
+DEFINE_CONTENT_SCAN (scan_qp_avx2, AVX2_TARGET, 32, __m256i, content_avx2_load, content_avx2, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE)
+#endif
+
+#ifdef HAVE_READER_NEON
+static inline guint32
+content_neon_equal (uint8x16_t block, guint8 c)
+{
+	return neon_mask (vceqq_u8 (block, vdupq_n_u8 (c)));
+}
+
+static inline guint32
+content_neon_high (uint8x16_t block)
+{
+	return neon_mask (vcgeq_u8 (block, vdupq_n_u8 (128)));
+}
+
+static inline guint32
+content_neon_range (uint8x16_t block, guint8 first, guint8 count)
+{
+	return neon_mask (vcltq_u8 (vsubq_u8 (block, vdupq_n_u8 (first)), vdupq_n_u8 (count)));
+}
+
+static inline guint32
+content_neon_alphabet (uint8x16_t block)
+{
+	return content_neon_range (vorrq_u8 (block, vdupq_n_u8 (32)), 'a', 26) |
+		content_neon_range (block, '0', 10) | content_neon_equal (block, '+') | content_neon_equal (block, '/');
+}
+
+static inline guint32
+content_neon_hex (uint8x16_t block)
+{
+	return content_neon_range (vorrq_u8 (block, vdupq_n_u8 (32)), 'a', 6) |
+		content_neon_range (block, '0', 10);
+}
+
+DEFINE_CONTENT_SCAN (scan_clean_neon, , 16, uint8x16_t, vld1q_u8, content_neon, GMIME_CONTENT_ENCODING_UNSPECIFIED)
+DEFINE_CONTENT_SCAN (scan_base64_neon, , 16, uint8x16_t, vld1q_u8, content_neon, GMIME_CONTENT_ENCODING_BASE64)
+DEFINE_CONTENT_SCAN (scan_qp_neon, , 16, uint8x16_t, vld1q_u8, content_neon, GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE)
+#endif
+
+#undef DEFINE_CONTENT_SCAN
+
+static gboolean
+uu_payload_scalar (const guint8 *input, gsize length)
+{
+	gsize i;
+
+	for (i = 0; i < length; i++) {
+		if (input[i] < 33 || input[i] > 96)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+typedef gboolean (*UUContentFunc) (const guint8 *input, gsize length);
+
+#ifdef HAVE_READER_SSE2
+static SSE2_TARGET gboolean
+uu_payload_sse2 (const guint8 *input, gsize length)
+{
+	while (length >= 16) {
+		if (content_sse2_range (content_sse2_load (input), 33, 64) != 0xffff)
+			return FALSE;
+
+		input += 16;
+		length -= 16;
+	}
+
+	return uu_payload_scalar (input, length);
+}
+
+static AVX2_TARGET gboolean
+uu_payload_avx2 (const guint8 *input, gsize length)
+{
+	if (length >= 32)
+		return content_avx2_range (content_avx2_load (input), 33, 64) == G_MAXUINT32 &&
+			content_avx2_range (content_avx2_load (input + length - 32), 33, 64) == G_MAXUINT32;
+
+	return uu_payload_sse2 (input, length);
+}
+#endif
+
+#ifdef HAVE_READER_NEON
+static gboolean
+uu_payload_neon (const guint8 *input, gsize length)
+{
+	while (length >= 16) {
+		if (content_neon_range (vld1q_u8 (input), 33, 64) != 0xffff)
+			return FALSE;
+
+		input += 16;
+		length -= 16;
+	}
+
+	return uu_payload_scalar (input, length);
+}
+#endif
+
+static GMimeReaderContentScan
+scan_uu_lines (const guint8 *input, gsize length, const GMimeReaderContentScanOptions *options,
+	       UUContentFunc valid)
+{
+	GMimeReaderContentScan result = { 0 };
+	gint remaining = options->remaining;
+	guint64 line_length = options->line_length;
+	gboolean midline_cr = options->midline_cr;
+	gsize i = 0;
+
+	while (i < length) {
+		gsize payload = i, count, end, newline = remaining == 0 && midline_cr ? 1 : 2;
+
+		if (remaining < 0) {
+			gint decoded = input[i] - 32;
+
+			if (input[i] == '-' || input[i] == options->first || decoded < 1 || decoded > 45)
+				break;
+			count = 4 * ((decoded + 2) / 3);
+			payload++;
+		} else {
+			count = remaining;
+		}
+
+		if (count > length - payload || length - payload - count < newline)
+			break;
+
+		end = payload + count;
+
+		if (input[end + newline - 1] != '\n' || (newline == 2 && input[end] != '\r') ||
+		    line_length + end + newline - i > 1000 || !valid (input + payload, count))
+			break;
+
+		result.scan.previous_line = result.scan.length;
+		result.scan.length = end + newline;
+		result.scan.lines++;
+		result.scan.formats = 2;
+		i = result.scan.length;
+		remaining = -1;
+		midline_cr = FALSE;
+		line_length = 0;
+	}
+
+	result.examined = result.scan.length;
+
+	return result;
+}
+
+static GMimeReaderContentScan
+scan_content_scalar_dispatch (const guint8 *input, gsize length, const GMimeReaderContentScanOptions *options)
+{
+	if (options->encoding == GMIME_CONTENT_ENCODING_UUENCODE)
+		return scan_uu_lines (input, length, options, uu_payload_scalar);
+
+	return scan_content_scalar (input, length, options);
+}
+
+#define DEFINE_CONTENT_DISPATCH(backend) \
+static GMimeReaderContentScan \
+scan_content_##backend (const guint8 *input, gsize length, const GMimeReaderContentScanOptions *options) \
+{ \
+	switch (options->encoding) { \
+	case GMIME_CONTENT_ENCODING_BASE64: return scan_base64_##backend (input, length, options); \
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE: return scan_qp_##backend (input, length, options); \
+	case GMIME_CONTENT_ENCODING_UUENCODE: return scan_uu_lines (input, length, options, uu_payload_##backend); \
+	default: return scan_clean_##backend (input, length, options); \
+	} \
+}
+
+#ifdef HAVE_READER_SSE2
+DEFINE_CONTENT_DISPATCH (sse2)
+DEFINE_CONTENT_DISPATCH (avx2)
+#endif
+#ifdef HAVE_READER_NEON
+DEFINE_CONTENT_DISPATCH (neon)
+#endif
+#undef DEFINE_CONTENT_DISPATCH
+
+GMimeReaderContentScanFunc
+_g_mime_reader_scan_content_get_backend (GMimeReaderScanBackend backend)
+{
+	switch (backend) {
+	case GMIME_READER_SCAN_SCALAR:
+		return scan_content_scalar_dispatch;
+	case GMIME_READER_SCAN_SSE2:
+#ifdef HAVE_READER_SSE2
+		if (have_sse2 ())
+			return scan_content_sse2;
+#endif
+		return NULL;
+	case GMIME_READER_SCAN_AVX2:
+#ifdef HAVE_READER_AVX2
+		if (have_avx2 ())
+			return scan_content_avx2;
+#endif
+		return NULL;
+	case GMIME_READER_SCAN_NEON:
+#ifdef HAVE_READER_NEON
+		return scan_content_neon;
+#else
+		return NULL;
+#endif
+	default:
+		g_return_val_if_reached (NULL);
+	}
+}
+
+GMimeReaderContentScan
+_g_mime_reader_scan_content (const guint8 *input, gsize length, const GMimeReaderContentScanOptions *options)
+{
+	static GMimeReaderContentScanFunc scanner;
+	static gsize initialized;
+
+	if (g_once_init_enter (&initialized)) {
+		scanner = _g_mime_reader_scan_content_get_backend (GMIME_READER_SCAN_AVX2);
+		if (!scanner)
+			scanner = _g_mime_reader_scan_content_get_backend (GMIME_READER_SCAN_SSE2);
+		if (!scanner)
+			scanner = _g_mime_reader_scan_content_get_backend (GMIME_READER_SCAN_NEON);
+		if (!scanner)
+			scanner = scan_content_scalar_dispatch;
+		g_once_init_leave (&initialized, 1);
+	}
+
+	return scanner (input, length, options);
+}
+
 static void
 scan_line_tail (const guint8 *input, gsize length, gsize offset, gboolean detect_null,
 		gboolean detect_eight_bit, GMimeReaderLineScan *scan)

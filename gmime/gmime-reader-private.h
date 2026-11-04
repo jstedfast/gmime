@@ -22,11 +22,14 @@
 #define __GMIME_READER_PRIVATE_H__
 
 #include "gmime-reader.h"
+#include "gmime-reader-simd-private.h"
 
 G_BEGIN_DECLS
 
 GMimeStream *_g_mime_reader_get_stream (GMimeReader *reader);
 void _g_mime_reader_set_format (GMimeReader *reader, GMimeFormat format);
+/* Private differential-test selector; scalar selects the original per-line path. */
+gboolean _g_mime_reader_set_content_scan_backend (GMimeReader *reader, GMimeReaderScanBackend backend);
 gboolean _g_mime_reader_has_input (GMimeReader *reader, GError **error);
 gboolean _g_mime_reader_header_limit_exceeded (GMimeReader *reader);
 gboolean _g_mime_reader_input_eos (GMimeReader *reader);

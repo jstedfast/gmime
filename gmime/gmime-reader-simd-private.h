@@ -22,6 +22,7 @@
 #define __GMIME_READER_SIMD_PRIVATE_H__
 
 #include <glib.h>
+#include "gmime-encodings.h"
 
 G_BEGIN_DECLS
 
@@ -52,6 +53,31 @@ G_GNUC_INTERNAL GMimeReaderScan _g_mime_reader_scan_lines_scalar (const guint8 *
 
 /* NULL means that this backend is not compiled in or cannot run on this CPU/OS. */
 G_GNUC_INTERNAL GMimeReaderScanFunc _g_mime_reader_scan_lines_get_backend (GMimeReaderScanBackend backend);
+
+typedef struct {
+	guint8 first, second;
+	gboolean detect_null, detect_eight_bit, midline_cr;
+	guint64 line_length;
+	GMimeContentEncoding encoding;
+	gint remaining;
+} GMimeReaderContentScanOptions;
+
+typedef struct {
+	GMimeReaderScan scan;
+	gsize examined;
+	guint32 alphabet_count;
+} GMimeReaderContentScan;
+
+typedef GMimeReaderContentScan (*GMimeReaderContentScanFunc) (const guint8 *input, gsize length,
+							    const GMimeReaderContentScanOptions *options);
+
+/* Skip clean CRLF lines, stopping before possible delimiters, long lines,
+ * special bytes or encoding errors. examined also includes a checked,
+ * newline-free tail; only scan.length is eligible for validator consumption.
+ * UNSPECIFIED checks structural bytes only. No readable sentinel is needed. */
+G_GNUC_INTERNAL GMimeReaderContentScan _g_mime_reader_scan_content (const guint8 *input, gsize length,
+	const GMimeReaderContentScanOptions *options);
+G_GNUC_INTERNAL GMimeReaderContentScanFunc _g_mime_reader_scan_content_get_backend (GMimeReaderScanBackend backend);
 
 typedef struct {
 	gsize length;
