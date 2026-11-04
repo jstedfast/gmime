@@ -5690,6 +5690,46 @@ test_header_construction (void)
 	g_test_assert_expected_messages ();
 }
 
+static gpointer
+lookup_header_identifiers (gpointer user_data)
+{
+	guint i, repeat;
+
+	for (i = 0; i <= GMIME_HEADER_X_STATUS; i++) {
+		const char *name = g_mime_header_id_to_name ((GMimeHeaderId) i);
+		char *lower = g_ascii_strdown (name, -1);
+		char *upper = g_ascii_strup (name, -1);
+		char *unknown = g_strconcat (name, "-Not-A-Header", NULL);
+
+		for (repeat = 0; repeat < 32; repeat++) {
+			g_assert_cmpint (g_mime_header_id_from_name (name), ==, (GMimeHeaderId) i);
+			g_assert_cmpint (g_mime_header_id_from_name (lower), ==, (GMimeHeaderId) i);
+			g_assert_cmpint (g_mime_header_id_from_name (upper), ==, (GMimeHeaderId) i);
+			g_assert_cmpint (g_mime_header_id_from_name (unknown), ==, GMIME_HEADER_UNKNOWN);
+		}
+
+		g_free (unknown);
+		g_free (upper);
+		g_free (lower);
+	}
+
+	return NULL;
+}
+
+static void
+test_header_identifier_threads (void)
+{
+	GThread *threads[4];
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		threads[i] = g_thread_new ("header-id", lookup_header_identifiers, NULL);
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		g_thread_join (threads[i]);
+
+	check (TRUE, "header identifiers support concurrent first use and case-insensitive lookup");
+}
+
 static void
 test_header_identifiers (void)
 {
@@ -13730,6 +13770,10 @@ main (int argc, char **argv)
 
 	g_mime_init ();
 	testsuite_init (argc, argv);
+
+	testsuite_start ("concurrent header identifier lookup");
+	test_header_identifier_threads ();
+	testsuite_end ();
 
 	testsuite_start ("filtered stream completion lifecycle");
 	test_filtered_stream_completion ();

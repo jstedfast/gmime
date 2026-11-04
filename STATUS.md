@@ -2063,7 +2063,10 @@ its numeric values, canonical field-name spelling and UNKNOWN = -1.
 `g_mime_header_id_to_name()` matches ToHeaderName(), returning "Unknown" for
 unknown or out-of-range identifiers. `g_mime_header_id_from_name()` matches
 whole names ignoring ASCII case; it does not strip whitespace or colons.
-Extension and unrecognized fields return UNKNOWN. The source documentation
+Like MimeKit's dictionary lookup, a lazily initialized, immutable hash table
+avoids comparing each parsed field against all 131 names. Initialization
+and concurrent lookups are thread-safe. Extension and unrecognized fields
+return UNKNOWN. The source documentation
 warning distinguishing Auto-Submitted from legacy Autosubmitted is retained;
 the source conversion methods contain no inline implementation comments.
 
@@ -3486,7 +3489,10 @@ all active frame/type/boundary references. set_stream() discards the failed
 operation's state without resetting or closing either stream.
 
 Line positions and the last two consumed bytes are retained independently
-of buffer movement. In contrast to the source's short-read-sensitive
+of buffer movement. Already-scanned newline-free spans and individual lines
+advance in constant time, using their last bytes instead of rescanning the
+input. Oversized-line reporting retains its threshold and callback cursor,
+including across split CRLFs. In contrast to the source's short-read-sensitive
 lookbehind in malformed/empty nested header blocks, end offsets therefore
 consistently exclude the newline before a boundary even after a refill.
 An immediate embedded-message delimiter is fully probed before deciding

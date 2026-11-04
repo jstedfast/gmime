@@ -224,16 +224,26 @@ g_mime_header_id_to_name (GMimeHeaderId id)
 GMimeHeaderId
 g_mime_header_id_from_name (const char *name)
 {
-	guint i;
+	static GHashTable *ids;
+	static gsize initialized;
+	gpointer value;
 
 	g_return_val_if_fail (name != NULL, GMIME_HEADER_UNKNOWN);
 
-	for (i = 0; i < G_N_ELEMENTS (header_names); i++) {
-		if (!g_ascii_strcasecmp (name, header_names[i]))
-			return (GMimeHeaderId) i;
+	if (g_once_init_enter (&initialized)) {
+		guint i;
+
+		ids = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+
+		for (i = 0; i < G_N_ELEMENTS (header_names); i++)
+			g_hash_table_insert (ids, (gpointer) header_names[i], GUINT_TO_POINTER (i + 1));
+
+		g_once_init_leave (&initialized, 1);
 	}
 
-	return GMIME_HEADER_UNKNOWN;
+	value = g_hash_table_lookup (ids, name);
+
+	return value ? (GMimeHeaderId) (GPOINTER_TO_UINT (value) - 1) : GMIME_HEADER_UNKNOWN;
 }
 
 
