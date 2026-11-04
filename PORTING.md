@@ -480,6 +480,11 @@ relocation of these diagnostics. Generic UTF-8 warnings remain suppressed for
 address headers in favor of their specialized diagnostics. Body-byte positions
 remain exact and unchanged.
 
+Reader content callbacks now borrow input-buffer slices directly; their lifetime
+is still limited to the callback. Copy bytes that must survive it. A trailing
+lone CR at EOF is delivered before encoding-validator finalization, matching
+MimeKit; withheld LF/CRLF sequences at EOF are delivered afterward.
+
 ### Header inspection
 
 `GMimeParserHeaderRegexFunc` and `g_mime_parser_set_header_regex()` have been

@@ -596,7 +596,7 @@ g_mime_reader_eos (GMimeReader *reader)
 }
 
 static gsize
-read_ahead (GMimeReader *reader, gsize atleast)
+read_ahead (GMimeReader *reader, gsize atleast, gsize save)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gsize left = priv->input_end - priv->input_index;
@@ -607,24 +607,28 @@ read_ahead (GMimeReader *reader, gsize atleast)
 	if (left >= atleast || priv->input_eos)
 		return left;
 
+	left += save;
 	if (left > 0) {
-		/* Align the end of the remaining input with the read-ahead area,
-		 * leaving as much room as possible for the next block. */
-		if (priv->input_index >= start) {
-			start -= MIN (READ_AHEAD_SIZE, left);
-			memmove (priv->input + start, priv->input + priv->input_index, left);
-			priv->input_index = start;
-			start += left;
-		} else if (priv->input_index > 0) {
-			gsize shift = MIN (priv->input_index, priv->input_end - start);
+		gsize index = priv->input_index - save;
 
-			memmove (priv->input + priv->input_index - shift, priv->input + priv->input_index, left);
-			priv->input_index -= shift;
-			start = priv->input_index + left;
+		/* Align the end of the remaining input with the read-ahead area,
+		 * retaining the requested lookbehind before the unread bytes. */
+		if (index >= start) {
+			start -= MIN (READ_AHEAD_SIZE, left);
+			memmove (priv->input + start, priv->input + index, left);
+			index = start;
+			start += left;
+		} else if (index > 0) {
+			gsize shift = MIN (index, priv->input_end - start);
+
+			memmove (priv->input + index - shift, priv->input + index, left);
+			index -= shift;
+			start = index + left;
 		} else {
 			start = priv->input_end;
 		}
 
+		priv->input_index = index + save;
 		priv->input_end = start;
 	} else {
 		priv->input_index = start;
@@ -632,7 +636,7 @@ read_ahead (GMimeReader *reader, gsize atleast)
 	}
 
 	if (start == sizeof (priv->input) - PAD_SIZE)
-		return left;
+		return priv->input_end - priv->input_index;
 
 	errno = 0;
 	nread = g_mime_stream_read (priv->stream, (char *) priv->input + start,
@@ -673,7 +677,7 @@ read_ahead_at_least (GMimeReader *reader, gsize atleast)
 
 	do {
 		previous = priv->input_end - priv->input_index;
-		available = read_ahead (reader, atleast);
+		available = read_ahead (reader, atleast, 0);
 	} while (!priv->error && available < atleast && available > previous);
 
 	return available;
@@ -1005,7 +1009,7 @@ boundary_in_headers (GMimeReader *reader, gboolean accept_eof)
 		if (left >= sizeof (priv->input) - PAD_SIZE)
 			return FALSE;
 
-		read_ahead (reader, left + 1);
+		read_ahead (reader, left + 1, 0);
 	} while (!priv->error);
 
 	return FALSE;
@@ -1281,7 +1285,7 @@ step_headers (GMimeReader *reader, gboolean message)
 	if (!callback_result (reader, klass->headers_begin (reader, begin_offset, begin_line_number, &priv->error)))
 		return FALSE;
 
-	read_ahead (reader, priv->stop_at_separator ? 1 : READ_AHEAD_SIZE);
+	read_ahead (reader, priv->stop_at_separator ? 1 : READ_AHEAD_SIZE, 0);
 
 	if (priv->error)
 		return FALSE;
@@ -1346,7 +1350,7 @@ step_headers (GMimeReader *reader, gboolean message)
 		while (!detect_invalid_header (reader, name_blanks, &invalid, &invalid_index, &name_length, &field_length)) {
 			gsize atleast = priv->input_end - priv->input_index + 1;
 
-			if (read_ahead (reader, atleast) < atleast) {
+			if (read_ahead (reader, atleast, 0) < atleast) {
 				/* A valid field name can exceed the fixed read-ahead
 				 * buffer. Spill validated bytes into the header budget,
 				 * retaining whether whitespace before the colon began. */
@@ -1483,7 +1487,7 @@ step_headers (GMimeReader *reader, gboolean message)
 			if (inptr < end)
 				break;
 
-			if (read_ahead (reader, 1) == 0) {
+			if (read_ahead (reader, 1, 0) == 0) {
 				if (priv->error)
 					return FALSE;
 
@@ -1761,33 +1765,30 @@ is_partial_boundary (GMimeReader *reader, const guint8 *start, gsize length)
 }
 
 static gboolean
-deliver_content_batch (GMimeReader *reader, GMimeReaderContentType type, guint8 *output,
-		       gsize *buffered, gsize *pending, gboolean trim, gint64 *delivered)
+deliver_content_batch (GMimeReader *reader, GMimeReaderContentType type, gsize content_index,
+		       gsize *pending, gboolean trim, gint64 *delivered)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gsize count, withheld = 0;
+	gsize count = priv->input_index - content_index;
 
-	if (!*buffered)
+	*pending = 0;
+	if (!count)
 		return TRUE;
 
-	count = *pending + *buffered;
-
 	/* The newline before a boundary belongs to the boundary, including a
-	 * CRLF split between input batches. Keep it until the next scan. */
-	if (trim && output[count - 1] == '\n')
-		withheld = count > 1 && output[count - 2] == '\r' ? 2 : 1;
-	else if (trim && output[count - 1] == '\r')
-		withheld = 1;
+	 * CRLF split between input batches. read_ahead() preserves it in input. */
+	if (trim && priv->input[priv->input_index - 1] == '\n')
+		*pending = count > 1 && priv->input[priv->input_index - 2] == '\r' ? 2 : 1;
+	else if (trim && !priv->boundary && !priv->mailbox_boundary && !priv->boundary_eos &&
+		 priv->input[priv->input_index - 1] == '\r')
+		*pending = 1;
 
-	count -= withheld;
+	count -= *pending;
 
-	if (count && !READER_CALLBACK (reader, priv, content_read, type, output, count))
+	if (count && !READER_CALLBACK (reader, priv, content_read, type, priv->input + content_index, count))
 		return FALSE;
 
 	*delivered += count;
-	memmove (output, output + count, withheld);
-	*pending = withheld;
-	*buffered = 0;
 
 	return TRUE;
 }
@@ -1798,8 +1799,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	gint64 begin = g_mime_reader_tell (reader), delivered = 0;
 	guint64 begin_line = priv->line_number;
-	guint8 output[READ_AHEAD_SIZE + BLOCK_SIZE + 2];
-	gsize npending = 0, buffered = 0;
+	gsize npending = 0, content_index = priv->input_index;
 	GMimeReaderNewLineFormat newline_format = GMIME_READER_NEWLINE_UNKNOWN;
 	gboolean midline = FALSE, incomplete = FALSE, trim = type != GMIME_READER_CONTENT_PREAMBLE;
 	gboolean refill = TRUE;
@@ -1840,13 +1840,15 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 
 		/* Generic checks run over the scanned input batch before encoding
 		 * validation, which in turn precedes its raw content callback. */
-		if (refill && !deliver_content_batch (reader, type, output, &buffered, &npending, trim, &delivered))
+		if (refill && !deliver_content_batch (reader, type, content_index, &npending, trim, &delivered))
 			return FALSE;
 
-		left = refill ? read_ahead (reader, atleast) : priv->input_end - priv->input_index;
+		left = refill ? read_ahead (reader, atleast, MIN (priv->input_index, 2)) : priv->input_end - priv->input_index;
 
-		if (refill)
+		if (refill) {
+			content_index = priv->input_index - npending;
 			validator_start = priv->input_index;
+		}
 
 		refill = FALSE;
 
@@ -1939,9 +1941,6 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 
 		midline = !lf && !priv->input_eos;
 
-		memcpy (output + npending + buffered, start, length);
-		buffered += length;
-
 		if (scan.length)
 			consume_scanned_lines (reader, &scan);
 		else
@@ -1954,7 +1953,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 		_g_mime_encoding_validator_write (priv->validator, priv->input + validator_start,
 						 priv->input_index - validator_start);
 
-	if (!deliver_content_batch (reader, type, output, &buffered, &npending, trim, &delivered))
+	if (!deliver_content_batch (reader, type, content_index, &npending, trim, &delivered))
 		return FALSE;
 
 	if (priv->validator) {
@@ -1963,7 +1962,7 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 	}
 
 	if (npending && priv->boundary_eos) {
-		if (!READER_CALLBACK (reader, priv, content_read, type, output, npending))
+		if (!READER_CALLBACK (reader, priv, content_read, type, priv->input + priv->input_index - npending, npending))
 			return FALSE;
 		delivered += npending;
 	}
@@ -2012,7 +2011,7 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 		if (lf || priv->input_eos)
 			break;
 
-		if (!read_ahead (reader, 1)) {
+		if (!read_ahead (reader, 1, 0)) {
 			if (priv->error)
 				return FALSE;
 			break;
@@ -2397,7 +2396,7 @@ found:
 		return FALSE;
 
 	for (;;) {
-		gsize left = read_ahead (reader, READ_AHEAD_SIZE), count;
+		gsize left = read_ahead (reader, READ_AHEAD_SIZE, 0), count;
 		const guint8 *start = priv->input + priv->input_index, *lf;
 
 		if (priv->error)
@@ -2443,7 +2442,7 @@ step_byte_order_mark (GMimeReader *reader)
 	 * partial prefix across short reads, but reject a mismatching prefix
 	 * rather than treating its remaining bytes as an ordinary header. */
 	do {
-		if (!read_ahead (reader, READ_AHEAD_SIZE))
+		if (!read_ahead (reader, READ_AHEAD_SIZE, 0))
 			break;
 
 		while (priv->input_index < priv->input_end && index < sizeof (bom) &&
@@ -2498,7 +2497,7 @@ read_entity_or_message (GMimeReader *reader, gboolean message, GError **error)
 				result = step_mailbox_marker (reader);
 
 				if (result) {
-					read_ahead (reader, 1);
+					read_ahead (reader, 1, 0);
 					result = priv->error == NULL;
 				}
 			}
@@ -2627,7 +2626,7 @@ _g_mime_reader_has_input (GMimeReader *reader, GError **error)
 	g_return_val_if_fail (!priv->reading, FALSE);
 	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
-	more = !priv->error && read_ahead (reader, 1) > 0;
+	more = !priv->error && read_ahead (reader, 1, 0) > 0;
 	if (priv->error)
 		g_propagate_error (error, g_error_copy (priv->error));
 	else if (!more)
@@ -2711,7 +2710,7 @@ _g_mime_reader_skip_blank_lines (GMimeReader *reader, GError **error)
 	priv->reading = TRUE;
 
 	if (!priv->error)
-		read_ahead (reader, READ_AHEAD_SIZE);
+		read_ahead (reader, READ_AHEAD_SIZE, 0);
 
 	while (!priv->error) {
 		gsize left = read_ahead_at_least (reader, 2);
@@ -2763,7 +2762,7 @@ _g_mime_reader_read_to_eos (GMimeReader *reader, GError **error)
 	content = g_mime_stream_block_new ();
 
 	while (!priv->error) {
-		gsize left = read_ahead (reader, 1);
+		gsize left = read_ahead (reader, 1, 0);
 		int err;
 
 		if (!left || priv->error)

@@ -3783,8 +3783,8 @@ logger's data remains alive until the active snapshot is released. Budgets
 reset for each operation/message, limit each diagnostic identity separately,
 and emit one truncation marker on the first suppressed issue. Reporting
 never changes parsing policy or masks callback/I/O errors. Raw content is
-staged in bounded batches so generic diagnostics precede encoding-validator
-writes and raw callbacks, matching MimeReader's ordering.
+scanned in bounded input-buffer batches so generic diagnostics precede
+encoding-validator writes and raw callbacks, matching MimeReader's ordering.
 
 The strict address validator ports the actual AddressValidator grammar and
 recovery, including nested groups, obsolete syntax, contextual NUL/ISO-2022
@@ -3908,6 +3908,16 @@ preserves MimeKit's immediate reporting behavior. Reader/parser fuzz comparisons
 ignore only the summary marker's position, retaining its validity, uniqueness
 and budget checks and full positions for ordinary diagnostics. A minimized
 nine-byte regression is generated and replayed by both MIME fuzz targets.
+
+### Direct input-buffer content delivery
+
+Content callbacks borrow slices of the input buffer, as in MimeKit, rather
+than copying each batch into a separate stack buffer. Refills retain up to two
+preceding bytes for withheld CR/LF sequences. Pending newlines are omitted
+before boundaries and delivered at EOF; a lone CR known to be content is
+delivered before validator finalization, matching MimeKit's ordering.
+Regressions verify input-buffer pointer identity, binary byte preservation,
+split CRLFs and EOF callback/finalization order.
 
 ### Reader-backed header and leaf model foundation
 

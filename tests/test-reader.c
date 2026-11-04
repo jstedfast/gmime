@@ -36,6 +36,8 @@ typedef struct {
 	guint reads, resets, closes;
 	gboolean nonseekable, unset_errno, zero_read;
 	gint64 origin;
+	const char *read_buffer;
+	gsize read_length;
 } ReaderInput;
 
 typedef TestStreamOneByteClass ReaderInputClass;
@@ -49,6 +51,8 @@ reader_input_read (GMimeStream *stream, char *buffer, size_t length)
 	ssize_t nread;
 
 	input->reads++;
+	input->read_buffer = buffer;
+	input->read_length = 0;
 	if (input->zero_read)
 		return 0;
 	if (input->bytes_read == input->fail_after) {
@@ -57,8 +61,10 @@ reader_input_read (GMimeStream *stream, char *buffer, size_t length)
 	}
 	length = MIN (length, MIN (input->chunk, input->fail_after - input->bytes_read));
 	nread = g_mime_stream_read (input->parent_instance.source, buffer, length);
-	if (nread > 0)
+	if (nread > 0) {
 		input->bytes_read += nread;
+		input->read_length = nread;
+	}
 	return nread;
 }
 
@@ -125,7 +131,7 @@ typedef struct {
 	guint stage, fail_stage, release_stage;
 	gboolean no_error, error_on_success, release;
 	GMimeReaderNewLineFormat newline_format;
-	gboolean trace_newlines, trace_reads;
+	gboolean trace_newlines, trace_reads, input_slices;
 } TestReader;
 
 typedef GMimeReaderClass TestReaderClass;
@@ -249,6 +255,13 @@ test_content_read (GMimeReader *reader, GMimeReaderContentType type, const guint
 {
 	TestReader *test = (TestReader *) reader;
 
+	if (test->input_slices) {
+		ReaderInput *input = (ReaderInput *) _g_mime_reader_get_stream (reader);
+
+		/* These cases consume each read completely, retaining at most CRLF. */
+		g_assert_cmpuint ((guintptr) buffer, >=, (guintptr) input->read_buffer - 2);
+		g_assert_cmpuint ((guintptr) buffer + length, <=, (guintptr) input->read_buffer + input->read_length);
+	}
 	g_byte_array_append (test->content, buffer, length);
 	test->content_chunks++;
 	test->max_chunk = MAX (test->max_chunk, length);
@@ -2983,6 +2996,66 @@ test_generated_scans (void)
 	}
 }
 
+typedef struct {
+	TestReader *reader;
+	gsize length;
+	guint flush_issues;
+} ContentFlushCheck;
+
+static void
+check_content_flush (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	ContentFlushCheck *check = user_data;
+
+	if (issue->violation == GMIME_COMPLIANCE_INVALID_QUOTED_PRINTABLE_SOFT_BREAK) {
+		/* A lone CR at EOF is content, delivered before validator Flush(). */
+		g_assert_cmpuint (check->reader->content->len, ==, check->length);
+		check->flush_issues++;
+	}
+}
+
+static void
+test_content_input_slices (void)
+{
+	static const guint chunks[] = { 1, 2, 7, 127, 128, 129, 1021, 4095, 4096 };
+	static const char *tails[] = { "", "\r", "\n", "\r\n", "=\r" };
+	GString *body = g_string_new (NULL), *wire = g_string_new (NULL);
+	guint encoding, tail, chunk, i;
+
+	testsuite_check ("Input-buffer content slices preserve refill lookbehind and EOF delivery order");
+	for (encoding = 0; encoding < 2; encoding++) {
+		for (tail = 0; tail < G_N_ELEMENTS (tails); tail++) {
+			g_string_truncate (body, 0);
+			for (i = 0; i < 150; i++) {
+				g_string_append (body, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789\r\n");
+				if (!encoding)
+					g_string_append_len (body, "\0\xff\r\n", 4);
+			}
+			g_string_append (body, tails[tail]);
+			g_string_printf (wire, "Content-Transfer-Encoding: %s\r\n\r\n", encoding ? "quoted-printable" : "binary");
+			g_string_append_len (wire, body->str, body->len);
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				ReaderInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+				TestReader *reader = new_reader (input, NULL);
+				ContentFlushCheck check = { reader, body->len, 0 };
+				GError *error = NULL;
+
+				reader->input_slices = chunks[chunk] >= 1021;
+				g_mime_reader_set_compliance_logger ((GMimeReader *) reader, check_content_flush, &check, NULL);
+				g_assert_true (g_mime_reader_read_message ((GMimeReader *) reader, &error));
+				g_assert_no_error (error);
+				g_assert_cmpmem (reader->content->data, reader->content->len, body->str, body->len);
+				g_assert_cmpuint (check.flush_issues, ==, encoding && tail == 4 ? 1 : 0);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+		}
+	}
+	g_string_free (body, TRUE);
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
 int
 main (int argc, char **argv)
 {
@@ -3048,6 +3121,7 @@ main (int argc, char **argv)
 	test_content_id_model_preservation ();
 	test_scan_corpus (datadir);
 	test_generated_scans ();
+	test_content_input_slices ();
 	testsuite_check ("Header limits, callback failures and input errors");
 	test_reader_limits_and_errors ();
 	testsuite_check_passed ();
