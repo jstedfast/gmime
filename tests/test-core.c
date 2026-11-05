@@ -5750,6 +5750,92 @@ test_header_identifier_threads (void)
 }
 
 static void
+test_header_formatter_dispatch (void)
+{
+	static const struct {
+		const char *name;
+		GMimeHeaderRawValueFormatter formatter;
+	} cases[] = {
+		{ "Authentication-Results", g_mime_header_format_authentication_results },
+		{ "ARC-Authentication-Results", g_mime_header_format_authentication_results },
+		{ "Received", g_mime_header_format_received },
+		{ "Sender", g_mime_header_format_addrlist },
+		{ "From", g_mime_header_format_addrlist },
+		{ "Reply-To", g_mime_header_format_addrlist },
+		{ "To", g_mime_header_format_addrlist },
+		{ "Cc", g_mime_header_format_addrlist },
+		{ "Bcc", g_mime_header_format_addrlist },
+		{ "Message-Id", g_mime_header_format_message_id },
+		{ "In-Reply-To", g_mime_header_format_message_id },
+		{ "Original-Message-Id", g_mime_header_format_message_id },
+		{ "References", g_mime_header_format_references },
+		{ "Resent-Sender", g_mime_header_format_addrlist },
+		{ "Resent-From", g_mime_header_format_addrlist },
+		{ "Resent-Reply-To", g_mime_header_format_addrlist },
+		{ "Resent-To", g_mime_header_format_addrlist },
+		{ "Resent-Cc", g_mime_header_format_addrlist },
+		{ "Resent-Bcc", g_mime_header_format_addrlist },
+		{ "Resent-Message-Id", g_mime_header_format_message_id },
+		{ "Content-Type", g_mime_header_format_content_type },
+		{ "Content-Disposition", g_mime_header_format_content_disposition },
+		{ "Content-Id", g_mime_header_format_message_id },
+		{ "Disposition-Notification-To", g_mime_header_format_addrlist },
+		{ "Disposition-Notification-Options", g_mime_header_format_disposition_notification_options },
+		{ "DKIM-Signature", g_mime_header_format_dkim_signature },
+		{ "ARC-Message-Signature", g_mime_header_format_dkim_signature },
+		{ "ARC-Seal", g_mime_header_format_dkim_signature },
+		{ "List-Archive", g_mime_header_format_mailing_list_command },
+		{ "List-Help", g_mime_header_format_mailing_list_command },
+		{ "List-Owner", g_mime_header_format_mailing_list_command },
+		{ "List-Post", g_mime_header_format_mailing_list_command },
+		{ "List-Subscribe", g_mime_header_format_mailing_list_command },
+		{ "List-Unsubscribe", g_mime_header_format_mailing_list_command },
+		{ "Newsgroups", g_mime_header_format_newsgroups }
+	};
+	static const char *unknown[] = { "X-Custom", "Sender-Extra", "X-Subject" };
+	guint i, j, k;
+
+	for (i = 0; i < GMIME_HEADER_X_STATUS + 1 + G_N_ELEMENTS (unknown); i++) {
+		const char *canonical = i <= GMIME_HEADER_X_STATUS ?
+			g_mime_header_id_to_name ((GMimeHeaderId) i) : unknown[i - GMIME_HEADER_X_STATUS - 1];
+		GMimeHeaderRawValueFormatter expected = NULL;
+
+		for (j = 0; j < G_N_ELEMENTS (cases); j++) {
+			if (!strcmp (canonical, cases[j].name)) {
+				expected = cases[j].formatter;
+				break;
+			}
+		}
+
+		for (k = 0; k < 3; k++) {
+			char *name = k == 0 ? g_strdup (canonical) :
+				k == 1 ? g_ascii_strdown (canonical, -1) : g_ascii_strup (canonical, -1);
+			GMimeHeader *header = g_mime_header_new (name, "", NULL), *clone;
+			char *wire = g_strdup_printf ("%s \t: value\r\n", name);
+			GError *error = NULL;
+
+			g_assert_nonnull (header);
+			check (header->formatter == expected,
+			       "all constructed header identifiers retain their field-specific or default formatter");
+			g_object_unref (header);
+			header = g_mime_header_parse_text (NULL, wire, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (header);
+			clone = g_mime_header_clone (header);
+			check (header->formatter == expected && clone->formatter == expected &&
+			       header->value == NULL && clone->value == NULL &&
+			       !strcmp (header->name, name) &&
+			       !strcmp (testsuite_header_raw_text (header), " value\r\n"),
+			       "parsed and cloned case variants preserve formatter selection, laziness and raw bytes");
+			g_object_unref (clone);
+			g_object_unref (header);
+			g_free (wire);
+			g_free (name);
+		}
+	}
+}
+
+static void
 test_header_identifiers (void)
 {
 	static const struct {
@@ -6201,7 +6287,11 @@ test_checked_header_assignment (void)
 		{ "X-Unicode", "\342\200\205\r\n", "\342\200\205", " \342\200\205\n" },
 		{ "Content-Type", " text/plain; charset=utf-8 ", "text/plain; charset=utf-8",
 		  " text/plain; charset=utf-8\n" },
+		{ "cOnTeNt-TyPe", " text/plain; charset=utf-8 ", "text/plain; charset=utf-8",
+		  " text/plain; charset=utf-8\n" },
 		{ "Content-Disposition", " attachment; filename=\"file.txt\" ",
+		  "attachment; filename=\"file.txt\"", " attachment; filename=file.txt\n" },
+		{ "CONTENT-DISPOSITION", " attachment; filename=\"file.txt\" ",
 		  "attachment; filename=\"file.txt\"", " attachment; filename=file.txt\n" }
 	};
 	static const struct {
@@ -6210,9 +6300,12 @@ test_checked_header_assignment (void)
 		{ "Content-Type", "" }, { "Content-Type", "plain" },
 		{ "Content-Type", "text/" }, { "Content-Type", "text/plain garbage" },
 		{ "Content-Type", "text/plain; name=\"unfinished" },
+		{ "content-type", "plain" }, { "CONTENT-TYPE", "text/" },
 		{ "Content-Disposition", "" }, { "Content-Disposition", "\"attachment\"" },
 		{ "Content-Disposition", "attachment garbage" },
-		{ "Content-Disposition", "attachment; filename=\"unfinished" }
+		{ "Content-Disposition", "attachment; filename=\"unfinished" },
+		{ "content-disposition", "attachment garbage" },
+		{ "CONTENT-DISPOSITION", "\"attachment\"" }
 	};
 	static const char *bad_names[] = { "", "X Test", "X:Test", "X\177Test", "X-\303\251" };
 	static const char binary[] = "Subject: one\0two\r\n\r\n";
@@ -6260,7 +6353,7 @@ test_checked_header_assignment (void)
 		       "checked construction rejects malformed structured headers");
 		g_clear_error (&error);
 		header = g_mime_header_new (invalid[i].name,
-					   !strcmp (invalid[i].name, "Content-Type") ? "text/plain" : "attachment", NULL);
+					   !g_ascii_strcasecmp (invalid[i].name, "Content-Type") ? "text/plain" : "attachment", NULL);
 		testsuite_header_set_raw_text (header, " explicit raw\r\n");
 		value = g_mime_header_get_value (header);
 		raw = header->raw_value;
@@ -8653,6 +8746,53 @@ test_header_list_remove_all (void)
 	check (g_mime_header_list_get_count (headers) == 2 && g_mime_header_list_contains (headers, "X-Keep"),
 	       "bulk removal leaves unrelated owner headers unchanged");
 	g_object_unref (message);
+}
+
+static void
+test_header_list_append_lookup (void)
+{
+	static const char *names[] = { "From", "fRoM", "X-Custom", "x-CUSTOM", "X-Other" };
+	GMimeHeaderList *headers;
+	GMimeHeader *header;
+	guint changes, expected, i, j, position;
+
+	for (position = 0; position < 3; position++) {
+		headers = g_mime_header_list_new (NULL);
+		changes = expected = 0;
+		g_mime_event_add (headers->changed, count_checked_header_changes, &changes);
+
+		for (i = 0; i < G_N_ELEMENTS (names); i++) {
+			int count = g_mime_header_list_get_count (headers);
+			int index = position == 0 ? count : position == 1 ? 0 : count / 2;
+
+			header = g_mime_header_new (names[i], "", NULL);
+			g_assert_nonnull (header);
+			g_mime_header_list_insert_header (headers, index, header);
+			check (g_mime_header_list_add (headers, header) == count + 1,
+			       "appending a repeated instance returns its new index");
+			g_object_unref (header);
+			expected += 2;
+			check (changes == expected, "inserting and appending instances each emit one list notification");
+			for (j = 0; j <= i; j++) {
+				index = g_mime_header_list_index_of (headers, names[j]);
+				check (index >= 0 && g_mime_header_list_get_header (headers, names[j]) ==
+				       g_mime_header_list_get_header_at (headers, index),
+				       "append lookup preserves the first case-insensitive match for known and extension fields");
+			}
+		}
+
+		while (g_mime_header_list_get_count (headers) > 0) {
+			g_mime_header_list_remove_at (headers, 0);
+			check (changes == ++expected, "removing each repeated occurrence emits one notification");
+			for (j = 0; j < G_N_ELEMENTS (names); j++) {
+				int index = g_mime_header_list_index_of (headers, names[j]);
+				header = index >= 0 ? g_mime_header_list_get_header_at (headers, index) : NULL;
+				check (g_mime_header_list_get_header (headers, names[j]) == header,
+				       "removal promotes the first remaining occurrence without conflating unknown identifiers");
+			}
+		}
+		g_object_unref (headers);
+	}
 }
 
 static void
@@ -13923,6 +14063,7 @@ main (int argc, char **argv)
 
 	testsuite_start ("header identifiers");
 	test_header_identifiers ();
+	test_header_formatter_dispatch ();
 	testsuite_end ();
 
 	testsuite_start ("linear-whitespace header unfolding");
@@ -14021,6 +14162,7 @@ main (int argc, char **argv)
 
 	testsuite_start ("existing header instances");
 	test_header_list_instances ();
+	test_header_list_append_lookup ();
 	testsuite_end ();
 
 	testsuite_start ("existing header replacement");
