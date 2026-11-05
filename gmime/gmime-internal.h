@@ -99,6 +99,7 @@ G_GNUC_INTERNAL GMimeHeader *_g_mime_header_new_from_reader (GMimeParserOptions 
 G_GNUC_INTERNAL void _g_mime_header_set_offset (GMimeHeader *header, gint64 offset);
 
 /* GMimeHeaderList */
+G_GNUC_INTERNAL void _g_mime_header_list_ensure_capacity (GMimeHeaderList *headers, guint capacity);
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
 G_GNUC_INTERNAL void _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options);
 G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *raw_name,

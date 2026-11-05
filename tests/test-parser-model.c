@@ -251,6 +251,202 @@ model_output_init (ModelOutput *output)
 }
 
 static void
+test_parsed_header_names (void)
+{
+	static const struct {
+		const char *wire, *name;
+		gsize length, field_length;
+		GMimeHeaderId id;
+		gboolean invalid;
+	} cases[] = {
+		{ "sUbJeCt \t: before\0after\r\n", "sUbJeCt",
+		  sizeof ("sUbJeCt \t: before\0after\r\n") - 1, 9, GMIME_HEADER_SUBJECT, FALSE },
+		{ "X-Long-Ascii: value\r\n", "X-Long-Ascii",
+		  sizeof ("X-Long-Ascii: value\r\n") - 1, 12, GMIME_HEADER_UNKNOWN, FALSE },
+		{ "X-\200\377\0Z\r\n", "X-\302\200\303\277\\0Z\r\n",
+		  sizeof ("X-\200\377\0Z\r\n") - 1, sizeof ("X-\200\377\0Z\r\n") - 1, GMIME_HEADER_UNKNOWN, TRUE },
+		{ "\0X\r\n", "\\0X\r\n", sizeof ("\0X\r\n") - 1, sizeof ("\0X\r\n") - 1, GMIME_HEADER_UNKNOWN, TRUE }
+	};
+	guint i, mode;
+
+	testsuite_check ("Parsed header names preserve ASCII, Latin-1 bytes and embedded NULs");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (mode = 0; mode < 2; mode++) {
+			GString *wire = g_string_new ("X-First: yes\r\n");
+			GMimeHeaderList *headers, *copy;
+			GMimeHeader *header, *clone;
+			GMimeReader *reader;
+			ModelInput *input;
+			GByteArray *bytes;
+			GError *error = NULL;
+			gconstpointer data;
+			gsize length;
+
+			g_string_append_len (wire, cases[i].wire, cases[i].length);
+			g_string_append (wire, "X-Last: done\r\n\r\n");
+			input = new_input (wire->str, wire->len, mode ? 4096 : 1);
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+			headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+			header = g_mime_header_list_get_header_at (headers, 1);
+			g_assert_cmpstr (g_mime_header_get_name (header), ==, cases[i].name);
+			g_assert_cmpint (header->id, ==, cases[i].id);
+			g_assert_cmpint (header->invalid, ==, cases[i].invalid);
+			g_assert_null (header->value);
+			g_assert_true (header->owns_options);
+			g_assert_cmpint (header->offset, ==, strlen ("X-First: yes\r\n"));
+			data = g_bytes_get_data (header->raw_name, &length);
+			g_assert_cmpmem (data, length, cases[i].wire, cases[i].field_length);
+			bytes = serialize_headers (headers, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, wire->str, wire->len - 2);
+			g_byte_array_unref (bytes);
+			clone = g_mime_header_clone (header);
+			g_assert_true (clone->raw_name == header->raw_name);
+			g_assert_true (clone->raw_value == header->raw_value);
+			g_object_unref (headers);
+			g_object_unref (reader);
+			g_object_unref (input);
+			copy = g_mime_header_list_new (NULL);
+			g_mime_header_list_add (copy, clone);
+			g_object_unref (clone);
+			bytes = serialize_headers (copy, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, cases[i].wire, cases[i].length);
+			g_byte_array_unref (bytes);
+			g_object_unref (copy);
+			g_string_free (wire, TRUE);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GPtrArray *headers;
+	guint fail_at;
+} HeaderCapture;
+
+static gboolean
+capture_parsed_header (GMimeHeader *header, gboolean toplevel, gpointer user_data, GError **error)
+{
+	HeaderCapture *capture = user_data;
+
+	g_assert_true (toplevel);
+	g_ptr_array_add (capture->headers, g_object_ref (header));
+	if (capture->headers->len == 1)
+		testsuite_header_set_raw_text (header, " callback\r\n");
+
+	if (capture->headers->len == capture->fail_at) {
+		g_set_error_literal (error, GMIME_ERROR, EIO, "Header callback failed.");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void
+test_header_staging (void)
+{
+	static const char wire[] = "Subject: original\r\nsUbJeCt: duplicate\r\nX-Other: third\r\n\r\nbody";
+	guint mode;
+
+	testsuite_check ("Header staging preserves callback edits, references, failures and reader reuse");
+	for (mode = 0; mode < 4; mode++) {
+		HeaderCapture capture = { g_ptr_array_new_with_free_func (g_object_unref), mode & 1 ? 2 : 0 };
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, mode & 2 ? 4096 : 1);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GMimeHeaderList *headers;
+		GMimeHeader *header;
+		GError *error = NULL;
+		guint i;
+
+		_g_mime_parser_reader_set_header_callback (reader, capture_parsed_header, &capture);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+		if (capture.fail_at) {
+			g_assert_null (headers);
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			g_assert_cmpuint (capture.headers->len, ==, capture.fail_at);
+		} else {
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_assert_cmpuint (capture.headers->len, ==, 3);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+			for (i = 0; i < capture.headers->len; i++)
+				g_assert_true (g_mime_header_list_get_header_at (headers, i) == capture.headers->pdata[i]);
+			g_assert_true (g_mime_header_list_get_header (headers, "SUBJECT") == capture.headers->pdata[0]);
+			g_object_unref (headers);
+		}
+		g_object_unref (input);
+		input = new_input ("\r\n", 2, 1);
+		_g_mime_parser_reader_set_header_callback (reader, NULL, NULL);
+		_g_mime_parser_reader_set_stream (reader, (GMimeStream *) input, GMIME_FORMAT_MESSAGE);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (headers);
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 0);
+		g_assert_true (headers->has_body_separator);
+		g_object_unref (headers);
+		g_object_unref (reader);
+		g_object_unref (input);
+		header = capture.headers->pdata[0];
+		g_assert_cmpstr (g_mime_header_get_value (header), ==, "callback");
+		header = capture.headers->pdata[1];
+		g_assert_cmpstr (g_mime_header_get_value (header), ==, "duplicate");
+		g_ptr_array_unref (capture.headers);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_content_header_partition (void)
+{
+	static const char wire[] =
+		"Subject: message\r\ncontent-alternative: first\r\nComments: comment\r\n"
+		"cOnTeNt-Testing: extension\r\nControl: control\r\ncOnTeNt-TyPe: text/plain\r\n"
+		"Content: no dash\r\nContent-: bare prefix\r\nX-Content-Type: not content\r\n"
+		"Content-Type-Extra: extension\r\nContent-broken line\r\n\r\nbody\r\n";
+	static const char *message_names[] = { "Subject", "Comments", "Control", "Content", "X-Content-Type" };
+	static const char *body_names[] = {
+		"content-alternative", "cOnTeNt-Testing", "cOnTeNt-TyPe",
+		"Content-", "Content-Type-Extra", "Content-broken line\r\n"
+	};
+	guint mode, i;
+
+	testsuite_check ("Cached content-header classification preserves known, extension and invalid field partitioning");
+	for (mode = 0; mode < 2; mode++) {
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, mode ? 1 : 4096);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GMimeHeaderList *headers;
+		GMimeMessage *message;
+		GMimeEntity *body;
+		GError *error = NULL;
+
+		message = _g_mime_parser_reader_construct_message (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		headers = _g_mime_entity_get_private ((GMimeEntity *) message)->headers;
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, G_N_ELEMENTS (message_names));
+		for (i = 0; i < G_N_ELEMENTS (message_names); i++)
+			g_assert_cmpstr (g_mime_header_get_name (g_mime_header_list_get_header_at (headers, i)),
+					==, message_names[i]);
+
+		body = g_mime_message_get_mime_part (message);
+		g_assert_true (GMIME_IS_TEXT_PART (body));
+		headers = _g_mime_entity_get_private (body)->headers;
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, G_N_ELEMENTS (body_names));
+		for (i = 0; i < G_N_ELEMENTS (body_names); i++)
+			g_assert_cmpstr (g_mime_header_get_name (g_mime_header_list_get_header_at (headers, i)),
+					==, body_names[i]);
+
+		g_object_unref (message);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_header_models (void)
 {
 	static const char wire[] = "X \t: a\0b\r\nX: second\r\nbroken line\r\n\tfold\r\n"
@@ -476,20 +672,25 @@ test_binary_encoding_headers (void)
 
 	testsuite_check ("Binary encoding headers do not turn a malformed token into a valid C-string prefix");
 	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
-		GString *wire = g_string_new ("Content-Type: message/partial; id=x; number=1\nContent-Transfer-Encoding:");
-
-		g_string_append_len (wire, cases[i].value, cases[i].length);
-		g_string_append (wire, "\nYWJj\n");
-		for (mode = 0; mode < 4; mode++) {
+		for (mode = 0; mode < 8; mode++) {
+			GString *wire = g_string_new ("Content-Type: message/partial; id=x; number=1\nContent-Transfer-Encoding:");
 			GMimeEntityPrivate *priv;
-			ModelInput *input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
-			GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
+			ModelInput *input;
+			GMimeReader *reader;
+			GMimeEntity *entity;
 			GError *error = NULL;
-			GMimeEntity *entity = _g_mime_parser_reader_construct_part (reader, &error);
 			GMimeHeader *header;
 			GByteArray *bytes;
 			GBytes *raw;
 			const char *decoded = cases[i].encoding == GMIME_CONTENT_ENCODING_BASE64 ? "abc" : "YWJj\n";
+
+			g_string_append_len (wire, cases[i].value, cases[i].length);
+			if (mode & 4)
+				g_string_append (wire, "cOnTeNt-TrAnSfEr-EnCoDiNg: quoted-printable\n");
+			g_string_append (wire, "\nYWJj\n");
+			input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
+			entity = _g_mime_parser_reader_construct_part (reader, &error);
 
 			g_assert_no_error (error);
 			g_assert_nonnull (entity);
@@ -519,8 +720,8 @@ test_binary_encoding_headers (void)
 			g_object_unref (entity);
 			g_object_unref (reader);
 			g_object_unref (input);
+			g_string_free (wire, TRUE);
 		}
-		g_string_free (wire, TRUE);
 	}
 	testsuite_check_passed ();
 }
@@ -6078,6 +6279,9 @@ main (int argc, char **argv)
 	g_mime_init ();
 	testsuite_init (argc, argv);
 	testsuite_start ("Reader-backed MIME model foundation");
+	test_parsed_header_names ();
+	test_header_staging ();
+	test_content_header_partition ();
 	test_header_models ();
 	test_empty_headers ();
 	test_leaf_models ();

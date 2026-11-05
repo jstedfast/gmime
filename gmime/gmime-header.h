@@ -388,6 +388,7 @@ G_DECLARE_FINAL_TYPE (GMimeHeaderList, g_mime_header_list, GMIME, HEADER_LIST, G
 
 
 GMimeHeaderList *g_mime_header_list_new (GMimeParserOptions *options);
+GMimeHeaderList *g_mime_header_list_new_with_capacity (GMimeParserOptions *options, int capacity);
 GMimeHeaderList *g_mime_header_list_load (GMimeParserOptions *options, GMimeStream *stream, GError **error);
 GMimeHeaderList *g_mime_header_list_load_file (GMimeParserOptions *options, const char *filename, GError **error);
 

@@ -2088,6 +2088,24 @@ Unknown fields still use name-based list lookup and default formatting.
 Case variants, repeated/shared instances, raw bytes and owner notifications
 retain their existing behavior.
 
+Parsed headers are staged in a plain owning pointer array, not a temporary
+HeaderList. Hash indexing and change subscriptions are established only in
+the returned header list or final entity lists. Leading invalid message
+fields are removed in one batch after preserving their raw marker bytes.
+Parsed-header construction copies ordinary ASCII names directly and creates
+the raw field/value buffers once, retaining Latin-1-to-UTF-8 name conversion
+and escaped NULs for unusual fields. Original bytes, lazy values, option
+snapshots, callbacks and first-header-wins behavior are unchanged.
+`g_mime_header_list_new_with_capacity()` reserves initial pointer-array space
+without adding headers or limiting growth. Parser-built lists reserve space
+from the staged header count before adding their headers; this does not
+preallocate GLib's name hash table.
+Content-header classification in parser partitioning and entity/part header
+notifications uses the contiguous cached Content-* identifier range, checking
+the name prefix only for unknown extension or invalid fields.
+Singleton-header warning selection and the parser's Content-Type cache
+initialization exclusion also use cached identifiers.
+
 Persistent regressions cover every common field, case variants, stream
 and standalone parsing, cloning, binary values, raw trailing blanks,
 checked/ordinary construction, value mutation and unknown identifiers.

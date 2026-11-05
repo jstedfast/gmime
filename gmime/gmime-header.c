@@ -443,24 +443,37 @@ _g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffe
 	/* MimeKit keeps the original field and value as byte arrays so invalid
 	 * fields and embedded NULs survive serialization and cloning without
 	 * acquiring a synthetic colon. */
-	name = g_string_sized_new (name_length);
+	header = g_object_new (GMIME_TYPE_HEADER, NULL);
 
 	for (i = 0; i < name_length; i++) {
-		if (buffer[i] == 0)
-			g_string_append (name, "\\0");
-		else
-			g_string_append_unichar (name, buffer[i]);
+		if (buffer[i] == 0 || buffer[i] >= 128)
+			break;
 	}
 
-	header = header_new (g_mime_parser_options_clone (options), name->str, NULL,
-			     name->str, NULL, NULL, offset);
+	if (i == name_length) {
+		header->name = g_strndup ((const char *) buffer, name_length);
+	} else {
+		name = g_string_sized_new (name_length);
+		g_string_append_len (name, (const char *) buffer, i);
+
+		for (; i < name_length; i++) {
+			if (buffer[i] == 0)
+				g_string_append (name, "\\0");
+			else
+				g_string_append_unichar (name, buffer[i]);
+		}
+
+		header->name = g_string_free (name, FALSE);
+	}
+
+	header->id = g_mime_header_id_from_name (header->name);
+	header->formatter = header_formatter_for_id (header->id);
+	header->options = g_mime_parser_options_clone (options);
 	header->owns_options = TRUE;
 	header->invalid = invalid;
-	header->reformat = FALSE;
-	g_bytes_unref (header->raw_name);
+	header->offset = offset;
 	header->raw_name = g_bytes_new (buffer, field_length);
 	header->raw_value = g_bytes_new (buffer + value_offset, length - value_offset);
-	g_string_free (name, TRUE);
 
 	return header;
 }
@@ -2447,11 +2460,46 @@ g_mime_header_list_finalize (GObject *object)
 GMimeHeaderList *
 g_mime_header_list_new (GMimeParserOptions *options)
 {
+	return g_mime_header_list_new_with_capacity (options, 0);
+}
+
+
+void
+_g_mime_header_list_ensure_capacity (GMimeHeaderList *headers, guint capacity)
+{
+	guint length = headers->array->len;
+
+	if (capacity <= length)
+		return;
+
+	/* GPtrArray has no reserve API; shrinking its length retains the storage. */
+	g_ptr_array_set_size (headers->array, capacity);
+	g_ptr_array_set_size (headers->array, length);
+}
+
+
+/**
+ * g_mime_header_list_new_with_capacity:
+ * @options: (nullable): a #GMimeParserOptions or %NULL
+ * @capacity: the initial number of headers to reserve space for, or %0
+ *
+ * Creates an empty #GMimeHeaderList with space for at least @capacity
+ * headers. The list grows as needed; @capacity is not a count or a limit.
+ * The list owns a snapshot of @options.
+ *
+ * Returns: (transfer full): a new header list object.
+ **/
+GMimeHeaderList *
+g_mime_header_list_new_with_capacity (GMimeParserOptions *options, int capacity)
+{
 	GMimeHeaderList *headers;
-	
+
+	g_return_val_if_fail (capacity >= 0, NULL);
+
 	headers = g_object_new (GMIME_TYPE_HEADER_LIST, NULL);
 	headers->options = g_mime_parser_options_clone (options);
-	
+	_g_mime_header_list_ensure_capacity (headers, capacity);
+
 	return headers;
 }
 

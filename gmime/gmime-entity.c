@@ -273,7 +273,7 @@ object_header_changed (GMimeEntity *object, GMimeHeader *header)
 	if (G_UNLIKELY (can_warn))
 		g_mime_header_get_value (header);
 	
-	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
+	if (!_g_mime_header_is_content (header))
 		return;
 	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
@@ -329,7 +329,7 @@ object_header_removed (GMimeEntity *object, GMimeHeader *header)
 	
 	name = g_mime_header_get_name (header);
 	
-	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
+	if (!_g_mime_header_is_content (header))
 		return;
 	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
