@@ -105,6 +105,7 @@ validator_report (ValidatorContext *context, GMimeEncodingViolation violation, g
 	issue.line_number = context->line_number;
 	/* Diagnostics may refer to an earlier octet, not the current input cursor. */
 	issue.column_number = (guint64) (offset - context->line_begin_offset) + 1;
+
 	context->report (&issue, context->user_data);
 }
 
@@ -132,7 +133,6 @@ G_DEFINE_TYPE_WITH_CODE (GMimeBase64Validator, _g_mime_base64_validator, G_TYPE_
 static GMimeContentEncoding
 base64_get_encoding (GMimeEncodingValidator *validator)
 {
-	(void) validator;
 	return GMIME_CONTENT_ENCODING_BASE64;
 }
 
