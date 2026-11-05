@@ -45,6 +45,7 @@ typedef struct {
 	GMimeReader parent_instance;
 	GMimeStream *stream;
 	GPtrArray *headers;
+	GByteArray *first_headers;
 	GPtrArray *stack;
 	GMimeStream *content;
 	GByteArray *boundary;
@@ -85,6 +86,7 @@ parser_reader_finalize (GObject *object)
 
 	parser_reader_reset (reader);
 	g_ptr_array_unref (reader->headers);
+	g_byte_array_unref (reader->first_headers);
 	g_ptr_array_unref (reader->stack);
 	g_clear_object (&reader->stream);
 	g_clear_pointer (&reader->marker, g_bytes_unref);
@@ -98,6 +100,7 @@ parser_reader_headers_begin (GMimeReader *base, gint64 offset, guint64 line, GEr
 
 	g_ptr_array_set_size (reader->headers, 0);
 	reader->has_body_separator = FALSE;
+
 	if (!reader->stack->len)
 		reader->headers_begin = offset;
 
@@ -110,19 +113,23 @@ parser_reader_header_read (GMimeReader *base, const guint8 *buffer, gsize length
 			   gint64 offset, guint64 line, GError **error)
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
+	GMimeParserOptions *options = g_mime_reader_get_options (base);
 	GMimeHeader *header;
 
-	header = _g_mime_header_new_from_reader (g_mime_reader_get_options (base), buffer, length,
+	header = _g_mime_header_new_from_reader (_g_mime_parser_options_snapshot (options), buffer, length,
 					       name_length, field_length, invalid, offset);
 	g_ptr_array_add (reader->headers, header);
 
-	if (reader->header_callback &&
-	    !reader->header_callback (header, reader->stack->len == 0, reader->header_data, error))
-		return FALSE;
+	if (reader->header_callback) {
+		if (!reader->header_callback (header, reader->stack->len == 0, reader->header_data, error))
+			return FALSE;
 
-	if (!invalid) {
+		options = g_mime_reader_get_options (base);
+	}
+
+	if (!invalid && g_mime_parser_options_get_warning_callback (options)) {
 		if (g_mime_utils_text_is_8bit (buffer, length))
-			_g_mime_parser_options_warn (g_mime_reader_get_options (base), offset,
+			_g_mime_parser_options_warn (options, offset,
 						    GMIME_WARN_UNENCODED_8BIT_HEADER, header->name);
 	}
 
@@ -142,21 +149,20 @@ parser_reader_body_separator (GMimeReader *base, gint64 offset, guint64 line, gi
 }
 
 static void
-parser_reader_check_repeated_header (GMimeParserOptions *options, GMimeEntity *entity, GMimeHeader *header)
+parser_reader_check_repeated_header (GMimeParserOptions *options, gboolean message,
+				    GMimeHeader *header, GMimeHeader *existing)
 {
 	static const GMimeHeaderId singletons[] = {
 		GMIME_HEADER_BCC, GMIME_HEADER_CC, GMIME_HEADER_DATE, GMIME_HEADER_FROM,
 		GMIME_HEADER_IN_REPLY_TO, GMIME_HEADER_MESSAGE_ID, GMIME_HEADER_REFERENCES,
 		GMIME_HEADER_REPLY_TO, GMIME_HEADER_SENDER, GMIME_HEADER_SUBJECT, GMIME_HEADER_TO
 	};
-	GMimeEntityPrivate *priv;
-	GMimeHeader *existing;
 	guint i;
 
-	if (header->invalid || !g_mime_parser_options_get_warning_callback (options))
+	if (!existing || header->invalid || !g_mime_parser_options_get_warning_callback (options))
 		return;
 
-	if (GMIME_IS_MESSAGE (entity)) {
+	if (message) {
 		for (i = 0; i < G_N_ELEMENTS (singletons); i++) {
 			if (header->id == singletons[i])
 				break;
@@ -166,13 +172,10 @@ parser_reader_check_repeated_header (GMimeParserOptions *options, GMimeEntity *e
 			return;
 	}
 
-	priv = _g_mime_entity_get_private (entity);
-
-	if ((existing = g_mime_header_list_get_header (priv->headers, header->name)))
-		_g_mime_parser_options_warn (options, header->offset,
-					    g_bytes_equal (existing->raw_value, header->raw_value) ?
-					    GMIME_WARN_DUPLICATED_HEADER : GMIME_CRIT_CONFLICTING_HEADER,
-					    header->name);
+	_g_mime_parser_options_warn (options, header->offset,
+				    g_bytes_equal (existing->raw_value, header->raw_value) ?
+				    GMIME_WARN_DUPLICATED_HEADER : GMIME_CRIT_CONFLICTING_HEADER,
+				    header->name);
 }
 
 static void
@@ -180,6 +183,9 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 {
 	GMimeEntityPrivate *priv = _g_mime_entity_get_private (entity);
 	gboolean message = GMIME_IS_MESSAGE (entity);
+	gboolean cache_valid;
+	guint64 version;
+	guint index = 0;
 	int i, count;
 
 	priv->ensure_newline = FALSE;
@@ -192,18 +198,33 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 	 * Message headers exclude Content-*; a message's root entity keeps only
 	 * Content-* headers. Non-toplevel entities keep every header. */
 	_g_mime_entity_block_header_list_changed (entity);
+
 	count = reader->headers->len;
 	_g_mime_header_list_ensure_capacity (priv->headers, count);
+	g_byte_array_set_size (reader->first_headers, count);
+	cache_valid = priv->headers->array->len == 0;
 
 	for (i = 0; i < count; i++) {
 		GMimeHeader *header = reader->headers->pdata[i];
 		gboolean content = _g_mime_header_is_content (header);
+		GMimeHeader *existing;
 
 		if ((message && content) || (!message && toplevel && !content))
 			continue;
 
-		parser_reader_check_repeated_header (priv->headers->options, entity, header);
-		g_mime_header_list_add (priv->headers, header);
+		version = priv->headers->version;
+		existing = g_hash_table_lookup (priv->headers->hash, header->name);
+		parser_reader_check_repeated_header (priv->headers->options, message, header, existing);
+
+		if (priv->headers->version != version)
+			existing = g_hash_table_lookup (priv->headers->hash, header->name);
+
+		_g_mime_header_list_append_parsed (priv->headers, header, existing == NULL);
+
+		cache_valid = cache_valid && priv->headers->version == version + 1;
+
+		if (cache_valid)
+			reader->first_headers->data[index++] = existing == NULL;
 
 		if (header->owns_options)
 			g_mime_parser_options_unref (header->options);
@@ -220,13 +241,17 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 	/* Initialize entity caches and invalidate lazy message metadata once per
 	 * field. Legacy address warning callbacks see the complete list, including
 	 * repeated headers. Invalid fields are wire data only. */
-	count = g_mime_header_list_get_count (priv->headers);
+	count = priv->headers->array->len;
+	version = priv->headers->version;
 
-	for (i = 0; i < count; i++) {
-		GMimeHeader *header = g_mime_header_list_get_header_at (priv->headers, i);
+	for (i = 0; i < count && (guint) i < priv->headers->array->len; i++) {
+		GMimeHeader *header = priv->headers->array->pdata[i];
 
+		/* Observers may edit the list during import or cache initialization. */
+		cache_valid = cache_valid && priv->headers->version == version;
 		if (!header->invalid && header->id != GMIME_HEADER_CONTENT_TYPE &&
-		    g_mime_header_list_get_header (priv->headers, header->name) == header)
+		    (cache_valid ? reader->first_headers->data[i] :
+		     g_hash_table_lookup (priv->headers->hash, header->name) == header))
 			GMIME_ENTITY_GET_CLASS (entity)->header_added (entity, header);
 	}
 }
@@ -685,6 +710,7 @@ static void
 g_mime_parser_reader_init (GMimeParserReader *reader)
 {
 	reader->headers = g_ptr_array_new_with_free_func (g_object_unref);
+	reader->first_headers = g_byte_array_new ();
 	reader->stack = g_ptr_array_new_with_free_func (g_object_unref);
 	reader->marker_offset = -1;
 	reader->headers_begin = reader->headers_end = -1;
@@ -795,8 +821,12 @@ _g_mime_parser_reader_construct_headers (GMimeReader *base, gboolean stop_at_sep
 
 	_g_mime_header_list_ensure_capacity (headers, reader->headers->len);
 
-	for (i = 0; i < reader->headers->len; i++)
-		g_mime_header_list_add (headers, reader->headers->pdata[i]);
+	for (i = 0; i < reader->headers->len; i++) {
+		GMimeHeader *header = reader->headers->pdata[i];
+
+		_g_mime_header_list_append_parsed (headers, header,
+						 !g_hash_table_contains (headers->hash, header->name));
+	}
 
 	headers->has_body_separator = reader->has_body_separator;
 	g_ptr_array_set_size (reader->headers, 0);

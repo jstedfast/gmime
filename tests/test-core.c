@@ -32,6 +32,7 @@
 #include <gmime/gmime.h>
 #include <gmime/gmime-events.h>
 #include <gmime/gmime-internal.h>
+#include <gmime/gmime-parser-reader-private.h>
 
 #include "testsuite.h"
 
@@ -13966,6 +13967,176 @@ test_filtered_stream_reads (void)
 	check (TRUE, "read completion drains buffered CR and trailers once, caches EOF, and preserves native error/reset semantics");
 }
 
+typedef struct {
+	GMimeEvent *event;
+	GString *trace;
+	guint mode;
+	gboolean acted;
+} EventMutation;
+
+static void
+event_mutation_callback (gpointer sender, gpointer args, gpointer user_data)
+{
+	EventMutation *state = sender;
+	int id = GPOINTER_TO_INT (user_data);
+
+	g_assert_true (args == state);
+	g_string_append_c (state->trace, id);
+	if (state->acted || id != (state->mode == 6 ? 'B' : 'A'))
+		return;
+	state->acted = TRUE;
+	switch (state->mode) {
+	case 1:
+		g_mime_event_remove (state->event, event_mutation_callback, GINT_TO_POINTER ('A'));
+		break;
+	case 2:
+		g_mime_event_remove (state->event, event_mutation_callback, GINT_TO_POINTER ('B'));
+		break;
+	case 3:
+		g_mime_event_add (state->event, event_mutation_callback, GINT_TO_POINTER ('D'));
+		break;
+	case 4:
+		g_mime_event_emit (state->event, state);
+		break;
+	case 5:
+		g_mime_event_block (state->event, event_mutation_callback, GINT_TO_POINTER ('B'));
+		break;
+	case 6:
+		g_mime_event_remove (state->event, event_mutation_callback, GINT_TO_POINTER ('A'));
+		break;
+	case 7:
+		g_mime_event_remove (state->event, event_mutation_callback, GINT_TO_POINTER ('A'));
+		g_mime_event_remove (state->event, event_mutation_callback, GINT_TO_POINTER ('B'));
+		g_mime_event_remove (state->event, event_mutation_callback, GINT_TO_POINTER ('C'));
+		g_mime_event_add (state->event, event_mutation_callback, GINT_TO_POINTER ('D'));
+		break;
+	}
+}
+
+static void
+test_event_mutation (void)
+{
+	static const char *expected[] = { "ABC", "AC", "AC", "ABCD", "AABCBC", "AC", "AB", "A" };
+	EventMutation state = { NULL, g_string_new (NULL), 0, FALSE };
+	guint mode, i;
+
+	for (mode = 0; mode < G_N_ELEMENTS (expected); mode++) {
+		state.event = g_mime_event_new (&state);
+		state.mode = mode;
+		state.acted = FALSE;
+		g_string_truncate (state.trace, 0);
+		g_mime_event_emit (state.event, &state);
+		for (i = 'A'; i <= 'C'; i++)
+			g_mime_event_add (state.event, event_mutation_callback, GINT_TO_POINTER (i));
+		g_mime_event_emit (state.event, &state);
+		g_assert_cmpstr (state.trace->str, ==, expected[mode]);
+		g_mime_event_free (state.event);
+	}
+
+	state.event = g_mime_event_new (&state);
+	state.mode = 3;
+	state.acted = FALSE;
+	g_string_truncate (state.trace, 0);
+	g_mime_event_add (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_emit (state.event, &state);
+	g_assert_cmpstr (state.trace->str, ==, "AD");
+	g_mime_event_remove (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_remove (state.event, event_mutation_callback, GINT_TO_POINTER ('D'));
+	g_mime_event_remove (state.event, event_mutation_callback, GINT_TO_POINTER ('D'));
+	g_mime_event_block (state.event, event_mutation_callback, GINT_TO_POINTER ('D'));
+	g_mime_event_unblock (state.event, event_mutation_callback, GINT_TO_POINTER ('D'));
+	g_string_truncate (state.trace, 0);
+	g_mime_event_emit (state.event, &state);
+	g_assert_cmpstr (state.trace->str, ==, "");
+
+	g_mime_event_add (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_block (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_block (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_add (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_unblock (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_emit (state.event, &state);
+	g_assert_cmpstr (state.trace->str, ==, "A");
+	g_mime_event_unblock (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_unblock (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_emit (state.event, &state);
+	g_assert_cmpstr (state.trace->str, ==, "AAA");
+	g_mime_event_block (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_block (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_remove (state.event, event_mutation_callback, GINT_TO_POINTER ('A'));
+	g_mime_event_emit (state.event, &state);
+	g_assert_cmpstr (state.trace->str, ==, "AAAA");
+	g_mime_event_free (state.event);
+	g_string_free (state.trace, TRUE);
+	check (TRUE, "events preserve live iteration, recursive emission, duplicate listeners and nested blocking");
+}
+
+static GMimeParserOptions *
+parse_option_snapshot (GMimeReader *reader)
+{
+	static const char wire[] = "X-Snapshot: value\r\n\r\n";
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer (wire, sizeof (wire) - 1);
+	GMimeParserOptions *options;
+	GMimeHeaderList *headers;
+	GError *error = NULL;
+
+	g_mime_reader_set_stream (reader, stream);
+	headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	options = g_mime_parser_options_ref (g_mime_header_list_get_header_at (headers, 0)->options);
+	g_object_unref (headers);
+	g_object_unref (stream);
+	return options;
+}
+
+static void
+test_option_snapshots (void)
+{
+	GMimeReader *reader = _g_mime_parser_reader_new (NULL, NULL, FALSE);
+	GMimeParserOptions *options = g_mime_reader_get_options (reader);
+	GMimeParserOptions *before, *after, *again;
+	GError *error = NULL;
+	guint i;
+
+	for (i = 0; i < 12; i++) {
+		before = parse_option_snapshot (reader);
+		again = parse_option_snapshot (reader);
+		g_assert_true (before == again);
+		g_mime_parser_options_unref (again);
+		switch (i) {
+		case 0: g_mime_parser_options_set_address_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT); break;
+		case 1: g_mime_parser_options_set_parameter_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT); break;
+		case 2: g_mime_parser_options_set_rfc2047_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT); break;
+		case 3: g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE); break;
+		case 4: g_mime_parser_options_set_allow_unquoted_commas_in_addresses (options, FALSE); break;
+		case 5: g_mime_parser_options_set_respect_content_length (options, TRUE); break;
+		case 6: g_mime_parser_options_set_detect_openpgp (options, FALSE); break;
+		case 7: g_mime_parser_options_set_max_address_group_depth (options, 7); break;
+		case 8: g_mime_parser_options_set_max_mime_depth (options, 42); break;
+		case 9: g_mime_parser_options_set_max_header_length (options, 65536); break;
+		case 10:
+			g_assert_true (g_mime_parser_options_set_charset_encoding (options, "windows-1251", &error));
+			g_assert_no_error (error);
+			g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (before), ==, "utf-8");
+			break;
+		case 11: g_mime_parser_options_set_warning_callback (options, NULL, NULL); break;
+		}
+		after = parse_option_snapshot (reader);
+		g_assert_true (before != after);
+		g_mime_parser_options_unref (before);
+		g_mime_parser_options_unref (after);
+	}
+	after = parse_option_snapshot (reader);
+	before = g_mime_parser_options_clone (after);
+	g_mime_parser_options_set_max_mime_depth (before, 13);
+	g_object_unref (reader);
+	g_assert_cmpint (g_mime_parser_options_get_max_mime_depth (after), ==, 42);
+	g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (after), ==, "windows-1251");
+	g_mime_parser_options_unref (before);
+	g_mime_parser_options_unref (after);
+	check (TRUE, "internal option snapshots are shared until a setter runs and survive their source");
+}
+
 int
 main (int argc, char **argv)
 {
@@ -13973,6 +14144,11 @@ main (int argc, char **argv)
 
 	g_mime_init ();
 	testsuite_init (argc, argv);
+
+	testsuite_start ("event listeners and parser option snapshots");
+	test_event_mutation ();
+	test_option_snapshots ();
+	testsuite_end ();
 
 	testsuite_start ("concurrent header identifier lookup");
 	test_header_identifier_threads ();

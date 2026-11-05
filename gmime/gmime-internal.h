@@ -79,6 +79,7 @@ G_GNUC_INTERNAL gboolean _g_mime_entity_ends_with_delimiter_newline (GMimeEntity
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
 G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);
+G_GNUC_INTERNAL GMimeParserOptions *_g_mime_parser_options_snapshot (GMimeParserOptions *options);
 G_GNUC_INTERNAL void _g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, GMimeParserWarning errcode,
 						  const gchar *item);
 
@@ -93,6 +94,7 @@ G_GNUC_INTERNAL GMimeEntity *_g_mime_parser_load_from_file (GMimeParserOptions *
 G_GNUC_INTERNAL char *_g_mime_header_dup_raw_value (GMimeHeader *header);
 G_GNUC_INTERNAL GBytes *_g_mime_header_get_formatted_value (GMimeHeader *header, GMimeFormatOptions *options);
 G_GNUC_INTERNAL GMimeContentEncoding _g_mime_header_get_content_encoding (GMimeHeader *header);
+/* Takes ownership of options. */
 G_GNUC_INTERNAL GMimeHeader *_g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffer,
 							  gsize length, gsize name_length, gsize field_length,
 							  gboolean invalid, gint64 offset);
@@ -100,6 +102,8 @@ G_GNUC_INTERNAL void _g_mime_header_set_offset (GMimeHeader *header, gint64 offs
 
 /* GMimeHeaderList */
 G_GNUC_INTERNAL void _g_mime_header_list_ensure_capacity (GMimeHeaderList *headers, guint capacity);
+G_GNUC_INTERNAL void _g_mime_header_list_append_parsed (GMimeHeaderList *headers, GMimeHeader *header,
+						      gboolean first);
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
 G_GNUC_INTERNAL void _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options);
 G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *raw_name,

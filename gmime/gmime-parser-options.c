@@ -44,6 +44,7 @@
 
 struct _GMimeParserOptions {
 	gatomicrefcount ref_count;
+	GMimeParserOptions *cached_snapshot;
 	GMimeRfcComplianceMode addresses;
 	GMimeRfcComplianceMode parameters;
 	GMimeRfcComplianceMode rfc2047;
@@ -126,6 +127,7 @@ g_mime_parser_options_new (void)
 	
 	options = g_slice_new (GMimeParserOptions);
 	g_atomic_ref_count_init (&options->ref_count);
+	options->cached_snapshot = NULL;
 	options->addresses = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->parameters = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
@@ -168,6 +170,7 @@ g_mime_parser_options_clone (GMimeParserOptions *options)
 	
 	clone = g_slice_new (GMimeParserOptions);
 	g_atomic_ref_count_init (&clone->ref_count);
+	clone->cached_snapshot = NULL;
 	clone->allow_no_domain = options->allow_no_domain;
 	clone->allow_unquoted_commas = options->allow_unquoted_commas;
 	clone->respect_content_length = options->respect_content_length;
@@ -187,6 +190,16 @@ g_mime_parser_options_clone (GMimeParserOptions *options)
 	clone->notify = NULL;
 
 	return clone;
+}
+
+/* The reader owns and synchronizes options; headers only read this snapshot. */
+GMimeParserOptions *
+_g_mime_parser_options_snapshot (GMimeParserOptions *options)
+{
+	if (!options->cached_snapshot)
+		options->cached_snapshot = g_mime_parser_options_clone (options);
+
+	return g_mime_parser_options_ref (options->cached_snapshot);
 }
 
 
@@ -223,6 +236,8 @@ g_mime_parser_options_unref (GMimeParserOptions *options)
 	g_return_if_fail (options != NULL);
 	
 	if (g_atomic_ref_count_dec (&options->ref_count)) {
+		g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
+
 		if (options->notify)
 			options->notify (options->warning_user_data);
 		
@@ -275,6 +290,7 @@ g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, 
 	g_return_if_fail (mode == GMIME_RFC_COMPLIANCE_STRICT || mode == GMIME_RFC_COMPLIANCE_LOOSE ||
 			  mode == GMIME_RFC_COMPLIANCE_LOOSER);
 	
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->addresses = mode;
 }
 
@@ -318,6 +334,7 @@ g_mime_parser_options_set_allow_addresses_without_domain (GMimeParserOptions *op
 {
 	g_return_if_fail (options != NULL);
 	
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->allow_no_domain = allow;
 }
 
@@ -351,6 +368,7 @@ g_mime_parser_options_set_allow_unquoted_commas_in_addresses (GMimeParserOptions
 {
 	g_return_if_fail (options != NULL);
 
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->allow_unquoted_commas = allow;
 }
 
@@ -388,6 +406,7 @@ g_mime_parser_options_set_respect_content_length (GMimeParserOptions *options, g
 {
 	g_return_if_fail (options != NULL);
 
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->respect_content_length = respect;
 }
 
@@ -424,6 +443,7 @@ g_mime_parser_options_set_detect_openpgp (GMimeParserOptions *options, gboolean 
 {
 	g_return_if_fail (options != NULL);
 
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->detect_openpgp = detect;
 }
 
@@ -458,6 +478,7 @@ g_mime_parser_options_set_max_address_group_depth (GMimeParserOptions *options, 
 	g_return_if_fail (options != NULL);
 	g_return_if_fail (max_depth >= 0);
 
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->max_address_group_depth = max_depth;
 }
 
@@ -496,6 +517,7 @@ g_mime_parser_options_set_max_mime_depth (GMimeParserOptions *options, int max_d
 	g_return_if_fail (options != NULL);
 	g_return_if_fail (max_depth >= 0);
 
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->max_mime_depth = max_depth;
 }
 
@@ -531,6 +553,7 @@ g_mime_parser_options_set_max_header_length (GMimeParserOptions *options, int ma
 	g_return_if_fail (options != NULL);
 	g_return_if_fail (max_length > 0);
 
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->max_header_length = max_length;
 }
 
@@ -576,6 +599,7 @@ g_mime_parser_options_set_parameter_compliance_mode (GMimeParserOptions *options
 {
 	g_return_if_fail (options != NULL);
 	
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->parameters = mode;
 }
 
@@ -619,6 +643,7 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
 {
 	g_return_if_fail (options != NULL);
 	
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->rfc2047 = mode;
 }
 
@@ -667,22 +692,27 @@ g_mime_parser_options_set_charset_encoding (GMimeParserOptions *options, const c
 
 	if (charset == NULL)
 		charset = "utf-8";
+
 	if (*charset == '\0') {
 		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 				     "Charset encoding name must not be empty");
 		return FALSE;
 	}
+
 	if ((cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
 		code = errno;
 		g_set_error (error, GMIME_ERROR, code == EINVAL ? GMIME_ERROR_NOT_SUPPORTED : code,
 			     "Cannot decode charset '%s': %s", charset, g_strerror (code));
 		return FALSE;
 	}
+
 	g_mime_iconv_close (cd);
 
 	copy = g_strdup (charset);
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	g_free (options->charset_encoding);
 	options->charset_encoding = copy;
+
 	return TRUE;
 }
 
@@ -740,7 +770,8 @@ g_mime_parser_options_set_warning_callback_full (GMimeParserOptions *options, GM
 
 	if (options->notify)
 		options->notify (options->warning_user_data);
-	
+
+	g_clear_pointer (&options->cached_snapshot, g_mime_parser_options_unref);
 	options->warning_cb = warning_cb;
 	options->warning_user_data = user_data;
 	options->notify = notify;

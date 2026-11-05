@@ -31,6 +31,8 @@
 #include <unistd.h>
 #endif
 #include <gmime/gmime.h>
+#include <gmime/gmime-events.h>
+#include <gmime/gmime-internal.h>
 #include <gmime/gmime-parser-reader-private.h>
 #include <gmime/gmime-reader-private.h>
 #include <gmime/gmime-table-private.h>
@@ -394,6 +396,215 @@ test_header_staging (void)
 		header = capture.headers->pdata[1];
 		g_assert_cmpstr (g_mime_header_get_value (header), ==, "duplicate");
 		g_ptr_array_unref (capture.headers);
+	}
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMimeReader *reader;
+	GPtrArray *headers;
+	guint warnings;
+} SnapshotCapture;
+
+static void
+snapshot_warning (gint64 offset, GMimeParserWarning code, const char *item, gpointer user_data)
+{
+	SnapshotCapture *capture = user_data;
+
+	if (code != GMIME_WARN_UNENCODED_8BIT_HEADER)
+		return;
+	capture->warnings++;
+	g_assert_cmpstr (item, ==, "X-Second");
+	g_mime_parser_options_set_warning_callback (g_mime_reader_get_options (capture->reader), NULL, NULL);
+}
+
+static gboolean
+snapshot_header (GMimeHeader *header, gboolean toplevel, gpointer user_data, GError **error)
+{
+	SnapshotCapture *capture = user_data;
+	GMimeParserOptions *options = g_mime_reader_get_options (capture->reader);
+
+	g_ptr_array_add (capture->headers, g_object_ref (header));
+	if (capture->headers->len == 2) {
+		if (!g_mime_parser_options_set_charset_encoding (options, "windows-1251", error))
+			return FALSE;
+		g_mime_parser_options_set_warning_callback (options, snapshot_warning, capture);
+	}
+	return TRUE;
+}
+
+static void
+test_parsed_option_snapshots (void)
+{
+	static const char wire[] = "X-First: \xe9\r\nX-Second: \xe9\r\nX-Third: \xe9\r\nX-Fourth: \xe9\r\n\r\n";
+	ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+	SnapshotCapture capture = { NULL, g_ptr_array_new_with_free_func (g_object_unref), 0 };
+	GMimeHeader *first, *second, *third, *fourth;
+	GMimeParserOptions *options;
+	GMimeHeaderList *headers;
+	GError *error = NULL;
+
+	testsuite_check ("Parsed snapshots survive callback option changes and legacy warning installation");
+	capture.reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+	_g_mime_parser_reader_set_header_callback (capture.reader, snapshot_header, &capture);
+	headers = _g_mime_parser_reader_construct_headers (capture.reader, FALSE, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_assert_cmpuint (capture.headers->len, ==, 4);
+	g_assert_cmpuint (capture.warnings, ==, 1);
+	first = capture.headers->pdata[0];
+	second = capture.headers->pdata[1];
+	third = capture.headers->pdata[2];
+	fourth = capture.headers->pdata[3];
+	g_assert_true (first->options == second->options);
+	g_assert_true (third->options == fourth->options);
+	g_assert_true (first->options != third->options);
+	options = g_mime_reader_get_options (capture.reader);
+	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "us-ascii", &error));
+	g_assert_no_error (error);
+	g_object_unref (headers);
+	g_object_unref (capture.reader);
+	g_object_unref (input);
+	g_assert_cmpstr (g_mime_header_get_value (first), ==, "\xc3\xa9");
+	g_assert_cmpstr (g_mime_header_get_value (second), ==, "\xc3\xa9");
+	g_assert_cmpstr (g_mime_header_get_value (third), ==, "\xd0\xb9");
+	g_assert_cmpstr (g_mime_header_get_value (fourth), ==, "\xd0\xb9");
+	g_ptr_array_unref (capture.headers);
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMimePart parent_instance;
+	guint mode, added, duplicates;
+	gboolean importing, mutated;
+	char *value;
+} ImportPart;
+
+typedef GMimePartClass ImportPartClass;
+
+G_DEFINE_TYPE (ImportPart, import_part, GMIME_TYPE_PART)
+
+static guint import_mode;
+static ImportPart *import_part_current;
+
+static void
+import_part_changed (gpointer sender, gpointer args, gpointer user_data)
+{
+	GMimeHeaderListChangedEventArgs *change = args;
+	GMimeHeaderList *headers = sender;
+	ImportPart *part = user_data;
+
+	if (change->action == GMIME_HEADER_LIST_CHANGED_ACTION_CLEARED) {
+		part->importing = TRUE;
+		if (part->mode == 5 && !part->mutated) {
+			part->mutated = TRUE;
+			g_mime_header_list_append (headers, "X-Dup", "observer", NULL);
+		}
+	} else if (part->importing && change->action == GMIME_HEADER_LIST_CHANGED_ACTION_ADDED) {
+		part->added++;
+		if (part->mode == 2 && !part->mutated &&
+		    !strcmp (change->header->name, "X-Dup") &&
+		    !strcmp (g_mime_header_get_value (change->header), "two")) {
+			part->mutated = TRUE;
+			g_mime_header_list_remove (headers, "X-Dup");
+		}
+	}
+}
+
+static void
+import_part_header_added (GMimeEntity *entity, GMimeHeader *header)
+{
+	ImportPart *part = (ImportPart *) entity;
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (entity);
+
+	if (part->importing && !strcmp (header->name, "X-Dup")) {
+		part->duplicates++;
+		g_free (part->value);
+		part->value = g_strdup (g_mime_header_get_value (header));
+	}
+	if (part->importing && !strcmp (header->name, "X-First")) {
+		g_assert_cmpint (g_mime_header_list_get_count (headers), >=, 4);
+		if (part->mode == 3 && !part->mutated) {
+			part->mutated = TRUE;
+			g_mime_header_list_remove (headers, "X-Dup");
+		} else if (part->mode == 4 && !part->mutated) {
+			part->mutated = TRUE;
+			g_mime_header_list_clear (headers);
+			return;
+		}
+	}
+	GMIME_ENTITY_CLASS (import_part_parent_class)->header_added (entity, header);
+}
+
+static void
+import_part_finalize (GObject *object)
+{
+	g_free (((ImportPart *) object)->value);
+	G_OBJECT_CLASS (import_part_parent_class)->finalize (object);
+}
+
+static void
+import_part_class_init (ImportPartClass *klass)
+{
+	GMIME_ENTITY_CLASS (klass)->header_added = import_part_header_added;
+	G_OBJECT_CLASS (klass)->finalize = import_part_finalize;
+}
+
+static void
+import_part_init (ImportPart *part)
+{
+	GMimeHeaderList *headers = g_mime_entity_get_header_list ((GMimeEntity *) part);
+
+	part->mode = import_mode;
+	import_part_current = part;
+	g_mime_event_add (headers->changed, import_part_changed, part);
+}
+
+static void
+import_warning (gint64 offset, GMimeParserWarning code, const char *item, gpointer user_data)
+{
+	ImportPart *part = import_part_current;
+
+	if (part->mode == 1 && !part->mutated && !strcmp (item, "X-Dup")) {
+		GMimeHeaderList *headers = g_mime_entity_get_header_list ((GMimeEntity *) part);
+
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+		part->mutated = TRUE;
+		g_mime_header_list_remove (headers, "X-Dup");
+	}
+}
+
+static void
+test_parsed_header_import (void)
+{
+	static const char wire[] = "Content-Type: application/x-import-observer\r\n"
+		"X-First: first\r\nX-Dup: one\r\nX-Dup: two\r\nX-Last: last\r\n\r\nbody";
+	guint mode;
+
+	testsuite_check ("Parsed import preserves custom observers and invalidates cached first occurrences after edits");
+	g_mime_entity_register_type ("application", "x-import-observer", import_part_get_type ());
+	for (mode = 0; mode < 6; mode++) {
+		GMimeParserOptions *options = g_mime_parser_options_new ();
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+		GMimeReader *reader;
+		ImportPart *part;
+		GError *error = NULL;
+
+		import_mode = mode;
+		g_mime_parser_options_set_warning_callback (options, import_warning, NULL);
+		reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
+		part = (ImportPart *) _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (part);
+		g_assert_cmpuint (part->added, ==, mode == 5 ? 6 : 5);
+		g_assert_cmpuint (part->duplicates, ==, mode == 4 ? 0 : mode == 5 ? 2 : 1);
+		g_assert_cmpstr (part->value, ==, mode == 4 ? NULL :
+				 mode == 5 ? "observer" : mode == 0 ? "one" : "two");
+		g_object_unref (part);
+		import_part_current = NULL;
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_mime_parser_options_unref (options);
 	}
 	testsuite_check_passed ();
 }
@@ -1138,7 +1349,7 @@ test_lazy_message_metadata (void)
 		g_assert_null (priv->message_id);
 		g_assert_null (priv->in_reply_to);
 		g_assert_null (priv->resent_message_id);
-		g_assert_cmpuint (g_mime_message_id_list_length (priv->references), ==, 0);
+		g_assert_null (priv->references);
 		g_assert_null (g_mime_header_list_get_header (headers, "Importance")->value);
 		before = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
 		g_assert_cmpuint (priv->lazy_loaded, ==, 0);
@@ -6281,6 +6492,8 @@ main (int argc, char **argv)
 	testsuite_start ("Reader-backed MIME model foundation");
 	test_parsed_header_names ();
 	test_header_staging ();
+	test_parsed_option_snapshots ();
+	test_parsed_header_import ();
 	test_content_header_partition ();
 	test_header_models ();
 	test_empty_headers ();

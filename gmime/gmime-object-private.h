@@ -471,6 +471,7 @@ struct _GMimeHeaderList {
 	gpointer changed;
 	GHashTable *hash;
 	GPtrArray *array;
+	guint64 version;
 	gboolean has_body_separator;
 };
 

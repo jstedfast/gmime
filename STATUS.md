@@ -2106,6 +2106,30 @@ the name prefix only for unknown extension or invalid fields.
 Singleton-header warning selection and the parser's Content-Type cache
 initialization exclusion also use cached identifiers.
 
+Events keep their first listener inline and allocate overflow storage only
+for additional listeners, preserving duplicate subscriptions, nested blocking
+and live-list mutation during emission. Parsed headers share a private
+read-only options snapshot until reader options change; public clones remain
+independent. Trusted parsed-header insertion avoids repeated public checks
+and name lookups. Cached first-occurrence flags are discarded if observers
+mutate the list, and custom list notifications remain observable.
+The legacy 8-bit header scan runs only when a warning callback is installed;
+compliance validation is unaffected. Message References lists are allocated
+on first access, retaining the identity and notifications of observed lists.
+Two matched 23-workload release runs against `7e80d27b` improve paired
+throughput by 24.1-25.6% for Short, 35.8-38.7% for HeaderStress, and
+24.1-24.6% for Enron with compliance disabled. With all validators enabled,
+the corresponding gains are 19.2-21.2%, 29.4-30.6%, and 20.3-22.3%.
+Callgrind instruction counts fall 18.2% for UTF-8 and 22.6% for Enron.
+These are combined source-change gains with unchanged release flags,
+not gains attributed to individual optimizations or compiler experiments.
+Separate compiler experiments on the optimized sources give equal-weight
+geometric-mean paired gains of 0.2% for LTO and 3.0% for PGO across the 46
+workload/validation combinations. PGO is corpus-trained, not a held-out
+evaluation: validated LF attachments gain 26.6%, but validated 998-character
+lines regress 5.7%. Default flags remain unchanged. Detailed results and
+provenance are retained in `_build-parser-throughput/header-allocation`.
+
 Persistent regressions cover every common field, case variants, stream
 and standalone parsing, cloning, binary values, raw trailing blanks,
 checked/ordinary construction, value mutation and unknown identifiers.
