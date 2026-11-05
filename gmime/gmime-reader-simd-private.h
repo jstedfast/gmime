@@ -108,5 +108,25 @@ typedef gsize (*GMimeReaderUtf8Func) (const guint8 *input, gsize length);
 G_GNUC_INTERNAL gsize _g_mime_reader_utf8_invalid_index (const guint8 *input, gsize length);
 G_GNUC_INTERNAL GMimeReaderUtf8Func _g_mime_reader_utf8_get_backend (GMimeReaderUtf8Backend backend);
 
+typedef struct {
+	/* ASCII membership: table[low nibble] has one bit per high nibble.
+	 * Inversion complements the full byte set, including non-ASCII bytes. */
+	guint8 table[16];
+	gboolean invert;
+} GMimeReaderByteSet;
+
+typedef enum {
+	GMIME_READER_BYTE_SEARCH_SCALAR,
+	GMIME_READER_BYTE_SEARCH_SSSE3,
+	GMIME_READER_BYTE_SEARCH_AVX2,
+	GMIME_READER_BYTE_SEARCH_NEON
+} GMimeReaderByteSearchBackend;
+
+typedef gsize (*GMimeReaderByteSearchFunc) (const guint8 *input, gsize length, const GMimeReaderByteSet *set);
+
+/* Return the first matching index, or length. No sentinel or alignment is required. */
+G_GNUC_INTERNAL gsize _g_mime_reader_find_byte (const guint8 *input, gsize length, const GMimeReaderByteSet *set);
+G_GNUC_INTERNAL GMimeReaderByteSearchFunc _g_mime_reader_byte_search_get_backend (GMimeReaderByteSearchBackend backend);
+
 G_END_DECLS
 #endif

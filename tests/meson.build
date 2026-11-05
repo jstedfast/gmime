@@ -73,7 +73,8 @@ foreach name : normal_tests
   elif name == 'test-parameter-validator'
     sources += ['../gmime/gmime-parameter-validator.c']
   elif name == 'test-encoded-word-validator'
-    sources += ['../gmime/gmime-encoded-word-validator.c', '../gmime/gmime-address-validator.c']
+    sources += ['../gmime/gmime-encoded-word-validator.c', '../gmime/gmime-address-validator.c',
+                '../gmime/gmime-reader-simd.c']
   endif
   test_programs += {name: executable(
     name, sources,
@@ -85,7 +86,8 @@ foreach name : normal_tests
 endforeach
 
 standalone_sources = {
-  'address-validator': ['../gmime/gmime-address-validator.c', '../gmime/gmime-encoded-word-validator.c'],
+  'address-validator': ['../gmime/gmime-address-validator.c', '../gmime/gmime-encoded-word-validator.c',
+                        '../gmime/gmime-reader-simd.c'],
   'reader-simd': ['../gmime/gmime-reader-simd.c'],
   'reader-bytes': ['../gmime/gmime-reader-simd.c'],
   'codecs': [

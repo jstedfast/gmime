@@ -30,13 +30,15 @@
 
 static GMimeReaderLineScanFunc scanners[5];
 static GMimeReaderUtf8Func validators[5];
-static guint scanner_count, validator_count;
+static GMimeReaderByteSearchFunc searches[5];
+static guint scanner_count, validator_count, search_count;
 
 static void
 init_backends (void)
 {
 	static const char *names[] = { "scalar", "SSE2", "AVX2", "NEON" };
 	static const char *utf8_names[] = { "scalar", "SSSE3/SSE4.1", "AVX2", "NEON" };
+	static const char *search_names[] = { "scalar", "SSSE3", "AVX2", "NEON" };
 	guint i;
 #ifndef GMIME_DISABLE_SIMD
 	const char *required = g_getenv ("GMIME_TEST_REQUIRE_READER_BACKEND");
@@ -45,20 +47,27 @@ init_backends (void)
 
 	scanners[scanner_count++] = _g_mime_reader_scan_line;
 	validators[validator_count++] = _g_mime_reader_utf8_invalid_index;
+	searches[search_count++] = _g_mime_reader_find_byte;
 	for (i = 0; i < G_N_ELEMENTS (names); i++) {
 		GMimeReaderLineScanFunc scanner = _g_mime_reader_scan_line_get_backend (i);
 		GMimeReaderUtf8Func validator = _g_mime_reader_utf8_get_backend (i);
+		GMimeReaderByteSearchFunc search = _g_mime_reader_byte_search_get_backend (i);
 
 		g_print ("%s byte scanner: %s; %s UTF-8 validator: %s\n", names[i], scanner ? "enabled" : "unavailable",
 			 utf8_names[i], validator ? "enabled" : "unavailable");
+		g_print ("%s byte-set search: %s\n", search_names[i], search ? "enabled" : "unavailable");
 		if (scanner)
 			scanners[scanner_count++] = scanner;
 		if (validator)
 			validators[validator_count++] = validator;
+		if (search)
+			searches[search_count++] = search;
 #ifndef GMIME_DISABLE_SIMD
 		if (required && !strcmp (required, names[i])) {
 			g_assert_nonnull (scanner);
 			g_assert_nonnull (validator);
+			if (i != GMIME_READER_SCAN_SSE2)
+				g_assert_nonnull (search);
 			found = TRUE;
 		}
 #endif
@@ -66,9 +75,59 @@ init_backends (void)
 #ifdef GMIME_DISABLE_SIMD
 	g_assert_cmpuint (scanner_count, ==, 2);
 	g_assert_cmpuint (validator_count, ==, 2);
+	g_assert_cmpuint (search_count, ==, 2);
 #else
 	g_assert_true (found);
 #endif
+}
+
+static void
+check_byte_set (const guint8 *input, gsize length, const gboolean members[256], gboolean invert)
+{
+	GMimeReaderByteSet set = { { 0 }, invert };
+	gsize expected;
+	guint c, backend;
+
+	for (c = 0; c < 128; c++) {
+		if (members[c])
+			set.table[c & 15] |= (guint8) (1u << (c >> 4));
+	}
+
+	for (expected = 0; expected < length; expected++) {
+		if (members[input[expected]] != invert)
+			break;
+	}
+
+	for (backend = 0; backend < search_count; backend++)
+		g_assert_cmpuint (searches[backend] (input, length, &set), ==, expected);
+}
+
+static void
+test_byte_sets (void)
+{
+	guint8 storage[160];
+	gboolean members[256] = { FALSE };
+	guint value, lane, invert;
+
+	check_byte_set (NULL, 0, members, FALSE);
+	check_byte_set (NULL, 0, members, TRUE);
+
+	for (value = 0; value < 256; value++) {
+		guint8 *input = storage + value % 32;
+
+		memset (members, 0, sizeof (members));
+		members[value & 127] = TRUE;
+
+		for (invert = 0; invert < 2; invert++) {
+			for (lane = 0; lane < 129; lane++) {
+				memset (input, invert ? value & 127 : (value + 1) & 127, 129);
+				input[lane] = (guint8) value;
+				check_byte_set (input, lane, members, invert);
+				check_byte_set (input, lane + 1, members, invert);
+				check_byte_set (input, 129, members, invert);
+			}
+		}
+	}
 }
 
 static void
@@ -240,6 +299,7 @@ test_differential (void)
 	static const guint8 valid[] = "plain\0\xc3\xa9\xe2\x82\xac\xf0\x9f\x98\x80\r\n";
 	GRand *random = g_rand_new_with_seed (0x783d008);
 	guint8 data[4096];
+	gboolean members[256] = { FALSE };
 	guint iteration, i, length;
 
 	for (iteration = 0; iteration < 12000; iteration++) {
@@ -250,6 +310,10 @@ test_differential (void)
 			data[g_rand_int_range (random, 0, length)] = g_rand_int (random);
 		check_line (data, length);
 		check_utf8 (data, length);
+		for (i = 0; i < 128; i++)
+			members[i] = (g_rand_int (random) & 7) == 0;
+		check_byte_set (data, length, members, FALSE);
+		check_byte_set (data, length, members, TRUE);
 	}
 	g_rand_free (random);
 }
@@ -261,6 +325,10 @@ test_guard_pages (void)
 	gsize page = sysconf (_SC_PAGESIZE), length;
 	guint8 *pages = mmap (NULL, page * 3, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	guint layout, kind;
+	gboolean members[256] = { FALSE };
+
+	members['\n'] = TRUE;
+	members[0] = TRUE;
 
 	g_assert_true (pages != MAP_FAILED);
 	g_assert_cmpint (mprotect (pages + page, page, PROT_READ | PROT_WRITE), ==, 0);
@@ -277,6 +345,8 @@ test_guard_pages (void)
 					input[length - 1] = '\n';
 				check_line (input, length);
 				check_utf8 (input, length);
+				check_byte_set (input, length, members, FALSE);
+				check_byte_set (input, length, members, TRUE);
 			}
 		}
 	}
@@ -358,6 +428,7 @@ main (int argc, char **argv)
 	g_test_init (&argc, &argv, NULL);
 	init_backends ();
 	g_test_add_func ("/reader-bytes/line-edges", test_line_edges);
+	g_test_add_func ("/reader-bytes/byte-sets", test_byte_sets);
 	g_test_add_func ("/reader-bytes/utf8-edges", test_utf8_edges);
 	g_test_add_func ("/reader-bytes/utf8-runs", test_utf8_runs);
 	g_test_add_func ("/reader-bytes/differential", test_differential);

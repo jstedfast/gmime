@@ -35,10 +35,12 @@
 #include <immintrin.h>
 #ifdef _MSC_VER
 #define SSE2_TARGET
+#define SSSE3_TARGET
 #define SSE41_TARGET
 #define AVX2_TARGET
 #else
 #define SSE2_TARGET __attribute__((target("sse2")))
+#define SSSE3_TARGET __attribute__((target("ssse3")))
 #define SSE41_TARGET __attribute__((target("ssse3,sse4.1")))
 #define AVX2_TARGET __attribute__((target("avx2,popcnt")))
 #endif
@@ -1392,4 +1394,178 @@ _g_mime_reader_utf8_invalid_index (const guint8 *input, gsize length)
 	}
 
 	return validator (input, length);
+}
+
+static gsize
+find_byte_scalar (const guint8 *input, gsize length, const GMimeReaderByteSet *set)
+{
+	gsize i;
+
+	for (i = 0; i < length; i++) {
+		guint8 c = input[i];
+		gboolean match = c < 128 && (set->table[c & 15] & (1u << (c >> 4)));
+
+		if (match != set->invert)
+			break;
+	}
+
+	return i;
+}
+
+#if defined(HAVE_READER_SSE2) || (defined(HAVE_READER_NEON) && (defined(__aarch64__) || defined(_M_ARM64)))
+static const guint8 byte_set_bits[16] = { 1, 2, 4, 8, 16, 32, 64, 128, 0, 0, 0, 0, 0, 0, 0, 0 };
+#endif
+
+#ifdef HAVE_READER_SSE2
+static SSSE3_TARGET gsize
+find_byte_ssse3 (const guint8 *input, gsize length, const GMimeReaderByteSet *set)
+{
+	const __m128i table = _mm_loadu_si128 ((const __m128i *) set->table);
+	const __m128i bits = _mm_loadu_si128 ((const __m128i *) byte_set_bits);
+	const __m128i nibble = _mm_set1_epi8 (15), zero = _mm_setzero_si128 ();
+	guint32 invert = set->invert ? 0 : 0xffff;
+	gsize offset = 0;
+
+	while (length - offset >= 16) {
+		__m128i block = _mm_loadu_si128 ((const __m128i *) (input + offset));
+		__m128i low = _mm_shuffle_epi8 (table, _mm_and_si128 (block, nibble));
+		__m128i high = _mm_shuffle_epi8 (bits, _mm_and_si128 (_mm_srli_epi16 (block, 4), nibble));
+		guint32 mask = (guint32) _mm_movemask_epi8 (_mm_cmpeq_epi8 (_mm_and_si128 (low, high), zero)) ^ invert;
+
+		if (mask)
+			return offset + first_bit (mask);
+
+		offset += 16;
+	}
+
+	if (offset < length)
+		offset += find_byte_scalar (input + offset, length - offset, set);
+
+	return offset;
+}
+
+static AVX2_TARGET gsize
+find_byte_avx2 (const guint8 *input, gsize length, const GMimeReaderByteSet *set)
+{
+	const __m256i table = _mm256_broadcastsi128_si256 (_mm_loadu_si128 ((const __m128i *) set->table));
+	const __m256i bits = _mm256_broadcastsi128_si256 (_mm_loadu_si128 ((const __m128i *) byte_set_bits));
+	const __m256i nibble = _mm256_set1_epi8 (15), zero = _mm256_setzero_si256 ();
+	guint32 invert = set->invert ? 0 : G_MAXUINT32;
+	gsize offset = 0;
+
+	while (length - offset >= 32) {
+		__m256i block = _mm256_loadu_si256 ((const __m256i *) (input + offset));
+		__m256i low = _mm256_shuffle_epi8 (table, _mm256_and_si256 (block, nibble));
+		__m256i high = _mm256_shuffle_epi8 (bits, _mm256_and_si256 (_mm256_srli_epi16 (block, 4), nibble));
+		guint32 mask = (guint32) _mm256_movemask_epi8 (_mm256_cmpeq_epi8 (_mm256_and_si256 (low, high), zero)) ^ invert;
+
+		if (mask)
+			return offset + first_bit (mask);
+
+		offset += 32;
+	}
+
+	if (offset < length)
+		offset += find_byte_ssse3 (input + offset, length - offset, set);
+
+	return offset;
+}
+
+static gboolean
+have_ssse3 (void)
+{
+#ifdef _MSC_VER
+	int info[4];
+
+	__cpuid (info, 1);
+	return (info[2] & (1 << 9)) != 0;
+#else
+	__builtin_cpu_init ();
+	return __builtin_cpu_supports ("ssse3");
+#endif
+}
+#endif
+
+#if defined(HAVE_READER_NEON) && (defined(__aarch64__) || defined(_M_ARM64))
+static gsize
+find_byte_neon (const guint8 *input, gsize length, const GMimeReaderByteSet *set)
+{
+	const uint8x16_t table = vld1q_u8 (set->table), bits = vld1q_u8 (byte_set_bits);
+	const uint8x16_t nibble = vdupq_n_u8 (15), zero = vdupq_n_u8 (0);
+	guint32 invert = set->invert ? 0 : 0xffff;
+	gsize offset = 0;
+
+	while (length - offset >= 16) {
+		uint8x16_t block = vld1q_u8 (input + offset);
+		uint8x16_t low = vqtbl1q_u8 (table, vandq_u8 (block, nibble));
+		uint8x16_t high = vqtbl1q_u8 (bits, vshrq_n_u8 (block, 4));
+		guint32 mask = neon_mask (vceqq_u8 (vandq_u8 (low, high), zero)) ^ invert;
+
+		if (mask)
+			return offset + first_bit (mask);
+
+		offset += 16;
+	}
+
+	if (offset < length)
+		offset += find_byte_scalar (input + offset, length - offset, set);
+
+	return offset;
+}
+#endif
+
+GMimeReaderByteSearchFunc
+_g_mime_reader_byte_search_get_backend (GMimeReaderByteSearchBackend backend)
+{
+	switch (backend) {
+	case GMIME_READER_BYTE_SEARCH_SCALAR:
+		return find_byte_scalar;
+	case GMIME_READER_BYTE_SEARCH_SSSE3:
+#ifdef HAVE_READER_SSE2
+		if (have_ssse3 ())
+			return find_byte_ssse3;
+#endif
+		return NULL;
+	case GMIME_READER_BYTE_SEARCH_AVX2:
+#ifdef HAVE_READER_AVX2
+		if (have_avx2 () && have_ssse3 ())
+			return find_byte_avx2;
+#endif
+		return NULL;
+	case GMIME_READER_BYTE_SEARCH_NEON:
+#if defined(HAVE_READER_NEON) && (defined(__aarch64__) || defined(_M_ARM64))
+		return find_byte_neon;
+#else
+		return NULL;
+#endif
+	default:
+		g_return_val_if_reached (NULL);
+	}
+}
+
+gsize
+_g_mime_reader_find_byte (const guint8 *input, gsize length, const GMimeReaderByteSet *set)
+{
+	static GMimeReaderByteSearchFunc search;
+	static gsize initialized;
+
+	if (length < 16)
+		return find_byte_scalar (input, length, set);
+
+	if (g_once_init_enter (&initialized)) {
+		search = _g_mime_reader_byte_search_get_backend (GMIME_READER_BYTE_SEARCH_AVX2);
+
+		if (!search)
+			search = _g_mime_reader_byte_search_get_backend (GMIME_READER_BYTE_SEARCH_SSSE3);
+
+		if (!search)
+			search = _g_mime_reader_byte_search_get_backend (GMIME_READER_BYTE_SEARCH_NEON);
+
+		if (!search)
+			search = find_byte_scalar;
+
+		g_once_init_leave (&initialized, 1);
+	}
+
+	return search (input, length, set);
 }
