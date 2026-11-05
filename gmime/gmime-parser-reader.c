@@ -237,9 +237,9 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 	if (!message)
 		priv->headers->has_body_separator = reader->has_body_separator;
 
-	/* Initialize GMime's eager caches once per field. Address callbacks
-	 * see the complete list, including repeated address headers, just as
-	 * MimeKit's lazy properties do. Invalid fields are wire data only. */
+	/* Initialize entity caches and invalidate lazy message metadata once per
+	 * field. Legacy address warning callbacks see the complete list, including
+	 * repeated headers. Invalid fields are wire data only. */
 	count = g_mime_header_list_get_count (priv->headers);
 
 	for (i = 0; i < count; i++) {

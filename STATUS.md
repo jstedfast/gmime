@@ -4041,6 +4041,36 @@ entities keep every header. The first Subject and Message-ID remain the
 semantic values while repeated address fields are collected together.
 Meaningful source comments explain the header copying and opaque fallback.
 
+Subject access now follows MimeKit's lazy first-header lookup: parsing and
+header changes do not decode or duplicate the Subject value. The getter
+reuses the header's decoded-value cache, preserving first-duplicate selection,
+raw bytes and serialization without notifying header-list observers.
+
+Dates, message IDs, References and priorities now use MimeKit-style
+lazy-loaded field bits. Address lists, including GMime's list-valued Sender
+and Resent-Sender, are allocated and parsed on demand. Header edits invalidate
+caches; changed/removed address headers clear a materialized list, which the
+next message getter reloads in place. Appended headers extend an already
+loaded list, while earlier insertions invalidate it to preserve header order.
+References are cleared on any matching header change. Callers must reacquire
+lists through the message after raw-header edits. Editing a retained,
+invalidated list instead makes its new contents authoritative, without
+duplicating them on the next getter.
+
+Recipient selection, mailbox additions and Autocrypt access use the lazy
+getters. Already cached equal date/ID assignments retain their raw headers;
+uncached assignments format the supplied value. Priority setters compare
+through their getters, as in MimeKit. Compliance diagnostics remain parse-time.
+GMime's separate legacy warning callback keeps address parsing eager when
+enabled because those warnings originate in the address model parser.
+
+Regression coverage checks all twelve address fields, scalar caches,
+duplicate headers, retained-list edits, parser-option and object lifetimes,
+and unchanged serialization across one-byte/buffered reads and both storage
+modes. A 3,300-entry corpus audit also matches the preceding Subject-only
+implementation's typed metadata, serialized messages and legacy warning
+sequence before and after getters, including nested messages.
+
 Parsed bodies are attached without the public body setter, preserving
 header offsets and avoiding an invented MIME-Version header. Nested models
 retain raw binary headers, separator state and buffered/persistent content
