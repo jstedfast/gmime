@@ -228,9 +228,7 @@ g_mime_message_init (GMimeMessage *message)
 	priv->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
 	priv->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
 	priv->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;
-	priv->references = g_mime_message_id_list_new ();
-
-	g_mime_event_add (priv->references->changed, (GMimeEventCallback) references_changed, message);
+	priv->references = NULL;
 }
 
 static void
@@ -256,8 +254,11 @@ g_mime_message_finalize (GObject *object)
 	g_free (priv->resent_message_id);
 	g_free (priv->marker);
 	g_clear_pointer (&priv->raw_marker, g_bytes_unref);
-	g_mime_event_remove (priv->references->changed, (GMimeEventCallback) references_changed, message);
-	g_object_unref (priv->references);
+
+	if (priv->references) {
+		g_mime_event_remove (priv->references->changed, (GMimeEventCallback) references_changed, message);
+		g_object_unref (priv->references);
+	}
 	
 	if (priv->date)
 		g_date_time_unref (priv->date);
@@ -402,12 +403,19 @@ message_update_references (GMimeMessage *message)
 	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private ((GMimeEntity *) message);
 	GMimeHeaderList *headers = entity_priv->headers;
 	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
-	GMimeMessageIdList *list = priv->references;
+	GMimeMessageIdList *list;
 	const char *value, *end;
 	GMimeHeader *header;
 	gsize length;
 	GBytes *raw;
 	char *id;
+
+	if (!priv->references) {
+		priv->references = g_mime_message_id_list_new ();
+		g_mime_event_add (priv->references->changed, (GMimeEventCallback) references_changed, message);
+	}
+
+	list = priv->references;
 
 	g_mime_event_block (list->changed, (GMimeEventCallback) references_changed, message);
 	g_mime_message_id_list_clear (list);
@@ -668,9 +676,11 @@ process_header (GMimeEntity *entity, GMimeHeaderListChangedAction action, GMimeH
 		g_clear_pointer (&priv->resent_message_id, g_free);
 		break;
 	case HEADER_REFERENCES:
-		g_mime_event_block (priv->references->changed, (GMimeEventCallback) references_changed, message);
-		g_mime_message_id_list_clear (priv->references);
-		g_mime_event_unblock (priv->references->changed, (GMimeEventCallback) references_changed, message);
+		if (priv->references) {
+			g_mime_event_block (priv->references->changed, (GMimeEventCallback) references_changed, message);
+			g_mime_message_id_list_clear (priv->references);
+			g_mime_event_unblock (priv->references->changed, (GMimeEventCallback) references_changed, message);
+		}
 		break;
 	case HEADER_IMPORTANCE:
 		priv->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
@@ -731,7 +741,10 @@ message_headers_cleared (GMimeEntity *entity)
 	priv->message_id = NULL;
 	g_clear_pointer (&priv->in_reply_to, g_free);
 	g_clear_pointer (&priv->resent_message_id, g_free);
-	message_update_references (message);
+
+	if (priv->references)
+		message_update_references (message);
+
 	priv->importance = GMIME_MESSAGE_IMPORTANCE_NORMAL;
 	priv->priority = GMIME_MESSAGE_PRIORITY_NORMAL;
 	priv->x_priority = GMIME_X_MESSAGE_PRIORITY_NORMAL;

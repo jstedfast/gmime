@@ -64,7 +64,7 @@ test_programs = {
 foreach name : normal_tests
   sources = [name + '.c']
   test_dep = have_crypto and name == 'test-parser-model' ? verify_test_dep : gmime_dep
-  if name == 'test-core'
+  if name == 'test-core' or (name == 'test-parser-model' and not have_crypto)
     sources += ['../gmime/gmime-events.c']
   elif name == 'test-addresses'
     sources += ['../gmime/gmime-parse-utils.c']
