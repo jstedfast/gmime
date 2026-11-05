@@ -2325,7 +2325,7 @@ test_message_references (void)
 	g_mime_header_list_append (headers, "references", "<duplicate@host>", NULL);
 	duplicate = g_mime_header_list_get_header_at (headers, 1);
 	testsuite_header_set_raw_text (duplicate, " <edited@host>\n");
-	check (g_mime_message_id_list_length (refs) == 2,
+	check (g_mime_message_get_references (message) == refs && g_mime_message_id_list_length (refs) == 2,
 	       "later References headers do not override the first");
 	testsuite_header_set_raw_text (header, " <incomplete\n");
 	check (g_mime_message_id_list_length (refs) == 0,
@@ -2335,18 +2335,22 @@ test_message_references (void)
 	       !g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "edited@host"),
 	       "removing the first References header promotes the next into the same list");
 	g_mime_header_list_insert (headers, 0, "References", "<inserted@host>", NULL);
-	check (!g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "inserted@host"),
+	check (g_mime_message_get_references (message) == refs &&
+	       !g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "inserted@host"),
 	       "inserting an earlier References header updates the list");
 	replacement = g_mime_header_new ("References", "<replaced@host>", NULL);
 	g_mime_header_list_replace (headers, replacement);
-	check (!g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "replaced@host"),
+	check (g_mime_message_get_references (message) == refs &&
+	       !g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "replaced@host"),
 	       "replacing References refreshes the list");
 	g_mime_header_list_add (headers, replacement);
 	g_mime_header_list_remove_at (headers, 0);
 	testsuite_header_set_raw_text (replacement, " <shared@host>\n");
-	check (!g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "shared@host"),
+	check (g_mime_message_get_references (message) == refs &&
+	       !g_strcmp0 (g_mime_message_id_list_get_message_id (refs, 0), "shared@host"),
 	       "repeated References header instances retain owner notifications");
 	g_mime_header_list_append (headers, "References", "<duplicate@host>", NULL);
+	g_mime_message_get_references (message);
 	g_mime_message_id_list_add (refs, "<added@@host>");
 	check (g_mime_header_list_get_count (headers) == 1 &&
 	       !g_strcmp0 (g_mime_entity_get_header (GMIME_ENTITY (message), "References"),
@@ -2956,6 +2960,11 @@ test_message_resent_addresses (void)
 		GMimeAddressType type;
 		GMimeInternetAddressList * (*get) (GMimeMessage *);
 	} properties[] = {
+		{ "From", GMIME_ADDRESS_TYPE_FROM, g_mime_message_get_from },
+		{ "Reply-To", GMIME_ADDRESS_TYPE_REPLY_TO, g_mime_message_get_reply_to },
+		{ "To", GMIME_ADDRESS_TYPE_TO, g_mime_message_get_to },
+		{ "Cc", GMIME_ADDRESS_TYPE_CC, g_mime_message_get_cc },
+		{ "Bcc", GMIME_ADDRESS_TYPE_BCC, g_mime_message_get_bcc },
 		{ "Resent-From", GMIME_ADDRESS_TYPE_RESENT_FROM, g_mime_message_get_resent_from },
 		{ "Resent-Reply-To", GMIME_ADDRESS_TYPE_RESENT_REPLY_TO, g_mime_message_get_resent_reply_to },
 		{ "Resent-To", GMIME_ADDRESS_TYPE_RESENT_TO, g_mime_message_get_resent_to },
@@ -3002,6 +3011,8 @@ test_message_resent_addresses (void)
 		name = g_ascii_strdown (properties[type].name, -1);
 		g_mime_header_list_append (headers, name, "Second <second@example.com>", NULL);
 		g_free (name);
+		check (g_mime_internet_address_list_length (list) == 0 && properties[type].get (message) == list,
+		       "raw address edits clear the retained list until the next getter");
 		text = g_mime_internet_address_list_to_string (list, NULL, FALSE);
 		check (g_mime_internet_address_list_length (list) == 2 &&
 		       !strcmp (text, "First <first@example.com>, Second <second@example.com>") &&
@@ -3010,6 +3021,7 @@ test_message_resent_addresses (void)
 		g_free (text);
 		g_mime_header_list_insert (headers, 0, properties[type].name, "Before <before@example.com>", NULL);
 		testsuite_header_set_raw_text (first, " Updated <updated@example.com>\n");
+		properties[type].get (message);
 		text = g_mime_internet_address_list_to_string (list, NULL, FALSE);
 		check (properties[type].get (message) == list &&
 		       !strcmp (text, "Before <before@example.com>, Updated <updated@example.com>, Second <second@example.com>"),
@@ -3017,24 +3029,29 @@ test_message_resent_addresses (void)
 		g_free (text);
 		g_mime_header_list_remove_header (headers, first);
 		testsuite_header_set_raw_text (first, " Detached <detached@example.com>\n");
+		properties[type].get (message);
 		text = g_mime_internet_address_list_to_string (list, NULL, FALSE);
 		check (!strcmp (text, "Before <before@example.com>, Second <second@example.com>"),
 		       "resent header removal refreshes the list and detaches removed instances");
 		g_free (text);
 		replacement = g_mime_header_new (properties[type].name, "Group: Member <member@example.com>;", NULL);
 		g_mime_header_list_replace (headers, replacement);
+		properties[type].get (message);
 		check (g_mime_internet_address_list_length (list) == 1 && g_mime_header_list_get_count (headers) == 1,
 		       "resent header replacement collapses duplicates and updates the list");
 		g_mime_header_list_insert_header (headers, 0, replacement);
+		properties[type].get (message);
 		check (g_mime_internet_address_list_length (list) == 2,
 		       "inserting a resent header that shares the final instance reconstructs ordered addresses");
 		unrelated = g_mime_header_new ("X-Unrelated", "preserved", NULL);
 		g_mime_header_list_set_header_at (headers, 0, unrelated);
 		g_object_unref (unrelated);
 		testsuite_header_set_raw_text (replacement, " Group: Member <member@example.com>;\n");
+		properties[type].get (message);
 		check (g_mime_internet_address_list_length (list) == 1,
 		       "indexed replacement and repeated-instance removal preserve resent header notifications");
 		g_mime_header_list_add (headers, replacement);
+		properties[type].get (message);
 		group = g_mime_internet_address_list_get_address (list, 0);
 		members = g_mime_group_address_get_members (GMIME_GROUP_ADDRESS (group));
 		member = g_mime_internet_address_list_get_address (members, 0);
@@ -3061,7 +3078,8 @@ test_message_resent_addresses (void)
 		       "generic mailbox addition accepts resent address types");
 		g_assert_no_error (error);
 		check (g_mime_internet_address_list_length (list) == 1 &&
-		       g_mime_internet_address_list_length (g_mime_message_get_to (message)) == 0,
+		       g_mime_internet_address_list_length (g_mime_message_get_to (message)) ==
+		       (properties[type].type == GMIME_ADDRESS_TYPE_TO ? 1 : 0),
 		       "resent address additions do not change ordinary recipients");
 		g_mime_header_list_clear (headers);
 		check (properties[type].get (message) == list && g_mime_internet_address_list_length (list) == 0,
@@ -3093,6 +3111,7 @@ test_message_resent_addresses (void)
 		g_free (text);
 		headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 		testsuite_header_set_raw_text (g_mime_header_list_get_header_at (headers, 0), " another-local\n");
+		properties[type].get (message);
 		check (g_mime_internet_address_list_length (list) == 1,
 		       "resent raw-header edits retain message parser options");
 		g_mime_parser_options_unref (options);
@@ -8814,10 +8833,12 @@ test_header_list_instances (void)
 		       g_mime_internet_address_list_get_address (addresses, 1))), "one@example.com"),
 	       "inserting an instance also present at the end rebuilds addresses in header order");
 	g_mime_header_list_add (headers, address);
-	check (g_mime_internet_address_list_length (addresses) == 4, "appending a repeated instance adds exactly one address occurrence");
+	check (g_mime_message_get_to (message) == addresses &&
+	       g_mime_internet_address_list_length (addresses) == 4,
+	       "appending a repeated instance adds exactly one address occurrence");
 	g_mime_header_list_remove_at (headers, 3);
 	g_mime_header_list_remove_header (headers, address);
-	check (g_mime_internet_address_list_length (addresses) == 2 &&
+	check (g_mime_message_get_to (message) == addresses && g_mime_internet_address_list_length (addresses) == 2 &&
 	       g_mime_header_list_get_header (headers, "To") == header,
 	       "removing repeated address instances updates lookup and owner recipients");
 	g_object_unref (message);

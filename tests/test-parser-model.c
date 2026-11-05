@@ -779,6 +779,229 @@ test_message_models (void)
 }
 
 static void
+test_lazy_subject (void)
+{
+	static const struct {
+		const char *raw;
+		gsize length;
+		const char *decoded;
+	} cases[] = {
+#define SUBJECT(raw, decoded) { raw, sizeof (raw) - 1, decoded }
+		SUBJECT ("first", "first"),
+		SUBJECT ("caf\303\251\r\n \346\227\245\346\234\254\350\252\236",
+			 "caf\303\251 \346\227\245\346\234\254\350\252\236"),
+		SUBJECT ("=?utf-8?b?Y2Fmw6k=?=", "caf\303\251"),
+		SUBJECT ("a\0b", "a\357\277\275b"),
+		SUBJECT ("caf\351", "caf\303\251"),
+		SUBJECT (" \t ", "")
+#undef SUBJECT
+	};
+	guint i, mode;
+
+	testsuite_check ("Subjects decode lazily and retain first-header semantics through mutations");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (mode = 0; mode < 4; mode++) {
+			GString *wire = g_string_new ("Subject: ");
+			GMimeHeaderList *headers;
+			GMimeHeader *first, *second, *clone;
+			GMimeMessage *message;
+			GMimeParser *parser;
+			ModelInput *input;
+			GByteArray *before, *after;
+			GBytes *raw;
+			GError *error = NULL;
+			const char *value;
+
+			g_string_append_len (wire, cases[i].raw, cases[i].length);
+			g_string_append (wire, "\r\nsUbJeCt: second\r\n\r\nbody\r\n");
+			input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
+			parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+				GMIME_FORMAT_MESSAGE, mode & 2 ? GMIME_CONTENT_STORAGE_SOURCE :
+				GMIME_CONTENT_STORAGE_MEMORY, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (parser);
+			message = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_object_unref (parser);
+			g_object_unref (input);
+			g_string_free (wire, TRUE);
+
+			headers = g_mime_entity_get_header_list ((GMimeEntity *) message);
+			first = g_mime_header_list_get_header_at (headers, 0);
+			second = g_mime_header_list_get_header_at (headers, 1);
+			g_assert_null (first->value);
+			g_assert_null (second->value);
+			before = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+			g_assert_null (first->value);
+			value = g_mime_message_get_subject (message);
+			g_assert_cmpstr (value, ==, cases[i].decoded);
+			g_assert_true (value == first->value);
+			g_assert_true (g_mime_message_get_subject (message) == value);
+			g_assert_null (second->value);
+			after = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+			g_assert_cmpmem (after->data, after->len, before->data, before->len);
+			g_byte_array_unref (before);
+			g_byte_array_unref (after);
+
+			raw = g_bytes_new_static (" changed\r\n", 10);
+			g_assert_true (g_mime_header_set_raw_value (first, raw, &error));
+			g_assert_no_error (error);
+			g_bytes_unref (raw);
+			g_assert_null (first->value);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "changed");
+			clone = g_mime_header_clone (second);
+			g_mime_header_list_insert_header (headers, 0, clone);
+			g_assert_null (clone->value);
+			g_assert_true (g_mime_header_list_remove_header (headers, first));
+			g_assert_null (clone->value);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "second");
+			g_assert_true (g_mime_header_list_remove_header (headers, clone));
+			g_object_unref (clone);
+			g_assert_null (second->value);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "second");
+			g_mime_message_set_subject (message, "assigned", "utf-8");
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "assigned");
+			g_mime_header_list_clear (headers);
+			g_assert_null (g_mime_message_get_subject (message));
+			g_mime_message_set_subject (message, "", NULL);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "");
+			g_mime_header_list_remove_all (headers, "Subject");
+			g_assert_null (g_mime_message_get_subject (message));
+			g_object_unref (message);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_lazy_message_metadata (void)
+{
+	static const char *address_names[] = {
+		"Sender", "From", "Reply-To", "To", "Cc", "Bcc", "Resent-From",
+		"Resent-Reply-To", "Resent-To", "Resent-Cc", "Resent-Bcc", "Resent-Sender"
+	};
+	static const char *metadata =
+		"Date: Mon, 1 Jan 2024 00:00:00 +0000\r\n"
+		"Resent-Date: Tue, 2 Jan 2024 00:00:00 +0000\r\n"
+		"Message-Id: <first@example.com>\r\n"
+		"Message-Id: <ignored@example.com>\r\n"
+		"In-Reply-To: noise <reply@example.com>\r\n"
+		"Resent-Message-Id: <resent@example.com>\r\n"
+		"References: <one@example.com> <two@example.com>\r\n"
+		"References: <ignored@example.com>\r\n"
+		"Importance: =?utf-8?q?high?=\r\n"
+		"Priority: urgent\r\n"
+		"X-Priority: 2 (High)\r\n";
+	guint mode, type;
+
+	testsuite_check ("Message metadata is lazy, retains parser options and reloads without rewriting headers");
+	for (mode = 0; mode < 4; mode++) {
+		GString *wire = g_string_new (metadata);
+		GMimeParserOptions *options = g_mime_parser_options_new ();
+		GMimeMessagePrivate *priv;
+		GMimeHeaderList *headers;
+		GMimeMessageIdList *references;
+		GMimeMessage *message;
+		GMimeParser *parser;
+		ModelInput *input;
+		GByteArray *before, *after;
+		GError *error = NULL;
+		guint32 loaded;
+
+		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
+			g_string_append_printf (wire, "%s: local, One <one@example.com>\r\n"
+				"%s: Two <two@example.com>\r\n", address_names[type], address_names[type]);
+		}
+		g_string_append (wire, "\r\nbody\r\n");
+		g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE);
+		input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
+		parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+			GMIME_FORMAT_MESSAGE, mode & 2 ? GMIME_CONTENT_STORAGE_SOURCE :
+			GMIME_CONTENT_STORAGE_MEMORY, &error);
+		g_assert_no_error (error);
+		message = g_mime_parser_construct_message (parser, options, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		g_object_unref (parser);
+		g_object_unref (input);
+		g_mime_parser_options_unref (options);
+		g_string_free (wire, TRUE);
+
+		priv = _g_mime_message_get_private (message);
+		headers = g_mime_entity_get_header_list ((GMimeEntity *) message);
+		g_assert_cmpuint (priv->lazy_loaded, ==, 0);
+		g_assert_null (priv->addrlists);
+		g_assert_null (priv->date);
+		g_assert_null (priv->resent_date);
+		g_assert_null (priv->message_id);
+		g_assert_null (priv->in_reply_to);
+		g_assert_null (priv->resent_message_id);
+		g_assert_cmpuint (g_mime_message_id_list_length (priv->references), ==, 0);
+		g_assert_null (g_mime_header_list_get_header (headers, "Importance")->value);
+		before = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+		g_assert_cmpuint (priv->lazy_loaded, ==, 0);
+		g_assert_null (priv->addrlists);
+
+		g_assert_cmpint (g_date_time_get_day_of_month (g_mime_message_get_date (message)), ==, 1);
+		g_assert_cmpint (g_date_time_get_day_of_month (g_mime_message_get_resent_date (message)), ==, 2);
+		g_assert_cmpstr (g_mime_message_get_message_id (message), ==, "first@example.com");
+		g_assert_cmpstr (g_mime_message_get_in_reply_to (message), ==, "reply@example.com");
+		g_assert_cmpstr (g_mime_message_get_resent_message_id (message), ==, "resent@example.com");
+		g_assert_cmpint (g_mime_message_get_importance (message), ==, GMIME_MESSAGE_IMPORTANCE_HIGH);
+		g_assert_cmpint (g_mime_message_get_priority (message), ==, GMIME_MESSAGE_PRIORITY_URGENT);
+		g_assert_cmpint (g_mime_message_get_x_priority (message), ==, GMIME_X_MESSAGE_PRIORITY_HIGH);
+		references = g_mime_message_get_references (message);
+		g_assert_cmpuint (g_mime_message_id_list_length (references), ==, 2);
+		g_assert_cmpstr (g_mime_message_id_list_get_message_id (references, 1), ==, "two@example.com");
+		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
+			GMimeInternetAddressList *list = g_mime_message_get_addresses (message, type);
+
+			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 2);
+			g_assert_true (g_mime_message_get_addresses (message, type) == list);
+		}
+		after = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+		g_assert_cmpmem (before->data, before->len, after->data, after->len);
+		g_byte_array_unref (before);
+		g_byte_array_unref (after);
+
+		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
+			GMimeInternetAddressList *list = g_mime_message_get_addresses (message, type);
+			GMimeHeader *header = g_mime_header_list_get_header (headers, address_names[type]);
+			GMimeInternetAddress *mailbox;
+
+			testsuite_header_set_raw_text (header, " changed@example.com\r\n");
+			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 0);
+			g_assert_cmpuint (priv->lazy_loaded & (1u << type), ==, 0);
+			mailbox = g_mime_mailbox_address_new ("New", "new@example.com", &error);
+			g_assert_no_error (error);
+			g_mime_internet_address_list_add (list, mailbox);
+			g_object_unref (mailbox);
+			g_assert_true (g_mime_message_get_addresses (message, type) == list);
+			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 1);
+			g_assert_cmpint (g_mime_header_list_index_of (headers, address_names[type]), ==,
+					g_mime_header_list_last_index_of (headers, address_names[type]));
+		}
+		testsuite_header_set_raw_text (g_mime_header_list_get_header (headers, "References"),
+					      " <changed@example.com>\r\n");
+		g_assert_cmpuint (g_mime_message_id_list_length (references), ==, 0);
+		g_mime_message_id_list_add (references, "new@example.com");
+		g_assert_true (g_mime_message_get_references (message) == references);
+		g_assert_cmpuint (g_mime_message_id_list_length (references), ==, 1);
+
+		g_mime_header_list_clear (headers);
+		g_assert_cmpuint (priv->lazy_loaded, ==, 0);
+		g_assert_null (g_mime_message_get_date (message));
+		loaded = priv->lazy_loaded;
+		g_assert_cmpuint (loaded, !=, 0);
+		g_assert_null (g_mime_message_get_date (message));
+		g_assert_cmpuint (priv->lazy_loaded, ==, loaded);
+		g_object_unref (message);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_message_depth (void)
 {
 	GString *wire = g_string_new (NULL);
@@ -2482,6 +2705,7 @@ test_public_parser_warnings (void)
 		{ "Subject: same\nSubject: same\n\n", GMIME_WARN_DUPLICATED_HEADER },
 		{ "Subject: one\nSubject: two\n\n", GMIME_CRIT_CONFLICTING_HEADER },
 		{ "Subject: \xc3\xa9\n\n", GMIME_WARN_UNENCODED_8BIT_HEADER },
+		{ "To: one@example.com two@example.com\r\n\r\n", GMIME_WARN_INVALID_ADDRESS_LIST },
 		{ "Content-Type: multipart/mixed\n\nbody", GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY },
 		{ "Content-Type: multipart/mixed; boundary=b\n\nbody", GMIME_WARN_TRUNCATED_MESSAGE },
 		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\n"
@@ -2512,6 +2736,10 @@ test_public_parser_warnings (void)
 			g_assert_cmpuint (counts[cases[i].warning], ==, 1);
 			g_assert_cmpuint (counts[GMIME_WARN_TRUNCATED_MESSAGE], ==,
 					  cases[i].warning == GMIME_WARN_TRUNCATED_MESSAGE);
+			if (cases[i].warning == GMIME_WARN_INVALID_ADDRESS_LIST) {
+				g_assert_cmpuint (g_mime_internet_address_list_length (g_mime_message_get_to (message)), ==, 2);
+				g_assert_cmpuint (counts[GMIME_WARN_INVALID_ADDRESS_LIST], ==, 1);
+			}
 			g_object_unref (message);
 			g_mime_parser_options_unref (options);
 			g_object_unref (parser);
@@ -5859,6 +6087,8 @@ main (int argc, char **argv)
 	test_model_stream_replacement ();
 	test_model_type_registration ();
 	test_message_models ();
+	test_lazy_subject ();
+	test_lazy_message_metadata ();
 	test_message_depth ();
 	test_message_model_errors ();
 	test_mailbox_models ();

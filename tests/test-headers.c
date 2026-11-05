@@ -528,6 +528,7 @@ test_address_sync (void)
 		
 		/* let's try this in reverse... set the header value and make sure GMimeInternetAddressList gets updated */
 		g_mime_entity_set_header (object, "To", "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)", NULL);
+		list = g_mime_message_get_to (message);
 		if (g_mime_internet_address_list_length (list) != 1)
 			throw (exception_new ("unexpected number of addresses in addrlist after setting header value"));
 		ia = g_mime_internet_address_list_get_address (list, 0);

@@ -599,6 +599,7 @@ typedef struct {
 	char *marker;
 
 	GMimeInternetAddressList **addrlists;
+	guint32 lazy_loaded;
 	GMimeMessageImportance importance;
 	GMimeXMessagePriority x_priority;
 	GMimeMessagePriority priority;
@@ -607,7 +608,6 @@ typedef struct {
 	char *in_reply_to;
 	char *message_id;
 	GDateTime *date;
-	char *subject;
 
 	char *resent_message_id;
 	GDateTime *resent_date;
