@@ -475,6 +475,7 @@ test_parsed_option_snapshots (void)
 
 typedef struct {
 	GMimePart parent_instance;
+	GMimeHeaderList *initial_headers;
 	guint mode, added, duplicates;
 	gboolean importing, mutated;
 	char *value;
@@ -493,6 +494,8 @@ import_part_changed (gpointer sender, gpointer args, gpointer user_data)
 	GMimeHeaderListChangedEventArgs *change = args;
 	GMimeHeaderList *headers = sender;
 	ImportPart *part = user_data;
+
+	g_assert_true (headers == part->initial_headers);
 
 	if (change->action == GMIME_HEADER_LIST_CHANGED_ACTION_CLEARED) {
 		part->importing = TRUE;
@@ -555,6 +558,10 @@ import_part_init (ImportPart *part)
 {
 	GMimeHeaderList *headers = g_mime_entity_get_header_list ((GMimeEntity *) part);
 
+	g_assert_nonnull (headers->options);
+	g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==,
+			 g_mime_parser_options_get_charset_encoding (g_mime_parser_options_get_default ()));
+	part->initial_headers = headers;
 	part->mode = import_mode;
 	import_part_current = part;
 	g_mime_event_add (headers->changed, import_part_changed, part);
@@ -606,6 +613,72 @@ test_parsed_header_import (void)
 		g_object_unref (input);
 		g_mime_parser_options_unref (options);
 	}
+	testsuite_check_passed ();
+}
+
+static void
+test_parsed_entity_options (void)
+{
+	static const struct {
+		const char *type, *subtype;
+	} cases[] = {
+		{ "application", "x-import-observer" },
+		{ "application", "x-unregistered-parser-options" },
+		{ "text", "plain" },
+		{ "message", "rfc822" },
+		{ "message", "partial" }
+	};
+	guint i;
+
+	testsuite_check ("Public factories and parsed entities retain independent options, including opaque fallbacks");
+	import_mode = 0;
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GMimeParserOptions *options = g_mime_parser_options_new ();
+		GMimeHeaderList *headers;
+		GMimeReader *reader;
+		GMimeEntity *entity;
+		ModelInput *input;
+		GError *error = NULL;
+		char *wire;
+
+		g_assert_true (g_mime_parser_options_set_charset_encoding (options, "windows-1251", &error));
+		g_assert_no_error (error);
+		entity = g_mime_entity_new_type (options, cases[i].type, cases[i].subtype);
+		g_assert_nonnull (entity);
+		headers = g_mime_entity_get_header_list (entity);
+		g_assert_true (headers->options != options);
+		g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==, "windows-1251");
+		g_assert_true (g_mime_parser_options_set_charset_encoding (options, "us-ascii", &error));
+		g_assert_no_error (error);
+		g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==, "windows-1251");
+		g_object_unref (entity);
+
+		g_assert_true (g_mime_parser_options_set_charset_encoding (options, "windows-1251", &error));
+		g_assert_no_error (error);
+		wire = g_strdup_printf ("Content-Type: %s/%s\r\nContent-Transfer-Encoding: base64\r\n"
+					"X-Legacy: \xe9\r\n\r\nYm9keQ==\r\n", cases[i].type, cases[i].subtype);
+		input = new_input (wire, strlen (wire), 1);
+		reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
+		entity = _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (entity);
+		g_assert_true (GMIME_IS_PART (entity));
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, strlen (wire));
+		headers = g_mime_entity_get_header_list (entity);
+		g_assert_true (headers->options != g_mime_reader_get_options (reader));
+		g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==, "windows-1251");
+		g_assert_true (g_mime_parser_options_set_charset_encoding (g_mime_reader_get_options (reader),
+									 "us-ascii", &error));
+		g_assert_no_error (error);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_mime_parser_options_unref (options);
+		g_assert_cmpstr (g_mime_header_get_value (g_mime_header_list_get_header (headers, "X-Legacy")),
+				 ==, "\xd0\xb9");
+		g_object_unref (entity);
+		g_free (wire);
+	}
+	import_part_current = NULL;
 	testsuite_check_passed ();
 }
 
@@ -6494,6 +6567,7 @@ main (int argc, char **argv)
 	test_header_staging ();
 	test_parsed_option_snapshots ();
 	test_parsed_header_import ();
+	test_parsed_entity_options ();
 	test_content_header_partition ();
 	test_header_models ();
 	test_empty_headers ();

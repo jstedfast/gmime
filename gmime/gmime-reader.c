@@ -443,11 +443,15 @@ g_mime_reader_get_format (GMimeReader *reader)
 GMimeParserOptions *
 g_mime_reader_get_options (GMimeReader *reader)
 {
-	GMimeReaderPrivate *priv;
-
 	g_return_val_if_fail (GMIME_IS_READER (reader), NULL);
 
-	priv = _g_mime_reader_get_private (reader);
+	return _g_mime_reader_get_options (reader);
+}
+
+GMimeParserOptions *
+_g_mime_reader_get_options (GMimeReader *reader)
+{
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 
 	return priv->options;
 }
@@ -988,7 +992,7 @@ check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
 	 * suppresses premature From-lines; it never splits a MIME body at an
 	 * arbitrary byte or suppresses an actual multipart delimiter. */
 	if ((priv->format == GMIME_FORMAT_MBOX && length >= 5 &&
-	     memcmp (buffer, "From ", 5) == 0 && g_mime_reader_tell (reader) >= priv->content_end) ||
+	     memcmp (buffer, "From ", 5) == 0 && input_offset (priv) >= priv->content_end) ||
 	    (priv->format == GMIME_FORMAT_MMDF && length >= 4 &&
 	     memcmp (buffer, "\1\1\1\1", 4) == 0)) {
 		priv->mailbox_boundary = TRUE;
@@ -1204,7 +1208,7 @@ static void
 check_header_span (GMimeReader *reader, HeaderDetection *detection, const guint8 *data, gsize length, gsize null_index)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 begin = g_mime_reader_tell (reader);
+	gint64 begin = input_offset (priv);
 	guint64 column = (guint64) (begin - priv->line_begin) + 1;
 	gsize i;
 
@@ -1274,7 +1278,7 @@ step_headers (GMimeReader *reader, gboolean message)
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
 	GMimeReaderClass *klass = GMIME_READER_GET_CLASS (reader);
 	guint64 begin_line_number = priv->line_number;
-	gint64 begin_offset = g_mime_reader_tell (reader);
+	gint64 begin_offset = input_offset (priv);
 	gboolean have_valid_headers = FALSE;
 	gboolean have_headers = FALSE;
 	gboolean eof = FALSE, invalid_initial_from = FALSE;
@@ -1310,7 +1314,7 @@ step_headers (GMimeReader *reader, gboolean message)
 	do {
 		HeaderDetection detection = { FALSE, FALSE, FALSE, TRUE, FALSE, 0, 0, 0, G_MAXSIZE };
 		guint64 line_number = priv->line_number;
-		gint64 offset = g_mime_reader_tell (reader);
+		gint64 offset = input_offset (priv);
 		guint64 column_number = (guint64) (offset - priv->line_begin) + 1;
 		gsize left = priv->input_end - priv->input_index;
 		gsize field_length, name_length;
@@ -1354,12 +1358,12 @@ step_headers (GMimeReader *reader, gboolean message)
 			/* A final bare CR is a separator in the header state. */
 			if (count == 1 && *start == '\r') {
 				priv->prev_line_begin = priv->line_begin;
-				priv->line_begin = g_mime_reader_tell (reader);
+				priv->line_begin = input_offset (priv);
 				priv->line_number++;
 			}
 
 			if (!callback_result (reader, klass->body_separator (reader, offset, line_number,
-									  g_mime_reader_tell (reader), &priv->error)))
+									  input_offset (priv), &priv->error)))
 				return FALSE;
 			break;
 		}
@@ -1429,7 +1433,7 @@ step_headers (GMimeReader *reader, gboolean message)
 
 				if (priv->format == GMIME_FORMAT_MBOX && left >= 5 &&
 				    memcmp (priv->input + priv->input_index, "From ", 5) == 0 &&
-				    g_mime_reader_tell (reader) >= priv->content_end) {
+				    input_offset (priv) >= priv->content_end) {
 					priv->mailbox_boundary = TRUE;
 					report_at (reader, GMIME_COMPLIANCE_MISSING_BODY_SEPARATOR, offset, line_number, 1,
 						   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
@@ -1511,7 +1515,7 @@ step_headers (GMimeReader *reader, gboolean message)
 				eof = TRUE;
 
 				if (priv->active_logger) {
-					gint64 end_offset = g_mime_reader_tell (reader);
+					gint64 end_offset = input_offset (priv);
 					guint64 column = (guint64) (end_offset - priv->line_begin) + 1;
 
 					if (midline) {
@@ -1569,18 +1573,18 @@ step_headers (GMimeReader *reader, gboolean message)
 			return FALSE;
 	} while (!eof);
 
-	check_missing_headers (reader, eof ? g_mime_reader_tell (reader) : last_offset,
+	check_missing_headers (reader, eof ? input_offset (priv) : last_offset,
 			       eof ? priv->line_number : last_line, eof);
 
 	priv->headers_complete = TRUE;
 
 	if (!callback_result (reader, klass->headers_end (reader, begin_offset, begin_line_number,
-							g_mime_reader_tell (reader), priv->line_number, &priv->error)))
+							input_offset (priv), priv->line_number, &priv->error)))
 		return FALSE;
 
 	/* MimeReader completes the empty header-block notification before
 	 * rejecting a leading From-line in a header-only operation. */
-	return !invalid_initial_from || invalid_headers (reader, g_mime_reader_tell (reader));
+	return !invalid_initial_from || invalid_headers (reader, input_offset (priv));
 }
 
 /**
@@ -1670,7 +1674,7 @@ static gint64
 entity_end_offset (GMimeReader *reader, gint64 begin)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 end = g_mime_reader_tell (reader);
+	gint64 end = input_offset (priv);
 
 	if (!priv->boundary_eos && priv->previous_count && priv->previous[1] == '\n') {
 		end--;
@@ -1772,7 +1776,7 @@ is_partial_boundary (GMimeReader *reader, const guint8 *start, gsize length)
 
 	if (priv->format == GMIME_FORMAT_MBOX)
 		return start[0] == 'F' && memcmp (start, "From ", MIN (length, 5)) == 0 &&
-			g_mime_reader_tell (reader) >= priv->content_end;
+			input_offset (priv) >= priv->content_end;
 
 	return priv->format == GMIME_FORMAT_MMDF && start[0] == '\1';
 }
@@ -2063,7 +2067,7 @@ static gboolean
 skip_boundary (GMimeReader *reader, gboolean *terminated)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 begin = g_mime_reader_tell (reader);
+	gint64 begin = input_offset (priv);
 	gboolean final = priv->final_boundary;
 	guint64 line = priv->line_number;
 
@@ -2075,7 +2079,7 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 		gsize left = priv->input_end - priv->input_index;
 		const guint8 *lf = memchr (start, '\n', left);
 		gsize length = lf ? (gsize) (lf - start) : left;
-		gint64 offset = g_mime_reader_tell (reader);
+		gint64 offset = input_offset (priv);
 
 		if (lf && !final) {
 			if (length == 0 || start[length - 1] != '\r')
@@ -2110,7 +2114,7 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 
 	priv->boundary = NULL;
 
-	return READER_CALLBACK (reader, priv, boundary_end, final, begin, line, g_mime_reader_tell (reader));
+	return READER_CALLBACK (reader, priv, boundary_end, final, begin, line, input_offset (priv));
 }
 
 static gboolean
@@ -2195,7 +2199,7 @@ push_entity (GMimeReader *reader, EntityFrame *parent, gint64 begin, guint64 lin
 
 	frame->begin = begin;
 	frame->begin_line = line;
-	frame->headers_end = g_mime_reader_tell (reader);
+	frame->headers_end = input_offset (priv);
 	frame->content_begin = frame->headers_end;
 	frame->content_line = priv->line_number;
 	frame->boundary = g_strdup (g_mime_content_type_get_boundary (frame->content_type));
@@ -2216,7 +2220,7 @@ static gboolean
 read_child_headers (GMimeReader *reader, EntityFrame *parent, gboolean message)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 begin = g_mime_reader_tell (reader);
+	gint64 begin = input_offset (priv);
 	guint64 line = priv->line_number;
 	EntityFrame *child;
 
@@ -2228,7 +2232,7 @@ read_child_headers (GMimeReader *reader, EntityFrame *parent, gboolean message)
 	if (message) {
 		parent->message_begin = begin;
 		parent->message_line = line;
-		parent->message_headers_end = g_mime_reader_tell (reader);
+		parent->message_headers_end = input_offset (priv);
 		parent->message_active = TRUE;
 
 		if (!READER_CALLBACK (reader, priv, message_begin, begin, line))
@@ -2245,7 +2249,7 @@ static gboolean
 step_entity (GMimeReader *reader, gboolean message)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gint64 begin = g_mime_reader_tell (reader);
+	gint64 begin = input_offset (priv);
 	guint64 line = priv->line_number;
 	EntityFrame *frame;
 
@@ -2270,7 +2274,7 @@ step_entity (GMimeReader *reader, gboolean message)
 
 		if (priv->format == GMIME_FORMAT_MBOX && priv->content_length >= 0 &&
 		    g_mime_parser_options_get_respect_content_length (priv->options)) {
-			gint64 offset = g_mime_reader_tell (reader);
+			gint64 offset = input_offset (priv);
 
 			if (priv->content_length > G_MAXINT64 - offset) {
 				g_set_error_literal (&priv->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
@@ -2348,8 +2352,8 @@ step_entity (GMimeReader *reader, gboolean message)
 					if (found && priv->active_logger) {
 						if (!length || start[length - 1] != '\r')
 							report_at (reader, GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY,
-								   g_mime_reader_tell (reader) + length, priv->line_number,
-								   (guint64) (g_mime_reader_tell (reader) + length - priv->line_begin) + 1,
+								   input_offset (priv) + length, priv->line_number,
+								   (guint64) (input_offset (priv) + length - priv->line_begin) + 1,
 								   GMIME_COMPLIANCE_POSITION_EXACT);
 					}
 
@@ -2397,8 +2401,8 @@ step_entity (GMimeReader *reader, gboolean message)
 					else if (priv->boundary_eos)
 						_g_mime_parser_options_warn (priv->options, -1, GMIME_WARN_TRUNCATED_MESSAGE, NULL);
 					report_at (reader, GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY,
-						   g_mime_reader_tell (reader), priv->line_number,
-						   (guint64) (g_mime_reader_tell (reader) - priv->line_begin) + 1,
+						   input_offset (priv), priv->line_number,
+						   (guint64) (input_offset (priv) - priv->line_begin) + 1,
 						   GMIME_COMPLIANCE_POSITION_EXACT);
 				}
 
@@ -2479,7 +2483,7 @@ step_mailbox_marker (GMimeReader *reader)
 	return FALSE;
 
 found:
-	begin = g_mime_reader_tell (reader);
+	begin = input_offset (priv);
 	line = priv->line_number;
 
 	if (!READER_CALLBACK (reader, priv, marker_begin, begin, line))
@@ -2507,7 +2511,7 @@ found:
 		if (lf) {
 			consume_input (reader, lf - start + 1);
 			priv->mailbox_boundary = FALSE;
-			return READER_CALLBACK (reader, priv, marker_end, begin, line, g_mime_reader_tell (reader));
+			return READER_CALLBACK (reader, priv, marker_end, begin, line, input_offset (priv));
 		}
 
 		/* Leave a split CRLF intact, but consume a final CR at actual EOF

@@ -589,13 +589,22 @@ g_mime_entity_new (GMimeParserOptions *options, GMimeContentType *content_type)
 GMimeEntity *
 g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const char *subtype)
 {
-	GMimeEntityPrivate *priv;
-	struct _type_bucket *bucket;
-	struct _subtype_bucket *sub;
 	GMimeEntity *object;
-	GType obj_type;
 	
 	g_return_val_if_fail (type != NULL, NULL);
+
+	if ((object = _g_mime_entity_new_for_parser (type, subtype)))
+		_g_mime_header_list_set_options (_g_mime_entity_get_private (object)->headers, options);
+
+	return object;
+}
+
+GMimeEntity *
+_g_mime_entity_new_for_parser (const char *type, const char *subtype)
+{
+	struct _type_bucket *bucket;
+	struct _subtype_bucket *sub;
+	GType obj_type;
 	
 	if ((bucket = g_hash_table_lookup (type_hash, type))) {
 		if (!(sub = g_hash_table_lookup (bucket->subtype_hash, subtype)))
@@ -618,12 +627,9 @@ g_mime_entity_new_type (GMimeParserOptions *options, const char *type, const cha
 			return NULL;
 	}
 	
-	object = g_object_new (obj_type, NULL);
-	priv = _g_mime_entity_get_private (object);
-
-	_g_mime_header_list_set_options (priv->headers, options);
-	
-	return object;
+	/* Keep constructor defaults available to subclass initializers. The
+	 * parser binds its options once, immediately before importing headers. */
+	return g_object_new (obj_type, NULL);
 }
 
 

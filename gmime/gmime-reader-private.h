@@ -26,6 +26,7 @@
 
 G_BEGIN_DECLS
 
+G_GNUC_INTERNAL GMimeParserOptions *_g_mime_reader_get_options (GMimeReader *reader);
 GMimeStream *_g_mime_reader_get_stream (GMimeReader *reader);
 void _g_mime_reader_set_format (GMimeReader *reader, GMimeFormat format);
 /* Private differential-test selector; scalar selects the original per-line path. */

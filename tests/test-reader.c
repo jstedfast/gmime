@@ -158,6 +158,7 @@ test_headers_begin (GMimeReader *reader, gint64 offset, guint64 line, GError **e
 {
 	TestReader *test = (TestReader *) reader;
 
+	g_assert_cmpint (g_mime_reader_tell (reader), ==, offset);
 	g_string_append_printf (test->trace, "B:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ";", offset, line);
 	return record_callback (test, error);
 }
@@ -170,6 +171,7 @@ test_header_read (GMimeReader *reader, const guint8 *buffer, gsize length,
 	TestReader *test = (TestReader *) reader;
 	char *encoded = g_base64_encode (buffer, length);
 
+	g_assert_cmpint (g_mime_reader_tell (reader), ==, offset + length);
 	g_string_append_printf (test->trace, "H:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ":%"
 				G_GSIZE_FORMAT ":%" G_GSIZE_FORMAT ":%d:%s;",
 				offset, line, name_length, field_length, invalid, encoded);
@@ -183,6 +185,7 @@ test_headers_end (GMimeReader *reader, gint64 begin, guint64 begin_line,
 {
 	TestReader *test = (TestReader *) reader;
 
+	g_assert_cmpint (g_mime_reader_tell (reader), ==, end);
 	g_string_append_printf (test->trace, "E:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ":%"
 				G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ";", begin, begin_line, end, end_line);
 	return record_callback (test, error);
@@ -193,6 +196,7 @@ test_body_separator (GMimeReader *reader, gint64 begin, guint64 line, gint64 end
 {
 	TestReader *test = (TestReader *) reader;
 
+	g_assert_cmpint (g_mime_reader_tell (reader), ==, end);
 	g_string_append_printf (test->trace, "S:%" G_GINT64_FORMAT ":%" G_GUINT64_FORMAT ":%"
 				G_GINT64_FORMAT ";", begin, line, end);
 	return record_callback (test, error);
@@ -703,6 +707,13 @@ test_reader_default_callbacks (void)
 	ReaderInput *input = new_input (wire, sizeof (wire) - 1, 1);
 	GMimeReader *reader;
 	GError *error = NULL;
+
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_READER*");
+	g_assert_null (g_mime_reader_get_options ((GMimeReader *) input));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_READER*");
+	g_assert_cmpint (g_mime_reader_tell ((GMimeReader *) input), ==, -1);
+	g_test_assert_expected_messages ();
 
 	g_mime_parser_options_set_detect_openpgp (options, TRUE);
 	reader = g_mime_reader_new (options, (GMimeStream *) input);
