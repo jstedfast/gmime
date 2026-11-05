@@ -2130,6 +2130,21 @@ evaluation: validated LF attachments gain 26.6%, but validated 998-character
 lines regress 5.7%. Default flags remain unchanged. Detailed results and
 provenance are retained in `_build-parser-throughput/header-allocation`.
 
+Reader-backed entity construction now skips the public factory's intermediate
+options clone and binds parser options once at header import, including opaque
+leaf fallbacks. Constructor defaults and the original HeaderList remain
+available to custom subclass initializers; public factory options stay
+independent. Internal reader offset calculations reuse the existing private
+offset helper, and parser callbacks use a trusted options accessor rather than
+repeating runtime type checks. Public reader argument checks remain enabled.
+Matched release profiles against `825752f4` reduce Enron runtime type-check
+calls from 317,811 to 93,342 and options clones from 26,982 to 23,984.
+Total instructions fall 4.1% for Enron and 7.9% for UTF-8 with compliance
+disabled; these are instruction counts, not elapsed-time throughput gains.
+The 6,600 decoded metadata/serialization/warning rows and both structural
+and compliance-issue audits match. Results and source snapshots are retained
+in `_build-parser-throughput/entity-setup`.
+
 Persistent regressions cover every common field, case variants, stream
 and standalone parsing, cloning, binary values, raw trailing blanks,
 checked/ordinary construction, value mutation and unknown identifiers.

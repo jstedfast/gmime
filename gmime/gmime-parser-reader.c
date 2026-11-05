@@ -113,7 +113,7 @@ parser_reader_header_read (GMimeReader *base, const guint8 *buffer, gsize length
 			   gint64 offset, guint64 line, GError **error)
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
-	GMimeParserOptions *options = g_mime_reader_get_options (base);
+	GMimeParserOptions *options = _g_mime_reader_get_options (base);
 	GMimeHeader *header;
 
 	header = _g_mime_header_new_from_reader (_g_mime_parser_options_snapshot (options), buffer, length,
@@ -124,7 +124,7 @@ parser_reader_header_read (GMimeReader *base, const guint8 *buffer, gsize length
 		if (!reader->header_callback (header, reader->stack->len == 0, reader->header_data, error))
 			return FALSE;
 
-		options = g_mime_reader_get_options (base);
+		options = _g_mime_reader_get_options (base);
 	}
 
 	if (!invalid && g_mime_parser_options_get_warning_callback (options)) {
@@ -190,7 +190,7 @@ parser_reader_copy_headers (GMimeParserReader *reader, GMimeEntity *entity, gboo
 
 	priv->ensure_newline = FALSE;
 
-	_g_mime_header_list_set_options (priv->headers, g_mime_reader_get_options ((GMimeReader *) reader));
+	_g_mime_header_list_set_options (priv->headers, _g_mime_reader_get_options ((GMimeReader *) reader));
 	g_mime_header_list_clear (priv->headers);
 
 	/* MimeKit attaches Headers.Changed after copying the parsed headers.
@@ -267,7 +267,7 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 			    gint64 offset, guint64 line, GError **error)
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
-	GMimeParserOptions *options = g_mime_reader_get_options (base);
+	GMimeParserOptions *options = _g_mime_reader_get_options (base);
 	GMimeEntity *parent = parser_reader_peek (reader);
 	const char *media_type, *subtype;
 	gboolean opaque = FALSE;
@@ -277,7 +277,7 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 
 	media_type = g_mime_content_type_get_media_type (content_type);
 	subtype = g_mime_content_type_get_media_subtype (content_type);
-	entity = g_mime_entity_new_type (options, media_type, subtype);
+	entity = _g_mime_entity_new_for_parser (media_type, subtype);
 
 	if (entity && G_OBJECT_TYPE (entity) == GMIME_TYPE_MESSAGE_PARTIAL) {
 		GMimeContentEncoding encoding = GMIME_CONTENT_ENCODING_UNSPECIFIED;
@@ -297,8 +297,6 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 	}
 
 	if (entity && type == GMIME_READER_ENTITY_PART && (!GMIME_IS_PART (entity) || opaque)) {
-		GMimeEntityPrivate *entity_priv;
-
 		if (!opaque && !((G_OBJECT_TYPE (entity) == GMIME_TYPE_MESSAGE_PART &&
 				  (g_mime_content_type_is_type (content_type, "message", "rfc822") ||
 				   g_mime_content_type_is_type (content_type, "message", "rfc2822") ||
@@ -326,9 +324,6 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 		 * applies when the reader reaches the MIME nesting limit. */
 		entity = g_object_new (!g_ascii_strcasecmp (media_type, "text") ?
 				       GMIME_TYPE_TEXT_PART : GMIME_TYPE_PART, NULL);
-		entity_priv = _g_mime_entity_get_private (entity);
-
-		_g_mime_header_list_set_options (entity_priv->headers, options);
 	}
 
 	if (!entity) {
@@ -551,7 +546,7 @@ parser_reader_content_begin (GMimeReader *base, GMimeReaderContentType type,
 	reader->content = reader->persistent && type == GMIME_READER_CONTENT_PART ? NULL : g_mime_stream_block_new ();
 
 	if (type == GMIME_READER_CONTENT_PART &&
-	    g_mime_parser_options_get_detect_openpgp (g_mime_reader_get_options (base)))
+	    g_mime_parser_options_get_detect_openpgp (_g_mime_reader_get_options (base)))
 		reader->openpgp = g_mime_filter_openpgp_new ();
 
 	return TRUE;
@@ -808,7 +803,7 @@ _g_mime_parser_reader_construct_headers (GMimeReader *base, gboolean stop_at_sep
 	g_return_val_if_fail (G_TYPE_CHECK_INSTANCE_TYPE (base, g_mime_parser_reader_get_type ()), NULL);
 	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-	headers = g_mime_header_list_new (g_mime_reader_get_options (base));
+	headers = g_mime_header_list_new (_g_mime_reader_get_options (base));
 
 	if (!parser_reader_initialize (base, error) ||
 	    !(stop_at_separator ? _g_mime_reader_read_headers_to_separator (base, error) :

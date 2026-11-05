@@ -84,6 +84,7 @@ G_GNUC_INTERNAL void _g_mime_parser_options_warn (GMimeParserOptions *options, g
 						  const gchar *item);
 
 /* GMimeParser */
+G_GNUC_INTERNAL GMimeEntity *_g_mime_entity_new_for_parser (const char *type, const char *subtype);
 G_GNUC_INTERNAL GMimeStream *_g_mime_parser_read_to_eos (GMimeParser *parser, GError **error);
 G_GNUC_INTERNAL GMimeEntity *_g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream,
 						GMimeContentStorage storage, gboolean message, GError **error);
