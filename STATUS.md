@@ -2078,6 +2078,16 @@ remain unchanged. The existing name-based APIs can use canonical names
 from the identifier helper. Identifier-based list lookup, removal,
 construction and checked value operations are described below.
 
+Formatter selection and message metadata invalidation dispatch on the cached
+header identifier instead of scanning field-name tables. Appending an existing
+header instance uses the header list's name hash to preserve the first match
+without a linear index search; earlier insertions retain their ordered lookup.
+Checked Content-Type and Content-Disposition assignments also select their
+structured parser by identifier rather than comparing formatter pointers.
+Unknown fields still use name-based list lookup and default formatting.
+Case variants, repeated/shared instances, raw bytes and owner notifications
+retain their existing behavior.
+
 Persistent regressions cover every common field, case variants, stream
 and standalone parsing, cloning, binary values, raw trailing blanks,
 checked/ordinary construction, value mutation and unknown identifiers.

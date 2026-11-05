@@ -247,46 +247,60 @@ g_mime_header_id_from_name (const char *name)
 }
 
 
-static struct {
-	const char *name;
-	GMimeHeaderRawValueFormatter formatter;
-} formatters[] = {
-	{ "Authentication-Results",      g_mime_header_format_authentication_results },
-	{ "ARC-Authentication-Results",  g_mime_header_format_authentication_results },
-	{ "Received",                    g_mime_header_format_received            },
-	{ "Sender",                      g_mime_header_format_addrlist            },
-	{ "From",                        g_mime_header_format_addrlist            },
-	{ "Reply-To",                    g_mime_header_format_addrlist            },
-	{ "To",                          g_mime_header_format_addrlist            },
-	{ "Cc",                          g_mime_header_format_addrlist            },
-	{ "Bcc",                         g_mime_header_format_addrlist            },
-	{ "Message-Id",                  g_mime_header_format_message_id          },
-	{ "In-Reply-To",                 g_mime_header_format_message_id          },
-	{ "Original-Message-Id",         g_mime_header_format_message_id          },
-	{ "References",                  g_mime_header_format_references          },
-	{ "Resent-Sender",               g_mime_header_format_addrlist            },
-	{ "Resent-From",                 g_mime_header_format_addrlist            },
-	{ "Resent-Reply-To",             g_mime_header_format_addrlist            },
-	{ "Resent-To",                   g_mime_header_format_addrlist            },
-	{ "Resent-Cc",                   g_mime_header_format_addrlist            },
-	{ "Resent-Bcc",                  g_mime_header_format_addrlist            },
-	{ "Resent-Message-Id",           g_mime_header_format_message_id          },
-	{ "Content-Type",                g_mime_header_format_content_type        },
-	{ "Content-Disposition",         g_mime_header_format_content_disposition },
-	{ "Content-Id",                  g_mime_header_format_message_id          },
-	{ "Disposition-Notification-To", g_mime_header_format_addrlist            },
-	{ "Disposition-Notification-Options", g_mime_header_format_disposition_notification_options },
-	{ "DKIM-Signature",              g_mime_header_format_dkim_signature      },
-	{ "ARC-Message-Signature",       g_mime_header_format_dkim_signature      },
-	{ "ARC-Seal",                    g_mime_header_format_dkim_signature      },
-	{ "List-Archive",                g_mime_header_format_mailing_list_command },
-	{ "List-Help",                   g_mime_header_format_mailing_list_command },
-	{ "List-Owner",                  g_mime_header_format_mailing_list_command },
-	{ "List-Post",                   g_mime_header_format_mailing_list_command },
-	{ "List-Subscribe",              g_mime_header_format_mailing_list_command },
-	{ "List-Unsubscribe",            g_mime_header_format_mailing_list_command },
-	{ "Newsgroups",                  g_mime_header_format_newsgroups          },
-};
+static GMimeHeaderRawValueFormatter
+header_formatter_for_id (GMimeHeaderId id)
+{
+	switch (id) {
+	case GMIME_HEADER_AUTHENTICATION_RESULTS:
+	case GMIME_HEADER_ARC_AUTHENTICATION_RESULTS:
+		return g_mime_header_format_authentication_results;
+	case GMIME_HEADER_RECEIVED:
+		return g_mime_header_format_received;
+	case GMIME_HEADER_SENDER:
+	case GMIME_HEADER_FROM:
+	case GMIME_HEADER_REPLY_TO:
+	case GMIME_HEADER_TO:
+	case GMIME_HEADER_CC:
+	case GMIME_HEADER_BCC:
+	case GMIME_HEADER_RESENT_SENDER:
+	case GMIME_HEADER_RESENT_FROM:
+	case GMIME_HEADER_RESENT_REPLY_TO:
+	case GMIME_HEADER_RESENT_TO:
+	case GMIME_HEADER_RESENT_CC:
+	case GMIME_HEADER_RESENT_BCC:
+	case GMIME_HEADER_DISPOSITION_NOTIFICATION_TO:
+		return g_mime_header_format_addrlist;
+	case GMIME_HEADER_MESSAGE_ID:
+	case GMIME_HEADER_IN_REPLY_TO:
+	case GMIME_HEADER_ORIGINAL_MESSAGE_ID:
+	case GMIME_HEADER_RESENT_MESSAGE_ID:
+	case GMIME_HEADER_CONTENT_ID:
+		return g_mime_header_format_message_id;
+	case GMIME_HEADER_REFERENCES:
+		return g_mime_header_format_references;
+	case GMIME_HEADER_CONTENT_TYPE:
+		return g_mime_header_format_content_type;
+	case GMIME_HEADER_CONTENT_DISPOSITION:
+		return g_mime_header_format_content_disposition;
+	case GMIME_HEADER_DISPOSITION_NOTIFICATION_OPTIONS:
+		return g_mime_header_format_disposition_notification_options;
+	case GMIME_HEADER_DKIM_SIGNATURE:
+	case GMIME_HEADER_ARC_MESSAGE_SIGNATURE:
+	case GMIME_HEADER_ARC_SEAL:
+		return g_mime_header_format_dkim_signature;
+	case GMIME_HEADER_LIST_ARCHIVE:
+	case GMIME_HEADER_LIST_HELP:
+	case GMIME_HEADER_LIST_OWNER:
+	case GMIME_HEADER_LIST_POST:
+	case GMIME_HEADER_LIST_SUBSCRIBE:
+	case GMIME_HEADER_LIST_UNSUBSCRIBE:
+		return g_mime_header_format_mailing_list_command;
+	case GMIME_HEADER_NEWSGROUPS:
+		return g_mime_header_format_newsgroups;
+	default:
+		return NULL;
+	}
+}
 
 
 static void g_mime_header_class_init (GMimeHeaderClass *klass);
@@ -356,13 +370,14 @@ header_bytes_take_string (char *text)
 static char *
 header_bytes_dup_text (GBytes *bytes)
 {
-	gsize length;
 	const char *data;
+	gsize length;
 
 	if (!bytes)
 		return NULL;
 
 	data = g_bytes_get_data (bytes, &length);
+
 	return length ? g_strndup (data, length) : g_strdup ("");
 }
 
@@ -395,7 +410,6 @@ header_new (GMimeParserOptions *options, const char *name, const char *value,
 {
 	GMimeHeaderRawValueFormatter formatter;
 	GMimeHeader *header;
-	guint i;
 	
 	header = g_object_new (GMIME_TYPE_HEADER, NULL);
 	header->raw_value = raw_value ? g_bytes_new (raw_value, strlen (raw_value)) : NULL;
@@ -408,14 +422,8 @@ header_new (GMimeParserOptions *options, const char *name, const char *value,
 	header->options = options;
 	header->offset = offset;
 	
-	formatter = g_mime_header_format_default;
-
-	for (i = 0; i < G_N_ELEMENTS (formatters); i++) {
-		if (!g_ascii_strcasecmp (formatters[i].name, name)) {
-			formatter = header->formatter = formatters[i].formatter;
-			break;
-		}
-	}
+	header->formatter = header_formatter_for_id (header->id);
+	formatter = header->formatter ? header->formatter : g_mime_header_format_default;
 	
 	if (!raw_value && value)
 		header->raw_value = header_bytes_take_string (formatter (header, NULL, header->value, charset));
@@ -983,17 +991,20 @@ header_format_value_full (GMimeHeader *header, GMimeFormatOptions *options, cons
 	char *raw_value;
 	int i, errsv;
 
-	if (formatter == g_mime_header_format_content_type) {
+	switch (header->id) {
+	case GMIME_HEADER_CONTENT_TYPE:
 		if (!(content_type = g_mime_content_type_parse_full (header->options, value, -1, error)))
 			return NULL;
 
 		parameters = g_mime_content_type_get_parameters (content_type);
-	} else if (formatter == g_mime_header_format_content_disposition) {
+		break;
+	case GMIME_HEADER_CONTENT_DISPOSITION:
 		if (!(disposition = g_mime_content_disposition_parse_full (header->options, value, -1, error)))
 			return NULL;
 
 		parameters = g_mime_content_disposition_get_parameters (disposition);
-	} else {
+		break;
+	default:
 		formatter = formatter ? formatter : g_mime_header_format_default;
 
 		errno = 0;
@@ -1670,8 +1681,10 @@ g_mime_header_format_authentication_results (GMimeHeader *header, GMimeFormatOpt
 
 	if (!(results = g_mime_authentication_results_parse (value, -1, NULL)))
 		return g_mime_header_format_default (header, options, value, charset);
+
 	raw = _g_mime_authentication_results_encode (results, options, strlen (header->name) + 1);
 	g_object_unref (results);
+
 	return raw;
 }
 
@@ -2837,7 +2850,7 @@ void
 g_mime_header_list_insert_header (GMimeHeaderList *headers, int index, GMimeHeader *header)
 {
 	GMimeHeaderListChangedEventArgs args;
-	int first;
+	gboolean update_lookup;
 
 	g_return_if_fail (GMIME_IS_HEADER_LIST (headers));
 	g_return_if_fail (GMIME_IS_HEADER (header));
@@ -2848,18 +2861,28 @@ g_mime_header_list_insert_header (GMimeHeaderList *headers, int index, GMimeHead
 
 	header_ensure_owned_options (header);
 
-	first = g_mime_header_list_index_of (headers, header->name);
-	args.action = (guint) index == headers->array->len ?
-		GMIME_HEADER_LIST_CHANGED_ACTION_ADDED : GMIME_HEADER_LIST_CHANGED_ACTION_INSERTED;
+	if ((guint) index == headers->array->len) {
+		args.action = GMIME_HEADER_LIST_CHANGED_ACTION_ADDED;
+		update_lookup = !g_hash_table_contains (headers->hash, header->name);
+	} else {
+		int first = g_mime_header_list_index_of (headers, header->name);
+
+		args.action = GMIME_HEADER_LIST_CHANGED_ACTION_INSERTED;
+		update_lookup = first == -1 || index <= first;
+	}
+
 	args.header = header;
+
 	g_object_ref (header);
 	g_mime_event_add (header->changed, (GMimeEventCallback) header_changed, headers);
 	g_ptr_array_insert (headers->array, index, header);
+
 	/* Update the lookup table to keep the first matching header. */
-	if (first == -1 || index <= first)
+	if (update_lookup)
 		g_hash_table_replace (headers->hash, header->name, header);
 
 	headers->has_body_separator = TRUE;
+
 	g_mime_event_emit (headers->changed, &args);
 }
 
@@ -2900,14 +2923,18 @@ g_mime_header_list_insert (GMimeHeaderList *headers, int index, const char *name
 
 	header = header_new (headers->options, name, value, name, NULL, charset, -1);
 	first = g_mime_header_list_index_of (headers, header->name);
+
 	g_mime_event_add (header->changed, (GMimeEventCallback) header_changed, headers);
 	g_ptr_array_insert (headers->array, index, header);
+
 	if (first == -1 || index <= first)
 		g_hash_table_replace (headers->hash, header->name, header);
 
 	args.action = GMIME_HEADER_LIST_CHANGED_ACTION_INSERTED;
 	args.header = header;
+
 	headers->has_body_separator = TRUE;
+
 	g_mime_event_emit (headers->changed, &args);
 }
 
@@ -3601,6 +3628,7 @@ g_mime_header_list_set_header_at (GMimeHeaderList *headers, int index, GMimeHead
 	g_mime_event_add (header->changed, (GMimeEventCallback) header_changed, headers);
 	headers->array->pdata[index] = header;
 	header_list_update_lookup (headers, original->name);
+
 	if (!same_name)
 		header_list_update_lookup (headers, header->name);
 
@@ -3619,6 +3647,7 @@ g_mime_header_list_set_header_at (GMimeHeaderList *headers, int index, GMimeHead
 		g_mime_event_emit (headers->changed, &args);
 		g_object_unref (header);
 	}
+
 	g_object_unref (original);
 }
 
@@ -3751,11 +3780,13 @@ g_mime_header_list_remove_all (GMimeHeaderList *headers, const char *name)
 
 	/* The caller may borrow the name of a header being removed. */
 	field = g_strdup (name);
+
 	for (i = headers->array->len; i > 0; i--) {
 		header = headers->array->pdata[i - 1];
 		if (!g_ascii_strcasecmp (header->name, field))
 			g_mime_header_list_remove_at (headers, i - 1);
 	}
+
 	g_free (field);
 }
 
@@ -3847,12 +3878,15 @@ g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions
 
 	if (headers->has_body_separator) {
 		newline = g_mime_format_options_get_newline (options);
+
 		if (strlen (newline) > (size_t) (G_MAXSSIZE - total)) {
 			errno = EOVERFLOW;
 			return -1;
 		}
+
 		if ((nwritten = _g_mime_stream_write_all (stream, newline, strlen (newline))) == -1)
 			return -1;
+
 		total += nwritten;
 	}
 
@@ -3922,6 +3956,7 @@ g_mime_header_list_to_string (GMimeHeaderList *headers, GMimeFormatOptions *opti
 	array = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array ((GMimeStreamMem *) stream, array);
+
 	if (_g_mime_header_list_write_to_stream (headers, options, stream) == -1) {
 		int errsv = errno;
 
@@ -3930,6 +3965,7 @@ g_mime_header_list_to_string (GMimeHeaderList *headers, GMimeFormatOptions *opti
 		errno = errsv;
 		return NULL;
 	}
+
 	g_object_unref (stream);
 	
 	g_byte_array_append (array, (unsigned char *) "", 1);

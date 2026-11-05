@@ -557,14 +557,77 @@ process_header (GMimeEntity *entity, GMimeHeaderListChangedAction action, GMimeH
 	GMimeMessagePrivate *priv = _g_mime_message_get_private (message);
 	GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (entity);
 	GMimeParserOptions *options = _g_mime_header_list_get_options (entity_priv->headers);
-	const char *name;
 	guint i;
-	
-	name = g_mime_header_get_name (header);
-	
-	for (i = 0; i < G_N_ELEMENTS (message_headers); i++) {
-		if (!g_ascii_strcasecmp (message_headers[i], name))
-			break;
+
+	switch (header->id) {
+	case GMIME_HEADER_SENDER:
+		i = HEADER_SENDER;
+		break;
+	case GMIME_HEADER_FROM:
+		i = HEADER_FROM;
+		break;
+	case GMIME_HEADER_REPLY_TO:
+		i = HEADER_REPLY_TO;
+		break;
+	case GMIME_HEADER_TO:
+		i = HEADER_TO;
+		break;
+	case GMIME_HEADER_CC:
+		i = HEADER_CC;
+		break;
+	case GMIME_HEADER_BCC:
+		i = HEADER_BCC;
+		break;
+	case GMIME_HEADER_RESENT_FROM:
+		i = HEADER_RESENT_FROM;
+		break;
+	case GMIME_HEADER_RESENT_REPLY_TO:
+		i = HEADER_RESENT_REPLY_TO;
+		break;
+	case GMIME_HEADER_RESENT_TO:
+		i = HEADER_RESENT_TO;
+		break;
+	case GMIME_HEADER_RESENT_CC:
+		i = HEADER_RESENT_CC;
+		break;
+	case GMIME_HEADER_RESENT_BCC:
+		i = HEADER_RESENT_BCC;
+		break;
+	case GMIME_HEADER_RESENT_SENDER:
+		i = HEADER_RESENT_SENDER;
+		break;
+	case GMIME_HEADER_DATE:
+		i = HEADER_DATE;
+		break;
+	case GMIME_HEADER_RESENT_DATE:
+		i = HEADER_RESENT_DATE;
+		break;
+	case GMIME_HEADER_MESSAGE_ID:
+		i = HEADER_MESSAGE_ID;
+		break;
+	case GMIME_HEADER_IN_REPLY_TO:
+		i = HEADER_IN_REPLY_TO;
+		break;
+	case GMIME_HEADER_RESENT_MESSAGE_ID:
+		i = HEADER_RESENT_MESSAGE_ID;
+		break;
+	case GMIME_HEADER_REFERENCES:
+		i = HEADER_REFERENCES;
+		break;
+	case GMIME_HEADER_IMPORTANCE:
+		i = HEADER_IMPORTANCE;
+		break;
+	case GMIME_HEADER_PRIORITY:
+		i = HEADER_PRIORITY;
+		break;
+	case GMIME_HEADER_X_PRIORITY:
+		i = HEADER_X_PRIORITY;
+		break;
+	case GMIME_HEADER_MIME_VERSION:
+		i = HEADER_MIME_VERSION;
+		break;
+	default:
+		return;
 	}
 
 	if (i < N_ADDRESS_TYPES) {
