@@ -3803,6 +3803,14 @@ encoding validators are now connected to reader wire content and flush at
 content completion. Validation includes the newline withheld before a
 boundary, even when that newline is not delivered as leaf content.
 
+Address validation uses bulk character-set searches for controls, ISO-2022
+markers, atom delimiters, phrase structure, unquoted specials and non-whitespace.
+The immutable search sets are derived from the grammar predicates. Runtime
+dispatch selects AVX2, SSSE3 or ARM64 NEON nibble-table lookups with scalar
+fallbacks and bounded tails. High bytes remain ordinary address text except
+when searching for non-whitespace; diagnostic order and exact positions are
+unchanged.
+
 Runtime-selected AVX2/POPCNT, SSE2 and ARM NEON content scanners count
 complete LF/CRLF lines and stop before possible MIME/mailbox delimiters.
 The 128-bit and 256-bit kernels port MimeReader's vector delimiter-prefix

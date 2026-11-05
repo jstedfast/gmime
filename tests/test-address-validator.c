@@ -343,6 +343,55 @@ test_wide_coordinates (void)
 }
 
 static void
+test_bulk_search_positions (void)
+{
+	static const struct {
+		const char *suffix;
+		gsize length;
+		GMimeComplianceViolation violation;
+	} cases[] = {
+#define CASE(text, violation) { text, sizeof (text) - 1, violation }
+		CASE ("\001@example.com", GMIME_COMPLIANCE_CONTROL_CHARACTER_IN_ADDRESS),
+		CASE ("\000@example.com", GMIME_COMPLIANCE_NULL_BYTE_IN_ADDRESS),
+		CASE ("\016@example.com", GMIME_COMPLIANCE_ISO2022_SEQUENCE_IN_LOCAL_PART),
+		CASE ("\033$B@example.com", GMIME_COMPLIANCE_ISO2022_SEQUENCE_IN_LOCAL_PART),
+		CASE ("\rB@example.com", GMIME_COMPLIANCE_LINE_BREAK_IN_ADDRESS),
+		CASE (". Name <a@example.com>", GMIME_COMPLIANCE_UNQUOTED_DISPLAY_NAME)
+#undef CASE
+	};
+	const gint64 offset = G_GINT64_CONSTANT (7000000000);
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	guint kind, prefix, alignment;
+
+	for (kind = 0; kind < G_N_ELEMENTS (cases); kind++) {
+		for (prefix = 0; prefix <= 129; prefix++) {
+			for (alignment = 0; alignment < 32; alignment++) {
+				gsize length = prefix + cases[kind].length;
+				guint8 *storage = g_malloc (length + alignment), *input = storage + alignment;
+				GMimeComplianceIssue *issue;
+
+				memset (input, 'a', prefix);
+				memcpy (input + prefix, cases[kind].suffix, cases[kind].length);
+				g_array_set_size (issues, 0);
+				_g_mime_address_validate (input, length, GMIME_COMPLIANCE_VALIDATOR_ADDRESS,
+					collect_issue, issues, GMIME_COMPLIANCE_CONTEXT_STORAGE, offset, 37, 11);
+				g_assert_cmpuint (issues->len, ==, 1);
+				issue = &g_array_index (issues, GMimeComplianceIssue, 0);
+				g_assert_cmpint (issue->violation, ==, cases[kind].violation);
+				g_assert_cmpint (issue->stream_offset, ==, offset + prefix);
+				g_assert_cmpuint (issue->line_number, ==, 37);
+				g_assert_cmpuint (issue->column_number, ==, 11 + prefix);
+				g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_EXACT);
+				g_assert_cmpint (issue->context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+				g_free (storage);
+			}
+		}
+	}
+
+	g_array_free (issues, TRUE);
+}
+
+static void
 count_issue (const GMimeComplianceIssue *issue, gpointer user_data)
 {
 	guint64 *count = user_data;
@@ -441,6 +490,7 @@ main (int argc, char **argv)
 	}
 	g_test_add_func ("/address-validator/empty", test_empty);
 	g_test_add_func ("/address-validator/wide-coordinates", test_wide_coordinates);
+	g_test_add_func ("/address-validator/bulk-search-positions", test_bulk_search_positions);
 	g_test_add_func ("/address-validator/recovery-scale", test_recovery_scale);
 	g_test_add_func ("/address-validator/nested-groups", test_nested_groups);
 	g_test_add_func ("/address-validator/reentrant-callback", test_reentrant_callback);

@@ -23,6 +23,10 @@
 
 #include "gmime-address-validator-private.h"
 #include "gmime-encoded-word-validator-private.h"
+#include "gmime-reader-simd-private.h"
+
+static GMimeReaderByteSet control_characters, iso2022_markers, atom_delimiters;
+static GMimeReaderByteSet phrase_structure, phrase_specials, non_whitespace;
 
 /*
  * A strict RFC 5322/RFC 6532 validator, deliberately independent of the tolerant
@@ -373,7 +377,14 @@ av_scan_for_control_characters (AddressValidator *v)
 	// again if the token they land in turns &to account for them, so there is nothing to be
 	// gained by remembering the rest.
 	for (gssize i = v->start_index; i < v->end_index; i++) {
-		guint8 c = v->text[i];
+		guint8 c;
+
+		i += (gssize) _g_mime_reader_find_byte (v->text + i, (gsize) (v->end_index - i), &control_characters);
+
+		if (i == v->end_index)
+			break;
+
+		c = v->text[i];
 
 		if (c == 0) {
 			if (v->null_cursor < 0)
@@ -459,16 +470,17 @@ static gssize
 av_next_iso2022_sequence (AddressValidator *v, gssize from, gssize limit)
 {
 	while (from < limit) {
-		if (v->text[from] == 0x0e || v->text[from] == 0x0f || v->text[from] == 0x1b) {
-			gssize length;
+		gssize length;
 
-			if (av_is_iso2022_sequence (v, from, &length))
-				return from;
+		from += (gssize) _g_mime_reader_find_byte (v->text + from, (gsize) (limit - from), &iso2022_markers);
 
-			from += MAX (length, 1);
-		} else {
-			from++;
-		}
+		if (from == limit)
+			break;
+
+		if (av_is_iso2022_sequence (v, from, &length))
+			return from;
+
+		from += MAX (length, 1);
 	}
 
 	return -1;
@@ -656,6 +668,42 @@ av_is_atom_or_control (AddressValidator *v G_GNUC_UNUSED, guint8 c)
 	return is_atom (c) || c == 0 || c == 0x7f || (c < 0x20 && c != '\t' && c != '\r' && c != '\n');
 }
 
+static void
+av_search_init (void)
+{
+	static gsize initialized;
+
+	if (g_once_init_enter (&initialized)) {
+		guint c;
+
+		/* Derive the complements from the grammar, as in MimeKit's SearchValues. */
+		for (c = 0; c < 128; c++) {
+			guint8 bit = (guint8) (1u << (c >> 4));
+
+			if ((c < 0x20 && c != '\t' && c != '\n') || c == 0x7f)
+				control_characters.table[c & 15] |= bit;
+
+			if (c == 0x0e || c == 0x0f || c == 0x1b)
+				iso2022_markers.table[c & 15] |= bit;
+
+			if (!av_is_atom_or_control (NULL, (guint8) c))
+				atom_delimiters.table[c & 15] |= bit;
+
+			if (c != 0 && strchr ("\"([<:,;>", c))
+				phrase_structure.table[c & 15] |= bit;
+
+			if (!av_is_atom_or_control (NULL, (guint8) c) && !is_whitespace ((guint8) c))
+				phrase_specials.table[c & 15] |= bit;
+
+			if (is_whitespace ((guint8) c))
+				non_whitespace.table[c & 15] |= bit;
+		}
+
+		non_whitespace.invert = TRUE;
+		g_once_init_leave (&initialized, 1);
+	}
+}
+
 /*
  * Determine whether a byte could begin an address, once the list separators and any
  * preceding CFWS have been dealt with by the caller.
@@ -790,8 +838,8 @@ av_skip_atom (AddressValidator *v)
 {
 	gssize start = v->index;
 
-	while (v->index < v->end_index && av_is_atom_or_control (v, v->text[v->index]))
-		v->index++;
+	v->index += (gssize) _g_mime_reader_find_byte (v->text + v->index,
+						    (gsize) (v->end_index - v->index), &atom_delimiters);
 
 	return v->index > start;
 }
@@ -1237,17 +1285,14 @@ static gboolean
 av_try_scan_phrase (AddressValidator *v, gboolean *unquotedSpecial, gssize *specialIndex, gboolean *hasContent)
 {
 	gssize start = v->index;
-	gssize at = start;
+	gssize at, special;
+
 	*unquotedSpecial = FALSE;
 	*specialIndex = -1;
 	*hasContent = FALSE;
 
-	// Only quotes, comments and domain-literals can hide a phrase terminator. Scanning
-	// for structure first avoids walking ordinary addr-specs twice, just as the source's
-	// SearchValues fast path does.
-	// strchr also matches the string terminator; a null byte is atom/control text.
-	while (at < v->end_index && (v->text[at] == 0 || !strchr ("\"([<:,;>", v->text[at])))
-		at++;
+	at = start + (gssize) _g_mime_reader_find_byte (v->text + start,
+						     (gsize) (v->end_index - start), &phrase_structure);
 
 	if (at == v->end_index) {
 		v->index = at;
@@ -1269,16 +1314,15 @@ av_try_scan_phrase (AddressValidator *v, gboolean *unquotedSpecial, gssize *spec
 		return TRUE;
 	}
 
-	for (gssize i = start; i < at; i++) {
-		if (!av_is_atom_or_control (v, v->text[i]) && !is_whitespace (v->text[i])) {
-			*unquotedSpecial = TRUE;
-			*specialIndex = i;
-			*hasContent = TRUE;
-			return TRUE;
-		}
+	special = start + (gssize) _g_mime_reader_find_byte (v->text + start, (gsize) (at - start), &phrase_specials);
 
-		if (!is_whitespace (v->text[i]))
-			*hasContent = TRUE;
+	if (special < at) {
+		*unquotedSpecial = TRUE;
+		*specialIndex = special;
+		*hasContent = TRUE;
+	} else {
+		*hasContent = _g_mime_reader_find_byte (v->text + start, (gsize) (at - start),
+						      &non_whitespace) < (gsize) (at - start);
 	}
 
 	// '<' and ':' make the extent unusable as a memo; see RecordPhraseExtent.
@@ -1908,6 +1952,8 @@ _g_mime_address_validate (const guint8 *buffer, gsize length, GMimeComplianceVal
 
 	if (v->end_index == 0)
 		return;
+
+	av_search_init ();
 
 	if (v->validate_syntax) {
 		av_scan_for_control_characters (v);
