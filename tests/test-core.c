@@ -5792,7 +5792,10 @@ test_header_formatter_dispatch (void)
 		{ "List-Unsubscribe", g_mime_header_format_mailing_list_command },
 		{ "Newsgroups", g_mime_header_format_newsgroups }
 	};
-	static const char *unknown[] = { "X-Custom", "Sender-Extra", "X-Subject" };
+	static const char *unknown[] = {
+		"X-Custom", "Sender-Extra", "X-Subject", "Content-", "Content-Custom",
+		"Content-Type-Extra", "Content", "ContentType", "X-Content-Type"
+	};
 	guint i, j, k;
 
 	for (i = 0; i < GMIME_HEADER_X_STATUS + 1 + G_N_ELEMENTS (unknown); i++) {
@@ -5812,16 +5815,22 @@ test_header_formatter_dispatch (void)
 				k == 1 ? g_ascii_strdown (canonical, -1) : g_ascii_strup (canonical, -1);
 			GMimeHeader *header = g_mime_header_new (name, "", NULL), *clone;
 			char *wire = g_strdup_printf ("%s \t: value\r\n", name);
+			gboolean content = !g_ascii_strncasecmp (name, "Content-", 8);
 			GError *error = NULL;
 
 			g_assert_nonnull (header);
 			check (header->formatter == expected,
 			       "all constructed header identifiers retain their field-specific or default formatter");
+			check (_g_mime_header_is_content (header) == content,
+			       "cached content-header classification matches the prefix for every identifier and extension");
 			g_object_unref (header);
 			header = g_mime_header_parse_text (NULL, wire, &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (header);
 			clone = g_mime_header_clone (header);
+			check (_g_mime_header_is_content (header) == content &&
+			       _g_mime_header_is_content (clone) == content,
+			       "parsed and cloned case variants retain content-header classification");
 			check (header->formatter == expected && clone->formatter == expected &&
 			       header->value == NULL && clone->value == NULL &&
 			       !strcmp (header->name, name) &&
@@ -8746,6 +8755,39 @@ test_header_list_remove_all (void)
 	check (g_mime_header_list_get_count (headers) == 2 && g_mime_header_list_contains (headers, "X-Keep"),
 	       "bulk removal leaves unrelated owner headers unchanged");
 	g_object_unref (message);
+}
+
+static void
+test_header_list_capacity (void)
+{
+	static const int capacities[] = { 0, 1, 7, 64 };
+	GMimeHeader *header = g_mime_header_new ("X-Reserve", "value", NULL);
+	guint i;
+	int j;
+
+	for (i = 0; i < G_N_ELEMENTS (capacities); i++) {
+		GMimeHeaderList *headers = g_mime_header_list_new_with_capacity (NULL, capacities[i]);
+		gpointer *storage = headers->array->pdata;
+
+		check (g_mime_header_list_get_count (headers) == 0 && headers->has_body_separator,
+		       "capacity constructors return an empty list with normal separator state");
+		check (headers->options != NULL, "capacity constructors own parser options");
+		for (j = 0; j < capacities[i]; j++) {
+			check (g_mime_header_list_add (headers, header) == j, "reserved lists append in order");
+			check (headers->array->pdata == storage, "reserved appends do not reallocate the pointer array");
+		}
+		check (g_mime_header_list_add (headers, header) == capacities[i] &&
+		       g_mime_header_list_get_count (headers) == capacities[i] + 1,
+		       "initial capacity does not limit growth");
+		check (g_mime_header_list_get_header (headers, "x-reserve") == header,
+		       "reserved lists preserve case-insensitive lookup");
+		g_object_unref (headers);
+	}
+	g_object_unref (header);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*capacity >= 0*");
+	check (g_mime_header_list_new_with_capacity (NULL, -1) == NULL,
+	       "negative initial capacity is a programming error");
+	g_test_assert_expected_messages ();
 }
 
 static void
@@ -14162,6 +14204,7 @@ main (int argc, char **argv)
 
 	testsuite_start ("existing header instances");
 	test_header_list_instances ();
+	test_header_list_capacity ();
 	test_header_list_append_lookup ();
 	testsuite_end ();
 

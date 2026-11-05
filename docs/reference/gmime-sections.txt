@@ -824,6 +824,7 @@ g_mime_header_set_raw_value
 g_mime_header_write_to_stream
 g_mime_header_to_string
 g_mime_header_list_new
+g_mime_header_list_new_with_capacity
 g_mime_header_list_load
 g_mime_header_list_load_file
 g_mime_header_list_get_count

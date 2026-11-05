@@ -457,6 +457,13 @@ struct _GMimeHeader {
 	GMimeHeaderId id;
 };
 
+static inline gboolean
+_g_mime_header_is_content (const GMimeHeader *header)
+{
+	return (header->id >= GMIME_HEADER_CONTENT_ALTERNATIVE && header->id <= GMIME_HEADER_CONTENT_TYPE) ||
+		(header->id == GMIME_HEADER_UNKNOWN && !g_ascii_strncasecmp (header->name, "Content-", 8));
+}
+
 struct _GMimeHeaderList {
 	GObject parent_instance;
 

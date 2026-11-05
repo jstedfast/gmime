@@ -181,7 +181,7 @@ process_header (GMimeEntity *entity, GMimeHeader *header)
 	
 	name = g_mime_header_get_name (header);
 	
-	if (g_ascii_strncasecmp (name, "Content-", 8) != 0)
+	if (!_g_mime_header_is_content (header))
 		return FALSE;
 	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
@@ -244,7 +244,7 @@ mime_part_header_removed (GMimeEntity *entity, GMimeHeader *header)
 	
 	name = g_mime_header_get_name (header);
 	
-	if (!g_ascii_strncasecmp (name, "Content-", 8)) {
+	if (_g_mime_header_is_content (header)) {
 		GMimePartPrivate *priv = _g_mime_part_get_private (mime_part);
 
 		for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
