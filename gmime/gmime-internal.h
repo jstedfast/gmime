@@ -116,6 +116,9 @@ G_GNUC_INTERNAL ssize_t _g_mime_header_list_write_to_stream (GMimeHeaderList *he
 /* GMimeContentEncoding */
 G_GNUC_INTERNAL GMimeContentEncoding _g_mime_content_encoding_parse (const char *text, gsize length);
 
+/* GMimeContent: takes ownership of stream. */
+G_GNUC_INTERNAL GMimeContent *_g_mime_content_new_take_stream (GMimeStream *stream, GMimeContentEncoding encoding);
+
 /* GMimeStream */
 G_GNUC_INTERNAL ssize_t _g_mime_stream_write_all (GMimeStream *stream, const char *buffer, size_t len);
 
@@ -140,10 +143,14 @@ G_GNUC_INTERNAL void _g_mime_multipart_add_with_boundary (GMimeMultipart *multip
 G_GNUC_INTERNAL void _g_mime_multipart_set_raw_text (GMimeMultipart *multipart, GBytes *bytes, gboolean epilogue);
 
 /* GMimePart */
+/* Takes ownership of content, preserving custom set_content implementations. */
+G_GNUC_INTERNAL void _g_mime_part_take_content (GMimePart *part, GMimeContent *content);
 G_GNUC_INTERNAL GMimeHeaderList *_g_mime_part_load_fields (GMimePart *part, const char *name, GError **error);
 G_GNUC_INTERNAL void _g_mime_part_serialize_fields (GMimePart *part, GMimeHeaderList *fields, const char *name);
 
 /* GMimeContentType */
+/* Appends the value after an existing field-name/colon prefix used for folding. */
+G_GNUC_INTERNAL void _g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *options, GString *str);
 G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
 G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gsize length,
 								gboolean *invalid_media_type, GError **error);

@@ -48,6 +48,7 @@ typedef struct {
 	GByteArray *first_headers;
 	GPtrArray *stack;
 	GMimeStream *content;
+	GByteArray *content_text;
 	GByteArray *boundary;
 	GByteArray *end_boundary;
 	GByteArray *pending_marker;
@@ -71,6 +72,7 @@ static void
 parser_reader_reset (GMimeParserReader *reader)
 {
 	g_clear_object (&reader->content);
+	g_clear_pointer (&reader->content_text, g_byte_array_unref);
 	g_ptr_array_set_size (reader->stack, 0);
 	g_ptr_array_set_size (reader->headers, 0);
 	g_clear_pointer (&reader->boundary, g_byte_array_unref);
@@ -271,12 +273,11 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 	GMimeEntity *parent = parser_reader_peek (reader);
 	const char *media_type, *subtype;
 	gboolean opaque = FALSE;
-	GMimeContentType *copy;
 	GMimeEntity *entity;
 	guint i;
 
-	media_type = g_mime_content_type_get_media_type (content_type);
-	subtype = g_mime_content_type_get_media_subtype (content_type);
+	media_type = content_type->type;
+	subtype = content_type->subtype;
 	entity = _g_mime_entity_new_for_parser (media_type, subtype);
 
 	if (entity && G_OBJECT_TYPE (entity) == GMIME_TYPE_MESSAGE_PARTIAL) {
@@ -298,16 +299,17 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 
 	if (entity && type == GMIME_READER_ENTITY_PART && (!GMIME_IS_PART (entity) || opaque)) {
 		if (!opaque && !((G_OBJECT_TYPE (entity) == GMIME_TYPE_MESSAGE_PART &&
-				  (g_mime_content_type_is_type (content_type, "message", "rfc822") ||
-				   g_mime_content_type_is_type (content_type, "message", "rfc2822") ||
-				   g_mime_content_type_is_type (content_type, "message", "global") ||
-				   g_mime_content_type_is_type (content_type, "message", "news") ||
-				   g_mime_content_type_is_type (content_type, "message", "external-body"))) ||
+				  !g_ascii_strcasecmp (media_type, "message") &&
+				  (!g_ascii_strcasecmp (subtype, "rfc822") ||
+				   !g_ascii_strcasecmp (subtype, "rfc2822") ||
+				   !g_ascii_strcasecmp (subtype, "global") ||
+				   !g_ascii_strcasecmp (subtype, "news") ||
+				   !g_ascii_strcasecmp (subtype, "external-body"))) ||
 				 (G_OBJECT_TYPE (entity) == GMIME_TYPE_TEXT_RFC822_HEADERS &&
-				  (g_mime_content_type_is_type (content_type, "text", "rfc822-headers") ||
-				   g_mime_content_type_is_type (content_type, "message", "global-headers"))) ||
+				  ((!g_ascii_strcasecmp (media_type, "text") && !g_ascii_strcasecmp (subtype, "rfc822-headers")) ||
+				   (!g_ascii_strcasecmp (media_type, "message") && !g_ascii_strcasecmp (subtype, "global-headers")))) ||
 				 (GMIME_IS_MULTIPART (entity) &&
-				  g_mime_content_type_is_type (content_type, "multipart", "*")))) {
+				  !g_ascii_strcasecmp (media_type, "multipart")))) {
 			g_set_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 				     "Reader-backed construction of %s as a leaf is not supported.",
 				     G_OBJECT_TYPE_NAME (entity));
@@ -347,15 +349,15 @@ parser_reader_entity_begin (GMimeReader *base, GMimeReaderEntityType type, GMime
 	}
 
 	parser_reader_copy_headers (reader, entity, parent && GMIME_IS_MESSAGE (parent));
-	copy = g_mime_content_type_clone (content_type);
-	_g_mime_entity_set_content_type (entity, copy);
-	g_object_unref (copy);
+	_g_mime_entity_set_content_type (entity, content_type);
 
-	if (type == GMIME_READER_ENTITY_MULTIPART)
+	if (type == GMIME_READER_ENTITY_MULTIPART) {
 		_g_mime_multipart_initialize_from_reader ((GMimeMultipart *) entity);
 
-	if (type == GMIME_READER_ENTITY_MULTIPART && !g_mime_content_type_get_boundary (content_type))
-		_g_mime_parser_options_warn (options, offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY, subtype);
+		if (!g_mime_content_type_get_boundary (content_type))
+			_g_mime_parser_options_warn (options, offset, GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY,
+						     content_type->subtype);
+	}
 
 	if (parent && GMIME_IS_MULTIPART (parent)) {
 		GBytes *boundary = reader->boundary ?
@@ -543,7 +545,10 @@ parser_reader_content_begin (GMimeReader *base, GMimeReaderContentType type,
 {
 	GMimeParserReader *reader = (GMimeParserReader *) base;
 
-	reader->content = reader->persistent && type == GMIME_READER_CONTENT_PART ? NULL : g_mime_stream_block_new ();
+	if (type != GMIME_READER_CONTENT_PART)
+		reader->content_text = g_byte_array_new ();
+	else if (!reader->persistent)
+		reader->content = g_mime_stream_block_new ();
 
 	if (type == GMIME_READER_CONTENT_PART &&
 	    g_mime_parser_options_get_detect_openpgp (_g_mime_reader_get_options (base)))
@@ -574,6 +579,16 @@ parser_reader_content_read (GMimeReader *base, GMimeReaderContentType type,
 	if (reader->openpgp)
 		g_mime_filter_filter (reader->openpgp, (char *) buffer, length, 0,
 				     &output, &output_length, &prespace);
+
+	if (reader->content_text) {
+		if (length > G_MAXUINT - reader->content_text->len) {
+			g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_GENERAL,
+					     "Multipart text exceeds byte-array capacity.");
+			return FALSE;
+		}
+
+		g_byte_array_append (reader->content_text, buffer, (guint) length);
+	}
 
 	errno = 0;
 	if (reader->content && _g_mime_stream_write_all (reader->content, (const char *) buffer, length) < 0)
@@ -615,24 +630,22 @@ parser_reader_content_end (GMimeReader *base, GMimeReaderContentType type,
 	GMimePart *part;
 
 	if (type != GMIME_READER_CONTENT_PART) {
-		GByteArray *buffer;
 		GBytes *bytes;
 
 		/* The reader only delivers [begin, end); retain the inexpensive
 		 * length safeguard for multipart preambles and epilogues too. */
-		errno = 0;
-		if (g_mime_stream_block_set_length ((GMimeStreamBlock *) reader->content, end - begin) < 0)
-			return parser_reader_io_error (error, "size multipart");
-
-		buffer = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) reader->content, error);
-		if (!buffer)
+		if (end < begin || (guint64) (end - begin) > reader->content_text->len) {
+			g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_GENERAL,
+					     "Multipart text is shorter than the reader's content range.");
 			return FALSE;
+		}
 
-		bytes = g_byte_array_free_to_bytes (buffer);
+		g_byte_array_set_size (reader->content_text, (guint) (end - begin));
+
+		bytes = g_byte_array_free_to_bytes (g_steal_pointer (&reader->content_text));
 		_g_mime_multipart_set_raw_text ((GMimeMultipart *) parser_reader_peek (reader), bytes,
 					       type == GMIME_READER_CONTENT_EPILOGUE);
 		g_bytes_unref (bytes);
-		g_clear_object (&reader->content);
 
 		return TRUE;
 	}
@@ -663,7 +676,8 @@ parser_reader_content_end (GMimeReader *base, GMimeReaderContentType type,
 			return parser_reader_io_error (error, "rewind buffered");
 	}
 
-	content = g_mime_content_new_with_stream (reader->content, g_mime_part_get_content_encoding (part));
+	content = _g_mime_content_new_take_stream (g_steal_pointer (&reader->content),
+						  g_mime_part_get_content_encoding (part));
 
 	if (newline == GMIME_READER_NEWLINE_UNIX)
 		g_mime_content_set_newline_format (content, GMIME_NEWLINE_FORMAT_UNIX);
@@ -672,10 +686,8 @@ parser_reader_content_end (GMimeReader *base, GMimeReaderContentType type,
 	else if (newline == GMIME_READER_NEWLINE_MIXED)
 		g_mime_content_set_newline_format (content, GMIME_NEWLINE_FORMAT_MIXED);
 
-	g_mime_part_set_content (part, content);
+	_g_mime_part_take_content (part, content);
 	parser_reader_finish_openpgp (reader, part);
-	g_object_unref (content);
-	g_clear_object (&reader->content);
 
 	return TRUE;
 }
@@ -844,8 +856,9 @@ _g_mime_parser_reader_construct_part (GMimeReader *base, GError **error)
 		return NULL;
 	}
 
-	entity = g_object_ref (g_ptr_array_index (reader->stack, 0));
+	entity = g_ptr_array_steal_index (reader->stack, 0);
 	parser_reader_reset (reader);
+
 	return entity;
 }
 
@@ -864,9 +877,11 @@ _g_mime_parser_reader_construct_message (GMimeReader *base, GError **error)
 		return NULL;
 	}
 
-	message = g_object_ref (g_ptr_array_index (reader->stack, 0));
+	message = g_ptr_array_steal_index (reader->stack, 0);
+
 	if (reader->pending_marker)
 		reader->marker = g_byte_array_free_to_bytes (g_steal_pointer (&reader->pending_marker));
+
 	parser_reader_reset (reader);
 
 	return message;
@@ -888,5 +903,6 @@ _g_mime_parser_reader_get_mbox_marker_offset (GMimeReader *base)
 	g_return_val_if_fail (G_TYPE_CHECK_INSTANCE_TYPE (base, g_mime_parser_reader_get_type ()), -1);
 
 	reader = (GMimeParserReader *) base;
+
 	return reader->marker ? reader->marker_offset : -1;
 }

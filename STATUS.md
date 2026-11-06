@@ -2145,6 +2145,44 @@ The 6,600 decoded metadata/serialization/warning rows and both structural
 and compliance-issue audits match. Results and source snapshots are retained
 in `_build-parser-throughput/entity-setup`.
 
+The parser now attaches pre-parsed Content-Types directly rather than cloning
+them. Entity setup reads trusted media-type fields directly and uses
+case-insensitive string comparisons for opaque fallbacks rather than repeating
+checked Content-Type calls. Reader frames cache digest classification and borrow
+boundary strings from their owned Content-Types; callbacks must not mutate those
+boundaries during parsing. Multipart diagnostics read the shared Content-Type
+subtype directly rather than retaining a separate copy; diagnostic preservation
+across custom setter mutations is not guaranteed.
+Content-Type parameter lists are created lazily, checked
+parameter normalization compacts its existing list, and multipart text is
+collected directly into byte arrays rather than temporary block streams.
+Content-Type value encoding and header formatting share an internal encoder,
+preserving field-name-aware folding and newlines without allocating empty
+parameter lists.
+Ordinary parameter encoding borrows values rather than copying them. Malformed
+Content-Type fallback validation skips token allocations, and RFC2231 decoding
+transfers valid UTF-8 buffers directly while retaining invalid-text/NUL repair.
+Private ownership-taking helpers transfer body streams and standard part
+content without paired ref/unref calls; custom content setters still receive
+virtual dispatch, and completed roots are stolen from the parser stack.
+
+Release object-lifetime traces reduce Short from 31 to 27 GObjects,
+HeaderStress from 63 to 57, and StarTrek from 147 to 91. None of these objects
+are discarded before parsing finishes with compliance disabled; StarTrek
+with compliance enabled creates 95 objects, of which only its four validators
+are temporary. Public Content-Type clones remain independent. Regressions
+cover shared Content-Type lifetimes, retained parameter lists, ownership handoffs and
+large binary multipart text, including partial-read failures.
+
+Against `3f16fc11`, a 15-round paired release run improves Short throughput
+by 9.7%/8.9%, HeaderStress by 7.5%/5.3%, and StarTrek by 23.5%/18.2%
+with compliance off/on respectively. StarTrek reaches 3,332/2,741 MiB/s.
+These are combined source-change gains from one shared-machine run, with
+unchanged compiler flags and no LTO or PGO. All 6,600 decoded
+metadata/serialization/warning rows and both structural/compliance audits
+match the baseline. Source snapshots, allocation traces and timing samples
+are retained in `_build-parser-throughput/content-type-sharing`.
+
 Persistent regressions cover every common field, case variants, stream
 and standalone parsing, cloning, binary values, raw trailing blanks,
 checked/ordinary construction, value mutation and unknown identifiers.

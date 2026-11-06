@@ -185,8 +185,8 @@ _g_mime_parse_cfws (const char *text, const char **in, const char *end, GError *
  * g_mime_parse_content_type:
  * @in: address of input text string
  * @end: exclusive end of the input
- * @type: address of the 'type' output string
- * @subtype: address of the 'subtype' output string
+ * @type: (nullable): address of the 'type' output string, or %NULL to skip allocation
+ * @subtype: (nullable): address of the 'subtype' output string, or %NULL to skip allocation
  *
  * Decodes the simple Content-Type type/subtype tokens and updates @in
  * to point to the first char after the end of the subtype.
@@ -199,26 +199,31 @@ g_mime_parse_content_type (const char **in, const char *end, char **type, char *
 {
 	register const char *inptr;
 	const char *start = *in;
+	const char *type_start;
+	const char *type_end;
+
+	if (type)
+		*type = NULL;
+
+	if (subtype)
+		*subtype = NULL;
 	
 	skip_cfws (&start, end);
+	type_start = start;
 	inptr = start;
 	
 	/* decode the type */
 	while (inptr < end && is_ttoken (*inptr))
 		inptr++;
 	
-	*type = g_strndup (start, (size_t) (inptr - start));
+	type_end = inptr;
 	
 	start = inptr;
 	skip_cfws (&start, end);
 	
 	/* check for type/subtype delimeter */
-	if (start == end || *start != '/') {
-		g_free (*type);
-		*subtype = NULL;
-		*type = NULL;
+	if (start == end || *start != '/')
 		return FALSE;
-	}
 	start++;
 	
 	skip_cfws (&start, end);
@@ -229,14 +234,14 @@ g_mime_parse_content_type (const char **in, const char *end, char **type, char *
 		inptr++;
 	
 	/* check that the subtype exists */
-	if (inptr == start) {
-		g_free (*type);
-		*subtype = NULL;
-		*type = NULL;
+	if (inptr == start)
 		return FALSE;
-	}
 	
-	*subtype = g_strndup (start, (size_t) (inptr - start));
+	if (type)
+		*type = g_strndup (type_start, (size_t) (type_end - type_start));
+
+	if (subtype)
+		*subtype = g_strndup (start, (size_t) (inptr - start));
 	
 	/* update the input string pointer */
 	*in = inptr;

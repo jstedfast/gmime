@@ -87,11 +87,9 @@ static void
 g_mime_content_type_init (GMimeContentType *content_type)
 {
 	content_type->changed = g_mime_event_new ((GObject *) content_type);
-	content_type->params = g_mime_param_list_new ();
+	content_type->params = NULL;
 	content_type->subtype = NULL;
 	content_type->type = NULL;
-	
-	g_mime_event_add (content_type->params->changed, (GMimeEventCallback) param_list_changed, content_type);
 }
 
 static void
@@ -99,9 +97,11 @@ g_mime_content_type_finalize (GObject *object)
 {
 	GMimeContentType *content_type = (GMimeContentType *) object;
 	
-	g_mime_event_remove (content_type->params->changed, (GMimeEventCallback) param_list_changed, content_type);
+	if (content_type->params)
+		g_mime_event_remove (content_type->params->changed, (GMimeEventCallback) param_list_changed, content_type);
+
 	g_mime_event_free (content_type->changed);
-	g_object_unref (content_type->params);
+	g_clear_object (&content_type->params);
 	g_free (content_type->subtype);
 	g_free (content_type->type);
 	
@@ -290,7 +290,6 @@ _g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, g
 	content_type->type = g_strndup (type, type_end - type);
 	content_type->subtype = g_strndup (subtype, subtype_end - subtype);
 	g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
-	g_object_unref (content_type->params);
 	content_type->params = params;
 
 done:
@@ -344,7 +343,6 @@ _g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gsize 
 	if (inptr < inend && *inptr++ == ';' && inptr < inend &&
 	    (params = _g_mime_param_list_parse (options, inptr, inend - inptr, offset))) {
 		g_mime_event_add (params->changed, (GMimeEventCallback) param_list_changed, content_type);
-		g_object_unref (content_type->params);
 		content_type->params = params;
 	}
 	
@@ -373,9 +371,11 @@ g_mime_content_type_clone (GMimeContentType *content_type)
 	clone = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
 	clone->type = g_strdup (content_type->type);
 	clone->subtype = g_strdup (content_type->subtype);
-	g_object_unref (clone->params);
-	clone->params = _g_mime_param_list_clone (content_type->params);
-	g_mime_event_add (clone->params->changed, (GMimeEventCallback) param_list_changed, clone);
+
+	if (content_type->params) {
+		clone->params = _g_mime_param_list_clone (content_type->params);
+		g_mime_event_add (clone->params->changed, (GMimeEventCallback) param_list_changed, clone);
+	}
 
 	return clone;
 }
@@ -419,18 +419,43 @@ g_mime_content_type_get_mime_type (GMimeContentType *content_type)
 char *
 g_mime_content_type_to_string (GMimeContentType *content_type)
 {
-	char *params, *str;
+	char *str;
 
 	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
 
-	params = g_mime_param_list_to_string (content_type->params);
-	str = g_strdup_printf ("Content-Type: %s/%s%s",
+	if (content_type->params) {
+		char *params = g_mime_param_list_to_string (content_type->params);
+
+		str = g_strdup_printf ("Content-Type: %s/%s%s",
 			       content_type->type ? content_type->type : "text",
 			       content_type->subtype ? content_type->subtype : "plain", params);
-	g_free (params);
+
+		g_free (params);
+	} else {
+		str = g_strdup_printf ("Content-Type: %s/%s",
+			       content_type->type ? content_type->type : "text",
+			       content_type->subtype ? content_type->subtype : "plain");
+	}
 
 	return str;
 }
+
+void
+_g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *options, GString *str)
+{
+	g_string_append_c (str, ' ');
+	g_string_append (str, content_type->type ? content_type->type : "text");
+	g_string_append_c (str, '/');
+	g_string_append (str, content_type->subtype ? content_type->subtype : "plain");
+
+	if (content_type->params) {
+		g_mime_param_list_encode (content_type->params, options, TRUE, str);
+	} else {
+		const char *newline = g_mime_format_options_get_newline (options);
+		g_string_append (str, newline);
+	}
+}
+
 
 /**
  * g_mime_content_type_encode:
@@ -455,16 +480,10 @@ g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *
 	str = g_string_new ("Content-Type:");
 	n = str->len;
 	
-	g_string_append_c (str, ' ');
-	g_string_append (str, content_type->type ? content_type->type : "text");
-	g_string_append_c (str, '/');
-	g_string_append (str, content_type->subtype ? content_type->subtype : "plain");
-	
-	g_mime_param_list_encode (content_type->params, options, TRUE, str);
+	_g_mime_content_type_encode (content_type, options, str);
+
 	len = str->len - n;
-	
 	raw_value = g_string_free (str, FALSE);
-	
 	memmove (raw_value, raw_value + n, len + 1);
 	
 	return raw_value;
@@ -607,8 +626,8 @@ g_mime_content_type_set_boundary (GMimeContentType *content_type, const char *bo
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 
 	if (boundary)
-		g_mime_param_list_set_parameter (content_type->params, "boundary", boundary);
-	else
+		g_mime_param_list_set_parameter (g_mime_content_type_get_parameters (content_type), "boundary", boundary);
+	else if (content_type->params)
 		g_mime_param_list_remove (content_type->params, "boundary");
 }
 
@@ -640,8 +659,8 @@ g_mime_content_type_set_charset (GMimeContentType *content_type, const char *cha
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 
 	if (charset)
-		g_mime_param_list_set_parameter (content_type->params, "charset", charset);
-	else
+		g_mime_param_list_set_parameter (g_mime_content_type_get_parameters (content_type), "charset", charset);
+	else if (content_type->params)
 		g_mime_param_list_remove (content_type->params, "charset");
 }
 
@@ -785,8 +804,8 @@ g_mime_content_type_set_format (GMimeContentType *content_type, const char *form
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 
 	if (format)
-		g_mime_param_list_set_parameter (content_type->params, "format", format);
-	else
+		g_mime_param_list_set_parameter (g_mime_content_type_get_parameters (content_type), "format", format);
+	else if (content_type->params)
 		g_mime_param_list_remove (content_type->params, "format");
 }
 
@@ -817,8 +836,8 @@ g_mime_content_type_set_name (GMimeContentType *content_type, const char *name)
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 
 	if (name)
-		g_mime_param_list_set_parameter (content_type->params, "name", name);
-	else
+		g_mime_param_list_set_parameter (g_mime_content_type_get_parameters (content_type), "name", name);
+	else if (content_type->params)
 		g_mime_param_list_remove (content_type->params, "name");
 }
 
@@ -848,7 +867,12 @@ GMimeParamList *
 g_mime_content_type_get_parameters (GMimeContentType *content_type)
 {
 	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
-	
+
+	if (!content_type->params) {
+		content_type->params = g_mime_param_list_new ();
+		g_mime_event_add (content_type->params->changed, (GMimeEventCallback) param_list_changed, content_type);
+	}
+
 	return content_type->params;
 }
 
@@ -869,7 +893,7 @@ g_mime_content_type_set_parameter (GMimeContentType *content_type, const char *n
 {
 	g_return_if_fail (GMIME_IS_CONTENT_TYPE (content_type));
 	
-	g_mime_param_list_set_parameter (content_type->params, name, value);
+	g_mime_param_list_set_parameter (g_mime_content_type_get_parameters (content_type), name, value);
 }
 
 
@@ -890,7 +914,11 @@ g_mime_content_type_get_parameter (GMimeContentType *content_type, const char *n
 	GMimeParam *param;
 	
 	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
-	
+	g_return_val_if_fail (name != NULL, NULL);
+
+	if (!content_type->params)
+		return NULL;
+
 	if (!(param = g_mime_param_list_get_parameter (content_type->params, name)))
 		return NULL;
 	

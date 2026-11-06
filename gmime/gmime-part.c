@@ -1473,6 +1473,26 @@ g_mime_part_set_content (GMimePart *mime_part, GMimeContent *content)
 	GMIME_PART_GET_CLASS (mime_part)->set_content (mime_part, content);
 }
 
+void
+_g_mime_part_take_content (GMimePart *mime_part, GMimeContent *content)
+{
+	GMimePartPrivate *priv = _g_mime_part_get_private (mime_part);
+	GMimePartClass *klass = GMIME_PART_GET_CLASS (mime_part);
+
+	if (priv->content == content) {
+		g_clear_object (&content);
+	} else if (klass->set_content == set_content) {
+		GMimeContent *previous = priv->content;
+
+		priv->openpgp = (GMimeOpenPGPData) -1;
+		priv->content = content;
+		g_clear_object (&previous);
+	} else {
+		klass->set_content (mime_part, content);
+		g_clear_object (&content);
+	}
+}
+
 
 /**
  * g_mime_part_get_content:

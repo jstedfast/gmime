@@ -1449,13 +1449,7 @@ g_mime_header_format_content_type (GMimeHeader *header, GMimeFormatOptions *opti
 	n = str->len;
 	
 	content_type = g_mime_content_type_parse (header->options, value);
-	
-	g_string_append_c (str, ' ');
-	g_string_append (str, content_type->type ? content_type->type : "text");
-	g_string_append_c (str, '/');
-	g_string_append (str, content_type->subtype ? content_type->subtype : "plain");
-	
-	g_mime_param_list_encode (content_type->params, options, TRUE, str);
+	_g_mime_content_type_encode (content_type, options, str);
 	g_object_unref (content_type);
 	
 	memmove (str->str, str->str + n, (str->len - n) + 1);

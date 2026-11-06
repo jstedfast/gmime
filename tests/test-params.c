@@ -429,6 +429,10 @@ test_checked_parsing (void)
 		  "; Name=\"\342\202\254\"; other=\"middle\"" },
 		{ "Name*=utf-8'en'%E2%82%AC; NAME*=iso-8859-1'fr'%E9",
 		  "; Name=\"\303\251\"" },
+		{ "A=first; a=discard; B=second; A*=utf-8'en'updated; b=discard; C=third; c=discard",
+		  "; A=\"updated\"; B=\"second\"; C=\"third\"" },
+		{ "A=first; A*=utf-8'en'updated; a=discard; A*=utf-8'fr'last",
+		  "; A=\"last\"" },
 		{ "name=fallback; other=middle; NAME*1*=AC; name*0*=utf-8'en'%E2%82%",
 		  "; name=\"\342\202\254\"; other=\"middle\"" },
 		{ "name*2147483647=last; NAME*0=first", "; name=\"firstlast\"" },
@@ -1259,6 +1263,11 @@ test_raw_parameter_nuls (void)
 		RAW_PARAMETER ("name=\"=?utf-8?q?a=22=3B_injected=3Dyes?=\"", "a\"; injected=yes"),
 		RAW_PARAMETER ("name*=iso-8859-1'en'caf%E9\0.txt", "caf\303\251\357\277\275.txt"),
 		RAW_PARAMETER ("name*=utf-8''a%00b", "a\357\277\275b"),
+		RAW_PARAMETER ("name*=utf-8''caf%C3%A9.txt", "caf\303\251.txt"),
+		RAW_PARAMETER ("name*0*=utf-8''caf%C3; name*1*=%A9.txt", "caf\303\251.txt"),
+		RAW_PARAMETER ("name*0*=utf-8''a%00; name*1*=b", "a\357\277\275b"),
+		RAW_PARAMETER ("name*=utf-8''a%FFb", "a?b"),
+		RAW_PARAMETER ("name*0*=utf-8''a%FF; name*1*=b", "a?b"),
 		RAW_PARAMETER ("name*0=\"a\0\"; name*1=\"b\"", "a\357\277\275b"),
 		RAW_PARAMETER ("name*0*=utf-8''a\0%E2; name*1*=%82%AC", "a\357\277\275\342\202\254"),
 		RAW_PARAMETER ("name*0*=utf-16le''a%00%00; name*1*=%00b%00", "a\357\277\275b"),
@@ -1478,6 +1487,130 @@ test_content_token_assignments (void)
 	       !strcmp (g_mime_content_disposition_get_disposition (disposition), "nline"),
 	       "primary-token assignments safely copy aliased substrings");
 	g_object_unref (part);
+}
+
+static void
+test_empty_content_type_parameters (void)
+{
+	guint i;
+
+	for (i = 0; i < 4; i++) {
+		GMimeContentType *type, *clone;
+		GMimeParamList *params;
+		GMimePart *part;
+		GError *error = NULL;
+
+		switch (i) {
+		case 0:
+			type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
+			g_mime_content_type_set_media_type (type, "text");
+			g_mime_content_type_set_media_subtype (type, "plain");
+			break;
+		case 1:
+			type = g_mime_content_type_new ("text", "plain");
+			break;
+		case 2:
+			type = g_mime_content_type_parse (NULL, "text/plain");
+			break;
+		default:
+			type = g_mime_content_type_parse_full (NULL, "text/plain", -1, &error);
+			g_assert_no_error (error);
+			break;
+		}
+
+		g_mime_content_type_set_boundary (type, NULL);
+		g_mime_content_type_set_charset (type, NULL);
+		g_mime_content_type_set_format (type, NULL);
+		g_mime_content_type_set_name (type, NULL);
+		check (g_mime_content_type_get_parameter (type, "absent") == NULL,
+		       "empty Content-Types permit lookups and removals without materializing parameters");
+		clone = g_mime_content_type_clone (type);
+		check_string (g_mime_content_type_to_string (clone), "Content-Type: text/plain",
+			      "empty Content-Type clones retain their display representation");
+		params = g_mime_content_type_get_parameters (type);
+		check (params != NULL && params == g_mime_content_type_get_parameters (type) &&
+		       g_mime_param_list_length (params) == 0,
+		       "empty Content-Types expose a stable mutable parameter list");
+		part = g_mime_part_new_with_content_type (type);
+		g_mime_param_list_set_parameter (params, "name", "attached.txt");
+		check (strstr (g_mime_entity_get_header ((GMimeEntity *) part, "Content-Type"), "attached.txt") != NULL &&
+		       g_mime_content_type_get_name (clone) == NULL,
+		       "materialized parameter lists notify their owner without modifying empty clones");
+		g_mime_content_type_set_name (clone, "clone.txt");
+		check (!strcmp (g_mime_content_type_get_name (type), "attached.txt"),
+		       "mutating an empty clone leaves the original parameter list independent");
+		g_object_ref (params);
+		g_object_unref (part);
+		g_object_unref (type);
+		g_mime_param_list_set_parameter (params, "name", "after-owner.txt");
+		g_object_unref (params);
+		g_object_unref (clone);
+	}
+}
+
+static void
+test_content_type_encoding (void)
+{
+	const char *value = "text/plain; name=abcdefghijklmnopqrstuvwxyz12";
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeHeader *header, *padded;
+	GError *error = NULL;
+	guint i, j;
+
+	header = g_mime_header_new ("Content-Type", "text/plain", NULL);
+	padded = g_mime_header_parse_text (NULL, "cOnTeNt-TyPe \t: text/plain\r\n", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (padded);
+
+	for (i = 0; i < 3; i++) {
+		GMimeFormatOptions *format = i ? options : NULL;
+		GMimeContentType *type = g_mime_content_type_new ("text", "plain");
+		const char *newline;
+		char *expected;
+
+		g_mime_format_options_set_newline_format (options, i == 2 ?
+			GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+		newline = g_mime_format_options_get_newline (format);
+		expected = g_strconcat (" text/plain", newline, NULL);
+		for (j = 0; j < 2; j++) {
+			if (j)
+				g_mime_content_type_get_parameters (type);
+			check_string (g_mime_content_type_encode (type, format), expected,
+				      "absent and empty Content-Type parameters retain the configured newline");
+			check_string (g_mime_content_type_to_string (type), "Content-Type: text/plain",
+				      "absent and empty Content-Type parameters retain newline-free display text");
+		}
+		check_string (g_mime_header_format_content_type (header, format, "text/plain", NULL), expected,
+			      "Content-Type header formatting retains the newline without parameters");
+		g_free (expected);
+		g_object_unref (type);
+	}
+
+	g_mime_format_options_set_max_line_length (options, 60);
+	for (i = 0; i < 2; i++) {
+		GMimeContentType *type = g_mime_content_type_parse (NULL, value);
+		const char *newline;
+		char *expected;
+
+		g_mime_format_options_set_newline_format (options, i ?
+			GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+		newline = g_mime_format_options_get_newline (options);
+		expected = g_strconcat (" ", value, newline, NULL);
+		check_string (g_mime_content_type_encode (type, options), expected,
+			      "Content-Type encoding accounts for the canonical field-name length");
+		check_string (g_mime_header_format_content_type (header, options, value, NULL), expected,
+			      "Content-Type header formatting matches standalone encoding");
+		g_free (expected);
+		expected = g_strconcat (" text/plain;", newline, "\tname=abcdefghijklmnopqrstuvwxyz12", newline, NULL);
+		check_string (g_mime_header_format_content_type (padded, options, value, NULL), expected,
+			      "Content-Type header folding accounts for raw field-name whitespace");
+		g_free (expected);
+		g_object_unref (type);
+	}
+
+	g_object_unref (padded);
+	g_object_unref (header);
+	g_mime_format_options_unref (options);
 }
 
 static void
@@ -2301,6 +2434,8 @@ main (int argc, char **argv)
 	test_content_display ();
 	test_content_token_assignments ();
 	test_content_type_properties ();
+	test_empty_content_type_parameters ();
+	test_content_type_encoding ();
 	test_disposition_properties ();
 	test_attachment_assignment ();
 	test_disposition_dates ();
