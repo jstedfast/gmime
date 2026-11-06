@@ -130,20 +130,23 @@ g_mime_content_new (void)
 GMimeContent *
 g_mime_content_new_with_stream (GMimeStream *stream, GMimeContentEncoding encoding)
 {
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
+
+	return _g_mime_content_new_take_stream (g_object_ref (stream), encoding);
+}
+
+GMimeContent *
+_g_mime_content_new_take_stream (GMimeStream *stream, GMimeContentEncoding encoding)
+{
 	GMimeContentPrivate *priv;
 	GMimeContent *content;
-	
-	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
-	
+
 	content = g_mime_content_new ();
 	priv = _g_mime_content_get_private (content);
 
 	priv->encoding = encoding;
 	priv->stream = stream;
-	
-	if (stream)
-		g_object_ref (stream);
-	
+
 	return content;
 }
 

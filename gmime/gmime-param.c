@@ -1482,7 +1482,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 		size_t nlen, vlen, length, quote = 0;
 		gboolean fits;
 		GMimeParam *param;
-		char *value;
+		const char *value;
 		
 		param = (GMimeParam *) list->array->pdata[i];
 		
@@ -1504,7 +1504,7 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 			continue;
 		}
 
-		value = g_strdup (param->value);
+		value = param->value;
 		quote = param_quote_overhead (param, options);
 		vlen = strlen (value);
 		
@@ -1541,8 +1541,6 @@ g_mime_param_list_encode (GMimeParamList *list, GMimeFormatOptions *options, gbo
 			g_string_append_len (str, value, vlen);
 
 		used += nlen + 1 + vlen + quote;
-		
-		g_free (value);
 	}
 	
 	if (fold)
@@ -2198,12 +2196,26 @@ charset_convert (const char **charset, const char *in, size_t inlen, GString *ou
 }
 
 static char *
+param_value_take_string (GString *str)
+{
+	char *value;
+
+	if (g_utf8_validate (str->str, str->len, NULL))
+		return g_string_free (str, FALSE);
+
+	value = g_utf8_make_valid (str->str, str->len);
+	g_string_free (str, TRUE);
+
+	return value;
+}
+
+static char *
 rfc2184_decode (const char *value, gsize length, char **charsetp, char **langp)
 {
 	GMimeDecoder *rfc2231 = _g_mime_rfc2231_decoder_new ();
 	const char *inptr = value, *charset;
 	GString *out = g_string_new ("");
-	char *decoded, *result;
+	char *decoded;
 	size_t len;
 
 	charset = rfc2184_param_charset (&inptr, value + length, langp);
@@ -2214,10 +2226,7 @@ rfc2184_decode (const char *value, gsize length, char **charsetp, char **langp)
 	*charsetp = g_strdup (charset);
 	g_free (decoded);
 
-	result = g_utf8_make_valid (out->str, out->len);
-	g_string_free (out, TRUE);
-
-	return result;
+	return param_value_take_string (out);
 }
 
 static char *
@@ -2449,8 +2458,7 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
 		g_object_unref (rfc2231);
 		g_string_free (octets, TRUE);
 		
-		param->value = g_utf8_make_valid (buf->str, buf->len);
-		g_string_free (buf, TRUE);
+		param->value = param_value_take_string (buf);
 		param->charset = rfc2184->charset ? g_strdup (rfc2184->charset) : NULL;
 		param->lang = g_steal_pointer (&rfc2184->lang);
 		
@@ -2481,18 +2489,21 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
 		}
 	}
 
-	if (checked) {
-		GMimeParamList *unique = g_mime_param_list_new ();
+	if (checked && params->array->len > 1) {
 		GHashTable *names = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 		GMimeParam *previous;
+		guint count = 0;
 
 		for (i = 0; i < params->array->len; i++) {
 			param = params->array->pdata[i];
 
 			if (!(previous = g_hash_table_lookup (names, param->name))) {
-				param_list_add (unique, g_object_ref (param));
+				params->array->pdata[count++] = param;
 				g_hash_table_insert (names, param->name, param);
-			} else if (param->method == GMIME_PARAM_ENCODING_METHOD_RFC2231) {
+				continue;
+			}
+
+			if (param->method == GMIME_PARAM_ENCODING_METHOD_RFC2231) {
 				/* Prefer the extended value over its ASCII fallback, as recommended
 				 * for HTTP parameters by RFC 6266 when MIME gives no guidance. */
 				g_mime_param_set_value (previous, param->value);
@@ -2500,11 +2511,13 @@ decode_param_list (GMimeParserOptions *options, const char *text, const char *in
 				g_mime_param_set_lang (previous, param->lang);
 				g_mime_param_set_encoding_method (previous, param->method);
 			}
+
+			g_mime_event_remove (param->changed, (GMimeEventCallback) param_changed, params);
+			g_object_unref (param);
 		}
 
 		g_hash_table_destroy (names);
-		g_object_unref (params);
-		params = unique;
+		g_ptr_array_set_size (params->array, count);
 	}
 	
 	return params;

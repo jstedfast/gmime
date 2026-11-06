@@ -69,8 +69,8 @@ typedef struct {
 	GMimeContentType *content_type;
 	GMimeReaderEntityType type;
 	EntityFrameState state;
-	char *boundary;
-	gboolean boundary_active, message_active;
+	const char *boundary;
+	gboolean boundary_active, message_active, digest;
 	gint64 begin, headers_end, content_begin;
 	guint64 begin_line, content_line;
 	gint64 message_begin, message_headers_end;
@@ -1065,15 +1065,13 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 
 		if (!priv->content_type) {
 			const char *cursor = value;
-			char *media, *subtype;
 
-			if (!g_mime_parse_content_type (&cursor, value + length, &media, &subtype)) {
+			if (!g_mime_parse_content_type (&cursor, value + length, NULL, NULL))
 				invalid_media_type = TRUE;
-			} else {
-				g_free (media);
-				g_free (subtype);
-			}
 
+			/* The checked parser may flag invalid syntax that the permissive
+			 * fallback accepts (e.g. "text/plain junk"). Report it even when
+			 * the fallback succeeds, not only when it fails. */
 			if (invalid_media_type) {
 				report_at (reader, GMIME_COMPLIANCE_INVALID_CONTENT_TYPE, begin, line, 1,
 					   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
@@ -1082,7 +1080,6 @@ update_header_state (GMimeReader *reader, gsize name_length, gsize field_length,
 			priv->content_type = _g_mime_content_type_parse (priv->options, value, length, -1);
 			g_mime_param_list_clear (g_mime_content_type_get_parameters (priv->content_type));
 		}
-
 	} else if (header_is (header, name_length, "Content-Disposition")) {
 		if (priv->seen_content_disposition)
 			report_at (reader, GMIME_COMPLIANCE_REPEATED_CONTENT_DISPOSITION, begin, line, 1,
@@ -2140,7 +2137,6 @@ entity_frame_free (gpointer data)
 	EntityFrame *frame = data;
 
 	g_object_unref (frame->content_type);
-	g_free (frame->boundary);
 	g_free (frame);
 }
 
@@ -2160,7 +2156,7 @@ push_entity (GMimeReader *reader, EntityFrame *parent, gint64 begin, guint64 lin
 	frame->type_line = priv->type_line;
 
 	if (!frame->content_type) {
-		if (parent && g_mime_content_type_is_type (parent->content_type, "multipart", "digest"))
+		if (parent && parent->digest)
 			frame->content_type = g_mime_content_type_new ("message", "rfc822");
 		else
 			frame->content_type = g_mime_content_type_new ("text", "plain");
@@ -2202,7 +2198,11 @@ push_entity (GMimeReader *reader, EntityFrame *parent, gint64 begin, guint64 lin
 	frame->headers_end = input_offset (priv);
 	frame->content_begin = frame->headers_end;
 	frame->content_line = priv->line_number;
-	frame->boundary = g_strdup (g_mime_content_type_get_boundary (frame->content_type));
+
+	frame->digest = g_mime_content_type_is_type (frame->content_type, "multipart", "digest");
+
+	/* The frame owns the Content-Type; callbacks must not mutate its boundary. */
+	frame->boundary = g_mime_content_type_get_boundary (frame->content_type);
 	g_ptr_array_add (priv->frames, frame);
 
 	return frame;
@@ -2397,7 +2397,7 @@ step_entity (GMimeReader *reader, gboolean message)
 					if (priv->boundary || priv->mailbox_boundary)
 						_g_mime_parser_options_warn (priv->options, frame->type_offset,
 									    GMIME_WARN_MALFORMED_MULTIPART,
-									    g_mime_content_type_get_media_subtype (frame->content_type));
+									    frame->content_type->subtype);
 					else if (priv->boundary_eos)
 						_g_mime_parser_options_warn (priv->options, -1, GMIME_WARN_TRUNCATED_MESSAGE, NULL);
 					report_at (reader, GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY,
