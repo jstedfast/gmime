@@ -712,6 +712,64 @@ test_overlap (void)
 }
 
 static void
+test_qp_line_boundaries (void)
+{
+	static const struct {
+		guint remaining;
+		const char *input, *output;
+	} cases[] = {
+		{ 2, "Xb\n", "X=\nb\n" },
+		{ 3, "\377b\n", "=\n=FFb\n" },
+		{ 4, "\377b\n", "=FF=\nb\n" },
+		{ 3, "\377\n", "=FF\n" },
+		{ 3, "\377\r\n", "=FF\n" },
+		{ 3, " \nb", "=20\nb=\n" },
+		{ 3, "\tb\n", "\tb\n" },
+		{ 4, "\377\rb\n", "=FF=\n=0Db\n" },
+		{ 3, "X\rb\n", "X=\n=0Db\n" },
+		{ 3, "\rXb\n", "=\n=0DXb\n" }
+	};
+	guint width, format, i, j;
+
+	for (format = 0; format < 2; format++) {
+		for (width = 60; width <= 76; width++) {
+			GMimeEncoder *encoder = new_encoder_with_newline_format (1, format, width);
+
+			for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+				char *prefix = g_strnfill (width - cases[i].remaining, 'a');
+				char *input = g_strconcat (prefix, cases[i].input, NULL);
+				GString *expected = g_string_new (prefix);
+				GByteArray *result;
+				gsize capacity, written;
+				guint8 *output;
+
+				for (j = 0; cases[i].output[j]; j++) {
+					if (cases[i].output[j] == '\n' && format == GMIME_NEWLINE_FORMAT_DOS)
+						g_string_append_c (expected, '\r');
+					g_string_append_c (expected, cases[i].output[j]);
+				}
+
+				capacity = g_mime_encoder_estimate_output_length (encoder, strlen (input));
+				output = g_malloc (capacity + 1);
+				memset (output, 0xa5, capacity + 1);
+				written = g_mime_encoder_flush (encoder, (const guint8 *) input, strlen (input), output, capacity);
+				assert_padding (output, written, capacity);
+				g_assert_cmpmem (output, written, expected->str, expected->len);
+				g_free (output);
+
+				result = encode_chunks (encoder, (const guint8 *) input, strlen (input), 1);
+				g_assert_cmpmem (result->data, result->len, expected->str, expected->len);
+				g_byte_array_unref (result);
+				g_string_free (expected, TRUE);
+				g_free (input);
+				g_free (prefix);
+			}
+			g_object_unref (encoder);
+		}
+	}
+}
+
+static void
 test_line_lengths (void)
 {
 	guint8 input[512], output[2048];
@@ -1447,6 +1505,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/codecs/base64-encoder-tails", test_base64_encoder_tails);
 	g_test_add_func ("/codecs/overlap", test_overlap);
 	g_test_add_func ("/codecs/line-lengths", test_line_lengths);
+	g_test_add_func ("/codecs/qp-line-boundaries", test_qp_line_boundaries);
 	g_test_add_func ("/codecs/newline-vectors", test_newline_vectors);
 	g_test_add_func ("/codecs/newline-chunks", test_newline_chunks);
 	g_test_add_func ("/codecs/newline-clone-reset", test_newline_clone_reset);

@@ -1431,6 +1431,53 @@ test_entity_limits_and_errors (void)
 }
 
 static void
+test_boundary_index_failure_recovery (void)
+{
+	GString *wire = g_string_new (NULL);
+	ReaderInput *input;
+	TestReader *reader;
+	GError *error = NULL;
+	char *expected;
+	guint i, stages, stage;
+
+	for (i = 0; i < 7; i++)
+		g_string_append_printf (wire, "Content-Type: multipart/mixed; boundary=b%u\n\n--b%u\n", i, i);
+	g_string_append (wire, "\nleaf\n--b0--\n");
+	input = new_input (wire->str, wire->len, 1);
+	reader = new_reader (input, NULL);
+	g_assert_true (g_mime_reader_read_entity ((GMimeReader *) reader, &error));
+	g_assert_no_error (error);
+	stages = reader->stage;
+	expected = g_strdup (reader->trace->str);
+	g_object_unref (reader);
+	g_object_unref (input);
+
+	/* Abort at every callback, including while ancestors are being unwound. */
+	for (stage = 1; stage <= stages; stage++) {
+		ReaderInput *replacement = new_input (wire->str, wire->len, 1);
+
+		input = new_input (wire->str, wire->len, 1);
+		reader = new_reader (input, NULL);
+		reader->fail_stage = stage;
+		g_assert_false (g_mime_reader_read_entity ((GMimeReader *) reader, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED);
+		g_clear_error (&error);
+		g_mime_reader_set_stream ((GMimeReader *) reader, (GMimeStream *) replacement);
+		reader->stage = reader->fail_stage = reader->entities = 0;
+		g_string_truncate (reader->trace, 0);
+		g_assert_true (g_mime_reader_read_entity ((GMimeReader *) reader, &error));
+		g_assert_no_error (error);
+		g_assert_cmpstr (reader->trace->str, ==, expected);
+		g_assert_cmpuint (reader->entities, ==, 0);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_object_unref (replacement);
+	}
+	g_free (expected);
+	g_string_free (wire, TRUE);
+}
+
+static void
 test_entity_streaming_and_depth (void)
 {
 	GString *wire = g_string_new ("Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\n\r\n");
@@ -3352,6 +3399,7 @@ main (int argc, char **argv)
 	testsuite_check_passed ();
 	testsuite_check ("Entity callback aborts, sticky failures, I/O errors and depth flattening");
 	test_entity_limits_and_errors ();
+	test_boundary_index_failure_recovery ();
 	testsuite_check_passed ();
 	testsuite_check ("Bounded content streaming and deep nonrecursive entity traversal");
 	test_entity_streaming_and_depth ();

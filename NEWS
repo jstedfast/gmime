@@ -18,6 +18,8 @@
 * Added separate raw and decoded content APIs, byte-preserving raw header
   access, and checked header construction and assignment.
 * Added SIMD acceleration for MIME scanning and transfer encoding/decoding.
+* Indexed ancestor MIME boundaries for deeply nested messages and optimized
+  quoted-printable encoding of ordinary bytes.
 * Hardened charset, MIME parameter, and enriched-text processing against
   oversized or malformed input.
 * Replaced crypto contexts and certificate/signature/decryption wrappers

@@ -951,6 +951,11 @@ Encoder flush accepts final input and resets the standard MIME codec state.
 Base64 empty flush emits nothing when no line or input is pending.
 Quoted-printable flush now follows MimeKit: a final unterminated content
 line is followed by "=\n", even when it does not end in whitespace.
+MimeKit a4a10817's quoted-printable common-path optimization is ported:
+ordinary saved bytes bypass redundant wrapping checks, while escaped bytes,
+trailing whitespace and hard line endings retain their existing handling.
+Line-boundary regressions cover every effective width (60..76), LF/CRLF,
+whole-input flush and byte-at-a-time encoding.
 Decoder flush accepts final input, recovers buffered bytes, and discards
 unrecoverable fragments. Empty decode is nonfinal; flush is required at EOF
 even when no input remains. Repeated empty flushes emit nothing; reset before
@@ -3575,7 +3580,14 @@ entity end offsets are clamped to the entity's start; entity line counts
 describe content rather than headers.
 
 Delimiter recognition checks the innermost active boundary first, then
-ancestors. An ancestor delimiter unwinds truncated descendants without
+ancestors. Following MimeKit 89a63228, more than four active multipart
+boundaries enable a balanced GTree index; shallow nesting keeps a bounded
+walk. Keys borrow frame-owned boundary bytes, duplicate markers restore
+their previous active match on pop, and overlapping opening/closing markers
+select the nearest ancestor. The index is cleared before frames are released
+on success or failure. Active-boundary links and cached read-ahead maxima
+also remove GMime's depth-linear frame scans from the content loop.
+An ancestor delimiter unwinds truncated descendants without
 consuming the ancestor's delimiter. Missing closing delimiters and missing
 body separators are tolerated in nested entities. Preambles keep their
 trailing newline. Leaf content and epilogues withhold a possible trailing
