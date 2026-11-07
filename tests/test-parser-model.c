@@ -2110,6 +2110,334 @@ parse_multipart (const char *wire)
 }
 
 static void
+append_boundary_wrappers (GString *wire, guint count, const char *newline, gboolean closing)
+{
+	guint i;
+
+	for (i = 0; i < count; i++) {
+		if (closing)
+			g_string_append_printf (wire, "--wrapper%u--%s", count - i - 1, newline);
+		else
+			g_string_append_printf (wire, "Content-Type: multipart/mixed; boundary=wrapper%u%s%s--wrapper%u%s",
+						i, newline, newline, i, newline);
+	}
+}
+
+static GMimeMultipart *
+unwrap_boundary_fixture (GMimeEntity *entity, guint wrappers)
+{
+	while (wrappers--) {
+		g_assert_true (GMIME_IS_MULTIPART (entity));
+		g_assert_cmpint (g_mime_multipart_get_count ((GMimeMultipart *) entity), ==, 1);
+		entity = g_mime_multipart_get_part ((GMimeMultipart *) entity, 0);
+	}
+	g_assert_true (GMIME_IS_MULTIPART (entity));
+	return (GMimeMultipart *) entity;
+}
+
+static void
+assert_boundary_content (GMimeEntity *entity, const char *expected)
+{
+	GByteArray *bytes;
+
+	g_assert_true (GMIME_IS_PART (entity));
+	bytes = read_content (g_mime_part_get_content ((GMimePart *) entity), FALSE);
+	g_assert_cmpmem (bytes->data, bytes->len, expected, strlen (expected));
+	g_byte_array_unref (bytes);
+}
+
+static void
+count_missing_boundary (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	guint *count = user_data;
+
+	if (issue->violation == GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY)
+		(*count)++;
+}
+
+static void
+test_ancestor_boundary_precedence (void)
+{
+	static const struct {
+		const char *outer, *middle;
+		gboolean closing;
+	} cases[] = {
+		{ "b", "b--", FALSE }, { "b--", "b", TRUE },
+		{ "b", "b", FALSE }, { "b", "b", TRUE },
+		{ "\303\251", "\303\251--", FALSE }, { "invalid?", "invalid?--", FALSE },
+		{ "", "--", FALSE }, { "--", "", TRUE }
+	};
+	static const guint chunks[] = { 1, 7, 4096 };
+	guint i, wrappers, chunk, dos;
+
+	testsuite_check ("Ancestor boundary matches preserve duplicate and opening/closing precedence");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (wrappers = 0; wrappers <= 4; wrappers += 4) {
+			for (dos = 0; dos < 2; dos++) {
+				const char *nl = dos ? "\r\n" : "\n";
+				GString *wire = g_string_new (NULL);
+
+				append_boundary_wrappers (wire, wrappers, nl, FALSE);
+				g_string_append_printf (wire,
+					"Content-Type: multipart/mixed; boundary=\"%s\"%s%s--%s%s"
+					"Content-Type: multipart/mixed; boundary=\"%s\"%s%s--%s%s"
+					"Content-Type: multipart/mixed; boundary=inner%s%s--inner%s%sfirst%s--%s%s\t %s",
+					cases[i].outer, nl, nl, cases[i].outer, nl,
+					cases[i].middle, nl, nl, cases[i].middle, nl,
+					nl, nl, nl, nl, nl, cases[i].middle, cases[i].closing ? "--" : "", nl);
+				if (cases[i].closing)
+					g_string_append_printf (wire, "epilogue%s", nl);
+				else
+					g_string_append_printf (wire, "%ssecond%s--%s--%s", nl, nl, cases[i].middle, nl);
+				g_string_append_printf (wire, "--%s--%s", cases[i].outer, nl);
+				append_boundary_wrappers (wire, wrappers, nl, TRUE);
+
+				for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+					ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+					GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+					GError *error = NULL;
+					GMimeEntity *root;
+					GMimeMultipart *outer, *middle, *inner;
+					guint missing = 0;
+
+					g_mime_reader_set_compliance_logger (reader, count_missing_boundary, &missing, NULL);
+					root = _g_mime_parser_reader_construct_part (reader, &error);
+					g_assert_no_error (error);
+					g_assert_cmpuint (missing, ==, 1);
+					outer = unwrap_boundary_fixture (root, wrappers);
+					middle = unwrap_boundary_fixture ((GMimeEntity *) outer, 1);
+					g_assert_cmpint (g_mime_multipart_get_count (middle), ==, cases[i].closing ? 1 : 2);
+					inner = unwrap_boundary_fixture (g_mime_multipart_get_part (middle, 0), 0);
+					g_assert_cmpint (g_mime_multipart_get_count (inner), ==, 1);
+					assert_boundary_content (g_mime_multipart_get_part (inner, 0), "first");
+					if (cases[i].closing)
+						g_assert_nonnull (strstr (g_mime_multipart_get_epilogue (middle), "epilogue"));
+					else
+						assert_boundary_content (g_mime_multipart_get_part (middle, 1), "second");
+					g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+					g_object_unref (root);
+					g_object_unref (reader);
+					g_object_unref (input);
+				}
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_transitions (void)
+{
+	static const guint chunks[] = { 1, 4096 };
+	GString *wire = g_string_new (NULL);
+	guint chunk, i;
+
+	testsuite_check ("Boundary indexing crosses its threshold repeatedly and restores duplicate ancestors");
+	append_boundary_wrappers (wire, 3, "\r\n", FALSE);
+	g_string_append (wire, "Content-Type: multipart/mixed; boundary=outer\r\n\r\n");
+	for (i = 0; i < 4; i++)
+		g_string_append_printf (wire, "--outer\r\nContent-Type: multipart/mixed; boundary=inner\r\n\r\n--inner\r\n"
+					"Content-Type: multipart/mixed; boundary=wrapper0\r\n\r\n--wrapper0\r\n\r\n"
+					"part%u\r\n--wrapper0--\r\n--inner--\r\n", i);
+	g_string_append (wire, "--outer--\r\n");
+	append_boundary_wrappers (wire, 3, "\r\n", TRUE);
+
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GError *error = NULL;
+		GMimeEntity *root = _g_mime_parser_reader_construct_part (reader, &error);
+		GMimeMultipart *outer;
+
+		g_assert_no_error (error);
+		outer = unwrap_boundary_fixture (root, 3);
+		g_assert_cmpint (g_mime_multipart_get_count (outer), ==, 4);
+		for (i = 0; i < 4; i++) {
+			GMimeMultipart *leaf = unwrap_boundary_fixture (g_mime_multipart_get_part (outer, i), 1);
+			char *expected = g_strdup_printf ("part%u", i);
+
+			g_assert_cmpint (g_mime_multipart_get_count (leaf), ==, 1);
+			assert_boundary_content (g_mime_multipart_get_part (leaf, 0), expected);
+			g_free (expected);
+		}
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+		g_object_unref (root);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_matches (void)
+{
+	static const char *names[] = { "b", "b--", "b----", "", "-", "--", "\303\251", "b b", "invalid?" };
+	GRand *random = g_rand_new_with_seed (27531);
+	char *long_name = g_strnfill (300, 'x');
+	guint iteration;
+
+	testsuite_check ("Indexed boundary lookups agree with nearest-first matching across generated deep trees");
+	for (iteration = 0; iteration < 128; iteration++) {
+		const char *active[32], *name;
+		guint depth = g_rand_int_range (random, 5, G_N_ELEMENTS (active) + 1), i;
+		gboolean closing = iteration % 2, final = FALSE;
+		gint match = -1;
+		GString *wire = g_string_new (NULL);
+		char *marker;
+		ModelInput *input;
+		GMimeReader *reader;
+		GError *error = NULL;
+		GMimeEntity *root, *entity;
+
+		for (i = 0; i < depth; i++) {
+			active[i] = i == 0 ? long_name : names[g_rand_int_range (random, 0, G_N_ELEMENTS (names))];
+			g_string_append_printf (wire, "Content-Type: multipart/mixed; boundary=\"%s\"\n\n--%s\n",
+						active[i], active[i]);
+		}
+		name = iteration % 7 ? active[g_rand_int_range (random, 0, depth)] : "unknown";
+		marker = g_strconcat (name, closing ? "--" : "", NULL);
+		for (i = depth; i > 0; i--) {
+			gsize length = strlen (active[i - 1]);
+
+			if (!strcmp (marker, active[i - 1])) {
+				match = i - 1;
+				break;
+			}
+			if (strlen (marker) == length + 2 && !memcmp (marker, active[i - 1], length) &&
+			    !strcmp (marker + length, "--")) {
+				match = i - 1;
+				final = TRUE;
+				break;
+			}
+		}
+		g_string_append_printf (wire, "\nfirst\n--%s\n\nsecond\n", marker);
+		input = new_input (wire->str, wire->len, iteration % 2 ? 4096 : 1);
+		reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		root = _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		entity = root;
+		for (i = 0; i < depth; i++) {
+			GMimeMultipart *multipart = unwrap_boundary_fixture (entity, 0);
+
+			g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, (gint) i == match && !final ? 2 : 1);
+			if ((gint) i == match) {
+				if (final)
+					g_assert_nonnull (strstr (g_mime_multipart_get_epilogue (multipart), "second"));
+				else
+					assert_boundary_content (g_mime_multipart_get_part (multipart, 1), "second\n");
+			}
+			entity = g_mime_multipart_get_part (multipart, 0);
+		}
+		if (match < 0) {
+			char *expected = g_strdup_printf ("first\n--%s\n\nsecond\n", marker);
+
+			assert_boundary_content (entity, expected);
+			g_free (expected);
+		} else {
+			assert_boundary_content (entity, "first");
+		}
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+		g_object_unref (root);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_string_free (wire, TRUE);
+		g_free (marker);
+	}
+	g_free (long_name);
+	g_rand_free (random);
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_restoration (void)
+{
+	GString *wire = g_string_new ("Content-Type: multipart/mixed; boundary=shared\n\n--shared\n");
+	guint chunk;
+
+	testsuite_check ("Popping an indexed duplicate restores its ancestor before the index is cleared");
+	append_boundary_wrappers (wire, 4, "\n", FALSE);
+	g_string_append (wire, "Content-Type: multipart/mixed; boundary=shared\n\n--shared\n"
+			 "Content-Type: multipart/mixed; boundary=inner\n\n--inner\n\nfirst\n"
+			 "--shared--\nepilogue\n--shared--\n");
+	for (chunk = 1; chunk <= 4096; chunk *= 4096) {
+		ModelInput *input = new_input (wire->str, wire->len, chunk);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GError *error = NULL;
+		GMimeEntity *root = _g_mime_parser_reader_construct_part (reader, &error);
+		GMimeMultipart *duplicate, *inner;
+
+		g_assert_no_error (error);
+		duplicate = unwrap_boundary_fixture (root, 5);
+		g_assert_cmpstr (g_mime_multipart_get_epilogue (duplicate), ==, "epilogue");
+		inner = unwrap_boundary_fixture ((GMimeEntity *) duplicate, 1);
+		g_assert_cmpint (g_mime_multipart_get_count (inner), ==, 1);
+		assert_boundary_content (g_mime_multipart_get_part (inner, 0), "first");
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+		g_object_unref (root);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_mailboxes (void)
+{
+	static const guint chunks[] = { 1, 4096 };
+	guint format, chunk, message;
+
+	testsuite_check ("Mbox and MMDF unwind indexed boundaries without retaining markers from earlier messages");
+	for (format = GMIME_FORMAT_MBOX; format <= GMIME_FORMAT_MMDF; format++) {
+		const char *separator = format == GMIME_FORMAT_MBOX ?
+			"From sender@example.org Wed Nov  4 12:00:00 2026\r\n" : "\1\1\1\1\r\n";
+		GString *wire = g_string_new (separator);
+
+		append_boundary_wrappers (wire, 4, "\r\n", FALSE);
+		g_string_append (wire, "Content-Type: multipart/mixed; boundary=old\r\n\r\n--old\r\n"
+				"Content-Type: multipart/mixed; boundary=inner\r\n\r\n--inner\r\n\r\nfirst\r\n");
+		if (format == GMIME_FORMAT_MMDF)
+			g_string_append (wire, separator);
+		g_string_append (wire, separator);
+		append_boundary_wrappers (wire, 4, "\r\n", FALSE);
+		g_string_append (wire, "Content-Type: multipart/mixed; boundary=new\r\n\r\n--new\r\n"
+				"Content-Type: multipart/mixed; boundary=other\r\n\r\n--other\r\n\r\n--old\r\nsecond\r\n"
+				"--other--\r\n--new--\r\n");
+		append_boundary_wrappers (wire, 4, "\r\n", TRUE);
+		if (format == GMIME_FORMAT_MMDF)
+			g_string_append (wire, separator);
+
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+			GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+			GError *error = NULL;
+
+			g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input, format);
+			for (message = 0; message < 2; message++) {
+				GMimeMessage *root = _g_mime_parser_reader_construct_message (reader, &error);
+				GMimeMultipart *inner;
+
+				g_assert_no_error (error);
+				g_assert_nonnull (root);
+				inner = unwrap_boundary_fixture (g_mime_message_get_mime_part (root), 5);
+				g_assert_cmpint (g_mime_multipart_get_count (inner), ==, 1);
+				assert_boundary_content (g_mime_multipart_get_part (inner, 0),
+							 message ? "--old\r\nsecond" : "first");
+				g_object_unref (root);
+			}
+			g_assert_true (g_mime_reader_eos (reader));
+			g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+		g_string_free (wire, TRUE);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_multipart_models (void)
 {
 	static const char wire[] = "Content-Type: multipart/mixed; boundary=b\n\npre\0one\n"
@@ -6828,6 +7156,11 @@ main (int argc, char **argv)
 	test_mailbox_models ();
 	test_mailbox_model_errors ();
 	test_multipart_models ();
+	test_ancestor_boundary_precedence ();
+	test_boundary_index_transitions ();
+	test_boundary_index_matches ();
+	test_boundary_index_restoration ();
+	test_boundary_index_mailboxes ();
 	test_boundary_characters ();
 	test_multipart_collection_bounds ();
 	test_multipart_boundary_validation ();

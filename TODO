@@ -14,6 +14,19 @@ GMime 3.4+ Planning:
 GMime 4.0 Planning:
 ===================
 
+- Pursue lightweight, atomic-refcounted boxed types for GMimeHeader, GMimeParam,
+  GMimeHeaderList, and GMimeParamList instead of GObject. An isolated prototype
+  based on 2eba6428 increased full parse-and-destroy throughput across two paired
+  runs by 47% for Short, 44-45% for HeaderStress, and 19-20% for StarTrek with
+  compliance reporting off; gains with reporting on were 38-40%, 32%, and 13-14%.
+  Objects remained eagerly constructed, using g_malloc0() without pooling.
+  Preserve shared mutable identity, escaped lifetimes, and change propagation;
+  settle the public ref/unref API and verify introspection/language bindings
+  before adopting this design. GObject weak-reference/qdata compatibility and
+  the proposed specialized header types below also need consideration.
+  MimeKit performance parity has not yet been established. Prototype and
+  measurement evidence: _build-parser-throughput/lightweight-model-2eba6428.
+
 - Remove g_mime_stream_close()
 
 - Remove g_mime_stream_filter_get/set_owner() - these will no longer

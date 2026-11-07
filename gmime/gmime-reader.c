@@ -57,6 +57,7 @@
 #define READ_AHEAD_SIZE 128
 #define BLOCK_SIZE 4096
 #define PAD_SIZE 4
+#define BOUNDARY_INDEX_THRESHOLD 4
 
 typedef enum {
 	FRAME_BEGIN,
@@ -65,11 +66,14 @@ typedef enum {
 	FRAME_END
 } EntityFrameState;
 
-typedef struct {
+typedef struct _EntityFrame {
 	GMimeContentType *content_type;
 	GMimeReaderEntityType type;
 	EntityFrameState state;
 	const char *boundary;
+	struct _EntityFrame *parent_boundary, *previous_match;
+	gsize boundary_length, boundary_read_ahead;
+	guint boundary_depth;
 	gboolean boundary_active, message_active, digest;
 	gint64 begin, headers_end, content_begin;
 	guint64 begin_line, content_line;
@@ -115,6 +119,8 @@ struct _GMimeReaderPrivate {
 
 	GPtrArray *frames;
 	EntityFrame *boundary;
+	EntityFrame *active_boundary;
+	GTree *boundary_index;
 
 	GMimeContentType *content_type;
 	GMimeContentEncoding encoding;
@@ -277,6 +283,7 @@ g_mime_reader_finalize (GObject *object)
 	g_clear_object (&priv->stream);
 	g_clear_error (&priv->error);
 	g_clear_object (&priv->content_type);
+	g_clear_pointer (&priv->boundary_index, g_tree_unref);
 
 	G_OBJECT_CLASS (g_mime_reader_parent_class)->finalize (object);
 }
@@ -947,11 +954,96 @@ boundary_whitespace (guint8 c)
 	return c == ' ' || c == '\t' || c == '\r' || c == '\v' || c == '\f';
 }
 
+static gint
+compare_boundaries (gconstpointer a, gconstpointer b)
+{
+	const EntityFrame *x = a, *y = b;
+
+	if (x->boundary_length != y->boundary_length)
+		return x->boundary_length < y->boundary_length ? -1 : 1;
+
+	return memcmp (x->boundary, y->boundary, x->boundary_length);
+}
+
+static void
+index_boundary (GMimeReaderPrivate *priv, EntityFrame *frame)
+{
+	/* Keys borrow live frames; replace the key as well as the value on duplicates. */
+	frame->previous_match = g_tree_lookup (priv->boundary_index, frame);
+	g_tree_replace (priv->boundary_index, frame, frame);
+}
+
+static void
+push_boundary (GMimeReaderPrivate *priv, EntityFrame *frame)
+{
+	EntityFrame *parent = priv->active_boundary;
+
+	frame->parent_boundary = parent;
+	frame->boundary_depth = parent ? parent->boundary_depth + 1 : 1;
+	frame->boundary_length = strlen (frame->boundary);
+	frame->boundary_read_ahead = MAX (parent ? parent->boundary_read_ahead : READ_AHEAD_SIZE,
+					 MIN (frame->boundary_length + 6, sizeof (priv->input) - PAD_SIZE));
+
+	if (frame->boundary_depth == BOUNDARY_INDEX_THRESHOLD + 1) {
+		EntityFrame *ancestors[BOUNDARY_INDEX_THRESHOLD];
+		guint i;
+
+		if (!priv->boundary_index)
+			priv->boundary_index = g_tree_new (compare_boundaries);
+
+		for (i = 0; i < BOUNDARY_INDEX_THRESHOLD; i++) {
+			ancestors[i] = parent;
+			parent = parent->parent_boundary;
+		}
+
+		while (i > 0)
+			index_boundary (priv, ancestors[--i]);
+	}
+
+	if (frame->boundary_depth > BOUNDARY_INDEX_THRESHOLD)
+		index_boundary (priv, frame);
+
+	frame->boundary_active = TRUE;
+	priv->active_boundary = frame;
+}
+
+static void
+pop_boundary (GMimeReaderPrivate *priv, EntityFrame *frame)
+{
+	g_assert (priv->active_boundary == frame);
+
+	if (frame->boundary_depth == BOUNDARY_INDEX_THRESHOLD + 1) {
+		g_tree_remove_all (priv->boundary_index);
+	} else if (frame->boundary_depth > BOUNDARY_INDEX_THRESHOLD) {
+		if (frame->previous_match)
+			g_tree_replace (priv->boundary_index, frame->previous_match, frame->previous_match);
+		else
+			g_tree_remove (priv->boundary_index, frame);
+	}
+
+	priv->active_boundary = frame->parent_boundary;
+	frame->boundary_active = FALSE;
+}
+
+static gboolean
+match_boundary (EntityFrame *frame, const guint8 *buffer, gsize length, gboolean *final)
+{
+	if (length != frame->boundary_length && length != frame->boundary_length + 2)
+		return FALSE;
+
+	if (memcmp (buffer, frame->boundary, frame->boundary_length) != 0)
+		return FALSE;
+
+	*final = length != frame->boundary_length;
+	return !*final || (buffer[length - 2] == '-' && buffer[length - 1] == '-');
+}
+
 static gboolean
 check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	guint i;
+	EntityFrame *frame = priv->active_boundary;
+	gboolean final;
 
 	if (length < 2)
 		return FALSE;
@@ -959,33 +1051,43 @@ check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
 	while (length > 0 && boundary_whitespace (buffer[length - 1]))
 		length--;
 
-	for (i = priv->frames ? priv->frames->len : 0; i > 0; i--) {
-		EntityFrame *frame = g_ptr_array_index (priv->frames, i - 1);
-		gsize marker_length;
+	if (frame && length >= 2 && buffer[0] == '-' && buffer[1] == '-') {
+		if (!match_boundary (frame, buffer + 2, length - 2, &final)) {
+			if (frame->boundary_depth > BOUNDARY_INDEX_THRESHOLD) {
+				EntityFrame key = { 0 }, *closing;
 
-		if (!frame->boundary_active)
-			continue;
+				key.boundary = (const char *) buffer + 2;
+				key.boundary_length = length - 2;
+				frame = g_tree_lookup (priv->boundary_index, &key);
+				final = FALSE;
 
-		if (buffer[0] != '-' || buffer[1] != '-')
-			break;
+				/* A closing marker may also open another boundary. The
+				 * innermost active match wins, regardless of its form. */
+				if (length >= 4 && buffer[length - 2] == '-' && buffer[length - 1] == '-') {
+					key.boundary_length -= 2;
 
-		marker_length = strlen (frame->boundary);
-		if (length != marker_length + 2 && length != marker_length + 4)
-			continue;
+					closing = g_tree_lookup (priv->boundary_index, &key);
 
-		if (memcmp (buffer + 2, frame->boundary, marker_length) != 0)
-			continue;
+					if (closing && (!frame || closing->boundary_depth > frame->boundary_depth)) {
+						frame = closing;
+						final = TRUE;
+					}
+				}
+			} else {
+				/* A bounded walk avoids index overhead for shallow multiparts. */
+				for (frame = frame->parent_boundary; frame; frame = frame->parent_boundary) {
+					if (match_boundary (frame, buffer + 2, length - 2, &final))
+						break;
+				}
+			}
+		}
 
-		if (length == marker_length + 4 &&
-		    (buffer[length - 1] != '-' || buffer[length - 2] != '-'))
-			continue;
-
-		/* The nearest matching boundary wins. An ancestor match is left
-		 * unconsumed while truncated descendants unwind their frames. */
-		priv->boundary = frame;
-		priv->final_boundary = length == marker_length + 4;
-
-		return TRUE;
+		if (frame) {
+			/* Leave ancestor matches unconsumed while truncated descendants unwind. */
+			priv->boundary = frame;
+			priv->final_boundary = final;
+			return TRUE;
+		}
 	}
 
 	/* Mailbox separators are outermost boundaries. Content-Length only
@@ -1701,17 +1803,8 @@ static gsize
 boundary_read_ahead (GMimeReader *reader)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	gsize length = READ_AHEAD_SIZE;
-	guint i;
 
-	for (i = 0; i < priv->frames->len; i++) {
-		EntityFrame *frame = g_ptr_array_index (priv->frames, i);
-
-		if (frame->boundary_active)
-			length = MAX (length, strlen (frame->boundary) + 6);
-	}
-
-	return MIN (length, sizeof (priv->input) - PAD_SIZE);
+	return priv->active_boundary ? priv->active_boundary->boundary_read_ahead : READ_AHEAD_SIZE;
 }
 
 static void
@@ -1760,16 +1853,9 @@ static gboolean
 is_partial_boundary (GMimeReader *reader, const guint8 *start, gsize length)
 {
 	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
-	guint i;
 
-	if (start[0] == '-') {
-		for (i = priv->frames->len; i > 0; i--) {
-			EntityFrame *frame = g_ptr_array_index (priv->frames, i - 1);
-
-			if (frame->boundary_active)
-				return length < 2 || start[1] == '-';
-		}
-	}
+	if (start[0] == '-' && priv->active_boundary)
+		return length < 2 || start[1] == '-';
 
 	if (priv->format == GMIME_FORMAT_MBOX)
 		return start[0] == 'F' && memcmp (start, "From ", MIN (length, 5)) == 0 &&
@@ -2312,17 +2398,17 @@ step_entity (GMimeReader *reader, gboolean message)
 					report_at (reader, frame->boundary ? GMIME_COMPLIANCE_INVALID_MULTIPART_BOUNDARY_PARAMETER :
 						   GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY_PARAMETER,
 						   frame->type_offset, frame->type_line, 1, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
-				frame->boundary_active = frame->boundary != NULL;
+				if (frame->boundary)
+					push_boundary (priv, frame);
 
 				if (!scan_content (reader, GMIME_READER_CONTENT_PREAMBLE))
 					return FALSE;
 
 				frame->state = priv->boundary == frame && !priv->final_boundary ? FRAME_NEXT_CHILD : FRAME_END;
 			} else {
-				gboolean have_boundary = FALSE, found;
+				gboolean found;
 				const guint8 *start, *lf;
 				gsize length;
-				guint i;
 
 				/* A boundary immediately after message/rfc822 headers
 				 * means the embedded message is absent, not a new child.
@@ -2334,12 +2420,6 @@ step_entity (GMimeReader *reader, gboolean message)
 				if (priv->error)
 					return FALSE;
 
-				for (i = 0; i < priv->frames->len; i++) {
-					EntityFrame *ancestor = g_ptr_array_index (priv->frames, i);
-
-					have_boundary |= ancestor->boundary_active;
-				}
-
 				/* Probe only the buffered first line, not an entire
 				 * potentially very long mailbox envelope. */
 				start = priv->input + priv->input_index;
@@ -2347,7 +2427,7 @@ step_entity (GMimeReader *reader, gboolean message)
 				length = lf ? (gsize) (lf - start) : priv->input_end - priv->input_index;
 				found = check_boundary (reader, start, length);
 
-				if (((have_boundary || priv->format != GMIME_FORMAT_MESSAGE) &&
+				if (((priv->active_boundary || priv->format != GMIME_FORMAT_MESSAGE) &&
 				     priv->input_index == priv->input_end) || found) {
 					if (found && priv->active_logger) {
 						if (!length || start[length - 1] != '\r')
@@ -2389,7 +2469,7 @@ step_entity (GMimeReader *reader, gboolean message)
 					if (!skip_boundary (reader, NULL))
 						return FALSE;
 
-					frame->boundary_active = FALSE;
+					pop_boundary (priv, frame);
 
 					if (!scan_content (reader, GMIME_READER_CONTENT_EPILOGUE))
 						return FALSE;
@@ -2404,9 +2484,8 @@ step_entity (GMimeReader *reader, gboolean message)
 						   input_offset (priv), priv->line_number,
 						   (guint64) (input_offset (priv) - priv->line_begin) + 1,
 						   GMIME_COMPLIANCE_POSITION_EXACT);
+					pop_boundary (priv, frame);
 				}
-
-				frame->boundary_active = FALSE;
 			}
 			break;
 		default:
@@ -2605,6 +2684,11 @@ read_entity_or_message (GMimeReader *reader, gboolean message, GError **error)
 		g_propagate_error (error, g_error_copy (priv->error));
 
 	priv->boundary = NULL;
+	priv->active_boundary = NULL;
+
+	if (priv->boundary_index)
+		g_tree_remove_all (priv->boundary_index);
+
 	g_clear_pointer (&priv->frames, g_ptr_array_unref);
 	g_clear_object (&priv->content_type);
 	priv->entity_read = FALSE;

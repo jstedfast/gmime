@@ -172,7 +172,26 @@ qp_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 			state->column = 0;
 		} else {
 			if (state->saved != -1) {
-				written += qp_write_saved (state, output + written, FALSE, FALSE);
+				guint8 b = state->saved;
+
+				/* The previous iteration left room for a literal and a soft break. */
+				if (b == ' ' || b == '\t' || (b >= 33 && b <= 126 && b != '=')) {
+					output[written++] = b;
+					state->column++;
+				} else {
+					if (state->column + 4 > state->max_line_length) {
+						output[written++] = '=';
+						if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
+							output[written++] = '\r';
+						output[written++] = '\n';
+						state->column = 0;
+					}
+
+					output[written++] = '=';
+					output[written++] = hex_alphabet[b >> 4];
+					output[written++] = hex_alphabet[b & 15];
+					state->column += 3;
+				}
 
 				if (state->column + 1 >= state->max_line_length) {
 					output[written++] = '=';
