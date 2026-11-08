@@ -7,22 +7,21 @@ testsuite_lib = static_library(
   c_args: ['-DG_LOG_DOMAIN="gmime-tests"'],
 )
 
-if have_crypto
-  # Capture canonicalized verification input without platform-specific interposition.
-  verify_test_lib = static_library(
-    'gmime-verify-test', gmime_gpgme_sources,
-    objects: libgmime.extract_objects(gmime_sources),
-    include_directories: gmime_inc,
-    dependencies: gmime_deps,
-    link_whole: util_lib,
-    c_args: ['-DG_LOG_DOMAIN="gmime"', '-Dgpgme_op_verify=gmime_test_op_verify'],
-  )
-  verify_test_dep = declare_dependency(
-    link_with: verify_test_lib,
-    include_directories: gmime_inc,
-    dependencies: gmime_deps,
-  )
-endif
+# Parser tests use private helpers even without crypto. Recompile the GPGME
+# glue to capture canonicalized verification input without symbol interposition.
+parser_model_test_lib = static_library(
+  'gmime-parser-test', gmime_gpgme_sources,
+  objects: libgmime.extract_objects(gmime_sources),
+  include_directories: gmime_inc,
+  dependencies: gmime_deps,
+  link_whole: util_lib,
+  c_args: ['-DG_LOG_DOMAIN="gmime"', '-Dgpgme_op_verify=gmime_test_op_verify'],
+)
+parser_model_test_dep = declare_dependency(
+  link_with: parser_model_test_lib,
+  include_directories: gmime_inc,
+  dependencies: gmime_deps,
+)
 
 normal_tests = [
   'test-stream-block', 'test-substreams', 'test-stream-close',
@@ -53,8 +52,8 @@ test_programs = {
 }
 foreach name : normal_tests
   sources = [name + '.c']
-  test_dep = have_crypto and name == 'test-parser-model' ? verify_test_dep : gmime_dep
-  if name == 'test-core' or (name == 'test-parser-model' and not have_crypto)
+  test_dep = name == 'test-parser-model' ? parser_model_test_dep : gmime_dep
+  if name == 'test-core'
     sources += ['../gmime/gmime-events.c']
   elif name == 'test-addresses'
     sources += ['../gmime/gmime-parse-utils.c']
