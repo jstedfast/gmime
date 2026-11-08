@@ -38,9 +38,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMessageFeedbackReport, g_mime_message_feedback_re
 
 struct _GMimeMessageFeedbackReportClass {
 	GMimePartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

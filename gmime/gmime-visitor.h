@@ -93,9 +93,6 @@ struct _GMimeVisitorClass {
 	void (* visit_body) (GMimeVisitor *visitor, GMimeMessage *message);
 	void (* visit_children) (GMimeVisitor *visitor, GMimeMultipart *multipart);
 	void (* visit_message_part_message) (GMimeVisitor *visitor, GMimeMessagePart *part);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

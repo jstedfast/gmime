@@ -77,9 +77,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeTextPart, g_mime_text_part, GMIME, TEXT_PART, GMi
 
 struct _GMimeTextPartClass {
 	GMimePartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

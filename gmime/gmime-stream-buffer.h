@@ -52,9 +52,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeStreamBuffer, g_mime_stream_buffer, GMIME, STREAM
 
 struct _GMimeStreamBufferClass {
 	GMimeStreamClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

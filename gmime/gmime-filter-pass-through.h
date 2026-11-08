@@ -37,9 +37,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterPassThrough, g_mime_filter_pass_through, GM
 
 struct _GMimeFilterPassThroughClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

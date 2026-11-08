@@ -57,9 +57,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterBest, g_mime_filter_best, GMIME, FILTER_BES
 
 struct _GMimeFilterBestClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

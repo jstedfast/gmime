@@ -38,9 +38,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMessageDispositionNotification, g_mime_message_di
 
 struct _GMimeMessageDispositionNotificationClass {
 	GMimePartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -64,9 +64,6 @@ struct _GMimeContentClass {
 
 	ssize_t (* write_to_stream) (GMimeContent *content, GMimeStream *stream);
 	ssize_t (* decode_to_stream) (GMimeContent *content, GMimeStream *stream);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -67,9 +67,6 @@ struct _GMimeEntityClass {
 
 	gboolean     (* prepare_with_max_line_length) (GMimeEntity *object, GMimeEncodingConstraint constraint,
 						      guint max_line_length, GError **error);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

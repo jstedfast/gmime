@@ -38,9 +38,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeStreamMmap, g_mime_stream_mmap, GMIME, STREAM_MMA
 
 struct _GMimeStreamMmapClass {
 	GMimeStreamClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

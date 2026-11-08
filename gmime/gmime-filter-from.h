@@ -56,9 +56,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterFrom, g_mime_filter_from, GMIME, FILTER_FRO
 
 struct _GMimeFilterFromClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

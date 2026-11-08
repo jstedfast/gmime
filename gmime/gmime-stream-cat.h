@@ -39,9 +39,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeStreamCat, g_mime_stream_cat, GMIME, STREAM_CAT, 
 
 struct _GMimeStreamCatClass {
 	GMimeStreamClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -112,9 +112,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterHTML, g_mime_filter_html, GMIME, FILTER_HTM
 
 struct _GMimeFilterHTMLClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

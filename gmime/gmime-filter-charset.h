@@ -39,9 +39,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterCharset, g_mime_filter_charset, GMIME, FILT
 
 struct _GMimeFilterCharsetClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

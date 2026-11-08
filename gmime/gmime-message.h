@@ -128,9 +128,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMessage, g_mime_message, GMIME, MESSAGE, GMimeEnt
 
 struct _GMimeMessageClass {
 	GMimeEntityClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

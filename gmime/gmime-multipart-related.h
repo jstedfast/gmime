@@ -37,9 +37,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMultipartRelated, g_mime_multipart_related, GMIME
 
 struct _GMimeMultipartRelatedClass {
 	GMimeMultipartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

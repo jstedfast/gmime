@@ -52,9 +52,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterGZip, g_mime_filter_gzip, GMIME, FILTER_GZI
 
 struct _GMimeFilterGZipClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 
