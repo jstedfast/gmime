@@ -10321,19 +10321,191 @@ test_content_copy (void)
 }
 
 static GMimeApplicationPkcs7Mime *
-test_compressed_part_new (const void *data, size_t length, GMimeContentEncoding encoding)
+test_pkcs7_part_new (GMimeSecureMimeType type, const void *data, size_t length, GMimeContentEncoding encoding)
 {
 	GMimeApplicationPkcs7Mime *part;
 	GMimeContent *content;
 	GMimeStream *stream;
 
-	part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA);
+	part = g_mime_application_pkcs7_mime_new (type);
 	stream = g_mime_stream_mem_new_with_buffer (data, length);
 	content = g_mime_content_new_with_stream (stream, encoding);
 	g_mime_part_set_content (GMIME_PART (part), content);
 	g_object_unref (content);
 	g_object_unref (stream);
 	return part;
+}
+
+static void
+test_signed_data_unwrap (void)
+{
+	/* Independently encoded SignedData with deliberately invalid signatures.
+	 * The BER fixture also has uninterpreted certificate and revocation sets. */
+	static const char *valid[] = {
+		"MIGlBgkqhkiG9w0BBwKggZcwgZQCAQExDzANBglghkgBZQMEAgEFADBABgkqhkiG9w0BBwGgMwQxQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQoNClVudmVyaWZpZWQgY29udGVudC4NCjE8MDoCAQEwBTAAAgEBMA0GCWCGSAFlAwQCAQUAMA0GCSqGSIb3DQEBAQUABBAAAAAAAAAAAAAAAAAAAAAA",
+		"MIAGCSqGSIb3DQEHAqCAMIACAQExgDANBglghkgBZQMEAgEFAAAAMIAGCSqGSIb3DQEHAaCAJIAEGENvbnRlbnQtVHlwZTogdGV4dC9wbGFpbiSABAcNCg0KVW52BBJlcmlmaWVkIGNvbnRlbnQuDQoAAAAAAAAAAKCAMAMCAQEAAKGAMAMCAQEAADE8MDoCAQEwBTAAAgEBMA0GCWCGSAFlAwQCAQUAMA0GCSqGSIb3DQEBAQUABBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+		"MIGpBgkqhkiG9w0BBwKggZswgZgCAQExDzANBglghkgBZQMEAgEFADBEBgkqhkiG9w0BBwGgNyQ1BBlDb250ZW50LVR5cGU6IHRleHQvcGxhaW4NBBgKDQpVbnZlcmlmaWVkIGNvbnRlbnQuDQoxPDA6AgEBMAUwAAIBATANBglghkgBZQMEAgEFADANBgkqhkiG9w0BAQEFAAQQAAAAAAAAAAAAAAAAAAAAAA=="
+	};
+	static const struct {
+		const char *base64;
+		int code;
+	} invalid[] = {
+		{ "MG4GCSqGSIb3DQEHAqBhMF8CAQExDzANBglghkgBZQMEAgEFADALBgkqhkiG9w0BBwExPDA6AgEBMAUwAAIBATANBglghkgBZQMEAgEFADANBgkqhkiG9w0BAQEFAAQQAAAAAAAAAAAAAAAAAAAAAA==", GMIME_ERROR_NOT_SUPPORTED },
+		{ "MIGlBgkqhkiG9w0BBwKggZcwgZQCAQExDzANBglghkgBZQMEAgEFADBABgkqhkiG9w0BBwKgMwQxQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQoNClVudmVyaWZpZWQgY29udGVudC4NCjE8MDoCAQEwBTAAAgEBMA0GCWCGSAFlAwQCAQUAMA0GCSqGSIb3DQEBAQUABBAAAAAAAAAAAAAAAAAAAAAA", GMIME_ERROR_NOT_SUPPORTED },
+		{ "MGUGCSqGSIb3DQEHAqBYMFYCAQExDzANBglghkgBZQMEAgEFADBABgkqhkiG9w0BBwGgMwQxQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQoNClVudmVyaWZpZWQgY29udGVudC4NCg==", GMIME_ERROR_PARSE_ERROR },
+		{ "MIGpBgkqhkiG9w0BBwKggZswgZgCAQExDzANBglghkgBZQMEAgEFADBABgkqhkiG9w0BBwGgMwQxQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQoNClVudmVyaWZpZWQgY29udGVudC4NCqAAoAAxPDA6AgEBMAUwAAIBATANBglghkgBZQMEAgEFADANBgkqhkiG9w0BAQEFAAQQAAAAAAAAAAAAAAAAAAAAAA==", GMIME_ERROR_PARSE_ERROR },
+		{ "MGkGCSqGSIb3DQEHAqBcMFoCAQExDzANBglghkgBZQMEAgEFADBABgkqhkiG9w0BBwGgMwQxQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQoNClVudmVyaWZpZWQgY29udGVudC4NCjECMAE=", GMIME_ERROR_PARSE_ERROR },
+		{ "MHQGCSqGSIb3DQEHAqBnMGUCAQExDzANBglghkgBZQMEAgEFADARBgkqhkiG9w0BBwGgBCQCBQAxPDA6AgEBMAUwAAIBATANBglghkgBZQMEAgEFADANBgkqhkiG9w0BAQEFAAQQAAAAAAAAAAAAAAAAAAAAAA==", GMIME_ERROR_PARSE_ERROR },
+		{ "MIGnBgkqhkiG9w0BBwKggZkwgZYCAQExDzANBglghkgBZQMEAgEFADBCBgkqhkiG9w0BBwGgNQSAQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQoNClVudmVyaWZpZWQgY29udGVudC4NCgAAMTwwOgIBATAFMAACAQEwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEEAAAAAAAAAAAAAAAAAAAAAA=", GMIME_ERROR_PARSE_ERROR },
+		{ "MIAGCSqGSIb3DQEHAqCAMIACAQExgDANBglghkgBZQMEAgEFAAAAMIAGCSqGSIb3DQEHAaCAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgCSAJIAkgAQxQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluDQoNClVudmVyaWZpZWQgY29udGVudC4NCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMTwwOgIBATAFMAACAQEwDQYJYIZIAWUDBAIBBQAwDQYJKoZIhvcNAQEBBQAEEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", GMIME_ERROR_PARSE_ERROR }
+	};
+	static const struct {
+		guint offset;
+		unsigned char value;
+	} mutations[] = {
+		{ 0, 0x31 }, { 1, 0xff }, { 2, 0xa4 }, { 13, 1 },
+		{ 22, 0 }, { 23, 0x30 }, { 55, 0x32 }, { 106, 0x30 }
+	};
+	GMimeApplicationPkcs7Mime *part;
+	GMimeEntity *entity;
+	GMimeContent *content;
+	GMimeContentType *type;
+	TestStreamFailure *failure;
+	GError *error = NULL;
+	unsigned char *data, *changed;
+	gsize length;
+	char *text;
+	guint i, j;
+	gboolean rejected;
+
+	for (i = 0; i < G_N_ELEMENTS (valid); i++) {
+		data = g_base64_decode (valid[i], &length);
+		part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA, data, length, GMIME_CONTENT_ENCODING_BINARY);
+		entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+		g_assert_no_error (error);
+		check (GMIME_IS_TEXT_PART (entity), "DER and BER SignedData unwrap without verifying invalid signatures");
+		if (GMIME_IS_TEXT_PART (entity)) {
+			text = g_mime_text_part_get_text (GMIME_TEXT_PART (entity));
+			check (text && !strcmp (text, "Unverified content.\n"),
+			       "unwrapping preserves MIME content and normalizes newlines across OCTET STRING chunks");
+			g_free (text);
+		}
+		g_clear_object (&entity);
+		g_object_unref (part);
+
+		rejected = TRUE;
+		for (j = 0; j < length; j++) {
+			part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA, data, j, GMIME_CONTENT_ENCODING_BINARY);
+			entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+			rejected = rejected && !entity && error != NULL;
+			g_clear_error (&error);
+			g_clear_object (&entity);
+			g_object_unref (part);
+		}
+		check (rejected, "all truncated SignedData prefixes fail, including truncations after the MIME content");
+		changed = g_malloc (length + 1);
+		memcpy (changed, data, length);
+		changed[length] = 0;
+		part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA, changed, length + 1, GMIME_CONTENT_ENCODING_BINARY);
+		entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+		check (!entity, "unwrapping rejects trailing CMS data");
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (part);
+		g_free (changed);
+		g_free (data);
+	}
+
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA, invalid[i].base64,
+					   strlen (invalid[i].base64), GMIME_CONTENT_ENCODING_BASE64);
+		entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+		check (!entity, "unwrapping rejects detached, unsupported, malformed, and excessively nested CMS content");
+		g_assert_error (error, GMIME_ERROR, invalid[i].code);
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (part);
+	}
+
+	data = g_base64_decode (valid[0], &length);
+	for (i = 0; i < G_N_ELEMENTS (mutations); i++) {
+		changed = g_memdup2 (data, length);
+		changed[mutations[i].offset] = mutations[i].value;
+		part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA, changed, length, GMIME_CONTENT_ENCODING_BINARY);
+		entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+		check (!entity, "unwrapping checks CMS tags, lengths, content type, version, and container boundaries");
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		g_object_unref (part);
+		g_free (changed);
+	}
+
+	for (i = 0; i < 2; i++) {
+		failure = g_object_new (test_stream_failure_get_type (), NULL);
+		failure->parent_instance.source = g_mime_stream_mem_new_with_buffer ((char *) data, length);
+		failure->unset_error = i;
+		failure->onebyte = TRUE;
+		g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+		part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
+		content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BINARY);
+		g_mime_part_set_content (GMIME_PART (part), content);
+		g_object_unref (content);
+
+		for (j = 0; j <= length; j += length / 2) {
+			failure->bytes_read = 0;
+			failure->fail_after = j;
+			entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+			check (!entity, "unwrapping propagates read errors, including errors after the full CMS container");
+			g_assert_error (error, GMIME_ERROR, (i ? GMIME_ERROR_GENERAL : EIO));
+			g_clear_error (&error);
+			g_clear_object (&entity);
+		}
+		failure->bytes_read = 0;
+		failure->fail_after = G_MAXSIZE;
+		failure->fail_reset_on = failure->reset_calls + 1;
+		entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+		check (!entity, "unwrapping propagates content stream rewind failures");
+		g_assert_error (error, GMIME_ERROR, (i ? GMIME_ERROR_GENERAL : ESPIPE));
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+		check (entity && !error, "unwrapping supports one-byte reads and retrying after an I/O failure");
+		g_clear_error (&error);
+		g_clear_object (&entity);
+		check (!failure->close_calls, "unwrapping leaves the caller's content stream open");
+		g_object_unref (part);
+		g_object_unref (failure);
+	}
+	g_free (data);
+
+	part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA, valid[0], strlen (valid[0]), GMIME_CONTENT_ENCODING_BASE64);
+	type = g_mime_content_type_new ("application", "pkcs7-mime");
+	g_mime_entity_set_content_type (GMIME_ENTITY (part), type);
+	g_object_unref (type);
+	entity = g_mime_application_pkcs7_mime_unwrap (part, &error);
+	check (entity && !error, "unwrapping decodes base64 and accepts an unspecified S/MIME type");
+	g_clear_object (&entity);
+	g_clear_error (&error);
+	g_object_unref (part);
+
+	part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA);
+	check (!g_mime_application_pkcs7_mime_unwrap (part, &error), "unwrapping rejects incompatible S/MIME types");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_object_unref (part);
+	part = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
+	check (!g_mime_application_pkcs7_mime_unwrap (part, &error), "unwrapping reports absent content");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	content = g_mime_content_new ();
+	g_mime_part_set_content (GMIME_PART (part), content);
+	g_object_unref (content);
+	check (!g_mime_application_pkcs7_mime_unwrap (part, &error), "unwrapping reports missing backing streams");
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_object_unref (part);
 }
 
 static void
@@ -10390,7 +10562,7 @@ test_compressed_data (void)
 
 	for (i = 0; i < G_N_ELEMENTS (valid); i++) {
 		data = g_base64_decode (valid[i], &length);
-		part = test_compressed_part_new (data, length, GMIME_CONTENT_ENCODING_BINARY);
+		part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA, data, length, GMIME_CONTENT_ENCODING_BINARY);
 		entity = g_mime_application_pkcs7_mime_decompress (part, 49, &error);
 		g_assert_no_error (error);
 		check (GMIME_IS_TEXT_PART (entity), "DER and BER CompressedData decode without a crypto context");
@@ -10411,7 +10583,7 @@ test_compressed_data (void)
 
 		rejected = TRUE;
 		for (j = 0; j < length; j++) {
-			part = test_compressed_part_new (data, j, GMIME_CONTENT_ENCODING_BINARY);
+			part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA, data, j, GMIME_CONTENT_ENCODING_BINARY);
 			entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
 			rejected = rejected && !entity && error != NULL;
 			g_clear_error (&error);
@@ -10424,7 +10596,7 @@ test_compressed_data (void)
 
 	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
 		data = g_base64_decode (invalid[i], &length);
-		part = test_compressed_part_new (data, length, GMIME_CONTENT_ENCODING_BINARY);
+		part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA, data, length, GMIME_CONTENT_ENCODING_BINARY);
 		entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
 		check (!entity && error,
 		       "truncated, trailing, concatenated, non-zlib, empty, and deeply nested payloads are rejected");
@@ -10438,7 +10610,7 @@ test_compressed_data (void)
 	for (i = 0; i < G_N_ELEMENTS (mutations); i++) {
 		changed = g_memdup2 (data, length);
 		changed[mutations[i].offset] = mutations[i].value;
-		part = test_compressed_part_new (changed, length, GMIME_CONTENT_ENCODING_BINARY);
+		part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA, changed, length, GMIME_CONTENT_ENCODING_BINARY);
 		entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
 		check (!entity, "invalid CMS tags, lengths, OIDs, versions, and zlib checksums fail");
 		g_assert_error (error, GMIME_ERROR, mutations[i].code);
@@ -10450,7 +10622,7 @@ test_compressed_data (void)
 	changed = g_malloc (length + 1);
 	memcpy (changed, data, length);
 	changed[length] = 0;
-	part = test_compressed_part_new (changed, length + 1, GMIME_CONTENT_ENCODING_BINARY);
+	part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA, changed, length + 1, GMIME_CONTENT_ENCODING_BINARY);
 	entity = g_mime_application_pkcs7_mime_decompress (part, 1024, &error);
 	check (!entity && error, "trailing CMS data is rejected");
 	g_clear_error (&error);
@@ -10493,7 +10665,7 @@ test_compressed_data (void)
 	}
 	g_free (data);
 
-	part = test_compressed_part_new (valid[0], strlen (valid[0]), GMIME_CONTENT_ENCODING_BASE64);
+	part = test_pkcs7_part_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA, valid[0], strlen (valid[0]), GMIME_CONTENT_ENCODING_BASE64);
 	type = g_mime_content_type_new ("application", "pkcs7-mime");
 	g_mime_entity_set_content_type (GMIME_ENTITY (part), type);
 	g_object_unref (type);
@@ -14410,6 +14582,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("CMS CompressedData");
 	test_compressed_data ();
+	testsuite_end ();
+
+	testsuite_start ("CMS SignedData unwrapping");
+	test_signed_data_unwrap ();
 	testsuite_end ();
 
 	testsuite_start ("certificate and signature dates");

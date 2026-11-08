@@ -207,6 +207,7 @@ g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_m
 static const unsigned char cms_compressed_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x01, 0x09 };
 static const unsigned char cms_zlib_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x03, 0x08 };
 static const unsigned char cms_data_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01 };
+static const unsigned char cms_signed_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x02 };
 
 typedef struct {
 	GMimeStream *stream;
@@ -218,52 +219,52 @@ typedef struct {
 	} scopes[32];
 	guint depth;
 	int lookahead;
-} CompressedDataReader;
+} CmsReader;
 
 static gboolean
-compressed_data_invalid (GError **error)
+cms_invalid (GError **error)
 {
 	g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-			     _("Invalid or truncated CMS CompressedData."));
+			     _("Invalid or truncated CMS content."));
 	return FALSE;
 }
 
 static gboolean
-compressed_data_io_error (GError **error)
+cms_io_error (GError **error)
 {
 	int errsv = errno;
 
 	g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
-		     _("CMS compression I/O failed: %s"),
+		     _("CMS I/O failed: %s"),
 		     errsv ? g_strerror (errsv) : "unknown I/O error");
 
 	return FALSE;
 }
 
 static gboolean
-compressed_data_write (GMimeStream *stream, const void *buffer, size_t length, GError **error)
+cms_write (GMimeStream *stream, const void *buffer, size_t length, GError **error)
 {
 	errno = 0;
 
 	if (_g_mime_stream_write_all (stream, buffer, length) == -1)
-		return compressed_data_io_error (error);
+		return cms_io_error (error);
 
 	return TRUE;
 }
 
 static guint64
-compressed_data_limit (CompressedDataReader *reader)
+cms_limit (CmsReader *reader)
 {
 	return reader->depth ? reader->scopes[reader->depth - 1].end : G_MAXUINT64;
 }
 
 static gboolean
-compressed_data_read (CompressedDataReader *reader, unsigned char *buffer, size_t length)
+cms_read (CmsReader *reader, unsigned char *buffer, size_t length)
 {
 	ssize_t nread;
 
-	if (length > compressed_data_limit (reader) - reader->position)
-		return compressed_data_invalid (reader->error);
+	if (length > cms_limit (reader) - reader->position)
+		return cms_invalid (reader->error);
 
 	if (length && reader->lookahead != -1) {
 		*buffer++ = reader->lookahead;
@@ -277,10 +278,10 @@ compressed_data_read (CompressedDataReader *reader, unsigned char *buffer, size_
 		nread = g_mime_stream_read (reader->stream, (char *) buffer, length);
 
 		if (nread < 0)
-			return compressed_data_io_error (reader->error);
+			return cms_io_error (reader->error);
 
 		if (nread == 0)
-			return compressed_data_invalid (reader->error);
+			return cms_invalid (reader->error);
 
 		reader->position += nread;
 		buffer += nread;
@@ -291,20 +292,20 @@ compressed_data_read (CompressedDataReader *reader, unsigned char *buffer, size_
 }
 
 static gboolean
-compressed_data_header (CompressedDataReader *reader, unsigned char *tag, guint64 *length, gboolean *indefinite)
+cms_header (CmsReader *reader, unsigned char *tag, guint64 *length, gboolean *indefinite)
 {
 	unsigned char byte;
 	guint count;
 
-	if (!compressed_data_read (reader, tag, 1) ||
-	    !compressed_data_read (reader, &byte, 1))
+	if (!cms_read (reader, tag, 1) ||
+	    !cms_read (reader, &byte, 1))
 		return FALSE;
 
 	*indefinite = byte == 0x80;
 	*length = 0;
 
 	if ((*tag & 0x1f) == 0x1f || (*indefinite && !(*tag & 0x20)))
-		return compressed_data_invalid (reader->error);
+		return cms_invalid (reader->error);
 
 	if (*indefinite)
 		return TRUE;
@@ -315,29 +316,29 @@ compressed_data_header (CompressedDataReader *reader, unsigned char *tag, guint6
 		count = byte & 0x7f;
 
 		if (count > sizeof (*length))
-			return compressed_data_invalid (reader->error);
+			return cms_invalid (reader->error);
 
 		while (count--) {
-			if (!compressed_data_read (reader, &byte, 1))
+			if (!cms_read (reader, &byte, 1))
 				return FALSE;
 
 			*length = (*length << 8) | byte;
 		}
 	}
 
-	if (*length > compressed_data_limit (reader) - reader->position)
-		return compressed_data_invalid (reader->error);
+	if (*length > cms_limit (reader) - reader->position)
+		return cms_invalid (reader->error);
 
 	return TRUE;
 }
 
 static gboolean
-compressed_data_push (CompressedDataReader *reader, guint64 length, gboolean indefinite)
+cms_push (CmsReader *reader, guint64 length, gboolean indefinite)
 {
-	guint64 end = indefinite ? compressed_data_limit (reader) : reader->position + length;
+	guint64 end = indefinite ? cms_limit (reader) : reader->position + length;
 
 	if (reader->depth == G_N_ELEMENTS (reader->scopes))
-		return compressed_data_invalid (reader->error);
+		return cms_invalid (reader->error);
 
 	reader->scopes[reader->depth].end = end;
 	reader->scopes[reader->depth].indefinite = indefinite;
@@ -347,44 +348,44 @@ compressed_data_push (CompressedDataReader *reader, guint64 length, gboolean ind
 }
 
 static gboolean
-compressed_data_begin (CompressedDataReader *reader, unsigned char expected)
+cms_begin (CmsReader *reader, unsigned char expected)
 {
 	gboolean indefinite;
 	guint64 length;
 	unsigned char tag;
 
-	if (!compressed_data_header (reader, &tag, &length, &indefinite))
+	if (!cms_header (reader, &tag, &length, &indefinite))
 		return FALSE;
 
 	if (tag != expected)
-		return compressed_data_invalid (reader->error);
+		return cms_invalid (reader->error);
 
-	return compressed_data_push (reader, length, indefinite);
+	return cms_push (reader, length, indefinite);
 }
 
 static gboolean
-compressed_data_at_end (CompressedDataReader *reader, gboolean *at_end)
+cms_at_end (CmsReader *reader, gboolean *at_end)
 {
 	unsigned char byte;
 	ssize_t nread;
 
 	if (!reader->scopes[reader->depth - 1].indefinite) {
-		*at_end = reader->position == compressed_data_limit (reader);
+		*at_end = reader->position == cms_limit (reader);
 		return TRUE;
 	}
 
 	if (reader->lookahead == -1) {
-		if (reader->position == compressed_data_limit (reader))
-			return compressed_data_invalid (reader->error);
+		if (reader->position == cms_limit (reader))
+			return cms_invalid (reader->error);
 
 		errno = 0;
 		nread = g_mime_stream_read (reader->stream, (char *) &byte, 1);
 
 		if (nread < 0)
-			return compressed_data_io_error (reader->error);
+			return cms_io_error (reader->error);
 
 		if (nread == 0)
-			return compressed_data_invalid (reader->error);
+			return cms_invalid (reader->error);
 
 		reader->lookahead = byte;
 	}
@@ -395,18 +396,18 @@ compressed_data_at_end (CompressedDataReader *reader, gboolean *at_end)
 }
 
 static gboolean
-compressed_data_end (CompressedDataReader *reader)
+cms_end (CmsReader *reader)
 {
 	unsigned char eoc[2];
 
 	if (reader->scopes[reader->depth - 1].indefinite) {
-		if (!compressed_data_read (reader, eoc, sizeof (eoc)))
+		if (!cms_read (reader, eoc, sizeof (eoc)))
 			return FALSE;
 
 		if (eoc[0] || eoc[1])
-			return compressed_data_invalid (reader->error);
-	} else if (reader->position != compressed_data_limit (reader)) {
-		return compressed_data_invalid (reader->error);
+			return cms_invalid (reader->error);
+	} else if (reader->position != cms_limit (reader)) {
+		return cms_invalid (reader->error);
 	}
 
 	reader->depth--;
@@ -415,21 +416,21 @@ compressed_data_end (CompressedDataReader *reader)
 }
 
 static gboolean
-compressed_data_value (CompressedDataReader *reader, unsigned char expected,
-		       const unsigned char *value, size_t size, int error_code)
+cms_value (CmsReader *reader, unsigned char expected,
+	   const unsigned char *value, size_t size, int error_code)
 {
 	unsigned char tag, buffer[sizeof (cms_compressed_oid)];
 	gboolean indefinite;
 	guint64 length;
 
-	if (!compressed_data_header (reader, &tag, &length, &indefinite))
+	if (!cms_header (reader, &tag, &length, &indefinite))
 		return FALSE;
 
 	if (tag != expected || indefinite)
-		return compressed_data_invalid (reader->error);
+		return cms_invalid (reader->error);
 
 	if (length == size) {
-		if (!compressed_data_read (reader, buffer, size))
+		if (!cms_read (reader, buffer, size))
 			return FALSE;
 
 		if (!memcmp (buffer, value, size))
@@ -438,14 +439,136 @@ compressed_data_value (CompressedDataReader *reader, unsigned char expected,
 
 	g_set_error_literal (reader->error, GMIME_ERROR, error_code,
 			     error_code == GMIME_ERROR_NOT_SUPPORTED ?
-			     _("Unsupported CMS compression algorithm or encapsulated content type.") :
-			     _("Unexpected CMS CompressedData value."));
+			     _("Unsupported CMS algorithm or encapsulated content type.") :
+			     _("Unexpected CMS value."));
 
 	return FALSE;
 }
 
 static gboolean
-compressed_data_inflate (CompressedDataReader *reader, z_stream *zstream, GMimeStream *output,
+cms_finish (CmsReader *reader)
+{
+	unsigned char byte;
+	ssize_t nread;
+
+	while (reader->depth) {
+		if (!cms_end (reader))
+			return FALSE;
+	}
+
+	errno = 0;
+	nread = g_mime_stream_read (reader->stream, (char *) &byte, 1);
+
+	if (nread < 0 || (!nread && !g_mime_stream_eos (reader->stream)))
+		return cms_io_error (reader->error);
+
+	return nread ? cms_invalid (reader->error) : TRUE;
+}
+
+static gboolean
+cms_skip_value (CmsReader *reader, unsigned char tag, guint64 length, gboolean indefinite)
+{
+	unsigned char buffer[4096];
+	gboolean at_end;
+	size_t count;
+
+	if (!tag)
+		return cms_invalid (reader->error);
+
+	if (tag & 0x20) {
+		if (!cms_push (reader, length, indefinite))
+			return FALSE;
+
+		while (TRUE) {
+			if (!cms_at_end (reader, &at_end))
+				return FALSE;
+
+			if (at_end)
+				break;
+
+			if (!cms_header (reader, &tag, &length, &indefinite) ||
+			    !cms_skip_value (reader, tag, length, indefinite))
+				return FALSE;
+		}
+
+		return cms_end (reader);
+	}
+
+	while (length) {
+		count = (size_t) MIN (length, sizeof (buffer));
+
+		if (!cms_read (reader, buffer, count))
+			return FALSE;
+
+		length -= count;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+cms_skip (CmsReader *reader, unsigned char expected)
+{
+	gboolean indefinite;
+	unsigned char tag;
+	guint64 length;
+
+	if (!cms_header (reader, &tag, &length, &indefinite))
+		return FALSE;
+
+	if (tag != expected)
+		return cms_invalid (reader->error);
+
+	return cms_skip_value (reader, tag, length, indefinite);
+}
+
+static gboolean
+cms_copy_octets (CmsReader *reader, GMimeStream *output)
+{
+	unsigned char tag, buffer[4096];
+	gboolean indefinite, at_end;
+	guint64 length;
+	size_t count;
+
+	if (!cms_header (reader, &tag, &length, &indefinite))
+		return FALSE;
+
+	if (tag == 0x24) {
+		if (!cms_push (reader, length, indefinite))
+			return FALSE;
+
+		while (TRUE) {
+			if (!cms_at_end (reader, &at_end))
+				return FALSE;
+
+			if (at_end)
+				break;
+
+			if (!cms_copy_octets (reader, output))
+				return FALSE;
+		}
+
+		return cms_end (reader);
+	}
+
+	if (tag != 0x04 || indefinite)
+		return cms_invalid (reader->error);
+
+	while (length) {
+		count = (size_t) MIN (length, sizeof (buffer));
+
+		if (!cms_read (reader, buffer, count) ||
+		    !cms_write (output, buffer, count, reader->error))
+			return FALSE;
+
+		length -= count;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+compressed_data_inflate (CmsReader *reader, z_stream *zstream, GMimeStream *output,
 			 size_t max_size, size_t *total, gboolean *finished)
 {
 	unsigned char tag, input[4096], buffer[4096];
@@ -454,15 +577,15 @@ compressed_data_inflate (CompressedDataReader *reader, z_stream *zstream, GMimeS
 	size_t count;
 	int status;
 
-	if (!compressed_data_header (reader, &tag, &length, &indefinite))
+	if (!cms_header (reader, &tag, &length, &indefinite))
 		return FALSE;
 
 	if (tag == 0x24) {
-		if (!compressed_data_push (reader, length, indefinite))
+		if (!cms_push (reader, length, indefinite))
 			return FALSE;
 
 		do {
-			if (!compressed_data_at_end (reader, &at_end))
+			if (!cms_at_end (reader, &at_end))
 				return FALSE;
 
 			if (at_end)
@@ -472,16 +595,16 @@ compressed_data_inflate (CompressedDataReader *reader, z_stream *zstream, GMimeS
 				return FALSE;
 		} while (TRUE);
 
-		return compressed_data_end (reader);
+		return cms_end (reader);
 	}
 
 	if (tag != 0x04 || indefinite || (*finished && length))
-		return compressed_data_invalid (reader->error);
+		return cms_invalid (reader->error);
 
 	while (length) {
 		count = (size_t) MIN (length, sizeof (input));
 
-		if (!compressed_data_read (reader, input, count))
+		if (!cms_read (reader, input, count))
 			return FALSE;
 
 		length -= count;
@@ -500,7 +623,7 @@ compressed_data_inflate (CompressedDataReader *reader, z_stream *zstream, GMimeS
 			}
 
 			if (status != Z_OK && status != Z_STREAM_END && status != Z_BUF_ERROR)
-				return compressed_data_invalid (reader->error);
+				return cms_invalid (reader->error);
 
 			count = sizeof (buffer) - zstream->avail_out;
 
@@ -510,7 +633,7 @@ compressed_data_inflate (CompressedDataReader *reader, z_stream *zstream, GMimeS
 				return FALSE;
 			}
 
-			if (!compressed_data_write (output, buffer, count, reader->error))
+			if (!cms_write (output, buffer, count, reader->error))
 				return FALSE;
 
 			*total += count;
@@ -519,14 +642,14 @@ compressed_data_inflate (CompressedDataReader *reader, z_stream *zstream, GMimeS
 				*finished = TRUE;
 
 				if (zstream->avail_in || length)
-					return compressed_data_invalid (reader->error);
+					return cms_invalid (reader->error);
 
 				break;
 			}
 
 			if (status == Z_BUF_ERROR) {
 				if (zstream->avail_in)
-					return compressed_data_invalid (reader->error);
+					return cms_invalid (reader->error);
 
 				break;
 			}
@@ -562,7 +685,7 @@ compressed_data_write_header (GMimeStream *stream, unsigned char tag, guint64 le
 
 	if (length < 128) {
 		buffer[1] = (unsigned char) length;
-		return compressed_data_write (stream, buffer, 2, error);
+		return cms_write (stream, buffer, 2, error);
 	}
 
 	do {
@@ -575,14 +698,14 @@ compressed_data_write_header (GMimeStream *stream, unsigned char tag, guint64 le
 	for (i = 0; i < count; i++)
 		buffer[2 + i] = (unsigned char) (length >> (8 * (count - i - 1)));
 
-	return compressed_data_write (stream, buffer, count + 2, error);
+	return cms_write (stream, buffer, count + 2, error);
 }
 
 static gboolean
 compressed_data_write_oid (GMimeStream *stream, const unsigned char *oid, size_t length, GError **error)
 {
 	return compressed_data_write_header (stream, 0x06, length, error) &&
-		compressed_data_write (stream, oid, length, error);
+		cms_write (stream, oid, length, error);
 }
 
 /**
@@ -619,7 +742,7 @@ g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err)
 	errno = 0;
 
 	if (g_mime_entity_write_to_stream (entity, options, stream) == -1) {
-		compressed_data_io_error (err);
+		cms_io_error (err);
 		g_mime_format_options_unref (options);
 		g_object_unref (stream);
 		return NULL;
@@ -651,7 +774,7 @@ g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err)
 			break;
 		}
 
-		if (!compressed_data_write (compressed, buffer, sizeof (buffer) - zstream.avail_out, err)) {
+		if (!cms_write (compressed, buffer, sizeof (buffer) - zstream.avail_out, err)) {
 			status = Z_ERRNO;
 			break;
 		}
@@ -679,14 +802,14 @@ g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err)
 	    !compressed_data_write_oid (encoded, cms_compressed_oid, sizeof (cms_compressed_oid), err) ||
 	    !compressed_data_write_header (encoded, 0xa0, compressed_data_encoded_size (content_size), err) ||
 	    !compressed_data_write_header (encoded, 0x30, content_size, err) ||
-	    !compressed_data_write (encoded, version, sizeof (version), err) ||
+	    !cms_write (encoded, version, sizeof (version), err) ||
 	    !compressed_data_write_header (encoded, 0x30, algorithm_size, err) ||
 	    !compressed_data_write_oid (encoded, cms_zlib_oid, sizeof (cms_zlib_oid), err) ||
 	    !compressed_data_write_header (encoded, 0x30, econtent_size, err) ||
 	    !compressed_data_write_oid (encoded, cms_data_oid, sizeof (cms_data_oid), err) ||
 	    !compressed_data_write_header (encoded, 0xa0, compressed_data_encoded_size (bytes->len), err) ||
 	    !compressed_data_write_header (encoded, 0x04, bytes->len, err) ||
-	    !compressed_data_write (encoded, bytes->data, bytes->len, err))
+	    !cms_write (encoded, bytes->data, bytes->len, err))
 		goto done;
 
 	g_mime_stream_reset (encoded);
@@ -727,14 +850,12 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	GMimeApplicationPkcs7MimePrivate *priv;
 	GMimeStream *filtered, *compressed, *stream;
 	gboolean at_end, finished = FALSE, valid;
-	CompressedDataReader reader = { 0 };
+	CmsReader reader = { 0 };
 	GMimeEntity *decompressed = NULL;
 	z_stream zstream = { 0 };
 	GMimeContent *content;
 	GMimeFilter *filter;
-	unsigned char byte;
 	size_t total = 0;
-	ssize_t nread;
 
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
 	g_return_val_if_fail (max_size > 0, NULL);
@@ -757,7 +878,7 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 
 	errno = 0;
 	if (!(compressed = g_mime_content_open (content))) {
-		compressed_data_io_error (err);
+		cms_io_error (err);
 		return NULL;
 	}
 
@@ -765,23 +886,23 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	reader.error = err;
 	reader.lookahead = -1;
 
-	if (!compressed_data_begin (&reader, 0x30) ||
-	    !compressed_data_value (&reader, 0x06, cms_compressed_oid, sizeof (cms_compressed_oid), GMIME_ERROR_PARSE_ERROR) ||
-	    !compressed_data_begin (&reader, 0xa0) ||
-	    !compressed_data_begin (&reader, 0x30) ||
-	    !compressed_data_value (&reader, 0x02, &zero, 1, GMIME_ERROR_PARSE_ERROR) ||
-	    !compressed_data_begin (&reader, 0x30) ||
-	    !compressed_data_value (&reader, 0x06, cms_zlib_oid, sizeof (cms_zlib_oid), GMIME_ERROR_NOT_SUPPORTED) ||
-	    !compressed_data_at_end (&reader, &at_end))
+	if (!cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_compressed_oid, sizeof (cms_compressed_oid), GMIME_ERROR_PARSE_ERROR) ||
+	    !cms_begin (&reader, 0xa0) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x02, &zero, 1, GMIME_ERROR_PARSE_ERROR) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_zlib_oid, sizeof (cms_zlib_oid), GMIME_ERROR_NOT_SUPPORTED) ||
+	    !cms_at_end (&reader, &at_end))
 		goto done;
 
-	if (!at_end && !compressed_data_value (&reader, 0x05, &zero, 0, GMIME_ERROR_PARSE_ERROR))
+	if (!at_end && !cms_value (&reader, 0x05, &zero, 0, GMIME_ERROR_PARSE_ERROR))
 		goto done;
 
-	if (!compressed_data_end (&reader) ||
-	    !compressed_data_begin (&reader, 0x30) ||
-	    !compressed_data_value (&reader, 0x06, cms_data_oid, sizeof (cms_data_oid), GMIME_ERROR_NOT_SUPPORTED) ||
-	    !compressed_data_begin (&reader, 0xa0))
+	if (!cms_end (&reader) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_data_oid, sizeof (cms_data_oid), GMIME_ERROR_NOT_SUPPORTED) ||
+	    !cms_begin (&reader, 0xa0))
 		goto done;
 
 	if (inflateInit (&zstream) != Z_OK) {
@@ -800,26 +921,16 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	inflateEnd (&zstream);
 
 	if (valid && !finished)
-		valid = compressed_data_invalid (err);
+		valid = cms_invalid (err);
 
-	while (valid && reader.depth)
-		valid = compressed_data_end (&reader);
-
-	if (valid) {
-		errno = 0;
-		nread = g_mime_stream_read (compressed, (char *) &byte, 1);
-
-		if (nread < 0 || (!nread && !g_mime_stream_eos (compressed)))
-			valid = compressed_data_io_error (err);
-		else if (nread)
-			valid = compressed_data_invalid (err);
-	}
+	if (valid)
+		valid = cms_finish (&reader);
 
 	if (valid) {
 		errno = 0;
 
 		if (g_mime_stream_flush (filtered) == -1)
-			valid = compressed_data_io_error (err);
+			valid = cms_io_error (err);
 	}
 
 	if (valid) {
@@ -834,6 +945,149 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 	g_object_unref (compressed);
 
 	return decompressed;
+}
+
+
+/**
+ * g_mime_application_pkcs7_mime_unwrap:
+ * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
+ * @err: return location for a #GError, or %NULL
+ *
+ * Extracts the encapsulated id-data MIME entity from CMS SignedData without
+ * verifying signatures, digests, certificates, or trust. The returned entity
+ * is unverified and must not be presented as authenticated content.
+ *
+ * Accepts DER and BER, including constructed OCTET STRINGs, with at most
+ * 32 nested ASN.1 containers. Checks container framing, but does not validate
+ * the contents of the digest, certificate, revocation, or signer sets.
+ * Detached signatures, other encapsulated content types, truncated containers,
+ * and trailing data are rejected. DOS newlines are normalized as for signature
+ * verification. No crypto context or crypto support is required.
+ *
+ * Returns: (nullable) (transfer full): the unverified entity, or %NULL on
+ * failure, with @err set. No partial entity is returned on failure.
+ **/
+GMimeEntity *
+g_mime_application_pkcs7_mime_unwrap (GMimeApplicationPkcs7Mime *pkcs7_mime, GError **err)
+{
+	GMimeStream *input, *stream = NULL, *filtered = NULL;
+	GMimeApplicationPkcs7MimePrivate *priv;
+	gboolean at_end, indefinite;
+	unsigned char tag, version;
+	GMimeEntity *entity = NULL;
+	CmsReader reader = { 0 };
+	GMimeContent *content;
+	GMimeFilter *filter;
+	guint64 length;
+
+	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
+
+	priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	if (priv->smime_type != GMIME_SECURE_MIME_TYPE_SIGNED_DATA &&
+	    priv->smime_type != GMIME_SECURE_MIME_TYPE_UNKNOWN) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("The S/MIME part does not contain signed data."));
+		return NULL;
+	}
+
+	if (!(content = g_mime_part_get_content ((GMimePart *) pkcs7_mime)) ||
+	    !g_mime_content_get_stream (content)) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("The signed S/MIME part has no content stream."));
+		return NULL;
+	}
+
+	errno = 0;
+	if (!(input = g_mime_content_open (content))) {
+		cms_io_error (err);
+		return NULL;
+	}
+
+	reader.stream = input;
+	reader.error = err;
+	reader.lookahead = -1;
+
+	if (!cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_signed_oid, sizeof (cms_signed_oid), GMIME_ERROR_PARSE_ERROR) ||
+	    !cms_begin (&reader, 0xa0) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_begin (&reader, 0x02) ||
+	    !cms_read (&reader, &version, 1) ||
+	    !cms_end (&reader))
+		goto done;
+
+	if (version != 1 && version != 3 && version != 4 && version != 5) {
+		cms_invalid (err);
+		goto done;
+	}
+
+	if (!cms_skip (&reader, 0x31) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_data_oid, sizeof (cms_data_oid), GMIME_ERROR_NOT_SUPPORTED) ||
+	    !cms_at_end (&reader, &at_end))
+		goto done;
+
+	if (at_end) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("The SignedData has no encapsulated MIME content."));
+		goto done;
+	}
+
+	if (!cms_begin (&reader, 0xa0))
+		goto done;
+
+	stream = g_mime_stream_mem_new ();
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_filter_dos2unix_new (FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
+
+	if (!cms_copy_octets (&reader, filtered) ||
+	    !cms_end (&reader) ||
+	    !cms_end (&reader) ||
+	    !cms_header (&reader, &tag, &length, &indefinite))
+		goto done;
+
+	if (tag == 0xa0) {
+		if (!cms_skip_value (&reader, tag, length, indefinite) ||
+		    !cms_header (&reader, &tag, &length, &indefinite))
+			goto done;
+	}
+
+	if (tag == 0xa1) {
+		if (!cms_skip_value (&reader, tag, length, indefinite) ||
+		    !cms_header (&reader, &tag, &length, &indefinite))
+			goto done;
+	}
+
+	if (tag != 0x31) {
+		cms_invalid (err);
+		goto done;
+	}
+
+	if (!cms_skip_value (&reader, tag, length, indefinite) ||
+	    !cms_finish (&reader))
+		goto done;
+
+	errno = 0;
+	if (g_mime_stream_flush (filtered) == -1 || g_mime_stream_reset (stream) == -1) {
+		cms_io_error (err);
+		goto done;
+	}
+
+	entity = g_mime_entity_load (NULL, stream, err);
+
+	if (!entity && (!err || !*err))
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot parse the extracted MIME content."));
+
+ done:
+	g_clear_object (&filtered);
+	g_clear_object (&stream);
+	g_object_unref (input);
+
+	return entity;
 }
 
 

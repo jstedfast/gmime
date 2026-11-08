@@ -47,6 +47,11 @@ This is an incremental migration, not yet a declaration of feature parity.
   `gmime-gpgme-4.0` for crypto. Core headers and GNOME bindings remain
   GPGME-independent; native crypto calls require application-supplied
   bindings. See PORTING.md for ownership, configuration and error handling.
+  `g_mime_application_pkcs7_mime_unwrap()` extracts encapsulated SignedData
+  MIME content without signature verification, addressing #67. It is available
+  without GPGME and to GNOME bindings. DER and BER container framing is checked,
+  but extracted content is explicitly unverified; detached signatures and
+  encapsulated types other than id-data are rejected.
   Stream, PGP/MIME and inline OpenPGP encryption accept separate visible and
   hidden recipient-key arrays, resolving #45 without exposing backend
   recipient-string syntax. Overlapping lists are rejected and the global
