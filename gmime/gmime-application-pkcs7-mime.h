@@ -73,6 +73,7 @@ GMimeSecureMimeType g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicati
 GMimeApplicationPkcs7Mime *g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err);
 GMimeEntity *g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime,
 						       size_t max_size, GError **err);
+GMimeEntity *g_mime_application_pkcs7_mime_unwrap (GMimeApplicationPkcs7Mime *pkcs7_mime, GError **err);
 
 G_END_DECLS
 
