@@ -180,6 +180,71 @@ The harness compiles the reference sources without modifying their checkout.
 The six empty-input cases explicitly retain GMime's documented EOS-on-success
 contract: unlike MimeKit, a failed empty read does not report successful EOS.
 
+### Performance benchmarks
+
+The top-level `benchmarks` directory contains the standalone benchmark targets
+and their dedicated fixtures. The `benchmark-gmime` executable ports the
+applicable synchronous workloads from
+MimeKit's benchmark suite. It covers address parsing and validation, RFC 2047
+decoding, parser and reader lifecycles, nested messages, message preparation,
+codecs, encoding validators, and stream filters. No MimeKit checkout or .NET
+runtime is needed. HTML/RTF, async, legacy-parser comparisons, and managed-runtime
+baselines are not applicable to GMime.
+
+Use an optimized build, without sanitizers or coverage, for measurements:
+
+```sh
+meson setup _build-bench --buildtype=release -Db_ndebug=false -Dtests=true
+meson compile -C _build-bench benchmark-gmime
+meson test -C _build-bench --no-rebuild benchmark-smoke
+meson test -C _build-bench --no-rebuild --benchmark benchmark --verbose
+```
+
+The smoke test checks every workload without timing. Select a subset or list
+the available names using the same executable:
+
+```sh
+meson test -C _build-bench --no-rebuild --benchmark benchmark --verbose \
+  --test-args='--list'
+meson test -C _build-bench --no-rebuild --benchmark benchmark --verbose \
+  --test-args='--filter=Parser/HeaderStress/* --milliseconds=200'
+```
+
+`--filter` accepts a case-sensitive glob. `--verify` performs untimed checks,
+and `--data` selects the `benchmarks/data` directory when running the executable
+directly. `--test-data` selects the shared `tests/data` fixtures. The defaults
+assume invocation from the repository root; Meson supplies absolute paths.
+Unmatched filters and invalid arguments fail explicitly.
+CSV output reports input bytes, measured iterations, median nanoseconds per
+operation over five samples, MiB/s, and the workload result. Each sample runs for at
+least 50 ms by default, after an untimed check and 5 ms warmup. Longer samples
+and repeated runs on an otherwise idle machine are recommended. MiB/s refers
+to input bytes, not decoded bytes; a mailbox operation parses the entire file,
+and a best-encoding operation scans its input 100 times, as in MimeKit.
+
+Fixtures are loaded/generated before timing. Parsing includes fresh input
+stream/parser construction and full model destruction, with memory and source
+storage measured separately. `/Compliance` variants enable a no-op logger;
+other parser/reader variants leave compliance disabled. Prepare resets both
+leaf transfer encodings before every operation. Codec/filter operations
+include their allocations and cleanup. Validators count issues without
+retaining them. These are native workload ports, not BenchmarkDotNet
+equivalents: deterministic destruction, GC, JIT, allocation accounting, and
+stream buffering differ. Preparation uses preloaded memory rather than
+MimeKit's file-backed attachment.
+
+The executable links the production library objects directly so its private
+validators and parser share one set of GTypes. It does not measure shared-library
+call overhead. See `benchmarks/data/README` for fixture provenance and
+deliberate input differences.
+
+Existing complementary targets remain available: `benchmark-compliance-validators`
+covers encoded-word and parameter validation; `test-codecs` and
+`test-codecs-scalar` already provide `--benchmark-base64` and
+`--benchmark-base64-encoder` for the upstream preallocated streaming layouts.
+The new fixture-based codec cases measure allocation and stream overhead
+instead of duplicating those layouts.
+
 ### Static analysis
 
 The `Static analysis` workflow runs CodeQL and Cppcheck independently on pushes

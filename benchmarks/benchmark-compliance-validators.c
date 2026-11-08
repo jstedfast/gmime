@@ -31,6 +31,7 @@ run (const char *name, const char *text, guint repeat, gboolean parameters,
 
 	iterations = MAX (2000, 20000000 / input->len);
 	start = g_get_monotonic_time ();
+
 	for (i = 0; i < iterations; i++) {
 		if (parameters) {
 			_g_mime_parameter_validate ((const guint8 *) input->str, input->len, content_type,
@@ -43,9 +44,12 @@ run (const char *name, const char *text, guint repeat, gboolean parameters,
 			_g_mime_encoded_word_validator_validate (&words, input->len, context);
 		}
 	}
+
 	elapsed = g_get_monotonic_time () - start;
+
 	printf ("%-24s %10.1f ns/header %8" G_GUINT64_FORMAT " issues\n",
 		name, elapsed * 1000.0 / iterations, count / iterations);
+
 	g_string_free (input, TRUE);
 }
 
@@ -89,28 +93,42 @@ main (void)
 		run (words[i].name, words[i].text, words[i].repeat, FALSE, TRUE, words[i].context);
 
 	for (i = 0; i < 20; i++) {
-		if (i)
+		if (i > 0)
 			g_string_append (text, ",\r\n ");
+
 		g_string_append (text, "=?utf-8?Q?Alice_Example?= <alice@example.com>");
 	}
+
 	run ("EncodedDisplayNames", text->str, 1, FALSE, TRUE, GMIME_ENCODED_WORD_CONTEXT_PHRASE);
+
 	g_string_printf (text, "%s\r\n =?utf-8?Q?valid?=\r\n %s\r\n =?utf-8?Q?bad=GG?=\r\n", padding, padding);
+
 	run ("SparseWords", text->str, 1, FALSE, TRUE, GMIME_ENCODED_WORD_CONTEXT_TEXT);
+
 	g_free (padding);
 
 	for (i = 0; i < G_N_ELEMENTS (parameters); i++)
 		run (parameters[i].name, parameters[i].text, 1, TRUE, parameters[i].content_type, GMIME_ENCODED_WORD_CONTEXT_TEXT);
 
 	g_string_assign (text, " text/plain");
+
 	for (i = 0; i < 100; i++)
 		g_string_append_printf (text, "; x%u=value", i);
+
 	g_string_append (text, "\r\n");
+
 	run ("ParameterManyNames", text->str, 1, TRUE, TRUE, GMIME_ENCODED_WORD_CONTEXT_TEXT);
+
 	g_string_assign (text, " attachment; filename*0*=utf-8''a");
+
 	for (i = 1; i <= 100; i++)
 		g_string_append_printf (text, "; filename*%u*=a", i);
+
 	g_string_append (text, "\r\n");
+
 	run ("ParameterManySegments", text->str, 1, TRUE, FALSE, GMIME_ENCODED_WORD_CONTEXT_TEXT);
+
 	g_string_free (text, TRUE);
+
 	return 0;
 }

@@ -1,0 +1,37 @@
+These fixtures accompany the native ports of MimeKit's benchmarks at
+a4a10817. MimeKit's MIT license is included in LICENSE.
+
+Copied from the MimeKit checkout, preserving its bytes:
+  startrek.eml       Benchmarks/TestData/messages/startrek.eml
+  content-length.mbox UnitTests/TestData/mbox/content-length.mbox.txt
+  lorem-ipsum.txt    UnitTests/TestData/text/lorem-ipsum.txt
+  wikipedia.txt     UnitTests/TestData/encoders/wikipedia.txt
+  wikipedia.qp      UnitTests/TestData/encoders/wikipedia.qp
+
+header-stress.eml is the MessageHeaderStressTest verbatim string extracted
+from the committed Benchmarks/MimeParserBenchmarks.cs at that revision,
+with doubled quotes unescaped and source newlines normalized to LF.
+No local modifications or release-comparison harnesses were imported.
+
+The benchmarks reuse tests/data/encodings/photo.jpg unchanged; it also matches
+MimeKit's UnitTests/TestData/images/girl.jpg byte-for-byte. The existing
+tests/data/encodings/photo.b64, tests/data/encodings/photo.uu, and
+tests/data/mbox/input/jwz.mbox (paths relative to the repository root)
+are converted to CRLF in untimed setup; this produces the same bytes as
+the corresponding MimeKit checkout fixtures, without checking in another
+10 MB copy of JWZ's mailbox. The wikipedia and lorem-ipsum fixtures here
+differ in content, not just line endings, from GMime's older test fixtures.
+
+Synthetic address, Base64-validator, nesting, and From-line cases are
+generated in C. Base64 validator payloads use a deterministic native PRNG,
+not the .NET Random sequence; lengths, line layouts, and chunk sizes match.
+The UTF-8 address parser cases and Latin-1 address validator cases retain
+their upstream byte encodings. In particular, the validator's international
+case is not valid UTF-8, and its Groups case lacks separating commas.
+
+The Unix newline-filter cases really contain LF-only data: upstream's
+LoremIpsumUnix setup accidentally used Unix2DosFilter a second time.
+Filter stream cases use explicit 4096-byte buffers (1024 for From filters),
+rather than relying on .NET MemoryStream.CopyTo's implementation.
+
+The byte-preserving .gitattributes in this directory applies to these fixtures.
