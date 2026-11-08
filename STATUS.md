@@ -3897,6 +3897,17 @@ and 87x for a long plain header. Many-name parameter performance was roughly
 unchanged. These are validator microbenchmarks, not whole-message throughput
 claims; timings depend on the machine and input.
 
+The top-level `benchmarks` directory contains the standalone benchmark targets.
+`benchmark-gmime` ports 136 additional named workloads from MimeKit's
+benchmark suite through `a4a10817`: address parsing/validation, RFC 2047,
+parser/reader lifecycles and nesting, preparation, fixture-based codecs,
+encoding validators, and stream filters. Parser/reader cases also have
+compliance-enabled variants. The executable shares the production library
+objects, preloads its fixtures, supports name filtering and CSV timing output,
+and has an untimed `benchmark-smoke` Meson test. Existing preallocated
+Base64 encoder/decoder and header-compliance benchmarks are not duplicated.
+See README.md for commands, scope, and cross-runtime comparison caveats.
+
 InvalidContentType also covers unexpected text after a recognizable type/subtype
 and before any parameter separator, including folded values and comments.
 Malformed parameters after a valid media type do not trigger this diagnostic.

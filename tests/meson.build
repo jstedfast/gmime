@@ -1,15 +1,5 @@
 tests_private_args = ['-DGMIME_PRIVATE_TESTS']
 
-compliance_benchmark = executable(
-  'benchmark-compliance-validators',
-  ['benchmark-compliance-validators.c', '../gmime/gmime-encoded-word-validator.c',
-   '../gmime/gmime-parameter-validator.c'],
-  include_directories: gmime_inc,
-  dependencies: public_deps,
-  build_by_default: false,
-)
-benchmark('compliance-validators', compliance_benchmark)
-
 testsuite_lib = static_library(
   'testsuite', 'testsuite.c',
   include_directories: gmime_inc,

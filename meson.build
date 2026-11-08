@@ -157,6 +157,7 @@ subdir('util')
 subdir('gmime')
 if get_option('tests')
   subdir('tests')
+  subdir('benchmarks')
 endif
 if get_option('fuzzing') != 'disabled'
   subdir('fuzzing')
