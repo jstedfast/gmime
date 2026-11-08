@@ -38,9 +38,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMultipartAlternative, g_mime_multipart_alternativ
 
 struct _GMimeMultipartAlternativeClass {
 	GMimeMultipartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

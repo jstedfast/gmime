@@ -59,9 +59,6 @@ struct _GMimeMultipartClass {
 	const char * (* get_boundary) (GMimeMultipart *multipart);
 
 	gboolean (* try_get_value) (GMimeMultipart *multipart, GMimeTextFormat format, GMimeTextPart **body);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

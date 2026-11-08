@@ -431,9 +431,6 @@ struct _GMimeReaderClass {
 	 **/
 	gboolean (* marker_end) (GMimeReader *reader, gint64 begin_offset, guint64 line_number,
 				gint64 end_offset, GError **error);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

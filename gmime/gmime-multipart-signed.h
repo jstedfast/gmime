@@ -44,9 +44,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMultipartSigned, g_mime_multipart_signed, GMIME, 
 
 struct _GMimeMultipartSignedClass {
 	GMimeMultipartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

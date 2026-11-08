@@ -44,9 +44,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMultipartEncrypted, g_mime_multipart_encrypted, G
 
 struct _GMimeMultipartEncryptedClass {
 	GMimeMultipartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -47,9 +47,6 @@ struct _GMimePartClass {
 	GMimeEntityClass parent_class;
 	
 	void (* set_content) (GMimePart *mime_part, GMimeContent *content);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

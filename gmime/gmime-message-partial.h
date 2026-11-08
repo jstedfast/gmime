@@ -41,9 +41,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMessagePartial, g_mime_message_partial, GMIME, ME
 
 struct _GMimeMessagePartialClass {
 	GMimePartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -36,9 +36,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeTextRfc822Headers, g_mime_text_rfc822_headers, GM
 
 struct _GMimeTextRfc822HeadersClass {
 	GMimeMessagePartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

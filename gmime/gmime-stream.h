@@ -83,9 +83,6 @@ struct _GMimeStreamClass {
 	gint64   (* tell)   (GMimeStream *stream);
 	gint64   (* length) (GMimeStream *stream);
 	GMimeStream * (* substream) (GMimeStream *stream, gint64 start, gint64 end);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -39,9 +39,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterUnix2Dos, g_mime_filter_unix2dos, GMIME, FI
 
 struct _GMimeFilterUnix2DosClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

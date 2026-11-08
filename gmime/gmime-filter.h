@@ -51,9 +51,6 @@ struct _GMimeFilterClass {
 			   char **outbuf, size_t *outlen, size_t *outprespace);
 	
 	void (* reset)    (GMimeFilter *filter);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

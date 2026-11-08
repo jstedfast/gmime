@@ -45,6 +45,7 @@ G_DECLARE_INTERFACE (GMimeDecoder, g_mime_decoder, GMIME, DECODER, GObject)
  **/
 struct _GMimeDecoderInterface {
 	GTypeInterface parent_iface;
+
 	GMimeContentEncoding (*get_encoding) (GMimeDecoder *decoder);
 	GMimeDecoder *(*clone) (GMimeDecoder *decoder);
 	gsize (*estimate_output_length) (GMimeDecoder *decoder, gsize input_length);
@@ -53,9 +54,6 @@ struct _GMimeDecoderInterface {
 	void (*reset) (GMimeDecoder *decoder);
 	gsize (*flush) (GMimeDecoder *decoder, const guint8 *input, gsize input_length,
 		       guint8 *output, gsize output_capacity);
-
-	/*< private >*/
-	gpointer reserved[7];
 };
 
 GMimeContentEncoding g_mime_decoder_get_encoding (GMimeDecoder *decoder);

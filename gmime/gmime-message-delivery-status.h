@@ -38,9 +38,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMessageDeliveryStatus, g_mime_message_delivery_st
 
 struct _GMimeMessageDeliveryStatusClass {
 	GMimePartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

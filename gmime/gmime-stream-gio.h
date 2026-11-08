@@ -40,9 +40,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeStreamGIO, g_mime_stream_gio, GMIME, STREAM_GIO, 
 
 struct _GMimeStreamGIOClass {
 	GMimeStreamClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

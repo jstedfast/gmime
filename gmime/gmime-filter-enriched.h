@@ -48,9 +48,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterEnriched, g_mime_filter_enriched, GMIME, FI
 
 struct _GMimeFilterEnrichedClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -38,9 +38,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterSmtpData, g_mime_filter_smtp_data, GMIME, F
 
 struct _GMimeFilterSmtpDataClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

@@ -40,9 +40,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterWindows, g_mime_filter_windows, GMIME, FILT
 
 struct _GMimeFilterWindowsClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

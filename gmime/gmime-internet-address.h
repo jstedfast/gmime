@@ -61,9 +61,6 @@ struct _GMimeInternetAddressClass {
 			    size_t *linelen, GString *str);
 	GMimeInternetAddress * (* clone) (GMimeInternetAddress *ia);
 	gboolean (* equal) (GMimeInternetAddress *ia, GMimeInternetAddress *other);
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 
@@ -89,9 +86,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeMailboxAddress, g_mime_mailbox_address, GMIME, MA
 
 struct _GMimeMailboxAddressClass {
 	GMimeInternetAddressClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 
@@ -118,9 +112,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeGroupAddress, g_mime_group_address, GMIME, GROUP_
 
 struct _GMimeGroupAddressClass {
 	GMimeInternetAddressClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

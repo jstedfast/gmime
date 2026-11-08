@@ -60,9 +60,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeApplicationPkcs7Mime, g_mime_application_pkcs7_mi
 
 struct _GMimeApplicationPkcs7MimeClass {
 	GMimePartClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 

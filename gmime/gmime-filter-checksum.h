@@ -38,9 +38,6 @@ G_DECLARE_DERIVABLE_TYPE (GMimeFilterChecksum, g_mime_filter_checksum, GMIME, FI
 
 struct _GMimeFilterChecksumClass {
 	GMimeFilterClass parent_class;
-
-	/*< private >*/
-	gpointer reserved[8];
 };
 
 
