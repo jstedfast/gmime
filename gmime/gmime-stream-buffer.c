@@ -153,6 +153,8 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 				if ((n = g_mime_stream_read (buffer_priv->source, buf + nread, len)) > 0) {
 					nread += n;
 					len -= n;
+				} else if (nread == 0) {
+					return n;
 				}
 				
 				break;
@@ -221,7 +223,9 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 					memmove (buffer_priv->buffer, buffer_priv->buffer + n, BLOCK_BUFFER_LEN - n);
 					buffer_priv->bufptr -= n;
 					buffer_priv->buflen -= n;
-				} else if (n == -1) {
+				} else if (n <= 0) {
+					if (n == 0)
+						errno = EIO;
 					if (nwritten == 0)
 						return -1;
 					
@@ -231,7 +235,9 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 			
 			if (buffer_priv->buflen == 0 && left >= BLOCK_BUFFER_LEN) {
 				while (left >= BLOCK_BUFFER_LEN) {
-					if ((n = g_mime_stream_write (source, buf + nwritten, BLOCK_BUFFER_LEN)) == -1) {
+					if ((n = g_mime_stream_write (source, buf + nwritten, BLOCK_BUFFER_LEN)) <= 0) {
+						if (n == 0)
+							errno = EIO;
 						if (nwritten == 0)
 							return -1;
 						
@@ -384,7 +390,7 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 			return -1;
 		}
 		
-		offset += stream_priv->bound_end;
+		offset += stream_priv->bound_end - stream_priv->position;
 		break;
 	default:
 		/* invalid whence argument */
@@ -401,7 +407,7 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 	    || (offset > 0 && offset <= (gint64) buffer_priv->buflen)) {
 		/* the position is within our pre-buffered region */
 		stream_priv->position += offset;
-		buffer_priv->bufptr += (size_t) offset;
+		buffer_priv->bufptr += offset;
 		buffer_priv->buflen -= (size_t) offset;
 		
 		return stream_priv->position;

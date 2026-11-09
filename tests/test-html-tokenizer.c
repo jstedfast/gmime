@@ -511,6 +511,115 @@ test_compliance_cap (void)
 }
 
 static void
+read_duplicate_tag (GMimeHtmlTokenizer *tokenizer)
+{
+	GMimeHtmlToken *token = next (tokenizer);
+
+	g_assert_nonnull (token);
+	g_mime_html_token_unref (token);
+}
+
+typedef struct {
+	GArray *issues;
+	guint destroyed;
+} ComplianceLog;
+
+static void
+log_tracked_issue (const GMimeHtmlComplianceIssue *issue, gpointer data)
+{
+	log_issue (issue, ((ComplianceLog *) data)->issues);
+}
+
+static void
+destroy_compliance_log (gpointer data)
+{
+	((ComplianceLog *) data)->destroyed++;
+}
+
+static void
+test_compliance_budget_changes (void)
+{
+	GMimeHtmlComplianceOptions *options = g_mime_html_compliance_options_new (), *clone;
+	ComplianceLog first = { g_array_new (FALSE, FALSE, sizeof (GMimeHtmlComplianceIssue)), 0 };
+	ComplianceLog second = { g_array_new (FALSE, FALSE, sizeof (GMimeHtmlComplianceIssue)), 0 };
+	ComplianceLog last = { g_array_new (FALSE, FALSE, sizeof (GMimeHtmlComplianceIssue)), 0 };
+	GString *input = g_string_new (NULL);
+	GMimeHtmlTokenizer *tokenizer;
+	ChunkStream *stream;
+	guint i;
+
+	for (i = 0; i < 17; i++)
+		g_string_append (input, "<p x=1 x=2>");
+	stream = chunk_new (input->str, input->len, 1);
+	tokenizer = g_mime_html_tokenizer_new (GMIME_STREAM (stream));
+	g_mime_html_compliance_options_set_max_issues_per_violation (options, 1);
+	g_mime_html_tokenizer_set_compliance_options (tokenizer, options);
+	g_mime_html_tokenizer_set_compliance_logger (tokenizer, log_tracked_issue, &first, destroy_compliance_log);
+	for (i = 0; i < 3; i++)
+		read_duplicate_tag (tokenizer);
+	g_assert_cmpuint (first.issues->len, ==, 2);
+
+	g_mime_html_compliance_options_set_max_issues_per_violation (options, 2);
+	for (i = 0; i < 3; i++)
+		read_duplicate_tag (tokenizer);
+	g_assert_cmpuint (first.issues->len, ==, 5);
+
+	clone = g_mime_html_compliance_options_clone (options);
+	g_mime_html_compliance_options_set_max_issues_per_violation (options, 0);
+	g_mime_html_tokenizer_set_compliance_options (tokenizer, clone);
+	g_mime_html_compliance_options_unref (clone);
+	for (i = 0; i < 3; i++)
+		read_duplicate_tag (tokenizer);
+	g_assert_cmpuint (first.issues->len, ==, 8);
+	for (i = 0; i < first.issues->len; i++) {
+		GMimeHtmlComplianceIssue *issue = &g_array_index (first.issues, GMimeHtmlComplianceIssue, i);
+		gboolean truncated = i == 1 || i == 4 || i == 7;
+
+		g_assert_cmpint (issue->violation, ==, truncated ?
+				 GMIME_HTML_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES :
+				 GMIME_HTML_COMPLIANCE_VIOLATION_DUPLICATE_ATTRIBUTE);
+		g_assert_cmpint (issue->severity, ==, GMIME_COMPLIANCE_SEVERITY_MAJOR);
+		g_assert_cmpint (issue->categories, ==, truncated ? GMIME_COMPLIANCE_CATEGORY_SECURITY :
+				 GMIME_COMPLIANCE_CATEGORY_SECURITY | GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY);
+	}
+
+	g_mime_html_tokenizer_set_compliance_logger (tokenizer, log_tracked_issue, &second, destroy_compliance_log);
+	g_assert_cmpuint (first.destroyed, ==, 1);
+	for (i = 0; i < 3; i++)
+		read_duplicate_tag (tokenizer);
+	g_assert_cmpuint (second.issues->len, ==, 3);
+	g_assert_cmpint (g_array_index (second.issues, GMimeHtmlComplianceIssue, 2).violation, ==,
+			 GMIME_HTML_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES);
+
+	g_mime_html_tokenizer_set_compliance_options (tokenizer, options);
+	g_mime_html_compliance_options_unref (options);
+	for (i = 0; i < 3; i++)
+		read_duplicate_tag (tokenizer);
+	g_assert_cmpuint (second.issues->len, ==, 6);
+	for (i = 3; i < second.issues->len; i++)
+		g_assert_cmpint (g_array_index (second.issues, GMimeHtmlComplianceIssue, i).violation, ==,
+				 GMIME_HTML_COMPLIANCE_VIOLATION_DUPLICATE_ATTRIBUTE);
+
+	g_mime_html_tokenizer_set_compliance_logger (tokenizer, NULL, NULL, NULL);
+	g_assert_cmpuint (second.destroyed, ==, 1);
+	read_duplicate_tag (tokenizer);
+	g_assert_cmpuint (second.issues->len, ==, 6);
+	g_mime_html_tokenizer_set_compliance_logger (tokenizer, log_tracked_issue, &last, destroy_compliance_log);
+	read_duplicate_tag (tokenizer);
+	g_assert_cmpuint (last.issues->len, ==, 1);
+	g_assert_null (next (tokenizer));
+	g_object_unref (tokenizer);
+	g_assert_cmpuint (first.destroyed, ==, 1);
+	g_assert_cmpuint (second.destroyed, ==, 1);
+	g_assert_cmpuint (last.destroyed, ==, 1);
+	g_object_unref (stream);
+	g_array_unref (first.issues);
+	g_array_unref (second.issues);
+	g_array_unref (last.issues);
+	g_string_free (input, TRUE);
+}
+
+static void
 test_errors (void)
 {
 	static const char *bad[] = { "\xc3", "\xc0\x80", "\xf4\x90\x80\x80", "<p>\xed\xa0\x80", "good\xf0\x9f" };
@@ -747,6 +856,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html/tokenizer/compliance", test_compliance);
 	g_test_add_func ("/html/tokenizer/upstream-compliance", test_compliance_vectors);
 	g_test_add_func ("/html/tokenizer/compliance-cap", test_compliance_cap);
+	g_test_add_func ("/html/tokenizer/compliance-budget-changes", test_compliance_budget_changes);
 	g_test_add_func ("/html/tokenizer/errors", test_errors);
 	g_test_add_func ("/html/tokenizer/lifetime-limits", test_lifetime_and_limits);
 	g_test_add_func ("/html/tokenizer/charset", test_charset);

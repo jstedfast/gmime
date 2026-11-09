@@ -347,6 +347,101 @@ compress_rtf (const guint8 *data, gsize length, gboolean compress, guint chunk)
 	return bytes;
 }
 
+static void
+test_property_snapshot_lifetimes (void)
+{
+	static const char *values[] = { "first", "replacement", "numeric text", "lower", "upper" };
+	GMimeTnefNameId *names[5], *missing, *identity;
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	GMimeTnefWriter *writer;
+	GMimeTnefPropertyWriter *output;
+	GMimeTnefReader *reader;
+	GMimeTnefPropertyReader *input;
+	GMimeTnefPropertySet *set;
+	GMimeTnefProperty *property;
+	GValue boxed_set = G_VALUE_INIT, boxed_property = G_VALUE_INIT;
+	GHashTable *index = g_hash_table_new_full ((GHashFunc) g_mime_tnef_name_id_hash,
+						  (GEqualFunc) g_mime_tnef_name_id_equal,
+						  (GDestroyNotify) g_mime_tnef_name_id_unref,
+						  (GDestroyNotify) g_mime_tnef_property_unref);
+	GError *error = NULL;
+	guint i;
+
+	names[0] = g_mime_tnef_name_id_new_with_id (property_set, 42);
+	names[1] = g_mime_tnef_name_id_new_with_id ("00020329-0000-0000-C000-000000000046", 42);
+	names[2] = g_mime_tnef_name_id_new_with_name (property_set, "42");
+	names[3] = g_mime_tnef_name_id_new_with_name (property_set, "custom");
+	names[4] = g_mime_tnef_name_id_new_with_name (property_set, "Custom");
+	writer = g_mime_tnef_writer_new (stream, 1252, 0, &error);
+	g_assert_no_error (error);
+	output = g_mime_tnef_writer_open_property_writer (writer, GMIME_TNEF_ATTRIBUTE_TAG_MAPI_PROPERTIES, &error);
+	g_assert_no_error (error);
+	for (i = 0; i < G_N_ELEMENTS (names); i++) {
+		CHECK (g_mime_tnef_property_writer_write_named_property (output, names[i],
+								       GMIME_TNEF_PROPERTY_TYPE_UNICODE, &error));
+		CHECK (g_mime_tnef_property_writer_write_value_string (output, values[i], &error));
+	}
+	CHECK (g_mime_tnef_property_writer_close (output, &error));
+	CHECK (g_mime_tnef_writer_close (writer, &error));
+	g_object_unref (output);
+	g_object_unref (writer);
+	reader = rewind_reader (stream, NULL);
+	input = find_properties (reader);
+	set = g_mime_tnef_property_reader_read_property_set (input, &error);
+	g_assert_no_error (error);
+	g_object_unref (input);
+	g_object_unref (reader);
+	g_object_unref (stream);
+
+	g_value_init (&boxed_set, GMIME_TYPE_TNEF_PROPERTY_SET);
+	g_value_set_boxed (&boxed_set, set);
+	g_mime_tnef_property_set_unref (set);
+	set = g_value_get_boxed (&boxed_set);
+	g_assert_cmpuint (g_mime_tnef_property_set_get_count (set), ==, G_N_ELEMENTS (names));
+	for (i = 0; i < G_N_ELEMENTS (names); i++) {
+		property = g_mime_tnef_property_set_get_property (set, i);
+		identity = g_mime_tnef_property_get_name (property);
+		g_assert_true (g_mime_tnef_name_id_equal (identity, names[i]));
+		g_assert_cmpstr (g_mime_tnef_name_id_get_property_set (identity), ==, property_set);
+		if (i < 2) {
+			g_assert_cmpint (g_mime_tnef_name_id_get_kind (identity), ==, GMIME_TNEF_NAME_ID_KIND_ID);
+			g_assert_cmpint (g_mime_tnef_name_id_get_id (identity), ==, 42);
+			g_assert_null (g_mime_tnef_name_id_get_name (identity));
+		} else {
+			g_assert_cmpint (g_mime_tnef_name_id_get_kind (identity), ==, GMIME_TNEF_NAME_ID_KIND_NAME);
+			g_assert_cmpstr (g_mime_tnef_name_id_get_name (identity), ==,
+					 g_mime_tnef_name_id_get_name (names[i]));
+		}
+		g_hash_table_insert (index, g_mime_tnef_name_id_ref (identity), g_mime_tnef_property_ref (property));
+	}
+	g_assert_cmpuint (g_hash_table_size (index), ==, 4);
+	property = g_mime_tnef_property_set_lookup_name (set, names[1]);
+	g_assert_cmpstr (g_value_get_string (g_mime_tnef_property_get_value (property, 0)), ==, "first");
+	missing = g_mime_tnef_name_id_new_with_id (property_set, 43);
+	g_assert_null (g_mime_tnef_property_set_lookup_name (set, missing));
+	g_assert_null (g_hash_table_lookup (index, missing));
+	g_mime_tnef_name_id_unref (missing);
+	missing = g_mime_tnef_name_id_new_with_id ("00020328-0000-0000-c000-000000000046", 42);
+	g_assert_null (g_mime_tnef_property_set_lookup_name (set, missing));
+	g_mime_tnef_name_id_unref (missing);
+
+	g_value_init (&boxed_property, GMIME_TYPE_TNEF_PROPERTY);
+	g_value_set_boxed (&boxed_property, property);
+	g_value_unset (&boxed_set);
+	for (i = 0; i < G_N_ELEMENTS (names); i++) {
+		property = g_hash_table_lookup (index, names[i]);
+		g_assert_nonnull (property);
+		g_assert_cmpstr (g_value_get_string (g_mime_tnef_property_get_value (property, 0)), ==,
+				 values[i == 0 ? 1 : i]);
+		g_mime_tnef_name_id_unref (names[i]);
+	}
+	g_hash_table_unref (index);
+	property = g_value_get_boxed (&boxed_property);
+	g_assert_cmpstr (g_value_get_string (g_mime_tnef_property_get_value (property, 0)), ==, "first");
+	g_assert_cmpint (g_mime_tnef_name_id_get_id (g_mime_tnef_property_get_name (property)), ==, 42);
+	g_value_unset (&boxed_property);
+}
+
 static GBytes *
 decompress_rtf (GBytes *bytes, guint chunk, gboolean valid)
 {
@@ -516,6 +611,11 @@ typedef struct {
 	guint suppressed;
 	gint64 last_offset;
 	guint last_depth;
+	guint destroyed;
+	GMimeComplianceSeverity last_severity;
+	GMimeComplianceCategories last_categories;
+	GMimeTnefAttributeTag last_attribute;
+	GMimeTnefPropertyTag last_property;
 } Diagnostics;
 
 static void
@@ -530,6 +630,332 @@ log_issue (const GMimeTnefComplianceIssue *issue, gpointer user_data)
 	}
 	diagnostics->last_offset = issue->stream_offset;
 	diagnostics->last_depth = issue->depth;
+	diagnostics->last_severity = issue->severity;
+	diagnostics->last_categories = issue->categories;
+	diagnostics->last_attribute = issue->attribute_tag;
+	diagnostics->last_property = issue->property_tag;
+	g_assert_nonnull (issue->description);
+}
+
+static void
+destroy_diagnostics (gpointer user_data)
+{
+	((Diagnostics *) user_data)->destroyed++;
+}
+
+static GByteArray *
+new_tnef_data (void)
+{
+	static const guint8 header[] = { 0x78, 0x9f, 0x3e, 0x22, 0x34, 0x12 };
+	GByteArray *data = g_byte_array_new ();
+
+	g_byte_array_append (data, header, sizeof header);
+	return data;
+}
+
+static void
+append_tnef_attribute (GByteArray *data, guint8 level, GMimeTnefAttributeTag tag,
+		       const guint8 *value, guint length)
+{
+	guint32 encoded_tag = GUINT32_TO_LE (tag), encoded_length = GUINT32_TO_LE (length);
+	guint16 checksum = GUINT16_TO_LE (g_mime_tnef_checksum_update (0, value, length));
+
+	g_byte_array_append (data, &level, 1);
+	g_byte_array_append (data, (const guint8 *) &encoded_tag, 4);
+	g_byte_array_append (data, (const guint8 *) &encoded_length, 4);
+	if (length)
+		g_byte_array_append (data, value, length);
+	g_byte_array_append (data, (const guint8 *) &checksum, 2);
+}
+
+static void
+test_option_snapshots (void)
+{
+	static const guint8 text[] = { 0xc0, 0xc1, 0 };
+	GByteArray *data = new_tnef_data ();
+	GMimeStream *stream, *value;
+	GMimeTnefOptions *options, *clone;
+	const GMimeTnefOptions *snapshot;
+	GMimeTnefReader *reader;
+	Diagnostics diagnostics = { 0 };
+	GError *error = NULL;
+	char *decoded, buffer[3];
+	guint pass, i;
+
+	for (i = 0; i < 3; i++)
+		append_tnef_attribute (data, 1, GMIME_TNEF_ATTRIBUTE_TAG_SUBJECT, text, sizeof text);
+	stream = g_mime_stream_mem_new_with_buffer ((const char *) data->data, data->len);
+	for (pass = 0; pass < 2; pass++) {
+		options = g_mime_tnef_options_new ();
+		g_mime_tnef_options_set_default_codepage (options, 1251);
+		g_mime_tnef_options_set_max_property_value_length (options, pass ? 2 : 3);
+		g_mime_tnef_options_set_max_total_data_bytes (options, 5);
+		g_mime_tnef_options_set_max_nesting_depth (options, 0);
+		clone = g_mime_tnef_options_clone (options);
+		g_mime_tnef_options_set_default_codepage (options, 1252);
+		g_mime_tnef_options_unref (options);
+		reader = rewind_reader (stream, clone);
+		g_mime_tnef_options_set_max_property_value_length (clone, 100);
+		g_mime_tnef_options_set_max_total_data_bytes (clone, 100);
+		g_mime_tnef_options_set_default_codepage (clone, 1252);
+		g_mime_tnef_options_unref (clone);
+		snapshot = g_mime_tnef_reader_get_options (reader);
+		g_assert_cmpuint (g_mime_tnef_options_get_max_property_value_length (snapshot), ==, (pass ? 2 : 3));
+		g_assert_cmpuint (g_mime_tnef_options_get_max_total_data_bytes (snapshot), ==, 5);
+		g_assert_cmpuint (g_mime_tnef_options_get_max_nesting_depth (snapshot), ==, 0);
+		g_assert_cmpint (g_mime_tnef_options_get_default_codepage (snapshot), ==, 1251);
+		g_mime_tnef_reader_set_compliance_logger (reader, log_issue, &diagnostics, NULL);
+		memset (&diagnostics, 0, sizeof diagnostics);
+		for (i = 0; i < 2; i++) {
+			CHECK (g_mime_tnef_reader_read (reader, &error));
+			g_assert_cmpint (g_mime_tnef_reader_get_codepage (reader), ==, 1251);
+			decoded = g_mime_tnef_reader_read_value_as_string (reader, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (decoded, ==, (i || pass ? "" : "\xd0\x90\xd0\x91"));
+			g_free (decoded);
+		}
+		g_assert_cmpuint (diagnostics.counts[GMIME_TNEF_COMPLIANCE_VIOLATION_DATA_SIZE_LIMIT_EXCEEDED],
+				  ==, (pass ? 2 : 1));
+		CHECK (g_mime_tnef_reader_read (reader, &error));
+		value = g_mime_tnef_reader_open_value_stream (reader, &error);
+		g_assert_no_error (error);
+		g_assert_cmpint (g_mime_stream_read (value, buffer, sizeof buffer), ==, sizeof buffer);
+		g_assert_cmpmem (buffer, sizeof buffer, text, sizeof text);
+		g_assert_true (g_mime_stream_eos (value));
+		g_assert_cmpint (g_mime_stream_close (value), ==, 0);
+		g_object_unref (value);
+		g_assert_false (g_mime_tnef_reader_read (reader, &error));
+		g_assert_no_error (error);
+		g_object_unref (reader);
+	}
+	g_object_unref (stream);
+	g_byte_array_unref (data);
+}
+
+static void
+test_compliance_budget (void)
+{
+	static const guint8 version[] = { 1, 0, 0, 0 }, invalid_class[] = { '\n' };
+	GByteArray *data = new_tnef_data ();
+	GMimeStream *stream;
+	GMimeTnefReader *reader;
+	GMimeTnefComplianceOptions *options, *clone;
+	Diagnostics discarded = { 0 }, diagnostics = { 0 };
+	GError *error = NULL;
+	guint i, pass;
+
+	for (i = 0; i < 4; i++) {
+		append_tnef_attribute (data, 1, GMIME_TNEF_ATTRIBUTE_TAG_TNEF_VERSION, version, sizeof version);
+		append_tnef_attribute (data, 1, GMIME_TNEF_ATTRIBUTE_TAG_MESSAGE_CLASS, invalid_class, sizeof invalid_class);
+	}
+	stream = g_mime_stream_mem_new_with_buffer ((const char *) data->data, data->len);
+	for (pass = 0; pass < 2; pass++) {
+		memset (&diagnostics, 0, sizeof diagnostics);
+		options = g_mime_tnef_compliance_options_new ();
+		g_mime_tnef_compliance_options_set_max_issues_per_violation (options, pass ? 0 : 1);
+		clone = g_mime_tnef_compliance_options_clone (options);
+		g_mime_tnef_compliance_options_unref (options);
+		reader = rewind_reader (stream, NULL);
+		g_mime_tnef_reader_set_compliance_options (reader, clone);
+		g_mime_tnef_compliance_options_set_max_issues_per_violation (clone, 2);
+		g_mime_tnef_compliance_options_unref (clone);
+		g_assert_cmpuint (g_mime_tnef_compliance_options_get_max_issues_per_violation (
+					 g_mime_tnef_reader_get_compliance_options (reader)), ==, (pass ? 0 : 1));
+		g_mime_tnef_reader_set_compliance_logger (reader, log_issue, &discarded, destroy_diagnostics);
+		g_mime_tnef_reader_set_compliance_logger (reader, NULL, NULL, NULL);
+		g_assert_cmpuint (discarded.destroyed, ==, pass + 1);
+		g_mime_tnef_reader_set_compliance_logger (reader, log_issue, &diagnostics, destroy_diagnostics);
+		CHECK (g_mime_tnef_reader_read (reader, &error));
+		g_mime_tnef_compliance_options_set_max_issues_per_violation (
+			g_mime_tnef_reader_get_compliance_options (reader), 2);
+		i = 1;
+		while (g_mime_tnef_reader_read (reader, &error))
+			i++;
+		g_assert_no_error (error);
+		g_assert_cmpuint (i, ==, 8);
+		g_assert_cmpuint (diagnostics.counts[GMIME_TNEF_COMPLIANCE_VIOLATION_UNSUPPORTED_VERSION], ==,
+				  (pass ? 4 : 1));
+		g_assert_cmpuint (diagnostics.counts[GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_MESSAGE_CLASS], ==,
+				  (pass ? 4 : 1));
+		g_assert_cmpuint (diagnostics.suppressed, ==, (pass ? 0 : 1));
+		g_assert_cmpuint (diagnostics.destroyed, ==, 0);
+		g_object_unref (reader);
+		g_assert_cmpuint (diagnostics.destroyed, ==, 1);
+	}
+	g_object_unref (stream);
+	g_byte_array_unref (data);
+}
+
+static void
+test_attribute_diagnostics (void)
+{
+	static const guint8 version[] = { 1, 0, 0, 0 }, codepage[] = { 0xff, 0xff, 0xff, 0x7f };
+	static const guint8 bad_class[] = "IPM.\nNote", date[14] = { 0 }, long_class[256] = { 0 };
+	static const struct {
+		GMimeTnefAttributeTag tag;
+		guint8 level;
+		const guint8 *value;
+		guint length;
+		GMimeTnefComplianceViolation violation;
+		GMimeComplianceSeverity severity;
+		GMimeComplianceCategories categories;
+	} cases[] = {
+		{ GMIME_TNEF_ATTRIBUTE_TAG_TNEF_VERSION, 1, version, 4,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_UNSUPPORTED_VERSION, GMIME_COMPLIANCE_SEVERITY_MINOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_OEM_CODEPAGE, 1, codepage, 4,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_MESSAGE_CODEPAGE, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_DATA_LOSS },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_TNEF_VERSION, 1, version, 3,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_ATTRIBUTE_VALUE, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_DATA_LOSS },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_MESSAGE_CLASS, 1, bad_class, sizeof bad_class,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_MESSAGE_CLASS, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_SECURITY },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_MESSAGE_CLASS, 1, NULL, 0,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_MESSAGE_CLASS, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_SECURITY },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_MESSAGE_CLASS, 1, long_class, sizeof long_class,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_MESSAGE_CLASS, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_SECURITY },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_SUBJECT, 3, NULL, 0,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_ATTRIBUTE_LEVEL, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_SECURITY },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_SUBJECT, 2, NULL, 0,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_ATTRIBUTE_LEVEL_MISMATCH, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_SECURITY },
+		{ (GMimeTnefAttributeTag) 0x0006ffff, 1, NULL, 0,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_UNKNOWN_ATTRIBUTE, GMIME_COMPLIANCE_SEVERITY_MINOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_DATA_LOSS },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_DATE_SENT, 1, date, sizeof date,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_DATE, GMIME_COMPLIANCE_SEVERITY_MINOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_DATA_LOSS },
+		{ GMIME_TNEF_ATTRIBUTE_TAG_PRIORITY, 1, version, 1,
+		  GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_ATTRIBUTE_VALUE, GMIME_COMPLIANCE_SEVERITY_MAJOR,
+		  GMIME_COMPLIANCE_CATEGORY_INTEROPERABILITY | GMIME_COMPLIANCE_CATEGORY_DATA_LOSS }
+	};
+	GMimeTnefReader *reader;
+	TestStream *stream;
+	GByteArray *data;
+	GBytes *bytes;
+	GDateTime *decoded;
+	GError *error = NULL;
+	Diagnostics diagnostics;
+	gint32 number;
+	guint i, j;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		memset (&diagnostics, 0, sizeof diagnostics);
+		data = new_tnef_data ();
+		append_tnef_attribute (data, cases[i].level, cases[i].tag, cases[i].value, cases[i].length);
+		append_tnef_attribute (data, 2, GMIME_TNEF_ATTRIBUTE_TAG_ATTACH_DATA, (const guint8 *) "tail", 4);
+		stream = g_object_new (test_stream_get_type (), NULL);
+		g_clear_object (&stream->inner);
+		stream->inner = g_mime_stream_mem_new_with_buffer ((const char *) data->data, data->len);
+		stream->chunk = 1;
+		reader = g_mime_tnef_reader_new (GMIME_STREAM (stream), NULL);
+		g_mime_tnef_reader_set_compliance_logger (reader, log_issue, &diagnostics, NULL);
+		CHECK (g_mime_tnef_reader_read (reader, &error));
+		g_assert_cmpuint (g_mime_tnef_reader_get_level (reader), ==, cases[i].level);
+		g_assert_cmpuint (g_mime_tnef_reader_get_length (reader), ==, cases[i].length);
+		if (cases[i].tag == GMIME_TNEF_ATTRIBUTE_TAG_DATE_SENT) {
+			decoded = g_mime_tnef_reader_read_value_as_date_time (reader, &error);
+			g_assert_no_error (error);
+			g_assert_cmpint (g_date_time_get_year (decoded), ==, 1);
+			g_date_time_unref (decoded);
+		} else if (cases[i].tag == GMIME_TNEF_ATTRIBUTE_TAG_PRIORITY) {
+			CHECK (g_mime_tnef_reader_read_value_as_int32 (reader, &number, &error));
+			g_assert_cmpint (number, ==, 0);
+		}
+		g_assert_cmpuint (diagnostics.last_attribute, ==, cases[i].tag);
+		g_assert_cmpuint (diagnostics.last_property, ==, 0);
+		g_assert_cmpuint (diagnostics.last_severity, ==, cases[i].severity);
+		g_assert_cmpuint (diagnostics.last_categories, ==, cases[i].categories);
+		g_assert_cmpint (diagnostics.last_offset, ==, 6);
+		for (j = 0; j < G_N_ELEMENTS (diagnostics.counts); j++)
+			g_assert_cmpuint (diagnostics.counts[j], ==, (j == (guint) cases[i].violation ? 1 : 0));
+		CHECK (g_mime_tnef_reader_read (reader, &error));
+		bytes = g_mime_tnef_reader_read_value_as_bytes (reader, &error);
+		g_assert_no_error (error);
+		g_assert_cmpmem (g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes), "tail", 4);
+		g_bytes_unref (bytes);
+		g_assert_false (g_mime_tnef_reader_read (reader, &error));
+		g_assert_no_error (error);
+		g_object_unref (reader);
+		g_object_unref (stream);
+		g_byte_array_unref (data);
+	}
+}
+
+static void
+test_malformed_text (void)
+{
+	static const guint8 broken_unicode[] = { 0, 0xd8, 'A', 0, 0x3d, 0xd8, 0, 0xde, 0, 0xdc, 0, 0xd8 };
+	static const guint8 odd_unicode[] = { 'A', 0, 0xff }, terminated[] = { 'A', 0, 0, 0, 0, 0 };
+	static const guint8 broken_utf8[] = { 'A', 0xff, 'B' }, broken_1252[] = { 0x80, 0x81, 'A' };
+	static const struct {
+		GMimeTnefPropertyType type;
+		int codepage;
+		const guint8 *data;
+		guint length;
+		const char *expected;
+	} cases[] = {
+		{ GMIME_TNEF_PROPERTY_TYPE_UNICODE, 1252, broken_unicode, sizeof broken_unicode,
+		  "\xef\xbf\xbd" "A\xf0\x9f\x98\x80\xef\xbf\xbd\xef\xbf\xbd" },
+		{ GMIME_TNEF_PROPERTY_TYPE_UNICODE, 1252, odd_unicode, sizeof odd_unicode, "A" },
+		{ GMIME_TNEF_PROPERTY_TYPE_UNICODE, 1252, terminated, sizeof terminated, "A" },
+		{ GMIME_TNEF_PROPERTY_TYPE_UNICODE, 1252, NULL, 0, "" },
+		{ GMIME_TNEF_PROPERTY_TYPE_STRING8, 65001, broken_utf8, sizeof broken_utf8, "A\xef\xbf\xbd" "B" },
+		{ GMIME_TNEF_PROPERTY_TYPE_STRING8, 1252, broken_1252, sizeof broken_1252, "\xe2\x82\xac\xc2\x81" "A" }
+	};
+	GMimeStream *stream;
+	GMimeTnefReader *reader;
+	GMimeTnefPropertyReader *properties;
+	GMimeTnefOptions *options;
+	GByteArray *data, *payload;
+	GError *error = NULL;
+	guint32 header[4];
+	static const guint8 padding[3] = { 0 };
+	char *text;
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		header[0] = GUINT32_TO_LE (1);
+		header[1] = GUINT32_TO_LE (g_mime_tnef_property_tag_new (0x2000, cases[i].type));
+		header[2] = GUINT32_TO_LE (1);
+		header[3] = GUINT32_TO_LE (cases[i].length);
+		payload = g_byte_array_new ();
+		g_byte_array_append (payload, (const guint8 *) header, sizeof header);
+		if (cases[i].length)
+			g_byte_array_append (payload, cases[i].data, cases[i].length);
+		g_byte_array_append (payload, padding, (4 - cases[i].length % 4) % 4);
+		data = new_tnef_data ();
+		append_tnef_attribute (data, 1, GMIME_TNEF_ATTRIBUTE_TAG_MAPI_PROPERTIES, payload->data, payload->len);
+		g_byte_array_unref (payload);
+		stream = g_mime_stream_mem_new_with_buffer ((const char *) data->data, data->len);
+		options = g_mime_tnef_options_new ();
+		g_mime_tnef_options_set_default_codepage (options, cases[i].codepage);
+		reader = g_mime_tnef_reader_new (stream, options);
+		g_mime_tnef_options_unref (options);
+		properties = find_properties (reader);
+		CHECK (g_mime_tnef_property_reader_read_next_property (properties, &error));
+		text = g_mime_tnef_property_reader_read_value_as_string (properties, &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (text, ==, cases[i].expected);
+		g_free (text);
+		g_assert_true (g_mime_tnef_property_reader_is_value_consumed (properties));
+		g_assert_null (g_mime_tnef_property_reader_read_value_as_bytes (properties, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+		g_clear_error (&error);
+		g_assert_false (g_mime_tnef_property_reader_read_next_property (properties, &error));
+		g_assert_no_error (error);
+		g_assert_false (g_mime_tnef_reader_read (reader, &error));
+		g_assert_no_error (error);
+		g_object_unref (properties);
+		g_object_unref (reader);
+		g_object_unref (stream);
+		g_byte_array_unref (data);
+	}
 }
 
 static void
@@ -676,7 +1102,8 @@ test_reader_errors (void)
 static void
 test_text_encodings (void)
 {
-	static const struct {
+	char *long_text = g_strnfill (4096, 'A');
+	const struct {
 		int codepage;
 		const char *input, *expected;
 	} cases[] = { { 1252,
@@ -685,7 +1112,8 @@ test_text_encodings (void)
 			"A\xe2\x82\xac?B" },
 		      { 936, "\xe4\xb8\x82", "\xe4\xb8\x82" },
 		      { 50220, "\xe6\x97\xa5\xe6\x9c\xac\xe2\x98\x83\xe8\xaa\x9e",
-			"\xe6\x97\xa5\xe6\x9c\xac?\xe8\xaa\x9e" } };
+			"\xe6\x97\xa5\xe6\x9c\xac?\xe8\xaa\x9e" },
+		      { 65001, long_text, long_text } };
 
 	GMimeStream *output;
 	GMimeTnefWriter *writer;
@@ -700,13 +1128,23 @@ test_text_encodings (void)
 		output = g_mime_stream_mem_new ();
 		writer = g_mime_tnef_writer_new (output, cases[i].codepage, 0, &error);
 		g_assert_no_error (error);
+		g_assert_false (g_mime_tnef_writer_write_attribute_string (writer, GMIME_TNEF_ATTRIBUTE_TAG_SUBJECT,
+									 "invalid\xff", &error));
+		g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE);
+		g_clear_error (&error);
 		CHECK (g_mime_tnef_writer_write_attribute_string (writer, GMIME_TNEF_ATTRIBUTE_TAG_SUBJECT,
 								  cases[i].input, &error));
 		properties = g_mime_tnef_writer_open_property_writer (writer, GMIME_TNEF_ATTRIBUTE_TAG_MAPI_PROPERTIES,
 								      &error);
 		write_tag (properties, 0x2000, GMIME_TNEF_PROPERTY_TYPE_STRING8);
+		g_assert_false (g_mime_tnef_property_writer_write_value_string (properties, "invalid\xff", &error));
+		g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE);
+		g_clear_error (&error);
 		CHECK (g_mime_tnef_property_writer_write_value_string (properties, cases[i].input, &error));
 		write_tag (properties, 0x2001, GMIME_TNEF_PROPERTY_TYPE_UNICODE);
+		g_assert_false (g_mime_tnef_property_writer_write_value_string (properties, "invalid\xff", &error));
+		g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE);
+		g_clear_error (&error);
 		CHECK (g_mime_tnef_property_writer_write_value_string (properties, cases[i].input, &error));
 		CHECK (g_mime_tnef_property_writer_close (properties, &error));
 		CHECK (g_mime_tnef_writer_close (writer, &error));
@@ -739,6 +1177,7 @@ test_text_encodings (void)
 		g_object_unref (reader);
 		g_object_unref (output);
 	}
+	g_free (long_text);
 }
 
 static void
@@ -976,9 +1415,14 @@ main (int argc, char **argv)
 	}
 	g_mime_init ();
 	g_test_add_func ("/tnef/properties", test_properties);
+	g_test_add_func ("/tnef/property-snapshot-lifetimes", test_property_snapshot_lifetimes);
 	g_test_add_func ("/tnef/rtf", test_rtf);
 	g_test_add_func ("/tnef/nested-streams", test_nested_streams);
 	g_test_add_func ("/tnef/limits-and-damage", test_limits_and_damage);
+	g_test_add_func ("/tnef/option-snapshots", test_option_snapshots);
+	g_test_add_func ("/tnef/compliance-budget", test_compliance_budget);
+	g_test_add_func ("/tnef/attribute-diagnostics", test_attribute_diagnostics);
+	g_test_add_func ("/tnef/malformed-text", test_malformed_text);
 	g_test_add_func ("/tnef/reader-errors", test_reader_errors);
 	g_test_add_func ("/tnef/text-encodings", test_text_encodings);
 	g_test_add_func ("/tnef/depth-budget-and-counts", test_depth_budget_and_counts);

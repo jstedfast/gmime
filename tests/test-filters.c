@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <zlib.h>
 
 #include <gmime/gmime.h>
 
@@ -206,16 +207,16 @@ error:
 }
 
 static void
-assert_enriched_output (const char *input, size_t length, const char *expected)
+assert_enriched_output (const char *input, size_t length, const char *expected, guint32 flags)
 {
-	GMimeFilter *filter = g_mime_filter_enriched_new (0);
+	GMimeFilter *filter;
 	char *bounded = g_memdup2 (input, length), *out;
 	size_t split, outlen, prespace, i, count = length > 512 ? 3 : length + 1;
 	GString *actual = g_string_new (NULL);
 
 	for (i = 0; i < count; i++) {
 		split = length > 512 ? (i == 2 ? length : i * (length / 2)) : i;
-		g_mime_filter_reset (filter);
+		filter = g_mime_filter_enriched_new (flags);
 		g_string_truncate (actual, 0);
 		g_mime_filter_filter (filter, bounded, split, 0, &out, &outlen, &prespace);
 		if (outlen)
@@ -229,10 +230,29 @@ assert_enriched_output (const char *input, size_t length, const char *expected)
 			testsuite_check_passed ();
 		else
 			testsuite_check_failed ("expected=\"%.300s\", actual=\"%.300s\"", expected, actual->str);
+		g_object_unref (filter);
+	}
+
+	if (length <= 512) {
+		filter = g_mime_filter_enriched_new (flags);
+		g_string_truncate (actual, 0);
+		for (i = 0; i < length; i++) {
+			g_mime_filter_filter (filter, bounded + i, 1, 0, &out, &outlen, &prespace);
+			if (outlen)
+				g_string_append_len (actual, out, outlen);
+		}
+		g_mime_filter_complete (filter, bounded, 0, 0, &out, &outlen, &prespace);
+		if (outlen)
+			g_string_append_len (actual, out, outlen);
+		testsuite_check ("Enriched one-byte conversion (%zu bytes)", length);
+		if (!strcmp (actual->str, expected))
+			testsuite_check_passed ();
+		else
+			testsuite_check_failed ("expected=\"%.300s\", actual=\"%.300s\"", expected, actual->str);
+		g_object_unref (filter);
 	}
 
 	g_string_free (actual, TRUE);
-	g_object_unref (filter);
 	g_free (bounded);
 }
 
@@ -240,6 +260,7 @@ static void
 test_enriched_tags (void)
 {
 	static const char nul_tag[] = "a<bold\0ignored>x</bold\0ignored>b<bold>c</bold>";
+	static const char richtext[] = "a<lt>b<nl>c\nd";
 	static const struct {
 		const char *input, *expected;
 	} cases[] = {
@@ -249,32 +270,83 @@ test_enriched_tags (void)
 		{ "<fontfamily><param>serif</param>x</fontfamily>", "<font face=\"serif\">x</font>" },
 		{ "<lang><param>en</param>x</lang>", "<span lang=\"en\">x</span>" },
 		{ "<paraindent><param>left,in</param>x</paraindent>",
-		  "<p style=\"margin-left:4em; margin:4em\">x</p>" }
+		  "<p style=\"margin-left:4em; margin:4em\">x</p>" },
+		{ "<paraindent><param>RIGHT,out</param>x</paraindent>",
+		  "<p style=\"margin-right:4em; margin:-4em\">x</p>" },
+		{ "<paraindent><param>left,right,in,out,unknown</param>x</paraindent>",
+		  "<p style=\"margin-left:4em; margin-right:4em\">x</p>" },
+		{ "<color><param>ffff,8000,0000</param>x</color>", "<font color=\"#FF8000\">x</font>" },
+		{ "<color><param>not-a-color</param>x</color>", "<font color=\"not-a-color\">x</font>" },
+		{ "<fontfamily><param>serif\"ignored</param>x</fontfamily>", "<font face=\"serif\">x</font>" },
+		{ "<lang><param>en\"ignored</param>x</lang>", "<span lang=\"en\">x</span>" },
+		{ "a  b\nc\n\nd", "a&nbsp; b c<br>d" },
+		{ "<nofill>a\n<nofill>b\n</nofill>c\n</nofill>d\ne", "a<br>b<br>c<br>d e" },
+		{ "<<&>", "&lt;&amp;&gt;" },
+		{ "trailing&", "trailing&amp;" },
+		{ "trailing ", "trailing " },
+		{ "trailing\n", "trailing" },
+		{ "<nofill>trailing\n", "trailing<br>" },
+		{ "unfinished<bold", "unfinished" },
+		{ "<color><bold>hello</bold>", "<b>hello</b>" },
+		{ "<color><param>red</wrong>tail", "tail" },
+		{ "<color><param>red", "" }
+	}, growth[] = {
+		{ "<bold>x</bold>", "<b>x</b>" },
+		{ "<nofill>\nx</nofill>", "<br>x" },
+		{ "\n\nx", "<br>x" },
+		{ "<<x", "&lt;x" },
+		{ "<paraindent><param>left,right,in</param>x</paraindent>",
+		  "<p style=\"margin-left:4em; margin-right:4em; margin:4em\">x</p>" }
 	};
 	GString *input = g_string_new ("<");
+	GString *expected;
 	char *tag = g_strnfill (16 * 1024 * 1024, 'x');
-	guint i;
+	guint i, j, k;
 
 	for (i = 0; i < G_N_ELEMENTS (cases); i++)
-		assert_enriched_output (cases[i].input, strlen (cases[i].input), cases[i].expected);
-	assert_enriched_output (nul_tag, sizeof (nul_tag) - 1, "axb<b>c</b>");
+		assert_enriched_output (cases[i].input, strlen (cases[i].input), cases[i].expected, 0);
+	assert_enriched_output (nul_tag, sizeof (nul_tag) - 1, "axb<b>c</b>", 0);
+	assert_enriched_output (richtext, sizeof (richtext) - 1, "a&lt;b<br>c d", GMIME_FILTER_ENRICHED_IS_RICHTEXT);
+	assert_enriched_output ("text<l", 6, "text", GMIME_FILTER_ENRICHED_IS_RICHTEXT);
 
 	g_string_append (input, tag);
 	g_string_append (input, "><bold>x</bold>");
-	assert_enriched_output (input->str, input->len, "<b>x</b>");
+	assert_enriched_output (input->str, input->len, "<b>x</b>", 0);
 	g_free (tag);
 
 	g_string_truncate (input, 0);
 	for (i = 0; i < 600000; i++)
 		g_string_append (input, "<unknown>");
-	assert_enriched_output (input->str, input->len, "");
+	assert_enriched_output (input->str, input->len, "", 0);
+	g_string_truncate (input, 0);
+	expected = g_string_new (NULL);
+	for (i = 0; i < 2048; i++) {
+		g_string_append (input, ">&<<x");
+		g_string_append (expected, "&gt;&amp;&lt;x");
+	}
+	assert_enriched_output (input->str, input->len, expected->str, 0);
+	for (i = 0; i < G_N_ELEMENTS (growth); i++) {
+		for (j = 16; j < 48; j++) {
+			g_string_truncate (input, 0);
+			g_string_truncate (expected, 0);
+			for (k = 0; k < j; k++) {
+				g_string_append_c (input, '&');
+				g_string_append (expected, "&amp;");
+			}
+			g_string_append (input, growth[i].input);
+			g_string_append (expected, growth[i].expected);
+			assert_enriched_output (input->str, input->len, expected->str, 0);
+		}
+	}
+	g_string_free (expected, TRUE);
 	g_string_free (input, TRUE);
 }
+
+static void assert_gzip_payload (GByteArray *encoded, const guint8 *input, size_t length);
 
 static void
 test_gzip (const char *datadir, const char *filename)
 {
-	char *name = g_strdup_printf ("%s.gz", filename);
 	char *path = g_build_filename (datadir, filename, NULL);
 	const char *what = "GMimeFilterGzip::zip";
 	GByteArray *actual, *expected;
@@ -295,32 +367,11 @@ test_gzip (const char *datadir, const char *filename)
 	g_mime_filter_reset (filter);
 	g_object_unref (stream);
 	g_object_unref (filter);
+	expected = read_all_bytes (path, TRUE);
 	g_free (path);
 	
-	path = g_build_filename (datadir, name, NULL);
-	expected = read_all_bytes (path, FALSE);
-	g_free (name);
-	g_free (path);
-	
-	if (actual->len != 1233 && (actual->len != expected->len || memcmp (actual->data, expected->data, actual->len) != 0)) {
-		if (actual->len != expected->len)
-			testsuite_check_failed ("%s failed: streams are not the same length: %u", what, actual->len);
-		else
-			testsuite_check_failed ("%s failed: streams do not match", what);
-		
-		name = g_strdup_printf ("%s.1.gz", filename);
-		path = g_build_filename (datadir, name, NULL);
-		g_free (name);
-		
-		stream = g_mime_stream_fs_open (path, O_WRONLY | O_CREAT | O_TRUNC, 0644, NULL);
-		g_free (path);
-		
-		g_mime_stream_write (stream, (const char *) actual->data, actual->len);
-		g_mime_stream_flush (stream);
-		g_object_unref (stream);
-	} else {
-		testsuite_check_passed ();
-	}
+	assert_gzip_payload (actual, expected->data, expected->len);
+	testsuite_check_passed ();
 	
 	g_byte_array_free (expected, TRUE);
 	g_byte_array_free (actual, TRUE);
@@ -386,6 +437,203 @@ error:
 	
 	g_mime_filter_reset (filter);
 	g_object_unref (filter);
+}
+
+static void
+collect_filter_output (GMimeFilter *filter, const guint8 *input, size_t length,
+		       gboolean complete, GByteArray *result)
+{
+	size_t outlen, prespace;
+	char *buffer = g_malloc (MAX (length, 1)), *out;
+
+	if (length)
+		memcpy (buffer, input, length);
+	if (complete)
+		g_mime_filter_complete (filter, buffer, length, 0, &out, &outlen, &prespace);
+	else
+		g_mime_filter_filter (filter, buffer, length, 0, &out, &outlen, &prespace);
+	if (outlen)
+		g_byte_array_append (result, (const guint8 *) out, outlen);
+	g_free (buffer);
+}
+
+static void
+test_enriched_lifecycle (void)
+{
+	static const guint8 pending[] = "<nofill>pending<bo", input[] = "a\nb<lt>c<nl>d";
+	GByteArray *actual = g_byte_array_new ();
+	GMimeFilter *filter, *copy;
+	guint flags;
+
+	testsuite_check ("Enriched reset and copy discard pending tags and nofill state");
+	for (flags = 0; flags <= GMIME_FILTER_ENRICHED_IS_RICHTEXT; flags++) {
+		const char *expected = flags ? "a b&lt;c<br>d" : "a bcd";
+
+		filter = g_mime_filter_enriched_new (flags);
+		g_byte_array_set_size (actual, 0);
+		collect_filter_output (filter, pending, sizeof (pending) - 1, FALSE, actual);
+		g_assert_cmpmem (actual->data, actual->len, "pending", 7);
+		copy = g_mime_filter_copy (filter);
+		g_byte_array_set_size (actual, 0);
+		collect_filter_output (copy, input, sizeof (input) - 1, TRUE, actual);
+		g_assert_cmpmem (actual->data, actual->len, expected, strlen (expected));
+		g_mime_filter_reset (filter);
+		g_byte_array_set_size (actual, 0);
+		collect_filter_output (filter, input, sizeof (input) - 1, TRUE, actual);
+		g_assert_cmpmem (actual->data, actual->len, expected, strlen (expected));
+		g_object_unref (copy);
+		g_object_unref (filter);
+	}
+	g_byte_array_unref (actual);
+	testsuite_check_passed ();
+}
+
+static void
+assert_gzip_payload (GByteArray *encoded, const guint8 *input, size_t length)
+{
+	guint8 *decoded = g_malloc (length + 1);
+	z_stream stream = { 0 };
+	int status;
+
+	g_assert_cmpint (inflateInit2 (&stream, MAX_WBITS + 16), ==, Z_OK);
+	stream.next_in = encoded->data;
+	stream.avail_in = encoded->len;
+	stream.next_out = decoded;
+	stream.avail_out = length + 1;
+	status = inflate (&stream, Z_FINISH);
+	if (status != Z_STREAM_END)
+		g_test_message ("Gzip decoding: input=%zu, encoded=%u, consumed=%lu, decoded=%lu, error=%s",
+				length, encoded->len, stream.total_in, stream.total_out, stream.msg ? stream.msg : "none");
+	g_assert_cmpint (status, ==, Z_STREAM_END);
+	g_assert_cmpuint (stream.total_in, ==, encoded->len);
+	g_assert_cmpuint (stream.total_out, ==, length);
+	g_assert_cmpmem (decoded, length, input, length);
+	g_assert_cmpint (inflateEnd (&stream), ==, Z_OK);
+	g_free (decoded);
+}
+
+static GByteArray *
+gzip_with_optional_headers (const guint8 *input, size_t length)
+{
+	unsigned char extra[] = { 'G', 'M', 4, 0, 1, 2, 3, 4 };
+	unsigned char filename[] = "streamed.txt", comment[] = "Split gzip header fields";
+	GByteArray *encoded = g_byte_array_new ();
+	gz_header header = { 0 };
+	z_stream stream = { 0 };
+
+	g_assert_cmpint (deflateInit2 (&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED,
+				     MAX_WBITS + 16, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY), ==, Z_OK);
+	header.extra = extra;
+	header.extra_len = sizeof (extra);
+	header.name = filename;
+	header.comment = comment;
+	header.hcrc = 1;
+	g_assert_cmpint (deflateSetHeader (&stream, &header), ==, Z_OK);
+	g_byte_array_set_size (encoded, compressBound (length) + 256);
+	stream.next_in = (Bytef *) input;
+	stream.avail_in = length;
+	stream.next_out = encoded->data;
+	stream.avail_out = encoded->len;
+	g_assert_cmpint (deflate (&stream, Z_FINISH), ==, Z_STREAM_END);
+	g_byte_array_set_size (encoded, stream.total_out);
+	g_assert_cmpint (deflateEnd (&stream), ==, Z_OK);
+
+	return encoded;
+}
+
+static void
+test_gzip_streaming (void)
+{
+	static const int levels[] = { Z_NO_COMPRESSION, Z_BEST_SPEED, Z_BEST_COMPRESSION };
+	static const size_t lengths[] = { 0, 1, 1012, 65536 };
+	static const size_t chunks[] = { 1, 257, 65536 };
+	GByteArray *encoded = g_byte_array_new (), *actual = g_byte_array_new (), *reference;
+	GRand *random = g_rand_new_with_seed (42);
+	guint8 *input = g_malloc (65536);
+	GMimeFilter *filter, *copy;
+	size_t offset, n;
+	guint i, j, k, final;
+
+	for (i = 0; i < 65536; i++)
+		input[i] = i < 32768 ? g_rand_int_range (random, 0, 256) : 'A';
+	g_rand_free (random);
+
+	testsuite_check ("Gzip finalization, reset, and independent zlib decoding");
+	for (i = 0; i < G_N_ELEMENTS (levels); i++) {
+		filter = g_mime_filter_gzip_new (GMIME_FILTER_GZIP_MODE_ZIP, levels[i]);
+		g_assert_nonnull (filter);
+		for (j = 0; j < G_N_ELEMENTS (lengths); j++) {
+			for (k = 0; k < G_N_ELEMENTS (chunks); k++) {
+				for (final = 0; final < 2; final++) {
+					g_mime_filter_reset (filter);
+					g_byte_array_set_size (encoded, 0);
+					for (offset = 0; offset < lengths[j]; offset += n) {
+						n = MIN (chunks[k], lengths[j] - offset);
+						collect_filter_output (filter, input + offset, n,
+								       final && offset + n == lengths[j], encoded);
+					}
+					collect_filter_output (filter, input, 0, TRUE, encoded);
+					assert_gzip_payload (encoded, input, lengths[j]);
+					n = encoded->len;
+					collect_filter_output (filter, input, 0, TRUE, encoded);
+					collect_filter_output (filter, input, 1, FALSE, encoded);
+					g_assert_cmpuint (encoded->len, ==, n);
+				}
+			}
+		}
+		copy = g_mime_filter_copy (filter);
+		g_byte_array_set_size (encoded, 0);
+		collect_filter_output (copy, input, 65536, TRUE, encoded);
+		assert_gzip_payload (encoded, input, 65536);
+		g_object_unref (copy);
+		g_object_unref (filter);
+	}
+	g_assert_null (g_mime_filter_gzip_new (GMIME_FILTER_GZIP_MODE_ZIP, 10));
+	testsuite_check_passed ();
+
+	testsuite_check ("Gunzip optional headers, streaming, and reset");
+	reference = gzip_with_optional_headers (input, 65536);
+	filter = g_mime_filter_gzip_new (GMIME_FILTER_GZIP_MODE_UNZIP, 0);
+	for (k = 0; k < G_N_ELEMENTS (chunks); k++) {
+		for (final = 0; final < 2; final++) {
+			g_mime_filter_reset (filter);
+			g_assert_null (g_mime_filter_gzip_get_filename (GMIME_FILTER_GZIP (filter)));
+			g_assert_null (g_mime_filter_gzip_get_comment (GMIME_FILTER_GZIP (filter)));
+			g_byte_array_set_size (actual, 0);
+			for (offset = 0; offset < reference->len; offset += n) {
+				n = MIN (chunks[k], reference->len - offset);
+				collect_filter_output (filter, reference->data + offset, n,
+						       final && offset + n == reference->len, actual);
+			}
+			collect_filter_output (filter, input, 0, TRUE, actual);
+			g_assert_cmpmem (actual->data, actual->len, input, 65536);
+			g_assert_cmpstr (g_mime_filter_gzip_get_filename (GMIME_FILTER_GZIP (filter)), ==, "streamed.txt");
+			g_assert_cmpstr (g_mime_filter_gzip_get_comment (GMIME_FILTER_GZIP (filter)), ==, "Split gzip header fields");
+		}
+	}
+	copy = g_mime_filter_copy (filter);
+	g_byte_array_set_size (actual, 0);
+	collect_filter_output (copy, reference->data, reference->len, TRUE, actual);
+	g_assert_cmpmem (actual->data, actual->len, input, 65536);
+	g_object_unref (copy);
+	for (i = 0; i < 3; i++) {
+		g_mime_filter_reset (filter);
+		g_byte_array_set_size (actual, 0);
+		reference->data[i] ^= 0xff;
+		collect_filter_output (filter, reference->data, 9, FALSE, actual);
+		collect_filter_output (filter, reference->data + 9, reference->len - 9, TRUE, actual);
+		g_assert_cmpuint (actual->len, ==, 0);
+		reference->data[i] ^= 0xff;
+		g_mime_filter_reset (filter);
+		collect_filter_output (filter, reference->data, reference->len, TRUE, actual);
+		g_assert_cmpmem (actual->data, actual->len, input, 65536);
+	}
+	g_object_unref (filter);
+	g_byte_array_unref (reference);
+	g_byte_array_unref (encoded);
+	g_byte_array_unref (actual);
+	g_free (input);
+	testsuite_check_passed ();
 }
 
 static void
@@ -2260,6 +2508,97 @@ test_factory_newlines (void)
 }
 
 static void
+test_checksum_lifecycle (void)
+{
+	static const guint8 digest[] = {
+		0xba, 0x78, 0x16, 0xbf, 0x8f, 0x01, 0xcf, 0xea,
+		0x41, 0x41, 0x40, 0xde, 0x5d, 0xae, 0x22, 0x23,
+		0xb0, 0x03, 0x61, 0xa3, 0x96, 0x17, 0x7a, 0x9c,
+		0xb4, 0x10, 0xff, 0x61, 0xf2, 0x00, 0x15, 0xad
+	};
+	GMimeFilter *filter = g_mime_filter_checksum_new (G_CHECKSUM_SHA256), *copy;
+	GByteArray *actual = g_byte_array_new ();
+	guint8 bytes[64];
+	char *text;
+	size_t length;
+
+	testsuite_check ("Checksum filters preserve input, copy accumulated state and reset finalized digests");
+	g_assert_true (filter_chunk (filter, (const guint8 *) "a", 1, FALSE, actual));
+	copy = g_mime_filter_copy (filter);
+	g_assert_true (filter_chunk (filter, (const guint8 *) "bc", 2, TRUE, actual));
+	g_assert_cmpmem (actual->data, actual->len, "abc", 3);
+	length = g_mime_filter_checksum_get_digest (GMIME_FILTER_CHECKSUM (filter), bytes, sizeof (bytes));
+	g_assert_cmpmem (bytes, length, digest, sizeof (digest));
+	text = g_mime_filter_checksum_get_string (GMIME_FILTER_CHECKSUM (filter));
+	g_assert_cmpstr (text, ==, "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+	g_free (text);
+
+	g_mime_filter_reset (filter);
+	g_byte_array_set_size (actual, 0);
+	g_assert_true (filter_chunk (filter, (const guint8 *) "", 0, TRUE, actual));
+	g_assert_cmpuint (actual->len, ==, 0);
+	text = g_mime_filter_checksum_get_string (GMIME_FILTER_CHECKSUM (filter));
+	g_assert_cmpstr (text, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+	g_free (text);
+	g_object_unref (filter);
+
+	g_assert_true (filter_chunk (copy, (const guint8 *) "", 0, TRUE, actual));
+	text = g_mime_filter_checksum_get_string (GMIME_FILTER_CHECKSUM (copy));
+	g_assert_cmpstr (text, ==, "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb");
+	g_free (text);
+	g_object_unref (copy);
+	g_byte_array_unref (actual);
+	testsuite_check_passed ();
+}
+
+static void
+test_checksum_streams (void)
+{
+	static const char input[] = "a\0b\r\n\377\200c";
+	GMimeStream *memory, *filtered;
+	GMimeFilter *filter;
+	GByteArray *actual;
+	char buffer[3], *expected, *text;
+	guint mode, pass;
+	ssize_t n;
+
+	testsuite_check ("Checksum filters hash binary stream reads and writes without changing their content");
+	expected = g_compute_checksum_for_data (G_CHECKSUM_SHA512, (const guint8 *) input, sizeof (input) - 1);
+	for (mode = 0; mode < 2; mode++) {
+		memory = mode ? g_mime_stream_mem_new_with_buffer (input, sizeof (input) - 1) :
+			g_mime_stream_mem_new ();
+		filtered = g_mime_stream_filter_new (memory);
+		filter = g_mime_filter_checksum_new (G_CHECKSUM_SHA512);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+		for (pass = 0; pass < 2; pass++) {
+			if (pass)
+				g_assert_cmpint (g_mime_stream_reset (filtered), ==, 0);
+			if (mode) {
+				actual = g_byte_array_new ();
+				while ((n = g_mime_stream_read (filtered, buffer, sizeof (buffer))) > 0)
+					g_byte_array_append (actual, (const guint8 *) buffer, n);
+				g_assert_cmpint (n, ==, 0);
+			} else {
+				g_assert_cmpint (g_mime_stream_write (filtered, input, 2), ==, 2);
+				g_assert_cmpint (g_mime_stream_write (filtered, input + 2, sizeof (input) - 3), ==, sizeof (input) - 3);
+				g_assert_cmpint (g_mime_stream_flush (filtered), ==, 0);
+				actual = g_byte_array_ref (g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory)));
+			}
+			g_assert_cmpmem (actual->data, actual->len, input, sizeof (input) - 1);
+			g_byte_array_unref (actual);
+			text = g_mime_filter_checksum_get_string (GMIME_FILTER_CHECKSUM (filter));
+			g_assert_cmpstr (text, ==, expected);
+			g_free (text);
+		}
+		g_object_unref (filter);
+		g_object_unref (filtered);
+		g_object_unref (memory);
+	}
+	g_free (expected);
+	testsuite_check_passed ();
+}
+
+static void
 test_factory_preconditions (void)
 {
 	static const guint lengths[] = { 0, 59, 999, G_MAXUINT };
@@ -2366,6 +2705,8 @@ int main (int argc, char **argv)
 	test_factory_names ();
 	test_factory_newlines ();
 	test_factory_preconditions ();
+	test_checksum_lifecycle ();
+	test_checksum_streams ();
 	
 	//test_charset_conversion (datadir, "chinese", "utf-8", "big5"); // Note: utf-8 -> big5 drops characters
 	test_charset_conversion (datadir, "cyrillic", "utf-8", "cp1251");
@@ -2381,7 +2722,9 @@ int main (int argc, char **argv)
 	
 	test_enriched (datadir, "enriched.txt", "enriched.html");
 	test_enriched_tags ();
+	test_enriched_lifecycle ();
 	
+	test_gzip_streaming ();
 	test_gzip (datadir, "lorem-ipsum.txt");
 	test_gunzip (datadir, "lorem-ipsum.txt");
 	

@@ -815,6 +815,134 @@ callback_destroy (gpointer data)
 }
 
 static void
+test_output_configuration (void)
+{
+	for (guint flowed = 0; flowed < 2; flowed++) {
+		GMimeTextConverter *converter = flowed ? g_mime_flowed_to_html_new () : g_mime_text_to_html_new ();
+		GMimeFlowedToHtml *flow = flowed ? GMIME_FLOWED_TO_HTML (converter) : NULL;
+		GMimeTextToHtml *plain = flowed ? NULL : GMIME_TEXT_TO_HTML (converter);
+		GMimeHeaderFooterFormat header_format, footer_format;
+		gboolean fragment, delete_space = FALSE;
+		CallbackState first = { 0 }, second = { 0 };
+		gpointer data = NULL;
+
+		g_mime_text_converter_set_header (converter, "<b>head</b> \nnext");
+		g_mime_text_converter_set_footer (converter, "<i>tail</i>");
+		assert_conversion (converter, "one \ntwo", flowed ?
+				   "<html><body>&lt;b&gt;head&lt;/b&gt; <br/>next<br/><p>one two</p>\n&lt;i&gt;tail&lt;/i&gt;<br/></body></html>" :
+				   "<html><body>&lt;b&gt;head&lt;/b&gt; <br/>next<br/>one <br/>two<br/>&lt;i&gt;tail&lt;/i&gt;<br/></body></html>");
+
+		if (flowed) {
+			fragment = g_mime_flowed_to_html_get_output_html_fragment (flow);
+			header_format = g_mime_flowed_to_html_get_header_format (flow);
+			footer_format = g_mime_flowed_to_html_get_footer_format (flow);
+			delete_space = g_mime_flowed_to_html_get_delete_space (flow);
+			g_mime_flowed_to_html_set_output_html_fragment (flow, TRUE);
+			g_mime_flowed_to_html_set_header_format (flow, GMIME_HEADER_FOOTER_FORMAT_HTML);
+			g_mime_flowed_to_html_set_footer_format (flow, GMIME_HEADER_FOOTER_FORMAT_HTML);
+			g_mime_flowed_to_html_set_delete_space (flow, TRUE);
+			g_mime_flowed_to_html_set_html_tag_callback (flow, callback, &first, callback_destroy);
+			g_assert_true (g_mime_flowed_to_html_get_html_tag_callback (flow, &data) == callback);
+		} else {
+			fragment = g_mime_text_to_html_get_output_html_fragment (plain);
+			header_format = g_mime_text_to_html_get_header_format (plain);
+			footer_format = g_mime_text_to_html_get_footer_format (plain);
+			g_mime_text_to_html_set_output_html_fragment (plain, TRUE);
+			g_mime_text_to_html_set_header_format (plain, GMIME_HEADER_FOOTER_FORMAT_HTML);
+			g_mime_text_to_html_set_footer_format (plain, GMIME_HEADER_FOOTER_FORMAT_HTML);
+			g_mime_text_to_html_set_html_tag_callback (plain, callback, &first, callback_destroy);
+			g_assert_true (g_mime_text_to_html_get_html_tag_callback (plain, &data) == callback);
+		}
+		g_assert_true (data == &first);
+		assert_conversion (converter, "one \ntwo", flowed ?
+				   "<b>head</b> \nnext<p>onetwo</p>\n<i>tail</i>" :
+				   "<b>head</b> \nnextone <br/>two<br/><i>tail</i>");
+		g_assert_cmpuint (first.calls, ==, 4);
+		g_assert_cmpuint (first.ends, ==, flowed ? 2 : 0);
+		g_assert_cmpuint (first.destroyed, ==, 0);
+
+		if (flowed) {
+			g_mime_flowed_to_html_set_output_html_fragment (flow, fragment);
+			g_mime_flowed_to_html_set_header_format (flow, header_format);
+			g_mime_flowed_to_html_set_footer_format (flow, footer_format);
+			g_mime_flowed_to_html_set_delete_space (flow, delete_space);
+			g_mime_flowed_to_html_set_html_tag_callback (flow, callback, &second, callback_destroy);
+		} else {
+			g_mime_text_to_html_set_output_html_fragment (plain, fragment);
+			g_mime_text_to_html_set_header_format (plain, header_format);
+			g_mime_text_to_html_set_footer_format (plain, footer_format);
+			g_mime_text_to_html_set_html_tag_callback (plain, callback, &second, callback_destroy);
+		}
+		g_assert_cmpuint (first.destroyed, ==, 1);
+		assert_conversion (converter, "one \ntwo", flowed ?
+				   "<html><body>&lt;b&gt;head&lt;/b&gt; <br/>next<br/><p>one two</p>\n&lt;i&gt;tail&lt;/i&gt;<br/></body></html>" :
+				   "<html><body>&lt;b&gt;head&lt;/b&gt; <br/>next<br/>one <br/>two<br/>&lt;i&gt;tail&lt;/i&gt;<br/></body></html>");
+		g_assert_cmpuint (second.calls, ==, 4);
+		g_object_unref (converter);
+		g_assert_cmpuint (first.destroyed, ==, 1);
+		g_assert_cmpuint (second.destroyed, ==, 1);
+	}
+}
+
+typedef struct {
+	guint calls, fail_at;
+	gboolean omit_error;
+} FailingCallback;
+
+static gboolean
+failing_callback (GMimeHtmlTagContext *context, GMimeHtmlWriter *writer, gpointer user_data, GError **error)
+{
+	FailingCallback *state = user_data;
+
+	if (++state->calls == state->fail_at) {
+		if (!state->omit_error)
+			g_set_error_literal (error, GMIME_ERROR, EACCES, "tag callback failure");
+		return FALSE;
+	}
+	g_mime_html_tag_context_set_invoke_callback_for_end_tag (context, TRUE);
+	return g_mime_html_tag_context_write_tag (context, writer, TRUE, error);
+}
+
+static void
+test_flowed_callback_errors (void)
+{
+	static const struct {
+		const char *input, *expected;
+		guint fail_at;
+	} cases[] = {
+		{ "> quote", "<blockquote><p>quote</p>\n</blockquote>", 1 },
+		{ "> quote", "<blockquote><p>quote</p>\n</blockquote>", 4 },
+		{ "> quote\nplain", "<blockquote><p>quote</p>\n</blockquote><p>plain</p>\n", 4 },
+		{ "quote \n> deeper", "<p>quote </p>\n<blockquote><p>deeper</p>\n</blockquote>", 1 },
+		{ "tail ", "<p>tail </p>\n", 1 },
+		{ "www.example.com", "<p><a href=\"http://www.example.com\">www.example.com</a></p>\n", 3 },
+		{ "\n", "<br/>\n", 1 }
+	};
+	GMimeTextConverter *converter = g_mime_flowed_to_html_new ();
+	FailingCallback state = { 0 };
+	GError *error = NULL;
+
+	g_mime_flowed_to_html_set_output_html_fragment (GMIME_FLOWED_TO_HTML (converter), TRUE);
+	g_mime_flowed_to_html_set_html_tag_callback (GMIME_FLOWED_TO_HTML (converter), failing_callback, &state, NULL);
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (guint omit = 0; omit < 2; omit++) {
+			state.calls = 0;
+			state.fail_at = cases[i].fail_at;
+			state.omit_error = omit;
+			g_assert_null (g_mime_text_converter_convert_to_string (converter, cases[i].input, -1, &error));
+			g_assert_error (error, GMIME_ERROR, (omit ? GMIME_ERROR_GENERAL : EACCES));
+			g_clear_error (&error);
+			g_assert_cmpuint (state.calls, ==, cases[i].fail_at);
+			state.fail_at = 0;
+			assert_conversion (converter, cases[i].input, cases[i].expected);
+		}
+	}
+	g_mime_flowed_to_html_set_html_tag_callback (GMIME_FLOWED_TO_HTML (converter), NULL, NULL, NULL);
+	assert_conversion (converter, "> restored", "<blockquote><p>restored</p>\n</blockquote>");
+	g_object_unref (converter);
+}
+
+static void
 test_callbacks_errors (void)
 {
 	GMimeTextConverter *converter = g_mime_text_to_html_new ();
@@ -872,6 +1000,8 @@ main (int argc, char **argv)
 	g_test_add_func ("/url-scan/preconditions", test_url_scan_preconditions);
 	g_test_add_func ("/html-output/custom-blockquotes", test_custom_blockquotes);
 	g_test_add_func ("/html-output/callbacks-errors", test_callbacks_errors);
+	g_test_add_func ("/html-output/configuration", test_output_configuration);
+	g_test_add_func ("/html-output/flowed-callback-errors", test_flowed_callback_errors);
 	int result = g_test_run ();
 
 	g_mime_shutdown ();

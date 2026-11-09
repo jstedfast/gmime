@@ -199,3 +199,47 @@ jobs:
           _build/meson-dist/
           ${{ runner.temp }}/glib-build/meson-logs/
         if-no-files-found: ignore
+
+  coverage:
+    name: Linux x64 GCC / coverage
+    runs-on: ubuntu-26.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      CC: gcc
+      GMIME_TEST_REQUIRE_READER_BACKEND: AVX2
+    steps:
+    - uses: actions/checkout@v7
+    - name: Install coverage dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install meson ninja-build pkg-config gcc gcovr \
+          libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev gnupg gpgsm
+    - name: Configure coverage build
+      run: |
+        meson setup _build --buildtype=debug -Db_ndebug=false -Db_coverage=true \
+          -Dcrypto=enabled -Dlibidn=enabled -Dintrospection=disabled -Dvapi=disabled \
+          -Dgtk_doc=false -Dexamples=false -Dtests=true
+    - name: Build
+      run: meson compile -C _build
+    - name: Test
+      run: meson test -C _build --no-rebuild --suite core --suite crypto --num-processes 1 --print-errorlogs
+    - name: Generate library coverage reports
+      run: |
+        gcovr _build --root . --filter '^gmime/' --filter '^util/' --print-summary \
+          --lcov _build/coverage.info --html-details _build/coverage.html
+    - name: Upload coverage to Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        file: _build/coverage.info
+        format: lcov
+    - name: Upload coverage reports and test logs
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage
+        path: |
+          _build/coverage*
+          _build/meson-logs/

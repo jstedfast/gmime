@@ -46,6 +46,20 @@ typedef GOutputStreamClass CloseOutputClass;
 G_DEFINE_TYPE (CloseInput, close_input, G_TYPE_INPUT_STREAM)
 G_DEFINE_TYPE (CloseOutput, close_output, G_TYPE_OUTPUT_STREAM)
 
+static gssize
+input_read (GInputStream *stream, void *buffer, gsize count, GCancellable *cancellable, GError **error)
+{
+	g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_FAILED, "input read failure");
+	return -1;
+}
+
+static gssize
+output_write (GOutputStream *stream, const void *buffer, gsize count, GCancellable *cancellable, GError **error)
+{
+	g_set_error_literal (error, G_IO_ERROR, G_IO_ERROR_NO_SPACE, "output write failure");
+	return -1;
+}
+
 static gboolean
 input_close (GInputStream *stream, GCancellable *cancellable, GError **error)
 {
@@ -87,6 +101,7 @@ output_finalize (GObject *object)
 static void
 close_input_class_init (CloseInputClass *klass)
 {
+	klass->read_fn = input_read;
 	klass->close_fn = input_close;
 	G_OBJECT_CLASS (klass)->finalize = input_finalize;
 }
@@ -94,6 +109,7 @@ close_input_class_init (CloseInputClass *klass)
 static void
 close_output_class_init (CloseOutputClass *klass)
 {
+	klass->write_fn = output_write;
 	klass->close_fn = output_close;
 	G_OBJECT_CLASS (klass)->finalize = output_finalize;
 }
@@ -120,7 +136,27 @@ test_gio_close (gboolean finalize)
 		{ G_IO_ERROR_PERMISSION_DENIED, -1, EACCES },
 		{ -1, G_IO_ERROR_NO_SPACE, ENOSPC },
 		{ G_IO_ERROR_PERMISSION_DENIED, G_IO_ERROR_NO_SPACE, EACCES },
-		{ G_IO_ERROR_FAILED, G_IO_ERROR_FAILED, EIO }
+		{ G_IO_ERROR_FAILED, G_IO_ERROR_FAILED, EIO },
+		{ G_IO_ERROR_NOT_FOUND, -1, ENOENT },
+		{ G_IO_ERROR_EXISTS, -1, EEXIST },
+		{ G_IO_ERROR_IS_DIRECTORY, -1, EISDIR },
+		{ G_IO_ERROR_NOT_DIRECTORY, -1, ENOTDIR },
+		{ G_IO_ERROR_NOT_EMPTY, -1, ENOTEMPTY },
+		{ G_IO_ERROR_FILENAME_TOO_LONG, -1, ENAMETOOLONG },
+		{ G_IO_ERROR_TOO_MANY_LINKS, -1, EMLINK },
+		{ G_IO_ERROR_INVALID_ARGUMENT, -1, EINVAL },
+#ifdef ENOTSUP
+		{ G_IO_ERROR_NOT_SUPPORTED, -1, ENOTSUP },
+#endif
+#ifdef ECANCELED
+		{ G_IO_ERROR_CANCELLED, -1, ECANCELED },
+#endif
+		{ G_IO_ERROR_READ_ONLY, -1, EROFS },
+#ifdef ETIMEDOUT
+		{ G_IO_ERROR_TIMED_OUT, -1, ETIMEDOUT },
+#endif
+		{ G_IO_ERROR_BUSY, -1, EBUSY },
+		{ G_IO_ERROR_WOULD_BLOCK, -1, EAGAIN }
 	};
 	guint i, owner;
 
@@ -185,6 +221,47 @@ test_gio_lifetime (void)
 	g_assert_nonnull (weak_file);
 	g_object_unref (sub);
 	g_assert_null (weak_file);
+}
+
+static void
+test_gio_unseekable (void)
+{
+	GMimeStreamGIOPrivate *priv;
+	GMimeStream *stream;
+	CloseOutput *output;
+	CloseInput *input;
+	int calls;
+	guint writing;
+	char buf[1];
+
+	for (writing = 0; writing < 2; writing++) {
+		stream = g_mime_stream_gio_new (g_file_new_for_path ("."));
+		g_assert_cmpint (g_mime_stream_seek (stream, 1, GMIME_STREAM_SEEK_SET), ==, 1);
+		priv = _g_mime_stream_gio_get_private (GMIME_STREAM_GIO (stream));
+		calls = 0;
+		if (writing) {
+			output = g_object_new (close_output_get_type (), NULL);
+			output->calls = &calls;
+			priv->ostream = G_OUTPUT_STREAM (output);
+			g_assert_cmpint (g_mime_stream_write (stream, "x", 1), ==, -1);
+			g_assert_cmpint (errno, ==, ENOSPC);
+		} else {
+			input = g_object_new (close_input_get_type (), NULL);
+			input->calls = &calls;
+			priv->istream = G_INPUT_STREAM (input);
+			g_assert_cmpint (g_mime_stream_read (stream, buf, 1), ==, -1);
+			g_assert_cmpint (errno, ==, EIO);
+		}
+		g_assert_cmpint (g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_SET), ==, -1);
+		g_assert_cmpint (errno, ==, EINVAL);
+		g_assert_cmpint (g_mime_stream_reset (stream), ==, -1);
+		g_assert_cmpint (errno, ==, EINVAL);
+		g_assert_cmpint (g_mime_stream_length (stream), ==, -1);
+		g_assert_cmpint (errno, ==, EINVAL);
+		g_assert_cmpint (g_mime_stream_tell (stream), ==, 1);
+		g_object_unref (stream);
+		g_assert_cmpint (calls, ==, 1);
+	}
 }
 
 static void
@@ -258,6 +335,9 @@ main (int argc, char **argv)
 	testsuite_check_passed ();
 	testsuite_check ("GIO substreams retain their parent's lifetime");
 	test_gio_lifetime ();
+	testsuite_check_passed ();
+	testsuite_check ("GIO propagates backend errors and rejects seeking on unseekable streams");
+	test_gio_unseekable ();
 	testsuite_check_passed ();
 	testsuite_check ("Buffer, concatenation and filter close/finalization ownership");
 	test_wrappers ();

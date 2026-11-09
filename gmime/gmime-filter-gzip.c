@@ -312,29 +312,34 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		gzip->stream->avail_out = priv->outsize - olen;
 	} while (1);
 	
+	gzip->crc32 = crc32 (gzip->crc32, (unsigned char *) in, len - gzip->stream->avail_in);
+	gzip->isize += len - gzip->stream->avail_in;
+
 	if (flush) {
 		guint32 val;
 		
 		do {
-			retval = deflate (gzip->stream, Z_FULL_FLUSH);
+			if (gzip->stream->avail_out == 0) {
+				olen = priv->outsize;
+				g_mime_filter_set_size (filter, olen + 1024, TRUE);
+				gzip->stream->next_out = (unsigned char *) priv->outbuf + olen;
+				gzip->stream->avail_out = priv->outsize - olen;
+			}
+
+			retval = deflate (gzip->stream, Z_FINISH);
 			
-			if (retval != Z_OK && !(retval == Z_BUF_ERROR && !gzip->stream->avail_in)) {
+			if (retval == Z_STREAM_END)
+				break;
+
+			if (retval != Z_OK) {
 				w(fprintf (stderr, "gzip: %d: %s\n", retval, gzip->stream->msg));
 				break;
 			}
-			
-			if (gzip->stream->avail_out > 0)
-				break;
-			
-			olen = priv->outsize;
-			g_mime_filter_set_size (filter, olen + 1024, TRUE);
-			gzip->stream->next_out = (unsigned char *) priv->outbuf + olen;
-			gzip->stream->avail_out = priv->outsize - olen;
 		} while (1);
 		
 		if (gzip->stream->avail_out < 8) {
-			olen = priv->outsize;
-			g_mime_filter_set_size (filter, olen + 8, TRUE);
+			olen = priv->outsize - gzip->stream->avail_out;
+			g_mime_filter_set_size (filter, priv->outsize + 8, TRUE);
 			gzip->stream->next_out = (unsigned char *) priv->outbuf + olen;
 			gzip->stream->avail_out = priv->outsize - olen;
 		}
@@ -351,9 +356,6 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		
 		gzip->state.zip.flushed = TRUE;
 	}
-	
-	gzip->crc32 = crc32 (gzip->crc32, (unsigned char *) in, len - gzip->stream->avail_in);
-	gzip->isize += len - gzip->stream->avail_in;
 	
 	*out = priv->outbuf;
 	*outlen = priv->outsize - gzip->stream->avail_out;
