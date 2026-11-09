@@ -21,7 +21,9 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
 #include <string.h>
+
 #include "gmime-encoding-validator-private.h"
 #include "gmime-codec-private.h"
 

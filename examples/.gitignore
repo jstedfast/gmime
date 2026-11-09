@@ -4,6 +4,7 @@ Makefile
 .libs/
 *.o
 basic-example
+custom-blockquotes
 imap-example
 uuencode
 uudecode

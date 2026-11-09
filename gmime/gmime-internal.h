@@ -64,6 +64,14 @@ G_GNUC_INTERNAL void _g_mime_format_options_set_hide_unknown_headers (GMimeForma
 G_GNUC_INTERNAL gboolean _g_mime_format_options_is_hidden_entity_header (GMimeFormatOptions *options,
 								       const char *header);
 
+/* GMimeEntity */
+G_GNUC_INTERNAL void g_mime_entity_type_registry_init (void);
+G_GNUC_INTERNAL void g_mime_entity_type_registry_shutdown (void);
+G_GNUC_INTERNAL GMimeAutocryptHeaderList *
+g_mime_entity_get_autocrypt_headers (GMimeEntity *mime_part, GDateTime *effective_date,
+				   const char *matchheader, GMimeInternetAddressList *addresses,
+				   gboolean keep_incomplete);
+
 /* GMimeWriter */
 G_GNUC_INTERNAL ssize_t _g_mime_writer_write (GMimeEntity *entity, GMimeFormatOptions *options,
 					    gboolean content_only, GMimeStream *stream);

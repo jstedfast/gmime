@@ -30,10 +30,9 @@
 #include "gmime-common.h"
 #include "gmime-filter-enriched.h"
 
-/* text/enriched is rfc1896 */
-
-
 #include "gmime-object-private.h"
+
+/* text/enriched is rfc1896 */
 
 /**
  * SECTION: gmime-filter-enriched

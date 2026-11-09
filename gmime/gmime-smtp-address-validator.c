@@ -23,6 +23,7 @@
 #endif
 
 #include <string.h>
+
 #include "gmime-smtp-address-validator.h"
 #include "gmime-smtp-unicode-private.h"
 

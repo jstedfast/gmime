@@ -25,7 +25,6 @@
 
 #include "gmime-filter-unix2dos.h"
 
-
 #include "gmime-object-private.h"
 
 /**

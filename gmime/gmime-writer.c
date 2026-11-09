@@ -20,12 +20,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#include "gmime-object-private.h"
 #endif
 
 #include <errno.h>
 #include <string.h>
 
+#include "gmime-object-private.h"
 #include "gmime-internal.h"
 #include "gmime-message.h"
 #include "gmime-message-part.h"

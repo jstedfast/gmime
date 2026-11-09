@@ -26,7 +26,6 @@
 #include "gmime-internet-address-private.h"
 #include "gmime-events.h"
 
-
 #include "gmime-object-private.h"
 
 /**

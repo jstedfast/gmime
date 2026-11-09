@@ -25,7 +25,6 @@
 
 #include "gmime-filter-smtp-data.h"
 
-
 #include "gmime-object-private.h"
 
 /**

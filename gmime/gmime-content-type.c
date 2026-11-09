@@ -37,6 +37,7 @@
 #include "gmime-events.h"
 #include "gmime-iconv.h"
 
+#include "gmime-object-private.h"
 
 #ifdef ENABLE_WARNINGS
 #define w(x) x
@@ -46,8 +47,6 @@
 
 #define d(x)
 
-
-#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-content-type

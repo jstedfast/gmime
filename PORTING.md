@@ -642,6 +642,34 @@ The new body builder, attachment collection, visitor, and report helpers are
 optional conveniences; a working explicit MIME tree need not be rewritten
 to use them.
 
+### Plain text to HTML
+
+`GMimeFilterHTML`, its flags, and `gmime-filter-html.h` are removed.
+Use `GMimeTextToHtml` for plain text or `GMimeFlowedToHtml` for RFC 3676
+flowed text. These are `GMimeTextConverter` objects, not `GMimeFilter`
+subclasses: call `g_mime_text_converter_convert()` with input/output streams
+or `g_mime_text_converter_convert_to_string()` for UTF-8 text.
+
+The converters generate a document wrapper by default; enable
+`output_html_fragment` when embedding the result. Plain text produces line
+breaks, while flowed text is reassembled into paragraphs. Both recognize
+links and nested quotations. Use `GMimeHtmlTagCallback` to customize or omit
+tags; see [examples/custom-blockquotes.c](examples/custom-blockquotes.c)
+for depth-specific classes and matching end-tag callbacks.
+
+The old flags do not have one-to-one replacements. Leading/repeated spaces
+and tabs are not converted to `&nbsp;`; supply appropriate CSS such as
+`white-space: break-spaces` when preserving plain-text layout. Citation
+colors/classes belong in callbacks and CSS. Link callbacks can omit anchors
+while retaining their text. Do not expect byte-identical legacy output or
+automatic compatibility with an existing filter pipeline.
+
+For link detection without HTML conversion, use `g_mime_url_scan()` from
+`gmime-url-scanner.h` (also included by `gmime.h`). It scans a bounded UTF-8
+range and returns byte offsets plus a borrowed URI prefix in `GMimeUrlMatch`.
+Resume at `match.end` to find subsequent links. The caller must supply valid
+UTF-8 and character-aligned bounds; the scanner does not validate the encoding.
+
 ## 8. Migrate cryptography to native GPGME
 
 Include `<gmime/gmime-gpgme.h>` and use the `gmime-gpgme-4.0` pkg-config

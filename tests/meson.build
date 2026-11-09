@@ -24,6 +24,8 @@ parser_model_test_dep = declare_dependency(
 )
 
 normal_tests = [
+  'test-text-converters',
+  'test-html-tokenizer', 'test-html-output', 'test-html-converters',
   'test-stream-block', 'test-substreams', 'test-stream-close',
   'test-received-clauses', 'test-received',
   'test-anonymizer',
@@ -137,7 +139,7 @@ foreach name, program : test_programs
   )
 endforeach
 
-manual_programs = ['test-best', 'test-parser', 'test-html']
+manual_programs = ['test-best', 'test-parser']
 if have_crypto
   manual_programs += ['test-pkcs7', 'test-smime']
 endif
