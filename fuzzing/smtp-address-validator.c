@@ -1,6 +1,6 @@
 /* Inspired by MimeKit.Fuzzing.Targets.SmtpUtf8ValidatorTarget.
  * Copyright (c) 2013-2026 .NET Foundation and Contributors.
- * Copyright (c) 2026 Jeffrey Stedfast.
+ * Copyright (C) Jeffrey Stedfast.
  * Distributed under the MIT license; see LICENSE. */
 
 #include "fuzz.h"

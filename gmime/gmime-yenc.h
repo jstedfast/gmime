@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
-/* GMime - Copyright (C) 2026 Jeffrey Stedfast
+/* GMime - Copyright (C) Jeffrey Stedfast
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 
