@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
-/* GMime - Copyright (C) 2026 Jeffrey Stedfast
+/* GMime - Copyright (C) Jeffrey Stedfast
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

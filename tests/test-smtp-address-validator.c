@@ -1,5 +1,5 @@
 /* GMime SMTP validator tests.
- * Copyright (C) 2026 Jeffrey Stedfast
+ * Copyright (C) Jeffrey Stedfast
  * SPDX-License-Identifier: LGPL-2.1-or-later
  */
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2026 Jeffrey Stedfast.
+/* Copyright (C) Jeffrey Stedfast.
  * Distributed under the MIT license; see LICENSE. */
 
 #include "fuzz.h"
