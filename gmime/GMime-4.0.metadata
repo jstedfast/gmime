@@ -42,6 +42,8 @@ Reader
   .marker_read.buffer ctype="const guint8*"
 ComplianceIssueFunc
   .issue ctype="const GMimeComplianceIssue*"
+TnefComplianceLogger
+  .issue ctype="const GMimeTnefComplianceIssue*"
 
 // Reparenting
 Stream

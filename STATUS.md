@@ -28,7 +28,7 @@ This is an incremental migration, not yet a declaration of feature parity.
   keeps its existing automatic seekable-source/nonseekable-memory behavior.
 
 - GMime 4.0.0 excludes async/cancellation APIs, parser-options-local MIME type
-  registration, TNEF, and DKIM/ARC/DMARC.
+  registration, high-level TNEF-to-MIME conversion, and DKIM/ARC/DMARC.
   Sender and Resent-Sender remain address lists. The existing global MIME
   type registry is unchanged. Raw multipart boundary access stays private
   unless users explicitly request it. Deferred features may be considered
@@ -723,7 +723,8 @@ This is an incremental migration, not yet a declaration of feature parity.
   visit_body() and visit_children() retain their canonical roles;
   visit_message_part_message() is MimeKit's VisitMessage(MessagePart) hook.
   Native crypto subclasses inherit ordinary part/multipart dispatch without
-  verification or decryption. TNEF remains outside the initial port scope.
+  verification or decryption. Low-level TNEF readers and writers are separate
+  from the MIME visitor; no TNEF message entity or visitor hook is added.
 
 - `GMimeHeaderListCollection` is an ordered, mutable GObject collection of
   `GMimeHeaderList` groups, providing the foundation for delivery-status
@@ -880,11 +881,13 @@ This is an incremental migration, not yet a declaration of feature parity.
 
 The first implementation scope is MIME parsing and writing, headers,
 addresses, parameters, transfer encodings, and the message object model.
-TNEF and DKIM/ARC/DMARC are excluded from 4.0.0
+High-level TNEF-to-MIME conversion and DKIM/ARC/DMARC are excluded from 4.0.0
 and may be considered for later 4.x releases. Async/cancellation and a
 parser-options-local MIME type registry are also outside the 4.0.0 scope.
 Standalone non-RTF text/HTML conversion, originally deferred, is now
 implemented as described below.
+Low-level TNEF reading/writing and compressed-RTF codecs, also originally
+deferred, are now implemented separately from the MIME object model.
 The structured MIME compliance framework is now implemented on GMimeReader
 and exposed by GMimeParser; remaining work is tracked in the migration
 roadmap below.
@@ -986,7 +989,8 @@ All concrete decoders implement the required flush virtual. Decoder filter
 completion, RFC 2047 runs, RFC 2231 runs, uudecode, and yEnc block completion
 use it. The native bounded buffers and exact-store guarantees are retained.
 The unterminated From-line fix follows MimeKit 6b00b465; its RTF dictionary
-reset remains deferred with TNEF. MimeKit bbccea76 needs no charset-filter
+reset is now included in the low-level compressed-RTF filter. MimeKit bbccea76
+needs no charset-filter
 port: native completion already flushes iconv on empty input, retaining
 GMime's existing malformed-character policy.
 
@@ -5835,6 +5839,49 @@ consumers exercise converters, previews, tokens, writers and callbacks.
 Existing unrelated scanner/documentation warnings remain; the new APIs
 produce none.
 
+### Low-level TNEF reading, writing and compressed RTF
+
+The low-level MimeKit TNEF surface is ported without `TnefMessage`,
+attachment extraction, calendar conversion or TNEF-to-MIME conversion.
+New sources use GMime's LGPL header and preserve relevant upstream
+framing, alignment, recovery and compression comments.
+
+- `GMimeTnefReader` and `GMimeTnefPropertyReader` provide forward-only
+  attributes, recipient rows, named/multi-valued MAPI properties, typed
+  values, bounded raw streams and embedded readers. Advancing invalidates
+  child streams/readers, including buffered embedded input.
+- Reference-counted boxed options and compliance metadata provide nesting,
+  per-value and cumulative materialization limits, per-violation reporting
+  caps and outer-stream offsets. Embedded readers share the root's
+  materialization and diagnostic budgets.
+- `GMimeTnefProperty` and `GMimeTnefPropertySet` retain immutable, ordered
+  snapshots and duplicates. Values use `GValue`, UTF-8, `GBytes` and
+  `GDateTime`; currency is an exact signed integer in units of 1/10000.
+  FILETIME precision is reduced from 100 ns to GLib microseconds.
+- `GMimeTnefWriter` and `GMimeTnefPropertyWriter` generate header attributes,
+  enforce attribute ordering, allocate named identifiers, patch counts and
+  lengths, and compute checksums. Seekable temporary storage is configurable;
+  final output may be nonseekable. Embedded writers inherit the factory.
+  Writers and child streams require explicit close. Finalizers perform no
+  completion I/O, and abandoned children fault their parents.
+- The property writer's compressed-RTF stream supports LZFu compression and
+  the uncompressed wrapper. `GMimeFilterRtfCompressed` incrementally decodes
+  either format, exposes mode/CRC status, ignores trailing data and discards
+  unknown modes. This does not add RTF-to-text/HTML conversion.
+- Identifiers include the upstream attribute/property enums, predefined
+  property tags and property-set GUIDs. Public APIs use explicit snake_case
+  methods rather than GObject properties or generated accessor macros.
+
+Validation covers 13 native regression groups, including five upstream
+fixtures, the exact Microsoft RTF compression vector, byte-for-byte upstream
+RTF output, nested lifetime/budget enforcement and latched I/O failures.
+They pass normally and under Clang ASan/UBSan. Existing charset, iconv,
+stream and filter tests pass. String conversion uses GMime's configured
+iconv backend, including CP936 extensions and stateful replacement encoding.
+Python introspection and compiled Vala consumers exercise constructors,
+callbacks and snapshots; GIR, typelib, VAPI and reference generation succeed,
+with no TNEF-specific scanner warnings or undocumented public symbols.
+
 ### Deferred subsystems and release integration
 
 - RTF conversion remains excluded. Existing HTML/enriched filters remain
@@ -5842,8 +5889,9 @@ produce none.
 - Defer HTML-meta charset detection to a later 4.x release.
   TextPart declaration/BOM detection, confidence and used-charset reporting
   are implemented without it.
-- Exclude TNEF reading/writing, properties, attachment extraction, MIME/calendar
-  conversion and compressed RTF from 4.0.0; reconsider in a later 4.x release.
+- Keep higher-level TNEF message APIs, attachment extraction and MIME/calendar
+  conversion outside 4.0.0. Low-level reading/writing, properties and compressed
+  RTF are implemented above.
 - Promote the broader historical actual-source differential comparisons into
   reproducible repository tooling with pinned reference revisions and explicit
   expected differences. The checked-in reader reference generator and

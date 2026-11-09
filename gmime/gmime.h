@@ -80,6 +80,12 @@
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-codecs.h>
 #include <gmime/gmime-yenc.h>
+#include <gmime/gmime-tnef-types.h>
+#include <gmime/gmime-tnef-options.h>
+#include <gmime/gmime-tnef-reader.h>
+#include <gmime/gmime-tnef-property.h>
+#include <gmime/gmime-tnef-writer.h>
+#include <gmime/gmime-filter-rtf-compressed.h>
 #include <gmime/gmime-compliance.h>
 #include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>

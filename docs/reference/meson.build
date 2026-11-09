@@ -16,6 +16,7 @@ gmime_doc = gnome.gtkdoc(
     'gmime-gpgme-private.h', 'gmime-internal.h', 'gmime-common.h', 'gmime-events.h',
     'gmime-parser-reader-private.h', 'gmime-object-private.h',
     'gmime-text-private.h',
+    'gmime-tnef-private.h',
     'gmime-html-entity-private.h', 'gmime-html-entity-tables-private.h',
     'gmime-html-token-private.h', 'gmime-html-token-tables-private.h',
     'gmime-html-tokenizer-states-private.h',
