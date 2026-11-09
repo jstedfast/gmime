@@ -66,7 +66,7 @@ if host_machine.system() == 'darwin'
   endif
 endif
 public_deps = [glib_dep, gobject_dep, gio_dep]
-private_deps = [gthread_dep, zlib_dep, iconv_dep]
+private_deps = [gthread_dep, zlib_dep, iconv_dep, cc.find_library('m', required: false)]
 
 gpgme_dep = dependency('gpgme', version: '>= 1.11.0', required: get_option('crypto'))
 gpg_error_dep = dependency('gpg-error', required: get_option('crypto'))

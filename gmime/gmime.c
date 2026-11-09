@@ -135,10 +135,20 @@ g_mime_init (void)
 	g_mime_filter_from_get_type ();
 	g_mime_filter_gzip_get_type ();
 	g_mime_filter_pass_through_get_type ();
+	g_mime_filter_rtf_compressed_get_type ();
 	g_mime_filter_smtp_data_get_type ();
 	g_mime_filter_strip_get_type ();
 	g_mime_filter_unix2dos_get_type ();
 	g_mime_filter_windows_get_type ();
+	g_mime_tnef_reader_get_type ();
+	g_mime_tnef_property_reader_get_type ();
+	g_mime_tnef_writer_get_type ();
+	g_mime_tnef_property_writer_get_type ();
+	g_mime_tnef_name_id_get_type ();
+	g_mime_tnef_options_get_type ();
+	g_mime_tnef_compliance_options_get_type ();
+	g_mime_tnef_property_get_type ();
+	g_mime_tnef_property_set_get_type ();
 	
 	g_mime_stream_get_type ();
 	g_mime_stream_block_get_type ();

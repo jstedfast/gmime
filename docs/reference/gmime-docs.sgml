@@ -56,6 +56,12 @@
 <!ENTITY GMimeDecoder SYSTEM "xml/gmime-decoder.xml">
 <!ENTITY gmime-codecs SYSTEM "xml/gmime-codecs.xml">
 <!ENTITY gmime-yenc SYSTEM "xml/gmime-yenc.xml">
+<!ENTITY gmime-tnef-types SYSTEM "xml/gmime-tnef-types.xml">
+<!ENTITY gmime-tnef-options SYSTEM "xml/gmime-tnef-options.xml">
+<!ENTITY gmime-tnef-reader SYSTEM "xml/gmime-tnef-reader.xml">
+<!ENTITY gmime-tnef-writer SYSTEM "xml/gmime-tnef-writer.xml">
+<!ENTITY gmime-tnef-property SYSTEM "xml/gmime-tnef-property.xml">
+<!ENTITY gmime-filter-rtf-compressed SYSTEM "xml/gmime-filter-rtf-compressed.xml">
 <!ENTITY GMimeInternetAddress SYSTEM "xml/gmime-internet-address.xml">
 <!ENTITY GMimeDomainList SYSTEM "xml/gmime-domain-list.xml">
 <!ENTITY gmime-smtp-address-validator SYSTEM "xml/gmime-smtp-address-validator.xml">
@@ -271,6 +277,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterGZip;
       &GMimeFilterOpenPGP;
       &GMimeFilterPassThrough;
+      &gmime-filter-rtf-compressed;
       &GMimeFilterSmtpData;
       &GMimeFilterStrip;
       &GMimeFilterUnix2Dos;
@@ -336,6 +343,15 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeParser;
       &GMimeReader;
       &gmime-compliance;
+    </chapter>
+
+    <chapter id="TNEF">
+      <title>Low-level TNEF</title>
+      &gmime-tnef-types;
+      &gmime-tnef-options;
+      &gmime-tnef-reader;
+      &gmime-tnef-writer;
+      &gmime-tnef-property;
     </chapter>
 
     <chapter id="GPGMEIntegration">

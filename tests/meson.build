@@ -24,6 +24,7 @@ parser_model_test_dep = declare_dependency(
 )
 
 normal_tests = [
+  'test-tnef',
   'test-text-converters',
   'test-html-tokenizer', 'test-html-output', 'test-html-converters',
   'test-stream-block', 'test-substreams', 'test-stream-close',

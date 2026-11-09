@@ -181,6 +181,7 @@ G_GNUC_INTERNAL char *_g_mime_charset_get_text_name (const char *charset, GError
 G_GNUC_INTERNAL const char *_g_mime_charset_get_text_converter (const char *name);
 G_GNUC_INTERNAL iconv_t _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error);
 G_GNUC_INTERNAL int _g_mime_charset_get_codepage (const char *charset);
+G_GNUC_INTERNAL char *_g_mime_charset_from_codepage (int codepage);
 G_GNUC_INTERNAL gsize _g_mime_charset_invalid_length (const char *charset, const unsigned char *in, gsize length, int error);
 
 /* Checked conversions must use the same backend as g_mime_iconv_open(), not GLib's. */

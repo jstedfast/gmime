@@ -239,6 +239,33 @@ static char *locale_charset = NULL;
 static char *locale_lang = NULL;
 static int initialized = 0;
 
+char *
+_g_mime_charset_from_codepage (int codepage)
+{
+	char *name = g_strdup_printf ("CP%d", codepage);
+	iconv_t converter;
+	guint i;
+
+	/* Prefer Windows codepages over narrower aliases such as GB2312 for CP936. */
+	if ((converter = g_mime_iconv_open ("UTF-8", name)) != (iconv_t) -1) {
+		g_mime_iconv_close (converter);
+		return name;
+	}
+	g_free (name);
+	if (codepage == 50221 || codepage == 50222)
+		codepage = 50220;
+	for (i = 0; i < G_N_ELEMENTS (known_codepages); i++) {
+		if (known_codepages[i].codepage != codepage)
+			continue;
+		converter = g_mime_iconv_open ("UTF-8", known_codepages[i].name);
+		if (converter != (iconv_t) -1) {
+			g_mime_iconv_close (converter);
+			return g_strdup (known_codepages[i].name);
+		}
+	}
+	return NULL;
+}
+
 #ifdef G_THREADS_ENABLED
 static GMutex lock;
 #define CHARSET_UNLOCK() g_mutex_unlock (&lock);
