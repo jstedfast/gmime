@@ -405,9 +405,7 @@ stream_reset (GMimeStream *stream)
 static gint64
 gio_seekable_seek (GMimeStream *stream, GSeekable *seekable, gint64 offset, GMimeSeekWhence whence)
 {
-	GMimeStreamGIO *gio = (GMimeStreamGIO *) stream;
 	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
-	GMimeStreamGIOPrivate *gio_priv = _g_mime_stream_gio_get_private (gio);
 	gboolean need_seek = TRUE;
 	GError *err = NULL;
 	gint64 real;
@@ -420,24 +418,17 @@ gio_seekable_seek (GMimeStream *stream, GSeekable *seekable, gint64 offset, GMim
 		real = stream_priv->position + offset;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		if (offset > 0 || (stream_priv->bound_end == -1 && !gio_priv->eos)) {
-			/* need to do an actual lseek() here because
-			 * we either don't know the offset of the end
-			 * of the stream and/or don't know if we can
-			 * seek past the end */
+		if (stream_priv->bound_end == -1) {
+			/* Even at EOF, our position may be past the physical end. */
 			if (!g_seekable_seek (seekable, offset, G_SEEK_END, NULL, &err)) {
 				set_errno (err);
 				return -1;
 			}
 			
 			need_seek = FALSE;
-			real = offset;
-		} else if (gio_priv->eos && stream_priv->bound_end == -1) {
-			/* seeking backwards from eos (which happens
-			 * to be our current position) */
-			real = stream_priv->position + offset;
+			real = g_seekable_tell (seekable);
 		} else {
-			/* seeking backwards from a known position */
+			/* seeking relative to a known boundary */
 			real = stream_priv->bound_end + offset;
 		}
 		
@@ -526,7 +517,13 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 			real = stream_priv->position + offset;
 			break;
 		case GMIME_STREAM_SEEK_END:
-			real = stream_priv->bound_end + offset;
+			if (stream_priv->bound_end == -1) {
+				if ((real = stream_length (stream)) == -1)
+					return -1;
+				real += stream_priv->bound_start + offset;
+			} else {
+				real = stream_priv->bound_end + offset;
+			}
 			break;
 		default:
 			g_assert_not_reached ();
@@ -607,6 +604,7 @@ stream_length (GMimeStream *stream)
 	GMimeStreamGIO *gio = (GMimeStreamGIO *) stream;
 	GMimeStreamGIOPrivate *gio_priv = _g_mime_stream_gio_get_private (gio);
 	GMimeStreamPrivate *stream_priv;
+	GError *err = NULL;
 	gint64 bound_end;
 
 	if (gio_priv->file == NULL) {
@@ -627,8 +625,8 @@ stream_length (GMimeStream *stream)
 			return -1;
 	} else if (!gio_priv->istream && !gio_priv->ostream) {
 		/* try opening an input stream to get the length */
-		if (!(gio_priv->istream = (GInputStream *) g_file_read (gio_priv->file, NULL, NULL))) {
-			errno = EINVAL;
+		if (!(gio_priv->istream = (GInputStream *) g_file_read (gio_priv->file, NULL, &err))) {
+			set_errno (err);
 			return -1;
 		}
 		

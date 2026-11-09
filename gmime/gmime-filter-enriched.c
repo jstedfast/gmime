@@ -347,7 +347,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		if (outptr == outend)
 			goto backup;
 		
-		if ((inptr + 1) >= inend)
+		if (inptr == inend || (inend - inptr == 1 && (!flush || *inptr == '<')))
 			break;
 
 		switch (*inptr++) {
@@ -363,6 +363,10 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			
 			break;
 		case '\n':
+			/* Preserve the omission of a final soft line break. */
+			if (inptr == inend && ((enriched->flags & IS_RICHTEXT) || enriched->nofill <= 0))
+				break;
+
 			if (!(enriched->flags & IS_RICHTEXT)) {
 				/* text/enriched */
 				if (enriched->nofill > 0) {
@@ -373,7 +377,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 						inptr--;
 						goto backup;
 					}
-				} else if (*inptr == '\n') {
+				} else if (inptr < inend && *inptr == '\n') {
 					if ((outptr + 4) >= outend) {
 						inptr--;
 						goto backup;
@@ -426,7 +430,11 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				}
 			} else {
 				/* text/richtext */
-				if ((inend - inptr) >= 3 && (outptr + 4) < outend) {
+				if ((inend - inptr) < 3) {
+					inptr--;
+					goto need_input;
+				}
+				if ((outptr + 4) < outend) {
 					if (strncmp (inptr, "lt>", 3) == 0) {
 						memcpy (outptr, "&lt;", 4);
 						outptr += 4;

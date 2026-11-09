@@ -38,6 +38,18 @@ G_BEGIN_DECLS
 
 G_DECLARE_FINAL_TYPE (GMimeTnefReader, g_mime_tnef_reader, GMIME, TNEF_READER, GObject)
 
+/**
+ * GMimeTnefPropertyReader:
+ *
+ * A forward-only MAPI property reader, invalidated when its attribute reader
+ * advances. Reading a property automatically positions its first value.
+ * Fixed-width scalar values may be reread; variable-length values are claimed
+ * by the first scalar, byte-array, stream or embedded-reader operation.
+ **/
+#define GMIME_TYPE_TNEF_PROPERTY_READER (g_mime_tnef_property_reader_get_type ())
+
+G_DECLARE_FINAL_TYPE (GMimeTnefPropertyReader, g_mime_tnef_property_reader, GMIME, TNEF_PROPERTY_READER, GObject)
+
 GMimeTnefReader *g_mime_tnef_reader_new (GMimeStream *stream, const GMimeTnefOptions *options);
 
 const GMimeTnefOptions *g_mime_tnef_reader_get_options (GMimeTnefReader *reader);
@@ -68,18 +80,6 @@ GBytes *g_mime_tnef_reader_read_value_as_bytes (GMimeTnefReader *reader, GError 
 GMimeStream *g_mime_tnef_reader_open_value_stream (GMimeTnefReader *reader, GError **error);
 
 GMimeTnefPropertyReader *g_mime_tnef_reader_get_property_reader (GMimeTnefReader *reader, GError **error);
-
-/**
- * GMimeTnefPropertyReader:
- *
- * A forward-only MAPI property reader, invalidated when its attribute reader
- * advances. Reading a property automatically positions its first value.
- * Fixed-width scalar values may be reread; variable-length values are claimed
- * by the first scalar, byte-array, stream or embedded-reader operation.
- **/
-#define GMIME_TYPE_TNEF_PROPERTY_READER (g_mime_tnef_property_reader_get_type ())
-
-G_DECLARE_FINAL_TYPE (GMimeTnefPropertyReader, g_mime_tnef_property_reader, GMIME, TNEF_PROPERTY_READER, GObject)
 
 int g_mime_tnef_property_reader_get_row_count (GMimeTnefPropertyReader *reader);
 int g_mime_tnef_property_reader_get_property_count (GMimeTnefPropertyReader *reader);

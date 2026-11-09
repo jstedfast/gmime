@@ -41,6 +41,18 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (GMimeTnefWriter, g_mime_tnef_writer, GMIME, TNEF_WRITER, GObject)
 
 /**
+ * GMimeTnefPropertyWriter:
+ *
+ * A MAPI property-list or recipient-table writer. Start each property with
+ * its tag or name, then write its values. Recipient tables require
+ * g_mime_tnef_property_writer_begin_row(). Explicit close patches counts
+ * and completes the attribute.
+ **/
+#define GMIME_TYPE_TNEF_PROPERTY_WRITER (g_mime_tnef_property_writer_get_type ())
+
+G_DECLARE_FINAL_TYPE (GMimeTnefPropertyWriter, g_mime_tnef_property_writer, GMIME, TNEF_PROPERTY_WRITER, GObject)
+
+/**
  * GMimeTnefTemporaryStreamFactory:
  * @user_data: (closure) (nullable): callback data
  * @error: return location for an error
@@ -76,17 +88,6 @@ GMimeTnefPropertyWriter *g_mime_tnef_writer_open_property_writer (GMimeTnefWrite
 gboolean g_mime_tnef_writer_flush (GMimeTnefWriter *writer, GError **error);
 gboolean g_mime_tnef_writer_close (GMimeTnefWriter *writer, GError **error);
 
-/**
- * GMimeTnefPropertyWriter:
- *
- * A MAPI property-list or recipient-table writer. Start each property with
- * its tag or name, then write its values. Recipient tables require
- * g_mime_tnef_property_writer_begin_row(). Explicit close patches counts
- * and completes the attribute.
- **/
-#define GMIME_TYPE_TNEF_PROPERTY_WRITER (g_mime_tnef_property_writer_get_type ())
-
-G_DECLARE_FINAL_TYPE (GMimeTnefPropertyWriter, g_mime_tnef_property_writer, GMIME, TNEF_PROPERTY_WRITER, GObject)
 
 int g_mime_tnef_property_writer_get_row_count (GMimeTnefPropertyWriter *writer);
 int g_mime_tnef_property_writer_get_property_count (GMimeTnefPropertyWriter *writer);
