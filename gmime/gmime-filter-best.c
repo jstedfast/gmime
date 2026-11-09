@@ -27,7 +27,6 @@
 
 #include "gmime-filter-best.h"
 
-
 #include "gmime-object-private.h"
 
 /**

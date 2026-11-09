@@ -47,7 +47,6 @@ GObject
     GMimeFilterEnriched
     GMimeFilterFrom
     GMimeFilterGZip
-    GMimeFilterHTML
     GMimeFilterOpenPGP
     GMimeFilterSmtpData
     GMimeFilterStrip

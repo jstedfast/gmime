@@ -25,6 +25,21 @@
 <!ENTITY GMimeMultipartSigned SYSTEM "xml/gmime-multipart-signed.xml">
 <!ENTITY GMimePart SYSTEM "xml/gmime-part.xml">
 <!ENTITY GMimeTextPart SYSTEM "xml/gmime-text-part.xml">
+<!ENTITY gmime-text-converter SYSTEM "xml/gmime-text-converter.xml">
+<!ENTITY gmime-html-compliance SYSTEM "xml/gmime-html-compliance.xml">
+<!ENTITY gmime-html-entity SYSTEM "xml/gmime-html-entity.xml">
+<!ENTITY gmime-html-token SYSTEM "xml/gmime-html-token.xml">
+<!ENTITY gmime-html-tokenizer SYSTEM "xml/gmime-html-tokenizer.xml">
+<!ENTITY gmime-html-utils SYSTEM "xml/gmime-html-utils.xml">
+<!ENTITY gmime-html-writer SYSTEM "xml/gmime-html-writer.xml">
+<!ENTITY gmime-html-tag-context SYSTEM "xml/gmime-html-tag-context.xml">
+<!ENTITY gmime-html-to-html SYSTEM "xml/gmime-html-to-html.xml">
+<!ENTITY gmime-html-to-text SYSTEM "xml/gmime-html-to-text.xml">
+<!ENTITY gmime-text-to-html SYSTEM "xml/gmime-text-to-html.xml">
+<!ENTITY gmime-flowed-to-html SYSTEM "xml/gmime-flowed-to-html.xml">
+<!ENTITY gmime-enriched-to-html SYSTEM "xml/gmime-enriched-to-html.xml">
+<!ENTITY gmime-text-previewer SYSTEM "xml/gmime-text-previewer.xml">
+<!ENTITY gmime-url-scanner SYSTEM "xml/gmime-url-scanner.xml">
 <!ENTITY GMimeIterator SYSTEM "xml/gmime-iterator.xml">
 <!ENTITY GMimeVisitor SYSTEM "xml/gmime-visitor.xml">
 <!ENTITY GMimeMessage SYSTEM "xml/gmime-message.xml">
@@ -78,7 +93,6 @@
 <!ENTITY GMimeFilterEnriched SYSTEM "xml/gmime-filter-enriched.xml">
 <!ENTITY GMimeFilterFrom SYSTEM "xml/gmime-filter-from.xml">
 <!ENTITY GMimeFilterGZip SYSTEM "xml/gmime-filter-gzip.xml">
-<!ENTITY GMimeFilterHTML SYSTEM "xml/gmime-filter-html.xml">
 <!ENTITY GMimeFilterOpenPGP SYSTEM "xml/gmime-filter-openpgp.xml">
 <!ENTITY GMimeFilterPassThrough SYSTEM "xml/gmime-filter-pass-through.xml">
 <!ENTITY GMimeFilterSmtpData SYSTEM "xml/gmime-filter-smtp-data.xml">
@@ -194,6 +208,21 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-iconv;
     &gmime-iconv-utils;
     &gmime-encodings;
+    &gmime-text-converter;
+    &gmime-html-compliance;
+    &gmime-html-entity;
+    &gmime-html-token;
+    &gmime-html-tokenizer;
+    &gmime-html-utils;
+    &gmime-html-writer;
+    &gmime-html-tag-context;
+    &gmime-html-to-html;
+    &gmime-html-to-text;
+    &gmime-text-to-html;
+    &gmime-flowed-to-html;
+    &gmime-enriched-to-html;
+    &gmime-text-previewer;
+    &gmime-url-scanner;
     &GMimeEncoder;
     &GMimeDecoder;
     &gmime-codecs;
@@ -240,7 +269,6 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterEnriched;
       &GMimeFilterFrom;
       &GMimeFilterGZip;
-      &GMimeFilterHTML;
       &GMimeFilterOpenPGP;
       &GMimeFilterPassThrough;
       &GMimeFilterSmtpData;

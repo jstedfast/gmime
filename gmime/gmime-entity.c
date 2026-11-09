@@ -40,7 +40,6 @@
 #include "gmime-utils.h"
 #include "gmime-parse-utils.h"
 
-
 #include "gmime-object-private.h"
 
 /**

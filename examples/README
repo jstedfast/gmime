@@ -11,6 +11,28 @@ messages, verifying pgp signatures, adding/removing MIME parts and
 writing messages back out again.
 
 
+Example: custom-blockquotes.c
+------------------------------
+
+Converts a built-in plain-text sample to an HTML fragment, adding
+class="quote level_001", class="quote level_002", etc. to nested
+blockquotes through GMimeHtmlTagCallback. Run custom-blockquotes to
+print the resulting HTML.
+
+The callback requests matching end-tag callbacks to track quote depth,
+including quotes closed at end of input. It delegates other tags to
+GMimeHtmlTagContext, preserving normal line breaks and link rendering.
+Applications can style the generated classes with CSS, for example:
+
+  blockquote.quote { border-left: 2px solid #888; padding-left: 1em; }
+  blockquote.level_002 { border-left-color: #4682b4; }
+
+The same callback works with GMimeFlowedToHtml: use its constructor,
+fragment setter, and callback setter for RFC 3676 input. Keep callback
+state alive throughout conversion and reset the depth before retrying
+after a failed conversion, which may not have delivered all end tags.
+
+
 Example: imap-example.c
 -----------------------
 

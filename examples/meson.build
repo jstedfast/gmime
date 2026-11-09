@@ -1,4 +1,4 @@
-foreach name : ['basic-example', 'imap-example', 'uuencode', 'uudecode', 'msgcheck']
+foreach name : ['basic-example', 'custom-blockquotes', 'imap-example', 'uuencode', 'uudecode', 'msgcheck']
   executable(
     name, name + '.c',
     dependencies: gmime_dep,

@@ -144,14 +144,6 @@ gboolean g_mime_entity_prepare_with_max_line_length (GMimeEntity *object, GMimeE
 
 void g_mime_entity_accept (GMimeEntity *object, GMimeVisitor *visitor);
 
-/* Internal API */
-G_GNUC_INTERNAL void g_mime_entity_type_registry_init (void);
-G_GNUC_INTERNAL void g_mime_entity_type_registry_shutdown (void);
-G_GNUC_INTERNAL GMimeAutocryptHeaderList *
-g_mime_entity_get_autocrypt_headers(GMimeEntity *mime_part, GDateTime *effective_date,
-				    const char *matchheader, GMimeInternetAddressList *addresses,
-				    gboolean keep_incomplete);
-
 G_END_DECLS
 
 #endif /* __GMIME_ENTITY_H__ */

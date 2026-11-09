@@ -30,7 +30,6 @@
 #include "gmime-filter-basic.h"
 #include "gmime-internal.h"
 
-
 #include "gmime-object-private.h"
 
 /**

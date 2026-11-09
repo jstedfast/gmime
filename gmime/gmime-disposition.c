@@ -34,7 +34,6 @@
 #include "gmime-internal.h"
 #include "gmime-events.h"
 
-
 #include "gmime-object-private.h"
 
 /**

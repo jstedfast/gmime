@@ -25,7 +25,6 @@
 
 #include "gmime-filter-checksum.h"
 
-
 #include "gmime-object-private.h"
 
 /**

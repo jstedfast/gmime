@@ -29,7 +29,6 @@
 #include "gmime-table-private.h"
 #include "packed.h"
 
-
 #include "gmime-object-private.h"
 
 /**

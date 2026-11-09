@@ -307,28 +307,6 @@ G_GNUC_INTERNAL GMimeFilterGZipPrivate *_g_mime_filter_gzip_get_private (GMimeFi
 #endif
 
 typedef struct {
-	struct _UrlScanner *scanner;
-
-	guint32 flags;
-	guint32 colour;
-
-	guint32 column       : 31;
-	guint32 pre_open     : 1;
-
-	guint32 citation_depth;
-} GMimeFilterHTMLPrivate;
-
-#ifdef GMIME_PRIVATE_TESTS
-static inline GMimeFilterHTMLPrivate *
-_g_mime_filter_html_get_private (GMimeFilterHTML *object)
-{
-	return g_type_instance_get_private ((GTypeInstance *) object, GMIME_TYPE_FILTER_HTML);
-}
-#else
-G_GNUC_INTERNAL GMimeFilterHTMLPrivate *_g_mime_filter_html_get_private (GMimeFilterHTML *object) G_GNUC_CONST;
-#endif
-
-typedef struct {
 	GMimeOpenPGPState state;
 	gboolean seen_end_marker;
 	gboolean midline;

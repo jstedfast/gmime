@@ -32,7 +32,6 @@
             <link linkend="GMimeFilterCRLF">GMimeFilterCRLF</link>
             <link linkend="GMimeFilterFrom">GMimeFilterFrom</link>
             <link linkend="GMimeFilterGZip">GMimeFilterGZip</link>
-            <link linkend="GMimeFilterHTML">GMimeFilterHTML</link>
             <link linkend="GMimeFilterMd5">GMimeFilterMd5</link>
             <link linkend="GMimeFilterPassThrough">GMimeFilterPassThrough</link>
             <link linkend="GMimeFilterStrip">GMimeFilterStrip</link>

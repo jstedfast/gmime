@@ -29,7 +29,6 @@
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 
-
 #include "gmime-object-private.h"
 
 /**

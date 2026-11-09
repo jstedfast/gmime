@@ -21,6 +21,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
 #include "gmime-rfc2047-private.h"
 #include "gmime-table-private.h"
 

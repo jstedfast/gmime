@@ -21,6 +21,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
 #include "gmime-codecs.h"
 #include "gmime-codec-private.h"
 
@@ -95,6 +96,7 @@ base64_decoder_decode (GMimeDecoder *decoder, const guint8 *input, gsize length,
 			start = input;
 			written += _g_mime_codec_decode_base64_blocks (&input, length, output + written);
 			length -= input - start;
+
 			/* Complete quartets replace previous before it is inspected again. */
 			if (!length)
 				break;

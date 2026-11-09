@@ -28,11 +28,18 @@ This is an incremental migration, not yet a declaration of feature parity.
   keeps its existing automatic seekable-source/nonseekable-memory behavior.
 
 - GMime 4.0.0 excludes async/cancellation APIs, parser-options-local MIME type
-  registration, TNEF, standalone text conversion, and DKIM/ARC/DMARC.
+  registration, TNEF, and DKIM/ARC/DMARC.
   Sender and Resent-Sender remain address lists. The existing global MIME
   type registry is unchanged. Raw multipart boundary access stays private
   unless users explicitly request it. Deferred features may be considered
   for later 4.x releases; they are not 4.0.0 release requirements.
+
+- Standalone non-RTF text/HTML conversion now includes the tokenizer, writer,
+  plain/flowed/enriched/HTML converters, previews, and streaming charset/BOM
+  handling. RTF remains excluded. The legacy `GMimeFilterHTML` and its
+  utility URL scanner are removed; use `GMimeTextToHtml` or
+  `GMimeFlowedToHtml` and HTML tag callbacks instead. Their modern URL
+  scanner is also public as `g_mime_url_scan()` and `GMimeUrlMatch`.
 
 - Meson >= 1.3.0 replaces Autotools. Use `meson setup _build`,
   `meson compile -C _build`, and `meson test -C _build`. Autogen, configure,
@@ -873,9 +880,11 @@ This is an incremental migration, not yet a declaration of feature parity.
 
 The first implementation scope is MIME parsing and writing, headers,
 addresses, parameters, transfer encodings, and the message object model.
-TNEF, standalone text conversion, and DKIM/ARC/DMARC are excluded from 4.0.0
+TNEF and DKIM/ARC/DMARC are excluded from 4.0.0
 and may be considered for later 4.x releases. Async/cancellation and a
 parser-options-local MIME type registry are also outside the 4.0.0 scope.
+Standalone non-RTF text/HTML conversion, originally deferred, is now
+implemented as described below.
 The structured MIME compliance framework is now implemented on GMimeReader
 and exposed by GMimeParser; remaining work is tracked in the migration
 roadmap below.
@@ -3507,8 +3516,9 @@ buffered body even across short source reads, and retains the existing
 replacement, finalization, newline, embedded-NUL and I/O error policies.
 Headers, the legacy unchecked getter and explicit strict decoding are unchanged.
 
-HTML tokenization and meta-charset discovery are explicitly deferred to a
-later 4.x release rather than adding an HTML tokenizer for 4.0.
+HTML-meta charset discovery remains deferred to a later 4.x release.
+The standalone HTML tokenizer is available, but these accessors do not yet
+use it to inspect HTML metadata.
 
 Native and ASan/UBSan core and MIME-part suites pass, including declaration/BOM
 precedence, all supported transfer encodings, confidence and fallback output,
@@ -5762,13 +5772,74 @@ Managed collection CopyTo(T[] array, int offset) convenience APIs, including
 Multipart.CopyTo(), are intentionally excluded from the port. Stream and
 content copying APIs are unaffected.
 
+### Standalone text and HTML conversion
+
+The non-RTF text subsystem ports MimeKit's tokenizer, writer, converters and
+previewers, with actual-source comparisons against revision
+`07e02c3a3f6cabd084e0fcbdcb302d6de4b6a350`. Applicable inline algorithm comments
+are retained. New C/header files use GMime's standard Emacs and copyright/LGPL
+headers.
+
+- `GMimeTextConverter` is an abstract GObject with final plain-text copying,
+  text-to-flowed, flowed-to-text, text-to-HTML, flowed-to-HTML, enriched-to-HTML,
+  HTML-to-text and HTML-to-HTML implementations. Stream conversion and
+  bounded-string convenience APIs report failures through `GError`.
+  Header/footer strings are copied; HTML output supports text/HTML insertion
+  formats, fragments and tag callbacks where supported upstream.
+- String APIs always accept/produce UTF-8. Stream APIs expose input/output
+  charsets, buffer sizes, optional UTF-8/16/32 BOM detection and optional BOM
+  emission. Conversion is incremental, handles incomplete characters across
+  reads, and flushes stateful encoders. Unlike .NET replacement fallbacks,
+  malformed, incomplete and unrepresentable characters are errors.
+  Detection and emission default to off; a matching input BOM is preserved
+  unless detection is enabled. Plain converters reject embedded NUL; HTML
+  input applies the tokenizer's state-specific NUL handling.
+- Stream conversion starts at current positions, flushes successful output,
+  and does not close either stream. Stream output may be partial on failure;
+  the string API returns no partial result. Converters are reusable after
+  failure, but concurrent/reentrant conversion and overlapping input/output
+  storage are unsupported.
+- Flowed encoding preserves MimeKit's stuffing, quote handling, delsp=yes
+  wrapping and deep-quote amplification bounds. Wrapping counts Unicode scalar
+  values instead of .NET UTF-16 code units and never splits a UTF-8 character.
+  Plain copying preserves newlines; generated line endings are LF on every
+  platform. Runtime-dispatched SIMD helpers preserve upstream bulk scanning
+  paths for UTF-8 validation, newline/space searches, tokenizer runs and URLs.
+- Boxed tokens/attributes, tag/attribute identifiers, all 2,231 named character
+  references, an incremental entity decoder and HTML escaping utilities are
+  public. The streaming tokenizer ports the state machine and tree metadata,
+  including raw/script text, foreign content, namespaces, truncated tags,
+  depth bounds and structured compliance logging/options.
+- `GMimeHtmlWriter` implements stateful tag/attribute/text/token serialization.
+  Borrowed tag contexts let callbacks delete tags/end tags, suppress content
+  and request end-tag callbacks. HTML-to-HTML exposes comment filtering,
+  fragments and noscript handling; it is not a general-purpose HTML sanitizer.
+  HTML-to-text preserves links, image alternatives, lists, tables, hidden
+  content and preformatted formatting, with configurable resource limits.
+  Enriched output preserves parameter handling and its depth/input/output
+  limits.
+- Plain and HTML previewers support strings, streams with a charset and
+  TextPart conveniences. Preview limits and text positions use Unicode scalar
+  values rather than .NET UTF-16 code units.
+- Focused native fixtures cover upstream token/compliance vectors and full
+  HTML corpora, entity tables, converter formatting/options/callbacks,
+  previews, limits, short reads/writes, charset/BOM handling and error paths.
+  Session-local actual-MimeKit comparisons match 1,240 plain/flowed cases and
+  4,958 HTML/output/preview cases. The latter normalize FlowedToHtml's generated
+  CRLF to native LF; BMP inputs avoid the documented scalar/UTF-16 difference.
+
+All 51 pre-existing core suites passed the integration run; all four new
+text/HTML suites pass natively and under Clang ASan/UBSan. GIR, typelib, Vala
+and reference-documentation generation pass. Python/GIR and compiled Vala
+consumers exercise converters, previews, tokens, writers and callbacks.
+Existing unrelated scanner/documentation warnings remain; the new APIs
+produce none.
+
 ### Deferred subsystems and release integration
 
-- Exclude standalone text utilities from 4.0.0: flowed text,
-  HTML parsing/conversion/filtering, text previews and RTF conversion.
-  These may be considered for a later 4.x release.
-  Existing HTML/enriched filters cover only part of this scope.
-- Defer HTML-meta charset detection and its tokenizer to a later 4.x release.
+- RTF conversion remains excluded. Existing HTML/enriched filters remain
+  available alongside the standalone tokenizer/converter APIs.
+- Defer HTML-meta charset detection to a later 4.x release.
   TextPart declaration/BOM detection, confidence and used-charset reporting
   are implemented without it.
 - Exclude TNEF reading/writing, properties, attachment extraction, MIME/calendar

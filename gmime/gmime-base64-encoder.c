@@ -21,7 +21,9 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+
 #include <string.h>
+
 #include "gmime-codecs.h"
 #include "gmime-codec-private.h"
 
@@ -115,22 +117,26 @@ base64_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 			length -= n;
 			written += n / 3 * 4;
 			state->column += n / 3;
+
 			if (state->column == per_line) {
 				if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
 					output[written++] = '\r';
 				output[written++] = '\n';
 				state->column = 0;
 			}
+
 			if (n)
 				continue;
 		}
 
 		state->buffer[state->buffered++] = *input++;
 		length--;
+
 		if (state->buffered == 3) {
 			codec_encode_triplet (state->buffer, output + written, FALSE);
 			written += 4;
 			state->buffered = 0;
+
 			if (++state->column == per_line) {
 				if (state->newline_format == GMIME_NEWLINE_FORMAT_DOS)
 					output[written++] = '\r';
@@ -139,6 +145,7 @@ base64_encoder_encode (GMimeEncoder *encoder, const guint8 *input, gsize length,
 			}
 		}
 	}
+
 	return written;
 }
 
@@ -234,5 +241,6 @@ g_mime_base64_encoder_new_with_newline_format (GMimeNewLineFormat newline_format
 	encoder->state.newline_format = newline_format;
 	/* RFC 2045 caps base64 lines at 76 characters, even with a larger format limit. */
 	encoder->state.max_line_length = MIN (max_line_length, 76);
+
 	return encoder;
 }

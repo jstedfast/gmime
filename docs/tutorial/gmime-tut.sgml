@@ -572,14 +572,17 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       
       <para>Also included are: GMimeFilterBest (which will likely not
       concern you), GMimeFilterEnriched (which will convert
-      text/enriched and/or text/rtf to text/html), and GMimeFilterHTML
-      which will convert text/plain into text/html with options to
-      wrap strings that appear to be hyperlinks with appropriate &lt;a
-      href=...&gt; tags; GMimeFilterStrip (again, likely this won't
+      text/enriched and/or text/rtf to text/html), and
+      GMimeFilterStrip (again, likely this won't
       concern you). To encode or decode yEnc, use GMimeFilterBasic with a
       GMimeYencEncoder or GMimeYencDecoder supplied to
       <function>g_mime_filter_basic_new_with_encoder()</function> or
       <function>g_mime_filter_basic_new_with_decoder()</function>.</para>
+
+      <para>For text/plain to text/html conversion, use the standalone
+      GMimeTextToHtml or GMimeFlowedToHtml converters. These are not
+      stream filters; use their HTML tag callbacks to customize
+      hyperlinks and nested blockquotes.</para>
       
       <para>For an example on how to use filters, please see the end
       of the previous chapter where it talks about GMimeStreamFilter
