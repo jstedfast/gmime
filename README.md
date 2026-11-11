@@ -7,8 +7,8 @@
 GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose
 Internet Mail Extension (MIME) as defined by [numerous IETF specifications](https://github.com/jstedfast/gmime/blob/master/RFCs.md).
 
-See [PORTING.md](PORTING.md) to migrate applications from GMime 3.x, and
-[STATUS.md](STATUS.md) for implementation scope and compatibility decisions.
+See [PORTING.md](PORTING.md) to migrate applications from GMime 3.x and review
+compatibility, ownership, and error-handling contracts.
 
 GMime features an extremely robust high-performance parser designed to be able to preserve byte-for-byte information
 allowing developers to re-seralize the parsed messages back to a stream exactly as the parser found them. It also features
@@ -16,6 +16,31 @@ integrated GnuPG and S/MIME v3.2 support.
 
 Built on top of GObject (the object system used by the [GNOME desktop](https://www.gnome.org)), many developers should find
 its API design and memory management very familiar.
+
+## GMime 4 features
+
+GMime 4 provides MIME parsing, writing, and object-model APIs for C/GObject.
+It is not source or ABI compatible with GMime 3. Public headers and the API
+reference define the interfaces; [PORTING.md](PORTING.md) describes the
+important migration differences.
+
+The library includes structured MIME compliance reporting, streaming readers,
+incremental transfer codecs, body and attachment builders, specialized MIME
+reports, Received and Authentication-Results models, and diagnostic
+anonymization. Standalone plain/flowed/enriched/HTML converters, tokenization,
+HTML writing, and text previews are also available. HTML conversion is not
+a general-purpose sanitizer, and anonymization is not a guarantee that all
+sensitive information is removed.
+
+Low-level TNEF attributes, MAPI properties, embedded readers/writers, and
+compressed-RTF codecs are supported. The APIs are synchronous.
+Authentication-Results models represent header claims, not authentication
+performed by GMime.
+
+OpenPGP and S/MIME use native GPGME contexts and results. Core MIME
+functionality, text conversion, TNEF, compression, and OpenPGP block discovery
+remain available without GPGME; native cryptographic operations require the
+optional integration described below.
 
 ## History
 
@@ -160,36 +185,19 @@ silently substituting scalar coverage. Hosted-runner timings are not
 performance gates. A required Windows job is deferred until a full-library
 integration build is available; scanner-only MSVC checks are not equivalent.
 
-The normal reader test includes 90 frozen actual-MimeKit callback traces,
+The normal reader test includes 90 frozen reference callback traces,
 including newline detection, multipart/embedded messages, truncated input,
-short reads, nonseekable streams, and a 4096-byte buffer edge. These run
-without .NET or a MimeKit checkout on every CI platform. To regenerate them,
-use the .NET 10 SDK and the actual reference sources, not GMime output:
-
-```sh
-dotnet run --project tools/mimekit-reader-reference \
-  -p:MimeKitSource=/path/to/MimeKit -- \
-  /path/to/MimeKit tests/data/reader/mimekit.txt
-```
-
-Use the same reference directory for the build property and program argument.
-The fixture records both the reference Git revision and a SHA-256 digest of
-the compiled source files, including local source edits. Review regenerated
-differences and the associated reference changes before accepting them.
-The harness compiles the reference sources without modifying their checkout.
-The six empty-input cases explicitly retain GMime's documented EOS-on-success
-contract: unlike MimeKit, a failed empty read does not report successful EOS.
+short reads, nonseekable streams, and a 4096-byte buffer edge. These run on
+every CI platform. The six empty-input cases retain GMime's documented
+EOS-on-success contract: a failed empty read does not report successful EOS.
 
 ### Performance benchmarks
 
 The top-level `benchmarks` directory contains the standalone benchmark targets
-and their dedicated fixtures. The `benchmark-gmime` executable ports the
-applicable synchronous workloads from
-MimeKit's benchmark suite. It covers address parsing and validation, RFC 2047
+and their dedicated fixtures. The `benchmark-gmime` executable covers
+address parsing and validation, RFC 2047
 decoding, parser and reader lifecycles, nested messages, message preparation,
-codecs, encoding validators, and stream filters. No MimeKit checkout or .NET
-runtime is needed. HTML/RTF, async, legacy-parser comparisons, and managed-runtime
-baselines are not applicable to GMime.
+codecs, encoding validators, and stream filters.
 
 Use an optimized build, without sanitizers or coverage, for measurements:
 
@@ -220,7 +228,7 @@ operation over five samples, MiB/s, and the workload result. Each sample runs fo
 least 50 ms by default, after an untimed check and 5 ms warmup. Longer samples
 and repeated runs on an otherwise idle machine are recommended. MiB/s refers
 to input bytes, not decoded bytes; a mailbox operation parses the entire file,
-and a best-encoding operation scans its input 100 times, as in MimeKit.
+and a best-encoding operation scans its input 100 times.
 
 Fixtures are loaded/generated before timing. Parsing includes fresh input
 stream/parser construction and full model destruction, with memory and source
@@ -228,10 +236,7 @@ storage measured separately. `/Compliance` variants enable a no-op logger;
 other parser/reader variants leave compliance disabled. Prepare resets both
 leaf transfer encodings before every operation. Codec/filter operations
 include their allocations and cleanup. Validators count issues without
-retaining them. These are native workload ports, not BenchmarkDotNet
-equivalents: deterministic destruction, GC, JIT, allocation accounting, and
-stream buffering differ. Preparation uses preloaded memory rather than
-MimeKit's file-backed attachment.
+retaining them. Preparation uses preloaded memory.
 
 The executable links the production library objects directly so its private
 validators and parser share one set of GTypes. It does not measure shared-library
@@ -795,8 +800,7 @@ of GMime.
 |LICENSE        |The GNU Lesser General Public License, version 2.1|
 |INSTALL        |In-depth installation instructions|
 |TODO           |Description of planned GMime development|
-|[PORTING.md](PORTING.md)|Application migration from GMime 3.2.15 to 4.0|
-|[STATUS.md](STATUS.md)|Implementation status, compatibility decisions, and validation history|
+|[PORTING.md](PORTING.md)|Application migration, compatibility decisions, ownership, and error handling for GMime 4.0|
 
 
 ## Discussion Forums
@@ -814,7 +818,6 @@ The current list of known bindings are:
 |-----------|----------------------------------------|
 |Go         |https://github.com/sendgrid/go-gmime    |
 |Perl       |http://search.cpan.org/dist/MIME-Fast   |
-|C#         |https://github.com/jstedfast/MimeKit    |
 |Julia      |https://github.com/bhftbootcamp/GMime.jl|
 
 ## Reporting Bugs

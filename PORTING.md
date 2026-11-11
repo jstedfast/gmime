@@ -7,9 +7,10 @@ do not mix headers or libraries from the two major versions.
 
 Use this guide as an ordered migration checklist, whether making changes
 manually or with an AI assistant. The installed public headers and reference
-manual define exact signatures and ownership. [STATUS.md](STATUS.md) records
-detailed implementation decisions, intentional differences, and historical
-validation; it is not an application migration checklist.
+manual define exact signatures and ownership. See
+[GMime 4 features](README.md#gmime-4-features) for an overview.
+Historical implementation notes and test results are not current compatibility
+or CI guarantees.
 
 ## 1. Update the build and dependencies
 
@@ -111,6 +112,35 @@ Additional replacements:
 Do not perform an unchecked global substring replacement: distinguish a
 GMime type macro from unrelated GObject or application identifiers.
 
+### Address construction, equality, and ownership
+
+`g_mime_mailbox_address_new()` now takes a trailing `GError **`.
+`g_mime_mailbox_address_set_addrspec()`, `g_mime_message_add_mailbox()`, and
+`g_mime_autocrypt_header_set_address_from_string()` return `gboolean` and
+take `GError **`; invalid addresses leave existing state unchanged.
+Empty mailbox strings remain valid model values.
+
+Mailbox `get_local_part()`, `get_address(idn_encode)`, and
+`get_domain(idn_encode)` return allocated strings. `get_addrspec()`,
+`get_raw_domain()`, and `get_route()` return borrowed values.
+Replace the former cached IDN getter with `get_address(TRUE)` and free its
+result. Stored domains retain their original Unicode/A-label spelling.
+Routes are mutable `GMimeDomainList` objects; edits update owning headers.
+
+Address-list lookup/removal now uses value equality rather than identity.
+Equality is case-sensitive for names and stored addresses, distinguishes NULL
+from empty names, and compares groups recursively; charsets/routes are ignored.
+Ordering is a separate operation: names use UTF-8 byte order and mailbox
+domains use IDN-encoded, ASCII-lowercase spelling. Do not treat comparison
+equality as value equality. `get_mailboxes()` returns an owned snapshot
+retaining the original mailboxes, not clones; edits still affect their owners.
+
+New typed address parsers and `g_mime_internet_address_list_parse_full()`
+accept explicit byte lengths and `GError **`, reject embedded NULs, and require
+complete values. Legacy list/message-header parsing remains best-effort.
+`GMIME_RFC_COMPLIANCE_LOOSER` additionally accepts consecutive/trailing
+local-part dots and escaped at-signs; it is not an SMTP validation policy.
+
 ### MIME tree iteration
 
 `GMimePartIter` has been removed. Use the GObject-based `GMimeIterator`:
@@ -161,8 +191,8 @@ repair stored indexes; reset or seek before relying on them.
 ### SMTP envelope address validation
 
 `g_mime_smtp_address_try_validate(address, length, options, &result)` checks a
-bare RFC 5321 mailbox; `g_mime_smtp_utf8_address_try_validate()` adds MimeKit's
-Unicode/NFC/context/script policy. These are not MIME header parsers or the
+bare RFC 5321 mailbox; `g_mime_smtp_utf8_address_try_validate()` adds
+Unicode/NFC/context/script validation. These are not MIME header parsers or the
 reader's compliance validator. They do not trim, normalize, rewrite or accept
 display names. SMTPUTF8 policy is stricter than transport syntax and does not
 guarantee protection against every spoof.
@@ -203,8 +233,8 @@ names remain ASCII. Office365's missing or method-specific service IDs,
 dotted methods, empty properties and unquoted property tspecials are retained.
 
 Nullable instance/version values use boolean getters with optional integer
-outputs, setters, and explicit clear methods; absent outputs are zero. Like
-MimeKit, setters do not range-check numbers, although parsing only accepts
+outputs, setters, and explicit clear methods; absent outputs are zero.
+Setters do not range-check numbers, although parsing only accepts
 nonnegative Int32 values. Result/property collections retain references,
 permit duplicates, use identity comparisons and preserve insertion order.
 Returned child objects and strings are borrowed.
@@ -215,8 +245,8 @@ Parsed properties retain quoting, except empty values are always quoted.
 `*_to_string()` returns allocated model text without a field name or newline.
 Both header names use a structured formatter, falling back to the default
 formatter for unparseable values; existing raw headers remain unchanged.
-Folding counts native UTF-8 octets rather than .NET UTF-16 code units and does
-not split indivisible quoted strings, comments or tokens.
+Folding counts UTF-8 octets and does not split indivisible quoted strings,
+comments or tokens.
 
 ### Instance state and subclassing
 
@@ -252,8 +282,8 @@ have changed.
 
 ### Stream ownership and explicit close
 
-Streams retain native reference-counted lifetime rules, not managed `Dispose`
-semantics. `g_mime_stream_close()` does not unref the wrapper, and an extra
+Streams retain reference-counted lifetime rules.
+`g_mime_stream_close()` does not unref the wrapper, and an extra
 reference does not prevent another caller from explicitly closing a shared
 resource. Flush and close explicitly, checking return values and `errno`;
 finalization cannot report delayed I/O failures. A failed close may already
@@ -282,6 +312,37 @@ change reference counts. Language bindings should retain default ownership.
 GIO close now returns -1 and sets `errno` on failure, preserving the first error
 while closing and releasing both internal streams. The wrapper is closed even
 on failure, and a subsequent close does not retry its released resources.
+
+### Stream bounds and storage
+
+Use `g_mime_stream_substream()` for bounded views. Negative starts, reversed ranges, and
+ranges outside the parent fail with `EINVAL`. An end of -1 inherits a finite
+parent's end. Bounds are absolute backend coordinates, not offsets from the
+parent's current position. Consult the backend's seek contract rather than
+assuming every stream uses identical coordinates or supports seeking.
+
+Memory and block views share bytes but have independent positions and bounds.
+Closing a parent memory view or replacing its byte array does not invalidate
+existing views. A finite declared length can exceed available storage; reads
+still stop at actual storage. `GMimeStreamMem` can grow on seeks and zero-fills
+newly exposed gaps; storage is limited to `G_MAXUINT` bytes.
+`GMimeStreamBlock` uses non-contiguous blocks, rejects seeks beyond its current
+extent, and supports explicit resizing. Resizing affects shared storage, not
+other views' positions; contiguous copies are independent.
+
+`GMimeStreamNull` measures the highest written position, not cumulative bytes.
+Its written/newline statistics remain cumulative, including overwrites.
+Nonempty reads now fail with `EBADF`; reset clears measurement and statistics.
+`GMimeStreamCat` reads across children at their current positions without
+requiring seeking, but explicit seek/reset operations require support from
+the affected children. Partial progress and subsequent I/O errors must still
+be handled.
+
+Fs/File/Mmap views must not outlive an explicit close of their owning backend.
+Never truncate a file while its mapping is active. Nonempty mapped operations
+require the corresponding read/write protection. Stream limits depend on the
+backend and platform; check `EOVERFLOW` rather than assuming every stream can
+address every 64-bit offset or accept arbitrarily large counts.
 
 ## 3. Preserve decoded-content behavior explicitly
 
@@ -321,6 +382,14 @@ For content subclasses, move decoded-output overrides to `decode_to_stream`.
 The `write_to_stream` virtual now supplies raw bytes to the default decoder.
 Revisit subclass chaining and test both raw and decoded output.
 
+`g_mime_part_set_content(part, NULL)` clears content without removing headers;
+the part then serializes an empty body. Assignments retain content references.
+Use `g_mime_content_type_set_charset_encoding()` for checked charset resolution;
+the older `get_charset()` / `set_charset()` operate on the raw parameter.
+`get_charset_encoding()` returns an owned resolved name, or NULL without error
+for an absent or unsupported name. A failed checked assignment preserves the
+previous parameter, and NULL removes it.
+
 ### Decoded message bodies
 
 Use `g_mime_message_get_text_body(message, error)` for plain text,
@@ -337,10 +406,8 @@ conversion: a supported declared charset wins, otherwise a UTF-8/UTF-16 BOM
 or UTF-8 is used. Declared charsets and UTF-16 BOMs replace malformed sequences
 (U+FFFD for Unicode, `?` otherwise); strict default/BOM UTF-8 retries the whole
 body as Latin-1 on malformed input. Charset mappings still follow native iconv.
-Incomplete final characters are processed rather than silently dropped as in
-MimeKit's current charset-filter EOF path.
+Incomplete final characters are processed rather than silently dropped.
 Decoded NULs are errors. Newlines use the default format options.
-HTML-meta charset detection and flowed-text conversion remain deferred;
 HTML is not sanitized. Existing `g_mime_message_get_body()` still returns a
 borrowed entity, and the legacy `g_mime_text_part_get_text()` is unchanged.
 
@@ -351,8 +418,7 @@ returns an owned charset name and `GMimeTextEncodingConfidence`. A supported
 Content-Type charset or decoded UTF-8/UTF-16 BOM gives `CERTAIN`; absent
 content gives `"us-ascii"` and `IRRELEVANT`. Empty content is not absent.
 No match returns FALSE, NULL and `UNDEFINED`, without an error. Detection
-does not validate the whole body or guess UTF-8. HTML-meta detection is
-deferred beyond 4.0, so `TENTATIVE` is reserved.
+does not validate the whole body or guess UTF-8. `TENTATIVE` is reserved.
 
 Without a usable declaration, detection opens a decoded reader and makes
 one read of up to three bytes; short reads are not retried. The backing
@@ -366,6 +432,97 @@ content decoding overrides, and does not change headers or the legacy getter.
 It uses buffered bytes for BOM detection, including across short source reads.
 The charset output is optional and is NULL on failure. Free both returned
 strings with `g_free()`. The explicit `get_text_with_charset()` remains strict.
+
+### Body selection, related resources, and attachments
+
+Multipart selection follows the concrete class, not merely its current
+Content-Type string. `GMimeMultipartAlternative` searches alternatives in
+reverse order; `GMimeMultipartRelated` considers only its selected root.
+Constructing a generic multipart with subtype `"alternative"` or `"related"`
+does not give it the specialized class's selection behavior. The parser and
+entity factory select specialized classes automatically.
+
+Related-resource lookup searches immediate children and never fetches external
+URLs or files. CID paths match Content-ID case-sensitively; URI comparisons
+use GLib's normalization. Relative locations
+resolve against the child's Content-Base or the container's Content-Base,
+not the container's Content-Location. `g_mime_multipart_related_open()` returns
+an owned decoded stream and optional allocated MIME-type/charset strings.
+Its source-sharing restrictions are the same as `g_mime_content_open()`.
+
+Content-Base and Content-Location are nullable entity-level UTF-8 strings.
+Content-Base must be absolute; Content-Location may be relative. Setters
+validate syntax but retain the supplied spelling rather than canonicalizing
+it. Getters do not resolve relative values.
+
+Attachment status is determined by Content-Disposition, not by a filename.
+`g_mime_message_get_body_parts()` and `get_attachments()` return owned
+`GPtrArray` snapshots of retained entities; release them with
+`g_ptr_array_unref()`. Membership is snapshotted, but entities are shared.
+Traversal excludes multipart containers and does not enter attached messages.
+A multipart marked as an attachment still contributes its individual leaves,
+not the container itself.
+
+`GMimeBodyBuilder` combines plain and HTML bodies as multipart/alternative,
+wraps HTML with linked resources as multipart/related, and adds attachments
+using multipart/mixed. NULL text means absent; empty text is a present body.
+Resources are ignored without HTML. With no text, one attachment is returned
+directly; an otherwise empty builder returns an empty text/plain part.
+Builds create new text parts/containers but retain attachment/resource objects.
+The returned body always carries an owned reference.
+
+Attachment collection stream inputs are copied from their current position
+without being closed; filename inputs are opened and closed internally.
+Byte inputs are copied, not shared. An explicit Content-Type is retained for
+ordinary parts. Only auto-detected seekable message inputs recover from a
+format error as application/octet-stream; explicit types and I/O failures do
+not silently fall back. Linked filenames must be valid relative URI references,
+so unescaped spaces and backslashes are not accepted.
+
+The `g_mime_types_*()` filename/type helpers use bundled extension mappings,
+not content sniffing or the host MIME database. Unknown extensions resolve
+to application/octet-stream. Registrations are process-wide; returned strings
+are owned. This filename registry is separate from the global entity-subclass
+registry used by the parser/factory.
+
+### Structured reports and traversal
+
+Delivery-status, disposition-notification, and feedback-report accessors lazily
+return borrowed cached header collections. Reading them preserves content;
+editing them regenerates it. Their caches survive inherited content replacement,
+so editing an old cached collection can replace newly assigned content.
+Retain a collection explicitly if it must outlive its report, and check loading
+errors. `GMimeTextRfc822Headers` can retain an embedded body: it is not a
+body-stripping API.
+
+`GMimeVisitor` traverses live MIME trees without decoding content or performing
+cryptography. Overriding a typed visit without chaining prunes that subtree.
+It does not snapshot collections.
+Retain borrowed entities across traversal or mutation when needed.
+
+### Message/partial splitting and joining
+
+Replace the old split/reconstruction entrypoints with
+`g_mime_message_partial_split(message, max_size, &count, &error)` and
+`g_mime_message_partial_join(options, first_message, partials, count, &error)`.
+`first_message` is the enclosing message of the first numbered fragment,
+not just its message/partial body. Both return owned results; release every
+message in a split result and free the array.
+
+Split preserves whole lines, so a fragment may exceed `max_size` by one byte
+when LF falls at the boundary. An unnecessary split returns a reference to
+the original message, not a clone. Otherwise envelopes get independent headers
+and fresh Message-IDs; their partial bodies share a separate reconstruction ID.
+Payload header filtering is intentional, so splitting is not arbitrary
+byte-chunking of the original full wire message.
+
+Join sorts a private copy of the fragment array and combines the first
+enclosing message's envelope with the payload's Subject, Message-ID, Encrypted,
+and MIME-Version fields according to RFC 2046. It loads decoded content into
+memory, independent of fragment streams. Invalid IDs, sequences, or totals
+are errors. An empty input array returns NULL without error; supplied fragments
+without a reconstructable message produce a parse error. Parameter getters
+return -1 for absent/invalid numbers; absent and empty IDs are distinct.
 
 ## 4. Handle parser errors and options
 
@@ -471,6 +628,13 @@ Passing NULL for the callback, data and destroy notifier disables reporting.
 Compliance reporting neither changes parsing policy nor replaces legacy
 warning callbacks or `GError` handling.
 
+The MIME root has depth zero; multipart children and embedded message bodies
+each add a level. At the configured depth limit, containers become leaf parts
+retaining raw body content. The raw-header limit includes the field name,
+colon, folds, and terminating newline, and is per header, not per header block.
+`allow_addresses_without_domain=FALSE` rejects bare local addresses but still
+permits them inside angle brackets; it is not SMTP envelope validation.
+
 `UnexpectedNullBytesInHeader` identifies the first NUL in each header.
 `Unexpected8BitBytesInHeader` identifies the leading byte of the first malformed
 UTF-8 sequence, not the first non-ASCII byte. Both now report `EXACT` positions,
@@ -482,8 +646,8 @@ remain exact and unchanged.
 
 Reader content callbacks now borrow input-buffer slices directly; their lifetime
 is still limited to the callback. Copy bytes that must survive it. A trailing
-lone CR at EOF is delivered before encoding-validator finalization, matching
-MimeKit; withheld LF/CRLF sequences at EOF are delivered afterward.
+lone CR at EOF is delivered before encoding-validator finalization;
+withheld LF/CRLF sequences at EOF are delivered afterward.
 
 Compliance-enabled content scanning now combines structural and transfer-encoding
 checks for clean Base64, quoted-printable and UU content. This is an internal
@@ -507,6 +671,24 @@ Applications that also need a constructed message can instead inspect its
 raw value. Inspect nested entities/messages explicitly if their headers matter;
 the old regex callback observed those as well. `GMimeParser` remains final and
 does not accept an application-supplied reader subclass.
+
+### Loading and saving files
+
+The convenience message/entity loaders use memory storage by default, unlike
+the parser's automatic source-storage selection. They consume input at its
+current position without closing caller-owned streams, parse one message or
+entity rather than a mailbox, and report empty input as a parse error.
+Use their `_with_storage()` variants for explicit source-backed storage.
+`g_mime_entity_load_with_content_type()` parses body-only input with a synthetic
+Content-Type header and memory storage; its header offsets refer to that
+synthetic input.
+
+`g_mime_entity_write_to_file()` and `write_content_to_file()` create or truncate
+the destination and report open/write/flush/close failures through `GError`.
+They do not provide atomic replacement, delete partial files on failure, or
+guarantee fsync-style durability. Never write over a file still backing the
+entity's source content. File loaders and writers close their own streams;
+an earlier operation error takes precedence over a cleanup error.
 
 ## 5. Treat raw headers as bytes, not C strings
 
@@ -533,6 +715,73 @@ and validates the assignment. Supply the complete raw value, including its
 required line ending, and check errors. Invalid assignment preserves the
 previous state. Use `g_mime_header_set_value_full()` for checked decoded-value
 assignment; do not construct raw headers by concatenating untrusted input.
+
+Raw assignment only requires a nonempty value ending in LF; it does not
+validate header syntax or prevent line injection. Explicit raw values bypass
+international reformatting. Decoded header getters replace embedded NULs with
+U+FFFD while leaving raw bytes unchanged. This differs from checked text-body
+decoding, which rejects decoded NULs.
+
+### Checked headers, duplicates, and display strings
+
+`g_mime_header_new_full()` and `set_value_full()` validate UTF-8, charsets,
+and structured Content-Type/Disposition values before publishing changes.
+Failures preserve the old header and owner state. NULL charset selects UTF-8;
+an available charset that cannot represent the text may still use the
+formatter's lossless UTF-8 fallback. These are not replacements for every
+legacy tolerant parser or setter.
+
+Choose header-list operations deliberately:
+
+| Operation | Duplicate and identity behavior |
+|---|---|
+| `set_value_full()` | Updates the first object, preserving later duplicates |
+| Legacy `set()` | Updates the first object and collapses duplicates |
+| `replace()` / `replace_value_full()` | Replaces at the first match and removes later matches |
+| `set_header_at()` | Replaces one slot without collapsing duplicates |
+| `add()` / `insert_header()` | Retains the supplied object, permitting shared/duplicate instances |
+
+Instance lookup/removal uses identity; field-name lookup ignores ASCII case.
+Shared header edits affect every containing list. Clone before insertion for
+independent edits; clones preserve raw bytes but reset the source offset to -1.
+Parser-option snapshots still borrow warning callback data.
+
+`g_mime_header_to_string()` is an unfolded display string without a final
+newline, not transport serialization. Parameter display strings are likewise
+not transport encoding. Use the corresponding stream writers for wire output.
+`g_mime_header_get_value_with_charset()` returns independently allocated text,
+without replacing the cached value or modifying raw bytes.
+
+Parameter names are unique within a list, unlike header names; object insertion
+with a duplicate name is a programming error. Parameter mutations can update
+all Content-Type/Disposition owners sharing the instance. The `always_quote`
+parameter setting and `always_quote_param_values` formatting option request
+quoting but do not override required RFC 2231 encoding. Empty values are
+always quoted; encoded-word lookalikes and control characters require encoding.
+Property/header trimming uses ASCII linear whitespace, not arbitrary Unicode
+whitespace.
+
+### Received models and diagnostic anonymization
+
+`GMimeReceived` exposes ordered clauses and an optional `GDateTime` retaining
+its timezone offset. Parsed clauses may contain recovery values that checked
+constructors/setters reject. Collections retain shared instances; named setters
+update the first matching clause, and adding a missing named clause sorts
+stably by identifier. Parsing or editing a model does not authenticate a
+Received header.
+
+`g_mime_received_to_string()` returns the value only, including leading
+whitespace and the configured final newline, not the `Received:` field name.
+Parsed date spelling survives until date assignment. Model serialization does
+not perform RFC 2047 or IDN conversion; comment parentheses remain literal.
+
+`GMimeAnonymizer` is for structure-preserving diagnostics, not guaranteed
+redaction. Preserved fields, dates, delimiters, whitespace, and byte counts
+remain visible. Its writers preserve duplicates and ignore ordinary
+hidden-header suppression. They leave the destination open, flush successful
+output, and report I/O failures through `GError`; failed output may be partial.
+Message/entity operations may insert MIME-Version on constructed messages and
+populate lazy report caches. Review the output before sharing it.
 
 ## 6. Update preparation, digest, and date calls
 
@@ -577,6 +826,21 @@ Message dates already used `GDateTime` in 3.x; do not change them unnecessarily.
 
 ## 7. Review formatting, codecs, and subclasses
 
+The public `GMimeEncoding` state structure, state/sizing macros, and
+`g_mime_encoding_*` step functions are removed. Use the `GMimeEncoder` and
+`GMimeDecoder` GObject interfaces and concrete types from `gmime-codecs.h`.
+Release codecs with `g_object_unref()`. Cloning preserves incremental state;
+reset begins a new stream. `GMimeFilterBasic` direct-codec constructors retain
+the supplied codec and its current state, while filter copies use reset clones.
+
+Codec calls return byte counts, not `GError`. Insufficient output capacity or
+invalid arguments are programming errors, not malformed-input reports.
+An output estimate of `G_MAXSIZE` means overflow and must not be passed to
+encode/decode/flush. Select LF/CRLF explicitly: existing direct MIME codec
+constructors retain LF defaults, while the newer encoder-filter factories
+default to CRLF. UU encoding emits payload and the zero-length line, not
+the surrounding begin/end markers.
+
 Finish every encoded stream with `g_mime_decoder_flush()`, including when
 the final input is empty. Empty `g_mime_decoder_decode()` calls are not EOF.
 Allocate the capacity reported by `g_mime_decoder_estimate_output_length()`
@@ -605,6 +869,14 @@ distinguish untouched raw-byte preservation from semantic round trips and
 intentional reformatting. Do not normalize signed bytes before verification.
 Oversized words may require encoded output even with international formatting
 to avoid inserting whitespace into the decoded value.
+
+`ensure_newline` defaults to FALSE and applies at message boundaries, not to
+every standalone entity or multipart child. It does not alter binary content.
+Built-in serialization is iterative and retains custom `write_to_stream`
+dispatch, but custom recursive overrides remain the application's
+responsibility. Signed children suppress international reformatting and
+hidden-header filtering; do not replace verification serialization with
+ordinary reformatting.
 
 The old yEnc filter/step API is removed. Use `GMimeYencEncoder` /
 `GMimeYencDecoder`, directly or through `GMimeFilterBasic`, and review the new
@@ -669,6 +941,63 @@ For link detection without HTML conversion, use `g_mime_url_scan()` from
 range and returns byte offsets plus a borrowed URI prefix in `GMimeUrlMatch`.
 Resume at `match.end` to find subsequent links. The caller must supply valid
 UTF-8 and character-aligned bounds; the scanner does not validate the encoding.
+
+### Text conversion and previews
+
+The standalone converters also support plain copying, flowed encoding/decoding,
+enriched-to-HTML, HTML-to-text, and HTML-to-HTML. String APIs consume and return
+UTF-8; stream APIs expose input/output charsets and optional BOM detection and
+emission. Both BOM options default to off. Malformed, incomplete, or
+unrepresentable characters are errors rather than silently replaced.
+This strict policy is different from tolerant message-body decoding and the
+legacy `GMimeFilterCharset` byte-skipping policy.
+
+Stream conversion starts at current positions, flushes successful output,
+and leaves both streams open. Output may be partial on failure; string
+conversion returns no partial result. Converters can be reused after failure
+but not concurrently/reentrantly, or with overlapping input/output storage.
+Plain copying preserves newlines; generated converter newlines are LF.
+Flowed wrapping and preview lengths count Unicode scalar values.
+
+HTML-to-HTML conversion and tag callbacks are not a general-purpose sanitizer.
+Choose application-specific filtering, URI, and rendering policies for
+untrusted content.
+
+### Low-level TNEF
+
+`GMimeTnefReader` and `GMimeTnefPropertyReader` expose forward-only attributes,
+recipient rows, named/multi-valued MAPI properties, typed values, raw streams,
+and embedded readers. Advancing the enclosing attribute invalidates its
+property reader and child streams/readers. Fixed-width scalar values can be
+reread; variable-length values are claimed by the first consuming operation.
+Use immutable `GMimeTnefProperty` / `GMimeTnefPropertySet` snapshots when values
+must survive advancement. They retain ordering and duplicates and use boxed
+reference counting rather than GObject ownership.
+
+Advancing skips unread attribute bytes and checks the preceding checksum.
+Malformed-input diagnostics use the compliance logger; I/O and invalid
+operations use `GError`. Successful advancement alone is not proof that all
+attributes were well formed.
+
+Values use UTF-8, `GBytes`, `GValue`, and `GDateTime`; currency uses an exact
+signed integer in units of 1/10000. FILETIME loses sub-microsecond precision.
+String conversion uses GMime's selected iconv backend.
+Reader options are cloned at construction. Configure nesting, per-value and
+cumulative materialization limits and compliance reporting before reading.
+Embedded readers share the root's materialization/reporting budgets; raw
+streaming bypasses materialization limits, so impose separate byte budgets
+when streaming untrusted values.
+
+TNEF writers require seekable temporary storage but can target nonseekable
+output. Embedded writers inherit the configured temporary-stream factory.
+Explicitly close value streams, embedded writers, property writers, and the
+outer writer in order, checking errors. Finalization does not complete output;
+abandoning a child faults its parent.
+
+The compressed-RTF writer supports LZFu and the uncompressed wrapper.
+`GMimeFilterRtfCompressed` incrementally decodes these formats and exposes
+mode/CRC status; callers must inspect it rather than assume output is valid.
+Unknown modes are discarded and trailing data is ignored.
 
 ## 8. Migrate cryptography to native GPGME
 
@@ -750,8 +1079,50 @@ and process each `GMimeOpenPGPBlock` independently with
 `g_mime_openpgp_block_verify()` or `g_mime_openpgp_block_decrypt()`.
 The document retains all decoded bytes, including unprotected gaps;
 large snapshots automatically spill to temporary files. Discovery works
-without crypto and is introspectable. See InlinePGP.md for recovery,
-stream lifetimes, and authentication boundaries.
+without crypto and is introspectable.
+
+### Inline OpenPGP discovery and authentication boundaries
+
+Discovery snapshots transfer-decoded bytes before charset, HTML, or flowed
+processing. It does not mutate the part, perform cryptography, import keys,
+prompt, or access the network, but can reposition the backing stream.
+No candidates means a valid document with zero blocks; missing content and
+I/O failure are errors. Only exact, unquoted line-start armor markers with
+LF/CRLF endings are recognized.
+
+Block status describes framing, not cryptographic validity. `COMPLETE` means
+matching markers; `TRUNCATED`, `INTERRUPTED`, and `MALFORMED` retain recoverable
+original bytes. Public/private key blocks are never automatically imported,
+and standalone signature blocks are not processed by the receiving helpers.
+Verification accepts complete clear-signed and PGP MESSAGE blocks; decryption
+accepts complete PGP MESSAGE blocks and verifies embedded signatures. GPGME
+decides whether the payload supports the requested operation.
+
+Documents, blocks, and read-only streams independently retain the snapshot,
+which survives replacement or destruction of the original part. Document
+streams expose all bytes; block streams start at zero within their block.
+Use document-relative block offsets and lengths to preserve unprotected gaps.
+Closing one view does not invalidate other views. Large snapshots use temporary
+files, so impose input-size/disk budgets. Automatic cleanup is not secure
+erasure, and crashes can leave temporary files behind.
+
+Process each block with separate output, results, and error handling. Failure
+does not prevent processing later blocks; discard partial output. Protection
+covers only the processed payload, not adjacent text, other blocks, MIME headers,
+or the whole document. Decryption alone does not authenticate the sender.
+Do not automatically render decrypted bytes as HTML or parse them as nested
+MIME; preserve visible protection boundaries and apply application policy.
+The existing single-value OpenPGP classification still describes the first
+detected block, not this multi-block model.
+
+### PKCS#7 extraction without verification
+
+`g_mime_application_pkcs7_mime_unwrap()` extracts encapsulated MIME content
+from SignedData **without verifying signatures**. It supports DER/BER framing
+and requires encapsulated id-data; detached content and other payload types
+are rejected. Use native GPGME verification when authenticity matters.
+Compression/decompression and unwrapping are available without GPGME; use the
+decompressor's `max_size` argument to bound expanded data.
 
 Native crypto methods are deliberately excluded from GIR/Vala. Ordinary
 MIME objects, compression, OpenPGP detection and parsing remain available
