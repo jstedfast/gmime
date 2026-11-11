@@ -239,7 +239,7 @@ test_decrypt (gpgme_ctx_t ctx, gboolean sign, GMimeStream *cleartext, GMimeStrea
 static void
 test_gpgme_handles (void)
 {
-	static const char fingerprint[] = "DA26DAB7572A1C5F2AB1A74BB47760E95182C200";
+	static const char fingerprint[] = "904051BD7A0BAF1C39BEECE0A93461F6B6A8A5E3";
 	gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
 	gpgme_key_t key = test_crypto_key (ctx, fingerprint, TRUE);
 	gpgme_key_t recipients[] = { key, NULL }, signer;
@@ -775,7 +775,7 @@ int main (int argc, char **argv)
 	testsuite_check ("%s", what);
 	try {
 		key = g_build_filename (datadir, "gmime.gpg.pub", NULL);
-		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_PUBLIC_KEY, 0, 1720);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_PUBLIC_KEY, 0, 645);
 		g_free (key);
 		
 		testsuite_check_passed ();
@@ -789,7 +789,7 @@ int main (int argc, char **argv)
 	testsuite_check ("%s", what);
 	try {
 		key = g_build_filename (datadir, "gmime.gpg.sec", NULL);
-		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_PRIVATE_KEY, 0, 1928);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_PRIVATE_KEY, 0, 877);
 		g_free (key);
 		
 		testsuite_check_passed ();
@@ -803,7 +803,7 @@ int main (int argc, char **argv)
 	testsuite_check ("%s", what);
 	try {
 		key = g_build_filename (datadir, "signed-message.txt", NULL);
-		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_SIGNED, 162, 440);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_SIGNED, 162, 469);
 		g_free (key);
 		
 		testsuite_check_passed ();
@@ -817,7 +817,7 @@ int main (int argc, char **argv)
 	testsuite_check ("%s", what);
 	try {
 		key = g_build_filename (datadir, "encrypted-message.txt", NULL);
-		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_ENCRYPTED, 165, 1084);
+		test_openpgp_filter (filter, key, GMIME_OPENPGP_DATA_ENCRYPTED, 165, 470);
 		g_free (key);
 		
 		testsuite_check_passed ();
