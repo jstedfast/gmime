@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -26,97 +26,48 @@
 #include <glib-object.h>
 #include <errno.h>
 
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-message.h>
 #include <gmime/gmime-content-type.h>
+#include <gmime/gmime-header.h>
 #include <gmime/gmime-parser-options.h>
+#include <gmime/gmime-compliance.h>
 #include <gmime/gmime-stream.h>
 
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_PARSER            (g_mime_parser_get_type ())
-#define GMIME_PARSER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PARSER, GMimeParser))
-#define GMIME_PARSER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PARSER, GMimeParserClass))
-#define GMIME_IS_PARSER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_PARSER))
-#define GMIME_IS_PARSER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PARSER))
-#define GMIME_PARSER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_PARSER, GMimeParserClass))
 
-typedef struct _GMimeParser GMimeParser;
-typedef struct _GMimeParserClass GMimeParserClass;
-
-
-/**
- * GMimeFormat:
- * @GMIME_FORMAT_MESSAGE: The stream contains a single message.
- * @GMIME_FORMAT_MBOX: The stream is in the UNIX mbox format.
- * @GMIME_FORMAT_MMDF: The stream is in the MMDF format.
- *
- * An enum of formats.
- **/
-typedef enum {
-	GMIME_FORMAT_MESSAGE,
-	GMIME_FORMAT_MBOX,
-	GMIME_FORMAT_MMDF
-} GMimeFormat;
 
 
 /**
  * GMimeParser:
- * @parent_object: parent #GObject
- * @priv: private parser state
  *
  * A MIME parser context.
  **/
-struct _GMimeParser {
-	GObject parent_object;
-	
-	struct _GMimeParserPrivate *priv;
-};
+G_DECLARE_FINAL_TYPE (GMimeParser, g_mime_parser, GMIME, PARSER, GObject)
 
-struct _GMimeParserClass {
-	GObjectClass parent_class;
-	
-};
-
-
-/**
- * GMimeParserHeaderRegexFunc:
- * @parser: The #GMimeParser object.
- * @header: The header field matched.
- * @value: The header field value.
- * @offset: The header field offset.
- * @user_data: The user-supplied callback data.
- *
- * Function signature for the callback to
- * g_mime_parser_set_header_regex().
- **/
-typedef void (* GMimeParserHeaderRegexFunc) (GMimeParser *parser, const char *header,
-					     const char *value, gint64 offset,
-					     gpointer user_data);
-
-
-GType g_mime_parser_get_type (void);
 
 GMimeParser *g_mime_parser_new (void);
 GMimeParser *g_mime_parser_new_with_stream (GMimeStream *stream);
+GMimeParser *g_mime_parser_new_with_stream_and_storage (GMimeStream *stream, GMimeFormat format,
+						      GMimeContentStorage storage, GError **error);
 
 void g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream);
-
-gboolean g_mime_parser_get_persist_stream (GMimeParser *parser);
-void g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist);
+gboolean g_mime_parser_init_with_stream_and_storage (GMimeParser *parser, GMimeStream *stream,
+						    GMimeFormat format, GMimeContentStorage storage, GError **error);
 
 GMimeFormat g_mime_parser_get_format (GMimeParser *parser);
 void g_mime_parser_set_format (GMimeParser *parser, GMimeFormat format);
 
-gboolean g_mime_parser_get_respect_content_length (GMimeParser *parser);
-void g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_content_length);
+GMimeComplianceOptions *g_mime_parser_get_compliance_options (GMimeParser *parser);
+void g_mime_parser_set_compliance_options (GMimeParser *parser, GMimeComplianceOptions *options);
+void g_mime_parser_set_compliance_logger (GMimeParser *parser, GMimeComplianceIssueFunc report,
+					gpointer user_data, GDestroyNotify destroy);
 
-void g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
-				     GMimeParserHeaderRegexFunc header_cb,
-				     gpointer user_data);
-
-GMimeObject *g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options);
-GMimeMessage *g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options);
+GMimeHeaderList *g_mime_parser_construct_headers (GMimeParser *parser, GMimeParserOptions *options, GError **error);
+GMimeEntity *g_mime_parser_construct_part (GMimeParser *parser, GMimeParserOptions *options, GError **error);
+GMimeMessage *g_mime_parser_construct_message (GMimeParser *parser, GMimeParserOptions *options, GError **error);
 
 gint64 g_mime_parser_tell (GMimeParser *parser);
 

@@ -4,7 +4,10 @@ Makefile
 .libs/
 *.o
 basic-example
+custom-blockquotes
 imap-example
 uuencode
 uudecode
 msgcheck
+mime-analyzer
+test-mime-analyzer

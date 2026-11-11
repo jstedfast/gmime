@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -24,11 +24,15 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-stream.h"
+#include "gmime-internal.h"
 
 #define d(x)
 
+
+#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-stream
@@ -44,7 +48,7 @@
 
 
 static void g_mime_stream_class_init (GMimeStreamClass *klass);
-static void g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass);
+static void g_mime_stream_init (GMimeStream *stream);
 static void g_mime_stream_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -62,29 +66,13 @@ static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 
 static GObjectClass *parent_class = NULL;
 
 
-GType
-g_mime_stream_get_type (void)
+
+G_DEFINE_ABSTRACT_TYPE_WITH_PRIVATE (GMimeStream, g_mime_stream, G_TYPE_OBJECT)
+
+GMimeStreamPrivate *
+_g_mime_stream_get_private (GMimeStream *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeStreamClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_stream_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeStream),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_stream_init,
-		};
-		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStream",
-					       &info, G_TYPE_FLAG_ABSTRACT);
-	}
-	
-	return type;
+	return g_mime_stream_get_instance_private (object);
 }
 
 
@@ -110,22 +98,25 @@ g_mime_stream_class_init (GMimeStreamClass *klass)
 }
 
 static void
-g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass)
+g_mime_stream_init (GMimeStream *stream)
 {
-	stream->super_stream = NULL;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+	priv->super_stream = NULL;
 	
-	stream->position = 0;
-	stream->bound_start = 0;
-	stream->bound_end = 0;
+	priv->position = 0;
+	priv->bound_start = 0;
+	priv->bound_end = 0;
 }
 
 static void
 g_mime_stream_finalize (GObject *object)
 {
 	GMimeStream *stream = (GMimeStream *) object;
-	
-	if (stream->super_stream)
-		g_object_unref (stream->super_stream);
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+	if (priv->super_stream)
+		g_object_unref (priv->super_stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -142,9 +133,11 @@ g_mime_stream_finalize (GObject *object)
 void
 g_mime_stream_construct (GMimeStream *stream, gint64 start, gint64 end)
 {
-	stream->position = start;
-	stream->bound_start = start;
-	stream->bound_end = end;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+	priv->position = start;
+	priv->bound_start = start;
+	priv->bound_end = end;
 }
 
 
@@ -210,6 +203,31 @@ g_mime_stream_write (GMimeStream *stream, const char *buf, size_t len)
 }
 
 
+ssize_t
+_g_mime_stream_write_all (GMimeStream *stream, const char *buffer, size_t len)
+{
+	ssize_t total = 0, nwritten;
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	while (len > 0) {
+		if ((nwritten = g_mime_stream_write (stream, buffer, len)) == -1)
+			return -1;
+		if (nwritten == 0) {
+			errno = EIO;
+			return -1;
+		}
+		buffer += nwritten;
+		len -= nwritten;
+		total += nwritten;
+	}
+
+	return total;
+}
+
 static int
 stream_flush (GMimeStream *stream)
 {
@@ -222,7 +240,9 @@ stream_flush (GMimeStream *stream)
  * g_mime_stream_flush:
  * @stream: a #GMimeStream
  *
- * Sync's the stream to disk.
+ * Flushes output according to the backend's contract. This does not uniformly
+ * imply durable storage or flushing every underlying stream. In particular,
+ * #GMimeStreamFilter completes its filters without flushing its source.
  *
  * Returns: %0 on success or %-1 on fail.
  **/
@@ -247,7 +267,17 @@ stream_close (GMimeStream *stream)
  * g_mime_stream_close:
  * @stream: a #GMimeStream
  *
- * Closes the stream.
+ * Closes the stream according to the backend's ownership policy. This does
+ * not release the caller's object reference and is not equivalent to
+ * g_object_unref(). Retaining an object reference does not protect a shared
+ * resource from an explicit close.
+ *
+ * Flush buffered output explicitly and check errors before closing.
+ * #GMimeStreamBuffer and #GMimeStreamCat release their source references
+ * without explicitly closing them; #GMimeStreamBuffer discards any unflushed
+ * output. #GMimeStreamFilter completes writes and closes its source only
+ * when its owner flag is enabled. Finalization cannot report I/O failures.
+ * A failed close may already have released the backend resource.
  *
  * Returns: %0 on success or %-1 on fail.
  **/
@@ -263,8 +293,11 @@ g_mime_stream_close (GMimeStream *stream)
 static gboolean
 stream_eos (GMimeStream *stream)
 {
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
 	d(g_warning ("Invoked default stream_eos implementation."));
-	return stream->position >= stream->bound_end;
+
+	return priv->position >= priv->bound_end;
 }
 
 
@@ -279,9 +312,13 @@ stream_eos (GMimeStream *stream)
 gboolean
 g_mime_stream_eos (GMimeStream *stream)
 {
+	GMimeStreamPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), TRUE);
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	priv = _g_mime_stream_get_private (stream);
+
+	if (priv->bound_end != -1 && priv->position >= priv->bound_end)
 		return TRUE;
 	
 	return GMIME_STREAM_GET_CLASS (stream)->eos (stream);
@@ -311,8 +348,11 @@ g_mime_stream_reset (GMimeStream *stream)
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	if ((rv = GMIME_STREAM_GET_CLASS (stream)->reset (stream)) == 0)
-		stream->position = stream->bound_start;
+	if ((rv = GMIME_STREAM_GET_CLASS (stream)->reset (stream)) == 0) {
+		GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+		priv->position = priv->bound_start;
+	}
 	
 	return rv;
 }
@@ -336,8 +376,10 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
  * the argument @offset according to the
  * directive @whence as follows:
  *
- *     #GMIME_STREAM_SEEK_SET: Seek @offset bytes relative to
- *     the beginning (bound_start) of the stream.
+ *     #GMIME_STREAM_SEEK_SET: Seek to @offset using the backend's
+ *     coordinate convention. Memory, block and file-backed streams use
+ *     absolute backend coordinates, not offsets from bound_start.
+ *     GMimeStreamNull uses offsets relative to bound_start.
  *
  *     #GMIME_STREAM_SEEK_CUR: Seek @offset bytes relative to the
  *     current offset of the stream.
@@ -359,8 +401,11 @@ g_mime_stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
 	d(g_warning ("Invoked default stream_tell implementation."));
-	return stream->position;
+
+	return priv->position;
 }
 
 
@@ -384,19 +429,20 @@ g_mime_stream_tell (GMimeStream *stream)
 static gint64
 stream_length (GMimeStream *stream)
 {
-	gint64 position = stream->position;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+	gint64 position = priv->position;
 	gint64 bound_end;
 	
-	if (stream->bound_end != -1)
-		return stream->bound_end - stream->bound_start;
+	if (priv->bound_end != -1)
+		return priv->bound_end - priv->bound_start;
 	
 	bound_end = g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_END);
 	g_mime_stream_seek (stream, position, GMIME_STREAM_SEEK_SET);
 	
-	if (bound_end < stream->bound_start)
+	if (bound_end < priv->bound_start)
 		return -1;
 	
-	return bound_end - stream->bound_start;
+	return bound_end - priv->bound_start;
 }
 
 
@@ -428,23 +474,51 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 /**
  * g_mime_stream_substream:
  * @stream: a #GMimeStream
- * @start: start boundary
- * @end: end boundary
+ * @start: absolute start boundary within @stream's bounds
+ * @end: absolute end boundary, or %-1 for the parent's end
  *
- * Creates a new substream of @stream with bounds @start and @end.
+ * Creates a new view of @stream without moving its logical position.
+ * Bounds use absolute backend coordinates, not offsets relative to the
+ * parent's start. An unbounded end inherits a finite parent end, so a nested
+ * view cannot escape its parent's range. Empty ranges are permitted.
  *
- * Returns: (transfer full): a substream of @stream with bounds @start
- * and @end.
+ * The view retains its parent. Backend-specific lifetime rules still apply;
+ * retaining the parent is not in itself protection against explicitly
+ * closing its backend.
+ *
+ * Returns: (transfer full) (nullable): a substream, or %NULL on failure.
+ * Invalid ranges fail with errno set to EINVAL before invoking the backend.
  **/
 GMimeStream *
 g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
+	GMimeStreamPrivate *priv;
 	GMimeStream *sub;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
-	
+
+	/* Validate the whole range before dispatching: no backend should see
+	 * negative starts, reversed bounds or a request escaping its parent. */
+	priv = _g_mime_stream_get_private (stream);
+
+	if (priv->bound_start < 0 || priv->bound_end < -1 ||
+	    (priv->bound_end != -1 && priv->bound_end < priv->bound_start) ||
+	    start < priv->bound_start || end < -1 ||
+	    (end != -1 && end < start) ||
+	    (priv->bound_end != -1 &&
+	     (start > priv->bound_end || (end != -1 && end > priv->bound_end)))) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	/* An unbounded child must not reopen the tail of a finite parent. */
+	if (end == -1)
+		end = priv->bound_end;
+
 	if ((sub = GMIME_STREAM_GET_CLASS (stream)->substream (stream, start, end))) {
-		sub->super_stream = stream;
+		GMimeStreamPrivate *sub_priv = _g_mime_stream_get_private (sub);
+
+		sub_priv->super_stream = stream;
 		g_object_ref (stream);
 	}
 	
@@ -463,15 +537,87 @@ g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 void
 g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 end)
 {
+	GMimeStreamPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
-	stream->bound_start = start;
-	stream->bound_end = end;
+	priv = _g_mime_stream_get_private (stream);
+
+	priv->bound_start = start;
+	priv->bound_end = end;
 	
-	if (stream->position < start)
-		stream->position = start;
-	else if (stream->position > end && end != -1)
-		stream->position = end;
+	if (priv->position < start)
+		priv->position = start;
+	else if (priv->position > end && end != -1)
+		priv->position = end;
+}
+
+/**
+ * g_mime_stream_get_bounds:
+ * @stream: a #GMimeStream
+ * @start: (out) (optional): absolute start boundary
+ * @end: (out) (optional): absolute end boundary, or %-1 if unbounded
+ *
+ * Gets the stream's bounds without invoking any virtual methods.
+ **/
+void
+g_mime_stream_get_bounds (GMimeStream *stream, gint64 *start, gint64 *end)
+{
+	GMimeStreamPrivate *priv;
+
+	g_return_if_fail (GMIME_IS_STREAM (stream));
+
+	priv = _g_mime_stream_get_private (stream);
+	
+	if (start)
+		*start = priv->bound_start;
+	
+	if (end)
+		*end = priv->bound_end;
+}
+
+/**
+ * g_mime_stream_get_position:
+ * @stream: a #GMimeStream
+ *
+ * Gets the base class's logical position without calling the tell virtual
+ * method. Intended for stream implementations; applications should normally
+ * use g_mime_stream_tell().
+ *
+ * Returns: the stored absolute position.
+ **/
+gint64
+g_mime_stream_get_position (GMimeStream *stream)
+{
+	GMimeStreamPrivate *priv;
+
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
+
+	priv = _g_mime_stream_get_private (stream);
+
+	return priv->position;
+}
+
+/**
+ * g_mime_stream_set_position:
+ * @stream: a #GMimeStream
+ * @position: nonnegative absolute position
+ *
+ * Updates the base class's logical position after a subclass performs I/O.
+ * This does not seek the backend, change bounds, or call any virtual methods.
+ * Applications should use g_mime_stream_seek() to reposition a stream.
+ **/
+void
+g_mime_stream_set_position (GMimeStream *stream, gint64 position)
+{
+	GMimeStreamPrivate *priv;
+
+	g_return_if_fail (GMIME_IS_STREAM (stream));
+	g_return_if_fail (position >= 0);
+
+	priv = _g_mime_stream_get_private (stream);
+
+	priv->position = position;
 }
 
 

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -30,46 +30,24 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_CONTENT_TYPE              (g_mime_content_type_get_type ())
-#define GMIME_CONTENT_TYPE(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), g_mime_content_type_get_type (), GMimeContentType))
-#define GMIME_CONTENT_TYPE_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), g_mime_content_type_get_type (), GMimeContentTypeClass))
-#define GMIME_IS_CONTENT_TYPE(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj), g_mime_content_type_get_type ()))
-#define GMIME_IS_CONTENT_TYPE_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), g_mime_content_type_get_type ()))
-#define GMIME_CONTENT_TYPE_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), g_mime_content_type_get_type (), GMimeContentTypeClass))
 
-typedef struct _GMimeContentType GMimeContentType;
-typedef struct _GMimeContentTypeClass GMimeContentTypeClass;
 
 /**
  * GMimeContentType:
- * @parent_object: parent #GObject
- * @type: media type
- * @subtype: media subtype
- * @params: a #GMimeParam list
  *
  * A data structure representing a Content-Type.
  **/
-struct _GMimeContentType {
-	GObject parent_object;
-	
-	char *type, *subtype;
-	GMimeParamList *params;
-	
-	/* < private > */
-	gpointer changed;
-};
+G_DECLARE_FINAL_TYPE (GMimeContentType, g_mime_content_type, GMIME, CONTENT_TYPE, GObject)
 
-struct _GMimeContentTypeClass {
-	GObjectClass parent_class;
-	
-};
-
-GType g_mime_content_type_get_type (void);
 
 GMimeContentType *g_mime_content_type_new (const char *type, const char *subtype);
 GMimeContentType *g_mime_content_type_parse (GMimeParserOptions *options, const char *str);
+GMimeContentType *g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gssize length, GError **error);
+GMimeContentType *g_mime_content_type_clone (GMimeContentType *content_type);
 
 char *g_mime_content_type_get_mime_type (GMimeContentType *content_type);
 
+char *g_mime_content_type_to_string (GMimeContentType *content_type);
 char *g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *options);
 
 gboolean g_mime_content_type_is_type (GMimeContentType *content_type, const char *type, const char *subtype);
@@ -79,6 +57,21 @@ const char *g_mime_content_type_get_media_type (GMimeContentType *content_type);
 
 void g_mime_content_type_set_media_subtype (GMimeContentType *content_type, const char *subtype);
 const char *g_mime_content_type_get_media_subtype (GMimeContentType *content_type);
+
+void g_mime_content_type_set_boundary (GMimeContentType *content_type, const char *boundary);
+const char *g_mime_content_type_get_boundary (GMimeContentType *content_type);
+
+void g_mime_content_type_set_charset (GMimeContentType *content_type, const char *charset);
+const char *g_mime_content_type_get_charset (GMimeContentType *content_type);
+
+gboolean g_mime_content_type_set_charset_encoding (GMimeContentType *content_type, const char *charset, GError **error);
+char *g_mime_content_type_get_charset_encoding (GMimeContentType *content_type, GError **error);
+
+void g_mime_content_type_set_format (GMimeContentType *content_type, const char *format);
+const char *g_mime_content_type_get_format (GMimeContentType *content_type);
+
+void g_mime_content_type_set_name (GMimeContentType *content_type, const char *name);
+const char *g_mime_content_type_get_name (GMimeContentType *content_type);
 
 GMimeParamList *g_mime_content_type_get_parameters (GMimeContentType *content_type);
 

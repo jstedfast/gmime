@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -23,19 +23,11 @@
 #define __GMIME_MULTIPART_ENCRYPTED_H__
 
 #include <gmime/gmime-multipart.h>
-#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART_ENCRYPTED            (g_mime_multipart_encrypted_get_type ())
-#define GMIME_MULTIPART_ENCRYPTED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncrypted))
-#define GMIME_MULTIPART_ENCRYPTED_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
-#define GMIME_IS_MULTIPART_ENCRYPTED(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED))
-#define GMIME_IS_MULTIPART_ENCRYPTED_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED))
-#define GMIME_MULTIPART_ENCRYPTED_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
 
-typedef struct _GMimeMultipartEncrypted GMimeMultipartEncrypted;
-typedef struct _GMimeMultipartEncryptedClass GMimeMultipartEncryptedClass;
 
 enum {
 	GMIME_MULTIPART_ENCRYPTED_VERSION,
@@ -45,35 +37,17 @@ enum {
 
 /**
  * GMimeMultipartEncrypted:
- * @parent_object: parent #GMimeMultipart
  *
  * A multipart/encrypted MIME part.
  **/
-struct _GMimeMultipartEncrypted {
-	GMimeMultipart parent_object;
-	
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMultipartEncrypted, g_mime_multipart_encrypted, GMIME, MULTIPART_ENCRYPTED, GMimeMultipart)
 
 struct _GMimeMultipartEncryptedClass {
 	GMimeMultipartClass parent_class;
-	
 };
 
 
-GType g_mime_multipart_encrypted_get_type (void);
-
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
-
-GMimeMultipartEncrypted *g_mime_multipart_encrypted_encrypt (GMimeCryptoContext *ctx, GMimeObject *entity,
-							     gboolean sign, const char *userid,
-							     GMimeEncryptFlags flags, GPtrArray *recipients,
-							     GError **err);
-
-GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *encrypted,
-						 GMimeDecryptFlags flags,
-						 const char *session_key,
-						 GMimeDecryptResult **result,
-						 GError **err);
 
 G_END_DECLS
 

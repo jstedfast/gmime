@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -28,45 +28,28 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_NULL            (g_mime_stream_null_get_type ())
-#define GMIME_STREAM_NULL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNull))
-#define GMIME_STREAM_NULL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
-#define GMIME_IS_STREAM_NULL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_NULL))
-#define GMIME_IS_STREAM_NULL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_NULL))
-#define GMIME_STREAM_NULL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
 
-typedef struct _GMimeStreamNull GMimeStreamNull;
-typedef struct _GMimeStreamNullClass GMimeStreamNullClass;
 
 /**
  * GMimeStreamNull:
- * @parent_object: parent #GMimeStream
- * @written: number of bytes written to this stream
- * @newlines: the number of newlines written to this stream
- * @count_newlines: whether or not the stream should count newlines
  *
  * A #GMimeStream which has no backing store.
  **/
-struct _GMimeStreamNull {
-	GMimeStream parent_object;
-	
-	size_t written;
-	size_t newlines;
-	
-	gboolean count_newlines;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamNull, g_mime_stream_null, GMIME, STREAM_NULL, GMimeStream)
 
 struct _GMimeStreamNullClass {
 	GMimeStreamClass parent_class;
-	
 };
 
 
-GType g_mime_stream_null_get_type (void);
-
 GMimeStream *g_mime_stream_null_new (void);
+
+int g_mime_stream_null_set_length (GMimeStreamNull *stream, gint64 length);
 
 void g_mime_stream_null_set_count_newlines (GMimeStreamNull *stream, gboolean count);
 gboolean g_mime_stream_null_get_count_newlines (GMimeStreamNull *stream);
+size_t g_mime_stream_null_get_written (GMimeStreamNull *stream);
+size_t g_mime_stream_null_get_newlines (GMimeStreamNull *stream);
 
 G_END_DECLS
 

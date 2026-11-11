@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -33,10 +33,6 @@
 #include "gmime.h"
 #include "gmime-internal.h"
 
-#ifdef ENABLE_CRYPTOGRAPHY
-#include "gmime-pkcs7-context.h"
-#include "gmime-gpg-context.h"
-#endif
 
 
 /**
@@ -48,7 +44,6 @@
  * Initialization, shutdown, and version-check functions.
  **/
 
-extern void g_mime_crypto_context_shutdown (void);
 
 GQuark gmime_gpgme_error_quark;
 GQuark gmime_error_quark;
@@ -116,6 +111,7 @@ g_mime_init (void)
 	
 	g_mime_format_options_init ();
 	g_mime_parser_options_init ();
+	g_mime_compliance_options_init ();
 	g_mime_charset_map_init ();
 	
 #ifdef ENABLE_CRYPTO
@@ -127,18 +123,9 @@ g_mime_init (void)
 	gmime_error_quark = g_quark_from_static_string ("gmime");
 
 	/* register our GObject types with the GType system */
-	g_mime_crypto_context_get_type ();
-	g_mime_decrypt_result_get_type ();
-	g_mime_certificate_list_get_type ();
-	g_mime_signature_list_get_type ();
-	g_mime_certificate_get_type ();
-	g_mime_signature_get_type ();
-#ifdef ENABLE_CRYPTO
-	g_mime_gpg_context_get_type ();
-	g_mime_pkcs7_context_get_type ();
-#endif
 	
 	g_mime_filter_get_type ();
+	g_mime_filter_anonymize_get_type ();
 	g_mime_filter_basic_get_type ();
 	g_mime_filter_best_get_type ();
 	g_mime_filter_charset_get_type ();
@@ -147,14 +134,24 @@ g_mime_init (void)
 	g_mime_filter_enriched_get_type ();
 	g_mime_filter_from_get_type ();
 	g_mime_filter_gzip_get_type ();
-	g_mime_filter_html_get_type ();
+	g_mime_filter_pass_through_get_type ();
+	g_mime_filter_rtf_compressed_get_type ();
 	g_mime_filter_smtp_data_get_type ();
 	g_mime_filter_strip_get_type ();
 	g_mime_filter_unix2dos_get_type ();
 	g_mime_filter_windows_get_type ();
-	g_mime_filter_yenc_get_type ();
+	g_mime_tnef_reader_get_type ();
+	g_mime_tnef_property_reader_get_type ();
+	g_mime_tnef_writer_get_type ();
+	g_mime_tnef_property_writer_get_type ();
+	g_mime_tnef_name_id_get_type ();
+	g_mime_tnef_options_get_type ();
+	g_mime_tnef_compliance_options_get_type ();
+	g_mime_tnef_property_get_type ();
+	g_mime_tnef_property_set_get_type ();
 	
 	g_mime_stream_get_type ();
+	g_mime_stream_block_get_type ();
 	g_mime_stream_buffer_get_type ();
 	g_mime_stream_cat_get_type ();
 	g_mime_stream_file_get_type ();
@@ -171,46 +168,51 @@ g_mime_init (void)
 	
 	g_mime_parser_get_type ();
 	g_mime_message_get_type ();
-	g_mime_data_wrapper_get_type ();
+	g_mime_content_get_type ();
+	g_mime_openpgp_block_get_type ();
+	g_mime_openpgp_document_get_type ();
 	
-	internet_address_get_type ();
-	internet_address_list_get_type ();
-	internet_address_group_get_type ();
-	internet_address_mailbox_get_type ();
+	g_mime_internet_address_get_type ();
+	g_mime_internet_address_list_get_type ();
+	g_mime_group_address_get_type ();
+	g_mime_mailbox_address_get_type ();
+	g_mime_domain_list_get_type ();
 	
 	g_mime_param_get_type ();
 	g_mime_header_get_type ();
 	g_mime_param_list_get_type ();
 	g_mime_header_list_get_type ();
+	g_mime_received_clause_get_type ();
+	g_mime_received_get_type ();
 	g_mime_content_type_get_type ();
 	g_mime_content_disposition_get_type ();
 	
 	/* register our default mime object types */
-	g_mime_object_type_registry_init ();
-	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());
-	g_mime_object_register_type ("text", "*", g_mime_text_part_get_type ());
-	g_mime_object_register_type ("application", "x-pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
-	g_mime_object_register_type ("application", "pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
-	g_mime_object_register_type ("multipart", "*", g_mime_multipart_get_type ());
-	g_mime_object_register_type ("multipart", "encrypted", g_mime_multipart_encrypted_get_type ());
-	g_mime_object_register_type ("multipart", "signed", g_mime_multipart_signed_get_type ());
-	g_mime_object_register_type ("message", "rfc822", g_mime_message_part_get_type ());
-	g_mime_object_register_type ("message", "rfc2822", g_mime_message_part_get_type ());
-	g_mime_object_register_type ("message", "global", g_mime_message_part_get_type ());
-	g_mime_object_register_type ("message", "news", g_mime_message_part_get_type ());
-	g_mime_object_register_type ("message", "partial", g_mime_message_partial_get_type ());
-	
-	g_mime_crypto_context_register ("application/x-pgp-signature", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-signature", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/x-pgp-encrypted", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-encrypted", g_mime_gpg_context_new);
-	g_mime_crypto_context_register ("application/pgp-keys", g_mime_gpg_context_new);
-	
-	g_mime_crypto_context_register ("application/x-pkcs7-signature", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-signature", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/x-pkcs7-mime", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-mime", g_mime_pkcs7_context_new);
-	g_mime_crypto_context_register ("application/pkcs7-keys", g_mime_pkcs7_context_new);
+	g_mime_entity_type_registry_init ();
+	g_mime_entity_register_type ("*", "*", g_mime_part_get_type ());
+	g_mime_entity_register_type ("text", "*", g_mime_text_part_get_type ());
+	g_mime_entity_register_type ("text", "rfc822-headers", g_mime_text_rfc822_headers_get_type ());
+	g_mime_entity_register_type ("application", "rtf", g_mime_text_part_get_type ());
+	g_mime_entity_register_type ("application", "x-pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
+	g_mime_entity_register_type ("application", "pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
+	g_mime_entity_register_type ("multipart", "*", g_mime_multipart_get_type ());
+	g_mime_entity_register_type ("multipart", "alternative", g_mime_multipart_alternative_get_type ());
+	g_mime_entity_register_type ("multipart", "related", g_mime_multipart_related_get_type ());
+	g_mime_entity_register_type ("multipart", "report", g_mime_multipart_report_get_type ());
+	g_mime_entity_register_type ("multipart", "encrypted", g_mime_multipart_encrypted_get_type ());
+	g_mime_entity_register_type ("multipart", "signed", g_mime_multipart_signed_get_type ());
+	g_mime_entity_register_type ("message", "rfc822", g_mime_message_part_get_type ());
+	g_mime_entity_register_type ("message", "rfc2822", g_mime_message_part_get_type ());
+	g_mime_entity_register_type ("message", "global", g_mime_message_part_get_type ());
+	g_mime_entity_register_type ("message", "news", g_mime_message_part_get_type ());
+	g_mime_entity_register_type ("message", "external-body", g_mime_message_part_get_type ());
+	g_mime_entity_register_type ("message", "global-headers", g_mime_text_rfc822_headers_get_type ());
+	g_mime_entity_register_type ("message", "partial", g_mime_message_partial_get_type ());
+	g_mime_entity_register_type ("message", "delivery-status", g_mime_message_delivery_status_get_type ());
+	g_mime_entity_register_type ("message", "global-delivery-status", g_mime_message_delivery_status_get_type ());
+	g_mime_entity_register_type ("message", "disposition-notification", g_mime_message_disposition_notification_get_type ());
+	g_mime_entity_register_type ("message", "global-disposition-notification", g_mime_message_disposition_notification_get_type ());
+	g_mime_entity_register_type ("message", "feedback-report", g_mime_message_feedback_report_get_type ());
 }
 
 
@@ -225,9 +227,9 @@ g_mime_shutdown (void)
 	if (--initialized)
 		return;
 	
-	g_mime_object_type_registry_shutdown ();
-	g_mime_crypto_context_shutdown ();
+	g_mime_entity_type_registry_shutdown ();
 	g_mime_format_options_shutdown ();
 	g_mime_parser_options_shutdown ();
+	g_mime_compliance_options_shutdown ();
 	g_mime_charset_map_shutdown ();
 }

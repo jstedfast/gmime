@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -22,41 +22,25 @@
 #ifndef __GMIME_MESSAGE_PART_H__
 #define __GMIME_MESSAGE_PART_H__
 
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-message.h>
 
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_PART            (g_mime_message_part_get_type ())
-#define GMIME_MESSAGE_PART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_PART, GMimeMessagePart))
-#define GMIME_MESSAGE_PART_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_PART, GMimeMessagePartClass))
-#define GMIME_IS_MESSAGE_PART(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_PART))
-#define GMIME_IS_MESSAGE_PART_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_PART))
-#define GMIME_MESSAGE_PART_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_PART, GMimeMessagePartClass))
 
-typedef struct _GMimeMessagePart GMimeMessagePart;
-typedef struct _GMimeMessagePartClass GMimeMessagePartClass;
 
 /**
  * GMimeMessagePart:
- * @parent_object: parent #GMimeObject
- * @message: child #GMimeMessage
  *
  * A message/rfc822 or message/news MIME part.
  **/
-struct _GMimeMessagePart {
-	GMimeObject parent_object;
-	
-	GMimeMessage *message;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessagePart, g_mime_message_part, GMIME, MESSAGE_PART, GMimeEntity)
 
 struct _GMimeMessagePartClass {
-	GMimeObjectClass parent_class;
-	
+	GMimeEntityClass parent_class;
 };
 
-
-GType g_mime_message_part_get_type (void);
 
 GMimeMessagePart *g_mime_message_part_new (const char *subtype);
 

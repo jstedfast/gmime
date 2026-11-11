@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -94,13 +94,13 @@ g_mime_strcase_hash (gconstpointer key)
 
 /**
  * g_mime_strdup_trim:
- * @str: The string to duplicate and trim
+ * @str: (nullable): The string to duplicate and trim
  *
  * Duplicates the given input string while also trimming leading and
- * trailing whitespace.
+ * trailing ASCII linear whitespace (SP, HTAB, CR and LF).
  *
- * Returns a duplicate string, minus any leading and trailing
- * whitespace that the original string may have contained.
+ * Returns: (nullable) (transfer full): a duplicate string without leading
+ * or trailing linear whitespace, or %NULL if @str is %NULL.
  **/
 char *
 g_mime_strdup_trim (const char *str)
@@ -108,6 +108,9 @@ g_mime_strdup_trim (const char *str)
 	register const char *inptr = str;
 	register const char *end;
 	const char *start;
+
+	if (!str)
+		return NULL;
 	
 	while (is_lwsp (*inptr))
 		inptr++;
@@ -121,4 +124,76 @@ g_mime_strdup_trim (const char *str)
 	}
 	
 	return g_strndup (start, (size_t) (end - start));
+}
+
+gboolean
+_g_mime_is_valid_boundary (const char *boundary)
+{
+	gsize length = strlen (boundary), i;
+
+	if (!length || length > 70 || boundary[length - 1] == ' ')
+		return FALSE;
+
+	for (i = 0; i < length; i++) {
+		if (!is_bchar (boundary[i]))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+gboolean
+_g_mime_strcase_equal_trimmed (const char *value, const char *token)
+{
+	size_t length = strlen (token);
+
+	if (!value || !g_utf8_validate (value, -1, NULL))
+		return FALSE;
+
+	while (is_lwsp (*value))
+		value++;
+
+	if (g_ascii_strncasecmp (value, token, length))
+		return FALSE;
+
+	value += length;
+
+	while (is_lwsp (*value))
+		value++;
+
+	return *value == '\0';
+}
+
+size_t
+_g_mime_count_utf16_units (const char *start, const char *end)
+{
+	size_t length = 0;
+
+	while (start < end) {
+		length += g_utf8_get_char (start) >= 0x10000 ? 2 : 1;
+		start = g_utf8_next_char (start);
+	}
+
+	return length;
+}
+
+const char *
+_g_mime_get_utf16_chunk_end (const char *start, const char *end, size_t *length)
+{
+	size_t limit = *length, units = 0;
+
+	while (start < end) {
+		size_t count = g_utf8_get_char (start) >= 0x10000 ? 2 : 1;
+
+		/* Never split a surrogate pair between values, or each half would be encoded separately (and lost). */
+		if (units && (units >= limit || count > limit - units))
+			break;
+
+		units += count;
+		start = g_utf8_next_char (start);
+	}
+
+	*length = units;
+
+	return start;
 }

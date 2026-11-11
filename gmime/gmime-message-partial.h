@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -30,39 +30,19 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_PARTIAL            (g_mime_message_partial_get_type ())
-#define GMIME_MESSAGE_PARTIAL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartial))
-#define GMIME_MESSAGE_PARTIAL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
-#define GMIME_IS_MESSAGE_PARTIAL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_PARTIAL))
-#define GMIME_IS_MESSAGE_PARTIAL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_PARTIAL))
-#define GMIME_MESSAGE_PARTIAL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
 
-typedef struct _GMimeMessagePartial GMimeMessagePartial;
-typedef struct _GMimeMessagePartialClass GMimeMessagePartialClass;
 
 /**
  * GMimeMessagePartial:
- * @parent_object: parent #GMimePart object
- * @number: the part number
- * @total: the total number of message/partials that make up the whole message/rfc822
- * @id: message/partial id
  *
  * A message/partial MIME part.
  **/
-struct _GMimeMessagePartial {
-	GMimePart parent_object;
-	
-	int number;
-	int total;
-	char *id;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeMessagePartial, g_mime_message_partial, GMIME, MESSAGE_PARTIAL, GMimePart)
 
 struct _GMimeMessagePartialClass {
 	GMimePartClass parent_class;
-	
 };
 
-
-GType g_mime_message_partial_get_type (void);
 
 GMimeMessagePartial *g_mime_message_partial_new (const char *id, int number, int total);
 
@@ -72,9 +52,10 @@ int g_mime_message_partial_get_number (GMimeMessagePartial *partial);
 
 int g_mime_message_partial_get_total (GMimeMessagePartial *partial);
 
-GMimeMessage *g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num);
+GMimeMessage *g_mime_message_partial_join (GMimeParserOptions *options, GMimeMessage *message,
+					 GMimeMessagePartial **partials, size_t num, GError **error);
 
-GMimeMessage **g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, size_t *nparts);
+GMimeMessage **g_mime_message_partial_split (GMimeMessage *message, size_t max_size, size_t *nparts, GError **error);
 
 G_END_DECLS
 

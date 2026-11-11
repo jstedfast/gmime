@@ -29,10 +29,10 @@ Find answers to common questions in the GMime manual
           </answer>
         </qandaentry>
         <qandaentry>
-          <question><para>How do I port from one GMime version to another?</para></question>
+          <question><para>How do I port from GMime 3.0 to GMime 4.0?</para></question>
           <answer>
-            <para>See the <link linkend="gmime-changes-3-0">list of
-            incompatible changes from 2.6 to 3.0</link>.</para>
+            <para>See <filename>PORTING.md</filename> in the source
+            distribution for the API changes and migration contract.</para>
           </answer>
         </qandaentry>
         <qandaentry>

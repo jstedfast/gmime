@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -28,6 +28,7 @@
 #include "gmime-format-options.h"
 #include "gmime-filter-dos2unix.h"
 #include "gmime-filter-unix2dos.h"
+#include "gmime-internal.h"
 
 
 /**
@@ -41,17 +42,21 @@
 
 
 struct _GMimeFormatOptions {
+	gatomicrefcount ref_count;
 	GMimeParamEncodingMethod method;
 	GMimeNewLineFormat newline;
 	gboolean mixed_charsets;
 	gboolean international;
+	gboolean always_quote_param_values;
+	gboolean ensure_newline;
+	gboolean hide_unknown_headers;
 	GPtrArray *hidden;
 	guint maxline;
 };
 
 static GMimeFormatOptions *default_options = NULL;
 
-G_DEFINE_BOXED_TYPE (GMimeFormatOptions, g_mime_format_options, g_mime_format_options_clone, g_mime_format_options_free);
+G_DEFINE_BOXED_TYPE (GMimeFormatOptions, g_mime_format_options, g_mime_format_options_ref, g_mime_format_options_unref);
 
 void
 g_mime_format_options_init (void)
@@ -63,17 +68,7 @@ g_mime_format_options_init (void)
 void
 g_mime_format_options_shutdown (void)
 {
-	guint i;
-	
-	if (default_options == NULL)
-		return;
-	
-	for (i = 0; i < default_options->hidden->len; i++)
-		g_free (default_options->hidden->pdata[i]);
-	
-	g_ptr_array_free (default_options->hidden, TRUE);
-	g_slice_free (GMimeFormatOptions, default_options);
-	default_options = NULL;
+	g_clear_pointer (&default_options, g_mime_format_options_unref);
 }
 
 
@@ -82,7 +77,10 @@ g_mime_format_options_shutdown (void)
  *
  * Gets the default format options.
  *
- * Returns: the default format options.
+ * The returned reference belongs to GMime. Use g_mime_format_options_ref()
+ * to retain it independently, or g_mime_format_options_clone() for a copy.
+ *
+ * Returns: (transfer none): the default format options.
  **/
 GMimeFormatOptions *
 g_mime_format_options_get_default (void)
@@ -96,7 +94,7 @@ g_mime_format_options_get_default (void)
  *
  * Creates a new set of #GMimeFormatOptions.
  *
- * Returns: a newly allocated set of #GMimeFormatOptions with the default values.
+ * Returns: (transfer full): new options with the default values and one reference.
  **/
 GMimeFormatOptions *
 g_mime_format_options_new (void)
@@ -104,11 +102,15 @@ g_mime_format_options_new (void)
 	GMimeFormatOptions *options;
 	
 	options = g_slice_new (GMimeFormatOptions);
+	g_atomic_ref_count_init (&options->ref_count);
 	options->method = GMIME_PARAM_ENCODING_METHOD_RFC2231;
 	options->newline = GMIME_NEWLINE_FORMAT_UNIX;
 	options->hidden = g_ptr_array_new ();
-	options->mixed_charsets = TRUE;
+	options->mixed_charsets = FALSE;
 	options->international = FALSE;
+	options->always_quote_param_values = FALSE;
+	options->ensure_newline = FALSE;
+	options->hide_unknown_headers = FALSE;
 	options->maxline = 78;
 	
 	return options;
@@ -134,11 +136,15 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 		options = default_options;
 	
 	clone = g_slice_new (GMimeFormatOptions);
+	g_atomic_ref_count_init (&clone->ref_count);
 	clone->method = options->method;
 	clone->newline = options->newline;
 	clone->mixed_charsets = options->mixed_charsets;
 	clone->international = options->international;
-	clone->maxline = options->newline;
+	clone->always_quote_param_values = options->always_quote_param_values;
+	clone->ensure_newline = options->ensure_newline;
+	clone->hide_unknown_headers = hidden && options->hide_unknown_headers;
+	clone->maxline = options->maxline;
 	
 	clone->hidden = g_ptr_array_new ();
 	
@@ -150,12 +156,13 @@ _g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden)
 	return clone;
 }
 
-
 /**
  * g_mime_format_options_clone:
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
- * Clones a #GMimeFormatOptions.
+ * Creates an independent copy of the settings in @options, including hidden
+ * headers. Unlike g_mime_format_options_ref() or g_boxed_copy(), this does not
+ * share settings.
  *
  * Returns: (transfer full): a newly allocated #GMimeFormatOptions.
  **/
@@ -167,25 +174,95 @@ g_mime_format_options_clone (GMimeFormatOptions *options)
 
 
 /**
- * g_mime_format_options_free:
+ * g_mime_format_options_ref:
  * @options: a #GMimeFormatOptions
  *
- * Frees a set of #GMimeFormatOptions.
+ * Atomically acquires a reference to @options. This shares the same settings;
+ * concurrent changes to the settings still require external synchronization.
+ *
+ * Returns: (transfer full): @options with an additional reference.
+ **/
+GMimeFormatOptions *
+g_mime_format_options_ref (GMimeFormatOptions *options)
+{
+	g_return_val_if_fail (options != NULL, NULL);
+
+	g_atomic_ref_count_inc (&options->ref_count);
+
+	return options;
+}
+
+
+/**
+ * g_mime_format_options_unref:
+ * @options: (transfer full): a #GMimeFormatOptions
+ *
+ * Atomically releases a reference to @options. The options and their owned
+ * data are destroyed when the last reference is released.
  **/
 void
-g_mime_format_options_free (GMimeFormatOptions *options)
+g_mime_format_options_unref (GMimeFormatOptions *options)
 {
 	guint i;
 	
 	g_return_if_fail (options != NULL);
 	
-	if (options != default_options) {
+	if (g_atomic_ref_count_dec (&options->ref_count)) {
 		for (i = 0; i < options->hidden->len; i++)
 			g_free (options->hidden->pdata[i]);
 		g_ptr_array_free (options->hidden, TRUE);
 		
 		g_slice_free (GMimeFormatOptions, options);
 	}
+}
+
+
+/**
+ * g_mime_format_options_get_max_line_length:
+ * @options: (nullable): a #GMimeFormatOptions or %NULL for the defaults
+ *
+ * Gets the line-length target for parameter encoding and header folding.
+ * The default is 78.
+ *
+ * Returns: the configured maximum line length.
+ **/
+guint
+g_mime_format_options_get_max_line_length (GMimeFormatOptions *options)
+{
+	return options ? options->maxline : default_options->maxline;
+}
+
+
+/**
+ * g_mime_format_options_set_max_line_length:
+ * @options: a mutable #GMimeFormatOptions
+ * @max_line_length: a line length between 60 and 998, inclusive
+ *
+ * Sets the line-length target for parameter encoding and header folding,
+ * including addresses, general text, References, Received, and
+ * Disposition-Notification-Options headers.
+ * RFC 2047 parameter encoded-words remain limited to 75 characters. Oversized
+ * parameter names, charset/language declarations, or individual characters
+ * may require exceeding the target. Disabling parameter folding suppresses hard
+ * line breaks, not parameter encoding or continuation selection.
+ *
+ * The global defaults cannot be changed with this setter; use
+ * g_mime_format_options_new() or g_mime_format_options_clone().
+ * References, Received, and Disposition-Notification-Options tokens are not
+ * split; an oversized token or first token may exceed the target.
+ * Address display names are folded between words,
+ * keeping quoted strings intact. General text folding preserves encoded-word
+ * tokens and can split oversized unencoded tokens over multiple lines.
+ * RFC 2047 text and phrase generation still uses legacy word sizing.
+ **/
+void
+g_mime_format_options_set_max_line_length (GMimeFormatOptions *options, guint max_line_length)
+{
+	g_return_if_fail (options != NULL);
+	g_return_if_fail (options != default_options);
+	g_return_if_fail (max_line_length >= 60 && max_line_length <= 998);
+
+	options->maxline = max_line_length;
 }
 
 
@@ -226,6 +303,43 @@ g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GM
 
 
 /**
+ * g_mime_format_options_get_always_quote_param_values:
+ * @options: (nullable): a #GMimeFormatOptions or %NULL for the defaults
+ *
+ * Gets whether otherwise unquoted parameter values should be quoted.
+ * The default is %FALSE.
+ *
+ * Returns: %TRUE if quoting is requested for all parameters.
+ **/
+gboolean
+g_mime_format_options_get_always_quote_param_values (GMimeFormatOptions *options)
+{
+	return options ? options->always_quote_param_values : default_options->always_quote_param_values;
+}
+
+
+/**
+ * g_mime_format_options_set_always_quote_param_values:
+ * @options: a mutable #GMimeFormatOptions
+ * @always_quote: whether to quote otherwise unquoted parameter values
+ *
+ * Requests quoting for all parameters written using @options.
+ * %FALSE does not suppress required quoting or a parameter's own request.
+ * RFC 2231 encoded values are not quoted. The global defaults cannot be
+ * changed with this setter; use g_mime_format_options_new() or
+ * g_mime_format_options_clone() to obtain mutable options.
+ **/
+void
+g_mime_format_options_set_always_quote_param_values (GMimeFormatOptions *options, gboolean always_quote)
+{
+	g_return_if_fail (options != NULL);
+	g_return_if_fail (options != default_options);
+
+	options->always_quote_param_values = !!always_quote;
+}
+
+
+/**
  * g_mime_format_options_get_newline_format:
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
@@ -246,6 +360,8 @@ g_mime_format_options_get_newline_format (GMimeFormatOptions *options)
  * @newline: a #GMimeNewLineFormat
  *
  * Sets the new-line format that should be used when writing headers and messages.
+ * Only %GMIME_NEWLINE_FORMAT_UNIX and %GMIME_NEWLINE_FORMAT_DOS are valid;
+ * %GMIME_NEWLINE_FORMAT_MIXED describes input, not an output format.
  **/
 void
 g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline)
@@ -254,6 +370,48 @@ g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewL
 	g_return_if_fail (newline == GMIME_NEWLINE_FORMAT_UNIX || newline == GMIME_NEWLINE_FORMAT_DOS);
 	
 	options->newline = newline;
+}
+
+
+/**
+ * g_mime_format_options_get_ensure_newline:
+ * @options: (nullable): a #GMimeFormatOptions or %NULL for the defaults
+ *
+ * Gets whether message serialization should complete the final newline.
+ * The default is %FALSE.
+ *
+ * Returns: %TRUE if final newline completion is requested for messages.
+ **/
+gboolean
+g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options)
+{
+	return (options ? options : default_options)->ensure_newline;
+}
+
+
+/**
+ * g_mime_format_options_set_ensure_newline:
+ * @options: a mutable #GMimeFormatOptions
+ * @ensure: whether messages should end with a newline
+ *
+ * Parsed messages normally retain an unterminated final body. Set this
+ * option to %TRUE to request a final newline when writing a message.
+ * The selected newline format determines the sequence to append.
+ *
+ * This option applies at message boundaries, including embedded messages;
+ * it does not force standalone entities or binary content to end with a
+ * newline. It does not add a body to a message without one.
+ *
+ * The global defaults cannot be changed with this setter; use
+ * g_mime_format_options_new() or g_mime_format_options_clone().
+ **/
+void
+g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure)
+{
+	g_return_if_fail (options != NULL);
+	g_return_if_fail (options != default_options);
+
+	options->ensure_newline = !!ensure;
 }
 
 
@@ -301,12 +459,12 @@ g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboole
 }
 
 
-#ifdef NOT_YET_IMPLEMENTED
 /**
  * g_mime_format_options_get_allow_mixed_charsets:
  * @options: (nullable): a #GMimeFormatOptions or %NULL
  *
- * Gets whether or not headers are allowed to be encoded using mixed charsets.
+ * Gets whether individual RFC 2047 words may use different charsets.
+ * The default is %FALSE.
  *
  * Returns: %TRUE if each header value is allowed to be encoded with mixed charsets or %FALSE otherwise.
  **/
@@ -325,7 +483,14 @@ g_mime_format_options_get_allow_mixed_charsets (GMimeFormatOptions *options)
  * @options: a #GMimeFormatOptions
  * @allow: %TRUE if each header value should be allowed to be encoded with mixed charsets
  *
- * Sets whether or not header values should be allowed to be encoded with mixed charsets.
+ * Sets whether RFC 2047 words may use US-ASCII or ISO-8859-1 instead of
+ * the requested charset. Disabled by default, so encoded words use the
+ * requested charset, or UTF-8 when no charset was specified. Lossless
+ * UTF-8 fallback remains possible for an unrepresentable word.
+ *
+ * When enabled, words needing other characters still use the requested
+ * charset, or UTF-8 if none was specified. This option does not change
+ * International UTF-8 output or explicitly assigned raw header values.
  **/
 void
 g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gboolean allow)
@@ -334,7 +499,6 @@ g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gbo
 	
 	options->mixed_charsets = allow;
 }
-
 
 /**
  * g_mime_format_options_get_allow_international:
@@ -356,7 +520,15 @@ g_mime_format_options_get_allow_international (GMimeFormatOptions *options)
  * @options: a #GMimeFormatOptions
  * @allow: %TRUE if international encoding is allowed
  *
- * Sets whether or not international encoding is allowed.
+ * Sets whether UTF-8 address names, domains, source routes, parameter values,
+ * and ordinary text headers can be written without RFC 2047, IDN, or RFC 2231
+ * encoding. Parameter values are quoted as needed; controls and encoded-word-like
+ * parameter text still require encoding. Ordinary text headers use Unicode-safe
+ * folding, counting UTF-16 units rather than UTF-8 bytes. Explicit raw header
+ * values are not reformatted. Parsed text, address and content fields are
+ * decoded and re-encoded without replacing their stored raw values. Mailing-list
+ * command fields preserve URL boundaries and format comments as UTF-8. Parsed
+ * trace, identifier, authentication and signature fields remain unchanged.
  **/
 void
 g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboolean allow)
@@ -366,37 +538,6 @@ g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboo
 	options->international = allow;
 }
 
-
-/**
- * g_mime_format_options_get_max_line:
- * @options: (nullable): a #GMimeFormatOptions or %NULL
- *
- * Gets the max line length to use with encoders.
- *
- * Returns: the max line length to use with encoders.
- **/
-guint
-g_mime_format_options_get_max_line (GMimeFormatOptions *options)
-{
-	return options ? options->maxline : default_options->maxline;
-}
-
-
-/**
- * g_mime_format_options_set_max_line:
- * @options: a #GMimeFormatOptions
- * @maxline: the max line length
- *
- * Sets the max line length to use for encoders.
- **/
-void
-g_mime_format_options_set_max_line (GMimeFormatOptions *options, guint maxline)
-{
-	g_return_if_fail (options != NULL);
-	
-	options->maxline = maxline;
-}
-#endif
 
 /**
  * g_mime_format_options_is_hidden_header:
@@ -411,18 +552,37 @@ gboolean
 g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char *header)
 {
 	guint i;
-	
+
 	g_return_val_if_fail (header != NULL, FALSE);
 	
 	if (options == NULL)
 		options = default_options;
 	
+	if (options->hide_unknown_headers && g_mime_header_id_from_name (header) == GMIME_HEADER_UNKNOWN)
+		return TRUE;
+
 	for (i = 0; i < options->hidden->len; i++) {
 		if (!g_ascii_strcasecmp (options->hidden->pdata[i], header))
 			return TRUE;
 	}
 	
 	return FALSE;
+}
+
+gboolean
+_g_mime_format_options_is_hidden_entity_header (GMimeFormatOptions *options, const char *header)
+{
+	if (options == NULL)
+		options = default_options;
+
+	/* Partial-message envelope filtering applies at message boundaries only. */
+	return !options->hide_unknown_headers && g_mime_format_options_is_hidden_header (options, header);
+}
+
+void
+_g_mime_format_options_set_hide_unknown_headers (GMimeFormatOptions *options, gboolean hide)
+{
+	options->hide_unknown_headers = hide;
 }
 
 
@@ -484,4 +644,5 @@ g_mime_format_options_clear_hidden_headers (GMimeFormatOptions *options)
 		g_free (options->hidden->pdata[i]);
 	
 	g_ptr_array_set_size (options->hidden, 0);
+	options->hide_unknown_headers = FALSE;
 }

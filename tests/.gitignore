@@ -10,7 +10,6 @@ test-cat
 test-encodings
 test-filters
 test-headers
-test-html
 test-iconv
 test-mbox
 test-mime

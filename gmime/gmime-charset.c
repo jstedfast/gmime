@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -17,7 +17,6 @@
  *  Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
  *  02110-1301, USA.
  */
-
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -43,6 +42,8 @@
 #include "gmime-charset-map-private.h"
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
+#include "gmime-error.h"
+#include "gmime-internal.h"
 #include "gmime-iconv.h"
 
 #ifdef HAVE_ICONV_DETECT_H
@@ -81,60 +82,76 @@
 static struct {
 	const char *charset;
 	const char *iconv_name;
+	const char *mime_name;
 } known_iconv_charsets[] = {
-	/* charset name, iconv-friendly name (sometimes case sensitive) */
-	{ "utf-8",           "UTF-8"      },
-	{ "utf8",            "UTF-8"      },
+	/* charset name, iconv-friendly name (sometimes case sensitive), MIME name */
+	{ "utf-8",           "UTF-8",      "utf-8" },
+	{ "utf8",            "UTF-8",      "utf-8" },
 	
 	/* ANSI_X3.4-1968 is used on some systems and should be
 	   treated the same as US-ASCII */
-	{ "ANSI_X3.4-1968",  NULL         },
+	{ "ANSI_X3.4-1968",  "US-ASCII",   "us-ascii" },
+	{ "ascii",          "US-ASCII",   "us-ascii" },
+	{ "iso-ir-6",       "US-ASCII",   "us-ascii" },
+	{ "csascii",        "US-ASCII",   "us-ascii" },
+
+	{ "latin1",         "ISO-8859-1", "iso-8859-1" },
+	{ "latin2",         "ISO-8859-2", "iso-8859-2" },
+	{ "latin3",         "ISO-8859-3", "iso-8859-3" },
+	{ "latin4",         "ISO-8859-4", "iso-8859-4" },
+	{ "latin5",         "ISO-8859-9", "iso-8859-9" },
+	{ "latin9",         "ISO-8859-15", "iso-8859-15" },
+	{ "ansi_x3.110-1983", "ISO-8859-1", "iso-8859-1" },
 	
 	/* 10646 is a special case, its usually UCS-2 big endian */
 	/* This might need some checking but should be ok for
            solaris/linux */
-	{ "iso-10646-1",     "UCS-2BE"    },
-	{ "iso_10646-1",     "UCS-2BE"    },
-	{ "iso10646-1",      "UCS-2BE"    },
-	{ "iso-10646",       "UCS-2BE"    },
-	{ "iso_10646",       "UCS-2BE"    },
-	{ "iso10646",        "UCS-2BE"    },
+	{ "iso-10646-1",     "UCS-2BE",    "ucs-2be" },
+	{ "iso_10646-1",     "UCS-2BE",    "ucs-2be" },
+	{ "iso10646-1",      "UCS-2BE",    "ucs-2be" },
+	{ "iso-10646",       "UCS-2BE",    "ucs-2be" },
+	{ "iso_10646",       "UCS-2BE",    "ucs-2be" },
+	{ "iso10646",        "UCS-2BE",    "ucs-2be" },
 	
 	/* Korean charsets */
 	/* Note: according to http://www.iana.org/assignments/character-sets,
 	 * ks_c_5601-1987 should really map to ISO-2022-KR, but the EUC-KR
 	 * mapping was given to me via a native Korean user, so I'm not sure
 	 * if I should change this... perhaps they are compatible? */
-	{ "ks_c_5601-1987",  "EUC-KR"     },
-	{ "5601",            "EUC-KR"     },
-	{ "ksc-5601",        "EUC-KR"     },
-	{ "ksc-5601-1987",   "EUC-KR"     },
-	{ "ksc-5601_1987",   "EUC-KR"     },
-	{ "ks_c_5861-1992",  "EUC-KR"     },
-	{ "euckr-0",         "EUC-KR"     },
+	{ "ks_c_5601-1987",  "EUC-KR",     "euc-kr" },
+	{ "5601",            "EUC-KR",     "euc-kr" },
+	{ "ksc-5601",        "EUC-KR",     "euc-kr" },
+	{ "ksc-5601-1987",   "EUC-KR",     "euc-kr" },
+	{ "ksc-5601_1987",   "EUC-KR",     "euc-kr" },
+	{ "ks_c_5861-1992",  "EUC-KR",     "euc-kr" },
+	{ "euckr-0",         "EUC-KR",     "euc-kr" },
 	
 	/* Chinese charsets */
-	{ "big5-0",          "BIG5"       },
-	{ "big5.eten-0",     "BIG5"       },
-	{ "big5hkscs-0",     "BIG5HKSCS"  },
+	{ "big5-0",          "BIG5",       "big5" },
+	{ "big5.eten-0",     "BIG5",       "big5" },
+	{ "big5hkscs-0",     "BIG5-HKSCS", "big5-hkscs" },
+	{ "big5hkscs",       "BIG5-HKSCS", "big5-hkscs" },
 	/* Note: GBK is a superset of gb2312 (see
 	 * http://en.wikipedia.org/wiki/GBK for details), so 'upgrade'
 	 * gb2312 to GBK so that we can completely convert GBK text
 	 * that is incorrectly tagged as gb2312 to UTF-8. */
-	{ "gb2312",          "GBK"        },
-	{ "gb-2312",         "GBK"        },
-	{ "gb2312-0",        "GBK"        },
-	{ "gb2312-80",       "GBK"        },
-	{ "gb2312.1980-0",   "GBK"        },
+	{ "gb2312",          "GBK",        "gb2312" },
+	{ "gb-2312",         "GBK",        "gb2312" },
+	{ "gb2312-0",        "GBK",        "gb2312" },
+	{ "gb2312-80",       "GBK",        "gb2312" },
+	{ "gb2312.1980-0",   "GBK",        "gb2312" },
 	/* euc-cn is an alias for gb2312 */
-	{ "euc-cn",          "GBK"        },
-	{ "gb18030-0",       "gb18030"    },
-	{ "gbk-0",           "GBK"        },
+	{ "euc-cn",          "GBK",        "euc-cn" },
+	{ "gb18030-0",       "gb18030",    "gb18030" },
+	{ "gbk-0",           "GBK",        "euc-cn" },
+	{ "gbk",             "GBK",        "euc-cn" },
 	
 	/* Japanese charsets */
-	{ "eucjp-0",         "eucJP"  	  },  /* should this map to "EUC-JP" instead? */
-	{ "ujis-0",          "ujis"  	  },  /* we might want to map this to EUC-JP */
-	{ NULL,              NULL         }
+	{ "eucjp-0",         "euc-jp",     "euc-jp" },
+	{ "ujis-0",          "euc-jp",     "euc-jp" },
+	{ "ujis",            "euc-jp",     "euc-jp" },
+	{ "eucJP",           "eucJP",      "euc-jp" },
+	{ NULL,              NULL,         NULL }
 };
 
 static const char *shiftjis_aliases[] = {
@@ -152,6 +169,7 @@ static struct {
 } cjkr_lang_map[] = {
 	{ "Big5",          "zh" },
 	{ "BIG5HKSCS",     "zh" },
+	{ "BIG5-HKSCS",    "zh" },
 	{ "gb2312",        "zh" },
 	{ "gb18030",       "zh" },
 	{ "gbk",           "zh" },
@@ -167,9 +185,86 @@ static struct {
 };
 
 static GHashTable *iconv_charsets = NULL;
+static GHashTable *charset_codepages = NULL;
+static GHashTable *codepage_cache = NULL;
+static int next_codepage = -1;
+
+static const struct {
+	const char *name;
+	int codepage;
+} known_codepages[] = {
+	{ "us-ascii", 20127 },
+	{ "utf-8", 65001 },
+	{ "utf-7", 65000 },
+	{ "utf-16le", 1200 },
+	{ "utf-16be", 1201 },
+	{ "utf-32le", 12000 },
+	{ "utf-32be", 12001 },
+	{ "iso-8859-1", 28591 },
+	{ "iso-8859-2", 28592 },
+	{ "iso-8859-3", 28593 },
+	{ "iso-8859-4", 28594 },
+	{ "iso-8859-5", 28595 },
+	{ "iso-8859-6", 28596 },
+	{ "iso-8859-7", 28597 },
+	{ "iso-8859-8", 28598 },
+	{ "iso-8859-9", 28599 },
+	{ "iso-8859-13", 28603 },
+	{ "iso-8859-15", 28605 },
+	{ "windows-1250", 1250 },
+	{ "windows-1251", 1251 },
+	{ "windows-1252", 1252 },
+	{ "windows-1253", 1253 },
+	{ "windows-1254", 1254 },
+	{ "windows-1255", 1255 },
+	{ "windows-1256", 1256 },
+	{ "windows-1257", 1257 },
+	{ "windows-1258", 1258 },
+	{ "shift_jis", 932 },
+	{ "euc-jp", 51932 },
+	{ "euc-kr", 51949 },
+	{ "gb2312", 936 },
+	{ "gbk", 936 },
+	{ "euc-cn", 936 },
+	{ "big5", 950 },
+	{ "gb18030", 54936 },
+	{ "iso-2022-jp", 50220 },
+	{ "iso-2022-kr", 50225 },
+	{ "koi8-r", 20866 },
+	{ "koi8-u", 21866 },
+	{ "macintosh", 10000 }
+};
+
 static char *locale_charset = NULL;
 static char *locale_lang = NULL;
 static int initialized = 0;
+
+char *
+_g_mime_charset_from_codepage (int codepage)
+{
+	char *name = g_strdup_printf ("CP%d", codepage);
+	iconv_t converter;
+	guint i;
+
+	/* Prefer Windows codepages over narrower aliases such as GB2312 for CP936. */
+	if ((converter = g_mime_iconv_open ("UTF-8", name)) != (iconv_t) -1) {
+		g_mime_iconv_close (converter);
+		return name;
+	}
+	g_free (name);
+	if (codepage == 50221 || codepage == 50222)
+		codepage = 50220;
+	for (i = 0; i < G_N_ELEMENTS (known_codepages); i++) {
+		if (known_codepages[i].codepage != codepage)
+			continue;
+		converter = g_mime_iconv_open ("UTF-8", known_codepages[i].name);
+		if (converter != (iconv_t) -1) {
+			g_mime_iconv_close (converter);
+			return g_strdup (known_codepages[i].name);
+		}
+	}
+	return NULL;
+}
 
 #ifdef G_THREADS_ENABLED
 static GMutex lock;
@@ -203,6 +298,10 @@ g_mime_charset_map_shutdown (void)
 	}
 #endif
 	
+	g_hash_table_destroy (codepage_cache);
+	codepage_cache = NULL;
+	g_hash_table_destroy (charset_codepages);
+	charset_codepages = NULL;
 	g_hash_table_destroy (iconv_charsets);
 	iconv_charsets = NULL;
 	
@@ -281,6 +380,13 @@ g_mime_charset_map_init (void)
 #endif
 	
 	iconv_charsets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	charset_codepages = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+	codepage_cache = g_hash_table_new (g_direct_hash, g_direct_equal);
+	next_codepage = -1;
+
+	for (i = 0; i < G_N_ELEMENTS (known_codepages); i++)
+		g_hash_table_insert (charset_codepages, g_strdup (known_codepages[i].name),
+				     GINT_TO_POINTER (known_codepages[i].codepage));
 	
 	for (i = 0; known_iconv_charsets[i].charset != NULL; i++) {
 		charset = g_ascii_strdown (known_iconv_charsets[i].charset, -1);
@@ -424,25 +530,12 @@ is_shift_jis (const char *name)
 	return FALSE;
 }
 
-static const char *
-strdown (char *str)
-{
-	register char *s = str;
-	
-	while (*s) {
-		if (*s >= 'A' && *s <= 'Z')
-			*s += 0x20;
-		s++;
-	}
-	
-	return str;
-}
-
 /**
  * g_mime_charset_iconv_name:
  * @charset: charset name
  *
  * Attempts to find an iconv-friendly charset name for @charset.
+ * ISO numbers outside the unsigned-int range are left unnormalized.
  *
  * Returns: an iconv-friendly charset name for @charset.
  **/
@@ -454,55 +547,56 @@ g_mime_charset_iconv_name (const char *charset)
 	if (charset == NULL)
 		return NULL;
 	
-	name = g_alloca (strlen (charset) + 1);
-	strcpy (name, charset);
-	strdown (name);
+	name = g_ascii_strdown (charset, -1);
 	
 	CHARSET_LOCK ();
 	
 	iconv_name = g_hash_table_lookup (iconv_charsets, name);
 	if (iconv_name) {
 		CHARSET_UNLOCK ();
+		g_free (name);
 		return iconv_name;
 	}
 	
 	if (!strncmp (name, "iso", 3)) {
-		int iso, codepage;
+		guint64 iso, codepage;
 		char *p;
 		
 		buf = name + 3;
 		if (*buf == '-' || *buf == '_')
 			buf++;
 		
-		iso = strtoul (buf, &p, 10);
+		iso = g_ascii_strtoull (buf, &p, 10);
 		
-		if (iso == 10646) {
+		if (!g_ascii_isdigit (*buf) || iso > G_MAXUINT) {
+			iconv_name = g_strdup (name);
+		} else if (iso == 10646) {
 			/* they all become ICONV_10646 */
 			iconv_name = g_strdup (ICONV_10646);
-		} else if (p > buf) {
+		} else {
 			buf = p;
 			if (*buf == '-' || *buf == '_')
 				buf++;
 			
-			codepage = strtoul (buf, &p, 10);
+			codepage = g_ascii_strtoull (buf, &p, 10);
 			
 			if (p > buf) {
 				/* codepage is numeric */
+				if (!g_ascii_isdigit (*buf) || codepage > G_MAXUINT) {
+					iconv_name = g_strdup (name);
+				} else {
 #ifdef __aix__
-				if (codepage == 13)
-					iconv_name = g_strdup ("IBM-921");
-				else
+					if (codepage == 13)
+						iconv_name = g_strdup ("IBM-921");
+					else
 #endif /* __aix__ */
-					iconv_name = g_strdup_printf (ICONV_ISO_INT_FORMAT,
-								      iso, codepage);
+						iconv_name = g_strdup_printf (ICONV_ISO_INT_FORMAT,
+									      (guint) iso, (guint) codepage);
+				}
 			} else {
 				/* codepage is a string - probably iso-2022-jp or something */
-				iconv_name = g_strdup_printf (ICONV_ISO_STR_FORMAT, iso, p);
+				iconv_name = g_strdup_printf (ICONV_ISO_STR_FORMAT, (guint) iso, p);
 			}
-		} else {
-			/* p == buf, which probably means we've
-			   encountered an invalid iso charset name */
-			iconv_name = g_strdup (name);
 		}
 	} else if (!strncmp (name, "windows-", 8)) {
 		buf = name + 8;
@@ -523,7 +617,7 @@ g_mime_charset_iconv_name (const char *charset)
 		iconv_name = g_strdup (charset);
 	}
 	
-	g_hash_table_insert (iconv_charsets, g_strdup (name), iconv_name);
+	g_hash_table_insert (iconv_charsets, name, iconv_name);
 	
 	CHARSET_UNLOCK ();
 	
@@ -609,13 +703,282 @@ g_mime_charset_canon_name (const char *charset)
 			return charset;
 		
 		return iso_charsets[iso];
-	} else if (!strncmp (charset, "CP125", 5)) {
+	} else if (!g_ascii_strncasecmp (charset, "CP125", 5)) {
 		ptr = charset + 5;
-		if (*ptr >= '0' && *ptr <= '9')
+		if (*ptr >= '0' && *ptr <= '9' && ptr[1] == '\0')
 			return windows_charsets[*ptr - '0'];
 	}
 	
 	return charset;
+}
+
+/**
+ * g_mime_charset_try_get_bom_encoding:
+ * @buffer: (array length=length) (element-type guint8) (nullable): bytes to inspect
+ * @length: the number of available bytes
+ * @charset: (out) (nullable) (transfer none): a static charset name, or %NULL
+ *
+ * Detects an initial UTF-16LE, UTF-16BE, or UTF-8 byte-order mark, returning
+ * "utf-16le", "utf-16be", or "utf-8", respectively. At most three bytes are
+ * inspected; incomplete marks do not match. @buffer may be %NULL only when
+ * @length is zero.
+ *
+ * This follows MimeKit's BOM policy, not general Unicode encoding detection:
+ * UTF-32 is not detected, and its FF FE prefix matches UTF-16LE. No bytes are
+ * removed or decoded, and a detected mark remains part of the content.
+ *
+ * Returns: %TRUE if a supported mark was found, otherwise %FALSE.
+ **/
+gboolean
+g_mime_charset_try_get_bom_encoding (const guint8 *buffer, gsize length, const char **charset)
+{
+	g_return_val_if_fail (charset != NULL, FALSE);
+
+	*charset = NULL;
+	g_return_val_if_fail (buffer != NULL || length == 0, FALSE);
+
+	/* Match the two-byte UTF-16 marks first, just as MimeKit does. In
+	 * particular, do not reinterpret FF FE 00 00 as a UTF-32 mark. */
+	if (length >= 2 && buffer[0] == 0xff && buffer[1] == 0xfe)
+		*charset = "utf-16le";
+	else if (length >= 2 && buffer[0] == 0xfe && buffer[1] == 0xff)
+		*charset = "utf-16be";
+	else if (length >= 3 && buffer[0] == 0xef && buffer[1] == 0xbb && buffer[2] == 0xbf)
+		*charset = "utf-8";
+
+	return *charset != NULL;
+}
+
+
+/**
+ * g_mime_charset_try_get_bom_encoding_from_stream:
+ * @stream: a #GMimeStream
+ * @charset: (out) (nullable) (transfer none): a static charset name, or %NULL
+ * @error: return location for an error, or %NULL
+ *
+ * Reads up to three bytes at the stream's current position and applies
+ * g_mime_charset_try_get_bom_encoding(). Exactly one read is attempted,
+ * including on streams that return short reads. The stream is not rewound,
+ * sought, or closed, and the inspected bytes remain consumed on either a
+ * match or a nonmatch. A zero-byte read returns %FALSE without an error.
+ *
+ * A read failure returns %FALSE with %GMIME_ERROR using the stream's errno,
+ * or %GMIME_ERROR_GENERAL if the stream did not set errno. No charset is
+ * returned on failure.
+ *
+ * Returns: %TRUE if a supported mark was found, otherwise %FALSE.
+ **/
+gboolean
+g_mime_charset_try_get_bom_encoding_from_stream (GMimeStream *stream, const char **charset, GError **error)
+{
+	guint8 buffer[3];
+	ssize_t nread;
+	int errsv;
+
+	g_return_val_if_fail (charset != NULL, FALSE);
+
+	*charset = NULL;
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), FALSE);
+	g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+	/* A short read is not filled by further reads: detection must consume
+	 * exactly what the single managed Stream.Read would have returned. */
+	errno = 0;
+	if ((nread = g_mime_stream_read (stream, (char *) buffer, sizeof (buffer))) == -1) {
+		errsv = errno;
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to read a text byte-order mark: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return FALSE;
+	}
+
+	return g_mime_charset_try_get_bom_encoding (buffer, (gsize) nread, charset);
+}
+
+
+char *
+_g_mime_charset_get_mime_name (const char *charset)
+{
+	const char *name;
+	guint i;
+
+	if (strstr (charset, "//"))
+		return g_strdup (charset);
+
+	for (i = 0; known_iconv_charsets[i].charset; i++) {
+		if (!g_ascii_strcasecmp (charset, known_iconv_charsets[i].charset))
+			return g_strdup (known_iconv_charsets[i].mime_name);
+	}
+
+	name = g_mime_charset_canon_name (charset);
+	if (!g_ascii_strcasecmp (name, ICONV_SHIFT_JIS))
+		return g_strdup ("shift_jis");
+
+	if (g_str_has_prefix (name, "windows-cp"))
+		return g_strconcat ("windows-", name + 10, NULL);
+
+	return g_ascii_strdown (name, -1);
+}
+
+char *
+_g_mime_charset_get_text_name (const char *charset, GError **error)
+{
+	const char *p;
+
+	for (p = charset; *p; p++) {
+		if ((guchar) *p >= 127 || !is_ttoken (*p))
+			break;
+	}
+
+	if (!*charset || *p) {
+		g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_CONVERSION,
+				     "Text charset name must be a nonempty MIME token");
+		return NULL;
+	}
+
+	/* MimeKit's historical "unicode" alias means UTF-8, unlike .NET's
+	 * Encoding.GetEncoding alias. Resolve it before native charset lookup. */
+	if (!g_ascii_strcasecmp (charset, "unicode"))
+		charset = "utf-8";
+	/* Managed UTF-16/32 encodings use little-endian bytes, not BOM sniffing. */
+	else if (!g_ascii_strcasecmp (charset, "utf16") || !g_ascii_strcasecmp (charset, "csunicode"))
+		charset = "utf-16";
+	else if (!g_ascii_strcasecmp (charset, "utf32"))
+		charset = "utf-32";
+
+	return _g_mime_charset_get_mime_name (charset);
+}
+
+const char *
+_g_mime_charset_get_text_converter (const char *name)
+{
+	if (!g_ascii_strcasecmp (name, "utf-16"))
+		return "UTF-16LE";
+
+	if (!g_ascii_strcasecmp (name, "utf-32"))
+		return "UTF-32LE";
+
+	return g_mime_charset_iconv_name (name);
+}
+
+char *
+_g_mime_charset_encode_text (const char *charset, const char *text, gsize *length, char **mime_name, GError **error)
+{
+	char *name, *bytes;
+
+	if (!(name = _g_mime_charset_get_text_name (charset, error)))
+		return NULL;
+
+	/* Explicit-endian encoders omit the preamble, like Encoding.GetBytes. */
+	bytes = _g_mime_iconv_convert (text, -1, _g_mime_charset_get_text_converter (name), "UTF-8", length, error);
+	if (bytes)
+		*mime_name = name;
+	else
+		g_free (name);
+
+	return bytes;
+}
+
+gsize
+_g_mime_charset_invalid_length (const char *charset, const unsigned char *in, gsize len, int error)
+{
+	gsize n, width;
+
+	if (!g_ascii_strncasecmp (charset, "UTF-16", 6) || !g_ascii_strncasecmp (charset, "UCS-2", 5))
+		return MIN (len, 2);
+
+	if (!g_ascii_strncasecmp (charset, "UTF-32", 6) || !g_ascii_strncasecmp (charset, "UCS-4", 5))
+		return MIN (len, 4);
+
+	if (error == EINVAL)
+		return len;
+
+	if (g_ascii_strcasecmp (charset, "UTF-8") && g_ascii_strcasecmp (charset, "UTF8"))
+		return 1;
+
+	if (in[0] < 0xc2 || in[0] > 0xf4 || len < 2)
+		return 1;
+
+	width = in[0] < 0xe0 ? 2 : in[0] < 0xf0 ? 3 : 4;
+	if (in[1] < 0x80 || in[1] > 0xbf ||
+	    (in[0] == 0xe0 && in[1] < 0xa0) || (in[0] == 0xed && in[1] >= 0xa0) ||
+	    (in[0] == 0xf0 && in[1] < 0x90) || (in[0] == 0xf4 && in[1] >= 0x90))
+		return 1;
+
+	/* Replace a maximal valid UTF-8 prefix once, not once per byte. */
+	for (n = 2; n < MIN (width, len) && in[n] >= 0x80 && in[n] <= 0xbf; n++)
+		;
+
+	return n;
+}
+
+iconv_t
+_g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error)
+{
+	iconv_t decoder;
+	const char *converter;
+	char *name;
+	int errsv;
+
+	if (encoding)
+		*encoding = NULL;
+	if (!(name = _g_mime_charset_get_text_name (charset, error)))
+		return (iconv_t) -1;
+
+	converter = _g_mime_charset_get_text_converter (name);
+	errno = 0;
+	decoder = iconv_open ("UTF-8", converter);
+	errsv = errno;
+	g_free (name);
+
+	if (decoder == (iconv_t) -1) {
+		g_set_error (error, G_CONVERT_ERROR, errsv == EINVAL ? G_CONVERT_ERROR_NO_CONVERSION : G_CONVERT_ERROR_FAILED,
+			     "Cannot decode text using charset '%s': %s",
+			     charset, errsv ? g_strerror (errsv) : "unknown conversion error");
+	} else if (encoding) {
+		*encoding = converter;
+	}
+
+	return decoder;
+}
+
+/* Positive identities are codepages; negative identities keep unmapped native
+ * charsets distinct. Both are valid only until the charset maps shut down. */
+int
+_g_mime_charset_get_codepage (const char *charset)
+{
+	gpointer value;
+	char *name;
+
+	g_return_val_if_fail (charset != NULL, 0);
+
+	CHARSET_LOCK ();
+	value = g_hash_table_lookup (codepage_cache, charset);
+	CHARSET_UNLOCK ();
+	if (value)
+		return GPOINTER_TO_INT (value);
+
+	charset = g_mime_charset_iconv_name (charset);
+	CHARSET_LOCK ();
+	value = g_hash_table_lookup (codepage_cache, charset);
+	CHARSET_UNLOCK ();
+	if (value)
+		return GPOINTER_TO_INT (value);
+
+	name = _g_mime_charset_get_mime_name (charset);
+	CHARSET_LOCK ();
+	if (!(value = g_hash_table_lookup (charset_codepages, name))) {
+		g_assert (next_codepage > G_MININT);
+		value = GINT_TO_POINTER (next_codepage--);
+		g_hash_table_insert (charset_codepages, name, value);
+		name = NULL;
+	}
+
+	g_hash_table_insert (codepage_cache, (gpointer) charset, value);
+	CHARSET_UNLOCK ();
+	g_free (name);
+
+	return GPOINTER_TO_INT (value);
 }
 
 

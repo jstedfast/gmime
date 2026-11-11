@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -29,37 +29,19 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_FILE            (g_mime_stream_file_get_type ())
-#define GMIME_STREAM_FILE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FILE, GMimeStreamFile))
-#define GMIME_STREAM_FILE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILE, GMimeStreamFileClass))
-#define GMIME_IS_STREAM_FILE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_FILE))
-#define GMIME_IS_STREAM_FILE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILE))
-#define GMIME_STREAM_FILE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILE, GMimeStreamFileClass))
 
-typedef struct _GMimeStreamFile GMimeStreamFile;
-typedef struct _GMimeStreamFileClass GMimeStreamFileClass;
 
 /**
  * GMimeStreamFile:
- * @parent_object: parent #GMimeStream
- * @owner: %TRUE if this stream owns @fd
- * @fp: standard-c FILE pointer
  *
  * A #GMimeStream wrapper around standard-c FILE pointers.
  **/
-struct _GMimeStreamFile {
-	GMimeStream parent_object;
-	
-	gboolean owner;
-	FILE *fp;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamFile, g_mime_stream_file, GMIME, STREAM_FILE, GMimeStream)
 
 struct _GMimeStreamFileClass {
 	GMimeStreamClass parent_class;
-	
 };
 
-
-GType g_mime_stream_file_get_type (void);
 
 GMimeStream *g_mime_stream_file_new (FILE *fp);
 GMimeStream *g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end);

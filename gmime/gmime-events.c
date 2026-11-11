@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -31,29 +31,11 @@ typedef struct _EventListener {
 	int blocked;
 } EventListener;
 
-static EventListener *
-event_listener_new (GMimeEventCallback callback, gpointer user_data)
-{
-	EventListener *listener;
-	
-	listener = g_slice_new (EventListener);
-	listener->user_data = user_data;
-	listener->callback = callback;
-	listener->blocked = 0;
-	
-	return listener;
-}
-
-static void
-event_listener_free (EventListener *listener)
-{
-	g_slice_free (EventListener, listener);
-}
-
-
 struct _GMimeEvent {
-	GPtrArray *array;
+	EventListener first;
+	GArray *extra;
 	gpointer owner;
+	guint count;
 };
 
 
@@ -71,8 +53,9 @@ g_mime_event_new (gpointer owner)
 	GMimeEvent *event;
 	
 	event = g_slice_new (GMimeEvent);
-	event->array = g_ptr_array_new ();
+	event->extra = NULL;
 	event->owner = owner;
+	event->count = 0;
 	
 	return event;
 }
@@ -87,13 +70,14 @@ g_mime_event_new (gpointer owner)
 void
 g_mime_event_free (GMimeEvent *event)
 {
-	guint i;
-	
-	for (i = 0; i < event->array->len; i++)
-		event_listener_free (event->array->pdata[i]);
-	g_ptr_array_free (event->array, TRUE);
-	
+	g_clear_pointer (&event->extra, g_array_unref);
 	g_slice_free (GMimeEvent, event);
+}
+
+static EventListener *
+event_listener_at (GMimeEvent *event, guint index)
+{
+	return index ? &g_array_index (event->extra, EventListener, index - 1) : &event->first;
 }
 
 
@@ -103,8 +87,8 @@ g_mime_event_index_of (GMimeEvent *event, GMimeEventCallback callback, gpointer 
 	EventListener *listener;
 	int i;
 	
-	for (i = 0; i < event->array->len; i++) {
-		listener = (EventListener *) event->array->pdata[i];
+	for (i = 0; i < event->count; i++) {
+		listener = event_listener_at (event, i);
 		if (listener->callback == callback && listener->user_data == user_data)
 			return i;
 	}
@@ -130,7 +114,7 @@ g_mime_event_block (GMimeEvent *event, GMimeEventCallback callback, gpointer use
 	if ((index = g_mime_event_index_of (event, callback, user_data)) == -1)
 		return;
 	
-	listener = (EventListener *) event->array->pdata[index];
+	listener = event_listener_at (event, index);
 	listener->blocked++;
 }
 
@@ -153,7 +137,7 @@ g_mime_event_unblock (GMimeEvent *event, GMimeEventCallback callback, gpointer u
 	if ((index = g_mime_event_index_of (event, callback, user_data)) == -1)
 		return;
 	
-	listener = (EventListener *) event->array->pdata[index];
+	listener = event_listener_at (event, index);
 	listener->blocked--;
 }
 
@@ -170,10 +154,17 @@ g_mime_event_unblock (GMimeEvent *event, GMimeEventCallback callback, gpointer u
 void
 g_mime_event_add (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data)
 {
-	EventListener *listener;
-	
-	listener = event_listener_new (callback, user_data);
-	g_ptr_array_add (event->array, listener);
+	EventListener listener = { callback, user_data, 0 };
+
+	if (event->count == 0) {
+		event->first = listener;
+	} else {
+		if (!event->extra)
+			event->extra = g_array_new (FALSE, FALSE, sizeof (EventListener));
+		g_array_append_val (event->extra, listener);
+	}
+
+	event->count++;
 }
 
 
@@ -189,15 +180,21 @@ g_mime_event_add (GMimeEvent *event, GMimeEventCallback callback, gpointer user_
 void
 g_mime_event_remove (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data)
 {
-	EventListener *listener;
 	int index;
 	
 	if ((index = g_mime_event_index_of (event, callback, user_data)) == -1)
 		return;
 	
-	listener = (EventListener *) event->array->pdata[index];
-	g_ptr_array_remove_index (event->array, index);
-	event_listener_free (listener);
+	if (index == 0) {
+		if (event->count > 1) {
+			event->first = g_array_index (event->extra, EventListener, 0);
+			g_array_remove_index (event->extra, 0);
+		}
+	} else {
+		g_array_remove_index (event->extra, index - 1);
+	}
+
+	event->count--;
 }
 
 
@@ -215,8 +212,8 @@ g_mime_event_emit (GMimeEvent *event, gpointer args)
 	EventListener *listener;
 	guint i;
 	
-	for (i = 0; i < event->array->len; i++) {
-		listener = (EventListener *) event->array->pdata[i];
+	for (i = 0; i < event->count; i++) {
+		listener = event_listener_at (event, i);
 		if (listener->blocked <= 0)
 			listener->callback (event->owner, args, listener->user_data);
 	}

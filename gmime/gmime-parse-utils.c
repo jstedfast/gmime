@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -24,9 +24,12 @@
 #endif
 
 #include <glib.h>
+#include <string.h>
 
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
+#include "gmime-common.h"
+#include "gmime-error.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -37,12 +40,153 @@
 
 #define d(x)
 
+gboolean
+_g_mime_parse_error (GError **error, const char *text, const char *inptr, const char *reason)
+{
+	g_set_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+		     "%s at byte offset %" G_GSIZE_FORMAT ".", reason, (gsize) (inptr - text));
+	return FALSE;
+}
+
+gboolean
+_g_mime_parse_validate_text (const char *str, gssize *length, GError **error)
+{
+	const char *nul;
+
+	if (*length < 0)
+		*length = strlen (str);
+
+	if (*length > G_MAXINT) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     "Input text exceeds the supported length.");
+		return FALSE;
+	}
+
+	if ((nul = memchr (str, '\0', *length))) {
+		_g_mime_parse_error (error, str, nul, "Embedded NUL in input text");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+gboolean
+_g_mime_parse_int32 (const char **in, const char *end, gint32 *value)
+{
+	const char *p = *in;
+	gint32 number = 0;
+	int digit;
+
+	if (p == end || *p < '0' || *p > '9')
+		return FALSE;
+
+	do {
+		digit = *p++ - '0';
+		if (number > (G_MAXINT32 - digit) / 10)
+			return FALSE;
+		number = number * 10 + digit;
+	} while (p < end && *p >= '0' && *p <= '9');
+
+	*value = number;
+	*in = p;
+	return TRUE;
+}
+
+char *
+_g_mime_parse_message_id_value (const char *value)
+{
+	const char *inptr = value, *start, *end;
+	gboolean angle_addr, quoted = FALSE;
+	GString *text;
+	char *msgid;
+
+	if (!g_utf8_validate (value, -1, NULL))
+		return NULL;
+
+	while (is_lwsp (*inptr))
+		inptr++;
+	
+	start = inptr;
+	end = inptr;
+	
+	while (*inptr) {
+		if (!is_lwsp (*inptr++))
+			end = inptr;
+	}
+
+	if (start == end)
+		return NULL;
+
+	angle_addr = *start == '<';
+	text = g_string_sized_new (end - start);
+
+	for (inptr = start; inptr < end; inptr++) {
+		if (*inptr == '\r' || *inptr == '\n') {
+			if (*inptr == '\r' && inptr + 1 < end && inptr[1] == '\n')
+				inptr++;
+
+			if (inptr + 1 == end || (inptr[1] != ' ' && inptr[1] != '\t'))
+				goto error;
+		} else {
+			g_string_append_c (text, *inptr);
+		}
+	}
+
+	if (!angle_addr) {
+		for (inptr = text->str; *inptr; inptr++) {
+			if (quoted) {
+				if (*inptr == '\\' && inptr[1])
+					inptr++;
+				else if (*inptr == '"')
+					quoted = FALSE;
+			} else if (*inptr == '"') {
+				quoted = TRUE;
+			} else if (*inptr == ' ' || *inptr == '\t') {
+				goto error;
+			}
+		}
+
+		g_string_prepend_c (text, '<');
+		g_string_append_c (text, '>');
+	}
+
+	inptr = text->str;
+	msgid = decode_msgid (&inptr, text->str + text->len);
+
+	if (msgid && (!skip_cfws (&inptr, text->str + text->len) || *inptr))
+		g_clear_pointer (&msgid, g_free);
+
+	g_string_free (text, TRUE);
+
+	return msgid;
+
+ error:
+	g_string_free (text, TRUE);
+	return NULL;
+}
+
+gboolean
+_g_mime_parse_cfws (const char *text, const char **in, const char *end, GError **error)
+{
+	skip_lwsp (in, end);
+
+	while (*in < end && **in == '(') {
+		if (!skip_comment (in, end))
+			return _g_mime_parse_error (error, text, *in, "Incomplete comment");
+
+		skip_lwsp (in, end);
+	}
+
+	return TRUE;
+}
+
 
 /**
  * g_mime_parse_content_type:
  * @in: address of input text string
- * @type: address of the 'type' output string
- * @subtype: address of the 'subtype' output string
+ * @end: exclusive end of the input
+ * @type: (nullable): address of the 'type' output string, or %NULL to skip allocation
+ * @subtype: (nullable): address of the 'subtype' output string, or %NULL to skip allocation
  *
  * Decodes the simple Content-Type type/subtype tokens and updates @in
  * to point to the first char after the end of the subtype.
@@ -51,47 +195,53 @@
  * otherwise.
  **/
 gboolean
-g_mime_parse_content_type (const char **in, char **type, char **subtype)
+g_mime_parse_content_type (const char **in, const char *end, char **type, char **subtype)
 {
 	register const char *inptr;
 	const char *start = *in;
+	const char *type_start;
+	const char *type_end;
+
+	if (type)
+		*type = NULL;
+
+	if (subtype)
+		*subtype = NULL;
 	
-	skip_cfws (&start);
+	skip_cfws (&start, end);
+	type_start = start;
 	inptr = start;
 	
 	/* decode the type */
-	while (*inptr && is_ttoken (*inptr))
+	while (inptr < end && is_ttoken (*inptr))
 		inptr++;
 	
-	*type = g_strndup (start, (size_t) (inptr - start));
+	type_end = inptr;
 	
 	start = inptr;
-	skip_cfws (&start);
+	skip_cfws (&start, end);
 	
 	/* check for type/subtype delimeter */
-	if (*start++ != '/') {
-		g_free (*type);
-		*subtype = NULL;
-		*type = NULL;
+	if (start == end || *start != '/')
 		return FALSE;
-	}
+	start++;
 	
-	skip_cfws (&start);
+	skip_cfws (&start, end);
 	inptr = start;
 	
 	/* decode the subtype */
-	while (*inptr && is_ttoken (*inptr))
+	while (inptr < end && is_ttoken (*inptr))
 		inptr++;
 	
 	/* check that the subtype exists */
-	if (inptr == start) {
-		g_free (*type);
-		*subtype = NULL;
-		*type = NULL;
+	if (inptr == start)
 		return FALSE;
-	}
 	
-	*subtype = g_strndup (start, (size_t) (inptr - start));
+	if (type)
+		*type = g_strndup (type_start, (size_t) (type_end - type_start));
+
+	if (subtype)
+		*subtype = g_strndup (start, (size_t) (inptr - start));
 	
 	/* update the input string pointer */
 	*in = inptr;
@@ -103,21 +253,25 @@ g_mime_parse_content_type (const char **in, char **type, char **subtype)
 /**
  * g_mime_skip_comment:
  * @in: address of input string
+ * @end: exclusive end of the input
  *
  * Skips a comment.
  *
  * Returns: %TRUE on success or %FALSE otherwise.
  **/
 gboolean
-g_mime_skip_comment (const char **in)
+g_mime_skip_comment (const char **in, const char *end)
 {
 	register const char *inptr = *in;
-	int depth = 1;
+	gsize depth = 1;
+
+	if (inptr == end || *inptr != '(')
+		return FALSE;
 	
 	/* skip over the '(' */
 	inptr++;
-	while (*inptr && depth) {
-		if (*inptr == '\\' && *(inptr + 1))
+	while (inptr < end && depth) {
+		if (*inptr == '\\' && inptr + 1 < end)
 			inptr++;
 		else if (*inptr == '(')
 			depth++;
@@ -136,18 +290,19 @@ g_mime_skip_comment (const char **in)
 /**
  * g_mime_skip_lwsp:
  * @in: address of input string
+ * @end: exclusive end of the input
  *
  * Skips whitespace.
  *
  * Returns: %TRUE if any input was skipped or %FALSE otherwise.
  **/
 gboolean
-g_mime_skip_lwsp (const char **in)
+g_mime_skip_lwsp (const char **in, const char *end)
 {
 	register const char *inptr = *in;
 	const char *start = inptr;
 	
-	while (is_lwsp (*inptr))
+	while (inptr < end && is_lwsp (*inptr))
 		inptr++;
 	
 	*in = inptr;
@@ -159,23 +314,24 @@ g_mime_skip_lwsp (const char **in)
 /**
  * g_mime_skip_cfws:
  * @in: address of input string
+ * @end: exclusive end of the input
  *
  * Skips comments and whitespace.
  *
  * Returns: %TRUE on success or %FALSE on error.
  **/
 gboolean
-g_mime_skip_cfws (const char **in)
+g_mime_skip_cfws (const char **in, const char *end)
 {
 	const char *inptr = *in;
 	
-	skip_lwsp (&inptr);
+	skip_lwsp (&inptr, end);
 	
-	while (*inptr == '(') {
-		if (!skip_comment (&inptr))
+	while (inptr < end && *inptr == '(') {
+		if (!skip_comment (&inptr, end))
 			return FALSE;
 		
-		skip_lwsp (&inptr);
+		skip_lwsp (&inptr, end);
 	}
 	
 	*in = inptr;
@@ -187,21 +343,25 @@ g_mime_skip_cfws (const char **in)
 /**
  * g_mime_skip_quoted:
  * @in: address of input string
+ * @end: exclusive end of the input
  *
  * Skips a quoted string.
  *
  * Returns: %TRUE on success or %FALSE on error.
  **/
 gboolean
-g_mime_skip_quoted (const char **in)
+g_mime_skip_quoted (const char **in, const char *end)
 {
 	register const char *inptr = *in;
 	gboolean escaped = FALSE;
+
+	if (inptr == end || *inptr != '"')
+		return FALSE;
 	
 	/* skip over leading '"' */
 	inptr++;
 	
-	while (*inptr) {
+	while (inptr < end) {
 		if (*inptr == '\\') {
 			escaped = !escaped;
 		} else if (!escaped) {
@@ -214,7 +374,7 @@ g_mime_skip_quoted (const char **in)
 		inptr++;
 	}
 	
-	if (*inptr == '\0') {
+	if (inptr == end) {
 		*in = inptr;
 		
 		return FALSE;
@@ -232,18 +392,19 @@ g_mime_skip_quoted (const char **in)
 /**
  * g_mime_skip_atom:
  * @in: address of input string
+ * @end: exclusive end of the input
  *
  * Skips an atom.
  *
  * Returns: %TRUE if any input was skipped or %FALSE otherwise.
  **/
 gboolean
-g_mime_skip_atom (const char **in)
+g_mime_skip_atom (const char **in, const char *end)
 {
 	register const char *inptr = *in;
 	const char *start = inptr;
 	
-	while (is_atom (*inptr))
+	while (inptr < end && is_atom (*inptr))
 		inptr++;
 	
 	*in = inptr;
@@ -255,289 +416,295 @@ g_mime_skip_atom (const char **in)
 /**
  * g_mime_skip_word:
  * @in: address of input string
+ * @end: exclusive end of the input
  *
  * Skips a word token.
  *
  * Returns: %TRUE on success or %FALSE otherwise.
  **/
 gboolean
-g_mime_skip_word (const char **in)
+g_mime_skip_word (const char **in, const char *end)
 {
+	if (*in == end)
+		return FALSE;
+
 	if (**in == '"')
-		return skip_quoted (in);
+		return skip_quoted (in, end);
 	
 	if (is_atom (**in))
-		return skip_atom (in);
+		return skip_atom (in, end);
 	
 	return FALSE;
 }
 
 
-static const char *
-decode_quoted_string (const char **in)
+static gboolean
+dotatom_parse (GString *str, const char **in, const char *end, const char *sentinels, gboolean replace_nuls)
 {
-	register const char *inptr = *in;
-	const char *qstring = NULL;
-	
-	if (*inptr == '"') {
-		qstring = inptr;
-		
-		inptr++;
-		while (*inptr && *inptr != '"') {
-			if (*inptr == '\\')
-				inptr++;
-			
-			if (*inptr)
-				inptr++;
-		}
-		
-		if (*inptr == '"')
-			inptr++;
-		
-		*in = inptr;
-	}
-	
-	return qstring;
-}
-
-static const char *
-decode_atom (const char **in)
-{
-	register const char *inptr = *in;
-	const char *atom = NULL;
-	
-	if (!is_atom (*inptr))
-		return NULL;
-	
-	atom = inptr++;
-	while (is_atom (*inptr))
-		inptr++;
-	
-	*in = inptr;
-	
-	return atom;
-}
-
-
-/**
- * g_mime_decode_word:
- * @in: address of input text string
- *
- * Extracts the next rfc822 'word' token.
- *
- * Returns: the next rfc822 'word' token or %NULL if non exist.
- **/
-const char *
-g_mime_decode_word (const char **in)
-{
+	const char *atom, *comment;
 	const char *inptr = *in;
-	
-	skip_cfws (&inptr);
-	if (*inptr == '"') {
-		*in = inptr;
-		return decode_quoted_string (in);
-	} else {
-		*in = inptr;
-		return decode_atom (in);
-	}
+	GString *domain = g_string_new (NULL);
+
+	do {
+		if (inptr == end || (!is_atom (*inptr) && !(replace_nuls && *inptr == '\0')))
+			goto error;
+
+		do {
+			atom = inptr;
+			while (inptr < end && is_atom (*inptr))
+				inptr++;
+
+			if (!g_utf8_validate (atom, inptr - atom, NULL))
+				goto error;
+
+			g_string_append_len (domain, atom, inptr - atom);
+
+			if (inptr == end || !replace_nuls || *inptr != '\0')
+				break;
+
+			g_string_append (domain, "\357\277\275");
+			inptr++;
+		} while (inptr < end && (is_atom (*inptr) || *inptr == '\0'));
+
+		comment = inptr;
+		if (!skip_cfws (&inptr, end))
+			goto error;
+
+		if (inptr == end || *inptr != '.') {
+			inptr = comment;
+			break;
+		}
+
+		/* skip over the '.' */
+		inptr++;
+
+		if (!skip_cfws (&inptr, end))
+			goto error;
+
+		/* allow domains to end with a '.', but strip it off */
+		if (inptr == end || (*inptr && strchr (sentinels, *inptr)))
+			break;
+
+		g_string_append_c (domain, '.');
+	} while (TRUE);
+
+	g_string_append_len (str, domain->str, domain->len);
+	g_string_free (domain, TRUE);
+
+	*in = inptr;
+
+	return TRUE;
+
+ error:
+	g_string_free (domain, TRUE);
+
+	*in = inptr;
+
+	return FALSE;
 }
 
 static gboolean
-decode_subliteral (const char **in, GString *domain)
+domain_literal_parse (GString *str, const char **in, const char *end, gboolean replace_nuls)
 {
 	const char *inptr = *in;
-	gboolean got = FALSE;
-	
-	while (*inptr && *inptr != '.' && *inptr != ']') {
-		if (is_dtext (*inptr)) {
-			g_string_append_c (domain, *inptr);
+
+	g_string_append_c (str, '[');
+	inptr++;
+
+	skip_lwsp (&inptr, end);
+
+	do {
+		const char *start = inptr;
+
+		while (inptr < end && (guchar) *inptr >= 33 && (guchar) *inptr < 127 && is_dtext (*inptr))
 			inptr++;
-			got = TRUE;
-		} else if (is_lwsp (*inptr)) {
-			skip_lwsp (&inptr);
-		} else {
+
+		g_string_append_len (str, start, (size_t) (inptr - start));
+
+		skip_lwsp (&inptr, end);
+
+		if (inptr == end)
+			goto error;
+
+		if (replace_nuls && *inptr == '\0') {
+			g_string_append (str, "\357\277\275");
+			inptr++;
+			continue;
+		}
+
+		if (*inptr == ']')
 			break;
-		}
-	}
-	
+
+		if (!is_ascii (*inptr) || is_ctrl (*inptr) || !is_dtext (*inptr))
+			goto error;
+	} while (TRUE);
+
+	g_string_append_c (str, ']');
+	*in = inptr + 1;
+
+	return TRUE;
+
+ error:
 	*in = inptr;
-	
-	return got;
+
+	return FALSE;
 }
 
-static void
-decode_domain_literal (const char **in, GString *domain)
-{
-	const char *inptr = *in;
-	
-	skip_cfws (&inptr);
-	while (*inptr && *inptr != ']') {
-		if (decode_subliteral (&inptr, domain) && *inptr == '.') {
-			g_string_append_c (domain, *inptr);
-			inptr++;
-		} else if (*inptr != ']') {
-			w(g_warning ("Malformed domain-literal, unexpected char '%c': %s",
-				     *inptr, *in));
-			
-			/* try and skip to the next char ?? */
-			if (*inptr)
-				inptr++;
-		}
-	}
-	
-	*in = inptr;
-}
-
-
-/**
- * g_mime_decode_domain:
- * @in: address of input text string
- * @domain: a #GString to decode the domain into
- *
- * Extracts the next rfc822 'domain' token and appends it to @domain.
- *
- * Returns: %TRUE if an rfc822 'domain' token was decoded or %FALSE
- * otherwise.
- **/
 gboolean
-g_mime_decode_domain (const char **in, GString *domain)
+_g_mime_parse_domain (GString *domain, const char **in, const char *end, const char *sentinels, gboolean replace_nuls)
 {
-	const char *inptr, *save, *atom;
-	size_t initial = domain->len;
-	
-	inptr = *in;
-	while (inptr && *inptr) {
-		skip_cfws (&inptr);
-		if (*inptr == '[') {
-			/* domain literal */
-			g_string_append_c (domain, '[');
-			inptr++;
-			
-			decode_domain_literal (&inptr, domain);
-			
-			if (*inptr == ']') {
-				g_string_append_c (domain, ']');
-				inptr++;
-			} else {
-				w(g_warning ("Missing ']' in domain-literal: %s", *in));
-			}
-		} else {
-			if (!(atom = decode_atom (&inptr))) {
-				w(g_warning ("Unexpected char '%c' in domain: %s", *inptr, *in));
-				/* remove the last '.' */
-				if (domain->len && domain->str[domain->len - 1] == '.')
-					g_string_truncate (domain, domain->len - 1);
-				break;
-			}
-			
-			g_string_append_len (domain, atom, (size_t) (inptr - atom));
-		}
-		
-		save = inptr;
-		skip_cfws (&inptr);
-		if (*inptr != '.') {
-			inptr = save;
-			break;
-		}
-		
-		g_string_append_c (domain, '.');
-		inptr++;
-	}
-	
-	*in = inptr;
-	
-	return domain->len > initial;
-}
+	if (*in == end)
+		return FALSE;
 
+	if (**in == '[')
+		return domain_literal_parse (domain, in, end, replace_nuls);
+
+	return dotatom_parse (domain, in, end, sentinels, replace_nuls);
+}
 
 char *
-g_mime_decode_addrspec (const char **in)
+g_mime_decode_msgid (const char **in, const char *end)
 {
-	const char *word, *inptr;
-	GString *addrspec;
-	char *str;
-	
-	skip_cfws (in);
-	inptr = *in;
-	
-	if (!(word = decode_word (&inptr))) {
-		w(g_warning ("No local-part in addr-spec: %s", *in));
-		return NULL;
-	}
-	
-	addrspec = g_string_new ("");
-	g_string_append_len (addrspec, word, (size_t) (inptr - word));
-	
-	/* get the rest of the local-part */
-	skip_cfws (&inptr);
-	while (*inptr == '.') {
-		g_string_append_c (addrspec, *inptr++);
-		if ((word = decode_word (&inptr))) {
-			g_string_append_len (addrspec, word, (size_t) (inptr - word));
-			skip_cfws (&inptr);
+	const char *inptr = *in, *start, *p;
+	gboolean angle_addr, square_brackets;
+	GString *msgid = NULL;
+
+	if (!skip_cfws (&inptr, end) || inptr == end)
+		goto error;
+
+	angle_addr = *inptr == '<';
+	if (angle_addr)
+		inptr++;
+
+	skip_lwsp (&inptr, end);
+	if (inptr == end)
+		goto error;
+
+	msgid = g_string_new (NULL);
+	/* Exchange sometimes wraps the msg-id inside square brackets as well as angles.
+	 * https://github.com/jstedfast/MimeKit/issues/912 */
+	square_brackets = *inptr == '[';
+
+	/* Use a deliberately loose local-part grammar to accept real-world msg-ids.
+	 * https://github.com/jstedfast/MimeKit/issues/472 */
+	do {
+		start = inptr;
+		if (*inptr == '"') {
+			if (!skip_quoted (&inptr, end))
+				goto error;
 		} else {
-			w(g_warning ("Invalid local-part in addr-spec: %s", *in));
-			goto exception;
+			while (inptr < end && *inptr != '.' && *inptr != '@' && *inptr != '>' && !is_lwsp (*inptr))
+				inptr++;
+		}
+
+		p = start;
+		while (p < inptr && !g_utf8_validate (p, inptr - p, &p) && *p == '\0')
+			p++;
+		if (p < inptr)
+			goto error;
+
+		/* Unfold quoted strings without discarding their literal spaces or tabs. */
+		for (p = start; p < inptr; p++) {
+			if (*p == '\0')
+				g_string_append (msgid, "\357\277\275");
+			else if (*start != '"' || (*p != '\r' && *p != '\n'))
+				g_string_append_c (msgid, *p);
+		}
+
+		skip_lwsp (&inptr, end);
+		if (inptr == end) {
+			if (angle_addr)
+				goto error;
+			break;
+		}
+
+		if (*inptr == '@' || *inptr == '>')
+			break;
+
+		if (*inptr == '.') {
+			g_string_append_c (msgid, '.');
+			inptr++;
+			skip_lwsp (&inptr, end);
+		}
+
+		if (inptr == end)
+			goto error;
+	} while (TRUE);
+
+	if (inptr < end && *inptr == '@') {
+		g_string_append_c (msgid, '@');
+		/* Recover <local-part@@domain> by collapsing repeated separators.
+		 * https://github.com/jstedfast/MimeKit/issues/962 */
+		do {
+			inptr++;
+		} while (inptr < end && *inptr == '@');
+
+		if (!skip_cfws (&inptr, end))
+			goto error;
+
+		/* Also accept <local-part@> for compatibility with existing messages.
+		 * https://github.com/jstedfast/MimeKit/issues/102 */
+		if (inptr < end && *inptr != '>') {
+			do {
+				if (!_g_mime_parse_domain (msgid, &inptr, end, ">@", TRUE))
+					goto error;
+
+				if (inptr == end || *inptr != '@')
+					break;
+
+				/* Preserve broken <local-part@domain1@domain2> identifiers.
+				 * https://github.com/jstedfast/MailKit/issues/138 */
+				g_string_append_c (msgid, '@');
+				inptr++;
+			} while (inptr < end);
+
+			if (!skip_cfws (&inptr, end))
+				goto error;
 		}
 	}
-	
-	/* we should be at the '@' now... */
-	if (*inptr++ != '@') {
-		w(g_warning ("Invalid addr-spec; missing '@': %s", *in));
-		goto exception;
+
+	if (square_brackets && inptr < end && *inptr == ']') {
+		g_string_append_c (msgid, ']');
+		inptr++;
 	}
-	
-	g_string_append_c (addrspec, '@');
-	if (!decode_domain (&inptr, addrspec)) {
-		w(g_warning ("No domain in addr-spec: %s", *in));
-		goto exception;
-	}
-	
-	str = g_string_free (addrspec, FALSE);
-	
+
+	if (angle_addr && (inptr == end || *inptr != '>'))
+		goto error;
+
+	if (inptr < end && *inptr == '>')
+		inptr++;
+
+	if (msgid->len == 0)
+		goto error;
+
 	*in = inptr;
-	
-	return str;
-	
- exception:
-	
-	g_string_free (addrspec, TRUE);
-	
+
+	return g_string_free (msgid, FALSE);
+
+ error:
+	w(g_warning ("Invalid msg-id: %.*s", (int) MIN (end - *in, G_MAXINT), *in));
+	if (msgid)
+		g_string_free (msgid, TRUE);
+	*in = inptr;
+
 	return NULL;
 }
 
 char *
-g_mime_decode_msgid (const char **in)
+_g_mime_parse_reference (const char **in, const char *end)
 {
-	const char *inptr = *in;
-	char *msgid = NULL;
-	
-	skip_cfws (&inptr);
-	if (*inptr != '<') {
-		w(g_warning ("Invalid msg-id; missing '<': %s", *in));
-	} else {
-		inptr++;
-	}
-	
-	skip_cfws (&inptr);
-	if ((msgid = decode_addrspec (&inptr))) {
-		skip_cfws (&inptr);
-		if (*inptr != '>') {
-			w(g_warning ("Invalid msg-id; missing '>': %s", *in));
-		} else {
-			inptr++;
+	char *msgid;
+
+	while (*in < end) {
+		if (!skip_cfws (in, end) || *in == end)
+			break;
+		if (**in == '<') {
+			if ((msgid = decode_msgid (in, end)))
+				return msgid;
+		} else if (!skip_word (in, end) && *in < end) {
+			(*in)++;
 		}
-		
-		*in = inptr;
-	} else {
-		w(g_warning ("Invalid msg-id; missing addr-spec: %s", *in));
-		*in = inptr;
-		while (*inptr && *inptr != '>')
-			inptr++;
-		
-		msgid = g_strndup (*in, (size_t) (inptr - *in));
-		*in = inptr;
 	}
-	
-	return msgid;
+
+	return NULL;
 }

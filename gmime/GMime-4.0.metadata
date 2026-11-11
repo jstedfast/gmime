@@ -1,0 +1,50 @@
+// Class macros use GMIME_, while function names use g_mime_.
+GMime lower_case_cprefix="gmime_"
+
+InternetAddress
+  .to_string#method name="to_new_string"
+
+// These are actually static factory methods
+Entity
+  .new skip
+  .new_type skip
+
+// G-I can't handle non-boxed types
+PartIter struct=false
+
+// G-I doesn't allow non-nullable return values (bug #660879)
+Message
+  .get_mime_part nullable
+Entity
+  .get_content_type_parameter nullable
+Parser
+  .construct_message nullable
+
+// Conflicts
+Entity
+  .write_to_stream#virtual_method name="write_to_stream_vfunc"
+FilterBest
+  .charset#method name="get_charset"
+Encoder
+  .encode.input ctype="const guint8*"
+  .encode.output out=false
+  .flush.input ctype="const guint8*"
+  .flush.output out=false
+Decoder
+  .decode.input ctype="const guint8*"
+  .decode.output out=false
+  .flush.input ctype="const guint8*"
+  .flush.output out=false
+Reader
+  .header_read.buffer ctype="const guint8*"
+  .content_read.buffer ctype="const guint8*"
+  .boundary_read.buffer ctype="const guint8*"
+  .marker_read.buffer ctype="const guint8*"
+ComplianceIssueFunc
+  .issue ctype="const GMimeComplianceIssue*"
+TnefComplianceLogger
+  .issue ctype="const GMimeTnefComplianceIssue*"
+
+// Reparenting
+Stream
+  .buffer_* parent="GMime.StreamBuffer" name="buffer_(.+)"

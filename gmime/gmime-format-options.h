@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -32,6 +32,8 @@ G_BEGIN_DECLS
  * GMimeNewLineFormat:
  * @GMIME_NEWLINE_FORMAT_UNIX: The Unix New-Line format ("\n").
  * @GMIME_NEWLINE_FORMAT_DOS: The DOS New-Line format ("\r\n").
+ * @GMIME_NEWLINE_FORMAT_MIXED: Both LF and CRLF occur in parsed content.
+ *   This input hint cannot be selected as an output or encoder format.
  *
  * There are two commonly used line-endings used by modern Operating Systems.
  * Unix-based systems such as Linux and Mac OS use a single character ('\n' aka LF)
@@ -41,7 +43,8 @@ G_BEGIN_DECLS
  **/
 typedef enum {
 	GMIME_NEWLINE_FORMAT_UNIX,
-	GMIME_NEWLINE_FORMAT_DOS
+	GMIME_NEWLINE_FORMAT_DOS,
+	GMIME_NEWLINE_FORMAT_MIXED
 } GMimeNewLineFormat;
 
 
@@ -67,7 +70,9 @@ typedef enum {
 /**
  * GMimeFormatOptions:
  *
- * Format options for serializing various GMime objects.
+ * Reference-counted format options for serializing various GMime objects.
+ * Boxed copies share settings; use g_mime_format_options_clone() for an
+ * independent copy.
  **/
 typedef struct _GMimeFormatOptions GMimeFormatOptions;
 
@@ -76,27 +81,34 @@ GType g_mime_format_options_get_type (void);
 GMimeFormatOptions *g_mime_format_options_get_default (void);
 
 GMimeFormatOptions *g_mime_format_options_new (void);
-void g_mime_format_options_free (GMimeFormatOptions *options);
+GMimeFormatOptions *g_mime_format_options_ref (GMimeFormatOptions *options);
+void g_mime_format_options_unref (GMimeFormatOptions *options);
 
 GMimeFormatOptions *g_mime_format_options_clone (GMimeFormatOptions *options);
+
+guint g_mime_format_options_get_max_line_length (GMimeFormatOptions *options);
+void g_mime_format_options_set_max_line_length (GMimeFormatOptions *options, guint max_line_length);
 
 GMimeParamEncodingMethod g_mime_format_options_get_param_encoding_method (GMimeFormatOptions *options);
 void g_mime_format_options_set_param_encoding_method (GMimeFormatOptions *options, GMimeParamEncodingMethod method);
 
+gboolean g_mime_format_options_get_always_quote_param_values (GMimeFormatOptions *options);
+void g_mime_format_options_set_always_quote_param_values (GMimeFormatOptions *options, gboolean always_quote);
+
 GMimeNewLineFormat g_mime_format_options_get_newline_format (GMimeFormatOptions *options);
 void g_mime_format_options_set_newline_format (GMimeFormatOptions *options, GMimeNewLineFormat newline);
+
+gboolean g_mime_format_options_get_ensure_newline (GMimeFormatOptions *options);
+void g_mime_format_options_set_ensure_newline (GMimeFormatOptions *options, gboolean ensure);
 
 const char *g_mime_format_options_get_newline (GMimeFormatOptions *options);
 GMimeFilter *g_mime_format_options_create_newline_filter (GMimeFormatOptions *options, gboolean ensure_newline);
 
-/*gboolean g_mime_format_options_get_allow_mixed_charsets (GMimeFormatOptions *options);*/
-/*void g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gboolean allow);*/
+gboolean g_mime_format_options_get_allow_mixed_charsets (GMimeFormatOptions *options);
+void g_mime_format_options_set_allow_mixed_charsets (GMimeFormatOptions *options, gboolean allow);
 
-/*gboolean g_mime_format_options_get_allow_international (GMimeFormatOptions *options);*/
-/*void g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboolean allow);*/
-
-/*gboolean g_mime_format_options_get_max_line (GMimeFormatOptions *options);*/
-/*void g_mime_format_options_set_max_line (GMimeFormatOptions *options, gboolean maxline);*/
+gboolean g_mime_format_options_get_allow_international (GMimeFormatOptions *options);
+void g_mime_format_options_set_allow_international (GMimeFormatOptions *options, gboolean allow);
 
 gboolean g_mime_format_options_is_hidden_header (GMimeFormatOptions *options, const char *header);
 void g_mime_format_options_add_hidden_header (GMimeFormatOptions *options, const char *header);

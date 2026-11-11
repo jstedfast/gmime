@@ -1,0 +1,167 @@
+name: Static analysis
+
+on:
+  push:
+    branches: [ "master", "v4.0-dev" ]
+  pull_request:
+    branches: [ "master", "v4.0-dev" ]
+  schedule:
+    - cron: '43 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CC: gcc
+
+jobs:
+  codeql:
+    name: CodeQL (C/C++)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc meson ninja-build pkg-config \
+            libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: c-cpp
+          build-mode: manual
+          queries: security-extended
+
+      - name: Configure and build
+        run: |
+          mkdir -p _build-codeql/reports
+          {
+            git rev-parse HEAD
+            "$CC" --version
+            meson --version
+            ninja --version
+            pkg-config --modversion glib-2.0 gobject-2.0 gio-2.0 zlib gpgme libidn2
+          } > _build-codeql/reports/toolchain.txt
+          meson setup _build-codeql --buildtype=debug -Db_ndebug=false \
+            -Dcrypto=enabled -Dlibidn=enabled -Dintrospection=disabled \
+            -Dvapi=disabled -Dgtk_doc=false -Dtests=false -Dexamples=false
+          meson compile -C _build-codeql
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:c-cpp/linux-full
+          output: _build-codeql/reports
+
+      - name: Upload reports and build configuration
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: codeql
+          path: |
+            _build-codeql/reports/
+            _build-codeql/compile_commands.json
+            _build-codeql/config.h
+            _build-codeql/iconv-detect.h
+            _build-codeql/meson-info/
+            _build-codeql/meson-logs/
+          if-no-files-found: warn
+          retention-days: 30
+
+  cppcheck:
+    name: Cppcheck
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck gcc meson ninja-build pkg-config \
+            libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev
+
+      - name: Configure and build
+        run: |
+          mkdir -p _build-cppcheck/reports _build-cppcheck/cppcheck-cache
+          {
+            git rev-parse HEAD
+            cppcheck --version
+            "$CC" --version
+            meson --version
+            ninja --version
+            pkg-config --modversion glib-2.0 gobject-2.0 gio-2.0 zlib gpgme libidn2
+          } > _build-cppcheck/reports/toolchain.txt
+          meson setup _build-cppcheck --buildtype=debug -Db_ndebug=false \
+            -Dcrypto=enabled -Dlibidn=enabled -Dintrospection=disabled \
+            -Dvapi=disabled -Dgtk_doc=false -Dtests=false -Dexamples=false
+          meson compile -C _build-cppcheck
+
+      - name: Analyze
+        run: |
+          status=0
+          cppcheck --project=_build-cppcheck/compile_commands.json \
+            --file-filter='*/gmime/gmime*.c' --file-filter='*/util/*.c' \
+            --cppcheck-build-dir=_build-cppcheck/cppcheck-cache \
+            --library=gtk --library=posix \
+            --enable=warning,performance,portability --check-level=normal \
+            --checkers-report=_build-cppcheck/reports/checkers.txt \
+            --error-exitcode=2 --xml \
+            --output-file=_build-cppcheck/reports/cppcheck.xml \
+            -j 2 > _build-cppcheck/reports/cppcheck.log 2>&1 || status=$?
+          cat _build-cppcheck/reports/cppcheck.log
+          # Findings are advisory until the initial baseline has been triaged.
+          case "$status" in
+            0) ;;
+            2) echo "::warning::Cppcheck reported findings; review the cppcheck artifact." ;;
+            *) exit "$status" ;;
+          esac
+
+      - name: Summarize findings and check analysis completed
+        run: |
+          python3 - <<'PY'
+          import collections
+          import os
+          import xml.etree.ElementTree as ET
+
+          errors = ET.parse("_build-cppcheck/reports/cppcheck.xml").findall("./errors/error")
+          counts = collections.Counter(error.attrib["severity"] for error in errors)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("### Cppcheck\n\n")
+              summary.write(f"{len(errors)} diagnostics (not yet triaged).\n\n")
+              for severity, count in sorted(counts.items()):
+                  summary.write(f"- {severity}: {count}\n")
+              summary.write("\nSee the **cppcheck** artifact for diagnostics, active checkers, "
+                            "tool versions, and build configuration. Findings are advisory; "
+                            "this is not a compliance certification.\n")
+
+          incomplete = {"syntaxError", "internalError", "unknownMacro", "preprocessorErrorDirective"}
+          if any(error.attrib["id"] in incomplete for error in errors):
+              raise SystemExit("Cppcheck could not fully analyze some sources; review cppcheck.xml")
+          PY
+
+      - name: Upload reports and build configuration
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: cppcheck
+          path: |
+            _build-cppcheck/reports/
+            _build-cppcheck/compile_commands.json
+            _build-cppcheck/config.h
+            _build-cppcheck/iconv-detect.h
+            _build-cppcheck/meson-info/
+            _build-cppcheck/meson-logs/
+          if-no-files-found: warn
+          retention-days: 30

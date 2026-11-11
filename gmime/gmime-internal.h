@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -23,12 +23,21 @@
 #define __GMIME_INTERNAL_H__
 
 #include <gmime/gmime-format-options.h>
+#include <gmime/gmime-filter-openpgp.h>
 #include <gmime/gmime-parser-options.h>
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-parser.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-events.h>
 #include <gmime/gmime-utils.h>
+#include <gmime/gmime-stream-filter.h>
+#include <gmime/gmime-text-part.h>
+#include <gmime/gmime-multipart.h>
+#include <gmime/gmime-iconv.h>
 
 G_BEGIN_DECLS
+
+/* GMimeFilterOpenPGP */
+G_GNUC_INTERNAL const GMimeOpenPGPMarker *_g_mime_openpgp_match_marker (const char *line, size_t length);
 
 typedef enum {
 	GMIME_HEADER_LIST_CHANGED_ACTION_ADDED,
@@ -43,58 +52,169 @@ typedef struct {
 	GMimeHeader *header;
 } GMimeHeaderListChangedEventArgs;
 
+/* GMimeComplianceOptions */
+G_GNUC_INTERNAL void g_mime_compliance_options_init (void);
+G_GNUC_INTERNAL void g_mime_compliance_options_shutdown (void);
+
 /* GMimeFormatOptions */
 G_GNUC_INTERNAL void g_mime_format_options_init (void);
 G_GNUC_INTERNAL void g_mime_format_options_shutdown (void);
 G_GNUC_INTERNAL GMimeFormatOptions *_g_mime_format_options_clone (GMimeFormatOptions *options, gboolean hidden);
+G_GNUC_INTERNAL void _g_mime_format_options_set_hide_unknown_headers (GMimeFormatOptions *options, gboolean hide);
+G_GNUC_INTERNAL gboolean _g_mime_format_options_is_hidden_entity_header (GMimeFormatOptions *options,
+								       const char *header);
+
+/* GMimeEntity */
+G_GNUC_INTERNAL void g_mime_entity_type_registry_init (void);
+G_GNUC_INTERNAL void g_mime_entity_type_registry_shutdown (void);
+G_GNUC_INTERNAL GMimeAutocryptHeaderList *
+g_mime_entity_get_autocrypt_headers (GMimeEntity *mime_part, GDateTime *effective_date,
+				   const char *matchheader, GMimeInternetAddressList *addresses,
+				   gboolean keep_incomplete);
+
+/* GMimeWriter */
+G_GNUC_INTERNAL ssize_t _g_mime_writer_write (GMimeEntity *entity, GMimeFormatOptions *options,
+					    gboolean content_only, GMimeStream *stream);
+G_GNUC_INTERNAL ssize_t _g_mime_writer_write_for_signature (GMimeEntity *entity, GMimeFormatOptions *options,
+							  GMimeStream *stream);
+G_GNUC_INTERNAL ssize_t _g_mime_part_write_content (GMimePart *part, GMimeFormatOptions *options,
+						  GMimeStream *stream, gboolean ensure_newline);
+G_GNUC_INTERNAL ssize_t _g_mime_message_write_headers (GMimeEntity *message, GMimeFormatOptions *options,
+						    GMimeStream *stream);
+G_GNUC_INTERNAL GPtrArray *_g_mime_message_merge_headers (GMimeMessage *message);
+G_GNUC_INTERNAL gboolean _g_mime_entity_ends_with_delimiter_newline (GMimeEntity *entity, gboolean anonymize);
 
 /* GMimeParserOptions */
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
 G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);
+G_GNUC_INTERNAL GMimeParserOptions *_g_mime_parser_options_snapshot (GMimeParserOptions *options);
 G_GNUC_INTERNAL void _g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, GMimeParserWarning errcode,
 						  const gchar *item);
 
+/* GMimeParser */
+G_GNUC_INTERNAL GMimeEntity *_g_mime_entity_new_for_parser (const char *type, const char *subtype);
+G_GNUC_INTERNAL GMimeStream *_g_mime_parser_read_to_eos (GMimeParser *parser, GError **error);
+G_GNUC_INTERNAL GMimeEntity *_g_mime_parser_load (GMimeParserOptions *options, GMimeStream *stream,
+						GMimeContentStorage storage, gboolean message, GError **error);
+G_GNUC_INTERNAL GMimeEntity *_g_mime_parser_load_from_file (GMimeParserOptions *options, const char *filename,
+							  gboolean message, GError **error);
+
 /* GMimeHeader */
-//G_GNUC_INTERNAL void _g_mime_header_set_raw_value (GMimeHeader *header, const char *raw_value);
+G_GNUC_INTERNAL char *_g_mime_header_dup_raw_value (GMimeHeader *header);
+G_GNUC_INTERNAL GBytes *_g_mime_header_get_formatted_value (GMimeHeader *header, GMimeFormatOptions *options);
+G_GNUC_INTERNAL GMimeContentEncoding _g_mime_header_get_content_encoding (GMimeHeader *header);
+/* Takes ownership of options. */
+G_GNUC_INTERNAL GMimeHeader *_g_mime_header_new_from_reader (GMimeParserOptions *options, const guint8 *buffer,
+							  gsize length, gsize name_length, gsize field_length,
+							  gboolean invalid, gint64 offset);
 G_GNUC_INTERNAL void _g_mime_header_set_offset (GMimeHeader *header, gint64 offset);
 
 /* GMimeHeaderList */
+G_GNUC_INTERNAL void _g_mime_header_list_ensure_capacity (GMimeHeaderList *headers, guint capacity);
+G_GNUC_INTERNAL void _g_mime_header_list_append_parsed (GMimeHeaderList *headers, GMimeHeader *header,
+						      gboolean first);
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
 G_GNUC_INTERNAL void _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options);
 G_GNUC_INTERNAL void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *raw_name,
 						 const char *raw_value, gint64 offset);
 G_GNUC_INTERNAL void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *raw_value);
+G_GNUC_INTERNAL ssize_t _g_mime_header_list_write_to_stream (GMimeHeaderList *headers, GMimeFormatOptions *options,
+							  GMimeStream *stream);
 
-/* GMimeObject */
-G_GNUC_INTERNAL void _g_mime_object_block_header_list_changed (GMimeObject *object);
-G_GNUC_INTERNAL void _g_mime_object_unblock_header_list_changed (GMimeObject *object);
-G_GNUC_INTERNAL void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
-G_GNUC_INTERNAL void _g_mime_object_append_header (GMimeObject *object, const char *name, const char *raw_name,
+/* GMimeContentEncoding */
+G_GNUC_INTERNAL GMimeContentEncoding _g_mime_content_encoding_parse (const char *text, gsize length);
+
+/* GMimeContent: takes ownership of stream. */
+G_GNUC_INTERNAL GMimeContent *_g_mime_content_new_take_stream (GMimeStream *stream, GMimeContentEncoding encoding);
+
+/* GMimeStream */
+G_GNUC_INTERNAL ssize_t _g_mime_stream_write_all (GMimeStream *stream, const char *buffer, size_t len);
+
+/* GMimeStreamFilter */
+G_GNUC_INTERNAL ssize_t _g_mime_stream_filter_get_written (GMimeStreamFilter *stream);
+
+/* GMimeEntity */
+G_GNUC_INTERNAL void _g_mime_entity_unref (GMimeEntity *entity);
+G_GNUC_INTERNAL gboolean _g_mime_is_content_uri (const char *uri, gboolean absolute);
+G_GNUC_INTERNAL void _g_mime_entity_block_header_list_changed (GMimeEntity *object);
+G_GNUC_INTERNAL void _g_mime_entity_unblock_header_list_changed (GMimeEntity *object);
+G_GNUC_INTERNAL void _g_mime_entity_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
+G_GNUC_INTERNAL void _g_mime_entity_append_header (GMimeEntity *object, const char *name, const char *raw_name,
 						   const char *raw_value, gint64 offset);
 
+/* GMimeTextPart */
+G_GNUC_INTERNAL gboolean _g_mime_text_part_is_format (GMimeTextPart *part, GMimeTextFormat format);
+
+/* GMimeMultipart */
+G_GNUC_INTERNAL void _g_mime_multipart_initialize_from_reader (GMimeMultipart *multipart);
+G_GNUC_INTERNAL void _g_mime_multipart_add_with_boundary (GMimeMultipart *multipart, GMimeEntity *part, GBytes *boundary);
+G_GNUC_INTERNAL void _g_mime_multipart_set_raw_text (GMimeMultipart *multipart, GBytes *bytes, gboolean epilogue);
+
+/* GMimePart */
+/* Takes ownership of content, preserving custom set_content implementations. */
+G_GNUC_INTERNAL void _g_mime_part_take_content (GMimePart *part, GMimeContent *content);
+G_GNUC_INTERNAL GMimeHeaderList *_g_mime_part_load_fields (GMimePart *part, const char *name, GError **error);
+G_GNUC_INTERNAL void _g_mime_part_serialize_fields (GMimePart *part, GMimeHeaderList *fields, const char *name);
+
 /* GMimeContentType */
-G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gint64 offset);
+/* Appends the value after an existing field-name/colon prefix used for folding. */
+G_GNUC_INTERNAL void _g_mime_content_type_encode (GMimeContentType *content_type, GMimeFormatOptions *options, GString *str);
+G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
+G_GNUC_INTERNAL GMimeContentType *_g_mime_content_type_parse_full (GMimeParserOptions *options, const char *str, gsize length,
+								gboolean *invalid_media_type, GError **error);
 
 /* GMimeParamList */
-G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_parse (GMimeParserOptions *options, const char *str, gint64 offset);
+G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_clone (GMimeParamList *list);
+G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
+G_GNUC_INTERNAL GMimeParamList *_g_mime_param_list_parse_full (GMimeParserOptions *options, const char *text,
+							     const char *in, const char *end, GError **error);
 
 /* GMimeContentDisposition */
 G_GNUC_INTERNAL GMimeContentDisposition *_g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str,
-									    gint64 offset);
+									    gsize length, gint64 offset);
+
+/* GMimeCharset */
+G_GNUC_INTERNAL char *_g_mime_charset_get_mime_name (const char *charset);
+G_GNUC_INTERNAL char *_g_mime_charset_encode_text (const char *charset, const char *text, gsize *length,
+						 char **mime_name, GError **error);
+G_GNUC_INTERNAL char *_g_mime_charset_get_text_name (const char *charset, GError **error);
+G_GNUC_INTERNAL const char *_g_mime_charset_get_text_converter (const char *name);
+G_GNUC_INTERNAL iconv_t _g_mime_charset_open_text_decoder (const char *charset, const char **encoding, GError **error);
+G_GNUC_INTERNAL int _g_mime_charset_get_codepage (const char *charset);
+G_GNUC_INTERNAL char *_g_mime_charset_from_codepage (int codepage);
+G_GNUC_INTERNAL gsize _g_mime_charset_invalid_length (const char *charset, const unsigned char *in, gsize length, int error);
+
+/* Checked conversions must use the same backend as g_mime_iconv_open(), not GLib's. */
+G_GNUC_INTERNAL char *_g_mime_iconv_convert (const char *text, gssize length, const char *to, const char *from,
+					  gsize *written, GError **error);
+G_GNUC_INTERNAL char *_g_mime_iconv_convert_with_iconv (const char *text, gsize length, iconv_t cd,
+						     gsize *written, GError **error);
+G_GNUC_INTERNAL char *_g_mime_iconv_decode_with_fallback (const char *text, gsize length, iconv_t cd, const char *charset,
+						       gsize *written, GError **error);
 
 /* utils */
+G_GNUC_INTERNAL GDateTime *_g_mime_utils_header_decode_date (const char *text, gsize length);
+G_GNUC_INTERNAL char *_g_mime_utils_decode_8bit_text (GMimeParserOptions *options, const char *text, gsize length);
+G_GNUC_INTERNAL char *_g_mime_utils_convert_from_utf8 (const char *text, gsize length, const char **charset,
+						     gsize *converted_length);
+G_GNUC_INTERNAL void _g_mime_utils_rfc2047_encode_word (GString *string, const char *word, gsize length,
+						      const char *charset, gboolean phrase);
+G_GNUC_INTERNAL gsize _g_mime_utils_rfc2047_estimate_word_length (const char *charset, gsize byte_count,
+							       gsize encode_count);
 G_GNUC_INTERNAL char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
-							      const char *field, const char *value);
+							      size_t field_length, const char *value);
 G_GNUC_INTERNAL char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, GMimeFormatOptions *format,
-							    const char *field, const char *value);
-G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, const char **charset,
-							gint64 offset);
-G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *text, const char **charset,
-							  gint64 offset);
+							    size_t field_length, const char *value);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text, size_t length,
+							const char **charset, gint64 offset);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_text_full (GMimeParserOptions *options, const char *text, size_t length,
+							     gint64 offset);
+G_GNUC_INTERNAL char *_g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *text, size_t length,
+							  const char **charset, gint64 offset);
 
-/* InternetAddressList */
-G_GNUC_INTERNAL InternetAddressList *_internet_address_list_parse (GMimeParserOptions *options, const char *str, gint64 offset);
-G_GNUC_INTERNAL void _internet_address_list_append_parse (InternetAddressList *list, GMimeParserOptions *options, const char *str, gint64 offset);
+/* GMimeInternetAddressList */
+G_GNUC_INTERNAL GMimeInternetAddressList *_g_mime_internet_address_list_parse (GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_internet_address_list_append_parse (GMimeInternetAddressList *list, GMimeParserOptions *options, const char *str, gsize length, gint64 offset);
 
 G_END_DECLS
 

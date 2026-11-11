@@ -1,0 +1,7202 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
+/*  GMime
+ *  Copyright (C) Jeffrey Stedfast
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
+ *  02110-1301, USA.
+ */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#include <gmime/gmime-object-private.h>
+#endif
+
+#include <errno.h>
+#include <fcntl.h>
+#include <glib/gstdio.h>
+#include <string.h>
+#ifdef __linux__
+#include <unistd.h>
+#endif
+#include <gmime/gmime.h>
+#include <gmime/gmime-events.h>
+#include <gmime/gmime-internal.h>
+#include <gmime/gmime-parser-reader-private.h>
+#include <gmime/gmime-reader-private.h>
+#include <gmime/gmime-table-private.h>
+
+#include "testsuite.h"
+#ifdef ENABLE_CRYPTO
+#include "test-crypto.h"
+#endif
+
+static GByteArray *serialize_writer (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only);
+
+typedef struct {
+	TestStreamOneByte parent_instance;
+	gsize chunk, bytes_read, fail_after;
+	gboolean nonseekable, fail_seek, fail_substream, unset_errno, zero_read;
+	gint64 origin;
+	guint reads, seeks, views, resets, fail_reset_after;
+} ModelInput;
+
+typedef TestStreamOneByteClass ModelInputClass;
+
+G_DEFINE_TYPE (ModelInput, model_input, TEST_TYPE_STREAM_ONEBYTE)
+
+static ssize_t
+model_input_read (GMimeStream *stream, char *buffer, size_t length)
+{
+	ModelInput *input = (ModelInput *) stream;
+	ssize_t nread;
+
+	input->reads++;
+	if (input->zero_read)
+		return 0;
+	if (input->bytes_read == input->fail_after) {
+		errno = input->unset_errno ? 0 : EIO;
+		return -1;
+	}
+	length = MIN (length, MIN (input->chunk, input->fail_after - input->bytes_read));
+	nread = g_mime_stream_read (input->parent_instance.source, buffer, length);
+	if (nread > 0)
+		input->bytes_read += nread;
+
+	return nread;
+}
+
+static gint64
+model_input_tell (GMimeStream *stream)
+{
+	ModelInput *input = (ModelInput *) stream;
+
+	if (input->nonseekable) {
+		errno = ESPIPE;
+		return -1;
+	}
+
+	return input->origin + g_mime_stream_tell (input->parent_instance.source);
+}
+
+static int
+model_input_reset (GMimeStream *stream)
+{
+	ModelInput *input = (ModelInput *) stream;
+
+	if (input->resets++ == input->fail_reset_after) {
+		errno = input->unset_errno ? 0 : EIO;
+		return -1;
+	}
+	return GMIME_STREAM_CLASS (model_input_parent_class)->reset (stream);
+}
+
+static gint64
+model_input_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
+{
+	ModelInput *input = (ModelInput *) stream;
+	gint64 position;
+
+	input->seeks++;
+	if (input->fail_seek) {
+		errno = input->unset_errno ? 0 : EIO;
+		return -1;
+	}
+	if (whence == GMIME_STREAM_SEEK_SET)
+		offset -= input->origin;
+	position = g_mime_stream_seek (input->parent_instance.source, offset, whence);
+
+	return position < 0 ? position : position + input->origin;
+}
+
+static GMimeStream *
+model_input_substream (GMimeStream *stream, gint64 begin, gint64 end)
+{
+	ModelInput *input = (ModelInput *) stream;
+
+	input->views++;
+	if (input->fail_substream) {
+		errno = input->unset_errno ? 0 : EIO;
+		return NULL;
+	}
+
+	return GMIME_STREAM_GET_CLASS (input->parent_instance.source)->substream (
+		input->parent_instance.source, begin - input->origin, end < 0 ? end : end - input->origin);
+}
+
+static void
+model_input_class_init (ModelInputClass *klass)
+{
+	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
+
+	stream_class->read = model_input_read;
+	stream_class->reset = model_input_reset;
+	stream_class->tell = model_input_tell;
+	stream_class->seek = model_input_seek;
+	stream_class->substream = model_input_substream;
+}
+
+static void
+model_input_init (ModelInput *input)
+{
+	input->chunk = G_MAXSIZE;
+	input->fail_after = G_MAXSIZE;
+	input->fail_reset_after = G_MAXUINT;
+}
+
+static ModelInput *
+new_input (const char *data, gsize length, gsize chunk)
+{
+	ModelInput *input = g_object_new (model_input_get_type (), NULL);
+
+	input->parent_instance.source = g_mime_stream_mem_new_with_buffer (data, length);
+	g_mime_stream_construct ((GMimeStream *) input, 0, -1);
+	input->chunk = chunk;
+	return input;
+}
+
+static GByteArray *
+serialize_headers (GMimeHeaderList *headers, gboolean international)
+{
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeStream *stream = g_mime_stream_block_new ();
+	GByteArray *bytes;
+	int i;
+
+	g_mime_format_options_set_allow_international (options, international);
+	if (international)
+		g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	for (i = 0; i < g_mime_header_list_get_count (headers); i++)
+		g_assert_cmpint (g_mime_header_write_to_stream (g_mime_header_list_get_header_at (headers, i),
+							      options, stream), >=, 0);
+	bytes = g_mime_stream_block_to_byte_array (GMIME_STREAM_BLOCK (stream), NULL);
+	g_mime_format_options_unref (options);
+	g_object_unref (stream);
+
+	return bytes;
+}
+
+typedef struct {
+	GMimeStream parent_instance;
+	gsize written, limit, chunk;
+	gsize short_start, short_end;
+	guint flushes, closes;
+	gboolean zero_write, unset_errno, fail_flush;
+} ModelOutput;
+
+typedef GMimeStreamClass ModelOutputClass;
+
+G_DEFINE_TYPE (ModelOutput, model_output, GMIME_TYPE_STREAM)
+
+static ssize_t
+model_output_write (GMimeStream *stream, const char *buffer, size_t length)
+{
+	ModelOutput *output = (ModelOutput *) stream;
+
+	if (output->written >= output->short_start && output->written < output->short_end)
+		length = MIN (length, output->chunk);
+	if (length > output->limit - output->written) {
+		if (output->zero_write)
+			return 0;
+		errno = output->unset_errno ? 0 : EIO;
+		return -1;
+	}
+	output->written += length;
+	return length;
+}
+
+static int
+model_output_flush (GMimeStream *stream)
+{
+	ModelOutput *output = (ModelOutput *) stream;
+
+	output->flushes++;
+	if (output->fail_flush) {
+		errno = output->unset_errno ? 0 : ENOSPC;
+		return -1;
+	}
+	return 0;
+}
+
+static int
+model_output_close (GMimeStream *stream)
+{
+	((ModelOutput *) stream)->closes++;
+	return 0;
+}
+
+static void
+model_output_class_init (ModelOutputClass *klass)
+{
+	klass->write = model_output_write;
+	klass->flush = model_output_flush;
+	klass->close = model_output_close;
+}
+
+static void
+model_output_init (ModelOutput *output)
+{
+	output->limit = G_MAXSIZE;
+	output->chunk = G_MAXSIZE;
+	output->short_end = G_MAXSIZE;
+}
+
+static void
+test_parsed_header_names (void)
+{
+	static const struct {
+		const char *wire, *name;
+		gsize length, field_length;
+		GMimeHeaderId id;
+		gboolean invalid;
+	} cases[] = {
+		{ "sUbJeCt \t: before\0after\r\n", "sUbJeCt",
+		  sizeof ("sUbJeCt \t: before\0after\r\n") - 1, 9, GMIME_HEADER_SUBJECT, FALSE },
+		{ "X-Long-Ascii: value\r\n", "X-Long-Ascii",
+		  sizeof ("X-Long-Ascii: value\r\n") - 1, 12, GMIME_HEADER_UNKNOWN, FALSE },
+		{ "X-\200\377\0Z\r\n", "X-\302\200\303\277\\0Z\r\n",
+		  sizeof ("X-\200\377\0Z\r\n") - 1, sizeof ("X-\200\377\0Z\r\n") - 1, GMIME_HEADER_UNKNOWN, TRUE },
+		{ "\0X\r\n", "\\0X\r\n", sizeof ("\0X\r\n") - 1, sizeof ("\0X\r\n") - 1, GMIME_HEADER_UNKNOWN, TRUE }
+	};
+	guint i, mode;
+
+	testsuite_check ("Parsed header names preserve ASCII, Latin-1 bytes and embedded NULs");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (mode = 0; mode < 2; mode++) {
+			GString *wire = g_string_new ("X-First: yes\r\n");
+			GMimeHeaderList *headers, *copy;
+			GMimeHeader *header, *clone;
+			GMimeReader *reader;
+			ModelInput *input;
+			GByteArray *bytes;
+			GError *error = NULL;
+			gconstpointer data;
+			gsize length;
+
+			g_string_append_len (wire, cases[i].wire, cases[i].length);
+			g_string_append (wire, "X-Last: done\r\n\r\n");
+			input = new_input (wire->str, wire->len, mode ? 4096 : 1);
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+			headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+			header = g_mime_header_list_get_header_at (headers, 1);
+			g_assert_cmpstr (g_mime_header_get_name (header), ==, cases[i].name);
+			g_assert_cmpint (header->id, ==, cases[i].id);
+			g_assert_cmpint (header->invalid, ==, cases[i].invalid);
+			g_assert_null (header->value);
+			g_assert_true (header->owns_options);
+			g_assert_cmpint (header->offset, ==, strlen ("X-First: yes\r\n"));
+			data = g_bytes_get_data (header->raw_name, &length);
+			g_assert_cmpmem (data, length, cases[i].wire, cases[i].field_length);
+			bytes = serialize_headers (headers, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, wire->str, wire->len - 2);
+			g_byte_array_unref (bytes);
+			clone = g_mime_header_clone (header);
+			g_assert_true (clone->raw_name == header->raw_name);
+			g_assert_true (clone->raw_value == header->raw_value);
+			g_object_unref (headers);
+			g_object_unref (reader);
+			g_object_unref (input);
+			copy = g_mime_header_list_new (NULL);
+			g_mime_header_list_add (copy, clone);
+			g_object_unref (clone);
+			bytes = serialize_headers (copy, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, cases[i].wire, cases[i].length);
+			g_byte_array_unref (bytes);
+			g_object_unref (copy);
+			g_string_free (wire, TRUE);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GPtrArray *headers;
+	guint fail_at;
+} HeaderCapture;
+
+static gboolean
+capture_parsed_header (GMimeHeader *header, gboolean toplevel, gpointer user_data, GError **error)
+{
+	HeaderCapture *capture = user_data;
+
+	g_assert_true (toplevel);
+	g_ptr_array_add (capture->headers, g_object_ref (header));
+	if (capture->headers->len == 1)
+		testsuite_header_set_raw_text (header, " callback\r\n");
+
+	if (capture->headers->len == capture->fail_at) {
+		g_set_error_literal (error, GMIME_ERROR, EIO, "Header callback failed.");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void
+test_header_staging (void)
+{
+	static const char wire[] = "Subject: original\r\nsUbJeCt: duplicate\r\nX-Other: third\r\n\r\nbody";
+	guint mode;
+
+	testsuite_check ("Header staging preserves callback edits, references, failures and reader reuse");
+	for (mode = 0; mode < 4; mode++) {
+		HeaderCapture capture = { g_ptr_array_new_with_free_func (g_object_unref), mode & 1 ? 2 : 0 };
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, mode & 2 ? 4096 : 1);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GMimeHeaderList *headers;
+		GMimeHeader *header;
+		GError *error = NULL;
+		guint i;
+
+		_g_mime_parser_reader_set_header_callback (reader, capture_parsed_header, &capture);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+		if (capture.fail_at) {
+			g_assert_null (headers);
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			g_assert_cmpuint (capture.headers->len, ==, capture.fail_at);
+		} else {
+			g_assert_no_error (error);
+			g_assert_nonnull (headers);
+			g_assert_cmpuint (capture.headers->len, ==, 3);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+			for (i = 0; i < capture.headers->len; i++)
+				g_assert_true (g_mime_header_list_get_header_at (headers, i) == capture.headers->pdata[i]);
+			g_assert_true (g_mime_header_list_get_header (headers, "SUBJECT") == capture.headers->pdata[0]);
+			g_object_unref (headers);
+		}
+		g_object_unref (input);
+		input = new_input ("\r\n", 2, 1);
+		_g_mime_parser_reader_set_header_callback (reader, NULL, NULL);
+		_g_mime_parser_reader_set_stream (reader, (GMimeStream *) input, GMIME_FORMAT_MESSAGE);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (headers);
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 0);
+		g_assert_true (headers->has_body_separator);
+		g_object_unref (headers);
+		g_object_unref (reader);
+		g_object_unref (input);
+		header = capture.headers->pdata[0];
+		g_assert_cmpstr (g_mime_header_get_value (header), ==, "callback");
+		header = capture.headers->pdata[1];
+		g_assert_cmpstr (g_mime_header_get_value (header), ==, "duplicate");
+		g_ptr_array_unref (capture.headers);
+	}
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMimeReader *reader;
+	GPtrArray *headers;
+	guint warnings;
+} SnapshotCapture;
+
+static void
+snapshot_warning (gint64 offset, GMimeParserWarning code, const char *item, gpointer user_data)
+{
+	SnapshotCapture *capture = user_data;
+
+	if (code != GMIME_WARN_UNENCODED_8BIT_HEADER)
+		return;
+	capture->warnings++;
+	g_assert_cmpstr (item, ==, "X-Second");
+	g_mime_parser_options_set_warning_callback (g_mime_reader_get_options (capture->reader), NULL, NULL);
+}
+
+static gboolean
+snapshot_header (GMimeHeader *header, gboolean toplevel, gpointer user_data, GError **error)
+{
+	SnapshotCapture *capture = user_data;
+	GMimeParserOptions *options = g_mime_reader_get_options (capture->reader);
+
+	g_ptr_array_add (capture->headers, g_object_ref (header));
+	if (capture->headers->len == 2) {
+		if (!g_mime_parser_options_set_charset_encoding (options, "windows-1251", error))
+			return FALSE;
+		g_mime_parser_options_set_warning_callback (options, snapshot_warning, capture);
+	}
+	return TRUE;
+}
+
+static void
+test_parsed_option_snapshots (void)
+{
+	static const char wire[] = "X-First: \xe9\r\nX-Second: \xe9\r\nX-Third: \xe9\r\nX-Fourth: \xe9\r\n\r\n";
+	ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+	SnapshotCapture capture = { NULL, g_ptr_array_new_with_free_func (g_object_unref), 0 };
+	GMimeHeader *first, *second, *third, *fourth;
+	GMimeParserOptions *options;
+	GMimeHeaderList *headers;
+	GError *error = NULL;
+
+	testsuite_check ("Parsed snapshots survive callback option changes and legacy warning installation");
+	capture.reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+	_g_mime_parser_reader_set_header_callback (capture.reader, snapshot_header, &capture);
+	headers = _g_mime_parser_reader_construct_headers (capture.reader, FALSE, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_assert_cmpuint (capture.headers->len, ==, 4);
+	g_assert_cmpuint (capture.warnings, ==, 1);
+	first = capture.headers->pdata[0];
+	second = capture.headers->pdata[1];
+	third = capture.headers->pdata[2];
+	fourth = capture.headers->pdata[3];
+	g_assert_true (first->options == second->options);
+	g_assert_true (third->options == fourth->options);
+	g_assert_true (first->options != third->options);
+	options = g_mime_reader_get_options (capture.reader);
+	g_assert_true (g_mime_parser_options_set_charset_encoding (options, "us-ascii", &error));
+	g_assert_no_error (error);
+	g_object_unref (headers);
+	g_object_unref (capture.reader);
+	g_object_unref (input);
+	g_assert_cmpstr (g_mime_header_get_value (first), ==, "\xc3\xa9");
+	g_assert_cmpstr (g_mime_header_get_value (second), ==, "\xc3\xa9");
+	g_assert_cmpstr (g_mime_header_get_value (third), ==, "\xd0\xb9");
+	g_assert_cmpstr (g_mime_header_get_value (fourth), ==, "\xd0\xb9");
+	g_ptr_array_unref (capture.headers);
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMimePart parent_instance;
+	GMimeHeaderList *initial_headers;
+	guint mode, added, duplicates;
+	gboolean importing, mutated;
+	char *value;
+} ImportPart;
+
+typedef GMimePartClass ImportPartClass;
+
+G_DEFINE_TYPE (ImportPart, import_part, GMIME_TYPE_PART)
+
+static guint import_mode;
+static ImportPart *import_part_current;
+
+static void
+import_part_changed (gpointer sender, gpointer args, gpointer user_data)
+{
+	GMimeHeaderListChangedEventArgs *change = args;
+	GMimeHeaderList *headers = sender;
+	ImportPart *part = user_data;
+
+	g_assert_true (headers == part->initial_headers);
+
+	if (change->action == GMIME_HEADER_LIST_CHANGED_ACTION_CLEARED) {
+		part->importing = TRUE;
+		if (part->mode == 5 && !part->mutated) {
+			part->mutated = TRUE;
+			g_mime_header_list_append (headers, "X-Dup", "observer", NULL);
+		}
+	} else if (part->importing && change->action == GMIME_HEADER_LIST_CHANGED_ACTION_ADDED) {
+		part->added++;
+		if (part->mode == 2 && !part->mutated &&
+		    !strcmp (change->header->name, "X-Dup") &&
+		    !strcmp (g_mime_header_get_value (change->header), "two")) {
+			part->mutated = TRUE;
+			g_mime_header_list_remove (headers, "X-Dup");
+		}
+	}
+}
+
+static void
+import_part_header_added (GMimeEntity *entity, GMimeHeader *header)
+{
+	ImportPart *part = (ImportPart *) entity;
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (entity);
+
+	if (part->importing && !strcmp (header->name, "X-Dup")) {
+		part->duplicates++;
+		g_free (part->value);
+		part->value = g_strdup (g_mime_header_get_value (header));
+	}
+	if (part->importing && !strcmp (header->name, "X-First")) {
+		g_assert_cmpint (g_mime_header_list_get_count (headers), >=, 4);
+		if (part->mode == 3 && !part->mutated) {
+			part->mutated = TRUE;
+			g_mime_header_list_remove (headers, "X-Dup");
+		} else if (part->mode == 4 && !part->mutated) {
+			part->mutated = TRUE;
+			g_mime_header_list_clear (headers);
+			return;
+		}
+	}
+	GMIME_ENTITY_CLASS (import_part_parent_class)->header_added (entity, header);
+}
+
+static void
+import_part_finalize (GObject *object)
+{
+	g_free (((ImportPart *) object)->value);
+	G_OBJECT_CLASS (import_part_parent_class)->finalize (object);
+}
+
+static void
+import_part_class_init (ImportPartClass *klass)
+{
+	GMIME_ENTITY_CLASS (klass)->header_added = import_part_header_added;
+	G_OBJECT_CLASS (klass)->finalize = import_part_finalize;
+}
+
+static void
+import_part_init (ImportPart *part)
+{
+	GMimeHeaderList *headers = g_mime_entity_get_header_list ((GMimeEntity *) part);
+
+	g_assert_nonnull (headers->options);
+	g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==,
+			 g_mime_parser_options_get_charset_encoding (g_mime_parser_options_get_default ()));
+	part->initial_headers = headers;
+	part->mode = import_mode;
+	import_part_current = part;
+	g_mime_event_add (headers->changed, import_part_changed, part);
+}
+
+static void
+import_warning (gint64 offset, GMimeParserWarning code, const char *item, gpointer user_data)
+{
+	ImportPart *part = import_part_current;
+
+	if (part->mode == 1 && !part->mutated && !strcmp (item, "X-Dup")) {
+		GMimeHeaderList *headers = g_mime_entity_get_header_list ((GMimeEntity *) part);
+
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 3);
+		part->mutated = TRUE;
+		g_mime_header_list_remove (headers, "X-Dup");
+	}
+}
+
+static void
+test_parsed_header_import (void)
+{
+	static const char wire[] = "Content-Type: application/x-import-observer\r\n"
+		"X-First: first\r\nX-Dup: one\r\nX-Dup: two\r\nX-Last: last\r\n\r\nbody";
+	guint mode;
+
+	testsuite_check ("Parsed import preserves custom observers and invalidates cached first occurrences after edits");
+	g_mime_entity_register_type ("application", "x-import-observer", import_part_get_type ());
+	for (mode = 0; mode < 6; mode++) {
+		GMimeParserOptions *options = g_mime_parser_options_new ();
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+		GMimeReader *reader;
+		ImportPart *part;
+		GError *error = NULL;
+
+		import_mode = mode;
+		g_mime_parser_options_set_warning_callback (options, import_warning, NULL);
+		reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
+		part = (ImportPart *) _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (part);
+		g_assert_cmpuint (part->added, ==, mode == 5 ? 6 : 5);
+		g_assert_cmpuint (part->duplicates, ==, mode == 4 ? 0 : mode == 5 ? 2 : 1);
+		g_assert_cmpstr (part->value, ==, mode == 4 ? NULL :
+				 mode == 5 ? "observer" : mode == 0 ? "one" : "two");
+		g_object_unref (part);
+		import_part_current = NULL;
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_mime_parser_options_unref (options);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_parsed_entity_options (void)
+{
+	static const struct {
+		const char *type, *subtype;
+	} cases[] = {
+		{ "application", "x-import-observer" },
+		{ "application", "x-unregistered-parser-options" },
+		{ "text", "plain" },
+		{ "message", "rfc822" },
+		{ "message", "partial" }
+	};
+	guint i;
+
+	testsuite_check ("Public factories and parsed entities retain independent options, including opaque fallbacks");
+	import_mode = 0;
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GMimeParserOptions *options = g_mime_parser_options_new ();
+		GMimeHeaderList *headers;
+		GMimeReader *reader;
+		GMimeEntity *entity;
+		ModelInput *input;
+		GError *error = NULL;
+		char *wire;
+
+		g_assert_true (g_mime_parser_options_set_charset_encoding (options, "windows-1251", &error));
+		g_assert_no_error (error);
+		entity = g_mime_entity_new_type (options, cases[i].type, cases[i].subtype);
+		g_assert_nonnull (entity);
+		headers = g_mime_entity_get_header_list (entity);
+		g_assert_true (headers->options != options);
+		g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==, "windows-1251");
+		g_assert_true (g_mime_parser_options_set_charset_encoding (options, "us-ascii", &error));
+		g_assert_no_error (error);
+		g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==, "windows-1251");
+		g_object_unref (entity);
+
+		g_assert_true (g_mime_parser_options_set_charset_encoding (options, "windows-1251", &error));
+		g_assert_no_error (error);
+		wire = g_strdup_printf ("Content-Type: %s/%s\r\nContent-Transfer-Encoding: base64\r\n"
+					"X-Legacy: \xe9\r\n\r\nYm9keQ==\r\n", cases[i].type, cases[i].subtype);
+		input = new_input (wire, strlen (wire), 1);
+		reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
+		entity = _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (entity);
+		g_assert_true (GMIME_IS_PART (entity));
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, strlen (wire));
+		headers = g_mime_entity_get_header_list (entity);
+		g_assert_true (headers->options != g_mime_reader_get_options (reader));
+		g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (headers->options), ==, "windows-1251");
+		g_assert_true (g_mime_parser_options_set_charset_encoding (g_mime_reader_get_options (reader),
+									 "us-ascii", &error));
+		g_assert_no_error (error);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_mime_parser_options_unref (options);
+		g_assert_cmpstr (g_mime_header_get_value (g_mime_header_list_get_header (headers, "X-Legacy")),
+				 ==, "\xd0\xb9");
+		g_object_unref (entity);
+		g_free (wire);
+	}
+	import_part_current = NULL;
+	testsuite_check_passed ();
+}
+
+static void
+parsed_multipart_warning (gint64 offset, GMimeParserWarning code, const char *item, gpointer user_data)
+{
+	guint *warnings = user_data;
+
+	if (code == GMIME_WARN_MALFORMED_MULTIPART || code == GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY) {
+		g_assert_cmpstr (item, ==, "digest");
+		(*warnings)++;
+	}
+}
+
+static void
+test_parsed_content_type_lifetime (void)
+{
+	static const char nested[] =
+		"Content-Type: multipart/mixed; boundary=o\r\n\r\n--o\r\n"
+		"Content-Type: multipart/digest; boundary=d\r\n\r\n--d\r\n\r\n"
+		"Subject: embedded\r\n\r\nbody\r\n--o--\r\n";
+	static const char missing[] = "Content-Type: multipart/digest\r\n\r\npreamble";
+	const char *cases[] = { nested, missing };
+	guint i, chunk, mode;
+
+	testsuite_check ("Shared Content-Types preserve boundaries, digest defaults, warning text and independent lifetimes");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (chunk = 0; chunk < 2; chunk++) {
+			for (mode = 0; mode < 2; mode++) {
+				GMimeParserOptions *options = g_mime_parser_options_new ();
+				ModelInput *input = new_input (cases[i], strlen (cases[i]), chunk ? 1 : 4096);
+				GMimeReader *reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, mode);
+				GMimeContentType *type;
+				GMimeMultipart *multipart;
+				GMimeMessage *message;
+				GError *error = NULL;
+				guint warnings = 0;
+
+				g_mime_parser_options_set_warning_callback (g_mime_reader_get_options (reader),
+									   parsed_multipart_warning, &warnings);
+				message = _g_mime_parser_reader_construct_message (reader, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				g_assert_cmpint (g_mime_reader_tell (reader), ==, strlen (cases[i]));
+				multipart = (GMimeMultipart *) g_mime_message_get_mime_part (message);
+				if (i == 0) {
+					GMimeEntity *child;
+					GMimeMessage *embedded;
+
+					g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 1);
+					multipart = (GMimeMultipart *) g_mime_multipart_get_part (multipart, 0);
+					g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 1);
+					child = g_mime_multipart_get_part (multipart, 0);
+					g_assert_true (GMIME_IS_MESSAGE_PART (child));
+					embedded = g_mime_message_part_get_message ((GMimeMessagePart *) child);
+					g_assert_nonnull (embedded);
+					g_assert_cmpstr (g_mime_message_get_subject (embedded), ==, "embedded");
+				} else {
+					g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 0);
+				}
+				g_assert_cmpuint (warnings, ==, 1);
+				type = g_object_ref (g_mime_entity_get_content_type ((GMimeEntity *) multipart));
+				g_assert_cmpstr (g_mime_content_type_get_media_subtype (type), ==, "digest");
+				g_object_unref (reader);
+				g_object_unref (input);
+				g_mime_parser_options_unref (options);
+				g_mime_content_type_set_parameter (type, "retained", "after-reader");
+				g_assert_nonnull (strstr (g_mime_entity_get_header ((GMimeEntity *) multipart, "Content-Type"),
+							 "after-reader"));
+				g_object_unref (message);
+				g_mime_content_type_set_boundary (type, "after-message");
+				g_object_unref (type);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_content_handoffs (void)
+{
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("body", 4);
+	GMimeContent *content, *replacement;
+	GMimePart *part = g_mime_part_new ();
+	gpointer weak_stream = stream, weak_content, weak_replacement;
+
+	testsuite_check ("Private content handoffs retain streams and consume exactly one reference");
+	g_object_add_weak_pointer (G_OBJECT (stream), &weak_stream);
+	content = _g_mime_content_new_take_stream (stream, GMIME_CONTENT_ENCODING_8BIT);
+	weak_content = content;
+	g_object_add_weak_pointer (G_OBJECT (content), &weak_content);
+	g_assert_true (g_mime_content_get_stream (content) == stream);
+	g_assert_cmpint (g_mime_content_get_encoding (content), ==, GMIME_CONTENT_ENCODING_8BIT);
+	_g_mime_part_take_content (part, content);
+	g_assert_true (g_mime_part_get_content (part) == content);
+	_g_mime_part_take_content (part, g_object_ref (content));
+	g_assert_nonnull (weak_content);
+	g_assert_nonnull (weak_stream);
+	replacement = g_mime_content_new ();
+	weak_replacement = replacement;
+	g_object_add_weak_pointer (G_OBJECT (replacement), &weak_replacement);
+	_g_mime_part_take_content (part, replacement);
+	g_assert_null (weak_content);
+	g_assert_null (weak_stream);
+	g_assert_true (g_mime_part_get_content (part) == replacement);
+	_g_mime_part_take_content (part, NULL);
+	g_assert_null (weak_replacement);
+	g_object_unref (part);
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMimePart parent_instance;
+	guint assignments;
+} ContentOwnerPart;
+
+typedef GMimePartClass ContentOwnerPartClass;
+
+G_DEFINE_TYPE (ContentOwnerPart, content_owner_part, GMIME_TYPE_PART)
+
+static gpointer transferred_content, transferred_stream;
+
+static void
+content_owner_part_set_content (GMimePart *part, GMimeContent *content)
+{
+	ContentOwnerPart *owner = (ContentOwnerPart *) part;
+
+	owner->assignments++;
+	transferred_content = content;
+	transferred_stream = g_mime_content_get_stream (content);
+	g_object_add_weak_pointer (G_OBJECT (content), &transferred_content);
+	g_object_add_weak_pointer (G_OBJECT (transferred_stream), &transferred_stream);
+	if (!g_mime_entity_get_content_type_parameter ((GMimeEntity *) part, "discard"))
+		GMIME_PART_CLASS (content_owner_part_parent_class)->set_content (part, content);
+}
+
+static void
+content_owner_part_class_init (ContentOwnerPartClass *klass)
+{
+	klass->set_content = content_owner_part_set_content;
+}
+
+static void
+content_owner_part_init (ContentOwnerPart *part)
+{
+}
+
+static void
+test_custom_content_handoffs (void)
+{
+	guint persistent, discard;
+
+	testsuite_check ("Parser content handoffs honor subclass setters that retain or discard the content");
+	g_mime_entity_register_type ("application", "x-content-owner", content_owner_part_get_type ());
+	for (persistent = 0; persistent < 2; persistent++) {
+		for (discard = 0; discard < 2; discard++) {
+			char *wire = g_strdup_printf ("Content-Type: application/x-content-owner%s\r\n\r\nbody\r\n",
+						      discard ? "; discard=yes" : "");
+			ModelInput *input = new_input (wire, strlen (wire), 1);
+			GMimeEntity *entity;
+			GMimeContent *content;
+			GError *error = NULL;
+
+			entity = g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, persistent, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			g_assert_cmpuint (((ContentOwnerPart *) entity)->assignments, ==, 1);
+			content = g_mime_part_get_content ((GMimePart *) entity);
+			if (discard) {
+				g_assert_null (content);
+				g_assert_null (transferred_content);
+				g_assert_null (transferred_stream);
+			} else {
+				g_assert_true (content == transferred_content);
+				g_assert_nonnull (transferred_stream);
+			}
+			g_object_unref (entity);
+			g_assert_null (transferred_content);
+			g_assert_null (transferred_stream);
+			g_object_unref (input);
+			g_free (wire);
+		}
+	}
+	g_mime_entity_register_type ("application", "x-content-owner", GMIME_TYPE_PART);
+	testsuite_check_passed ();
+}
+
+static void
+test_content_header_partition (void)
+{
+	static const char wire[] =
+		"Subject: message\r\ncontent-alternative: first\r\nComments: comment\r\n"
+		"cOnTeNt-Testing: extension\r\nControl: control\r\ncOnTeNt-TyPe: text/plain\r\n"
+		"Content: no dash\r\nContent-: bare prefix\r\nX-Content-Type: not content\r\n"
+		"Content-Type-Extra: extension\r\nContent-broken line\r\n\r\nbody\r\n";
+	static const char *message_names[] = { "Subject", "Comments", "Control", "Content", "X-Content-Type" };
+	static const char *body_names[] = {
+		"content-alternative", "cOnTeNt-Testing", "cOnTeNt-TyPe",
+		"Content-", "Content-Type-Extra", "Content-broken line\r\n"
+	};
+	guint mode, i;
+
+	testsuite_check ("Cached content-header classification preserves known, extension and invalid field partitioning");
+	for (mode = 0; mode < 2; mode++) {
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, mode ? 1 : 4096);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GMimeHeaderList *headers;
+		GMimeMessage *message;
+		GMimeEntity *body;
+		GError *error = NULL;
+
+		message = _g_mime_parser_reader_construct_message (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		headers = _g_mime_entity_get_private ((GMimeEntity *) message)->headers;
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, G_N_ELEMENTS (message_names));
+		for (i = 0; i < G_N_ELEMENTS (message_names); i++)
+			g_assert_cmpstr (g_mime_header_get_name (g_mime_header_list_get_header_at (headers, i)),
+					==, message_names[i]);
+
+		body = g_mime_message_get_mime_part (message);
+		g_assert_true (GMIME_IS_TEXT_PART (body));
+		headers = _g_mime_entity_get_private (body)->headers;
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, G_N_ELEMENTS (body_names));
+		for (i = 0; i < G_N_ELEMENTS (body_names); i++)
+			g_assert_cmpstr (g_mime_header_get_name (g_mime_header_list_get_header_at (headers, i)),
+					==, body_names[i]);
+
+		g_object_unref (message);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_header_models (void)
+{
+	static const char wire[] = "X \t: a\0b\r\nX: second\r\nbroken line\r\n\tfold\r\n"
+		"Content-Type\0not-a-field\r\n\r\nbody";
+	static const char first[] = "X \t: a\0b\r\n";
+	const gsize header_length = sizeof (wire) - 1 - 6;
+	gsize chunks[] = { 1, 2, 7, 4096 };
+	guint i;
+
+	testsuite_check ("Reader-backed headers preserve raw bytes, invalid fields, clones and offsets");
+	for (i = 0; i < G_N_ELEMENTS (chunks); i++) {
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[i]);
+		GMimeReader *reader;
+		GMimeHeaderList *headers, *copy;
+		GMimeHeader *header, *clone;
+		GError *error = NULL;
+		GByteArray *bytes;
+		GBytes *raw_name, *raw_value;
+		gconstpointer data;
+		gsize length;
+		int j;
+
+		input->origin = ((gint64) 1 << 34);
+		reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (headers);
+		g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 4);
+		g_assert_true (headers->has_body_separator);
+		header = g_mime_header_list_get_header (headers, "X");
+		g_assert_true (header == g_mime_header_list_get_header_at (headers, 0));
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, input->origin);
+		g_assert_cmpstr (testsuite_header_raw_name (header), ==, "X \t");
+		raw_value = g_mime_header_get_raw_value (header);
+		g_assert_true (raw_value == header->raw_value);
+		data = g_bytes_get_data (raw_value, &length);
+		g_assert_cmpmem (data, length, " a\0b\r\n", 6);
+		clone = g_mime_header_list_get_header_at (headers, 3);
+		raw_name = g_mime_header_get_raw_name (clone);
+		g_assert_true (raw_name == clone->raw_name);
+		data = g_bytes_get_data (raw_name, &length);
+		g_assert_cmpmem (data, length, "Content-Type\0not-a-field\r\n", 26);
+		g_assert_null (g_mime_header_list_get_header (headers, "Content-Type"));
+		bytes = serialize_headers (headers, FALSE);
+		g_assert_cmpmem (bytes->data, bytes->len, wire, header_length);
+		g_byte_array_unref (bytes);
+		bytes = serialize_headers (headers, TRUE);
+		g_assert_cmpmem (bytes->data, bytes->len, wire, header_length);
+		g_byte_array_unref (bytes);
+
+		copy = g_mime_header_list_new (NULL);
+		for (j = 0; j < g_mime_header_list_get_count (headers); j++) {
+			GMimeHeader *original = g_mime_header_list_get_header_at (headers, j);
+
+			clone = g_mime_header_clone (original);
+			g_assert_cmpint (g_mime_header_get_offset (clone), ==, -1);
+			g_assert_true (clone->raw_name == original->raw_name && clone->raw_value == original->raw_value);
+			g_mime_header_list_add (copy, clone);
+			g_object_unref (clone);
+		}
+		testsuite_header_set_raw_text (header, " changed\r\n");
+		g_assert_cmpstr (testsuite_header_raw_text (header), ==, " changed\r\n");
+		bytes = serialize_headers (headers, TRUE);
+		g_assert_cmpuint (bytes->len, ==, strlen ("X \t: changed\r\n") + header_length - (sizeof (first) - 1));
+		g_assert_cmpmem (bytes->data, strlen ("X \t: changed\r\n"), "X \t: changed\r\n", strlen ("X \t: changed\r\n"));
+		g_assert_cmpmem (bytes->data + strlen ("X \t: changed\r\n"), bytes->len - strlen ("X \t: changed\r\n"),
+				 wire + sizeof (first) - 1, header_length - (sizeof (first) - 1));
+		g_byte_array_unref (bytes);
+		g_mime_header_set_value (header, NULL, "decoded", NULL);
+		g_assert_cmpstr (g_mime_header_get_value (header), ==, "decoded");
+		bytes = serialize_headers (headers, FALSE);
+		g_assert_cmpuint (bytes->len, ==, strlen ("X \t: decoded\n") + header_length - (sizeof (first) - 1));
+		g_assert_cmpmem (bytes->data, strlen ("X \t: decoded\n"), "X \t: decoded\n", strlen ("X \t: decoded\n"));
+		g_assert_cmpmem (bytes->data + strlen ("X \t: decoded\n"), bytes->len - strlen ("X \t: decoded\n"),
+				 wire + sizeof (first) - 1, header_length - (sizeof (first) - 1));
+		g_byte_array_unref (bytes);
+		g_object_unref (headers);
+		g_object_unref (reader);
+		g_object_unref (input);
+
+		bytes = serialize_headers (copy, FALSE);
+		g_assert_cmpmem (bytes->data, bytes->len, wire, header_length);
+		g_byte_array_unref (bytes);
+		g_object_unref (copy);
+		data = g_bytes_get_data (raw_name, &length);
+		g_assert_cmpmem (data, length, "Content-Type\0not-a-field\r\n", 26);
+		data = g_bytes_get_data (raw_value, &length);
+		g_assert_cmpmem (data, length, " a\0b\r\n", 6);
+		g_bytes_unref (raw_name);
+		g_bytes_unref (raw_value);
+	}
+	testsuite_check_passed ();
+}
+
+static GByteArray *
+read_content (GMimeContent *content, gboolean decode)
+{
+	GMimeStream *stream = g_mime_stream_block_new ();
+	GByteArray *bytes;
+
+	if (decode)
+		g_assert_cmpint (g_mime_content_decode_to_stream (content, stream), >=, 0);
+	else
+		g_assert_cmpint (g_mime_content_write_to_stream (content, stream), >=, 0);
+	bytes = g_mime_stream_block_to_byte_array (GMIME_STREAM_BLOCK (stream), NULL);
+	g_object_unref (stream);
+
+	return bytes;
+}
+
+static void
+test_leaf_models (void)
+{
+	static const struct {
+		const char *headers, *raw, *decoded, *type;
+		GMimeContentEncoding encoding;
+		int newline;
+	} cases[] = {
+		{ "X: a\n\n", "abc", "abc", "GMimeTextPart", GMIME_CONTENT_ENCODING_UNSPECIFIED, -1 },
+		{ "\n", "", "", "GMimeTextPart", GMIME_CONTENT_ENCODING_UNSPECIFIED, -1 },
+		{ "Content-Type: text/plain\n", "", "", "GMimeTextPart", GMIME_CONTENT_ENCODING_UNSPECIFIED, -1 },
+		{ "Content-Type: text/plain\n\n", "", "", "GMimeTextPart", GMIME_CONTENT_ENCODING_UNSPECIFIED, -1 },
+		{ "Content-Type: text/plain\n\n", "a\nb\n", "a\nb\n", "GMimeTextPart",
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_NEWLINE_FORMAT_UNIX },
+		{ "Content-Type: text/plain\n\n", "a\r\nb\r\n", "a\r\nb\r\n", "GMimeTextPart",
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Content-Type: text/plain\n\n", "a\nb\r\n", "a\nb\r\n", "GMimeTextPart",
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_NEWLINE_FORMAT_MIXED },
+		{ "Content-Type: application/rtf\n\n", "{\\rtf1 body}\r\n", "{\\rtf1 body}\r\n", "GMimeTextPart",
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Content-Type: message/rfc822\nContent-Transfer-Encoding: base64\n\n", "YWJj\n", "abc", "GMimePart",
+		  GMIME_CONTENT_ENCODING_BASE64, GMIME_NEWLINE_FORMAT_UNIX },
+		{ "Content-Type: MeSsAgE/RfC822\nContent-Transfer-Encoding: base64\n\n", "YWJj\n", "abc", "GMimePart",
+		  GMIME_CONTENT_ENCODING_BASE64, GMIME_NEWLINE_FORMAT_UNIX },
+		{ "Content-Type: message/partial\nContent-Transfer-Encoding: base64\n\n", "YWJj\n", "abc", "GMimePart",
+		  GMIME_CONTENT_ENCODING_BASE64, GMIME_NEWLINE_FORMAT_UNIX },
+		{ "Content-Type: message/partial; id=x; number=1\n\n", "fragment", "fragment", "GMimeMessagePartial",
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED, -1 },
+		{ "Content-Type: text/rfc822-headers\nContent-Transfer-Encoding: base64\n\n", "YWJj", "abc", "GMimeTextPart",
+		  GMIME_CONTENT_ENCODING_BASE64, -1 },
+		{ "Content-Type: message/global-headers\nContent-Transfer-Encoding: quoted-printable\n\n", "a=3Db", "a=b",
+		  "GMimePart", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, -1 },
+		{ "Content-Type: TeXt/RfC822-HeAdErS\nContent-Transfer-Encoding: base64\n\n", "YWJj", "abc", "GMimeTextPart",
+		  GMIME_CONTENT_ENCODING_BASE64, -1 },
+		{ "Content-Type: MeSsAgE/GlObAl-HeAdErS\nContent-Transfer-Encoding: quoted-printable\n\n", "a=3Db", "a=b",
+		  "GMimePart", GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, -1 },
+		{ "Content-Type: message/delivery-status\n\n", "X: value\r\n", "X: value\r\n", "GMimeMessageDeliveryStatus",
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Content-Type: application/octet-stream\nContent-Transfer-Encoding: base64\n"
+		  "Content-Transfer-Encoding: quoted-printable\n\n", "YWJj", "abc", "GMimePart",
+		  GMIME_CONTENT_ENCODING_BASE64, -1 },
+	};
+	guint i, mode;
+
+	testsuite_check ("Reader-backed leaves retain encoded bodies, specialized types and newline hints");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		char *wire = g_strconcat (cases[i].headers, cases[i].raw, NULL);
+
+		for (mode = 0; mode < 8; mode++) {
+			GMimeEntityPrivate *priv;
+			ModelInput *input = new_input (wire, strlen (wire), mode & 1 ? 1 : 4096);
+			GMimeReader *reader;
+			GMimeEntity *entity;
+			GMimeContent *content;
+			GMimeNewLineFormat newline;
+			GByteArray *bytes;
+			GError *error = NULL;
+
+			input->nonseekable = (mode & 2) != 0;
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 4) != 0);
+			entity = _g_mime_parser_reader_construct_part (reader, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			g_assert_cmpstr (G_OBJECT_TYPE_NAME (entity), ==, cases[i].type);
+			priv = _g_mime_entity_get_private (entity);
+
+			g_assert_false (priv->ensure_newline);
+			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, cases[i].encoding);
+			content = g_mime_part_get_content (GMIME_PART (entity));
+			g_assert_cmpint (input->views, ==, *cases[i].raw && (mode & 4) && !(mode & 2) ? 1 : 0);
+			g_object_unref (reader);
+			g_object_unref (input);
+
+			if (!*cases[i].raw) {
+				g_assert_null (content);
+			} else {
+				g_assert_nonnull (content);
+				g_assert_cmpint (g_mime_content_get_encoding (content), ==, cases[i].encoding);
+				g_assert_cmpint (g_mime_content_get_newline_format (content, &newline), ==, cases[i].newline >= 0);
+				if (cases[i].newline >= 0)
+					g_assert_cmpint (newline, ==, cases[i].newline);
+				bytes = read_content (content, FALSE);
+				g_assert_cmpmem (bytes->data, bytes->len, cases[i].raw, strlen (cases[i].raw));
+				g_byte_array_unref (bytes);
+				bytes = read_content (content, TRUE);
+				g_assert_cmpmem (bytes->data, bytes->len, cases[i].decoded, strlen (cases[i].decoded));
+				g_byte_array_unref (bytes);
+			}
+			g_object_unref (entity);
+		}
+		g_free (wire);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_binary_encoding_headers (void)
+{
+	static const struct {
+		const char *value;
+		gsize length;
+		GMimeContentEncoding encoding;
+	} cases[] = {
+		{ " base64\0x\n", sizeof (" base64\0x\n") - 1, GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ "\0base64\n", sizeof ("\0base64\n") - 1, GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ " base64 \0x\n", sizeof (" base64 \0x\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
+		{ " base64\r\0x\n", sizeof (" base64\r\0x\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
+		{ " base64;\0x\n", sizeof (" base64;\0x\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
+		{ " =?us-ascii?q?base64?=\0x\n", sizeof (" =?us-ascii?q?base64?=\0x\n") - 1,
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ " =?us-ascii?q?base64?= \0x\n", sizeof (" =?us-ascii?q?base64?= \0x\n") - 1,
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ " =?us-ascii?q?base64?=\n", sizeof (" =?us-ascii?q?base64?=\n") - 1,
+		  GMIME_CONTENT_ENCODING_UNSPECIFIED },
+		{ " base64\rignored\n", sizeof (" base64\rignored\n") - 1, GMIME_CONTENT_ENCODING_BASE64 },
+		{ " ba\rse64\n", sizeof (" ba\rse64\n") - 1, GMIME_CONTENT_ENCODING_UNSPECIFIED },
+	};
+	guint i, mode;
+
+	testsuite_check ("Binary encoding headers do not turn a malformed token into a valid C-string prefix");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (mode = 0; mode < 8; mode++) {
+			GString *wire = g_string_new ("Content-Type: message/partial; id=x; number=1\nContent-Transfer-Encoding:");
+			GMimeEntityPrivate *priv;
+			ModelInput *input;
+			GMimeReader *reader;
+			GMimeEntity *entity;
+			GError *error = NULL;
+			GMimeHeader *header;
+			GByteArray *bytes;
+			GBytes *raw;
+			const char *decoded = cases[i].encoding == GMIME_CONTENT_ENCODING_BASE64 ? "abc" : "YWJj\n";
+
+			g_string_append_len (wire, cases[i].value, cases[i].length);
+			if (mode & 4)
+				g_string_append (wire, "cOnTeNt-TrAnSfEr-EnCoDiNg: quoted-printable\n");
+			g_string_append (wire, "\nYWJj\n");
+			input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
+			entity = _g_mime_parser_reader_construct_part (reader, &error);
+
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			g_assert_cmpstr (G_OBJECT_TYPE_NAME (entity), ==,
+					cases[i].encoding == GMIME_CONTENT_ENCODING_BASE64 ? "GMimePart" : "GMimeMessagePartial");
+			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, cases[i].encoding);
+			bytes = read_content (g_mime_part_get_content (GMIME_PART (entity)), TRUE);
+			g_assert_cmpmem (bytes->data, bytes->len, decoded, strlen (decoded));
+			g_byte_array_unref (bytes);
+			priv = _g_mime_entity_get_private (entity);
+
+			bytes = serialize_headers (priv->headers, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, wire->str, wire->len - 6);
+			g_byte_array_unref (bytes);
+
+			header = g_mime_header_list_get_header (priv->headers, "Content-Transfer-Encoding");
+			testsuite_header_set_raw_text (header, " base64\n");
+			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, GMIME_CONTENT_ENCODING_BASE64);
+			g_mime_header_set_value (header, NULL, "quoted-printable", NULL);
+			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==,
+					GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
+			raw = g_bytes_new (cases[i].value, cases[i].length);
+			g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
+			g_assert_no_error (error);
+			g_assert_cmpint (g_mime_part_get_content_encoding (GMIME_PART (entity)), ==, cases[i].encoding);
+			g_bytes_unref (raw);
+			g_object_unref (entity);
+			g_object_unref (reader);
+			g_object_unref (input);
+			g_string_free (wire, TRUE);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_model_metadata (void)
+{
+	GMimeEntityPrivate *priv;
+	static const char wire[] = "Content-Type: text/plain; charset=us-ascii\n"
+		"Content-Type: application/octet-stream\nContent-Disposition: inline\n"
+		"Content-Disposition: attachment\nContent-Id: <first@example.com>\n"
+		"Content-Id: <second@example.com>\nX: a\0b\nbad header\n\nbody\0tail\n";
+	ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeReader *reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
+	GMimeEntity *entity;
+	GMimeHeaderList *headers;
+	GMimeContent *content;
+	GByteArray *bytes;
+	GError *error = NULL;
+	GMimeNewLineFormat newline;
+
+	testsuite_check ("Reader-backed model caches use first headers and preserve binary content");
+	g_mime_parser_options_set_max_header_length (options, 1);
+	g_mime_parser_options_unref (options);
+	entity = _g_mime_parser_reader_construct_part (reader, &error);
+	g_assert_no_error (error);
+	g_assert_true (GMIME_IS_TEXT_PART (entity));
+	priv = _g_mime_entity_get_private (entity);
+
+	g_assert_true (g_mime_content_type_is_type (priv->content_type, "text", "plain"));
+	g_assert_cmpstr (g_mime_content_type_get_parameter (priv->content_type, "charset"), ==, "us-ascii");
+	g_assert_cmpstr (g_mime_entity_get_disposition (entity), ==, "inline");
+	g_assert_cmpstr (g_mime_entity_get_content_id (entity), ==, "first@example.com");
+	headers = g_mime_entity_get_header_list (entity);
+	bytes = serialize_headers (headers, FALSE);
+	g_assert_cmpmem (bytes->data, bytes->len, wire, sizeof (wire) - 1 - sizeof ("\nbody\0tail\n") + 1);
+	g_byte_array_unref (bytes);
+	content = g_mime_part_get_content (GMIME_PART (entity));
+	bytes = read_content (content, FALSE);
+	g_assert_cmpmem (bytes->data, bytes->len, "body\0tail\n", 10);
+	g_byte_array_unref (bytes);
+	g_assert_true (g_mime_content_get_newline_format (content, &newline));
+	g_assert_cmpint (newline, ==, GMIME_NEWLINE_FORMAT_UNIX);
+	g_mime_content_clear_newline_format (content);
+	g_assert_false (g_mime_content_get_newline_format (content, NULL));
+	g_mime_content_set_newline_format (content, GMIME_NEWLINE_FORMAT_DOS);
+	g_assert_true (g_mime_content_get_newline_format (content, &newline));
+	g_assert_cmpint (newline, ==, GMIME_NEWLINE_FORMAT_DOS);
+	g_mime_content_set_stream (content, input->parent_instance.source);
+	g_assert_false (g_mime_content_get_newline_format (content, NULL));
+	g_object_unref (entity);
+	g_object_unref (reader);
+	g_object_unref (input);
+	testsuite_check_passed ();
+}
+
+static void
+test_persistent_resume (void)
+{
+	GString *wire = g_string_new ("X: outer\n\nContent-Type: text/plain\n\n");
+	ModelInput *input;
+	GMimeReader *reader;
+	GMimeHeaderList *headers;
+	GMimeEntity *entity;
+	GByteArray *bytes;
+	GError *error = NULL;
+	gsize body_offset = wire->len;
+	guint i;
+
+	testsuite_check ("Persistent model reads restore physical read-ahead without replaying buffered bytes");
+	for (i = 0; i < 14000; i++)
+		g_string_append_c (wire, 'a' + i % 26);
+	input = new_input (wire->str, wire->len, 83);
+	reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, TRUE);
+	headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+	g_assert_no_error (error);
+	g_assert_cmpint (g_mime_reader_tell (reader), ==, 10);
+	g_assert_cmpint (g_mime_stream_tell ((GMimeStream *) input), >, 10);
+	g_assert_cmpint (g_mime_stream_seek ((GMimeStream *) input, 0, GMIME_STREAM_SEEK_SET), ==, 0);
+	entity = _g_mime_parser_reader_construct_part (reader, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (entity);
+	g_assert_cmpint (input->seeks, ==, 2);
+	g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+	g_object_unref (reader);
+	g_object_unref (input);
+	bytes = read_content (g_mime_part_get_content (GMIME_PART (entity)), FALSE);
+	g_assert_cmpmem (bytes->data, bytes->len, wire->str + body_offset, wire->len - body_offset);
+	g_byte_array_unref (bytes);
+	g_object_unref (entity);
+	g_object_unref (headers);
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_model_stream_replacement (void)
+{
+	static const char wire[] = "Content-Type: text/plain\n\nreplacement\n";
+	ModelInput *first = new_input ("X: initial\n\nbody", 16, 1);
+	GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) first, TRUE);
+	GMimeHeaderList *headers;
+	GError *error = NULL;
+	guint i;
+
+	testsuite_check ("Model stream replacement references the new source and rechecks persistence");
+	headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+	g_assert_no_error (error);
+	g_object_unref (headers);
+	g_object_unref (first);
+	for (i = 0; i < 3; i++) {
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, 3);
+		GMimeEntity *entity;
+		GByteArray *bytes;
+
+		input->nonseekable = i == 1;
+		g_mime_reader_set_stream (reader, (GMimeStream *) input);
+		entity = _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (entity);
+		g_assert_cmpuint (input->views, ==, i == 1 ? 0 : 1);
+		bytes = read_content (g_mime_part_get_content (GMIME_PART (entity)), FALSE);
+		g_assert_cmpmem (bytes->data, bytes->len, "replacement\n", 12);
+		g_byte_array_unref (bytes);
+		g_object_unref (entity);
+		g_object_unref (input);
+	}
+	g_object_unref (reader);
+	testsuite_check_passed ();
+}
+
+static void
+test_model_type_registration (void)
+{
+	GMimeEntityPrivate *priv;
+	static const char wire[] = "Content-Type: application/x-reader-leaf\n\nbody";
+	static const char container[] = "Content-Type: application/x-reader-container\n\nbody";
+	ModelInput *input = new_input (wire, sizeof (wire) - 1, 3);
+	GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+	GMimeHeaderList *headers;
+	GMimeEntity *entity;
+	GError *error = NULL;
+
+	testsuite_check ("Registered leaf types are retained and unsupported custom containers are not coerced");
+	g_mime_entity_register_type ("application", "x-reader-leaf", GMIME_TYPE_TEXT_PART);
+	entity = _g_mime_parser_reader_construct_part (reader, &error);
+	g_assert_no_error (error);
+	g_assert_true (GMIME_IS_TEXT_PART (entity));
+	priv = _g_mime_entity_get_private (entity);
+
+	g_assert_true (g_mime_content_type_is_type (priv->content_type, "application", "x-reader-leaf"));
+	g_object_unref (entity);
+	g_object_unref (input);
+
+	g_mime_entity_register_type ("application", "x-reader-container", GMIME_TYPE_MESSAGE_PART);
+	input = new_input (container, sizeof (container) - 1, 3);
+	g_mime_reader_set_stream (reader, (GMimeStream *) input);
+	g_assert_null (_g_mime_parser_reader_construct_part (reader, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED);
+	g_clear_error (&error);
+
+	g_assert_cmpint (g_mime_stream_seek ((GMimeStream *) input, 0, GMIME_STREAM_SEEK_SET), ==, 0);
+	g_mime_reader_set_stream (reader, (GMimeStream *) input);
+	headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (headers);
+	g_assert_cmpstr (g_mime_header_get_value (g_mime_header_list_get_header (headers, "Content-Type")), ==,
+			 "application/x-reader-container");
+	g_object_unref (headers);
+	g_object_unref (reader);
+	g_object_unref (input);
+	testsuite_check_passed ();
+}
+
+static void
+test_message_models (void)
+{
+	static const char *types[] = {
+		"message/rfc822", "message/rfc2822", "message/global", "message/news",
+		"message/external-body", "text/rfc822-headers", "message/global-headers"
+	};
+	static const char inner[] = "Subject: first\nContent-Type: text/plain; charset=utf-8\n"
+		"Subject: second\nTo: a@example.com\nTo: b@example.com\n"
+		"Content-Transfer-Encoding: base64\nX: a\0b\n\nYWJj\n";
+	guint i, mode;
+
+	testsuite_check ("Message models split headers without losing offsets, duplicates or binary fields");
+	for (i = 0; i <= G_N_ELEMENTS (types); i++) {
+		GString *wire = g_string_new (NULL);
+		gsize inner_offset;
+
+		if (i < G_N_ELEMENTS (types))
+			g_string_append_printf (wire, "X-Outer: retained\nContent-Type: %s\n\n", types[i]);
+		inner_offset = wire->len;
+		g_string_append_len (wire, inner, sizeof (inner) - 1);
+		for (mode = 0; mode < 8; mode++) {
+			GMimeEntityPrivate *message_priv;
+			GMimeEntityPrivate *body_priv;
+			ModelInput *input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
+			GMimeReader *reader;
+			GMimeEntity *entity, *body;
+			GMimeMessage *message;
+			GMimeHeaderList *headers;
+			GError *error = NULL;
+			GByteArray *bytes;
+
+			input->nonseekable = (mode & 2) != 0;
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 4) != 0);
+			if (i == G_N_ELEMENTS (types)) {
+				message = _g_mime_parser_reader_construct_message (reader, &error);
+				entity = (GMimeEntity *) message;
+			} else {
+				GMimeEntityPrivate *entity_priv;
+
+				entity = _g_mime_parser_reader_construct_part (reader, &error);
+				g_assert_no_error (error);
+				g_assert_true (GMIME_IS_MESSAGE_PART (entity));
+				message = g_mime_message_part_get_message (GMIME_MESSAGE_PART (entity));
+				entity_priv = _g_mime_entity_get_private (entity);
+
+				g_assert_cmpint (g_mime_header_list_get_count (entity_priv->headers), ==, 2);
+			}
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "first");
+			g_assert_cmpint (g_mime_internet_address_list_length (g_mime_message_get_to (message)), ==, 2);
+			message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+			headers = message_priv->headers;
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 5);
+			g_assert_false (g_mime_header_list_contains (headers, "MIME-Version"));
+			g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header (headers, "Subject")), ==, inner_offset);
+			body = g_mime_message_get_mime_part (message);
+			g_assert_true (GMIME_IS_TEXT_PART (body));
+			body_priv = _g_mime_entity_get_private (body);
+
+			g_assert_cmpint (g_mime_header_list_get_count (body_priv->headers), ==, 2);
+			g_assert_true (body_priv->headers->has_body_separator);
+			g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header (body_priv->headers, "Content-Type")), ==,
+					inner_offset + strlen ("Subject: first\n"));
+			g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+			g_object_unref (reader);
+			g_object_unref (input);
+
+			bytes = read_content (g_mime_part_get_content (GMIME_PART (body)), TRUE);
+			g_assert_cmpmem (bytes->data, bytes->len, "abc", 3);
+			g_byte_array_unref (bytes);
+			g_mime_message_set_subject (message, "changed", NULL);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "changed");
+			g_object_unref (entity);
+		}
+		g_string_free (wire, TRUE);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_lazy_subject (void)
+{
+	static const struct {
+		const char *raw;
+		gsize length;
+		const char *decoded;
+	} cases[] = {
+#define SUBJECT(raw, decoded) { raw, sizeof (raw) - 1, decoded }
+		SUBJECT ("first", "first"),
+		SUBJECT ("caf\303\251\r\n \346\227\245\346\234\254\350\252\236",
+			 "caf\303\251 \346\227\245\346\234\254\350\252\236"),
+		SUBJECT ("=?utf-8?b?Y2Fmw6k=?=", "caf\303\251"),
+		SUBJECT ("a\0b", "a\357\277\275b"),
+		SUBJECT ("caf\351", "caf\303\251"),
+		SUBJECT (" \t ", "")
+#undef SUBJECT
+	};
+	guint i, mode;
+
+	testsuite_check ("Subjects decode lazily and retain first-header semantics through mutations");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (mode = 0; mode < 4; mode++) {
+			GString *wire = g_string_new ("Subject: ");
+			GMimeHeaderList *headers;
+			GMimeHeader *first, *second, *clone;
+			GMimeMessage *message;
+			GMimeParser *parser;
+			ModelInput *input;
+			GByteArray *before, *after;
+			GBytes *raw;
+			GError *error = NULL;
+			const char *value;
+
+			g_string_append_len (wire, cases[i].raw, cases[i].length);
+			g_string_append (wire, "\r\nsUbJeCt: second\r\n\r\nbody\r\n");
+			input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
+			parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+				GMIME_FORMAT_MESSAGE, mode & 2 ? GMIME_CONTENT_STORAGE_SOURCE :
+				GMIME_CONTENT_STORAGE_MEMORY, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (parser);
+			message = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_object_unref (parser);
+			g_object_unref (input);
+			g_string_free (wire, TRUE);
+
+			headers = g_mime_entity_get_header_list ((GMimeEntity *) message);
+			first = g_mime_header_list_get_header_at (headers, 0);
+			second = g_mime_header_list_get_header_at (headers, 1);
+			g_assert_null (first->value);
+			g_assert_null (second->value);
+			before = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+			g_assert_null (first->value);
+			value = g_mime_message_get_subject (message);
+			g_assert_cmpstr (value, ==, cases[i].decoded);
+			g_assert_true (value == first->value);
+			g_assert_true (g_mime_message_get_subject (message) == value);
+			g_assert_null (second->value);
+			after = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+			g_assert_cmpmem (after->data, after->len, before->data, before->len);
+			g_byte_array_unref (before);
+			g_byte_array_unref (after);
+
+			raw = g_bytes_new_static (" changed\r\n", 10);
+			g_assert_true (g_mime_header_set_raw_value (first, raw, &error));
+			g_assert_no_error (error);
+			g_bytes_unref (raw);
+			g_assert_null (first->value);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "changed");
+			clone = g_mime_header_clone (second);
+			g_mime_header_list_insert_header (headers, 0, clone);
+			g_assert_null (clone->value);
+			g_assert_true (g_mime_header_list_remove_header (headers, first));
+			g_assert_null (clone->value);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "second");
+			g_assert_true (g_mime_header_list_remove_header (headers, clone));
+			g_object_unref (clone);
+			g_assert_null (second->value);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "second");
+			g_mime_message_set_subject (message, "assigned", "utf-8");
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "assigned");
+			g_mime_header_list_clear (headers);
+			g_assert_null (g_mime_message_get_subject (message));
+			g_mime_message_set_subject (message, "", NULL);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "");
+			g_mime_header_list_remove_all (headers, "Subject");
+			g_assert_null (g_mime_message_get_subject (message));
+			g_object_unref (message);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_lazy_message_metadata (void)
+{
+	static const char *address_names[] = {
+		"Sender", "From", "Reply-To", "To", "Cc", "Bcc", "Resent-From",
+		"Resent-Reply-To", "Resent-To", "Resent-Cc", "Resent-Bcc", "Resent-Sender"
+	};
+	static const char *metadata =
+		"Date: Mon, 1 Jan 2024 00:00:00 +0000\r\n"
+		"Resent-Date: Tue, 2 Jan 2024 00:00:00 +0000\r\n"
+		"Message-Id: <first@example.com>\r\n"
+		"Message-Id: <ignored@example.com>\r\n"
+		"In-Reply-To: noise <reply@example.com>\r\n"
+		"Resent-Message-Id: <resent@example.com>\r\n"
+		"References: <one@example.com> <two@example.com>\r\n"
+		"References: <ignored@example.com>\r\n"
+		"Importance: =?utf-8?q?high?=\r\n"
+		"Priority: urgent\r\n"
+		"X-Priority: 2 (High)\r\n";
+	guint mode, type;
+
+	testsuite_check ("Message metadata is lazy, retains parser options and reloads without rewriting headers");
+	for (mode = 0; mode < 4; mode++) {
+		GString *wire = g_string_new (metadata);
+		GMimeParserOptions *options = g_mime_parser_options_new ();
+		GMimeMessagePrivate *priv;
+		GMimeHeaderList *headers;
+		GMimeMessageIdList *references;
+		GMimeMessage *message;
+		GMimeParser *parser;
+		ModelInput *input;
+		GByteArray *before, *after;
+		GError *error = NULL;
+		guint32 loaded;
+
+		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
+			g_string_append_printf (wire, "%s: local, One <one@example.com>\r\n"
+				"%s: Two <two@example.com>\r\n", address_names[type], address_names[type]);
+		}
+		g_string_append (wire, "\r\nbody\r\n");
+		g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE);
+		input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
+		parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+			GMIME_FORMAT_MESSAGE, mode & 2 ? GMIME_CONTENT_STORAGE_SOURCE :
+			GMIME_CONTENT_STORAGE_MEMORY, &error);
+		g_assert_no_error (error);
+		message = g_mime_parser_construct_message (parser, options, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		g_object_unref (parser);
+		g_object_unref (input);
+		g_mime_parser_options_unref (options);
+		g_string_free (wire, TRUE);
+
+		priv = _g_mime_message_get_private (message);
+		headers = g_mime_entity_get_header_list ((GMimeEntity *) message);
+		g_assert_cmpuint (priv->lazy_loaded, ==, 0);
+		g_assert_null (priv->addrlists);
+		g_assert_null (priv->date);
+		g_assert_null (priv->resent_date);
+		g_assert_null (priv->message_id);
+		g_assert_null (priv->in_reply_to);
+		g_assert_null (priv->resent_message_id);
+		g_assert_null (priv->references);
+		g_assert_null (g_mime_header_list_get_header (headers, "Importance")->value);
+		before = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+		g_assert_cmpuint (priv->lazy_loaded, ==, 0);
+		g_assert_null (priv->addrlists);
+
+		g_assert_cmpint (g_date_time_get_day_of_month (g_mime_message_get_date (message)), ==, 1);
+		g_assert_cmpint (g_date_time_get_day_of_month (g_mime_message_get_resent_date (message)), ==, 2);
+		g_assert_cmpstr (g_mime_message_get_message_id (message), ==, "first@example.com");
+		g_assert_cmpstr (g_mime_message_get_in_reply_to (message), ==, "reply@example.com");
+		g_assert_cmpstr (g_mime_message_get_resent_message_id (message), ==, "resent@example.com");
+		g_assert_cmpint (g_mime_message_get_importance (message), ==, GMIME_MESSAGE_IMPORTANCE_HIGH);
+		g_assert_cmpint (g_mime_message_get_priority (message), ==, GMIME_MESSAGE_PRIORITY_URGENT);
+		g_assert_cmpint (g_mime_message_get_x_priority (message), ==, GMIME_X_MESSAGE_PRIORITY_HIGH);
+		references = g_mime_message_get_references (message);
+		g_assert_cmpuint (g_mime_message_id_list_length (references), ==, 2);
+		g_assert_cmpstr (g_mime_message_id_list_get_message_id (references, 1), ==, "two@example.com");
+		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
+			GMimeInternetAddressList *list = g_mime_message_get_addresses (message, type);
+
+			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 2);
+			g_assert_true (g_mime_message_get_addresses (message, type) == list);
+		}
+		after = serialize_writer ((GMimeEntity *) message, NULL, FALSE);
+		g_assert_cmpmem (before->data, before->len, after->data, after->len);
+		g_byte_array_unref (before);
+		g_byte_array_unref (after);
+
+		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
+			GMimeInternetAddressList *list = g_mime_message_get_addresses (message, type);
+			GMimeHeader *header = g_mime_header_list_get_header (headers, address_names[type]);
+			GMimeInternetAddress *mailbox;
+
+			testsuite_header_set_raw_text (header, " changed@example.com\r\n");
+			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 0);
+			g_assert_cmpuint (priv->lazy_loaded & (1u << type), ==, 0);
+			mailbox = g_mime_mailbox_address_new ("New", "new@example.com", &error);
+			g_assert_no_error (error);
+			g_mime_internet_address_list_add (list, mailbox);
+			g_object_unref (mailbox);
+			g_assert_true (g_mime_message_get_addresses (message, type) == list);
+			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 1);
+			g_assert_cmpint (g_mime_header_list_index_of (headers, address_names[type]), ==,
+					g_mime_header_list_last_index_of (headers, address_names[type]));
+		}
+		testsuite_header_set_raw_text (g_mime_header_list_get_header (headers, "References"),
+					      " <changed@example.com>\r\n");
+		g_assert_cmpuint (g_mime_message_id_list_length (references), ==, 0);
+		g_mime_message_id_list_add (references, "new@example.com");
+		g_assert_true (g_mime_message_get_references (message) == references);
+		g_assert_cmpuint (g_mime_message_id_list_length (references), ==, 1);
+
+		g_mime_header_list_clear (headers);
+		g_assert_cmpuint (priv->lazy_loaded, ==, 0);
+		g_assert_null (g_mime_message_get_date (message));
+		loaded = priv->lazy_loaded;
+		g_assert_cmpuint (loaded, !=, 0);
+		g_assert_null (g_mime_message_get_date (message));
+		g_assert_cmpuint (priv->lazy_loaded, ==, loaded);
+		g_object_unref (message);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_message_depth (void)
+{
+	GString *wire = g_string_new (NULL);
+	guint i, limit;
+
+	testsuite_check ("Message model stacks obey the reader's nesting limit and preserve opaque descendants");
+	for (i = 0; i < 32; i++)
+		g_string_append (wire, "Content-Type: message/rfc822\n\n");
+	g_string_append (wire, "Subject: deepest\n\nbody");
+	for (limit = 0; limit <= 32; limit++) {
+		ModelInput *input = new_input (wire->str, wire->len, 3);
+		GMimeParserOptions *options = g_mime_parser_options_new ();
+		GMimeReader *reader;
+		GMimeEntity *entity, *part;
+		GError *error = NULL;
+
+		g_mime_parser_options_set_max_mime_depth (options, limit);
+		reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
+		g_mime_parser_options_unref (options);
+		entity = _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (entity);
+		part = entity;
+		for (i = 0; i < limit; i++) {
+			GMimeMessage *message;
+
+			g_assert_true (GMIME_IS_MESSAGE_PART (part));
+			message = g_mime_message_part_get_message (GMIME_MESSAGE_PART (part));
+			g_assert_nonnull (message);
+			part = g_mime_message_get_mime_part (message);
+		}
+		g_assert_true (GMIME_IS_PART (part));
+		g_assert_false (GMIME_IS_MESSAGE_PART (part));
+		g_object_unref (entity);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_message_model_errors (void)
+{
+	static const char wire[] = "Subject: outer\nContent-Type: message/rfc822\n\n"
+		"Subject: inner\nContent-Type: message/rfc822\n\nSubject: last\n\nbody\n";
+	static const char recovered[] = "Subject: recovered\n\nreplacement\n";
+	static const char multipart_wire[] = "Content-Type: multipart/mixed; boundary=b\n\npre\0amble\n"
+		"--b\nContent-Type: multipart/digest; boundary=c\n\n--c\n\ninvalid\0marker\n"
+		"Subject: last\n\nbody\n--c--\n--b--\nepi\0logue";
+	guint mode, i;
+
+	testsuite_check ("Message and multipart failures clean nested stacks and recover after stream replacement");
+	for (mode = 0; mode < 32; mode++) {
+		const char *input_wire = mode & 16 ? multipart_wire : wire;
+		gsize length = mode & 16 ? sizeof (multipart_wire) - 1 : sizeof (wire) - 1;
+		int code = mode & 1 ? GMIME_ERROR_GENERAL : EIO;
+
+		for (i = 0; i <= length; i++) {
+			ModelInput *input = new_input (input_wire, length, 1);
+			ModelInput *replacement;
+			GMimeReader *reader;
+			GMimeMessage *message;
+			GMimeEntity *entity;
+			GError *error = NULL;
+			GByteArray *bytes;
+			guint reads;
+
+			input->fail_after = i;
+			input->unset_errno = (mode & 1) != 0;
+			input->nonseekable = (mode & 8) != 0;
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
+			entity = mode & 4 ? (GMimeEntity *) _g_mime_parser_reader_construct_message (reader, &error) :
+				_g_mime_parser_reader_construct_part (reader, &error);
+			g_assert_null (entity);
+			g_assert_error (error, GMIME_ERROR, code);
+			g_clear_error (&error);
+			reads = input->reads;
+			g_assert_null (_g_mime_parser_reader_construct_message (reader, &error));
+			g_assert_error (error, GMIME_ERROR, code);
+			g_assert_cmpuint (input->reads, ==, reads);
+			g_clear_error (&error);
+			g_object_unref (input);
+
+			replacement = new_input (recovered, sizeof (recovered) - 1, 3);
+			replacement->nonseekable = (mode & 8) != 0;
+			g_mime_reader_set_stream (reader, (GMimeStream *) replacement);
+			message = _g_mime_parser_reader_construct_message (reader, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "recovered");
+			g_assert_cmpuint (replacement->views, ==, (mode & 2) && !(mode & 8) ? 1 : 0);
+			g_object_unref (replacement);
+			g_object_unref (reader);
+
+			entity = g_mime_message_get_mime_part (message);
+			bytes = read_content (g_mime_part_get_content (GMIME_PART (entity)), FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, "replacement\n", 12);
+			g_byte_array_unref (bytes);
+			g_object_unref (message);
+		}
+		}
+	testsuite_check_passed ();
+}
+
+static void
+assert_raw_bytes (GBytes *bytes, const char *expected, gsize length)
+{
+	gsize size;
+	const void *data;
+
+	g_assert_nonnull (bytes);
+	data = g_bytes_get_data (bytes, &size);
+	g_assert_cmpmem (data, size, expected, length);
+}
+
+static void
+test_mailbox_models (void)
+{
+	static const char first[] = ">From invalid\0preheader\r\nSubject: first\r\n"
+		"Content-Type: multipart/mixed; boundary=b\r\n\r\n"
+		"--b\r\nContent-Type: application/octet-stream\r\n"
+		"Content-Transfer-Encoding: binary\r\n\r\none\0tail\r\n"
+		"--b\r\nContent-Type: message/rfc822\r\n\r\nSubject: inner\r\n\r\ninner\r\n--b--\r\n";
+	static const char second[] = "Subject: second\r\n"
+		"Content-Type: application/octet-stream\r\nContent-Transfer-Encoding: binary\r\n\r\ntwo\0tail";
+	static const char preheader[] = ">From invalid\0preheader\r\n";
+	gsize chunks[] = { 1, 7, 4096 };
+	guint mode, chunk, format;
+
+	testsuite_check ("Mailbox models retain opening envelopes, sequential state and persistent content lifetimes");
+	for (format = 0; format < 2; format++) {
+		GString *wire = g_string_new ("\357\273\277ignored pretext\r\n");
+		GString *marker = g_string_new (format ? "\001\001\001\001" : "From ");
+		const char *next_marker = format ? "\001\001\001\001 next" : "From next";
+		gsize begin = wire->len, first_headers, next_begin;
+		guint i;
+
+		/* Force marker callbacks across multiple reader buffers, including
+		 * NUL bytes which must not truncate the retained envelope. */
+		for (i = 0; i < 10000; i++)
+			g_string_append_c (marker, i == 5000 ? '\0' : 'a' + i % 26);
+		g_string_append_len (wire, marker->str, marker->len);
+		g_string_append (wire, "\r\n");
+		first_headers = wire->len + sizeof (preheader) - 1;
+		g_string_append_len (wire, first, sizeof (first) - 1);
+		if (format)
+			g_string_append (wire, "\001\001\001\001 close\r\n");
+		next_begin = wire->len;
+		g_string_append (wire, next_marker);
+		g_string_append (wire, "\r\n");
+		g_string_append_len (wire, second, sizeof (second) - 1);
+		if (format)
+			g_string_append (wire, "\r\n\001\001\001\001 close\r\n");
+
+		for (mode = 0; mode < 4; mode++) {
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GMimeEntityPrivate *message_priv;
+				GMimeMessagePrivate *message_priv2;
+				GMimeMessagePrivate *next_priv;
+				ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+				GMimeReader *reader;
+				GMimeMessage *message, *next;
+				GMimeMultipart *multipart;
+				GMimeContent *content;
+				GBytes *saved_marker;
+				GByteArray *bytes;
+				GError *error = NULL;
+				gint64 origin;
+
+				input->origin = ((gint64) 1 << 34);
+				input->nonseekable = (mode & 1) != 0;
+				origin = input->nonseekable ? 0 : input->origin;
+				reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
+				g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input,
+								     format ? GMIME_FORMAT_MMDF : GMIME_FORMAT_MBOX);
+				g_assert_null (_g_mime_parser_reader_get_mbox_marker (reader));
+				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, -1);
+				message = _g_mime_parser_reader_construct_message (reader, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				g_assert_false (g_mime_reader_eos (reader));
+				g_assert_cmpstr (g_mime_message_get_subject (message), ==, "first");
+				message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+				g_assert_cmpint (g_mime_header_get_offset (g_mime_header_list_get_header (
+					message_priv->headers, "Subject")), ==, origin + first_headers);
+				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, origin + begin);
+				saved_marker = g_bytes_ref (_g_mime_parser_reader_get_mbox_marker (reader));
+				assert_raw_bytes (saved_marker, marker->str, marker->len);
+				message_priv2 = _g_mime_message_get_private (message);
+
+				assert_raw_bytes (message_priv2->raw_marker, preheader, sizeof (preheader) - 1);
+				multipart = GMIME_MULTIPART (message_priv2->mime_part);
+				g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 2);
+				content = g_mime_part_get_content (GMIME_PART (g_mime_multipart_get_part (multipart, 0)));
+				bytes = read_content (content, FALSE);
+				g_assert_cmpmem (bytes->data, bytes->len, "one\0tail", 8);
+				g_byte_array_unref (bytes);
+
+				/* Reading persistent content may move the source behind
+				 * buffered mailbox data. The next parse restores it. */
+				next = _g_mime_parser_reader_construct_message (reader, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (next);
+				g_assert_cmpstr (g_mime_message_get_subject (next), ==, "second");
+				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, origin + next_begin);
+				assert_raw_bytes (_g_mime_parser_reader_get_mbox_marker (reader), next_marker, strlen (next_marker));
+				next_priv = _g_mime_message_get_private (next);
+
+				g_assert_null (next_priv->raw_marker);
+				g_assert_true (g_mime_reader_eos (reader));
+				g_assert_null (_g_mime_parser_reader_construct_message (reader, &error));
+				g_assert_no_error (error);
+				g_assert_null (_g_mime_parser_reader_get_mbox_marker (reader));
+				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, -1);
+				g_object_unref (reader);
+				g_object_unref (input);
+				assert_raw_bytes (saved_marker, marker->str, marker->len);
+				g_bytes_unref (saved_marker);
+				bytes = read_content (g_mime_part_get_content (GMIME_PART (next_priv->mime_part)), FALSE);
+				g_assert_cmpmem (bytes->data, bytes->len, "two\0tail", 8);
+				g_byte_array_unref (bytes);
+				bytes = read_content (content, FALSE);
+				g_assert_cmpmem (bytes->data, bytes->len, "one\0tail", 8);
+				g_byte_array_unref (bytes);
+				g_object_unref (message);
+				g_object_unref (next);
+			}
+		}
+		g_string_free (marker, TRUE);
+		g_string_free (wire, TRUE);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Mailbox boundaries immediately after message/rfc822 headers leave embedded messages absent");
+	{
+		static const char *wires[] = {
+			"From first\nContent-Type: message/rfc822\n\nFrom second\nSubject: second\n\nlast",
+			"\001\001\001\001\nContent-Type: message/rfc822\n\n\001\001\001\001\n"
+			"\001\001\001\001\nSubject: second\n\nlast\n\001\001\001\001\n"
+		};
+
+		for (format = 0; format < G_N_ELEMENTS (wires); format++) {
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GMimeMessagePrivate *priv;
+				GMimeMessagePrivate *message_priv5;
+				ModelInput *input = new_input (wires[format], strlen (wires[format]), chunks[chunk]);
+				GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, TRUE);
+				GError *error = NULL;
+				GMimeMessage *message;
+
+				g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input,
+								     format ? GMIME_FORMAT_MMDF : GMIME_FORMAT_MBOX);
+				message = _g_mime_parser_reader_construct_message (reader, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				priv = _g_mime_message_get_private (message);
+
+				g_assert_true (GMIME_IS_MESSAGE_PART (priv->mime_part));
+				message_priv5 = _g_mime_message_get_private (message);
+
+				g_assert_null (g_mime_message_part_get_message (GMIME_MESSAGE_PART (message_priv5->mime_part)));
+				g_object_unref (message);
+				message = _g_mime_parser_reader_construct_message (reader, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				g_assert_cmpstr (g_mime_message_get_subject (message), ==, "second");
+				g_assert_true (g_mime_reader_eos (reader));
+				g_object_unref (message);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Embedded-message mailbox lookahead does not read an entire long envelope");
+	{
+		GMimeMessagePrivate *message_priv3;
+		static const char prefix[] = "From first\nContent-Type: message/rfc822\n\n";
+		GString *wire = g_string_new (prefix);
+		ModelInput *input;
+		GMimeReader *reader;
+		GMimeMessage *message;
+		GError *error = NULL;
+
+		g_string_append (wire, "From ");
+		for (mode = 0; mode < 10000; mode++)
+			g_string_append_c (wire, 'x');
+		g_string_append (wire, "\nSubject: second\n\nbody\n");
+		input = new_input (wire->str, wire->len, 1);
+		input->fail_after = sizeof (prefix) - 1 + 128;
+		reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input, GMIME_FORMAT_MBOX);
+		message = _g_mime_parser_reader_construct_message (reader, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		message_priv3 = _g_mime_message_get_private (message);
+
+		g_assert_true (GMIME_IS_MESSAGE_PART (message_priv3->mime_part));
+		g_assert_null (g_mime_message_part_get_message (GMIME_MESSAGE_PART (message_priv3->mime_part)));
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, sizeof (prefix) - 1);
+		g_assert_cmpuint (input->bytes_read, <=, input->fail_after);
+		g_object_unref (message);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_string_free (wire, TRUE);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Mbox Content-Length suppresses premature markers without changing retained content");
+	for (mode = 0; mode < 8; mode++) {
+		static const char body[] = "before\nFrom false\n\ninside\n";
+		GString *wire = g_string_new ("From first\nSubject: first\n");
+
+		g_string_append_printf (wire, "Content-Length: %u\n\n%sFrom real\nSubject: second\n\nlast",
+				       (guint) strlen (body), body);
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			GMimeReader *reader;
+			GError *error = NULL;
+			guint count = 0;
+
+			input->nonseekable = (mode & 1) != 0;
+			g_mime_parser_options_set_respect_content_length (options, (mode & 4) != 0);
+			reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, (mode & 2) != 0);
+			g_mime_parser_options_unref (options);
+			g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input, GMIME_FORMAT_MBOX);
+			while (!g_mime_reader_eos (reader)) {
+				GMimeMessage *message = _g_mime_parser_reader_construct_message (reader, &error);
+
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				if (!count) {
+					GMimeMessagePrivate *message_priv4 = _g_mime_message_get_private (message);
+					GByteArray *bytes = read_content (g_mime_part_get_content (GMIME_PART (message_priv4->mime_part)), FALSE);
+					gsize length = mode & 4 ? sizeof (body) - 2 : strlen ("before");
+
+					g_assert_cmpmem (bytes->data, bytes->len, body, length);
+					g_byte_array_unref (bytes);
+				}
+				g_object_unref (message);
+				g_assert_cmpuint (++count, <=, 3);
+			}
+			g_assert_cmpuint (count, ==, mode & 4 ? 2 : 3);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+		g_string_free (wire, TRUE);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_mailbox_model_errors (void)
+{
+	static const char *wires[] = {
+		"From first\r\nSubject: first\r\n\r\nbody\r\nFrom second\r\nSubject: second\r\n\r\nlast",
+		"\001\001\001\001\r\nSubject: first\r\n\r\nbody\r\n\001\001\001\001\r\n"
+		"\001\001\001\001\r\nSubject: second\r\n\r\nlast\r\n\001\001\001\001\r\n"
+	};
+	static const char recovered[] = "Subject: recovered\n\nreplacement\n";
+	guint mode, format;
+	gsize offset;
+
+	testsuite_check ("Mailbox read failures clear envelopes, stay sticky and recover with a replacement stream");
+	for (format = 0; format < G_N_ELEMENTS (wires); format++) {
+		for (mode = 0; mode < 8; mode++) {
+			for (offset = 0; offset <= strlen (wires[format]); offset++) {
+				ModelInput *input = new_input (wires[format], strlen (wires[format]), 1);
+				ModelInput *replacement;
+				GMimeReader *reader;
+				GMimeMessage *message;
+				GError *error = NULL;
+				int code = mode & 4 ? GMIME_ERROR_GENERAL : EIO;
+				guint count = 0, reads;
+
+				input->fail_after = offset;
+				input->nonseekable = (mode & 1) != 0;
+				input->unset_errno = (mode & 4) != 0;
+				reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
+				g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input,
+								     format ? GMIME_FORMAT_MMDF : GMIME_FORMAT_MBOX);
+				while ((message = _g_mime_parser_reader_construct_message (reader, &error))) {
+					g_object_unref (message);
+					g_assert_cmpuint (++count, <=, 2);
+				}
+				g_assert_error (error, GMIME_ERROR, code);
+				g_clear_error (&error);
+				g_assert_null (_g_mime_parser_reader_get_mbox_marker (reader));
+				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, -1);
+				reads = input->reads;
+				g_assert_null (_g_mime_parser_reader_construct_message (reader, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_assert_cmpuint (input->reads, ==, reads);
+				g_clear_error (&error);
+				replacement = new_input (recovered, sizeof (recovered) - 1, 3);
+				replacement->nonseekable = (mode & 1) != 0;
+				g_mime_reader_set_stream (reader, (GMimeStream *) replacement);
+				message = _g_mime_parser_reader_construct_message (reader, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				g_assert_cmpstr (g_mime_message_get_subject (message), ==, "recovered");
+				g_assert_null (_g_mime_parser_reader_get_mbox_marker (reader));
+				g_assert_cmpint (_g_mime_parser_reader_get_mbox_marker_offset (reader), ==, -1);
+				g_object_unref (message);
+				g_object_unref (replacement);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static GMimeMultipart *
+parse_multipart (const char *wire)
+{
+	ModelInput *input = new_input (wire, strlen (wire), 1);
+	GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+	GError *error = NULL;
+	GMimeEntity *entity = _g_mime_parser_reader_construct_part (reader, &error);
+
+	g_assert_no_error (error);
+	g_assert_true (GMIME_IS_MULTIPART (entity));
+	g_object_unref (reader);
+	g_object_unref (input);
+	return (GMimeMultipart *) entity;
+}
+
+static void
+append_boundary_wrappers (GString *wire, guint count, const char *newline, gboolean closing)
+{
+	guint i;
+
+	for (i = 0; i < count; i++) {
+		if (closing)
+			g_string_append_printf (wire, "--wrapper%u--%s", count - i - 1, newline);
+		else
+			g_string_append_printf (wire, "Content-Type: multipart/mixed; boundary=wrapper%u%s%s--wrapper%u%s",
+						i, newline, newline, i, newline);
+	}
+}
+
+static GMimeMultipart *
+unwrap_boundary_fixture (GMimeEntity *entity, guint wrappers)
+{
+	while (wrappers--) {
+		g_assert_true (GMIME_IS_MULTIPART (entity));
+		g_assert_cmpint (g_mime_multipart_get_count ((GMimeMultipart *) entity), ==, 1);
+		entity = g_mime_multipart_get_part ((GMimeMultipart *) entity, 0);
+	}
+	g_assert_true (GMIME_IS_MULTIPART (entity));
+	return (GMimeMultipart *) entity;
+}
+
+static void
+assert_boundary_content (GMimeEntity *entity, const char *expected)
+{
+	GByteArray *bytes;
+
+	g_assert_true (GMIME_IS_PART (entity));
+	bytes = read_content (g_mime_part_get_content ((GMimePart *) entity), FALSE);
+	g_assert_cmpmem (bytes->data, bytes->len, expected, strlen (expected));
+	g_byte_array_unref (bytes);
+}
+
+static void
+count_missing_boundary (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	guint *count = user_data;
+
+	if (issue->violation == GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY)
+		(*count)++;
+}
+
+static void
+test_ancestor_boundary_precedence (void)
+{
+	static const struct {
+		const char *outer, *middle;
+		gboolean closing;
+	} cases[] = {
+		{ "b", "b--", FALSE }, { "b--", "b", TRUE },
+		{ "b", "b", FALSE }, { "b", "b", TRUE },
+		{ "\303\251", "\303\251--", FALSE }, { "invalid?", "invalid?--", FALSE },
+		{ "", "--", FALSE }, { "--", "", TRUE }
+	};
+	static const guint chunks[] = { 1, 7, 4096 };
+	guint i, wrappers, chunk, dos;
+
+	testsuite_check ("Ancestor boundary matches preserve duplicate and opening/closing precedence");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (wrappers = 0; wrappers <= 4; wrappers += 4) {
+			for (dos = 0; dos < 2; dos++) {
+				const char *nl = dos ? "\r\n" : "\n";
+				GString *wire = g_string_new (NULL);
+
+				append_boundary_wrappers (wire, wrappers, nl, FALSE);
+				g_string_append_printf (wire,
+					"Content-Type: multipart/mixed; boundary=\"%s\"%s%s--%s%s"
+					"Content-Type: multipart/mixed; boundary=\"%s\"%s%s--%s%s"
+					"Content-Type: multipart/mixed; boundary=inner%s%s--inner%s%sfirst%s--%s%s\t %s",
+					cases[i].outer, nl, nl, cases[i].outer, nl,
+					cases[i].middle, nl, nl, cases[i].middle, nl,
+					nl, nl, nl, nl, nl, cases[i].middle, cases[i].closing ? "--" : "", nl);
+				if (cases[i].closing)
+					g_string_append_printf (wire, "epilogue%s", nl);
+				else
+					g_string_append_printf (wire, "%ssecond%s--%s--%s", nl, nl, cases[i].middle, nl);
+				g_string_append_printf (wire, "--%s--%s", cases[i].outer, nl);
+				append_boundary_wrappers (wire, wrappers, nl, TRUE);
+
+				for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+					ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+					GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+					GError *error = NULL;
+					GMimeEntity *root;
+					GMimeMultipart *outer, *middle, *inner;
+					guint missing = 0;
+
+					g_mime_reader_set_compliance_logger (reader, count_missing_boundary, &missing, NULL);
+					root = _g_mime_parser_reader_construct_part (reader, &error);
+					g_assert_no_error (error);
+					g_assert_cmpuint (missing, ==, 1);
+					outer = unwrap_boundary_fixture (root, wrappers);
+					middle = unwrap_boundary_fixture ((GMimeEntity *) outer, 1);
+					g_assert_cmpint (g_mime_multipart_get_count (middle), ==, cases[i].closing ? 1 : 2);
+					inner = unwrap_boundary_fixture (g_mime_multipart_get_part (middle, 0), 0);
+					g_assert_cmpint (g_mime_multipart_get_count (inner), ==, 1);
+					assert_boundary_content (g_mime_multipart_get_part (inner, 0), "first");
+					if (cases[i].closing)
+						g_assert_nonnull (strstr (g_mime_multipart_get_epilogue (middle), "epilogue"));
+					else
+						assert_boundary_content (g_mime_multipart_get_part (middle, 1), "second");
+					g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+					g_object_unref (root);
+					g_object_unref (reader);
+					g_object_unref (input);
+				}
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_transitions (void)
+{
+	static const guint chunks[] = { 1, 4096 };
+	GString *wire = g_string_new (NULL);
+	guint chunk, i;
+
+	testsuite_check ("Boundary indexing crosses its threshold repeatedly and restores duplicate ancestors");
+	append_boundary_wrappers (wire, 3, "\r\n", FALSE);
+	g_string_append (wire, "Content-Type: multipart/mixed; boundary=outer\r\n\r\n");
+	for (i = 0; i < 4; i++)
+		g_string_append_printf (wire, "--outer\r\nContent-Type: multipart/mixed; boundary=inner\r\n\r\n--inner\r\n"
+					"Content-Type: multipart/mixed; boundary=wrapper0\r\n\r\n--wrapper0\r\n\r\n"
+					"part%u\r\n--wrapper0--\r\n--inner--\r\n", i);
+	g_string_append (wire, "--outer--\r\n");
+	append_boundary_wrappers (wire, 3, "\r\n", TRUE);
+
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GError *error = NULL;
+		GMimeEntity *root = _g_mime_parser_reader_construct_part (reader, &error);
+		GMimeMultipart *outer;
+
+		g_assert_no_error (error);
+		outer = unwrap_boundary_fixture (root, 3);
+		g_assert_cmpint (g_mime_multipart_get_count (outer), ==, 4);
+		for (i = 0; i < 4; i++) {
+			GMimeMultipart *leaf = unwrap_boundary_fixture (g_mime_multipart_get_part (outer, i), 1);
+			char *expected = g_strdup_printf ("part%u", i);
+
+			g_assert_cmpint (g_mime_multipart_get_count (leaf), ==, 1);
+			assert_boundary_content (g_mime_multipart_get_part (leaf, 0), expected);
+			g_free (expected);
+		}
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+		g_object_unref (root);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_matches (void)
+{
+	static const char *names[] = { "b", "b--", "b----", "", "-", "--", "\303\251", "b b", "invalid?" };
+	GRand *random = g_rand_new_with_seed (27531);
+	char *long_name = g_strnfill (300, 'x');
+	guint iteration;
+
+	testsuite_check ("Indexed boundary lookups agree with nearest-first matching across generated deep trees");
+	for (iteration = 0; iteration < 128; iteration++) {
+		const char *active[32], *name;
+		guint depth = g_rand_int_range (random, 5, G_N_ELEMENTS (active) + 1), i;
+		gboolean closing = iteration % 2, final = FALSE;
+		gint match = -1;
+		GString *wire = g_string_new (NULL);
+		char *marker;
+		ModelInput *input;
+		GMimeReader *reader;
+		GError *error = NULL;
+		GMimeEntity *root, *entity;
+
+		for (i = 0; i < depth; i++) {
+			active[i] = i == 0 ? long_name : names[g_rand_int_range (random, 0, G_N_ELEMENTS (names))];
+			g_string_append_printf (wire, "Content-Type: multipart/mixed; boundary=\"%s\"\n\n--%s\n",
+						active[i], active[i]);
+		}
+		name = iteration % 7 ? active[g_rand_int_range (random, 0, depth)] : "unknown";
+		marker = g_strconcat (name, closing ? "--" : "", NULL);
+		for (i = depth; i > 0; i--) {
+			gsize length = strlen (active[i - 1]);
+
+			if (!strcmp (marker, active[i - 1])) {
+				match = i - 1;
+				break;
+			}
+			if (strlen (marker) == length + 2 && !memcmp (marker, active[i - 1], length) &&
+			    !strcmp (marker + length, "--")) {
+				match = i - 1;
+				final = TRUE;
+				break;
+			}
+		}
+		g_string_append_printf (wire, "\nfirst\n--%s\n\nsecond\n", marker);
+		input = new_input (wire->str, wire->len, iteration % 2 ? 4096 : 1);
+		reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		root = _g_mime_parser_reader_construct_part (reader, &error);
+		g_assert_no_error (error);
+		entity = root;
+		for (i = 0; i < depth; i++) {
+			GMimeMultipart *multipart = unwrap_boundary_fixture (entity, 0);
+
+			g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, (gint) i == match && !final ? 2 : 1);
+			if ((gint) i == match) {
+				if (final)
+					g_assert_nonnull (strstr (g_mime_multipart_get_epilogue (multipart), "second"));
+				else
+					assert_boundary_content (g_mime_multipart_get_part (multipart, 1), "second\n");
+			}
+			entity = g_mime_multipart_get_part (multipart, 0);
+		}
+		if (match < 0) {
+			char *expected = g_strdup_printf ("first\n--%s\n\nsecond\n", marker);
+
+			assert_boundary_content (entity, expected);
+			g_free (expected);
+		} else {
+			assert_boundary_content (entity, "first");
+		}
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+		g_object_unref (root);
+		g_object_unref (reader);
+		g_object_unref (input);
+		g_string_free (wire, TRUE);
+		g_free (marker);
+	}
+	g_free (long_name);
+	g_rand_free (random);
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_restoration (void)
+{
+	GString *wire = g_string_new ("Content-Type: multipart/mixed; boundary=shared\n\n--shared\n");
+	guint chunk;
+
+	testsuite_check ("Popping an indexed duplicate restores its ancestor before the index is cleared");
+	append_boundary_wrappers (wire, 4, "\n", FALSE);
+	g_string_append (wire, "Content-Type: multipart/mixed; boundary=shared\n\n--shared\n"
+			 "Content-Type: multipart/mixed; boundary=inner\n\n--inner\n\nfirst\n"
+			 "--shared--\nepilogue\n--shared--\n");
+	for (chunk = 1; chunk <= 4096; chunk *= 4096) {
+		ModelInput *input = new_input (wire->str, wire->len, chunk);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GError *error = NULL;
+		GMimeEntity *root = _g_mime_parser_reader_construct_part (reader, &error);
+		GMimeMultipart *duplicate, *inner;
+
+		g_assert_no_error (error);
+		duplicate = unwrap_boundary_fixture (root, 5);
+		g_assert_cmpstr (g_mime_multipart_get_epilogue (duplicate), ==, "epilogue");
+		inner = unwrap_boundary_fixture ((GMimeEntity *) duplicate, 1);
+		g_assert_cmpint (g_mime_multipart_get_count (inner), ==, 1);
+		assert_boundary_content (g_mime_multipart_get_part (inner, 0), "first");
+		g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+		g_object_unref (root);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_index_mailboxes (void)
+{
+	static const guint chunks[] = { 1, 4096 };
+	guint format, chunk, message;
+
+	testsuite_check ("Mbox and MMDF unwind indexed boundaries without retaining markers from earlier messages");
+	for (format = GMIME_FORMAT_MBOX; format <= GMIME_FORMAT_MMDF; format++) {
+		const char *separator = format == GMIME_FORMAT_MBOX ?
+			"From sender@example.org Wed Nov  4 12:00:00 2026\r\n" : "\1\1\1\1\r\n";
+		GString *wire = g_string_new (separator);
+
+		append_boundary_wrappers (wire, 4, "\r\n", FALSE);
+		g_string_append (wire, "Content-Type: multipart/mixed; boundary=old\r\n\r\n--old\r\n"
+				"Content-Type: multipart/mixed; boundary=inner\r\n\r\n--inner\r\n\r\nfirst\r\n");
+		if (format == GMIME_FORMAT_MMDF)
+			g_string_append (wire, separator);
+		g_string_append (wire, separator);
+		append_boundary_wrappers (wire, 4, "\r\n", FALSE);
+		g_string_append (wire, "Content-Type: multipart/mixed; boundary=new\r\n\r\n--new\r\n"
+				"Content-Type: multipart/mixed; boundary=other\r\n\r\n--other\r\n\r\n--old\r\nsecond\r\n"
+				"--other--\r\n--new--\r\n");
+		append_boundary_wrappers (wire, 4, "\r\n", TRUE);
+		if (format == GMIME_FORMAT_MMDF)
+			g_string_append (wire, separator);
+
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			ModelInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+			GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+			GError *error = NULL;
+
+			g_mime_reader_set_stream_with_format (reader, (GMimeStream *) input, format);
+			for (message = 0; message < 2; message++) {
+				GMimeMessage *root = _g_mime_parser_reader_construct_message (reader, &error);
+				GMimeMultipart *inner;
+
+				g_assert_no_error (error);
+				g_assert_nonnull (root);
+				inner = unwrap_boundary_fixture (g_mime_message_get_mime_part (root), 5);
+				g_assert_cmpint (g_mime_multipart_get_count (inner), ==, 1);
+				assert_boundary_content (g_mime_multipart_get_part (inner, 0),
+							 message ? "--old\r\nsecond" : "first");
+				g_object_unref (root);
+			}
+			g_assert_true (g_mime_reader_eos (reader));
+			g_assert_cmpint (g_mime_reader_tell (reader), ==, wire->len);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+		g_string_free (wire, TRUE);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_models (void)
+{
+	static const char wire[] = "Content-Type: multipart/mixed; boundary=b\n\npre\0one\n"
+		"--b \t\r\n--b\r\nContent-Type: application/octet-stream\n"
+		"Content-Transfer-Encoding: binary\n\nbody\0tail\r\n--b-- \t\r\nepi\0tail\n";
+	static const char expected[] = "Content-Type: multipart/mixed; boundary=b\n\npre\0one\n"
+		"--b \t\r\n--b\r\nContent-Type: application/octet-stream\n"
+		"Content-Transfer-Encoding: binary\n\nbody\0tail\n--b-- \t\nepi\0tail\n";
+	static const char mutations[] = "Content-Type: multipart/mixed; boundary=b\n\n"
+		"--b \t\n\none\n--b\t\n\ntwo\n--b  ";
+	gsize chunks[] = { 1, 7, 4096 };
+	guint mode, chunk, operation;
+
+	testsuite_check ("Multipart models preserve binary text, raw markers and source lifetimes");
+	for (mode = 0; mode < 8; mode++) {
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			GMimeMultipartPrivate *multipart_priv;
+			ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+			GMimeReader *reader;
+			GMimeEntity *root;
+			GMimeMultipart *multipart;
+			GMimeStream *output;
+			GError *error = NULL;
+			GByteArray *bytes;
+			ssize_t written;
+
+			input->nonseekable = (mode & 1) != 0;
+			reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, (mode & 2) != 0);
+			root = mode & 4 ? (GMimeEntity *) _g_mime_parser_reader_construct_message (reader, &error) :
+				_g_mime_parser_reader_construct_part (reader, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (root);
+			if (mode & 4) {
+				GMimeMessagePrivate *priv = _g_mime_message_get_private ((GMimeMessage *) root);
+
+				multipart = (GMimeMultipart *) priv->mime_part;
+			} else {
+				multipart = (GMimeMultipart *) root;
+			}
+			g_assert_true (GMIME_IS_MULTIPART (multipart));
+			g_assert_cmpuint (input->views, ==, (mode & 2) && !(mode & 1) ? 1 : 0);
+			g_object_unref (reader);
+			g_object_unref (input);
+			multipart_priv = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv->children->len, ==, 2);
+			assert_raw_bytes (multipart_priv->raw_preamble, "pre\0one\n", 8);
+			assert_raw_bytes (multipart_priv->raw_epilogue, "\r\nepi\0tail\n", 11);
+			assert_raw_bytes (multipart_priv->raw_end_boundary, "--b-- \t", 7);
+			assert_raw_bytes (multipart_priv->raw_boundaries->pdata[0], "--b \t\r\n", 7);
+			assert_raw_bytes (multipart_priv->raw_boundaries->pdata[1], "--b\r\n", 5);
+			g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, "pre\357\277\275one\n");
+			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, "epi\357\277\275tail\n");
+			/* Reassigning the decoded view must not discard binary bytes. */
+			g_mime_multipart_set_preamble (multipart, multipart_priv->preamble);
+			g_mime_multipart_set_epilogue (multipart, multipart_priv->epilogue);
+			output = g_mime_stream_block_new ();
+			written = g_mime_entity_write_to_stream (root, NULL, output);
+			bytes = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) output, NULL);
+			g_assert_cmpint (written, ==, bytes->len);
+			g_assert_cmpmem (bytes->data, bytes->len, expected, sizeof (expected) - 1);
+			g_byte_array_unref (bytes);
+			g_object_unref (output);
+			g_object_unref (root);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart EOF markers produce the same children regardless of read-ahead");
+	{
+		static const char *bodies[] = { "--b", "--b\n", "--b\n--b\n", "--b\n\nx\n--b\n" };
+		static const guint counts[] = { 0, 1, 2, 2 };
+		guint body;
+
+		for (body = 0; body < G_N_ELEMENTS (bodies); body++) {
+			char *text = g_strconcat ("Content-Type: multipart/mixed; boundary=b\n\n", bodies[body], NULL);
+
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GMimeMultipartPrivate *multipart_priv2;
+				ModelInput *input = new_input (text, strlen (text), chunks[chunk]);
+				GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+				GError *error = NULL;
+				GMimeEntity *entity = _g_mime_parser_reader_construct_part (reader, &error);
+				GMimeMultipart *multipart = (GMimeMultipart *) entity;
+				GMimeStream *output = g_mime_stream_block_new ();
+				GByteArray *bytes;
+
+				g_assert_no_error (error);
+				g_assert_true (GMIME_IS_MULTIPART (multipart));
+				multipart_priv2 = _g_mime_multipart_get_private (multipart);
+
+				g_assert_cmpuint (multipart_priv2->children->len, ==, counts[body]);
+				g_assert_cmpint (multipart_priv2->raw_trailing_boundary != NULL, ==, body == 0);
+				g_assert_cmpuint (g_bytes_get_size (multipart_priv2->raw_end_boundary), ==, 0);
+				g_assert_cmpint (g_mime_entity_write_to_stream (entity, NULL, output), ==, strlen (text));
+				bytes = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) output, NULL);
+				g_assert_cmpmem (bytes->data, bytes->len, text, strlen (text));
+				g_byte_array_unref (bytes);
+				g_object_unref (output);
+				g_object_unref (entity);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+			g_free (text);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart mutations keep delimiter slots aligned and invalidate changed boundaries");
+	for (operation = 0; operation < 11; operation++) {
+		GMimeEntityPrivate *entity_priv3;
+		GMimeMultipart *multipart = parse_multipart (mutations);
+		GMimeMultipartPrivate *multipart_priv3 = _g_mime_multipart_get_private (multipart);
+		GMimeEntity *first = g_object_ref (multipart_priv3->children->pdata[0]);
+		GMimeEntity *removed;
+		GBytes *original = g_bytes_ref (multipart_priv3->raw_boundaries->pdata[0]);
+		GMimeContentType *type;
+		GMimeStream *output;
+		GByteArray *bytes;
+
+		g_assert_cmpuint (multipart_priv3->children->len, ==, 2);
+		g_assert_nonnull (multipart_priv3->raw_trailing_boundary);
+		if (operation == 0) {
+			GMimeMultipartPrivate *multipart_priv4;
+
+			g_mime_multipart_add (multipart, first);
+			multipart_priv4 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv4->raw_boundaries->pdata[2]);
+		} else if (operation == 1) {
+			GMimeMultipartPrivate *multipart_priv5;
+
+			g_mime_multipart_insert (multipart, 0, first);
+			multipart_priv5 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv5->raw_boundaries->pdata[0]);
+			g_assert_true (multipart_priv5->raw_boundaries->pdata[1] == original);
+		} else if (operation == 2) {
+			GMimeMultipartPrivate *multipart_priv6;
+
+			g_assert_true (g_mime_multipart_remove (multipart, first));
+			multipart_priv6 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv6->raw_boundaries->len, ==, 1);
+		} else if (operation == 3) {
+			GMimeMultipartPrivate *multipart_priv7;
+
+			removed = g_mime_multipart_remove_at (multipart, 0);
+			g_object_unref (removed);
+			multipart_priv7 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv7->raw_boundaries->len, ==, 1);
+		} else if (operation == 4) {
+			GMimeMultipartPrivate *multipart_priv8;
+
+			removed = g_mime_multipart_replace (multipart, 1, first);
+			g_object_unref (removed);
+			multipart_priv8 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_cmpuint (multipart_priv8->raw_boundaries->len, ==, 2);
+			g_assert_true (multipart_priv8->raw_boundaries->pdata[0] == original);
+		} else if (operation == 5) {
+			GMimeMultipartPrivate *multipart_priv9;
+
+			g_mime_multipart_clear (multipart);
+			multipart_priv9 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv9->raw_boundaries);
+			g_assert_null (multipart_priv9->raw_end_boundary);
+		} else if (operation == 6) {
+			g_mime_multipart_set_boundary (multipart, "changed");
+			g_mime_multipart_set_boundary (multipart, "b");
+		} else if (operation == 7) {
+			GMimeEntityPrivate *entity_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+			g_mime_content_type_set_parameter (entity_priv->content_type, "boundary", "changed");
+		} else if (operation == 8) {
+			type = g_mime_content_type_parse (NULL, "multipart/mixed; boundary=changed");
+			g_mime_entity_set_content_type ((GMimeEntity *) multipart, type);
+			g_object_unref (type);
+		} else if (operation == 9) {
+			g_mime_entity_set_header ((GMimeEntity *) multipart, "Content-Type",
+						 "multipart/mixed; boundary=changed", NULL);
+		} else {
+			GMimeMultipartPrivate *multipart_priv10;
+			GMimeEntityPrivate *entity_priv2 = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+			g_mime_content_type_set_parameter (entity_priv2->content_type, "x", "value");
+			multipart_priv10 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_true (multipart_priv10->raw_boundaries->pdata[0] == original);
+			g_assert_nonnull (multipart_priv10->raw_trailing_boundary);
+		}
+		if (operation < 6)
+			g_assert_null (multipart_priv3->raw_trailing_boundary);
+		else if (operation < 10) {
+			GMimeMultipartPrivate *multipart_priv11 = _g_mime_multipart_get_private (multipart);
+
+			g_assert_null (multipart_priv11->raw_boundaries);
+			g_assert_null (multipart_priv11->raw_end_boundary);
+		}
+		output = g_mime_stream_block_new ();
+		g_assert_cmpint (g_mime_entity_write_to_stream ((GMimeEntity *) multipart, NULL, output), >, 0);
+		bytes = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) output, NULL);
+		g_assert_cmpuint (bytes->len, >, 0);
+		g_byte_array_unref (bytes);
+		g_object_unref (output);
+		g_bytes_unref (original);
+		g_object_unref (first);
+		entity_priv3 = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+		type = g_object_ref (entity_priv3->content_type);
+		g_object_unref (multipart);
+		g_mime_content_type_set_parameter (type, "boundary", "after-owner-finalization");
+		g_object_unref (type);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_collection_bounds (void)
+{
+	static const char *wires[] = {
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n"
+		"--b \t\n\none\n--b\t\n\ntwo\n--b-- \t\r\nepi\n",
+		"Content-Type: multipart/mixed; boundary=b\n\n"
+		"--b \t\n\none\n--b\t\n\ntwo\n--b  ",
+		"Content-Type: multipart/mixed; boundary=b\n\n"
+		"--b \t\n\none\n--b\t\n\ntwo",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b--\n"
+	};
+	guint model, operation, range, i;
+
+	testsuite_check ("Multipart indexed operations reject invalid ranges without changing children or markers");
+	for (model = 0; model < G_N_ELEMENTS (wires) + 2; model++) {
+		for (operation = 0; operation < 4; operation++) {
+			for (range = 0; range < 3; range++) {
+				GMimeMultipartPrivate *priv;
+				GMimeMultipart *multipart = model < 2 ? g_mime_multipart_new () : parse_multipart (wires[model - 2]);
+				GMimeEntity *candidate = (GMimeEntity *) g_mime_part_new ();
+				GMimeEntity *weak = candidate;
+				GMimeFormatOptions *options = g_mime_format_options_new ();
+				GPtrArray *children = g_ptr_array_new_with_free_func (g_object_unref);
+				GPtrArray *raw_boundaries;
+				GBytes *preamble, *epilogue, *end, *trailing, *boundaries[2] = { NULL, NULL };
+				GByteArray *before[2], *after;
+				gboolean write_end;
+				int index;
+
+				if (model < 2) {
+					g_mime_multipart_set_boundary (multipart, "b");
+					if (model == 1) {
+						g_mime_multipart_add (multipart, candidate);
+						g_mime_multipart_add (multipart, candidate);
+					}
+				}
+				g_object_add_weak_pointer (G_OBJECT (candidate), (gpointer *) &weak);
+				priv = _g_mime_multipart_get_private (multipart);
+
+				for (i = 0; i < priv->children->len; i++) {
+					GMimeMultipartPrivate *multipart_priv = _g_mime_multipart_get_private (multipart);
+
+					g_ptr_array_add (children, g_object_ref (multipart_priv->children->pdata[i]));
+					if (multipart_priv->raw_boundaries)
+						boundaries[i] = multipart_priv->raw_boundaries->pdata[i];
+				}
+				raw_boundaries = priv->raw_boundaries;
+				preamble = priv->raw_preamble;
+				epilogue = priv->raw_epilogue;
+				end = priv->raw_end_boundary;
+				trailing = priv->raw_trailing_boundary;
+				write_end = priv->write_end_boundary;
+				for (i = 0; i < 2; i++) {
+					g_mime_format_options_set_newline_format (options, i);
+					before[i] = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+				}
+				index = range == 0 ? -1 : range == 1 ? (int) children->len + (operation == 0) : G_MAXINT;
+				g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*index*");
+				if (operation == 0)
+					g_mime_multipart_insert (multipart, index, candidate);
+				else if (operation == 1)
+					g_assert_null (g_mime_multipart_remove_at (multipart, index));
+				else if (operation == 2)
+					g_assert_null (g_mime_multipart_replace (multipart, index, candidate));
+				else
+					g_assert_null (g_mime_multipart_get_part (multipart, index));
+				g_test_assert_expected_messages ();
+				g_assert_cmpuint (priv->children->len, ==, children->len);
+				g_assert_true (priv->raw_boundaries == raw_boundaries);
+				g_assert_true (priv->raw_preamble == preamble);
+				g_assert_true (priv->raw_epilogue == epilogue);
+				g_assert_true (priv->raw_end_boundary == end);
+				g_assert_true (priv->raw_trailing_boundary == trailing);
+				g_assert_cmpint (priv->write_end_boundary, ==, write_end);
+				for (i = 0; i < children->len; i++) {
+					GMimeMultipartPrivate *multipart_priv2 = _g_mime_multipart_get_private (multipart);
+
+					g_assert_true (multipart_priv2->children->pdata[i] == children->pdata[i]);
+					if (raw_boundaries) {
+						g_assert_cmpuint (raw_boundaries->len, ==, children->len);
+						g_assert_true (raw_boundaries->pdata[i] == boundaries[i]);
+					}
+				}
+				for (i = 0; i < 2; i++) {
+					g_mime_format_options_set_newline_format (options, i);
+					after = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+					g_assert_cmpmem (after->data, after->len, before[i]->data, before[i]->len);
+					g_byte_array_unref (before[i]);
+					g_byte_array_unref (after);
+				}
+				g_mime_format_options_unref (options);
+				g_object_unref (multipart);
+				g_ptr_array_unref (children);
+				g_object_unref (candidate);
+				g_assert_null (weak);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart indexed edits retain aliases and transfer replaced and removed references");
+	for (model = 0; model < 5; model++) {
+		GMimeMultipart *multipart = model == 0 ? g_mime_multipart_new () : model == 1 ?
+			(GMimeMultipart *) g_mime_multipart_alternative_new () : parse_multipart (wires[model - 2]);
+		GMimeEntity *candidate = (GMimeEntity *) g_mime_part_new ();
+		GMimeEntity *weak = candidate, *removed, *replaced;
+		GMimeMultipartPrivate *multipart_priv3 = _g_mime_multipart_get_private (multipart);
+		guint count = multipart_priv3->children->len;
+
+		if (model < 2)
+			g_mime_multipart_set_boundary (multipart, "b");
+		g_object_add_weak_pointer (G_OBJECT (candidate), (gpointer *) &weak);
+		g_mime_multipart_insert (multipart, count, candidate);
+		g_object_unref (candidate);
+		g_assert_true (g_mime_multipart_get_part (multipart, count) == weak);
+		g_assert_null (multipart_priv3->raw_trailing_boundary);
+		replaced = g_mime_multipart_replace (multipart, count, weak);
+		g_assert_true (replaced == weak);
+		g_object_unref (replaced);
+		g_mime_multipart_insert (multipart, 0, weak);
+		if (model < 2) {
+			GMimeFormatOptions *options = g_mime_format_options_new ();
+			guint newline;
+
+			for (newline = 0; newline < 2; newline++) {
+				GString *expected = g_string_new (NULL);
+				GByteArray *actual;
+				const char *nl;
+
+				g_mime_format_options_set_newline_format (options, newline);
+				nl = g_mime_format_options_get_newline (options);
+				g_string_append_printf (expected, "Content-Type: multipart/%s; boundary=b%s%s",
+							model == 0 ? "mixed" : "alternative", nl, nl);
+				for (i = 0; i < 2; i++)
+					g_string_append_printf (expected, "--b%sContent-Type: application/octet-stream%s%s", nl, nl, nl);
+				g_string_append_printf (expected, "--b--%s", nl);
+				actual = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, expected->str, expected->len);
+				g_byte_array_unref (actual);
+				g_string_free (expected, TRUE);
+			}
+			g_mime_format_options_unref (options);
+		}
+		removed = g_mime_multipart_remove_at (multipart, count + 1);
+		g_assert_true (removed == weak);
+		g_assert_cmpint (g_mime_multipart_index_of (multipart, weak), ==, 0);
+		g_assert_true (g_mime_multipart_remove (multipart, weak));
+		g_assert_nonnull (weak);
+		g_assert_cmpint (g_mime_multipart_index_of (multipart, weak), ==, -1);
+		g_mime_multipart_add (multipart, removed);
+		candidate = (GMimeEntity *) g_mime_part_new ();
+		replaced = g_mime_multipart_replace (multipart, count, candidate);
+		g_assert_true (replaced == weak);
+		g_object_unref (candidate);
+		g_object_unref (multipart);
+		g_assert_true (removed == weak);
+		g_object_unref (removed);
+		g_assert_true (replaced == weak);
+		g_object_unref (replaced);
+		g_assert_null (weak);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_boundary_characters (void)
+{
+	guint i;
+
+	testsuite_check ("Boundary character table classifies every byte independently of char signedness");
+	for (i = 0; i < 256; i++) {
+		gboolean expected = g_ascii_isalnum (i) || (i != 0 && strchr ("'()+_,-./:=? ", i) != NULL);
+
+		g_assert_cmpint (is_bchar ((char) i), ==, expected);
+		g_assert_cmpint (is_bchar ((unsigned char) i), ==, expected);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_boundary_validation (void)
+{
+	static const char *wires[] = {
+		"Content-Type: multipart/mixed;\n\tboundary=\"b\"\n\npre\n"
+		"--b \t\n\nbody\n--b-- \t\nepi\n",
+		"Content-Type: multipart/mixed;\n\tboundary=\"b\"\n\npre\n"
+		"--b \t\n\nbody\n--b  "
+	};
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
+	static const char bchars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'()+_,-./:=? ";
+	static const char *invalid_values[] = {
+		"", " ", "b ", " b ", "\tb", "b\t", "b\r\nInjected: true",
+		"caf\303\251", "b\360\237\230\200", "\342\200\213b", "\357\273\277b"
+	};
+	GPtrArray *invalid = g_ptr_array_new_with_free_func (g_free);
+	guint model, i, newline;
+
+	for (i = 0; i < G_N_ELEMENTS (invalid_values); i++)
+		g_ptr_array_add (invalid, g_strdup (invalid_values[i]));
+	for (i = 1; i < 256; i++) {
+		char candidate[] = { 'b', (char) i, 'b', '\0' };
+
+		if (!strchr (bchars, i))
+			g_ptr_array_add (invalid, g_strdup (candidate));
+	}
+	for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+		GString *padded = g_string_new ("b");
+
+		g_string_append_unichar (padded, whitespace[i]);
+		g_ptr_array_add (invalid, g_string_free (padded, FALSE));
+	}
+	g_ptr_array_add (invalid, g_strnfill (71, 'b'));
+	g_ptr_array_add (invalid, g_strnfill (1024, 'b'));
+
+	testsuite_check ("Multipart boundary rejection and identical assignment preserve headers, markers and exact output");
+	for (model = 0; model < 3; model++) {
+		GMimeEntityPrivate *multipart_priv;
+		GMimeMultipartPrivate *multipart_priv2;
+		GMimeMultipart *multipart = model ? parse_multipart (wires[model - 1]) : g_mime_multipart_new ();
+		GMimeFormatOptions *options = g_mime_format_options_new ();
+		GMimeHeader *header;
+		GPtrArray *raw_boundaries;
+		GBytes *end, *trailing, *raw_header;
+		GByteArray *before[2], *after;
+		const char *boundary;
+		gboolean write_end;
+
+		if (!model)
+			g_mime_multipart_set_boundary (multipart, "b");
+		boundary = g_mime_multipart_get_boundary (multipart);
+		multipart_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+		header = g_mime_header_list_get_header (multipart_priv->headers, "Content-Type");
+		raw_header = header->raw_value;
+		multipart_priv2 = _g_mime_multipart_get_private (multipart);
+
+		raw_boundaries = multipart_priv2->raw_boundaries;
+		end = multipart_priv2->raw_end_boundary;
+		trailing = multipart_priv2->raw_trailing_boundary;
+		write_end = multipart_priv2->write_end_boundary;
+		for (newline = 0; newline < 2; newline++) {
+			g_mime_format_options_set_newline_format (options, newline);
+			before[newline] = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+		}
+		for (i = 0; i < invalid->len; i++) {
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*_g_mime_is_valid_boundary*");
+			g_mime_multipart_set_boundary (multipart, invalid->pdata[i]);
+			g_test_assert_expected_messages ();
+			g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart));
+			g_assert_true (g_mime_multipart_get_boundary (multipart) == boundary);
+			g_assert_true (header->raw_value == raw_header);
+			g_assert_true (multipart_priv2->raw_boundaries == raw_boundaries);
+			g_assert_true (multipart_priv2->raw_end_boundary == end);
+			g_assert_true (multipart_priv2->raw_trailing_boundary == trailing);
+			g_assert_cmpint (multipart_priv2->write_end_boundary, ==, write_end);
+		}
+		for (newline = 0; newline < 2; newline++) {
+			g_mime_format_options_set_newline_format (options, newline);
+			after = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+			g_assert_cmpmem (after->data, after->len, before[newline]->data, before[newline]->len);
+			g_byte_array_unref (after);
+			g_byte_array_unref (before[newline]);
+		}
+
+		g_mime_multipart_set_boundary (multipart, "changed");
+		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "changed");
+		g_assert_null (multipart_priv2->raw_boundaries);
+		g_assert_null (multipart_priv2->raw_end_boundary);
+		g_assert_true (multipart_priv2->write_end_boundary);
+		g_assert_true (multipart_priv2->raw_trailing_boundary == trailing);
+		g_mime_multipart_set_boundary (multipart, g_mime_multipart_get_boundary (multipart) + 1);
+		g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, "hanged");
+		g_mime_format_options_unref (options);
+		g_object_unref (multipart);
+	}
+	g_ptr_array_unref (invalid);
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart boundaries accept all bchars and lengths 1 through 70 without trimming");
+	for (model = 0; model < 3; model++) {
+		GMimeMultipart *multipart = model ? parse_multipart (wires[model - 1]) : g_mime_multipart_new ();
+		GMimeFormatOptions *options = g_mime_format_options_new ();
+		GPtrArray *valid = g_ptr_array_new_with_free_func (g_free);
+
+		g_ptr_array_add (valid, g_strdup (" b"));
+		g_ptr_array_add (valid, g_strdup (" b  c"));
+		for (i = 0; i < sizeof bchars - 1; i++) {
+			char candidate[] = { 'b', bchars[i], 'b', '\0' };
+
+			g_ptr_array_add (valid, g_strdup (candidate));
+		}
+		for (i = 1; i <= 70; i++)
+			g_ptr_array_add (valid, g_strnfill (i, 'b'));
+		for (i = 0; i < valid->len; i++) {
+			const char *value = valid->pdata[i];
+			char *marker = g_strdup_printf ("--%s--", value);
+
+			g_mime_multipart_set_boundary (multipart, value);
+			g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, value);
+			for (newline = 0; newline < 2; newline++) {
+				GByteArray *output;
+
+				g_mime_format_options_set_newline_format (options, newline);
+				output = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+				g_assert_nonnull (g_strstr_len ((const char *) output->data, output->len, marker));
+				g_byte_array_unref (output);
+			}
+			g_free (marker);
+		}
+		g_ptr_array_unref (valid);
+		g_mime_format_options_unref (options);
+		g_object_unref (multipart);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart NULL boundary assignment retains native automatic generation");
+	for (model = 0; model < 3; model++) {
+		GMimeEntityPrivate *entity_priv;
+		GMimeMultipart *multipart = model ? parse_multipart (wires[model - 1]) : g_mime_multipart_new ();
+		const char *boundary;
+		guchar *decoded;
+		gsize length;
+		char *encoded;
+
+		g_mime_multipart_set_boundary (multipart, NULL);
+		boundary = g_mime_multipart_get_boundary (multipart);
+		g_assert_cmpuint (strlen (boundary), ==, 26);
+		g_assert_true (g_str_has_prefix (boundary, "=-"));
+		decoded = g_base64_decode (boundary + 2, &length);
+		g_assert_cmpuint (length, ==, 16);
+		encoded = g_base64_encode (decoded, length);
+		g_assert_cmpstr (boundary + 2, ==, encoded);
+		g_free (encoded);
+		g_free (decoded);
+		entity_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+		g_mime_content_type_set_boundary (entity_priv->content_type, NULL);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*_g_mime_is_valid_boundary*");
+		g_mime_multipart_set_boundary (multipart, "");
+		g_test_assert_expected_messages ();
+		g_assert_null (g_mime_content_type_get_boundary (entity_priv->content_type));
+		boundary = g_mime_multipart_get_boundary (multipart);
+		g_assert_cmpuint (strlen (boundary), ==, 26);
+		for (i = 0; boundary[i]; i++)
+			g_assert_nonnull (strchr (bchars, boundary[i]));
+		g_assert_true (g_mime_multipart_get_boundary (multipart) == boundary);
+		g_object_unref (multipart);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_text_views (void)
+{
+	static const struct {
+		const char *preamble, *epilogue, *pretext, *epitext;
+		gsize prelength, epilength;
+		const char *charset;
+	} cases[] = {
+		{ "\0\0tail\n", "\n\0\0tail", "\357\277\275\357\277\275tail\n", "\357\277\275\357\277\275tail", 7, 7, NULL },
+		{ "a\0b\0c\n", "\r\nx\0y\0z\n", "a\357\277\275b\357\277\275c\n", "x\357\277\275y\357\277\275z\n", 6, 8, NULL },
+		{ "caf\303\251\0tail\n", "\n\303\251\0tail", "caf\303\251\357\277\275tail\n", "\303\251\357\277\275tail", 11, 8, NULL },
+		{ "a\377\0tail\n", "\n\r\377\0tail", "a\303\277\357\277\275tail\n", "\r\303\277\357\277\275tail", 8, 8, NULL },
+		{ "\377\0a\0\0\0\n\n", "\n\377\0x\0\0\0z\0",
+		  "\303\277a\357\277\275\340\250\212", "\303\277x\357\277\275z", 8, 9, "utf-16le" },
+		{ "\0\377\0a\0\0\n\n", "\n\0\377\0x\0\0\0z",
+		  "\303\277a\357\277\275\340\250\212", "\303\277x\357\277\275z", 8, 9, "utf-16be" },
+		{ "\0\0\0\377\0\0\0a\0\0\0\0\0\0\0\n", "\n\0\0\0\377\0\0\0x\0\0\0\0\0\0\0z",
+		  "\303\277a\357\277\275\n", "\303\277x\357\277\275z", 16, 17, "utf-32be" }
+	};
+	guint i, persistent;
+
+	testsuite_check ("Multipart text views replace NULs without changing raw bytes or no-op output");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (persistent = 0; persistent < 2; persistent++) {
+			GMimeMultipartPrivate *priv;
+			GString *wire = g_string_new ("Content-Type: multipart/mixed; boundary=b\n\n");
+			GMimeStream *input, *before = g_mime_stream_mem_new (), *after = g_mime_stream_mem_new ();
+			GMimeMultipart *multipart;
+			GMimeEntity *entity;
+			GBytes *preamble, *epilogue;
+			GByteArray *original, *unchanged;
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			GError *error = NULL;
+			ssize_t written;
+
+			g_string_append_len (wire, cases[i].preamble, cases[i].prelength);
+			g_string_append (wire, "--b\n\nbody\n--b--");
+			g_string_append_len (wire, cases[i].epilogue, cases[i].epilength);
+			input = g_mime_stream_mem_new_with_buffer (wire->str, wire->len);
+			if (cases[i].charset) {
+				g_assert_true (g_mime_parser_options_set_charset_encoding (options, cases[i].charset, &error));
+				g_assert_no_error (error);
+			}
+			entity = g_mime_entity_load_with_storage (options, input, persistent, &error);
+			g_mime_parser_options_unref (options);
+			g_assert_no_error (error);
+			g_assert_true (GMIME_IS_MULTIPART (entity));
+			multipart = (GMimeMultipart *) entity;
+			g_object_unref (input);
+			g_string_free (wire, TRUE);
+			priv = _g_mime_multipart_get_private (multipart);
+
+			preamble = g_bytes_ref (priv->raw_preamble);
+			epilogue = g_bytes_ref (priv->raw_epilogue);
+			assert_raw_bytes (preamble, cases[i].preamble, cases[i].prelength);
+			assert_raw_bytes (epilogue, cases[i].epilogue, cases[i].epilength);
+			written = g_mime_entity_write_to_stream (entity, NULL, before);
+			g_assert_cmpint (written, >, 0);
+			g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, cases[i].pretext);
+			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, cases[i].epitext);
+			g_assert_true (g_utf8_validate (priv->preamble, -1, NULL));
+			g_assert_true (g_utf8_validate (priv->epilogue, -1, NULL));
+			g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart));
+			g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart));
+			g_assert_true (priv->raw_preamble == preamble);
+			g_assert_true (priv->raw_epilogue == epilogue);
+			g_assert_cmpint (g_mime_entity_write_to_stream (entity, NULL, after), ==, written);
+			original = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) before);
+			unchanged = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) after);
+			g_assert_cmpmem (original->data, original->len, unchanged->data, unchanged->len);
+			g_object_unref (before);
+			g_object_unref (after);
+			g_mime_multipart_set_preamble (multipart, "new preamble\n");
+			g_mime_multipart_set_epilogue (multipart, "new epilogue");
+			assert_raw_bytes (priv->raw_preamble, "new preamble\n", 13);
+			assert_raw_bytes (priv->raw_epilogue, "\nnew epilogue\n", 14);
+			g_mime_multipart_set_preamble (multipart, NULL);
+			g_mime_multipart_set_epilogue (multipart, NULL);
+			g_assert_null (g_mime_multipart_get_preamble (multipart));
+			g_assert_null (g_mime_multipart_get_epilogue (multipart));
+			g_assert_null (priv->raw_preamble);
+			g_assert_null (priv->raw_epilogue);
+			g_object_unref (entity);
+			assert_raw_bytes (preamble, cases[i].preamble, cases[i].prelength);
+			assert_raw_bytes (epilogue, cases[i].epilogue, cases[i].epilength);
+			g_bytes_unref (preamble);
+			g_bytes_unref (epilogue);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_large_multipart_text (void)
+{
+	GString *wire = g_string_new ("Content-Type: multipart/mixed; boundary=b\r\n\r\n");
+	gsize preamble, prelength, epilogue;
+	guint i, persistent, chunk, fail;
+
+	testsuite_check ("Multipart text preserves large binary chunks and releases partial buffers on errors");
+	preamble = wire->len;
+	for (i = 0; i < 1200; i++)
+		g_string_append_len (wire, "pre\0amble\r\n", 11);
+	prelength = wire->len - preamble;
+	g_string_append (wire, "--b\r\n\r\nbody\r\n--b--");
+	epilogue = wire->len;
+	g_string_append (wire, "\r\n");
+	for (i = 0; i < 1200; i++)
+		g_string_append_len (wire, "epi\0logue\r\n", 11);
+
+	for (persistent = 0; persistent < 2; persistent++) {
+		for (chunk = 0; chunk < 2; chunk++) {
+			for (fail = 0; fail < 3; fail++) {
+				ModelInput *input = new_input (wire->str, wire->len, chunk ? 1 : 4096);
+				GMimeEntity *entity;
+				GError *error = NULL;
+
+				if (fail)
+					input->fail_after = (fail == 1 ? preamble : epilogue) + 6000;
+				entity = g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, persistent, &error);
+				if (fail) {
+					g_assert_null (entity);
+					g_assert_nonnull (error);
+					g_clear_error (&error);
+				} else {
+					GMimeMultipartPrivate *priv;
+
+					g_assert_no_error (error);
+					g_assert_true (GMIME_IS_MULTIPART (entity));
+					priv = _g_mime_multipart_get_private ((GMimeMultipart *) entity);
+					assert_raw_bytes (priv->raw_preamble, wire->str + preamble, prelength);
+					assert_raw_bytes (priv->raw_epilogue, wire->str + epilogue, wire->len - epilogue);
+					g_object_unref (entity);
+				}
+				g_object_unref (input);
+			}
+		}
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_text_folding (void)
+{
+	static const gunichar whitespace[] = {
+		'\t', '\n', '\v', '\f', '\r', ' ', 0x85, 0xa0, 0x1680,
+		0x2000, 0x2001, 0x2002, 0x2003, 0x2004, 0x2005, 0x2006,
+		0x2007, 0x2008, 0x2009, 0x200a, 0x2028, 0x2029, 0x202f, 0x205f, 0x3000
+	};
+	static const struct {
+		const char *input, *folded;
+	} cases[] = {
+		{ NULL, NULL },
+		{ "", "" },
+		{ "hello world", "hello world\n" },
+		{ " \t", " \t\n" },
+		{ "a\r\nb\r\n", "a\nb\n" },
+		{ "a\rb", "a\rb\n" },
+		{ "a\n\nb\n", "a\n\nb\n" },
+		{ "a \n b\t", "a\n b\t\n" },
+		{ "a\v\nb\f\n", "a\v\nb\f\n" },
+		{ "a\302\240\nb\343\200\200\n", "a\302\240\nb\343\200\200\n" },
+		{ " \t\302\205\n\343\200\200 ", " \t\302\205\n\343\200\200 \n" },
+		{ "a\302\205b\342\200\250c", "a\302\205b\342\200\250c\n" }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_get_default ();
+	GMimeNewLineFormat old_newline = g_mime_format_options_get_newline_format (options);
+	guint maxline = g_mime_format_options_get_max_line_length (options);
+	guint i, j, model, format;
+
+	testsuite_check ("Multipart text setters fold decoded views and retain immutable raw snapshots");
+	for (format = 0; format < 2; format++) {
+		g_mime_format_options_set_newline_format (options, format);
+		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+			GString *expected = cases[i].folded ? g_string_new (NULL) : NULL;
+			const char *newline = g_mime_format_options_get_newline (options);
+			char *epilogue;
+
+			if (expected) {
+				for (j = 0; cases[i].folded[j]; j++) {
+					if (cases[i].folded[j] == '\n')
+						g_string_append (expected, newline);
+					else
+						g_string_append_c (expected, cases[i].folded[j]);
+				}
+			}
+			epilogue = expected ? g_strconcat (newline, expected->str, NULL) : NULL;
+			for (model = 0; model < 3; model++) {
+				GMimeMultipartPrivate *priv;
+				GMimeMultipart *multipart = model ? parse_multipart (model == 1 ?
+					"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\n\nbody\n--b--\nepi\n" :
+					"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody") : g_mime_multipart_new ();
+				GBytes *prebytes, *epibytes;
+
+				g_mime_multipart_set_preamble (multipart, cases[i].input);
+				g_mime_multipart_set_epilogue (multipart, cases[i].input);
+				g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected ? expected->str : NULL);
+				g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, expected ? expected->str : NULL);
+				priv = _g_mime_multipart_get_private (multipart);
+
+				prebytes = priv->raw_preamble ? g_bytes_ref (priv->raw_preamble) : NULL;
+				epibytes = priv->raw_epilogue ? g_bytes_ref (priv->raw_epilogue) : NULL;
+				g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart));
+				g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart));
+				g_assert_true (priv->raw_preamble == prebytes);
+				g_assert_true (priv->raw_epilogue == epibytes);
+				if (model == 2 && cases[i].input) {
+					g_assert_null (priv->raw_end_boundary);
+					g_assert_true (priv->write_end_boundary);
+				}
+				g_mime_multipart_set_preamble (multipart, "prefix suffix");
+				g_mime_multipart_set_preamble (multipart, g_mime_multipart_get_preamble (multipart) + 7);
+				g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_preamble (multipart));
+				g_mime_multipart_set_epilogue (multipart, g_mime_multipart_get_epilogue (multipart) + 3);
+				{
+					char *suffix = g_strconcat ("fix", newline, NULL);
+
+					g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, suffix);
+					g_free (suffix);
+				}
+				g_mime_multipart_set_preamble (multipart, NULL);
+				g_mime_multipart_set_epilogue (multipart, NULL);
+				g_object_unref (multipart);
+				if (prebytes) {
+					assert_raw_bytes (prebytes, expected->str, expected->len);
+					g_bytes_unref (prebytes);
+				}
+				if (epibytes) {
+					assert_raw_bytes (epibytes, epilogue, strlen (epilogue));
+					g_bytes_unref (epibytes);
+				}
+			}
+			if (expected)
+				g_string_free (expected, TRUE);
+			g_free (epilogue);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart folded setters serialize without duplicate delimiter newlines");
+	for (format = 0; format < 2; format++) {
+		g_mime_format_options_set_newline_format (options, format);
+		for (model = 0; model < 3; model++) {
+			GMimeMultipart *multipart = model ? parse_multipart (model == 1 ?
+				"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\n\nbody\n--b--\nepi\n" :
+				"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody") : g_mime_multipart_new ();
+			GMimeFormatOptions *output_options = g_mime_format_options_new ();
+
+			g_mime_multipart_set_boundary (multipart, "b");
+			g_mime_multipart_set_preamble (multipart, "before");
+			g_mime_multipart_set_epilogue (multipart, "after");
+			for (j = 0; j < 2; j++) {
+				const char *newline;
+				GByteArray *actual;
+				GString *expected = g_string_new (NULL);
+
+				g_mime_format_options_set_newline_format (output_options, j);
+				newline = g_mime_format_options_get_newline (output_options);
+				g_string_append_printf (expected, "Content-Type: multipart/mixed; boundary=b%s%sbefore%s",
+					newline, newline, newline);
+				if (model)
+					g_string_append_printf (expected, "--b\n%sbody%s", newline, newline);
+				g_string_append_printf (expected, "--b--%safter%s", newline, newline);
+				actual = serialize_writer ((GMimeEntity *) multipart, output_options, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, expected->str, expected->len);
+				g_byte_array_unref (actual);
+				g_string_free (expected, TRUE);
+			}
+			g_mime_format_options_unref (output_options);
+			g_object_unref (multipart);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart folding recognizes only ASCII linear whitespace as word separators");
+	for (format = 0; format < 2; format++) {
+		const char *newline;
+
+		g_mime_format_options_set_newline_format (options, format);
+		newline = g_mime_format_options_get_newline (options);
+		for (i = 0; i < G_N_ELEMENTS (whitespace); i++) {
+			GMimeMultipart *multipart = g_mime_multipart_new ();
+			char buffer[7] = { 0 };
+			gboolean ascii = whitespace[i] == ' ' || whitespace[i] == '\t' ||
+				whitespace[i] == '\r' || whitespace[i] == '\n';
+			char *word = g_strnfill (maxline - 2, 'a');
+			char *input, *expected;
+
+			g_unichar_to_utf8 (whitespace[i], buffer);
+			input = g_strconcat (word, buffer, "b", NULL);
+			expected = ascii ? g_strconcat (word, newline, "b", newline, NULL) :
+				g_strconcat (input, newline, NULL);
+			g_mime_multipart_set_preamble (multipart, input);
+			g_mime_multipart_set_epilogue (multipart, input);
+			g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected);
+			g_assert_cmpstr (g_mime_multipart_get_epilogue (multipart), ==, expected);
+			g_free (expected);
+			g_free (input);
+			g_free (word);
+			g_object_unref (multipart);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Multipart folds at exact UTF-16 column limits without splitting oversized words");
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	for (i = maxline - 3; i <= maxline + 2; i++) {
+		GMimeMultipart *multipart = g_mime_multipart_new ();
+		char *word = g_strnfill (i, 'a');
+		char *input = g_strconcat (word, " b", NULL);
+		char *expected = g_strconcat (word, i >= maxline - 2 ? "\nb\n" : " b\n", NULL);
+
+		g_mime_multipart_set_preamble (multipart, input);
+		g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected);
+		g_free (word);
+		g_free (input);
+		g_free (expected);
+		g_object_unref (multipart);
+	}
+	{
+		GMimeMultipart *multipart = g_mime_multipart_new ();
+		GString *input = g_string_new (NULL);
+		char *expected;
+
+		for (i = 0; i < (maxline - 1) / 2; i++)
+			g_string_append (input, "\360\237\230\200");
+		expected = g_strconcat (input->str, "\nb\n", NULL);
+		g_string_append (input, " b");
+		g_mime_multipart_set_preamble (multipart, input->str);
+		g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+		g_mime_multipart_set_preamble (multipart, "\377");
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*g_utf8_validate*");
+		g_mime_multipart_set_epilogue (multipart, "\377");
+		g_test_assert_expected_messages ();
+		g_assert_cmpstr (g_mime_multipart_get_preamble (multipart), ==, expected);
+		g_assert_null (g_mime_multipart_get_epilogue (multipart));
+		g_free (expected);
+		g_string_free (input, TRUE);
+		g_object_unref (multipart);
+	}
+	g_mime_format_options_set_newline_format (options, old_newline);
+	testsuite_check_passed ();
+}
+
+static void
+test_multipart_output (void)
+{
+	static const char *boundaryless[] = {
+		"Content-Type: multipart/mixed\n\n",
+		"Content-Type: multipart/mixed\n\npreamble",
+		"Content-Type: multipart/mixed\n\npreamble\n"
+	};
+	static const char *wires[] = {
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\n\nbody\n--b--\nepilogue",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\n\nbody\n--b",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: message/rfc822\n\n"
+		"invalid marker\nSubject: test\n\nbody"
+	};
+	guint i, newline;
+
+	testsuite_check ("Multipart output counts normalized bytes and propagates write/filter-completion failures");
+	for (i = 0; i < G_N_ELEMENTS (wires); i++) {
+		GMimeMultipart *multipart = parse_multipart (wires[i]);
+		GMimeEntityPrivate *priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+		priv->ensure_newline = TRUE;
+		for (newline = 0; newline < 2; newline++) {
+			GMimeFormatOptions *options = g_mime_format_options_new ();
+			GMimeStream *stream = g_mime_stream_block_new ();
+			GByteArray *bytes;
+			gsize offset;
+
+			g_mime_format_options_set_newline_format (options, newline);
+			g_assert_cmpint (g_mime_entity_write_to_stream ((GMimeEntity *) multipart, options, stream), >, 0);
+			bytes = g_mime_stream_block_to_byte_array ((GMimeStreamBlock *) stream, NULL);
+			for (offset = 0; offset <= bytes->len; offset++) {
+				ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+				ssize_t result;
+
+				output->limit = offset;
+				errno = 0;
+				result = g_mime_entity_write_to_stream ((GMimeEntity *) multipart, options, (GMimeStream *) output);
+				if (offset < bytes->len) {
+					g_assert_cmpint (result, ==, -1);
+					g_assert_cmpint (errno, ==, EIO);
+				} else {
+					g_assert_cmpint (result, ==, bytes->len);
+					g_assert_cmpuint (output->written, ==, bytes->len);
+				}
+				g_object_unref (output);
+			}
+			g_byte_array_unref (bytes);
+			g_object_unref (stream);
+			g_mime_format_options_unref (options);
+		}
+		g_object_unref (multipart);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Boundaryless parsed multipart output does not invent delimiters or mutate headers");
+	for (i = 0; i < G_N_ELEMENTS (boundaryless); i++) {
+		for (newline = 0; newline < 2; newline++) {
+			GMimeFormatOptions *options = g_mime_format_options_new ();
+			char **lines = g_strsplit (boundaryless[i], "\n", -1);
+			char *wire = g_strjoinv (newline ? "\r\n" : "\n", lines);
+			GMimeMultipart *multipart = parse_multipart (wire);
+			guint pass;
+
+			g_mime_format_options_set_newline_format (options,
+				newline ? GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			for (pass = 0; pass < 2; pass++) {
+				GByteArray *bytes = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+
+				g_assert_cmpmem (bytes->data, bytes->len, wire, strlen (wire));
+				g_assert_null (g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary"));
+				g_byte_array_unref (bytes);
+			}
+			g_object_unref (multipart);
+			g_mime_format_options_unref (options);
+			g_strfreev (lines);
+			g_free (wire);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_model_errors (void)
+{
+	static const char *containers[] = {
+		"Content-Type: application/x-reader-unsupported\n\nbody",
+		"Content-Type: message/rfc822\n\nContent-Type: application/x-reader-unsupported\n\nbody",
+		"Content-Type: text/rfc822-headers\n\nContent-Type: application/x-reader-unsupported\n\nbody"
+	};
+	static const char wire[] = "X: a\n\nbody";
+	guint i, unset;
+
+	g_mime_entity_register_type ("application", "x-reader-unsupported", GMIME_TYPE_MESSAGE_PART);
+	testsuite_check ("Model construction reports unsupported containers and cleans partial failures");
+	for (i = 0; i < G_N_ELEMENTS (containers); i++) {
+		ModelInput *input = new_input (containers[i], strlen (containers[i]), 1);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GError *error = NULL;
+		guint reads;
+
+		g_assert_null (_g_mime_parser_reader_construct_part (reader, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED);
+		g_clear_error (&error);
+		reads = input->reads;
+		g_assert_null (_g_mime_parser_reader_construct_headers (reader, FALSE, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED);
+		g_assert_cmpuint (input->reads, ==, reads);
+		g_clear_error (&error);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+
+	for (unset = 0; unset < 2; unset++) {
+		int code = unset ? GMIME_ERROR_GENERAL : EIO;
+
+		for (i = 0; i < sizeof (wire) - 1; i++) {
+			ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+			GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+			GError *error = NULL;
+
+			input->fail_after = i;
+			input->unset_errno = unset;
+			g_assert_null (_g_mime_parser_reader_construct_part (reader, &error));
+			g_assert_error (error, GMIME_ERROR, code);
+			g_clear_error (&error);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+		for (i = 0; i < 2; i++) {
+			ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+			GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, TRUE);
+			GError *error = NULL;
+
+			input->unset_errno = unset;
+			input->fail_substream = i == 0;
+			if (i == 1) {
+				GMimeHeaderList *headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+
+				g_assert_no_error (error);
+				g_object_unref (headers);
+				g_assert_cmpint (g_mime_stream_seek ((GMimeStream *) input, 0, GMIME_STREAM_SEEK_SET), ==, 0);
+				input->fail_seek = TRUE;
+			}
+			g_assert_null (_g_mime_parser_reader_construct_part (reader, &error));
+			g_assert_error (error, GMIME_ERROR, code);
+			g_clear_error (&error);
+			g_assert_false (_g_mime_reader_restore_stream_position (reader, &error));
+			g_assert_error (error, GMIME_ERROR, code);
+			g_clear_error (&error);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_empty_headers (void)
+{
+	static const char *cases[] = { "", "\n", "\r\n", "X: a", "X: a\n", "X: a\n\n" };
+	guint i;
+
+	testsuite_check ("Header models preserve separator state at empty input and EOF");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		ModelInput *input = new_input (cases[i], strlen (cases[i]), 1);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, (GMimeStream *) input, FALSE);
+		GError *error = NULL;
+		GMimeHeaderList *headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+
+		g_assert_no_error (error);
+		g_assert_nonnull (headers);
+		g_assert_cmpint (headers->has_body_separator, ==, i == 1 || i == 2 || i == 5);
+		g_object_unref (headers);
+		headers = _g_mime_parser_reader_construct_headers (reader, FALSE, &error);
+		g_assert_no_error (error);
+		g_assert_false (headers->has_body_separator);
+		g_object_unref (headers);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_public_parser_models (void)
+{
+	static const char wire[] = "X-Skip: first\n\n"
+		"From sender\0binary\nSubject: first\nContent-Type: text/plain\n\none\0tail\n"
+		"From next\nSubject: second\n\nlast";
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint mode, chunk;
+
+	testsuite_check ("Public parser retains one buffer across headers, formats and mailbox reads in both storage modes");
+	for (mode = 0; mode < 4; mode++) {
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			GMimeMessagePrivate *first_priv;
+			ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+			GMimeParser *parser;
+			GMimeHeaderList *headers;
+			GMimeMessage *first, *second;
+			GMimeContent *saved;
+			GByteArray *bytes;
+			GError *error = NULL;
+			char *marker;
+
+			input->nonseekable = (mode & 1) != 0;
+			parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+				GMIME_FORMAT_MESSAGE, (mode & 2) && !(mode & 1) ?
+				GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (parser);
+			headers = g_mime_parser_construct_headers (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
+			g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, 0);
+			g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, 14);
+			g_assert_cmpint (g_mime_parser_tell (parser), ==, 15);
+			g_object_unref (headers);
+			g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
+			first = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (first);
+			g_assert_cmpstr (g_mime_message_get_subject (first), ==, "first");
+			g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, 15);
+			marker = g_mime_parser_get_mbox_marker (parser);
+			g_assert_cmpstr (marker, ==, "From sender");
+			g_free (marker);
+			first_priv = _g_mime_message_get_private (first);
+
+			saved = g_mime_part_get_content (GMIME_PART (first_priv->mime_part));
+			bytes = read_content (saved, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, "one\0tail", 8);
+			g_byte_array_unref (bytes);
+			if ((mode & 2) && !(mode & 1))
+				g_assert_cmpint (g_mime_stream_seek ((GMimeStream *) input, 0, GMIME_STREAM_SEEK_SET), ==, 0);
+			second = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (second);
+			g_assert_cmpstr (g_mime_message_get_subject (second), ==, "second");
+			g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, 84);
+			g_assert_null (g_mime_parser_construct_message (parser, NULL, &error));
+			g_assert_no_error (error);
+			g_assert_true (g_mime_parser_eos (parser));
+			g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
+			g_object_unref (parser);
+			g_object_unref (input);
+			bytes = read_content (saved, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, "one\0tail", 8);
+			g_byte_array_unref (bytes);
+			g_object_unref (second);
+			g_object_unref (first);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Public parsing retains incomplete embedded-message pre-header bytes at EOF");
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		GMimeMessagePrivate *outer_priv;
+		GMimeMessagePrivate *inner_priv;
+		static const char incomplete[] = "Content-Type: message/rfc822\n\nSubject: outer\n"
+			"Content-Type: multipart/digest; boundary=b\n\n--b\n\nx";
+		ModelInput *input = new_input (incomplete, sizeof (incomplete) - 1, chunks[chunk]);
+		GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+		GMimeEntity *entity, *child;
+		GMimeMessage *outer, *inner;
+		GError *error = NULL;
+		gconstpointer bytes;
+		gsize length;
+
+		entity = g_mime_parser_construct_part (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_true (GMIME_IS_MESSAGE_PART (entity));
+		outer = g_mime_message_part_get_message (GMIME_MESSAGE_PART (entity));
+		outer_priv = _g_mime_message_get_private (outer);
+
+		g_assert_true (GMIME_IS_MULTIPART (outer_priv->mime_part));
+		child = g_mime_multipart_get_part (GMIME_MULTIPART (outer_priv->mime_part), 0);
+		g_assert_true (GMIME_IS_MESSAGE_PART (child));
+		inner = g_mime_message_part_get_message (GMIME_MESSAGE_PART (child));
+		g_assert_nonnull (inner);
+		inner_priv = _g_mime_message_get_private (inner);
+
+		g_assert_nonnull (inner_priv->raw_marker);
+		bytes = g_bytes_get_data (inner_priv->raw_marker, &length);
+		g_assert_cmpmem (bytes, length, "x", 1);
+		g_object_unref (entity);
+		g_object_unref (parser);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Public message headers expose raw values and offsets without streaming callbacks");
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		static const char status[] = "Status: RO\n";
+		static const char x_status[] = "X-Status: F\0A\n";
+		static const char wire[] = "Status: RO\nX-Status: F\0A\nMIME-Version: 1.0\n"
+			"Content-Type: message/rfc822\n\nStatus: R\n\nbody";
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+		GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+		GMimeHeaderList *headers;
+		GMimeHeader *header;
+		GMimeMessage *message;
+		GError *error = NULL;
+		GBytes *raw;
+		gconstpointer data;
+		gsize length;
+
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+		header = g_mime_header_list_get_header (headers, "Status");
+		g_assert_nonnull (header);
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, 0);
+		g_assert_cmpstr (g_mime_header_get_value (header), ==, "RO");
+		header = g_mime_header_list_get_header (headers, "X-Status");
+		g_assert_nonnull (header);
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, sizeof (status) - 1);
+		raw = g_mime_header_get_raw_value (header);
+		data = g_bytes_get_data (raw, &length);
+		g_assert_cmpmem (data, length, " F\0A\n", 5);
+		g_bytes_unref (raw);
+		header = g_mime_header_list_get_header (headers, "MIME-Version");
+		g_assert_nonnull (header);
+		g_assert_cmpint (g_mime_header_get_offset (header), ==, sizeof (status) + sizeof (x_status) - 2);
+		g_object_unref (message);
+		g_object_unref (parser);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+count_public_warning (gint64 offset, GMimeParserWarning warning, const char *item, gpointer user_data)
+{
+	guint *counts = user_data;
+
+	g_assert_cmpuint (warning, <=, GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT);
+	counts[warning]++;
+}
+
+static void
+test_public_long_header_names (void)
+{
+	const gsize lengths[] = { 4095, 4096, 4097, 4223, 4224, 4225, 8192, 8448 };
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint i, j, blank;
+
+	testsuite_check ("Public header names spanning the reader buffer retain their names and wire bytes");
+	for (i = 0; i < G_N_ELEMENTS (lengths); i++) {
+		for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			for (blank = 0; blank < 2; blank++) {
+				char *name = g_strnfill (lengths[i], 'X');
+				char *wire = g_strconcat (name, blank ? " \t: value\n\n" : ": value\n\n", NULL);
+				ModelInput *input = new_input (wire, strlen (wire), chunks[j]);
+				GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+				GError *error = NULL;
+				GMimeHeaderList *headers = g_mime_parser_construct_headers (parser, NULL, &error);
+				GMimeHeader *header;
+
+				if (error)
+					testsuite_printf (stderr, 1, "Long header: length=%" G_GSIZE_FORMAT
+							  ", chunk=%" G_GSIZE_FORMAT ", blanks=%u: %s\n",
+							  lengths[i], chunks[j], blank, error->message);
+				g_assert_no_error (error);
+				g_assert_nonnull (headers);
+				g_assert_cmpint (g_mime_header_list_get_count (headers), ==, 1);
+				header = g_mime_header_list_get_header_at (headers, 0);
+				g_assert_false (header->invalid);
+				g_assert_cmpstr (header->name, ==, name);
+				g_assert_cmpstr (testsuite_header_raw_text (header), ==, " value\n");
+				g_assert_cmpuint (g_bytes_get_size (header->raw_name), ==, lengths[i] + blank * 2);
+				g_assert_cmpint (g_mime_parser_tell (parser), ==, strlen (wire));
+				g_object_unref (headers);
+				g_object_unref (parser);
+				g_object_unref (input);
+				g_free (wire);
+				g_free (name);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_public_parser_warnings (void)
+{
+	static const char same[] = "Subject: a\0one\nSubject: a\0one\n\n";
+	static const char different[] = "Subject: a\0one\nSubject: a\0two\n\n";
+	static const struct {
+		const char *wire;
+		GMimeParserWarning warning;
+	} cases[] = {
+		{ "Subject: same\nSubject: same\n\n", GMIME_WARN_DUPLICATED_HEADER },
+		{ "Subject: one\nSubject: two\n\n", GMIME_CRIT_CONFLICTING_HEADER },
+		{ "Subject: \xc3\xa9\n\n", GMIME_WARN_UNENCODED_8BIT_HEADER },
+		{ "To: one@example.com two@example.com\r\n\r\n", GMIME_WARN_INVALID_ADDRESS_LIST },
+		{ "Content-Type: multipart/mixed\n\nbody", GMIME_CRIT_MULTIPART_WITHOUT_BOUNDARY },
+		{ "Content-Type: multipart/mixed; boundary=b\n\nbody", GMIME_WARN_TRUNCATED_MESSAGE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\n"
+		  "Content-Type: multipart/mixed; boundary=c\n\n--c\n\nbody\n--b--\n",
+		  GMIME_WARN_MALFORMED_MULTIPART },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nX: value\n--b--\n",
+		  GMIME_WARN_PART_WITHOUT_CONTENT },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\n--b--\n",
+		  GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT }
+	};
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint i, j;
+
+	testsuite_check ("Public parser warnings distinguish malformed ancestors from actual EOF truncation");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			ModelInput *input = new_input (cases[i].wire, strlen (cases[i].wire), chunks[j]);
+			GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			guint counts[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+			GMimeMessage *message;
+			GError *error = NULL;
+
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts);
+			message = g_mime_parser_construct_message (parser, options, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_assert_cmpuint (counts[cases[i].warning], ==, 1);
+			g_assert_cmpuint (counts[GMIME_WARN_TRUNCATED_MESSAGE], ==,
+					  cases[i].warning == GMIME_WARN_TRUNCATED_MESSAGE);
+			if (cases[i].warning == GMIME_WARN_INVALID_ADDRESS_LIST) {
+				g_assert_cmpuint (g_mime_internet_address_list_length (g_mime_message_get_to (message)), ==, 2);
+				g_assert_cmpuint (counts[GMIME_WARN_INVALID_ADDRESS_LIST], ==, 1);
+			}
+			g_object_unref (message);
+			g_mime_parser_options_unref (options);
+			g_object_unref (parser);
+			g_object_unref (input);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Duplicate header warnings compare every byte after embedded NULs");
+	for (i = 0; i < 2; i++) {
+		for (j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			ModelInput *input = new_input (i ? different : same, sizeof (same) - 1, chunks[j]);
+			GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			guint counts[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+			GError *error = NULL;
+			GMimeMessage *message;
+
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts);
+			message = g_mime_parser_construct_message (parser, options, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (message);
+			g_assert_cmpuint (counts[GMIME_WARN_DUPLICATED_HEADER], ==, !i);
+			g_assert_cmpuint (counts[GMIME_CRIT_CONFLICTING_HEADER], ==, i);
+			g_object_unref (message);
+			g_mime_parser_options_unref (options);
+			g_object_unref (parser);
+			g_object_unref (input);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+typedef struct _ParserLogger ParserLogger;
+struct _ParserLogger {
+	GMimeParser *parser;
+	GArray *issues;
+	ParserLogger *next;
+	guint destroyed;
+	gboolean replace, release;
+};
+
+static void
+collect_parser_issue (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	g_array_append_val ((GArray *) user_data, *issue);
+}
+
+static void
+parser_logger_destroyed (gpointer user_data)
+{
+	((ParserLogger *) user_data)->destroyed++;
+}
+
+static void
+parser_log_issue (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	ParserLogger *logger = user_data;
+
+	g_assert_cmpuint (logger->destroyed, ==, 0);
+	collect_parser_issue (issue, logger->issues);
+	if (logger->replace) {
+		GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+		ModelInput *replacement = new_input ("", 0, 1);
+
+		logger->replace = FALSE;
+		g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+		g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_NONE);
+		g_mime_compliance_options_set_max_issues_per_violation (options, 1);
+		g_mime_parser_set_compliance_options (logger->parser, options);
+		g_mime_compliance_options_unref (options);
+		g_mime_parser_set_compliance_logger (logger->parser, logger->next ? parser_log_issue : NULL,
+			logger->next, logger->next ? parser_logger_destroyed : NULL);
+		g_assert_cmpuint (logger->destroyed, ==, 0);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
+		g_assert_null (g_mime_parser_construct_message (logger->parser, NULL, NULL));
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!parser->priv->reading*");
+		g_assert_false (g_mime_parser_init_with_stream_and_storage (logger->parser, (GMimeStream *) replacement,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, NULL));
+		g_test_assert_expected_messages ();
+		g_assert_cmpuint (replacement->seeks, ==, 0);
+		g_assert_cmpuint (replacement->reads, ==, 0);
+		g_object_unref (replacement);
+	}
+	if (logger->release) {
+		logger->release = FALSE;
+		g_object_unref (logger->parser);
+	}
+}
+
+static guint
+count_parser_issue (GArray *issues, GMimeComplianceViolation violation)
+{
+	guint i, count = 0;
+
+	for (i = 0; i < issues->len; i++)
+		count += g_array_index (issues, GMimeComplianceIssue, i).violation == violation;
+
+	return count;
+}
+
+static GObject *
+construct_compliance_model (GMimeParser *parser, GMimeParserOptions *options, guint operation, GError **error)
+{
+	switch (operation) {
+	case 0: return (GObject *) g_mime_parser_construct_headers (parser, options, error);
+	case 1: return (GObject *) g_mime_parser_construct_part (parser, options, error);
+	default: return (GObject *) g_mime_parser_construct_message (parser, options, error);
+	}
+}
+
+static void
+test_parser_compliance_options (void)
+{
+	GMimeParser *parser = g_mime_parser_new ();
+	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
+	GMimeComplianceOptions *borrowed;
+	GMimeStream *input = g_mime_stream_mem_new ();
+	ParserLogger logger = { .parser = parser };
+	guint operation;
+
+	testsuite_check ("Parser compliance settings work before input and survive stream replacement");
+	g_assert_cmpint (g_mime_parser_tell (parser), ==, -1);
+	g_assert_true (g_mime_parser_eos (parser));
+	g_assert_null (g_mime_parser_get_mbox_marker (parser));
+	g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
+	g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, -1);
+	g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, -1);
+	for (operation = 0; operation < 3; operation++) {
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*_g_mime_reader_get_stream*");
+		g_assert_null (construct_compliance_model (parser, NULL, operation, NULL));
+		g_test_assert_expected_messages ();
+	}
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_assert_nonnull (borrowed);
+	g_assert_true (borrowed != g_mime_compliance_options_get_default ());
+	g_assert_cmpint (g_mime_compliance_options_get_context (borrowed), ==, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+	g_assert_cmpint (g_mime_compliance_options_get_enabled_validators (borrowed), ==, GMIME_COMPLIANCE_VALIDATOR_ALL);
+	g_assert_cmpuint (g_mime_compliance_options_get_max_issues_per_violation (borrowed), ==, 0);
+	g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+	g_mime_parser_set_compliance_options (parser, options);
+	g_mime_compliance_options_set_context (options, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_assert_true (borrowed != options);
+	g_assert_cmpint (g_mime_compliance_options_get_context (borrowed), ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+	g_mime_parser_set_compliance_options (parser, borrowed);
+	g_assert_cmpint (g_mime_compliance_options_get_context (g_mime_parser_get_compliance_options (parser)),
+			 ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+	g_mime_parser_set_compliance_options (parser, NULL);
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_assert_cmpint (g_mime_compliance_options_get_context (borrowed), ==, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+	g_mime_compliance_options_set_max_issues_per_violation (borrowed, 3);
+	g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+	g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+		GMIME_FORMAT_MBOX, GMIME_CONTENT_STORAGE_MEMORY, NULL));
+	g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MBOX);
+	g_assert_cmpint (g_mime_parser_tell (parser), ==, 0);
+	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
+	g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+		GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, NULL));
+	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
+	g_assert_cmpuint (g_mime_compliance_options_get_max_issues_per_violation (borrowed), ==, 3);
+	g_assert_cmpuint (logger.destroyed, ==, 0);
+	g_mime_parser_set_compliance_logger (parser, NULL, NULL, NULL);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	g_object_unref (parser);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	g_object_unref (input);
+	g_mime_compliance_options_unref (options);
+	parser = g_mime_parser_new ();
+	logger.parser = parser;
+	logger.destroyed = 0;
+	g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+	g_object_unref (parser);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	testsuite_check_passed ();
+}
+
+static void
+test_parser_compliance_models (void)
+{
+	static const char wire[] = "Subject: a\nSubject: a\nContent-Transfer-Encoding: base64\n\n!!!!\n";
+	const gsize chunks[] = { 1, 7, 4096 };
+	guint operation, mode, chunk, logged, i;
+
+	testsuite_check ("Public header, entity and message diagnostics match the reader without changing models or warnings");
+	for (operation = 0; operation < 3; operation++) {
+		for (mode = 0; mode < 3; mode++) {
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+				GArray *expected = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+				GMimeReader *reader = g_mime_reader_new (NULL, (GMimeStream *) input);
+				GMimeComplianceOptions *compliance = g_mime_compliance_options_new ();
+				GByteArray *baseline = NULL;
+				GError *error = NULL;
+
+				g_mime_compliance_options_set_max_issues_per_violation (compliance, 1);
+				g_mime_reader_set_compliance_options (reader, compliance);
+				g_mime_reader_set_compliance_logger (reader, collect_parser_issue, expected, NULL);
+				if (operation == 0)
+					g_assert_true (_g_mime_reader_read_headers_to_separator (reader, &error));
+				else if (operation == 1)
+					g_assert_true (g_mime_reader_read_entity (reader, &error));
+				else
+					g_assert_true (g_mime_reader_read_message (reader, &error));
+				g_assert_no_error (error);
+				g_assert_cmpuint (expected->len, >, 0);
+				g_object_unref (reader);
+				g_object_unref (input);
+
+				for (logged = 0; logged < 2; logged++) {
+					GMimeParserOptions *options = g_mime_parser_options_new ();
+					guint warnings[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+					GMimeParser *parser;
+					GObject *model;
+					GByteArray *bytes;
+
+					input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+					input->nonseekable = mode == 2;
+					parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input, GMIME_FORMAT_MESSAGE,
+						mode == 1 ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
+					g_assert_no_error (error);
+					g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+					g_mime_parser_set_compliance_options (parser, compliance);
+					if (logged)
+						g_mime_parser_set_compliance_logger (parser, collect_parser_issue, issues, NULL);
+					model = construct_compliance_model (parser, options, operation, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (model);
+					g_assert_cmpuint (warnings[GMIME_WARN_DUPLICATED_HEADER], ==, operation != 0);
+					if (operation == 0) {
+						g_assert_cmpint (g_mime_parser_tell (parser), ==, sizeof (wire) - 6);
+						bytes = serialize_headers (GMIME_HEADER_LIST (model), FALSE);
+					} else {
+						bytes = serialize_writer (GMIME_ENTITY (model), NULL, FALSE);
+					}
+					if (logged) {
+						g_assert_cmpmem (bytes->data, bytes->len, baseline->data, baseline->len);
+						g_byte_array_unref (bytes);
+					} else {
+						baseline = bytes;
+						g_assert_cmpuint (issues->len, ==, 0);
+					}
+					g_object_unref (model);
+					g_object_unref (parser);
+					g_object_unref (input);
+					g_mime_parser_options_unref (options);
+				}
+				g_assert_cmpuint (issues->len, ==, expected->len);
+				for (i = 0; i < expected->len; i++)
+					g_assert_true (g_mime_compliance_issue_equal (&g_array_index (expected, GMimeComplianceIssue, i),
+						&g_array_index (issues, GMimeComplianceIssue, i)));
+				g_assert_cmpuint (count_parser_issue (issues, GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER), ==, operation != 0);
+				g_byte_array_unref (baseline);
+				g_array_unref (issues);
+				g_array_unref (expected);
+				g_mime_compliance_options_unref (compliance);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+check_content_type_syntax (const char *value, gboolean invalid, const char *mime_type, const char *charset,
+			  GMimeParserOptions *options, gsize chunk)
+{
+	static const char prefix[] = "Subject: content-type syntax\r\n";
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	char *wire = g_strdup_printf ("%sContent-Type: %s\r\n\r\nbody\r\n", prefix, value);
+	guint logging, validators, operation;
+
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_DOS);
+	for (logging = 0; logging < 2; logging++) {
+		for (validators = 0; validators < 2; validators++) {
+			GMimeComplianceOptions *compliance = g_mime_compliance_options_new ();
+
+			g_mime_compliance_options_set_enabled_validators (compliance, validators ?
+				GMIME_COMPLIANCE_VALIDATOR_ALL : GMIME_COMPLIANCE_VALIDATOR_NONE);
+			for (operation = 0; operation < 4; operation++) {
+				ModelInput *input = new_input (wire, strlen (wire), chunk);
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				GError *error = NULL;
+				guint i;
+
+				if (operation == 0) {
+					GMimeReader *reader = g_mime_reader_new (options, (GMimeStream *) input);
+
+					g_mime_reader_set_compliance_options (reader, compliance);
+					if (logging)
+						g_mime_reader_set_compliance_logger (reader, collect_parser_issue, issues, NULL);
+					g_assert_true (g_mime_reader_read_message (reader, &error));
+					g_assert_no_error (error);
+					g_object_unref (reader);
+				} else {
+					GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+					GByteArray *bytes;
+					GObject *model;
+
+					g_mime_parser_set_compliance_options (parser, compliance);
+					if (logging)
+						g_mime_parser_set_compliance_logger (parser, collect_parser_issue, issues, NULL);
+					model = construct_compliance_model (parser, options, operation - 1, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (model);
+					if (operation == 1) {
+						GMimeStream *stream = g_mime_stream_mem_new ();
+
+						g_assert_cmpint (g_mime_header_list_write_to_stream (
+							GMIME_HEADER_LIST (model), format, stream), >=, 0);
+						bytes = g_byte_array_ref (g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream)));
+						g_object_unref (stream);
+						g_assert_cmpmem (bytes->data, bytes->len, wire, strlen (wire) - 6);
+					} else {
+						GMimeEntity *part = operation == 3 ?
+							g_mime_message_get_mime_part (GMIME_MESSAGE (model)) : GMIME_ENTITY (model);
+						GMimeContentType *type = g_mime_entity_get_content_type (part);
+						char *actual = g_mime_content_type_get_mime_type (type);
+
+						g_assert_true (GMIME_IS_PART (part));
+						g_assert_cmpstr (actual, ==, mime_type);
+						g_assert_cmpstr (g_mime_content_type_get_charset (type), ==, charset);
+						g_assert_cmpint (g_mime_param_list_length (g_mime_content_type_get_parameters (type)),
+								==, charset ? 1 : 0);
+						g_free (actual);
+						bytes = read_content (g_mime_part_get_content (GMIME_PART (part)), TRUE);
+						g_assert_cmpmem (bytes->data, bytes->len, "body\r\n", 6);
+						g_byte_array_unref (bytes);
+						bytes = serialize_writer (GMIME_ENTITY (model), format, FALSE);
+						g_assert_cmpmem (bytes->data, bytes->len, wire, strlen (wire));
+					}
+					g_byte_array_unref (bytes);
+					g_object_unref (model);
+					g_object_unref (parser);
+				}
+
+				g_assert_cmpuint (count_parser_issue (issues, GMIME_COMPLIANCE_INVALID_CONTENT_TYPE),
+						 ==, invalid && logging);
+				if (!logging)
+					g_assert_cmpuint (issues->len, ==, 0);
+				for (i = 0; i < issues->len; i++) {
+					GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+					if (issue->violation != GMIME_COMPLIANCE_INVALID_CONTENT_TYPE)
+						continue;
+					g_assert_cmpint (issue->stream_offset, ==, sizeof (prefix) - 1);
+					g_assert_cmpuint (issue->line_number, ==, 2);
+					g_assert_cmpuint (issue->column_number, ==, 1);
+					g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+				}
+				g_array_unref (issues);
+				g_object_unref (input);
+			}
+			g_mime_compliance_options_unref (compliance);
+		}
+	}
+	g_mime_format_options_unref (format);
+	g_free (wire);
+}
+
+static void
+test_content_type_syntax (void)
+{
+	static const struct {
+		const char *value;
+		gboolean invalid;
+		const char *mime_type, *charset;
+	} cases[] = {
+		{ "text/plain junk", TRUE, "text/plain", NULL },
+		{ "text/plain junk; charset=utf-8", TRUE, "text/plain", NULL },
+		{ "text/plain charset=utf-8", TRUE, "text/plain", NULL },
+		{ "text/plain (comment; charset=ignored) junk", TRUE, "text/plain", NULL },
+		{ "text/plain\r\n\tjunk", TRUE, "text/plain", NULL },
+		{ "\r\n\ttext/plain (comment)\r\n\tjunk; charset=utf-8", TRUE, "text/plain", NULL },
+		{ "text/plain, text/html", TRUE, "text/plain", NULL },
+		{ "text/plain\"junk\"", TRUE, "text/plain", NULL },
+		{ "text/plain", FALSE, "text/plain", NULL },
+		{ "text/plain (comment; junk)", FALSE, "text/plain", NULL },
+		{ "text/plain (comment); charset=utf-8", FALSE, "text/plain", "utf-8" },
+		{ "text/plain;\r\n\tcharset=\"utf-8\"", FALSE, "text/plain", "utf-8" },
+		{ "text/plain;", FALSE, "text/plain", NULL },
+		{ "text/plain; charset", FALSE, "text/plain", NULL },
+		{ "text/plain; charset=utf-8; broken", FALSE, "text/plain", NULL },
+		{ "text/plain; (unterminated", FALSE, "text/plain", NULL },
+		{ "text/x/y; charset=utf-8", FALSE, "text/x/y", "utf-8" },
+		{ "text/x/y; charset", FALSE, "text/x", NULL },
+		{ "text/x/y junk", TRUE, "text/x", NULL },
+		/* Keep GMime's existing fallback models for these malformed values. */
+		{ "text/plain (unterminated", TRUE, "text/plain", NULL },
+		{ "garbage; charset=utf-8", TRUE, "application/octet-stream", NULL }
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	const gsize chunks[] = { 1, 4096 };
+	guint i, mode, chunk;
+
+	testsuite_check ("Content-Type syntax diagnostics preserve models and distinguish malformed parameters");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (mode = GMIME_RFC_COMPLIANCE_LOOSE; mode <= GMIME_RFC_COMPLIANCE_LOOSER; mode++) {
+			g_mime_parser_options_set_parameter_compliance_mode (options, mode);
+			for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++)
+				check_content_type_syntax (cases[i].value, cases[i].invalid, cases[i].mime_type,
+							  cases[i].charset, options, chunks[chunk]);
+		}
+	}
+	g_mime_parser_options_unref (options);
+	testsuite_check_passed ();
+}
+
+static void
+test_parser_compliance_lifetime (void)
+{
+	static const char encoded[] = "Content-Transfer-Encoding: base64\n\n!!!!\nmore\n";
+	char *mailbox = g_strconcat ("From a\n", encoded, "From b\n", encoded, "From c\n", encoded, NULL);
+	ModelInput *input = new_input (mailbox, strlen (mailbox), 4096);
+	GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+	GArray *first = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	GArray *second = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	ParserLogger next = { .parser = parser, .issues = second };
+	ParserLogger logger = { .parser = parser, .issues = first, .next = &next, .replace = TRUE };
+	GMimeComplianceOptions *borrowed;
+	GMimeMessage *message;
+	GError *error = NULL;
+	guint i, count;
+
+	testsuite_check ("Parser logger replacements snapshot settings, reset mailbox budgets and retain data through callbacks");
+	g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
+	g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (message);
+	g_assert_cmpuint (logger.destroyed, ==, 1);
+	g_assert_cmpuint (second->len, ==, 0);
+	g_assert_cmpuint (count_parser_issue (first, GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER), >, 0);
+	for (i = 0; i < first->len; i++)
+		g_assert_cmpint (g_array_index (first, GMimeComplianceIssue, i).context, ==, GMIME_COMPLIANCE_CONTEXT_TRANSPORT);
+
+	for (i = 0, count = 0; i < 2; i++) {
+		g_array_set_size (second, 0);
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		g_object_unref (message);
+		g_assert_cmpuint (count_parser_issue (second, GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER), ==, 0);
+		g_assert_cmpuint (count_parser_issue (second, GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY), ==, 1);
+		g_assert_cmpuint (count_parser_issue (second, GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES), ==, 1);
+		if (i == 0)
+			count = second->len;
+		else
+			g_assert_cmpuint (second->len, ==, count);
+	}
+	for (i = 0; i < second->len; i++)
+		g_assert_cmpint (g_array_index (second, GMimeComplianceIssue, i).context, ==, GMIME_COMPLIANCE_CONTEXT_STORAGE);
+
+	borrowed = g_mime_parser_get_compliance_options (parser);
+	g_object_unref (input);
+	input = new_input (encoded, sizeof (encoded) - 1, 1);
+	g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) input,
+		GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+	g_assert_no_error (error);
+	g_assert_true (borrowed == g_mime_parser_get_compliance_options (parser));
+	g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, -1);
+	g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, -1);
+	g_assert_null (g_mime_parser_get_mbox_marker (parser));
+	g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
+	g_assert_cmpuint (next.destroyed, ==, 0);
+	g_array_set_size (second, 0);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (message);
+	g_assert_cmpuint (second->len, >, 0);
+	g_mime_parser_set_compliance_logger (parser, NULL, NULL, NULL);
+	g_assert_cmpuint (next.destroyed, ==, 1);
+	g_object_unref (input);
+	input = new_input (encoded, sizeof (encoded) - 1, 1);
+	g_mime_parser_init_with_stream (parser, (GMimeStream *) input);
+	g_array_set_size (second, 0);
+	message = g_mime_parser_construct_message (parser, NULL, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (message);
+	g_assert_cmpuint (second->len, ==, 0);
+	g_object_unref (parser);
+	g_assert_cmpuint (next.destroyed, ==, 1);
+	g_object_unref (input);
+	g_free (mailbox);
+	testsuite_check_passed ();
+
+	testsuite_check ("Compliance callbacks may disable reporting and release the parser during every construction operation");
+	for (i = 0; i < 3; i++) {
+		GMimeParser *weak;
+		GObject *model;
+
+		input = new_input (encoded, sizeof (encoded) - 1, 1);
+		parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+		weak = parser;
+		logger = (ParserLogger) { .parser = parser, .issues = first, .replace = TRUE, .release = TRUE };
+		g_array_set_size (first, 0);
+		g_object_add_weak_pointer (G_OBJECT (parser), (gpointer *) &weak);
+		g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+		model = construct_compliance_model (parser, NULL, i, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (model);
+		g_assert_null (weak);
+		g_assert_cmpuint (logger.destroyed, ==, 1);
+		g_assert_cmpuint (first->len, >, 1);
+		g_object_unref (model);
+		g_object_unref (input);
+	}
+	g_array_unref (first);
+	g_array_unref (second);
+	testsuite_check_passed ();
+}
+
+static void
+test_parser_compliance_errors (void)
+{
+	static const char wire[] = "Subject: a\nContent-Transfer-Encoding: base64\n\n!!!!\n";
+	GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+	guint operation, offset;
+
+	testsuite_check ("Parser compliance preserves sticky I/O errors and settings through failed and successful input replacement");
+	for (operation = 0; operation < 3; operation++) {
+		gsize length = operation == 0 ? sizeof (wire) - 6 : sizeof (wire) - 1;
+
+		for (offset = 0; offset < length; offset++) {
+			ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+			ModelInput *replacement = new_input (wire, sizeof (wire) - 1, 1);
+			GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+			ParserLogger logger = { .parser = parser, .issues = issues };
+			GObject *model;
+			GError *error = NULL;
+			guint count, reads;
+
+			g_array_set_size (issues, 0);
+			input->fail_after = offset;
+			g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+			g_assert_null (construct_compliance_model (parser, NULL, operation, &error));
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			count = issues->len;
+			reads = input->reads;
+			replacement->fail_seek = TRUE;
+			g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
+				GMIME_FORMAT_MBOX, GMIME_CONTENT_STORAGE_SOURCE, &error));
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MESSAGE);
+			g_assert_null (construct_compliance_model (parser, NULL, operation, &error));
+			g_assert_error (error, GMIME_ERROR, EIO);
+			g_clear_error (&error);
+			g_assert_cmpuint (issues->len, ==, count);
+			g_assert_cmpuint (input->reads, ==, reads);
+			g_assert_cmpuint (logger.destroyed, ==, 0);
+			replacement->fail_seek = FALSE;
+			g_mime_parser_init_with_stream (parser, (GMimeStream *) replacement);
+			g_array_set_size (issues, 0);
+			model = construct_compliance_model (parser, NULL, operation, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (model);
+			g_assert_cmpuint (issues->len, >, 0);
+			g_object_unref (model);
+			g_object_unref (parser);
+			g_assert_cmpuint (logger.destroyed, ==, 1);
+			g_object_unref (input);
+			g_object_unref (replacement);
+		}
+		for (offset = 0; offset < 2; offset++) {
+			const char *invalid = offset ? wire : "invalid";
+			int code = offset ? GMIME_ERROR_HEADER_TOO_LONG : GMIME_ERROR_PARSE_ERROR;
+			GMimeStream *input = g_mime_stream_mem_new_with_buffer (invalid, strlen (invalid));
+			GMimeParser *parser = g_mime_parser_new_with_stream (input);
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			ParserLogger logger = { .parser = parser, .issues = issues };
+			GError *error = NULL;
+
+			if (offset)
+				g_mime_parser_options_set_max_header_length (options, 1);
+			g_mime_parser_set_compliance_logger (parser, parser_log_issue, &logger, parser_logger_destroyed);
+			g_assert_null (construct_compliance_model (parser, options, operation, &error));
+			g_assert_error (error, GMIME_ERROR, code);
+			g_clear_error (&error);
+			g_assert_cmpuint (logger.destroyed, ==, 0);
+			g_object_unref (parser);
+			g_assert_cmpuint (logger.destroyed, ==, 1);
+			g_mime_parser_options_unref (options);
+			g_object_unref (input);
+		}
+	}
+	g_array_unref (issues);
+	testsuite_check_passed ();
+}
+
+#ifdef ENABLE_CRYPTO
+static void
+test_gpgme_adapter_errors (void)
+{
+	guint mode;
+
+	gpgme_check_version (NULL);
+	testsuite_check ("GPGME stream adapters propagate short I/O, EOF and missing errno failures");
+	for (mode = 0; mode < 3; mode++) {
+		ModelInput *input = new_input ("data", 4, 1);
+		ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+		gpgme_data_t data;
+		GError *error = NULL;
+		char buffer[4];
+
+		input->fail_after = 0;
+		input->unset_errno = mode == 1;
+		input->zero_read = mode == 2;
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) input, &data, &error));
+		g_assert_no_error (error);
+		errno = 0;
+		g_assert_cmpint (gpgme_data_read (data, buffer, sizeof (buffer)), ==, -1);
+		g_assert_cmpint (errno, ==, EIO);
+		gpgme_data_release (data);
+		g_object_unref (input);
+
+		output->limit = 0;
+		output->unset_errno = mode == 1;
+		output->zero_write = mode == 2;
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) output, &data, &error));
+		g_assert_no_error (error);
+		errno = 0;
+		g_assert_cmpint (gpgme_data_write (data, "data", 4), ==, -1);
+		g_assert_cmpint (errno, ==, EIO);
+		gpgme_data_release (data);
+		g_object_unref (output);
+	}
+	{
+		ModelInput *input = new_input ("data", 4, 1);
+		ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+		gpgme_data_t data;
+		GError *error = NULL;
+		char buffer[4];
+		guint i;
+
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) input, &data, &error));
+		for (i = 0; i < 4; i++) {
+			g_assert_cmpint (gpgme_data_read (data, buffer, sizeof (buffer)), ==, 1);
+			g_assert_cmpint (buffer[0], ==, "data"[i]);
+		}
+		g_assert_cmpint (gpgme_data_read (data, buffer, sizeof (buffer)), ==, 0);
+		g_assert_cmpint (gpgme_data_seek (data, 0, SEEK_SET), ==, 0);
+		input->fail_seek = TRUE;
+		errno = 0;
+		g_assert_cmpint (gpgme_data_seek (data, 0, SEEK_SET), ==, -1);
+		g_assert_cmpint (errno, ==, EIO);
+		gpgme_data_release (data);
+		g_object_unref (input);
+		output->chunk = 1;
+		g_assert_true (g_mime_gpgme_data_new ((GMimeStream *) output, &data, &error));
+		g_assert_cmpint (gpgme_data_write (data, "data", 4), ==, 1);
+		g_assert_cmpuint (output->written, ==, 1);
+		gpgme_data_release (data);
+		g_object_unref (output);
+		g_assert_no_error (error);
+	}
+	testsuite_check_passed ();
+}
+
+static GByteArray *verify_content_bytes, *verify_signature_bytes;
+static guint verify_calls;
+
+static GByteArray *
+capture_verify_data (gpgme_data_t data)
+{
+	GByteArray *bytes = g_byte_array_new ();
+	char buffer[127];
+	ssize_t nread;
+
+	g_assert_cmpint (gpgme_data_seek (data, 0, SEEK_CUR), ==, 0);
+	while ((nread = gpgme_data_read (data, buffer, sizeof (buffer))) > 0)
+		g_byte_array_append (bytes, (const guint8 *) buffer, nread);
+	g_assert_cmpint (nread, ==, 0);
+	return bytes;
+}
+
+/* The private test adapter calls this instead of native verification. Capture
+ * its exact inputs, then fail: these synthetic signatures never authenticate. */
+gpgme_error_t
+gmime_test_op_verify (gpgme_ctx_t ctx, gpgme_data_t signature, gpgme_data_t signed_text,
+		      gpgme_data_t plaintext)
+{
+	g_assert_cmpint (gpgme_get_offline (ctx), ==, 1);
+	verify_calls++;
+	g_clear_pointer (&verify_content_bytes, g_byte_array_unref);
+	g_clear_pointer (&verify_signature_bytes, g_byte_array_unref);
+	verify_content_bytes = capture_verify_data (signed_text);
+	verify_signature_bytes = capture_verify_data (signature);
+	return gpgme_error (GPG_ERR_NO_DATA);
+}
+
+typedef struct {
+	GMimeMultipart parent_instance;
+	GMimeStream *output;
+} ModelVerifyMultipart;
+
+typedef GMimeMultipartClass ModelVerifyMultipartClass;
+
+G_DEFINE_TYPE (ModelVerifyMultipart, model_verify_multipart, GMIME_TYPE_MULTIPART)
+
+static ssize_t
+model_verify_multipart_write (GMimeEntity *entity, GMimeFormatOptions *options,
+			      gboolean content_only, GMimeStream *stream)
+{
+	ModelVerifyMultipart *multipart = (ModelVerifyMultipart *) entity;
+
+	/* Inject output failures into the real writer with verification options. */
+	return GMIME_ENTITY_CLASS (model_verify_multipart_parent_class)->write_to_stream (
+		entity, options, content_only, multipart->output ? multipart->output : stream);
+}
+
+static void
+model_verify_multipart_class_init (ModelVerifyMultipartClass *klass)
+{
+	GMIME_ENTITY_CLASS (klass)->write_to_stream = model_verify_multipart_write;
+}
+
+static void
+model_verify_multipart_init (ModelVerifyMultipart *multipart)
+{
+}
+
+static GMimeMultipartSigned *
+new_model_signed (GMimeEntity *content)
+{
+	GMimeMultipartSigned *signed_part = g_mime_multipart_signed_new ();
+	GMimePart *signature = g_mime_part_new_with_type ("application", "pgp-signature");
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("c2lnAGJ5dGVz", 12);
+	GMimeContent *wrapper = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BASE64);
+
+	g_mime_part_set_content (signature, wrapper);
+	g_mime_entity_set_content_type_parameter ((GMimeEntity *) signed_part, "protocol", "application/pgp-signature");
+	g_mime_multipart_add ((GMimeMultipart *) signed_part, content);
+	g_mime_multipart_add ((GMimeMultipart *) signed_part, (GMimeEntity *) signature);
+	g_object_unref (wrapper);
+	g_object_unref (stream);
+	g_object_unref (signature);
+	return signed_part;
+}
+
+static GByteArray *
+serialize_verify_content (GMimeEntity *entity)
+{
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	GByteArray *bytes;
+	ssize_t written;
+
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	written = g_mime_entity_write_to_stream (entity, options, stream);
+	g_assert_cmpint (written, >=, 0);
+	bytes = g_byte_array_ref (g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream));
+	g_assert_cmpint (written, ==, bytes->len);
+	g_object_unref (stream);
+	g_mime_format_options_unref (options);
+	return bytes;
+}
+
+static void
+test_signature_markers (void)
+{
+	static const char wire[] = "Content-Type: multipart/x-model-verify; boundary=b\r\n\r\n"
+		"--b\r\nContent-Type: multipart/signed; boundary=c\r\n\r\n--c\r\n"
+		"Content-Type: application/octet-stream\r\nContent-Transfer-Encoding: binary\r\n\r\n"
+		"A\0B\nC\r\n--c--\r\n--b--\r\n";
+	static const char trailing[] = "Content-Type: multipart/x-model-verify; boundary=b\r\n\r\n"
+		"--b\r\n\r\nbody\r\n--b";
+	static const struct {
+		const char *raw, *canonical;
+		gsize raw_length, canonical_length;
+	} markers[] = {
+		{ "", "", 0, 0 },
+		{ "\n", "\r\n", 1, 2 },
+		{ "\r\n", "\r\n", 2, 2 },
+		{ "--b\r", "--b\r", 4, 4 },
+		{ "--b", "--b", 3, 3 },
+		{ "--b\n--b\r\n--b\n", "--b\r\n--b\r\n--b\r\n", 13, 15 },
+		{ "--b\0x\n--b\r\r\n", "--b\0x\r\n--b\r\r\n", 12, 13 },
+		{ "\n--b \t\n--b--", "\r\n--b \t\r\n--b--", 12, 14 }
+	};
+	guint slot_index, i, mode;
+
+	gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
+	g_mime_entity_register_type ("multipart", "x-model-verify", model_verify_multipart_get_type ());
+	testsuite_check ("Verification canonicalizes only raw marker LF and preserves binary data and ordinary output");
+	for (slot_index = 0; slot_index < 3; slot_index++) {
+		for (i = 0; i < G_N_ELEMENTS (markers); i++) {
+			for (mode = 0; mode < 2; mode++) {
+				const char *text = slot_index == 2 ? trailing : wire;
+				gsize length = slot_index == 2 ? sizeof (trailing) - 1 : sizeof (wire) - 1;
+				ModelInput *input = new_input (text, length, mode ? 4096 : 1);
+				GMimeParser *parser;
+				GMimeEntity *entity;
+				GMimeMultipartSigned *signed_part;
+				gpgme_verify_result_t signatures = NULL;
+				GMimeMultipart *multipart;
+				GByteArray *expected, *before, *after;
+				GBytes **slot;
+				GError *error = NULL;
+
+				parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+					GMIME_FORMAT_MESSAGE, mode ? GMIME_CONTENT_STORAGE_SOURCE :
+					GMIME_CONTENT_STORAGE_MEMORY, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (parser);
+				entity = g_mime_parser_construct_part (parser, NULL, &error);
+				g_assert_no_error (error);
+				g_assert_true (GMIME_IS_MULTIPART (entity));
+				multipart = (GMimeMultipart *) entity;
+				GMimeMultipartPrivate *priv = _g_mime_multipart_get_private (multipart);
+
+				slot = slot_index == 0 ? (GBytes **) &priv->raw_boundaries->pdata[0] :
+					slot_index == 1 ? &priv->raw_end_boundary : &priv->raw_trailing_boundary;
+				g_assert_nonnull (*slot);
+				g_bytes_unref (*slot);
+				*slot = g_bytes_new_static (markers[i].canonical, markers[i].canonical_length);
+				expected = serialize_verify_content (entity);
+				g_bytes_unref (*slot);
+				*slot = g_bytes_new_static (markers[i].raw, markers[i].raw_length);
+				before = serialize_verify_content (entity);
+				signed_part = new_model_signed (entity);
+				g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+				g_assert_nonnull (error);
+				g_clear_error (&error);
+				g_assert_null (signatures);
+				g_assert_cmpmem (verify_content_bytes->data, verify_content_bytes->len, expected->data, expected->len);
+				g_assert_cmpmem (verify_signature_bytes->data, verify_signature_bytes->len, "sig\0bytes", 9);
+
+				after = serialize_verify_content (entity);
+				g_assert_cmpmem (after->data, after->len, before->data, before->len);
+				g_byte_array_unref (after);
+				g_byte_array_unref (before);
+				g_byte_array_unref (expected);
+
+				g_object_unref (signed_part);
+				g_object_unref (entity);
+				g_object_unref (parser);
+				g_object_unref (input);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Verification preserves mixed-newline source bodies without bypassing transcoding");
+	for (mode = 0; mode < 10; mode++) {
+		static const char text[] = "Content-Type: text/plain\n\none\nsecond\r\nthird\r";
+		static const char raw[] = "Content-Type: text/plain\r\n\r\none\nsecond\r\nthird\r";
+		ModelInput *input = new_input (text, sizeof (text) - 1, 1);
+		GMimeParser *parser = g_mime_parser_new_with_stream ((GMimeStream *) input);
+		GError *error = NULL;
+		GMimeEntity *entity = g_mime_parser_construct_part (parser, NULL, &error);
+		GMimeContent *content;
+		GMimeMultipartSigned *signed_part;
+		gpgme_verify_result_t signatures = NULL;
+		GByteArray *expected, *after;
+
+		g_assert_no_error (error);
+		g_assert_true (GMIME_IS_PART (entity));
+		content = g_mime_part_get_content ((GMimePart *) entity);
+		if (mode % 5 == 0)
+			g_mime_content_clear_newline_format (content);
+		else if (mode % 5 < 4)
+			g_mime_content_set_newline_format (content, (GMimeNewLineFormat) (mode % 5 - 1));
+		if (mode >= 5)
+			g_mime_part_set_content_encoding ((GMimePart *) entity, GMIME_CONTENT_ENCODING_BASE64);
+		expected = serialize_verify_content (entity);
+		signed_part = new_model_signed (entity);
+		g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+		g_assert_nonnull (error);
+		g_clear_error (&error);
+		g_assert_null (signatures);
+		if (mode == 3 || mode == 4)
+			g_assert_cmpmem (verify_content_bytes->data, verify_content_bytes->len, raw, sizeof (raw) - 1);
+		else
+			g_assert_cmpmem (verify_content_bytes->data, verify_content_bytes->len, expected->data, expected->len);
+		after = serialize_verify_content (entity);
+		g_assert_cmpmem (after->data, after->len, expected->data, expected->len);
+		g_byte_array_unref (after);
+		g_byte_array_unref (expected);
+
+		g_object_unref (signed_part);
+		g_object_unref (entity);
+		g_object_unref (parser);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Verification aborts on canonical marker write failures, including short and zero writes");
+	{
+		ModelVerifyMultipart *multipart = (ModelVerifyMultipart *) parse_multipart (
+			"Content-Type: multipart/x-model-verify; boundary=b\n\n--b\n--b\n\nbody\n--b--\n");
+		GMimeMultipartSigned *signed_part = new_model_signed ((GMimeEntity *) multipart);
+		gpgme_verify_result_t signatures = NULL;
+		GError *error = NULL;
+		gsize offset, length, marker_start, marker_end;
+		const char *marker;
+
+		g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+		g_assert_nonnull (error);
+		g_clear_error (&error);
+		g_assert_null (signatures);
+		length = verify_content_bytes->len;
+		marker = g_strstr_len ((const char *) verify_content_bytes->data, length, "\r\n\r\n");
+		g_assert_nonnull (marker);
+		marker_start = marker - (const char *) verify_content_bytes->data + 4;
+		marker_end = marker_start + strlen ("--b\r\n--b\r\n");
+
+		for (mode = 0; mode < 3; mode++) {
+			for (offset = 0; offset <= length; offset++) {
+				ModelOutput *output;
+				guint calls;
+
+				if (mode == 2 && (offset < marker_start || offset >= marker_end))
+					continue;
+				output = g_object_new (model_output_get_type (), NULL);
+				calls = verify_calls;
+
+				output->limit = offset;
+				output->chunk = mode ? 1 : G_MAXSIZE;
+				output->short_start = marker_start;
+				output->short_end = marker_end;
+				output->zero_write = mode == 2;
+				multipart->output = (GMimeStream *) output;
+				g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+				if (offset < length) {
+					g_assert_null (signatures);
+					g_assert_error (error, GMIME_ERROR, EIO);
+					g_assert_cmpuint (verify_calls, ==, calls);
+					g_clear_error (&error);
+				} else {
+					g_assert_nonnull (error);
+					g_clear_error (&error);
+					g_assert_null (signatures);
+					g_assert_cmpuint (verify_calls, ==, calls + 1);
+					g_assert_cmpuint (output->written, ==, length);
+
+				}
+				multipart->output = NULL;
+				g_object_unref (output);
+			}
+		}
+		g_object_unref (signed_part);
+		g_object_unref (multipart);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Verification rejects missing signatures and propagates source failures before invoking crypto");
+	for (mode = 0; mode < 14; mode++) {
+		GMimePart *part = g_mime_part_new ();
+		GMimeMultipartSigned *signed_part = new_model_signed ((GMimeEntity *) part);
+		GMimeEntity *signature = g_mime_multipart_get_part ((GMimeMultipart *) signed_part, 1);
+		ModelInput *input = new_input ("data", 4, 1);
+		GMimeContent *content = g_mime_content_new_with_stream ((GMimeStream *) input, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+		gpgme_verify_result_t signatures = NULL;
+		GError *error = NULL;
+		guint calls = verify_calls;
+		int code = GMIME_ERROR_PARSE_ERROR;
+
+		if (mode < 2) {
+			GMimeEntity *invalid = mode ? (GMimeEntity *) g_mime_multipart_new () :
+				(GMimeEntity *) g_mime_part_new ();
+			GMimeEntityPrivate *signature_priv = _g_mime_entity_get_private (signature);
+
+			g_mime_entity_set_content_type (invalid, signature_priv->content_type);
+			g_object_unref (g_mime_multipart_replace ((GMimeMultipart *) signed_part, 1, invalid));
+			g_object_unref (invalid);
+		} else {
+			guint fault = (mode - 2) / 2;
+
+			if (fault < 2)
+				input->fail_after = 1;
+			else
+				input->fail_reset_after = (fault - 2) / 2;
+			input->unset_errno = (mode & 1) != 0;
+			g_mime_part_set_content ((fault & 1) ? (GMimePart *) signature : part, content);
+			code = input->unset_errno ? GMIME_ERROR_GENERAL : EIO;
+		}
+		g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &signatures, &error));
+		g_assert_null (signatures);
+		g_assert_error (error, GMIME_ERROR, code);
+		g_assert_cmpuint (verify_calls, ==, calls);
+		g_clear_error (&error);
+		g_object_unref (content);
+		g_object_unref (input);
+		g_object_unref (signed_part);
+		g_object_unref (part);
+	}
+	testsuite_check_passed ();
+	g_clear_pointer (&verify_content_bytes, g_byte_array_unref);
+	g_clear_pointer (&verify_signature_bytes, g_byte_array_unref);
+	gpgme_release (ctx);
+}
+#endif
+
+
+static GByteArray *
+serialize_writer (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only)
+{
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	GByteArray *bytes;
+	ssize_t written;
+
+	written = content_only ? g_mime_entity_write_content_to_stream (entity, options, stream) :
+		g_mime_entity_write_to_stream (entity, options, stream);
+	bytes = g_byte_array_ref (g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream));
+	g_assert_cmpint (written, ==, bytes->len);
+	g_object_unref (stream);
+	return bytes;
+}
+
+static void
+test_writer_depth (void)
+{
+	const guint depth = 8192;
+	guint kind, dos, i;
+
+	testsuite_check ("Iterative writers preserve exact bytes through deep multipart, message and mixed graphs");
+	for (kind = 0; kind < 3; kind++) {
+		for (dos = 0; dos < 2; dos++) {
+			GMimeFormatOptions *options = g_mime_format_options_new ();
+			GMimePart *leaf = g_mime_part_new_with_type ("application", "octet-stream");
+			GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("A\0B\nC\rD", 7);
+			GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+			GPtrArray *entities = g_ptr_array_new ();
+			GByteArray *flags = g_byte_array_new ();
+			GByteArray *leaf_bytes, *bytes;
+			GMimeEntity *root = (GMimeEntity *) leaf;
+			ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+			const char *newline = dos ? "\r\n" : "\n";
+			char *multipart_prefix, *message_prefix, *ending;
+			GString *expected = g_string_new (NULL);
+			gsize header_length;
+
+			g_mime_format_options_set_newline_format (options, dos ? GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			g_mime_part_set_content (leaf, content);
+			g_mime_part_set_content_encoding (leaf, GMIME_CONTENT_ENCODING_BINARY);
+			g_object_unref (content);
+			g_object_unref (stream);
+			g_ptr_array_add (entities, leaf);
+			leaf_bytes = serialize_writer (root, options, FALSE);
+			multipart_prefix = g_strdup_printf ("Content-Type: multipart/mixed; boundary=deep%s%s--deep%s",
+							  newline, newline, newline);
+			message_prefix = g_strdup_printf ("Content-Type: message/rfc822%s%sMIME-Version: 1.0%s",
+							newline, newline, newline);
+			ending = g_strdup_printf ("%s--deep--%s", newline, newline);
+			for (i = 0; i < depth; i++) {
+				if (kind == 0 || (kind == 2 && (i & 1))) {
+					GMimeMultipart *multipart = g_mime_multipart_new ();
+
+					g_mime_multipart_set_boundary (multipart, "deep");
+					g_mime_multipart_add (multipart, root);
+					root = (GMimeEntity *) multipart;
+				} else {
+					GMimeMessage *message = g_mime_message_new (FALSE);
+
+					g_mime_message_set_mime_part (message, root);
+					g_ptr_array_add (entities, message);
+					root = (GMimeEntity *) g_mime_message_part_new_with_message ("rfc822", message);
+				}
+				g_ptr_array_add (entities, root);
+			}
+			for (i = 0; i < entities->len; i++) {
+				GMimeEntityPrivate *entities_priv = _g_mime_entity_get_private (((GMimeEntity *) entities->pdata[i]));
+				guint8 ensure = entities_priv->ensure_newline;
+
+				g_byte_array_append (flags, &ensure, 1);
+			}
+			for (i = depth; i > 0; i--)
+				g_string_append (expected, kind == 0 || (kind == 2 && ((i - 1) & 1)) ?
+						 multipart_prefix : message_prefix);
+			g_string_append_len (expected, (const char *) leaf_bytes->data, leaf_bytes->len);
+			for (i = 0; i < depth; i++)
+				if (kind == 0 || (kind == 2 && (i & 1)))
+					g_string_append (expected, ending);
+			bytes = serialize_writer (root, options, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
+			g_byte_array_unref (bytes);
+			header_length = strlen (GMIME_IS_MULTIPART (root) ?
+				"Content-Type: multipart/mixed; boundary=deep" : "Content-Type: message/rfc822") + 2 * strlen (newline);
+			bytes = serialize_writer (root, options, TRUE);
+			g_assert_cmpmem (bytes->data, bytes->len, expected->str + header_length, expected->len - header_length);
+			g_byte_array_unref (bytes);
+			output->limit = expected->len / 2;
+			errno = 0;
+			g_assert_cmpint (g_mime_entity_write_to_stream (root, options, (GMimeStream *) output), ==, -1);
+			g_assert_cmpint (errno, ==, EIO);
+			for (i = 0; i < entities->len; i++) {
+				GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) entities->pdata[i]);
+
+				g_assert_cmpint (priv->ensure_newline, ==, flags->data[i]);
+			}
+
+			for (i = entities->len; i > 0; i--)
+				g_object_unref (entities->pdata[i - 1]);
+			g_ptr_array_unref (entities);
+			g_byte_array_unref (flags);
+			g_byte_array_unref (leaf_bytes);
+			g_object_unref (output);
+			g_mime_format_options_unref (options);
+			g_string_free (expected, TRUE);
+			g_free (multipart_prefix);
+			g_free (message_prefix);
+			g_free (ending);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	guint objects, destroyed, containers, entered, exited, active, max_active;
+} ModelDestruction;
+
+typedef struct {
+	GMimeMultipart parent_instance;
+	ModelDestruction *state;
+} ModelDestructionMultipart;
+
+typedef GMimeMultipartClass ModelDestructionMultipartClass;
+
+typedef struct {
+	GMimeMessagePart parent_instance;
+	ModelDestruction *state;
+} ModelDestructionMessagePart;
+
+typedef GMimeMessagePartClass ModelDestructionMessagePartClass;
+
+typedef struct {
+	GMimeMessage parent_instance;
+	ModelDestruction *state;
+} ModelDestructionMessage;
+
+typedef GMimeMessageClass ModelDestructionMessageClass;
+
+G_DEFINE_TYPE (ModelDestructionMultipart, model_destruction_multipart, GMIME_TYPE_MULTIPART)
+G_DEFINE_TYPE (ModelDestructionMessagePart, model_destruction_message_part, GMIME_TYPE_MESSAGE_PART)
+G_DEFINE_TYPE (ModelDestructionMessage, model_destruction_message, GMIME_TYPE_MESSAGE)
+
+static void
+model_destruction_finalize (GObject *object, ModelDestruction *state, GObjectClass *parent)
+{
+	state->entered++;
+	state->active++;
+	state->max_active = MAX (state->max_active, state->active);
+	g_assert_cmpuint (state->active, <=, 2);
+	parent->finalize (object);
+	state->active--;
+	state->exited++;
+}
+
+static void
+model_destruction_multipart_finalize (GObject *object)
+{
+	ModelDestructionMultipart *multipart = (ModelDestructionMultipart *) object;
+
+	model_destruction_finalize (object, multipart->state, G_OBJECT_CLASS (model_destruction_multipart_parent_class));
+}
+
+static void
+model_destruction_multipart_class_init (ModelDestructionMultipartClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_destruction_multipart_finalize;
+}
+
+static void
+model_destruction_multipart_init (ModelDestructionMultipart *multipart)
+{
+}
+
+static void
+model_destruction_message_part_finalize (GObject *object)
+{
+	ModelDestructionMessagePart *part = (ModelDestructionMessagePart *) object;
+
+	model_destruction_finalize (object, part->state, G_OBJECT_CLASS (model_destruction_message_part_parent_class));
+}
+
+static void
+model_destruction_message_part_class_init (ModelDestructionMessagePartClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_destruction_message_part_finalize;
+}
+
+static void
+model_destruction_message_part_init (ModelDestructionMessagePart *part)
+{
+}
+
+static void
+model_destruction_message_finalize (GObject *object)
+{
+	ModelDestructionMessage *message = (ModelDestructionMessage *) object;
+
+	model_destruction_finalize (object, message->state, G_OBJECT_CLASS (model_destruction_message_parent_class));
+}
+
+static void
+model_destruction_message_class_init (ModelDestructionMessageClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_destruction_message_finalize;
+}
+
+static void
+model_destruction_message_init (ModelDestructionMessage *message)
+{
+}
+
+static void
+model_destruction_notify (gpointer data, GObject *object)
+{
+	ModelDestruction *state = data;
+
+	state->destroyed++;
+}
+
+static void
+track_destruction (ModelDestruction *state, gpointer object)
+{
+	state->objects++;
+	g_object_weak_ref (object, model_destruction_notify, state);
+}
+
+static gpointer
+new_destruction_container (GType type, ModelDestruction *state)
+{
+	GObject *object = g_object_new (type, NULL);
+	GMimeContentType *content_type = NULL;
+
+	if (type == model_destruction_multipart_get_type ()) {
+		((ModelDestructionMultipart *) object)->state = state;
+		content_type = g_mime_content_type_new ("multipart", "mixed");
+	} else if (type == model_destruction_message_part_get_type ()) {
+		((ModelDestructionMessagePart *) object)->state = state;
+		content_type = g_mime_content_type_new ("message", "rfc822");
+	} else {
+		g_assert_cmpuint (type, ==, model_destruction_message_get_type ());
+		((ModelDestructionMessage *) object)->state = state;
+	}
+	if (content_type) {
+		g_mime_entity_set_content_type ((GMimeEntity *) object, content_type);
+		g_object_unref (content_type);
+	}
+	if (GMIME_IS_MULTIPART (object))
+		g_mime_multipart_set_boundary ((GMimeMultipart *) object, "lifetime");
+	state->containers++;
+	track_destruction (state, object);
+	return object;
+}
+
+static GMimeEntity *
+new_destruction_tree (guint kind, guint depth, ModelDestruction *state)
+{
+	GMimePart *leaf = g_mime_part_new_with_type ("application", "octet-stream");
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("A\0B\nC\rD", 7);
+	GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+	GMimeEntity *root = (GMimeEntity *) leaf;
+	guint i;
+
+	track_destruction (state, leaf);
+	track_destruction (state, content);
+	track_destruction (state, stream);
+	g_mime_part_set_content (leaf, content);
+	g_mime_part_set_content_encoding (leaf, GMIME_CONTENT_ENCODING_BINARY);
+	g_object_unref (content);
+	g_object_unref (stream);
+	for (i = 0; i < depth; i++) {
+		GMimeEntity *child = root;
+
+		if (kind == 0 || (kind == 2 && (i & 1))) {
+			GMimeMultipart *multipart = new_destruction_container (model_destruction_multipart_get_type (), state);
+
+			g_mime_multipart_add (multipart, child);
+			root = (GMimeEntity *) multipart;
+		} else {
+			GMimeMessage *message = new_destruction_container (model_destruction_message_get_type (), state);
+			GMimeMessagePart *part = new_destruction_container (model_destruction_message_part_get_type (), state);
+
+			g_mime_message_set_mime_part (message, child);
+			g_mime_message_part_set_message (part, message);
+			g_object_unref (message);
+			root = (GMimeEntity *) part;
+		}
+		g_object_unref (child);
+	}
+	return root;
+}
+
+static void
+assert_destruction_complete (ModelDestruction *state)
+{
+	g_assert_cmpuint (state->destroyed, ==, state->objects);
+	g_assert_cmpuint (state->entered, ==, state->containers);
+	g_assert_cmpuint (state->exited, ==, state->containers);
+	g_assert_cmpuint (state->active, ==, 0);
+	g_assert_cmpuint (state->max_active, <=, 2);
+}
+
+static void
+test_destruction_depth (void)
+{
+	static const guint depths[] = { 10000, 100000, 20000 };
+	guint kind, message_root;
+
+	testsuite_check ("Root-only deep MIME destruction bounds subclass finalizer nesting and releases every object");
+	for (kind = 0; kind < G_N_ELEMENTS (depths); kind++) {
+		for (message_root = 0; message_root < 2; message_root++) {
+			ModelDestruction state = { 0 };
+			GMimeEntity *root = new_destruction_tree (kind, depths[kind], &state);
+
+			if (message_root) {
+				GMimeMessage *message = new_destruction_container (model_destruction_message_get_type (), &state);
+
+				g_mime_message_set_mime_part (message, root);
+				g_object_unref (root);
+				root = (GMimeEntity *) message;
+			}
+			g_assert_cmpuint (state.destroyed, ==, 0);
+			g_object_unref (root);
+			assert_destruction_complete (&state);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_destruction_ownership (void)
+{
+	GType types[] = { model_destruction_multipart_get_type (), model_destruction_message_get_type (),
+			  model_destruction_message_part_get_type () };
+	guint kind, retained;
+
+	testsuite_check ("Destruction preserves retained and shared subtrees, including duplicate child references");
+	for (kind = 0; kind < 3; kind++) {
+		for (retained = 0; retained < 2; retained++) {
+			ModelDestruction state = { 0 };
+			GMimeEntity *root = new_destruction_tree (kind, 128, &state);
+			GMimeEntity *first = new_destruction_container (types[kind], &state);
+			GMimeEntity *second = new_destruction_container (types[kind], &state);
+			GMimeMultipart *holder = g_mime_multipart_new ();
+			GByteArray *before, *after;
+
+			if (kind == 0) {
+				g_mime_multipart_add ((GMimeMultipart *) first, root);
+				g_mime_multipart_add ((GMimeMultipart *) first, root);
+				g_mime_multipart_add ((GMimeMultipart *) second, root);
+			} else if (kind == 1) {
+				g_mime_message_set_mime_part ((GMimeMessage *) first, root);
+				g_mime_message_set_mime_part ((GMimeMessage *) second, root);
+			} else {
+				GMimeMessage *message = new_destruction_container (model_destruction_message_get_type (), &state);
+
+				g_mime_message_set_mime_part (message, root);
+				g_object_unref (root);
+				root = (GMimeEntity *) message;
+				g_mime_message_part_set_message ((GMimeMessagePart *) first, message);
+				g_mime_message_part_set_message ((GMimeMessagePart *) second, message);
+			}
+			before = serialize_writer (root, NULL, FALSE);
+			if (!retained)
+				g_object_unref (root);
+			g_mime_multipart_add (holder, first);
+			g_object_unref (first);
+			g_object_unref (holder);
+			g_assert_cmpuint (state.destroyed, ==, 1);
+			if (kind == 0)
+				g_assert_true (g_mime_multipart_get_part ((GMimeMultipart *) second, 0) == root);
+			else if (kind == 1)
+				g_assert_true (g_mime_message_get_mime_part ((GMimeMessage *) second) == root);
+			else
+				g_assert_true ((GMimeEntity *) g_mime_message_part_get_message ((GMimeMessagePart *) second) == root);
+			after = serialize_writer (root, NULL, FALSE);
+			g_assert_cmpmem (before->data, before->len, after->data, after->len);
+			g_byte_array_unref (after);
+			g_object_unref (second);
+			if (retained) {
+				g_assert_cmpuint (state.destroyed, ==, 2);
+				after = serialize_writer (root, NULL, FALSE);
+				g_assert_cmpmem (before->data, before->len, after->data, after->len);
+				g_byte_array_unref (after);
+				g_object_unref (root);
+			}
+			g_byte_array_unref (before);
+			assert_destruction_complete (&state);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Clearing, removing and replacing deep children completes destruction before returning");
+	for (kind = 0; kind < 4; kind++) {
+		ModelDestruction state = { 0 };
+		GMimeEntity *root = new_destruction_tree (2, 2048, &state);
+		GObject *holder;
+
+		if (kind < 2) {
+			GMimeMultipart *multipart = g_mime_multipart_new ();
+
+			g_mime_multipart_add (multipart, root);
+			g_object_unref (root);
+			if (kind == 0)
+				g_mime_multipart_clear (multipart);
+			else
+				g_assert_true (g_mime_multipart_remove (multipart, root));
+			g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 0);
+			holder = (GObject *) multipart;
+		} else if (kind == 2) {
+			GMimeMessage *message = g_mime_message_new (FALSE);
+			GMimePart *replacement = g_mime_part_new ();
+
+			g_mime_message_set_mime_part (message, root);
+			g_object_unref (root);
+			g_mime_message_set_mime_part (message, (GMimeEntity *) replacement);
+			g_assert_true (g_mime_message_get_mime_part (message) == (GMimeEntity *) replacement);
+			g_object_unref (replacement);
+			holder = (GObject *) message;
+		} else {
+			GMimeMessage *message = g_mime_message_new (FALSE);
+			GMimeMessagePart *part = g_mime_message_part_new_with_message ("rfc822", message);
+
+			g_mime_message_set_mime_part (message, root);
+			g_object_unref (root);
+			g_object_unref (message);
+			g_mime_message_part_set_message (part, NULL);
+			g_assert_null (g_mime_message_part_get_message (part));
+			holder = (GObject *) part;
+		}
+		assert_destruction_complete (&state);
+		g_object_unref (holder);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+destruction_reenter (gpointer data, GObject *object)
+{
+	GMimeEntity **other = data;
+
+	g_assert_nonnull (*other);
+	g_object_unref (*other);
+	*other = NULL;
+}
+
+static void
+test_destruction_reentrancy (void)
+{
+	ModelDestruction state = { 0 };
+	GMimeEntity *root = new_destruction_tree (0, 2048, &state);
+	GMimeEntity *other = new_destruction_tree (2, 2048, &state);
+	GMimeEntity *child = g_mime_multipart_get_part ((GMimeMultipart *) root, 0);
+	GType types[] = { model_destruction_multipart_get_type (), model_destruction_message_part_get_type (),
+			  model_destruction_message_get_type () };
+	guint i;
+
+	testsuite_check ("Reentrant weak notifications and later independent releases drain all pending children");
+	g_object_weak_ref (G_OBJECT (child), destruction_reenter, &other);
+	g_object_unref (root);
+	g_assert_null (other);
+	assert_destruction_complete (&state);
+	root = new_destruction_tree (2, 2048, &state);
+	g_object_unref (root);
+	for (i = 0; i < G_N_ELEMENTS (types); i++)
+		g_object_unref (new_destruction_container (types[i], &state));
+	assert_destruction_complete (&state);
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMutex mutex;
+	GCond cond;
+	guint waiting;
+} DestructionBarrier;
+
+static void
+destruction_barrier (gpointer data, GObject *object)
+{
+	DestructionBarrier *barrier = data;
+	gint64 deadline = g_get_monotonic_time () + 30 * G_TIME_SPAN_SECOND;
+
+	g_mutex_lock (&barrier->mutex);
+	if (++barrier->waiting == 3)
+		g_cond_broadcast (&barrier->cond);
+	while (barrier->waiting < 3)
+		g_assert_true (g_cond_wait_until (&barrier->cond, &barrier->mutex, deadline));
+	g_mutex_unlock (&barrier->mutex);
+}
+
+static gpointer
+destruction_thread (gpointer data)
+{
+	DestructionBarrier *barrier = data;
+	ModelDestruction state = { 0 };
+	GMimeEntity *root = new_destruction_tree (2, 2048, &state);
+	GMimeMultipart *holder = g_mime_multipart_new ();
+
+	g_mime_multipart_add (holder, root);
+	g_object_weak_ref (G_OBJECT (root), destruction_barrier, barrier);
+	g_object_unref (root);
+	g_object_unref (holder);
+	assert_destruction_complete (&state);
+	return NULL;
+}
+
+static void
+test_destruction_threads (void)
+{
+	DestructionBarrier barrier = { 0 };
+	GThread *threads[3];
+	guint i;
+
+	testsuite_check ("Concurrent MIME destruction keeps independent per-thread release queues");
+	g_mutex_init (&barrier.mutex);
+	g_cond_init (&barrier.cond);
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		threads[i] = g_thread_new ("mime-destruction", destruction_thread, &barrier);
+	for (i = 0; i < G_N_ELEMENTS (threads); i++)
+		g_thread_join (threads[i]);
+	g_assert_cmpuint (barrier.waiting, ==, G_N_ELEMENTS (threads));
+	g_cond_clear (&barrier.cond);
+	g_mutex_clear (&barrier.mutex);
+	testsuite_check_passed ();
+}
+
+typedef struct {
+	GMimePart parent_instance;
+	GMimeEntity *nested;
+	guint calls;
+	gboolean content_only, international, hidden, fail;
+} ModelWriterPart;
+
+typedef GMimePartClass ModelWriterPartClass;
+
+G_DEFINE_TYPE (ModelWriterPart, model_writer_part, GMIME_TYPE_PART)
+
+static ssize_t
+model_writer_part_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
+{
+	ModelWriterPart *part = (ModelWriterPart *) entity;
+
+	part->calls++;
+	part->content_only = content_only;
+	part->international = g_mime_format_options_get_allow_international (options);
+	part->hidden = g_mime_format_options_is_hidden_header (options, "X-Test");
+	if (part->fail) {
+		errno = EACCES;
+		return -1;
+	}
+	if (part->nested) {
+		GByteArray *bytes = serialize_writer (part->nested, options, FALSE);
+
+		g_byte_array_unref (bytes);
+	}
+	return GMIME_ENTITY_CLASS (model_writer_part_parent_class)->write_to_stream (entity, options, content_only, stream);
+}
+
+static void
+model_writer_part_class_init (ModelWriterPartClass *klass)
+{
+	GMIME_ENTITY_CLASS (klass)->write_to_stream = model_writer_part_write;
+}
+
+static void
+model_writer_part_init (ModelWriterPart *part)
+{
+}
+
+static void
+test_writer_dispatch (void)
+{
+	GMimeEntityPrivate *message_priv;
+	GMimeEntityPrivate *part_priv;
+	GMimeEntityPrivate *multipart_priv;
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeMultipart *multipart = g_mime_multipart_new_with_subtype ("signed");
+	ModelWriterPart *part = g_object_new (model_writer_part_get_type (), NULL);
+	ModelWriterPart *nested = g_object_new (model_writer_part_get_type (), NULL);
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("body", 4);
+	GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	GMimeContentType *type = g_mime_content_type_new ("text", "plain");
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GByteArray *bytes;
+	ModelOutput *output;
+	guint calls;
+
+	testsuite_check ("Custom writers retain dispatch, parent chaining, formatting scope and reentrant writes");
+	g_mime_entity_set_content_type ((GMimeEntity *) part, type);
+	g_mime_entity_set_content_type ((GMimeEntity *) nested, type);
+	g_mime_part_set_content ((GMimePart *) part, content);
+	g_mime_part_set_content ((GMimePart *) nested, content);
+	g_mime_multipart_set_boundary (multipart, "signed");
+	g_mime_multipart_add (multipart, (GMimeEntity *) part);
+	g_mime_format_options_set_allow_international (options, TRUE);
+	g_mime_format_options_add_hidden_header (options, "X-Test");
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+	part->nested = (GMimeEntity *) nested;
+
+	bytes = serialize_writer ((GMimeEntity *) part, options, FALSE);
+	g_assert_cmpuint (part->calls, ==, 1);
+	g_assert_cmpuint (nested->calls, ==, 1);
+	g_assert_true (part->international);
+	g_assert_true (part->hidden);
+	g_assert_false (part->content_only);
+	g_byte_array_unref (bytes);
+	bytes = serialize_writer ((GMimeEntity *) multipart, options, FALSE);
+	g_assert_cmpuint (part->calls, ==, 2);
+	g_assert_cmpuint (nested->calls, ==, 2);
+	g_assert_false (part->international);
+	g_assert_false (part->hidden);
+	g_assert_false (nested->international);
+	g_assert_false (nested->hidden);
+	g_assert_true (g_mime_format_options_get_allow_international (options));
+	g_assert_true (g_mime_format_options_is_hidden_header (options, "X-Test"));
+	g_byte_array_unref (bytes);
+
+	output = g_object_new (model_output_get_type (), NULL);
+	part->fail = TRUE;
+	errno = 0;
+	g_assert_cmpint (g_mime_entity_write_to_stream ((GMimeEntity *) multipart, options, (GMimeStream *) output), ==, -1);
+	g_assert_cmpint (errno, ==, EACCES);
+	part->fail = FALSE;
+	bytes = serialize_writer ((GMimeEntity *) part, options, FALSE);
+	g_assert_true (part->international);
+	g_assert_true (part->hidden);
+	g_byte_array_unref (bytes);
+	testsuite_check_passed ();
+
+	testsuite_check ("Message writing passes newline requirements without mutating its body");
+	g_mime_message_set_mime_part (message, (GMimeEntity *) part);
+	message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+	message_priv->ensure_newline = FALSE;
+	part_priv = _g_mime_entity_get_private (((GMimeEntity *) part));
+
+	part_priv->ensure_newline = TRUE;
+	calls = part->calls;
+	bytes = serialize_writer ((GMimeEntity *) message, options, TRUE);
+	g_assert_cmpmem (bytes->data, bytes->len, "body", 4);
+	g_assert_cmpuint (part->calls, ==, calls + 1);
+	g_assert_true (part->content_only);
+	g_assert_true (part_priv->ensure_newline);
+	g_byte_array_unref (bytes);
+	bytes = serialize_writer ((GMimeEntity *) part, options, TRUE);
+	g_assert_cmpmem (bytes->data, bytes->len, "body\n", 5);
+	g_byte_array_unref (bytes);
+	output->written = 0;
+	output->limit = 0;
+	errno = 0;
+	g_assert_cmpint (g_mime_entity_write_content_to_stream ((GMimeEntity *) message, options, (GMimeStream *) output), ==, -1);
+	g_assert_cmpint (errno, ==, EIO);
+	g_assert_true (part_priv->ensure_newline);
+	g_assert_false (message_priv->ensure_newline);
+	testsuite_check_passed ();
+
+	testsuite_check ("Legacy multipart writing retains text and does not invent a removed boundary");
+	g_mime_multipart_clear (multipart);
+	multipart_priv = _g_mime_entity_get_private (((GMimeEntity *) multipart));
+
+	g_assert_true (g_mime_param_list_remove (g_mime_content_type_get_parameters (
+		multipart_priv->content_type), "boundary"));
+	g_mime_multipart_set_preamble (multipart, "pre");
+	g_mime_multipart_set_epilogue (multipart, "post");
+	bytes = serialize_writer ((GMimeEntity *) multipart, options, TRUE);
+	g_assert_cmpmem (bytes->data, bytes->len, "pre\n\npost\n", 10);
+	g_assert_null (g_mime_entity_get_content_type_parameter ((GMimeEntity *) multipart, "boundary"));
+	g_byte_array_unref (bytes);
+	testsuite_check_passed ();
+
+	g_object_unref (output);
+	g_object_unref (message);
+	g_object_unref (multipart);
+	g_object_unref (part);
+	g_object_unref (nested);
+	g_object_unref (type);
+	g_object_unref (content);
+	g_object_unref (stream);
+	g_mime_format_options_unref (options);
+}
+
+static void
+test_message_header_writing (void)
+{
+	static const struct {
+		const char *wire, *headers;
+	} cases[] = {
+		{ "\n", "\n" },
+		{ "Subject: empty\n\n", "Subject: empty\n\n" },
+		{ "Subject: no separator\n", "Subject: no separator\n" },
+		{ "Subject: no content\nContent-Type: text/plain\n", "Subject: no content\nContent-Type: text/plain\n" },
+		{ "Content-Type: text/plain\nX-Message: after\n\nbody",
+		  "Content-Type: text/plain\nX-Message: after\n\n" },
+		{ "X-Before: a\nContent-Type: text/plain\nContent-Transfer-Encoding: base64\nX-After: b\n\nYm9keQ==",
+		  "X-Before: a\nContent-Type: text/plain\nContent-Transfer-Encoding: base64\nX-After: b\n\n" },
+		{ "Bcc: hidden@example.com\nX: one\nX: two\nContent-Type: multipart/mixed; boundary=b\n\n--b\n"
+		  "Content-Type: text/plain\n\nbody\n--b--\n",
+		  "Bcc: hidden@example.com\nX: one\nX: two\nContent-Type: multipart/mixed; boundary=b\n\n" },
+		{ "Content-Type: message/rfc822\n\nSubject: embedded\n\nbody", "Content-Type: message/rfc822\n\n" },
+		{ "X \t: first\nbroken line\n\tfold\nContent-Type: text/plain\n\nbody",
+		  "X \t: first\nbroken line\n\tfold\nContent-Type: text/plain\n\n" },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n", "Content-Type: multipart/mixed; boundary=b\n\n" }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GError *error = NULL;
+	guint i, format, hidden, ensure, prepend, append, separator;
+
+	testsuite_check ("Headers-only message output preserves merged order, raw fields and parsed separators");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GMimeStream *input = g_mime_stream_mem_new_with_buffer (cases[i].wire, strlen (cases[i].wire));
+		GMimeParser *parser = g_mime_parser_new ();
+		GMimeMessage *message;
+
+		g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+		g_assert_no_error (error);
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		for (format = 0; format < 3; format++) {
+			GMimeFormatOptions *selected = format ? options : NULL;
+			const char *newline;
+
+			g_mime_format_options_set_newline_format (options, format == 2 ?
+				GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+			newline = g_mime_format_options_get_newline (selected);
+			for (hidden = 0; hidden < (format ? 4 : 1); hidden++) {
+				GString *expected = g_string_new (NULL);
+				const char *line = cases[i].headers;
+
+				g_mime_format_options_clear_hidden_headers (options);
+				if (hidden & 1)
+					g_mime_format_options_add_hidden_header (options, "Bcc");
+				if (hidden & 2)
+					g_mime_format_options_add_hidden_header (options, "Content-Type");
+				while (*line) {
+					const char *end = strchr (line, '\n');
+					size_t length = end ? (size_t) (end - line) : strlen (line);
+
+					if (!((hidden & 1) && g_str_has_prefix (line, "Bcc:")) &&
+					    !((hidden & 2) && g_str_has_prefix (line, "Content-Type:"))) {
+						g_string_append_len (expected, line, length);
+						if (end)
+							g_string_append (expected, newline);
+					}
+					line += length + (end ? 1 : 0);
+				}
+				for (ensure = 0; ensure < 2; ensure++) {
+					GMimeStream *output = g_mime_stream_mem_new ();
+					GByteArray *bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) output);
+					GByteArray *full;
+					ssize_t written;
+					gsize offset;
+
+					g_mime_format_options_set_ensure_newline (options, ensure);
+					written = g_mime_message_write_headers_to_stream (message, selected, output);
+					g_assert_cmpint (written, ==, expected->len);
+					g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
+					full = serialize_writer ((GMimeEntity *) message, selected, FALSE);
+					g_assert_cmpuint (full->len, >=, bytes->len);
+					g_assert_cmpmem (full->data, bytes->len, bytes->data, bytes->len);
+					g_byte_array_unref (full);
+					g_assert_cmpint (g_mime_message_write_headers_to_stream (message, selected, output), ==, written);
+					g_assert_cmpmem (bytes->data + written, written, expected->str, expected->len);
+					g_assert_cmpint (g_mime_stream_write (output, "!", 1), ==, 1);
+					g_object_unref (output);
+					for (offset = 0; offset <= expected->len; offset++) {
+						ModelOutput *limited = g_object_new (model_output_get_type (), NULL);
+
+						limited->limit = offset;
+						limited->chunk = 1;
+						limited->fail_flush = TRUE;
+						errno = 0;
+						written = g_mime_message_write_headers_to_stream (message, selected, (GMimeStream *) limited);
+						g_assert_cmpint (written, ==, offset < expected->len ? -1 : (ssize_t) expected->len);
+						g_assert_cmpint (errno, ==, offset < expected->len ? EIO : 0);
+						g_assert_cmpuint (limited->written, ==, offset);
+						g_assert_cmpuint (limited->flushes, ==, 0);
+						g_assert_cmpuint (limited->closes, ==, 0);
+						g_object_unref (limited);
+					}
+				}
+				g_string_free (expected, TRUE);
+			}
+		}
+		g_object_unref (message);
+		g_object_unref (parser);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Merged message headers retain raw order around prepended and appended fields");
+	for (prepend = 0; prepend < 2; prepend++) {
+		for (append = 0; append < 2; append++) {
+			for (separator = 0; separator < 2; separator++) {
+				char *wire = g_strconcat ("X: first\nContent-Type: text/plain\n", separator ? "\nbody" : "", NULL);
+				GMimeStream *input = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+				GMimeParser *parser = g_mime_parser_new ();
+				GMimeMessage *message;
+				GMimeStream *output = g_mime_stream_mem_new ();
+				GByteArray *bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) output);
+				GByteArray *full;
+				char *expected, *headers;
+
+				g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+					GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+				g_assert_no_error (error);
+				message = g_mime_parser_construct_message (parser, NULL, &error);
+				g_assert_no_error (error);
+				if (prepend) {
+					GMimeEntityPrivate *priv = _g_mime_entity_get_private ((GMimeEntity *) message);
+
+					g_mime_header_list_prepend (priv->headers, "X-Prepended", "first", NULL);
+				}
+				if (append)
+					g_mime_message_set_subject (message, "appended", NULL);
+				expected = g_strconcat (prepend ? "X-Prepended: first\n" : "",
+					"X: first\nContent-Type: text/plain\n", append ? "Subject: appended\n" : "",
+					separator ? "\n" : "", NULL);
+				g_mime_format_options_clear_hidden_headers (options);
+				g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+				g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, output), ==, strlen (expected));
+				g_assert_cmpmem (bytes->data, bytes->len, expected, strlen (expected));
+				headers = g_mime_entity_get_headers ((GMimeEntity *) message, options);
+				g_assert_cmpuint (strlen (headers), ==, strlen (expected) - separator);
+				g_assert_cmpmem (headers, strlen (headers), expected, strlen (headers));
+				g_free (headers);
+				full = serialize_writer ((GMimeEntity *) message, options, FALSE);
+				g_assert_cmpuint (full->len, >=, bytes->len);
+				g_assert_cmpmem (full->data, bytes->len, bytes->data, bytes->len);
+				g_byte_array_unref (full);
+				g_object_unref (output);
+				g_object_unref (message);
+				g_object_unref (parser);
+				g_object_unref (input);
+				g_free (expected);
+				g_free (wire);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Headers-only writing leaves body writers, content, flags and caller streams untouched");
+	{
+		GMimeEntityPrivate *message_priv;
+		GMimeEntityPrivate *body_priv;
+		ModelWriterPart *body = g_object_new (model_writer_part_get_type (), NULL);
+		GMimeMessage *message = g_mime_message_new (FALSE);
+		ModelInput *input = new_input ("body", 4, 1);
+		GMimeContent *content = g_mime_content_new_with_stream ((GMimeStream *) input, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+		GMimeContentType *type = g_mime_content_type_new ("text", "plain");
+		GMimeStream *output = g_mime_stream_mem_new ();
+		GByteArray *bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) output);
+		static const char expected[] = "Subject: scope\nMIME-Version: 1.0\nContent-Type: text/plain\n\n";
+		guint reads, seeks, resets, mode;
+
+		g_mime_entity_set_content_type ((GMimeEntity *) body, type);
+		g_mime_part_set_content ((GMimePart *) body, content);
+		g_mime_message_set_subject (message, "scope", NULL);
+		g_mime_message_set_mime_part (message, (GMimeEntity *) body);
+		g_mime_format_options_clear_hidden_headers (options);
+		g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_UNIX);
+		g_mime_format_options_set_ensure_newline (options, TRUE);
+		body->fail = TRUE;
+		input->fail_after = 0;
+		input->fail_seek = TRUE;
+		input->fail_reset_after = 0;
+		reads = input->reads;
+		seeks = input->seeks;
+		resets = input->resets;
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, output), ==, sizeof (expected) - 1);
+		g_assert_cmpmem (bytes->data, bytes->len, expected, sizeof (expected) - 1);
+		g_assert_cmpuint (body->calls, ==, 0);
+		g_assert_cmpuint (input->reads, ==, reads);
+		g_assert_cmpuint (input->seeks, ==, seeks);
+		g_assert_cmpuint (input->resets, ==, resets);
+		message_priv = _g_mime_entity_get_private (((GMimeEntity *) message));
+
+		g_assert_true (message_priv->ensure_newline);
+		body_priv = _g_mime_entity_get_private (((GMimeEntity *) body));
+
+		g_assert_false (body_priv->ensure_newline);
+		g_assert_true (g_mime_format_options_get_ensure_newline (options));
+		for (mode = 0; mode < 2; mode++) {
+			ModelOutput *limited = g_object_new (model_output_get_type (), NULL);
+
+			limited->limit = 0;
+			limited->zero_write = mode == 0;
+			limited->unset_errno = mode == 1;
+			errno = EBUSY;
+			g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, (GMimeStream *) limited), ==, -1);
+			g_assert_cmpint (errno, ==, mode == 0 ? EIO : 0);
+			g_assert_cmpuint (body->calls, ==, 0);
+			g_assert_cmpuint (limited->closes, ==, 0);
+			g_object_unref (limited);
+		}
+		errno = 0;
+		g_assert_cmpint (g_mime_entity_write_to_stream ((GMimeEntity *) message, options, output), ==, -1);
+		g_assert_cmpint (errno, ==, EACCES);
+		g_assert_cmpuint (body->calls, ==, 1);
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, output), ==, sizeof (expected) - 1);
+		g_assert_cmpuint (body->calls, ==, 1);
+		g_assert_cmpuint (input->reads, ==, reads);
+		g_assert_cmpuint (input->seeks, ==, seeks);
+		g_assert_cmpuint (input->resets, ==, resets);
+		g_assert_true (message_priv->ensure_newline);
+		g_assert_false (body_priv->ensure_newline);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_MESSAGE (message)*");
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (NULL, options, output), ==, -1);
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+		g_assert_cmpint (g_mime_message_write_headers_to_stream (message, options, NULL), ==, -1);
+		g_test_assert_expected_messages ();
+		g_object_unref (output);
+		g_object_unref (type);
+		g_object_unref (content);
+		g_object_unref (input);
+		g_object_unref (message);
+		g_object_unref (body);
+	}
+	testsuite_check_passed ();
+	g_mime_format_options_unref (options);
+}
+
+typedef struct {
+	GMimePart parent_instance;
+	GMimeStream *stream;
+	GMimeFormatOptions *options;
+	guint calls, failure;
+	gboolean content_only;
+#ifdef __linux__
+	char buffer[128];
+#endif
+} ModelFilePart;
+
+typedef GMimePartClass ModelFilePartClass;
+
+G_DEFINE_TYPE (ModelFilePart, model_file_part, GMIME_TYPE_PART)
+
+static ssize_t
+model_file_part_write (GMimeEntity *entity, GMimeFormatOptions *options, gboolean content_only, GMimeStream *stream)
+{
+	ModelFilePart *part = (ModelFilePart *) entity;
+
+	g_set_object (&part->stream, stream);
+	part->options = options;
+	part->content_only = content_only;
+	part->calls++;
+	if (part->failure == 1 || part->failure == 2) {
+		g_assert_cmpint (g_mime_stream_write (stream, "prefix", 6), ==, 6);
+		errno = part->failure == 1 ? EACCES : 0;
+		return -1;
+	}
+#ifdef __linux__
+	if (part->failure == 3) {
+		GMimeStreamFile *file = (GMimeStreamFile *) stream;
+		GMimeStreamFilePrivate *file_priv = _g_mime_stream_file_get_private (file);
+
+		g_assert_cmpint (fclose (file_priv->fp), ==, 0);
+		file_priv->fp = g_fopen ("/dev/full", "wb");
+		g_assert_nonnull (file_priv->fp);
+		g_assert_cmpint (setvbuf (file_priv->fp, part->buffer, _IOFBF, sizeof (part->buffer)), ==, 0);
+		g_assert_cmpint (fputc ('x', file_priv->fp), ==, 'x');
+		return 0;
+	}
+	if (part->failure >= 4) {
+		GMimeStreamFilePrivate *stream_priv = _g_mime_stream_file_get_private (GMIME_STREAM_FILE (stream));
+
+		g_assert_cmpint (close (fileno (stream_priv->fp)), ==, 0);
+		errno = part->failure == 5 ? EACCES : 0;
+		return part->failure == 4 ? 0 : -1;
+	}
+#endif
+	return GMIME_ENTITY_CLASS (model_file_part_parent_class)->write_to_stream (entity, options, content_only, stream);
+}
+
+static void
+model_file_part_finalize (GObject *object)
+{
+	g_clear_object (&((ModelFilePart *) object)->stream);
+	G_OBJECT_CLASS (model_file_part_parent_class)->finalize (object);
+}
+
+static void
+model_file_part_class_init (ModelFilePartClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = model_file_part_finalize;
+	GMIME_ENTITY_CLASS (klass)->write_to_stream = model_file_part_write;
+}
+
+static void
+model_file_part_init (ModelFilePart *part)
+{
+}
+
+static void
+test_file_writing (void)
+{
+	static const char binary[] = "Content-Type: application/octet-stream\nContent-Transfer-Encoding: binary\n\nA\0B\nC\rD";
+	static const char *cases[] = {
+		binary,
+		"Subject: empty\n\n",
+		"Content-Type: text/plain; charset=utf-8\r\n\r\nbody\r\nnext",
+		"Content-Type: text/plain\nContent-Transfer-Encoding: quoted-printable\n\none=3Dtwo\n",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\nContent-Type: text/plain\n\nbody\n--b--\npost",
+		"Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\ntruncated"
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GError *error = NULL;
+	ModelFilePart *custom = g_object_new (model_file_part_get_type (), NULL);
+	GMimeStream *content_stream = g_mime_stream_mem_new_with_buffer ("body", 4);
+	GMimeContent *content = g_mime_content_new_with_stream (content_stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+	char *directory, *filename, *missing, *actual;
+	gsize length;
+	guint i, message, format, ensure, content_only, repeat;
+	guint failures = 2;
+
+	testsuite_check ("File writers preserve exact full and content-only entity and message bytes");
+	directory = g_dir_make_tmp ("gmime-file-writing-XXXXXX", &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (directory);
+	filename = g_build_filename (directory, "message-\303\251 file.eml", NULL);
+	missing = g_build_filename (directory, "absent", "message.eml", NULL);
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (message = 0; message < 2; message++) {
+			GMimeStream *input = g_mime_stream_mem_new_with_buffer (cases[i],
+				i == 0 ? sizeof (binary) - 1 : strlen (cases[i]));
+			GMimeParser *parser = g_mime_parser_new ();
+			GMimeEntity *entity;
+
+			g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, input,
+				GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+			g_assert_no_error (error);
+			entity = message ? (GMimeEntity *) g_mime_parser_construct_message (parser, NULL, &error) :
+				g_mime_parser_construct_part (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			g_object_unref (parser);
+			g_object_unref (input);
+			for (format = 0; format < 3; format++) {
+				GMimeFormatOptions *selected = format ? options : NULL;
+
+				g_mime_format_options_set_newline_format (options, format == 2 ?
+					GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+				for (ensure = 0; ensure < 2; ensure++) {
+					g_mime_format_options_set_ensure_newline (options, ensure);
+					for (content_only = 0; content_only < 2; content_only++) {
+						GByteArray *expected = serialize_writer (entity, selected, content_only);
+
+						for (repeat = 0; repeat < 2; repeat++) {
+							g_assert_true (g_file_set_contents (filename, "stale data", 10, &error));
+							if (content_only)
+								g_assert_true (g_mime_entity_write_content_to_file (entity, selected, filename, &error));
+							else
+								g_assert_true (g_mime_entity_write_to_file (entity, selected, filename, &error));
+							g_assert_no_error (error);
+							g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+							g_assert_cmpmem (actual, length, expected->data, expected->len);
+							g_free (actual);
+							g_assert_cmpint (g_unlink (filename), ==, 0);
+						}
+						g_byte_array_unref (expected);
+					}
+				}
+			}
+			g_object_unref (entity);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("File writers validate arguments before truncation and report open errors");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_ENTITY (object)*");
+	g_assert_false (g_mime_entity_write_to_file (NULL, NULL, filename, &error));
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*filename != NULL*");
+	g_assert_false (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, NULL, NULL, &error));
+	g_test_assert_expected_messages ();
+	g_assert_null (error);
+	g_assert_true (g_file_set_contents (filename, "untouched", 9, &error));
+	g_set_error_literal (&error, GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, NULL, filename, &error));
+	g_test_assert_expected_messages ();
+	g_clear_error (&error);
+	g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+	g_assert_cmpmem (actual, length, "untouched", 9);
+	g_free (actual);
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, NULL, missing, &error));
+	g_assert_error (error, GMIME_ERROR, ENOENT);
+	g_assert_nonnull (strstr (error->message, missing));
+	g_clear_error (&error);
+	g_assert_false (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, NULL, directory, &error));
+	g_assert_nonnull (error);
+	g_assert_cmpuint (error->domain, ==, GMIME_ERROR);
+	g_assert_cmpint (error->code, >, 0);
+	g_clear_error (&error);
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, NULL, missing, NULL));
+	g_assert_cmpuint (custom->calls, ==, 0);
+	testsuite_check_passed ();
+
+	testsuite_check ("File writers retain virtual dispatch and close retained streams on success and failure");
+	g_mime_part_set_content ((GMimePart *) custom, content);
+	g_mime_entity_set_header ((GMimeEntity *) custom, "Bcc", "Hidden <a@example.com>", NULL);
+	g_mime_format_options_add_hidden_header (options, "Bcc");
+	for (format = 0; format < 2; format++) {
+		GMimeFormatOptions *selected = format ? options : NULL;
+
+		for (content_only = 0; content_only < 2; content_only++) {
+			GMimeStreamFilePrivate *custom_priv;
+			GByteArray *expected = serialize_writer ((GMimeEntity *) custom, selected, content_only);
+			guint calls = custom->calls;
+
+			if (content_only)
+				g_assert_true (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, selected, filename, &error));
+			else
+				g_assert_true (g_mime_entity_write_to_file ((GMimeEntity *) custom, selected, filename, &error));
+			g_assert_no_error (error);
+			g_assert_cmpuint (custom->calls, ==, calls + 1);
+			g_assert_true (custom->options == selected);
+			g_assert_cmpint (custom->content_only, ==, content_only);
+			custom_priv = _g_mime_stream_file_get_private (GMIME_STREAM_FILE (custom->stream));
+
+			g_assert_null (custom_priv->fp);
+			g_assert_cmpint (g_mime_stream_close (custom->stream), ==, 0);
+			g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+			g_assert_cmpmem (actual, length, expected->data, expected->len);
+			if (format || content_only)
+				g_assert_null (g_strstr_len (actual, length, "Bcc:"));
+			else
+				g_assert_nonnull (g_strstr_len (actual, length, "Bcc:"));
+			g_free (actual);
+			g_byte_array_unref (expected);
+		}
+	}
+#ifdef __linux__
+	failures = 6;
+#endif
+	for (i = 1; i <= failures; i++) {
+		int code = i == 3 ? ENOSPC : i == 4 ? EBADF :
+			i == 1 || i == 5 ? EACCES : GMIME_ERROR_GENERAL;
+		const char *operation = i == 3 ? "flush" : i == 4 ? "close" : "write";
+
+		custom->failure = i;
+		for (content_only = 0; content_only < 2; content_only++) {
+			GMimeStreamFilePrivate *stream_file_priv;
+
+			errno = EBUSY;
+			if (content_only)
+				g_assert_false (g_mime_entity_write_content_to_file ((GMimeEntity *) custom, options, filename, &error));
+			else
+				g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, filename, &error));
+			g_assert_cmpint (errno, ==, code == GMIME_ERROR_GENERAL ? 0 : code);
+			g_assert_error (error, GMIME_ERROR, code);
+			g_assert_nonnull (strstr (error->message, operation));
+			g_assert_nonnull (strstr (error->message, filename));
+			g_clear_error (&error);
+			stream_file_priv = _g_mime_stream_file_get_private (GMIME_STREAM_FILE (custom->stream));
+
+			g_assert_null (stream_file_priv->fp);
+			g_assert_cmpint (g_mime_stream_close (custom->stream), ==, 0);
+			g_assert_true (g_file_get_contents (filename, &actual, &length, &error));
+			g_assert_cmpmem (actual, length, "prefix", i < 3 ? 6 : 0);
+			g_free (actual);
+		}
+	}
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, filename, NULL));
+	custom->failure = 0;
+	g_assert_true (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, filename, &error));
+	g_assert_no_error (error);
+#ifdef __linux__
+	g_assert_false (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, "/dev/full", &error));
+	g_assert_error (error, GMIME_ERROR, ENOSPC);
+	g_clear_error (&error);
+	g_assert_true (g_mime_entity_write_to_file ((GMimeEntity *) custom, options, "/dev/null", &error));
+	g_assert_no_error (error);
+#endif
+	testsuite_check_passed ();
+
+	g_assert_cmpint (g_unlink (filename), ==, 0);
+	g_assert_cmpint (g_rmdir (directory), ==, 0);
+	g_free (missing);
+	g_free (filename);
+	g_free (directory);
+	g_object_unref (content);
+	g_object_unref (content_stream);
+	g_object_unref (custom);
+	g_mime_format_options_unref (options);
+}
+
+#ifdef __linux__
+typedef struct {
+	const char *filename;
+	gboolean closed;
+} LoadFileFailure;
+
+static int
+find_loaded_file_descriptor (const char *filename)
+{
+	GDir *directory = g_dir_open ("/proc/self/fd", 0, NULL);
+	const char *name;
+	int fd = -1;
+
+	g_assert_nonnull (directory);
+	while ((name = g_dir_read_name (directory))) {
+		char *path = g_build_filename ("/proc/self/fd", name, NULL);
+		char *target = g_file_read_link (path, NULL);
+
+		if (!g_strcmp0 (target, filename))
+			fd = (int) g_ascii_strtoll (name, NULL, 10);
+		g_free (target);
+		g_free (path);
+		if (fd >= 0)
+			break;
+	}
+	g_dir_close (directory);
+	return fd;
+}
+
+static void
+close_loaded_file_on_warning (gint64 offset, GMimeParserWarning warning, const char *item, gpointer user_data)
+{
+	LoadFileFailure *failure = user_data;
+	int fd;
+
+	if (warning != GMIME_WARN_TRUNCATED_MESSAGE && warning != GMIME_CRIT_INVALID_HEADER_NAME)
+		return;
+	fd = find_loaded_file_descriptor (failure->filename);
+	if (fd >= 0) {
+		g_assert_cmpint (close (fd), ==, 0);
+		failure->closed = TRUE;
+	}
+}
+#endif
+
+static void
+test_commented_parameter_messages (void)
+{
+	/* Boundary variants inspired by https://github.com/noxxi/mime-is-broken. */
+	static const struct {
+		const char *parameter, *delimiter, *boundary;
+		guint count;
+	} cases[] = {
+		{ "boundary*=''audit", "audit", "audit", 1 },
+		{ "boundary*='en'audit", "audit", "audit", 1 },
+		{ "boundary*0*=''; boundary*1*=audit", "audit", "audit", 1 },
+		{ "boundary=audit(comment)", "audit", "audit", 1 },
+		{ "boundary=audit\r\n\t(nested (comment); ignored=yes)", "audit", "audit", 1 },
+		{ "boundary=\"audit(comment)\"", "audit(comment)", "audit(comment)", 1 },
+		{ "boundary=audit(comment)", "audit(comment)", "audit", 0 },
+		{ "boundary*=us-ascii''audit%28comment%29", "audit(comment)", "audit(comment)", 1 }
+	};
+	static const gsize chunks[] = { 1, 2, 7, 4096 };
+	guint i, chunk, nonseekable;
+
+	testsuite_check ("Commented and empty-charset parameters preserve chunked multipart structure and content");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		char *wire = g_strdup_printf ("From: sender@example.com\r\n"
+			"Date: Sat, 31 Oct 2026 10:00:00 -0400\r\nMIME-Version: 1.0\r\n"
+			"Content-Type: multipart/mixed; %s\r\n\r\n"
+			"--%s\r\nContent-Type: application/octet-stream; name=file.zip(comment)\r\n"
+			"Content-Disposition: attachment; filename*=''file%%2Ezip(comment)\r\n"
+			"Content-Transfer-Encoding: base64\r\n\r\naGVsbG8=\r\n--%s--\r\n",
+			cases[i].parameter, cases[i].delimiter, cases[i].delimiter);
+
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			for (nonseekable = 0; nonseekable < 2; nonseekable++) {
+				ModelInput *input = new_input (wire, strlen (wire), chunks[chunk]);
+				GMimeMessage *message;
+				GMimeEntity *body, *part;
+				GMimeMultipart *multipart;
+				GByteArray *decoded;
+				GError *error = NULL;
+
+				input->nonseekable = nonseekable;
+				message = g_mime_message_load (NULL, (GMimeStream *) input, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (message);
+				body = g_mime_message_get_mime_part (message);
+				g_assert_true (GMIME_IS_MULTIPART (body));
+				multipart = GMIME_MULTIPART (body);
+				g_assert_cmpstr (g_mime_multipart_get_boundary (multipart), ==, cases[i].boundary);
+				g_assert_cmpuint (g_mime_multipart_get_count (multipart), ==, cases[i].count);
+				if (cases[i].count) {
+					part = g_mime_multipart_get_part (multipart, 0);
+					g_assert_true (GMIME_IS_PART (part));
+					g_assert_cmpstr (g_mime_entity_get_content_type_parameter (part, "name"), ==, "file.zip");
+					g_assert_cmpstr (g_mime_entity_get_content_disposition_parameter (part, "filename"), ==, "file.zip");
+					decoded = read_content (g_mime_part_get_content (GMIME_PART (part)), TRUE);
+					g_assert_cmpmem (decoded->data, decoded->len, "hello", 5);
+					g_byte_array_unref (decoded);
+				}
+				g_object_unref (message);
+				g_object_unref (input);
+			}
+		}
+		g_free (wire);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_loading (void)
+{
+	static const char binary[] = "Content-Type: application/octet-stream\nContent-Transfer-Encoding: binary\n\nA\0B\nC\rD";
+	static const char *cases[] = {
+		binary, "\n", "Subject: headers only\n",
+		"Subject: x\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nbody",
+		"Content-Type: text/plain\nContent-Transfer-Encoding: base64\n\nYm9keQ==",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\nContent-Type: text/plain\n\nbody\n--b--\npost",
+		"Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody",
+		"\357\273\277Subject: bom\r\nContent-Type: text/plain\r\n\r\nbody",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\ntruncated"
+	};
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	GError *error = NULL;
+	char *directory = g_dir_make_tmp ("gmime-loading-XXXXXX", &error);
+	char *filename, *missing;
+	guint i, message, nonseekable, unset, from_file;
+
+	g_assert_no_error (error);
+	filename = g_build_filename (directory, "message-\303\251 file.eml", NULL);
+	missing = g_build_filename (directory, "absent", "message.eml", NULL);
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_UNIX);
+
+	testsuite_check ("Stream and filename loaders copy content without retaining or closing borrowed input");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		gsize length = i == 0 ? sizeof (binary) - 1 : strlen (cases[i]);
+
+		for (message = 0; message < 2; message++) {
+			if (!message && g_str_has_prefix (cases[i], "\357\273\277"))
+				continue;
+			for (nonseekable = 0; nonseekable < 2; nonseekable++) {
+				GString *wire = g_string_new ("skip");
+				ModelInput *input;
+				GMimeEntity *entity, *file_entity;
+				GByteArray *expected, *actual;
+				gpointer alive;
+				guint warnings[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+
+				g_string_append_len (wire, cases[i], length);
+				input = new_input (wire->str, wire->len, 1);
+				g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+				input->nonseekable = nonseekable;
+				input->fail_seek = TRUE;
+				alive = input;
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+				entity = message ? (GMimeEntity *) g_mime_message_load (options, (GMimeStream *) input, &error) :
+					g_mime_entity_load (options, (GMimeStream *) input, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (entity);
+				g_assert_cmpuint (input->seeks, ==, 0);
+				g_assert_cmpuint (input->resets, ==, 0);
+				g_assert_cmpuint (input->views, ==, 0);
+				g_assert_cmpuint (input->bytes_read, ==, length);
+				if (i == G_N_ELEMENTS (cases) - 1)
+					g_assert_cmpuint (warnings[GMIME_WARN_TRUNCATED_MESSAGE], >, 0);
+				expected = serialize_writer (entity, format, FALSE);
+				g_byte_array_set_size (g_mime_stream_mem_get_byte_array (
+					(GMimeStreamMem *) input->parent_instance.source), 0);
+				g_assert_cmpint (g_mime_stream_close ((GMimeStream *) input), ==, 0);
+				g_object_unref (input);
+				g_assert_null (alive);
+				actual = serialize_writer (entity, format, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+				g_byte_array_unref (actual);
+
+				g_assert_true (g_file_set_contents (filename, cases[i], length, &error));
+				file_entity = message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, filename, &error) :
+					g_mime_entity_load_from_file (NULL, filename, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (file_entity);
+#ifdef __linux__
+				g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+#endif
+				g_assert_true (g_file_set_contents (filename, "overwritten", 11, &error));
+				g_assert_cmpint (g_unlink (filename), ==, 0);
+				actual = serialize_writer (file_entity, format, FALSE);
+				g_assert_cmpstr (G_OBJECT_TYPE_NAME (file_entity), ==, G_OBJECT_TYPE_NAME (entity));
+				g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+				g_byte_array_unref (actual);
+				g_byte_array_unref (expected);
+				g_object_unref (file_entity);
+				g_object_unref (entity);
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+	testsuite_check_passed ();
+
+	testsuite_check ("Loaders reject empty and malformed input, honor header limits and propagate open/read errors");
+	for (message = 0; message < 2; message++) {
+		for (i = 0; i < 3; i++) {
+			const char *wire = i == 0 ? "" : i == 1 ? "invalid" : "Subject: too long\n\nbody";
+			int code = i == 2 ? GMIME_ERROR_HEADER_TOO_LONG : GMIME_ERROR_PARSE_ERROR;
+
+			g_mime_parser_options_set_max_header_length (options, i == 2 ? 1 :
+				g_mime_parser_options_get_max_header_length (NULL));
+			for (from_file = 0; from_file < 2; from_file++) {
+				GMimeStream *input = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+				GMimeEntity *entity;
+
+				g_assert_true (g_file_set_contents (filename, wire, strlen (wire), &error));
+				if (from_file)
+					entity = message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
+						g_mime_entity_load_from_file (options, filename, &error);
+				else
+					entity = message ? (GMimeEntity *) g_mime_message_load (options, input, &error) :
+						g_mime_entity_load (options, input, &error);
+				g_assert_null (entity);
+				g_assert_error (error, GMIME_ERROR, code);
+				g_clear_error (&error);
+#ifdef __linux__
+				g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+#endif
+				g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
+				g_object_unref (input);
+				g_assert_cmpint (g_unlink (filename), ==, 0);
+			}
+		}
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, missing, &error) :
+			g_mime_entity_load_from_file (NULL, missing, &error));
+		g_assert_error (error, GMIME_ERROR, ENOENT);
+		g_assert_cmpint (errno, ==, ENOENT);
+		g_clear_error (&error);
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, directory, &error) :
+			g_mime_entity_load_from_file (NULL, directory, &error));
+		g_assert_nonnull (error);
+		g_assert_cmpuint (error->domain, ==, GMIME_ERROR);
+		g_clear_error (&error);
+		for (unset = 0; unset < 2; unset++) {
+			static const char wire[] = "Subject: x\n\nbody";
+			int code = unset ? GMIME_ERROR_GENERAL : EIO;
+
+			for (i = 0; i < sizeof (wire); i++) {
+				ModelInput *input = new_input (wire, sizeof (wire) - 1, 1);
+				gpointer alive = input;
+
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				input->nonseekable = TRUE;
+				input->fail_after = i;
+				input->unset_errno = unset;
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, (GMimeStream *) input, &error) :
+					g_mime_entity_load (NULL, (GMimeStream *) input, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_assert_cmpint (errno, ==, unset ? 0 : EIO);
+				g_clear_error (&error);
+				g_assert_cmpuint (input->seeks, ==, 0);
+				g_assert_cmpuint (input->resets, ==, 0);
+				g_object_unref (input);
+				g_assert_null (alive);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Loaders validate arguments, support omitted errors and preserve primary failures over close errors");
+	for (message = 0; message < 2; message++) {
+		GMimeStream *input = g_mime_stream_mem_new ();
+#ifdef __linux__
+		LoadFileFailure failure = { filename, FALSE };
+#endif
+
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, NULL, &error) :
+			g_mime_entity_load (NULL, NULL, &error));
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*filename != NULL*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, NULL, &error) :
+			g_mime_entity_load_from_file (NULL, NULL, &error));
+		g_test_assert_expected_messages ();
+		g_set_error_literal (&error, GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+		for (from_file = 0; from_file < 2; from_file++) {
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+			if (from_file)
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, missing, &error) :
+					g_mime_entity_load_from_file (NULL, missing, &error));
+			else
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, input, &error) :
+					g_mime_entity_load (NULL, input, &error));
+			g_test_assert_expected_messages ();
+			g_assert_error (error, GMIME_ERROR, GMIME_ERROR_GENERAL);
+		}
+		g_clear_error (&error);
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load (NULL, input, NULL) :
+			g_mime_entity_load (NULL, input, NULL));
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (NULL, missing, NULL) :
+			g_mime_entity_load_from_file (NULL, missing, NULL));
+		g_object_unref (input);
+#ifdef __linux__
+		g_mime_parser_options_set_max_header_length (options, g_mime_parser_options_get_max_header_length (NULL));
+		g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure);
+		g_assert_true (g_file_set_contents (filename, cases[G_N_ELEMENTS (cases) - 1], -1, &error));
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
+			g_mime_entity_load_from_file (options, filename, &error));
+		g_assert_error (error, GMIME_ERROR, EBADF);
+		g_assert_nonnull (strstr (error->message, "close"));
+		g_assert_cmpint (errno, ==, EBADF);
+		g_assert_true (failure.closed);
+		g_clear_error (&error);
+		g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+		g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+		g_assert_cmpint (g_unlink (filename), ==, 0);
+		{
+			GString *wire = g_string_new ("Subject: x\ninvalid\nX-Test: ");
+
+			while (wire->len < 256)
+				g_string_append_c (wire, 'x');
+			g_string_append (wire, "\n\nbody");
+			g_mime_parser_options_set_max_header_length (options, 64);
+			failure.closed = FALSE;
+			g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure);
+			g_assert_true (g_file_set_contents (filename, wire->str, wire->len, &error));
+			g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
+				g_mime_entity_load_from_file (options, filename, &error));
+			g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+			g_assert_null (strstr (error->message, "close"));
+			g_assert_true (failure.closed);
+			g_clear_error (&error);
+			g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+			g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+			g_assert_cmpint (g_unlink (filename), ==, 0);
+			g_string_free (wire, TRUE);
+		}
+#endif
+	}
+	testsuite_check_passed ();
+	g_assert_cmpint (g_rmdir (directory), ==, 0);
+	g_free (filename);
+	g_free (missing);
+	g_free (directory);
+	g_mime_format_options_unref (format);
+	g_mime_parser_options_unref (options);
+}
+
+static void
+test_loading_storage (void)
+{
+	static const char *cases[] = {
+		"Content-Type: text/plain\n\nbody",
+		"Content-Type: text/plain\nContent-Transfer-Encoding: base64\n\nYm9keQ==",
+		"Content-Type: multipart/mixed; boundary=b\n\npre\n--b\nContent-Type: text/plain\n\nbody\n--b--\npost",
+		"Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody",
+		"Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\ntruncated"
+	};
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	GError *error = NULL;
+	guint i, message, storage, chunk, unset;
+
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_UNIX);
+	g_mime_format_options_set_ensure_newline (format, FALSE);
+	testsuite_check ("Explicit storage selects copied or source-backed content and preserves borrowed input ownership");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (message = 0; message < 2; message++) {
+			for (storage = GMIME_CONTENT_STORAGE_MEMORY; storage <= GMIME_CONTENT_STORAGE_SOURCE; storage++) {
+				for (chunk = 1; chunk <= 4096; chunk *= 4096) {
+					GString *wire = g_string_new ("skip");
+					ModelInput *input;
+					GMimeEntity *entity;
+					GByteArray *expected, *actual;
+					gpointer alive;
+
+					g_string_append (wire, cases[i]);
+					input = new_input (wire->str, wire->len, chunk);
+					g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+					input->fail_seek = storage == GMIME_CONTENT_STORAGE_MEMORY;
+					alive = input;
+					g_object_add_weak_pointer (G_OBJECT (input), &alive);
+					entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+						(GMimeStream *) input, storage, &error) :
+						g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, storage, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (entity);
+					g_assert_cmpuint (input->bytes_read, ==, strlen (cases[i]));
+					g_assert_cmpuint (input->resets, ==, 0);
+					g_assert_cmpuint (input->seeks, ==, storage == GMIME_CONTENT_STORAGE_SOURCE ? 1 : 0);
+					if (storage == GMIME_CONTENT_STORAGE_SOURCE)
+						g_assert_cmpuint (input->views, >, 0);
+					else
+						g_assert_cmpuint (input->views, ==, 0);
+					expected = serialize_writer (entity, format, FALSE);
+					actual = serialize_writer (entity, format, FALSE);
+					g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+					g_byte_array_unref (actual);
+					g_assert_cmpint (g_mime_stream_reset ((GMimeStream *) input), ==, 0);
+					g_object_unref (input);
+					if (storage == GMIME_CONTENT_STORAGE_SOURCE)
+						g_assert_nonnull (alive);
+					else
+						g_assert_null (alive);
+					actual = serialize_writer (entity, format, FALSE);
+					g_assert_cmpmem (actual->data, actual->len, expected->data, expected->len);
+					g_byte_array_unref (actual);
+					g_byte_array_unref (expected);
+					g_object_unref (entity);
+					g_assert_null (alive);
+					g_string_free (wire, TRUE);
+				}
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Memory storage copies bytes while source storage references the original encoded content");
+	for (message = 0; message < 2; message++) {
+		for (storage = GMIME_CONTENT_STORAGE_MEMORY; storage <= GMIME_CONTENT_STORAGE_SOURCE; storage++) {
+			ModelInput *input = new_input (cases[0], strlen (cases[0]), 1);
+			GByteArray *source = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) input->parent_instance.source);
+			GMimeEntity *entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (
+				NULL, (GMimeStream *) input, storage, &error) :
+				g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, storage, &error);
+			GMimeEntity *body;
+			GByteArray *actual;
+
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			body = message ? g_mime_message_get_mime_part ((GMimeMessage *) entity) : entity;
+			memcpy (source->data + source->len - 4, "edit", 4);
+			actual = read_content (g_mime_part_get_content ((GMimePart *) body), FALSE);
+			if (storage == GMIME_CONTENT_STORAGE_SOURCE)
+				g_assert_cmpmem (actual->data, actual->len, "edit", 4);
+			else
+				g_assert_cmpmem (actual->data, actual->len, "body", 4);
+			g_byte_array_unref (actual);
+			g_object_unref (entity);
+			g_assert_cmpint (g_mime_stream_reset ((GMimeStream *) input), ==, 0);
+			g_object_unref (input);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Source storage rejects nonseekable input and exposes seek and substream errors without copying");
+	for (message = 0; message < 2; message++) {
+		for (unset = 0; unset < 2; unset++) {
+			for (i = 0; i < 3; i++) {
+				ModelInput *input = new_input (cases[0], strlen (cases[0]), 1);
+				gpointer alive = input;
+				int code = i == 0 ? ESPIPE : unset ?
+					(i == 1 ? GMIME_ERROR_NOT_SUPPORTED : GMIME_ERROR_GENERAL) : EIO;
+
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				input->nonseekable = i == 0;
+				input->fail_seek = i == 1;
+				input->fail_substream = i == 2;
+				input->unset_errno = unset;
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+					(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error) :
+					g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_assert_cmpint (errno, ==, i == 0 ? ESPIPE : unset ? 0 : EIO);
+				g_clear_error (&error);
+				if (i < 2) {
+					g_assert_cmpuint (input->reads, ==, 0);
+					g_assert_cmpuint (input->views, ==, 0);
+					g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+						(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, NULL) :
+						g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, NULL));
+				} else {
+					g_assert_cmpuint (input->views, ==, 1);
+				}
+				g_assert_cmpuint (input->resets, ==, 0);
+				g_object_unref (input);
+				g_assert_null (alive);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Source loading propagates read failures and options without retaining failed inputs");
+	for (message = 0; message < 2; message++) {
+		for (unset = 0; unset < 2; unset++) {
+			int code = unset ? GMIME_ERROR_GENERAL : EIO;
+
+			for (i = 0; i <= strlen (cases[2]); i++) {
+				ModelInput *input = new_input (cases[2], strlen (cases[2]), 1);
+				gpointer alive = input;
+
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				input->fail_after = i;
+				input->unset_errno = unset;
+				g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+					(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error) :
+					g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_assert_cmpint (errno, ==, unset ? 0 : EIO);
+				g_clear_error (&error);
+				g_object_unref (input);
+				g_assert_null (alive);
+			}
+		}
+		for (i = 0; i < 2; i++) {
+			GMimeParserOptions *options = g_mime_parser_options_new ();
+			GMimeStream *input = g_mime_stream_mem_new_with_buffer (cases[2], strlen (cases[2]));
+			GMimeEntity *entity;
+			guint warnings[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+			if (i == 0)
+				g_mime_parser_options_set_max_header_length (options, 1);
+			else
+				g_mime_parser_options_set_max_mime_depth (options, 0);
+			entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (options, input,
+				GMIME_CONTENT_STORAGE_SOURCE, &error) :
+				g_mime_entity_load_with_storage (options, input, GMIME_CONTENT_STORAGE_SOURCE, &error);
+			if (i == 0) {
+				g_assert_null (entity);
+				g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+				g_clear_error (&error);
+			} else {
+				g_assert_no_error (error);
+				g_assert_nonnull (entity);
+				g_assert_true (GMIME_IS_PART (message ?
+					g_mime_message_get_mime_part ((GMimeMessage *) entity) : entity));
+				g_assert_cmpuint (warnings[GMIME_CRIT_NESTING_OVERFLOW], >, 0);
+				g_object_unref (entity);
+			}
+			g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
+			g_object_unref (input);
+			g_mime_parser_options_unref (options);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Explicit storage validates streams, enum values and error destinations before accessing input");
+	for (message = 0; message < 2; message++) {
+		ModelInput *input = new_input (cases[0], strlen (cases[0]), 1);
+		int invalid[] = { -1, 2 };
+
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL, NULL,
+			GMIME_CONTENT_STORAGE_MEMORY, &error) :
+			g_mime_entity_load_with_storage (NULL, NULL, GMIME_CONTENT_STORAGE_MEMORY, &error));
+		g_test_assert_expected_messages ();
+		for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*storage == GMIME_CONTENT_STORAGE_MEMORY*");
+			g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+				(GMimeStream *) input, invalid[i], &error) :
+				g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, invalid[i], &error));
+			g_test_assert_expected_messages ();
+		}
+		g_set_error_literal (&error, GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL,
+			(GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error) :
+			g_mime_entity_load_with_storage (NULL, (GMimeStream *) input, GMIME_CONTENT_STORAGE_SOURCE, &error));
+		g_test_assert_expected_messages ();
+		g_assert_cmpstr (error->message, ==, "existing error");
+		g_clear_error (&error);
+		g_assert_cmpuint (input->reads, ==, 0);
+		g_assert_cmpuint (input->seeks, ==, 0);
+		g_assert_cmpuint (input->views, ==, 0);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Source-backed files stay open across model disposal and retained views keep their source alive");
+	for (message = 0; message < 2; message++) {
+		for (i = 0; i < 2; i++) {
+			char *directory = g_dir_make_tmp ("gmime-storage-XXXXXX", &error);
+			char *filename;
+			GMimeStream *input;
+			GMimeEntity *entity;
+			GByteArray *actual;
+			gpointer alive;
+
+			g_assert_no_error (error);
+			filename = g_build_filename (directory, "source.eml", NULL);
+			g_assert_true (g_file_set_contents (filename, cases[0], -1, &error));
+			input = g_mime_stream_fs_open (filename, O_RDONLY, 0, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (input);
+			alive = input;
+			g_object_add_weak_pointer (G_OBJECT (input), &alive);
+			entity = message ? (GMimeEntity *) g_mime_message_load_with_storage (NULL, input,
+				GMIME_CONTENT_STORAGE_SOURCE, &error) :
+				g_mime_entity_load_with_storage (NULL, input, GMIME_CONTENT_STORAGE_SOURCE, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			if (i == 0) {
+				g_object_unref (entity);
+				g_assert_nonnull (alive);
+				g_assert_cmpint (g_mime_stream_reset (input), ==, 0);
+				g_assert_cmpint (g_mime_stream_close (input), ==, 0);
+				g_object_unref (input);
+			} else {
+				g_object_unref (input);
+				g_assert_nonnull (alive);
+				actual = serialize_writer (entity, format, FALSE);
+				g_assert_cmpmem (actual->data, actual->len, cases[0], strlen (cases[0]));
+				g_byte_array_unref (actual);
+				g_object_unref (entity);
+			}
+			g_assert_null (alive);
+#ifdef __linux__
+			g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
+#endif
+			g_assert_cmpint (g_unlink (filename), ==, 0);
+			g_assert_cmpint (g_rmdir (directory), ==, 0);
+			g_free (filename);
+			g_free (directory);
+		}
+	}
+	testsuite_check_passed ();
+	g_mime_format_options_unref (format);
+}
+
+static void
+test_parser_storage (void)
+{
+	static const char first[] = "Subject: first\nContent-Type: text/plain\n\none";
+	static const char second[] = "Subject: second\nContent-Type: text/plain\n\ntwo";
+	guint storage, format, chunk, next_storage;
+	GError *error = NULL;
+
+	testsuite_check ("Explicit parser storage preserves positions, sequential mailbox state and content lifetimes");
+	for (storage = GMIME_CONTENT_STORAGE_MEMORY; storage <= GMIME_CONTENT_STORAGE_SOURCE; storage++) {
+		for (format = GMIME_FORMAT_MESSAGE; format <= GMIME_FORMAT_MMDF; format++) {
+			for (chunk = 1; chunk <= 4096; chunk *= 4096) {
+				GString *wire = g_string_new ("skip");
+				ModelInput *input;
+				GMimeParser *parser;
+				GMimeMessage *messages[2] = { NULL, NULL };
+				gpointer alive;
+				guint i, count = format == GMIME_FORMAT_MESSAGE ? 1 : 2;
+
+				if (format != GMIME_FORMAT_MESSAGE)
+					g_string_append (wire, format == GMIME_FORMAT_MBOX ? "From first\n" : "\001\001\001\001\n");
+				g_string_append (wire, first);
+				if (format != GMIME_FORMAT_MESSAGE) {
+					g_string_append (wire, format == GMIME_FORMAT_MBOX ? "\nFrom second\n" :
+							 "\n\001\001\001\001\n\001\001\001\001\n");
+					g_string_append (wire, second);
+					if (format == GMIME_FORMAT_MMDF)
+						g_string_append (wire, "\n\001\001\001\001\n");
+				}
+				input = new_input (wire->str, wire->len, chunk);
+				alive = input;
+				g_object_add_weak_pointer (G_OBJECT (input), &alive);
+				g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+				input->fail_seek = storage == GMIME_CONTENT_STORAGE_MEMORY;
+				parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input, format, storage, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (parser);
+				g_assert_cmpuint (input->reads, ==, 0);
+				g_assert_cmpuint (input->resets, ==, 0);
+				g_assert_cmpuint (input->seeks, ==, storage == GMIME_CONTENT_STORAGE_SOURCE ? 1 : 0);
+				g_assert_cmpint (g_mime_parser_tell (parser), ==, 4);
+				g_assert_cmpint (g_mime_parser_get_format (parser), ==, format);
+				for (i = 0; i < count; i++) {
+					GMimeMessagePrivate *messages_priv;
+					GByteArray *bytes;
+
+					messages[i] = g_mime_parser_construct_message (parser, NULL, &error);
+					g_assert_no_error (error);
+					g_assert_nonnull (messages[i]);
+					g_assert_cmpstr (g_mime_message_get_subject (messages[i]), ==, i ? "second" : "first");
+					messages_priv = _g_mime_message_get_private (messages[i]);
+
+					bytes = read_content (g_mime_part_get_content (GMIME_PART (messages_priv->mime_part)), FALSE);
+					g_assert_cmpmem (bytes->data, bytes->len, i ? "two" : "one", 3);
+					g_byte_array_unref (bytes);
+				}
+				g_assert_null (g_mime_parser_construct_message (parser, NULL, &error));
+				g_assert_no_error (error);
+				g_assert_true (g_mime_parser_eos (parser));
+				g_object_unref (parser);
+				g_object_unref (input);
+				g_assert_cmpint (alive != NULL, ==, storage == GMIME_CONTENT_STORAGE_SOURCE);
+				for (i = 0; i < count; i++) {
+					GMimeMessagePrivate *message_priv = _g_mime_message_get_private (messages[i]);
+					GByteArray *bytes = read_content (g_mime_part_get_content (GMIME_PART (message_priv->mime_part)), FALSE);
+
+					g_assert_cmpmem (bytes->data, bytes->len, i ? "two" : "one", 3);
+					g_byte_array_unref (bytes);
+					g_object_unref (messages[i]);
+				}
+				g_assert_null (alive);
+				g_string_free (wire, TRUE);
+			}
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Checked stream replacement validates before discarding buffered data and retains old models");
+	for (storage = GMIME_CONTENT_STORAGE_MEMORY; storage <= GMIME_CONTENT_STORAGE_SOURCE; storage++) {
+		for (next_storage = GMIME_CONTENT_STORAGE_MEMORY; next_storage <= GMIME_CONTENT_STORAGE_SOURCE; next_storage++) {
+			GString *wire = g_string_new ("From first\n");
+			ModelInput *input, *replacement;
+			GMimeParser *parser;
+			GMimeMessage *old[2], *message;
+			GByteArray *bytes;
+			gpointer alive;
+			guint i;
+			gint64 position, begin, end, marker_offset;
+
+			g_string_append_printf (wire, "%s\nFrom second\n%s", first, second);
+			input = new_input (wire->str, wire->len, 4096);
+			alive = input;
+			g_object_add_weak_pointer (G_OBJECT (input), &alive);
+			parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+				GMIME_FORMAT_MBOX, storage, &error);
+			old[0] = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (old[0]);
+			position = g_mime_parser_tell (parser);
+			begin = g_mime_parser_get_headers_begin (parser);
+			end = g_mime_parser_get_headers_end (parser);
+			marker_offset = g_mime_parser_get_mbox_marker_offset (parser);
+			for (i = 0; i < 2; i++) {
+				int code = i ? EIO : ESPIPE;
+				char *marker;
+
+				replacement = new_input (second, sizeof (second) - 1, 1);
+				replacement->nonseekable = i == 0;
+				replacement->fail_seek = i == 1;
+				g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
+					GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, &error));
+				g_assert_error (error, GMIME_ERROR, code);
+				g_clear_error (&error);
+				g_assert_cmpuint (replacement->reads, ==, 0);
+				g_assert_cmpint (g_mime_parser_tell (parser), ==, position);
+				g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, begin);
+				g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, end);
+				g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, marker_offset);
+				g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MBOX);
+				marker = g_mime_parser_get_mbox_marker (parser);
+				g_assert_cmpstr (marker, ==, "From first");
+				g_free (marker);
+				g_object_unref (replacement);
+			}
+			old[1] = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (g_mime_message_get_subject (old[1]), ==, "second");
+			replacement = new_input (first, sizeof (first) - 1, 1);
+			replacement->nonseekable = next_storage == GMIME_CONTENT_STORAGE_MEMORY;
+			g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
+				GMIME_FORMAT_MESSAGE, next_storage, &error));
+			g_assert_no_error (error);
+			g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MESSAGE);
+			g_assert_cmpint (g_mime_parser_tell (parser), ==, 0);
+			g_assert_cmpint (g_mime_parser_get_headers_begin (parser), ==, -1);
+			g_assert_cmpint (g_mime_parser_get_headers_end (parser), ==, -1);
+			g_assert_cmpint (g_mime_parser_get_mbox_marker_offset (parser), ==, -1);
+			g_assert_null (g_mime_parser_get_mbox_marker (parser));
+			g_object_unref (input);
+			g_assert_cmpint (alive != NULL, ==, storage == GMIME_CONTENT_STORAGE_SOURCE);
+			message = g_mime_parser_construct_message (parser, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (g_mime_message_get_subject (message), ==, "first");
+			g_object_unref (parser);
+			for (i = 0; i < 2; i++) {
+				GMimeMessagePrivate *old_priv = _g_mime_message_get_private (old[i]);
+
+				bytes = read_content (g_mime_part_get_content (GMIME_PART (old_priv->mime_part)), FALSE);
+				g_assert_cmpmem (bytes->data, bytes->len, i ? "two" : "one", 3);
+				g_byte_array_unref (bytes);
+				g_object_unref (old[i]);
+			}
+			g_assert_null (alive);
+			g_object_unref (message);
+			g_assert_cmpint (g_mime_stream_reset ((GMimeStream *) replacement), ==, 0);
+			g_object_unref (replacement);
+			g_string_free (wire, TRUE);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Checked parser initialization rejects invalid arguments before probing input");
+	{
+		ModelInput *input = new_input (first, sizeof (first) - 1, 1);
+		GMimeParser *parser = g_mime_parser_new ();
+		guint i;
+
+		for (i = 0; i < 4; i++) {
+			GMimeFormat invalid_format = i < 2 ? (i ? GMIME_FORMAT_MMDF + 1 : -1) : GMIME_FORMAT_MESSAGE;
+			GMimeContentStorage invalid_storage = i < 2 ? GMIME_CONTENT_STORAGE_SOURCE : (i == 2 ? -1 : 2);
+			const char *pattern = i < 2 ? "*format >= GMIME_FORMAT_MESSAGE*" : "*storage == GMIME_CONTENT_STORAGE_MEMORY*";
+
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, pattern);
+			g_assert_null (g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+				invalid_format, invalid_storage, &error));
+			g_test_assert_expected_messages ();
+			g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, pattern);
+			g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) input,
+				invalid_format, invalid_storage, &error));
+			g_test_assert_expected_messages ();
+		}
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_PARSER (parser)*");
+		g_assert_false (g_mime_parser_init_with_stream_and_storage (NULL, (GMimeStream *) input,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, &error));
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM (stream)*");
+		g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, NULL,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, &error));
+		g_test_assert_expected_messages ();
+		g_set_error_literal (&error, GMIME_ERROR, GMIME_ERROR_GENERAL, "existing error");
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*error == NULL || *error == NULL*");
+		g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) input,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_SOURCE, &error));
+		g_test_assert_expected_messages ();
+		g_assert_cmpstr (error->message, ==, "existing error");
+		g_clear_error (&error);
+		g_assert_cmpuint (input->reads, ==, 0);
+		g_assert_cmpuint (input->seeks, ==, 0);
+		g_assert_cmpuint (input->views, ==, 0);
+		g_assert_cmpuint (input->resets, ==, 0);
+		g_assert_cmpint (g_mime_parser_get_format (parser), ==, GMIME_FORMAT_MESSAGE);
+		g_assert_cmpint (g_mime_parser_tell (parser), ==, -1);
+		g_object_unref (parser);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Failed checked replacement preserves sticky errors and successful replacement clears them");
+	{
+		ModelInput *input = new_input ("invalid", 7, 1);
+		ModelInput *replacement = new_input (first, sizeof (first) - 1, 1);
+		GMimeParser *parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error);
+		GMimeMessage *message;
+		guint reads;
+
+		g_assert_null (g_mime_parser_construct_message (parser, NULL, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		reads = input->reads;
+		replacement->fail_seek = TRUE;
+		g_assert_false (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
+			GMIME_FORMAT_MBOX, GMIME_CONTENT_STORAGE_SOURCE, &error));
+		g_assert_error (error, GMIME_ERROR, EIO);
+		g_clear_error (&error);
+		g_assert_null (g_mime_parser_construct_message (parser, NULL, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_assert_cmpuint (input->reads, ==, reads);
+		g_clear_error (&error);
+		g_assert_true (g_mime_parser_init_with_stream_and_storage (parser, (GMimeStream *) replacement,
+			GMIME_FORMAT_MESSAGE, GMIME_CONTENT_STORAGE_MEMORY, &error));
+		message = g_mime_parser_construct_message (parser, NULL, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (message);
+		g_object_unref (message);
+		g_object_unref (parser);
+		g_object_unref (input);
+		g_object_unref (replacement);
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_content_type_load (void)
+{
+	static const char multipart[] = "--b\nContent-Type: text/plain\n\nbody\n--b--\n";
+	static const char nested[] = "Subject: nested\nContent-Type: text/plain\n\nbody";
+	static const struct {
+		const char *type, *body, *klass;
+		gsize length;
+	} cases[] = {
+		{ "text/plain; charset=utf-8", "body\nnext", "GMimeTextPart", 9 },
+		{ "application/octet-stream", "", "GMimePart", 0 },
+		{ "application/octet-stream", "body\0tail\n", "GMimePart", 10 },
+		{ "multipart/mixed; boundary=b", multipart, "GMimeMultipart", sizeof (multipart) - 1 },
+		{ "message/rfc822", nested, "GMimeMessagePart", sizeof (nested) - 1 }
+	};
+	GMimeFormatOptions *format = g_mime_format_options_new ();
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	guint i, nonseekable, unset;
+
+	g_mime_format_options_set_newline_format (format, GMIME_NEWLINE_FORMAT_UNIX);
+	testsuite_check ("Content-type loading rejects invalid arguments");
+	{
+		GMimeContentType *type = g_mime_content_type_new ("text", "plain");
+		GMimeStream *input = g_mime_stream_mem_new ();
+		GError *error = NULL;
+
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_CONTENT_TYPE*");
+		g_assert_null (g_mime_entity_load_with_content_type (NULL, NULL, input, &error));
+		g_test_assert_expected_messages ();
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_IS_STREAM*");
+		g_assert_null (g_mime_entity_load_with_content_type (NULL, type, NULL, &error));
+		g_test_assert_expected_messages ();
+		g_assert_no_error (error);
+		g_object_unref (input);
+		g_object_unref (type);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Content-type loading reparses models and copies current-position content without taking ownership");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (nonseekable = 0; nonseekable < 2; nonseekable++) {
+			GMimeEntityPrivate *priv;
+			GMimeContentType *type = g_mime_content_type_parse (NULL, cases[i].type);
+			GString *wire = g_string_new ("skip"), *expected = g_string_new ("Content-Type: ");
+			GMimeEntity *entity;
+			ModelInput *input;
+			gpointer alive;
+			GByteArray *bytes;
+			GError *error = NULL;
+			char *before, *after;
+
+			g_string_append_len (wire, cases[i].body, cases[i].length);
+			input = new_input (wire->str, wire->len, 1);
+			alive = input;
+			g_object_add_weak_pointer (G_OBJECT (input), &alive);
+			g_assert_cmpint (g_mime_stream_seek (input->parent_instance.source, 4, GMIME_STREAM_SEEK_SET), ==, 4);
+			input->nonseekable = nonseekable;
+			input->fail_seek = TRUE;
+			before = g_mime_content_type_to_string (type);
+			entity = g_mime_entity_load_with_content_type (options, type, (GMimeStream *) input, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (entity);
+			g_assert_cmpstr (G_OBJECT_TYPE_NAME (entity), ==, cases[i].klass);
+			priv = _g_mime_entity_get_private (entity);
+
+			g_assert_true (priv->content_type != type);
+			after = g_mime_content_type_to_string (type);
+			g_assert_cmpstr (before, ==, after);
+			g_assert_cmpuint (input->seeks, ==, 0);
+			g_assert_cmpuint (input->resets, ==, 0);
+			g_assert_cmpuint (input->views, ==, 0);
+			g_assert_cmpuint (input->bytes_read, ==, cases[i].length);
+			g_assert_cmpint (g_mime_stream_tell (input->parent_instance.source), ==, wire->len);
+			bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) input->parent_instance.source);
+			g_assert_nonnull (bytes);
+			g_assert_cmpuint (bytes->len, ==, wire->len);
+			g_byte_array_set_size (bytes, 0);
+			g_mime_content_type_set_parameter (type, "changed", "after loading");
+			g_object_unref (type);
+			g_assert_cmpint (g_mime_stream_close ((GMimeStream *) input), ==, 0);
+			g_object_unref (input);
+			g_assert_null (alive);
+
+			g_string_append (expected, cases[i].type);
+			g_string_append (expected, "\n\n");
+			g_string_append_len (expected, cases[i].body, cases[i].length);
+			bytes = serialize_writer (entity, format, FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
+			g_byte_array_unref (bytes);
+			g_object_unref (entity);
+			g_free (before);
+			g_free (after);
+			g_string_free (expected, TRUE);
+			g_string_free (wire, TRUE);
+		}
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Content-type loading honors depth and synthetic-header limits without changing options");
+	for (i = 0; i < 2; i++) {
+		const char *body = cases[3].body;
+		GMimeContentType *type = g_mime_content_type_parse (NULL, cases[3].type);
+		ModelInput *input = new_input (body, strlen (body), 1);
+		GMimeEntity *entity;
+		GByteArray *bytes;
+		GError *error = NULL;
+
+		g_mime_parser_options_set_max_mime_depth (options, 0);
+		g_mime_parser_options_set_max_header_length (options, i ? 1 :
+							   g_mime_parser_options_get_max_header_length (NULL));
+		entity = g_mime_entity_load_with_content_type (options, type, (GMimeStream *) input, &error);
+		if (i) {
+			g_assert_null (entity);
+			g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+			g_clear_error (&error);
+			g_assert_cmpuint (g_mime_parser_options_get_max_header_length (options), ==, 1);
+		} else {
+			g_assert_no_error (error);
+			g_assert_true (GMIME_IS_PART (entity));
+			g_assert_false (GMIME_IS_MULTIPART (entity));
+			bytes = read_content (g_mime_part_get_content ((GMimePart *) entity), FALSE);
+			g_assert_cmpmem (bytes->data, bytes->len, body, strlen (body));
+			g_byte_array_unref (bytes);
+			g_object_unref (entity);
+		}
+		g_assert_cmpuint (g_mime_parser_options_get_max_mime_depth (options), ==, 0);
+		g_assert_cmpuint (input->seeks, ==, 0);
+		g_assert_cmpuint (input->resets, ==, 0);
+		g_object_unref (type);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Content-type loading propagates source read failures without returning partial entities");
+	for (unset = 0; unset < 2; unset++) {
+		for (i = 0; i <= 9; i++) {
+			GMimeContentType *type = g_mime_content_type_new ("text", "plain");
+			ModelInput *input = new_input ("body\0tail", 9, 1);
+			GError *error = NULL;
+			gpointer alive = input;
+			int code = unset ? GMIME_ERROR_GENERAL : EIO;
+
+			g_object_add_weak_pointer (G_OBJECT (input), &alive);
+			input->nonseekable = TRUE;
+			input->fail_after = i;
+			input->unset_errno = unset;
+			g_assert_null (g_mime_entity_load_with_content_type (NULL, type, (GMimeStream *) input, &error));
+			g_assert_error (error, GMIME_ERROR, code);
+			g_clear_error (&error);
+			g_assert_cmpuint (input->bytes_read, ==, i);
+			g_assert_cmpuint (input->seeks, ==, 0);
+			g_assert_cmpuint (input->resets, ==, 0);
+			g_object_unref (type);
+			g_object_unref (input);
+			g_assert_null (alive);
+		}
+	}
+	testsuite_check_passed ();
+	g_mime_parser_options_unref (options);
+	g_mime_format_options_unref (format);
+}
+
+static void
+test_ensure_newline (void)
+{
+	static const struct {
+		const char *wire;
+		gboolean message, append;
+	} cases[] = {
+		{ "Subject: x\nContent-Type: text/plain\n\nbody", TRUE, TRUE },
+		{ "Subject: x\nContent-Type: text/plain\n\nbody\n", TRUE, FALSE },
+		{ "Subject: x\nContent-Type: text/plain\nContent-Transfer-Encoding: binary\n\nbody", TRUE, FALSE },
+		{ "Content-Type: text/plain\n\nbody", FALSE, FALSE },
+		{ "Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody", FALSE, FALSE },
+		{ "Content-Type: message/rfc822\n\nSubject: nested\nContent-Type: text/plain\n\nbody", TRUE, TRUE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody", TRUE, TRUE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody", FALSE, FALSE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody\n--b--", TRUE, TRUE },
+		{ "Content-Type: multipart/mixed; boundary=b\n\n--b\nContent-Type: text/plain\n\nbody\n--b--\n", TRUE, FALSE }
+	};
+	GMimeFormatOptions *options = g_mime_format_options_new (), *clone;
+	guint i, dos, ensure, persist;
+
+	testsuite_check ("Public newline completion options clone independently and protect the defaults");
+	g_assert_false (g_mime_format_options_get_ensure_newline (NULL));
+	g_assert_false (g_mime_format_options_get_ensure_newline (options));
+	g_mime_format_options_set_ensure_newline (options, TRUE);
+	clone = g_mime_format_options_clone (options);
+	g_mime_format_options_set_ensure_newline (options, FALSE);
+	g_assert_true (g_mime_format_options_get_ensure_newline (clone));
+	g_assert_false (g_mime_format_options_get_ensure_newline (options));
+	g_mime_format_options_unref (clone);
+	clone = g_mime_format_options_clone (NULL);
+	g_assert_false (g_mime_format_options_get_ensure_newline (clone));
+	g_mime_format_options_unref (clone);
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*options != NULL*");
+	g_mime_format_options_set_ensure_newline (NULL, TRUE);
+	g_test_assert_expected_messages ();
+	g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*options != default_options*");
+	g_mime_format_options_set_ensure_newline (g_mime_format_options_get_default (), TRUE);
+	g_test_assert_expected_messages ();
+	g_assert_false (g_mime_format_options_get_ensure_newline (NULL));
+	testsuite_check_passed ();
+
+	testsuite_check ("Message newline completion matches MimeKit without affecting standalone or binary entities");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (dos = 0; dos < 2; dos++) {
+			for (persist = 0; persist < 2; persist++) {
+				GMimeEntityPrivate *body_priv;
+				ModelInput *input = new_input (cases[i].wire, strlen (cases[i].wire), 1);
+				GMimeParser *parser;
+				GMimeEntity *entity, *body;
+				GError *error = NULL;
+				gboolean body_ensure;
+
+				parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
+					GMIME_FORMAT_MESSAGE, persist ? GMIME_CONTENT_STORAGE_SOURCE :
+					GMIME_CONTENT_STORAGE_MEMORY, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (parser);
+				entity = cases[i].message ? (GMimeEntity *) g_mime_parser_construct_message (parser, NULL, &error) :
+					g_mime_parser_construct_part (parser, NULL, &error);
+				g_assert_no_error (error);
+				g_assert_nonnull (entity);
+				if (cases[i].message) {
+					GMimeMessagePrivate *priv = _g_mime_message_get_private ((GMimeMessage *) entity);
+
+					body = priv->mime_part;
+				} else {
+					body = entity;
+				}
+				g_assert_nonnull (body);
+				body_priv = _g_mime_entity_get_private (body);
+
+				body_ensure = body_priv->ensure_newline;
+				g_mime_format_options_set_newline_format (options, dos ? GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);
+				for (ensure = 0; ensure < 2; ensure++) {
+					GString *expected = g_string_new (NULL);
+					const char *p, *line = cases[i].wire, *newline = dos ? "\r\n" : "\n";
+					GByteArray *bytes, *again;
+					ModelOutput *output = g_object_new (model_output_get_type (), NULL);
+
+					for (p = cases[i].wire; *p; p++) {
+						if (*p == '\n') {
+							/* Raw opening markers retain their original newlines. */
+							g_string_append (expected, strncmp (line, "--b\n", 4) ? newline : "\n");
+							line = p + 1;
+						} else
+							g_string_append_c (expected, *p);
+					}
+					if (ensure && cases[i].append)
+						g_string_append (expected, newline);
+					g_mime_format_options_set_ensure_newline (options, ensure);
+					bytes = serialize_writer (entity, options, FALSE);
+					g_assert_cmpmem (bytes->data, bytes->len, expected->str, expected->len);
+					g_assert_cmpint (body_priv->ensure_newline, ==, body_ensure);
+					g_assert_cmpint (g_mime_format_options_get_ensure_newline (options), ==, ensure);
+					if (ensure && cases[i].append) {
+						output->limit = bytes->len - strlen (newline);
+						errno = 0;
+						g_assert_cmpint (g_mime_entity_write_to_stream (entity, options, (GMimeStream *) output), ==, -1);
+						g_assert_cmpint (errno, ==, EIO);
+						g_assert_cmpint (body_priv->ensure_newline, ==, body_ensure);
+					}
+					again = serialize_writer (entity, options, FALSE);
+					g_assert_cmpmem (again->data, again->len, bytes->data, bytes->len);
+					g_byte_array_unref (again);
+					g_byte_array_unref (bytes);
+					g_string_free (expected, TRUE);
+					g_object_unref (output);
+				}
+				g_object_unref (entity);
+				g_object_unref (parser);
+				g_object_unref (input);
+			}
+		}
+	}
+	testsuite_check_passed ();
+	g_mime_format_options_unref (options);
+}
+
+int
+main (int argc, char **argv)
+{
+	g_mime_init ();
+	testsuite_init (argc, argv);
+	testsuite_start ("Reader-backed MIME model foundation");
+	test_parsed_header_names ();
+	test_header_staging ();
+	test_parsed_option_snapshots ();
+	test_parsed_header_import ();
+	test_parsed_entity_options ();
+	test_parsed_content_type_lifetime ();
+	test_content_handoffs ();
+	test_custom_content_handoffs ();
+	test_content_header_partition ();
+	test_header_models ();
+	test_empty_headers ();
+	test_leaf_models ();
+	test_binary_encoding_headers ();
+	test_model_metadata ();
+	test_persistent_resume ();
+	test_model_stream_replacement ();
+	test_model_type_registration ();
+	test_message_models ();
+	test_lazy_subject ();
+	test_lazy_message_metadata ();
+	test_message_depth ();
+	test_message_model_errors ();
+	test_mailbox_models ();
+	test_mailbox_model_errors ();
+	test_multipart_models ();
+	test_ancestor_boundary_precedence ();
+	test_boundary_index_transitions ();
+	test_boundary_index_matches ();
+	test_boundary_index_restoration ();
+	test_boundary_index_mailboxes ();
+	test_boundary_characters ();
+	test_multipart_collection_bounds ();
+	test_multipart_boundary_validation ();
+	test_multipart_text_views ();
+	test_large_multipart_text ();
+	test_multipart_text_folding ();
+	test_multipart_output ();
+	test_model_errors ();
+	test_public_parser_models ();
+	test_public_parser_warnings ();
+	test_parser_compliance_options ();
+	test_parser_compliance_models ();
+	test_content_type_syntax ();
+	test_parser_compliance_lifetime ();
+	test_parser_compliance_errors ();
+	test_public_long_header_names ();
+#ifdef ENABLE_CRYPTO
+	test_gpgme_adapter_errors ();
+	test_signature_markers ();
+#endif
+	test_writer_depth ();
+	test_destruction_depth ();
+	test_destruction_ownership ();
+	test_destruction_reentrancy ();
+	test_destruction_threads ();
+	test_writer_dispatch ();
+	test_message_header_writing ();
+	test_file_writing ();
+	test_commented_parameter_messages ();
+	test_loading ();
+	test_loading_storage ();
+	test_parser_storage ();
+	test_content_type_load ();
+	test_ensure_newline ();
+	testsuite_end ();
+	g_mime_shutdown ();
+
+	return testsuite_exit ();
+}

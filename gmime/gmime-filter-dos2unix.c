@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -25,18 +25,26 @@
 
 #include "gmime-filter-dos2unix.h"
 
+#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-filter-dos2unix
  * @title: GMimeFilterDos2Unix
  * @short_description: Convert line-endings from Windows/DOS (CRLF) to UNIX (LF).
  *
- * A #GMimeFilter for converting from DOS to UNIX line-endings.
+ * Converts CRLF pairs to LF, including pairs split across input buffers.
+ * All other bytes are preserved, including a trailing bare CR on completion.
+ * If ensure_newline is enabled, completion ensures a final LF instead;
+ * a trailing bare CR is combined with that newline and converted to LF.
+ *
+ * Repeated empty completion calls add no further output. Reset discards
+ * conversion state; copying preserves the ensure_newline setting but creates
+ * a fresh filter without buffered input.
  **/
 
 
 static void g_mime_filter_dos2unix_class_init (GMimeFilterDos2UnixClass *klass);
-static void g_mime_filter_dos2unix_init (GMimeFilterDos2Unix *filter, GMimeFilterDos2UnixClass *klass);
+static void g_mime_filter_dos2unix_init (GMimeFilterDos2Unix *filter);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
 static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
@@ -49,28 +57,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_dos2unix_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterDos2Unix, g_mime_filter_dos2unix, GMIME_TYPE_FILTER)
+
+GMimeFilterDos2UnixPrivate *
+_g_mime_filter_dos2unix_get_private (GMimeFilterDos2Unix *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterDos2UnixClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_dos2unix_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterDos2Unix),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_dos2unix_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterDos2Unix", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_dos2unix_get_instance_private (object);
 }
 
 
@@ -88,31 +81,34 @@ g_mime_filter_dos2unix_class_init (GMimeFilterDos2UnixClass *klass)
 }
 
 static void
-g_mime_filter_dos2unix_init (GMimeFilterDos2Unix *filter, GMimeFilterDos2UnixClass *klass)
+g_mime_filter_dos2unix_init (GMimeFilterDos2Unix *filter)
 {
-	filter->ensure_newline = FALSE;
-	filter->pc = '\0';
+	GMimeFilterDos2UnixPrivate *priv = _g_mime_filter_dos2unix_get_private (filter);
+
+	priv->ensure_newline = FALSE;
+	priv->pc = '\0';
 }
 
 
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterDos2Unix *dos2unix = (GMimeFilterDos2Unix *) filter;
-	
-	return g_mime_filter_dos2unix_new (dos2unix->ensure_newline);
+	GMimeFilterDos2UnixPrivate *priv = _g_mime_filter_dos2unix_get_private ((GMimeFilterDos2Unix *) filter);
+
+	return g_mime_filter_dos2unix_new (priv->ensure_newline);
 }
 
 static void
 convert (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 	 char **outbuf, size_t *outlen, size_t *outprespace, gboolean flush)
 {
-	GMimeFilterDos2Unix *dos2unix = (GMimeFilterDos2Unix *) filter;
+	GMimeFilterDos2UnixPrivate *dos2unix = _g_mime_filter_dos2unix_get_private ((GMimeFilterDos2Unix *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	register const char *inptr = inbuf;
 	const char *inend = inbuf + inlen;
 	size_t expected = inlen;
 	char *outptr;
-	
+
 	if (flush && dos2unix->ensure_newline)
 		expected++;
 	
@@ -120,8 +116,8 @@ convert (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		expected++;
 	
 	g_mime_filter_set_size (filter, expected, FALSE);
-	
-	outptr = filter->outbuf;
+
+	outptr = priv->outbuf;
 	while (inptr < inend) {
 		if (*inptr == '\n') {
 			*outptr++ = *inptr;
@@ -136,12 +132,20 @@ convert (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		dos2unix->pc = *inptr++;
 	}
 	
+	if (flush && dos2unix->pc == '\r') {
+		/* A trailing CR is held back until we know whether it precedes LF.
+		 * When ensuring a newline, the CR and the appended LF form CRLF,
+		 * which must be converted to a single LF. */
+		*outptr++ = dos2unix->ensure_newline ? '\n' : '\r';
+		dos2unix->pc = dos2unix->ensure_newline ? '\n' : '\0';
+	}
+
 	if (flush && dos2unix->ensure_newline && dos2unix->pc != '\n')
 		dos2unix->pc = *outptr++ = '\n';
 	
-	*outlen = outptr - filter->outbuf;
-	*outprespace = filter->outpre;
-	*outbuf = filter->outbuf;
+	*outlen = outptr - priv->outbuf;
+	*outprespace = priv->outpre;
+	*outbuf = priv->outbuf;
 }
 
 static void
@@ -161,9 +165,9 @@ filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterDos2Unix *dos2unix = (GMimeFilterDos2Unix *) filter;
-	
-	dos2unix->pc = '\0';
+	GMimeFilterDos2UnixPrivate *priv = _g_mime_filter_dos2unix_get_private ((GMimeFilterDos2Unix *) filter);
+
+	priv->pc = '\0';
 }
 
 
@@ -171,17 +175,23 @@ filter_reset (GMimeFilter *filter)
  * g_mime_filter_dos2unix_new:
  * @ensure_newline: %TRUE if the filter should ensure that the stream ends in a new line
  *
- * Creates a new #GMimeFilterDos2Unix filter.
+ * Creates a new #GMimeFilterDos2Unix filter. CRLF pairs are converted to LF;
+ * bare CR bytes are preserved unless a trailing CR is combined with the
+ * newline requested by @ensure_newline. With @ensure_newline, even empty
+ * input completes with a single LF.
  *
- * Returns: a new #GMimeFilterDos2Unix filter.
+ * Returns: (transfer full): a new #GMimeFilterDos2Unix filter.
  **/
 GMimeFilter *
 g_mime_filter_dos2unix_new (gboolean ensure_newline)
 {
+	GMimeFilterDos2UnixPrivate *priv;
 	GMimeFilterDos2Unix *dos2unix;
 	
 	dos2unix = g_object_new (GMIME_TYPE_FILTER_DOS2UNIX, NULL);
-	dos2unix->ensure_newline = ensure_newline;
+	priv = _g_mime_filter_dos2unix_get_private (dos2unix);
+
+	priv->ensure_newline = ensure_newline;
 	
 	return (GMimeFilter *) dos2unix;
 }

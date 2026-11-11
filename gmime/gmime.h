@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -25,32 +25,77 @@
 #include <glib.h>
 #include <gmime/gmime-version.h>
 #include <gmime/gmime-error.h>
+#include <gmime/gmime-anonymizer.h>
+#include <gmime/gmime-authentication-results.h>
 #include <gmime/gmime-charset.h>
 #include <gmime/gmime-iconv.h>
 #include <gmime/gmime-iconv-utils.h>
 #include <gmime/gmime-param.h>
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-disposition.h>
-#include <gmime/gmime-data-wrapper.h>
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-header-list-collection.h>
+#include <gmime/gmime-received-clause.h>
+#include <gmime/gmime-received.h>
+#include <gmime/gmime-content.h>
+#include <gmime/gmime-entity.h>
+#include <gmime/gmime-attachment-collection.h>
+#include <gmime/gmime-body-builder.h>
 #include <gmime/gmime-part.h>
+#include <gmime/gmime-openpgp.h>
 #include <gmime/gmime-text-part.h>
-#include <gmime/gmime-part-iter.h>
+#include <gmime/gmime-text-converter.h>
+#include <gmime/gmime-html-compliance.h>
+#include <gmime/gmime-html-entity.h>
+#include <gmime/gmime-html-token.h>
+#include <gmime/gmime-html-tokenizer.h>
+#include <gmime/gmime-html-utils.h>
+#include <gmime/gmime-html-writer.h>
+#include <gmime/gmime-html-tag-context.h>
+#include <gmime/gmime-html-to-html.h>
+#include <gmime/gmime-html-to-text.h>
+#include <gmime/gmime-text-to-html.h>
+#include <gmime/gmime-flowed-to-html.h>
+#include <gmime/gmime-enriched-to-html.h>
+#include <gmime/gmime-text-previewer.h>
+#include <gmime/gmime-url-scanner.h>
+#include <gmime/gmime-iterator.h>
 #include <gmime/gmime-application-pkcs7-mime.h>
 #include <gmime/gmime-multipart.h>
+#include <gmime/gmime-multipart-alternative.h>
+#include <gmime/gmime-multipart-related.h>
+#include <gmime/gmime-multipart-report.h>
 #include <gmime/gmime-multipart-encrypted.h>
 #include <gmime/gmime-multipart-signed.h>
 #include <gmime/gmime-message.h>
+#include <gmime/gmime-message-delivery-status.h>
+#include <gmime/gmime-message-disposition-notification.h>
+#include <gmime/gmime-message-feedback-report.h>
 #include <gmime/gmime-message-part.h>
+#include <gmime/gmime-text-rfc822-headers.h>
 #include <gmime/gmime-message-partial.h>
-#include <gmime/internet-address.h>
+#include <gmime/gmime-visitor.h>
+#include <gmime/gmime-internet-address.h>
+#include <gmime/gmime-smtp-address-validator.h>
+#include <gmime/gmime-domain-list.h>
 #include <gmime/gmime-encodings.h>
+#include <gmime/gmime-codecs.h>
+#include <gmime/gmime-yenc.h>
+#include <gmime/gmime-tnef-types.h>
+#include <gmime/gmime-tnef-options.h>
+#include <gmime/gmime-tnef-reader.h>
+#include <gmime/gmime-tnef-property.h>
+#include <gmime/gmime-tnef-writer.h>
+#include <gmime/gmime-filter-rtf-compressed.h>
+#include <gmime/gmime-compliance.h>
 #include <gmime/gmime-format-options.h>
 #include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-parser.h>
 #include <gmime/gmime-utils.h>
-#include <gmime/gmime-references.h>
+#include <gmime/gmime-types.h>
+#include <gmime/gmime-message-id-list.h>
 #include <gmime/gmime-stream.h>
+#include <gmime/gmime-reader.h>
+#include <gmime/gmime-stream-block.h>
 #include <gmime/gmime-stream-buffer.h>
 #include <gmime/gmime-stream-cat.h>
 #include <gmime/gmime-stream-file.h>
@@ -62,6 +107,7 @@
 #include <gmime/gmime-stream-null.h>
 #include <gmime/gmime-stream-pipe.h>
 #include <gmime/gmime-filter.h>
+#include <gmime/gmime-filter-anonymize.h>
 #include <gmime/gmime-filter-basic.h>
 #include <gmime/gmime-filter-best.h>
 #include <gmime/gmime-filter-charset.h>
@@ -70,16 +116,12 @@
 #include <gmime/gmime-filter-enriched.h>
 #include <gmime/gmime-filter-from.h>
 #include <gmime/gmime-filter-gzip.h>
-#include <gmime/gmime-filter-html.h>
 #include <gmime/gmime-filter-openpgp.h>
+#include <gmime/gmime-filter-pass-through.h>
 #include <gmime/gmime-filter-smtp-data.h>
 #include <gmime/gmime-filter-strip.h>
 #include <gmime/gmime-filter-unix2dos.h>
 #include <gmime/gmime-filter-windows.h>
-#include <gmime/gmime-filter-yenc.h>
-#include <gmime/gmime-crypto-context.h>
-#include <gmime/gmime-pkcs7-context.h>
-#include <gmime/gmime-gpg-context.h>
 
 G_BEGIN_DECLS
 

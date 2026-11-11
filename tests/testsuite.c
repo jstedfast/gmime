@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,6 +33,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#ifdef G_OS_UNIX
+#include <sys/un.h>
+#endif
 
 #include "testsuite.h"
 
@@ -41,6 +44,74 @@ static struct _stack *stack = NULL;
 static int total_errors = 0;
 static int total_tests = 0;
 int verbose = 0;
+
+typedef struct {
+	GBytes *bytes;
+	char *text;
+} HeaderText;
+
+static void
+header_text_free (gpointer data)
+{
+	HeaderText *cached = data;
+
+	g_bytes_unref (cached->bytes);
+	g_free (cached->text);
+	g_free (cached);
+}
+
+/* Text-only fixtures must not hide embedded NULs in byte-backed headers. */
+static const char *
+header_text (GMimeHeader *header, GBytes *bytes, const char *key)
+{
+	HeaderText *cached = g_object_get_data (G_OBJECT (header), key);
+	gsize length;
+	const char *data;
+
+	if (!bytes) {
+		g_object_set_data (G_OBJECT (header), key, NULL);
+		return NULL;
+	}
+
+	if (cached && cached->bytes == bytes) {
+		g_bytes_unref (bytes);
+		return cached->text;
+	}
+
+	data = g_bytes_get_data (bytes, &length);
+	g_assert_true (!length || !memchr (data, 0, length));
+	cached = g_new (HeaderText, 1);
+	cached->bytes = bytes;
+	cached->text = length ? g_strndup (data, length) : g_strdup ("");
+	g_object_set_data_full (G_OBJECT (header), key, cached, header_text_free);
+
+	return cached->text;
+}
+
+const char *
+testsuite_header_raw_text (GMimeHeader *header)
+{
+	return header_text (header, g_mime_header_get_raw_value (header), "gmime-test-raw-value");
+}
+
+const char *
+testsuite_header_raw_name (GMimeHeader *header)
+{
+	return header_text (header, g_mime_header_get_raw_name (header), "gmime-test-raw-name");
+}
+
+void
+testsuite_header_set_raw_text (GMimeHeader *header, const char *text)
+{
+	GBytes *bytes = g_bytes_new (text, strlen (text));
+	GError *error = NULL;
+	gboolean success;
+
+	success = g_mime_header_set_raw_value (header, bytes, &error);
+	g_assert_no_error (error);
+	g_assert_true (success);
+	g_bytes_unref (bytes);
+}
 
 enum {
 	TEST,
@@ -238,7 +309,8 @@ testsuite_check_failed (const char *fmt, ...)
 	
 	g_assert (stack != NULL && stack->type == CHECK);
 	
-	if (verbose > 2) {
+	if (verbose > 0) {
+		fprintf (stderr, "FAILED: %s: ", stack->message);
 		va_start (ap, fmt);
 		vfprintf (stderr, fmt, ap);
 		va_end (ap);
@@ -411,93 +483,149 @@ testsuite_can_safely_override_session_key (const char *gpg)
 	return get_gpg_version (gpg) >= v2_1_16;
 }
 
-int
-testsuite_setup_gpghome (const char *gpg)
+static char *gnupg_home = NULL;
+static char *saved_gnupg_home = NULL;
+static gboolean gnupg_uses_agent = FALSE;
+
+static gboolean
+run_gpg_command (char **argv)
 {
-	char *command;
-	FILE *fp;
-	
-	/* reset .gnupg config directory */
-	if (system ("/bin/rm -rf ./tmp") != 0)
+	GError *error = NULL;
+	int status;
+
+	if (!g_spawn_sync (NULL, argv, NULL, G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL,
+			   NULL, NULL, NULL, NULL, &status, &error) ||
+	    !g_spawn_check_wait_status (status, &error)) {
+		fprintf (stderr, "%s failed: %s\n", argv[0], error->message);
+		g_error_free (error);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+write_gpg_config (const char *name, const char *config)
+{
+	char *path = g_build_filename (gnupg_home, name, NULL);
+	GError *error = NULL;
+	gboolean success;
+	char *text;
+
+#if DEBUG_GNUPG
+	text = g_strdup_printf ("%slog-file socket://%s/S.log\ndebug 1024\nverbose\n",
+				config, gnupg_home);
+#else
+	text = g_strdup (config);
+#endif
+
+	success = g_file_set_contents (path, text, -1, &error);
+	if (!success) {
+		fprintf (stderr, "Cannot write %s: %s\n", path, error->message);
+		g_error_free (error);
+	}
+
+	g_free (path);
+	g_free (text);
+
+	return success;
+}
+
+static void
+cleanup_gpghome (void)
+{
+	if (testsuite_destroy_gpghome () != EXIT_SUCCESS)
+		fprintf (stderr, "Failed to clean up the test GnuPG home.\n");
+}
+
+int
+testsuite_setup_gpghome (const char *gpg, const char *name)
+{
+	static gboolean cleanup_registered = FALSE;
+	char *argv[] = { (char *) gpg, "--list-keys", NULL };
+	char *template, *basename;
+
+	g_return_val_if_fail (name != NULL, EXIT_FAILURE);
+	g_return_val_if_fail (gnupg_home == NULL, EXIT_FAILURE);
+
+	basename = g_strdup_printf ("gmime-%s-XXXXXX", name);
+	template = g_build_filename (g_get_tmp_dir (), basename, NULL);
+#ifdef G_OS_UNIX
+	/* Nested test TMPDIRs can exceed the agent's Unix-domain socket limit. */
+	if (strlen (template) + sizeof ("/S.gpg-agent.browser") > sizeof (((struct sockaddr_un *) 0)->sun_path)) {
+		g_free (template);
+		template = g_build_filename ("/tmp", basename, NULL);
+	}
+#endif
+	g_free (basename);
+	gnupg_home = g_mkdtemp (template);
+	if (!gnupg_home) {
+		fprintf (stderr, "Cannot create a test GnuPG home in %s: %s\n", template, g_strerror (errno));
+		g_free (template);
 		return EXIT_FAILURE;
-	
-	if (g_mkdir ("./tmp", 0755) != 0)
-		return EXIT_FAILURE;
-	
-	g_setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	}
+	gnupg_home = g_strdup (gnupg_home);
+	g_free (template);
+
+	saved_gnupg_home = g_strdup (g_getenv ("GNUPGHOME"));
+	g_setenv ("GNUPGHOME", gnupg_home, TRUE);
+	gnupg_uses_agent = get_gpg_version (gpg) >= ((2 << 24) | (1 << 16));
+
+	if (!cleanup_registered) {
+		if (atexit (cleanup_gpghome) != 0) {
+			fprintf (stderr, "Cannot register test GnuPG home cleanup.\n");
+			goto fail;
+		}
+		cleanup_registered = TRUE;
+	}
 	
 	/* disable environment variables that gpg-agent uses for pinentry */
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
 	g_unsetenv ("DISPLAY");
 	g_unsetenv ("GPG_TTY");
-	
-        command = g_strdup_printf ("%s --list-keys > /dev/null 2>&1", gpg);
-	if (system (command) != 0) {
-		g_free (command);
-		return EXIT_FAILURE;
-	}
-	
-	g_free (command);
-	
-	if (get_gpg_version (gpg) >= ((2 << 24) | (1 << 16))) {
-		if (!(fp = fopen ("./tmp/.gnupg/gpg.conf", "a")))
-			return EXIT_FAILURE;
-		
-		if (fprintf (fp, "pinentry-mode loopback\n") == -1) {
-			fclose (fp);
-			return EXIT_FAILURE;
-		}
-		
-		if (fclose (fp))
-			return EXIT_FAILURE;
-	}
-	
-	if (!(fp = fopen ("./tmp/.gnupg/gpgsm.conf", "a")))
-		return EXIT_FAILURE;
-	
-	if (fprintf (fp, "disable-crl-checks\n") == -1) {
-		fclose (fp);
-		return EXIT_FAILURE;
-	}
-	
-	if (fclose (fp))
-		return EXIT_FAILURE;
-	
+
+	if (!write_gpg_config ("gpg.conf", gnupg_uses_agent ? "pinentry-mode loopback\n" : "") ||
+	    !write_gpg_config ("gpgsm.conf", "disable-crl-checks\n"))
+		goto fail;
+
 #if DEBUG_GNUPG
-	if (TRUE) {
-		const char *files[] = { "./tmp/.gnupg/gpg.conf", "./tmp/.gnupg/gpgsm.conf", "./tmp/.gnupg/gpg-agent.conf", "./tmp/.gnupg/dirmngr.conf", NULL };
-		const char debug[] = "log-file socket://%s/tmp/.gnupg/S.log\ndebug 1024\nverbose\n";
-		char *cwd = g_get_current_dir ();
-		int i;
-		
-		for (i = 0; files[i]; i++) {
-			if (!(fp = fopen (files[i], "a")))
-				return EXIT_FAILURE;
-			
-			if (fprintf (fp, debug, cwd) == -1) {
-				g_free (cwd);
-				fclose (fp);
-				return EXIT_FAILURE;
-			}
-			
-			if (fclose (fp)) {
-				g_free (cwd);
-				return EXIT_FAILURE;
-			}
-		}
-		
-		g_free (cwd);
-	}
+	if (!write_gpg_config ("gpg-agent.conf", "") || !write_gpg_config ("dirmngr.conf", ""))
+		goto fail;
 #endif
-	
+
+	if (!run_gpg_command (argv))
+		goto fail;
+
 	return EXIT_SUCCESS;
+
+fail:
+	cleanup_gpghome ();
+	return EXIT_FAILURE;
 }
 
 int
 testsuite_destroy_gpghome (void)
 {
-	if (system ("/bin/rm -rf ./tmp") != 0)
+	char *kill_argv[] = { "gpgconf", "--homedir", gnupg_home, "--kill", "all", NULL };
+	char *remove_argv[] = { "/bin/rm", "-rf", "--", gnupg_home, NULL };
+
+	if (!gnupg_home)
+		return EXIT_SUCCESS;
+
+	if (gnupg_uses_agent && !run_gpg_command (kill_argv))
 		return EXIT_FAILURE;
+
+	if (!run_gpg_command (remove_argv))
+		return EXIT_FAILURE;
+
+	if (saved_gnupg_home)
+		g_setenv ("GNUPGHOME", saved_gnupg_home, TRUE);
+	else
+		g_unsetenv ("GNUPGHOME");
+
+	g_clear_pointer (&saved_gnupg_home, g_free);
+	g_clear_pointer (&gnupg_home, g_free);
+
 	return EXIT_SUCCESS;
 }
 
@@ -667,7 +795,8 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	TestStreamOneByte *test = (TestStreamOneByte *) stream;
 	
-	return g_mime_stream_substream (test->source, start, end);
+	/* The public wrapper attaches the returned substream to this stream. */
+	return GMIME_STREAM_GET_CLASS (test->source)->substream (test->source, start, end);
 }
 
 
@@ -683,6 +812,7 @@ GMimeStream *
 test_stream_onebyte_new (GMimeStream *source)
 {
 	TestStreamOneByte *test;
+	gint64 start, end;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (source), NULL);
 	
@@ -691,9 +821,8 @@ test_stream_onebyte_new (GMimeStream *source)
 	test->source = source;
 	g_object_ref (source);
 	
-	g_mime_stream_construct ((GMimeStream *) test,
-				 source->bound_start,
-				 source->bound_end);
+	g_mime_stream_get_bounds (source, &start, &end);
+	g_mime_stream_construct ((GMimeStream *) test, start, end);
 	
 	return (GMimeStream *) test;
 }

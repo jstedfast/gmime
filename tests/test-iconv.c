@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <gmime/gmime.h>
 
@@ -132,6 +133,114 @@ test_utils (void)
 	testsuite_end ();
 }
 
+static void
+test_utils_growth (void)
+{
+	char input[64], expected[sizeof (input) * 4 + 4] = { 0 }, *converted;
+	GString *utf8, *iso2022;
+	iconv_t cd;
+	guint i;
+
+	testsuite_check ("Conversion buffer growth preserves output and multibyte terminators");
+	for (i = 0; i < sizeof (input); i++)
+		expected[i * 4] = input[i] = 'A' + i % 26;
+	cd = g_mime_iconv_open ("UTF-32LE", "UTF-8");
+	g_assert_true (cd != (iconv_t) -1);
+	converted = g_mime_iconv_strndup (cd, input, sizeof (input));
+	g_assert_nonnull (converted);
+	g_assert_cmpmem (converted, sizeof (expected), expected, sizeof (expected));
+	g_free (converted);
+	g_mime_iconv_close (cd);
+	testsuite_check_passed ();
+
+	testsuite_check ("Stateful conversion grows during flush and resets the descriptor for reuse");
+	utf8 = g_string_new (NULL);
+	iso2022 = g_string_new (NULL);
+	/* Leave no output space for the final three-byte shift back to ASCII. */
+	for (i = 0; i < 17; i++) {
+		g_string_append (utf8, "\xe3\x81\x82" "A");
+		g_string_append (iso2022, "\033$B$\"\033(BA");
+	}
+	g_string_append (utf8, "\xe3\x81\x82");
+	g_string_append (iso2022, "\033$B$\"\033(B");
+	cd = g_mime_iconv_open ("ISO-2022-JP", "UTF-8");
+	g_assert_true (cd != (iconv_t) -1);
+	for (i = 0; i < 2; i++) {
+		converted = g_mime_iconv_strdup (cd, utf8->str);
+		g_assert_nonnull (converted);
+		g_assert_cmpstr (converted, ==, iso2022->str);
+		g_free (converted);
+	}
+	g_mime_iconv_close (cd);
+	g_string_free (iso2022, TRUE);
+	g_string_free (utf8, TRUE);
+	testsuite_check_passed ();
+}
+
+static void
+test_utils_errors (void)
+{
+	const char binary[] = "a\0b";
+	char *converted;
+	iconv_t cd;
+
+	testsuite_check ("Bounded conversion handles binary data, truncated input and invalid descriptors");
+	converted = g_mime_iconv_strndup ((iconv_t) -1, "abc\xff", 3);
+	g_assert_cmpstr (converted, ==, "abc");
+	g_free (converted);
+	cd = g_mime_iconv_open ("UTF-8", "UTF-8");
+	g_assert_true (cd != (iconv_t) -1);
+	converted = g_mime_iconv_strndup (cd, binary, sizeof (binary) - 1);
+	g_assert_nonnull (converted);
+	g_assert_cmpmem (converted, sizeof (binary), binary, sizeof (binary));
+	g_free (converted);
+	converted = g_mime_iconv_strdup (cd, "a\xc3");
+	g_assert_cmpstr (converted, ==, "a");
+	g_free (converted);
+	g_mime_iconv_close (cd);
+	testsuite_check_passed ();
+
+	testsuite_check ("Conversion errors preserve errno and reset partially shifted descriptors");
+	cd = g_mime_iconv_open ("ISO-2022-JP", "UTF-8");
+	g_assert_true (cd != (iconv_t) -1);
+#ifdef ENABLE_WARNINGS
+	g_test_expect_message ("gmime", G_LOG_LEVEL_WARNING, "*g_mime_iconv_strndup:*");
+#endif
+	errno = 0;
+	converted = g_mime_iconv_strdup (cd, "\xe3\x81\x82\xff");
+	g_assert_null (converted);
+	g_assert_cmpint (errno, ==, EILSEQ);
+#ifdef ENABLE_WARNINGS
+	g_test_assert_expected_messages ();
+#endif
+	converted = g_mime_iconv_strdup (cd, "A");
+	g_assert_cmpstr (converted, ==, "A");
+	g_free (converted);
+	g_mime_iconv_close (cd);
+	testsuite_check_passed ();
+}
+
+static void
+test_utils_locale (void)
+{
+	char *converted;
+
+	testsuite_check ("Locale conversion wrappers preserve ASCII and honor explicit byte lengths");
+	converted = g_mime_iconv_locale_to_utf8 ("Subject: hello");
+	g_assert_cmpstr (converted, ==, "Subject: hello");
+	g_free (converted);
+	converted = g_mime_iconv_utf8_to_locale ("Subject: hello");
+	g_assert_cmpstr (converted, ==, "Subject: hello");
+	g_free (converted);
+	converted = g_mime_iconv_locale_to_utf8_length ("hello\xff", 5);
+	g_assert_cmpstr (converted, ==, "hello");
+	g_free (converted);
+	converted = g_mime_iconv_utf8_to_locale_length ("hello\xff", 5);
+	g_assert_cmpstr (converted, ==, "hello");
+	g_free (converted);
+	testsuite_check_passed ();
+}
+
 int main (int argc, char **argv)
 {
 	g_mime_init ();
@@ -139,6 +248,11 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	test_utils ();
+	testsuite_start ("charset conversion edge cases");
+	test_utils_growth ();
+	test_utils_errors ();
+	test_utils_locale ();
+	testsuite_end ();
 	
 	g_mime_shutdown ();
 	

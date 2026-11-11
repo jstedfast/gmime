@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -37,6 +37,11 @@ G_GNUC_INTERNAL int g_mime_strcase_equal (gconstpointer v, gconstpointer v2);
 G_GNUC_INTERNAL guint g_mime_strcase_hash (gconstpointer key);
 
 G_GNUC_INTERNAL char *g_mime_strdup_trim (const char *str);
+
+G_GNUC_INTERNAL gboolean _g_mime_is_valid_boundary (const char *boundary);
+G_GNUC_INTERNAL gboolean _g_mime_strcase_equal_trimmed (const char *value, const char *token);
+G_GNUC_INTERNAL size_t _g_mime_count_utf16_units (const char *start, const char *end);
+G_GNUC_INTERNAL const char *_g_mime_get_utf16_chunk_end (const char *start, const char *end, size_t *length);
 
 G_END_DECLS
 

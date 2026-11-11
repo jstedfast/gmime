@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -26,39 +26,38 @@
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL gboolean g_mime_parse_content_type (const char **in, char **type, char **subtype);
+G_GNUC_INTERNAL gboolean g_mime_parse_content_type (const char **in, const char *end, char **type, char **subtype);
 
-G_GNUC_INTERNAL gboolean g_mime_skip_comment (const char **in);
-#define skip_comment(in) g_mime_skip_comment (in)
+G_GNUC_INTERNAL gboolean _g_mime_parse_validate_text (const char *str, gssize *length, GError **error);
+G_GNUC_INTERNAL gboolean _g_mime_parse_error (GError **error, const char *text, const char *inptr, const char *reason);
+G_GNUC_INTERNAL gboolean _g_mime_parse_int32 (const char **in, const char *end, gint32 *value);
+G_GNUC_INTERNAL gboolean _g_mime_parse_cfws (const char *text, const char **in, const char *end, GError **error);
+G_GNUC_INTERNAL gboolean _g_mime_parse_domain (GString *domain, const char **in, const char *end, const char *sentinels,
+					    gboolean replace_nuls);
+G_GNUC_INTERNAL char *_g_mime_parse_message_id_value (const char *value);
+G_GNUC_INTERNAL char *_g_mime_parse_reference (const char **in, const char *end);
 
-G_GNUC_INTERNAL gboolean g_mime_skip_lwsp (const char **in);
-#define skip_lwsp(in) g_mime_skip_lwsp (in)
+G_GNUC_INTERNAL gboolean g_mime_skip_comment (const char **in, const char *end);
+#define skip_comment(in,end) g_mime_skip_comment (in, end)
 
-G_GNUC_INTERNAL gboolean g_mime_skip_cfws (const char **in);
-#define skip_cfws(in) g_mime_skip_cfws (in)
+G_GNUC_INTERNAL gboolean g_mime_skip_lwsp (const char **in, const char *end);
+#define skip_lwsp(in,end) g_mime_skip_lwsp (in, end)
 
-G_GNUC_INTERNAL gboolean g_mime_skip_quoted (const char **in);
-#define skip_quoted(in) g_mime_skip_quoted (in)
+G_GNUC_INTERNAL gboolean g_mime_skip_cfws (const char **in, const char *end);
+#define skip_cfws(in,end) g_mime_skip_cfws (in, end)
 
-G_GNUC_INTERNAL gboolean g_mime_skip_atom (const char **in);
-#define skip_atom(in) g_mime_skip_atom (in)
+G_GNUC_INTERNAL gboolean g_mime_skip_quoted (const char **in, const char *end);
+#define skip_quoted(in,end) g_mime_skip_quoted (in, end)
 
-G_GNUC_INTERNAL gboolean g_mime_skip_word (const char **in);
-#define skip_word(in) g_mime_skip_word (in)
+G_GNUC_INTERNAL gboolean g_mime_skip_atom (const char **in, const char *end);
+#define skip_atom(in,end) g_mime_skip_atom (in, end)
 
-
-G_GNUC_INTERNAL const char *g_mime_decode_word (const char **in);
-#define decode_word(in) g_mime_decode_word (in)
-
-G_GNUC_INTERNAL gboolean g_mime_decode_domain (const char **in, GString *domain);
-#define decode_domain(in, domain) g_mime_decode_domain (in, domain)
+G_GNUC_INTERNAL gboolean g_mime_skip_word (const char **in, const char *end);
+#define skip_word(in,end) g_mime_skip_word (in, end)
 
 
-G_GNUC_INTERNAL char *g_mime_decode_addrspec (const char **in);
-#define decode_addrspec(in) g_mime_decode_addrspec (in)
-
-G_GNUC_INTERNAL char *g_mime_decode_msgid (const char **in);
-#define decode_msgid(in) g_mime_decode_msgid (in)
+G_GNUC_INTERNAL char *g_mime_decode_msgid (const char **in, const char *end);
+#define decode_msgid(in,end) g_mime_decode_msgid (in, end)
 
 G_END_DECLS
 

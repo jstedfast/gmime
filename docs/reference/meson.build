@@ -1,0 +1,31 @@
+gmime_doc = gnome.gtkdoc(
+  'gmime',
+  main_xml: 'gmime-docs.sgml',
+  module_version: api_version,
+  src_dir: include_directories('../../gmime'),
+  dependencies: gmime_dep,
+  content_files: files(
+    'building.sgml', 'compiling.sgml', 'content.sgml', 'filters.sgml',
+    'question_index.sgml', 'resources.sgml', 'streams.sgml', 'tree_index.sgml',
+  ),
+  ignore_headers: [
+    'gmime-internet-address-private.h', 'gmime-codec-private.h',
+    'gmime-rfc2047-private.h', 'gmime-encoding-validator-private.h',
+    'gmime-smtp-unicode-private.h',
+    'gmime-charset-map-private.h', 'gmime-table-private.h', 'gmime-parse-utils.h',
+    'gmime-gpgme-private.h', 'gmime-internal.h', 'gmime-common.h', 'gmime-events.h',
+    'gmime-parser-reader-private.h', 'gmime-object-private.h',
+    'gmime-text-private.h',
+    'gmime-tnef-private.h',
+    'gmime-html-entity-private.h', 'gmime-html-entity-tables-private.h',
+    'gmime-html-token-private.h', 'gmime-html-token-tables-private.h',
+    'gmime-html-tokenizer-states-private.h',
+    'gmime-html-tree-private.h', 'gmime-html-tree-internal.h', 'gmime-html-tree-rules-private.h',
+    'charset-map.c', 'gen-table.c',
+  ] + (have_crypto ? [] : ['gmime-gpgme.h']),
+  scan_args: ['--deprecated-guards=GMIME_DISABLE_DEPRECATED'],
+  scanobjs_args: ['--type-init-func=g_mime_init ()'],
+  mkdb_args: ['--sgml-mode', '--output-format=xml'],
+  install: true,
+)
+alias_target('gmime-doc', gmime_doc)

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -56,19 +57,19 @@ print_depth (GMimeStream *stream, int depth)
 }
 
 static void
-print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
+print_mime_struct (GMimeStream *stream, GMimeEntity *part, int depth)
 {
 	GMimeMultipart *multipart;
 	GMimeMessagePart *mpart;
 	GMimeContentType *type;
-	GMimeObject *subpart;
-	GMimeObject *body;
+	GMimeEntity *subpart;
+	GMimeEntity *body;
 	GMimeMessage *msg;
 	int i, n;
 	
 	print_depth (stream, depth);
 	
-	type = g_mime_object_get_content_type (part);
+	type = g_mime_entity_get_content_type (part);
 	
 	g_mime_stream_printf (stream, "Content-Type: %s/%s\n",
 			      g_mime_content_type_get_media_type (type),
@@ -95,26 +96,21 @@ print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 }
 
 static void
-xevcb (GMimeParser *parser, const char *header, const char *value, gint64 offset, gpointer user_data)
-{
-}
-
-static void
-test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
+test_parser (GMimeParser *parser, GMimeParserOptions *options, GMimeStream *mbox, GMimeStream *summary)
 {
 	gint64 message_begin, message_end, headers_begin, headers_end;
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
-	InternetAddressList *list;
+	GMimeInternetAddressList *list;
 	GMimeMessage *message;
 	char *marker, *buf;
 	const char *subject;
-	GMimeObject *body;
+	GMimeEntity *body;
 	GDateTime *date;
 	int nmsg = 0;
 	
 	while (!g_mime_parser_eos (parser)) {
 		message_begin = g_mime_parser_tell (parser);
-		if (!(message = g_mime_parser_construct_message (parser, NULL)))
+		if (!(message = g_mime_parser_construct_message (parser, options, NULL)))
 			throw (exception_new ("failed to parse message #%d", nmsg));
 		
 		message_end = g_mime_parser_tell (parser);
@@ -131,15 +127,15 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		g_mime_stream_printf (summary, "%s\n", marker);
 		
 		if ((list = g_mime_message_get_from (message)) != NULL &&
-		    internet_address_list_length (list) > 0) {
-			buf = internet_address_list_to_string (list, format, FALSE);
+		    g_mime_internet_address_list_length (list) > 0) {
+			buf = g_mime_internet_address_list_to_string (list, format, FALSE);
 			g_mime_stream_printf (summary, "From: %s\n", buf);
 			g_free (buf);
 		}
 		
 		if ((list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO)) != NULL &&
-		    internet_address_list_length (list) > 0) {
-			buf = internet_address_list_to_string (list, format, FALSE);
+		    g_mime_internet_address_list_length (list) > 0) {
+			buf = g_mime_internet_address_list_to_string (list, format, FALSE);
 			g_mime_stream_printf (summary, "To: %s\n", buf);
 			g_free (buf);
 		}
@@ -167,7 +163,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 				g_mime_stream_write (mbox, "\n", 1);
 			
 			g_mime_stream_printf (mbox, "%s\n", marker);
-			g_mime_object_write_to_stream ((GMimeObject *) message, format, mbox);
+			g_mime_entity_write_to_stream ((GMimeEntity *) message, format, mbox);
 		}
 		
 		g_object_unref (message);
@@ -179,6 +175,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 static gboolean
 streams_match (GMimeStream *istream, GMimeStream *ostream)
 {
+	GMimeStreamPrivate *priv;
 	char buf[4096], dbuf[4096], errstr[1024], *bufptr, *bufend, *dbufptr;
 	gint64 len, totalsize, totalread = 0;
 	size_t nread, size;
@@ -187,16 +184,18 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 	
 	v(fprintf (stdout, "Checking if streams match... "));
 	
-	if (istream->bound_end != -1) {
-		totalsize = istream->bound_end - istream->position;
+	priv = _g_mime_stream_get_private (istream);
+
+	if (priv->bound_end != -1) {
+		totalsize = priv->bound_end - priv->position;
 	} else if ((len = g_mime_stream_length (istream)) == -1) {
 		sprintf (errstr, "Error: Unable to get length of original stream\n");
 		goto fail;
-	} else if (len < (istream->position - istream->bound_start)) {
+	} else if (len < (priv->position - priv->bound_start)) {
 		sprintf (errstr, "Error: Overflow on original stream?\n");
 		goto fail;
 	} else {
-		totalsize = len - (istream->position - istream->bound_start);
+		totalsize = len - (priv->position - priv->bound_start);
 	}
 	
 	while (totalread < totalsize) {
@@ -277,6 +276,7 @@ int main (int argc, char **argv)
 	char input[256], output[256], *tmp, *p, *q;
 	GMimeStream *istream, *ostream, *mstream, *pstream;
 	GMimeParser *parser;
+	GMimeParserOptions *options;
 	const char *dent;
 	const char *path;
 	struct stat st;
@@ -290,6 +290,7 @@ int main (int argc, char **argv)
 #endif
 	
 	g_mime_init ();
+	options = g_mime_parser_options_new ();
 	
 	testsuite_init (argc, argv);
 	
@@ -360,32 +361,28 @@ int main (int argc, char **argv)
 				mstream = g_mime_stream_fs_new (fd);
 #endif
 				
-				parser = g_mime_parser_new_with_stream (istream);
-				g_mime_parser_set_persist_stream (parser, TRUE);
-				g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
-				
-				if (!g_mime_parser_get_persist_stream (parser))
-					throw (exception_new ("persist stream check failed"));
+				parser = g_mime_parser_new_with_stream_and_storage (istream, GMIME_FORMAT_MBOX,
+										 GMIME_CONTENT_STORAGE_SOURCE, NULL);
+				if (!parser)
+					throw (exception_new ("source storage parser construction failed"));
 				
 				if (g_mime_parser_get_format (parser) != GMIME_FORMAT_MBOX)
 					throw (exception_new ("format check failed"));
 				
 				if (strstr (dent, "content-length") != NULL) {
-					g_mime_parser_set_respect_content_length (parser, TRUE);
+					g_mime_parser_options_set_respect_content_length (options, TRUE);
 					
-					if (!g_mime_parser_get_respect_content_length (parser))
+					if (!g_mime_parser_options_get_respect_content_length (options))
 						throw (exception_new ("respect content-length check failed"));
 				} else {
-					g_mime_parser_set_respect_content_length (parser, FALSE);
+					g_mime_parser_options_set_respect_content_length (options, FALSE);
 					
-					if (g_mime_parser_get_respect_content_length (parser))
+					if (g_mime_parser_options_get_respect_content_length (options))
 						throw (exception_new ("respect content-length check failed"));
 				}
 				
-				g_mime_parser_set_header_regex (parser, "^X-Evolution", xevcb, NULL);
-				
 				pstream = g_mime_stream_mem_new ();
-				test_parser (parser, mstream, pstream);
+				test_parser (parser, options, mstream, pstream);
 				
 #ifdef ENABLE_MBOX_MATCH
 				g_mime_stream_flush (mstream);
@@ -458,7 +455,7 @@ int main (int argc, char **argv)
 		
 		testsuite_check ("user-input mbox: `%s'", path);
 		try {
-			test_parser (parser, mstream, ostream);
+			test_parser (parser, options, mstream, ostream);
 			
 #ifdef ENABLE_MBOX_MATCH
 			g_mime_stream_reset (istream);
@@ -506,6 +503,7 @@ int main (int argc, char **argv)
 	
 	testsuite_end ();
 	
+	g_mime_parser_options_unref (options);
 	g_mime_shutdown ();
 	
 	return testsuite_exit ();

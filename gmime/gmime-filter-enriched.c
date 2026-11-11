@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -30,8 +30,9 @@
 #include "gmime-common.h"
 #include "gmime-filter-enriched.h"
 
-/* text/enriched is rfc1896 */
+#include "gmime-object-private.h"
 
+/* text/enriched is rfc1896 */
 
 /**
  * SECTION: gmime-filter-enriched
@@ -103,7 +104,7 @@ static struct {
 #define PARAM_TAG_MIN_LEN  (sizeof ("<param>") + sizeof ("</param>") - 2)
 
 static void g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass);
-static void g_mime_filter_enriched_init       (GMimeFilterEnriched *filter, GMimeFilterEnrichedClass *klass);
+static void g_mime_filter_enriched_init       (GMimeFilterEnriched *filter);
 static void g_mime_filter_enriched_finalize   (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -117,28 +118,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_enriched_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterEnriched, g_mime_filter_enriched, GMIME_TYPE_FILTER)
+
+GMimeFilterEnrichedPrivate *
+_g_mime_filter_enriched_get_private (GMimeFilterEnriched *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterEnrichedClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_enriched_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterEnriched),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_enriched_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterEnriched", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_enriched_get_instance_private (object);
 }
 
 static void
@@ -158,10 +144,12 @@ g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass)
 }
 
 static void
-g_mime_filter_enriched_init (GMimeFilterEnriched *filter, GMimeFilterEnrichedClass *klass)
+g_mime_filter_enriched_init (GMimeFilterEnriched *filter)
 {
-	filter->flags = 0;
-	filter->nofill = 0;
+	GMimeFilterEnrichedPrivate *priv = _g_mime_filter_enriched_get_private (filter);
+
+	priv->flags = 0;
+	priv->nofill = 0;
 }
 
 static void
@@ -174,9 +162,9 @@ g_mime_filter_enriched_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterEnriched *enriched = (GMimeFilterEnriched *) filter;
-	
-	return g_mime_filter_enriched_new (enriched->flags);
+	GMimeFilterEnrichedPrivate *priv = _g_mime_filter_enriched_get_private ((GMimeFilterEnriched *) filter);
+
+	return g_mime_filter_enriched_new (priv->flags);
 }
 
 #if 0
@@ -276,6 +264,7 @@ param_parse_colour (const char *in, size_t inlen)
 	/* check for numeric r/g/b in the format: ####,####,#### */
 	for (i = 0; i < 3; i++) {
 		v = strtoul (inptr, (char **) &end, 16);
+
 		if (end != inptr + 4 || (i < 2 && *end != ',') || (i == 2 && end != inend))
 			return g_strndup (in, inlen);
 		
@@ -336,7 +325,8 @@ static void
 enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		  char **out, size_t *outlen, size_t *outprespace, gboolean flush)
 {
-	GMimeFilterEnriched *enriched = (GMimeFilterEnriched *) filter;
+	GMimeFilterEnrichedPrivate *enriched = _g_mime_filter_enriched_get_private ((GMimeFilterEnriched *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
 	const char *tag, *inend, *outend;
 	register const char *inptr;
 	register char *outptr;
@@ -345,8 +335,9 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	
 	inptr = in;
 	inend = in + inlen;
-	outptr = filter->outbuf;
-	outend = filter->outbuf + filter->outsize;
+
+	outptr = priv->outbuf;
+	outend = priv->outbuf + priv->outsize;
 	
  retry:
 	do {
@@ -356,9 +347,9 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		if (outptr == outend)
 			goto backup;
 		
-		if ((inptr + 1) >= inend)
+		if (inptr == inend || (inend - inptr == 1 && (!flush || *inptr == '<')))
 			break;
-		
+
 		switch (*inptr++) {
 		case ' ':
 			while (inptr < inend && (outptr + 7) < outend && *inptr == ' ') {
@@ -372,6 +363,10 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			
 			break;
 		case '\n':
+			/* Preserve the omission of a final soft line break. */
+			if (inptr == inend && ((enriched->flags & IS_RICHTEXT) || enriched->nofill <= 0))
+				break;
+
 			if (!(enriched->flags & IS_RICHTEXT)) {
 				/* text/enriched */
 				if (enriched->nofill > 0) {
@@ -382,7 +377,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 						inptr--;
 						goto backup;
 					}
-				} else if (*inptr == '\n') {
+				} else if (inptr < inend && *inptr == '\n') {
 					if ((outptr + 4) >= outend) {
 						inptr--;
 						goto backup;
@@ -435,7 +430,11 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				}
 			} else {
 				/* text/richtext */
-				if ((inend - inptr) >= 3 && (outptr + 4) < outend) {
+				if ((inend - inptr) < 3) {
+					inptr--;
+					goto need_input;
+				}
+				if ((outptr + 4) < outend) {
 					if (strncmp (inptr, "lt>", 3) == 0) {
 						memcpy (outptr, "&lt;", 4);
 						outptr += 4;
@@ -477,18 +476,16 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					goto backup;
 				}
 			} else {
-				const char *fmt, *html_tag = NULL;
-				char *enriched_tag;
+				const char *fmt, *html_tag = NULL, *enriched_tag = NULL;
 				size_t len;
 				guint i;
 				
 				len = inptr - tag;
-				enriched_tag = g_alloca (len + 1);
-				memcpy (enriched_tag, tag, len);
-				enriched_tag[len] = '\0';
 				
 				for (i = 0; i < G_N_ELEMENTS (enriched_tags); i++) {
-					if (!g_ascii_strcasecmp (enriched_tag, enriched_tags[i].enriched)) {
+					if (strlen (enriched_tags[i].enriched) == len &&
+					    !g_ascii_strncasecmp (tag, enriched_tags[i].enriched, len)) {
+						enriched_tag = enriched_tags[i].enriched;
 						html_tag = enriched_tags[i].html;
 						break;
 					}
@@ -584,9 +581,9 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	if (inptr < inend)
 		g_mime_filter_backup (filter, inptr, (unsigned) (inend - inptr));
 	
-	*out = filter->outbuf;
-	*outlen = outptr - filter->outbuf;
-	*outprespace = filter->outpre;
+	*out = priv->outbuf;
+	*outlen = outptr - priv->outbuf;
+	*outprespace = priv->outpre;
 	
 	return;
 	
@@ -596,19 +593,19 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		size_t offset, grow;
 		
 		grow = (inend - inptr) * 2 + 20;
-		offset = outptr - filter->outbuf;
-		g_mime_filter_set_size (filter, filter->outsize + grow, TRUE);
-		outend = filter->outbuf + filter->outsize;
-		outptr = filter->outbuf + offset;
+		offset = outptr - priv->outbuf;
+		g_mime_filter_set_size (filter, priv->outsize + grow, TRUE);
+		outend = priv->outbuf + priv->outsize;
+		outptr = priv->outbuf + offset;
 		
 		goto retry;
 	} else {
 		g_mime_filter_backup (filter, inptr, (unsigned) (inend - inptr));
 	}
 	
-	*out = filter->outbuf;
-	*outlen = outptr - filter->outbuf;
-	*outprespace = filter->outpre;
+	*out = priv->outbuf;
+	*outlen = outptr - priv->outbuf;
+	*outprespace = priv->outpre;
 }
 
 static void
@@ -628,9 +625,9 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterEnriched *enriched = (GMimeFilterEnriched *) filter;
-	
-	enriched->nofill = 0;
+	GMimeFilterEnrichedPrivate *priv = _g_mime_filter_enriched_get_private ((GMimeFilterEnriched *) filter);
+
+	priv->nofill = 0;
 }
 
 
@@ -645,10 +642,13 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_enriched_new (guint32 flags)
 {
+	GMimeFilterEnrichedPrivate *priv;
 	GMimeFilterEnriched *enriched;
 	
 	enriched = g_object_new (GMIME_TYPE_FILTER_ENRICHED, NULL);
-	enriched->flags = flags;
+	priv = _g_mime_filter_enriched_get_private (enriched);
+
+	priv->flags = flags;
 	
 	return (GMimeFilter *) enriched;
 }

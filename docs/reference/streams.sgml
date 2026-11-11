@@ -16,6 +16,33 @@
     lseek(), etc) with some additional niceties such as a printf-like 
     function.</para>
 
+    <para>Explicit close and object lifetime are distinct.
+    g_mime_stream_close() does not release the caller's object reference;
+    g_object_unref() only finalizes a stream when its last reference is
+    released. A retained reference does not prevent another caller from
+    explicitly closing shared resources. Flush and close writers explicitly
+    and check return values and errno: finalization cannot report I/O
+    failures, and a failed close may already have released its backend.</para>
+
+    <para>GMimeStreamBuffer discards unflushed output on close or
+    finalization, releasing its source reference without explicitly closing
+    it. GMimeStreamCat likewise releases children without flushing or
+    explicitly closing them. GMimeStreamFilter completes writes on explicit
+    close and closes its source only when its owner flag is enabled;
+    finalization does neither, but releases its source reference.
+    Releasing the last reference can still finalize the source.
+    Flushing a filter completes its output without flushing its source:
+    flush downstream buffering separately.</para>
+
+    <para>GMimeStreamGIO constructors take ownership of the supplied GFile
+    reference. Pass an additional reference to retain the file independently.
+    The owner flag controls releasing the GFile, not the input/output streams
+    opened by the wrapper, which are always closed and released. Close
+    attempts both internal streams, reports the first error through errno,
+    and leaves the wrapper closed even on failure. Substreams borrow their
+    parent's GFile and retain the parent object; finish using them before
+    explicitly closing an owning parent.</para>
+
     <para>The three (3) basic stream types are: GMimeStreamFile,
     GMimeStreamFs and GMimeStreamMem. You can manipulate all three
     streams using the GMimeStream interfaces. In addition, some of
@@ -38,15 +65,136 @@
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</para>
 
+    <para>Use g_mime_stream_substream() for bounded views rather than a
+    separate bounded-stream class. Start and end use absolute backend
+    coordinates, and ranges must fit inside their parent's bounds.
+    An end of -1 inherits a finite parent's end; empty ranges are valid.
+    Invalid ranges fail with EINVAL before backend dispatch. Each backend
+    still defines its own seek and explicit-close behavior.</para>
+
+    <para>GMimeStreamMem substreams retain their shared byte array, so
+    explicitly closing a parent or replacing its buffer does not invalidate
+    existing views. Positions and bounds are independent. Reads stop at the
+    actual allocation even if the declared finite range extends farther;
+    the finite length still reports that range. Writes can grow storage and
+    zero newly exposed gaps, stopping with a partial count or zero at a full
+    end bound. SEEK_SET is absolute, and finite SEEK_END uses the view's
+    end. Unbounded seeks can grow storage, but seeking to the current
+    position does not regrow externally truncated data. Invalid origins
+    fail with EINVAL; overflowing offsets, write counts or storage sizes
+    fail with EOVERFLOW.</para>
+
+    <para>GMimeStreamFs views also retain independent logical positions and
+    EOF state, but borrow the same descriptor. Reads reposition it for the
+    current view and return zero at a finite end. Cached EOF does not
+    suppress subsequent reads after another writer extends the file.
+    Unbounded length queries use the actual file extent, reporting zero
+    when it ends before the view's start. Writes retain partial counts and
+    fail with EINVAL at a full finite bound. Seeks do not extend the file;
+    positive SEEK_END offsets use physical EOF, zero and negative finite
+    offsets use the declared end, and unbounded cached EOF supplies the
+    observed end for nonpositive offsets. Invalid origins fail with EINVAL;
+    overflowing counts, arithmetic or off_t conversions fail with EOVERFLOW.
+    Windows I/O counts are additionally limited to G_MAXINT for the CRT API.
+    Finish using all views before explicitly closing an owning parent:
+    object retention alone does not keep its descriptor open.</para>
+
+    <para>GMimeStreamFile uses the same bounded conventions for buffered FILE
+    views. Each view now retains its own observed EOF instead of consulting
+    shared feof state; a short positive read is not EOF until a later read
+    returns zero. Other views and length queries do not change that state.
+    Same-position seeks preserve it; reset clears it. Counts and arithmetic
+    are checked, and fseek offsets outside the range of long fail with
+    EOVERFLOW. Stdio errors return -1 when no bytes were transferred, retain
+    positive partial counts, and use EIO if stdio supplies no errno.
+    Buffered writes may report delayed failures only when flushed or closed.
+    Closing detaches the FILE even when fclose fails, so finalization cannot
+    close it twice. Views still borrow their parent's FILE pointer: finish
+    using them before explicitly closing an owning parent.</para>
+
+    <para>GMimeStreamMmap retains a fixed mapping with independent view
+    positions and EOF state. Reads return zero at the finite end; reads and
+    partial writes also stop at mapped storage even when declared bounds
+    extend farther. Constructors limit mappings to actual file storage,
+    while finite length still describes the declared range. Nonempty reads
+    require PROT_READ and writes require PROT_WRITE; missing protection
+    fails with EACCES. Counts and seek arithmetic are checked for overflow.
+    Seeking never extends storage. Finite SEEK_END uses the declared end;
+    unbounded SEEK_END uses the fixed absolute mapping extent, rejects
+    positive offsets and clamps negative targets before the view's start.
+    Same-position seeks preserve cached EOF; reset clears it. Empty root
+    mappings fail with EINVAL, but empty substreams remain valid.
+    Views borrow the mapping and descriptor: finish them before explicitly
+    closing an owning parent. Do not truncate the underlying file while any
+    mapping remains active.</para>
+
+    <para>GMimeStreamBlock stores memory content in separate 2048-byte blocks,
+    avoiding repeated copies of existing bytes while growing. Unlike
+    GMimeStreamMem, it does not allow seeking past the stored extent; extend it
+    first with g_mime_stream_block_set_length(). Growth exposes zeros, and
+    shrinking clears the discarded tail. Use
+    g_mime_stream_block_to_byte_array() for an independent contiguous copy
+    without moving the position. Native substreams share storage and length,
+    but retain independent positions and bounds. Closing one view does not
+    invalidate the others. Reset only rewinds. Native bounds and SEEK_SET
+    positions are absolute.</para>
+
+    <para>GMimeStreamCat concatenates child streams in insertion order.
+    Reads fill the requested buffer across child boundaries, starting at
+    each child's current position without seeking or resetting it. This
+    permits reading nonseekable sources; explicitly seeking or resetting
+    the concatenation still requires repositionable children. Empty or
+    exhausted concatenations return zero, and adding a source after EOF
+    resumes reading. A transient zero read without a child EOF indication
+    does not skip that child. On an error after partial progress, the bytes
+    already read are returned and the failing child remains current for
+    the next read. Sources are retained by reference and are not explicitly
+    closed when the concatenation releases them.</para>
+
+    <para>Concatenated writes also use each child's current position.
+    Earlier children retain their existing lengths and must support length
+    and position queries; the last child may grow and can be a pipe or
+    filtered destination. A full child is flushed before spilling into the
+    next child, but not when a write merely fills it exactly. Short writes
+    are retried on the same child. Write or boundary-flush errors preserve
+    accepted bytes and leave the failing child current for retry. Explicit
+    flush affects only the current child and does nothing when there is no
+    current child; writing after read-side EOF resumes at the last child.
+    Read EOF stays cached across writes until a child is added or the
+    concatenation is reset or repositioned, without losing the current flush
+    destination. Native child and concatenation bounds still apply, and
+    zero-progress writes fail
+    with EIO rather than skipping destinations.</para>
+
+    <para>Forward concatenation seeks physically position traversed children
+    and leave a child selected when the target lands exactly at its end.
+    This permits seeking to the chain's end while retaining the final flush
+    destination. Backward seeks reposition only the selected child and the
+    children up to the previous current child; they seek rather than reset
+    those children. Seeking to the current position leaves cached EOF
+    unchanged. Child seek errors preserve already completed positioning;
+    an explicit reset rewinds all children even at the logical beginning,
+    recovering their positions after a partial backward seek.
+    Native bounds still apply, and overflowing length sums or seek offsets
+    fail with EOVERFLOW.</para>
+
     <para>The five (5) advanced stream types are GMimeStreamMmap,
     GMimeStreamNull, GMimeStreamPipe, GMimeStreamBuffer and
     GMimeStreamFilter.</para>
 
     <para>Our most simple stream, GMimeStreamNull, is the stream
     equivalent of /dev/null on Unix systems. The main difference is
-    that GMimeStreamNull records the number of bytes written to it -
-    you may find this useful if you need to know the number of bytes a
-    GMimeObject (for example) will require.</para>
+    that GMimeStreamNull records the number of bytes written to it.
+    Its logical length tracks the highest written position, so overwrites
+    do not inflate the measured size. The written and optional newlines
+    counters remain cumulative, including overwrites. Use
+    g_mime_stream_null_set_length() to resize the measurement without
+    recording output. Seeks outside the measured extent fail rather than
+    clamping, and nonempty reads fail with EBADF. Native bounds limit writes;
+    setting length updates a finite end bound relative to its start.
+    Reset clears measurement and statistics while retaining bounds and the
+    newline-counting option. This is useful for measuring how many bytes a
+    GMimeEntity (for example) will require without storing its output.</para>
 
     <para>GMimeStreamMmap is a memory-mapped stream. This isn't
     guaranteed to work on all systems since not all systems support
@@ -75,5 +223,23 @@
     could write a compression filter and apply it to a
     GMimeStreamFilter and any further reads or writes would be
     (un)compressed.</para>
+
+    <para>Filter membership is checked by instance identity. Removing
+    a filter instance removes its first occurrence; the existing ID-based
+    removal identifies a particular occurrence. Duplicate entries each
+    retain a reference. The source accessor returns a borrowed stream.
+    Avoid changing the chain or manipulating the source while filtered
+    output is buffered.</para>
+
+    <para>Flushing GMimeStreamFilter completes its write-side filters
+    once until more data is written. Failed completion writes can be
+    retried with flush or close without duplicating accepted output.
+    Close reports completion failures before closing an owned source.
+    Read-side completion occurs once at source EOF, and its output is
+    drained before EOF is reported. Reset discards buffered output and
+    resets both the source and the filters. Flush does not flush the
+    underlying source itself; flush that stream separately when needed.
+    Explicitly flush or close to finish writes before releasing the
+    stream.</para>
   </refsect1>
 </refentry>

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -27,14 +27,7 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_OPENPGP            (g_mime_filter_openpgp_get_type ())
-#define GMIME_FILTER_OPENPGP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_OPENPGP, GMimeFilterOpenPGP))
-#define GMIME_FILTER_OPENPGP_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_OPENPGP, GMimeFilterOpenPGPClass))
-#define GMIME_IS_FILTER_OPENPGP(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_OPENPGP))
-#define GMIME_IS_FILTER_OPENPGP_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_OPENPGP))
-#define GMIME_FILTER_OPENPGP_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_OPENPGP, GMimeFilterOpenPGPClass))
 
-typedef struct _GMimeFilterOpenPGP GMimeFilterOpenPGP;
-typedef struct _GMimeFilterOpenPGPClass GMimeFilterOpenPGPClass;
 
 
 /**
@@ -110,32 +103,17 @@ typedef struct {
 
 /**
  * GMimeFilterOpenPGP:
- * @parent_object: parent #GMimeFilter
  *
  * A filter to detect OpenPGP markers.
  *
  * Since: 3.2
  **/
-struct _GMimeFilterOpenPGP {
-	GMimeFilter parent_object;
-	
-	/* < private > */
-	GMimeOpenPGPState state;
-	gboolean seen_end_marker;
-	gboolean midline;
-	gint64 begin_offset;
-	gint64 end_offset;
-	gint64 position;
-	guint next;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeFilterOpenPGP, g_mime_filter_openpgp, GMIME, FILTER_OPENPGP, GMimeFilter)
 
 struct _GMimeFilterOpenPGPClass {
 	GMimeFilterClass parent_class;
-	
 };
 
-
-GType g_mime_filter_openpgp_get_type (void);
 
 GMimeFilter *g_mime_filter_openpgp_new (void);
 

@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -29,6 +29,7 @@
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 
+#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-filter-charset
@@ -37,12 +38,23 @@
  * @see_also:
  *
  * A #GMimeFilter which is used for converting text from one charset
- * to another.
+ * to another using the native iconv backend. Complete input characters
+ * are converted immediately, growing output storage as needed. Only an
+ * incomplete input character is retained for the next call.
+ *
+ * Completion flushes the target charset's shift state. Reset discards
+ * pending input and conversion state; copying creates a fresh converter
+ * with the same charset names, not a snapshot of a partial character.
+ *
+ * Native conversion policy is retained: invalid or unrepresentable input
+ * bytes are skipped, and an incomplete final character is discarded.
+ * This differs from managed Encoding replacement fallbacks. Generic
+ * UTF-16/UTF-32 byte-order marks also follow iconv rather than .NET policy.
  **/
 
 
 static void g_mime_filter_charset_class_init (GMimeFilterCharsetClass *klass);
-static void g_mime_filter_charset_init (GMimeFilterCharset *filter, GMimeFilterCharsetClass *klass);
+static void g_mime_filter_charset_init (GMimeFilterCharset *filter);
 static void g_mime_filter_charset_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -56,28 +68,13 @@ static void filter_reset (GMimeFilter *filter);
 static GMimeFilterClass *parent_class = NULL;
 
 
-GType
-g_mime_filter_charset_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeFilterCharset, g_mime_filter_charset, GMIME_TYPE_FILTER)
+
+GMimeFilterCharsetPrivate *
+_g_mime_filter_charset_get_private (GMimeFilterCharset *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeFilterCharsetClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_filter_charset_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeFilterCharset),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_filter_charset_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterCharset", &info, 0);
-	}
-	
-	return type;
+	return g_mime_filter_charset_get_instance_private (object);
 }
 
 
@@ -98,22 +95,25 @@ g_mime_filter_charset_class_init (GMimeFilterCharsetClass *klass)
 }
 
 static void
-g_mime_filter_charset_init (GMimeFilterCharset *filter, GMimeFilterCharsetClass *klass)
+g_mime_filter_charset_init (GMimeFilterCharset *filter)
 {
-	filter->from_charset = NULL;
-	filter->to_charset = NULL;
-	filter->cd = (iconv_t) -1;
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private (filter);
+
+	priv->from_charset = NULL;
+	priv->to_charset = NULL;
+	priv->cd = (iconv_t) -1;
 }
 
 static void
 g_mime_filter_charset_finalize (GObject *object)
 {
-	GMimeFilterCharset *filter = (GMimeFilterCharset *) object;
-	
-	g_free (filter->from_charset);
-	g_free (filter->to_charset);
-	if (filter->cd != (iconv_t) -1)
-		g_mime_iconv_close (filter->cd);
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) object);
+
+	g_free (priv->from_charset);
+	g_free (priv->to_charset);
+
+	if (priv->cd != (iconv_t) -1)
+		g_mime_iconv_close (priv->cd);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -122,172 +122,115 @@ g_mime_filter_charset_finalize (GObject *object)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
-	
-	return g_mime_filter_charset_new (charset->from_charset, charset->to_charset);
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) filter);
+
+	return g_mime_filter_charset_new (priv->from_charset, priv->to_charset);
+}
+
+static void
+grow_output (GMimeFilter *filter, char **outbuf, size_t *outleft)
+{
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
+	size_t written = *outbuf - priv->outbuf;
+
+	if (G_UNLIKELY (priv->outsize > (G_MAXSIZE - 16) / 2))
+		g_error ("GMimeFilterCharset output buffer size overflow");
+
+	/* Reallocation moves the buffer, so retain a byte offset, not iconv's
+	 * old output pointer. Already converted bytes must survive growth. */
+	g_mime_filter_set_size (filter, priv->outsize * 2 + 16, TRUE);
+
+	*outbuf = priv->outbuf + written;
+	*outleft = priv->outsize - written;
+}
+
+static void
+convert (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+	 char **out, size_t *outlen, size_t *outprespace, gboolean complete)
+{
+	GMimeFilterCharsetPrivate *charset = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) filter);
+	GMimeFilterPrivate *priv = _g_mime_filter_get_private (filter);
+	size_t inleft = len, outleft;
+	char *inbuf = in, *outbuf;
+
+	if (charset->cd == (iconv_t) -1) {
+		*out = in;
+		*outlen = len;
+		*outprespace = prespace;
+		return;
+	}
+
+	if (G_UNLIKELY (len > G_MAXSIZE - 16))
+		g_error ("GMimeFilterCharset output buffer size overflow");
+
+	/* The source length is only a starting estimate. Like MimeKit's
+	 * decoder/encoder loop, drain complete characters in this call rather
+	 * than saving valid input just because its output needs more space. */
+	g_mime_filter_set_size (filter, len + 16, FALSE);
+
+	outbuf = priv->outbuf;
+	outleft = priv->outsize;
+
+	while (inleft > 0) {
+		if (iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft) != (size_t) -1)
+			continue;
+
+		if (errno == E2BIG) {
+			grow_output (filter, &outbuf, &outleft);
+		} else if (errno == EINVAL) {
+			/* Only an incomplete input character needs a later call.
+			 * Preserve the native policy of dropping it at completion. */
+			if (!complete)
+				g_mime_filter_backup (filter, inbuf, inleft);
+			break;
+		} else if (errno == EILSEQ || errno == ERANGE) {
+			/* Retain native byte-skipping recovery. Old GnuWin32
+			 * libiconv also reports invalid input as ERANGE. */
+			inbuf++;
+			inleft--;
+		} else {
+			/* The filter API cannot return conversion errors; do not
+			 * silently substitute unconverted input after partial output. */
+			g_error ("GMimeFilterCharset conversion failed: %s", g_strerror (errno));
+		}
+	}
+
+	if (complete) {
+		/* Stateful targets can emit a final shift sequence even with no
+		 * input. Grow and retry it without losing the converted prefix. */
+		while (iconv (charset->cd, NULL, NULL, &outbuf, &outleft) == (size_t) -1) {
+			if (errno != E2BIG)
+				g_error ("GMimeFilterCharset completion failed: %s", g_strerror (errno));
+			grow_output (filter, &outbuf, &outleft);
+		}
+	}
+
+	*out = priv->outbuf;
+	*outlen = outbuf - priv->outbuf;
+	*outprespace = priv->outpre;
 }
 
 static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
-	size_t inleft, outleft, converted = 0;
-	char *inbuf;
-	char *outbuf;
-	
-	if (charset->cd == (iconv_t) -1)
-		goto noop;
-	
-	g_mime_filter_set_size (filter, len * 5 + 16, FALSE);
-	outbuf = filter->outbuf;
-	outleft = filter->outsize;
-	
-	inbuf = in;
-	inleft = len;
-	
-	do {
-		converted = iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft);
-		if (converted == (size_t) -1) {
-			if (errno == E2BIG || errno == EINVAL)
-				break;
-			
-			/* Note: GnuWin32's libiconv 1.9 can also set errno to ERANGE
-			 * which seems to mean that it encountered a character that
-			 * does not fit the specified 'from' charset. We'll handle
-			 * that the same way we handle EILSEQ. */
-			if (errno == EILSEQ || errno == ERANGE) {
-				/*
-				 * EILSEQ An invalid multibyte sequence has been  encountered
-				 *        in the input.
-				 *
-				 * What we do here is eat the invalid bytes in the sequence
-				 * and continue.
-				 */
-				
-				inbuf++;
-				inleft--;
-			} else {
-				/* unknown error condition */
-				goto noop;
-			}
-		}
-	} while (inleft > 0);
-	
-	if (inleft > 0) {
-		/* We've either got an E2BIG or EINVAL. Save the
-                   remainder of the buffer as we'll process this next
-                   time through */
-		g_mime_filter_backup (filter, inbuf, inleft);
-	}
-	
-	*out = filter->outbuf;
-	*outlen = outbuf - filter->outbuf;
-	*outprespace = filter->outpre;
-	
-	return;
-	
- noop:
-	
-	*out = in;
-	*outlen = len;
-	*outprespace = prespace;
+	convert (filter, in, len, prespace, out, outlen, outprespace, FALSE);
 }
 
-static void 
+static void
 filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
-	size_t inleft, outleft, converted = 0;
-	char *inbuf;
-	char *outbuf;
-	
-	if (charset->cd == (iconv_t) -1)
-		goto noop;
-	
-	g_mime_filter_set_size (filter, len * 5 + 16, FALSE);
-	outbuf = filter->outbuf;
-	outleft = filter->outsize;
-	
-	inbuf = in;
-	inleft = len;
-	
-	if (inleft > 0) {
-		do {
-			converted = iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft);
-			if (converted != (size_t) -1)
-				continue;
-			
-			if (errno == E2BIG) {
-				/*
-				 * E2BIG   There is not sufficient room at *outbuf.
-				 *
-				 * We just need to grow our outbuffer and try again.
-				 */
-				
-				converted = outbuf - filter->outbuf;
-				g_mime_filter_set_size (filter, inleft * 5 + filter->outsize + 16, TRUE);
-				outbuf = filter->outbuf + converted;
-				outleft = filter->outsize - converted;
-			} else if (errno == EILSEQ) {
-				/*
-				 * EILSEQ An invalid multibyte sequence has been  encountered
-				 *        in the input.
-				 *
-				 * What we do here is eat the invalid bytes in the sequence
-				 * and continue.
-				 */
-				
-				inbuf++;
-				inleft--;
-			} else if (errno == EINVAL) {
-				/*
-				 * EINVAL  An  incomplete  multibyte sequence has been encoun-
-				 *         tered in the input.
-				 *
-				 * We assume that this can only happen if we've run out of
-				 * bytes for a multibyte sequence, if not we're in trouble.
-				 */
-				
-				break;
-			} else {
-				goto noop;
-			}
-		} while (inleft > 0);
-	}
-	
-	/* flush the iconv conversion */
-	while (iconv (charset->cd, NULL, NULL, &outbuf, &outleft) == (size_t) -1) {
-		if (errno != E2BIG)
-			break;
-		
-		converted = outbuf - filter->outbuf;
-		g_mime_filter_set_size (filter, filter->outsize + 16, TRUE);
-		outbuf = filter->outbuf + converted;
-		outleft = filter->outsize - converted;
-	}
-	
-	*out = filter->outbuf;
-	*outlen = outbuf - filter->outbuf;
-	*outprespace = filter->outpre;
-	
-	return;
-	
- noop:
-	
-	*out = in;
-	*outlen = len;
-	*outprespace = prespace;
+	convert (filter, in, len, prespace, out, outlen, outprespace, TRUE);
 }
 
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
-	
-	if (charset->cd != (iconv_t) -1)
-		iconv (charset->cd, NULL, NULL, NULL, NULL);
+	GMimeFilterCharsetPrivate *priv = _g_mime_filter_charset_get_private ((GMimeFilterCharset *) filter);
+
+	if (priv->cd != (iconv_t) -1 && iconv (priv->cd, NULL, NULL, NULL, NULL) == (size_t) -1)
+		g_error ("GMimeFilterCharset reset failed: %s", g_strerror (errno));
 }
 
 
@@ -298,12 +241,17 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new #GMimeFilterCharset filter.
  *
- * Returns: a new charset filter or %NULL if the charset conversion is
- * not possible.
+ * Charset names are copied and remain available through
+ * g_mime_filter_charset_get_from_charset() and
+ * g_mime_filter_charset_get_to_charset().
+ *
+ * Returns: (nullable) (transfer full): a new charset filter or %NULL if
+ * the charset conversion is not possible, with errno set.
  **/
 GMimeFilter *
 g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 {
+	GMimeFilterCharsetPrivate *priv;
 	GMimeFilterCharset *charset;
 	iconv_t cd;
 	
@@ -312,9 +260,53 @@ g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 		return NULL;
 	
 	charset = g_object_new (GMIME_TYPE_FILTER_CHARSET, NULL);
-	charset->from_charset = g_strdup (from_charset);
-	charset->to_charset = g_strdup (to_charset);
-	charset->cd = cd;
+	priv = _g_mime_filter_charset_get_private (charset);
+
+	priv->from_charset = g_strdup (from_charset);
+	priv->to_charset = g_strdup (to_charset);
+	priv->cd = cd;
 	
 	return (GMimeFilter *) charset;
+}
+
+/**
+ * g_mime_filter_charset_get_from_charset:
+ * @filter: a #GMimeFilterCharset
+ *
+ * Gets the original source charset name supplied to the constructor.
+ * The name is not replaced with an iconv alias or a canonical MIME name.
+ *
+ * Returns: (transfer none): the filter-owned source charset name.
+ **/
+const char *
+g_mime_filter_charset_get_from_charset (GMimeFilterCharset *filter)
+{
+	GMimeFilterCharsetPrivate *priv;
+
+	g_return_val_if_fail (GMIME_IS_FILTER_CHARSET (filter), NULL);
+
+	priv = _g_mime_filter_charset_get_private (filter);
+
+	return priv->from_charset;
+}
+
+/**
+ * g_mime_filter_charset_get_to_charset:
+ * @filter: a #GMimeFilterCharset
+ *
+ * Gets the original target charset name supplied to the constructor.
+ * The name is not replaced with an iconv alias or a canonical MIME name.
+ *
+ * Returns: (transfer none): the filter-owned target charset name.
+ **/
+const char *
+g_mime_filter_charset_get_to_charset (GMimeFilterCharset *filter)
+{
+	GMimeFilterCharsetPrivate *priv;
+
+	g_return_val_if_fail (GMIME_IS_FILTER_CHARSET (filter), NULL);
+
+	priv = _g_mime_filter_charset_get_private (filter);
+
+	return priv->to_charset;
 }

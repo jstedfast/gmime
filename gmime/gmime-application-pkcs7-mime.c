@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -24,6 +24,8 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
+#include <zlib.h>
 
 #include "gmime-application-pkcs7-mime.h"
 #include "gmime-filter-dos2unix.h"
@@ -33,8 +35,11 @@
 #include "gmime-internal.h"
 #include "gmime-parser.h"
 #include "gmime-error.h"
+#include "gmime-gpgme-private.h"
 
 #define _(x) x
+
+#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-application-pkcs7-mime
@@ -47,45 +52,30 @@
 
 /* GObject class methods */
 static void g_mime_application_pkcs7_mime_class_init (GMimeApplicationPkcs7MimeClass *klass);
-static void g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *catpart, GMimeApplicationPkcs7MimeClass *klass);
+static void g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *catpart);
 static void g_mime_application_pkcs7_mime_finalize (GObject *object);
 
-/* GMimeObject class methods */
-static void application_pkcs7_mime_set_content_type (GMimeObject *object, GMimeContentType *content_type);
+/* GMimeEntity class methods */
+static void application_pkcs7_mime_set_content_type (GMimeEntity *object, GMimeContentType *content_type);
 
 
 static GMimePartClass *parent_class = NULL;
 
 
-GType
-g_mime_application_pkcs7_mime_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeApplicationPkcs7Mime, g_mime_application_pkcs7_mime, GMIME_TYPE_PART)
+
+GMimeApplicationPkcs7MimePrivate *
+_g_mime_application_pkcs7_mime_get_private (GMimeApplicationPkcs7Mime *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeApplicationPkcs7MimeClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_application_pkcs7_mime_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeApplicationPkcs7Mime),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_application_pkcs7_mime_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_PART, "GMimeApplicationPkcs7Mime", &info, 0);
-	}
-	
-	return type;
+	return g_mime_application_pkcs7_mime_get_instance_private (object);
 }
 
 
 static void
 g_mime_application_pkcs7_mime_class_init (GMimeApplicationPkcs7MimeClass *klass)
 {
-	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
+	GMimeEntityClass *object_class = GMIME_ENTITY_CLASS (klass);
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_PART);
@@ -96,9 +86,11 @@ g_mime_application_pkcs7_mime_class_init (GMimeApplicationPkcs7MimeClass *klass)
 }
 
 static void
-g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeApplicationPkcs7MimeClass *klass)
+g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *pkcs7_mime)
 {
-	pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
+	GMimeApplicationPkcs7MimePrivate *priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	priv->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
 }
 
 static void
@@ -109,27 +101,30 @@ g_mime_application_pkcs7_mime_finalize (GObject *object)
 
 
 static void
-application_pkcs7_mime_set_content_type (GMimeObject *object, GMimeContentType *content_type)
+application_pkcs7_mime_set_content_type (GMimeEntity *object, GMimeContentType *content_type)
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime = (GMimeApplicationPkcs7Mime *) object;
 	const char *value;
-	
+	GMimeApplicationPkcs7MimePrivate *priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
 	if ((value = g_mime_content_type_get_parameter (content_type, "smime-type")) != NULL) {
 		if (!g_ascii_strcasecmp (value, "compressed-data"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA;
 		else if (!g_ascii_strcasecmp (value, "enveloped-data"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA;
+		else if (!g_ascii_strcasecmp (value, "authEnveloped-data"))
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA;
 		else if (!g_ascii_strcasecmp (value, "signed-data"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_SIGNED_DATA;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_SIGNED_DATA;
 		else if (!g_ascii_strcasecmp (value, "certs-only"))
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_CERTS_ONLY;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_CERTS_ONLY;
 		else
-			pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
+			priv->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
 	} else {
-		pkcs7_mime->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
+		priv->smime_type = GMIME_SECURE_MIME_TYPE_UNKNOWN;
 	}
 	
-	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
+	GMIME_ENTITY_CLASS (parent_class)->set_content_type (object, content_type);
 }
 
 /**
@@ -161,6 +156,10 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 		g_mime_content_type_set_parameter (content_type, "smime-type", "enveloped-data");
 		name = "smime.p7m";
 		break;
+	case GMIME_SECURE_MIME_TYPE_AUTH_ENVELOPED_DATA:
+		g_mime_content_type_set_parameter (content_type, "smime-type", "authEnveloped-data");
+		name = "smime.p7m";
+		break;
 	case GMIME_SECURE_MIME_TYPE_SIGNED_DATA:
 		g_mime_content_type_set_parameter (content_type, "smime-type", "signed-data");
 		name = "smime.p7m";
@@ -174,7 +173,7 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 		break;
 	}
 	
-	g_mime_object_set_content_type ((GMimeObject *) pkcs7_mime, content_type);
+	g_mime_entity_set_content_type ((GMimeEntity *) pkcs7_mime, content_type);
 	g_object_unref (content_type);
 	
 	g_mime_part_set_filename ((GMimePart *) pkcs7_mime, name);
@@ -195,138 +194,912 @@ g_mime_application_pkcs7_mime_new (GMimeSecureMimeType type)
 GMimeSecureMimeType
 g_mime_application_pkcs7_mime_get_smime_type (GMimeApplicationPkcs7Mime *pkcs7_mime)
 {
+	GMimeApplicationPkcs7MimePrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), GMIME_SECURE_MIME_TYPE_UNKNOWN);
 	
-	return pkcs7_mime->smime_type;
+	priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	return priv->smime_type;
 }
 
 
-#if 0
-GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_compress (GMimeObject *entity, GError **err)
+static const unsigned char cms_compressed_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x01, 0x09 };
+static const unsigned char cms_zlib_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x03, 0x08 };
+static const unsigned char cms_data_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x01 };
+static const unsigned char cms_signed_oid[] = { 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x02 };
+
+typedef struct {
+	GMimeStream *stream;
+	GError **error;
+	guint64 position;
+	struct {
+		guint64 end;
+		gboolean indefinite;
+	} scopes[32];
+	guint depth;
+	int lookahead;
+} CmsReader;
+
+static gboolean
+cms_invalid (GError **error)
 {
-	GMimeApplicationPkcs7Mime *pkcs7_mime;
-	GMimeStream *compressed, *stream;
-	GMimeFormatOptions *options;
-	GMimeDataWrapper *content;
-	GMimeCryptoContext *ctx;
-	
-	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
-	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot compress application/pkcs7-mime part: no crypto context registered for this type."));
-		
-		return NULL;
+	g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+			     _("Invalid or truncated CMS content."));
+	return FALSE;
+}
+
+static gboolean
+cms_io_error (GError **error)
+{
+	int errsv = errno;
+
+	g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+		     _("CMS I/O failed: %s"),
+		     errsv ? g_strerror (errsv) : "unknown I/O error");
+
+	return FALSE;
+}
+
+static gboolean
+cms_write (GMimeStream *stream, const void *buffer, size_t length, GError **error)
+{
+	errno = 0;
+
+	if (_g_mime_stream_write_all (stream, buffer, length) == -1)
+		return cms_io_error (error);
+
+	return TRUE;
+}
+
+static guint64
+cms_limit (CmsReader *reader)
+{
+	return reader->depth ? reader->scopes[reader->depth - 1].end : G_MAXUINT64;
+}
+
+static gboolean
+cms_read (CmsReader *reader, unsigned char *buffer, size_t length)
+{
+	ssize_t nread;
+
+	if (length > cms_limit (reader) - reader->position)
+		return cms_invalid (reader->error);
+
+	if (length && reader->lookahead != -1) {
+		*buffer++ = reader->lookahead;
+		reader->lookahead = -1;
+		reader->position++;
+		length--;
 	}
-	
+
+	while (length) {
+		errno = 0;
+		nread = g_mime_stream_read (reader->stream, (char *) buffer, length);
+
+		if (nread < 0)
+			return cms_io_error (reader->error);
+
+		if (nread == 0)
+			return cms_invalid (reader->error);
+
+		reader->position += nread;
+		buffer += nread;
+		length -= nread;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+cms_header (CmsReader *reader, unsigned char *tag, guint64 *length, gboolean *indefinite)
+{
+	unsigned char byte;
+	guint count;
+
+	if (!cms_read (reader, tag, 1) ||
+	    !cms_read (reader, &byte, 1))
+		return FALSE;
+
+	*indefinite = byte == 0x80;
+	*length = 0;
+
+	if ((*tag & 0x1f) == 0x1f || (*indefinite && !(*tag & 0x20)))
+		return cms_invalid (reader->error);
+
+	if (*indefinite)
+		return TRUE;
+
+	if (!(byte & 0x80)) {
+		*length = byte;
+	} else {
+		count = byte & 0x7f;
+
+		if (count > sizeof (*length))
+			return cms_invalid (reader->error);
+
+		while (count--) {
+			if (!cms_read (reader, &byte, 1))
+				return FALSE;
+
+			*length = (*length << 8) | byte;
+		}
+	}
+
+	if (*length > cms_limit (reader) - reader->position)
+		return cms_invalid (reader->error);
+
+	return TRUE;
+}
+
+static gboolean
+cms_push (CmsReader *reader, guint64 length, gboolean indefinite)
+{
+	guint64 end = indefinite ? cms_limit (reader) : reader->position + length;
+
+	if (reader->depth == G_N_ELEMENTS (reader->scopes))
+		return cms_invalid (reader->error);
+
+	reader->scopes[reader->depth].end = end;
+	reader->scopes[reader->depth].indefinite = indefinite;
+	reader->depth++;
+
+	return TRUE;
+}
+
+static gboolean
+cms_begin (CmsReader *reader, unsigned char expected)
+{
+	gboolean indefinite;
+	guint64 length;
+	unsigned char tag;
+
+	if (!cms_header (reader, &tag, &length, &indefinite))
+		return FALSE;
+
+	if (tag != expected)
+		return cms_invalid (reader->error);
+
+	return cms_push (reader, length, indefinite);
+}
+
+static gboolean
+cms_at_end (CmsReader *reader, gboolean *at_end)
+{
+	unsigned char byte;
+	ssize_t nread;
+
+	if (!reader->scopes[reader->depth - 1].indefinite) {
+		*at_end = reader->position == cms_limit (reader);
+		return TRUE;
+	}
+
+	if (reader->lookahead == -1) {
+		if (reader->position == cms_limit (reader))
+			return cms_invalid (reader->error);
+
+		errno = 0;
+		nread = g_mime_stream_read (reader->stream, (char *) &byte, 1);
+
+		if (nread < 0)
+			return cms_io_error (reader->error);
+
+		if (nread == 0)
+			return cms_invalid (reader->error);
+
+		reader->lookahead = byte;
+	}
+
+	*at_end = reader->lookahead == 0;
+
+	return TRUE;
+}
+
+static gboolean
+cms_end (CmsReader *reader)
+{
+	unsigned char eoc[2];
+
+	if (reader->scopes[reader->depth - 1].indefinite) {
+		if (!cms_read (reader, eoc, sizeof (eoc)))
+			return FALSE;
+
+		if (eoc[0] || eoc[1])
+			return cms_invalid (reader->error);
+	} else if (reader->position != cms_limit (reader)) {
+		return cms_invalid (reader->error);
+	}
+
+	reader->depth--;
+
+	return TRUE;
+}
+
+static gboolean
+cms_value (CmsReader *reader, unsigned char expected,
+	   const unsigned char *value, size_t size, int error_code)
+{
+	unsigned char tag, buffer[sizeof (cms_compressed_oid)];
+	gboolean indefinite;
+	guint64 length;
+
+	if (!cms_header (reader, &tag, &length, &indefinite))
+		return FALSE;
+
+	if (tag != expected || indefinite)
+		return cms_invalid (reader->error);
+
+	if (length == size) {
+		if (!cms_read (reader, buffer, size))
+			return FALSE;
+
+		if (!memcmp (buffer, value, size))
+			return TRUE;
+	}
+
+	g_set_error_literal (reader->error, GMIME_ERROR, error_code,
+			     error_code == GMIME_ERROR_NOT_SUPPORTED ?
+			     _("Unsupported CMS algorithm or encapsulated content type.") :
+			     _("Unexpected CMS value."));
+
+	return FALSE;
+}
+
+static gboolean
+cms_finish (CmsReader *reader)
+{
+	unsigned char byte;
+	ssize_t nread;
+
+	while (reader->depth) {
+		if (!cms_end (reader))
+			return FALSE;
+	}
+
+	errno = 0;
+	nread = g_mime_stream_read (reader->stream, (char *) &byte, 1);
+
+	if (nread < 0 || (!nread && !g_mime_stream_eos (reader->stream)))
+		return cms_io_error (reader->error);
+
+	return nread ? cms_invalid (reader->error) : TRUE;
+}
+
+static gboolean
+cms_skip_value (CmsReader *reader, unsigned char tag, guint64 length, gboolean indefinite)
+{
+	unsigned char buffer[4096];
+	gboolean at_end;
+	size_t count;
+
+	if (!tag)
+		return cms_invalid (reader->error);
+
+	if (tag & 0x20) {
+		if (!cms_push (reader, length, indefinite))
+			return FALSE;
+
+		while (TRUE) {
+			if (!cms_at_end (reader, &at_end))
+				return FALSE;
+
+			if (at_end)
+				break;
+
+			if (!cms_header (reader, &tag, &length, &indefinite) ||
+			    !cms_skip_value (reader, tag, length, indefinite))
+				return FALSE;
+		}
+
+		return cms_end (reader);
+	}
+
+	while (length) {
+		count = (size_t) MIN (length, sizeof (buffer));
+
+		if (!cms_read (reader, buffer, count))
+			return FALSE;
+
+		length -= count;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+cms_skip (CmsReader *reader, unsigned char expected)
+{
+	gboolean indefinite;
+	unsigned char tag;
+	guint64 length;
+
+	if (!cms_header (reader, &tag, &length, &indefinite))
+		return FALSE;
+
+	if (tag != expected)
+		return cms_invalid (reader->error);
+
+	return cms_skip_value (reader, tag, length, indefinite);
+}
+
+static gboolean
+cms_copy_octets (CmsReader *reader, GMimeStream *output)
+{
+	unsigned char tag, buffer[4096];
+	gboolean indefinite, at_end;
+	guint64 length;
+	size_t count;
+
+	if (!cms_header (reader, &tag, &length, &indefinite))
+		return FALSE;
+
+	if (tag == 0x24) {
+		if (!cms_push (reader, length, indefinite))
+			return FALSE;
+
+		while (TRUE) {
+			if (!cms_at_end (reader, &at_end))
+				return FALSE;
+
+			if (at_end)
+				break;
+
+			if (!cms_copy_octets (reader, output))
+				return FALSE;
+		}
+
+		return cms_end (reader);
+	}
+
+	if (tag != 0x04 || indefinite)
+		return cms_invalid (reader->error);
+
+	while (length) {
+		count = (size_t) MIN (length, sizeof (buffer));
+
+		if (!cms_read (reader, buffer, count) ||
+		    !cms_write (output, buffer, count, reader->error))
+			return FALSE;
+
+		length -= count;
+	}
+
+	return TRUE;
+}
+
+static gboolean
+compressed_data_inflate (CmsReader *reader, z_stream *zstream, GMimeStream *output,
+			 size_t max_size, size_t *total, gboolean *finished)
+{
+	unsigned char tag, input[4096], buffer[4096];
+	gboolean indefinite, at_end;
+	guint64 length;
+	size_t count;
+	int status;
+
+	if (!cms_header (reader, &tag, &length, &indefinite))
+		return FALSE;
+
+	if (tag == 0x24) {
+		if (!cms_push (reader, length, indefinite))
+			return FALSE;
+
+		do {
+			if (!cms_at_end (reader, &at_end))
+				return FALSE;
+
+			if (at_end)
+				break;
+
+			if (!compressed_data_inflate (reader, zstream, output, max_size, total, finished))
+				return FALSE;
+		} while (TRUE);
+
+		return cms_end (reader);
+	}
+
+	if (tag != 0x04 || indefinite || (*finished && length))
+		return cms_invalid (reader->error);
+
+	while (length) {
+		count = (size_t) MIN (length, sizeof (input));
+
+		if (!cms_read (reader, input, count))
+			return FALSE;
+
+		length -= count;
+		zstream->next_in = input;
+		zstream->avail_in = (uInt) count;
+
+		do {
+			zstream->next_out = buffer;
+			zstream->avail_out = sizeof (buffer);
+			status = inflate (zstream, Z_NO_FLUSH);
+
+			if (status == Z_MEM_ERROR) {
+				g_set_error_literal (reader->error, GMIME_ERROR, GMIME_ERROR_GENERAL,
+						     _("Could not allocate CMS decompression state."));
+				return FALSE;
+			}
+
+			if (status != Z_OK && status != Z_STREAM_END && status != Z_BUF_ERROR)
+				return cms_invalid (reader->error);
+
+			count = sizeof (buffer) - zstream->avail_out;
+
+			if (count > max_size - *total) {
+				g_set_error_literal (reader->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+						     _("Decompressed CMS content exceeds the maximum size."));
+				return FALSE;
+			}
+
+			if (!cms_write (output, buffer, count, reader->error))
+				return FALSE;
+
+			*total += count;
+
+			if (status == Z_STREAM_END) {
+				*finished = TRUE;
+
+				if (zstream->avail_in || length)
+					return cms_invalid (reader->error);
+
+				break;
+			}
+
+			if (status == Z_BUF_ERROR) {
+				if (zstream->avail_in)
+					return cms_invalid (reader->error);
+
+				break;
+			}
+		} while (zstream->avail_in || !zstream->avail_out);
+	}
+
+	return TRUE;
+}
+
+static guint64
+compressed_data_encoded_size (guint64 length)
+{
+	guint64 size = length + 2;
+
+	if (length >= 128) {
+		do {
+			size++;
+			length >>= 8;
+		} while (length);
+	}
+
+	return size;
+}
+
+static gboolean
+compressed_data_write_header (GMimeStream *stream, unsigned char tag, guint64 length, GError **error)
+{
+	unsigned char buffer[10];
+	guint64 value = length;
+	guint count = 0, i;
+
+	buffer[0] = tag;
+
+	if (length < 128) {
+		buffer[1] = (unsigned char) length;
+		return cms_write (stream, buffer, 2, error);
+	}
+
+	do {
+		count++;
+		value >>= 8;
+	} while (value);
+
+	buffer[1] = 0x80 | count;
+
+	for (i = 0; i < count; i++)
+		buffer[2 + i] = (unsigned char) (length >> (8 * (count - i - 1)));
+
+	return cms_write (stream, buffer, count + 2, error);
+}
+
+static gboolean
+compressed_data_write_oid (GMimeStream *stream, const unsigned char *oid, size_t length, GError **error)
+{
+	return compressed_data_write_header (stream, 0x06, length, error) &&
+		cms_write (stream, oid, length, error);
+}
+
+/**
+ * g_mime_application_pkcs7_mime_compress:
+ * @entity: a #GMimeEntity to compress
+ * @err: return location for a #GError, or %NULL
+ *
+ * Serializes @entity using DOS newlines and compresses it as RFC 3274 CMS
+ * CompressedData using zlib. No crypto context is required.
+ *
+ * Returns: (nullable) (transfer full): a new compressed S/MIME part, or %NULL
+ * on failure, with @err set.
+ **/
+GMimeApplicationPkcs7Mime *
+g_mime_application_pkcs7_mime_compress (GMimeEntity *entity, GError **err)
+{
+	static const unsigned char version[] = { 0x02, 0x01, 0x00 };
+	guint64 algorithm_size, econtent_size, content_size, wrapped_size;
+	GMimeStream *compressed, *stream, *encoded = NULL;
+	GMimeApplicationPkcs7Mime *pkcs7_mime = NULL;
+	GMimeFormatOptions *options;
+	unsigned char buffer[4096];
+	z_stream zstream = { 0 };
+	GMimeContent *content;
+	GByteArray *bytes;
+	int status;
+
+	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
+
 	options = _g_mime_format_options_clone (NULL, FALSE);
 	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
-	
-	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (entity, options, stream);
-	g_mime_format_options_free (options);
-	
-	/* reset the content stream */
-	g_mime_stream_reset (stream);
-	
-	/* compress the content stream */
-	compressed = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_compress (ctx, stream, compressed, err) == -1) {
-		g_object_unref (compressed);
+
+	errno = 0;
+
+	if (g_mime_entity_write_to_stream (entity, options, stream) == -1) {
+		cms_io_error (err);
+		g_mime_format_options_unref (options);
 		g_object_unref (stream);
-		g_object_unref (ctx);
 		return NULL;
 	}
-	
+
+	g_mime_format_options_unref (options);
+
+	compressed = g_mime_stream_mem_new ();
+	status = deflateInit (&zstream, Z_DEFAULT_COMPRESSION);
+
+	if (status != Z_OK) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
+				     _("Could not initialize CMS compression."));
+		goto done;
+	}
+
+	bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) stream);
+	zstream.next_in = bytes->data;
+	zstream.avail_in = bytes->len;
+
+	do {
+		zstream.next_out = buffer;
+		zstream.avail_out = sizeof (buffer);
+		status = deflate (&zstream, Z_FINISH);
+
+		if (status != Z_OK && status != Z_STREAM_END) {
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
+					     _("CMS compression failed."));
+			break;
+		}
+
+		if (!cms_write (compressed, buffer, sizeof (buffer) - zstream.avail_out, err)) {
+			status = Z_ERRNO;
+			break;
+		}
+	} while (status != Z_STREAM_END);
+
+	deflateEnd (&zstream);
+
+	if (status != Z_STREAM_END)
+		goto done;
+
 	g_object_unref (stream);
-	g_mime_stream_reset (compressed);
-	g_object_unref (ctx);
-	
-	/* construct the application/pkcs7-mime part */
+	stream = NULL;
+
+	bytes = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) compressed);
+	algorithm_size = compressed_data_encoded_size (sizeof (cms_zlib_oid));
+	econtent_size = compressed_data_encoded_size (sizeof (cms_data_oid)) +
+		compressed_data_encoded_size (compressed_data_encoded_size (bytes->len));
+	content_size = sizeof (version) + compressed_data_encoded_size (algorithm_size) +
+		compressed_data_encoded_size (econtent_size);
+	wrapped_size = compressed_data_encoded_size (compressed_data_encoded_size (content_size));
+	encoded = g_mime_stream_mem_new ();
+
+	if (!compressed_data_write_header (encoded, 0x30,
+					  compressed_data_encoded_size (sizeof (cms_compressed_oid)) + wrapped_size, err) ||
+	    !compressed_data_write_oid (encoded, cms_compressed_oid, sizeof (cms_compressed_oid), err) ||
+	    !compressed_data_write_header (encoded, 0xa0, compressed_data_encoded_size (content_size), err) ||
+	    !compressed_data_write_header (encoded, 0x30, content_size, err) ||
+	    !cms_write (encoded, version, sizeof (version), err) ||
+	    !compressed_data_write_header (encoded, 0x30, algorithm_size, err) ||
+	    !compressed_data_write_oid (encoded, cms_zlib_oid, sizeof (cms_zlib_oid), err) ||
+	    !compressed_data_write_header (encoded, 0x30, econtent_size, err) ||
+	    !compressed_data_write_oid (encoded, cms_data_oid, sizeof (cms_data_oid), err) ||
+	    !compressed_data_write_header (encoded, 0xa0, compressed_data_encoded_size (bytes->len), err) ||
+	    !compressed_data_write_header (encoded, 0x04, bytes->len, err) ||
+	    !cms_write (encoded, bytes->data, bytes->len, err))
+		goto done;
+
+	g_mime_stream_reset (encoded);
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA);
-	content = g_mime_data_wrapper_new_with_stream (compressed, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (encoded, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
-	g_object_unref (compressed);
 	g_object_unref (content);
-	
+
+ done:
+	g_clear_object (&encoded);
+	g_object_unref (compressed);
+	g_clear_object (&stream);
+
 	return pkcs7_mime;
 }
 
 
-GMimeObject *
-g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
+/**
+ * g_mime_application_pkcs7_mime_decompress:
+ * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
+ * @max_size: positive maximum decompressed size in bytes, including MIME headers
+ * @err: return location for a #GError, or %NULL
+ *
+ * Decompresses RFC 3274 CMS CompressedData and parses its MIME content.
+ * Accepts DER and BER, including constructed OCTET STRINGs, with at most
+ * 32 nested ASN.1 containers. Only zlib compression and encapsulated id-data
+ * content are supported. No crypto context is required. The entire zlib
+ * stream, including its checksum, must be valid; truncated, trailing, or
+ * oversized content is rejected.
+ *
+ * Returns: (nullable) (transfer full): the decompressed entity, or %NULL on
+ * failure, with @err set. No partial entity is returned on failure.
+ **/
+GMimeEntity *
+g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime, size_t max_size, GError **err)
 {
+	static const unsigned char zero = 0;
+	GMimeApplicationPkcs7MimePrivate *priv;
 	GMimeStream *filtered, *compressed, *stream;
-	GMimeObject *decompressed;
-	GMimeDataWrapper *content;
-	GMimeCryptoContext *ctx;
-	GMimeDecryptResult *res;
+	gboolean at_end, finished = FALSE, valid;
+	CmsReader reader = { 0 };
+	GMimeEntity *decompressed = NULL;
+	z_stream zstream = { 0 };
+	GMimeContent *content;
 	GMimeFilter *filter;
-	GMimeParser *parser;
-	
+	size_t total = 0;
+
 	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
-	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot decompress application/pkcs7-mime part: no crypto context registered for this type."));
-		
+	g_return_val_if_fail (max_size > 0, NULL);
+
+	priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	if (priv->smime_type != GMIME_SECURE_MIME_TYPE_COMPRESSED_DATA &&
+	    priv->smime_type != GMIME_SECURE_MIME_TYPE_UNKNOWN) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("The S/MIME part does not contain compressed data."));
 		return NULL;
 	}
-	
-	/* get the compressed stream */
-	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
-	compressed = g_mime_stream_mem_new ();
-	g_mime_data_wrapper_write_to_stream (content, compressed);
-	g_mime_stream_reset (compressed);
-	
+
+	if (!(content = g_mime_part_get_content ((GMimePart *) pkcs7_mime)) ||
+	    !g_mime_content_get_stream (content)) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("The compressed S/MIME part has no content stream."));
+		return NULL;
+	}
+
+	errno = 0;
+	if (!(compressed = g_mime_content_open (content))) {
+		cms_io_error (err);
+		return NULL;
+	}
+
+	reader.stream = compressed;
+	reader.error = err;
+	reader.lookahead = -1;
+
+	if (!cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_compressed_oid, sizeof (cms_compressed_oid), GMIME_ERROR_PARSE_ERROR) ||
+	    !cms_begin (&reader, 0xa0) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x02, &zero, 1, GMIME_ERROR_PARSE_ERROR) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_zlib_oid, sizeof (cms_zlib_oid), GMIME_ERROR_NOT_SUPPORTED) ||
+	    !cms_at_end (&reader, &at_end))
+		goto done;
+
+	if (!at_end && !cms_value (&reader, 0x05, &zero, 0, GMIME_ERROR_PARSE_ERROR))
+		goto done;
+
+	if (!cms_end (&reader) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_data_oid, sizeof (cms_data_oid), GMIME_ERROR_NOT_SUPPORTED) ||
+	    !cms_begin (&reader, 0xa0))
+		goto done;
+
+	if (inflateInit (&zstream) != Z_OK) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
+				     _("Could not initialize CMS decompression."));
+		goto done;
+	}
+
 	stream = g_mime_stream_mem_new ();
 	filtered = g_mime_stream_filter_new (stream);
 	filter = g_mime_filter_dos2unix_new (FALSE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
 	g_object_unref (filter);
-	
-	/* decompress the content stream */
-	if (g_mime_crypto_context_decompress (ctx, compressed, stream, err) == -1) {
-		g_object_unref (compressed);
-		g_object_unref (filtered);
-		g_object_unref (stream);
-		g_object_unref (ctx);
-		
-		return NULL;
+
+	valid = compressed_data_inflate (&reader, &zstream, filtered, max_size, &total, &finished);
+	inflateEnd (&zstream);
+
+	if (valid && !finished)
+		valid = cms_invalid (err);
+
+	if (valid)
+		valid = cms_finish (&reader);
+
+	if (valid) {
+		errno = 0;
+
+		if (g_mime_stream_flush (filtered) == -1)
+			valid = cms_io_error (err);
 	}
-	
-	g_mime_stream_flush (filtered);
-	g_object_unref (compressed);
+
+	if (valid) {
+		g_mime_stream_reset (stream);
+		decompressed = g_mime_entity_load (NULL, stream, err);
+	}
+
 	g_object_unref (filtered);
-	g_object_unref (ctx);
-	
-	g_mime_stream_reset (stream);
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
-	
-	decompressed = g_mime_parser_construct_part (parser, NULL);
-	g_object_unref (parser);
-	
-	if (!decompressed) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Cannot decompress application/pkcs7-mime part: failed to parse decompressed content."));
-		
-		return NULL;
-	}
-	
+
+ done:
+	g_object_unref (compressed);
+
 	return decompressed;
 }
-#endif
 
 
 /**
- * g_mime_application_pkcs7_mime_encrypt:
- * @entity: a #GMimeObject to encrypt
- * @flags: a #GMimeEncryptFlags
- * @recipients: (element-type utf8): an array of recipients to encrypt to
+ * g_mime_application_pkcs7_mime_unwrap:
+ * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
+ * @err: return location for a #GError, or %NULL
+ *
+ * Extracts the encapsulated id-data MIME entity from CMS SignedData without
+ * verifying signatures, digests, certificates, or trust. The returned entity
+ * is unverified and must not be presented as authenticated content.
+ *
+ * Accepts DER and BER, including constructed OCTET STRINGs, with at most
+ * 32 nested ASN.1 containers. Checks container framing, but does not validate
+ * the contents of the digest, certificate, revocation, or signer sets.
+ * Detached signatures, other encapsulated content types, truncated containers,
+ * and trailing data are rejected. DOS newlines are normalized as for signature
+ * verification. No crypto context or crypto support is required.
+ *
+ * Returns: (nullable) (transfer full): the unverified entity, or %NULL on
+ * failure, with @err set. No partial entity is returned on failure.
+ **/
+GMimeEntity *
+g_mime_application_pkcs7_mime_unwrap (GMimeApplicationPkcs7Mime *pkcs7_mime, GError **err)
+{
+	GMimeStream *input, *stream = NULL, *filtered = NULL;
+	GMimeApplicationPkcs7MimePrivate *priv;
+	gboolean at_end, indefinite;
+	unsigned char tag, version;
+	GMimeEntity *entity = NULL;
+	CmsReader reader = { 0 };
+	GMimeContent *content;
+	GMimeFilter *filter;
+	guint64 length;
+
+	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
+
+	priv = _g_mime_application_pkcs7_mime_get_private (pkcs7_mime);
+
+	if (priv->smime_type != GMIME_SECURE_MIME_TYPE_SIGNED_DATA &&
+	    priv->smime_type != GMIME_SECURE_MIME_TYPE_UNKNOWN) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("The S/MIME part does not contain signed data."));
+		return NULL;
+	}
+
+	if (!(content = g_mime_part_get_content ((GMimePart *) pkcs7_mime)) ||
+	    !g_mime_content_get_stream (content)) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     _("The signed S/MIME part has no content stream."));
+		return NULL;
+	}
+
+	errno = 0;
+	if (!(input = g_mime_content_open (content))) {
+		cms_io_error (err);
+		return NULL;
+	}
+
+	reader.stream = input;
+	reader.error = err;
+	reader.lookahead = -1;
+
+	if (!cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_signed_oid, sizeof (cms_signed_oid), GMIME_ERROR_PARSE_ERROR) ||
+	    !cms_begin (&reader, 0xa0) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_begin (&reader, 0x02) ||
+	    !cms_read (&reader, &version, 1) ||
+	    !cms_end (&reader))
+		goto done;
+
+	if (version != 1 && version != 3 && version != 4 && version != 5) {
+		cms_invalid (err);
+		goto done;
+	}
+
+	if (!cms_skip (&reader, 0x31) ||
+	    !cms_begin (&reader, 0x30) ||
+	    !cms_value (&reader, 0x06, cms_data_oid, sizeof (cms_data_oid), GMIME_ERROR_NOT_SUPPORTED) ||
+	    !cms_at_end (&reader, &at_end))
+		goto done;
+
+	if (at_end) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+				     _("The SignedData has no encapsulated MIME content."));
+		goto done;
+	}
+
+	if (!cms_begin (&reader, 0xa0))
+		goto done;
+
+	stream = g_mime_stream_mem_new ();
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_filter_dos2unix_new (FALSE);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	g_object_unref (filter);
+
+	if (!cms_copy_octets (&reader, filtered) ||
+	    !cms_end (&reader) ||
+	    !cms_end (&reader) ||
+	    !cms_header (&reader, &tag, &length, &indefinite))
+		goto done;
+
+	if (tag == 0xa0) {
+		if (!cms_skip_value (&reader, tag, length, indefinite) ||
+		    !cms_header (&reader, &tag, &length, &indefinite))
+			goto done;
+	}
+
+	if (tag == 0xa1) {
+		if (!cms_skip_value (&reader, tag, length, indefinite) ||
+		    !cms_header (&reader, &tag, &length, &indefinite))
+			goto done;
+	}
+
+	if (tag != 0x31) {
+		cms_invalid (err);
+		goto done;
+	}
+
+	if (!cms_skip_value (&reader, tag, length, indefinite) ||
+	    !cms_finish (&reader))
+		goto done;
+
+	errno = 0;
+	if (g_mime_stream_flush (filtered) == -1 || g_mime_stream_reset (stream) == -1) {
+		cms_io_error (err);
+		goto done;
+	}
+
+	entity = g_mime_entity_load (NULL, stream, err);
+
+	if (!entity && (!err || !*err))
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot parse the extracted MIME content."));
+
+ done:
+	g_clear_object (&filtered);
+	g_clear_object (&stream);
+	g_object_unref (input);
+
+	return entity;
+}
+
+
+#ifdef ENABLE_CRYPTO
+
+/**
+ * g_mime_application_pkcs7_mime_encrypt: (skip)
+ * @ctx: a borrowed GPGME CMS context
+ * @entity: a #GMimeEntity to encrypt
+ * @flags: native GPGME encryption flags
+ * @recipients: borrowed NULL-terminated recipient keys
+ * @result: (out) (optional): a retained encryption result
  * @err: a #GError
  *
  * Attempts to encrypt the @entity MIME part to the public keys of @recipients
@@ -337,51 +1110,58 @@ g_mime_application_pkcs7_mime_decompress (GMimeApplicationPkcs7Mime *pkcs7_mime)
  * information as to why the failure occurred.
  **/
 GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags flags, GPtrArray *recipients, GError **err)
+g_mime_application_pkcs7_mime_encrypt (gpgme_ctx_t ctx, GMimeEntity *entity, gpgme_encrypt_flags_t flags,
+				      gpgme_key_t *recipients, gpgme_encrypt_result_t *result, GError **err)
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeStream *ciphertext, *stream;
-	GMimeFormatOptions *options;
-	GMimeDataWrapper *content;
-	GMimeCryptoContext *ctx;
+	GMimeContent *content;
+	int armor, textmode;
+	gboolean success;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
+	if (result)
+		*result = NULL;
+
+	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
 	g_return_val_if_fail (recipients != NULL, NULL);
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot encrypt application/pkcs7-mime part: no crypto context registered for this type."));
-		
+	if (!_g_mime_gpgme_check_protocol (ctx, GPGME_PROTOCOL_CMS, err))
 		return NULL;
-	}
-	
-	options = _g_mime_format_options_clone (NULL, FALSE);
-	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
 	/* get the cleartext */
-	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (entity, options, stream);
-	g_mime_format_options_free (options);
-	
-	/* reset the content stream */
-	g_mime_stream_reset (stream);
+	if (!(stream = _g_mime_gpgme_serialize (entity, err)))
+		return NULL;
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_encrypt (ctx, FALSE, NULL, flags, recipients, stream, ciphertext, err) == -1) {
+
+	/* capture the current context settings */
+	armor = gpgme_get_armor (ctx);
+	textmode = gpgme_get_textmode (ctx);
+
+	/* override the context settings */
+	gpgme_set_armor (ctx, FALSE);
+	gpgme_set_textmode (ctx, FALSE);
+
+	/* encrypt the content stream */
+	success = g_mime_gpgme_encrypt (ctx, FALSE, flags, recipients, NULL, stream, ciphertext, result, NULL, err);
+
+	/* restore the original context settings */
+	gpgme_set_textmode (ctx, textmode);
+	gpgme_set_armor (ctx, armor);
+
+	if (!success) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
-		g_object_unref (ctx);
 		return NULL;
 	}
 	
 	g_object_unref (stream);
 	g_mime_stream_reset (ciphertext);
-	g_object_unref (ctx);
 	
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA);
-	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
@@ -391,166 +1171,124 @@ g_mime_application_pkcs7_mime_encrypt (GMimeObject *entity, GMimeEncryptFlags fl
 
 
 /**
- * g_mime_application_pkcs7_mime_decrypt:
+ * g_mime_application_pkcs7_mime_decrypt: (skip)
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
- * @flags: a #GMimeDecryptFlags
- * @session_key: session key to use or %NULL
- * @result: the decryption result
+ * @ctx: a borrowed GPGME CMS context
+ * @result: (out) (optional): a retained native decryption result
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted application/pkcs7-mime part.
  *
- * When non-%NULL, @session_key should be a %NULL-terminated string,
- * such as the one returned by g_mime_decrypt_result_get_session_key()
- * from a previous decryption. If the @session_key is not valid, decryption
- * will fail.
- *
- * If @result is non-%NULL, then on a successful decrypt operation, it will be
- * updated to point to a newly-allocated #GMimeDecryptResult with signature
- * status information as well as a list of recipients that the part was
- * encrypted to.
+ * Context policy is unchanged. Release any returned result even on failure.
+ * Nested signed MIME entities must be verified separately.
  *
  * Returns: (nullable) (transfer full): the decrypted MIME part on success or
  * %NULL on fail. If the decryption fails, an exception will be set on
  * @err to provide information as to why the failure occurred.
  **/
-GMimeObject *
-g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime,
-				       GMimeDecryptFlags flags, const char *session_key,
-				       GMimeDecryptResult **result, GError **err)
+GMimeEntity *
+g_mime_application_pkcs7_mime_decrypt (GMimeApplicationPkcs7Mime *pkcs7_mime, gpgme_ctx_t ctx,
+				      gpgme_decrypt_result_t *result, GError **err)
 {
-	GMimeStream *filtered, *ciphertext, *stream;
-	GMimeDataWrapper *content;
-	GMimeCryptoContext *ctx;
-	GMimeDecryptResult *res;
-	GMimeObject *decrypted;
-	GMimeFilter *filter;
-	GMimeParser *parser;
-	
-	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
+	GMimeStream *ciphertext, *stream;
+	GMimeEntity *decrypted;
 	
 	if (result)
 		*result = NULL;
+
+	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot decrypt application/pkcs7-mime part: no crypto context registered for this type."));
-		
+	if (!_g_mime_gpgme_check_protocol (ctx, GPGME_PROTOCOL_CMS, err))
 		return NULL;
-	}
 	
 	/* get the ciphertext stream */
-	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
-	ciphertext = g_mime_stream_mem_new ();
-	g_mime_data_wrapper_write_to_stream (content, ciphertext);
-	g_mime_stream_reset (ciphertext);
+	if (!(ciphertext = _g_mime_gpgme_decode (GMIME_PART (pkcs7_mime), err)))
+		return NULL;
 	
 	stream = g_mime_stream_mem_new ();
-	filtered = g_mime_stream_filter_new (stream);
-	filter = g_mime_filter_dos2unix_new (FALSE);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	g_object_unref (filter);
 	
 	/* decrypt the content stream */
-	if (!(res = g_mime_crypto_context_decrypt (ctx, flags, session_key, ciphertext, filtered, err))) {
+	if (!g_mime_gpgme_decrypt (ctx, FALSE, ciphertext, stream, result, NULL, err)) {
 		g_object_unref (ciphertext);
-		g_object_unref (filtered);
 		g_object_unref (stream);
-		g_object_unref (ctx);
 		
 		return NULL;
 	}
 	
-	g_mime_stream_flush (filtered);
 	g_object_unref (ciphertext);
-	g_object_unref (filtered);
-	g_object_unref (ctx);
-	
-	g_mime_stream_reset (stream);
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, stream);
+	decrypted = _g_mime_gpgme_parse (stream, err);
 	g_object_unref (stream);
-	
-	decrypted = g_mime_parser_construct_part (parser, NULL);
-	g_object_unref (parser);
-	
-	if (!decrypted) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Cannot decrypt application/pkcs7-mime part: failed to parse decrypted content."));
-		
-		g_object_unref (res);
-		
-		return NULL;
-	}
-	
-	if (!result)
-		g_object_unref (res);
-	else
-		*result = res;
 	
 	return decrypted;
 }
 
 
 /**
- * g_mime_application_pkcs7_mime_sign:
- * @entity: a #GMimeObject
- * @userid: the user id to sign with
+ * g_mime_application_pkcs7_mime_sign: (skip)
+ * @ctx: a borrowed GPGME CMS context with configured signers
+ * @entity: a #GMimeEntity
+ * @result: (out) (optional): a retained signing result
  * @err: a #GError
  *
- * Attempts to sign the @entity MIME part with @userid's private key using
- * S/MIME. If successful, a new application/pkcs7-mime object is returned.
+ * Signs @entity using the context's signers and S/MIME. If successful, a new
+ * application/pkcs7-mime object is returned.
  *
  * Returns: (nullable) (transfer full): a new #GMimeApplicationPkcs7Mime object on success
  * or %NULL on fail. If signing fails, an exception will be set on @err to provide
  * information as to why the failure occurred.
  **/
 GMimeApplicationPkcs7Mime *
-g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GError **err)
+g_mime_application_pkcs7_mime_sign (gpgme_ctx_t ctx, GMimeEntity *entity,
+				   gpgme_sign_result_t *result, GError **err)
 {
 	GMimeApplicationPkcs7Mime *pkcs7_mime;
 	GMimeStream *ciphertext, *stream;
-	GMimeFormatOptions *options;
-	GMimeDataWrapper *content;
-	GMimeCryptoContext *ctx;
+	GMimeContent *content;
+	int armor, textmode;
+	gboolean success;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (entity), NULL);
-	g_return_val_if_fail (userid != NULL, NULL);
+	if (result)
+		*result = NULL;
+
+	g_return_val_if_fail (GMIME_IS_ENTITY (entity), NULL);
 	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot sign application/pkcs7-mime part: no crypto context registered for this type."));
-		
+	if (!_g_mime_gpgme_check_protocol (ctx, GPGME_PROTOCOL_CMS, err))
 		return NULL;
-	}
-	
-	options = _g_mime_format_options_clone (NULL, FALSE);
-	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
 	
 	/* get the cleartext */
-	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (entity, options, stream);
-	g_mime_format_options_free (options);
-	
-	/* reset the content stream */
-	g_mime_stream_reset (stream);
+	if (!(stream = _g_mime_gpgme_serialize (entity, err)))
+		return NULL;
 	
 	/* sign the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_sign (ctx, FALSE, userid, stream, ciphertext, err) == -1) {
+
+	/* capture the current context settings */
+	armor = gpgme_get_armor (ctx);
+	textmode = gpgme_get_textmode (ctx);
+
+	/* override the context settings */
+	gpgme_set_armor (ctx, FALSE);
+	gpgme_set_textmode (ctx, FALSE);
+
+	/* sign the content stream */
+	success = g_mime_gpgme_sign (ctx, GPGME_SIG_MODE_NORMAL, stream, ciphertext, result, err);
+
+	/* restore the original context settings */
+	gpgme_set_textmode (ctx, textmode);
+	gpgme_set_armor (ctx, armor);
+
+	if (!success) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
-		g_object_unref (ctx);
 		return NULL;
 	}
 	
 	g_object_unref (stream);
 	g_mime_stream_reset (ciphertext);
-	g_object_unref (ctx);
 	
 	/* construct the application/pkcs7-mime part */
 	pkcs7_mime = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
-	content = g_mime_data_wrapper_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_DEFAULT);
+	content = g_mime_content_new_with_stream (ciphertext, GMIME_CONTENT_ENCODING_UNSPECIFIED);
 	g_mime_part_set_content ((GMimePart *) pkcs7_mime, content);
 	g_object_unref (ciphertext);
 	g_object_unref (content);
@@ -560,85 +1298,55 @@ g_mime_application_pkcs7_mime_sign (GMimeObject *entity, const char *userid, GEr
 
 
 /**
- * g_mime_application_pkcs7_mime_verify:
+ * g_mime_application_pkcs7_mime_verify: (skip)
  * @pkcs7_mime: a #GMimeApplicationPkcs7Mime
- * @flags: a #GMimeVerifyFlags
+ * @ctx: a borrowed GPGME CMS context
  * @entity: (out) (transfer full): the extracted entity
+ * @result: (out) (optional): a retained native verification result
  * @err: a #GError
  *
  * Attempts to verify the signed @pkcs7_mime part and extract the original
  * MIME entity.
  *
- * Returns: (nullable) (transfer full): a new #GMimeSignatureList object on
- * success or %NULL on fail. If the verification fails, an exception
- * will be set on @err to provide information as to why the failure
- * occurred.
+ * Returns: TRUE if verification and MIME parsing completed. Inspect individual
+ * signature status and validity; successful processing does not imply trust.
  **/
-GMimeSignatureList *
-g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, GMimeVerifyFlags flags, GMimeObject **entity, GError **err)
+gboolean
+g_mime_application_pkcs7_mime_verify (GMimeApplicationPkcs7Mime *pkcs7_mime, gpgme_ctx_t ctx,
+				     GMimeEntity **entity, gpgme_verify_result_t *result, GError **err)
 {
-	GMimeStream *filtered, *ciphertext, *stream;
-	GMimeSignatureList *signatures;
-	GMimeDataWrapper *content;
-	GMimeCryptoContext *ctx;
-	GMimeFilter *filter;
-	GMimeParser *parser;
+	GMimeStream *ciphertext, *stream;
 	
-	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), NULL);
-	g_return_val_if_fail (entity != NULL, NULL);
+	if (result)
+		*result = NULL;
+
+	if (entity)
+		*entity = NULL;
+
+	g_return_val_if_fail (GMIME_IS_APPLICATION_PKCS7_MIME (pkcs7_mime), FALSE);
+	g_return_val_if_fail (entity != NULL, FALSE);
 	
-	*entity = NULL;
-	
-	if (!(ctx = g_mime_crypto_context_new ("application/pkcs7-mime"))) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     _("Cannot verify application/pkcs7-mime part: no crypto context registered for this type."));
-		
-		return NULL;
-	}
+	if (!_g_mime_gpgme_check_protocol (ctx, GPGME_PROTOCOL_CMS, err))
+		return FALSE;
 	
 	/* get the ciphertext stream */
-	content = g_mime_part_get_content ((GMimePart *) pkcs7_mime);
-	ciphertext = g_mime_stream_mem_new ();
-	g_mime_data_wrapper_write_to_stream (content, ciphertext);
-	g_mime_stream_reset (ciphertext);
+	if (!(ciphertext = _g_mime_gpgme_decode (GMIME_PART (pkcs7_mime), err)))
+		return FALSE;
 	
 	stream = g_mime_stream_mem_new ();
-	filtered = g_mime_stream_filter_new (stream);
-	filter = g_mime_filter_dos2unix_new (FALSE);
-	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
-	g_object_unref (filter);
 	
-	/* decrypt the content stream */
-	if (!(signatures = g_mime_crypto_context_verify (ctx, flags, ciphertext, NULL, filtered, err))) {
+	if (!g_mime_gpgme_verify (ctx, ciphertext, NULL, stream, result, err)) {
 		g_object_unref (ciphertext);
-		g_object_unref (filtered);
 		g_object_unref (stream);
-		g_object_unref (ctx);
 		
-		return NULL;
+		return FALSE;
 	}
 	
-	g_mime_stream_flush (filtered);
 	g_object_unref (ciphertext);
-	g_object_unref (filtered);
-	g_object_unref (ctx);
-	
-	g_mime_stream_reset (stream);
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, stream);
+	*entity = _g_mime_gpgme_parse (stream, err);
 	g_object_unref (stream);
 	
-	*entity = g_mime_parser_construct_part (parser, NULL);
-	g_object_unref (parser);
-	
-	if (*entity == NULL) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Cannot verify application/pkcs7-mime part: failed to parse extracted content."));
-		
-		g_object_unref (signatures);
-		
-		return NULL;
-	}
-	
-	return signatures;
+	return *entity != NULL;
 }
+
+#endif /* ENABLE_CRYPTO */

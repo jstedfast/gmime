@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -28,43 +28,27 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
-#define GMIME_STREAM_FILTER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))
-#define GMIME_STREAM_FILTER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
-#define GMIME_IS_STREAM_FILTER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_FILTER))
-#define GMIME_IS_STREAM_FILTER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILTER))
-#define GMIME_STREAM_FILTER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
 
-typedef struct _GMimeStreamFilter GMimeStreamFilter;
-typedef struct _GMimeStreamFilterClass GMimeStreamFilterClass;
 
 /**
  * GMimeStreamFilter:
- * @parent_object: parent #GMimeStream
- * @priv: private state data
- * @source: source stream
  *
  * A #GMimeStream which passes data through any #GMimeFilter objects.
  **/
-struct _GMimeStreamFilter {
-	GMimeStream parent_object;
-	
-	struct _GMimeStreamFilterPrivate *priv;
-	
-	GMimeStream *source;
-	gboolean owner;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamFilter, g_mime_stream_filter, GMIME, STREAM_FILTER, GMimeStream)
 
 struct _GMimeStreamFilterClass {
 	GMimeStreamClass parent_class;
-	
 };
 
 
-GType g_mime_stream_filter_get_type (void);
-
 GMimeStream *g_mime_stream_filter_new (GMimeStream *stream);
 
+GMimeStream *g_mime_stream_filter_get_source (GMimeStreamFilter *stream);
+
 int g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter);
+gboolean g_mime_stream_filter_contains (GMimeStreamFilter *stream, GMimeFilter *filter);
+gboolean g_mime_stream_filter_remove_filter (GMimeStreamFilter *stream, GMimeFilter *filter);
 void g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id);
 
 void g_mime_stream_filter_set_owner (GMimeStreamFilter *stream, gboolean owner);

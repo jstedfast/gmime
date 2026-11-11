@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,8 +46,12 @@ void testsuite_check_passed (void);
 
 int testsuite_total_errors (void);
 
+const char *testsuite_header_raw_text (GMimeHeader *header);
+const char *testsuite_header_raw_name (GMimeHeader *header);
+void testsuite_header_set_raw_text (GMimeHeader *header, const char *text);
+
 /* GnuPG test suite utility functions */
-int testsuite_setup_gpghome (const char *gpg);
+int testsuite_setup_gpghome (const char *gpg, const char *name);
 int testsuite_destroy_gpghome (void);
 gboolean testsuite_can_safely_override_session_key (const char *gpg);
 
@@ -93,7 +97,7 @@ typedef struct _TestStreamOneByte TestStreamOneByte;
 typedef struct _TestStreamOneByteClass TestStreamOneByteClass;
 
 struct _TestStreamOneByte {
-	GMimeStream parent_object;
+	GMimeStream parent_instance;
 	GMimeStream *source;
 };
 

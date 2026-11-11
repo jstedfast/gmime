@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -28,37 +28,19 @@
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_MEM            (g_mime_stream_mem_get_type ())
-#define GMIME_STREAM_MEM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMem))
-#define GMIME_STREAM_MEM_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
-#define GMIME_IS_STREAM_MEM(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_MEM))
-#define GMIME_IS_STREAM_MEM_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_MEM))
-#define GMIME_STREAM_MEM_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
 
-typedef struct _GMimeStreamMem GMimeStreamMem;
-typedef struct _GMimeStreamMemClass GMimeStreamMemClass;
 
 /**
  * GMimeStreamMem:
- * @parent_object: parent #GMimeStream
- * @buffer: a memory buffer
- * @owner: %TRUE if this stream owns the memory buffer
  *
  * A memory-backed #GMimeStream.
  **/
-struct _GMimeStreamMem {
-	GMimeStream parent_object;
-	
-	GByteArray *buffer;
-	gboolean owner;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimeStreamMem, g_mime_stream_mem, GMIME, STREAM_MEM, GMimeStream)
 
 struct _GMimeStreamMemClass {
 	GMimeStreamClass parent_class;
-	
 };
 
-
-GType g_mime_stream_mem_get_type (void);
 
 GMimeStream *g_mime_stream_mem_new (void);
 GMimeStream *g_mime_stream_mem_new_with_byte_array (GByteArray *array);

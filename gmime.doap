@@ -16,7 +16,7 @@
     <foaf:Person>
       <foaf:name>Jeffrey Stedfast</foaf:name>
       <gnome:userid>fejj</gnome:userid>
-	  <foaf:mbox rdf:resource="mailto:fejj@gnome.org" />
+	  <foaf:mbox rdf:resource="mailto:jestedfa@microsoft.com" />
     </foaf:Person>
   </maintainer>
 </Project>

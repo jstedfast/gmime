@@ -1,3 +1,36 @@
+### GMime 4.0
+
+* This release breaks API/ABI compatibility with GMime 3.x. See PORTING.md
+  for migration from 3.2.15.
+* Renamed GMimeObject to GMimeEntity, GMimeDataWrapper to GMimeContent, and
+  standardized address type names. Parser and formatting options are now
+  reference-counted.
+* Added streaming MIME reader and writer APIs, explicit memory-backed or
+  source-backed content storage, and improved parser error reporting.
+* Added optional structured compliance diagnostics for headers, addresses,
+  MIME parameters, encoded words, and transfer-encoded content. Reports include
+  byte offsets, line/column positions, context-sensitive severity, and configurable
+  reporting limits without changing tolerant parsing.
+* Added message body builders, attachment collections, and specialized delivery
+  status, disposition notification, and feedback report types.
+* Added MIME visitor APIs and GMimeIterator for message and entity traversal,
+  replacing GMimePartIter.
+* Added separate raw and decoded content APIs, byte-preserving raw header
+  access, and checked header construction and assignment.
+* Added SIMD acceleration for MIME scanning and transfer encoding/decoding.
+* Indexed ancestor MIME boundaries for deeply nested messages and optimized
+  quoted-printable encoding of ordinary bytes.
+* Hardened charset, MIME parameter, and enriched-text processing against
+  oversized or malformed input.
+* Replaced crypto contexts and certificate/signature/decryption wrappers
+  with caller-owned GPGME contexts, native keys and retained native results.
+  Crypto applications now use gmime-gpgme-4.0 and gmime/gmime-gpgme.h;
+  native crypto operations are not exposed through GObject introspection.
+* Added non-mutating discovery, verification, and decryption of multiple
+  inline OpenPGP blocks while preserving surrounding unprotected text.
+* Replaced Autotools with Meson. A C11 compiler and GLib 2.70.2 or newer are
+  required; macOS builds require GNU libiconv.
+
 ### GMime 3.2.15
 
 * Fixed the g_mime_object_get_header API definition to note that it can return null

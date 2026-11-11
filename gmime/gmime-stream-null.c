@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -23,10 +23,11 @@
 #include <config.h>
 #endif
 
-#include <string.h>
+#include <errno.h>
 
 #include "gmime-stream-null.h"
 
+#include "gmime-object-private.h"
 
 /**
  * SECTION: gmime-stream-null
@@ -37,13 +38,16 @@
  * A #GMimeStream which has no real backing storage at all. This
  * stream is useful for dry-runs and can also be useful for
  * determining statistics on source data which can be written to
- * streams but cannot be read as a stream itself (e.g. a #GMimeObject
- * via g_mime_object_write_to_stream()).
+ * streams but cannot be read as a stream itself (e.g. a #GMimeEntity
+ * via g_mime_entity_write_to_stream()).
+ *
+ * Logical length tracks the highest written position, independently of
+ * cumulative byte and newline statistics. Reading is not supported.
  **/
 
 
 static void g_mime_stream_null_class_init (GMimeStreamNullClass *klass);
-static void g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass);
+static void g_mime_stream_null_init (GMimeStreamNull *stream);
 static void g_mime_stream_null_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -61,28 +65,13 @@ static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 
 static GMimeStreamClass *parent_class = NULL;
 
 
-GType
-g_mime_stream_null_get_type (void)
+
+G_DEFINE_TYPE_WITH_PRIVATE (GMimeStreamNull, g_mime_stream_null, GMIME_TYPE_STREAM)
+
+GMimeStreamNullPrivate *
+_g_mime_stream_null_get_private (GMimeStreamNull *object)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (GMimeStreamNullClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_stream_null_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (GMimeStreamNull),
-			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_stream_null_init,
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_STREAM, "GMimeStreamNull", &info, 0);
-	}
-	
-	return type;
+	return g_mime_stream_null_get_instance_private (object);
 }
 
 
@@ -109,11 +98,14 @@ g_mime_stream_null_class_init (GMimeStreamNullClass *klass)
 }
 
 static void
-g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass)
+g_mime_stream_null_init (GMimeStreamNull *stream)
 {
-	stream->written = 0;
-	stream->newlines = 0;
-	stream->count_newlines = FALSE;
+	GMimeStreamNullPrivate *priv = _g_mime_stream_null_get_private (stream);
+
+	priv->written = 0;
+	priv->newlines = 0;
+	priv->count_newlines = FALSE;
+	priv->measured_end = 0;
 }
 
 static void
@@ -122,35 +114,99 @@ g_mime_stream_null_finalize (GObject *object)
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
+/**
+ * g_mime_stream_null_get_written:
+ * @stream: a #GMimeStreamNull
+ *
+ * Returns: cumulative bytes written since the last reset.
+ **/
+size_t
+g_mime_stream_null_get_written (GMimeStreamNull *stream)
+{
+	GMimeStreamNullPrivate *priv;
+
+	g_return_val_if_fail (GMIME_IS_STREAM_NULL (stream), 0);
+
+	priv = _g_mime_stream_null_get_private (stream);
+
+	return priv->written;
+}
+
+/**
+ * g_mime_stream_null_get_newlines:
+ * @stream: a #GMimeStreamNull
+ *
+ * Returns: cumulative LF bytes counted since the last reset. Counting must
+ * be enabled with g_mime_stream_null_set_count_newlines().
+ **/
+size_t
+g_mime_stream_null_get_newlines (GMimeStreamNull *stream)
+{
+	GMimeStreamNullPrivate *priv;
+
+	g_return_val_if_fail (GMIME_IS_STREAM_NULL (stream), 0);
+
+	priv = _g_mime_stream_null_get_private (stream);
+
+	return priv->newlines;
+}
+
 
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
-	memset (buf, 0, len);
-	
-	stream->position += len;
-	
-	return len;
+	errno = EBADF;
+	return -1;
 }
 
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
-	register const char *inptr = buf;
-	const char *inend = buf + len;
-	
-	if (null->count_newlines) {
-		while (inptr < inend) {
-			if (*inptr == '\n')
-				null->newlines++;
-			inptr++;
+	GMimeStreamNullPrivate *priv = _g_mime_stream_null_get_private (null);
+	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+	size_t i, newlines = priv->newlines;
+
+	if (stream_priv->bound_end != -1 && stream_priv->position >= stream_priv->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (len > G_MAXSSIZE) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	if (stream_priv->bound_end != -1)
+		len = (size_t) MIN ((gint64) len, stream_priv->bound_end - stream_priv->position);
+
+	if ((guint64) len > (guint64) (G_MAXINT64 - stream_priv->position) ||
+	    len > G_MAXSIZE - priv->written) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	/* Statistics count accepted bytes, including overwrites. Check them
+	 * before committing the position or logical length of the stream. */
+	if (priv->count_newlines) {
+		for (i = 0; i < len; i++) {
+			if (buf[i] == '\n') {
+				if (newlines == G_MAXSIZE) {
+					errno = EOVERFLOW;
+					return -1;
+				}
+				newlines++;
+			}
 		}
 	}
-	
-	null->written += len;
-	stream->position += len;
-	
+
+	priv->newlines = newlines;
+	priv->written += len;
+	stream_priv->position += len;
+
+	/* Seeking backwards and overwriting must not inflate the measured size. */
+	priv->measured_end = MAX (priv->measured_end, stream_priv->position);
+
 	return len;
 }
 
@@ -176,9 +232,12 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
-	
-	null->written = 0;
-	null->newlines = 0;
+	GMimeStreamNullPrivate *priv = _g_mime_stream_null_get_private (null);
+	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+
+	priv->written = 0;
+	priv->newlines = 0;
+	priv->measured_end = stream_priv->bound_start;
 	
 	return 0;
 }
@@ -187,53 +246,83 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
-	gint64 bound_end;
-	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : null->written;
-	
+	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+	GMimeStreamNullPrivate *priv = _g_mime_stream_null_get_private (null);
+	gint64 bound_end, origin, real;
+
+	bound_end = stream_priv->bound_end != -1 ? stream_priv->bound_end :
+		MAX (priv->measured_end, stream_priv->bound_start);
+
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		stream->position = MIN (offset + stream->bound_start, bound_end);
+		origin = stream_priv->bound_start;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		stream->position = MAX (offset + bound_end, 0);
+		origin = bound_end;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		stream->position += offset;
-		if (stream->position < stream->bound_start)
-			stream->position = stream->bound_start;
-		else if (stream->position > bound_end)
-			stream->position = bound_end;
+		origin = stream_priv->position;
+		break;
+	default:
+		errno = EINVAL;
+		return -1;
 	}
-	
-	return stream->position;
+
+	/* Origins are nonnegative; negative offsets cannot underflow gint64. */
+	if (offset > 0 && origin > G_MAXINT64 - offset) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+	real = origin + offset;
+
+	/* Sanity check the resultant offset rather than silently clamping it. */
+	if (real < stream_priv->bound_start || real > bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	return stream_priv->position = real;
 }
 
 static gint64
 stream_tell (GMimeStream *stream)
 {
-	return stream->position;
+	GMimeStreamPrivate *priv = _g_mime_stream_get_private (stream);
+
+	return priv->position;
 }
 
 static gint64
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
+	GMimeStreamPrivate *stream_priv = _g_mime_stream_get_private (stream);
+	GMimeStreamNullPrivate *priv = _g_mime_stream_null_get_private (null);
 	gint64 bound_end;
+
+	bound_end = stream_priv->bound_end != -1 ? stream_priv->bound_end :
+		MAX (priv->measured_end, stream_priv->bound_start);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : null->written;
-	
-	return bound_end - stream->bound_start;
+	return bound_end - stream_priv->bound_start;
 }
 
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
+	GMimeStreamNullPrivate *source_priv = _g_mime_stream_null_get_private (GMIME_STREAM_NULL (stream));
+	GMimeStreamPrivate *stream_priv;
+	GMimeStreamNullPrivate *priv;
 	GMimeStream *null;
 	
 	null = g_object_new (GMIME_TYPE_STREAM_NULL, NULL);
 	g_mime_stream_construct (null, start, end);
-	
+	priv = _g_mime_stream_null_get_private (GMIME_STREAM_NULL (null));
+
+	stream_priv = _g_mime_stream_get_private (stream);
+
+	priv->measured_end = stream_priv->bound_end != -1 ?
+		stream_priv->bound_end : source_priv->measured_end;
+
 	return null;
 }
 
@@ -258,6 +347,54 @@ g_mime_stream_null_new (void)
 
 
 /**
+ * g_mime_stream_null_set_length:
+ * @stream: a #GMimeStreamNull
+ * @length: the desired measured length, in bytes
+ *
+ * Sets the logical length without writing bytes. The position is moved to
+ * the new end only if it was beyond that end. Cumulative byte and newline
+ * statistics are unchanged. For a bounded stream, the end bound is updated
+ * to the new length relative to its start bound.
+ *
+ * Returns: %0 on success or %-1 on failure, with errno set to EINVAL for
+ * a negative length or EOVERFLOW if the new end is not representable.
+ **/
+int
+g_mime_stream_null_set_length (GMimeStreamNull *stream, gint64 length)
+{
+	GMimeStreamNullPrivate *stream_priv;
+	GMimeStreamPrivate *base_priv;
+	GMimeStream *base;
+	gint64 end;
+
+	g_return_val_if_fail (GMIME_IS_STREAM_NULL (stream), -1);
+
+	base = (GMimeStream *) stream;
+	if (length < 0) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	base_priv = _g_mime_stream_get_private (base);
+
+	if (length > G_MAXINT64 - base_priv->bound_start) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	end = base_priv->bound_start + length;
+	base_priv->position = MIN (base_priv->position, end);
+	stream_priv = _g_mime_stream_null_get_private (stream);
+
+	stream_priv->measured_end = end;
+	if (base_priv->bound_end != -1)
+		base_priv->bound_end = end;
+
+	return 0;
+}
+
+
+/**
  * g_mime_stream_null_set_count_newlines:
  * @stream: a #GMimeStreamNull
  * @count: %TRUE if newlines should be counted or %FALSE otherwise
@@ -268,9 +405,13 @@ g_mime_stream_null_new (void)
 void
 g_mime_stream_null_set_count_newlines (GMimeStreamNull *stream, gboolean count)
 {
+	GMimeStreamNullPrivate *priv;
+
 	g_return_if_fail (GMIME_IS_STREAM_NULL (stream));
 	
-	stream->count_newlines = count;
+	priv = _g_mime_stream_null_get_private (stream);
+
+	priv->count_newlines = count;
 }
 
 
@@ -286,7 +427,11 @@ g_mime_stream_null_set_count_newlines (GMimeStreamNull *stream, gboolean count)
 gboolean
 g_mime_stream_null_get_count_newlines (GMimeStreamNull *stream)
 {
+	GMimeStreamNullPrivate *priv;
+
 	g_return_val_if_fail (GMIME_IS_STREAM_NULL (stream), FALSE);
 	
-	return stream->count_newlines;
+	priv = _g_mime_stream_null_get_private (stream);
+
+	return priv->count_newlines;
 }

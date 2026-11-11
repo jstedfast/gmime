@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -27,18 +27,34 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GMimeFormat:
+ * @GMIME_FORMAT_MESSAGE: The stream contains a single message.
+ * @GMIME_FORMAT_MBOX: The stream is in the UNIX mbox format.
+ * @GMIME_FORMAT_MMDF: The stream is in the MMDF format.
+ *
+ * The input format used by a reader or parser.
+ **/
+typedef enum {
+	GMIME_FORMAT_MESSAGE,
+	GMIME_FORMAT_MBOX,
+	GMIME_FORMAT_MMDF
+} GMimeFormat;
+
 #define GMIME_TYPE_PARSER_OPTIONS (g_mime_parser_options_get_type ())
 
 /**
  * GMimeRfcComplianceMode:
  * @GMIME_RFC_COMPLIANCE_LOOSE: Attempt to be much more liberal accepting broken and/or invalid formatting.
  * @GMIME_RFC_COMPLIANCE_STRICT: Do not attempt to be overly liberal in accepting broken and/or invalid formatting.
+ * @GMIME_RFC_COMPLIANCE_LOOSER: Also allow consecutive or trailing local-part dots and escaped '@' characters in addresses.
  *
  * An RFC compliance mode.
  **/
 typedef enum {
 	GMIME_RFC_COMPLIANCE_LOOSE,
-	GMIME_RFC_COMPLIANCE_STRICT
+	GMIME_RFC_COMPLIANCE_STRICT,
+	GMIME_RFC_COMPLIANCE_LOOSER
 } GMimeRfcComplianceMode;
 
 /**
@@ -61,8 +77,20 @@ typedef enum {
  * @GMIME_WARN_PART_WITHOUT_CONTENT: A MIME part's headers were terminated by a boundary marker.
  * @GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT: A MIME part was encountered without any headers -or- content. This is very likely to be an attempt to exploit the MIME parser.
  *
- * Issues the @GMimeParser detects. Note that the `GMIME_CRIT_*` issues indicate that some parts of the @GMimeParser input may
+ * Issues the #GMimeParser detects. Note that the `GMIME_CRIT_*` issues indicate that some parts of the #GMimeParser input may
  * be ignored or will be interpreted differently by other software products.
+ *
+ * New applications should prefer the #GMimeComplianceViolation reporting APIs.
+ * Register a logger with g_mime_parser_set_compliance_logger() or
+ * g_mime_reader_set_compliance_logger() to receive structured
+ * #GMimeComplianceIssue diagnostics with more detailed input positions.
+ *
+ * The two reporting mechanisms have different coverage. Parser warning
+ * callbacks remain supported for diagnostics not currently provided by the
+ * compliance APIs, including value-conflict distinctions and decoder warnings
+ * outside the selected encoded-word validator headers. They are not deprecated
+ * and may be used alongside compliance reporting; installing a compliance
+ * logger does not replace or disable a parser warning callback.
  **/
 typedef enum {
 	GMIME_WARN_DUPLICATED_HEADER = 1U,
@@ -87,7 +115,9 @@ typedef enum {
 /**
  * GMimeParserOptions:
  *
- * A set of parser options used by #GMimeParser and various other parsing functions.
+ * A reference-counted set of parser options used by #GMimeParser and various
+ * other parsing functions. Boxed copies share settings; use
+ * g_mime_parser_options_clone() for an independent copy.
  **/
 typedef struct _GMimeParserOptions GMimeParserOptions;
 
@@ -99,6 +129,9 @@ typedef struct _GMimeParserOptions GMimeParserOptions;
  * @user_data: User-supplied callback data.
  *
  * The function signature for a callback to g_mime_parser_options_set_warning_callback().
+ *
+ * Prefer #GMimeComplianceIssueFunc for new compliance reporting code. See
+ * #GMimeParserWarning for guidance on when this callback is still useful.
  **/
 typedef void (*GMimeParserWarningFunc) (gint64 offset, GMimeParserWarning errcode, const gchar *item, gpointer user_data);
 
@@ -108,7 +141,8 @@ GType g_mime_parser_options_get_type (void);
 GMimeParserOptions *g_mime_parser_options_get_default (void);
 
 GMimeParserOptions *g_mime_parser_options_new (void);
-void g_mime_parser_options_free (GMimeParserOptions *options);
+GMimeParserOptions *g_mime_parser_options_ref (GMimeParserOptions *options);
+void g_mime_parser_options_unref (GMimeParserOptions *options);
 
 GMimeParserOptions *g_mime_parser_options_clone (GMimeParserOptions *options);
 
@@ -118,14 +152,32 @@ void g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *opti
 gboolean g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *options);
 void g_mime_parser_options_set_allow_addresses_without_domain (GMimeParserOptions *options, gboolean allow);
 
+gboolean g_mime_parser_options_get_allow_unquoted_commas_in_addresses (GMimeParserOptions *options);
+void g_mime_parser_options_set_allow_unquoted_commas_in_addresses (GMimeParserOptions *options, gboolean allow);
+
+gboolean g_mime_parser_options_get_respect_content_length (GMimeParserOptions *options);
+void g_mime_parser_options_set_respect_content_length (GMimeParserOptions *options, gboolean respect);
+
+gboolean g_mime_parser_options_get_detect_openpgp (GMimeParserOptions *options);
+void g_mime_parser_options_set_detect_openpgp (GMimeParserOptions *options, gboolean detect);
+
+int g_mime_parser_options_get_max_address_group_depth (GMimeParserOptions *options);
+void g_mime_parser_options_set_max_address_group_depth (GMimeParserOptions *options, int max_depth);
+
+int g_mime_parser_options_get_max_mime_depth (GMimeParserOptions *options);
+void g_mime_parser_options_set_max_mime_depth (GMimeParserOptions *options, int max_depth);
+
+int g_mime_parser_options_get_max_header_length (GMimeParserOptions *options);
+void g_mime_parser_options_set_max_header_length (GMimeParserOptions *options, int max_length);
+
 GMimeRfcComplianceMode g_mime_parser_options_get_parameter_compliance_mode (GMimeParserOptions *options);
 void g_mime_parser_options_set_parameter_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);
 
 GMimeRfcComplianceMode g_mime_parser_options_get_rfc2047_compliance_mode (GMimeParserOptions *options);
 void g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, GMimeRfcComplianceMode mode);
 
-const char **g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options);
-void g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const char **charsets);
+const char *g_mime_parser_options_get_charset_encoding (GMimeParserOptions *options);
+gboolean g_mime_parser_options_set_charset_encoding (GMimeParserOptions *options, const char *charset, GError **error);
 
 GMimeParserWarningFunc g_mime_parser_options_get_warning_callback (GMimeParserOptions *options);
 void g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data);

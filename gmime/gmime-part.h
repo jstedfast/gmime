@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -25,71 +25,50 @@
 #include <glib.h>
 #include <stdio.h>
 
-#include <gmime/gmime-object.h>
+#include <gmime/gmime-entity.h>
 #include <gmime/gmime-encodings.h>
 #include <gmime/gmime-filter-best.h>
 #include <gmime/gmime-filter-openpgp.h>
-#include <gmime/gmime-data-wrapper.h>
-#include <gmime/gmime-crypto-context.h>
+#include <gmime/gmime-content.h>
 
 G_BEGIN_DECLS
 
 #define GMIME_TYPE_PART            (g_mime_part_get_type ())
-#define GMIME_PART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PART, GMimePart))
-#define GMIME_PART_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PART, GMimePartClass))
-#define GMIME_IS_PART(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_PART))
-#define GMIME_IS_PART_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PART))
-#define GMIME_PART_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_PART, GMimePartClass))
 
-typedef struct _GMimePart GMimePart;
-typedef struct _GMimePartClass GMimePartClass;
 
 /**
  * GMimePart:
- * @parent_object: parent #GMimeObject
- * @encoding: a #GMimeContentEncoding
- * @openpgp: a #GMimeOpenPGPData
- * @content_description: Content-Description string
- * @content_location: Content-Location string
- * @content_md5: Content-MD5 string
- * @content: a #GMimeDataWrapper representing the MIME part's content
  *
  * A leaf-node MIME part object.
  **/
-struct _GMimePart {
-	GMimeObject parent_object;
-	
-	GMimeContentEncoding encoding;
-	GMimeOpenPGPData openpgp;
-	char *content_description;
-	char *content_location;
-	char *content_md5;
-	
-	GMimeDataWrapper *content;
-};
+G_DECLARE_DERIVABLE_TYPE (GMimePart, g_mime_part, GMIME, PART, GMimeEntity)
 
 struct _GMimePartClass {
-	GMimeObjectClass parent_class;
+	GMimeEntityClass parent_class;
 	
-	void (* set_content) (GMimePart *mime_part, GMimeDataWrapper *content);
+	void (* set_content) (GMimePart *mime_part, GMimeContent *content);
 };
 
-
-GType g_mime_part_get_type (void);
 
 /* constructors */
 GMimePart *g_mime_part_new (void);
 GMimePart *g_mime_part_new_with_type (const char *type, const char *subtype);
+GMimePart *g_mime_part_new_with_content_type (GMimeContentType *content_type);
+GMimePart *g_mime_part_new_with_content_type_string (GMimeParserOptions *options, const char *content_type, GError **error);
 
 /* accessor functions */
 void g_mime_part_set_content_description (GMimePart *mime_part, const char *description);
 const char *g_mime_part_get_content_description (GMimePart *mime_part);
 
+void g_mime_part_set_content_duration (GMimePart *mime_part, int duration);
+int g_mime_part_get_content_duration (GMimePart *mime_part);
+
 void g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id);
 const char *g_mime_part_get_content_id (GMimePart *mime_part);
 
 void g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5);
-gboolean g_mime_part_verify_content_md5 (GMimePart *mime_part);
+char *g_mime_part_compute_content_md5 (GMimePart *mime_part, GError **error);
+gboolean g_mime_part_verify_content_md5 (GMimePart *mime_part, GError **error);
 const char *g_mime_part_get_content_md5 (GMimePart *mime_part);
 
 void g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location);
@@ -98,26 +77,26 @@ const char *g_mime_part_get_content_location (GMimePart *mime_part);
 void g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding encoding);
 GMimeContentEncoding g_mime_part_get_content_encoding (GMimePart *mime_part);
 
-GMimeContentEncoding g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstraint constraint);
+GMimeContentEncoding g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstraint constraint,
+							 GError **error);
+GMimeContentEncoding g_mime_part_get_best_content_encoding_with_max_line_length (GMimePart *mime_part,
+									      GMimeEncodingConstraint constraint,
+									      guint max_line_length, GError **error);
+
+gboolean g_mime_part_prepare (GMimePart *mime_part, GMimeEncodingConstraint constraint, GError **error);
+gboolean g_mime_part_prepare_with_max_line_length (GMimePart *mime_part, GMimeEncodingConstraint constraint,
+						 guint max_line_length, GError **error);
 
 gboolean g_mime_part_is_attachment (GMimePart *mime_part);
 
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (GMimePart *mime_part);
 
-void g_mime_part_set_content (GMimePart *mime_part, GMimeDataWrapper *content);
-GMimeDataWrapper *g_mime_part_get_content (GMimePart *mime_part);
+void g_mime_part_set_content (GMimePart *mime_part, GMimeContent *content);
+GMimeContent *g_mime_part_get_content (GMimePart *mime_part);
 
 void g_mime_part_set_openpgp_data (GMimePart *mime_part, GMimeOpenPGPData data);
 GMimeOpenPGPData g_mime_part_get_openpgp_data (GMimePart *mime_part);
-
-gboolean g_mime_part_openpgp_encrypt (GMimePart *mime_part, gboolean sign, const char *userid,
-				      GMimeEncryptFlags flags, GPtrArray *recipients, GError **err);
-GMimeDecryptResult *g_mime_part_openpgp_decrypt (GMimePart *mime_part, GMimeDecryptFlags flags,
-						 const char *session_key, GError **err);
-
-gboolean g_mime_part_openpgp_sign (GMimePart *mime_part, const char *userid, GError **err);
-GMimeSignatureList *g_mime_part_openpgp_verify (GMimePart *mime_part, GMimeVerifyFlags flags, GError **err);
 
 G_END_DECLS
 

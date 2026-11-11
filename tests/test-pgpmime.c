@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2022 Jeffrey Stedfast
+ *  Copyright (C) Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#include <gmime/gmime-object-private.h>
 #endif
 
 #include <stdio.h>
@@ -31,181 +32,63 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include <gpgme.h>
 #include <gmime/gmime.h>
 
 #include "testsuite.h"
+#ifdef ENABLE_CRYPTO
+#include "test-crypto.h"
+#endif
 
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
 
-static gboolean
-request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt, gboolean reprompt, GMimeStream *response, GError **err)
-{
-	g_mime_stream_write_string (response, "no.secret\n");
-	
-	return TRUE;
-}
-
-static GMimeSignatureStatus
-get_sig_status (GMimeSignatureList *signatures)
-{
-	GMimeSignatureStatus status = 0;
-	GMimeSignature *sig;
-	int i;
-	
-	if (!signatures || signatures->array->len == 0)
-		return GMIME_SIGNATURE_STATUS_RED;
-	
-	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
-		sig = g_mime_signature_list_get_signature (signatures, i);
-		status |= g_mime_signature_get_status (sig);
-	}
-	
-	return status;
-}
-
-static void
-print_verify_results (GMimeSignatureList *signatures)
-{
-	GMimeSignatureStatus status;
-	GMimeSignature *sig;
-	int count, i;
-	
-	status = get_sig_status (signatures);
-	
-	fprintf (stdout, "Overall status: (0x%x) ", status);
-	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
-		fputs ("BAD\n", stdout);
-	else if ((status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
-		fputs ("GOOD\n", stdout);
-	else if ((status & GMIME_SIGNATURE_STATUS_VALID) != 0)
-		fputs ("VALID\n", stdout);
-	else
-		fputs ("UNKNOWN\n", stdout);
-	
-	fputs ("\nSignatures:\n", stdout);
-	count = g_mime_signature_list_length (signatures);
-	for (i = 0; i < count; i++) {
-		sig = g_mime_signature_list_get_signature (signatures, i);
-		
-		fprintf (stdout, "\tName: %s\n", sig->cert->name ? sig->cert->name : "(null)");
-		fprintf (stdout, "\tKeyId: %s\n", sig->cert->keyid ? sig->cert->keyid : "(null)");
-		fprintf (stdout, "\tUserID: %s\n", sig->cert->user_id ? sig->cert->user_id : "(null)");
-		fprintf (stdout, "\tFingerprint: %s\n", sig->cert->fingerprint ? sig->cert->fingerprint : "(null)");
-		fprintf (stdout, "\tTrust: ");
-		
-		switch (sig->cert->trust) {
-		case GMIME_TRUST_UNKNOWN:
-			fputs ("Unknown\n", stdout);
-			break;
-		case GMIME_TRUST_NEVER:
-			fputs ("Never\n", stdout);
-			break;
-		case GMIME_TRUST_UNDEFINED:
-			fputs ("Undefined\n", stdout);
-			break;
-		case GMIME_TRUST_MARGINAL:
-			fputs ("Marginal\n", stdout);
-			break;
-		case GMIME_TRUST_FULL:
-			fputs ("Full\n", stdout);
-			break;
-		case GMIME_TRUST_ULTIMATE:
-			fputs ("Ultimate\n", stdout);
-			break;
-		}
-		
-		fprintf (stdout, "\tStatus: ");
-		if ((sig->status & GMIME_SIGNATURE_STATUS_RED) != 0)
-			fputs ("BAD\n", stdout);
-		else if ((sig->status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
-			fputs ("GOOD\n", stdout);
-		else if ((sig->status & GMIME_SIGNATURE_STATUS_VALID) != 0)
-			fputs ("VALID\n", stdout);
-		else
-			fputs ("UNKNOWN\n", stdout);
-		
-		fprintf (stdout, "\tSignature made on %s", ctime (&sig->created));
-		if (sig->expires != (time_t) 0)
-			fprintf (stdout, "\tSignature expires on %s", ctime (&sig->expires));
-		else
-			fprintf (stdout, "\tSignature never expires\n");
-		
-		fprintf (stdout, "\tErrors: ");
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
-			fputs ("Key Revoked, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_EXPIRED)
-			fputs ("Key Expired, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_SIG_EXPIRED)
-			fputs ("Sig Expired, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_MISSING)
-			fputs ("Key Missing, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_CRL_MISSING)
-			fputs ("CRL Missing, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_CRL_TOO_OLD)
-			fputs ("CRL Too Old, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_BAD_POLICY)
-			fputs ("Bad Policy, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_SYS_ERROR)
-			fputs ("System Error, ", stdout);
-		if (sig->status & GMIME_SIGNATURE_STATUS_TOFU_CONFLICT)
-			fputs ("Tofu Conflict", stdout);
-		if ((sig->status & GMIME_SIGNATURE_STATUS_ERROR_MASK) == 0)
-			fputs ("None", stdout);
-		fputc ('\n', stdout);
-		
-		if (i + 1 < count)
-			fputc ('\n', stdout);
-	}
-}
-
+#ifdef ENABLE_CRYPTO
 static GMimeMessage *
-create_message (GMimeObject *body)
+create_message (GMimeEntity *body)
 {
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
-	InternetAddressList *list;
-	InternetAddress *mailbox;
+	GMimeInternetAddressList *list;
+	GMimeInternetAddress *mailbox;
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
 	
 	message = g_mime_message_new (TRUE);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_from (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_reply_to (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Federico Mena-Quintero", "federico@helixcode.com", NULL);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
 	g_mime_message_set_subject (message, "This is a test message", NULL);
-	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c", NULL);
+	g_mime_entity_set_header ((GMimeEntity *) message, "X-Mailer", "main.c", NULL);
 	g_mime_message_set_mime_part (message, body);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) message, format, stream);
 	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	
-	/*fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
-		 GMIME_STREAM_MEM (stream)->buffer->len,
-		 GMIME_STREAM_MEM (stream)->buffer->data);*/
+	/*GMimeStreamMemPrivate *priv = _g_mime_stream_mem_get_private (GMIME_STREAM_MEM (stream));
+	fprintf (stderr, "-----BEGIN RAW MESSAGE-----\n%.*s-----END RAW MESSAGE-----\n",
+		 priv->buffer->len, priv->buffer->data);*/
 	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
 	
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	g_object_unref (parser);
 	
 	return message;
@@ -219,10 +102,11 @@ that GMime properly treats MIME part content as opaque.\nIf this still verifies 
 then we have ourselves a winner I guess...\n"
 
 static void
-test_multipart_signed (GMimeCryptoContext *ctx)
+test_multipart_signed (gpgme_ctx_t ctx)
 {
-	GMimeSignatureList *signatures;
-	GMimeSignatureStatus status;
+	GMimeMessagePrivate *priv;
+	gpgme_verify_result_t signatures = NULL;
+	gpgme_sigsum_t status;
 	GMimeMultipartSigned *mps;
 	GMimeMessage *message;
 	GMimeTextPart *part;
@@ -233,7 +117,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	g_mime_text_part_set_text (part, MULTIPART_SIGNED_CONTENT);
 	
 	/* sign the part */
-	mps = g_mime_multipart_signed_sign (ctx, (GMimeObject *) part, "no.user@no.domain", &err);
+	mps = g_mime_multipart_signed_sign (ctx, (GMimeEntity *) part, NULL, &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -242,19 +126,23 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 		throw (ex);
 	}
 	
-	message = create_message ((GMimeObject *) mps);
+	message = create_message ((GMimeEntity *) mps);
 	g_object_unref (mps);
 	
-	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
+	priv = _g_mime_message_get_private (message);
+
+	if (!GMIME_IS_MULTIPART_SIGNED (priv->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not a multipart/signed?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	mps = (GMimeMultipartSigned *) message->mime_part;
+	mps = (GMimeMultipartSigned *) priv->mime_part;
 	
-	if (!(signatures = g_mime_multipart_signed_verify (mps, 0, &err))) {
+	if (!g_mime_multipart_signed_verify (mps, ctx, &signatures, &err)) {
+		g_clear_pointer (&signatures, gpgme_result_unref);
 		ex = exception_new ("%s", err->message);
+		g_object_unref (message);
 		v(fputs ("failed.\n", stdout));
 		g_error_free (err);
 		throw (ex);
@@ -263,25 +151,25 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	v(print_verify_results (signatures));
 	
 	status = get_sig_status (signatures);
-	g_object_unref (signatures);
+	gpgme_result_unref (signatures);
 	g_object_unref (message);
 	
-	if (status & GMIME_SIGNATURE_STATUS_RED)
+	if (status & GPGME_SIGSUM_RED)
 		throw (exception_new ("signature status was BAD"));
 }
 
 #define MULTIPART_ENCRYPTED_CONTENT "This is a test of multipart/encrypted.\n"
 
 static void
-create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
+create_encrypted_message (gpgme_ctx_t ctx, gboolean sign,
 			  GMimeStream **cleartext_out, GMimeStream **stream_out)
 {
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
-	InternetAddressList *list;
-	InternetAddress *mailbox;
-	GPtrArray *recipients;
+	GMimeInternetAddressList *list;
+	GMimeInternetAddress *mailbox;
+	gpgme_key_t recipients[2] = { NULL, NULL };
 	GMimeMessage *message;
 	Exception *ex = NULL;
 	GError *err = NULL;
@@ -292,15 +180,14 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	
 	/* hold onto this for comparison later */
 	cleartext = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) part, format, cleartext);
+	g_mime_entity_write_to_stream ((GMimeEntity *) part, format, cleartext);
 	g_mime_stream_reset (cleartext);
 	
 	/* encrypt the part */
-	recipients = g_ptr_array_new ();
-	g_ptr_array_add (recipients, "no.user@no.domain");
-	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeObject *) part, sign, "no.user@no.domain",
-						  GMIME_ENCRYPT_ALWAYS_TRUST, recipients, &err);
-	g_ptr_array_free (recipients, TRUE);
+	recipients[0] = test_crypto_key (ctx, "no.user@no.domain", FALSE);
+	mpe = g_mime_multipart_encrypted_encrypt (ctx, (GMimeEntity *) part, sign,
+						  GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, NULL, NULL, &err);
+	gpgme_key_unref (recipients[0]);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -312,28 +199,28 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	
 	message = g_mime_message_new (TRUE);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_from (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Jeffrey Stedfast", "fejj@helixcode.com", NULL);
 	list = g_mime_message_get_reply_to (message);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
+	mailbox = g_mime_mailbox_address_new ("Federico Mena-Quintero", "federico@helixcode.com", NULL);
 	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
-	internet_address_list_add (list, mailbox);
+	g_mime_internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
 	g_mime_message_set_subject (message, "This is a test message", NULL);
-	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c", NULL);
-	g_mime_message_set_mime_part (message, (GMimeObject *) mpe);
+	g_mime_entity_set_header ((GMimeEntity *) message, "X-Mailer", "main.c", NULL);
+	g_mime_message_set_mime_part (message, (GMimeEntity *) mpe);
 	g_object_unref (mpe);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream ((GMimeObject *) message, format, stream);
+	g_mime_entity_write_to_stream ((GMimeEntity *) message, format, stream);
 	g_object_unref (message);
 	
 	*stream_out = stream;
@@ -341,16 +228,18 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 }	
 
 static char *
-test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
+test_multipart_encrypted (gpgme_ctx_t ctx, gboolean sign,
 			  GMimeStream *cleartext, GMimeStream *stream,
 			  const char *session_key)
 {
+	GMimeMessagePrivate *priv;
 	GMimeFormatOptions *format = g_mime_format_options_get_default ();
-	GMimeSignatureStatus status;
+	gpgme_sigsum_t status;
 	GMimeStream *test_stream;
  	GMimeMultipartEncrypted *mpe;
-	GMimeDecryptResult *result;
-	GMimeObject *decrypted;
+	gpgme_decrypt_result_t result = NULL;
+	gpgme_verify_result_t signatures = NULL;
+	GMimeEntity *decrypted;
 	GMimeMessage *message;
 	Exception *ex = NULL;
 	GMimeParser *parser;
@@ -364,20 +253,32 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	
-	message = g_mime_parser_construct_message (parser, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, NULL);
 	g_object_unref (parser);
 	
-	if (!GMIME_IS_MULTIPART_ENCRYPTED (message->mime_part)) {
+	priv = _g_mime_message_get_private (message);
+
+	if (!GMIME_IS_MULTIPART_ENCRYPTED (priv->mime_part)) {
 		ex = exception_new ("resultant top-level mime part not a multipart/encrypted?");
 		g_object_unref (message);
 		throw (ex);
 	}
 	
-	mpe = (GMimeMultipartEncrypted *) message->mime_part;
+	mpe = (GMimeMultipartEncrypted *) priv->mime_part;
 	
 	/* okay, now to test our decrypt function... */
-	decrypted = g_mime_multipart_encrypted_decrypt (mpe, GMIME_DECRYPT_EXPORT_SESSION_KEY, session_key, &result, &err);
+	g_assert_cmpuint (gpgme_set_ctx_flag (ctx, "export-session-key", "1"), ==, 0);
+	g_assert_cmpuint (gpgme_set_ctx_flag (ctx, "override-session-key", session_key ? session_key : ""), ==, 0);
+	decrypted = g_mime_multipart_encrypted_decrypt (mpe, ctx, &result, &signatures, &err);
+	g_assert_cmpstr (gpgme_get_ctx_flag (ctx, "export-session-key"), ==, "1");
+	g_assert_cmpstr (gpgme_get_ctx_flag (ctx, "override-session-key"), ==, session_key ? session_key : "");
+	gpgme_set_ctx_flag (ctx, "override-session-key", "");
+	gpgme_set_ctx_flag (ctx, "export-session-key", "0");
+	g_object_unref (message);
 	if (!decrypted || err != NULL) {
+		g_clear_pointer (&result, gpgme_result_unref);
+		g_clear_pointer (&signatures, gpgme_result_unref);
+		g_clear_object (&decrypted);
 		ex = exception_new ("decryption failed: %s", err->message);
 		g_error_free (err);
 		throw (ex);
@@ -386,35 +287,43 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 #if GPGME_VERSION_NUMBER >= 0x010800
 	if (!result->session_key) {
 		ex = exception_new ("No session key returned!");
+		if (signatures)
+			gpgme_result_unref (signatures);
+		gpgme_result_unref (result);
+		g_object_unref (decrypted);
 		throw (ex);
 	}
 	
 	ret = g_strdup (result->session_key);
 #endif
 	
-	if (result->signatures)
-		v(print_verify_results (result->signatures));
+	if (signatures)
+		v(print_verify_results (signatures));
 	
 	if (sign) {
-		status = get_sig_status (result->signatures);
+		status = get_sig_status (signatures);
 		
-		if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
+		if ((status & GPGME_SIGSUM_RED) != 0)
 			ex = exception_new ("signature status expected to be GOOD");
 	} else {
-		if (result->signatures)
+		if (signatures && signatures->signatures)
 			ex = exception_new ("signature status expected to be NONE");
 	}
 	
-	g_object_unref (result);
+	if (signatures)
+		gpgme_result_unref (signatures);
+	gpgme_result_unref (result);
 	
 	if (ex != NULL) {
 		g_free (ret);
 		ret = NULL;
+		g_object_unref (decrypted);
 		throw (ex);
 	}
 	
 	test_stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (decrypted, format, test_stream);
+	g_mime_entity_write_to_stream (decrypted, format, test_stream);
+	g_object_unref (decrypted);
 	
 	buf[0] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) cleartext);
 	buf[1] = g_mime_stream_mem_get_byte_array ((GMimeStreamMem *) test_stream);
@@ -434,7 +343,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 }
 
 static void
-import_key (GMimeCryptoContext *ctx, const char *path)
+import_key (gpgme_ctx_t ctx, const char *path)
 {
 	GMimeStream *stream;
 	GError *err = NULL;
@@ -445,7 +354,7 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 		throw (exception_new ("open() failed: %s", g_strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_crypto_context_import_keys (ctx, stream, &err);
+	test_crypto_import (ctx, stream, &err);
 	g_object_unref (stream);
 	
 	if (err != NULL) {
@@ -471,9 +380,12 @@ create_mime_part (void)
 }
 
 static void
-test_openpgp_sign (void)
+test_openpgp_sign (gpgme_ctx_t ctx)
 {
-	GMimeSignatureList *signatures;
+	GMimeContentPrivate *priv_priv;
+	GMimeContentPrivate *content_priv;
+	GMimePartPrivate *priv;
+	gpgme_verify_result_t signatures = NULL;
 	GMimeStream *original;
 	GMimePart *mime_part;
 	Exception *ex = NULL;
@@ -481,10 +393,14 @@ test_openpgp_sign (void)
 	GByteArray *buf[2];
 	
 	mime_part = create_mime_part ();
-	original = mime_part->content->stream;
+	priv = _g_mime_part_get_private (mime_part);
+
+	priv_priv = _g_mime_content_get_private (priv->content);
+
+	original = priv_priv->stream;
 	g_object_ref (original);
 	
-	if (!g_mime_part_openpgp_sign (mime_part, "no.user@no.domain", &err)) {
+	if (!g_mime_part_openpgp_sign (mime_part, ctx, NULL, &err)) {
 		ex = exception_new ("signing failed: %s", err->message);
 		g_object_unref (mime_part);
 		g_object_unref (original);
@@ -499,7 +415,8 @@ test_openpgp_sign (void)
 		throw (exception_new ("OpenPGP data property not updated after signing"));
 	}
 	
-	if (!(signatures = g_mime_part_openpgp_verify (mime_part, 0, &err))) {
+	if (!g_mime_part_openpgp_verify (mime_part, ctx, &signatures, &err)) {
+		g_clear_pointer (&signatures, gpgme_result_unref);
 		ex = exception_new ("verifying failed: %s", err->message);
 		g_object_unref (mime_part);
 		g_object_unref (original);
@@ -508,7 +425,7 @@ test_openpgp_sign (void)
 	}
 	
 	if (g_mime_part_get_openpgp_data (mime_part) != GMIME_OPENPGP_DATA_NONE) {
-		g_object_unref (signatures);
+		gpgme_result_unref (signatures);
 		g_object_unref (mime_part);
 		g_object_unref (original);
 		
@@ -516,12 +433,16 @@ test_openpgp_sign (void)
 	}
 
 	buf[0] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (original));
-	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (mime_part->content->stream));
+	content_priv = _g_mime_content_get_private (priv->content);
+
+	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (content_priv->stream));
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("extracted data does not match original cleartext");
+	if (ex == NULL && (get_sig_status (signatures) & GPGME_SIGSUM_RED))
+		ex = exception_new ("inline signature is not valid");
 	
-	g_object_unref (signatures);
+	gpgme_result_unref (signatures);
 	g_object_unref (mime_part);
 	g_object_unref (original);
 	
@@ -530,33 +451,40 @@ test_openpgp_sign (void)
 }
 
 static void
-test_openpgp_encrypt (gboolean sign)
+test_openpgp_encrypt (gpgme_ctx_t ctx, gboolean sign)
 {
-	GMimeDecryptResult *result;
+	GMimeContentPrivate *priv_priv;
+	GMimeContentPrivate *content_priv;
+	GMimePartPrivate *priv;
+	gpgme_decrypt_result_t result = NULL;
+	gpgme_verify_result_t signatures = NULL;
 	GMimeStream *original;
 	GMimePart *mime_part;
 	Exception *ex = NULL;
 	GError *err = NULL;
 	GByteArray *buf[2];
-	GPtrArray *rcpts;
+	gpgme_key_t rcpts[2] = { NULL, NULL };
 	
-	rcpts = g_ptr_array_new ();
-	g_ptr_array_add (rcpts, "no.user@no.domain");
+	rcpts[0] = test_crypto_key (ctx, "no.user@no.domain", FALSE);
 	
 	mime_part = create_mime_part ();
-	original = mime_part->content->stream;
+	priv = _g_mime_part_get_private (mime_part);
+
+	priv_priv = _g_mime_content_get_private (priv->content);
+
+	original = priv_priv->stream;
 	g_object_ref (original);
 	
-	if (!g_mime_part_openpgp_encrypt (mime_part, sign, "no.user@no.domain", GMIME_ENCRYPT_ALWAYS_TRUST, rcpts, &err)) {
+	if (!g_mime_part_openpgp_encrypt (mime_part, ctx, sign, GPGME_ENCRYPT_ALWAYS_TRUST, rcpts, NULL, NULL, NULL, &err)) {
 		ex = exception_new ("encrypting failed: %s", err->message);
-		g_ptr_array_free (rcpts, TRUE);
+		gpgme_key_unref (rcpts[0]);
 		g_object_unref (mime_part);
 		g_object_unref (original);
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	g_ptr_array_free (rcpts, TRUE);
+	gpgme_key_unref (rcpts[0]);
 	
 	if (g_mime_part_get_openpgp_data (mime_part) != GMIME_OPENPGP_DATA_ENCRYPTED) {
 		g_object_unref (mime_part);
@@ -565,7 +493,9 @@ test_openpgp_encrypt (gboolean sign)
 		throw (exception_new ("OpenPGP data property not updated after encrypting"));
 	}
 	
-	if (!(result = g_mime_part_openpgp_decrypt (mime_part, 0, NULL, &err))) {
+	if (!g_mime_part_openpgp_decrypt (mime_part, ctx, &result, &signatures, &err)) {
+		g_clear_pointer (&result, gpgme_result_unref);
+		g_clear_pointer (&signatures, gpgme_result_unref);
 		ex = exception_new ("decrypting failed: %s", err->message);
 		g_object_unref (mime_part);
 		g_object_unref (original);
@@ -576,35 +506,268 @@ test_openpgp_encrypt (gboolean sign)
 	if (g_mime_part_get_openpgp_data (mime_part) != GMIME_OPENPGP_DATA_NONE) {
 		g_object_unref (mime_part);
 		g_object_unref (original);
-		g_object_unref (result);
+		if (signatures)
+			gpgme_result_unref (signatures);
+		gpgme_result_unref (result);
 		
 		throw (exception_new ("OpenPGP data property not updated after decrypting"));
 	}
 	
 	buf[0] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (original));
-	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (mime_part->content->stream));
+	content_priv = _g_mime_content_get_private (priv->content);
+
+	buf[1] = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (content_priv->stream));
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("decrypted data does not match original cleartext");
+	if (ex == NULL && sign && (get_sig_status (signatures) & GPGME_SIGSUM_RED))
+		ex = exception_new ("inline encrypted signature is not valid");
+	if (ex == NULL && !sign && signatures && signatures->signatures)
+		ex = exception_new ("unexpected inline encrypted signature");
 	
 	g_object_unref (mime_part);
 	g_object_unref (original);
-	g_object_unref (result);
+	if (signatures)
+		gpgme_result_unref (signatures);
+	gpgme_result_unref (result);
 	
 	if (ex != NULL)
 		throw (ex);
 }
 
-static GMimeCryptoContext *
+static gpgme_ctx_t
 create_gpg_context (void)
 {
-	GMimeCryptoContext *ctx;
+	gpgme_ctx_t ctx;
 	
-	ctx = g_mime_gpg_context_new ();
-	g_mime_crypto_context_set_request_password (ctx, request_passwd);
+	ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
+
 	
 	return ctx;
 }
+
+static void
+assert_context (gpgme_ctx_t ctx, int armor, int textmode, const char *fingerprint)
+{
+	gpgme_passphrase_cb_t callback;
+	gpgme_key_t signer;
+	void *hook;
+
+	g_assert_cmpint (gpgme_get_armor (ctx), ==, armor);
+	g_assert_cmpint (gpgme_get_textmode (ctx), ==, textmode);
+	g_assert_cmpint (gpgme_get_protocol (ctx), ==, GPGME_PROTOCOL_OpenPGP);
+	g_assert_cmpint (gpgme_get_offline (ctx), ==, 1);
+	g_assert_cmpint (gpgme_get_pinentry_mode (ctx), ==, GPGME_PINENTRY_MODE_LOOPBACK);
+	gpgme_get_passphrase_cb (ctx, &callback, &hook);
+	g_assert_true (callback == test_passphrase);
+	g_assert_null (hook);
+	g_assert_cmpstr (gpgme_get_ctx_flag (ctx, "export-session-key"), ==, "1");
+	g_assert_cmpuint (gpgme_signers_count (ctx), ==, 1);
+	signer = gpgme_signers_enum (ctx, 0);
+	g_assert_cmpstr (signer->subkeys->fpr, ==, fingerprint);
+	gpgme_key_unref (signer);
+}
+
+static void
+test_context_settings (gpgme_ctx_t ctx)
+{
+	gpgme_key_t key = test_crypto_key (ctx, "no.user@no.domain", FALSE);
+	gpgme_key_t recipients[] = { key, NULL };
+	gpgme_verify_result_t verified = NULL;
+	gpgme_sign_result_t signed_result = NULL;
+	gpgme_decrypt_result_t decrypted_result = NULL;
+	GMimeMultipartSigned *signed_part;
+	GMimeMultipartEncrypted *encrypted;
+	GMimePart *part;
+	GMimeEntity *decrypted;
+	GError *error = NULL;
+	int armor, textmode;
+
+	g_assert_cmpuint (gpgme_set_ctx_flag (ctx, "export-session-key", "1"), ==, 0);
+	for (armor = 0; armor < 2; armor++) {
+		for (textmode = 0; textmode < 2; textmode++) {
+			GMimeContent *saved_content;
+
+			gpgme_set_armor (ctx, armor);
+			gpgme_set_textmode (ctx, textmode);
+			part = create_mime_part ();
+			signed_part = g_mime_multipart_signed_sign (ctx, GMIME_ENTITY (part), &signed_result, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (signed_part);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			g_assert_true (g_mime_multipart_signed_verify (signed_part, ctx, &verified, &error));
+			g_assert_no_error (error);
+			g_assert_false (get_sig_status (verified) & GPGME_SIGSUM_RED);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			gpgme_result_unref (verified);
+			gpgme_result_unref (signed_result);
+			{
+				GMimePart *signature = GMIME_PART (g_mime_multipart_get_part (GMIME_MULTIPART (signed_part), 1));
+				GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("invalid", 7);
+				GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+
+				g_mime_part_set_content (signature, content);
+				g_object_unref (content);
+				g_object_unref (stream);
+				verified = NULL;
+				g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &verified, &error));
+				g_assert_nonnull (error);
+				g_assert_true (get_sig_status (verified) & GPGME_SIGSUM_RED);
+				g_clear_pointer (&verified, gpgme_result_unref);
+				g_clear_error (&error);
+				assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			}
+			g_object_unref (signed_part);
+			encrypted = g_mime_multipart_encrypted_encrypt (ctx, GMIME_ENTITY (part), TRUE,
+								      GPGME_ENCRYPT_ALWAYS_TRUST, recipients, NULL, NULL, NULL, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (encrypted);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			decrypted = g_mime_multipart_encrypted_decrypt (encrypted, ctx, &decrypted_result, &verified, &error);
+			g_assert_no_error (error);
+			g_assert_nonnull (decrypted);
+			g_assert_nonnull (decrypted_result->session_key);
+			g_assert_false (get_sig_status (verified) & GPGME_SIGSUM_RED);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			gpgme_result_unref (decrypted_result);
+			gpgme_result_unref (verified);
+			g_object_unref (decrypted);
+			{
+				GMimePart *ciphertext = GMIME_PART (g_mime_multipart_get_part (GMIME_MULTIPART (encrypted), 1));
+				GMimeStream *stream = g_mime_stream_mem_new_with_buffer ("invalid", 7);
+				GMimeContent *content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_UNSPECIFIED);
+
+				g_mime_part_set_content (ciphertext, content);
+				g_object_unref (content);
+				g_object_unref (stream);
+				decrypted_result = NULL;
+				verified = NULL;
+				g_assert_null (g_mime_multipart_encrypted_decrypt (encrypted, ctx, &decrypted_result, &verified, &error));
+				g_assert_nonnull (error);
+				g_clear_pointer (&decrypted_result, gpgme_result_unref);
+				g_clear_pointer (&verified, gpgme_result_unref);
+				g_clear_error (&error);
+				assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			}
+			g_object_unref (encrypted);
+			g_assert_true (g_mime_part_openpgp_sign (part, ctx, NULL, &error));
+			g_assert_no_error (error);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			g_assert_true (g_mime_part_openpgp_verify (part, ctx, &verified, &error));
+			g_assert_no_error (error);
+			g_assert_false (get_sig_status (verified) & GPGME_SIGSUM_RED);
+			gpgme_result_unref (verified);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			g_assert_true (g_mime_part_openpgp_encrypt (part, ctx, FALSE, GPGME_ENCRYPT_ALWAYS_TRUST,
+								 recipients, NULL, NULL, NULL, &error));
+			g_assert_no_error (error);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			g_assert_true (g_mime_part_openpgp_decrypt (part, ctx, NULL, NULL, &error));
+			g_assert_no_error (error);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+
+			/* Backend failure after MIME/inline settings have been applied. */
+			saved_content = g_object_ref (g_mime_part_get_content (part));
+			verified = (gpgme_verify_result_t) GINT_TO_POINTER (1);
+			g_assert_false (g_mime_part_openpgp_verify (part, ctx, &verified, &error));
+			g_assert_nonnull (error);
+			g_assert_true (get_sig_status (verified) & GPGME_SIGSUM_RED);
+			g_clear_pointer (&verified, gpgme_result_unref);
+			g_clear_error (&error);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			g_assert_true (g_mime_part_get_content (part) == saved_content);
+			g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_NONE);
+			decrypted_result = (gpgme_decrypt_result_t) GINT_TO_POINTER (1);
+			g_assert_cmpuint (gpgme_set_ctx_flag (ctx, "override-session-key",
+				"9:0000000000000000000000000000000000000000000000000000000000000000"), ==, 0);
+			g_assert_false (g_mime_part_openpgp_decrypt (part, ctx, &decrypted_result, &verified, &error));
+			g_assert_nonnull (error);
+			g_clear_pointer (&decrypted_result, gpgme_result_unref);
+			g_assert_true (get_sig_status (verified) & GPGME_SIGSUM_RED);
+			g_clear_pointer (&verified, gpgme_result_unref);
+			g_clear_error (&error);
+			g_assert_cmpstr (gpgme_get_ctx_flag (ctx, "override-session-key"), ==,
+				"9:0000000000000000000000000000000000000000000000000000000000000000");
+			g_assert_cmpuint (gpgme_set_ctx_flag (ctx, "override-session-key", ""), ==, 0);
+			assert_context (ctx, armor, textmode, key->subkeys->fpr);
+			g_assert_true (g_mime_part_get_content (part) == saved_content);
+			g_assert_cmpint (g_mime_part_get_openpgp_data (part), ==, GMIME_OPENPGP_DATA_NONE);
+			g_object_unref (saved_content);
+			g_object_unref (part);
+		}
+	}
+	gpgme_set_ctx_flag (ctx, "export-session-key", "0");
+	gpgme_set_armor (ctx, 0);
+	gpgme_set_textmode (ctx, 0);
+	gpgme_key_unref (key);
+}
+
+static void
+test_crypto_errors (gpgme_ctx_t ctx)
+{
+	gpgme_ctx_t cms = test_crypto_context (GPGME_PROTOCOL_CMS);
+	GMimeMultipartSigned *signed_part = g_mime_multipart_signed_new ();
+	GMimeMultipartEncrypted *encrypted = g_mime_multipart_encrypted_new ();
+	GMimeApplicationPkcs7Mime *pkcs7 = g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_SIGNED_DATA);
+	GMimePart *part = g_mime_part_new ();
+	gpgme_verify_result_t verified = NULL;
+	gpgme_decrypt_result_t decrypted = NULL;
+	gpgme_sign_result_t signed_result = NULL;
+	GMimeEntity *entity = NULL;
+	GError *error = NULL;
+
+	g_assert_false (g_mime_part_openpgp_sign (part, cms, &signed_result, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR);
+	g_assert_null (signed_result);
+	g_clear_error (&error);
+	g_assert_null (g_mime_multipart_encrypted_encrypt (cms, GMIME_ENTITY (part), FALSE,
+							 0, NULL, NULL, NULL, NULL, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR);
+	g_clear_error (&error);
+	g_assert_null (g_mime_application_pkcs7_mime_sign (ctx, GMIME_ENTITY (part), &signed_result, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR);
+	g_clear_error (&error);
+	g_assert_false (g_mime_application_pkcs7_mime_verify (pkcs7, ctx, &entity, &verified, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR);
+	g_assert_null (entity);
+	g_assert_null (verified);
+	g_clear_error (&error);
+
+	g_assert_false (g_mime_part_openpgp_sign (part, ctx, &signed_result, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_assert_false (g_mime_part_openpgp_verify (part, ctx, &verified, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_assert_false (g_mime_part_openpgp_decrypt (part, ctx, &decrypted, &verified, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_clear_error (&error);
+	g_assert_false (g_mime_multipart_signed_verify (signed_part, ctx, &verified, &error));
+	g_assert_nonnull (error);
+	g_assert_null (verified);
+	g_clear_error (&error);
+	g_assert_null (g_mime_multipart_encrypted_decrypt (encrypted, ctx, &decrypted, &verified, &error));
+	g_assert_nonnull (error);
+	g_assert_null (decrypted);
+	g_assert_null (verified);
+	g_clear_error (&error);
+	g_assert_false (g_mime_application_pkcs7_mime_verify (pkcs7, cms, &entity, &verified, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_assert_null (entity);
+	g_assert_null (verified);
+	g_clear_error (&error);
+	g_assert_null (g_mime_application_pkcs7_mime_decrypt (pkcs7, cms, &decrypted, &error));
+	g_assert_nonnull (error);
+	g_assert_null (decrypted);
+	g_clear_error (&error);
+	g_object_unref (part);
+	g_object_unref (pkcs7);
+	g_object_unref (encrypted);
+	g_object_unref (signed_part);
+	gpgme_release (cms);
+}
+
+#endif
 
 int main (int argc, char *argv[])
 {
@@ -612,7 +775,7 @@ int main (int argc, char *argv[])
 	GMimeStream *stream = NULL, *cleartext = NULL;
 	const char *datadir = "data/pgpmime";
 	char *session_key = NULL;
-	GMimeCryptoContext *ctx;
+	gpgme_ctx_t ctx;
 	char *gpg, *key;
 	struct stat st;
 	int i;
@@ -625,7 +788,7 @@ int main (int argc, char *argv[])
 		if (!(gpg = g_find_program_in_path ("gpg")))
 			return EXIT_FAILURE;
 	
-	if (testsuite_setup_gpghome (gpg) != 0)
+	if (testsuite_setup_gpghome (gpg, "pgpmime") != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
@@ -639,13 +802,12 @@ int main (int argc, char *argv[])
 		return 0;
 	
 	testsuite_start ("PGP/MIME implementation");
-	
-	g_mime_crypto_context_register ("application/pgp-encrypted", create_gpg_context);
-	g_mime_crypto_context_register ("application/pgp-signature", create_gpg_context);
-	g_mime_crypto_context_register ("application/pgp-keys", create_gpg_context);
+
+
+
 	ctx = create_gpg_context ();
 	
-	testsuite_check ("GMimeGpgContext::import");
+	testsuite_check ("GPGME OpenPGP::import");
 	try {
 		key = g_build_filename (datadir, "gmime.gpg.pub", NULL);
 		import_key (ctx, key);
@@ -657,10 +819,19 @@ int main (int argc, char *argv[])
 		
 		testsuite_check_passed ();
 	} catch (ex) {
-		testsuite_check_failed ("GMimeGpgContext::import failed: %s", ex->message);
+		testsuite_check_failed ("GPGME OpenPGP::import failed: %s", ex->message);
 		return EXIT_FAILURE;
 	} finally;
 	
+	test_crypto_signer (ctx, "no.user@no.domain");
+
+	testsuite_check ("Native context settings and signer preservation on success and failure");
+	test_context_settings (ctx);
+	testsuite_check_passed ();
+	testsuite_check ("Wrong protocols, missing content and cleared failure outputs");
+	test_crypto_errors (ctx);
+	testsuite_check_passed ();
+
 	testsuite_check ("multipart/signed");
 	try {
 		test_multipart_signed (ctx);
@@ -721,7 +892,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("rfc4880 sign");
 	try {
-		test_openpgp_sign ();
+		test_openpgp_sign (ctx);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("rfc4880 sign failed: %s", ex->message);
@@ -729,7 +900,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("rfc4880 encrypt");
 	try {
-		test_openpgp_encrypt (FALSE);
+		test_openpgp_encrypt (ctx, FALSE);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("rfc4880 encrypt failed: %s", ex->message);
@@ -737,13 +908,13 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("rfc4880 sign+encrypt");
 	try {
-		test_openpgp_encrypt (TRUE);
+		test_openpgp_encrypt (ctx, TRUE);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("rfc4880 sign+encrypt failed: %s", ex->message);
 	} finally;
 	
-	g_object_unref (ctx);
+	gpgme_release (ctx);
 	g_free (gpg);
 	
 	testsuite_end ();

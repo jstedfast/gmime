@@ -1,0 +1,191 @@
+GMime fuzzing
+=============
+
+Adapted from MimeKit's Fuzzing/Targets/MimeReaderTarget.cs,
+MimeParserTarget.cs, EncodersTarget.cs, DecodersTarget.cs, Rfc2047Target.cs,
+AddressParserTarget.cs, HeaderValuesTarget.cs, SmtpUtf8ValidatorTarget.cs,
+Helpers/{Fuzz,RecordingMimeReader,MimeComplianceChecker,
+MimeRoundTrip}.cs and corpus-seeding/replay scripts. The six hand-written
+MIME seeds and mime.dict are copied byte-for-byte from MimeKit's Fuzzing
+directory. These files retain their upstream MIT license in LICENSE.
+No MimeKit reader implementation or changed diagnostic locations are imported.
+
+Targets
+-------
+
+mime-reader checks callback ranges and normalized callback traces with and
+without a compliance logger, and with fragmented input. Consecutive read
+callbacks are folded into FNV-1a hashes plus lengths, as in MimeKit, so
+legitimate buffer segmentation does not cause false mismatches. It also checks
+diagnostic positions, contexts, metadata and per-violation budgets, comparing
+diagnostic multisets per message across chunk sizes (independent validators'
+delivery order may vary with buffering). Both standalone messages and mbox
+are scanned.
+
+mime-parser compares byte-exact serialized output from memory-backed,
+source-backed/fragmented, and logged parsing. GMime has no async parser API,
+so storage and chunking comparisons replace MimeKit's sync/async comparisons.
+All runs use the public GMimeParser, including its compliance options and
+logger APIs for the logged run.
+Checks include mbox markers/progress, repeated writes, retained source-content
+lifetimes and parse/write fixed points. Like MimeKit, the latter permits
+convergence solely by removal of bare CRs in malformed input.
+
+encoders exercises the public Base64, quoted-printable, uuencode, yEnc and
+pass-through codecs. It checks whole/chunked and clone/reset/flush equivalence,
+output estimates and exact stores, alphabets and line lengths, GLib Base64
+equivalence, reference CRC-32, and direct and stream-filter round trips.
+The first byte selects the codec modulo five; the second selects line length
+and LF/CRLF and the whole input seeds deterministic, bounded chunk sizes.
+Seven-byte calls force Base64's scalar path alongside the dispatched path.
+UU buffers whole lines even with small chunks; an independent scalar sextet
+reference checks its output instead.
+
+decoders checks malformed Base64, quoted-printable body/header modes, full-block
+and payload-only uuencode/yEnc, and pass-through input. It compares whole,
+split, cloned, reset and seven-byte scalar-sized decoding including explicit
+EOF flush, checks repeated empty flushes and exact output guards, and
+round-trips through four matching encoders. Empty Decode remains nonfinal.
+The low three bits
+of the first byte select the decoder and the upper five select the split.
+GMime's private RFC 2231 and one-shot RFC 2047 payload codecs are not invoked
+directly; the public header utilities exercise RFC 2047 payload encoding.
+Unlike MimeKit's padded SIMD stores, every GMime codec path must leave bytes
+after the returned output length untouched.
+
+rfc2047 exercises strict/loose text and phrase decoding, UTF-8 output and
+expansion bounds, UTF-8 text encode/decode round trips, and phrase encoding.
+As in MimeKit, round trips exclude control characters and trim outer spaces;
+GMime's existing all-space pass-through behavior is preserved.
+Literal NULs are mapped to spaces for GMime's public C-string APIs so the
+remaining input is still exercised; encoded NULs remain unmodified.
+
+structured-headers directly exercises checked address/list/mailbox/group,
+source-route, parameter, Content-Type, Content-Disposition and
+Authentication-Results parsers, their
+private raw-header recovery paths, and Message-ID/References scanners.
+Each input and selected prefix/suffix slices are copied into exact-size
+allocations, with no added terminator (even empty slices end at the allocation
+boundary). Results are compared with the same bounded bytes followed by an
+out-of-range suffix, and checked NUL-free inputs also with C-string parsing.
+Comparisons include display text, parameter values and formatting metadata,
+errors, warning payloads and identifier cursor positions. Round-trip checks
+adapt MimeKit's AddressParserTarget and HeaderValuesTarget (e607255b): encoded
+addresses must converge with only display-name whitespace/IDNA normalization,
+and content fields may take one extra round to settle encoded-word charsets
+without changing parameter names or values. Address convergence allows eight
+non-shrinking rounds; shrinking rounds remain bounded by the output length.
+Plausible identifiers must survive angle-bracket formatting, and dates must
+retain both their instant and UTC offset. These checks do not impose strict
+round trips on the identifier parser's deliberately malformed recovery output.
+Authentication-Results canonical serialization must parse again and stabilize;
+its reference vectors and malformed-byte/deep-comment cases are seeded too.
+The target also checks input preservation, reference progress and identifier
+UTF-8. Literal NULs are preserved: checked APIs must reject them, while raw
+recovery still processes the complete range. A whole-input selector varies all
+three address/parameter
+compliance modes, domainless/unquoted-comma address options and strict/loose
+RFC 2047 decoding without consuming syntax. Round-trip formatting uses LF.
+The harness reuses production GMime objects to reach private parsers without
+exporting them, including when the normal library is shared.
+
+smtp-address-validator checks the public SMTP and SMTPUTF8 validators with all
+twelve option combinations. It compares exact-size non-terminated input with
+bounded and NUL-terminated copies, verifies boolean/error agreement and input
+preservation, and checks that length limits, ASCII-as-Latin and IDN decoding
+only change results as documented. Raw invalid UTF-8 and NUL bytes remain
+unmodified, replacing MimeKit's UTF-16/lone-surrogate input path.
+
+Reader/parser whole-input selectors leave MIME prefixes unchanged. Input
+limits are 1 MiB for reader/parser/decoders, 256 KiB for encoders and 64 KiB
+for rfc2047/structured-headers, and 4 KiB for smtp-address-validator.
+Both replay and libFuzzer enforce them. MIME
+depth is limited to 16, address-group depth to 4, and mailbox operations
+to 10,000 messages per run. Reaching the mailbox work budget is recorded in
+the compared traces, not misreported as a parser defect. Only documented
+parse/header-limit failures are accepted; other errors and GLib
+warnings/criticals terminate the process.
+
+Build and replay (Linux shell commands)
+--------------------------------------
+
+Any supported C compiler can build the replay harness; Python 3 generates
+the deterministic regression corpora:
+
+  meson setup _build-replay -Dfuzzing=replay
+  meson compile -C _build-replay
+  meson test -C _build-replay --suite fuzzing --print-errorlogs
+  _build-replay/fuzzing/gmime-fuzz --list
+  _build-replay/fuzzing/gmime-fuzz --replay all fuzzing/corpus
+
+Replay accepts files and recursively enumerated directories, reports slow
+inputs (over two seconds), and fails on unreadable/missing paths or when
+no eligible inputs were replayed. A failing input aborts immediately; its
+path is printed before execution. Oversized files are counted as skipped.
+
+Coverage-guided fuzzing
+----------------------
+
+Use a separate Clang build. Coverage instrumentation is applied to GMime
+itself, not just the harness. These binaries are for testing, not installation.
+Clang's compiler-rt/libFuzzer runtime must be installed.
+
+  CC=clang meson setup _build-fuzz -Dfuzzing=libfuzzer \
+    -Ddefault_library=static \
+    -Db_sanitize=address,undefined -Db_ndebug=false \
+    -Dcrypto=disabled -Dlibidn=disabled -Dintrospection=disabled \
+    -Dvapi=disabled -Dgtk_doc=false -Dexamples=false -Dtests=false
+  meson compile -C _build-fuzz
+  meson test -C _build-fuzz --suite fuzzing --print-errorlogs
+  python3 fuzzing/seed-corpora.py _build-fuzz/artifacts
+
+The seeder merges the hand-written seeds, existing round-trip fixtures and
+up to 200 messages per test mailbox, deduplicated by SHA-256. It never deletes
+an existing working corpus. Keep generated corpora and crash artifacts out
+of the source tree (build directories are already ignored).
+
+Codec seeds cover all decoder selector bits, encoder options, binary payloads,
+SIMD/line/chunk boundaries, malformed escapes and MIME line tails. Header seeds
+include MimeKit's five RFC 2047 examples and UTF-8, whitespace and NUL edges.
+Structured-header seeds cover comments, escaped quotes, groups, source routes,
+RFC 2231 continuations and charsets, encoded words, malformed identifiers,
+literal/decoded NULs, every prefix of the syntax examples and allocation-size
+edges through the 64 KiB limit. The full seeder also extracts folded structured
+and address header values from message/mbox fixtures, following MimeKit's
+fuzz-seed-corpora.ps1 without decoding or truncating embedded NULs.
+Meson generates these deterministic regression seeds at build time; the full
+seeder additionally imports tests/data/encodings fixtures with codec prefixes.
+SMTP seeds include the checked-in MimeKit test vectors and every short prefix,
+malformed UTF-8/NULs, ISO-2022-JP, length boundaries and long combining sequences.
+
+Run each target separately:
+
+  ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
+  UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1 \
+  _build-fuzz/fuzzing/fuzz-mime-reader \
+    -dict=fuzzing/mime.dict -max_len=1048576 -timeout=10 \
+    -rss_limit_mb=2048 -max_total_time=600 -print_final_stats=1 \
+    -artifact_prefix=_build-fuzz/artifacts/mime-reader/crashes/ \
+    _build-fuzz/artifacts/mime-reader/corpus
+
+For encoders/decoders use codecs.dict instead of mime.dict. Use -max_len=262144
+for encoders and -max_len=65536 for rfc2047/structured-headers; other targets use
+1048576 except smtp-address-validator, which uses -max_len=4096.
+Use structured-headers.dict for the structured-headers target, and
+smtp-address-validator.dict for smtp-address-validator.
+gmime-fuzz --list prints each target's input limit.
+
+Replay a crash using the matching executable and crash filename, without
+a corpus directory, or use gmime-fuzz --replay. libFuzzer's -minimize_crash=1
+can reduce it before adding a permanent regression test. Preserve the seed,
+command, compiler/sanitizer configuration and failure output when triaging.
+
+GitHub Actions
+--------------
+
+.github/workflows/fuzz.yml follows MimeKit's nightly/manual fuzz workflow.
+It runs all seven targets nightly at 03:17 UTC for 600 seconds each. Manual runs
+can select one target and a duration from 1 to 14,400 seconds. Each job
+replays the regression seeds, restores and extends a target/branch-specific
+corpus cache, then saves a new immutable cache even after a failure.
+Crashing inputs, fuzzer output and Meson logs are uploaded on failure.
