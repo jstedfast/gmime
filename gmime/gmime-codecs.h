@@ -42,56 +42,97 @@ G_BEGIN_DECLS
  * Incremental Base64 encoder with MIME line wrapping.
  **/
 #define GMIME_TYPE_BASE64_ENCODER (g_mime_base64_encoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeBase64Encoder, g_mime_base64_encoder, GMIME, BASE64_ENCODER, GObject)
+
+GMimeBase64Encoder *g_mime_base64_encoder_new (void);
+GMimeBase64Encoder *g_mime_base64_encoder_new_with_max_line_length (guint max_line_length);
+GMimeBase64Encoder *g_mime_base64_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
+
 /**
  * GMimeBase64Decoder:
  *
  * Incremental Base64 decoder which ignores non-alphabet bytes.
  **/
 #define GMIME_TYPE_BASE64_DECODER (g_mime_base64_decoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeBase64Decoder, g_mime_base64_decoder, GMIME, BASE64_DECODER, GObject)
+
+GMimeBase64Decoder *g_mime_base64_decoder_new (void);
+
 /**
  * GMimeQuotedPrintableEncoder:
  *
  * Incremental quoted-printable encoder with MIME line wrapping.
  **/
 #define GMIME_TYPE_QUOTED_PRINTABLE_ENCODER (g_mime_quoted_printable_encoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeQuotedPrintableEncoder, g_mime_quoted_printable_encoder, GMIME, QUOTED_PRINTABLE_ENCODER, GObject)
+
+GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new (void);
+GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new_with_max_line_length (guint max_line_length);
+GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
+
 /**
  * GMimeQuotedPrintableDecoder:
  *
  * Incremental body or RFC 2047 quoted-printable decoder.
  **/
 #define GMIME_TYPE_QUOTED_PRINTABLE_DECODER (g_mime_quoted_printable_decoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeQuotedPrintableDecoder, g_mime_quoted_printable_decoder, GMIME, QUOTED_PRINTABLE_DECODER, GObject)
+
+GMimeQuotedPrintableDecoder *g_mime_quoted_printable_decoder_new (gboolean rfc2047);
+
 /**
  * GMimeUUEncoder:
  *
  * Incremental uuencode payload encoder.
  **/
 #define GMIME_TYPE_UU_ENCODER (g_mime_uu_encoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeUUEncoder, g_mime_uu_encoder, GMIME, UU_ENCODER, GObject)
+
+GMimeUUEncoder *g_mime_uu_encoder_new (void);
+GMimeUUEncoder *g_mime_uu_encoder_new_with_newline_format (GMimeNewLineFormat newline_format);
+
 /**
  * GMimeUUDecoder:
  *
  * Incremental full-block or payload-only uudecoder.
  **/
 #define GMIME_TYPE_UU_DECODER (g_mime_uu_decoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeUUDecoder, g_mime_uu_decoder, GMIME, UU_DECODER, GObject)
+
+GMimeUUDecoder *g_mime_uu_decoder_new (gboolean payload_only);
+
 /**
  * GMimePassThroughEncoder:
  *
  * An encoder which copies bytes unchanged.
  **/
 #define GMIME_TYPE_PASS_THROUGH_ENCODER (g_mime_pass_through_encoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimePassThroughEncoder, g_mime_pass_through_encoder, GMIME, PASS_THROUGH_ENCODER, GObject)
+
+GMimePassThroughEncoder *g_mime_pass_through_encoder_new (GMimeContentEncoding encoding);
+GMimePassThroughDecoder *g_mime_pass_through_decoder_new (GMimeContentEncoding encoding);
+
 /**
  * GMimePassThroughDecoder:
  *
  * A decoder which copies bytes unchanged.
  **/
 #define GMIME_TYPE_PASS_THROUGH_DECODER (g_mime_pass_through_decoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimePassThroughDecoder, g_mime_pass_through_decoder, GMIME, PASS_THROUGH_DECODER, GObject)
+
+GMimeYencEncoder *g_mime_yenc_encoder_new (void);
+GMimeYencEncoder *g_mime_yenc_encoder_new_with_max_line_length (guint max_line_length);
+GMimeYencEncoder *g_mime_yenc_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
+
+guint32 g_mime_yenc_encoder_get_checksum (GMimeYencEncoder *encoder);
 
 /**
  * GMimeYencEncoder:
@@ -100,7 +141,9 @@ G_DECLARE_FINAL_TYPE (GMimePassThroughDecoder, g_mime_pass_through_decoder, GMIM
  * Flush ends the current line but retains the checksum until reset.
  **/
 #define GMIME_TYPE_YENC_ENCODER (g_mime_yenc_encoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeYencEncoder, g_mime_yenc_encoder, GMIME, YENC_ENCODER, GObject)
+
 /**
  * GMimeYencDecoder:
  *
@@ -108,26 +151,11 @@ G_DECLARE_FINAL_TYPE (GMimeYencEncoder, g_mime_yenc_encoder, GMIME, YENC_ENCODER
  * CRC-32 checksum. Header and trailer metadata are not validated.
  **/
 #define GMIME_TYPE_YENC_DECODER (g_mime_yenc_decoder_get_type ())
+
 G_DECLARE_FINAL_TYPE (GMimeYencDecoder, g_mime_yenc_decoder, GMIME, YENC_DECODER, GObject)
 
-GMimeBase64Encoder *g_mime_base64_encoder_new (void);
-GMimeBase64Encoder *g_mime_base64_encoder_new_with_max_line_length (guint max_line_length);
-GMimeBase64Encoder *g_mime_base64_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
-GMimeBase64Decoder *g_mime_base64_decoder_new (void);
-GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new (void);
-GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new_with_max_line_length (guint max_line_length);
-GMimeQuotedPrintableEncoder *g_mime_quoted_printable_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
-GMimeQuotedPrintableDecoder *g_mime_quoted_printable_decoder_new (gboolean rfc2047);
-GMimeUUEncoder *g_mime_uu_encoder_new (void);
-GMimeUUEncoder *g_mime_uu_encoder_new_with_newline_format (GMimeNewLineFormat newline_format);
-GMimeUUDecoder *g_mime_uu_decoder_new (gboolean payload_only);
-GMimePassThroughEncoder *g_mime_pass_through_encoder_new (GMimeContentEncoding encoding);
-GMimePassThroughDecoder *g_mime_pass_through_decoder_new (GMimeContentEncoding encoding);
-GMimeYencEncoder *g_mime_yenc_encoder_new (void);
-GMimeYencEncoder *g_mime_yenc_encoder_new_with_max_line_length (guint max_line_length);
-GMimeYencEncoder *g_mime_yenc_encoder_new_with_newline_format (GMimeNewLineFormat newline_format, guint max_line_length);
-guint32 g_mime_yenc_encoder_get_checksum (GMimeYencEncoder *encoder);
 GMimeYencDecoder *g_mime_yenc_decoder_new (gboolean payload_only);
+
 guint32 g_mime_yenc_decoder_get_checksum (GMimeYencDecoder *decoder);
 
 G_END_DECLS
