@@ -290,14 +290,16 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 	
 	outbuf = (const char *) GMIME_STREAM_MEM (ostream)->buffer->data;
 	outlen = GMIME_STREAM_MEM (ostream)->buffer->len;
-	if ((inptr = strstr (outbuf, "\n\n"))) {
+	if (outbuf == NULL) {
+		ex = exception_new ("no exported key found");
+	} else if ((inptr = strstr (outbuf, "\n\n"))) {
 		/* skip past the headers which may have different version numbers */
 		inptr += 2;
 		outlen -= (inptr - outbuf);
 		outbuf = inptr;
 	}
 	
-	if (outlen != inlen || memcmp (outbuf, inbuf, inlen) != 0)
+	if (ex == NULL && (outlen != inlen || memcmp (outbuf, inbuf, inlen) != 0))
 		ex = exception_new ("exported key does not match original key");
 	
 	g_object_unref (istream);
