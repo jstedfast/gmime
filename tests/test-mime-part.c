@@ -1750,7 +1750,6 @@ test_text_encoding_detection (void)
 		{ "77u/Q2F0", GMIME_CONTENT_ENCODING_BASE64 },
 		{ "begin 644 text.txt\n&[[N_0V%T\n`\nend\n", GMIME_CONTENT_ENCODING_UUENCODE },
 	};
-	static const char html[] = "<html><head><meta charset=windows-1252></head><body>Cat</body></html>";
 	GMimeTextPart *part = g_mime_text_part_new ();
 	GMimeContentType *type = g_mime_entity_get_content_type (GMIME_ENTITY (part));
 	GMimeTextEncodingConfidence confidence;
@@ -1857,23 +1856,187 @@ test_text_encoding_detection (void)
 	g_clear_error (&error);
 	testsuite_check_passed ();
 
-	testsuite_check ("HTML meta charset detection remains deferred");
-	g_mime_content_type_set_media_subtype (type, "html");
-	stream = g_mime_stream_mem_new_with_buffer (html, sizeof (html) - 1);
+	g_object_unref (part);
+}
+
+static void
+test_html_encoding_detection (void)
+{
+	static const struct {
+		const char *html, *detected;
+	} cases[] = {
+		{ "<html><head><meta charset=windows-1252>", "windows-1252" },
+		{ "<HTML><HEAD><META CHARSET=' CP1252 '>", "windows-1252" },
+		{ "<html><head><meta charset='&#160;windows-1252&#160;'>", NULL },
+		{ "<html><head><meta http-equiv=Content-Type content='text/html; charset=iso-8859-1'>", "iso-8859-1" },
+		{ "<html><head><meta content='text/html; charset=iso-8859-1' http-equiv=content-type>", "iso-8859-1" },
+		{ "<html><head><meta content='text/html; charset=iso-8859-1'>", NULL },
+		{ "<html><head><meta http-equiv=' Content-Type ' content='text/html; charset=iso-8859-1'>", NULL },
+		{ "<html><head><meta http-equiv=Content-Type content='not a type; charset=iso-8859-1'>", NULL },
+		{ "<html><head><meta content='text/html; charset=iso-8859-1' charset=windows-1252>", "windows-1252" },
+		{ "<html><head><meta charset=windows-1252 content='text/html; charset=iso-8859-1'>", "windows-1252" },
+		{ "<html><head><meta charset=unknown-charset charset=windows-1252>", NULL },
+		{ "<html><head><meta charset charset=windows-1252>", "windows-1252" },
+		{ "<html><head><meta charset='' charset=windows-1252>", NULL },
+		{ "<html><head><meta charset=' '>", NULL },
+		{ "<html><head><meta http-equiv=refresh http-equiv=Content-Type content='text/html; charset=iso-8859-1'>", NULL },
+		{ "<html><head><meta content=broken content='text/html; charset=iso-8859-1' http-equiv=Content-Type>", NULL },
+		{ "<html><head><meta charset=unknown-charset><meta charset=windows-1252><meta charset=iso-8859-1>", "windows-1252" },
+		{ "<html><head><meta charset='utf-8//IGNORE'><meta charset=windows-1252>", "windows-1252" },
+		{ "<html><head><meta charset=x-user-defined>", "windows-1252" },
+		{ "<html><head><meta charset=utf-16>", "utf-8" },
+		{ "<html><head><meta charset=utf-16be>", "utf-8" },
+		{ "<html><head><meta charset=utf16>", "utf-8" },
+		{ "<html><head><meta http-equiv=Content-Type content='text/html; charset=utf-16le'>", "utf-8" },
+		{ "<meta charset=windows-1252>", NULL },
+		{ "<head><meta charset=windows-1252>", NULL },
+		{ "<html><meta charset=windows-1252>", NULL },
+		{ "<html/><head><meta charset=windows-1252>", NULL },
+		{ "</html><html><head><meta charset=windows-1252>", NULL },
+		{ "<html><head/><meta charset=windows-1252>", NULL },
+		{ "<html></head><head><meta charset=windows-1252>", NULL },
+		{ "<html><head><body><meta charset=windows-1252>", NULL },
+		{ "<html><head></meta charset=windows-1252>", NULL },
+		{ "<html><head><!-- <meta charset=windows-1252> -->", NULL },
+		{ "<html><head><script>var x = '<meta charset=windows-1252>';</script>", NULL },
+	};
+	static const struct {
+		const char *declared, *bom, *meta, *detected, *used, *decoded;
+	} decoding[] = {
+		{ NULL, "", "windows-1252", "windows-1252", "windows-1252", "\342\202\254" },
+		{ "unknown-charset", "", "windows-1252", "windows-1252", "windows-1252", "\342\202\254" },
+		{ "iso-8859-1", "", "windows-1252", "iso-8859-1", "iso-8859-1", "\302\200" },
+		{ NULL, "\357\273\277", "windows-1252", "utf-8", "iso-8859-1", "\302\200" },
+		{ NULL, "", "x-user-defined", "windows-1252", "windows-1252", "\342\202\254" },
+		{ NULL, "", "utf-16", "utf-8", "iso-8859-1", "\302\200" },
+		{ NULL, "", "utf-8", "utf-8", "utf-8", "\357\277\275" },
+	};
+	static const char meta[] = "<meta charset='windows-1252'>";
+	GMimeTextPart *part = g_mime_text_part_new_with_subtype ("html");
+	GMimeContentType *type = g_mime_entity_get_content_type (GMIME_ENTITY (part));
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GMimeTextEncodingConfidence confidence;
+	GMimeContent *content;
+	GMimeStream *stream;
+	GError *error = NULL;
+	char *charset, *used, *text, *html, *base64, *expected, *before, *after;
+	char buffer[1200];
+	gsize offset;
+	guint i, encoding;
+
+	testsuite_check ("HTML meta detection handles attributes, aliases, unsupported names and document context");
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		stream = g_mime_stream_mem_new_with_buffer (cases[i].html, strlen (cases[i].html));
+		content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
+		g_mime_part_set_content (GMIME_PART (part), content);
+		g_object_unref (content);
+		g_object_unref (stream);
+		g_assert_cmpint (g_mime_text_part_try_detect_encoding (part, &charset, &confidence, &error),
+				==, cases[i].detected != NULL);
+		g_assert_no_error (error);
+		g_assert_cmpstr (charset, ==, cases[i].detected);
+		g_assert_cmpint (confidence, ==, charset ?
+				GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE : GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED);
+		g_free (charset);
+		text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (used, ==, cases[i].detected ? cases[i].detected : "utf-8");
+		g_assert_cmpstr (text, ==, cases[i].html);
+		g_free (used);
+		g_free (text);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("HTML body decoding uses transfer-decoded meta charsets after MIME declarations and BOMs");
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (part));
+	for (i = 0; i < G_N_ELEMENTS (decoding); i++) {
+		g_mime_content_type_set_charset (type, decoding[i].declared);
+		before = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+		html = g_strdup_printf ("%s<html><head><meta charset=%s></head><body>\200</body></html>",
+					decoding[i].bom, decoding[i].meta);
+		expected = g_strdup_printf ("%s<html><head><meta charset=%s></head><body>%s</body></html>",
+					    *decoding[i].bom ? "\303\257\302\273\302\277" : "",
+					    decoding[i].meta, decoding[i].decoded);
+		for (encoding = 0; encoding < 3; encoding++) {
+			if (encoding == 2)
+				base64 = g_strdup_printf ("%s<html><head><meta charset=3D%s></head><body>=80</body></html>",
+							  *decoding[i].bom ? "=EF=BB=BF" : "", decoding[i].meta);
+			else
+				base64 = encoding ? g_base64_encode ((const guchar *) html, strlen (html)) : g_strdup (html);
+			stream = g_mime_stream_mem_new_with_buffer (base64, strlen (base64));
+			g_free (base64);
+			content = g_mime_content_new_with_stream (stream, encoding == 2 ? GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE :
+								 encoding == 1 ? GMIME_CONTENT_ENCODING_BASE64 : GMIME_CONTENT_ENCODING_BINARY);
+			g_mime_part_set_content (GMIME_PART (part), content);
+			g_object_unref (content);
+			g_assert_true (g_mime_text_part_try_detect_encoding (part, &charset, &confidence, &error));
+			g_assert_no_error (error);
+			g_assert_cmpstr (charset, ==, decoding[i].detected);
+			g_assert_cmpint (confidence, ==, *decoding[i].bom ||
+					(decoding[i].declared && strcmp (decoding[i].declared, "unknown-charset")) ?
+					GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN : GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE);
+			g_free (charset);
+			text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (used, ==, decoding[i].used);
+			g_assert_cmpstr (text, ==, expected);
+			g_assert_cmpint (g_mime_stream_tell (stream), ==, 0);
+			g_free (used);
+			g_free (text);
+			text = g_mime_message_get_html_body (message, &error);
+			g_assert_no_error (error);
+			g_assert_cmpstr (text, ==, expected);
+			g_free (text);
+			after = g_mime_entity_get_headers (GMIME_ENTITY (part), NULL);
+			g_assert_cmpstr (after, ==, before);
+			g_free (after);
+			g_object_unref (stream);
+		}
+		g_free (before);
+		g_free (expected);
+		g_free (html);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("HTML detection limits meta scanning to the first 1024 decoded bytes");
+	g_mime_content_type_set_charset (type, NULL);
+	for (i = 0; i < 3; i++) {
+		memset (buffer, ' ', sizeof (buffer));
+		memcpy (buffer, "<html><head>", 12);
+		offset = i == 0 ? 1024 - (sizeof (meta) - 1) : i == 1 ? 1024 : 1024 - 10;
+		memcpy (buffer + offset, meta, sizeof (meta) - 1);
+		base64 = g_base64_encode ((const guchar *) buffer, sizeof (buffer));
+		stream = g_mime_stream_mem_new_with_buffer (base64, strlen (base64));
+		g_free (base64);
+		content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BASE64);
+		g_mime_part_set_content (GMIME_PART (part), content);
+		g_object_unref (content);
+		g_object_unref (stream);
+		g_assert_cmpint (g_mime_text_part_try_detect_encoding (part, &charset, NULL, &error), ==, i == 0);
+		g_assert_no_error (error);
+		g_assert_cmpstr (charset, ==, i == 0 ? "windows-1252" : NULL);
+		g_free (charset);
+		text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (used, ==, i == 0 ? "windows-1252" : "utf-8");
+		g_assert_cmpuint (strlen (text), ==, sizeof (buffer));
+		g_assert_cmpmem (text, sizeof (buffer), buffer, sizeof (buffer));
+		g_free (used);
+		g_free (text);
+	}
+	testsuite_check_passed ();
+
+	testsuite_check ("Plain text never treats HTML markup as a charset declaration");
+	g_mime_content_type_set_media_subtype (type, "plain");
+	stream = g_mime_stream_mem_new_with_buffer (cases[0].html, strlen (cases[0].html));
 	content = g_mime_content_new_with_stream (stream, GMIME_CONTENT_ENCODING_BINARY);
 	g_mime_part_set_content (GMIME_PART (part), content);
 	g_object_unref (content);
 	g_object_unref (stream);
-	g_assert_false (g_mime_text_part_try_detect_encoding (part, &detected, &confidence, &error));
+	g_assert_false (g_mime_text_part_try_detect_encoding (part, &charset, NULL, &error));
 	g_assert_no_error (error);
-	g_assert_null (detected);
-	g_assert_cmpint (confidence, ==, GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED);
-	text = g_mime_text_part_get_text_with_encoding (part, &used, &error);
-	g_assert_no_error (error);
-	g_assert_cmpstr (text, ==, html);
-	g_assert_cmpstr (used, ==, "utf-8");
-	g_free (text);
-	g_free (used);
+	g_assert_null (charset);
+	g_object_unref (message);
 	g_object_unref (part);
 	testsuite_check_passed ();
 }
@@ -2074,6 +2237,7 @@ int main (int argc, char **argv)
 	test_text_with_charset ();
 	test_text_decode_with_charset ();
 	test_text_encoding_detection ();
+	test_html_encoding_detection ();
 	
 	testsuite_end ();
 

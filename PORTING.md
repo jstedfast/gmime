@@ -402,10 +402,12 @@ a selected empty body. I/O and conversion errors never return partial text.
 Selection follows the multipart classes, including alternative preference
 and related roots, rather than scanning attachments or embedded messages.
 A standalone attachment is excluded. Transfer decoding precedes charset
-conversion: a supported declared charset wins, otherwise a UTF-8/UTF-16 BOM
-or UTF-8 is used. Declared charsets and UTF-16 BOMs replace malformed sequences
-(U+FFFD for Unicode, `?` otherwise); strict default/BOM UTF-8 retries the whole
-body as Latin-1 on malformed input. Charset mappings still follow native iconv.
+conversion: a supported declared charset wins, followed by a UTF-8/UTF-16 BOM,
+an HTML meta charset in the first 1024 decoded bytes, then UTF-8. Declared
+charsets, meta charsets and UTF-16 BOMs replace malformed sequences (U+FFFD
+for Unicode, `?` otherwise). HTML meta UTF-16 declarations map to strict UTF-8;
+these and strict default/BOM UTF-8 retry the whole body as Latin-1 on malformed
+input. Charset mappings still follow native iconv.
 Incomplete final characters are processed rather than silently dropped.
 Decoded NULs are errors. Newlines use the default format options.
 HTML is not sanitized. Existing `g_mime_message_get_body()` still returns a
@@ -418,18 +420,28 @@ returns an owned charset name and `GMimeTextEncodingConfidence`. A supported
 Content-Type charset or decoded UTF-8/UTF-16 BOM gives `CERTAIN`; absent
 content gives `"us-ascii"` and `IRRELEVANT`. Empty content is not absent.
 No match returns FALSE, NULL and `UNDEFINED`, without an error. Detection
-does not validate the whole body or guess UTF-8. `TENTATIVE` is reserved.
+does not validate the whole body or guess UTF-8.
+
+For HTML without a usable MIME declaration or BOM, a supported meta charset
+gives `TENTATIVE`. The scan requires opening `<html>` and `<head>` tags and
+stops at `<body>`. It recognizes `<meta charset="...">` and
+`<meta http-equiv="Content-Type" content="text/html; charset=...">`, skipping
+unsupported charsets. `x-user-defined` maps to Windows-1252 and UTF-16 meta
+declarations map to UTF-8. Only the first 1024 transfer-decoded bytes are scanned.
 
 Without a usable declaration, detection opens a decoded reader and makes
-one read of up to three bytes; short reads are not retried. The backing
-stream may be read ahead and is not closed or rewound afterward. Unlike
-checked decoding, this uses the backing stream, not content copy overrides.
+one read of up to three bytes; short BOM reads are not retried. If needed, the
+HTML scan opens a fresh decoded reader and fills its bounded prefix across
+short reads. The backing stream may be read ahead and is not closed or rewound
+afterward. Unlike checked decoding, this uses the backing stream, not content
+copy overrides.
 
 Use `g_mime_text_part_get_text_with_encoding(part, &used_charset, error)` for
 checked automatic decoding and the charset actually used, including Latin-1
 after fallback. It shares the message-body decoding policy above, honors
 content decoding overrides, and does not change headers or the legacy getter.
-It uses buffered bytes for BOM detection, including across short source reads.
+It uses buffered bytes for BOM and HTML meta detection, including across short
+source reads, without reopening the content.
 The charset output is optional and is NULL on failure. Free both returned
 strings with `g_free()`. The explicit `get_text_with_charset()` remains strict.
 

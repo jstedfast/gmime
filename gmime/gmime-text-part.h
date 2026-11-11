@@ -59,7 +59,7 @@ typedef enum {
  * @GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT: The part has no content.
  *
  * Confidence in a detected text encoding, not a statistical probability.
- * Tentative detection is reserved for future HTML-meta charset support.
+ * HTML meta declarations give tentative confidence.
  **/
 typedef enum {
 	GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED,

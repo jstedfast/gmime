@@ -179,6 +179,7 @@ typedef struct {
 	guint decode_calls;
 	gboolean fail_decode;
 	GMimeMessage *detach_message;
+	const char *encoded_text;
 } TestContent;
 
 typedef GMimeContentClass TestContentClass;
@@ -188,8 +189,10 @@ G_DEFINE_TYPE (TestContent, test_content, GMIME_TYPE_CONTENT)
 static ssize_t
 test_content_write_to_stream (GMimeContent *content, GMimeStream *stream)
 {
+	const char *text = ((TestContent *) content)->encoded_text;
+
 	((TestContent *) content)->write_calls++;
-	return g_mime_stream_write (stream, "Q2F0", 4);
+	return g_mime_stream_write (stream, text ? text : "Q2F0", text ? strlen (text) : 4);
 }
 
 static ssize_t
@@ -4313,6 +4316,98 @@ test_text_encoding_errors (void)
 	}
 	g_object_unref (part);
 	check (TRUE, "text encoding detection preserves bounded-read, error, ownership and output contracts");
+}
+
+static void
+test_html_encoding_errors (void)
+{
+	static const char html[] = "<html><head><meta charset=windows-1252></head><body>\200</body></html>";
+	GMimeTextPart *part = g_mime_text_part_new_with_subtype ("html");
+	GMimeTextEncodingConfidence confidence;
+	GMimeContent *content;
+	TestStreamFailure *failure;
+	TestContent *custom;
+	GMimeStream *stream;
+	GError *error = NULL;
+	char sentinel[] = "output sentinel";
+	char buffer[2048], *charset, *text, *base64;
+	guint mode, unset_error, report_error, resets;
+	gboolean success;
+
+	memset (buffer, ' ', sizeof (buffer));
+	memcpy (buffer, html, sizeof (html) - 1);
+	for (report_error = 0; report_error < 2; report_error++) {
+		for (unset_error = 0; unset_error < 2; unset_error++) {
+			for (mode = 0; mode < 5; mode++) {
+				failure = g_object_new (test_stream_failure_get_type (), NULL);
+				failure->parent_instance.source = g_mime_stream_mem_new_with_buffer (buffer, sizeof (buffer));
+				failure->fail_after = mode == 1 ? 0 : mode == 3 ? 20 : mode == 4 ? 1025 : G_MAXSIZE;
+				failure->onebyte = TRUE;
+				failure->fail_reset_on = mode == 2 ? 2 : 0;
+				failure->unset_error = unset_error;
+				g_mime_stream_construct (GMIME_STREAM (failure), 0, -1);
+				content = g_mime_content_new_with_stream (GMIME_STREAM (failure), GMIME_CONTENT_ENCODING_BINARY);
+				g_mime_part_set_content (GMIME_PART (part), content);
+				g_object_unref (content);
+				charset = sentinel;
+				confidence = GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN;
+				success = mode == 0 || mode == 4;
+				g_assert_cmpint (g_mime_text_part_try_detect_encoding (part, &charset, &confidence,
+												     report_error ? &error : NULL), ==, success);
+				if (report_error && !success) {
+					g_assert_error (error, GMIME_ERROR, (unset_error ? GMIME_ERROR_GENERAL : mode == 2 ? ESPIPE : EIO));
+					g_clear_error (&error);
+				} else {
+					g_assert_no_error (error);
+				}
+				g_assert_cmpstr (charset, ==, success ? "windows-1252" : NULL);
+				g_assert_cmpint (confidence, ==, success ?
+						GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE : GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED);
+				g_assert_cmpuint (failure->reset_calls, ==, mode == 1 ? 1 : 2);
+				g_assert_cmpuint (failure->bytes_read, ==, mode == 0 ? 1025 :
+						  mode == 1 ? 0 : mode == 2 ? 1 : mode == 3 ? 20 : 1025);
+				g_assert_cmpuint (failure->close_calls, ==, 0);
+				g_free (charset);
+
+				if (mode == 0) {
+					failure->bytes_read = 0;
+					resets = failure->reset_calls;
+					failure->fail_reset_on = resets + 3;
+					text = g_mime_text_part_get_text_with_encoding (part, &charset, &error);
+					g_assert_no_error (error);
+					g_assert_cmpstr (charset, ==, "windows-1252");
+					g_assert_nonnull (strstr (text, "<body>\342\202\254</body>"));
+					g_assert_cmpuint (failure->bytes_read, ==, sizeof (buffer));
+					g_assert_cmpuint (failure->reset_calls, ==, resets + 2);
+					g_assert_cmpuint (failure->close_calls, ==, 0);
+					g_free (charset);
+					g_free (text);
+				}
+				g_object_unref (failure);
+			}
+		}
+	}
+	check (TRUE, "HTML detection bounds short reads and propagates BOM, reopen and prefix errors, even without an error output");
+
+	stream = g_mime_stream_mem_new_with_buffer ("ignored", 7);
+	custom = g_object_new (test_content_get_type (), NULL);
+	g_mime_content_set_stream (GMIME_CONTENT (custom), stream);
+	g_object_unref (stream);
+	g_mime_content_set_encoding (GMIME_CONTENT (custom), GMIME_CONTENT_ENCODING_BASE64);
+	base64 = g_base64_encode ((const guchar *) html, sizeof (html) - 1);
+	custom->encoded_text = base64;
+	g_mime_part_set_content (GMIME_PART (part), GMIME_CONTENT (custom));
+	text = g_mime_text_part_get_text_with_encoding (part, &charset, &error);
+	g_assert_no_error (error);
+	check (text && strstr (text, "<body>\342\202\254</body>") &&
+	       charset && !strcmp (charset, "windows-1252") &&
+	       custom->decode_calls == 1 && custom->write_calls == 1,
+	       "automatic HTML charset detection uses overridden decoded bytes without rereading content");
+	g_free (text);
+	g_free (charset);
+	g_object_unref (custom);
+	g_object_unref (part);
+	g_free (base64);
 }
 
 static void
@@ -14421,6 +14516,7 @@ main (int argc, char **argv)
 	test_message_text_decoding ();
 	test_message_text_errors ();
 	test_text_encoding_errors ();
+	test_html_encoding_errors ();
 	testsuite_end ();
 
 	testsuite_start ("multipart related roots");

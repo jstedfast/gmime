@@ -2695,16 +2695,18 @@ g_mime_message_get_html_body (GMimeMessage *message, GError **error)
  * %GMIME_TEXT_FORMAT_COMPRESSED_RICH_TEXT have no match.
  *
  * Transfer encoding is decoded before charset conversion. A supported
- * Content-Type charset takes precedence; otherwise a UTF-8/UTF-16 BOM is used,
- * then UTF-8. Declared charsets and UTF-16 BOMs use replacement decoding:
+ * Content-Type charset takes precedence, followed by a UTF-8/UTF-16 BOM,
+ * an HTML meta charset in the first 1024 decoded bytes, then UTF-8.
+ * Declared charsets, meta charsets and UTF-16 BOMs use replacement decoding:
  * malformed Unicode sequences become U+FFFD, other malformed input becomes
- * '?'. The default UTF-8 and UTF-8 BOM decoders are strict and retry the
+ * '?'. HTML meta UTF-16 declarations are remapped to strict UTF-8.
+ * The default UTF-8 and UTF-8 BOM decoders are also strict and retry the
  * whole body as ISO-8859-1 on malformed input, like MimeKit. Charset mappings
  * follow native iconv rather than managed codepage best-fit tables.
  * Incomplete final characters are also handled, unlike MimeKit versions
  * whose charset filter omits decoder finalization at EOF.
- * HTML meta charset detection is not yet supported. Newlines follow the
- * default #GMimeFormatOptions; bare CRs and Unicode BOMs are retained.
+ * Newlines follow the default #GMimeFormatOptions; bare CRs and Unicode
+ * BOMs are retained.
  * No final newline is added. Flowed text is not unflowed, and formats are
  * neither converted nor sanitized.
  *

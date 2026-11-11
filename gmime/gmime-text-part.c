@@ -34,11 +34,14 @@
 #include "gmime-stream-mem.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-charset.h"
+#include "gmime-html-tokenizer.h"
 #include "gmime-charset.h"
 #include "gmime-common.h"
 #include "gmime-internal.h"
 
 #define d(x)
+
+#define HTML_CHARSET_SCAN_LENGTH 1024
 
 
 /**
@@ -608,6 +611,186 @@ text_part_decode_text (GByteArray *buffer, iconv_t decoder, const char *fallback
 	return normalized;
 }
 
+static GMimeStream *
+text_part_open_content (GMimeContent *content, GError **error)
+{
+	GMimeStream *stream;
+	int errsv;
+
+	if (!g_mime_content_get_stream (content)) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
+				     "Cannot detect text encoding without a backing stream");
+		return NULL;
+	}
+
+	errno = 0;
+	stream = g_mime_content_open (content);
+	errsv = errno;
+
+	if (!stream) {
+		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+			     "Failed to open text content: %s",
+			     errsv ? g_strerror (errsv) : "unknown I/O error");
+		return NULL;
+	}
+
+	return stream;
+}
+
+static char *
+text_part_get_meta_charset (GMimeHtmlToken *token, gboolean *replace, GError **error)
+{
+	gboolean seen_charset = FALSE, seen_content = FALSE, seen_pragma = FALSE;
+	gboolean need_pragma = FALSE, got_pragma = FALSE;
+	char *charset = NULL, *trimmed, *name;
+	const GMimeHtmlAttribute *attribute;
+	const char *value, *start, *end;
+	GMimeContentType *type;
+	int codepage;
+	gsize i;
+
+	for (i = 0; i < g_mime_html_token_get_n_attributes (token); i++) {
+		attribute = g_mime_html_token_get_attribute (token, i);
+
+		if (!(value = g_mime_html_attribute_get_value (attribute)))
+			continue;
+
+		switch (g_mime_html_attribute_get_id (attribute)) {
+		case GMIME_HTML_ATTRIBUTE_HTTP_EQUIV:
+			if (!seen_pragma) {
+				got_pragma = !g_ascii_strcasecmp (value, "Content-Type");
+				seen_pragma = TRUE;
+			}
+			break;
+		case GMIME_HTML_ATTRIBUTE_CONTENT:
+			if (!seen_content && !charset &&
+			    (type = g_mime_content_type_parse_full (NULL, value, -1, NULL))) {
+				value = g_mime_content_type_get_charset (type);
+
+				if (value && *value) {
+					charset = g_strdup (value);
+					need_pragma = TRUE;
+				}
+
+				g_object_unref (type);
+			}
+
+			seen_content = TRUE;
+			break;
+		case GMIME_HTML_ATTRIBUTE_CHARSET:
+			if (!seen_charset && *value) {
+				g_free (charset);
+				charset = g_strdup (value);
+				need_pragma = FALSE;
+			}
+
+			seen_charset = TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (!charset || (need_pragma && !got_pragma)) {
+		g_free (charset);
+		return NULL;
+	}
+
+	start = charset;
+	end = charset + strlen (charset);
+
+	while (start < end && g_ascii_isspace (*start))
+		start++;
+
+	while (end > start) {
+		if (!g_ascii_isspace (end[-1]))
+			break;
+
+		end--;
+	}
+
+	trimmed = g_strndup (start, end - start);
+	g_free (charset);
+
+	type = g_mime_content_type_new ("text", "html");
+	g_mime_content_type_set_charset (type, !g_ascii_strcasecmp (trimmed, "x-user-defined") ?
+					"windows-1252" : trimmed);
+	g_free (trimmed);
+	name = g_mime_content_type_get_charset_encoding (type, error);
+	g_object_unref (type);
+
+	if (name) {
+		codepage = _g_mime_charset_get_codepage (_g_mime_charset_get_text_converter (name));
+		*replace = codepage != 1200 && codepage != 1201;
+
+		if (!*replace) {
+			g_free (name);
+			name = g_strdup ("utf-8");
+		}
+	}
+
+	return name;
+}
+
+static char *
+text_part_detect_html_charset (const char *bytes, gsize length, gboolean *replace, GError **error)
+{
+	enum { NONE, HTML, HEAD, STOP } state = NONE;
+	GMimeHtmlTokenizer *tokenizer;
+	GMimeHtmlToken *token;
+	GMimeStream *stream;
+	GError *local_error = NULL;
+	char *charset = NULL;
+
+	/* Limit processing to the first 1024 transfer-decoded bytes. Latin-1
+	 * keeps the prescan independent of the charset it is trying to find. */
+	stream = g_mime_stream_mem_new_with_buffer (length ? bytes : "", MIN (length, HTML_CHARSET_SCAN_LENGTH));
+	tokenizer = g_mime_html_tokenizer_new_with_charset (stream, "iso-8859-1", FALSE,
+							 HTML_CHARSET_SCAN_LENGTH, error);
+	g_object_unref (stream);
+
+	if (!tokenizer)
+		return NULL;
+
+	while (g_mime_html_tokenizer_read_next_token (tokenizer, &token, &local_error) && token) {
+		if (g_mime_html_token_get_kind (token) == GMIME_HTML_TOKEN_TAG) {
+			switch (g_mime_html_token_get_tag_id (token)) {
+			case GMIME_HTML_TAG_HTML:
+				if (state == NONE)
+					state = g_mime_html_token_is_end_tag (token) ||
+						g_mime_html_token_is_empty_element (token) ? STOP : HTML;
+				break;
+			case GMIME_HTML_TAG_HEAD:
+				if (state == HTML)
+					state = g_mime_html_token_is_end_tag (token) ||
+						g_mime_html_token_is_empty_element (token) ? STOP : HEAD;
+				break;
+			case GMIME_HTML_TAG_META:
+				if (state == HEAD && !g_mime_html_token_is_end_tag (token))
+					charset = text_part_get_meta_charset (token, replace, &local_error);
+				break;
+			case GMIME_HTML_TAG_BODY:
+				state = STOP;
+				break;
+			default:
+				break;
+			}
+		}
+
+		g_mime_html_token_unref (token);
+
+		if (charset || local_error || state == STOP)
+			break;
+	}
+
+	g_object_unref (tokenizer);
+
+	if (local_error)
+		g_propagate_error (error, local_error);
+
+	return charset;
+}
+
 /**
  * g_mime_text_part_try_detect_encoding:
  * @mime_part: a #GMimeTextPart
@@ -622,18 +805,24 @@ text_part_decode_text (GByteArray *buffer, iconv_t decoder, const char *fallback
  * "us-ascii" with %GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT, even if a charset
  * is declared. Empty content is not the same as absent content.
  *
- * Without a declaration or BOM, returns %FALSE with %NULL @charset and
+ * HTML without a declaration or BOM is scanned for meta charset declarations
+ * in its first 1024 transfer-decoded bytes. A supported meta charset gives
+ * %GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE. The scan requires opening html
+ * and head tags and stops at a body tag. Both charset attributes and
+ * http-equiv="Content-Type" declarations are recognized. Unsupported names
+ * are skipped; x-user-defined maps to Windows-1252 and UTF-16 to UTF-8.
+ * Otherwise returns %FALSE with %NULL @charset and
  * %GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED. This does not guess UTF-8 or
- * Latin-1, validate the entire content, or inspect HTML meta tags.
- * Tentative detection is reserved for a later release.
+ * Latin-1 or validate the entire content.
  *
  * A declared charset or absent content requires no I/O. Otherwise this opens
  * a decoded reader with g_mime_content_open() and makes one read of up to
  * three decoded bytes. The decoder may read ahead in the backing stream;
- * short reads are not retried. The reader is released without closing or
- * rewinding the backing stream. This path uses the backing stream, not the
- * content's decode-to-stream override. Source-backed content must remain
- * open and unchanged.
+ * short BOM reads are not retried. The HTML scan opens a new decoded reader
+ * and fills its bounded prefix across short reads. Readers are released
+ * without closing or rewinding the backing stream. This path uses the backing
+ * stream, not the content's decode-to-stream override. Source-backed content
+ * must remain open and unchanged.
  *
  * Stream failures report %GMIME_ERROR; operational charset resolution
  * failures report %G_CONVERT_ERROR. Both outputs are cleared on failure.
@@ -645,16 +834,20 @@ gboolean
 g_mime_text_part_try_detect_encoding (GMimeTextPart *mime_part, char **charset,
 				    GMimeTextEncodingConfidence *confidence, GError **error)
 {
+	char buffer[HTML_CHARSET_SCAN_LENGTH];
 	GError *local_error = NULL;
+	gboolean found, replace;
 	GMimeContent *content;
 	GMimeStream *stream;
 	const char *bom;
-	gboolean found;
+	gsize length = 0;
+	ssize_t nread;
 	int errsv;
 
 	g_return_val_if_fail (charset != NULL, FALSE);
 
 	*charset = NULL;
+
 	if (confidence)
 		*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_UNDEFINED;
 
@@ -663,8 +856,10 @@ g_mime_text_part_try_detect_encoding (GMimeTextPart *mime_part, char **charset,
 
 	if (!(content = g_mime_part_get_content ((GMimePart *) mime_part))) {
 		*charset = g_strdup ("us-ascii");
+
 		if (confidence)
 			*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_IRRELEVANT;
+
 		return TRUE;
 	}
 
@@ -679,36 +874,62 @@ g_mime_text_part_try_detect_encoding (GMimeTextPart *mime_part, char **charset,
 	if (*charset) {
 		if (confidence)
 			*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN;
+
 		return TRUE;
 	}
 
-	if (!g_mime_content_get_stream (content)) {
-		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION,
-				     "Cannot detect text encoding without a backing stream");
-		return FALSE;
-	}
-
 	g_object_ref (content);
-	errno = 0;
-	stream = g_mime_content_open (content);
-	errsv = errno;
-	g_object_unref (content);
 
-	if (!stream) {
-		g_set_error (error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
-			     "Failed to open text content: %s",
-			     errsv ? g_strerror (errsv) : "unknown I/O error");
+	if (!(stream = text_part_open_content (content, error))) {
+		g_object_unref (content);
 		return FALSE;
 	}
 
-	found = g_mime_charset_try_get_bom_encoding_from_stream (stream, &bom, error);
+	found = g_mime_charset_try_get_bom_encoding_from_stream (stream, &bom, &local_error);
 	g_object_unref (stream);
 
 	if (found) {
 		*charset = g_strdup (bom);
+
 		if (confidence)
 			*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_CERTAIN;
+	} else if (!local_error && g_mime_text_part_is_html (mime_part) &&
+		   (stream = text_part_open_content (content, &local_error))) {
+		while (length < sizeof (buffer)) {
+			errno = 0;
+			nread = g_mime_stream_read (stream, buffer + length, sizeof (buffer) - length);
+
+			if (nread == -1) {
+				errsv = errno;
+				g_set_error (&local_error, GMIME_ERROR, errsv ? errsv : GMIME_ERROR_GENERAL,
+					     "Failed to read HTML text content: %s",
+					     errsv ? g_strerror (errsv) : "unknown I/O error");
+				break;
+			}
+
+			if (!nread)
+				break;
+
+			length += nread;
+		}
+
+		g_object_unref (stream);
+
+		if (!local_error)
+			*charset = text_part_detect_html_charset (buffer, length, &replace, &local_error);
+
+		if (*charset) {
+			found = TRUE;
+
+			if (confidence)
+				*confidence = GMIME_TEXT_ENCODING_CONFIDENCE_TENTATIVE;
+		}
 	}
+
+	g_object_unref (content);
+
+	if (local_error)
+		g_propagate_error (error, local_error);
 
 	return found;
 }
@@ -775,8 +996,11 @@ g_mime_text_part_get_text_with_charset (GMimeTextPart *mime_part, const char *ch
  * source charset. Uses the same decoding policy as
  * g_mime_message_get_text_body_with_format(): supported declared charsets and
  * UTF-16 BOMs use replacement, while UTF-8 BOMs and the UTF-8 default use
- * strict decoding and retry malformed input as ISO-8859-1. Incomplete final
- * characters are handled rather than dropped. HTML-meta detection is deferred.
+ * strict decoding and retry malformed input as ISO-8859-1. Without a declared
+ * charset or BOM, HTML meta charsets in the first 1024 decoded bytes are used
+ * before the UTF-8 default. Meta charsets use replacement, except UTF-16
+ * declarations remapped to strict UTF-8. Incomplete final characters are
+ * handled rather than dropped.
  *
  * Reports the charset used by the successful conversion, including Latin-1
  * after fallback, not merely the detected or declared charset. Missing content
@@ -838,17 +1062,27 @@ g_mime_text_part_get_text_with_encoding (GMimeTextPart *mime_part, char **used_c
 	encoding = charset;
 	replace = charset != NULL;
 
-	if (!encoding && !g_mime_charset_try_get_bom_encoding (buffer->data, buffer->len, &encoding))
-		encoding = "utf-8";
-	else if (!charset)
-		replace = strcmp (encoding, "utf-8") != 0;
+	if (!encoding) {
+		if (g_mime_charset_try_get_bom_encoding (buffer->data, buffer->len, &encoding)) {
+			replace = strcmp (encoding, "utf-8") != 0;
+		} else {
+			if (g_mime_text_part_is_html (mime_part))
+				charset = text_part_detect_html_charset ((const char *) buffer->data, buffer->len,
+									&replace, &local_error);
+			if (local_error) {
+				g_object_unref (stream);
+				g_propagate_error (error, local_error);
+				return NULL;
+			}
+			encoding = charset ? charset : "utf-8";
+		}
+	}
 
 	if ((decoder = _g_mime_charset_open_text_decoder (encoding, &converter, &local_error)) != (iconv_t) -1) {
 		text = text_part_decode_text (buffer, decoder, replace ? converter : NULL, &local_error);
 		g_mime_iconv_close (decoder);
 
-		/* Declared charsets and UTF-16 BOMs use replacement. Only the strict
-		 * UTF-8 default or BOM decoder can trigger MimeKit's Latin-1 retry. */
+		/* Only strict UTF-8 selection can trigger the Latin-1 retry. */
 		if (!replace && (g_error_matches (local_error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE) ||
 				 g_error_matches (local_error, G_CONVERT_ERROR, G_CONVERT_ERROR_PARTIAL_INPUT))) {
 			g_clear_error (&local_error);
