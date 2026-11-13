@@ -415,7 +415,7 @@ snapshot_warning (gint64 offset, GMimeParserWarning code, const char *item, gpoi
 		return;
 	capture->warnings++;
 	g_assert_cmpstr (item, ==, "X-Second");
-	g_mime_parser_options_set_warning_callback (g_mime_reader_get_options (capture->reader), NULL, NULL);
+	g_mime_parser_options_set_warning_callback (g_mime_reader_get_options (capture->reader), NULL, NULL, NULL);
 }
 
 static gboolean
@@ -428,7 +428,7 @@ snapshot_header (GMimeHeader *header, gboolean toplevel, gpointer user_data, GEr
 	if (capture->headers->len == 2) {
 		if (!g_mime_parser_options_set_charset_encoding (options, "windows-1251", error))
 			return FALSE;
-		g_mime_parser_options_set_warning_callback (options, snapshot_warning, capture);
+		g_mime_parser_options_set_warning_callback (options, snapshot_warning, capture, NULL);
 	}
 	return TRUE;
 }
@@ -598,7 +598,7 @@ test_parsed_header_import (void)
 		GError *error = NULL;
 
 		import_mode = mode;
-		g_mime_parser_options_set_warning_callback (options, import_warning, NULL);
+		g_mime_parser_options_set_warning_callback (options, import_warning, NULL, NULL);
 		reader = _g_mime_parser_reader_new (options, (GMimeStream *) input, FALSE);
 		part = (ImportPart *) _g_mime_parser_reader_construct_part (reader, &error);
 		g_assert_no_error (error);
@@ -718,7 +718,8 @@ test_parsed_content_type_lifetime (void)
 				guint warnings = 0;
 
 				g_mime_parser_options_set_warning_callback (g_mime_reader_get_options (reader),
-									   parsed_multipart_warning, &warnings);
+									    parsed_multipart_warning, &warnings,
+									    NULL);
 				message = _g_mime_parser_reader_construct_message (reader, &error);
 				g_assert_no_error (error);
 				g_assert_nonnull (message);
@@ -3782,7 +3783,7 @@ test_public_parser_warnings (void)
 			GMimeMessage *message;
 			GError *error = NULL;
 
-			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts);
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts, NULL);
 			message = g_mime_parser_construct_message (parser, options, &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (message);
@@ -3811,7 +3812,7 @@ test_public_parser_warnings (void)
 			GError *error = NULL;
 			GMimeMessage *message;
 
-			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts);
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, counts, NULL);
 			message = g_mime_parser_construct_message (parser, options, &error);
 			g_assert_no_error (error);
 			g_assert_nonnull (message);
@@ -4017,7 +4018,7 @@ test_parser_compliance_models (void)
 					parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input, GMIME_FORMAT_MESSAGE,
 						mode == 1 ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY, &error);
 					g_assert_no_error (error);
-					g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+					g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings, NULL);
 					g_mime_parser_set_compliance_options (parser, compliance);
 					if (logged)
 						g_mime_parser_set_compliance_logger (parser, collect_parser_issue, issues, NULL);
@@ -6141,7 +6142,7 @@ test_loading (void)
 				input->fail_seek = TRUE;
 				alive = input;
 				g_object_add_weak_pointer (G_OBJECT (input), &alive);
-				g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+				g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings, NULL);
 				entity = message ? (GMimeEntity *) g_mime_message_load (options, (GMimeStream *) input, &error) :
 					g_mime_entity_load (options, (GMimeStream *) input, &error);
 				g_assert_no_error (error);
@@ -6183,7 +6184,7 @@ test_loading (void)
 			}
 		}
 	}
-	g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+	g_mime_parser_options_set_warning_callback (options, NULL, NULL, NULL);
 	testsuite_check_passed ();
 
 	testsuite_check ("Loaders reject empty and malformed input, honor header limits and propagate open/read errors");
@@ -6287,7 +6288,7 @@ test_loading (void)
 		g_object_unref (input);
 #ifdef __linux__
 		g_mime_parser_options_set_max_header_length (options, g_mime_parser_options_get_max_header_length (NULL));
-		g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure);
+		g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure, NULL);
 		g_assert_true (g_file_set_contents (filename, cases[G_N_ELEMENTS (cases) - 1], -1, &error));
 		g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
 			g_mime_entity_load_from_file (options, filename, &error));
@@ -6296,7 +6297,7 @@ test_loading (void)
 		g_assert_cmpint (errno, ==, EBADF);
 		g_assert_true (failure.closed);
 		g_clear_error (&error);
-		g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+		g_mime_parser_options_set_warning_callback (options, NULL, NULL, NULL);
 		g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
 		g_assert_cmpint (g_unlink (filename), ==, 0);
 		{
@@ -6307,7 +6308,7 @@ test_loading (void)
 			g_string_append (wire, "\n\nbody");
 			g_mime_parser_options_set_max_header_length (options, 64);
 			failure.closed = FALSE;
-			g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure);
+			g_mime_parser_options_set_warning_callback (options, close_loaded_file_on_warning, &failure, NULL);
 			g_assert_true (g_file_set_contents (filename, wire->str, wire->len, &error));
 			g_assert_null (message ? (GMimeEntity *) g_mime_message_load_from_file (options, filename, &error) :
 				g_mime_entity_load_from_file (options, filename, &error));
@@ -6315,7 +6316,7 @@ test_loading (void)
 			g_assert_null (strstr (error->message, "close"));
 			g_assert_true (failure.closed);
 			g_clear_error (&error);
-			g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+			g_mime_parser_options_set_warning_callback (options, NULL, NULL, NULL);
 			g_assert_cmpint (find_loaded_file_descriptor (filename), ==, -1);
 			g_assert_cmpint (g_unlink (filename), ==, 0);
 			g_string_free (wire, TRUE);
@@ -6492,7 +6493,7 @@ test_loading_storage (void)
 			GMimeEntity *entity;
 			guint warnings[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
 
-			g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings);
+			g_mime_parser_options_set_warning_callback (options, count_public_warning, warnings, NULL);
 			if (i == 0)
 				g_mime_parser_options_set_max_header_length (options, 1);
 			else

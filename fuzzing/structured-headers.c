@@ -399,7 +399,7 @@ check_slice (GMimeParserOptions *options, GMimeFormatOptions *format, const guin
 	memcpy (exact, data, length);
 	memcpy (padded, data, length);
 	memcpy (padded + length, suffix, sizeof (suffix));
-	g_mime_parser_options_set_warning_callback (options, record_warning, warnings);
+	g_mime_parser_options_set_warning_callback (options, record_warning, warnings, NULL);
 
 	for (parser = 0; parser < PARSER_COUNT; parser++) {
 		g_string_truncate (warnings, 0);
@@ -452,7 +452,7 @@ check_slice (GMimeParserOptions *options, GMimeFormatOptions *format, const guin
 	g_free (actual);
 	check_date (exact, padded, length);
 	fuzz_equal (data, length, (const guint8 *) exact, length, "Structured-header input preservation");
-	g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+	g_mime_parser_options_set_warning_callback (options, NULL, NULL, NULL);
 	g_string_free (warnings, TRUE);
 	g_free (padded);
 	g_free (allocation);

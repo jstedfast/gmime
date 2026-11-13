@@ -670,7 +670,7 @@ test_bounded_parsing (void)
 	gsize length;
 	guint i, mode, parser;
 
-	g_mime_parser_options_set_warning_callback (options, collect_parse_warning, warnings);
+	g_mime_parser_options_set_warning_callback (options, collect_parse_warning, warnings, NULL);
 	for (mode = 0; mode < 3; mode++) {
 		g_mime_parser_options_set_address_compliance_mode (options, mode == 0 ?
 			GMIME_RFC_COMPLIANCE_STRICT : mode == 1 ? GMIME_RFC_COMPLIANCE_LOOSE : GMIME_RFC_COMPLIANCE_LOOSER);
