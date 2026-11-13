@@ -180,8 +180,7 @@ const char *g_mime_parser_options_get_charset_encoding (GMimeParserOptions *opti
 gboolean g_mime_parser_options_set_charset_encoding (GMimeParserOptions *options, const char *charset, GError **error);
 
 GMimeParserWarningFunc g_mime_parser_options_get_warning_callback (GMimeParserOptions *options);
-void g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data);
-void g_mime_parser_options_set_warning_callback_full (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data, GDestroyNotify notify);
+void g_mime_parser_options_set_warning_callback (GMimeParserOptions *options, GMimeParserWarningFunc warning_cb, gpointer user_data, GDestroyNotify notify);
 
 G_END_DECLS
 
