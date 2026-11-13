@@ -1479,13 +1479,13 @@ test_rfc2047_token_recovery (void)
 
 	for (phrase = 0; phrase < 2; phrase++) {
 		warnings = 0;
-		g_mime_parser_options_set_warning_callback (options, count_rfc2047_warning, &warnings);
+		g_mime_parser_options_set_warning_callback (options, count_rfc2047_warning, &warnings, NULL);
 		decoded = phrase ? g_mime_utils_header_decode_phrase (options, "=?utf-8?Q?a b?=") :
 			g_mime_utils_header_decode_text (options, "=?utf-8?Q?a b?=");
 		check (!strcmp (decoded, "a b") && warnings == 1, "accepted payload whitespace still reports one warning");
 		g_free (decoded);
 	}
-	g_mime_parser_options_set_warning_callback (options, NULL, NULL);
+	g_mime_parser_options_set_warning_callback (options, NULL, NULL, NULL);
 
 	folded = g_mime_utils_unstructured_header_fold (options, NULL, raw);
 	check (!strcmp (folded, raw), "recovery preserves original charset, language, and encoding spelling when folding");
@@ -10999,7 +10999,7 @@ test_options_references (void)
 	for (i = 0; i < G_N_ELEMENTS (threads); i++)
 		g_thread_join (threads[i]);
 
-	g_mime_parser_options_set_warning_callback_full (parser, NULL, &destroyed, options_destroy_notify);
+	g_mime_parser_options_set_warning_callback (parser, NULL, &destroyed, options_destroy_notify);
 	g_mime_parser_options_set_max_mime_depth (parser, 123);
 	check (g_mime_parser_options_set_charset_encoding (parser, "windows-1252", NULL),
 	       "set reference-counted parser charset");
@@ -11116,7 +11116,7 @@ test_options_default_references (void)
 	guint maxline = g_mime_format_options_get_max_line_length (format);
 	guint destroyed = 0;
 
-	g_mime_parser_options_set_warning_callback_full (parser, NULL, &destroyed, options_destroy_notify);
+	g_mime_parser_options_set_warning_callback (parser, NULL, &destroyed, options_destroy_notify);
 	g_mime_compliance_options_set_max_issues_per_violation (compliance, 17);
 	g_mime_shutdown ();
 	check (destroyed == 0 && !strcmp (g_mime_parser_options_get_charset_encoding (parser), charset) &&
@@ -11539,7 +11539,7 @@ test_address_depth (void)
 	for (limit = 0; limit <= 2; limit++) {
 		g_mime_parser_options_set_max_address_group_depth (options, limit);
 		warnings = 0;
-		g_mime_parser_options_set_warning_callback (options, count_warning, &warnings);
+		g_mime_parser_options_set_warning_callback (options, count_warning, &warnings, NULL);
 		list = g_mime_internet_address_list_parse (options, nested);
 		check ((warnings != 0) == (limit < 2), "group depth warning");
 		if (limit == 0) {
@@ -11617,7 +11617,7 @@ test_mime_depth (gboolean multipart, gboolean onebyte)
 	for (limit = 0; limit <= 4; limit++) {
 		g_mime_parser_options_set_max_mime_depth (options, limit);
 		warnings = 0;
-		g_mime_parser_options_set_warning_callback (options, count_warning, &warnings);
+		g_mime_parser_options_set_warning_callback (options, count_warning, &warnings, NULL);
 		input = g_mime_stream_mem_new_with_buffer (text, strlen (text));
 		if (onebyte) {
 			stream = test_stream_onebyte_new (input);
@@ -11703,7 +11703,7 @@ test_depth_siblings (gboolean multipart, gboolean onebyte, gboolean persist)
 	int i;
 
 	g_mime_parser_options_set_max_mime_depth (options, 1);
-	g_mime_parser_options_set_warning_callback (options, count_warning, &warnings);
+	g_mime_parser_options_set_warning_callback (options, count_warning, &warnings, NULL);
 	input = g_mime_stream_mem_new_with_buffer (text, strlen (text));
 	if (onebyte) {
 		stream = test_stream_onebyte_new (input);
@@ -12285,7 +12285,7 @@ parse_core_entity (const char *text, int limit, gboolean onebyte, guint *warning
 	}
 	g_mime_parser_options_set_max_mime_depth (options, limit);
 	if (warnings)
-		g_mime_parser_options_set_warning_callback (options, count_warning, warnings);
+		g_mime_parser_options_set_warning_callback (options, count_warning, warnings, NULL);
 	parser = g_mime_parser_new_with_stream_and_storage (input, GMIME_FORMAT_MESSAGE,
 		onebyte ? GMIME_CONTENT_STORAGE_MEMORY : GMIME_CONTENT_STORAGE_SOURCE, &error);
 	g_assert_no_error (error);
@@ -14386,7 +14386,7 @@ test_option_snapshots (void)
 			g_assert_no_error (error);
 			g_assert_cmpstr (g_mime_parser_options_get_charset_encoding (before), ==, "utf-8");
 			break;
-		case 11: g_mime_parser_options_set_warning_callback (options, NULL, NULL); break;
+		case 11: g_mime_parser_options_set_warning_callback (options, NULL, NULL, NULL); break;
 		}
 		after = parse_option_snapshot (reader);
 		g_assert_true (before != after);
