@@ -98,7 +98,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install meson ninja-build pkg-config clang \
-          libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev gnupg gpgsm
+          libglib2.0-dev libidn2-dev libgpgme-dev libgpg-error-dev zlib1g-dev gnupg gpgsm
         if [[ '${{ matrix.integration }}' == 'true' ]]; then
           sudo apt-get -y install gtk-doc-tools valac gobject-introspection \
             libgirepository1.0-dev python3-gi
@@ -109,6 +109,9 @@ jobs:
           "$RUNNER_TEMP/meson-env/bin/pip" install 'meson==1.3.2'
           echo "$RUNNER_TEMP/meson-env/bin" >> "$GITHUB_PATH"
         fi
+    - name: Set up fixed libgcrypt
+      if: (matrix.os == 'ubuntu-26.04' || matrix.os == 'ubuntu-26.04-arm') && matrix.features == 'enabled'
+      uses: ./.github/actions/setup-libgcrypt
     - name: Build minimum supported GLib
       if: matrix.minimum_glib
       run: |
@@ -198,6 +201,7 @@ jobs:
           _build/meson-private/dist-build/meson-logs/
           _build/meson-dist/
           ${{ runner.temp }}/glib-build/meson-logs/
+          ${{ runner.temp }}/libgcrypt-1.12.3/config.log
         if-no-files-found: ignore
 
   coverage:
@@ -215,7 +219,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install meson ninja-build pkg-config gcc gcovr \
-          libglib2.0-dev libidn2-dev libgpgme-dev zlib1g-dev gnupg gpgsm
+          libglib2.0-dev libidn2-dev libgpgme-dev libgpg-error-dev zlib1g-dev gnupg gpgsm
+    - name: Set up fixed libgcrypt
+      uses: ./.github/actions/setup-libgcrypt
     - name: Configure coverage build
       run: |
         meson setup _build --buildtype=debug -Db_ndebug=false -Db_coverage=true \
@@ -243,3 +249,4 @@ jobs:
         path: |
           _build/coverage*
           _build/meson-logs/
+          ${{ runner.temp }}/libgcrypt-1.12.3/config.log

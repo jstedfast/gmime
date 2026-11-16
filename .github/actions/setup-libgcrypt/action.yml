@@ -1,0 +1,29 @@
+name: Set up fixed libgcrypt
+description: Use a private libgcrypt build for Ubuntu 26.04 crypto tests.
+
+runs:
+  using: composite
+  steps:
+    - name: Build libgcrypt 1.12.3
+      shell: bash
+      run: |
+        # Ubuntu's 1.12.0 has the ECC regression https://dev.gnupg.org/T8094.
+        cd "$RUNNER_TEMP"
+        curl --fail --location --retry 3 \
+          https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-1.12.3.tar.bz2 \
+          -o libgcrypt-1.12.3.tar.bz2
+        echo '98d1b0b3202d2b03fa754a35aa3cbbfcf526a3260d8d2ee213748001b1043006  libgcrypt-1.12.3.tar.bz2' | sha256sum --check
+        tar -xf libgcrypt-1.12.3.tar.bz2
+        cd libgcrypt-1.12.3
+        ./configure --prefix="$RUNNER_TEMP/libgcrypt-prefix" \
+          --libdir="$RUNNER_TEMP/libgcrypt-prefix/lib" --disable-doc --disable-static
+        make -j1
+        make install
+        echo "LD_LIBRARY_PATH=$RUNNER_TEMP/libgcrypt-prefix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+    - name: Verify GnuPG uses fixed libgcrypt
+      shell: bash
+      run: |
+        for program in gpg gpg-agent gpgsm; do
+          echo "$program:"
+          "$program" --version | grep -Fx 'libgcrypt 1.12.3'
+        done
