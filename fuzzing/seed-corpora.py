@@ -51,6 +51,7 @@ def structured_header_inputs():
         b'<a@b>', b'(c) <a@[127.0.0.1]>', b'"a b"@c',
         b"<a@@b@c>", b"junk <a@b> <c@d>", b"<a@domain1@domain2>",
         b"<a\0b@ho\0st>", b'<"a\\\0b"@[127.\0.1]>',
+        b"<a@[127.\0.1]>", b"<a\0b@[127.0.0.1]>",
         b"(c\0) <a@b>\0<c@d>", b"<a\0\xff@b> <c@d>",
         b"before\0after@example.com, tail@example.com",
         b'text/plain; name="before\0after"; tail=value',
@@ -117,7 +118,7 @@ def mime_inputs(root):
 
 def regression_inputs():
     # The first suppressed issue differs with one-byte versus buffered reads.
-    mime = [b"F:\r\r\0\n\rq\0"]
+    mime = [b"F:\r\r\0\n\rq\0", b"X" * 1024 + b"\n", b"X" * 1024 + b"\r\n"]
     lengths = (0, 1, 2, 3, 15, 16, 17, 31, 32, 33, 45, 57, 64, 76, 77, 78,
                127, 128, 129, 255, 256, 257, 4095, 4096, 4097)
     payloads = [bytes((i * 31) & 255 for i in range(length)) for length in lengths]
@@ -154,6 +155,7 @@ def regression_inputs():
         b"  literal =?utf-8?q?word?=  ", b"\r\n\tfolded\r\ntext",
         b"=?utf-8?b?TQ?=", b"=?utf-8?q?abc=?= =?utf-8?b?TQ?=",
         b"\xff\xfe\xc0\x80\xed\xa0\x80", b"\xff" * LIMITS["rfc2047"],
+        b"Uin\xe4-\xf4\xa9\x96\x92", b"\xf8\x88\x80\x80\x80",
     ]
     return {"mime-reader": mime, "mime-parser": mime,
             "encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,

@@ -2544,10 +2544,10 @@ step_mailbox_marker (GMimeReader *reader)
 		if (priv->error)
 			return FALSE;
 
-		if (left < prefix_length)
+		if (!left)
 			break;
 
-		if (!midline && memcmp (start, prefix, prefix_length) == 0)
+		if (!midline && left >= prefix_length && memcmp (start, prefix, prefix_length) == 0)
 			goto found;
 
 		lf = memchr (start, '\n', left);

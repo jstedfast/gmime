@@ -1070,6 +1070,7 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 {
 	size_t outlen, outleft, rc, n = 0;
 	char *outbuf, *out;
+	const char *invalid;
 	
 	if (*outp == NULL) {
 		outleft = outlen = (inleft * 2) + 16;
@@ -1132,6 +1133,16 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 	}
 	
 	*outbuf = '\0';
+
+	/* Some iconv implementations accept UTF-8 beyond the Unicode range. */
+	invalid = out;
+	while (invalid < outbuf && !g_utf8_validate (invalid, outbuf - invalid, &invalid)) {
+		if (*invalid) {
+			out[invalid - out] = '?';
+			n++;
+		}
+		invalid++;
+	}
 	
 	*outlenp = outlen;
 	*outp = out;

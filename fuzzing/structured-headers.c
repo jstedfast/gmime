@@ -306,6 +306,14 @@ plausible_message_id (const char *id)
 	for (p = id; *p; p++)
 		if ((guchar) *p <= ' ' || *p == 127 || strchr ("\"<>()\\:", *p))
 			return FALSE;
+
+	/* NUL recovery can insert U+FFFD into an otherwise ASCII-only domain literal. */
+	if (at[1] == '[') {
+		for (p = at + 2; *p; p++)
+			if ((guchar) *p >= 128)
+				return FALSE;
+	}
+
 	return TRUE;
 }
 

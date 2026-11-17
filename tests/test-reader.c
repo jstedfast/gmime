@@ -2915,6 +2915,46 @@ test_consumed_line_state (void)
 	testsuite_check_passed ();
 }
 
+static void
+test_mailbox_pretext_line_state (void)
+{
+	static const guint widths[] = { 999, 1000, 1001, 1025 };
+	static const guint chunks[] = { 1, 2, 3, 7, 31, 4096 };
+	GString *wire = g_string_new (NULL);
+	GMimeFormat format;
+	guint width, chunk, dos;
+
+	testsuite_check ("Mailbox pretext retains final line diagnostics across short reads");
+	for (dos = 0; dos < 2; dos++) {
+		for (width = 0; width < G_N_ELEMENTS (widths); width++) {
+			g_string_set_size (wire, widths[width]);
+			memset (wire->str, 'X', wire->len);
+			wire->str[wire->len - 1] = '\n';
+			if (dos)
+				wire->str[wire->len - 2] = '\r';
+
+			for (format = GMIME_FORMAT_MBOX; format <= GMIME_FORMAT_MMDF; format++) {
+				for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+					ReaderInput *input = new_input (wire->str, wire->len, chunks[chunk]);
+					GMimeReader *reader = g_mime_reader_new_with_format (NULL, (GMimeStream *) input, format);
+					ConsumedLineState state = { reader, wire->str, wire->len, 0 };
+					GError *error = NULL;
+
+					g_mime_reader_set_compliance_logger (reader, check_consumed_line_issue, &state, NULL);
+					g_assert_false (g_mime_reader_read_message (reader, &error));
+					g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+					g_assert_cmpuint (state.oversized, ==, widths[width] > 1000 ? 1 : 0);
+					g_clear_error (&error);
+					g_object_unref (reader);
+					g_object_unref (input);
+				}
+			}
+		}
+	}
+	g_string_free (wire, TRUE);
+	testsuite_check_passed ();
+}
+
 static char *
 record_scan_trace (const char *data, gsize length, GMimeFormat format, gsize chunk, gboolean fast,
 		   gint backend, guint budget, GArray *issues)
@@ -3432,6 +3472,7 @@ main (int argc, char **argv)
 	test_repeated_content_ids ();
 	test_content_id_model_preservation ();
 	test_consumed_line_state ();
+	test_mailbox_pretext_line_state ();
 	test_scan_corpus (datadir);
 	test_generated_scans ();
 	test_content_input_slices ();
