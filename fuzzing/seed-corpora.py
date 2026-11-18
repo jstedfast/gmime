@@ -41,6 +41,7 @@ def structured_header_inputs():
         b"<@one,,@two:a@host>", b"@one,,@two.", b"<<a@b>>",
         b"Team: a@b, Nested: c@d;;", b"Team:;", b"a@b, @bad, c@d",
         b"=?utf-8?q?Name?= <a@b>", b'"Display \xc3\xa9" <a@b>', b"\xff@b",
+        b"y(=?ISO2022-JP?B?GyRA?Gyh9?= )",
         b"name=x", b'name="a\\"b"', b"name=x; name=y",
         b"name*0*=utf-8'en'%E2%; name*1*=82%AC",
         b"name*2147483648*=x", b"name*=utf-16le''a%00b%00",

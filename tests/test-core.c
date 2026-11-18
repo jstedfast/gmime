@@ -963,6 +963,31 @@ header_wire_string (GMimeHeader *header, GMimeFormatOptions *options)
 }
 
 static void
+test_stateful_charset_fallback (void)
+{
+	static const char *inputs[] = { "\033", "\033?" };
+	GLogLevelFlags fatal;
+	char *encoded, *decoded;
+	guint i, phrase;
+
+	fatal = g_log_set_always_fatal (G_LOG_FATAL_MASK | G_LOG_LEVEL_WARNING | G_LOG_LEVEL_CRITICAL);
+	for (phrase = 0; phrase < 2; phrase++) {
+		for (i = 0; i < G_N_ELEMENTS (inputs); i++) {
+			encoded = phrase ? g_mime_utils_header_encode_phrase (NULL, inputs[i], "iso-2022-jp") :
+				g_mime_utils_header_encode_text (NULL, inputs[i], "iso-2022-jp");
+			check (g_str_has_prefix (encoded, "=?utf-8?"),
+			       "literal escapes use UTF-8 when a stateful charset cannot round-trip");
+			decoded = phrase ? g_mime_utils_header_decode_phrase (NULL, encoded) :
+				g_mime_utils_header_decode_text (NULL, encoded);
+			check (!strcmp (decoded, inputs[i]), "stateful charset fallback preserves literal escapes");
+			g_free (decoded);
+			g_free (encoded);
+		}
+	}
+	g_log_set_always_fatal (fatal);
+}
+
+static void
 test_mixed_header_charsets (void)
 {
 	static const struct {
@@ -14581,6 +14606,7 @@ main (int argc, char **argv)
 
 	testsuite_start ("mixed header charset policy");
 	test_mixed_header_charsets ();
+	test_stateful_charset_fallback ();
 	testsuite_end ();
 
 	testsuite_start ("quoted and comment phrase groups");

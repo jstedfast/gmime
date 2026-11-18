@@ -2106,8 +2106,10 @@ _g_mime_utils_convert_from_utf8 (const char *text, gsize length, const char **ch
 		}
 	}
 
+	/* Literal escapes can make stateful output incomplete on the reverse conversion. */
 	if (error && !g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_NO_CONVERSION) &&
-	    !g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE))
+	    !g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_ILLEGAL_SEQUENCE) &&
+	    !(converted && g_error_matches (error, G_CONVERT_ERROR, G_CONVERT_ERROR_PARTIAL_INPUT)))
 		g_warning ("Cannot encode charset '%s': %s", *charset, error->message);
 
 	g_clear_error (&error);
