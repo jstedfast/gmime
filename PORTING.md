@@ -613,7 +613,7 @@ Review these defaults against application/security requirements:
 
 | Option | 4.0 default |
 |---|---|
-| Maximum raw length of one header | 16 KiB |
+| Maximum raw length of one header | 32 KiB |
 | Maximum MIME nesting depth | 1024 |
 | Maximum address-group nesting depth | 3 |
 | Addresses without a domain | Allowed |

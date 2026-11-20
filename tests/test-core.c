@@ -11170,8 +11170,8 @@ test_options (void)
 	check (g_mime_parser_options_get_max_mime_depth (options) == 1024, "default MIME depth");
 	check (g_mime_parser_options_get_max_address_group_depth (NULL) == 3, "implicit default address group depth");
 	check (g_mime_parser_options_get_max_mime_depth (NULL) == 1024, "implicit default MIME depth");
-	check (g_mime_parser_options_get_max_header_length (options) == 16 * 1024, "default header length");
-	check (g_mime_parser_options_get_max_header_length (NULL) == 16 * 1024, "implicit default header length");
+	check (g_mime_parser_options_get_max_header_length (options) == 32 * 1024, "default header length");
+	check (g_mime_parser_options_get_max_header_length (NULL) == 32 * 1024, "implicit default header length");
 	check (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (options), "default unquoted commas");
 	check (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (NULL), "implicit default unquoted commas");
 	check (g_mime_parser_options_get_allow_addresses_without_domain (options), "default local addresses");
@@ -11935,7 +11935,7 @@ test_header_lengths (void)
 	};
 	const int name_lengths[] = { 4095, 4096, 4097, 8192 };
 	char *text, *name, *value;
-	const int default_limit = 16 * 1024;
+	const int default_limit = 32 * 1024;
 	guint i, j;
 	int message, onebyte, delta, length;
 

@@ -441,9 +441,9 @@ g_mime_skip_word (const char **in, const char *end)
 static gboolean
 dotatom_parse (GString *str, const char **in, const char *end, const char *sentinels, gboolean replace_nuls)
 {
+	GString *domain = g_string_new (NULL);
 	const char *atom, *comment;
 	const char *inptr = *in;
-	GString *domain = g_string_new (NULL);
 
 	do {
 		if (inptr == end || (!is_atom (*inptr) && !(replace_nuls && *inptr == '\0')))
