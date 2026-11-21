@@ -27,6 +27,9 @@
 <!ENTITY GMimeTextPart SYSTEM "xml/gmime-text-part.xml">
 <!ENTITY gmime-text-converter SYSTEM "xml/gmime-text-converter.xml">
 <!ENTITY gmime-html-compliance SYSTEM "xml/gmime-html-compliance.xml">
+<!ENTITY gmime-rtf-compliance SYSTEM "xml/gmime-rtf-compliance.xml">
+<!ENTITY gmime-rtf-to-text SYSTEM "xml/gmime-rtf-to-text.xml">
+<!ENTITY gmime-rtf-to-html SYSTEM "xml/gmime-rtf-to-html.xml">
 <!ENTITY gmime-html-entity SYSTEM "xml/gmime-html-entity.xml">
 <!ENTITY gmime-html-token SYSTEM "xml/gmime-html-token.xml">
 <!ENTITY gmime-html-tokenizer SYSTEM "xml/gmime-html-tokenizer.xml">
@@ -216,6 +219,9 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-encodings;
     &gmime-text-converter;
     &gmime-html-compliance;
+    &gmime-rtf-compliance;
+    &gmime-rtf-to-text;
+    &gmime-rtf-to-html;
     &gmime-html-entity;
     &gmime-html-token;
     &gmime-html-tokenizer;

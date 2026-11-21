@@ -33,7 +33,8 @@ a general-purpose sanitizer, and anonymization is not a guarantee that all
 sensitive information is removed.
 
 Low-level TNEF attributes, MAPI properties, embedded readers/writers, and
-compressed-RTF codecs are supported. The APIs are synchronous.
+compressed-RTF codecs are supported. Standalone RTF converters render
+uncompressed documents as plain text or HTML. The APIs are synchronous.
 Authentication-Results models represent header claims, not authentication
 performed by GMime.
 

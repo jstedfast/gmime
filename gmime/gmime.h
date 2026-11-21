@@ -45,6 +45,9 @@
 #include <gmime/gmime-text-part.h>
 #include <gmime/gmime-text-converter.h>
 #include <gmime/gmime-html-compliance.h>
+#include <gmime/gmime-rtf-compliance.h>
+#include <gmime/gmime-rtf-to-text.h>
+#include <gmime/gmime-rtf-to-html.h>
 #include <gmime/gmime-html-entity.h>
 #include <gmime/gmime-html-token.h>
 #include <gmime/gmime-html-tokenizer.h>

@@ -975,6 +975,15 @@ HTML-to-HTML conversion and tag callbacks are not a general-purpose sanitizer.
 Choose application-specific filtering, URI, and rendering policies for
 untrusted content.
 
+`g_mime_rtf_to_text_new()` and `g_mime_rtf_to_html_new()` accept uncompressed
+RTF. They default to Latin-1 stream input, mapping each byte one-to-one before
+interpreting document and font code pages. String inputs are still UTF-8.
+Both converters expose limits on saved group states, fonts and colors, an
+optional per-document compliance logger, and callbacks for visible Outlook
+attachment placeholders. Plain text uses the RTF rendition of encapsulated
+HTML; when HTML extraction is enabled, treat the resulting HTML as untrusted.
+For a TNEF compressed-RTF property, decompress it before conversion.
+
 ### Low-level TNEF
 
 `GMimeTnefReader` and `GMimeTnefPropertyReader` expose forward-only attributes,

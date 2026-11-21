@@ -44,6 +44,8 @@ ComplianceIssueFunc
   .issue ctype="const GMimeComplianceIssue*"
 TnefComplianceLogger
   .issue ctype="const GMimeTnefComplianceIssue*"
+RtfComplianceLogger
+  .issue ctype="const GMimeRtfComplianceIssue*"
 
 // Reparenting
 Stream

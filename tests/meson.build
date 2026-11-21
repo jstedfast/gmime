@@ -25,6 +25,7 @@ parser_model_test_dep = declare_dependency(
 
 normal_tests = [
   'test-tnef',
+  'test-rtf-tokenizer', 'test-rtf-interpreter', 'test-rtf-text', 'test-rtf-html',
   'test-text-converters',
   'test-html-tokenizer', 'test-html-output', 'test-html-converters',
   'test-stream-block', 'test-substreams', 'test-stream-close',
@@ -55,7 +56,7 @@ test_programs = {
 }
 foreach name : normal_tests
   sources = [name + '.c']
-  test_dep = name == 'test-parser-model' ? parser_model_test_dep : gmime_dep
+  test_dep = name in ['test-parser-model', 'test-rtf-tokenizer', 'test-rtf-interpreter'] ? parser_model_test_dep : gmime_dep
   if name == 'test-core'
     sources += ['../gmime/gmime-events.c']
   elif name == 'test-addresses'
