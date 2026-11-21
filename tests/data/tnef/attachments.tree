@@ -1,7 +1,8 @@
+from:JGERLAND@SYNACOR.COM
 multipart/mixed
   multipart/related; type=multipart/alternative
     multipart/alternative
       text/plain; charset=utf-8 116 45d379b0d3c0f2c6abaa3956d15348fa8e3e4494bb0eba44cfd88dc3ff474b8f
       text/html; charset=utf-8 703 f3733d016dbe76dc07deea89e56fd4550dacbdaa748c2a454de97e2173f7e842
-    image/jpeg; name=zappa_av1.jpg; disposition=inline; filename=zappa_av1.jpg; size=6548; cid=generated-0@snapshot 2937 bea844f30e0fcc20fad419a0d11032a6465da93c1da185a1196949955994409a
-  application/octet-stream; name=bookmark.htm; disposition=attachment; filename=bookmark.htm; size=85902 85805 1e08d6e23c75ff80ac992eebc24c2943c7843b7dfee235966b37de5eb4362599
+    image/jpeg; name=zappa_av1.jpg; disposition=inline; filename=zappa_av1.jpg; size=6548; modification-date=2003-04-07T10:35:38Z; cid=generated-0@snapshot; encoding=base64 2937 bea844f30e0fcc20fad419a0d11032a6465da93c1da185a1196949955994409a
+  application/octet-stream; name=bookmark.htm; disposition=attachment; filename=bookmark.htm; size=85902; modification-date=2003-06-17T10:22:41Z; encoding=base64 85805 1e08d6e23c75ff80ac992eebc24c2943c7843b7dfee235966b37de5eb4362599

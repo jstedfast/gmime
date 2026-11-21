@@ -62,6 +62,12 @@ test_render (void)
 	check (base, "{\\rtf1{\\field{\\*\\fldinst HYPERLINK \"https://example.test/?a&b\"}{\\fldrslt link}}"
 	       "{\\field{\\*\\fldinst HYPERLINK \"file:///x\"}{\\fldrslt plain}}}",
 	       "<div><a href=\"https://example.test/?a&amp;b\">link</a>plain</div>\n");
+	/* Nested field results must close and reopen anchors, never nest them. */
+	check (base, "{\\rtf1{\\field{\\*\\fldinst HYPERLINK \"http://a/\"}{\\fldrslt a"
+	       "{\\field{\\*\\fldinst HYPERLINK \"http://b/\"}{\\fldrslt b}}c}}}",
+	       "<div><a href=\"http://a/\">a</a><a href=\"http://b/\">b</a><a href=\"http://a/\">c</a></div>\n");
+	check (base, "{\\rtf1 a\\row b}", "<div>a<table><tr></tr>\n</table>\nb</div>\n");
+	check (base, "{\\rtf1\\row\\cell\\row}", "<table><tr></tr>\n<tr><td></td></tr>\n</table>\n");
 	g_object_unref (base);
 }
 

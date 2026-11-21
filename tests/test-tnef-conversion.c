@@ -390,6 +390,189 @@ test_rtf_callbacks (void)
 
 static const char *corpus_directory;
 
+typedef struct {
+	const char *reference, *id, *base, *location;
+	gboolean rendered, related;
+} InlineCase;
+
+static void
+test_html_reference (gconstpointer user_data)
+{
+	const InlineCase *example = user_data;
+	char *html = g_strdup_printf ("<html><body><img src=\"%s\"></body></html>", example->reference);
+	GMimeTnefPropertyWriter *properties;
+	GMimeTnefConversionResult *result;
+	GMimeEntity *body, *part;
+	Fixture fixture;
+
+	start (&fixture);
+	properties = g_mime_tnef_writer_open_property_writer (fixture.writer, ATTR (MAPI_PROPERTIES), NULL);
+	binary (properties, TAG (BODY_HTML_B), html, strlen (html));
+	end_props (properties);
+	g_free (html);
+
+	properties = attachment (&fixture, 1, "picture.gif");
+	string (properties, TAG (ATTACH_MIME_TAG_W), "image/gif");
+	if (example->id)
+		string (properties, TAG (ATTACH_CONTENT_ID_W), example->id);
+	if (example->base)
+		string (properties, TAG (ATTACH_CONTENT_BASE_W), example->base);
+	if (example->location)
+		string (properties, TAG (ATTACH_CONTENT_LOCATION_W), example->location);
+	integer (properties, TAG (ATTACH_FLAGS), example->rendered ? 4 : 0);
+	binary (properties, TAG (ATTACH_DATA_BIN), "GIF89a", 6);
+	end_props (properties);
+
+	result = finish (&fixture, NULL);
+	body = g_mime_message_get_mime_part (g_mime_tnef_conversion_result_get_message (result));
+	g_assert_true (g_mime_content_type_is_type (g_mime_entity_get_content_type (body), "multipart",
+						   example->related ? "related" : "mixed"));
+	g_assert_cmpint (g_mime_multipart_get_count (GMIME_MULTIPART (body)), ==, 2);
+	part = g_mime_multipart_get_part (GMIME_MULTIPART (body), 1);
+	g_assert_cmpstr (g_mime_entity_get_disposition (part), ==, example->related ? "inline" : "attachment");
+	assert_content (part, "GIF89a", 6);
+	g_mime_tnef_conversion_result_unref (result);
+}
+
+static void
+test_sender_headers (void)
+{
+	static const struct {
+		const char *represented, *sender, *smtp, *from, *sender_header;
+	} cases[] = {
+		{ NULL, NULL, NULL, NULL, NULL },
+		{ "boss@example.org", "assistant@example.org", NULL, "Boss <boss@example.org>", "Assistant <assistant@example.org>" },
+		{ "alice@example.org", "ALICE@example.org", NULL, "Boss <alice@example.org>", NULL },
+		{ NULL, "/O=EXAMPLE/CN=ASSISTANT", "assistant@example.org", "Assistant <assistant@example.org>", NULL }
+	};
+
+	for (guint index = 0; index < G_N_ELEMENTS (cases); index++) {
+		Fixture fixture;
+		GMimeTnefPropertyWriter *properties;
+		GMimeTnefConversionResult *result;
+		GMimeEntity *message;
+
+		start (&fixture);
+		properties = g_mime_tnef_writer_open_property_writer (fixture.writer, ATTR (MAPI_PROPERTIES), NULL);
+		string (properties, TAG (BODY_W), "Hello");
+		if (cases[index].represented) {
+			string (properties, TAG (SENT_REPRESENTING_NAME_W), "Boss");
+			string (properties, TAG (SENT_REPRESENTING_ADDRTYPE_W), "SMTP");
+			string (properties, TAG (SENT_REPRESENTING_EMAIL_ADDRESS_W), cases[index].represented);
+		}
+		if (cases[index].sender) {
+			string (properties, TAG (SENDER_NAME_W), "Assistant");
+			string (properties, TAG (SENDER_ADDRTYPE_W), cases[index].smtp ? "EX" : "SMTP");
+			string (properties, TAG (SENDER_EMAIL_ADDRESS_W), cases[index].sender);
+		}
+		if (cases[index].smtp)
+			string (properties, TAG (SENDER_SMTP_ADDRESS_W), cases[index].smtp);
+		end_props (properties);
+
+		result = finish (&fixture, NULL);
+		message = GMIME_ENTITY (g_mime_tnef_conversion_result_get_message (result));
+		g_assert_cmpstr (g_mime_entity_get_header (message, "From"), ==, cases[index].from);
+		g_assert_cmpstr (g_mime_entity_get_header (message, "Sender"), ==, cases[index].sender_header);
+		g_assert_null (g_mime_entity_get_header (message, "Date"));
+		g_assert_null (g_mime_entity_get_header (message, "Subject"));
+		g_assert_null (g_mime_entity_get_header (message, "Message-Id"));
+		g_mime_tnef_conversion_result_unref (result);
+	}
+}
+
+static void
+test_body_precedence (void)
+{
+	/* MS-OXBBODY 2.1.3.1: native format takes precedence; when that body
+	 * is missing, choose among the available in-sync representations. */
+	static const struct {
+		int native;
+		gboolean sync, plain, html, expect_rtf;
+	} cases[] = {
+		{ 0, FALSE, TRUE, FALSE, FALSE }, { 0, FALSE, TRUE, TRUE, FALSE },
+		{ 0, TRUE, TRUE, TRUE, TRUE }, { 2, FALSE, TRUE, TRUE, TRUE },
+		{ 1, FALSE, FALSE, FALSE, TRUE }, { 1, TRUE, TRUE, FALSE, FALSE },
+		{ 3, TRUE, TRUE, TRUE, FALSE }
+	};
+	static const char html[] = "<p>HTML property</p>";
+
+	for (guint index = 0; index < G_N_ELEMENTS (cases); index++) {
+		Fixture fixture;
+		GMimeTnefPropertyWriter *properties;
+		GMimeStream *rtf;
+		GMimeTnefConversionResult *result;
+		GMimeEntity *body;
+
+		start (&fixture);
+		properties = g_mime_tnef_writer_open_property_writer (fixture.writer, ATTR (MAPI_PROPERTIES), NULL);
+		if (cases[index].plain)
+			string (properties, TAG (BODY_W), "Plain property");
+		if (cases[index].html)
+			binary (properties, TAG (BODY_HTML_B), html, sizeof html - 1);
+		integer (properties, TAG (NATIVE_BODY), cases[index].native);
+		g_assert_true (g_mime_tnef_property_writer_write_property_tag (properties, TAG (RTF_IN_SYNC), NULL));
+		g_assert_true (g_mime_tnef_property_writer_write_value_boolean (properties, cases[index].sync, NULL));
+		g_assert_true (g_mime_tnef_property_writer_write_property_tag (properties, TAG (RTF_COMPRESSED), NULL));
+		rtf = g_mime_tnef_property_writer_open_rtf_compressed_stream (properties, index % 2, NULL);
+		g_assert_cmpint (g_mime_stream_write_string (rtf, "{\\rtf1\\ansi RTF property}"), >, 0);
+		g_assert_cmpint (g_mime_stream_close (rtf), ==, 0);
+		g_object_unref (rtf);
+		end_props (properties);
+
+		result = finish (&fixture, NULL);
+		g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, 0);
+		body = g_mime_message_get_mime_part (g_mime_tnef_conversion_result_get_message (result));
+		if (cases[index].html || cases[index].expect_rtf) {
+			GMimeMultipart *alternative = GMIME_MULTIPART (body);
+			g_assert_true (GMIME_IS_MULTIPART_ALTERNATIVE (alternative));
+			g_assert_cmpuint (g_mime_multipart_get_count (alternative), ==, 2);
+			for (int part = 0; part < 2; part++) {
+				GMimeEntity *entity = g_mime_multipart_get_part (alternative, part);
+				char *value = g_mime_text_part_get_text (GMIME_TEXT_PART (entity));
+				g_assert_true (g_mime_content_type_is_type (g_mime_entity_get_content_type (entity),
+									    "text", part ? "html" : "plain"));
+				if (cases[index].expect_rtf)
+					g_assert_nonnull (strstr (value, "RTF property"));
+				else
+					g_assert_cmpstr (value, ==, part ? html : "Plain property");
+				g_free (value);
+			}
+		} else {
+			assert_text (body, "Plain property");
+		}
+		g_mime_tnef_conversion_result_unref (result);
+	}
+}
+
+static void
+test_attachment_media_types (void)
+{
+	static const char *const types[] = { "text/plain", "multipart/mixed; boundary=x", "message/rfc822",
+		"message/partial", "application/applefile", "application/mac-binhex40", "not a mime type" };
+	Fixture fixture;
+	GMimeTnefConversionResult *result;
+	GMimeMultipart *mixed;
+	start (&fixture);
+	for (guint index = 0; index < G_N_ELEMENTS (types); index++) {
+		GMimeTnefPropertyWriter *properties = attachment (&fixture, 1, "file.bin");
+		string (properties, TAG (ATTACH_MIME_TAG_W), types[index]);
+		binary (properties, TAG (ATTACH_DATA_BIN), "ABC", 3);
+		end_props (properties);
+	}
+	result = finish (&fixture, NULL);
+	mixed = GMIME_MULTIPART (g_mime_message_get_mime_part (g_mime_tnef_conversion_result_get_message (result)));
+	g_assert_cmpuint (g_mime_multipart_get_count (mixed), ==, G_N_ELEMENTS (types));
+	for (guint index = 0; index < G_N_ELEMENTS (types); index++) {
+		GMimeEntity *entity = g_mime_multipart_get_part (mixed, index);
+		char *type = g_mime_content_type_get_mime_type (g_mime_entity_get_content_type (entity));
+		g_assert_cmpstr (type, ==, index ? "application/octet-stream" : "text/plain");
+		g_assert_cmpstr (g_mime_part_get_filename (GMIME_PART (entity)), ==, "file.bin");
+		assert_content (entity, "ABC", 3);
+		g_free (type);
+	}
+	g_mime_tnef_conversion_result_unref (result);
+}
+
 static int
 compare_property_lines (gconstpointer left, gconstpointer right)
 {
@@ -428,8 +611,71 @@ normalize_calendar (GByteArray *bytes)
 	return calendar;
 }
 
-/* Boundaries and header folding are library-specific. Compare the ordered
- * MIME tree and decoded payloads, with text in canonical CRLF form. */
+static void
+append_snapshot_date (GString *description, const char *value)
+{
+	GDateTime *date = g_mime_utils_header_decode_date (value);
+	g_assert_nonnull (date);
+	GDateTime *utc = g_date_time_to_utc (date);
+	char *formatted = g_date_time_format (utc, "%Y-%m-%dT%H:%M:%SZ");
+
+	g_string_append (description, formatted);
+	g_free (formatted);
+	g_date_time_unref (utc);
+	g_date_time_unref (date);
+}
+
+static void
+describe_headers (GString *description, GMimeMessage *message)
+{
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	GPtrArray *lines = g_ptr_array_new_with_free_func (g_free);
+
+	for (int index = 0; index < g_mime_header_list_get_count (headers); index++) {
+		GMimeHeader *header = g_mime_header_list_get_header_at (headers, index);
+		const char *value = g_mime_header_get_value (header);
+		char *field = g_ascii_strdown (g_mime_header_get_name (header), -1);
+		/* GMime spells out these defaults; MimeKit leaves them implicit. */
+		if ((!strcmp (field, "mime-version") && !g_strcmp0 (value, "1.0")) ||
+		    ((!strcmp (field, "priority") || !strcmp (field, "importance")) && !g_strcmp0 (value, "normal"))) {
+			g_free (field);
+			continue;
+		}
+		GString *line = g_string_new (field);
+		g_string_append_c (line, ':');
+		if (!strcmp (field, "date")) {
+			append_snapshot_date (line, value);
+		} else if (value) {
+			/* Ignore differences in header folding and horizontal whitespace. */
+			gboolean space = FALSE;
+			for (; *value; value++) {
+				if (strchr (" \t\r\n", *value)) {
+					space = TRUE;
+				} else {
+					if (space && line->len > strlen (field) + 1)
+						g_string_append_c (line, ' ');
+					g_string_append_c (line, *value);
+					space = FALSE;
+				}
+			}
+		}
+		g_free (field);
+		/* Avoid duplicating long transport diagnostics verbatim in fixtures. */
+		if (line->len > 200) {
+			char *digest = g_compute_checksum_for_string (G_CHECKSUM_SHA256, line->str, line->len);
+			char *separator = strchr (line->str, ':');
+			g_string_truncate (line, separator - line->str + 1);
+			g_string_append_printf (line, "sha256=%s", digest);
+			g_free (digest);
+		}
+		g_ptr_array_add (lines, g_string_free (line, FALSE));
+	}
+	g_ptr_array_sort (lines, compare_property_lines);
+	for (guint index = 0; index < lines->len; index++)
+		g_string_append_printf (description, "%s\n", (char *) lines->pdata[index]);
+	g_ptr_array_unref (lines);
+}
+
 static void
 describe_entity (GString *description, GMimeEntity *entity, guint depth, const char *generated_id)
 {
@@ -479,8 +725,22 @@ describe_entity (GString *description, GMimeEntity *entity, guint depth, const c
 			g_string_append_printf (description, "; filename=%s", filename);
 		if (size)
 			g_string_append_printf (description, "; size=%s", size);
+		static const char *const date_names[] = { "creation-date", "modification-date", "read-date" };
+		for (guint index = 0; index < G_N_ELEMENTS (date_names); index++) {
+			const char *value = g_mime_entity_get_content_disposition_parameter (entity, date_names[index]);
+			if (value) {
+				g_string_append_printf (description, "; %s=", date_names[index]);
+				append_snapshot_date (description, value);
+			}
+		}
 		if (cid)
 			g_string_append_printf (description, "; cid=%s", g_strcmp0 (cid, generated_id) ? cid : "generated-0@snapshot");
+		const char *encoding = g_mime_entity_get_header (entity, "Content-Transfer-Encoding");
+		/* GMime explicitly chooses a transport encoding for generated text;
+		 * MimeKit defers that choice until serialization. */
+		if (encoding && (!GMIME_IS_TEXT_PART (entity) ||
+		    g_mime_content_type_is_type (g_mime_entity_get_content_type (entity), "text", "calendar")))
+			g_string_append_printf (description, "; encoding=%s", encoding);
 
 		if (GMIME_IS_TEXT_PART (entity)) {
 			GMimeFilter *filter = g_mime_filter_unix2dos_new (FALSE);
@@ -538,6 +798,7 @@ test_corpus_conversion (gconstpointer user_data)
 	g_assert_no_error (error);
 	g_object_unref (source);
 	body = g_mime_message_get_mime_part (g_mime_tnef_conversion_result_get_message (result));
+	describe_headers (actual, g_mime_tnef_conversion_result_get_message (result));
 	if (!strcmp (name, "attachments") || !strcmp (name, "christmas")) {
 		GMimeEntity *related = g_mime_multipart_get_part (GMIME_MULTIPART (body), 0);
 		GMimeEntity *image = g_mime_multipart_get_part (GMIME_MULTIPART (related), 1);
@@ -559,6 +820,16 @@ test_corpus_conversion (gconstpointer user_data)
 int
 main (int argc, char **argv)
 {
+	static const InlineCase references[] = {
+		{ "CID:Image%31@Example.com", "<image1@example.com>", NULL, NULL, TRUE, TRUE },
+		{ "cid:pic@host", "\xc2\xa0pic@host\xc2\xa0", NULL, NULL, TRUE, FALSE },
+		{ "cid:%C2%A0pic@host%C2%A0", "pic@host", NULL, NULL, TRUE, FALSE },
+		{ "cid:%C2%A0pic@host%C2%A0", "\xc2\xa0pic@host\xc2\xa0", NULL, NULL, TRUE, TRUE },
+		{ "cid:pic@host", "pic@host", NULL, NULL, FALSE, FALSE },
+		{ "cid:pic@host", NULL, NULL, NULL, TRUE, FALSE },
+		{ "http://example.org/i/logo.gif", NULL, NULL, "http://example.org/i/logo.gif", TRUE, TRUE },
+		{ "http://example.org/i/logo.gif", NULL, "http://example.org/i/", "logo.gif", TRUE, TRUE }
+	};
 	static const char *const corpus[] = {
 		"attachments", "body", "christmas", "data-before-name", "garbage-at-end", "long-filename", "MAPI_ATTACH_DATA_OBJ",
 		"MAPI_OBJECT", "missing-filenames", "multi-value-attribute", "one-file", "panic", "rtf",
@@ -568,6 +839,14 @@ main (int argc, char **argv)
 	int result;
 	g_test_init (&argc, &argv, NULL);
 	g_mime_init ();
+	g_test_add_func ("/tnef/conversion/sender-headers", test_sender_headers);
+	g_test_add_func ("/tnef/conversion/body-precedence", test_body_precedence);
+	g_test_add_func ("/tnef/conversion/attachment-media-types", test_attachment_media_types);
+	for (index = 0; index < G_N_ELEMENTS (references); index++) {
+		char *path = g_strdup_printf ("/tnef/conversion/html-reference/%u", index);
+		g_test_add_data_func (path, references + index, test_html_reference);
+		g_free (path);
+	}
 	corpus_directory = "data/tnef";
 	for (int arg = 1; arg < argc; arg++) {
 		if (argv[arg][0] != '-')

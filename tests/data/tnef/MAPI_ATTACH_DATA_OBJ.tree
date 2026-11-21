@@ -1,7 +1,10 @@
+date:2002-08-20T11:39:48Z
+message-id:<BBDA395B19A3D3119A0E0000F8D02CA902AEBCE8@ODIN>
+subject:Bodø-damer på vei!
 multipart/mixed
   multipart/alternative
     text/plain; charset=utf-8 2028 07f0642e707c9222bceb6559f5c0a2ebe76633bcc059b8fbc2536d0d9d60b593
     text/html; charset=utf-8 3429 4883773ac357a7ac9c4dc871168e74538ba1e1c536fd852a2cc60b50bac45a07
-  application/octet-stream; name=VIA Nytt 1402.doc; disposition=attachment; filename=VIA_Nytt_1402.doc; size=62030 61952 9955935516d1407e0f833d91242f7416c68a66eae69e73d855ae17724e04fe60
-  application/octet-stream; name=VIA Nytt 1402.pdf; disposition=attachment; filename=VIA_Nytt_1402.pdf; size=213763 213685 968c9c4a8a6a02ff9a6c4e2621d5f5d512593a30d57379f704c4274ead48d72e
-  application/octet-stream; name=VIA Nytt 14021.htm; disposition=attachment; filename=VIA_Nytt_14021.htm; size=68997 68919 c2ee04f99e59079afa8661913dbd8b9002ea005c7540aaec85a67ed113e9a7b8
+  application/octet-stream; name=VIA Nytt 1402.doc; disposition=attachment; filename=VIA_Nytt_1402.doc; size=62030; creation-date=2002-07-26T08:47:42Z; modification-date=2002-08-20T11:27:58Z; encoding=base64 61952 9955935516d1407e0f833d91242f7416c68a66eae69e73d855ae17724e04fe60
+  application/octet-stream; name=VIA Nytt 1402.pdf; disposition=attachment; filename=VIA_Nytt_1402.pdf; size=213763; creation-date=2002-08-20T07:57:50Z; modification-date=2002-08-20T11:28:01Z; encoding=base64 213685 968c9c4a8a6a02ff9a6c4e2621d5f5d512593a30d57379f704c4274ead48d72e
+  application/octet-stream; name=VIA Nytt 14021.htm; disposition=attachment; filename=VIA_Nytt_14021.htm; size=68997; creation-date=2002-08-20T10:41:01Z; modification-date=2002-08-20T11:28:05Z; encoding=base64 68919 c2ee04f99e59079afa8661913dbd8b9002ea005c7540aaec85a67ed113e9a7b8

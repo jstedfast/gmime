@@ -1,7 +1,9 @@
+from:ADAM@PTM.COM
+message-id:<NEBBJICMOKLANKBNHOELOEENCCAA.Adam@PTM.com>
 multipart/mixed
   multipart/alternative
     text/plain; charset=utf-8 6 60958ccac3e5dfa6ae74aa4f8d6206fd33a5fc9546b8abaad65e3f1c4023c5bf
     text/html; charset=utf-8 81 023cd39d37e22ea750af132575f89ad4b9d3193727c2037210aa75617cd9f237
-  application/octet-stream; name=AUTOEXEC.BAT; disposition=attachment; filename=AUTOEXEC.BAT; size=3605 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-  application/octet-stream; name=CONFIG.SYS; disposition=attachment; filename=CONFIG.SYS; size=3599 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
-  application/octet-stream; name=boot.ini; disposition=attachment; filename=boot.ini; size=3882 289 a815374e31481bbb939d99e73ecfe1de7914363ecd5c670c60a9022474251bce
+  application/octet-stream; name=AUTOEXEC.BAT; disposition=attachment; filename=AUTOEXEC.BAT; size=3605; modification-date=2000-03-24T09:30:09Z; encoding=base64 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  application/octet-stream; name=CONFIG.SYS; disposition=attachment; filename=CONFIG.SYS; size=3599; modification-date=2000-03-24T09:30:09Z; encoding=base64 0 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+  application/octet-stream; name=boot.ini; disposition=attachment; filename=boot.ini; size=3882; modification-date=2000-03-24T09:26:59Z; encoding=base64 289 a815374e31481bbb939d99e73ecfe1de7914363ecd5c670c60a9022474251bce

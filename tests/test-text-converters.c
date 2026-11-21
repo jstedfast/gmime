@@ -230,6 +230,10 @@ test_unflow (void)
 	check_conversion (converter, "last ", "last");
 	check_conversion (converter, ">  ", "");
 	check_conversion (converter, " \n", "\n");
+	/* MimeKit issue 1130: delsp across a paragraph, then a soft line at EOF. */
+	check_conversion (converter, "We had access, but now there is \r\n"
+			  "a message at the bottom of the \r\nrecord\r\n\r\nURL:\r\nhttps://example.com/ ",
+			  "We had access, but now there isa message at the bottom of therecord\n\nURL:\nhttps://example.com/");
 	g_object_unref (converter);
 }
 

@@ -1,3 +1,10 @@
+acceptlanguage:de-DE, en-US
+date:2017-03-07T12:04:24Z
+from:Administrator <Administrator@exchange.local>
+message-id:<011fdf9d1a754260a583e5c6c89061d3@WIN-N56837RFTER.exchange.local>
+subject:example
+x-ms-has-attach:yes
+x-originating-ip:[192.168.122.1]
 multipart/mixed
   text/html; charset=us-ascii 1226 2b1faef9cdcfcf896e3aaa8b93a33de5285a35e86697397df4b5aa58ad81209f
-  application/octet-stream; name=example.dat; disposition=attachment; filename=example.dat 1024 b188960490adc65828dc99f6183137bd9951725ed739982920c9814bc842ccb5
+  application/octet-stream; name=example.dat; disposition=attachment; filename=example.dat; creation-date=2017-03-07T12:04:23Z; modification-date=2017-03-07T12:04:23Z; encoding=base64 1024 b188960490adc65828dc99f6183137bd9951725ed739982920c9814bc842ccb5

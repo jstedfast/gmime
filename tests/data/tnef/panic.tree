@@ -1,5 +1,27 @@
+acceptlanguage:en-US
+authentication-results:spf=none (sender IP is ) smtp.mailfrom=anders.waglund@bifirm.com;
+date:2016-01-12T13:14:55Z
+from:Anders Wåglund <anders.waglund@bifirm.com>
+in-reply-to:<HE1PR07MB129059B644E4AB8B16EB5EB2E1E10@HE1PR07MB1290.eurprd07.prod.outlook.com>
+message-id:<VI1PR07MB1486473A0B5207810BB98E10EDCA0@VI1PR07MB1486.eurprd07.prod.outlook.com>
+received-spf:None (protection.outlook.com: bifirm.com does not designate permitted sender hosts)
+references:<HE1PR07MB129059B644E4AB8B16EB5EB2E1E10@HE1PR07MB1290.eurprd07.prod.outlook.com>
+spamdiagnosticmetadata:NSPM
+spamdiagnosticoutput:1:23
+subject:Fw: VIKTIGT: Vill att någon av er gör följande ändringar i https://baka.spiderads.eu/
+x-exchange-antispam-report-cfa-test:BCL:0;PCL:0;RULEID:(102615245)(601004)(2401047)(520078)(5005006)(8121501046)(3002001)(10201501046);SRVR:VI1PR07MB1488;BCL:0;PCL:0;RULEID:;SRVR:VI1PR07MB1488;
+x-exchange-antispam-report-test:UriScan:;
+x-forefront-antispam-report:sha256=03d6ecd6a5d5c64af131ec38db1628f5cebab73220b32f504e248f6bb9e572ed
+x-forefront-prvs:081904387B
+x-ld-processed:997f5ba7-7813-4620-8039-81ccc9df5981,ExtAddr
+x-microsoft-antispam-prvs:<VI1PR07MB14884C6EFB4D004D70984D34EDCA0@VI1PR07MB1488.eurprd07.prod.outlook.com>
+x-microsoft-antispam:UriScan:;BCL:0;PCL:0;RULEID:;SRVR:VI1PR07MB1488;
+x-microsoft-exchange-diagnostics:sha256=1068b5c900aa77a94a0404a9eab4c7860df699bd21b37d249f7ebcfd7a7c278f
+x-ms-has-attach:yes
+x-ms-office365-filtering-correlation-id:88640e74-b904-4a8f-57f3-08d31b525d8d
+x-originating-ip:[82.99.58.5]
 multipart/related; type=text/html
   text/html; charset=iso-8859-1 10561 4827810231cf06061e129e0082f7e922137bc75409915d95a1d64907fa0bae00
-  image/jpeg; name=image001.jpg; disposition=inline; filename=image001.jpg; cid=image001.jpg@01D139A1.76DB0C80 11250 ee9bec688ebc6b535fa1c06b3c7f388510f501509a2d6ae17e964a3eda92f8db
-  image/jpeg; name=image002.jpg; disposition=inline; filename=image002.jpg; cid=image002.jpg@01D139A1.76DB0C80 9583 a497dd22b4a1f2de15da0929f17429edb502f94d767a0fa2ce67da35162cc62f
-  image/png; name=image003.png; disposition=inline; filename=image003.png; cid=image003.png@01D139A1.76DB0C80 7147 7c65885b27f3cd66501fdb7a4711c22ba8b6f64e51ea6c2a3ec9db6fa968a7b8
+  image/jpeg; name=image001.jpg; disposition=inline; filename=image001.jpg; creation-date=2015-12-18T13:38:48Z; modification-date=2015-12-18T13:38:48Z; cid=image001.jpg@01D139A1.76DB0C80; encoding=base64 11250 ee9bec688ebc6b535fa1c06b3c7f388510f501509a2d6ae17e964a3eda92f8db
+  image/jpeg; name=image002.jpg; disposition=inline; filename=image002.jpg; creation-date=2015-12-18T13:38:49Z; modification-date=2015-12-18T13:38:49Z; cid=image002.jpg@01D139A1.76DB0C80; encoding=base64 9583 a497dd22b4a1f2de15da0929f17429edb502f94d767a0fa2ce67da35162cc62f
+  image/png; name=image003.png; disposition=inline; filename=image003.png; creation-date=2015-12-18T13:38:49Z; modification-date=2015-12-18T13:38:49Z; cid=image003.png@01D139A1.76DB0C80; encoding=base64 7147 7c65885b27f3cd66501fdb7a4711c22ba8b6f64e51ea6c2a3ec9db6fa968a7b8

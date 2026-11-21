@@ -39,7 +39,7 @@ typedef struct {
 } CalWriter;
 
 typedef struct {
-	guint16 year, month, weekday, day, hour, minute, second;
+	guint16 year, month, weekday, day, hour, minute, second, milliseconds;
 } CalTransition;
 
 typedef struct {

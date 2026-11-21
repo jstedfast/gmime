@@ -33,7 +33,7 @@ static CalTransition
 read_transition (const guint8 *data)
 {
 	CalTransition transition = { U16 (data), U16 (data + 2), U16 (data + 4), U16 (data + 6),
-			    U16 (data + 8), U16 (data + 10), U16 (data + 12) };
+			    U16 (data + 8), U16 (data + 10), U16 (data + 12), U16 (data + 14) };
 
 	return transition;
 }
@@ -119,7 +119,8 @@ cal_zone_parse (GBytes *bytes, gboolean definition, const char *fallback)
 
 	if (!z->std_date.month || !z->dst_date.month) {
 		/* A missing transition cannot be inferred from its partner. */
-		z->dst_date.month = 0;
+		CalTransition fixed = { 0 };
+		z->std_date = z->dst_date = fixed;
 		z->daylight = z->standard;
 	} else if (!valid_transition (z->std_date) || !valid_transition (z->dst_date)) {
 		g_free (id);

@@ -23,6 +23,46 @@
 #include <string.h>
 
 static void
+test_overlong_control_words (void)
+{
+	char *word = g_strnfill (1000, 'a'), *digits = g_strnfill (1000, '9');
+	char *input = g_strconcat ("\\", word, "123 \\fs", digits, " \\fs-", digits, " x", NULL);
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer (input, strlen (input));
+	GMimeRtfTokenizer *lexer = _g_mime_rtf_tokenizer_new (stream);
+	GMimeRtfToken token;
+	GError *error = NULL;
+
+	for (int i = 0; i < 3; i++) {
+		g_assert_true (_g_mime_rtf_tokenizer_next (lexer, &token, &error));
+		g_assert_no_error (error);
+		g_assert_cmpint (token.kind, ==, GMIME_RTF_CONTROL_WORD);
+		g_assert_true (token.has_parameter);
+		if (!i) {
+			g_assert_true (token.keyword_truncated);
+			g_assert_cmpstr (token.keyword, ==, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+			g_assert_cmpint (token.parameter, ==, 123);
+		} else {
+			g_assert_cmpstr (token.keyword, ==, "fs");
+			g_assert_true (token.parameter_invalid);
+			g_assert_cmpint (token.parameter, ==, i == 1 ? G_MAXINT32 : G_MININT32);
+		}
+	}
+	g_assert_true (_g_mime_rtf_tokenizer_next (lexer, &token, &error));
+	g_assert_cmpint (token.kind, ==, GMIME_RTF_TEXT);
+	g_assert_cmpmem (token.text, token.length, "x", 1);
+	for (int i = 0; i < 3; i++) {
+		g_assert_true (_g_mime_rtf_tokenizer_next (lexer, &token, &error));
+		g_assert_cmpint (token.kind, ==, GMIME_RTF_EOF);
+	}
+	g_assert_no_error (error);
+	_g_mime_rtf_tokenizer_free (lexer);
+	g_object_unref (stream);
+	g_free (input);
+	g_free (digits);
+	g_free (word);
+}
+
+static void
 test_tokens (void)
 {
 	/* Put the backslash in the last byte of a refill. Binary contains a
@@ -69,6 +109,7 @@ main (int argc, char **argv)
 	g_test_init (&argc, &argv, NULL);
 	g_mime_init ();
 	g_test_add_func ("/rtf/tokenizer/refill-and-binary", test_tokens);
+	g_test_add_func ("/rtf/tokenizer/overlong-control-words", test_overlong_control_words);
 	int result = g_test_run ();
 	g_mime_shutdown ();
 	return result;

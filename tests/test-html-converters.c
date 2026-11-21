@@ -142,6 +142,42 @@ check (GMimeTextConverter *converter, const char *input, const char *expected)
 }
 
 static void
+test_bogus_comment_round_trip (void)
+{
+	static const Case cases[] = {
+		{ "</ <p>", "</ <p>" }, { "</<s", "</<s>" },
+		{ "<?xml version=\"1.0\"?>", "<?xml version=\"1.0\"?>" },
+		{ "</?x>", "<?x>" }, { "<!DOC>", "<!DOC>" }, { "<!-x>", "<!-x>" }
+	};
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GError *error = NULL;
+		char *result = g_mime_text_converter_convert_to_string (converter, cases[i].input, -1, &error);
+		GMimeHtmlTokenizer *tokenizer;
+		GMimeHtmlToken *token = NULL;
+		GMimeStream *stream;
+
+		g_assert_no_error (error);
+		g_assert_cmpstr (result, ==, cases[i].expected);
+		stream = g_mime_stream_mem_new_with_buffer (result, strlen (result));
+		tokenizer = g_mime_html_tokenizer_new (stream);
+		g_assert_true (g_mime_html_tokenizer_read_next_token (tokenizer, &token, &error));
+		g_assert_nonnull (token);
+		g_assert_cmpint (g_mime_html_token_get_kind (token), ==, GMIME_HTML_TOKEN_COMMENT);
+		g_assert_true (g_mime_html_token_get_is_bogus_comment (token));
+		g_mime_html_token_unref (token);
+		g_assert_true (g_mime_html_tokenizer_read_next_token (tokenizer, &token, &error));
+		g_assert_no_error (error);
+		g_assert_null (token);
+		g_object_unref (tokenizer);
+		g_object_unref (stream);
+		g_free (result);
+	}
+	g_object_unref (converter);
+}
+
+static void
 test_html_to_text (void)
 {
 	static const Case cases[] = {
@@ -719,6 +755,7 @@ main (int argc, char **argv)
 	g_test_init (&argc, &argv, NULL);
 	g_mime_init ();
 	g_test_add_func ("/html-converters/text", test_html_to_text);
+	g_test_add_func ("/html-converters/bogus-comment-round-trip", test_bogus_comment_round_trip);
 	g_test_add_func ("/html-converters/limits", test_limits);
 	g_test_add_func ("/html-converters/fragments", test_fragments);
 	g_test_add_func ("/html-converters/filter", test_html_filter);

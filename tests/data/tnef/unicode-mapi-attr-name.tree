@@ -1,7 +1,17 @@
+acceptlanguage:pl-PL, en-US
+date:2014-06-20T10:27:10Z
+from:Marcin Jabłonkowski <M.Jablonkowski@promedica24.pl>
+in-reply-to:<3471F010E285B744A23B2B4A58D1FD3851E817BE@PM24-EX1.pm24.local>
+message-id:<3471F010E285B744A23B2B4A58D1FD3851E817DA@PM24-EX1.pm24.local>
+references:<a8a0d43823fa5472bc690d202a644ced@swift.generated> <3471F010E285B744A23B2B4A58D1FD3851E817BE@PM24-EX1.pm24.local>
+subject:RE: [ZGLOSZENIE] THU#29044 Aktualizacja numerów w dodatkowych panelach
+x-c2exchangeserversnames:PM24-EX1
+x-ms-has-attach:yes
+x-originating-ip:[10.34.7.107]
 multipart/mixed
   multipart/related; type=text/html
     text/html; charset=utf-8 6389 3d598c5cfca21274e62f15bdd62690e6c83de4d46635ad609679437487fcc2bf
-    image/png; name=image001.png; disposition=inline; filename=image001.png; cid=image001.png@01CF8C82.F4A2A290 3815 037f9d1fa06bccd31878332853814a43e6ed86b3893770b42b057597b49d19c9
-    image/png; name=image002.png; disposition=inline; filename=image002.png; cid=image002.png@01CF8C82.F4A2A290 3573 ea179fb97a7e850e58b830f51a1fe411d5a4e5ffb1620c895abe9788cfac6f07
-    image/png; name=image003.png; disposition=inline; filename=image003.png; cid=image003.png@01CF8C82.F4A2A290 3792 20c51557b9c7ec0a5da9ccfd4c2efb0ff7be72d15b05e1ddecc3d1c69fc8eaa9
-  application/octet-stream; name=spaconsole2.cfg; disposition=attachment; filename=spaconsole2.cfg 8387 4d9639506fa4bf42ede43ffbaa8ed5a8f8fe2338bc2562f9b9aef7970bc4a25e
+    image/png; name=image001.png; disposition=inline; filename=image001.png; creation-date=2014-06-20T10:27:10Z; modification-date=2014-06-20T10:27:10Z; cid=image001.png@01CF8C82.F4A2A290; encoding=base64 3815 037f9d1fa06bccd31878332853814a43e6ed86b3893770b42b057597b49d19c9
+    image/png; name=image002.png; disposition=inline; filename=image002.png; creation-date=2014-06-20T10:27:10Z; modification-date=2014-06-20T10:27:10Z; cid=image002.png@01CF8C82.F4A2A290; encoding=base64 3573 ea179fb97a7e850e58b830f51a1fe411d5a4e5ffb1620c895abe9788cfac6f07
+    image/png; name=image003.png; disposition=inline; filename=image003.png; creation-date=2014-06-20T10:27:10Z; modification-date=2014-06-20T10:27:10Z; cid=image003.png@01CF8C82.F4A2A290; encoding=base64 3792 20c51557b9c7ec0a5da9ccfd4c2efb0ff7be72d15b05e1ddecc3d1c69fc8eaa9
+  application/octet-stream; name=spaconsole2.cfg; disposition=attachment; filename=spaconsole2.cfg; creation-date=2014-06-20T10:27:02Z; modification-date=2014-06-20T10:27:02Z; encoding=base64 8387 4d9639506fa4bf42ede43ffbaa8ed5a8f8fe2338bc2562f9b9aef7970bc4a25e

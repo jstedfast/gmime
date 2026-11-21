@@ -1,8 +1,10 @@
+message-id:<DM5PR21MB0828DA2B8C88048BC03EFFA6CFA20@DM5PR21MB0828.namprd21.prod.outlook.com>
+msip_labels:sha256=1778c3bdeb3e8888b929ec06e7f7047c61c6cfae61c393bcfc37d3b88387dbd4
 multipart/mixed
   multipart/related; type=multipart/alternative
     multipart/alternative
       text/plain; charset=utf-8 1868 d50b3ab8f7bf0db219ab0800074d9568f3cbd69bafbdf4e423b77d22880db7d6
       text/html; charset=utf-8 4307 8896a581730d92e7489448e01d752db5764da751cf396bb1e074d4beef981833
-    image/jpeg; name=kitten-playing-with-a-christmas-tree.jpg; disposition=inline; filename=kitten-playing-with-a-christmas-tree.jpg; size=378843; cid=generated-0@snapshot 375081 f79d79bf20d19d17f4bbc92bc59485be362df93deaa92b71cc0d490d3b7ac935
-  application/ms-tnef; name=Build a train table; disposition=attachment; filename=Untitled Attachment; size=9217 6508 ffaf277cb2d598c5235ff295852dfc941bca0f500f487fc4699147482f34bf0b
-  application/ms-tnef; name=Christmas Celebration!; disposition=attachment; filename=Untitled Attachment; size=387453 385301 b70438e89e97db895fa43d906c163d4cb5f4bd03d78b0d66060d788938ad65ae
+    image/jpeg; name=kitten-playing-with-a-christmas-tree.jpg; disposition=inline; filename=kitten-playing-with-a-christmas-tree.jpg; size=378843; modification-date=2018-12-15T10:03:32Z; cid=generated-0@snapshot; encoding=base64 375081 f79d79bf20d19d17f4bbc92bc59485be362df93deaa92b71cc0d490d3b7ac935
+  application/ms-tnef; name=Build a train table; disposition=attachment; filename=Untitled Attachment; size=9217; modification-date=2018-12-15T10:17:38Z; encoding=base64 6508 ffaf277cb2d598c5235ff295852dfc941bca0f500f487fc4699147482f34bf0b
+  application/ms-tnef; name=Christmas Celebration!; disposition=attachment; filename=Untitled Attachment; size=387453; modification-date=2018-12-15T10:17:38Z; encoding=base64 385301 b70438e89e97db895fa43d906c163d4cb5f4bd03d78b0d66060d788938ad65ae

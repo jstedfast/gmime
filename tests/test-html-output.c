@@ -367,6 +367,17 @@ test_enriched_limits (void)
 	g_mime_enriched_to_html_set_max_parameter_length (enriched, 3);
 	assert_limit (converter, "<param>1234</param>");
 	assert_limit (converter, "<param><xx></param>");
+	/* The parameter budget counts normalized newlines and nested param tags. */
+	g_mime_enriched_to_html_set_output_html_fragment (enriched, TRUE);
+	const char *plain = "<div style=\"white-space: pre-wrap;\"><div>x</div></div>";
+	assert_conversion (converter, "<color><param>r\r\nb</param>x</color>", plain);
+	assert_limit (converter, "<color><param>r\r\ned</param>x</color>");
+	g_mime_enriched_to_html_set_max_element_depth (enriched, 3);
+	g_mime_enriched_to_html_set_max_parameter_length (enriched, 16);
+	assert_conversion (converter, "<color><param><param>x</param></param>x</color>", plain);
+	g_mime_enriched_to_html_set_max_parameter_length (enriched, 15);
+	assert_limit (converter, "<color><param><param>x</param></param>x</color>");
+	g_mime_enriched_to_html_set_output_html_fragment (enriched, FALSE);
 	g_mime_enriched_to_html_set_max_input_length (enriched, 1);
 	assert_limit (converter, "ab");
 	assert_conversion (converter, "\xf0\x9f\x98\xb1",
