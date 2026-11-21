@@ -606,7 +606,8 @@ done:
  * stream. Output can be partial on failure. Shared backing storage must not
  * overlap. Invalid or unrepresentable characters are reported in %G_CONVERT_ERROR;
  * I/O errors use %GMIME_ERROR with errno, or %GMIME_ERROR_GENERAL when unavailable.
- * Encoding defaults to UTF-8 with no BOM detection or emission.
+ * Encoding defaults to UTF-8 with no BOM detection or emission, except
+ * that RTF converters default to Latin-1 input to preserve wire bytes.
  *
  * Returns: %TRUE on success.
  **/
