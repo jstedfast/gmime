@@ -39,8 +39,8 @@ equal_ignoring_cr (GByteArray *first, GByteArray *second)
 	}
 }
 
-static void
-check_roundtrip (GMimeMessage *message)
+void
+fuzz_check_mime_roundtrip (GMimeMessage *message)
 {
 	GMimeParserOptions *options = fuzz_parser_options ();
 	GByteArray *first = serialize (message), *second;
@@ -157,13 +157,73 @@ parse_input (const guint8 *data, gsize length, GMimeFormat format, gboolean sour
 		fuzz_equal (last_bytes->data, last_bytes->len, again->data, again->len, "Repeated write or source-content lifetime");
 		g_byte_array_unref (again);
 		if (roundtrip && format == GMIME_FORMAT_MESSAGE)
-			check_roundtrip (last_message);
+			fuzz_check_mime_roundtrip (last_message);
 		g_object_unref (last_message);
 		g_byte_array_unref (last_bytes);
 	}
 	g_string_free (checker.trace, TRUE);
 	g_mime_parser_options_unref (options);
 	return result;
+}
+
+void
+fuzz_compliance_validators (const guint8 *data, gsize length)
+{
+	guint selector = fuzz_selector (data, length);
+	FuzzCompliance reader_issues, parser_issues;
+	GMimeParserOptions *options = fuzz_parser_options ();
+	GString *baseline, *logged;
+	GByteArray *output[2] = { NULL, NULL };
+	GError *errors[2] = { NULL, NULL };
+
+	fuzz_compliance_init (&reader_issues, length, selector);
+	fuzz_compliance_init (&parser_issues, length, selector);
+	guint choice = (selector >> 3) % 7;
+	reader_issues.validators = parser_issues.validators = choice == 6 ? GMIME_COMPLIANCE_VALIDATOR_ALL : 1U << choice;
+	baseline = fuzz_read_message_trace (data, length, NULL);
+	logged = fuzz_read_message_trace (data, length, &reader_issues);
+	fuzz_equal ((guint8 *) baseline->str, baseline->len, (guint8 *) logged->str, logged->len, "Validated reader callbacks");
+	g_string_free (logged, TRUE);
+	g_string_free (baseline, TRUE);
+	for (guint index = 0; index < 2; index++) {
+		GMimeStream *stream = fuzz_stream_new (data, length, 4096);
+		GMimeParser *parser = g_mime_parser_new_with_stream (stream);
+		GMimeMessage *message;
+		if (index) {
+			GMimeComplianceOptions *limits = fuzz_compliance_options (&parser_issues);
+			g_mime_parser_set_compliance_options (parser, limits);
+			g_mime_compliance_options_unref (limits);
+			g_mime_parser_set_compliance_logger (parser, fuzz_compliance_report, &parser_issues, NULL);
+			fuzz_compliance_begin (&parser_issues);
+		}
+		message = g_mime_parser_construct_message (parser, options, &errors[index]);
+		if (index)
+			fuzz_compliance_end (&parser_issues);
+		if (message) {
+			output[index] = serialize (message);
+			g_object_unref (message);
+		}
+		g_object_unref (parser);
+		g_object_unref (stream);
+	}
+	g_assert_true ((errors[0] == NULL) == (errors[1] == NULL));
+	if (errors[0])
+		g_assert_error (errors[1], errors[0]->domain, errors[0]->code);
+	g_assert_true ((output[0] == NULL) == (output[1] == NULL));
+	if (output[0])
+		fuzz_equal (output[0]->data, output[0]->len, output[1]->data, output[1]->len, "Validated parser serialization");
+	/* Model construction may abort in a callback before the scanner finishes
+	 * reporting issues. At EOF the parser doesn't start an operation at all. */
+	if (output[0])
+		fuzz_equal ((guint8 *) reader_issues.trace->str, reader_issues.trace->len,
+			    (guint8 *) parser_issues.trace->str, parser_issues.trace->len, "Reader vs parser diagnostics");
+	for (guint index = 0; index < 2; index++) {
+		g_clear_pointer (&output[index], g_byte_array_unref);
+		g_clear_error (&errors[index]);
+	}
+	g_string_free (reader_issues.trace, TRUE);
+	g_string_free (parser_issues.trace, TRUE);
+	g_mime_parser_options_unref (options);
 }
 
 void

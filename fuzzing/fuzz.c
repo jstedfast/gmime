@@ -14,6 +14,15 @@ const FuzzTarget fuzz_targets[] = {
 	{ "rfc2047", fuzz_rfc2047, 64 * 1024 },
 	{ "structured-headers", fuzz_structured_headers, 64 * 1024 },
 	{ "smtp-address-validator", fuzz_smtp_address_validator, 4096 },
+	{ "tnef-reader", fuzz_tnef_reader, FUZZ_MAX_LENGTH },
+	{ "tnef-message", fuzz_tnef_message, 4 * FUZZ_MAX_LENGTH },
+	{ "compliance-validators", fuzz_compliance_validators, 256 * 1024 },
+	{ "filters", fuzz_filters, 256 * 1024 },
+	{ "html-tokenizer", fuzz_html_tokenizer, 256 * 1024 },
+	{ "text-converters", fuzz_text_converters, 256 * 1024 },
+	{ "rtf-compressed", fuzz_rtf_compressed, FUZZ_MAX_LENGTH },
+	{ "rtf-tokenizer", fuzz_rtf_tokenizer, FUZZ_MAX_LENGTH },
+	{ "rtf-converters", fuzz_rtf_converters, FUZZ_MAX_LENGTH },
 };
 const gsize fuzz_target_count = G_N_ELEMENTS (fuzz_targets);
 
@@ -132,6 +141,7 @@ fuzz_compliance_init (FuzzCompliance *checker, gsize length, guint32 selector)
 	memset (checker, 0, sizeof (*checker));
 	checker->trace = g_string_new (NULL);
 	checker->length = length;
+	checker->validators = GMIME_COMPLIANCE_VALIDATOR_ALL;
 	checker->cap = (selector & 3) < G_N_ELEMENTS (caps) ? caps[selector & 3] :
 		g_mime_compliance_options_get_max_issues_per_violation (g_mime_compliance_options_get_default ());
 	checker->context = (selector & 4) ? GMIME_COMPLIANCE_CONTEXT_STORAGE : GMIME_COMPLIANCE_CONTEXT_TRANSPORT;
@@ -174,7 +184,7 @@ fuzz_compliance_options (FuzzCompliance *checker)
 	GMimeComplianceOptions *options = g_mime_compliance_options_new ();
 
 	g_mime_compliance_options_set_context (options, checker->context);
-	g_mime_compliance_options_set_enabled_validators (options, GMIME_COMPLIANCE_VALIDATOR_ALL);
+	g_mime_compliance_options_set_enabled_validators (options, checker->validators);
 	g_mime_compliance_options_set_max_issues_per_violation (options, checker->cap);
 
 	return options;

@@ -1,6 +1,6 @@
 fuzz_support = static_library(
   'fuzz-support', ['fuzz.c', 'mime-reader.c', 'mime-parser.c', 'codecs.c', 'rfc2047.c',
-                   'structured-headers.c', 'smtp-address-validator.c'],
+                   'structured-headers.c', 'smtp-address-validator.c', 'tnef.c', 'filters.c', 'text.c'],
   # Reuse production objects to reach private parsers in shared-library builds too.
   objects: libgmime.extract_objects(gmime_sources, gmime_gpgme_sources),
   include_directories: gmime_inc,
@@ -26,8 +26,18 @@ regression_seeds = custom_target(
 
 foreach target, max_length : {'mime-reader': 1048576, 'mime-parser': 1048576,
                              'encoders': 262144, 'decoders': 1048576, 'rfc2047': 65536,
-                             'structured-headers': 65536, 'smtp-address-validator': 4096}
+                             'structured-headers': 65536, 'smtp-address-validator': 4096,
+                             'tnef-reader': 1048576, 'tnef-message': 4194304,
+                             'filters': 262144, 'compliance-validators': 262144,
+                             'html-tokenizer': 262144, 'text-converters': 262144,
+                             'rtf-compressed': 1048576, 'rtf-converters': 1048576, 'rtf-tokenizer': 1048576}
   corpus_args = [meson.current_build_dir() / 'seeds' / target / 'corpus']
+  if target in ['tnef-reader', 'tnef-message']
+    corpus_args += [meson.project_source_root() / 'tests' / 'data' / 'tnef']
+  endif
+  if target in ['compliance-validators', 'html-tokenizer', 'rtf-converters', 'rtf-tokenizer', 'rtf-compressed']
+    corpus_args += [meson.current_source_dir() / 'seeds' / target]
+  endif
   if target in ['mime-reader', 'mime-parser']
     corpus_args += [meson.current_source_dir() / 'corpus']
     foreach directory : ['messages', 'compliance', 'partial', 'openpgp', 'dkim', 'smime']

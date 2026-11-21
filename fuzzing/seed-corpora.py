@@ -15,7 +15,10 @@ import re
 MAX_LENGTH = 1024 * 1024
 LIMITS = {"mime-reader": MAX_LENGTH, "mime-parser": MAX_LENGTH,
           "encoders": 256 * 1024, "decoders": MAX_LENGTH, "rfc2047": 64 * 1024,
-          "structured-headers": 64 * 1024, "smtp-address-validator": 4096}
+          "structured-headers": 64 * 1024, "smtp-address-validator": 4096,
+          "tnef-reader": MAX_LENGTH, "tnef-message": 4 * MAX_LENGTH,
+          "rtf-compressed": MAX_LENGTH, "rtf-converters": MAX_LENGTH, "rtf-tokenizer": MAX_LENGTH,
+          "html-tokenizer": 262144, "text-converters": 262144, "compliance-validators": 262144, "filters": 262144}
 
 
 def smtp_inputs():
@@ -158,7 +161,15 @@ def regression_inputs():
         b"\xff\xfe\xc0\x80\xed\xa0\x80", b"\xff" * LIMITS["rfc2047"],
         b"Uin\xe4-\xf4\xa9\x96\x92", b"\xf8\x88\x80\x80\x80",
     ]
-    return {"mime-reader": mime, "mime-parser": mime,
+    header = bytes.fromhex("78 9f 3e 22 00 00")
+    tnef = [header[:end] for end in range(len(header) + 1)] + [b"not TNEF"]
+    text = [b"", b"\0", b"From hello\r\n From world\n", b"> quote \r\n> continued\r\n",
+            b" <&> http://example.com/\n", bytes(range(256))]
+    filters = [bytes([kind]) + data for kind in range(9) for data in text +
+               [b"From a\nFrom b\r\n", b"-----BEGIN PGP MESSAGE-----\n\nabc\n-----END PGP MESSAGE-----\n"]]
+    return {"mime-reader": mime, "mime-parser": mime, "tnef-reader": tnef, "tnef-message": tnef,
+            "rtf-compressed": text, "rtf-converters": text, "rtf-tokenizer": text,
+            "html-tokenizer": text, "text-converters": text, "filters": filters, "compliance-validators": mime,
             "encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,
             "structured-headers": structured_header_inputs(), "smtp-address-validator": smtp_inputs()}
 
@@ -175,6 +186,14 @@ def main():
     targets = tuple(LIMITS) if args.target == "all" else (args.target,)
     inputs = regression_inputs()
     if not args.regressions_only:
+        for target in targets:
+            for path in sorted((root / "fuzzing" / "seeds" / target).glob("*")):
+                if path.is_file():
+                    inputs[target] = inputs[target] + [path.read_bytes()]
+        for target in ("tnef-reader", "tnef-message"):
+            if target in targets:
+                inputs[target] = inputs[target] + [path.read_bytes() for path in
+                    sorted((root / "tests" / "data" / "tnef").glob("*.tnef"))]
         if any(target.startswith("mime-") or target == "structured-headers" for target in targets):
             messages = mime_inputs(root)
             for target in ("mime-reader", "mime-parser"):

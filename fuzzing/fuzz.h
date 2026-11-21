@@ -15,6 +15,7 @@ typedef struct {
 	GString *trace;
 	gsize length, operation_start;
 	GMimeComplianceContext context;
+	GMimeComplianceValidators validators;
 	guint cap, counts[GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1];
 	gboolean reached_cap, truncated;
 } FuzzCompliance;
@@ -50,5 +51,16 @@ void fuzz_decoders (const guint8 *data, gsize length);
 void fuzz_rfc2047 (const guint8 *data, gsize length);
 void fuzz_structured_headers (const guint8 *data, gsize length);
 void fuzz_smtp_address_validator (const guint8 *data, gsize length);
+void fuzz_tnef_reader (const guint8 *data, gsize length);
+void fuzz_tnef_message (const guint8 *data, gsize length);
+void fuzz_check_mime_roundtrip (GMimeMessage *message);
+void fuzz_compliance_validators (const guint8 *data, gsize length);
+GString *fuzz_read_message_trace (const guint8 *data, gsize length, FuzzCompliance *checker);
+void fuzz_filters (const guint8 *data, gsize length);
+void fuzz_rtf_compressed (const guint8 *data, gsize length);
+void fuzz_rtf_tokenizer (const guint8 *data, gsize length);
+void fuzz_rtf_converters (const guint8 *data, gsize length);
+void fuzz_html_tokenizer (const guint8 *data, gsize length);
+void fuzz_text_converters (const guint8 *data, gsize length);
 
 #endif

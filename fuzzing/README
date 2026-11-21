@@ -13,6 +13,25 @@ No MimeKit reader implementation or changed diagnostic locations are imported.
 Targets
 -------
 
+tnef-reader compares attribute offsets, tags, lengths, raw payload hashes and
+diagnostic traces between whole and fragmented reads, with varying issue caps.
+It also checks that re-emitting accepted raw attributes is byte-idempotent.
+tnef-message compares stream and reader loading after releasing both inputs,
+varies calendar and embedded-message conversion, and checks the resulting
+message with the MIME parser's serialization round-trip oracle. Both targets
+use the TNEF unit-test fixtures as seeds.
+
+rtf-tokenizer compares tokenizer and interpreter traces; rtf-converters
+compares rendering across stream chunk sizes and checks that HTML attachment
+callbacks agree with preflight. rtf-compressed checks streaming decompression
+and round trips through the TNEF writer.
+
+html-tokenizer compares token traces and HTML normalization. text-converters
+checks plain, flowed and HTML conversions, including generated links and
+quote callbacks. filters compares whole and chunked filtering, byte-level
+reference transformations, encoding selection and OpenPGP detection.
+compliance-validators exercises transfer validation through the MIME reader.
+
 mime-reader checks callback ranges and normalized callback traces with and
 without a compliance logger, and with fragmented input. Consecutive read
 callbacks are folded into FNV-1a hashes plus lengths, as in MimeKit, so
@@ -169,8 +188,9 @@ Run each target separately:
     _build-fuzz/artifacts/mime-reader/corpus
 
 For encoders/decoders use codecs.dict instead of mime.dict. Use -max_len=262144
-for encoders and -max_len=65536 for rfc2047/structured-headers; other targets use
-1048576 except smtp-address-validator, which uses -max_len=4096.
+for encoders, filters, compliance-validators, html-tokenizer and text-converters;
+use 65536 for rfc2047/structured-headers, 4096 for smtp-address-validator
+and 4194304 for tnef-message. The remaining targets use 1048576.
 Use structured-headers.dict for the structured-headers target, and
 smtp-address-validator.dict for smtp-address-validator.
 gmime-fuzz --list prints each target's input limit.
@@ -184,7 +204,7 @@ GitHub Actions
 --------------
 
 .github/workflows/fuzz.yml follows MimeKit's nightly/manual fuzz workflow.
-It runs all seven targets nightly at 03:17 UTC for 600 seconds each. Manual runs
+It runs all sixteen targets nightly at 03:17 UTC for 600 seconds each. Manual runs
 can select one target and a duration from 1 to 14,400 seconds. Each job
 replays the regression seeds, restores and extends a target/branch-specific
 corpus cache, then saves a new immutable cache even after a failure.

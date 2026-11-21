@@ -336,6 +336,12 @@ read_input (const guint8 *data, gsize length, GMimeFormat format, gsize chunk, F
 	return trace;
 }
 
+GString *
+fuzz_read_message_trace (const guint8 *data, gsize length, FuzzCompliance *checker)
+{
+	return read_input (data, length, GMIME_FORMAT_MESSAGE, 4096, checker);
+}
+
 static void
 check_byte_scanners (const guint8 *data, gsize length)
 {

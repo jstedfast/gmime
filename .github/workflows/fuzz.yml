@@ -14,7 +14,7 @@ on:
         description: 'Fuzz target'
         default: all
         type: choice
-        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers, smtp-address-validator]
+        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers, smtp-address-validator, tnef-reader, tnef-message, filters, compliance-validators, html-tokenizer, text-converters, rtf-compressed, rtf-tokenizer, rtf-converters]
 
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
-          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers", "smtp-address-validator"]
+          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers", "smtp-address-validator", "tnef-reader", "tnef-message", "filters", "compliance-validators", "html-tokenizer", "text-converters", "rtf-compressed", "rtf-tokenizer", "rtf-converters"]
           target = os.environ["TARGET"]
           duration = os.environ["DURATION"]
           if target != "all" and target not in targets:
@@ -103,6 +103,14 @@ jobs:
             rfc2047) max_len=65536; dictionary=mime ;;
             structured-headers) max_len=65536; dictionary=structured-headers ;;
             smtp-address-validator) max_len=4096; dictionary=smtp-address-validator ;;
+            tnef-reader) max_len=1048576; dictionary=tnef ;;
+            tnef-message) max_len=4194304; dictionary=tnef ;;
+            filters) max_len=262144; dictionary=filters ;;
+            compliance-validators) max_len=262144; dictionary=mime ;;
+            text-converters) max_len=262144; dictionary=text ;;
+            html-tokenizer) max_len=262144; dictionary=html ;;
+            rtf-compressed) max_len=1048576; dictionary=rtf-compressed ;;
+            rtf-converters|rtf-tokenizer) max_len=1048576; dictionary=rtf ;;
             *) max_len=1048576; dictionary=mime ;;
           esac
           "_build-fuzz/fuzzing/fuzz-$TARGET" \
