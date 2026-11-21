@@ -1,0 +1,5 @@
+multipart/mixed
+  multipart/alternative
+    text/plain; charset=utf-8 729 d98d982b0011c7748c7a5e087c3c9479b0775ea287c80e1de1060f65a04ff871
+    text/html; charset=utf-8 1689 64180063a72ed12d5415625622458b98ec7e0271305d465e1fd818b44a3bc663
+  application/octet-stream; name=allproductsmar2000.dat; disposition=attachment; filename=allproductsmar2000.dat; size=3855 279 de2ad5d4e20a2456ad12808dee82af2d0d1236ddf5bd55832581a7886cdcd807

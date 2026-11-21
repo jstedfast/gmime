@@ -101,7 +101,6 @@ get_method (const char *name, GMimeTnefPropertySet *props, const char **status)
 	if (class_is (name, "IPM.Appointment")) return "PUBLISH";
 	if (class_is (name, "IPM.Schedule.Meeting.Request")) return "REQUEST";
 	if (class_is (name, "IPM.Schedule.Meeting.Canceled")) return "CANCEL";
-
 	if (class_is (name, "IPM.Schedule.Meeting.Resp.Pos")) *status = "ACCEPTED";
 	if (class_is (name, "IPM.Schedule.Meeting.Resp.Neg")) *status = "DECLINED";
 	if (class_is (name, "IPM.Schedule.Meeting.Resp.Tent")) {
@@ -348,16 +347,29 @@ create_uid (GMimeTnefPropertySet *props, const char *summary, gint64 start, gint
 		g_checksum_update (sum, (const guchar *) summary, strlen (summary));
 
 	{
-		gint64 times[] = { start, end, get_stamp (get_value (props, CREATION_TIME)) };
+		const GValue *start_value = get_named (props, 0x820d);
+		const GValue *end_value = get_named (props, 0x820e);
+		const GValue *created = get_value (props, CREATION_TIME);
+		const GValue *sources[] = { start_value, end_value ? end_value : start_value, created };
+		gint64 times[] = { start, end, get_stamp (created) };
 		guint i;
 
 		for (i = 0; i < G_N_ELEMENTS (times); i++) {
+			gint64 ticks;
+
 			g_checksum_update (sum, (const guchar *) "\n", 1);
 
 			if (times[i] == CAL_NO_TIME)
 				continue;
 
-			g_snprintf (dates, sizeof dates, "%" G_GINT64_FORMAT, (times[i] + G_GINT64_CONSTANT (62135596800)) * 10000000);
+			/* Calendar lines show whole seconds, but the UID seed includes
+			 * the fractional part of each timestamp. */
+			ticks = (times[i] + G_GINT64_CONSTANT (62135596800)) * 10000000;
+
+			if (sources[i] && G_VALUE_HOLDS (sources[i], G_TYPE_DATE_TIME) && g_value_get_boxed (sources[i]))
+				ticks += 10 * g_date_time_get_microsecond (g_value_get_boxed (sources[i]));
+
+			g_snprintf (dates, sizeof dates, "%" G_GINT64_FORMAT, ticks);
 			g_checksum_update (sum, (const guchar *) dates, strlen (dates));
 		}
 	}

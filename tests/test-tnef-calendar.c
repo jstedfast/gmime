@@ -243,12 +243,130 @@ test_recurrence (void)
 	g_byte_array_unref (pattern);
 }
 
+static void
+write_text_property (GMimeTnefPropertyWriter *writer, GMimeTnefPropertyTag tag, const char *text)
+{
+	g_assert_true (g_mime_tnef_property_writer_write_property_tag (writer, tag, NULL));
+	g_assert_true (g_mime_tnef_property_writer_write_value_string (writer, text, NULL));
+}
+
+static void
+write_appointment_time (GMimeTnefPropertyWriter *writer, int id, int day, int hour, int minute)
+{
+	GDateTime *time = g_date_time_new_utc (2024, 3, day, hour, minute, 0);
+
+	named (writer, id, GMIME_TNEF_PROPERTY_TYPE_SYS_TIME);
+	g_assert_true (g_mime_tnef_property_writer_write_value_date_time (writer, time, NULL));
+	g_date_time_unref (time);
+}
+
+typedef struct {
+	const char *message_class;
+	const char *method;
+	const char *attendee_status;
+} MeetingCase;
+
+static void
+test_meeting (gconstpointer user_data)
+{
+	const MeetingCase *meeting = user_data;
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	GMimeTnefWriter *writer = g_mime_tnef_writer_new (stream, 1252, 0, NULL);
+	GMimeTnefPropertyWriter *properties;
+	GMimeTnefMessage *source;
+	GMimeTnefConversionResult *result;
+	GMimePart *part;
+	GMimeStream *output = g_mime_stream_mem_new ();
+	GByteArray *bytes;
+	char *calendar, *expected;
+	guint retained = 0;
+	gboolean counter = !strcmp (meeting->method, "COUNTER");
+
+	properties = g_mime_tnef_writer_open_property_writer (writer, GMIME_TNEF_ATTRIBUTE_TAG_RECIPIENT_TABLE, NULL);
+	g_assert_nonnull (properties);
+	g_assert_true (g_mime_tnef_property_writer_begin_row (properties, NULL));
+	g_assert_true (g_mime_tnef_property_writer_write_property_tag (properties, GMIME_TNEF_PROPERTY_TAG_RECIPIENT_TYPE, NULL));
+	g_assert_true (g_mime_tnef_property_writer_write_value_int32 (properties, GMIME_TNEF_RECIPIENT_TYPE_TO, NULL));
+	write_text_property (properties, GMIME_TNEF_PROPERTY_TAG_DISPLAY_NAME_W, "Alice");
+	write_text_property (properties, GMIME_TNEF_PROPERTY_TAG_SMTP_ADDRESS_W, "alice@example.com");
+	g_assert_true (g_mime_tnef_property_writer_close (properties, NULL));
+	g_object_unref (properties);
+
+	properties = g_mime_tnef_writer_open_property_writer (writer, GMIME_TNEF_ATTRIBUTE_TAG_MAPI_PROPERTIES, NULL);
+	write_text_property (properties, GMIME_TNEF_PROPERTY_TAG_MESSAGE_CLASS_W, meeting->message_class);
+	write_text_property (properties, GMIME_TNEF_PROPERTY_TAG_BODY_W, "See you there");
+	write_text_property (properties, GMIME_TNEF_PROPERTY_TAG_SENT_REPRESENTING_NAME_W, "Bob");
+	write_text_property (properties, GMIME_TNEF_PROPERTY_TAG_SENT_REPRESENTING_ADDRTYPE_W, "SMTP");
+	write_text_property (properties, GMIME_TNEF_PROPERTY_TAG_SENT_REPRESENTING_EMAIL_ADDRESS_W, "bob@example.com");
+	write_appointment_time (properties, 0x820d, 1, 15, 0);
+	write_appointment_time (properties, 0x820e, 1, 16, 0);
+	if (counter) {
+		named (properties, 0x8257, GMIME_TNEF_PROPERTY_TYPE_BOOLEAN);
+		g_assert_true (g_mime_tnef_property_writer_write_value_boolean (properties, TRUE, NULL));
+		write_appointment_time (properties, 0x8250, 2, 15, 0);
+		write_appointment_time (properties, 0x8251, 2, 16, 30);
+	}
+	g_assert_true (g_mime_tnef_property_writer_close (properties, NULL));
+	g_object_unref (properties);
+
+	g_assert_true (g_mime_tnef_writer_close (writer, NULL));
+	g_object_unref (writer);
+
+	g_assert_cmpint (g_mime_stream_reset (stream), ==, 0);
+	source = g_mime_tnef_message_load (stream, NULL, NULL);
+	g_assert_nonnull (source);
+	result = g_mime_tnef_message_convert_to_mime (source, NULL, NULL);
+	g_assert_nonnull (result);
+	part = find_calendar (g_mime_message_get_mime_part (g_mime_tnef_conversion_result_get_message (result)), &retained);
+	g_assert_nonnull (part);
+	g_assert_cmpstr (g_mime_entity_get_content_type_parameter (GMIME_ENTITY (part), "method"), ==, meeting->method);
+	g_assert_cmpint (g_mime_content_write_to_stream (g_mime_part_get_content (part), output), >, 0);
+	bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
+	calendar = g_strndup ((const char *) bytes->data, bytes->len);
+	expected = g_strdup_printf ("\r\nMETHOD:%s\r\n", meeting->method);
+	g_assert_nonnull (strstr (calendar, expected));
+	g_free (expected);
+
+	if (meeting->attendee_status) {
+		expected = g_strdup_printf ("\r\nATTENDEE;PARTSTAT=%s;CN=Bob:mailto:bob@example.com\r\n", meeting->attendee_status);
+		g_assert_nonnull (strstr (calendar, expected));
+		g_free (expected);
+		g_assert_nonnull (strstr (calendar, "\r\nORGANIZER;CN=Alice:mailto:alice@example.com\r\n"));
+		g_assert_nonnull (strstr (calendar, "\r\nCOMMENT:See you there\r\n"));
+	} else {
+		g_assert_nonnull (strstr (calendar, "\r\nSTATUS:CANCELLED\r\n"));
+	}
+	if (counter) {
+		g_assert_nonnull (strstr (calendar, "\r\nDTSTART:20240302T150000Z\r\n"));
+		g_assert_nonnull (strstr (calendar, "\r\nDTEND:20240302T163000Z\r\n"));
+		g_assert_nonnull (strstr (calendar, "\r\nX-MS-OLK-ORIGINALSTART:20240301T150000Z\r\n"));
+		g_assert_nonnull (strstr (calendar, "\r\nX-MS-OLK-ORIGINALEND:20240301T160000Z\r\n"));
+	}
+	g_free (calendar);
+	g_object_unref (output);
+	g_mime_tnef_conversion_result_unref (result);
+	g_object_unref (source);
+	g_object_unref (stream);
+}
+
 int
 main (int argc, char **argv)
 {
+	static const MeetingCase meetings[] = {
+		{ "IPM.Schedule.Meeting.Resp.Pos", "REPLY", "ACCEPTED" },
+		{ "IPM.Schedule.Meeting.Resp.Tent", "REPLY", "TENTATIVE" },
+		{ "IPM.Schedule.Meeting.Resp.Neg", "REPLY", "DECLINED" },
+		{ "IPM.Schedule.Meeting.Resp.Tent", "COUNTER", "TENTATIVE" },
+		{ "IPM.Schedule.Meeting.Canceled", "CANCEL", NULL }
+	};
 	int status;
 	g_test_init (&argc, &argv, NULL);
 	g_mime_init ();
+	for (guint index = 0; index < G_N_ELEMENTS (meetings); index++) {
+		char *path = g_strdup_printf ("/tnef/calendar/meeting/%s/%s", meetings[index].method, meetings[index].message_class);
+		g_test_add_data_func (path, meetings + index, test_meeting);
+		g_free (path);
+	}
 	g_test_add_func ("/tnef/calendar/folding", test_folding);
 	g_test_add_func ("/tnef/calendar/recurrence", test_recurrence);
 	status = g_test_run ();

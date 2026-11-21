@@ -1,0 +1,2 @@
+*.tnef binary
+*.tree text eol=lf

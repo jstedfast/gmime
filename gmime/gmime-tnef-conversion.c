@@ -1358,7 +1358,7 @@ prepare_slots (Conversion *ctx, GMimeEntity **entities, gboolean *is_inline, GAr
 {
 	GHashTable *ids = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 	guint i, n = g_mime_tnef_message_get_attachment_count (ctx->tnef);
-	gboolean ok = FALSE, any_text = FALSE;
+	gboolean ok = FALSE, any_text = FALSE, any_image = FALSE;
 	int hc = 0, tc;
 
 	if (!count_slots (ctx->rtf, GMIME_RTF_TO_HTML (html), &hc, error))
@@ -1455,8 +1455,15 @@ prepare_slots (Conversion *ctx, GMimeEntity **entities, gboolean *is_inline, GAr
 			g_mime_content_type_set_media_subtype (content_type, image);
 
 			slot->image = GMIME_PART (entity);
+			any_image = TRUE;
 			is_inline[slot->index] = TRUE;
 		}
+	}
+
+	/* A no-op HTML callback would still open a formatted span at the placeholder. */
+	if (!any_image && !any_text) {
+		ok = TRUE;
+		goto done;
 	}
 
 	tc = hc;

@@ -1,0 +1,7 @@
+multipart/mixed
+  multipart/related; type=text/html
+    text/html; charset=utf-8 6389 3d598c5cfca21274e62f15bdd62690e6c83de4d46635ad609679437487fcc2bf
+    image/png; name=image001.png; disposition=inline; filename=image001.png; cid=image001.png@01CF8C82.F4A2A290 3815 037f9d1fa06bccd31878332853814a43e6ed86b3893770b42b057597b49d19c9
+    image/png; name=image002.png; disposition=inline; filename=image002.png; cid=image002.png@01CF8C82.F4A2A290 3573 ea179fb97a7e850e58b830f51a1fe411d5a4e5ffb1620c895abe9788cfac6f07
+    image/png; name=image003.png; disposition=inline; filename=image003.png; cid=image003.png@01CF8C82.F4A2A290 3792 20c51557b9c7ec0a5da9ccfd4c2efb0ff7be72d15b05e1ddecc3d1c69fc8eaa9
+  application/octet-stream; name=spaconsole2.cfg; disposition=attachment; filename=spaconsole2.cfg 8387 4d9639506fa4bf42ede43ffbaa8ed5a8f8fe2338bc2562f9b9aef7970bc4a25e

@@ -19,6 +19,7 @@
  */
 
 #include <config.h>
+#include <stdlib.h>
 #include <string.h>
 #include <gmime/gmime.h>
 #include <gmime/gmime-tnef-conversion.h>
@@ -387,12 +388,196 @@ test_rtf_callbacks (void)
 	g_mime_tnef_conversion_result_unref (result);
 }
 
+static const char *corpus_directory;
+
+static int
+compare_property_lines (gconstpointer left, gconstpointer right)
+{
+	return strcmp (*(const char *const *) left, *(const char *const *) right);
+}
+
+/* MimeKit emits the properties of these two VEVENTs in lexical order.
+ * Preserve component boundaries (including the nested reminder). Neither
+ * fixture has folded event properties. */
+static GString *
+normalize_calendar (GByteArray *bytes)
+{
+	GString *calendar = g_string_new_len ((const char *) bytes->data, bytes->len);
+	char *event, *end, *properties, **lines;
+	gsize length;
+
+	g_assert_cmpuint (g_string_replace (calendar, "\r\nPRODID:-//GMime//EN\r\n",
+		"\r\nPRODID:-//.NET Foundation//MimeKit//EN\r\n", 0), ==, 1);
+	event = strstr (calendar->str, "BEGIN:VEVENT\r\n");
+	g_assert_nonnull (event);
+	event += strlen ("BEGIN:VEVENT\r\n");
+	end = strstr (event, "\r\nBEGIN:");
+	if (!end)
+		end = strstr (event, "\r\nEND:VEVENT");
+	g_assert_nonnull (end);
+
+	length = end - event;
+	properties = g_strndup (event, length);
+	lines = g_strsplit (properties, "\r\n", -1);
+	qsort (lines, g_strv_length (lines), sizeof (char *), compare_property_lines);
+	g_free (properties);
+	properties = g_strjoinv ("\r\n", lines);
+	memcpy (event, properties, length);
+	g_free (properties);
+	g_strfreev (lines);
+	return calendar;
+}
+
+/* Boundaries and header folding are library-specific. Compare the ordered
+ * MIME tree and decoded payloads, with text in canonical CRLF form. */
+static void
+describe_entity (GString *description, GMimeEntity *entity, guint depth, const char *generated_id)
+{
+	static const char *const parameters[] = { "charset", "method", "name", "type" };
+	char *type;
+	guint indent;
+
+	for (indent = 0; indent < depth; indent++)
+		g_string_append (description, "  ");
+
+	if (!entity) {
+		g_string_append (description, "(no body)\n");
+		return;
+	}
+
+	type = g_mime_content_type_get_mime_type (g_mime_entity_get_content_type (entity));
+	g_string_append (description, type);
+	g_free (type);
+	for (guint index = 0; index < G_N_ELEMENTS (parameters); index++) {
+		const char *value = g_mime_entity_get_content_type_parameter (entity, parameters[index]);
+		if (value)
+			g_string_append_printf (description, "; %s=%s", parameters[index], value);
+	}
+
+	if (GMIME_IS_MULTIPART (entity)) {
+		GMimeMultipart *multipart = GMIME_MULTIPART (entity);
+		int index;
+
+		g_string_append_c (description, '\n');
+		for (index = 0; index < g_mime_multipart_get_count (multipart); index++)
+			describe_entity (description, g_mime_multipart_get_part (multipart, index), depth + 1, generated_id);
+	} else {
+		GMimeContent *content = g_mime_part_get_content (GMIME_PART (entity));
+		GMimeStream *memory = g_mime_stream_mem_new ();
+		GMimeStream *output = g_mime_stream_filter_new (memory);
+		GByteArray *bytes;
+		GString *normalized = NULL;
+		char *digest;
+		const char *disposition = g_mime_entity_get_disposition (entity);
+		const char *filename = g_mime_entity_get_content_disposition_parameter (entity, "filename");
+		const char *size = g_mime_entity_get_content_disposition_parameter (entity, "size");
+		const char *cid = g_mime_entity_get_content_id (entity);
+
+		if (disposition)
+			g_string_append_printf (description, "; disposition=%s", disposition);
+		if (filename)
+			g_string_append_printf (description, "; filename=%s", filename);
+		if (size)
+			g_string_append_printf (description, "; size=%s", size);
+		if (cid)
+			g_string_append_printf (description, "; cid=%s", g_strcmp0 (cid, generated_id) ? cid : "generated-0@snapshot");
+
+		if (GMIME_IS_TEXT_PART (entity)) {
+			GMimeFilter *filter = g_mime_filter_unix2dos_new (FALSE);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (output), filter);
+			g_object_unref (filter);
+		}
+
+		g_assert_nonnull (content);
+		g_assert_cmpint (g_mime_content_write_to_stream (content, output), >=, 0);
+		g_assert_cmpint (g_mime_stream_flush (output), ==, 0);
+		bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (memory));
+		if (g_mime_content_type_is_type (g_mime_entity_get_content_type (entity), "text", "calendar")) {
+			normalized = normalize_calendar (bytes);
+		} else if (generated_id && g_mime_content_type_is_type (g_mime_entity_get_content_type (entity), "text", "html")) {
+			char *reference = g_strconcat ("cid:", generated_id, NULL);
+			normalized = g_string_new_len ((const char *) bytes->data, bytes->len);
+			g_assert_cmpuint (g_string_replace (normalized, reference, "cid:generated-0@snapshot", 0), ==, 1);
+			g_free (reference);
+		}
+		if (normalized) {
+			digest = g_compute_checksum_for_data (G_CHECKSUM_SHA256, (const guint8 *) normalized->str, normalized->len);
+			g_string_append_printf (description, " %" G_GSIZE_FORMAT " %s\n", normalized->len, digest);
+			g_string_free (normalized, TRUE);
+		} else {
+			digest = g_compute_checksum_for_data (G_CHECKSUM_SHA256, bytes->data, bytes->len);
+			g_string_append_printf (description, " %u %s\n", bytes->len, digest);
+		}
+		g_free (digest);
+		g_object_unref (output);
+		g_object_unref (memory);
+	}
+}
+
+static void
+test_corpus_conversion (gconstpointer user_data)
+{
+	const char *name = user_data;
+	char *prefix = g_build_filename (corpus_directory, name, NULL);
+	char *input = g_strconcat (prefix, ".tnef", NULL);
+	char *snapshot = g_strconcat (prefix, ".tree", NULL);
+	GString *actual = g_string_new (NULL);
+	GError *error = NULL;
+	GMimeStream *stream = g_mime_stream_file_open (input, "rb", &error);
+	GMimeTnefConversionResult *result;
+	GMimeTnefMessage *source;
+	GMimeEntity *body;
+	const char *generated_id = NULL;
+	char *expected;
+
+	g_assert_no_error (error);
+	source = g_mime_tnef_message_load (stream, NULL, &error);
+	g_assert_no_error (error);
+	g_object_unref (stream);
+	result = g_mime_tnef_message_convert_to_mime (source, NULL, &error);
+	g_assert_no_error (error);
+	g_object_unref (source);
+	body = g_mime_message_get_mime_part (g_mime_tnef_conversion_result_get_message (result));
+	if (!strcmp (name, "attachments") || !strcmp (name, "christmas")) {
+		GMimeEntity *related = g_mime_multipart_get_part (GMIME_MULTIPART (body), 0);
+		GMimeEntity *image = g_mime_multipart_get_part (GMIME_MULTIPART (related), 1);
+		generated_id = g_mime_entity_get_content_id (image);
+		g_assert_nonnull (generated_id);
+	}
+	describe_entity (actual, body, 0, generated_id);
+	g_assert_true (g_file_get_contents (snapshot, &expected, NULL, &error));
+	g_assert_cmpstr (actual->str, ==, expected);
+
+	g_free (expected);
+	g_mime_tnef_conversion_result_unref (result);
+	g_string_free (actual, TRUE);
+	g_free (snapshot);
+	g_free (input);
+	g_free (prefix);
+}
+
 int
 main (int argc, char **argv)
 {
+	static const char *const corpus[] = {
+		"attachments", "body", "christmas", "data-before-name", "garbage-at-end", "long-filename", "MAPI_ATTACH_DATA_OBJ",
+		"MAPI_OBJECT", "missing-filenames", "multi-value-attribute", "one-file", "panic", "rtf",
+		"multi-name-property", "triples", "two-files", "unicode-mapi-attr", "unicode-mapi-attr-name", "winmail"
+	};
+	guint index;
 	int result;
 	g_test_init (&argc, &argv, NULL);
 	g_mime_init ();
+	corpus_directory = "data/tnef";
+	for (int arg = 1; arg < argc; arg++) {
+		if (argv[arg][0] != '-')
+			corpus_directory = argv[arg];
+	}
+	for (index = 0; index < G_N_ELEMENTS (corpus); index++) {
+		char *path = g_strconcat ("/tnef/conversion/corpus/", corpus[index], NULL);
+		g_test_add_data_func (path, corpus[index], test_corpus_conversion);
+		g_free (path);
+	}
 	g_test_add_data_func ("/tnef/conversion/skeleton", GINT_TO_POINTER (1), test_skeleton);
 	g_test_add_data_func ("/tnef/conversion/fallback", NULL, test_skeleton);
 	g_test_add_data_func ("/tnef/conversion/embedded-converted", GINT_TO_POINTER (1), test_nested);

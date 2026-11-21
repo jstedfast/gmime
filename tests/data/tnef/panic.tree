@@ -1,0 +1,5 @@
+multipart/related; type=text/html
+  text/html; charset=iso-8859-1 10561 4827810231cf06061e129e0082f7e922137bc75409915d95a1d64907fa0bae00
+  image/jpeg; name=image001.jpg; disposition=inline; filename=image001.jpg; cid=image001.jpg@01D139A1.76DB0C80 11250 ee9bec688ebc6b535fa1c06b3c7f388510f501509a2d6ae17e964a3eda92f8db
+  image/jpeg; name=image002.jpg; disposition=inline; filename=image002.jpg; cid=image002.jpg@01D139A1.76DB0C80 9583 a497dd22b4a1f2de15da0929f17429edb502f94d767a0fa2ce67da35162cc62f
+  image/png; name=image003.png; disposition=inline; filename=image003.png; cid=image003.png@01D139A1.76DB0C80 7147 7c65885b27f3cd66501fdb7a4711c22ba8b6f64e51ea6c2a3ec9db6fa968a7b8

@@ -1,0 +1,3 @@
+multipart/mixed
+  application/octet-stream; name=AUTHORS file for tnef; disposition=attachment; filename=AUTHORS; size=308 244 36c47da7d11846caf0474a4b3df83bb4eba9ea01d2bca500c288fa108e123d28
+  application/octet-stream; name=README file for tnef; disposition=attachment; filename=README; size=957 893 d0f163180d6ad5d8d3b4e7c6bc0cc948d05888bff0f69dba375b946ea4c6b0fa

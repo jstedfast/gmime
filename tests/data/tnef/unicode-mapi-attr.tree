@@ -1,0 +1,3 @@
+multipart/mixed
+  text/html; charset=us-ascii 1226 2b1faef9cdcfcf896e3aaa8b93a33de5285a35e86697397df4b5aa58ad81209f
+  application/octet-stream; name=example.dat; disposition=attachment; filename=example.dat 1024 b188960490adc65828dc99f6183137bd9951725ed739982920c9814bc842ccb5

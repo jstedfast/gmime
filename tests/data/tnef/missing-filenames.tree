@@ -1,0 +1,8 @@
+multipart/mixed
+  multipart/alternative
+    text/plain; charset=utf-8 957 318795a6db0a738742b464617ad2f0f270fd69db879cc1bd66b09f505baa96b9
+    text/html; charset=utf-8 1591 281eaa0b64a348acf4ee1080cd1034cd57b0348c977ff137d9e835f8bb1b2faf
+  application/octet-stream; name=generpts.src; disposition=attachment; filename=generpts.src; size=64750 61210 69ebd0e9c298f62d1bcced07a66fce16c43f0e6e0228336e1a56d8df8874b3b9
+  application/octet-stream; name=TechlibDEC99.doc; disposition=attachment; filename=TechlibDEC99.doc; size=33856 33792 d1a592c2e3729270860ec3dcac357799e2667fa9859febd1b258c6ca3612f532
+  application/octet-stream; name=TechlibDEC99-JAN00.doc; disposition=attachment; filename=TechlibDEC99-JAN00.doc; size=34368 34304 360db5c11b1f21c60ffbf7aa040a91f48fdef402663c303cfeddd4ef4a3dc9cd
+  application/octet-stream; name=TechlibNOV99.doc; disposition=attachment; filename=TechlibNOV99.doc; size=33856 33792 b1e6b103cc5a9b759dd0a436d45bba131e69ca06a8b4c99d9beebf76d95cde93

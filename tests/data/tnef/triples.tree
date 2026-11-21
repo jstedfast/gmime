@@ -1,0 +1,4 @@
+multipart/alternative
+  text/plain; charset=utf-8 20 7bd083a2a0823481c6a6bd1109c2c4f54d8a8a324e4c33f39ab0558c1ec57a25
+  text/html; charset=utf-8 95 cc910755ae762f2948e6000ee6f38c96637cf8dfc2a2cf28ed485ef78fc67c4b
+  text/calendar; charset=utf-8; method=PUBLISH 650 0828fa9831207cb259902b172b07ea5742c09c50ef6c58ac1621e2f1ea83091a
