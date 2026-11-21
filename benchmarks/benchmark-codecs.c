@@ -35,15 +35,15 @@ typedef struct {
 } FilterData;
 
 static GMimeEncoder *
-new_encoder (Codec codec, guint width)
+new_encoder (Codec codec, GMimeNewLineFormat format, guint width)
 {
 	switch (codec) {
 	case BASE64:
-		return GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (GMIME_NEWLINE_FORMAT_DOS, width));
+		return GMIME_ENCODER (g_mime_base64_encoder_new_with_newline_format (format, width));
 	case QP:
-		return GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (GMIME_NEWLINE_FORMAT_DOS, width));
+		return GMIME_ENCODER (g_mime_quoted_printable_encoder_new_with_newline_format (format, width));
 	case UU:
-		return GMIME_ENCODER (g_mime_uu_encoder_new_with_newline_format (GMIME_NEWLINE_FORMAT_DOS));
+		return GMIME_ENCODER (g_mime_uu_encoder_new_with_newline_format (format));
 	default:
 		g_error ("Unknown codec");
 	}
@@ -61,14 +61,14 @@ new_decoder (Codec codec, gboolean payload_only)
 }
 
 static gsize
-codec_transform (FilterData *test, GBytes **result)
+codec_transform (FilterData *test, GMimeNewLineFormat format, GBytes **result)
 {
 	gsize length, capacity, written;
 	const guint8 *input = g_bytes_get_data (test->input, &length);
 	guint8 *output;
 
 	if (test->kind == ENCODE) {
-		GMimeEncoder *encoder = new_encoder (test->codec, test->width);
+		GMimeEncoder *encoder = new_encoder (test->codec, format, test->width);
 		capacity = g_mime_encoder_estimate_output_length (encoder, length);
 		output = g_malloc (capacity);
 		written = g_mime_encoder_flush (encoder, input, length, output, capacity);
@@ -92,7 +92,7 @@ codec_transform (FilterData *test, GBytes **result)
 static guint64
 run_codec (gpointer data)
 {
-	return codec_transform (data, NULL);
+	return codec_transform (data, GMIME_NEWLINE_FORMAT_DOS, NULL);
 }
 
 static GMimeFilter *
@@ -102,7 +102,7 @@ new_filter (FilterData *test)
 
 	switch (test->kind) {
 	case ENCODE: {
-		GMimeEncoder *encoder = new_encoder (test->codec, test->width);
+		GMimeEncoder *encoder = new_encoder (test->codec, GMIME_NEWLINE_FORMAT_DOS, test->width);
 		filter = g_mime_filter_basic_new_with_encoder (encoder);
 		g_object_unref (encoder);
 		return filter;
@@ -230,7 +230,7 @@ codec_benchmarks (const char *datadir, const char *testdatadir)
 						original = load_fixture (codec == QP ? datadir : testdatadir, codec == QP ? NULL : "encodings",
 							codec == QP ? "wikipedia.txt" : "photo.jpg", FALSE);
 
-							test.kind = encode ? ENCODE : DECODE;
+						test.kind = encode ? ENCODE : DECODE;
 						test.codec = codec;
 						test.width = width;
 						test.chunk = 4096;
@@ -239,7 +239,7 @@ codec_benchmarks (const char *datadir, const char *testdatadir)
 								      encoded_files[codec], codec != QP);
 						test.array = g_bytes_unref_to_array (g_bytes_ref (test.input));
 
-						codec_transform (&test, &expected);
+						codec_transform (&test, GMIME_NEWLINE_FORMAT_DOS, &expected);
 
 						if (encode)
 							verify_encode (&test, expected, original);
@@ -323,29 +323,32 @@ validate_and_run (const char *name, ValidatorData *test, gboolean malformed)
 }
 
 static GBytes *
-base64_layout (guint layout)
+binary_input (gsize length)
 {
-	static const guint widths[] = { G_MAXUINT, 76, 76, 7, 23, G_MAXUINT };
-	static const char *separators[] = { "", "\r\n", "\n", " \t\r\n", "!? \t\r\n", "" };
-	guint8 data[65536];
+	guint8 *data = g_malloc (length);
 	guint32 random = 12345;
-	GString *text = g_string_new (NULL);
-	char *base64;
-	gsize i, length, count;
+	gsize i;
 
 	/* Deterministic native data; the layout matches upstream, not .NET Random's sequence. */
-	for (i = 0; i < sizeof (data); i++) {
+	for (i = 0; i < length; i++) {
 		random = random * 1664525u + 1013904223u;
 		data[i] = random >> 24;
 	}
 
-	base64 = g_base64_encode (data, layout == 5 ? 48 : sizeof (data));
-	length = strlen (base64);
+	return g_bytes_new_take (data, length);
+}
+
+static GBytes *
+wrapped_base64 (GBytes *input, guint width, const char *separator)
+{
+	GString *text = g_string_new (NULL);
+	char *base64 = g_base64_encode (g_bytes_get_data (input, NULL), g_bytes_get_size (input));
+	gsize i, count, length = strlen (base64);
 
 	for (i = 0; i < length; i += count) {
-		count = MIN (widths[layout], length - i);
+		count = MIN (width, length - i);
 		g_string_append_len (text, base64 + i, count);
-		g_string_append (text, separators[layout]);
+		g_string_append (text, separator);
 	}
 
 	g_free (base64);
@@ -353,24 +356,230 @@ base64_layout (guint layout)
 	return g_string_free_to_bytes (text);
 }
 
+typedef struct {
+	GMimeEncoder *encoder;
+	GMimeDecoder *decoder;
+	const guint8 *input;
+	guint8 *output;
+	gsize length, chunk, capacity;
+	gboolean flush;
+} ChunkedCodec;
+
+/* Collect bytes only for the correctness check, never in the measured loop. */
+static gsize
+chunked_transform (ChunkedCodec *test, GByteArray *capture)
+{
+	gsize offset, count, n, written = 0;
+
+	if (test->encoder)
+		g_mime_encoder_reset (test->encoder);
+	else
+		g_mime_decoder_reset (test->decoder);
+
+	for (offset = 0; offset < test->length; offset += count) {
+		count = MIN (test->chunk, test->length - offset);
+		n = test->encoder ?
+			g_mime_encoder_encode (test->encoder, test->input + offset, count, test->output, test->capacity) :
+			g_mime_decoder_decode (test->decoder, test->input + offset, count, test->output, test->capacity);
+		if (capture)
+			g_byte_array_append (capture, test->output, n);
+		written += n;
+	}
+
+	if (test->flush) {
+		n = test->encoder ?
+			g_mime_encoder_flush (test->encoder, NULL, 0, test->output, test->capacity) :
+			g_mime_decoder_flush (test->decoder, NULL, 0, test->output, test->capacity);
+		if (capture)
+			g_byte_array_append (capture, test->output, n);
+		written += n;
+	}
+
+	return written;
+}
+
+static guint64
+run_chunked (gpointer data)
+{
+	return chunked_transform (data, NULL);
+}
+
+static void
+benchmark_chunked (const char *name, GBytes *input, GBytes *expected, GMimeEncoder *encoder,
+		   GMimeDecoder *decoder, guint chunk, gsize estimate_length, gboolean flush)
+{
+	GByteArray *capture = g_byte_array_new ();
+	ChunkedCodec test = { 0 };
+	GBytes *actual;
+
+	test.encoder = encoder;
+	test.decoder = decoder;
+	test.chunk = chunk;
+	test.flush = flush;
+	test.input = g_bytes_get_data (input, &test.length);
+	test.capacity = encoder ? g_mime_encoder_estimate_output_length (encoder, estimate_length) :
+		g_mime_decoder_estimate_output_length (decoder, estimate_length);
+	test.output = g_malloc (test.capacity);
+
+	chunked_transform (&test, capture);
+	actual = g_byte_array_free_to_bytes (capture);
+	benchmark_equal (actual, expected, name);
+	g_bytes_unref (actual);
+
+	benchmark_run (name, test.length, run_chunked, &test);
+	g_free (test.output);
+}
+
+static void
+base64_encoder_benchmarks (void)
+{
+	static const struct {
+		const char *layout;
+		guint length, width, chunk;
+		GMimeNewLineFormat format;
+	} cases[] = {
+		{ "MimeCrlf",   65536, 76,  4096, GMIME_NEWLINE_FORMAT_DOS },
+		{ "MimeLf",     65536, 76,  4096, GMIME_NEWLINE_FORMAT_UNIX },
+		{ "Width60",    65536, 60,  4096, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Width64",    65536, 64,  4096, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Width68",    65536, 68,  4096, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Width72",    65536, 72,  4096, GMIME_NEWLINE_FORMAT_DOS },
+		{ "SmallChunks", 65536, 76,   17, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Bulk",       65536, 76, 65536, GMIME_NEWLINE_FORMAT_DOS },
+		{ "SingleLine",    57, 76,  4096, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Small",         48, 76,  4096, GMIME_NEWLINE_FORMAT_DOS },
+		{ "Tiny",           1, 76,  4096, GMIME_NEWLINE_FORMAT_DOS },
+	};
+	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		char *name = g_strdup_printf ("Base64Encoder/%s", cases[i].layout);
+
+		if (benchmark_selected (name)) {
+			GBytes *input = binary_input (cases[i].length);
+			GBytes *expected = wrapped_base64 (input, cases[i].width,
+				cases[i].format == GMIME_NEWLINE_FORMAT_DOS ? "\r\n" : "\n");
+			GMimeEncoder *encoder = new_encoder (BASE64, cases[i].format, cases[i].width);
+
+			benchmark_chunked (name, input, expected, encoder, NULL, cases[i].chunk, cases[i].chunk, TRUE);
+			g_object_unref (encoder);
+			g_bytes_unref (expected);
+			g_bytes_unref (input);
+		}
+		g_free (name);
+	}
+}
+
+static void
+base64_decoder_validator_benchmarks (void)
+{
+	static const struct {
+		const char *layout;
+		guint length, width;
+		const char *separator;
+		gboolean malformed;
+	} cases[] = {
+		{ "Unwrapped",  65536, G_MAXUINT, "", FALSE },
+		{ "MimeCrlf",   65536, 76, "\r\n", FALSE },
+		{ "MimeLf",     65536, 76, "\n", FALSE },
+		{ "ShortLines", 65536, 7, " \t\r\n", FALSE },
+		{ "Garbage",    65536, 23, "!? \t\r\n", TRUE },
+		{ "Small",         48, G_MAXUINT, "", FALSE },
+	};
+	guint i, validate;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (validate = 0; validate < 2; validate++) {
+			char *name = g_strdup_printf ("Base64%s/%s", validate ? "Validator" : "Decoder", cases[i].layout);
+
+			if (benchmark_selected (name)) {
+				GBytes *plain = binary_input (cases[i].length);
+				GBytes *input = wrapped_base64 (plain, cases[i].width, cases[i].separator);
+
+				if (validate) {
+					ValidatorData test = { input, BASE64, 4096 };
+					validate_and_run (name, &test, cases[i].malformed);
+				} else {
+					GMimeDecoder *decoder = new_decoder (BASE64, FALSE);
+					benchmark_chunked (name, input, plain, NULL, decoder, 4096, 4096, FALSE);
+					g_object_unref (decoder);
+				}
+				g_bytes_unref (input);
+				g_bytes_unref (plain);
+			}
+			g_free (name);
+		}
+	}
+}
+
+static void
+release_codec_benchmarks (void)
+{
+	/* UTF-8 octets for 日本語é, independent of the compiler's execution charset. */
+	static const char utf8_line[] = "MimeKit: "
+		"\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\xc3\xa9 "
+		"\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\xc3\xa9 "
+		"\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\xc3\xa9\n";
+	static const struct {
+		const char *name;
+		Codec codec;
+		const char *line;
+	} cases[] = {
+		{ "Base64", BASE64, NULL },
+		{ "UU", UU, NULL },
+		{ "QP-ASCII", QP, "The quick brown fox jumps over the lazy dog. An ordinary message line.\n" },
+		{ "QP-UTF8", QP, utf8_line },
+	};
+	guint i, encode;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (encode = 0; encode < 2; encode++) {
+			char *name = g_strdup_printf ("Release%s/%s", encode ? "Encoder" : "Decoder", cases[i].name);
+
+			if (benchmark_selected (name)) {
+				FilterData test = { 0 };
+				GBytes *encoded;
+
+				test.kind = ENCODE;
+				test.codec = cases[i].codec;
+				test.width = 76;
+				if (cases[i].line) {
+					guint8 *data = g_malloc (65536);
+					gsize offset, n = strlen (cases[i].line);
+
+					for (offset = 0; offset + n <= 65536; offset += n)
+						memcpy (data + offset, cases[i].line, n);
+					memset (data + offset, 'x', 65536 - offset);
+					data[65535] = '\n';
+					test.input = g_bytes_new_take (data, 65536);
+				} else {
+					test.input = binary_input (65536);
+				}
+
+				codec_transform (&test, GMIME_NEWLINE_FORMAT_UNIX, &encoded);
+				verify_encode (&test, encoded, test.input);
+				if (encode) {
+					GMimeEncoder *encoder = new_encoder (test.codec, GMIME_NEWLINE_FORMAT_UNIX, test.width);
+					benchmark_chunked (name, test.input, encoded, encoder, NULL, 4096, g_bytes_get_size (test.input), TRUE);
+					g_object_unref (encoder);
+				} else {
+					GMimeDecoder *decoder = new_decoder (test.codec, TRUE);
+					benchmark_chunked (name, encoded, test.input, NULL, decoder, 4096, g_bytes_get_size (encoded), TRUE);
+					g_object_unref (decoder);
+				}
+				g_bytes_unref (encoded);
+				g_bytes_unref (test.input);
+			}
+			g_free (name);
+		}
+	}
+}
+
 static void
 validator_benchmarks (const char *datadir, const char *testdatadir)
 {
-	static const char *layouts[] = { "Unwrapped", "MimeCrlf", "MimeLf", "ShortLines", "Garbage", "Small" };
 	static const char *names[] = { "Base64", "QuotedPrintable", "UU", "UUInvalidContent", "UUExtraLineData", "UUSingleLongLine" };
 	guint i;
-
-	for (i = 0; i < G_N_ELEMENTS (layouts); i++) {
-		char *name = g_strdup_printf ("Base64Validator/%s", layouts[i]);
-
-		if (benchmark_selected (name)) {
-			ValidatorData test = { base64_layout (i), BASE64, 4096 };
-			validate_and_run (name, &test, i == 4);
-			g_bytes_unref (test.input);
-		}
-
-		g_free (name);
-	}
 
 	for (i = 0; i < G_N_ELEMENTS (names); i++) {
 		char *name = g_strdup_printf ("EncodingValidator/%s", names[i]);
@@ -392,7 +601,7 @@ validator_benchmarks (const char *datadir, const char *testdatadir)
 				encoder.codec = QP;
 				encoder.width = 76;
 
-				codec_transform (&encoder, &test.input);
+				codec_transform (&encoder, GMIME_NEWLINE_FORMAT_DOS, &test.input);
 
 				g_bytes_unref (encoder.input);
 				g_bytes_unref (text);
@@ -578,6 +787,9 @@ void
 benchmark_codecs (const char *datadir, const char *testdatadir)
 {
 	codec_benchmarks (datadir, testdatadir);
+	base64_encoder_benchmarks ();
+	base64_decoder_validator_benchmarks ();
+	release_codec_benchmarks ();
 	validator_benchmarks (datadir, testdatadir);
 	filter_benchmarks (datadir, testdatadir);
 }

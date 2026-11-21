@@ -20,6 +20,7 @@
 
 #include "benchmark.h"
 #include <gmime/gmime-address-validator-private.h>
+#include <gmime/gmime-reader-simd-private.h>
 #include <string.h>
 
 typedef struct {
@@ -187,6 +188,87 @@ count_issue (const GMimeComplianceIssue *issue, gpointer data)
 }
 
 static guint64
+parse_address_string (gpointer data)
+{
+	GString *text = data;
+	GMimeInternetAddressList *addresses = g_mime_internet_address_list_parse (NULL, text->str);
+	guint count;
+
+	if (!addresses)
+		g_error ("Address string parsing failed");
+	count = g_mime_internet_address_list_length (addresses);
+	g_object_unref (addresses);
+	return count;
+}
+
+typedef struct {
+	GMimeReaderUtf8Func scan;
+	const guint8 *input;
+	gsize length;
+} Utf8Data;
+
+static guint64
+scan_utf8 (gpointer data)
+{
+	Utf8Data *test = data;
+	return test->scan (test->input, test->length);
+}
+
+static void
+benchmark_utf8 (void)
+{
+	static const struct {
+		const char *name, *unit;
+	} inputs[] = {
+		{ "Ascii", "ordinary ascii text " }, { "Latin", "caf\303\251 d\303\251j\303\240 " },
+		{ "Cjk", "\346\227\245\346\234\254\350\252\236" }, { "Emoji", "\360\237\230\200\360\237\232\200" },
+		{ "Mixed", "\303\251 " "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+		  " \346\227\245\360\237\230\200\r\n " }
+	};
+	static const char *errors[] = { "Valid", "Early", "Late" };
+	static const guint sizes[] = { 32, 128, 512, 8192 };
+
+	for (guint i = 0; i < G_N_ELEMENTS (inputs); i++) {
+		for (guint s = 0; s < G_N_ELEMENTS (sizes); s++) {
+			for (guint e = 0; e < G_N_ELEMENTS (errors); e++) {
+				for (guint scalar = 0; scalar <= 1; scalar++) {
+					char *name = g_strdup_printf ("Utf8Validation/%s/%u/%s/%s", inputs[i].name,
+						sizes[s], errors[e], scalar ? "Scalar" : "Dispatch");
+					if (benchmark_selected (name)) {
+						GString *text = g_string_sized_new (sizes[s]);
+						const char *invalid;
+						gsize expected = sizes[s];
+						Utf8Data test;
+
+						while (text->len < sizes[s])
+							g_string_append (text, inputs[i].unit);
+						g_string_truncate (text, sizes[s]);
+						if (!g_utf8_validate_len (text->str, text->len, &invalid))
+							memset ((char *) invalid, 'a', text->len - (invalid - text->str));
+						if (e) {
+							text->str[e == 1 ? 0 : text->len - 1] = (char) 0xff;
+							/* A damaged continuation makes its lead byte the first invalid index. */
+							if (g_utf8_validate_len (text->str, text->len, &invalid))
+								g_error ("Expected invalid UTF-8");
+							expected = invalid - text->str;
+						}
+						test.scan = scalar ? _g_mime_reader_utf8_get_backend (GMIME_READER_UTF8_SCALAR) :
+							_g_mime_reader_utf8_invalid_index;
+						test.input = (guint8 *) text->str;
+						test.length = text->len;
+						if (scan_utf8 (&test) != expected)
+							g_error ("%s: incorrect first invalid index", name);
+						benchmark_run (name, text->len, scan_utf8, &test);
+						g_string_free (text, TRUE);
+					}
+					g_free (name);
+				}
+			}
+		}
+	}
+}
+
+static guint64
 validate_addresses (gpointer data)
 {
 	GString *text = data;
@@ -223,6 +305,7 @@ benchmark_headers (void)
 {
 	guint i;
 
+	benchmark_utf8 ();
 	for (i = 0; i < G_N_ELEMENTS (parser_inputs); i++) {
 		const AddressInput *input = &parser_inputs[i];
 		char *name = g_strdup_printf ("AddressParser/%s", input->name);
@@ -237,6 +320,15 @@ benchmark_headers (void)
 			g_string_free (text, TRUE);
 		}
 
+		g_free (name);
+		name = g_strdup_printf ("AddressParser/String/%s", input->name);
+		if (benchmark_selected (name)) {
+			GString *text = address_input (input, FALSE);
+			if (parse_address_string (text) != input->count)
+				g_error ("%s: unexpected number of parsed addresses", name);
+			benchmark_run (name, text->len, parse_address_string, text);
+			g_string_free (text, TRUE);
+		}
 		g_free (name);
 	}
 

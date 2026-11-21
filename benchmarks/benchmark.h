@@ -34,5 +34,6 @@ void benchmark_check (gboolean success, const char *operation, GError **error);
 void benchmark_headers (void);
 void benchmark_parser (const char *datadir, const char *testdatadir);
 void benchmark_codecs (const char *datadir, const char *testdatadir);
+void benchmark_text (const char *datadir, const char *testdatadir);
 
 #endif

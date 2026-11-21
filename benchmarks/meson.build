@@ -10,7 +10,7 @@ benchmark('compliance-validators', compliance_benchmark)
 
 benchmark_exe = executable(
   'benchmark-gmime',
-  ['benchmark.c', 'benchmark-headers.c', 'benchmark-parser.c', 'benchmark-codecs.c'],
+  ['benchmark.c', 'benchmark-headers.c', 'benchmark-parser.c', 'benchmark-codecs.c', 'benchmark-text.c'],
   # Private validators must share the parser's GTypes, not register a second copy.
   objects: libgmime.extract_all_objects(recursive: false),
   include_directories: gmime_inc,

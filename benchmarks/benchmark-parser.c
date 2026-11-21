@@ -19,6 +19,8 @@
  */
 
 #include "benchmark.h"
+#include <gmime/gmime-reader-simd-private.h>
+#include <string.h>
 
 typedef struct {
 	GByteArray *input;
@@ -116,6 +118,454 @@ nested_message (gboolean mixed, guint depth)
 	}
 
 	return g_string_free_to_bytes (text);
+}
+
+/* Validation and scanner inputs follow MimeKit's benchmarks (see data/LICENSE). */
+static void
+append_run (GString *text, char c, guint length)
+{
+	gsize offset = text->len;
+
+	g_string_set_size (text, offset + length);
+	memset (text->str + offset, c, length);
+}
+
+static GBytes *
+header_message (const char *datadir, const char *scenario)
+{
+	static const char invalid[] = "Subject: bad\0value\r\n another \xff\r\n"
+		"Cc: Display\0Name <a@example.com>, \xff@example.com\r\n"
+		"Content-Type: text/plain; charset=\"ut\0f-8\"; name=\"\xff\"\r\nTrace: a\0b\xff\r\n";
+	GString *text;
+	guint i;
+
+	if (!strcmp (scenario, "HeaderStress"))
+		return benchmark_load (datadir, "header-stress.eml");
+	if (!strcmp (scenario, "StarTrek"))
+		return benchmark_load (datadir, "startrek.eml");
+
+	text = g_string_new ("From: Alice <alice@example.com>\r\nTo: Bob <bob@example.com>\r\n"
+			     "Date: Mon, 2 Nov 2026 12:00:00 -0500\r\nMessage-Id: <experiment@example.com>\r\n");
+	if (!strcmp (scenario, "Short")) {
+		g_string_append (text, "Subject: Hello\r\n");
+		for (i = 0; i < 12; i++)
+			g_string_append_printf (text, "Trace-%u: ordinary header text\r\n", i);
+	} else if (!strcmp (scenario, "Folded")) {
+		g_string_append (text, "Subject: first line\r\n");
+		for (i = 0; i < 64; i++) {
+			g_string_append_c (text, ' ');
+			append_run (text, 'a', 72);
+			g_string_append (text, "\r\n");
+		}
+		g_string_append (text, "Trace: first line\r\n");
+		for (i = 0; i < 64; i++)
+			g_string_append (text, " folded plain text\r\n");
+	} else if (!strcmp (scenario, "LongLine")) {
+		g_string_append (text, "Subject: ");
+		append_run (text, 'a', 8192);
+		g_string_append (text, "\r\nTrace: ");
+		append_run (text, 'b', 8192);
+		g_string_append (text, "\r\n");
+	} else if (!strcmp (scenario, "Addresses")) {
+		g_string_append (text, "Cc: ");
+		for (i = 0; i < 80; i++)
+			g_string_append_printf (text, "%sPerson %u <person%u@example.com>", i ? ",\r\n " : "", i, i);
+		g_string_append (text, "\r\n");
+	} else if (!strcmp (scenario, "Parameters")) {
+		g_string_append (text, "Content-Type: text/plain");
+		for (i = 0; i < 32; i++)
+			g_string_append_printf (text, ";\r\n x%u=\"ordinary value %u\"", i, i);
+		g_string_append (text, "\r\nContent-Disposition: attachment; filename*0*=utf-8''monthly%20;\r\n"
+				 " filename*1*=report.pdf\r\n");
+	} else if (!strcmp (scenario, "Utf8")) {
+		const char *japanese = "\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e";
+		g_string_append_printf (text, "Subject: caf\xc3\xa9 %s\r\n", japanese);
+		for (i = 0; i < 64; i++)
+			g_string_append_printf (text, " %s caf\xc3\xa9 ordinary text\r\n", japanese);
+		g_string_append (text, "Cc: \xc3\x89lodie <elodie@example.com>\r\nTrace: caf\xc3\xa9\r\n");
+	} else if (!strcmp (scenario, "Invalid")) {
+		g_string_append_len (text, invalid, sizeof (invalid) - 1);
+	} else {
+		g_assert_not_reached ();
+	}
+
+	g_string_append (text, "\r\nbody\r\n");
+	return g_string_free_to_bytes (text);
+}
+
+static GBytes *
+release_message (const char *datadir, const char *scenario)
+{
+	GString *text;
+
+	if (!strcmp (scenario, "Utf8"))
+		return header_message (datadir, scenario);
+
+	if (!strcmp (scenario, "QP-Utf8-CRLF")) {
+		text = g_string_new ("Content-Type: text/plain\r\nContent-Transfer-Encoding: quoted-printable\r\n\r\n");
+		while (text->len < 65536)
+			g_string_append (text, "=E6=97=A5=E6=9C=AC=E8=AA=9E=C3=A9=E6=97=A5=E6=9C=AC=E8=AA=9E=C3=A9\r\n");
+	} else {
+		guint width = !strcmp (scenario, "Body-LineWidth-32") ? 32 : 998;
+		gsize start;
+
+		text = g_string_new ("Content-Type: text/plain\r\nContent-Transfer-Encoding: 7bit\r\n\r\n");
+		start = text->len;
+		while (text->len - start < 65536) {
+			append_run (text, 'x', width);
+			g_string_append (text, "\r\n");
+		}
+	}
+
+	return g_string_free_to_bytes (text);
+}
+
+typedef enum {
+	LOG_OFF,
+	LOG_STRUCTURAL,
+	LOG_ALL
+} LoggingMode;
+
+typedef struct {
+	GPtrArray *streams;
+	GMimeContentStorage storage;
+	LoggingMode logging;
+	guint issue_limit;
+} ValidationData;
+
+static void
+count_issue (const GMimeComplianceIssue *issue, gpointer data)
+{
+	(*(guint *) data)++;
+}
+
+static GMimeMessage *
+parse_fixture (ValidationData *test, GMimeStream *stream, guint *issues, GError **error)
+{
+	GMimeParser *parser;
+	GMimeMessage *message;
+	GMimeComplianceOptions *options;
+
+	if (g_mime_stream_reset (stream) < 0)
+		g_error ("Cannot rewind memory stream");
+	parser = g_mime_parser_new_with_stream_and_storage (stream, GMIME_FORMAT_MESSAGE, test->storage, error);
+	if (!parser)
+		return NULL;
+	options = g_mime_parser_get_compliance_options (parser);
+	g_mime_compliance_options_set_max_issues_per_violation (options, test->issue_limit);
+	g_mime_compliance_options_set_enabled_validators (options, test->logging == LOG_STRUCTURAL ?
+							  GMIME_COMPLIANCE_VALIDATOR_NONE : GMIME_COMPLIANCE_VALIDATOR_ALL);
+	if (test->logging != LOG_OFF)
+		g_mime_parser_set_compliance_logger (parser, count_issue, issues, NULL);
+	message = g_mime_parser_construct_message (parser, NULL, error);
+	g_object_unref (parser);
+	return message;
+}
+
+static guint64
+parse_validated (gpointer data)
+{
+	ValidationData *test = data;
+	guint64 result = 0;
+	guint i;
+
+	for (i = 0; i < test->streams->len; i++) {
+		GError *error = NULL;
+		guint issues = 0;
+		GMimeMessage *message = parse_fixture (test, test->streams->pdata[i], &issues, &error);
+
+		benchmark_check (message != NULL, "parsing validation fixture", &error);
+		result += issues + g_mime_header_list_get_count (g_mime_entity_get_header_list (GMIME_ENTITY (message)));
+		g_object_unref (message);
+	}
+	return result;
+}
+
+static void
+add_fixture (ValidationData *test, GBytes *bytes)
+{
+	const char *data = g_bytes_get_data (bytes, NULL);
+	g_ptr_array_add (test->streams, g_mime_stream_mem_new_with_buffer (data, g_bytes_get_size (bytes)));
+}
+
+/* MKCORP01: little-endian message count followed by length-prefixed messages. */
+static guint32
+corpus_uint32 (const guint8 **cursor, const guint8 *end)
+{
+	guint32 value;
+
+	if ((gsize) (end - *cursor) < sizeof (value))
+		g_error ("Truncated packed corpus");
+	memcpy (&value, *cursor, sizeof (value));
+	*cursor += sizeof (value);
+	return GUINT32_FROM_LE (value);
+}
+
+static gsize
+load_release_corpus (ValidationData *test, const char *dir, const char *file)
+{
+	GBytes *packed = benchmark_load (dir, file);
+	gsize length, accepted_bytes = 0;
+	const guint8 *cursor = g_bytes_get_data (packed, &length), *end;
+	guint count, i;
+
+	if (length < 8 || memcmp (cursor, "MKCORP01", 8))
+		g_error ("%s: invalid packed corpus signature", file);
+	end = cursor + length;
+	cursor += 8;
+	count = corpus_uint32 (&cursor, end);
+	if (!count || count > 100000)
+		g_error ("%s: invalid packed corpus count %u", file, count);
+	for (i = 0; i < count; i++) {
+		guint32 size = corpus_uint32 (&cursor, end);
+		GMimeStream *stream;
+		GMimeMessage *message;
+		GError *error = NULL;
+		guint issues = 0;
+
+		if (size > (gsize) (end - cursor))
+			g_error ("%s: truncated message %u", file, i);
+		stream = g_mime_stream_mem_new_with_buffer ((const char *) cursor, size);
+		cursor += size;
+		message = parse_fixture (test, stream, &issues, &error);
+		if (!message && (g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) ||
+				 g_error_matches (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG))) {
+			g_clear_error (&error);
+			g_object_unref (stream);
+			continue;
+		}
+		benchmark_check (message != NULL, "preflighting packed message", &error);
+		g_object_unref (message);
+		g_ptr_array_add (test->streams, stream);
+		accepted_bytes += size;
+	}
+	if (cursor != end || !test->streams->len)
+		g_error ("%s: trailing data or no parseable messages", file);
+	g_printerr ("%s: benchmarking %u messages; excluded %u\n", file, test->streams->len, count - test->streams->len);
+	g_bytes_unref (packed);
+	return accepted_bytes;
+}
+
+static void
+benchmark_validation (const char *datadir, gboolean release)
+{
+	static const char *headers[] = {
+		"Short", "Folded", "LongLine", "Addresses", "Parameters", "Utf8", "Invalid", "HeaderStress", "StarTrek"
+	};
+	static const char *release_cases[] = {
+		"Utf8", "Body-LineWidth-32", "Body-LineWidth-998", "QP-Utf8-CRLF", "enron-crlf", "attachments-crlf"
+	};
+	static const char *modes[] = { "Off", "Structural", "All" };
+	const char *corpus = g_getenv ("MIMEKIT_BENCHMARK_CORPUS");
+	guint i, mode;
+
+	for (i = 0; i < (release ? G_N_ELEMENTS (release_cases) : G_N_ELEMENTS (headers)); i++) {
+		const char *scenario = release ? release_cases[i] : headers[i];
+		ValidationData test = { NULL, release ? GMIME_CONTENT_STORAGE_SOURCE : GMIME_CONTENT_STORAGE_MEMORY,
+					LOG_OFF, release ? 1 : 0 };
+		char *file = NULL;
+		gsize bytes = 0;
+
+		if (release && g_str_has_suffix (scenario, "-crlf")) {
+			char *path;
+			gboolean exists;
+
+			if (!corpus || !*corpus)
+				continue;
+			file = g_strconcat (scenario, ".bin", NULL);
+			path = g_build_filename (corpus, file, NULL);
+			exists = g_file_test (path, G_FILE_TEST_IS_REGULAR);
+			g_free (path);
+			if (!exists) {
+				g_free (file);
+				continue;
+			}
+		}
+		for (mode = LOG_OFF; mode <= LOG_ALL; mode++) {
+			char *name;
+
+			if (release && mode == LOG_STRUCTURAL)
+				continue;
+			name = g_strdup_printf ("%s/%s/%s", release ? "ReleaseParser" : "HeaderByteValidation",
+						scenario, modes[mode]);
+			if (benchmark_selected (name)) {
+				if (!test.streams) {
+					test.streams = g_ptr_array_new_with_free_func (g_object_unref);
+					if (file) {
+						bytes = load_release_corpus (&test, corpus, file);
+					} else {
+						GBytes *input = release ? release_message (datadir, scenario) :
+							header_message (datadir, scenario);
+						bytes = g_bytes_get_size (input);
+						add_fixture (&test, input);
+						g_bytes_unref (input);
+					}
+				}
+				test.logging = mode;
+				benchmark_run (name, bytes, parse_validated, &test);
+			}
+			g_free (name);
+		}
+		if (test.streams)
+			g_ptr_array_unref (test.streams);
+		g_free (file);
+	}
+}
+
+typedef struct {
+	GPtrArray *values;
+	gsize bytes;
+	guint64 lines, flags;
+	gboolean detect;
+} ScannerData;
+
+/* Preserve the following-header lookahead, including bytes that must not
+ * be attributed to the header being scanned. Only count actual value bytes. */
+static void
+add_scan_value (ScannerData *test, const guint8 *value, gsize length)
+{
+	static const char next[] = "Next: \0\xc3\xbf";
+	GString *input = g_string_sized_new (length + 80);
+	guint flags = 0;
+	gsize i;
+
+	g_string_append_len (input, (const char *) value, length);
+	for (i = 0; i < length; i++) {
+		if (!value[i])
+			flags |= 1;
+		if (value[i] & 0x80)
+			flags |= 2;
+		if (value[i] == '\n')
+			test->lines++;
+	}
+	if (!length || value[length - 1] != '\n') {
+		g_string_append_c (input, '\n');
+		test->lines++;
+	}
+	test->bytes += input->len;
+	test->flags += flags;
+	g_string_append_len (input, next, sizeof (next) - 1);
+	append_run (input, 'x', 64);
+	g_string_append (input, "\r\n\n");
+	g_ptr_array_add (test->values, g_string_free_to_bytes (input));
+}
+
+static void
+setup_scanner (ScannerData *test, const char *datadir, const char *scenario)
+{
+	GString *value;
+	guint i;
+
+	if (!strcmp (scenario, "Corpus") || !strcmp (scenario, "HeaderStress")) {
+		GBytes *bytes = header_message (datadir, !strcmp (scenario, "Corpus") ? "StarTrek" : scenario);
+		GMimeStream *stream = g_mime_stream_mem_new_with_buffer (g_bytes_get_data (bytes, NULL), g_bytes_get_size (bytes));
+		GMimeParser *parser = g_mime_parser_new_with_stream (stream);
+		GError *error = NULL;
+		GMimeMessage *message = g_mime_parser_construct_message (parser, NULL, &error);
+		GMimeHeaderList *headers;
+		int h;
+
+		benchmark_check (message != NULL, "collecting raw header values", &error);
+		headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+		for (h = 0; h < g_mime_header_list_get_count (headers); h++) {
+			GMimeHeader *header = g_mime_header_list_get_header_at (headers, h);
+			GBytes *raw = g_mime_header_get_raw_value (header);
+
+			if (raw) {
+				add_scan_value (test, g_bytes_get_data (raw, NULL), g_bytes_get_size (raw));
+				g_bytes_unref (raw);
+			}
+		}
+		g_object_unref (message);
+		g_object_unref (parser);
+		g_object_unref (stream);
+		g_bytes_unref (bytes);
+		return;
+	}
+
+	value = g_string_new (NULL);
+	if (!strcmp (scenario, "Short")) {
+		g_string_append (value, " hello\r\n");
+	} else if (!strcmp (scenario, "DenseFolds")) {
+		for (i = 0; i < 64; i++)
+			g_string_append (value, " a\r\n\tb\r\n");
+	} else {
+		guint lines = !strcmp (scenario, "Folded") ? 16 : 1;
+		guint width = !strcmp (scenario, "LongLine") ? 4096 : 75;
+
+		for (i = 0; i < lines; i++) {
+			g_string_append_c (value, ' ');
+			append_run (value, 'x', width);
+			g_string_append (value, "\r\n");
+		}
+	}
+	add_scan_value (test, (const guint8 *) value->str, value->len);
+	g_string_free (value, TRUE);
+}
+
+static guint64
+scan_header_values (gpointer data)
+{
+	ScannerData *test = data;
+	guint64 result = 0;
+	guint i;
+
+	for (i = 0; i < test->values->len; i++) {
+		gsize size;
+		const guint8 *start = g_bytes_get_data (test->values->pdata[i], &size);
+		const guint8 *p = start, *end = start + size;
+		guint flags = 0, lines = 0;
+
+		do {
+			const guint8 *lf;
+
+			/* Same two paths as GMimeReader's header loop. */
+			if (test->detect && flags != 3) {
+				GMimeReaderLineScan scan = _g_mime_reader_scan_line (p, end - p, !(flags & 1), !(flags & 2));
+				if (scan.null_index != G_MAXSIZE)
+					flags |= 1;
+				if (scan.eight_bit_index != G_MAXSIZE)
+					flags |= 2;
+				lf = p + scan.length;
+			} else {
+				lf = memchr (p, '\n', end - p);
+			}
+			if (!lf || lf == end)
+				g_error ("Missing header lookahead");
+			p = lf + 1;
+			lines++;
+		} while (p < end && (*p == ' ' || *p == '\t'));
+		result += (guint64) (p - start) + lines + flags;
+	}
+	return result;
+}
+
+static void
+benchmark_header_scanner (const char *datadir)
+{
+	static const char *cases[] = { "Short", "Typical", "Folded", "DenseFolds", "LongLine", "Corpus", "HeaderStress" };
+	guint i, detect;
+
+	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+		ScannerData test = { 0 };
+
+		for (detect = 0; detect < 2; detect++) {
+			char *name = g_strdup_printf ("HeaderValueScanner/%s/%s", cases[i], detect ? "DetectBytes" : "Lines");
+			if (benchmark_selected (name)) {
+				if (!test.values) {
+					test.values = g_ptr_array_new_with_free_func ((GDestroyNotify) g_bytes_unref);
+					setup_scanner (&test, datadir, cases[i]);
+				}
+				test.detect = detect;
+				if (!test.bytes || scan_header_values (&test) != test.bytes + test.lines + (detect ? test.flags : 0))
+					g_error ("%s: incorrect header scan result", name);
+				benchmark_run (name, test.bytes, scan_header_values, &test);
+			}
+			g_free (name);
+		}
+		if (test.values)
+			g_ptr_array_unref (test.values);
+	}
 }
 
 typedef struct {
@@ -280,5 +730,8 @@ benchmark_parser (const char *datadir, const char *testdatadir)
 			g_byte_array_unref (input);
 	}
 
+	benchmark_validation (datadir, FALSE);
+	benchmark_header_scanner (datadir);
+	benchmark_validation (datadir, TRUE);
 	benchmark_prepare (datadir, testdatadir);
 }

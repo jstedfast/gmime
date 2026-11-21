@@ -56,7 +56,7 @@ benchmark_run (const char *name, gsize bytes, BenchmarkFunc func, gpointer data)
 	guint64 expected = func (data), result = 0, iterations, total = 0;
 	gint64 start, elapsed;
 	double samples[5];
-	guint round;
+	guint round, batch_size;
 
 	if (verify) {
 		if (func (data) != expected)
@@ -68,9 +68,13 @@ benchmark_run (const char *name, gsize bytes, BenchmarkFunc func, gpointer data)
 	}
 
 	start = g_get_monotonic_time ();
+	iterations = 0;
 	do {
 		result_sink = func (data);
+		iterations++;
 	} while (g_get_monotonic_time () - start < 5000);
+	/* Amortize the clock read for small kernels, not for whole documents. */
+	batch_size = MIN (iterations, 16);
 
 	for (round = 0; round < G_N_ELEMENTS (samples); round++) {
 		iterations = 0;
@@ -79,10 +83,10 @@ benchmark_run (const char *name, gsize bytes, BenchmarkFunc func, gpointer data)
 		do {
 			guint batch;
 
-			for (batch = 0; batch < 16; batch++)
+			for (batch = 0; batch < batch_size; batch++)
 				result = func (data);
 
-			iterations += 16;
+			iterations += batch_size;
 			elapsed = g_get_monotonic_time () - start;
 		} while (elapsed < (gint64) milliseconds * 1000);
 
@@ -195,6 +199,7 @@ main (int argc, char **argv)
 	benchmark_headers ();
 	benchmark_parser (datadir, testdatadir);
 	benchmark_codecs (datadir, testdatadir);
+	benchmark_text (datadir, testdatadir);
 
 	g_mime_shutdown ();
 

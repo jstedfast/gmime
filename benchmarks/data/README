@@ -35,3 +35,11 @@ Filter stream cases use explicit 4096-byte buffers (1024 for From filters),
 rather than relying on .NET MemoryStream.CopyTo's implementation.
 
 The byte-preserving .gitattributes in this directory applies to these fixtures.
+
+The HTML and RTF workloads follow MimeKit e7695758. The HTML specification
+sample reuses tests/data/html-tokenizer/test.html, the UTF-8 transcription
+of MimeKit's Windows-1252 test.html. Gimhae_Kim_clan.utf-8.html is copied
+from UnitTests/TestData/html and retains the Wikipedia article's attribution
+and license links. The benchmark consumes its BOM in untimed setup.
+RTF documents are generated before timing, including the paired encapsulated
+and extracted HTML bodies. LargeBinary uses one wire byte per \bin byte.

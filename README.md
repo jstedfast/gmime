@@ -198,7 +198,8 @@ The top-level `benchmarks` directory contains the standalone benchmark targets
 and their dedicated fixtures. The `benchmark-gmime` executable covers
 address parsing and validation, RFC 2047
 decoding, parser and reader lifecycles, nested messages, message preparation,
-codecs, encoding validators, and stream filters.
+codecs, encoding validators, stream filters, UTF-8 validation, HTML tokenization
+and sanitization, and RTF-to-text and RTF-to-HTML conversion.
 
 Use an optimized build, without sanitizers or coverage, for measurements:
 
@@ -217,6 +218,8 @@ meson test -C _build-bench --no-rebuild --benchmark benchmark --verbose \
   --test-args='--list'
 meson test -C _build-bench --no-rebuild --benchmark benchmark --verbose \
   --test-args='--filter=Parser/HeaderStress/* --milliseconds=200'
+meson test -C _build-bench --no-rebuild --benchmark benchmark --verbose \
+  --test-args='--filter=Rtf/*'
 ```
 
 `--filter` accepts a case-sensitive glob. `--verify` performs untimed checks,
@@ -239,17 +242,25 @@ leaf transfer encodings before every operation. Codec/filter operations
 include their allocations and cleanup. Validators count issues without
 retaining them. Preparation uses preloaded memory.
 
+The header-byte workloads compare parsing with logging off, structural
+validation, and all validators. Set `MIMEKIT_BENCHMARK_CORPUS` to a directory
+containing the packed MimeKit corpora to include the Enron and attachment
+parser workloads; they are not required for the built-in scenarios. Only
+messages accepted by GMime are included in those timings.
+
 The executable links the production library objects directly so its private
 validators and parser share one set of GTypes. It does not measure shared-library
 call overhead. See `benchmarks/data/README` for fixture provenance and
-deliberate input differences.
+deliberate input differences. HTML conversion distinguishes writing to a null
+stream, returning a string, and filtering tags with a callback. The RTF cases
+distinguish extracting encapsulated HTML from rendering its RTF alternative.
+The UTF-8 cases compare GMime's scalar and CPU-dispatched implementations.
 
 Existing complementary targets remain available: `benchmark-compliance-validators`
-covers encoded-word and parameter validation; `test-codecs` and
-`test-codecs-scalar` already provide `--benchmark-base64` and
-`--benchmark-base64-encoder` for the upstream preallocated streaming layouts.
-The new fixture-based codec cases measure allocation and stream overhead
-instead of duplicating those layouts.
+covers encoded-word and parameter validation. The main runner includes both
+preallocated Base64 layouts and fixture-based codec and filter operations.
+`test-codecs` and `test-codecs-scalar` also provide `--benchmark-base64` and
+`--benchmark-base64-encoder` for comparing dispatched and scalar builds.
 
 ### Static analysis
 
