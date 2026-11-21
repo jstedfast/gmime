@@ -135,6 +135,7 @@ factory_unref (TemporaryStreamFactory *factory)
 	if (factory && g_atomic_int_dec_and_test (&factory->ref_count)) {
 		if (factory->destroy)
 			factory->destroy (factory->user_data);
+
 		g_free (factory);
 	}
 }

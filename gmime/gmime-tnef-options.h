@@ -55,6 +55,9 @@ void g_mime_tnef_options_set_max_property_value_length (GMimeTnefOptions *option
 guint64 g_mime_tnef_options_get_max_total_data_bytes (const GMimeTnefOptions *options);
 void g_mime_tnef_options_set_max_total_data_bytes (GMimeTnefOptions *options, guint64 maximum);
 
+guint g_mime_tnef_options_get_max_attachments (const GMimeTnefOptions *options);
+void g_mime_tnef_options_set_max_attachments (GMimeTnefOptions *options, guint maximum);
+
 int g_mime_tnef_options_get_default_codepage (const GMimeTnefOptions *options);
 void g_mime_tnef_options_set_default_codepage (GMimeTnefOptions *options, int codepage);
 

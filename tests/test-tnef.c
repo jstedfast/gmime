@@ -1399,6 +1399,55 @@ test_fixture (gconstpointer user_data)
 	g_free (path);
 }
 
+static void
+test_tnef_part (void)
+{
+	static const guint8 payload[] = {
+		0x78, 0x9f, 0x3e, 0x22, 0x34, 0x12, /* signature and legacy key */
+		1, 4, 0x80, 1, 0, 2, 0, 0, 0, 0xc0, 0, 0xc0, 0 /* attSubject */
+	};
+	static const char *subtypes[] = { "ms-tnef", "vnd.ms-tnef" };
+	GMimeTnefPart *part = g_mime_tnef_part_new ();
+	GMimeTnefOptions *options = g_mime_tnef_options_new ();
+	char *encoded = g_base64_encode (payload, sizeof payload);
+	GError *error = NULL;
+	guint i;
+
+	g_assert_cmpstr (g_mime_part_get_filename (GMIME_PART (part)), ==, "winmail.dat");
+	g_assert_null (g_mime_tnef_part_load_tnef_message (part, NULL, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION);
+	g_clear_error (&error);
+	g_object_unref (part);
+	g_mime_tnef_options_set_default_codepage (options, 1252);
+
+	for (i = 0; i < G_N_ELEMENTS (subtypes); i++) {
+		char *wire = g_strdup_printf ("Content-Type: application/%s; charset=windows-1251\r\n"
+					      "Content-Transfer-Encoding: base64\r\n\r\n%s\r\n", subtypes[i], encoded);
+		GMimeStream *stream = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
+		GMimeEntity *entity = g_mime_entity_load (NULL, stream, &error);
+		GMimeTnefMessage *first, *second;
+
+		g_assert_no_error (error);
+		g_assert_true (GMIME_IS_TNEF_PART (entity));
+		g_assert_null (g_mime_part_get_filename (GMIME_PART (entity)));
+		first = g_mime_tnef_part_load_tnef_message (GMIME_TNEF_PART (entity), NULL, &error);
+		g_assert_no_error (error);
+		second = g_mime_tnef_part_load_tnef_message (GMIME_TNEF_PART (entity), options, &error);
+		g_assert_no_error (error);
+		g_object_unref (entity);
+		g_object_unref (stream);
+		g_free (wire);
+
+		g_assert_cmpstr (g_mime_tnef_message_get_subject (first), ==, "\xd0\x90");
+		g_assert_cmpstr (g_mime_tnef_message_get_subject (second), ==, "\xc3\x80");
+		g_object_unref (first);
+		g_object_unref (second);
+	}
+
+	g_mime_tnef_options_unref (options);
+	g_free (encoded);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -1414,6 +1463,7 @@ main (int argc, char **argv)
 			data_directory = argv[i];
 	}
 	g_mime_init ();
+	g_test_add_func ("/tnef/part", test_tnef_part);
 	g_test_add_func ("/tnef/properties", test_properties);
 	g_test_add_func ("/tnef/property-snapshot-lifetimes", test_property_snapshot_lifetimes);
 	g_test_add_func ("/tnef/rtf", test_rtf);

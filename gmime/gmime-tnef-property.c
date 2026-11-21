@@ -75,6 +75,7 @@ g_mime_tnef_property_unref (GMimeTnefProperty *property)
 	if (g_atomic_int_dec_and_test (&property->ref_count)) {
 		g_clear_pointer (&property->name, g_mime_tnef_name_id_unref);
 		g_array_unref (property->values);
+		g_free (property->decoded_binary);
 		g_free (property);
 	}
 }

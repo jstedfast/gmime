@@ -117,6 +117,12 @@ visitor_visit_message_disposition_notification (GMimeVisitor *visitor, GMimeMess
 }
 
 static void
+visitor_visit_tnef_part (GMimeVisitor *visitor, GMimeTnefPart *part)
+{
+	g_mime_visitor_visit_part (visitor, (GMimePart *) part);
+}
+
+static void
 visitor_visit_message_feedback_report (GMimeVisitor *visitor, GMimeMessageFeedbackReport *part)
 {
 	g_mime_visitor_visit_part (visitor, (GMimePart *) part);
@@ -180,6 +186,7 @@ g_mime_visitor_class_init (GMimeVisitorClass *klass)
 	klass->visit_message_delivery_status = visitor_visit_message_delivery_status;
 	klass->visit_message_disposition_notification = visitor_visit_message_disposition_notification;
 	klass->visit_message_feedback_report = visitor_visit_message_feedback_report;
+	klass->visit_tnef_part = visitor_visit_tnef_part;
 	klass->visit_multipart = visitor_visit_multipart;
 	klass->visit_multipart_alternative = visitor_visit_multipart_alternative;
 	klass->visit_multipart_related = visitor_visit_multipart_related;
@@ -325,6 +332,22 @@ g_mime_visitor_visit_message_disposition_notification (GMimeVisitor *visitor, GM
 	g_return_if_fail (GMIME_IS_MESSAGE_DISPOSITION_NOTIFICATION (part));
 
 	GMIME_VISITOR_GET_CLASS (visitor)->visit_message_disposition_notification (visitor, part);
+}
+
+/**
+ * g_mime_visitor_visit_tnef_part:
+ * @visitor: a #GMimeVisitor
+ * @part: a TNEF part
+ *
+ * Visits a TNEF part. By default this delegates to the leaf-part visitor.
+ **/
+void
+g_mime_visitor_visit_tnef_part (GMimeVisitor *visitor, GMimeTnefPart *part)
+{
+	g_return_if_fail (GMIME_IS_VISITOR (visitor));
+	g_return_if_fail (GMIME_IS_TNEF_PART (part));
+
+	GMIME_VISITOR_GET_CLASS (visitor)->visit_tnef_part (visitor, part);
 }
 
 /**

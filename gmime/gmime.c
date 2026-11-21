@@ -213,6 +213,8 @@ g_mime_init (void)
 	g_mime_entity_register_type ("message", "disposition-notification", g_mime_message_disposition_notification_get_type ());
 	g_mime_entity_register_type ("message", "global-disposition-notification", g_mime_message_disposition_notification_get_type ());
 	g_mime_entity_register_type ("message", "feedback-report", g_mime_message_feedback_report_get_type ());
+	g_mime_entity_register_type ("application", "ms-tnef", GMIME_TYPE_TNEF_PART);
+	g_mime_entity_register_type ("application", "vnd.ms-tnef", GMIME_TYPE_TNEF_PART);
 }
 
 

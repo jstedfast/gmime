@@ -153,6 +153,7 @@ TEST_VISIT (message_feedback_report, GMimeMessageFeedbackReport, "feedback")
 TEST_VISIT (multipart_alternative, GMimeMultipartAlternative, "alternative")
 TEST_VISIT (multipart_related, GMimeMultipartRelated, "related")
 TEST_VISIT (text_rfc822_headers, GMimeTextRfc822Headers, "headers")
+TEST_VISIT (tnef_part, GMimeTnefPart, "tnef")
 
 #undef TEST_VISIT
 
@@ -182,6 +183,7 @@ test_visitor_class_init (TestVisitorClass *klass)
 	klass->visit_multipart_report = test_visit_multipart_report;
 	klass->visit_text_part = test_visit_text_part;
 	klass->visit_text_rfc822_headers = test_visit_text_rfc822_headers;
+	klass->visit_tnef_part = test_visit_tnef_part;
 	klass->visit_body = test_visit_body;
 	klass->visit_children = test_visit_children;
 	klass->visit_message_part_message = test_visit_message_part_message;
@@ -373,6 +375,7 @@ test_empty_and_inherited_dispatch (void)
 		g_object_new (test_visitor_text_get_type (), NULL),
 		(GMimeEntity *) g_mime_multipart_signed_new (),
 		(GMimeEntity *) g_mime_multipart_encrypted_new (),
+		(GMimeEntity *) g_mime_tnef_part_new (),
 		(GMimeEntity *) g_mime_application_pkcs7_mime_new (GMIME_SECURE_MIME_TYPE_ENVELOPED_DATA)
 	};
 	const char *expected[] = {
@@ -384,6 +387,7 @@ test_empty_and_inherited_dispatch (void)
 		"part:-;entity:-;",
 		"multipart:-;entity:-;children:-;",
 		"multipart:-;entity:-;children:-;",
+		"tnef:-;part:-;entity:-;",
 		"part:-;entity:-;"
 	};
 	gpointer weak;

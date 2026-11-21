@@ -32,6 +32,7 @@
 #include <gmime/gmime-multipart-report.h>
 #include <gmime/gmime-text-part.h>
 #include <gmime/gmime-text-rfc822-headers.h>
+#include <gmime/gmime-tnef-part.h>
 
 G_BEGIN_DECLS
 
@@ -67,6 +68,7 @@ G_DECLARE_DERIVABLE_TYPE (GMimeVisitor, g_mime_visitor, GMIME, VISITOR, GObject)
  * @visit_body: traverse a message's body
  * @visit_children: traverse a multipart's children in order
  * @visit_message_part_message: traverse an encapsulated message
+ * @visit_tnef_part: visit a TNEF attachment without expanding it
  *
  * All methods have defaults. Chain to the parent implementation to retain
  * its traversal, or omit chaining to prune that subtree.
@@ -93,6 +95,7 @@ struct _GMimeVisitorClass {
 	void (* visit_body) (GMimeVisitor *visitor, GMimeMessage *message);
 	void (* visit_children) (GMimeVisitor *visitor, GMimeMultipart *multipart);
 	void (* visit_message_part_message) (GMimeVisitor *visitor, GMimeMessagePart *part);
+	void (* visit_tnef_part) (GMimeVisitor *visitor, GMimeTnefPart *part);
 };
 
 
@@ -110,6 +113,7 @@ void g_mime_visitor_visit_multipart_alternative (GMimeVisitor *visitor, GMimeMul
 void g_mime_visitor_visit_multipart_related (GMimeVisitor *visitor, GMimeMultipartRelated *multipart);
 void g_mime_visitor_visit_multipart_report (GMimeVisitor *visitor, GMimeMultipartReport *multipart);
 void g_mime_visitor_visit_text_part (GMimeVisitor *visitor, GMimeTextPart *part);
+void g_mime_visitor_visit_tnef_part (GMimeVisitor *visitor, GMimeTnefPart *part);
 void g_mime_visitor_visit_text_rfc822_headers (GMimeVisitor *visitor, GMimeTextRfc822Headers *part);
 void g_mime_visitor_visit_body (GMimeVisitor *visitor, GMimeMessage *message);
 void g_mime_visitor_visit_children (GMimeVisitor *visitor, GMimeMultipart *multipart);

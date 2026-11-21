@@ -984,6 +984,26 @@ attachment placeholders. Plain text uses the RTF rendition of encapsulated
 HTML; when HTML extraction is enabled, treat the resulting HTML as untrusted.
 For a TNEF compressed-RTF property, decompress it before conversion.
 
+### TNEF attachments
+
+The MIME parser recognizes `application/ms-tnef` and `application/vnd.ms-tnef`
+as `GMimeTnefPart`. Parsing and visitor traversal do not expand `winmail.dat`.
+Call `g_mime_tnef_part_load_tnef_message()` to transfer-decode the part and
+load an independent `GMimeTnefMessage`. When no explicit options are supplied,
+a recognized part charset provides the fallback code page. For a raw TNEF
+stream, use `g_mime_tnef_message_load()` instead.
+
+Use the message's body, recipient, and attachment accessors to inspect its
+contents without converting it. To extract an attachment, copy from the
+stream returned by `g_mime_tnef_attachment_open_read()`; treat the sender's
+filename as metadata, not as a trusted filesystem path.
+
+`g_mime_tnef_message_convert_to_mime()` returns a `GMimeTnefConversionResult`.
+The result owns the converted `GMimeMessage` and an ordered list of losses.
+Inspect those losses even when conversion succeeds; for example, a recipient
+may not have an Internet address. Take a reference to the MIME message before
+releasing the result if you need to keep it.
+
 ### Low-level TNEF
 
 `GMimeTnefReader` and `GMimeTnefPropertyReader` expose forward-only attributes,

@@ -23,8 +23,17 @@ parser_model_test_dep = declare_dependency(
   dependencies: gmime_deps,
 )
 
+# RTF internals are private too, but these tests use the real GPGME glue.
+rtf_test_lib = static_library(
+  'gmime-rtf-test',
+  objects: libgmime.extract_objects(gmime_sources + gmime_gpgme_sources),
+  link_whole: util_lib,
+)
+rtf_test_dep = declare_dependency(link_with: rtf_test_lib, dependencies: gmime_deps)
+
 normal_tests = [
   'test-tnef',
+  'test-tnef-message', 'test-tnef-conversion', 'test-tnef-calendar',
   'test-rtf-tokenizer', 'test-rtf-interpreter', 'test-rtf-text', 'test-rtf-html',
   'test-text-converters',
   'test-html-tokenizer', 'test-html-output', 'test-html-converters',
@@ -56,7 +65,10 @@ test_programs = {
 }
 foreach name : normal_tests
   sources = [name + '.c']
-  test_dep = name in ['test-parser-model', 'test-rtf-tokenizer', 'test-rtf-interpreter'] ? parser_model_test_dep : gmime_dep
+  test_dep = name == 'test-parser-model' ? parser_model_test_dep : gmime_dep
+  if name in ['test-rtf-tokenizer', 'test-rtf-interpreter']
+    test_dep = rtf_test_dep
+  endif
   if name == 'test-core'
     sources += ['../gmime/gmime-events.c']
   elif name == 'test-addresses'
@@ -123,6 +135,8 @@ foreach name, program : test_programs
   data_name = name.substring(5)
   if name == 'test-openpgp'
     data_name = 'pgp'
+  elif name in ['test-tnef-message', 'test-tnef-conversion', 'test-tnef-calendar']
+    data_name = 'tnef'
   endif
   if name in ['test-streams', 'test-cat']
     data_dir = 'data' / data_name

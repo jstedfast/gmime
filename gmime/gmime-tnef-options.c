@@ -40,6 +40,7 @@ g_mime_tnef_options_new (void)
 
 	options->ref_count = 1;
 	options->max_nesting_depth = 32;
+	options->max_attachments = 1024;
 	options->max_property_value_length = 32 * 1024 * 1024;
 	options->max_total_data_bytes = 64 * 1024 * 1024;
 	options->default_codepage = 0;
@@ -97,11 +98,41 @@ g_mime_tnef_options_clone (const GMimeTnefOptions *options)
 
 	clone = g_mime_tnef_options_new ();
 	clone->max_nesting_depth = options->max_nesting_depth;
+	clone->max_attachments = options->max_attachments;
 	clone->max_property_value_length = options->max_property_value_length;
 	clone->max_total_data_bytes = options->max_total_data_bytes;
 	clone->default_codepage = options->default_codepage;
 
 	return clone;
+}
+
+/**
+ * g_mime_tnef_options_get_max_attachments:
+ * @options: TNEF options
+ *
+ * Returns: the number of attachments a message may retain (default: 1024).
+ **/
+guint
+g_mime_tnef_options_get_max_attachments (const GMimeTnefOptions *options)
+{
+	g_return_val_if_fail (options != NULL, 0);
+
+	return options->max_attachments;
+}
+
+/**
+ * g_mime_tnef_options_set_max_attachments:
+ * @options: TNEF options
+ * @maximum: maximum number of attachments per message
+ *
+ * Limits attachment materialization. Zero skips all attachments.
+ **/
+void
+g_mime_tnef_options_set_max_attachments (GMimeTnefOptions *options, guint maximum)
+{
+	g_return_if_fail (options != NULL);
+
+	options->max_attachments = maximum;
 }
 
 /**

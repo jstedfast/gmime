@@ -62,6 +62,9 @@
 <!ENTITY gmime-tnef-types SYSTEM "xml/gmime-tnef-types.xml">
 <!ENTITY gmime-tnef-options SYSTEM "xml/gmime-tnef-options.xml">
 <!ENTITY gmime-tnef-reader SYSTEM "xml/gmime-tnef-reader.xml">
+<!ENTITY gmime-tnef-part SYSTEM "xml/gmime-tnef-part.xml">
+<!ENTITY gmime-tnef-message SYSTEM "xml/gmime-tnef-message.xml">
+<!ENTITY gmime-tnef-conversion SYSTEM "xml/gmime-tnef-conversion.xml">
 <!ENTITY gmime-tnef-writer SYSTEM "xml/gmime-tnef-writer.xml">
 <!ENTITY gmime-tnef-property SYSTEM "xml/gmime-tnef-property.xml">
 <!ENTITY gmime-filter-rtf-compressed SYSTEM "xml/gmime-filter-rtf-compressed.xml">
@@ -356,6 +359,9 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &gmime-tnef-types;
       &gmime-tnef-options;
       &gmime-tnef-reader;
+      &gmime-tnef-message;
+      &gmime-tnef-part;
+      &gmime-tnef-conversion;
       &gmime-tnef-writer;
       &gmime-tnef-property;
     </chapter>

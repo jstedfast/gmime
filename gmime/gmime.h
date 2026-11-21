@@ -86,6 +86,9 @@
 #include <gmime/gmime-tnef-types.h>
 #include <gmime/gmime-tnef-options.h>
 #include <gmime/gmime-tnef-reader.h>
+#include <gmime/gmime-tnef-message.h>
+#include <gmime/gmime-tnef-part.h>
+#include <gmime/gmime-tnef-conversion.h>
 #include <gmime/gmime-tnef-property.h>
 #include <gmime/gmime-tnef-writer.h>
 #include <gmime/gmime-filter-rtf-compressed.h>

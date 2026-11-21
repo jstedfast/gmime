@@ -26,6 +26,7 @@
 struct _GMimeTnefOptions {
 	gint ref_count;
 	guint max_nesting_depth;
+	guint max_attachments;
 	guint max_property_value_length;
 	guint64 max_total_data_bytes;
 	int default_codepage;
@@ -49,6 +50,8 @@ struct _GMimeTnefProperty {
 	GMimeTnefPropertyTag tag;
 	GMimeTnefNameId *name;
 	GArray *values;
+	int codepage;
+	char *decoded_binary;
 };
 
 struct _GMimeTnefPropertySet {
@@ -58,6 +61,16 @@ struct _GMimeTnefPropertySet {
 
 G_GNUC_INTERNAL GMimeTnefProperty *_g_mime_tnef_property_new (GMimeTnefPropertyTag tag, GMimeTnefNameId *name);
 G_GNUC_INTERNAL GMimeTnefPropertySet *_g_mime_tnef_property_set_new (void);
+
+typedef struct _TnefReplayContext TnefReplayContext;
+G_GNUC_INTERNAL TnefReplayContext *_g_mime_tnef_reader_capture (GMimeTnefReader *reader, gint64 offset);
+G_GNUC_INTERNAL void _g_mime_tnef_replay_context_free (TnefReplayContext *context);
+G_GNUC_INTERNAL GMimeTnefReader *_g_mime_tnef_replay_context_open (TnefReplayContext *context, GMimeStream *stream);
+G_GNUC_INTERNAL gboolean _g_mime_tnef_reader_started (GMimeTnefReader *reader);
+G_GNUC_INTERNAL gboolean _g_mime_tnef_reader_invalid_signature (GMimeTnefReader *reader);
+G_GNUC_INTERNAL gboolean _g_mime_tnef_reader_value_skipped (GMimeTnefReader *reader);
+G_GNUC_INTERNAL gint64 _g_mime_tnef_reader_absolute_offset (GMimeTnefReader *reader);
+G_GNUC_INTERNAL void _g_mime_tnef_reader_log_attribute (GMimeTnefReader *reader, GMimeTnefComplianceViolation violation);
 
 G_GNUC_INTERNAL guint16 _g_mime_tnef_get_uint16 (const guint8 *buffer);
 G_GNUC_INTERNAL guint32 _g_mime_tnef_get_uint32 (const guint8 *buffer);

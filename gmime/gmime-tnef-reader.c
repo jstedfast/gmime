@@ -69,20 +69,38 @@ typedef enum {
 	VALUE_PROPERTIES
 } ValueClaim;
 
-struct _GMimeTnefReader {
-	GObject parent_instance;
-	GMimeStream *stream;
-	GMimeTnefOptions *options;
+/* Replay readers must share accounting and callback ownership without
+ * retaining a parent stream or its transient parsing state. */
+typedef struct {
+	gint ref_count;
+	GMutex lock;
 	GMimeTnefComplianceOptions *compliance;
 	GMimeTnefComplianceLogger logger;
 	gpointer logger_data;
 	GDestroyNotify logger_destroy;
-	GMimeTnefReader *parent, *root;
+	guint64 total_data_bytes;
+	guint issue_counts[23], issue_limit;
+	gboolean reported_limit;
+} ReaderBudget;
+
+struct _TnefReplayContext {
+	ReaderBudget *budget;
+	GMimeTnefOptions *options;
+	int codepage;
+	guint depth;
+	gint64 base_offset;
+};
+
+struct _GMimeTnefReader {
+	GObject parent_instance;
+	GMimeStream *stream;
+	GMimeTnefOptions *options;
+	ReaderBudget *budget;
+	GMimeTnefReader *parent;
 	GMimeTnefPropertyReader *properties;
 	guint64 parent_generation, generation, value_generation;
-	guint64 total_data_bytes;
-	guint issue_counts[23], issue_limit, depth;
-	gboolean reported_limit, started, seen_attachment, has_oem_codepage;
+	guint depth;
+	gboolean invalid_signature, started, seen_attachment, has_oem_codepage;
 	gboolean eof, truncated, skip_iid, value_skipped;
 	int io_errno, codepage, scalar_length;
 	GMimeTnefAttachMethod attach_method;
@@ -141,7 +159,7 @@ static const guint8 iid_imessage[16] = { 0x07, 0x03, 0x02, 0x00, 0x00, 0x00, 0x0
 static void
 log_issue (GMimeTnefReader *reader, GMimeTnefComplianceViolation violation, gint64 offset, GMimeTnefPropertyTag tag)
 {
-	GMimeTnefReader *root = reader->root;
+	ReaderBudget *root = reader->budget;
 	guint index = (guint) violation;
 	GMimeTnefComplianceIssue issue;
 
@@ -149,11 +167,15 @@ log_issue (GMimeTnefReader *reader, GMimeTnefComplianceViolation violation, gint
 		return;
 
 	/* One counter per violation. Limits and counters are shared by embedded readers. */
+	g_mutex_lock (&root->lock);
+
 	if (root->issue_limit && index < G_N_ELEMENTS (root->issue_counts)) {
 		if (root->issue_counts[index] >= root->issue_limit) {
 			/* The report becomes incomplete at the first suppressed issue. Emit the marker only once. */
-			if (root->reported_limit)
+			if (root->reported_limit) {
+				g_mutex_unlock (&root->lock);
 				return;
+			}
 
 			root->reported_limit = TRUE;
 			violation = GMIME_TNEF_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES;
@@ -161,6 +183,8 @@ log_issue (GMimeTnefReader *reader, GMimeTnefComplianceViolation violation, gint
 			root->issue_counts[index]++;
 		}
 	}
+
+	g_mutex_unlock (&root->lock);
 
 	issue.violation = violation;
 	issue.severity = g_mime_tnef_compliance_violation_get_severity (violation);
@@ -293,14 +317,17 @@ read_exact (GMimeTnefReader *reader, guint8 *buffer, gsize length, GMimeTnefProp
 static GBytes *
 read_value_bytes (GMimeTnefReader *reader, guint length, GMimeTnefPropertyTag tag, GError **error)
 {
-	GMimeTnefReader *root = reader->root;
+	ReaderBudget *root = reader->budget;
 	guint remaining = length;
 	GByteArray *bytes;
 
 	reader->value_skipped = FALSE;
 
+	g_mutex_lock (&root->lock);
+
 	if (length > reader->options->max_property_value_length ||
-	    length > root->options->max_total_data_bytes - root->total_data_bytes) {
+	    length > reader->options->max_total_data_bytes - root->total_data_bytes) {
+		g_mutex_unlock (&root->lock);
 		reader->value_skipped = TRUE;
 
 		log_issue (reader, GMIME_TNEF_COMPLIANCE_VIOLATION_DATA_SIZE_LIMIT_EXCEEDED, reader->offset, tag);
@@ -312,6 +339,7 @@ read_value_bytes (GMimeTnefReader *reader, guint length, GMimeTnefPropertyTag ta
 	}
 
 	root->total_data_bytes += length;
+	g_mutex_unlock (&root->lock);
 
 	/* A claimed length must not force a large up-front allocation before its data is known to exist. */
 	bytes = g_byte_array_sized_new (MIN (length, 65536));
@@ -320,7 +348,9 @@ read_value_bytes (GMimeTnefReader *reader, guint length, GMimeTnefPropertyTag ta
 		gsize count;
 
 		if (!fill (reader, 1, error)) {
+			g_mutex_lock (&root->lock);
 			root->total_data_bytes -= remaining;
+			g_mutex_unlock (&root->lock);
 
 			if (reader->io_errno) {
 				g_byte_array_unref (bytes);
@@ -386,6 +416,19 @@ claim_value (GMimeTnefReader *reader, ValueClaim claim, GError **error)
 }
 
 static void
+budget_unref (ReaderBudget *budget)
+{
+	if (g_atomic_int_dec_and_test (&budget->ref_count)) {
+		if (budget->logger_destroy)
+			budget->logger_destroy (budget->logger_data);
+
+		g_mime_tnef_compliance_options_unref (budget->compliance);
+		g_mutex_clear (&budget->lock);
+		g_free (budget);
+	}
+}
+
+static void
 g_mime_tnef_reader_finalize (GObject *object)
 {
 	GMimeTnefReader *reader = GMIME_TNEF_READER (object);
@@ -396,10 +439,7 @@ g_mime_tnef_reader_finalize (GObject *object)
 	g_clear_pointer (&reader->date, g_date_time_unref);
 
 	g_mime_tnef_options_unref (reader->options);
-	g_mime_tnef_compliance_options_unref (reader->compliance);
-
-	if (reader->logger_destroy)
-		reader->logger_destroy (reader->logger_data);
+	budget_unref (reader->budget);
 
 	g_free (reader->charset);
 
@@ -416,8 +456,10 @@ static void
 g_mime_tnef_reader_init (GMimeTnefReader *reader)
 {
 	reader->options = g_mime_tnef_options_new ();
-	reader->compliance = g_mime_tnef_compliance_options_new ();
-	reader->root = reader;
+	reader->budget = g_new0 (ReaderBudget, 1);
+	reader->budget->ref_count = 1;
+	g_mutex_init (&reader->budget->lock);
+	reader->budget->compliance = g_mime_tnef_compliance_options_new ();
 	reader->scalar_length = -1;
 	reader->codepage = 1252;
 	reader->charset = g_strdup ("WINDOWS-1252");
@@ -475,14 +517,14 @@ g_mime_tnef_reader_set_compliance_logger (GMimeTnefReader *reader, GMimeTnefComp
 					  GDestroyNotify destroy)
 {
 	g_return_if_fail (GMIME_IS_TNEF_READER (reader));
-	g_return_if_fail (!reader->started && !reader->parent);
+	g_return_if_fail (!reader->started && !reader->depth);
 
-	if (reader->logger_destroy)
-		reader->logger_destroy (reader->logger_data);
+	if (reader->budget->logger_destroy)
+		reader->budget->logger_destroy (reader->budget->logger_data);
 
-	reader->logger = logger;
-	reader->logger_data = user_data;
-	reader->logger_destroy = destroy;
+	reader->budget->logger = logger;
+	reader->budget->logger_data = user_data;
+	reader->budget->logger_destroy = destroy;
 }
 
 /**
@@ -499,12 +541,12 @@ g_mime_tnef_reader_set_compliance_options (GMimeTnefReader *reader, const GMimeT
 	GMimeTnefComplianceOptions *copy;
 
 	g_return_if_fail (GMIME_IS_TNEF_READER (reader));
-	g_return_if_fail (!reader->started && !reader->parent);
+	g_return_if_fail (!reader->started && !reader->depth);
 	g_return_if_fail (options != NULL);
 
 	copy = g_mime_tnef_compliance_options_clone (options);
-	g_mime_tnef_compliance_options_unref (reader->compliance);
-	reader->compliance = copy;
+	g_mime_tnef_compliance_options_unref (reader->budget->compliance);
+	reader->budget->compliance = copy;
 }
 
 static gboolean
@@ -520,6 +562,7 @@ read_header (GMimeTnefReader *reader, GError **error)
 		return FALSE;
 
 	if (_g_mime_tnef_get_uint32 (header) != 0x223e9f78) {
+		reader->invalid_signature = TRUE;
 		/* With a wrong signature, nothing meaningful remains to read. */
 		log_issue (reader, GMIME_TNEF_COMPLIANCE_VIOLATION_INVALID_SIGNATURE, reader->offset - 4, 0);
 		return FALSE;
@@ -666,7 +709,8 @@ g_mime_tnef_reader_read (GMimeTnefReader *reader, GError **error)
 
 	if (!reader->started) {
 		reader->started = TRUE;
-		reader->issue_limit = reader->compliance->max_issues_per_violation;
+		if (!reader->depth)
+			reader->budget->issue_limit = reader->budget->compliance->max_issues_per_violation;
 	}
 
 	if (reader->state == READER_DONE)
@@ -1764,7 +1808,9 @@ g_mime_tnef_property_reader_open_embedded_message (GMimeTnefPropertyReader *prop
 
 	child->parent = g_object_ref (reader);
 	child->parent_generation = reader->value_generation;
-	child->root = reader->root;
+	budget_unref (child->budget);
+	child->budget = reader->budget;
+	g_atomic_int_inc (&child->budget->ref_count);
 	child->depth = reader->depth + 1;
 	child->base_offset = reader->base_offset + properties->data_start;
 	child->skip_iid = TRUE;
@@ -2090,6 +2136,7 @@ g_mime_tnef_property_reader_read_property (GMimeTnefPropertyReader *properties, 
 	}
 
 	property = _g_mime_tnef_property_new (properties->tag, properties->name);
+	property->codepage = properties->reader->codepage;
 
 	while (properties->has_value) {
 		properties->reader->value_skipped = FALSE;
@@ -2236,7 +2283,82 @@ g_mime_tnef_reader_get_compliance_options (GMimeTnefReader *reader)
 {
 	g_return_val_if_fail (GMIME_IS_TNEF_READER (reader), NULL);
 
-	return reader->root->compliance;
+	return reader->budget->compliance;
+}
+
+TnefReplayContext *
+_g_mime_tnef_reader_capture (GMimeTnefReader *reader, gint64 offset)
+{
+	TnefReplayContext *context = g_new (TnefReplayContext, 1);
+
+	context->options = g_mime_tnef_options_ref (reader->options);
+	context->budget = reader->budget;
+	g_atomic_int_inc (&context->budget->ref_count);
+	context->depth = reader->depth + 1;
+	context->codepage = reader->codepage;
+	context->base_offset = offset;
+
+	return context;
+}
+
+void
+_g_mime_tnef_replay_context_free (TnefReplayContext *context)
+{
+	budget_unref (context->budget);
+	g_mime_tnef_options_unref (context->options);
+	g_free (context);
+}
+
+GMimeTnefReader *
+_g_mime_tnef_replay_context_open (TnefReplayContext *context, GMimeStream *stream)
+{
+	GMimeTnefReader *child = g_mime_tnef_reader_new (stream, context->options);
+
+	budget_unref (child->budget);
+	child->budget = context->budget;
+	g_atomic_int_inc (&child->budget->ref_count);
+	child->depth = context->depth;
+	child->base_offset = context->base_offset;
+	child->codepage = context->codepage;
+	g_free (child->charset);
+	child->charset = _g_mime_tnef_get_charset (child->codepage);
+
+	if (child->depth > child->options->max_nesting_depth) {
+		log_issue (child, GMIME_TNEF_COMPLIANCE_VIOLATION_NESTING_TOO_DEEP, 0, 0);
+		child->state = READER_DONE;
+	}
+
+	return child;
+}
+
+gboolean
+_g_mime_tnef_reader_started (GMimeTnefReader *reader)
+{
+	return reader->started;
+}
+
+gboolean
+_g_mime_tnef_reader_invalid_signature (GMimeTnefReader *reader)
+{
+	return reader->invalid_signature;
+}
+
+gboolean
+_g_mime_tnef_reader_value_skipped (GMimeTnefReader *reader)
+{
+	return reader->value_skipped;
+}
+
+gint64
+_g_mime_tnef_reader_absolute_offset (GMimeTnefReader *reader)
+{
+	return reader->base_offset + reader->offset;
+}
+
+void
+_g_mime_tnef_reader_log_attribute (GMimeTnefReader *reader, GMimeTnefComplianceViolation violation)
+{
+	log_issue (reader, violation, reader->attribute_offset, 0);
 }
 
 /**
