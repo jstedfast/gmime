@@ -211,8 +211,10 @@ GitHub Actions
 --------------
 
 .github/workflows/fuzz.yml follows MimeKit's nightly/manual fuzz workflow.
-It runs all sixteen targets nightly at 03:17 UTC for 600 seconds each. Manual runs
-can select one target and a duration from 1 to 14,400 seconds. Each job
+It runs all targets nightly at 03:17 UTC for one hour each. Manual runs
+default to 600 seconds and can select a target and a duration from 1 to 14,400 seconds. Each job
 replays the regression seeds, restores and extends a target/branch-specific
 corpus cache, then saves a new immutable cache even after a failure.
 Crashing inputs, fuzzer output and Meson logs are uploaded on failure.
+When libFuzzer leaves a crashing input, the workflow opens an issue for
+the target or comments on its existing open issue with the new run and artifact.

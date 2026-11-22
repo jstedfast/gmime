@@ -24,12 +24,13 @@ jobs:
     runs-on: ubuntu-26.04
     outputs:
       matrix: ${{ steps.targets.outputs.matrix }}
+      duration: ${{ steps.targets.outputs.duration }}
     steps:
       - name: Select targets and validate duration
         id: targets
         env:
           TARGET: ${{ inputs.target || 'all' }}
-          DURATION: ${{ inputs.duration || '600' }}
+          DURATION: ${{ inputs.duration || '3600' }}
         run: |
           python3 - <<'PY'
           import json, os
@@ -42,12 +43,16 @@ jobs:
               raise SystemExit("Duration must be an integer from 1 to 14400 seconds")
           with open(os.environ["GITHUB_OUTPUT"], "a") as output:
               output.write("matrix=" + json.dumps(targets if target == "all" else [target]) + "\n")
+              output.write("duration=" + duration + "\n")
           PY
 
   fuzz:
     needs: targets
     runs-on: ubuntu-26.04
     timeout-minutes: 360
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -58,7 +63,7 @@ jobs:
     env:
       CC: clang
       TARGET: ${{ matrix.target }}
-      DURATION: ${{ inputs.duration || '600' }}
+      DURATION: ${{ needs.targets.outputs.duration }}
       CORPUS_PATH: _build-fuzz/artifacts/${{ matrix.target }}/corpus
       ASAN_OPTIONS: detect_leaks=1:halt_on_error=1:abort_on_error=1
       UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1:print_stacktrace=1
@@ -96,6 +101,7 @@ jobs:
         run: python3 fuzzing/seed-corpora.py _build-fuzz/artifacts --target "$TARGET"
 
       - name: Fuzz
+        id: fuzz
         run: |
           case "$TARGET" in
             encoders) max_len=262144; dictionary=codecs ;;
@@ -129,6 +135,7 @@ jobs:
           key: gmime-fuzz-v1-${{ matrix.target }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload crashes and failure logs
+        id: crashes
         if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
@@ -139,3 +146,41 @@ jobs:
             _build-fuzz/meson-logs/
           if-no-files-found: ignore
           retention-days: 30
+
+      - name: Report fuzzing failure
+        if: failure() && !cancelled() && steps.fuzz.outcome == 'failure'
+        uses: actions/github-script@v8
+        env:
+          CRASH_ARTIFACT_URL: ${{ steps.crashes.outputs.artifact-url }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const target = process.env.TARGET;
+            const dir = `_build-fuzz/artifacts/${target}/crashes`;
+            const crashes = fs.existsSync(dir) && fs.readdirSync(dir, { withFileTypes: true })
+              .some(entry => entry.isFile() && /^(crash-|deadly-signal|timeout-|oom-)/.test(entry.name));
+            if (!crashes) {
+              core.info('No crashing input; skipping issue reporting.');
+              return;
+            }
+
+            const { owner, repo } = context.repo;
+            const marker = `<!-- gmime-fuzz:${target} -->`;
+            const run = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}/attempts/${process.env.GITHUB_RUN_ATTEMPT}`;
+            const artifact = process.env.CRASH_ARTIFACT_URL;
+            const body = [
+              marker, `Fuzzing found a failing input for **${target}**.`, '',
+              `Commit: ${context.sha}`, `Workflow run: ${run}`,
+              artifact ? `Crashing inputs and logs (retained for 30 days): ${artifact}`
+                       : 'No artifact is available; see the workflow logs.'
+            ].join('\n');
+
+            const issues = github.rest.issues;
+            for await (const { data } of github.paginate.iterator(issues.listForRepo, { owner, repo, state: 'open', per_page: 100 })) {
+              const prior = data.find(i => !i.pull_request && i.body?.startsWith(marker));
+              if (prior) {
+                await issues.createComment({ owner, repo, issue_number: prior.number, body });
+                return;
+              }
+            }
+            await issues.create({ owner, repo, title: `Fuzzing failure: ${target}`, body });
