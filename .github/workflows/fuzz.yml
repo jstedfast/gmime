@@ -20,6 +20,35 @@ permissions:
   contents: read
 
 jobs:
+  formatting-regressions:
+    if: github.event_name == 'schedule' || inputs.target == 'all' || inputs.target == 'html-tokenizer'
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build formatting regression tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build pkg-config libglib2.0-dev zlib1g-dev
+          meson setup _build -Dfuzzing=replay -Dtests=true -Dcrypto=disabled -Ddkim-crypto=disabled \
+            -Dlibidn=disabled -Dintrospection=disabled -Dvapi=disabled -Dgtk_doc=false -Dexamples=false
+          ninja -C _build fuzzing/gmime-fuzz tests/test-html-converters
+      - name: Compare whole-input and fragmented tokenizer traces
+        shell: bash
+        run: |
+          set -o pipefail
+          _build/fuzzing/gmime-fuzz --measure-html-formatting \
+            tests/data/html-converters/{planet-fitness,homedepot-check-inside-now,mimekit.net,formatting-fallback}.html \
+            | tee formatting-results.tsv
+      - name: Publish comparison results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: formatting-regression-results
+          path: formatting-results.tsv
+      - name: Check converter recovery and literal fallback
+        run: _build/tests/test-html-converters -p /html-converters/formatting-prototype-fallback
+
   targets:
     runs-on: ubuntu-26.04
     outputs:

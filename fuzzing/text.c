@@ -273,12 +273,12 @@ static const char *
 formatting_outcome (HtmlTree *tree)
 {
 	if (tree->depth_exceeded)
-		return "Depth";
+		return "fallback:Depth";
 	switch (tree->formatting_stop) {
-	case HTML_FORMATTING_STOP_CAPACITY: return "Capacity";
-	case HTML_FORMATTING_STOP_ATTRIBUTE_EQUIVALENCE: return "AttributeEquivalence";
-	case HTML_FORMATTING_STOP_COMPLEX_ADOPTION: return "ComplexAdoption";
-	case HTML_FORMATTING_STOP_STACK_REMAPPING: return "StackRemapping";
+	case HTML_FORMATTING_STOP_CAPACITY: return "fallback:Capacity";
+	case HTML_FORMATTING_STOP_ATTRIBUTE_EQUIVALENCE: return "fallback:AttributeEquivalence";
+	case HTML_FORMATTING_STOP_COMPLEX_ADOPTION: return "fallback:ComplexAdoption";
+	case HTML_FORMATTING_STOP_STACK_REMAPPING: return "fallback:StackRemapping";
 	default: return "trace agreement";
 	}
 }
@@ -310,6 +310,7 @@ fuzz_measure_html_formatting (const char *path, const guint8 *data, gsize length
 			GString *traces[2];
 			const char *outcomes[2];
 			guint peaks[2];
+			guint64 remaining[2] = { 0, 0 };
 			for (guint j = 0; j < 2; j++) {
 				GMimeStream *input = fuzz_stream_new ((guint8 *) html->str, html->len, j ? 13 : 4096);
 				GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new (input);
@@ -321,8 +322,13 @@ fuzz_measure_html_formatting (const char *path, const guint8 *data, gsize length
 				traces[j] = trace_tokens (tokenizer, html->len, &error);
 				outcomes[j] = formatting_outcome (tree);
 				peaks[j] = tree->formatting_peak;
-				if (error && !(g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) &&
-					       (tree->depth_exceeded || _g_mime_html_tree_formatting_exceeded (tree)))) {
+				if (g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) &&
+				    (tree->depth_exceeded || _g_mime_html_tree_formatting_exceeded (tree))) {
+					const char *p = g_utf8_offset_to_pointer (html->str, g_mime_html_tokenizer_get_position (tokenizer));
+
+					for (; *p; p = g_utf8_next_char (p))
+						remaining[j] += g_utf8_get_char (p) > 0xffff ? 2 : 1;
+				} else if (error) {
 					g_printerr ("%s: %s\n", path, error->message);
 					outcomes[j] = "error";
 					ok = FALSE;
@@ -331,11 +337,13 @@ fuzz_measure_html_formatting (const char *path, const guint8 *data, gsize length
 				g_object_unref (tokenizer);
 				g_object_unref (input);
 			}
-			if (!g_string_equal (traces[0], traces[1]) || strcmp (outcomes[0], outcomes[1]) || peaks[0] != peaks[1]) {
+			if (!g_string_equal (traces[0], traces[1]) || strcmp (outcomes[0], outcomes[1]) ||
+			    peaks[0] != peaks[1] || remaining[0] != remaining[1]) {
 				outcomes[0] = "token trace mismatch";
 				ok = FALSE;
 			}
-			g_print ("%s\t%u\t%u\t%u\t%s\n", path, scripting, capacities[n], peaks[0], outcomes[0]);
+			g_print ("%s\t%u\t%u\t%u\t%s\t%" G_GUINT64_FORMAT "\n", path, scripting, capacities[n],
+				 peaks[0], outcomes[0], remaining[0]);
 			g_string_free (traces[0], TRUE);
 			g_string_free (traces[1], TRUE);
 		}

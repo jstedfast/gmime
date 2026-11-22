@@ -22,6 +22,7 @@
 #define __GMIME_HTML_TREE_INTERNAL_H__
 
 #include "gmime-html-tree-private.h"
+#include "gmime-html-to-html.h"
 #include "gmime-html-token-private.h"
 
 typedef struct _HtmlTree HtmlTree;
@@ -37,6 +38,7 @@ typedef enum {
 void _g_mime_html_tree_set_formatting_capacity (HtmlTree *tree, guint capacity);
 gboolean _g_mime_html_tree_formatting_exceeded (HtmlTree *tree);
 HtmlTree *_g_mime_html_tokenizer_get_tree (GMimeHtmlTokenizer *tokenizer);
+void _g_mime_html_to_html_enable_formatting_prototype (GMimeHtmlToHtml *converter);
 
 HtmlTree *_g_mime_html_tree_new (guint maximum);
 void _g_mime_html_tree_free (HtmlTree *tree);

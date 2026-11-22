@@ -42,7 +42,8 @@ compliance-validators exercises transfer validation through the MIME reader.
 
 Run `gmime-fuzz --measure-html-formatting <file>...` on UTF-8 HTML fixtures
 to compare disabled recovery with budgets of 16, 32 and 64 active entries,
-with and without scripting. The TSV reports peak usage and the stop reason.
+with and without scripting. The TSV reports peak usage, the fallback reason,
+and how many UTF-16 code units remained in the normalized input at fallback.
 “trace agreement” means the native whole-input and fragmented token traces
 matched, not that an independent browser built an identical DOM.
 

@@ -68,7 +68,7 @@ main (int argc, char **argv)
 			return 2;
 		}
 		fuzz_init ();
-		g_print ("file\tscripting\tcapacity\tpeak\toutcome\n");
+		g_print ("file\tscripting\tcapacity\tpeak\toutcome\tremainingUtf16\n");
 		for (arg = 2; arg < argc; arg++) {
 			GError *error = NULL;
 			char *data;

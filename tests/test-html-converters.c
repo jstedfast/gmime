@@ -24,6 +24,7 @@
 #include <gmime/gmime.h>
 #include <gmime/gmime-html-to-text.h>
 #include <gmime/gmime-html-to-html.h>
+#include <gmime/gmime-html-tree-internal.h>
 #include <gmime/gmime-text-previewer.h>
 
 static const char *data_dir = "tests/data/html-converters";
@@ -497,6 +498,39 @@ test_callbacks_compliance (void)
 }
 
 static void
+test_formatting_prototype_fallback (void)
+{
+	static const GMimeHtmlNoScriptHandling modes[] = {
+		GMIME_HTML_NO_SCRIPT_HANDLING_SCRIPTING_DISABLED, GMIME_HTML_NO_SCRIPT_HANDLING_SCRIPTING_ENABLED
+	};
+	const char *input = "<font><p><custom-note></font><p>footer</p>";
+
+	for (guint i = 0; i < G_N_ELEMENTS (modes); i++) {
+		GMimeTextConverter *converter = g_mime_html_to_html_new ();
+		GMimeHtmlToHtml *html = GMIME_HTML_TO_HTML (converter);
+		GError *error = NULL;
+		char *output;
+
+		_g_mime_html_to_html_enable_formatting_prototype (html);
+		g_mime_html_to_html_set_no_script_handling (html, modes[i]);
+		output = g_mime_text_converter_convert_to_string (converter, input, -1, &error);
+		g_assert_no_error (error);
+		g_assert_true (g_str_has_suffix (output, "&lt;p&gt;footer&lt;/p&gt;"));
+		g_free (output);
+
+		g_mime_html_to_html_set_limit_exceeded_behavior (html, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+		g_assert_null (g_mime_text_converter_convert_to_string (converter, input, -1, &error));
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+		output = g_mime_text_converter_convert_to_string (converter, "<font><p>one</font> two</p>", -1, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (strstr (output, " two</p>"));
+		g_free (output);
+		g_object_unref (converter);
+	}
+}
+
+static void
 test_depth_limit_behavior (void)
 {
 	static const char tail[] = "\360\237\230\200\0<em>&";
@@ -846,6 +880,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html-converters/cdata-round-trip", test_cdata_round_trip);
 	g_test_add_func ("/html-converters/limits", test_limits);
 	g_test_add_func ("/html-converters/depth-limit-behavior", test_depth_limit_behavior);
+	g_test_add_func ("/html-converters/formatting-prototype-fallback", test_formatting_prototype_fallback);
 	g_test_add_func ("/html-converters/fragments", test_fragments);
 	g_test_add_func ("/html-converters/filter", test_html_filter);
 	g_test_add_func ("/html-converters/foreign", test_foreign_content);

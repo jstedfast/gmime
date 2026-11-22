@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "gmime-html-to-html.h"
-#include "gmime-html-tree-private.h"
+#include "gmime-html-tree-internal.h"
 #include "gmime-text-to-html.h"
 #include "gmime-text-private.h"
 #include "gmime-stream-mem.h"
@@ -47,7 +47,7 @@
  **/
 struct _GMimeHtmlToHtml {
 	GMimeTextConverter parent_object;
-	gboolean comments, fragment;
+	gboolean comments, fragment, formatting_prototype;
 	guint depth;
 	GMimeHtmlLimitExceededBehavior limit_behavior;
 	GMimeHeaderFooterFormat header_format, footer_format;
@@ -479,6 +479,10 @@ convert_html_to_html (GMimeTextConverter *converter, GMimeStream *input, GMimeSt
 	g_mime_html_tokenizer_set_compliance_logger (state.tokenizer, options->logger, options->logger_data, NULL);
 	_g_mime_html_tokenizer_set_track_closed_elements (state.tokenizer, TRUE);
 
+	/* Enable the experimental formatting prototype if requested */
+	if (options->formatting_prototype)
+		_g_mime_html_tree_set_formatting_capacity (_g_mime_html_tokenizer_get_tree (state.tokenizer), 32);
+
 	while (ok) {
 		ok = g_mime_html_tokenizer_read_next_token (state.tokenizer, &token, error);
 		if (!ok || !token)
@@ -584,6 +588,12 @@ GMimeTextConverter *
 g_mime_html_to_html_new (void)
 {
 	return g_object_new (GMIME_TYPE_HTML_TO_HTML, NULL);
+}
+
+void
+_g_mime_html_to_html_enable_formatting_prototype (GMimeHtmlToHtml *converter)
+{
+	converter->formatting_prototype = TRUE;
 }
 
 /**
