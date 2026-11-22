@@ -6,6 +6,10 @@ foreach name : ['basic-example', 'custom-blockquotes', 'imap-example', 'uuencode
   )
 endforeach
 
+if dkim_provider != 'disabled'
+  executable('dkim-verifier', 'dkim-verifier.c', dependencies: gmime_dep)
+endif
+
 mime_analyzer = executable(
   'mime-analyzer', 'mime-analyzer.c',
   dependencies: gmime_dep,

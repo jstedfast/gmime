@@ -33,6 +33,17 @@ state alive throughout conversion and reset the depth before retrying
 after a failed conversion, which may not have delivered all end tags.
 
 
+Example: dkim-verifier.c
+------------------------
+
+Run `dkim-verifier FILE.eml [FILE.eml ...]` to check DKIM signatures using
+the system DNS resolver, then evaluate DMARC using those same results.
+The output includes each signing domain and selector, and the DMARC entry
+for an Authentication-Results header. No SPF result is inferred from a file.
+Authentication failures are reported, not used as process exit codes;
+unreadable messages are errors. Requires a DKIM crypto provider.
+
+
 Example: imap-example.c
 -----------------------
 

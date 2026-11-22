@@ -41,6 +41,7 @@ normal_tests = [
   'test-received-clauses', 'test-received',
   'test-anonymizer',
   'test-authentication-results',
+  'test-dmarc-record', 'test-dmarc',
   'test-dkim-dns', 'test-dkim-crypto', 'test-dkim-body',
   'test-content-type',
   'test-smtp-address-validator',

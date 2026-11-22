@@ -69,7 +69,9 @@ lookup (GResolver *resolver, const char *name, GResolverRecordType type, GCancel
 
 	test->lookups++;
 	g_assert_cmpint (type, ==, G_RESOLVER_RECORD_TXT);
-	if (!strcmp (name, "20120113._domainkey.gmail.com.")) {
+	if (!strcmp (name, "_dmarc.football.example.com.")) {
+		txt[0] = "v=DMARC1; p=reject; psd=n; adkim=s";
+	} else if (!strcmp (name, "20120113._domainkey.gmail.com.")) {
 		/* Archived key from MimeKit's TestData/dkim/gmail.pub. */
 		txt[0] = "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Kd87/UeJjenpabgbFwh+"
 			"eBCsSTrqmwIYYvywlbhbqoo2DymndFkbjOVIPIldNs/m40KF+yzMn1skyoxcTUGCQs8g3FgD2A"
@@ -126,6 +128,31 @@ replace (const char *text, const char *search, const char *with)
 	char *result = g_strconcat (prefix, with, p + strlen (search), NULL);
 	g_free (prefix);
 	return result;
+}
+
+static void
+test_dmarc_identity (void)
+{
+	GResolver *resolver = g_object_new (dkim_test_resolver_get_type (), NULL);
+	GMimeDmarcVerifier *verifier = g_mime_dmarc_verifier_new (resolver);
+	char *tampered = replace (message, "lost the game", "won the game");
+	const char *inputs[] = { message, tampered };
+
+	for (guint i = 0; i < G_N_ELEMENTS (inputs); i++) {
+		GMimeMessage *parsed = testsuite_parse_message (inputs[i], strlen (inputs[i]));
+		GError *error = NULL;
+		GMimeDmarcResult *result = g_mime_dmarc_verifier_verify (verifier, parsed, NULL, NULL, &error);
+
+		g_assert_no_error (error);
+		g_assert_nonnull (result);
+		g_assert_cmpint (g_mime_dmarc_result_get_status (result), ==, i ? GMIME_DMARC_STATUS_FAIL : GMIME_DMARC_STATUS_PASS);
+		g_assert_cmpint (g_mime_dmarc_result_get_dkim_aligned (result), ==, !i);
+		g_mime_dmarc_result_free (result);
+		g_object_unref (parsed);
+	}
+	g_free (tampered);
+	g_object_unref (verifier);
+	g_object_unref (resolver);
 }
 
 static void
@@ -417,6 +444,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/dkim/resolver-edges", test_resolver_edges);
 	g_test_add_func ("/dkim/many-headers", test_many_headers);
 	g_test_add_func ("/dkim/rfc8463", test_rfc);
+	g_test_add_func ("/dkim/dmarc-identity", test_dmarc_identity);
 	g_test_add_func ("/dkim/prefix", test_prefix);
 	g_test_add_func ("/dkim/malformed", test_malformed);
 	g_test_add_func ("/dkim/sign", test_sign);

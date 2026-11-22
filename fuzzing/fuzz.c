@@ -15,6 +15,7 @@ const FuzzTarget fuzz_targets[] = {
 	{ "structured-headers", fuzz_structured_headers, 64 * 1024 },
 	{ "dns-records", fuzz_dns_records, 16 * 1024 },
 	{ "dkim-arc-verifier", fuzz_dkim_arc_verifier, 64 * 1024 },
+	{ "dmarc-verifier", fuzz_dmarc_verifier, 64 * 1024 },
 	{ "smtp-address-validator", fuzz_smtp_address_validator, 4096 },
 	{ "tnef-reader", fuzz_tnef_reader, FUZZ_MAX_LENGTH },
 	{ "tnef-message", fuzz_tnef_message, 4 * FUZZ_MAX_LENGTH },

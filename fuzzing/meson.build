@@ -27,12 +27,15 @@ regression_seeds = custom_target(
 foreach target, max_length : {'mime-reader': 1048576, 'mime-parser': 1048576,
                              'encoders': 262144, 'decoders': 1048576, 'rfc2047': 65536,
                              'structured-headers': 65536, 'smtp-address-validator': 4096,
-                             'dns-records': 16384, 'dkim-arc-verifier': 65536,
+                             'dns-records': 16384, 'dkim-arc-verifier': 65536, 'dmarc-verifier': 65536,
                              'tnef-reader': 1048576, 'tnef-message': 4194304,
                              'filters': 262144, 'compliance-validators': 262144,
                              'html-tokenizer': 262144, 'text-converters': 262144,
                              'rtf-compressed': 1048576, 'rtf-converters': 1048576, 'rtf-tokenizer': 1048576}
   corpus_args = [meson.current_build_dir() / 'seeds' / target / 'corpus']
+  if target == 'dmarc-verifier'
+    corpus_args += [meson.current_source_dir() / 'seeds' / 'dkim-arc-verifier']
+  endif
   if target in ['tnef-reader', 'tnef-message']
     corpus_args += [meson.project_source_root() / 'tests' / 'data' / 'tnef']
   endif

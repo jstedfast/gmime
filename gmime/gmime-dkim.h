@@ -57,6 +57,8 @@ gboolean g_mime_dkim_sign (GMimeMessage *message, const char *domain, const char
 
 gboolean g_mime_dkim_verify (GMimeMessage *message, guint signature_index, GResolver *resolver,
 			     GCancellable *cancellable, GError **error);
+gboolean g_mime_dkim_verify_full (GMimeMessage *message, guint signature_index, GResolver *resolver,
+				  GCancellable *cancellable, char **domain, char **selector, GError **error);
 
 G_END_DECLS
 #endif

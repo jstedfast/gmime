@@ -57,6 +57,15 @@ it, and pass that received chain status when sealing the outgoing message.
 A passing chain authenticates the seals; it does not establish that the
 sealers or their authentication assessments are trustworthy.
 
+DMARC evaluates the domains in `From` against authenticated DKIM and SPF
+identifiers. The receiver supplies the SPF result from the SMTP transaction;
+GMime does not run SPF or trust an incoming `Authentication-Results` header.
+Policy discovery uses DNS TXT records through `GResolver`. The returned policy
+is the domain owner's request, not an instruction to reject or quarantine mail.
+If the receiver can distinguish NXDOMAIN from a missing TXT record, it can
+provide an existence callback for the `np=` policy. `GResolver` alone does
+not reliably distinguish the two.
+
 ## History
 
 As a developer and user of Electronic Mail clients, I had come to

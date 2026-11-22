@@ -14,7 +14,7 @@ on:
         description: 'Fuzz target'
         default: all
         type: choice
-        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers, smtp-address-validator, tnef-reader, tnef-message, filters, compliance-validators, html-tokenizer, text-converters, rtf-compressed, rtf-tokenizer, rtf-converters, dns-records, dkim-arc-verifier]
+        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers, smtp-address-validator, tnef-reader, tnef-message, filters, compliance-validators, html-tokenizer, text-converters, rtf-compressed, rtf-tokenizer, rtf-converters, dns-records, dkim-arc-verifier, dmarc-verifier]
 
 permissions:
   contents: read
@@ -34,7 +34,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
-          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers", "smtp-address-validator", "tnef-reader", "tnef-message", "filters", "compliance-validators", "html-tokenizer", "text-converters", "rtf-compressed", "rtf-tokenizer", "rtf-converters", "dns-records", "dkim-arc-verifier"]
+          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers", "smtp-address-validator", "tnef-reader", "tnef-message", "filters", "compliance-validators", "html-tokenizer", "text-converters", "rtf-compressed", "rtf-tokenizer", "rtf-converters", "dns-records", "dkim-arc-verifier", "dmarc-verifier"]
           target = os.environ["TARGET"]
           duration = os.environ["DURATION"]
           if target != "all" and target not in targets:
@@ -108,7 +108,7 @@ jobs:
             decoders) max_len=1048576; dictionary=codecs ;;
             rfc2047) max_len=65536; dictionary=mime ;;
             structured-headers) max_len=65536; dictionary=structured-headers ;;
-            dkim-arc-verifier) max_len=65536; dictionary=dkim ;;
+            dkim-arc-verifier|dmarc-verifier) max_len=65536; dictionary=dkim ;;
             dns-records) max_len=16384; dictionary=dkim ;;
             smtp-address-validator) max_len=4096; dictionary=smtp-address-validator ;;
             tnef-reader) max_len=1048576; dictionary=tnef ;;

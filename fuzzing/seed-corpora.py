@@ -14,7 +14,7 @@ import re
 
 MAX_LENGTH = 1024 * 1024
 LIMITS = {"mime-reader": MAX_LENGTH, "mime-parser": MAX_LENGTH,
-          "dkim-arc-verifier": 65536, "dns-records": 16384,
+          "dkim-arc-verifier": 65536, "dmarc-verifier": 65536, "dns-records": 16384,
           "encoders": 256 * 1024, "decoders": MAX_LENGTH, "rfc2047": 64 * 1024,
           "structured-headers": 64 * 1024, "smtp-address-validator": 4096,
           "tnef-reader": MAX_LENGTH, "tnef-message": 4 * MAX_LENGTH,
@@ -170,7 +170,14 @@ def regression_inputs():
                [b"From a\nFrom b\r\n", b"-----BEGIN PGP MESSAGE-----\n\nabc\n-----END PGP MESSAGE-----\n"]]
     return {"mime-reader": mime, "mime-parser": mime, "tnef-reader": tnef, "tnef-message": tnef,
             "dkim-arc-verifier": [b"From: a@example.org\n\n", b"ARC-Seal: i=1; cv=pass\n\n"],
+            "dmarc-verifier": [
+                b"_dmarc.example.org v=DMARC1; p=reject\n@spf pass example.org\n%%\nFrom: a@example.org\n\n",
+                b"_dmarc.example.org v=DMARC1; p=reject; sp=quarantine; aspf=s\n@spf pass example.org\n%%\nFrom: a@mx.example.org\n\n",
+                b"_dmarc.example.org !tempfail\n%%\nFrom: a@example.org, b@example.net\n\n",
+            ],
             "dns-records": [b"v=DKIM1; p=", b"k=rsa; p=AQID", b"!tempfail", b"b= aa;\r\n x=tag",
+                            b"v=DMARC1; p=reject; aspf=s; t=y; psd=y",
+                            b"v=DMARC1; p=quarantine; p=reject; np=none; rua=mailto:a@example.org",
                             b"k=ed25519; p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo="],
             "rtf-compressed": text, "rtf-converters": text, "rtf-tokenizer": text,
             "html-tokenizer": text, "text-converters": text, "filters": filters, "compliance-validators": mime,
@@ -191,7 +198,8 @@ def main():
     inputs = regression_inputs()
     if not args.regressions_only:
         for target in targets:
-            for path in sorted((root / "fuzzing" / "seeds" / target).glob("*")):
+            seed_dir = "dkim-arc-verifier" if target == "dmarc-verifier" else target
+            for path in sorted((root / "fuzzing" / "seeds" / seed_dir).glob("*")):
                 if path.is_file():
                     inputs[target] = inputs[target] + [path.read_bytes()]
         for target in ("tnef-reader", "tnef-message"):

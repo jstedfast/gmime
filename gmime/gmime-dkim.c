@@ -847,9 +847,40 @@ gboolean
 g_mime_dkim_verify (GMimeMessage *message, guint signature_index, GResolver *resolver,
 		    GCancellable *cancellable, GError **error)
 {
+	return g_mime_dkim_verify_full (message, signature_index, resolver, cancellable, NULL, NULL, error);
+}
+
+static gboolean verify_header (GMimeMessage *message, GPtrArray *fields, guint index, gboolean ams,
+			       GResolver *resolver, GCancellable *cancellable, char **domain, char **selector, GError **error);
+
+/**
+ * g_mime_dkim_verify_full:
+ * @message: message to verify
+ * @signature_index: zero-based DKIM-Signature occurrence, counting from the top
+ * @resolver: (nullable): TXT record resolver
+ * @cancellable: (nullable): optional cancellable
+ * @domain: (out) (optional) (transfer full): claimed signing domain, or %NULL
+ * @selector: (out) (optional) (transfer full): claimed selector, or %NULL
+ * @error: return location for a #GError
+ *
+ * Like g_mime_dkim_verify(), but also returns the d= and s= tags when
+ * available. Do not treat either value as authenticated on failure.
+ *
+ * Returns: %TRUE if the selected signature and body hash verify
+ */
+gboolean
+g_mime_dkim_verify_full (GMimeMessage *message, guint signature_index, GResolver *resolver,
+			 GCancellable *cancellable, char **domain, char **selector, GError **error)
+{
 	GPtrArray *fields;
 
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), FALSE);
+
+	if (domain)
+		*domain = NULL;
+
+	if (selector)
+		*selector = NULL;
 
 	if (g_cancellable_set_error_if_cancelled (cancellable, error))
 		return FALSE;
@@ -859,8 +890,10 @@ g_mime_dkim_verify (GMimeMessage *message, guint signature_index, GResolver *res
 
 	for (guint i = 0; i < fields->len; i++) {
 		if (header_is (fields->pdata[i], "DKIM-Signature") && !signature_index--) {
-			gboolean valid = _g_mime_dkim_verify_header (message, fields, i, FALSE, resolver, cancellable, error);
+			gboolean valid = verify_header (message, fields, i, FALSE, resolver, cancellable, domain, selector, error);
+
 			g_ptr_array_unref (fields);
+
 			return valid;
 		}
 	}
@@ -1278,9 +1311,9 @@ done:
 	return valid;
 }
 
-gboolean
-_g_mime_dkim_verify_header (GMimeMessage *message, GPtrArray *fields, guint index, gboolean ams,
-			    GResolver *resolver, GCancellable *cancellable, GError **error)
+static gboolean
+verify_header (GMimeMessage *message, GPtrArray *fields, guint index, gboolean ams,
+	       GResolver *resolver, GCancellable *cancellable, char **domain, char **selector, GError **error)
 {
 	GHashTable *tags;
 	gboolean valid;
@@ -1288,8 +1321,22 @@ _g_mime_dkim_verify_header (GMimeMessage *message, GPtrArray *fields, guint inde
 	if (!(tags = _g_mime_dkim_parse_tags (fields->pdata[index], error)))
 		return FALSE;
 
+	/* Return d= from the same signature we verify. This is a claimed
+	 * identity until verification succeeds. */
+	if (domain)
+		*domain = g_strdup (g_hash_table_lookup (tags, "d"));
+	if (selector)
+		*selector = g_strdup (g_hash_table_lookup (tags, "s"));
+
 	valid = verify_tags (message, fields, index, ams, tags, resolver, cancellable, error);
 	g_hash_table_unref (tags);
 
 	return valid;
+}
+
+gboolean
+_g_mime_dkim_verify_header (GMimeMessage *message, GPtrArray *fields, guint index, gboolean ams,
+			    GResolver *resolver, GCancellable *cancellable, GError **error)
+{
+	return verify_header (message, fields, index, ams, resolver, cancellable, NULL, NULL, error);
 }

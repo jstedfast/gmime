@@ -29,6 +29,8 @@
 #include <gmime/gmime-authentication-results.h>
 #include <gmime/gmime-dkim.h>
 #include <gmime/gmime-arc.h>
+#include <gmime/gmime-dmarc-record.h>
+#include <gmime/gmime-dmarc.h>
 #include <gmime/gmime-charset.h>
 #include <gmime/gmime-iconv.h>
 #include <gmime/gmime-iconv-utils.h>

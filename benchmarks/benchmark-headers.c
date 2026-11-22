@@ -300,10 +300,97 @@ decode_words (gpointer data)
 	return length;
 }
 
+static guint64
+parse_dmarc (gpointer data)
+{
+	GError *error = NULL;
+	GMimeDmarcRecord *record = g_mime_dmarc_record_parse (data, &error);
+	GMimeDmarcPolicy policy;
+
+	benchmark_check (record != NULL, "DMARC policy parsing", &error);
+	policy = g_mime_dmarc_record_get_policy (record);
+	g_mime_dmarc_record_free (record);
+	return policy;
+}
+
+typedef GResolver BenchmarkResolver;
+typedef GResolverClass BenchmarkResolverClass;
+G_DEFINE_TYPE (BenchmarkResolver, benchmark_resolver, G_TYPE_RESOLVER)
+
+static GList *
+lookup_policy (GResolver *resolver, const char *name, GResolverRecordType type, GCancellable *cancel, GError **error)
+{
+	const char *txt[] = { "v=DMARC1; p=reject; psd=n", NULL };
+
+	if (type == G_RESOLVER_RECORD_TXT && !strcmp (name, "_dmarc.example.org."))
+		return g_list_prepend (NULL, g_variant_ref_sink (g_variant_new ("(^as)", txt)));
+	g_set_error_literal (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_NOT_FOUND, "Not in benchmark zone");
+	return NULL;
+}
+
+static void
+benchmark_resolver_class_init (BenchmarkResolverClass *klass)
+{
+	klass->lookup_records = lookup_policy;
+}
+
+static void
+benchmark_resolver_init (BenchmarkResolver *resolver)
+{
+}
+
+typedef struct {
+	GMimeDmarcVerifier *verifier;
+	GMimeMessage *message;
+} DmarcBenchmark;
+
+static guint64
+evaluate_dmarc (gpointer data)
+{
+	DmarcBenchmark *bench = data;
+	GMimeDmarcIdentifier dkim = { GMIME_DMARC_IDENTIFIER_PASS, "relay.example.org" };
+	GError *error = NULL;
+	GMimeDmarcResult *result = g_mime_dmarc_verifier_verify_with_results (bench->verifier, bench->message,
+									     &dkim, 1, NULL, NULL, &error);
+	GMimeDmarcStatus status;
+
+	benchmark_check (result != NULL, "DMARC policy evaluation", &error);
+	status = g_mime_dmarc_result_get_status (result);
+	g_mime_dmarc_result_free (result);
+	return status;
+}
+
 void
 benchmark_headers (void)
 {
+	static const char *policies[] = {
+		"v=DMARC1; p=reject",
+		"v=DMARC1; adkim=s; aspf=r; p=reject; sp=quarantine; np=reject; "
+		"rua=mailto:reports@example.org,mailto:agg@example.net; "
+		"ruf=mailto:fail@example.org; fo=0:d:s; psd=n"
+	};
 	guint i;
+
+	for (i = 0; i < G_N_ELEMENTS (policies); i++) {
+		const char *name = i ? "DMARC/ReportingPolicy" : "DMARC/MinimalPolicy";
+
+		if (benchmark_selected (name)) {
+			if (parse_dmarc ((gpointer) policies[i]) != GMIME_DMARC_POLICY_REJECT)
+				g_error ("%s: unexpected DMARC policy", name);
+			benchmark_run (name, strlen (policies[i]), parse_dmarc, (gpointer) policies[i]);
+		}
+	}
+	if (benchmark_selected ("DMARC/RelaxedTreeWalk")) {
+		GResolver *resolver = g_object_new (benchmark_resolver_get_type (), NULL);
+		DmarcBenchmark bench = { g_mime_dmarc_verifier_new (resolver), g_mime_message_new (FALSE) };
+		g_mime_message_add_mailbox (bench.message, GMIME_ADDRESS_TYPE_FROM, NULL, "a@news.example.org", NULL);
+		if (evaluate_dmarc (&bench) != GMIME_DMARC_STATUS_PASS)
+			g_error ("DMARC: expected aligned DKIM through shared organizational domain");
+		benchmark_run ("DMARC/RelaxedTreeWalk", 0, evaluate_dmarc, &bench);
+		g_object_unref (bench.message);
+		g_object_unref (bench.verifier);
+		g_object_unref (resolver);
+	}
 
 	benchmark_utf8 ();
 	for (i = 0; i < G_N_ELEMENTS (parser_inputs); i++) {

@@ -29,6 +29,7 @@ typedef struct {
 	GResolver parent;
 	GHashTable *records, *outcomes;
 	GString *queries;
+	char *spf;
 } Zone;
 
 typedef GResolverClass ZoneClass;
@@ -77,6 +78,7 @@ zone_finalize (GObject *object)
 	g_hash_table_unref (zone->records);
 	g_hash_table_unref (zone->outcomes);
 	g_string_free (zone->queries, TRUE);
+	g_free (zone->spf);
 	G_OBJECT_CLASS (fuzz_zone_parent_class)->finalize (object);
 }
 
@@ -140,7 +142,12 @@ parse_zone (Zone *zone, const guint8 *data, gsize length)
 				value = line + strcspn (line, " \t");
 				if (*value)
 					*value++ = '\0';
-				add_record (zone, line, value);
+				if (!strcmp (line, "@spf")) {
+					g_free (zone->spf);
+					zone->spf = g_strdup (value);
+				} else {
+					add_record (zone, line, value);
+				}
 			}
 			g_strfreev (lines);
 			g_free (text);
@@ -207,6 +214,135 @@ fuzz_dkim_arc_verifier (const guint8 *data, gsize length)
 	g_object_unref (zone);
 }
 
+static GMimeDmarcDomainExistence
+domain_exists (const char *name, GCancellable *cancel, gpointer data, GError **error)
+{
+	Zone *zone = data;
+	char *key = zone_name (name);
+	const char *outcome = g_hash_table_lookup (zone->outcomes, key);
+	gboolean present = g_hash_table_contains (zone->records, key);
+
+	g_free (key);
+	if (!g_strcmp0 (outcome, "!empty") || (!outcome && present))
+		return GMIME_DMARC_DOMAIN_EXISTS;
+	if (!outcome || !strcmp (outcome, "!nxdomain"))
+		return GMIME_DMARC_DOMAIN_NONEXISTENT;
+	return GMIME_DMARC_DOMAIN_UNKNOWN;
+}
+
+static void
+check_dmarc (const GMimeDmarcResult *result, const GMimeDmarcIdentifier *spf)
+{
+	GMimeDmarcStatus status = g_mime_dmarc_result_get_status (result);
+	gboolean aligned = g_mime_dmarc_result_get_dkim_aligned (result) || g_mime_dmarc_result_get_spf_aligned (result);
+	const GMimeDmarcIdentifier *dkim = g_mime_dmarc_result_get_aligned_dkim_result (result);
+	GMimeAuthenticationResults *ar = g_mime_authentication_results_new ("mx.example");
+	GMimeAuthenticationMethodResult *method = g_mime_dmarc_result_to_authentication_method_result (result);
+	GMimeAuthenticationResults *parsed;
+	char *text, *formatted;
+
+	if (status == GMIME_DMARC_STATUS_PASS)
+		FUZZ_CHECK (aligned && g_mime_dmarc_result_get_record (result), "DMARC pass without aligned authentication and policy");
+	if (status == GMIME_DMARC_STATUS_FAIL)
+		FUZZ_CHECK (!aligned && g_mime_dmarc_result_get_policy (result) != GMIME_DMARC_POLICY_UNSPECIFIED,
+			    "Inconsistent DMARC failure");
+	FUZZ_CHECK (g_mime_dmarc_result_get_dkim_aligned (result) == (dkim != NULL), "Missing or unexpected aligned DKIM result");
+	if (dkim)
+		FUZZ_CHECK (dkim->status == GMIME_DMARC_IDENTIFIER_PASS, "Aligned DKIM result did not pass");
+	if (g_mime_dmarc_result_get_spf_aligned (result))
+		FUZZ_CHECK (spf && spf->status == GMIME_DMARC_IDENTIFIER_PASS, "Aligned SPF result did not pass");
+
+	g_mime_authentication_results_add_result (ar, method);
+	text = g_mime_authentication_results_to_string (ar);
+	parsed = g_mime_authentication_results_parse (text, -1, NULL);
+	FUZZ_CHECK (parsed != NULL, "DMARC Authentication-Results did not parse");
+	formatted = g_mime_authentication_results_to_string (parsed);
+	FUZZ_CHECK (!strcmp (text, formatted), "DMARC Authentication-Results did not round-trip");
+	g_free (formatted);
+	g_free (text);
+	g_object_unref (parsed);
+	g_object_unref (method);
+	g_object_unref (ar);
+}
+
+void
+fuzz_dmarc_verifier (const guint8 *data, gsize length)
+{
+	static const char *const statuses[] = { "none", "pass", "fail", "temperror", "permerror", "softfail", "neutral" };
+	Zone *zone = g_object_new (fuzz_zone_get_type (), NULL);
+	gsize pos = parse_zone (zone, data, length);
+	GMimeStream *stream = fuzz_stream_new (data + pos, length - pos, 37);
+	GMimeMessage *message = g_mime_message_load (NULL, stream, NULL);
+	GMimeDmarcVerifier *verifier;
+	GMimeDmarcResult *direct, *supplied;
+	GMimeDmarcIdentifier input, *spf = NULL;
+	GMimeDmarcIdentifier ids[8];
+	char *domains[8] = { NULL };
+	guint count = 0;
+	gint64 start = g_get_real_time () / G_USEC_PER_SEC;
+
+	g_object_unref (stream);
+	if (!message) {
+		g_object_unref (zone);
+		return;
+	}
+	if (zone->spf) {
+		char *domain = zone->spf + strcspn (zone->spf, " \t");
+		if (*domain) {
+			*domain++ = '\0';
+			for (guint i = 0; i < G_N_ELEMENTS (statuses); i++) {
+				if (!g_ascii_strcasecmp (zone->spf, statuses[i])) {
+					input.status = (GMimeDmarcIdentifierStatus) i;
+					input.domain = g_strstrip (domain);
+					spf = &input;
+					break;
+				}
+			}
+		}
+	}
+	verifier = g_mime_dmarc_verifier_new (G_RESOLVER (zone));
+	g_mime_dmarc_verifier_set_existence_func (verifier, domain_exists, zone, NULL);
+	g_mime_dmarc_verifier_set_max_author_domains (verifier, (fuzz_selector (data, length) & 1) ? 4 : 1);
+	g_mime_dmarc_verifier_set_max_dkim_signatures (verifier, G_N_ELEMENTS (ids));
+	direct = g_mime_dmarc_verifier_verify (verifier, message, spf, NULL, NULL);
+	FUZZ_CHECK (direct != NULL, "No DMARC decision");
+	check_dmarc (direct, spf);
+	for (guint i = 0; i < g_mime_dmarc_result_get_author_domain_result_count (direct); i++)
+		check_dmarc (g_mime_dmarc_result_get_author_domain_result (direct, i), spf);
+
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	for (int i = 0; i < g_mime_header_list_get_count (headers) && count < G_N_ELEMENTS (ids); i++) {
+		GMimeHeader *field = g_mime_header_list_get_header_at (headers, i);
+		GError *error = NULL;
+		if (g_mime_header_get_id (field) != GMIME_HEADER_DKIM_SIGNATURE)
+			continue;
+		gboolean ok = g_mime_dkim_verify_full (message, count, G_RESOLVER (zone), NULL, &domains[count], NULL, &error);
+		ids[count].status = ok ? GMIME_DMARC_IDENTIFIER_PASS :
+			g_error_matches (error, G_RESOLVER_ERROR, G_RESOLVER_ERROR_TEMPORARY_FAILURE) ?
+			GMIME_DMARC_IDENTIFIER_TEMP_ERROR : GMIME_DMARC_IDENTIFIER_FAIL;
+		ids[count].domain = domains[count];
+		count++;
+		g_clear_error (&error);
+	}
+	supplied = g_mime_dmarc_verifier_verify_with_results (verifier, message, ids, count, spf, NULL, NULL);
+	FUZZ_CHECK (supplied != NULL, "No DMARC decision with precomputed DKIM results");
+	check_dmarc (supplied, spf);
+	if (start == g_get_real_time () / G_USEC_PER_SEC)
+		FUZZ_CHECK (g_mime_dmarc_result_get_status (direct) == g_mime_dmarc_result_get_status (supplied) &&
+			    g_mime_dmarc_result_get_errors (direct) == g_mime_dmarc_result_get_errors (supplied) &&
+			    g_mime_dmarc_result_get_policy (direct) == g_mime_dmarc_result_get_policy (supplied) &&
+			    g_mime_dmarc_result_get_dkim_aligned (direct) == g_mime_dmarc_result_get_dkim_aligned (supplied) &&
+			    g_mime_dmarc_result_get_spf_aligned (direct) == g_mime_dmarc_result_get_spf_aligned (supplied),
+			    "DMARC decision differs with precomputed DKIM results");
+	for (guint i = 0; i < count; i++)
+		g_free (domains[i]);
+	g_mime_dmarc_result_free (supplied);
+	g_mime_dmarc_result_free (direct);
+	g_object_unref (verifier);
+	g_object_unref (message);
+	g_object_unref (zone);
+}
+
 void
 fuzz_dns_records (const guint8 *data, gsize length)
 {
@@ -216,6 +352,27 @@ fuzz_dns_records (const guint8 *data, gsize length)
 	GHashTable *tags = _g_mime_dkim_parse_tags (raw, NULL);
 	char **lines = g_strsplit (text, "\n", 17);
 	guint accepted = 0;
+	GError *error = NULL;
+	GMimeDmarcRecord *record = g_mime_dmarc_record_parse (text, &error);
+
+	FUZZ_CHECK ((record != NULL) == (error == NULL), "DMARC parse result disagrees with error");
+	if (record) {
+		GMimeDmarcRecord *again = g_mime_dmarc_record_parse (text, NULL);
+		const GPtrArray *lists[] = { g_mime_dmarc_record_get_aggregate_report_uris (record),
+					     g_mime_dmarc_record_get_failure_report_uris (record) };
+		FUZZ_CHECK (again && g_mime_dmarc_record_get_errors (record) == g_mime_dmarc_record_get_errors (again) &&
+			    g_mime_dmarc_record_get_policy (record) == g_mime_dmarc_record_get_policy (again),
+			    "Inconsistent DMARC policy parse");
+		for (guint i = 0; i < G_N_ELEMENTS (lists); i++) {
+			for (guint j = 0; j < lists[i]->len; j++) {
+				const char *uri = lists[i]->pdata[j];
+				FUZZ_CHECK (uri && *uri, "Empty DMARC report URI");
+			}
+		}
+		g_mime_dmarc_record_free (again);
+		g_mime_dmarc_record_free (record);
+	}
+	g_clear_error (&error);
 
 	if (tags) {
 		char *stripped = _g_mime_dkim_strip_b (raw);
