@@ -627,7 +627,8 @@ g_mime_text_converter_convert (GMimeTextConverter *converter, GMimeStream *input
  * Converts a bounded string. Input need not be NUL-terminated when @length is
  * nonnegative. Malformed UTF-8 is rejected. Input and output are always UTF-8,
  * independent of stream charset and BOM settings. Plain-text converters reject
- * embedded NUL; HTML converters apply their tokenizer's NUL handling.
+ * embedded NUL; HTML converters apply their tokenizer's NUL handling. If the
+ * converted output contains a NUL, returns %NULL with %G_CONVERT_ERROR_EMBEDDED_NUL.
  *
  * Returns: (transfer full) (nullable): converted UTF-8 text; free with g_free().
  **/
@@ -651,7 +652,12 @@ g_mime_text_converter_convert_to_string (GMimeTextConverter *converter, const ch
 
 	if (text_converter_convert (converter, input, output, FALSE, error)) {
 		bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (output));
-		result = g_strndup (bytes->len ? (const char *) bytes->data : "", bytes->len);
+
+		if (bytes->len && memchr (bytes->data, 0, bytes->len))
+			g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
+					     "The converted text contains an embedded NUL.");
+		else
+			result = g_strndup (bytes->len ? (const char *) bytes->data : "", bytes->len);
 	}
 
 	g_object_unref (output);

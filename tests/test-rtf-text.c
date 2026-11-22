@@ -110,6 +110,33 @@ test_render (void)
 }
 
 static void
+test_unicode_nul (void)
+{
+	const char input[] = "{\\rtf1 a\\u0?b}";
+	GMimeTextConverter *plain = g_mime_rtf_to_text_new (), *html = g_mime_rtf_to_html_new ();
+	GMimeStream *source = g_mime_stream_mem_new_with_buffer (input, sizeof input - 1);
+	GMimeStream *dest = g_mime_stream_mem_new ();
+	GByteArray *bytes = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (dest));
+	GError *error = NULL;
+	char *rendered;
+
+	g_assert_true (g_mime_text_converter_convert (plain, source, dest, &error));
+	g_assert_no_error (error);
+	g_assert_cmpmem (bytes->data, bytes->len, "a\0b", 3);
+	g_assert_null (g_mime_text_converter_convert_to_string (plain, input, -1, &error));
+	g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL);
+	g_clear_error (&error);
+	rendered = g_mime_text_converter_convert_to_string (html, input, -1, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (strstr (rendered, ">ab<"));
+	g_free (rendered);
+	g_object_unref (dest);
+	g_object_unref (source);
+	g_object_unref (html);
+	g_object_unref (plain);
+}
+
+static void
 log_issue (const GMimeRtfComplianceIssue *issue, gpointer data)
 {
 	GArray *log = data;
@@ -219,6 +246,7 @@ main (int argc, char **argv)
 		g_free (path);
 	}
 	g_test_add_func ("/rtf/text/codepage-and-placeholders", test_render);
+	g_test_add_func ("/rtf/text/unicode-nul", test_unicode_nul);
 	g_test_add_func ("/rtf/text/diagnostic-budget", test_budget);
 	g_test_add_data_func ("/rtf/text/logger-parity", GINT_TO_POINTER (FALSE), test_logger_parity);
 	g_test_add_data_func ("/rtf/html/logger-parity", GINT_TO_POINTER (TRUE), test_logger_parity);

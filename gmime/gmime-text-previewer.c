@@ -142,8 +142,9 @@ finish (Preview *preview)
 	if (preview->whitespace && preview->length)
 		preview->length--;
 
+	/* HTML data tokens may contain U+0000, but the preview is a C string. */
 	for (guint i = 0; i < preview->length; i++)
-		g_string_append_unichar (text, preview->text[i]);
+		g_string_append_unichar (text, preview->text[i] ? preview->text[i] : 0xfffd);
 
 	return g_string_free (text, FALSE);
 }
@@ -277,15 +278,12 @@ preview_suppresses (GMimeHtmlTagId id)
 }
 
 static gboolean
-append_prefixed (Preview *preview, const char **prefix, const char *text)
+append_prefixed (Preview *preview, const char **prefix, const char *text, gsize length)
 {
-	char *value = g_strconcat (*prefix, text ? text : "", NULL);
-	gboolean full = append (preview, value, strlen (value), TRUE, TRUE);
+	gboolean full = append (preview, *prefix, strlen (*prefix), TRUE, TRUE);
 
 	*prefix = "";
-	g_free (value);
-
-	return full;
+	return full || (length && append (preview, text, length, TRUE, TRUE));
 }
 
 static char *
@@ -319,9 +317,10 @@ html_preview (GMimeTextPreviewer *previewer, GMimeStream *input, gboolean string
 						const GMimeHtmlAttribute *alt =
 							g_mime_html_token_lookup_attribute (token, "alt");
 
-						if (alt)
-							full = append_prefixed (&preview, &prefix,
-										g_mime_html_attribute_get_value (alt));
+						if (alt) {
+							const char *value = g_mime_html_attribute_get_value (alt);
+							full = append_prefixed (&preview, &prefix, value, value ? strlen (value) : 0);
+						}
 					} else if (id == GMIME_HTML_TAG_LI) {
 						PreviewTag *ol = preview_peek (&stack, GMIME_HTML_TAG_OL);
 						PreviewTag *ul = preview_peek (&stack, GMIME_HTML_TAG_UL);
@@ -361,19 +360,12 @@ html_preview (GMimeTextPreviewer *previewer, GMimeStream *input, gboolean string
 				preview_pop (&stack, id);
 			}
 		} else if (kind == GMIME_HTML_TOKEN_DATA && body && !(stack.inner && stack.inner->suppressed)) {
-			if (strlen (g_mime_html_token_get_data (token)) != g_mime_html_token_get_data_length (token)) {
-				g_set_error_literal (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL,
-						     "The HTML preview contains an embedded NUL.");
-				ok = FALSE;
-			} else {
-				full = append_prefixed (&preview, &prefix, g_mime_html_token_get_data (token));
-			}
+			full = append_prefixed (&preview, &prefix, g_mime_html_token_get_data (token),
+						g_mime_html_token_get_data_length (token));
 		}
 
 		g_mime_html_token_unref (token);
 
-		if (!ok)
-			break;
 	}
 
 	preview_clear (&stack);

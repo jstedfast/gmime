@@ -39,9 +39,15 @@ check_converter (GMimeTextConverter *converter, const guint8 *data, gsize length
 	if (length && !memchr (data, 0, length) && !GMIME_IS_HTML_TO_HTML (converter)) {
 		char *utf8 = g_convert ((const char *) data, length, "UTF-8", "ISO-8859-1", NULL, NULL, &error);
 		char *rendered = g_mime_text_converter_convert_to_string (converter, utf8, -1, &error);
-		g_assert_no_error (error);
-		g_assert_nonnull (rendered);
-		fuzz_equal ((guint8 *) rendered, strlen (rendered), whole->data, whole->len, "String vs stream conversion");
+		if (whole->len && memchr (whole->data, 0, whole->len)) {
+			g_assert_error (error, G_CONVERT_ERROR, G_CONVERT_ERROR_EMBEDDED_NUL);
+			g_assert_null (rendered);
+			g_clear_error (&error);
+		} else {
+			g_assert_no_error (error);
+			g_assert_nonnull (rendered);
+			fuzz_equal ((guint8 *) rendered, strlen (rendered), whole->data, whole->len, "String vs stream conversion");
+		}
 		g_free (rendered);
 		g_free (utf8);
 	}

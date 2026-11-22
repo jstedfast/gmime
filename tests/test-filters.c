@@ -2651,6 +2651,26 @@ test_factory_preconditions (void)
 	testsuite_check_passed ();
 }
 
+static void
+test_openpgp_offsets (void)
+{
+	const char preamble[] = "first line\nsecond line\n";
+	char message[] = "first line\nsecond line\n-----BEGIN PGP MESSAGE-----\nbody\n-----END PGP MESSAGE-----\n";
+	size_t length = sizeof message - 1;
+
+	for (size_t split = 1; split < length; split++) {
+		GMimeFilter *filter = g_mime_filter_openpgp_new ();
+		size_t outlen, prespace;
+		char *out;
+
+		g_mime_filter_filter (filter, message, split, 0, &out, &outlen, &prespace);
+		g_mime_filter_complete (filter, message + split, length - split, 0, &out, &outlen, &prespace);
+		g_assert_cmpint (g_mime_filter_openpgp_get_begin_offset (GMIME_FILTER_OPENPGP (filter)), ==, sizeof preamble - 1);
+		g_assert_cmpint (g_mime_filter_openpgp_get_end_offset (GMIME_FILTER_OPENPGP (filter)), ==, length);
+		g_object_unref (filter);
+	}
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/filters";
@@ -2674,6 +2694,7 @@ int main (int argc, char **argv)
 		return 0;
 	
 	testsuite_start ("GMimeFilter");
+	test_openpgp_offsets ();
 
 	test_strip_streaming ();
 	test_strip_long_runs ();

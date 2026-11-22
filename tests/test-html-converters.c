@@ -597,6 +597,23 @@ test_preview (void)
 	GMimeTextPreviewer *html = g_mime_html_text_previewer_new ();
 	GMimeTextPreviewer *plain = g_mime_plain_text_previewer_new ();
 
+	/* An HTML data token is length-delimited even when the preview is not. */
+	const char input[] = "<body>a<p>b\0c\0d</body>";
+	const char *expected[] = { "a b\357\277\275c\357\277\275d", "a b\357\277\275\342\200\246" };
+	for (guint i = 0; i < G_N_ELEMENTS (expected); i++) {
+		GMimeStream *stream = g_mime_stream_mem_new_with_buffer (input, sizeof input - 1);
+		GError *error = NULL;
+		char *actual;
+
+		g_mime_text_previewer_set_maximum_preview_length (html, i ? 5 : 7);
+		actual = g_mime_text_previewer_get_preview_text_from_stream (html, stream, "utf-8", &error);
+		g_assert_no_error (error);
+		g_assert_cmpstr (actual, ==, expected[i]);
+		g_free (actual);
+		g_object_unref (stream);
+	}
+	g_mime_text_previewer_set_maximum_preview_length (html, 230);
+
 	for (guint i = 0; i < G_N_ELEMENTS (cases); i++)
 		check_preview (html, cases[i].input, cases[i].expected);
 

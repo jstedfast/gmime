@@ -367,7 +367,13 @@ write_text (RenderState *state, const char *text, gsize length, GError **error)
 	gsize start = 0;
 
 	for (gsize i = 0; i < length; i++) {
-		if (text[i] == '\t' || (text[i] == ' ' && state->last_was_space)) {
+		if (!text[i]) {
+			/* RTF can produce U+0000; omit it from HTML text. */
+			if (i > start && !g_mime_html_writer_write_text (state->writer, text + start, i - start, error))
+				return FALSE;
+
+			start = i + 1;
+		} else if (text[i] == '\t' || (text[i] == ' ' && state->last_was_space)) {
 			if ((i > start && !g_mime_html_writer_write_text (state->writer, text + start, i - start, error)) ||
 			    !g_mime_html_writer_write_text (state->writer, tabs, text[i] == '\t' ? 8 : 2, error))
 				return FALSE;

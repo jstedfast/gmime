@@ -238,7 +238,7 @@ scan (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 					g_mime_filter_backup (filter, lineptr, inptr - lineptr);
 					openpgp->position += lineptr - inbuf;
 				} else {
-					openpgp->position += inptr - lineptr;
+					openpgp->position += inptr - inbuf;
 					openpgp->midline = TRUE;
 				}
 				
