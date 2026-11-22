@@ -1,24 +1,21 @@
 <refentry id="gmime-contents">
   <refmeta>
-    <refentrytitle>Data Wrappers</refentrytitle>
+    <refentrytitle>MIME part content</refentrytitle>
     <refmiscinfo>GMime Library</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>Data Wrappers</refname>
-    <refpurpose>How to use Data Wrappers</refpurpose>
+    <refname>MIME part content</refname>
+    <refpurpose>Read or copy a MIME part's content with GMimeContent</refpurpose>
   </refnamediv>
   <refsect1 id="data-wrapper-overview">
-    <title>Overview of Data Wrappers</title>
-    
-    <para>Data wrappers are very simple. A GMimeContent object
-    contains both a stream and an encoding-type. The encoding-type
-    (such as GMIME_CONTENT_ENCODING_BASE64) is used by
-    g_mime_content_decode_to_stream() in order to decode the data
-    into its unencoded form. This means that you, the application
-    programmer, do not need to worry about decoding the content stream
-    yourself. To copy the original encoded bytes instead, use
-    g_mime_content_write_to_stream(). To read decoded bytes without making
-    a full copy, use g_mime_content_open().</para>
+    <title>Reading and copying content</title>
+
+    <para>A <type>GMimeContent</type> object holds a stream and its content
+    transfer encoding. Use <function>g_mime_content_open()</function> to
+    read decoded bytes without making a full copy, or
+    <function>g_mime_content_decode_to_stream()</function> to write the
+    decoded bytes to another stream. To copy the original bytes without
+    decoding them, use <function>g_mime_content_write_to_stream()</function>.</para>
   </refsect1>
 </refentry>

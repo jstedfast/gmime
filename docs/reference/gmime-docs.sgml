@@ -126,7 +126,7 @@
 
 <!ENTITY gmime-Streams SYSTEM "streams.sgml">
 <!ENTITY gmime-Filters SYSTEM "filters.sgml">
-<!ENTITY gmime-DataWrappers SYSTEM "content.sgml">
+<!ENTITY gmime-PartContent SYSTEM "content.sgml">
 ]>
 
 <book id="index">
@@ -215,7 +215,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     <title>GMime Fundamentals</title>
     &gmime-Streams;
     &gmime-Filters;
-    &gmime-DataWrappers;
+    &gmime-PartContent;
   </part>
 
   <part id="core">
@@ -299,7 +299,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     </chapter>
 
     <chapter id="DataWrappers">
-      <title>Data Wrappers</title>
+      <title>MIME part content</title>
       &GMimeContent;
     </chapter>
 

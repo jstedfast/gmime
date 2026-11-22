@@ -106,7 +106,7 @@ g_mime_content_finalize (GObject *object)
  *
  * Creates a new #GMimeContent object.
  *
- * Returns: a new data wrapper object.
+ * Returns: a new #GMimeContent object.
  **/
 GMimeContent *
 g_mime_content_new (void)
@@ -122,9 +122,7 @@ g_mime_content_new (void)
  *
  * Creates a new #GMimeContent object around @stream.
  *
- * Returns: a data wrapper around @stream. Since the wrapper owns its
- * own reference on the stream, caller is responsible for unrefing
- * its own copy.
+ * Returns: a new #GMimeContent object holding its own reference to @stream.
  **/
 GMimeContent *
 g_mime_content_new_with_stream (GMimeStream *stream, GMimeContentEncoding encoding)
