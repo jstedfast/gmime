@@ -720,6 +720,8 @@ _g_mime_parse_reference_full (const char **in, const char *end, gboolean *embedd
 				if (embedded_nul)
 					*embedded_nul = memchr (start, 0, inptr - start) != NULL;
 
+				*in = inptr;
+
 				return msgid;
 			}
 		} else if (!skip_word (&inptr, end) && inptr < end) {
