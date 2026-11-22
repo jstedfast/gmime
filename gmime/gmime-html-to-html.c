@@ -291,6 +291,22 @@ process_tag (HtmlState *state, GMimeHtmlToken *token)
 	gssize last_foreign = (gssize) count - 1;
 	GMimeHtmlTagContext *context;
 
+	/* Closing a formatting element can grow the stack during reconstruction.
+	 * If that reconstruction hit the limit, its implicit closes are incomplete.
+	 * Treat the end tag as literal text along with the remaining input. */
+	if (end && _g_mime_html_tokenizer_get_depth_exceeded (state->tokenizer)) {
+		char *text;
+		gboolean ok;
+
+		if (state->suppressed)
+			return TRUE;
+
+		text = g_mime_html_token_to_string (token);
+		ok = g_mime_html_writer_write_text (state->writer, text, -1, state->error);
+		g_free (text);
+		return ok;
+	}
+
 	/* Explicitly close foreign elements, including HTML elements above them.
 	 * Otherwise removing a breakout tag can change how output is interpreted.
 	 * This also keeps conversion idempotent. */

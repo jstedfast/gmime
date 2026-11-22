@@ -506,6 +506,12 @@ test_fragments (void)
 		check (converter, cases[i].expected, cases[i].expected);
 	}
 
+	const char *expected = "<a><div><div><svg>&lt;/a&gt;&lt;br&gt;";
+	g_mime_html_to_html_set_max_element_depth (GMIME_HTML_TO_HTML (converter), 4);
+	check (converter, "<a><div><div><noscript><svg></a><br>", expected);
+	g_mime_html_to_html_set_max_element_depth (GMIME_HTML_TO_HTML (converter), 4096);
+	check (converter, expected, expected);
+
 	g_object_unref (converter);
 }
 
