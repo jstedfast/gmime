@@ -40,6 +40,12 @@ quote callbacks. filters compares whole and chunked filtering, byte-level
 reference transformations, encoding selection and OpenPGP detection.
 compliance-validators exercises transfer validation through the MIME reader.
 
+Run `gmime-fuzz --measure-html-formatting <file>...` on UTF-8 HTML fixtures
+to compare disabled recovery with budgets of 16, 32 and 64 active entries,
+with and without scripting. The TSV reports peak usage and the stop reason.
+“trace agreement” means the native whole-input and fragmented token traces
+matched, not that an independent browser built an identical DOM.
+
 mime-reader checks callback ranges and normalized callback traces with and
 without a compliance logger, and with fragmented input. Consecutive read
 callbacks are folded into FNV-1a hashes plus lengths, as in MimeKit, so

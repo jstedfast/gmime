@@ -3,6 +3,7 @@
  * Distributed under the MIT license; see LICENSE. */
 
 #include "fuzz.h"
+#include <gmime/gmime-html-tree-internal.h>
 #include <gmime/gmime-rtf-tokenizer-private.h>
 #include <gmime/gmime-rtf-interpreter-private.h>
 #include <string.h>
@@ -232,29 +233,115 @@ fuzz_rtf_converters (const guint8 *data, gsize length)
 }
 
 static GString *
-html_trace (GMimeStream *input, gsize length, guint selector)
+trace_tokens (GMimeHtmlTokenizer *tokenizer, gsize length, GError **error)
 {
-	GError *error = NULL;
-	GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new_with_charset (input, "iso-8859-1", FALSE, 4096, &error);
 	GMimeHtmlToken *token;
 	GString *trace = g_string_new (NULL);
-	guint count = 0;
+	gsize count = 0;
 
-	g_assert_no_error (error);
-	g_mime_html_tokenizer_set_decode_character_references (tokenizer, selector & 1);
-	g_mime_html_tokenizer_set_ignore_truncated_tags (tokenizer, (selector & 2) != 0);
-	g_mime_html_tokenizer_set_scripting_enabled (tokenizer, (selector & 4) != 0);
-	g_mime_html_tokenizer_set_max_element_depth (tokenizer, 1 + selector % 64);
-	while (g_mime_html_tokenizer_read_next_token (tokenizer, &token, &error) && token) {
+	while (g_mime_html_tokenizer_read_next_token (tokenizer, &token, error) && token) {
 		char *value = g_mime_html_token_to_string (token);
 		g_assert_cmpuint (++count, <=, length + 1);
 		g_string_append_printf (trace, "%d:%zu:%s;", g_mime_html_token_get_kind (token), strlen (value), value);
 		g_free (value);
 		g_mime_html_token_unref (token);
 	}
+	return trace;
+}
+
+static GString *
+html_trace (GMimeStream *input, gsize length, guint selector)
+{
+	GError *error = NULL;
+	GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new_with_charset (input, "iso-8859-1", FALSE, 4096, &error);
+	GString *trace;
+
+	g_assert_no_error (error);
+	g_mime_html_tokenizer_set_decode_character_references (tokenizer, selector & 1);
+	g_mime_html_tokenizer_set_ignore_truncated_tags (tokenizer, (selector & 2) != 0);
+	g_mime_html_tokenizer_set_scripting_enabled (tokenizer, (selector & 4) != 0);
+	g_mime_html_tokenizer_set_max_element_depth (tokenizer, 1 + selector % 64);
+	if (selector & 128)
+		_g_mime_html_tree_set_formatting_capacity (_g_mime_html_tokenizer_get_tree (tokenizer), 1 + (selector >> 8) % 64);
+	trace = trace_tokens (tokenizer, length, &error);
 	g_assert_no_error (error);
 	g_object_unref (tokenizer);
 	return trace;
+}
+
+static const char *
+formatting_outcome (HtmlTree *tree)
+{
+	if (tree->depth_exceeded)
+		return "Depth";
+	switch (tree->formatting_stop) {
+	case HTML_FORMATTING_STOP_CAPACITY: return "Capacity";
+	case HTML_FORMATTING_STOP_ATTRIBUTE_EQUIVALENCE: return "AttributeEquivalence";
+	case HTML_FORMATTING_STOP_COMPLEX_ADOPTION: return "ComplexAdoption";
+	case HTML_FORMATTING_STOP_STACK_REMAPPING: return "StackRemapping";
+	default: return "trace agreement";
+	}
+}
+
+gboolean
+fuzz_measure_html_formatting (const char *path, const guint8 *data, gsize length)
+{
+	static const guint capacities[] = { 0, 16, 32, 64 };
+	GString *html = g_string_sized_new (length);
+	gboolean ok = TRUE;
+
+	for (gsize i = 0; i < length; i++) {
+		if (!data[i])
+			g_string_append_unichar (html, 0xfffc);
+		else if (data[i] == '\r') {
+			g_string_append_c (html, '\n');
+			if (i + 1 < length && data[i + 1] == '\n')
+				i++;
+		} else
+			g_string_append_c (html, data[i]);
+	}
+	if (html->len > G_MAXUINT || !g_utf8_validate (html->str, html->len, NULL)) {
+		g_printerr ("%s: expected a UTF-8 text fixture\n", path);
+		g_string_free (html, TRUE);
+		return FALSE;
+	}
+	for (guint scripting = 0; scripting <= 1; scripting++) {
+		for (guint n = 0; n < G_N_ELEMENTS (capacities); n++) {
+			GString *traces[2];
+			const char *outcomes[2];
+			guint peaks[2];
+			for (guint j = 0; j < 2; j++) {
+				GMimeStream *input = fuzz_stream_new ((guint8 *) html->str, html->len, j ? 13 : 4096);
+				GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new (input);
+				HtmlTree *tree = _g_mime_html_tokenizer_get_tree (tokenizer);
+				GError *error = NULL;
+				g_mime_html_tokenizer_set_scripting_enabled (tokenizer, scripting);
+				g_mime_html_tokenizer_set_limit_exceeded_behavior (tokenizer, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+				_g_mime_html_tree_set_formatting_capacity (tree, capacities[n]);
+				traces[j] = trace_tokens (tokenizer, html->len, &error);
+				outcomes[j] = formatting_outcome (tree);
+				peaks[j] = tree->formatting_peak;
+				if (error && !(g_error_matches (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR) &&
+					       (tree->depth_exceeded || _g_mime_html_tree_formatting_exceeded (tree)))) {
+					g_printerr ("%s: %s\n", path, error->message);
+					outcomes[j] = "error";
+					ok = FALSE;
+				}
+				g_clear_error (&error);
+				g_object_unref (tokenizer);
+				g_object_unref (input);
+			}
+			if (!g_string_equal (traces[0], traces[1]) || strcmp (outcomes[0], outcomes[1]) || peaks[0] != peaks[1]) {
+				outcomes[0] = "token trace mismatch";
+				ok = FALSE;
+			}
+			g_print ("%s\t%u\t%u\t%u\t%s\n", path, scripting, capacities[n], peaks[0], outcomes[0]);
+			g_string_free (traces[0], TRUE);
+			g_string_free (traces[1], TRUE);
+		}
+	}
+	g_string_free (html, TRUE);
+	return ok;
 }
 
 void

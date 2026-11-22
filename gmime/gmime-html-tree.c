@@ -297,6 +297,251 @@ stack_remove (HtmlTree *tree, int index)
 		stack_replace (tree, index, 1, NULL, 0);
 }
 
+/* An active entry identifies one physical instance in a folded stack entry.
+ * A negative index means it must be reconstructed; UNKNOWN denotes a marker. */
+typedef struct {
+	GMimeHtmlTagId id;
+	int index, instance;
+	GBytes *key;
+} FormattingSlot;
+
+static void
+clear_slot (gpointer data)
+{
+	FormattingSlot *slot = data;
+	g_clear_pointer (&slot->key, g_bytes_unref);
+}
+
+void
+_g_mime_html_tree_set_formatting_capacity (HtmlTree *tree, guint capacity)
+{
+	/* Experimental: opt in before parsing, independently of max_depth. */
+	g_return_if_fail (!tree->htmlCreated && !stack_count (tree));
+	g_return_if_fail (capacity <= G_MAXINT);
+
+	g_clear_pointer (&tree->formatting, g_array_unref);
+	tree->formatting_capacity = capacity;
+	tree->formatting_peak = 0;
+	tree->formatting_stop = HTML_FORMATTING_STOP_NONE;
+
+	if (capacity) {
+		tree->formatting = g_array_new (FALSE, FALSE, sizeof (FormattingSlot));
+		g_array_set_clear_func (tree->formatting, clear_slot);
+	}
+}
+
+gboolean
+_g_mime_html_tree_formatting_exceeded (HtmlTree *tree)
+{
+	return tree->formatting_stop != HTML_FORMATTING_STOP_NONE;
+}
+
+static inline FormattingSlot *
+formatting_slot (HtmlTree *tree, int index)
+{
+	return &g_array_index (tree->formatting, FormattingSlot, index);
+}
+
+static gboolean
+formatting_pending (HtmlTree *tree)
+{
+	return tree->formatting && tree->formatting->len &&
+		formatting_slot (tree, tree->formatting->len - 1)->index < 0;
+}
+
+/* Bound the canonical key in UTF-16 code units, as in MimeKit. Don't retain
+ * source tokens or unbounded strings. NULL means exact comparison is unavailable. */
+static int
+key_component (gunichar2 *out, int room, const char *s, gboolean fold)
+{
+	int n = 0;
+
+	while (s && *s) {
+		gunichar c = g_utf8_get_char (s);
+
+		if (c == '\r' || n >= room)
+			return -1;
+
+		if (c > 0xffff) {
+			if (n + 1 >= room)
+				return -1;
+
+			c -= 0x10000;
+			out[n++] = 0xd800 | (c >> 10);
+			out[n++] = 0xdc00 | (c & 0x3ff);
+		} else {
+			out[n++] = fold && c >= 'A' && c <= 'Z' ? c + 32 : c;
+		}
+
+		s = g_utf8_next_char (s);
+	}
+
+	return n;
+}
+
+static GBytes *
+formatting_key (GPtrArray *attributes)
+{
+	gunichar2 key[128], pair[128];
+	int length = 0;
+
+	if (attributes && attributes->len > 4)
+		return NULL;
+
+	for (guint i = 0; attributes && i < attributes->len; i++) {
+		const GMimeHtmlAttribute *attr = attributes->pdata[i];
+		int pos = 0, order = 1, n, v, size;
+
+		if ((n = key_component (pair + 1, 126, attr->name, TRUE)) < 0 ||
+		    (v = key_component (pair + 2 + n, 126 - n, attr->value, FALSE)) < 0)
+			return NULL;
+
+		pair[0] = n;
+		pair[n + 1] = v;
+
+		while (pos < length) {
+			int other = key[pos];
+
+			order = memcmp (pair + 1, key + pos + 1, MIN (n, other) * sizeof *key);
+
+			if (!order)
+				order = n - other;
+
+			if (order <= 0)
+				break;
+
+			pos += 2 + other + key[pos + 1 + other];
+		}
+
+		if (!order)
+			continue; /* The first duplicate wins. */
+
+		size = 2 + n + v;
+
+		if (size > 128 - length)
+			return NULL;
+
+		memmove (key + pos + size, key + pos, (length - pos) * sizeof *key);
+		memcpy (key + pos, pair, size * sizeof *key);
+		length += size;
+	}
+
+	return g_bytes_new (key, length * sizeof *key);
+}
+
+static void
+formatting_push (HtmlTree *tree, GMimeHtmlTagId id, GPtrArray *attributes)
+{
+	gboolean uncertain = FALSE;
+	FormattingSlot slot;
+	int matches = 0;
+
+	if (tree->depth_exceeded || tree->formatting_stop)
+		return;
+
+	slot.key = formatting_key (attributes);
+
+	if (id != GMIME_HTML_TAG_UNKNOWN) {
+		for (int i = (int) tree->formatting->len - 1; i >= 0; i--) {
+			FormattingSlot *other = formatting_slot (tree, i);
+
+			if (other->id == GMIME_HTML_TAG_UNKNOWN)
+				break;
+
+			if (other->id != id)
+				continue;
+
+			if (other->key && slot.key) {
+				if (!g_bytes_equal (other->key, slot.key))
+					continue;
+			} else {
+				/* Unknown keys have attributes, so can't match the empty key. */
+				if ((other->key && !g_bytes_get_size (other->key)) ||
+				    (slot.key && !g_bytes_get_size (slot.key)))
+					continue;
+
+				uncertain = TRUE;
+			}
+
+			if (++matches == 3) {
+				if (uncertain) {
+					tree->formatting_stop = HTML_FORMATTING_STOP_ATTRIBUTE_EQUIVALENCE;
+					clear_slot (&slot);
+					return;
+				}
+
+				g_array_remove_index (tree->formatting, i);
+				break;
+			}
+		}
+	}
+
+	if (tree->formatting->len == tree->formatting_capacity) {
+		tree->formatting_stop = HTML_FORMATTING_STOP_CAPACITY;
+		clear_slot (&slot);
+		return;
+	}
+
+	slot.id = id;
+	slot.index = stack_count (tree) - 1;
+	slot.instance = stack_top (tree)->Count;
+
+	g_array_append_val (tree->formatting, slot);
+
+	tree->formatting_peak = MAX (tree->formatting_peak, tree->formatting->len);
+}
+
+static void
+formatting_popped (HtmlTree *tree)
+{
+	for (guint i = 0; tree->formatting && i < tree->formatting->len; i++) {
+		FormattingSlot *slot = formatting_slot (tree, i);
+
+		if (slot->index < 0 ||
+		    (slot->index < stack_count (tree) && slot->instance <= stack_entry (tree, slot->index)->Count))
+			continue;
+
+		if (slot->id == GMIME_HTML_TAG_UNKNOWN) {
+			g_array_set_size (tree->formatting, i);
+			break;
+		}
+
+		slot->index = -1;
+	}
+}
+
+static void
+formatting_reconstruct (HtmlTree *tree)
+{
+	int start;
+
+	if (!formatting_pending (tree))
+		return;
+
+	start = tree->formatting->len;
+
+	while (start && formatting_slot (tree, start - 1)->index < 0)
+		start--;
+
+	for (guint i = start; i < tree->formatting->len; i++) {
+		FormattingSlot *slot = formatting_slot (tree, i);
+
+		stack_push (tree, g_mime_html_tag_id_to_name (slot->id), slot->id, GMIME_HTML_NAMESPACE_HTML, F_None);
+
+		if (tree->depth_exceeded)
+			break;
+
+		slot->index = stack_count (tree) - 1;
+		slot->instance = stack_top (tree)->Count;
+	}
+}
+
+static gboolean
+reconstructs_on_characters (HtmlTree *tree)
+{
+	return formatting_pending (tree) && stack_top (tree)->PrevHtmlOrIntegrationPoint == stack_count (tree) - 1;
+}
+
 void
 _g_mime_html_tree_clear_closed (HtmlTree *tree)
 {
@@ -311,7 +556,8 @@ _g_mime_html_tree_clear_closed (HtmlTree *tree)
 gboolean
 _g_mime_html_tree_tracks_characters (HtmlTree *tree)
 {
-	return !tree->inFrameset && (tree->mode != AfterHead || tree->framesetOk || !tree->bodyCreated);
+	return !tree->inFrameset &&
+		(tree->mode != AfterHead || tree->framesetOk || !tree->bodyCreated || reconstructs_on_characters (tree));
 }
 
 gboolean
@@ -354,6 +600,7 @@ _g_mime_html_tree_free (HtmlTree *tree)
 	_g_mime_html_tree_clear_closed (tree);
 	g_array_unref (tree->entries);
 	g_array_unref (tree->closed);
+	g_clear_pointer (&tree->formatting, g_array_unref);
 	g_hash_table_unref (tree->html_names);
 	g_hash_table_unref (tree->foreign_names);
 	g_free (tree);
@@ -378,11 +625,19 @@ _g_mime_html_tree_tag (HtmlTree *tree, GMimeHtmlToken *tag)
 								     GMIME_HTML_TAG_DISPOSITION_NORMAL;
 	}
 
-	return tree->depth_exceeded ? GMIME_HTML_TOKENIZER_STATE_PLAIN_TEXT : state;
+	return tree->depth_exceeded || tree->formatting_stop ? GMIME_HTML_TOKENIZER_STATE_PLAIN_TEXT : state;
 }
 
 void
 _g_mime_html_tree_character (HtmlTree *tree, gunichar c)
 {
-	process_character_data (tree, c);
+	if (c && reconstructs_on_characters (tree)) {
+		formatting_reconstruct (tree);
+
+		if (tree->depth_exceeded)
+			return;
+	}
+
+	if (c != ' ' && c != '\t' && c != '\r' && c != '\n' && c != '\f')
+		process_character_data (tree, c);
 }

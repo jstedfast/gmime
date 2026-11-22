@@ -25,7 +25,7 @@
 #include <gmime/gmime-html-tokenizer.h>
 #include <gmime/gmime-html-utils.h>
 #include <gmime/gmime-html-entity.h>
-#include <gmime/gmime-html-tree-private.h>
+#include <gmime/gmime-html-tree-internal.h>
 #include "data/html-tokenizer/vectors.h"
 #include "data/html-tokenizer/compliance-vectors.h"
 
@@ -804,13 +804,93 @@ test_serialization (void)
 }
 
 static void
+test_depth_limit_behavior (void)
+{
+	GString *input = g_string_new ("<div><span>");
+	gsize prefix = input->len;
+
+	for (guint i = 0; i < 4097; i++)
+		g_string_append_c (input, 'x');
+	g_string_append (input, "<em>&amp;");
+
+	for (guint fail = 0; fail <= 1; fail++) {
+		ChunkStream *stream = chunk_new (input->str, input->len, 7);
+		GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new (GMIME_STREAM (stream));
+		GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeHtmlComplianceIssue));
+		GMimeHtmlComplianceIssue issue;
+		GMimeHtmlToken *token;
+
+		g_mime_html_tokenizer_set_compliance_logger (tokenizer, log_issue, issues, NULL);
+		g_mime_html_tokenizer_set_max_element_depth (tokenizer, 1);
+		if (fail)
+			g_mime_html_tokenizer_set_limit_exceeded_behavior (tokenizer,
+									  GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+
+		token = next (tokenizer);
+		g_assert_cmpstr (g_mime_html_token_get_name (token), ==, "div");
+		g_mime_html_token_unref (token);
+		if (fail) {
+			GError *error = NULL;
+
+			g_assert_false (g_mime_html_tokenizer_read_next_token (tokenizer, &token, &error));
+			g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+			g_assert_nonnull (strstr (error->message, "MaxElementDepth (1)"));
+			g_assert_null (token);
+			g_assert_cmpint (g_mime_html_tokenizer_get_state (tokenizer), ==,
+					 GMIME_HTML_TOKENIZER_STATE_END_OF_FILE);
+			g_clear_error (&error);
+		} else {
+			token = next (tokenizer);
+			g_assert_cmpstr (g_mime_html_token_get_name (token), ==, "span");
+			g_mime_html_token_unref (token);
+			/* The public tokenizer still returns the whole literal tail as one token. */
+			token = next (tokenizer);
+			g_assert_cmpint (g_mime_html_token_get_kind (token), ==, GMIME_HTML_TOKEN_DATA);
+			g_assert_cmpstr (g_mime_html_token_get_data (token), ==, input->str + prefix);
+			g_mime_html_token_unref (token);
+		}
+		g_assert_null (next (tokenizer));
+		g_assert_cmpuint (issues->len, ==, 1);
+		issue = g_array_index (issues, GMimeHtmlComplianceIssue, 0);
+		g_assert_cmpint (issue.violation, ==, GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED);
+		g_assert_cmpint (issue.line_number, ==, 1);
+		g_assert_cmpint (issue.line_position, ==, 11);
+		g_assert_cmpint (issue.offset, ==, 10);
+		g_object_unref (tokenizer);
+		g_object_unref (stream);
+		g_array_unref (issues);
+	}
+	g_string_free (input, TRUE);
+}
+
+static void
 test_configuration_validation (void)
 {
 	const GMimeHtmlNamespace invalid_namespaces[] = { (GMimeHtmlNamespace) -1,
 							  (GMimeHtmlNamespace) (GMIME_HTML_NAMESPACE_XML_NS + 1) };
 	const guint invalid_depths[] = { 0, G_MAXUINT };
+	const GMimeHtmlLimitExceededBehavior invalid_policies[] = { (GMimeHtmlLimitExceededBehavior) -1,
+								   (GMimeHtmlLimitExceededBehavior) 2 };
 	GMimeStream *stream = g_mime_stream_mem_new ();
 	GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new (stream);
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+	GMimeHtmlToHtml *html = GMIME_HTML_TO_HTML (converter);
+
+	g_mime_html_tokenizer_set_limit_exceeded_behavior (tokenizer, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+	g_mime_html_to_html_set_limit_exceeded_behavior (html, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+	for (guint i = 0; i < G_N_ELEMENTS (invalid_policies); i++) {
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT*");
+		g_mime_html_tokenizer_set_limit_exceeded_behavior (tokenizer, invalid_policies[i]);
+		g_test_assert_expected_messages ();
+		g_assert_cmpint (g_mime_html_tokenizer_get_limit_exceeded_behavior (tokenizer), ==,
+				 GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT*");
+		g_mime_html_to_html_set_limit_exceeded_behavior (html, invalid_policies[i]);
+		g_test_assert_expected_messages ();
+		g_assert_cmpint (g_mime_html_to_html_get_limit_exceeded_behavior (html), ==,
+				 GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+	}
+	g_object_unref (converter);
 
 	g_mime_html_tokenizer_set_namespace (tokenizer, GMIME_HTML_NAMESPACE_SVG);
 	for (guint i = 0; i < G_N_ELEMENTS (invalid_namespaces); i++) {
@@ -836,6 +916,224 @@ test_configuration_validation (void)
 	g_object_unref (stream);
 }
 
+static GMimeHtmlTokenizer *
+formatting_tokenizer (const char *input, guint capacity)
+{
+	ChunkStream *stream = chunk_new (input, strlen (input), 1);
+	GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new (GMIME_STREAM (stream));
+	g_object_unref (stream);
+	_g_mime_html_tree_set_formatting_capacity (_g_mime_html_tokenizer_get_tree (tokenizer), capacity);
+	return tokenizer;
+}
+
+static void
+tree_tags (HtmlTree *tree, const char *names)
+{
+	char **words = g_strsplit (names, " ", -1);
+	for (int i = 0; words[i]; i++) {
+		gboolean end = words[i][0] == '/';
+		GMimeHtmlToken *tag = g_mime_html_token_new_tag (words[i] + end, end, FALSE, NULL, 0);
+		_g_mime_html_tree_tag (tree, tag);
+		g_mime_html_token_unref (tag);
+	}
+	g_strfreev (words);
+}
+
+static void
+test_formatting_reconstruction (void)
+{
+	const char *const openings[] = { "math mtext p i /p", "math mtext p i /i /p", "math mtext table td i /table" };
+	for (guint i = 0; i < G_N_ELEMENTS (openings); i++) {
+		HtmlTree *tree = _g_mime_html_tree_new (32);
+		_g_mime_html_tree_set_formatting_capacity (tree, 32);
+		tree_tags (tree, openings[i]);
+		g_assert_true (_g_mime_html_tree_foreign (tree));
+		_g_mime_html_tree_character (tree, ' ');
+		g_assert_cmpint (_g_mime_html_tree_foreign (tree), ==, i != 0);
+		_g_mime_html_tree_free (tree);
+	}
+}
+
+static void
+test_formatting_adoption (void)
+{
+	static const struct {
+		const char *start, *adopt, *closed, *close_block, *after_block, *remaining;
+		guint folded;
+	} cases[] = {
+		{ "font font p", "/font", "", "/p", "", "/font", 0 },
+		{ "font font div", "/font", "", "/div", "", "/font", 0 },
+		{ "font li p", "/font", "", "/li", "p", "", 0 },
+		{ "font center p", "/font", "", "/center", "p", "", 0 },
+		{ "a p font", "/a", "font", "/p", "", "/font", 1 },
+		{ "a p font", "a", "font", "/p", "a font", "/a /font", 1 },
+		{ "font p span span span", "/font", "span", "/p", "", "", 3 }
+	};
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		HtmlTree *tree = _g_mime_html_tree_new (32);
+		_g_mime_html_tree_set_formatting_capacity (tree, 32);
+		tree->track_closed = TRUE;
+		tree_tags (tree, "math mtext");
+		tree_tags (tree, cases[i].start);
+		for (guint step = 0; step < 2; step++) {
+			GString *closed = g_string_new (NULL);
+			tree_tags (tree, step ? cases[i].close_block : cases[i].adopt);
+			g_assert_false (_g_mime_html_tree_formatting_exceeded (tree));
+			for (guint j = 0; j < tree->closed->len; j++) {
+				GMimeHtmlClosedElement entry = g_array_index (tree->closed, GMimeHtmlClosedElement, j);
+				if (j)
+					g_string_append_c (closed, ' ');
+				g_string_append (closed, entry.name);
+				g_assert_cmpuint (entry.count, ==, step ? 1 : cases[i].folded);
+			}
+			g_assert_cmpstr (closed->str, ==, step ? cases[i].after_block : cases[i].closed);
+			g_string_free (closed, TRUE);
+		}
+		g_assert_cmpint (_g_mime_html_tree_foreign (tree), ==, i >= 2);
+		_g_mime_html_tree_character (tree, 'x');
+		g_assert_cmpint (_g_mime_html_tree_foreign (tree), ==, !*cases[i].remaining);
+		if (*cases[i].remaining)
+			tree_tags (tree, cases[i].remaining);
+		g_assert_true (_g_mime_html_tree_foreign (tree));
+		_g_mime_html_tree_free (tree);
+	}
+}
+
+static void
+test_formatting_budget (void)
+{
+	const char *equal = "<font COLOR=red size=2><font size='2' color='red'><font color=r&#101;d size=2>"
+		"<font size=2 color=red COLOR=blue>";
+	const char *unknown = "<i a b c d e><i a b c d e><i a b c d e><i a b c d e>";
+	static const struct {
+		const char *extra;
+		guint capacity, peak;
+		HtmlFormattingStopReason reason;
+	} cases[] = {
+		{ "", 3, 3, HTML_FORMATTING_STOP_NONE },
+		{ "<font color=RED size=2>", 3, 3, HTML_FORMATTING_STOP_CAPACITY },
+		{ "<font color=red size=2 title>", 3, 3, HTML_FORMATTING_STOP_CAPACITY },
+		{ "", 2, 2, HTML_FORMATTING_STOP_CAPACITY },
+		{ "", 8, 3, HTML_FORMATTING_STOP_ATTRIBUTE_EQUIVALENCE },
+		{ "<font><p><span><small></font>", 32, 2, HTML_FORMATTING_STOP_COMPLEX_ADOPTION },
+		{ "<form><i></form>", 32, 1, HTML_FORMATTING_STOP_STACK_REMAPPING }
+	};
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		char *input = g_strconcat (i < 3 ? equal : i < 5 ? unknown : "", cases[i].extra, NULL);
+		GMimeHtmlTokenizer *tokenizer = formatting_tokenizer (input, cases[i].capacity);
+		HtmlTree *tree = _g_mime_html_tokenizer_get_tree (tokenizer);
+		GMimeHtmlToken *token;
+		while ((token = next (tokenizer)))
+			g_mime_html_token_unref (token);
+		g_assert_cmpint (tree->formatting_stop, ==, cases[i].reason);
+		g_assert_cmpuint (tree->formatting_peak, ==, cases[i].peak);
+		g_object_unref (tokenizer);
+		g_free (input);
+	}
+}
+
+static void
+test_formatting_limits (void)
+{
+	const char *prefix = "<i a b c d e><i a b c d e><i a b c d e><i a b c d e>";
+	static const char *const runs[] = { NULL, "x", "&#32;" };
+	for (guint i = 0; i < G_N_ELEMENTS (runs); i++) {
+		char *input = i ? g_strconcat ("<p><i></p><div><section>", runs[i], "<br>", NULL)
+			: g_strconcat (prefix, "<p>tail", NULL);
+		for (guint fail = 0; fail <= 1; fail++) {
+			GMimeHtmlTokenizer *tokenizer = formatting_tokenizer (input, 32);
+			GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeHtmlComplianceIssue));
+			GMimeHtmlToken *token;
+			g_mime_html_tokenizer_set_compliance_logger (tokenizer, log_issue, issues, NULL);
+			g_mime_html_tokenizer_set_decode_character_references (tokenizer, TRUE);
+			if (i)
+				g_mime_html_tokenizer_set_max_element_depth (tokenizer, 2);
+			if (fail)
+				g_mime_html_tokenizer_set_limit_exceeded_behavior (tokenizer, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+			for (guint n = 0; n < (i ? 5 : 3); n++) {
+				token = next (tokenizer);
+				g_assert_nonnull (token);
+				g_mime_html_token_unref (token);
+			}
+			if (fail) {
+				GError *error = NULL;
+				g_assert_false (g_mime_html_tokenizer_read_next_token (tokenizer, &token, &error));
+				g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+				g_assert_null (token);
+				g_clear_error (&error);
+			} else {
+				GString *tail = g_string_new (NULL);
+				if (!i) {
+					token = next (tokenizer);
+					g_assert_cmpint (token->kind, ==, GMIME_HTML_TOKEN_TAG);
+					g_mime_html_token_unref (token);
+				}
+				while ((token = next (tokenizer))) {
+					g_assert_cmpint (token->kind, ==, GMIME_HTML_TOKEN_DATA);
+					g_string_append (tail, token->data);
+					g_mime_html_token_unref (token);
+				}
+				g_assert_cmpstr (tail->str, ==, !i ? "<p>tail" : i == 1 ? "x<br>" : " <br>");
+				g_string_free (tail, TRUE);
+			}
+			g_assert_null (next (tokenizer));
+			g_assert_cmpuint (issues->len, ==, 1);
+			GMimeHtmlComplianceIssue issue = g_array_index (issues, GMimeHtmlComplianceIssue, 0);
+			g_assert_cmpint (issue.violation, ==, i ? GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED :
+					 GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED);
+			if (!i) {
+				g_assert_cmpint (issue.offset, ==, strlen (prefix) - 1);
+				g_assert_cmpint (issue.severity, ==, GMIME_COMPLIANCE_SEVERITY_MAJOR);
+				g_assert_cmpint (issue.categories, ==, GMIME_COMPLIANCE_CATEGORY_SECURITY | GMIME_COMPLIANCE_CATEGORY_DATA_LOSS);
+			}
+			g_array_unref (issues);
+			g_object_unref (tokenizer);
+		}
+		g_free (input);
+	}
+}
+
+static void
+test_formatting_tokenization (void)
+{
+	const char *tail = "note</custom-note></p><p>footer</p>";
+	char *unsupported = g_strconcat ("<font><p><custom-note></font>", tail, NULL);
+	const char *inputs[] = {
+		"<svg><![CDATA[diagram]]></svg><math><mtext><p><i></p> &#32;<![CDATA[note]]><h5>Title</h5>",
+		unsupported
+	};
+	for (guint i = 0; i < G_N_ELEMENTS (inputs); i++) {
+		GMimeHtmlTokenizer *tokenizer = formatting_tokenizer (inputs[i], 32);
+		GString *starts = g_string_new (NULL), *data = g_string_new (NULL);
+		guint cdata = 0, bogus = 0;
+		GMimeHtmlToken *token;
+		while ((token = next (tokenizer))) {
+			if (token->kind == GMIME_HTML_TOKEN_TAG && !token->is_end_tag)
+				g_string_append_printf (starts, " %s", token->name);
+			else if (token->kind == GMIME_HTML_TOKEN_DATA)
+				g_string_append (data, token->data);
+			else if (token->kind == GMIME_HTML_TOKEN_CDATA) {
+				cdata++;
+				g_assert_cmpstr (token->data, ==, "diagram");
+			} else if (token->kind == GMIME_HTML_TOKEN_COMMENT && token->bogus)
+				bogus++;
+			g_mime_html_token_unref (token);
+		}
+		g_assert_cmpstr (starts->str, ==, i ? " font p custom-note" : " svg math mtext p i h5");
+		g_assert_cmpuint (cdata, ==, !i);
+		g_assert_cmpuint (bogus, ==, !i);
+		if (i) {
+			g_assert_cmpint (_g_mime_html_tokenizer_get_tree (tokenizer)->formatting_stop, ==,
+					 HTML_FORMATTING_STOP_COMPLEX_ADOPTION);
+			g_assert_cmpstr (data->str, ==, tail);
+		}
+		g_string_free (starts, TRUE);
+		g_string_free (data, TRUE);
+		g_object_unref (tokenizer);
+	}
+	g_free (unsupported);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -851,6 +1149,11 @@ main (int argc, char **argv)
 		fixture_root = argc > 1 ? argv[1] : "tests/data/html-tokenizer";
 
 	g_test_add_func ("/html/tokenizer/upstream-vectors", test_vectors);
+	g_test_add_func ("/html/formatting/reconstruction", test_formatting_reconstruction);
+	g_test_add_func ("/html/formatting/adoption", test_formatting_adoption);
+	g_test_add_func ("/html/formatting/budget", test_formatting_budget);
+	g_test_add_func ("/html/formatting/limits", test_formatting_limits);
+	g_test_add_func ("/html/formatting/tokenization", test_formatting_tokenization);
 	g_test_add_func ("/html/tokenizer/upstream-corpus", test_corpus);
 	g_test_add_func ("/html/entities/upstream", test_entities);
 	g_test_add_func ("/html/tokenizer/compliance", test_compliance);
@@ -859,6 +1162,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html/tokenizer/compliance-budget-changes", test_compliance_budget_changes);
 	g_test_add_func ("/html/tokenizer/errors", test_errors);
 	g_test_add_func ("/html/tokenizer/lifetime-limits", test_lifetime_and_limits);
+	g_test_add_func ("/html/tokenizer/depth-limit-behavior", test_depth_limit_behavior);
 	g_test_add_func ("/html/tokenizer/charset", test_charset);
 	g_test_add_func ("/html/tokenizer/serialization", test_serialization);
 	g_test_add_func ("/html/tokenizer/configuration-validation", test_configuration_validation);

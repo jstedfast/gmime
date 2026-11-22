@@ -38,6 +38,8 @@ G_GNUC_INTERNAL gboolean _g_mime_text_reader_read_line (GMimeTextReader *reader,
 G_GNUC_INTERNAL gboolean _g_mime_text_write (GMimeStream *stream, const char *text, gsize length, GError **error);
 G_GNUC_INTERNAL char *_g_mime_text_read_all (GMimeStream *stream, gsize max_chars, GError **error);
 G_GNUC_INTERNAL gboolean _g_mime_text_converter_is_active (GMimeTextConverter *converter);
+G_GNUC_INTERNAL gboolean _g_mime_html_writer_write_text (GMimeHtmlWriter *writer, const char *text, gsize length,
+							 GError **error);
 
 G_GNUC_INTERNAL GMimeStream *_g_mime_text_stream_new_decoder (GMimeStream *source, const char *charset,
 							      gboolean detect_bom, gsize buffer_size, GError **error);

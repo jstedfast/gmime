@@ -45,8 +45,9 @@
  *
  * read_next_token() returns %TRUE with a new token, %TRUE with a %NULL token at
  * end of input, or %FALSE on error. Tokens remain valid across subsequent reads.
- * The depth limit counts folded, distinct open-element stack entries; after
- * exceeding it, the remaining input is treated as literal text.
+ * The depth limit counts folded, distinct open-element stack entries. By
+ * default, a structural limit makes the tokenizer treat the remaining input
+ * as literal text. See g_mime_html_tokenizer_set_limit_exceeded_behavior().
  */
 
 struct _GMimeHtmlTokenizer {
@@ -61,7 +62,9 @@ struct _GMimeHtmlTokenizer {
 	GMimeHtmlAttribute *attribute;
 	const char *activeTagName;
 	GMimeHtmlTokenizerState state;
-	gboolean decode, ignore_truncated, isEndTag, bang, nestedComment, reported_depth;
+	gboolean decode, ignore_truncated, isEndTag, bang, nestedComment;
+	GMimeHtmlLimitExceededBehavior limit_behavior;
+	gboolean literal_remainder, stream_literal_text, limit_failed;
 	gunichar quote, cdata[3];
 	guint cdataIndex;
 	gint64 position, markOffset;
@@ -71,11 +74,17 @@ struct _GMimeHtmlTokenizer {
 	GMimeHtmlComplianceLogger logger;
 	gpointer logger_data;
 	GDestroyNotify logger_destroy;
-	guint cap, issues[GMIME_HTML_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES + 1];
+	guint cap, issues[GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED + 1];
 	gboolean cap_reported;
 };
 
 G_DEFINE_FINAL_TYPE (GMimeHtmlTokenizer, g_mime_html_tokenizer, G_TYPE_OBJECT)
+
+HtmlTree *
+_g_mime_html_tokenizer_get_tree (GMimeHtmlTokenizer *tokenizer)
+{
+	return tokenizer->tree;
+}
 
 static void
 log_issue (GMimeHtmlTokenizer *tokenizer, GMimeHtmlComplianceViolation violation, gint64 offset, int line, int column)
@@ -131,6 +140,33 @@ log_issue_at_previous_character (GMimeHtmlTokenizer *tokenizer, GMimeHtmlComplia
 }
 
 static void
+on_limit_exceeded (GMimeHtmlTokenizer *tokenizer, GMimeHtmlComplianceViolation violation, gboolean after_tag)
+{
+	if (tokenizer->literal_remainder)
+		return;
+
+	tokenizer->literal_remainder = TRUE;
+	tokenizer->state = GMIME_HTML_TOKENIZER_STATE_PLAIN_TEXT;
+
+	if (after_tag)
+		log_issue_at_previous_character (tokenizer, violation, '>');
+	else
+		log_issue_at_current_position (tokenizer, violation);
+
+	if (tokenizer->limit_behavior == GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL && !tokenizer->error) {
+		tokenizer->state = GMIME_HTML_TOKENIZER_STATE_END_OF_FILE;
+		tokenizer->limit_failed = TRUE;
+
+		if (violation == GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED)
+			g_set_error (&tokenizer->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     "HTML element depth exceeded MaxElementDepth (%u).", tokenizer->tree->max_depth);
+		else
+			g_set_error_literal (&tokenizer->error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     "HTML formatting recovery budget exceeded.");
+	}
+}
+
+static void
 mark_previous_character (GMimeHtmlTokenizer *tokenizer)
 {
 	tokenizer->markOffset = tokenizer->position - 1;
@@ -183,12 +219,6 @@ static gunichar
 to_lower (gunichar c)
 {
 	return c >= 'A' && c <= 'Z' ? c + 32 : c;
-}
-
-static gboolean
-is_html_white_space (gunichar c)
-{
-	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f';
 }
 
 static gboolean
@@ -299,31 +329,28 @@ name_is (GMimeHtmlTokenizer *tokenizer, const char *value)
 }
 
 static void
-process_character_data (GMimeHtmlTokenizer *tokenizer, gsize start)
+process_single_character (GMimeHtmlTokenizer *tokenizer, gunichar c)
 {
-	const char *p = tokenizer->data->str + start, *end = tokenizer->data->str + tokenizer->data->len;
+	_g_mime_html_tree_character (tokenizer->tree, c);
 
-	while (p < end && _g_mime_html_tree_tracks_characters (tokenizer->tree)) {
-		gunichar c = g_utf8_get_char (p);
+	if (tokenizer->tree->depth_exceeded)
+		on_limit_exceeded (tokenizer, GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED, FALSE);
+}
+
+static void
+process_characters (GMimeHtmlTokenizer *tokenizer, const char *p, const char *end)
+{
+	while (p < end && !tokenizer->literal_remainder && _g_mime_html_tree_tracks_characters (tokenizer->tree)) {
+		process_single_character (tokenizer, g_utf8_get_char (p));
 
 		p = g_utf8_next_char (p);
-
-		if (!is_html_white_space (c))
-			_g_mime_html_tree_character (tokenizer->tree, c);
 	}
 }
 
 static void
-process_character_string (GMimeHtmlTokenizer *tokenizer, const char *p)
+process_character_data (GMimeHtmlTokenizer *tokenizer, gsize start)
 {
-	while (*p && _g_mime_html_tree_tracks_characters (tokenizer->tree)) {
-		gunichar c = g_utf8_get_char (p);
-
-		p = g_utf8_next_char (p);
-
-		if (!is_html_white_space (c))
-			_g_mime_html_tree_character (tokenizer->tree, c);
-	}
+	process_characters (tokenizer, tokenizer->data->str + start, tokenizer->data->str + tokenizer->data->len);
 }
 
 static GMimeHtmlToken *
@@ -487,12 +514,10 @@ emit_tag_token (GMimeHtmlTokenizer *tokenizer)
 							 '>');
 	}
 
-	/* Once structural tracking overflows, the remaining input is literal text. */
-	if (tokenizer->tree->depth_exceeded && !tokenizer->reported_depth) {
-		log_issue_at_previous_character (tokenizer,
-						 GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED, '>');
-		tokenizer->reported_depth = TRUE;
-	}
+	if (tokenizer->tree->depth_exceeded)
+		on_limit_exceeded (tokenizer, GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED, TRUE);
+	else if (_g_mime_html_tree_formatting_exceeded (tokenizer->tree))
+		on_limit_exceeded (tokenizer, GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED, TRUE);
 
 	g_string_truncate (tokenizer->data, 0);
 	tokenizer->tag = NULL;
@@ -651,6 +676,9 @@ g_mime_html_tokenizer_new_with_charset (GMimeStream *stream, const char *charset
  *
  * Reads the next token. A successful read at end of input sets @token to
  * %NULL. On failure, @token is also set to %NULL and @error is set.
+ * With %GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL, the read that encounters a
+ * structural limit fails with %GMIME_ERROR_PARSE_ERROR in the %GMIME_ERROR
+ * domain. Subsequent reads return end of input.
  *
  * Returns: %TRUE on success, including end of input, or %FALSE on error
  */
@@ -672,7 +700,11 @@ g_mime_html_tokenizer_read_next_token (GMimeHtmlTokenizer *tokenizer, GMimeHtmlT
 		g_mime_html_token_unref (*token);
 		*token = NULL;
 
-		if (error)
+		if (tokenizer->limit_failed) {
+			tokenizer->state = GMIME_HTML_TOKENIZER_STATE_END_OF_FILE;
+			tokenizer->limit_failed = FALSE;
+			g_propagate_error (error, g_steal_pointer (&tokenizer->error));
+		} else if (error)
 			*error = g_error_copy (tokenizer->error);
 
 		return FALSE;
@@ -804,7 +836,8 @@ g_mime_html_tokenizer_get_max_element_depth (GMimeHtmlTokenizer *tokenizer)
  *
  * Sets the open-element stack limit. Exceeding it reports
  * %GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED when a logger is
- * installed and treats the remaining input as plain text rather than failing.
+ * installed. By default the remaining input is treated as literal text;
+ * g_mime_html_tokenizer_set_limit_exceeded_behavior() can request failure instead.
  **/
 void
 g_mime_html_tokenizer_set_max_element_depth (GMimeHtmlTokenizer *tokenizer, guint maximum)
@@ -813,6 +846,39 @@ g_mime_html_tokenizer_set_max_element_depth (GMimeHtmlTokenizer *tokenizer, guin
 	g_return_if_fail (maximum > 0 && maximum <= G_MAXINT);
 
 	tokenizer->tree->max_depth = maximum;
+}
+
+/**
+ * g_mime_html_tokenizer_get_limit_exceeded_behavior:
+ * @tokenizer: a #GMimeHtmlTokenizer
+ *
+ * Returns: the structural limit policy, initially %GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT.
+ **/
+GMimeHtmlLimitExceededBehavior
+g_mime_html_tokenizer_get_limit_exceeded_behavior (GMimeHtmlTokenizer *tokenizer)
+{
+	g_return_val_if_fail (GMIME_IS_HTML_TOKENIZER (tokenizer), GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT);
+
+	return tokenizer->limit_behavior;
+}
+
+/**
+ * g_mime_html_tokenizer_set_limit_exceeded_behavior:
+ * @tokenizer: a #GMimeHtmlTokenizer
+ * @value: the behavior when structural tracking exceeds its limits
+ *
+ * By default, a tag that exceeds a limit is the last tag returned and the
+ * remainder is literal text. In fail mode the triggering token is not
+ * returned. Both modes report the violation to the compliance logger.
+ **/
+void
+g_mime_html_tokenizer_set_limit_exceeded_behavior (GMimeHtmlTokenizer *tokenizer, GMimeHtmlLimitExceededBehavior value)
+{
+	g_return_if_fail (GMIME_IS_HTML_TOKENIZER (tokenizer));
+	g_return_if_fail (value == GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT ||
+			  value == GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+
+	tokenizer->limit_behavior = value;
 }
 
 /**
@@ -976,6 +1042,12 @@ g_mime_html_tokenizer_set_compliance_options (GMimeHtmlTokenizer *tokenizer, GMi
 	tokenizer->options = options;
 	memset (tokenizer->issues, 0, sizeof tokenizer->issues);
 	tokenizer->cap_reported = FALSE;
+}
+
+void
+_g_mime_html_tokenizer_set_stream_literal_text (GMimeHtmlTokenizer *tokenizer, gboolean enabled)
+{
+	tokenizer->stream_literal_text = enabled;
 }
 
 void

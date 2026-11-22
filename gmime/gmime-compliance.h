@@ -227,9 +227,8 @@ typedef enum {
  * @GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT: missing uuencode terminator
  * @GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES: reporting budget was exceeded
  *
- * Diagnostic identities matching MimeKit. Values may change before the 4.0 release.
- * Use the violation
- * metadata functions for names, descriptions, remarks and context-specific severity.
+ * Use the violation metadata functions for names, descriptions, remarks and
+ * context-specific severity.
  **/
 typedef enum {
 	GMIME_COMPLIANCE_NONE = 0,
@@ -334,7 +333,7 @@ typedef enum {
 	GMIME_COMPLIANCE_INVALID_UUENCODED_LINE_EXTRA_DATA = 99,
 	GMIME_COMPLIANCE_INVALID_UUENCODE_END_MARKER = 100,
 	GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT = 101,
-	GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES = G_MAXINT
+	GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES = G_MAXINT32
 } GMimeComplianceViolation;
 
 /**

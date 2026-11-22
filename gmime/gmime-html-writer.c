@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "gmime-html-writer.h"
+#include "gmime-html-token-private.h"
 #include "gmime-html-utils.h"
 #include "gmime-text-private.h"
 #include "gmime-error.h"
@@ -388,19 +389,24 @@ g_mime_html_writer_write_html_attribute (GMimeHtmlWriter *writer, const GMimeHtm
 gboolean
 g_mime_html_writer_write_text (GMimeHtmlWriter *writer, const char *text, gssize length, GError **error)
 {
-	char *copy, *encoded;
-	gboolean result;
-
 	g_return_val_if_fail (GMIME_IS_HTML_WRITER (writer), FALSE);
 
-	if (!validate_text (text, &length, error) || !g_mime_html_writer_finish (writer, error))
+	return validate_text (text, &length, error) && _g_mime_html_writer_write_text (writer, text, length, error);
+}
+
+/* Token data is valid UTF-8 but may contain embedded NULs. */
+gboolean
+_g_mime_html_writer_write_text (GMimeHtmlWriter *writer, const char *text, gsize length, GError **error)
+{
+	gboolean result;
+	char *encoded;
+
+	if (!g_mime_html_writer_finish (writer, error))
 		return FALSE;
 
-	copy = g_strndup (text, length);
-	encoded = g_mime_html_encode (copy);
+	encoded = _g_mime_html_encode_len (text, length, 0);
 	result = write_string (writer, encoded, error);
 	g_free (encoded);
-	g_free (copy);
 
 	return result;
 }

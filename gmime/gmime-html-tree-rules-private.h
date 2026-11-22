@@ -18,7 +18,6 @@
  *  02110-1301, USA.
  */
 
-/* Rules ported from MimeKit/Text/HtmlTreeConstruction.cs. */
 static gboolean
 ascii_match (const char *a, const char *b)
 {
@@ -56,6 +55,7 @@ static void process_head_end_tag (HtmlTree *tree, GMimeHtmlToken *tag);
 static void process_end_tag_internal (HtmlTree *tree, GMimeHtmlToken *tag);
 static void process_form_end_tag (HtmlTree *tree);
 static void process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id);
+static void close_tracked_formatting (HtmlTree *tree, GMimeHtmlTagId id, gboolean nested_anchor);
 static void process_html_end_tag (HtmlTree *tree, GMimeHtmlToken *tag);
 
 static GMimeHtmlTokenizerState
@@ -102,6 +102,7 @@ static void
 pop_above (HtmlTree *tree, int index)
 {
 	stack_pop_above (tree, index);
+	formatting_popped (tree);
 
 	if (tree->formPointerIndex >= stack_count (tree))
 		tree->formPointerIndex = -1;
@@ -112,6 +113,7 @@ pop_through (HtmlTree *tree, int index)
 {
 	tree->poppedThrough = TRUE;
 	stack_pop_through (tree, index);
+	formatting_popped (tree);
 
 	if (tree->formPointerIndex >= stack_count (tree))
 		tree->formPointerIndex = -1;
@@ -121,6 +123,15 @@ static void
 remove_entry (HtmlTree *tree, int index)
 {
 	tree->poppedThrough = TRUE;
+
+	/* Rebuilding this suffix could merge entries and invalidate instance indexes. */
+	for (guint i = 0; tree->formatting && i < tree->formatting->len; i++) {
+		if (formatting_slot (tree, i)->index >= index) {
+			tree->formatting_stop = HTML_FORMATTING_STOP_STACK_REMAPPING;
+			return;
+		}
+	}
+
 	stack_remove (tree, index);
 }
 
@@ -698,6 +709,15 @@ static void
 push_html (HtmlTree *tree, GMimeHtmlToken *tag)
 {
 	stack_push (tree, tag->name, tag->id, GMIME_HTML_NAMESPACE_HTML, get_html_flags (tree, tag->id, tag->name));
+	if (tree->formatting) {
+		if (g_mime_html_tag_id_is_formatting_element (tag->id))
+			formatting_push (tree, tag->id, tag->attributes);
+		else if (tag->id == GMIME_HTML_TAG_TD || tag->id == GMIME_HTML_TAG_TH ||
+			 tag->id == GMIME_HTML_TAG_CAPTION || tag->id == GMIME_HTML_TAG_MARQUEE ||
+			 tag->id == GMIME_HTML_TAG_OBJECT || tag->id == GMIME_HTML_TAG_APPLET ||
+			 (tag->id == GMIME_HTML_TAG_UNKNOWN && !g_ascii_strcasecmp (tag->name, "template")))
+			formatting_push (tree, GMIME_HTML_TAG_UNKNOWN, NULL);
+	}
 }
 
 static void
@@ -705,6 +725,38 @@ push_implied (HtmlTree *tree, GMimeHtmlTagId id)
 {
 	stack_push (tree, g_mime_html_tag_id_to_name (id), id, GMIME_HTML_NAMESPACE_HTML,
 		    get_html_flags (tree, id, ""));
+}
+
+static gboolean
+reconstructs_before_start_tag (HtmlTree *tree, GMimeHtmlToken *tag)
+{
+	switch (tag->id) {
+	case GMIME_HTML_TAG_BASE:
+	case GMIME_HTML_TAG_BASE_FONT:
+	case GMIME_HTML_TAG_BG_SOUND:
+	case GMIME_HTML_TAG_LINK:
+	case GMIME_HTML_TAG_META:
+	case GMIME_HTML_TAG_SCRIPT:
+	case GMIME_HTML_TAG_STYLE:
+	case GMIME_HTML_TAG_TITLE:
+	case GMIME_HTML_TAG_NO_FRAMES:
+	case GMIME_HTML_TAG_TEXT_AREA:
+	case GMIME_HTML_TAG_I_FRAME:
+	case GMIME_HTML_TAG_NO_EMBED:
+	case GMIME_HTML_TAG_PARAM:
+	case GMIME_HTML_TAG_SOURCE:
+	case GMIME_HTML_TAG_TRACK:
+	case GMIME_HTML_TAG_RP:
+	case GMIME_HTML_TAG_RT:
+		return FALSE;
+	case GMIME_HTML_TAG_NO_SCRIPT:
+		return !tree->scripting && tree->bodyCreated;
+	case GMIME_HTML_TAG_UNKNOWN:
+		return g_ascii_strcasecmp (tag->name, "template") && g_ascii_strcasecmp (tag->name, "rb") &&
+			g_ascii_strcasecmp (tag->name, "rtc");
+	default:
+		return TRUE;
+	}
 }
 
 static void
@@ -800,6 +852,10 @@ process_html_start_tag (HtmlTree *tree, GMimeHtmlToken *tag, InsertionMode entry
 	case GMIME_HTML_TAG_PLAIN_TEXT:
 	case GMIME_HTML_TAG_XMP:
 		close_p_in_button_scope (tree);
+
+		if (id == GMIME_HTML_TAG_XMP)
+			formatting_reconstruct (tree);
+
 		push_html (tree, tag);
 		return;
 	case GMIME_HTML_TAG_FORM:
@@ -841,9 +897,21 @@ process_html_start_tag (HtmlTree *tree, GMimeHtmlToken *tag, InsertionMode entry
 		if (in_scope (tree, index, stack_top (tree)->PrevScope))
 			pop_through (tree, index);
 
+		formatting_reconstruct (tree);
 		push_html (tree, tag);
 		return;
 	case GMIME_HTML_TAG_A:
+		if (tree->formatting) {
+			close_tracked_formatting (tree, id, TRUE);
+
+			if (tree->formatting_stop)
+				return;
+
+			formatting_reconstruct (tree);
+			push_html (tree, tag);
+			return;
+		}
+
 		// Approximates the adoption agency algorithm being run for a nested <a>: when there is no
 		// special element above the open <a>, the open <a> gets popped.
 		index = stack_index (tree, GMIME_HTML_NAMESPACE_HTML, GMIME_HTML_TAG_A, "");
@@ -858,6 +926,7 @@ process_html_start_tag (HtmlTree *tree, GMimeHtmlToken *tag, InsertionMode entry
 		if (stack_is_top_html (tree, GMIME_HTML_TAG_OPTION))
 			pop_through (tree, (stack_count (tree) - 1));
 
+		formatting_reconstruct (tree);
 		push_html (tree, tag);
 		return;
 	case GMIME_HTML_TAG_TABLE:
@@ -888,6 +957,8 @@ process_html_start_tag (HtmlTree *tree, GMimeHtmlToken *tag, InsertionMode entry
 		return;
 	case GMIME_HTML_TAG_UNKNOWN:
 		if (!g_ascii_strcasecmp (tag->name, "svg")) {
+			formatting_reconstruct (tree);
+
 			if (!tag->is_empty_element)
 				stack_push (tree, tag->name, GMIME_HTML_TAG_UNKNOWN, GMIME_HTML_NAMESPACE_SVG, F_None);
 
@@ -895,6 +966,8 @@ process_html_start_tag (HtmlTree *tree, GMimeHtmlToken *tag, InsertionMode entry
 		}
 
 		if (!g_ascii_strcasecmp (tag->name, "math")) {
+			formatting_reconstruct (tree);
+
 			if (!tag->is_empty_element)
 				stack_push (tree, tag->name, GMIME_HTML_TAG_UNKNOWN, GMIME_HTML_NAMESPACE_MATH_ML,
 					    F_None);
@@ -914,6 +987,18 @@ process_html_start_tag (HtmlTree *tree, GMimeHtmlToken *tag, InsertionMode entry
 	}
 
 	// Note: The self-closing flag is ignored for HTML elements that are not void elements.
+	if (formatting_pending (tree) && reconstructs_before_start_tag (tree, tag))
+		formatting_reconstruct (tree);
+
+	if (tree->formatting && id == GMIME_HTML_TAG_NO_BR && in_scope (tree, tree->html_ids[id], stack_top (tree)->PrevScope)) {
+		process_formatting_end_tag (tree, id);
+
+		if (tree->formatting_stop)
+			return;
+
+		formatting_reconstruct (tree);
+	}
+
 	if (!is_void_element (tree, id, tag->name))
 		push_html (tree, tag);
 }
@@ -1162,10 +1247,89 @@ process_form_end_tag (HtmlTree *tree)
 		remove_entry (tree, index);
 }
 
+static gboolean
+recoverable_block (const Entry *entry)
+{
+	return entry->Count == 1 && entry->Namespace == GMIME_HTML_NAMESPACE_HTML &&
+		(entry->Id == GMIME_HTML_TAG_P || entry->Id == GMIME_HTML_TAG_DIV ||
+		 entry->Id == GMIME_HTML_TAG_LI || entry->Id == GMIME_HTML_TAG_CENTER);
+}
+
+static void
+close_tracked_formatting (HtmlTree *tree, GMimeHtmlTagId id, gboolean nested_anchor)
+{
+	int index = tree->html_ids[id], top = stack_count (tree) - 1;
+
+	for (int i = (int) tree->formatting->len - 1; i >= 0; i--) {
+		FormattingSlot *slot = formatting_slot (tree, i);
+
+		if (slot->id == GMIME_HTML_TAG_UNKNOWN)
+			break;
+
+		if (slot->id != id)
+			continue;
+
+		if (slot->index < 0) {
+			g_array_remove_index (tree->formatting, i);
+			return;
+		}
+
+		if (slot->index < stack_top (tree)->PrevScope) {
+			if (nested_anchor)
+				tree->formatting_stop = HTML_FORMATTING_STOP_COMPLEX_ADOPTION;
+
+			return;
+		}
+
+		if (slot->index != index || slot->instance != stack_entry (tree, index)->Count)
+			goto unsupported;
+
+		if (index <= stack_top (tree)->PrevSpecial) {
+			if (top <= index || top - index > 2 || !recoverable_block (stack_entry (tree, index + 1)))
+				goto unsupported;
+
+			if (top - index == 2 && !recoverable_block (stack_top (tree))) {
+				const Entry *entry = stack_top (tree);
+
+				if (entry->Namespace != GMIME_HTML_NAMESPACE_HTML ||
+				    !(entry->Id == GMIME_HTML_TAG_SPAN || g_mime_html_tag_id_is_formatting_element (entry->Id)))
+					goto unsupported;
+
+				g_array_remove_index (tree->formatting, i);
+				pop_above (tree, top - 1);
+			} else {
+				g_array_remove_index (tree->formatting, i);
+			}
+
+			/* Remove only one physical instance. Keep the surviving block(s)
+			 * on the stack without reporting them as implicitly closed. */
+			stack_remove (tree, index);
+			tree->poppedThrough = TRUE;
+			return;
+		}
+
+		g_array_remove_index (tree->formatting, i);
+		pop_through (tree, index);
+
+		return;
+	}
+	if (!nested_anchor && index > stack_top (tree)->PrevSpecial)
+		pop_through (tree, index);
+	return;
+
+unsupported:
+	tree->formatting_stop = HTML_FORMATTING_STOP_COMPLEX_ADOPTION;
+}
+
 static void
 process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 {
 	int index = stack_index (tree, GMIME_HTML_NAMESPACE_HTML, id, "");
+
+	if (tree->formatting) {
+		close_tracked_formatting (tree, id, FALSE);
+		return;
+	}
 
 	if (!in_scope (tree, index, stack_top (tree)->PrevScope))
 		return;

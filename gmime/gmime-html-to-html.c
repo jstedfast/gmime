@@ -49,6 +49,7 @@ struct _GMimeHtmlToHtml {
 	GMimeTextConverter parent_object;
 	gboolean comments, fragment;
 	guint depth;
+	GMimeHtmlLimitExceededBehavior limit_behavior;
 	GMimeHeaderFooterFormat header_format, footer_format;
 	GMimeHtmlNoScriptHandling noscript;
 	GMimeHtmlTagCallback callback;
@@ -472,6 +473,8 @@ convert_html_to_html (GMimeTextConverter *converter, GMimeStream *input, GMimeSt
 							     GMIME_HTML_NO_SCRIPT_HANDLING_SCRIPTING_ENABLED);
 	g_mime_html_tokenizer_set_ignore_truncated_tags (state.tokenizer, TRUE);
 	g_mime_html_tokenizer_set_max_element_depth (state.tokenizer, options->depth);
+	g_mime_html_tokenizer_set_limit_exceeded_behavior (state.tokenizer, options->limit_behavior);
+	_g_mime_html_tokenizer_set_stream_literal_text (state.tokenizer, TRUE);
 	g_mime_html_tokenizer_set_compliance_options (state.tokenizer, options->compliance);
 	g_mime_html_tokenizer_set_compliance_logger (state.tokenizer, options->logger, options->logger_data, NULL);
 	_g_mime_html_tokenizer_set_track_closed_elements (state.tokenizer, TRUE);
@@ -485,6 +488,11 @@ convert_html_to_html (GMimeTextConverter *converter, GMimeStream *input, GMimeSt
 
 		if (kind == GMIME_HTML_TOKEN_TAG) {
 			ok = process_tag (&state, token);
+		} else if (kind == GMIME_HTML_TOKEN_CDATA) {
+			/* The output context may no longer be foreign content. Keep the payload as text. */
+			if (!state.suppressed)
+				ok = _g_mime_html_writer_write_text (state.writer, g_mime_html_token_get_data (token),
+								   g_mime_html_token_get_data_length (token), error);
 		} else if (kind == GMIME_HTML_TOKEN_COMMENT) {
 			if (!options->comments && !state.suppressed)
 				ok = g_mime_html_writer_write_token (state.writer, token, error);
@@ -666,18 +674,52 @@ g_mime_html_to_html_get_max_element_depth (GMimeHtmlToHtml *converter)
  * @converter: a #GMimeHtmlToHtml
  * @value: the maximum element depth, from 1 to %G_MAXINT
  *
- * Limits the tokenizer's distinct open-element stack entries. After this
- * limit is exceeded, the remaining input is treated as literal text rather
- * than parsed as markup. A depth-limit diagnostic is reported when a
- * compliance logger is registered.
+ * Limits the tokenizer's distinct open-element stack entries. By default,
+ * the tag that exceeds the limit is processed and the remaining input is
+ * treated as literal text. See g_mime_html_to_html_set_limit_exceeded_behavior().
+ * A depth-limit diagnostic is reported when a compliance logger is registered.
  **/
 void
 g_mime_html_to_html_set_max_element_depth (GMimeHtmlToHtml *converter, guint value)
 {
 	g_return_if_fail (GMIME_IS_HTML_TO_HTML (converter));
-	g_return_if_fail (value > 0);
+	g_return_if_fail (value > 0 && value <= G_MAXINT);
 
 	converter->depth = value;
+}
+
+/**
+ * g_mime_html_to_html_get_limit_exceeded_behavior:
+ * @converter: a #GMimeHtmlToHtml
+ *
+ * Returns: the structural limit policy, initially %GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT.
+ **/
+GMimeHtmlLimitExceededBehavior
+g_mime_html_to_html_get_limit_exceeded_behavior (GMimeHtmlToHtml *converter)
+{
+	g_return_val_if_fail (GMIME_IS_HTML_TO_HTML (converter), GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT);
+
+	return converter->limit_behavior;
+}
+
+/**
+ * g_mime_html_to_html_set_limit_exceeded_behavior:
+ * @converter: a #GMimeHtmlToHtml
+ * @value: the behavior when structural tracking exceeds its limits
+ *
+ * By default the remaining input is processed as text, not markup. In fail
+ * mode conversion stops with %GMIME_ERROR_PARSE_ERROR in the %GMIME_ERROR
+ * domain before the triggering token is processed by the converter. Output
+ * already written to the destination is not rolled back.
+ **/
+void
+g_mime_html_to_html_set_limit_exceeded_behavior (GMimeHtmlToHtml *converter, GMimeHtmlLimitExceededBehavior value)
+{
+	g_return_if_fail (GMIME_IS_HTML_TO_HTML (converter));
+	g_return_if_fail (value == GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT ||
+			  value == GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+
+	converter->limit_behavior = value;
 }
 
 /**

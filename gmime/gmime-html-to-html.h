@@ -23,7 +23,7 @@
 
 #include <gmime/gmime-text-converter.h>
 #include <gmime/gmime-html-tag-context.h>
-#include <gmime/gmime-html-compliance.h>
+#include <gmime/gmime-html-tokenizer.h>
 
 G_BEGIN_DECLS
 
@@ -68,6 +68,9 @@ void g_mime_html_to_html_set_output_html_fragment (GMimeHtmlToHtml *converter, g
 
 guint g_mime_html_to_html_get_max_element_depth (GMimeHtmlToHtml *converter);
 void g_mime_html_to_html_set_max_element_depth (GMimeHtmlToHtml *converter, guint value);
+
+GMimeHtmlLimitExceededBehavior g_mime_html_to_html_get_limit_exceeded_behavior (GMimeHtmlToHtml *converter);
+void g_mime_html_to_html_set_limit_exceeded_behavior (GMimeHtmlToHtml *converter, GMimeHtmlLimitExceededBehavior value);
 
 GMimeHeaderFooterFormat g_mime_html_to_html_get_header_format (GMimeHtmlToHtml *converter);
 void g_mime_html_to_html_set_header_format (GMimeHtmlToHtml *converter, GMimeHeaderFooterFormat value);

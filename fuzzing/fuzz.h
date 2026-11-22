@@ -64,6 +64,7 @@ void fuzz_rtf_compressed (const guint8 *data, gsize length);
 void fuzz_rtf_tokenizer (const guint8 *data, gsize length);
 void fuzz_rtf_converters (const guint8 *data, gsize length);
 void fuzz_html_tokenizer (const guint8 *data, gsize length);
+gboolean fuzz_measure_html_formatting (const char *path, const guint8 *data, gsize length);
 void fuzz_text_converters (const guint8 *data, gsize length);
 
 #endif

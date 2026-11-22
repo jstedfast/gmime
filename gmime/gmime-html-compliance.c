@@ -180,6 +180,7 @@ g_mime_html_compliance_violation_get_severity (GMimeHtmlComplianceViolation viol
 	// what a filter or scanner examined may not be what the recipient sees, or content that was lost.
 	case GMIME_HTML_COMPLIANCE_VIOLATION_EOF_IN_TAG:
 	case GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED:
+	case GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED:
 	case GMIME_HTML_COMPLIANCE_VIOLATION_UNEXPECTED_SOLIDUS_IN_TAG:
 	case GMIME_HTML_COMPLIANCE_VIOLATION_DUPLICATE_ATTRIBUTE:
 	case GMIME_HTML_COMPLIANCE_VIOLATION_MISSING_WHITESPACE_BETWEEN_ATTRIBUTES:
@@ -257,6 +258,7 @@ g_mime_html_compliance_violation_get_categories (GMimeHtmlComplianceViolation vi
 	// Note: Content that was lost or went unprocessed is content that went unscanned.
 	case GMIME_HTML_COMPLIANCE_VIOLATION_EOF_IN_TAG:
 	case GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED:
+	case GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED:
 		return DataLoss | Security;
 
 	// Note: Different HTML processors may disagree about the structure of the document, so what a
@@ -402,6 +404,8 @@ g_mime_html_compliance_violation_get_description (GMimeHtmlComplianceViolation v
 		return "The input contained a U+0000 NULL character.";
 	case GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED:
 		return "Elements were nested more deeply than the configured limit.";
+	case GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED:
+		return "The active formatting recovery budget was exceeded.";
 	case GMIME_HTML_COMPLIANCE_VIOLATION_IGNORED_START_TAG:
 		return "A start tag was ignored.";
 	case GMIME_HTML_COMPLIANCE_VIOLATION_FOREIGN_CONTENT_BREAKOUT:
@@ -516,7 +520,9 @@ g_mime_html_compliance_violation_get_remarks (GMimeHtmlComplianceViolation viola
 	case GMIME_HTML_COMPLIANCE_VIOLATION_UNEXPECTED_NULL_CHARACTER:
 		return "NULL characters are not allowed in HTML. Depending on where they appear, browsers either ignore them or replace them with U+FFFD REPLACEMENT CHARACTER, while other HTML processors may truncate the content at the NULL.";
 	case GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED:
-		return "This is not a defect in the document, but the remainder of the input was treated as text rather than markup.";
+		return "This is not a defect in the document. The parser stops interpreting markup; depending on the structural limit policy, the remaining input is treated as text or processing fails.";
+	case GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED:
+		return "The parser stopped interpreting markup rather than guessing which formatting elements to reconstruct.";
 	case GMIME_HTML_COMPLIANCE_VIOLATION_IGNORED_START_TAG:
 		return "Browsers do not insert an element for some start tags that appear where they are not allowed, e.g. a second <head>, a <frameset> after the body content has started, a nested <form>, a table structure start tag such as <tr> outside of a table, or any start tag other than <html>, <frameset>, <frame> or <noframes> in a frameset document. Since the ignored start tag does not change how the content that follows it gets tokenized, other HTML processors that do honor it may disagree about the structure of the document.";
 	case GMIME_HTML_COMPLIANCE_VIOLATION_FOREIGN_CONTENT_BREAKOUT:

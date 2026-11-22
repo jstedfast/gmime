@@ -117,7 +117,11 @@ read_character_reference (GMimeHtmlTokenizer *tokenizer, GMimeHtmlTokenizerState
 
 	if (!try_peek (tokenizer, &c)) {
 		tokenizer->state = GMIME_HTML_TOKENIZER_STATE_END_OF_FILE;
+
 		g_string_append_unichar (tokenizer->data, '&');
+
+		if (next == GMIME_HTML_TOKENIZER_STATE_DATA && _g_mime_html_tree_tracks_characters (tokenizer->tree))
+			process_single_character (tokenizer, '&');
 
 		return emit_data_token (tokenizer, tokenizer->decode, FALSE);
 	}
@@ -135,7 +139,7 @@ read_character_reference (GMimeHtmlTokenizer *tokenizer, GMimeHtmlTokenizerState
 		g_string_append_unichar (tokenizer->data, '&');
 
 		if (next == GMIME_HTML_TOKENIZER_STATE_DATA && _g_mime_html_tree_tracks_characters (tokenizer->tree))
-			_g_mime_html_tree_character (tokenizer->tree, '&');
+			process_single_character (tokenizer, '&');
 
 		return NULL;
 	}
@@ -163,9 +167,18 @@ read_character_reference (GMimeHtmlTokenizer *tokenizer, GMimeHtmlTokenizerState
 			if (tokenizer->logger != NULL)
 				validate_character_reference (tokenizer, FALSE, '\0');
 
-			if (tokenizer->decode)
-				g_string_append (tokenizer->data,
-						 _g_mime_html_entity_value (&tokenizer->entity, FALSE, 0));
+			gboolean track = next == GMIME_HTML_TOKENIZER_STATE_DATA &&
+				_g_mime_html_tree_tracks_characters (tokenizer->tree);
+
+			if (tokenizer->decode || track) {
+				const char *value = _g_mime_html_entity_value (&tokenizer->entity, FALSE, 0);
+
+				if (track)
+					process_characters (tokenizer, value, value + strlen (value));
+
+				if (tokenizer->decode)
+					g_string_append (tokenizer->data, value);
+			}
 
 			_g_mime_html_entity_reset (&tokenizer->entity);
 
@@ -182,7 +195,7 @@ read_character_reference (GMimeHtmlTokenizer *tokenizer, GMimeHtmlTokenizerState
 		const char *value = _g_mime_html_entity_value (&tokenizer->entity, FALSE, 0);
 
 		if (next == GMIME_HTML_TOKENIZER_STATE_DATA && _g_mime_html_tree_tracks_characters (tokenizer->tree))
-			process_character_string (tokenizer, value);
+			process_characters (tokenizer, value, value + strlen (value));
 
 		if (tokenizer->decode)
 			g_string_append (tokenizer->data, value);
@@ -352,13 +365,18 @@ read_data (GMimeHtmlTokenizer *tokenizer)
 	do {
 		gsize startIndex = tokenizer->data->len;
 
-		if (!try_read_data_until (tokenizer, specials, &c)) {
+		gboolean found = try_read_data_until (tokenizer, specials, &c);
+		if (_g_mime_html_tree_tracks_characters (tokenizer->tree))
+			process_character_data (tokenizer, startIndex);
+
+		if (!found) {
 			tokenizer->state = GMIME_HTML_TOKENIZER_STATE_END_OF_FILE;
 			break;
 		}
-
-		if (_g_mime_html_tree_tracks_characters (tokenizer->tree))
-			process_character_data (tokenizer, startIndex);
+		if (tokenizer->literal_remainder) {
+			g_string_append_unichar (tokenizer->data, c);
+			return emit_data_token (tokenizer, TRUE, FALSE);
+		}
 
 		switch (c) {
 		case '&':
@@ -396,7 +414,7 @@ read_data (GMimeHtmlTokenizer *tokenizer)
 		default_case:
 			// Note: The special characters are never whitespace.
 			if (_g_mime_html_tree_tracks_characters (tokenizer->tree))
-				_g_mime_html_tree_character (tokenizer->tree, c);
+				process_single_character (tokenizer, c);
 
 			g_string_append_unichar (tokenizer->data, c);
 			break;
@@ -520,6 +538,27 @@ read_plain_text (GMimeHtmlTokenizer *tokenizer)
 {
 	gunichar discard;
 
+	/* Only the converter may split a literal run. Read whole UTF-8 scalars. */
+	if (tokenizer->literal_remainder && tokenizer->stream_literal_text) {
+		while (tokenizer->data->len < 4096) {
+			gunichar c;
+
+			if (!try_read (tokenizer, &c)) {
+				tokenizer->state = GMIME_HTML_TOKENIZER_STATE_END_OF_FILE;
+				break;
+			}
+
+			if (c == 0) {
+				log_null_character (tokenizer);
+				c = 0xfffd;
+			}
+
+			g_string_append_unichar (tokenizer->data, c);
+		}
+
+		return emit_data_token (tokenizer, TRUE, FALSE);
+	}
+
 	while (try_read_data_until (tokenizer, &PlainTextSpecials, &discard)) {
 		log_null_character (tokenizer);
 		g_string_append_unichar (tokenizer->data, 0xfffd);
@@ -527,9 +566,8 @@ read_plain_text (GMimeHtmlTokenizer *tokenizer)
 
 	tokenizer->state = GMIME_HTML_TOKENIZER_STATE_END_OF_FILE;
 
-	// Note: If the depth limit was exceeded, then the remaining input is not the content of a <plaintext> element and
-	// so needs to be encoded when written as HTML.
-	return emit_data_token (tokenizer, tokenizer->tree->depth_exceeded, FALSE);
+	/* A literal remainder, unlike the content of <plaintext>, needs escaping. */
+	return emit_data_token (tokenizer, tokenizer->literal_remainder, FALSE);
 }
 
 static GMimeHtmlToken *

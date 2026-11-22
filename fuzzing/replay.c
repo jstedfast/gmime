@@ -61,6 +61,31 @@ main (int argc, char **argv)
 			g_print ("%s\t%" G_GSIZE_FORMAT "\n", fuzz_targets[i].name, fuzz_targets[i].max_length);
 		return 0;
 	}
+	if (argc > 1 && !strcmp (argv[1], "--measure-html-formatting")) {
+		int result = 0;
+		if (argc < 3) {
+			g_printerr ("Usage: gmime-fuzz --measure-html-formatting <file>...\n");
+			return 2;
+		}
+		fuzz_init ();
+		g_print ("file\tscripting\tcapacity\tpeak\toutcome\n");
+		for (arg = 2; arg < argc; arg++) {
+			GError *error = NULL;
+			char *data;
+			gsize length;
+			if (!g_file_get_contents (argv[arg], &data, &length, &error)) {
+				g_printerr ("%s\n", error->message);
+				g_error_free (error);
+				result = 2;
+				break;
+			}
+			if (!fuzz_measure_html_formatting (argv[arg], (guint8 *) data, length))
+				result = 1;
+			g_free (data);
+		}
+		g_mime_shutdown ();
+		return result;
+	}
 	if (argc < 4 || strcmp (argv[1], "--replay")) {
 		g_printerr ("Usage: gmime-fuzz --list | --replay <target|all> <file|directory>...\n");
 		return 2;

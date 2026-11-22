@@ -142,6 +142,30 @@ check (GMimeTextConverter *converter, const char *input, const char *expected)
 }
 
 static void
+test_cdata_round_trip (void)
+{
+	static const Case cases[] = {
+		{ "<svg><text><![CDATA[<h5> &amp;]]></text></svg>", "<svg><text>&lt;h5&gt; &amp;amp;</text></svg>" },
+		{ "<math><mtext><![CDATA[<h5> &amp;]]></mtext></math>", "<math><mtext>&lt;h5&gt; &amp;amp;</mtext></math>" }
+	};
+	static const char nul[] = "<svg><![CDATA[a\0<b>]]></svg>";
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+	GError *error = NULL;
+	char *output;
+
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		check (converter, cases[i].input, cases[i].expected);
+		check (converter, cases[i].expected, cases[i].expected);
+	}
+
+	output = g_mime_text_converter_convert_to_string (converter, nul, sizeof nul - 1, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (output, ==, "<svg>a&lt;b&gt;</svg>");
+	g_free (output);
+	g_object_unref (converter);
+}
+
+static void
 test_bogus_comment_round_trip (void)
 {
 	static const Case cases[] = {
@@ -473,6 +497,46 @@ test_callbacks_compliance (void)
 }
 
 static void
+test_depth_limit_behavior (void)
+{
+	static const char tail[] = "\360\237\230\200\0<em>&";
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+	GMimeHtmlToHtml *html = GMIME_HTML_TO_HTML (converter);
+	GString *input = g_string_new ("<div><span>");
+	GString *tags = g_string_new (NULL);
+	char *encoded, *expected, *actual;
+	GError *error = NULL;
+
+	g_mime_html_to_html_set_max_element_depth (html, 1);
+	g_mime_html_to_html_set_html_tag_callback (html, record_callback, tags, NULL);
+	for (guint i = 0; i < 4095; i++)
+		g_string_append_c (input, 'x');
+	encoded = g_mime_html_encode ("\360\237\230\200\357\277\275<em>&");
+	expected = g_strconcat (input->str, encoded, NULL);
+	g_string_append_len (input, tail, sizeof tail - 1);
+	actual = g_mime_text_converter_convert_to_string (converter, input->str, input->len, &error);
+	g_assert_no_error (error);
+	g_assert_cmpstr (actual, ==, expected);
+	g_assert_cmpstr (tags->str, ==, "div span ");
+	g_free (actual);
+	g_free (expected);
+	g_free (encoded);
+
+	g_string_truncate (tags, 0);
+	g_mime_html_to_html_set_limit_exceeded_behavior (html, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+	actual = g_mime_text_converter_convert_to_string (converter, input->str, input->len, &error);
+	g_assert_null (actual);
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+	g_assert_cmpstr (tags->str, ==, "div ");
+	g_clear_error (&error);
+	check (converter, "<div>ok</div>", "<div>ok</div>");
+
+	g_string_free (input, TRUE);
+	g_string_free (tags, TRUE);
+	g_object_unref (converter);
+}
+
+static void
 test_fragments (void)
 {
 	static const Case cases[] = {
@@ -779,7 +843,9 @@ main (int argc, char **argv)
 	g_mime_init ();
 	g_test_add_func ("/html-converters/text", test_html_to_text);
 	g_test_add_func ("/html-converters/bogus-comment-round-trip", test_bogus_comment_round_trip);
+	g_test_add_func ("/html-converters/cdata-round-trip", test_cdata_round_trip);
 	g_test_add_func ("/html-converters/limits", test_limits);
+	g_test_add_func ("/html-converters/depth-limit-behavior", test_depth_limit_behavior);
 	g_test_add_func ("/html-converters/fragments", test_fragments);
 	g_test_add_func ("/html-converters/filter", test_html_filter);
 	g_test_add_func ("/html-converters/foreign", test_foreign_content);

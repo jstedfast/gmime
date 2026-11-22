@@ -26,6 +26,20 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GMimeHtmlLimitExceededBehavior:
+ * @GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT: Stop interpreting markup
+ *   and treat the remaining input as literal text (the default).
+ * @GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL: Stop with a %GMIME_ERROR_PARSE_ERROR
+ *   in the %GMIME_ERROR domain. Previously written output is not rolled back.
+ *
+ * How to handle an exceeded HTML element depth or formatting recovery limit.
+ **/
+typedef enum {
+	GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_LITERAL_TEXT,
+	GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL
+} GMimeHtmlLimitExceededBehavior;
+
 #define GMIME_TYPE_HTML_TOKENIZER (g_mime_html_tokenizer_get_type ())
 
 /**
@@ -56,6 +70,10 @@ void g_mime_html_tokenizer_set_ignore_truncated_tags (GMimeHtmlTokenizer *tokeni
 
 guint g_mime_html_tokenizer_get_max_element_depth (GMimeHtmlTokenizer *tokenizer);
 void g_mime_html_tokenizer_set_max_element_depth (GMimeHtmlTokenizer *tokenizer, guint maximum);
+
+GMimeHtmlLimitExceededBehavior g_mime_html_tokenizer_get_limit_exceeded_behavior (GMimeHtmlTokenizer *tokenizer);
+void g_mime_html_tokenizer_set_limit_exceeded_behavior (GMimeHtmlTokenizer *tokenizer,
+							GMimeHtmlLimitExceededBehavior value);
 
 gboolean g_mime_html_tokenizer_get_scripting_enabled (GMimeHtmlTokenizer *tokenizer);
 void g_mime_html_tokenizer_set_scripting_enabled (GMimeHtmlTokenizer *tokenizer, gboolean enabled);

@@ -36,6 +36,7 @@ typedef struct {
 } GMimeHtmlClosedElement;
 
 void _g_mime_html_tokenizer_set_track_closed_elements (GMimeHtmlTokenizer *tokenizer, gboolean enabled);
+void _g_mime_html_tokenizer_set_stream_literal_text (GMimeHtmlTokenizer *tokenizer, gboolean enabled);
 
 const GMimeHtmlClosedElement *_g_mime_html_tokenizer_get_closed_elements (GMimeHtmlTokenizer *tokenizer, gsize *count);
 

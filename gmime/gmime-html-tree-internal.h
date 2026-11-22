@@ -26,6 +26,18 @@
 
 typedef struct _HtmlTree HtmlTree;
 
+typedef enum {
+	HTML_FORMATTING_STOP_NONE,
+	HTML_FORMATTING_STOP_CAPACITY,
+	HTML_FORMATTING_STOP_ATTRIBUTE_EQUIVALENCE,
+	HTML_FORMATTING_STOP_COMPLEX_ADOPTION,
+	HTML_FORMATTING_STOP_STACK_REMAPPING
+} HtmlFormattingStopReason;
+
+void _g_mime_html_tree_set_formatting_capacity (HtmlTree *tree, guint capacity);
+gboolean _g_mime_html_tree_formatting_exceeded (HtmlTree *tree);
+HtmlTree *_g_mime_html_tokenizer_get_tree (GMimeHtmlTokenizer *tokenizer);
+
 HtmlTree *_g_mime_html_tree_new (guint maximum);
 void _g_mime_html_tree_free (HtmlTree *tree);
 
@@ -41,6 +53,9 @@ gboolean _g_mime_html_tree_noscript (HtmlTree *tree);
 
 struct _HtmlTree {
 	GArray *entries, *closed;
+	GArray *formatting;
+	guint formatting_capacity, formatting_peak;
+	HtmlFormattingStopReason formatting_stop;
 	GHashTable *html_names, *foreign_names;
 	gint html_ids[GMIME_HTML_TAG_XMP + 1];
 	guint max_depth;

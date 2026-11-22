@@ -77,7 +77,8 @@ G_BEGIN_DECLS
  * @GMIME_HTML_COMPLIANCE_VIOLATION_FOREIGN_CONTENT_BREAKOUT: A tag broke out of foreign content, closing SVG or MathML elements.
  * @GMIME_HTML_COMPLIANCE_VIOLATION_ATTRIBUTES_MERGED_INTO_EXISTING_ELEMENT: A start tag's attributes were added to an existing element.
  * @GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED: Element nesting exceeded the configured limit.
- * @GMIME_HTML_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES: The diagnostic cap suppressed further issues.
+ * @GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED: Active formatting could not be recovered within the configured budget.
+ * @GMIME_HTML_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES: The diagnostic cap suppressed further issues. Its value is reserved outside the range of ordinary violations.
  *
  * HTML lexical and structural recovery diagnostics. Descriptions, remarks,
  * severities and categories are available through the violation accessors.
@@ -133,7 +134,8 @@ typedef enum {
 	GMIME_HTML_COMPLIANCE_VIOLATION_FOREIGN_CONTENT_BREAKOUT,
 	GMIME_HTML_COMPLIANCE_VIOLATION_ATTRIBUTES_MERGED_INTO_EXISTING_ELEMENT,
 	GMIME_HTML_COMPLIANCE_VIOLATION_ELEMENT_DEPTH_LIMIT_EXCEEDED,
-	GMIME_HTML_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES
+	GMIME_HTML_COMPLIANCE_VIOLATION_FORMATTING_RECOVERY_LIMIT_EXCEEDED,
+	GMIME_HTML_COMPLIANCE_VIOLATION_TOO_MANY_COMPLIANCE_ISSUES = G_MAXINT32
 } GMimeHtmlComplianceViolation;
 
 /**
