@@ -1,0 +1,25 @@
+ARC-Seal: i=1; a=rsa-sha256; cv=none;
+	d=example.org; s=dummy; t=12345; x_test = test ; b=3yMg6E5eKRywwkzYYXX3BK111SuTJ1F4cZgQd3hLBFm6poDhR3KQCAKTpJS7DAGG/5rVDg9EyiixGCvaKV15KVAU0mI1WATsGYUmk4IMdTwKqn8kQCA5mQb7RBEkUVsLb5it1KHg+xVZ+aUl42zsWf4Wl2XuN+rvAHm6QCEH7U4=
+ARC-Message-Signature: i=1; a=rsa-sha256; d=example.org; s=dummy;
+	c=simple/simple; t=12345; h=mime-version:date:from:to:subject;
+	bh=hhFbTjokraRYc/Af+8v4zyKm/9ApHGkBSLO129NtPbo=; b=
+	z31psGVT6BD7+fBH0BqWbqySBt5VuAsSBdXrRf4zfa5h0AHHGSK2uvNTM9DmUZsI8l56INQ56VcCg/fTZU9rGDb/0PbGA/YtuwU+hsrU+U/jTMtmiDDSEJ/taC0nu7u1NoqOGZcvsWHz8b7B+S0Yz9la7Rdq8sIxIOuDumf6SBU=; x_test 	=
+  value ;
+ARC-Authentication-Results: i=1; lists.example.org;
+	arc=none; spf=pass smtp.mfrom=jqd@d1.example
+Authentication-Results: lists.example.org; arc=none;
+  spf=pass smtp.mfrom=jqd@d1.example;
+  dkim=pass (1024-bit key) header.i=@d1.example;
+  dmarc=pass
+MIME-Version: 1.0
+Return-Path: <jqd@d1.example.org>
+Received: by 10.157.14.6 with HTTP; Tue, 3 Jan 2017 12:22:54 -0800 (PST)
+Message-ID: <54B84785.1060301@d1.example.org>
+Date: Thu, 14 Jan 2015 15:00:01 -0800
+From: John Q Doe <jqd@d1.example.org>
+To: arc@dmarc.org
+Subject: Example 1
+
+Hey gang,  
+This is a test message.
+--J.

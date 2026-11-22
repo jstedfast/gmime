@@ -50,6 +50,8 @@ void fuzz_encoders (const guint8 *data, gsize length);
 void fuzz_decoders (const guint8 *data, gsize length);
 void fuzz_rfc2047 (const guint8 *data, gsize length);
 void fuzz_structured_headers (const guint8 *data, gsize length);
+void fuzz_dns_records (const guint8 *data, gsize length);
+void fuzz_dkim_arc_verifier (const guint8 *data, gsize length);
 void fuzz_smtp_address_validator (const guint8 *data, gsize length);
 void fuzz_tnef_reader (const guint8 *data, gsize length);
 void fuzz_tnef_message (const guint8 *data, gsize length);

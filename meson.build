@@ -85,6 +85,23 @@ if host_machine.system() == 'windows'
 elif host_machine.system() == 'sunos'
   private_deps += [cc.find_library('socket'), cc.find_library('nsl')]
 endif
+dkim_choice = get_option('dkim-crypto')
+dkim_provider = 'disabled'
+if dkim_choice in ['auto', 'gnutls']
+  dkim_dep = dependency('gnutls', version: '>= 3.7', required: dkim_choice == 'gnutls')
+  if dkim_dep.found()
+    dkim_provider = 'gnutls'
+  endif
+endif
+if dkim_provider == 'disabled' and dkim_choice in ['auto', 'openssl']
+  dkim_dep = dependency('libcrypto', version: '>= 3.0', required: dkim_choice == 'openssl')
+  if dkim_dep.found()
+    dkim_provider = 'openssl'
+  endif
+endif
+if dkim_provider != 'disabled'
+  private_deps += dkim_dep
+endif
 gmime_deps = public_deps + private_deps
 
 introspection_option = get_option('introspection')
@@ -106,6 +123,8 @@ have_vapi = vapigen.found()
 config = configuration_data()
 config.set_quoted('GMIME_VERSION', meson.project_version())
 config.set('ENABLE_CRYPTO', have_crypto)
+config.set('HAVE_DKIM_GNUTLS', dkim_provider == 'gnutls')
+config.set('HAVE_DKIM_OPENSSL', dkim_provider == 'openssl')
 config.set('ENABLE_WARNINGS', get_option('mime_warnings'))
 config.set('LIBIDN', idn_dep.found())
 
@@ -171,6 +190,7 @@ endif
 
 summary({
   'Crypto (GPGME)': have_crypto,
+  'DKIM/ARC signatures': dkim_provider,
   'IDN backend': idn_dep.found() ? 'libidn2' : 'GLib',
   'Introspection': have_introspection,
   'Vala bindings': have_vapi,

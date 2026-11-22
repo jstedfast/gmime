@@ -1,0 +1,32 @@
+ARC-Seal: i=2; a=rsa-sha256; cv=pass;
+	d=example.org; s=dummy; t=12345; b=M6yJQo2blX9/oVxtll8h9wgV1Wb0X+bwcVqTJf1+/PcuChZLtocaMEwgK+CPulrcAHp9aN+pdglErHXs+F9KKlQVOhWmtcSjNobLXvqC9oympGrZVckCV6UhlXx2bIt3GdrtfRtAs1iYd4TnLPPmKSNfaU2zHYJ+cDSyatEy7qc=
+ARC-Message-Signature: i=2; a=rsa-sha256; d=example.org; s=dummy;
+	c=simple/simple; t=12345; h=mime-version:date:from:to:subject;
+	bh=hhFbTjokraRYc/Af+8v4zyKm/9ApHGkBSLO129NtPbo=; b=
+	Y5eIb6eeWh/Fb1wi2vuyB2oO2mLKnRJIHwfQnM30xvqAv0MroBboVdXDXHayCrSWsGfxtusjIOc7BDPZoIzFrnuPA8SAyZts8ojVSMMFHzMaEEhxO/26uN57jm953BDRtP1uOz6hmrP67D5O73O6aAiPxuWkCB9WjNPafiGbytE=; x_test=ok;
+ARC-Authentication-Results: i=2; lists.example.org;
+	arc=pass; spf=pass smtp.mfrom=jqd@d1.example
+ARC-Seal: i=1; a=rsa-sha256; cv=none;
+	d=example.org; s=dummy; t=12345; b=bffFQMBLlL3x8OsFyeeBkXGELbTzU26dTolcU2eiVJO1zjPF89HFFD/x/+I/NkyCFlwpgwFFKU2BUu52OZspHU76Dpi4hJcseavdI4wa45tgySzG63WwumIOCSq+dLf8H8Z0lC0l7fwpKTLKk65nF7b+XpLl4R3u9T1CWzwiQRQ=
+ARC-Message-Signature: i=1; a=rsa-sha256; d=example.org; s=dummy;
+	c=simple/simple; t=12345; h=mime-version:date:from:to:subject;
+	bh=hhFbTjokraRYc/Af+8v4zyKm/9ApHGkBSLO129NtPbo=; b=
+	LL8uoBmntXquqEOSy+df7QSq6isE7TAOhVI4B4Ajxwj2BegbbKZy4nT5DgIpjYjmKyOQAJUhGv63+CbCrlyY2MhRdWS7F/YKUVF7rKmo2I0B1e+DX3oPplzEfHKadRpRn/D45uobWmBQvzBirvHrINK2dt/gNyh9uSy6/oNEQx0=; x_test=ok;
+ARC-Authentication-Results: i=1; lists.example.org;
+	arc=none; spf=pass smtp.mfrom=jqd@d1.example
+Authentication-Results: lists.example.org; arc=none;
+  spf=pass smtp.mfrom=jqd@d1.example;
+  dkim=pass (1024-bit key) header.i=@d1.example;
+  dmarc=pass
+MIME-Version: 1.0
+Return-Path: <jqd@d1.example.org>
+Received: by 10.157.14.6 with HTTP; Tue, 3 Jan 2017 12:22:54 -0800 (PST)
+Message-ID: <54B84785.1060301@d1.example.org>
+Date: Thu, 14 Jan 2015 15:00:01 -0800
+From: John Q Doe <jqd@d1.example.org>
+To: arc@dmarc.org
+Subject: Example 1
+
+Hey gang,  
+This is a test message.
+--J.

@@ -13,6 +13,8 @@ const FuzzTarget fuzz_targets[] = {
 	{ "decoders", fuzz_decoders, FUZZ_MAX_LENGTH },
 	{ "rfc2047", fuzz_rfc2047, 64 * 1024 },
 	{ "structured-headers", fuzz_structured_headers, 64 * 1024 },
+	{ "dns-records", fuzz_dns_records, 16 * 1024 },
+	{ "dkim-arc-verifier", fuzz_dkim_arc_verifier, 64 * 1024 },
 	{ "smtp-address-validator", fuzz_smtp_address_validator, 4096 },
 	{ "tnef-reader", fuzz_tnef_reader, FUZZ_MAX_LENGTH },
 	{ "tnef-message", fuzz_tnef_message, 4 * FUZZ_MAX_LENGTH },

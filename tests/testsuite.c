@@ -39,6 +39,35 @@
 
 #include "testsuite.h"
 
+GMimeMessage *
+testsuite_parse_message (const char *data, gsize length)
+{
+	GMimeStream *stream = g_mime_stream_mem_new_with_buffer (data, length);
+	GError *error = NULL;
+	GMimeMessage *message = g_mime_message_load_with_storage (NULL, stream, GMIME_CONTENT_STORAGE_SOURCE, &error);
+
+	g_assert_no_error (error);
+	g_assert_nonnull (message);
+	g_object_unref (stream);
+	return message;
+}
+
+GBytes *
+testsuite_serialize_message (GMimeMessage *message)
+{
+	GMimeFormatOptions *options = g_mime_format_options_new ();
+	GMimeStream *stream = g_mime_stream_mem_new ();
+	GByteArray *array = g_mime_stream_mem_get_byte_array (GMIME_STREAM_MEM (stream));
+	GBytes *bytes;
+
+	g_mime_format_options_set_newline_format (options, GMIME_NEWLINE_FORMAT_DOS);
+	g_assert_cmpint (g_mime_entity_write_to_stream (GMIME_ENTITY (message), options, stream), >=, 0);
+	bytes = g_bytes_new (array->data, array->len);
+	g_object_unref (stream);
+	g_mime_format_options_unref (options);
+	return bytes;
+}
+
 
 static struct _stack *stack = NULL;
 static int total_errors = 0;

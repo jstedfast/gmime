@@ -1,4 +1,5 @@
 option('crypto', type: 'feature', value: 'auto', description: 'OpenPGP and S/MIME support using GPGME')
+option('dkim-crypto', type: 'combo', choices: ['auto', 'gnutls', 'openssl', 'disabled'], value: 'auto', description: 'DKIM and ARC signature provider (auto prefers GnuTLS)')
 option('libidn', type: 'feature', value: 'auto', description: 'Use libidn2 instead of GLib for IDN conversion')
 option('iconv_prefix', type: 'string', value: '', description: 'Installation prefix of an external iconv (e.g. keg-only GNU libiconv on macOS)')
 option('introspection', type: 'feature', value: 'auto', description: 'Generate GObject introspection data')

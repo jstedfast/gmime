@@ -25,6 +25,7 @@ jobs:
             features: enabled
             backend: AVX2
             integration: true
+            dkim: gnutls
           - name: Linux x64 GCC / minimal
             os: ubuntu-26.04
             arch: x86_64
@@ -76,6 +77,7 @@ jobs:
             features: enabled
             backend: AVX2
             sanitize: true
+            dkim: openssl
           - name: Linux x64 GCC / static
             os: ubuntu-26.04
             arch: x86_64
@@ -98,7 +100,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install meson ninja-build pkg-config clang \
-          libglib2.0-dev libidn2-dev libgpgme-dev libgpg-error-dev zlib1g-dev gnupg gpgsm
+          libglib2.0-dev libidn2-dev libgpgme-dev libgpg-error-dev zlib1g-dev gnupg gpgsm libgnutls28-dev libssl-dev
         if [[ '${{ matrix.integration }}' == 'true' ]]; then
           sudo apt-get -y install gtk-doc-tools valac gobject-introspection \
             libgirepository1.0-dev python3-gi
@@ -166,7 +168,8 @@ jobs:
         fi
         meson setup _build --buildtype='${{ matrix.buildtype || 'debugoptimized' }}' -Db_ndebug=false \
           --prefix="$RUNNER_TEMP/gmime-prefix" --libdir=lib \
-          -Dcrypto='${{ matrix.features }}' -Dlibidn='${{ matrix.features }}' "${extra[@]}"
+          -Dcrypto='${{ matrix.features }}' -Dlibidn='${{ matrix.features }}' \
+          -Ddkim-crypto='${{ matrix.dkim || (matrix.features == 'disabled' && 'disabled' || 'auto') }}' "${extra[@]}"
     - name: Build
       run: meson compile -C _build
     - name: Report and require native SIMD coverage

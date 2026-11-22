@@ -46,6 +46,9 @@ void testsuite_check_passed (void);
 
 int testsuite_total_errors (void);
 
+GMimeMessage *testsuite_parse_message (const char *data, gsize length);
+GBytes *testsuite_serialize_message (GMimeMessage *message);
+
 const char *testsuite_header_raw_text (GMimeHeader *header);
 const char *testsuite_header_raw_name (GMimeHeader *header);
 void testsuite_header_set_raw_text (GMimeHeader *header, const char *text);

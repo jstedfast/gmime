@@ -41,6 +41,7 @@ normal_tests = [
   'test-received-clauses', 'test-received',
   'test-anonymizer',
   'test-authentication-results',
+  'test-dkim-dns', 'test-dkim-crypto', 'test-dkim-body',
   'test-content-type',
   'test-smtp-address-validator',
   'test-openpgp',
@@ -50,6 +51,9 @@ normal_tests = [
   'test-mime-part', 'test-mime-whitespace', 'test-partial', 'test-mbox', 'test-autocrypt', 'test-mime', 'test-types',
 ]
 crypto_tests = ['test-pgp', 'test-pgpmime', 'test-hidden-recipients']
+if dkim_provider != 'disabled'
+  normal_tests += ['test-dkim', 'test-arc']
+endif
 if have_crypto
   normal_tests += crypto_tests
 endif
@@ -66,7 +70,7 @@ test_programs = {
 foreach name : normal_tests
   sources = [name + '.c']
   test_dep = name == 'test-parser-model' ? parser_model_test_dep : gmime_dep
-  if name in ['test-rtf-tokenizer', 'test-rtf-interpreter']
+  if name in ['test-rtf-tokenizer', 'test-rtf-interpreter', 'test-dkim-dns', 'test-dkim-crypto', 'test-dkim-body']
     test_dep = rtf_test_dep
   endif
   if name == 'test-core'

@@ -41,7 +41,21 @@ performed by GMime.
 OpenPGP and S/MIME use native GPGME contexts and results. Core MIME
 functionality, text conversion, TNEF, compression, and OpenPGP block discovery
 remain available without GPGME; native cryptographic operations require the
-optional integration described below.
+optional GPGME integration described below. DKIM and ARC use a separate
+signature provider. Select it with `-Ddkim-crypto=auto|gnutls|openssl|disabled`.
+In `auto` mode Meson prefers GnuTLS 3.7 or later, then OpenSSL 3's `libcrypto`
+(not `libssl`); neither is required for parsing mail. An explicitly requested
+provider must be available. DNS TXT lookups use GIO's `GResolver`.
+
+Sign, seal, and verify a `GMimeMessage` directly. Signing and sealing prepend
+headers in place; the MIME body streams into the hash without a whole-message
+buffer. Verify the parsed message before changing its headers or content.
+Pass a `GResolver` to use application-specific DNS,
+or `NULL` to use the system resolver. A resolver failure is not proof that
+the signature is bad. For ARC, verify the received message before modifying
+it, and pass that received chain status when sealing the outgoing message.
+A passing chain authenticates the seals; it does not establish that the
+sealers or their authentication assessments are trustworthy.
 
 ## History
 

@@ -14,7 +14,7 @@ on:
         description: 'Fuzz target'
         default: all
         type: choice
-        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers, smtp-address-validator, tnef-reader, tnef-message, filters, compliance-validators, html-tokenizer, text-converters, rtf-compressed, rtf-tokenizer, rtf-converters]
+        options: [all, mime-reader, mime-parser, encoders, decoders, rfc2047, structured-headers, smtp-address-validator, tnef-reader, tnef-message, filters, compliance-validators, html-tokenizer, text-converters, rtf-compressed, rtf-tokenizer, rtf-converters, dns-records, dkim-arc-verifier]
 
 permissions:
   contents: read
@@ -33,7 +33,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os
-          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers", "smtp-address-validator", "tnef-reader", "tnef-message", "filters", "compliance-validators", "html-tokenizer", "text-converters", "rtf-compressed", "rtf-tokenizer", "rtf-converters"]
+          targets = ["mime-reader", "mime-parser", "encoders", "decoders", "rfc2047", "structured-headers", "smtp-address-validator", "tnef-reader", "tnef-message", "filters", "compliance-validators", "html-tokenizer", "text-converters", "rtf-compressed", "rtf-tokenizer", "rtf-converters", "dns-records", "dkim-arc-verifier"]
           target = os.environ["TARGET"]
           duration = os.environ["DURATION"]
           if target != "all" and target not in targets:
@@ -69,7 +69,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y clang libclang-rt-dev meson ninja-build \
-            pkg-config libglib2.0-dev zlib1g-dev
+            pkg-config libglib2.0-dev zlib1g-dev libgnutls28-dev
 
       # Caches are immutable: restore the newest corpus, then save a new key.
       - name: Restore corpus
@@ -85,7 +85,7 @@ jobs:
           meson setup _build-fuzz --buildtype=debugoptimized \
             -Dfuzzing=libfuzzer -Ddefault_library=static \
             -Db_sanitize=address,undefined -Db_ndebug=false \
-            -Dcrypto=disabled -Dlibidn=disabled -Dintrospection=disabled \
+            -Dcrypto=disabled -Ddkim-crypto=gnutls -Dlibidn=disabled -Dintrospection=disabled \
             -Dvapi=disabled -Dgtk_doc=false -Dexamples=false -Dtests=false
           meson compile -C _build-fuzz
 
@@ -102,6 +102,8 @@ jobs:
             decoders) max_len=1048576; dictionary=codecs ;;
             rfc2047) max_len=65536; dictionary=mime ;;
             structured-headers) max_len=65536; dictionary=structured-headers ;;
+            dkim-arc-verifier) max_len=65536; dictionary=dkim ;;
+            dns-records) max_len=16384; dictionary=dkim ;;
             smtp-address-validator) max_len=4096; dictionary=smtp-address-validator ;;
             tnef-reader) max_len=1048576; dictionary=tnef ;;
             tnef-message) max_len=4194304; dictionary=tnef ;;

@@ -13,6 +13,13 @@ No MimeKit reader implementation or changed diagnostic locations are imported.
 Targets
 -------
 
+dkim-arc-verifier compares verification results, diagnostics and TXT queries
+for buffered and fragmented, source-backed messages. Its offline resolver
+reads MimeKit's zone/%%/message seed format. The three signed fixtures are
+from MimeKit's DkimSeedGenerator (RSA, Ed25519 and ARC). dns-records checks
+DKIM key policy, signature tags and domain names. GMime has no DMARC verifier
+or async DKIM verifier; neither target queries the system resolver.
+
 tnef-reader compares attribute offsets, tags, lengths, raw payload hashes and
 diagnostic traces between whole and fragmented reads, with varying issue caps.
 It also checks that re-emitting accepted raw attributes is byte-idempotent.

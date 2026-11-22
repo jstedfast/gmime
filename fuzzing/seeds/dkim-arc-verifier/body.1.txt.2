@@ -1,0 +1,31 @@
+fuzz._domainkey.mimekit.net v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDUpnnZhPLoZqFd2TZ26uUfhFfiZuMUMUlFDyd2ujh8Fkh2PROdZin+xXrenfGMYG8EJscizGg1/PcyjY2UkXaX9rmbLGtDOXR2pEaMfFy5U+mStuzrEjxVim+5i4q9KjCKIexvBKb57/czarNxhwTzuyvMxUBLHHiZGpAMGkT4KQIDAQAB
+ed._domainkey.mimekit.net v=DKIM1; k=ed25519; p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=
+_dmarc.mimekit.net v=DMARC1; p=reject; adkim=r; aspf=r
+@spf pass mimekit.net
+%%
+ARC-Seal: i=1; a=rsa-sha256; cv=none; d=mimekit.net; s=fuzz; t=1795313249;
+	b=MyGMefGE6ql8vsLeu61kbxiHoHRgpUH7UUfDNyaZ9j7REMxjAdvk59hTQFHilUBE6r6nMe2LQLN
+	3efj59N6ZLXN/SjtWDi5zfT48VH9xH8UDASyBjIg3CQaHIugP0YoI3/MHqkBqGeLCxVM6WJh8mF4B
+	fHzjVYl4tr3DqMcXpEE=
+ARC-Message-Signature: i=1; a=rsa-sha256; d=mimekit.net; s=fuzz;
+	c=simple/simple; t=1795313249;
+	h=from:to:cc:subject:date:message-id:mime-version:content-type;
+	bh=mzU5MVOP5oQXUFeN7Zcsfw+FxTwwCNkd9RenxTp6b5g=;
+	b=EgKoGuq5/7BYNTB+mi1JHzrOz4YeMWkZOfQn6w+oNb/xQjh+DD9sV/g9+N7ogJgTrrSsSN4UsEW
+	tGOTYpcLemu2bgjmOTD2BbqGotP0WjswNiy76tlnKzX8HGZs+Dea4HMAduZW+zN3WB3qbUmed3C67
+	6mUP9Vit4b0k5RHDLtM=
+ARC-Authentication-Results: i=1; mx.fuzz.example; spf=pass; dkim=pass
+DKIM-Signature: v=1; a=rsa-sha256; d=mimekit.net; s=fuzz; c=simple/simple;
+	t=1795313249; h=from:to:cc:subject:date:message-id:mime-version:content-type;
+	bh=mzU5MVOP5oQXUFeN7Zcsfw+FxTwwCNkd9RenxTp6b5g=;
+	b=MtPaeG3Xq0mGWlZfFB5qF+XRjVWE8ggF2xYmb7+eaNVgFwGrAY6DNZetYNf/pjvLZ9VN5Lna3uj
+	zFeoPzcJYgCWg8mykUN6ALycaI2okl23OtKdRdRgMNrAbIk6cbvPe41+j9ojeeDt4KWp4O0VhRBvm
+	jrvGH4tXv+WICElYIjY=
+From: MimeKit Unit Tests <mimekit@mimekit.net>
+To: MimeKit Unit Tests <mimekit@mimekit.net>
+Subject: MimeMessage.TextBody and HtmlBody tests
+Date: Sat, 2 Jan 2016 17:42:00 -0400
+MIME-Version: 1.0
+Content-Type: text/plain
+
+This is the text body.

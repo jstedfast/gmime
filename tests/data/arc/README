@@ -1,0 +1,20 @@
+Source: MimeKit UnitTests/Cryptography/ArcSignerTests.cs and
+ArcVerifierTests.cs (license in LICENSE). The named signer inputs and public
+test key dummy.pem come from the corresponding MimeKit methods. Keep their
+wire whitespace. In particular, "Hey gang,  " in c_simple_simple.eml has two
+significant trailing spaces.
+
+The verifier corpus predates the final ARC syntax. For example, MimeKit's
+cv_pass_i1_1 passes with i= after other AS/AMS tags and with AAR signed by
+h=. RFC 8617 sections 4.1.2 and 4.1.3 require a leading instance; section
+4.1.2 prohibits ARC headers in h=. draft-cv_pass_i1_1.eml preserves this
+upstream message verbatim (CRLF wire endings) as a documented difference.
+Blindly importing its negative variants would fail at the wrong check.
+
+generate.py uses Python cryptography (not GMime) and the MimeKit test key to
+produce final-RFC versions of the chain and grammar cases. The simple/simple
+body hash is the upstream signer oracle. The latest AMS signs the current
+body, while each seal authenticates all preceding sets; the old-body-changed
+and old-seal-invalid fixtures distinguish those rules. Even malformed signed
+tag lists have matching signatures so the test exercises the grammar check.
+Regeneration is optional; the test reads the checked-in messages offline.

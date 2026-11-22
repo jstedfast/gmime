@@ -1,0 +1,18 @@
+fuzz._domainkey.mimekit.net v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDUpnnZhPLoZqFd2TZ26uUfhFfiZuMUMUlFDyd2ujh8Fkh2PROdZin+xXrenfGMYG8EJscizGg1/PcyjY2UkXaX9rmbLGtDOXR2pEaMfFy5U+mStuzrEjxVim+5i4q9KjCKIexvBKb57/czarNxhwTzuyvMxUBLHHiZGpAMGkT4KQIDAQAB
+ed._domainkey.mimekit.net v=DKIM1; k=ed25519; p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo=
+_dmarc.mimekit.net v=DMARC1; p=reject; adkim=r; aspf=r
+@spf pass mimekit.net
+%%
+DKIM-Signature: v=1; a=ed25519-sha256; d=mimekit.net; s=ed; c=simple/simple;
+	t=1795313249; h=from:to:cc:subject:date:message-id:mime-version:content-type;
+	bh=mzU5MVOP5oQXUFeN7Zcsfw+FxTwwCNkd9RenxTp6b5g=;
+	b=Mdm5g8IpJtd8NMZyQ/uLdpKC6WUdp6Muw+YeF2SjhkVpjUeSmH1QgDUoqR63ZiFoR0oFdoz6UrS
+	OuHOPKwLXDQ==
+From: MimeKit Unit Tests <mimekit@mimekit.net>
+To: MimeKit Unit Tests <mimekit@mimekit.net>
+Subject: MimeMessage.TextBody and HtmlBody tests
+Date: Sat, 2 Jan 2016 17:42:00 -0400
+MIME-Version: 1.0
+Content-Type: text/plain
+
+This is the text body.

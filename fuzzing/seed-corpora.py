@@ -14,6 +14,7 @@ import re
 
 MAX_LENGTH = 1024 * 1024
 LIMITS = {"mime-reader": MAX_LENGTH, "mime-parser": MAX_LENGTH,
+          "dkim-arc-verifier": 65536, "dns-records": 16384,
           "encoders": 256 * 1024, "decoders": MAX_LENGTH, "rfc2047": 64 * 1024,
           "structured-headers": 64 * 1024, "smtp-address-validator": 4096,
           "tnef-reader": MAX_LENGTH, "tnef-message": 4 * MAX_LENGTH,
@@ -168,6 +169,9 @@ def regression_inputs():
     filters = [bytes([kind]) + data for kind in range(9) for data in text +
                [b"From a\nFrom b\r\n", b"-----BEGIN PGP MESSAGE-----\n\nabc\n-----END PGP MESSAGE-----\n"]]
     return {"mime-reader": mime, "mime-parser": mime, "tnef-reader": tnef, "tnef-message": tnef,
+            "dkim-arc-verifier": [b"From: a@example.org\n\n", b"ARC-Seal: i=1; cv=pass\n\n"],
+            "dns-records": [b"v=DKIM1; p=", b"k=rsa; p=AQID", b"!tempfail", b"b= aa;\r\n x=tag",
+                            b"k=ed25519; p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo="],
             "rtf-compressed": text, "rtf-converters": text, "rtf-tokenizer": text,
             "html-tokenizer": text, "text-converters": text, "filters": filters, "compliance-validators": mime,
             "encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,
