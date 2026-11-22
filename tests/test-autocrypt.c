@@ -214,6 +214,105 @@ test_ah_attribute_parsing (void)
 }
 
 static void
+test_bounded_codec (void)
+{
+#define SPAN(s) s, sizeof (s) - 1
+#define ADDR " addr=alice@example.org; "
+	static const struct { const char *raw; gsize length; } invalid[] = {
+		{ SPAN (ADDR "keydata=\r\n") }, { SPAN (ADDR "keydata=YQ\n") },
+		{ SPAN (ADDR "keydata=Y!Q==\n") }, { SPAN (ADDR "keydata=YR==\n") },
+		{ SPAN (ADDR "keydata=YQ==YQ==\n") }, { SPAN (ADDR "keydata=Y\0Q==\n") },
+		{ SPAN (ADDR "keydata=Y\rQ==\n") }, { SPAN (ADDR "keydata=Y\nQ==\n") },
+		{ SPAN (ADDR "keydata=Y\vQ==\n") }, { SPAN (ADDR "keydata=YQ==") },
+		{ SPAN (ADDR "keydata=YQ==; _extra=yes\n") }, { SPAN (ADDR "_extra=yes\n") },
+		{ SPAN ("addr=; keydata=YQ==\n") }, { SPAN ("addr=alice; keydata=YQ==\n") },
+		{ SPAN ("keydata=YQ==\n") }, { SPAN (ADDR "ADDR=b@example.org; keydata=YQ==\n") },
+		{ SPAN (ADDR "required=x; keydata=YQ==\n") }
+	};
+	GMimeAutocryptHeader *ah;
+	GError *error = NULL;
+	guint i;
+
+	testsuite_check ("Bounded Autocrypt field syntax");
+	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
+		ah = g_mime_autocrypt_header_parse (invalid[i].raw, invalid[i].length, GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
+		g_assert_null (ah);
+		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+		g_clear_error (&error);
+	}
+	for (i = 0; i < 2; i++) {
+		GMimeAutocryptHeaderKind kind = i ? GMIME_AUTOCRYPT_HEADER_GOSSIP : GMIME_AUTOCRYPT_HEADER_DIRECT;
+		GBytes *raw;
+		const char *p;
+		gsize len;
+		GMimeAutocryptHeader *again;
+
+		ah = g_mime_autocrypt_header_parse (SPAN (ADDR "_extra=x; PREFER-ENCRYPT=mutual;\n KEYDATA=Y\r\n\tQ==\r\n"),
+						    kind, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (ah);
+		g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (ah), ==,
+				 i ? GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE : GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL);
+		p = g_bytes_get_data (g_mime_autocrypt_header_get_keydata (ah), &len);
+		g_assert_cmpmem (p, len, "a", 1);
+		g_mime_autocrypt_header_set_prefer_encrypt (ah, GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL);
+		raw = g_mime_autocrypt_header_format (ah, kind, &error);
+		g_assert_no_error (error);
+		p = g_bytes_get_data (raw, &len);
+		g_assert_cmpint (g_strstr_len (p, len, "prefer-encrypt=") != NULL, ==, !i);
+		again = g_mime_autocrypt_header_parse (p, len, kind, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (again);
+		g_bytes_unref (raw);
+		g_object_unref (again);
+		g_object_unref (ah);
+	}
+	testsuite_check_passed ();
+#undef ADDR
+#undef SPAN
+}
+
+static void
+test_codec_wire_limit (void)
+{
+	/* A folded field exactly filling the direct wire budget. The same
+	 * value with one extra byte (or the longer gossip name) cannot fit. */
+	const struct _ah_gen_test test = { .addr = "abcdefghijk@example.org", .keydatacount = 7350, .keybyte = 'x' };
+	GMimeAutocryptHeader *ah = _gen_header (&test), *parsed;
+	GError *error = NULL;
+	GBytes *raw;
+	const char *p;
+	char *longer;
+	gsize length;
+
+	testsuite_check ("Autocrypt 10 KiB complete-field limit");
+	raw = g_mime_autocrypt_header_format (ah, GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
+	g_assert_no_error (error);
+	p = g_bytes_get_data (raw, &length);
+	g_assert_cmpuint (length + strlen ("Autocrypt:"), ==, 10240);
+	parsed = g_mime_autocrypt_header_parse (p, length, GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
+	g_assert_no_error (error);
+	g_assert_true (g_bytes_equal (g_mime_autocrypt_header_get_keydata (ah), g_mime_autocrypt_header_get_keydata (parsed)));
+	g_object_unref (parsed);
+	longer = g_malloc (length + 1);
+	longer[0] = ' ';
+	memcpy (longer + 1, p, length);
+	g_assert_null (g_mime_autocrypt_header_parse (longer, length + 1, GMIME_AUTOCRYPT_HEADER_DIRECT, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+	g_clear_error (&error);
+	g_assert_null (g_mime_autocrypt_header_parse (p, length, GMIME_AUTOCRYPT_HEADER_GOSSIP, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+	g_clear_error (&error);
+	g_assert_null (g_mime_autocrypt_header_format (ah, GMIME_AUTOCRYPT_HEADER_GOSSIP, &error));
+	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+	g_clear_error (&error);
+	g_free (longer);
+	g_bytes_unref (raw);
+	g_object_unref (ah);
+	testsuite_check_passed ();
+}
+
+static void
 test_ah_decoded_headers (void)
 {
 	static const struct {
@@ -1272,6 +1371,8 @@ int main (int argc, char **argv)
 	test_ah_generation ();
 	test_ah_idn_addresses ();
 	test_ah_attribute_parsing ();
+	test_bounded_codec ();
+	test_codec_wire_limit ();
 	testsuite_end ();
 	
 #ifdef ENABLE_CRYPTO

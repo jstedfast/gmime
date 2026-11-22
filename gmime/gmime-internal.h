@@ -36,6 +36,9 @@
 
 G_BEGIN_DECLS
 
+/* GMimeAutocrypt */
+G_GNUC_INTERNAL char *_g_mime_autocrypt_canonicalize_mailbox (GMimeMailboxAddress *mailbox);
+
 /* GMimeFilterOpenPGP */
 G_GNUC_INTERNAL const GMimeOpenPGPMarker *_g_mime_openpgp_match_marker (const char *line, size_t length);
 

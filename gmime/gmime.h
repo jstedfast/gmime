@@ -74,6 +74,7 @@
 #include <gmime/gmime-multipart-encrypted.h>
 #include <gmime/gmime-multipart-signed.h>
 #include <gmime/gmime-message.h>
+#include <gmime/gmime-autocrypt-peer-state.h>
 #include <gmime/gmime-message-delivery-status.h>
 #include <gmime/gmime-message-disposition-notification.h>
 #include <gmime/gmime-message-feedback-report.h>

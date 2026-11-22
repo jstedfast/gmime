@@ -40,6 +40,14 @@ uncompressed documents as plain text or HTML. The APIs are synchronous.
 Authentication-Results models represent header claims, not authentication
 performed by GMime.
 
+For Autocrypt, pass the message and its **original receipt time** to
+`g_mime_message_observe_autocrypt()`. An ignored message does not update a peer;
+a sender seen without a usable advertisement can advance `last_seen` without
+erasing an earlier key. `GMimeAutocryptPeerState` keeps direct and gossip
+keys and timestamps separate. Merge and persist the new snapshot within the
+same application transaction so concurrent updates cannot overwrite one
+another. GMime neither imports advertised keys nor authenticates their owners.
+
 OpenPGP and S/MIME use native GPGME contexts and results. Core MIME
 functionality, text conversion, TNEF, compression, and OpenPGP block discovery
 remain available without GPGME; native cryptographic operations require the

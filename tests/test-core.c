@@ -2706,6 +2706,49 @@ test_message_priorities (void)
 }
 
 static void
+test_autocrypt_observations (void)
+{
+	const char *value = "addr=alice@example.org; keydata=YWJj";
+	GDateTime *received = g_date_time_new_utc (2026, 1, 1, 12, 0, 0);
+	GDateTime *future = g_date_time_add_days (received, 1);
+	GMimeMessage *message = g_mime_message_new (FALSE);
+	GMimeEntity *entity = GMIME_ENTITY (message);
+	GMimeAutocryptObservation *obs;
+	GMimeMultipart *report;
+
+	obs = g_mime_message_observe_autocrypt (message, received);
+	check (g_mime_autocrypt_observation_get_status (obs) == GMIME_AUTOCRYPT_OBSERVATION_IGNORED, "no From: ignore message");
+	g_object_unref (obs);
+	g_mime_entity_set_header (entity, "From", "alice@example.org", NULL);
+	g_mime_entity_append_header (entity, "Autocrypt", "addr=bob@example.org; keydata=YWJj", NULL);
+	g_mime_entity_append_header (entity, "Autocrypt", "addr=alice@example.org; keydata=**", NULL);
+	obs = g_mime_message_observe_autocrypt (message, received);
+	check (g_mime_autocrypt_observation_get_status (obs) == GMIME_AUTOCRYPT_OBSERVATION_SEEN &&
+	       g_date_time_equal (received, g_mime_autocrypt_observation_get_effective_date (obs)), "unmatched or invalid without Date: seen at receipt");
+	g_object_unref (obs);
+	g_mime_message_set_date (message, future);
+	g_mime_entity_append_header (entity, "Autocrypt", value, NULL);
+	obs = g_mime_message_observe_autocrypt (message, received);
+	check (g_mime_autocrypt_observation_get_status (obs) == GMIME_AUTOCRYPT_OBSERVATION_ADVERTISED &&
+	       g_date_time_equal (received, g_mime_autocrypt_observation_get_effective_date (obs)), "one valid advertisement with future Date: use receipt");
+	g_object_unref (obs);
+	g_mime_entity_append_header (entity, "Autocrypt", value, NULL);
+	obs = g_mime_message_observe_autocrypt (message, received);
+	check (g_mime_autocrypt_observation_get_status (obs) == GMIME_AUTOCRYPT_OBSERVATION_SEEN &&
+	       !g_mime_autocrypt_observation_get_keydata (obs), "duplicate matching advertisements: observe without a key");
+	g_object_unref (obs);
+	report = g_mime_multipart_new_with_subtype ("report");
+	g_mime_message_set_mime_part (message, GMIME_ENTITY (report));
+	obs = g_mime_message_observe_autocrypt (message, received);
+	check (g_mime_autocrypt_observation_get_status (obs) == GMIME_AUTOCRYPT_OBSERVATION_IGNORED, "multipart/report: ignore message");
+	g_object_unref (obs);
+	g_object_unref (report);
+	g_object_unref (message);
+	g_date_time_unref (future);
+	g_date_time_unref (received);
+}
+
+static void
 test_message_dates (void)
 {
 	static const struct {
@@ -14509,6 +14552,10 @@ main (int argc, char **argv)
 
 	testsuite_start ("message dates");
 	test_message_dates ();
+	testsuite_end ();
+
+	testsuite_start ("Autocrypt observations");
+	test_autocrypt_observations ();
 	testsuite_end ();
 
 	testsuite_start ("resent message addresses");

@@ -196,6 +196,28 @@ GPtrArray *g_mime_message_get_attachments (GMimeMessage *message);
 gboolean g_mime_message_try_get_entity (GMimeMessage *message, const char *path_specifier, GMimeEntity **entity);
 
 GMimeAutocryptHeader *g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now);
+/**
+ * GMimeAutocryptObservationStatus:
+ * @GMIME_AUTOCRYPT_OBSERVATION_IGNORED: No eligible sender observation.
+ * @GMIME_AUTOCRYPT_OBSERVATION_SEEN: Eligible sender, but no unique matching advertisement.
+ * @GMIME_AUTOCRYPT_OBSERVATION_ADVERTISED: One matching, syntactically valid advertisement.
+ */
+typedef enum {
+	GMIME_AUTOCRYPT_OBSERVATION_IGNORED,
+	GMIME_AUTOCRYPT_OBSERVATION_SEEN,
+	GMIME_AUTOCRYPT_OBSERVATION_ADVERTISED
+} GMimeAutocryptObservationStatus;
+
+#define GMIME_TYPE_AUTOCRYPT_OBSERVATION (g_mime_autocrypt_observation_get_type ())
+G_DECLARE_FINAL_TYPE (GMimeAutocryptObservation, g_mime_autocrypt_observation, GMIME, AUTOCRYPT_OBSERVATION, GObject)
+
+GMimeAutocryptObservation *g_mime_message_observe_autocrypt (GMimeMessage *message, GDateTime *received_at);
+GMimeAutocryptObservationStatus g_mime_autocrypt_observation_get_status (GMimeAutocryptObservation *observation);
+const char *g_mime_autocrypt_observation_get_address (GMimeAutocryptObservation *observation);
+GDateTime *g_mime_autocrypt_observation_get_effective_date (GMimeAutocryptObservation *observation);
+GBytes *g_mime_autocrypt_observation_get_keydata (GMimeAutocryptObservation *observation);
+GMimeAutocryptPreferEncrypt g_mime_autocrypt_observation_get_prefer_encrypt (GMimeAutocryptObservation *observation);
+
 GMimeAutocryptHeaderList *g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *message, GDateTime *now, GMimeEntity *inner_part);
 
 /* convenience functions */

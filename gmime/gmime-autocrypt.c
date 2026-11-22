@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMimeAutocrypt
  *  Copyright (C) 2017 Daniel Kahn Gillmor
+ *  Copyright (C) 2026 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -26,6 +27,7 @@
 #include <string.h>
 
 #include "gmime-autocrypt.h"
+#include "gmime-error.h"
 
 #include "gmime-object-private.h"
 
@@ -78,8 +80,10 @@ g_mime_autocrypt_header_finalize (GObject *object)
 	
 	if (ah->address)
 		g_object_unref (ah->address);
+
 	if (ah->keydata)
 		g_bytes_unref (ah->keydata);
+
 	if (ah->effective_date)
 		g_date_time_unref (ah->effective_date);
 	
@@ -98,6 +102,288 @@ GMimeAutocryptHeader *
 g_mime_autocrypt_header_new (void)
 {
 	return g_object_new (GMIME_TYPE_AUTOCRYPT_HEADER, NULL);
+}
+
+#define AUTOCRYPT_WIRE_LIMIT (10 * 1024)
+
+static gsize
+field_prefix_length (GMimeAutocryptHeaderKind kind)
+{
+	return kind == GMIME_AUTOCRYPT_HEADER_DIRECT ? sizeof ("Autocrypt:") - 1 : sizeof ("Autocrypt-Gossip:") - 1;
+}
+
+static void
+wire_limit_error (GError **error)
+{
+	g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG, "Autocrypt field exceeds 10 KiB");
+}
+
+/* The span includes the last line ending, but not the field name or colon. */
+static char *
+unfold_raw_value (const char *raw, gsize length, GError **error)
+{
+	GString *text = g_string_sized_new (length);
+	gsize i;
+
+	if (!length || raw[length - 1] != '\n')
+		goto invalid;
+
+	for (i = 0; i < length; i++) {
+		guchar c = raw[i];
+
+		if (c == '\r') {
+			if (++i == length || raw[i] != '\n')
+				goto invalid;
+
+			c = '\n';
+		}
+
+		if (c == '\n') {
+			if (i + 1 < length && raw[i + 1] != ' ' && raw[i + 1] != '\t')
+				goto invalid;
+		} else if ((c < 32 && c != '\t') || c == 127) {
+			goto invalid;
+		} else {
+			g_string_append_c (text, c);
+		}
+	}
+
+	return g_string_free (text, FALSE);
+
+invalid:
+	g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR, "Invalid Autocrypt field bytes or line ending");
+	g_string_free (text, TRUE);
+
+	return NULL;
+}
+
+static GBytes *
+parse_keydata (char *value, GError **error)
+{
+	char *in, *out = value, *canonical;
+	guchar *decoded;
+	gsize length;
+
+	for (in = value; *in; in++) {
+		if (*in != ' ' && *in != '\t')
+			*out++ = *in;
+	}
+
+	*out = '\0';
+
+	if (out == value) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR, "Empty Autocrypt keydata");
+		return NULL;
+	}
+
+	/* Round-tripping also checks padding position and unused bits. The wire
+	 * limit bounds both allocations before calling the permissive decoder. */
+	decoded = g_base64_decode (value, &length);
+	canonical = g_base64_encode (decoded, length);
+
+	if (strcmp (canonical, value)) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR, "Invalid Base64 in Autocrypt keydata");
+		g_free (canonical);
+		g_free (decoded);
+		return NULL;
+	}
+
+	g_free (canonical);
+
+	return g_bytes_new_take (decoded, length);
+}
+
+/**
+ * g_mime_autocrypt_header_parse:
+ * @raw_value: (array length=length) (element-type guint8): bytes following the colon
+ * @length: byte length, including folding whitespace and the final LF or CRLF
+ * @kind: the field being parsed
+ * @error: (nullable): return location for a #GError
+ *
+ * Parses one complete raw field value, without RFC 2047 decoding. Requires
+ * addr and a final, nonempty, canonical Base64 keydata. Unknown critical and
+ * duplicate attributes invalidate the field; unknown underscore attributes
+ * are ignored. Gossip cannot establish an encryption preference.
+ * The field name, colon and raw value together may not exceed 10 KiB.
+ * This validates the representation, not the OpenPGP key or its owner.
+ *
+ * Returns: (transfer full) (nullable): the advertisement, or %NULL on error
+ */
+GMimeAutocryptHeader *
+g_mime_autocrypt_header_parse (const char *raw_value, gsize length, GMimeAutocryptHeaderKind kind, GError **error)
+{
+	GMimeAutocryptHeader *ah;
+	char *text, *name, *next;
+	const char *problem;
+	GHashTable *seen;
+
+	g_return_val_if_fail (raw_value != NULL || length == 0, NULL);
+	g_return_val_if_fail (kind == GMIME_AUTOCRYPT_HEADER_DIRECT || kind == GMIME_AUTOCRYPT_HEADER_GOSSIP, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (length > AUTOCRYPT_WIRE_LIMIT - field_prefix_length (kind)) {
+		wire_limit_error (error);
+		return NULL;
+	}
+
+	if (!(text = unfold_raw_value (raw_value, length, error)))
+		return NULL;
+
+	ah = g_mime_autocrypt_header_new ();
+	seen = g_hash_table_new (g_str_hash, g_str_equal);
+
+	for (name = text; name; name = next) {
+		char *value, *inptr;
+
+		if ((next = strchr (name, ';')))
+			*next++ = '\0';
+
+		if (!(value = strchr (name, '='))) {
+			problem = "Missing Autocrypt attribute value";
+			goto invalid;
+		}
+
+		*value++ = '\0';
+		g_strstrip (name);
+		g_strstrip (value);
+
+		for (inptr = name; *inptr; inptr++) {
+			if (!g_ascii_isalnum (*inptr) && !strchr ("!#$%&'*+-.^_`|~", *inptr)) {
+				problem = "Invalid Autocrypt attribute name";
+				goto invalid;
+			}
+
+			*inptr = g_ascii_tolower (*inptr);
+		}
+
+		if (!g_hash_table_add (seen, name)) {
+			problem = "Duplicate Autocrypt attribute";
+			goto invalid;
+		}
+
+		if (!strcmp (name, "addr")) {
+			if (!g_mime_autocrypt_header_set_address_from_string (ah, value, error))
+				goto fail;
+
+			if (_g_mime_mailbox_address_get_private (ah->address)->at < 0) {
+				problem = "Autocrypt addr must include a local part and domain";
+				goto invalid;
+			}
+		} else if (!strcmp (name, "keydata")) {
+			if (next) {
+				problem = "Autocrypt keydata must be the final attribute";
+				goto invalid;
+			}
+
+			if (!(ah->keydata = parse_keydata (value, error)))
+				goto fail;
+		} else if (!strcmp (name, "prefer-encrypt")) {
+			if (kind == GMIME_AUTOCRYPT_HEADER_DIRECT && !g_ascii_strcasecmp (value, "mutual"))
+				ah->prefer_encrypt = GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL;
+		} else if (*name != '_') {
+			problem = "Unsupported critical Autocrypt attribute";
+			goto invalid;
+		}
+	}
+
+	if (!ah->address || !ah->keydata) {
+		problem = !ah->address ? "Missing Autocrypt addr" : "Missing Autocrypt keydata";
+		goto invalid;
+	}
+
+	g_hash_table_unref (seen);
+	g_free (text);
+
+	return ah;
+
+invalid:
+	g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR, problem);
+
+fail:
+	g_hash_table_unref (seen);
+	g_object_unref (ah);
+	g_free (text);
+
+	return NULL;
+}
+
+/**
+ * g_mime_autocrypt_header_format:
+ * @ah: an Autocrypt advertisement
+ * @kind: the field to produce
+ * @error: (nullable): return location for a #GError
+ *
+ * Produces a raw field value suitable for g_mime_header_set_raw_value(),
+ * with a leading space, CRLF folds and a final CRLF. Counts all these
+ * bytes and the field name and colon against the 10 KiB wire limit.
+ * The preference is omitted for gossip.
+ *
+ * Returns: (transfer full) (nullable): the raw value, or %NULL on error
+ */
+GBytes *
+g_mime_autocrypt_header_format (GMimeAutocryptHeader *ah, GMimeAutocryptHeaderKind kind, GError **error)
+{
+	gsize length, prefix, column;
+	const char *addr, *inptr;
+	const guchar *data;
+	GString *value;
+	char *encoded;
+
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_HEADER (ah), NULL);
+	g_return_val_if_fail (kind == GMIME_AUTOCRYPT_HEADER_DIRECT || kind == GMIME_AUTOCRYPT_HEADER_GOSSIP, NULL);
+	g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+	if (!g_mime_autocrypt_header_is_complete (ah)) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION, "Incomplete Autocrypt advertisement");
+		return NULL;
+	}
+
+	addr = g_mime_autocrypt_header_get_address_as_string (ah);
+	prefix = field_prefix_length (kind);
+	data = g_bytes_get_data (ah->keydata, &length);
+
+	if (length > AUTOCRYPT_WIRE_LIMIT / 4 * 3 || strlen (addr) > AUTOCRYPT_WIRE_LIMIT) {
+		wire_limit_error (error);
+		return NULL;
+	}
+
+	if (_g_mime_mailbox_address_get_private (ah->address)->at < 0 || strpbrk (addr, ";\r\n") ||
+	    strlen (addr) + prefix + sizeof (" addr=;") - 1 > 998) {
+		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION, "Unrepresentable Autocrypt address");
+		return NULL;
+	}
+
+	value = g_string_new (" addr=");
+	g_string_append (value, addr);
+	g_string_append_c (value, ';');
+
+	if (kind == GMIME_AUTOCRYPT_HEADER_DIRECT && ah->prefer_encrypt == GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL)
+		g_string_append (value, "\r\n prefer-encrypt=mutual;");
+
+	g_string_append (value, "\r\n keydata=");
+	column = sizeof (" keydata=") - 1;
+	encoded = g_base64_encode (data, length);
+
+	for (inptr = encoded; *inptr; inptr += 4) {
+		if (column + 4 > 78) {
+			g_string_append (value, "\r\n ");
+			column = 1;
+		}
+
+		g_string_append_len (value, inptr, 4);
+		column += 4;
+	}
+
+	g_free (encoded);
+	g_string_append (value, "\r\n");
+
+	if (value->len > AUTOCRYPT_WIRE_LIMIT - prefix) {
+		wire_limit_error (error);
+		g_string_free (value, TRUE);
+		return NULL;
+	}
+
+	return g_string_free_to_bytes (value);
 }
 
 
@@ -129,8 +415,8 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 #undef attr
 	struct _attr *attrs[] = { &k, &p, &a };
 	GMimeAutocryptPreferEncrypt newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE;
-	GMimeAutocryptHeader *ret;
 	const char *inptr, *inend, *start, *end;
+	GMimeAutocryptHeader *ret;
 	GBytes *newkeydata;
 	guchar *decoded;
 	gsize decodedlen;
@@ -163,6 +449,7 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 			    g_ascii_strncasecmp (attrs[i]->name, start, attrs[i]->sz) == 0 && start[attrs[i]->sz] == '=') {
 				if (attrs[i]->val)
 					return NULL;
+
 				attrs[i]->val = start + attrs[i]->sz + 1;
 				attrs[i]->length = end - attrs[i]->val;
 				known = TRUE;
@@ -186,8 +473,10 @@ g_mime_autocrypt_header_new_from_string (const char *string)
 	
 	ret = g_object_new (GMIME_TYPE_AUTOCRYPT_HEADER, NULL);
 	address = g_strndup (a.val, a.length);
+
 	if (!g_mime_autocrypt_header_set_address_from_string (ret, address, NULL))
 		g_clear_object (&ret);
+
 	g_free (address);
 
 	if (!ret)
@@ -492,7 +781,7 @@ g_mime_autocrypt_header_to_string (GMimeAutocryptHeader *ah, gboolean gossip)
 	g_ptr_array_add (lines, first);
 	
 	while (offset < ksz) {
-		gsize newsz = MIN((maxwid/4)*3, ksz - offset);
+		gsize newsz = MIN ((maxwid / 4) * 3, ksz - offset);
 		g_ptr_array_add (lines, g_base64_encode (kp + offset, newsz));
 		offset += newsz;
 	}

@@ -1170,6 +1170,37 @@ MIME objects, compression, OpenPGP detection and parsing remain available
 to GNOME bindings, including builds without cryptography. Binding clients
 that need crypto must supply GPGME and integration bindings themselves.
 
+### Migrate Autocrypt peer tracking
+
+The existing Autocrypt header and extraction APIs remain available. If your
+application maintains peer state, replace `g_mime_message_get_autocrypt_header()`
+and its `NULL`/`is_complete()` checks with
+`g_mime_message_observe_autocrypt(message, received_at)`:
+
+| Old extraction result | New observation status | What to do |
+|---|---|---|
+| `NULL` | `GMIME_AUTOCRYPT_OBSERVATION_IGNORED` | Leave peer state unchanged. The new API also ignores `multipart/report`. |
+| Incomplete header | `GMIME_AUTOCRYPT_OBSERVATION_SEEN` | Advance `last_seen` if newer; keep the stored key and preference. |
+| Complete header | `GMIME_AUTOCRYPT_OBSERVATION_ADVERTISED` | Validate the advertised key before accepting it. Parsing does not establish key usability or trust. |
+
+Pass the **original receipt time**, such as the mail store's delivery
+timestamp, not the current time on each rescan. For a non-ignored observation,
+load the peer by `g_mime_autocrypt_observation_get_address()`, then call
+`g_mime_autocrypt_peer_state_apply_observation(state, observation, key_usable)`.
+Persist the returned snapshot in the same transaction as the load; the input
+state is immutable. Pass `FALSE` when the key is absent or unusable. Apply
+gossip separately with `g_mime_autocrypt_peer_state_apply_gossip()` so it
+cannot replace a direct advertisement. These operations do not require GPGME.
+
+For applications that handle header values directly, the stricter alternative
+to `g_mime_autocrypt_header_new_from_string()` takes **raw field-value bytes**
+and their length: `g_mime_autocrypt_header_parse()`. Pass
+`GMIME_AUTOCRYPT_HEADER_DIRECT` or `GMIME_AUTOCRYPT_HEADER_GOSSIP` rather than
+a boolean. In place of `g_mime_autocrypt_header_to_string()`, the matching
+`g_mime_autocrypt_header_format()` returns a `GBytes` value suitable for
+`g_mime_header_set_raw_value()`. Both APIs report errors and enforce the
+10 KiB limit on the complete wire header.
+
 ## 9. Validate the migrated application
 
 1. Build with warnings enabled and verify all binaries/bindings load GMime 4.

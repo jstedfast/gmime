@@ -18,7 +18,6 @@
  *  02110-1301, USA.
  */
 
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -2749,6 +2748,252 @@ g_mime_message_get_text_body_with_format (GMimeMessage *message, GMimeTextFormat
 	return text;
 }
 
+
+struct _GMimeAutocryptObservation {
+	GObject parent_object;
+	GMimeAutocryptObservationStatus status;
+	char *address;
+	GDateTime *date;
+	GBytes *keydata;
+	GMimeAutocryptPreferEncrypt preference;
+};
+
+G_DEFINE_TYPE (GMimeAutocryptObservation, g_mime_autocrypt_observation, G_TYPE_OBJECT)
+
+static void
+autocrypt_observation_finalize (GObject *object)
+{
+	GMimeAutocryptObservation *obs = GMIME_AUTOCRYPT_OBSERVATION (object);
+
+	g_free (obs->address);
+	g_clear_pointer (&obs->date, g_date_time_unref);
+	g_clear_pointer (&obs->keydata, g_bytes_unref);
+	G_OBJECT_CLASS (g_mime_autocrypt_observation_parent_class)->finalize (object);
+}
+
+static void
+g_mime_autocrypt_observation_class_init (GMimeAutocryptObservationClass *klass)
+{
+	G_OBJECT_CLASS (klass)->finalize = autocrypt_observation_finalize;
+}
+
+static void
+g_mime_autocrypt_observation_init (GMimeAutocryptObservation *obs)
+{
+	obs->status = GMIME_AUTOCRYPT_OBSERVATION_IGNORED;
+}
+
+char *
+_g_mime_autocrypt_canonicalize_mailbox (GMimeMailboxAddress *mailbox)
+{
+	char *encoded = g_mime_mailbox_address_get_address (mailbox, TRUE);
+	char *canonical = NULL;
+
+	if (encoded && strchr (encoded, '@') && g_utf8_validate (encoded, -1, NULL))
+		canonical = g_utf8_strdown (encoded, -1);
+	g_free (encoded);
+	return canonical;
+}
+
+/**
+ * g_mime_message_observe_autocrypt:
+ * @message: message to examine
+ * @received_at: original receipt time, including on subsequent rescans
+ *
+ * Observe a single sender without importing a key or modifying peer state.
+ * The application should exclude spam before calling. Reports and messages
+ * without exactly one From mailbox are ignored. A malformed, missing or
+ * ambiguous advertisement does not erase the sender observation.
+ *
+ * Prefer a delivery timestamp recorded by your mail store, such as IMAP
+ * INTERNALDATE for a message delivered by SMTP. If your application handles
+ * delivery itself, record the time once at delivery and reuse it on rescans.
+ * Do not pass the sender's Date header: this function already compares it
+ * with @received_at.
+ *
+ * A Received field prepended by your own receiving server can also supply
+ * the timestamp. In this example, @message came directly from that server
+ * and the application knows it prepended the topmost Received field:
+ *
+ * |[<!-- language="C" -->
+ * const char *value = g_mime_entity_get_header (GMIME_ENTITY (message), "Received");
+ * GMimeReceived *hop = value ? g_mime_received_parse (NULL, value, -1, NULL) : NULL;
+ * GDateTime *received_at = hop ? g_mime_received_get_date_time (hop) : NULL;
+ *
+ * if (received_at) {
+ *         observation = g_mime_message_observe_autocrypt (message, received_at);
+ * }
+ * g_clear_object (&hop);
+ * ]|
+ *
+ * Header position alone does not establish trust in an imported message.
+ * If the trusted field is missing or undated, use recorded delivery metadata
+ * or skip the observation; do not search older hops or use the rescan time.
+ *
+ * Returns: (transfer full): an immutable observation.
+ */
+GMimeAutocryptObservation *
+g_mime_message_observe_autocrypt (GMimeMessage *message, GDateTime *received_at)
+{
+	GMimeAutocryptObservation *obs;
+	GMimeInternetAddressList *from;
+	GMimeInternetAddress *sender;
+	GMimeHeaderList *headers;
+	GMimeEntity *body;
+	GDateTime *date;
+	guint nfrom = 0;
+
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	g_return_val_if_fail (received_at != NULL, NULL);
+
+	obs = g_object_new (GMIME_TYPE_AUTOCRYPT_OBSERVATION, NULL);
+	body = g_mime_message_get_mime_part (message);
+
+	if (body && g_mime_content_type_is_type (g_mime_entity_get_content_type (body), "multipart", "report"))
+		return obs;
+
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+
+	for (int i = 0; i < g_mime_header_list_get_count (headers); i++) {
+		if (g_mime_header_get_id (g_mime_header_list_get_header_at (headers, i)) == GMIME_HEADER_FROM)
+			nfrom++;
+	}
+
+	from = g_mime_message_get_from (message);
+
+	if (nfrom != 1 || !from || g_mime_internet_address_list_length (from) != 1)
+		return obs;
+
+	sender = g_mime_internet_address_list_get_address (from, 0);
+
+	if (!GMIME_IS_MAILBOX_ADDRESS (sender))
+		return obs;
+
+	obs->address = _g_mime_autocrypt_canonicalize_mailbox (GMIME_MAILBOX_ADDRESS (sender));
+
+	if (!obs->address)
+		return obs;
+
+	date = g_mime_message_get_date (message);
+	obs->date = g_date_time_ref (date && g_date_time_compare (date, received_at) < 0 ? date : received_at);
+	obs->status = GMIME_AUTOCRYPT_OBSERVATION_SEEN;
+
+	for (int i = 0; i < g_mime_header_list_get_count (headers); i++) {
+		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
+		GMimeAutocryptHeader *advertisement;
+		const char *data;
+		gboolean matches;
+		char *address;
+		GBytes *raw;
+		gsize len;
+
+		if (g_mime_header_get_id (header) != GMIME_HEADER_AUTOCRYPT)
+			continue;
+
+		if (!(raw = g_mime_header_get_raw_value (header)))
+			continue;
+
+		data = g_bytes_get_data (raw, &len);
+		advertisement = data ? g_mime_autocrypt_header_parse (data, len, GMIME_AUTOCRYPT_HEADER_DIRECT, NULL) : NULL;
+		g_bytes_unref (raw);
+
+		if (!advertisement)
+			continue;
+
+		address = _g_mime_autocrypt_canonicalize_mailbox (g_mime_autocrypt_header_get_address (advertisement));
+		matches = !g_strcmp0 (obs->address, address);
+		g_free (address);
+
+		if (matches && obs->keydata) {
+			g_object_unref (advertisement);
+			g_clear_pointer (&obs->keydata, g_bytes_unref);
+			obs->preference = GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE;
+			obs->status = GMIME_AUTOCRYPT_OBSERVATION_SEEN;
+			break;
+		}
+
+		if (matches) {
+			obs->keydata = g_bytes_ref (g_mime_autocrypt_header_get_keydata (advertisement));
+			obs->preference = g_mime_autocrypt_header_get_prefer_encrypt (advertisement);
+			obs->status = GMIME_AUTOCRYPT_OBSERVATION_ADVERTISED;
+		}
+
+		g_object_unref (advertisement);
+	}
+
+	return obs;
+}
+
+/**
+ * g_mime_autocrypt_observation_get_status:
+ * @observation: an observation
+ *
+ * Returns: the eligibility and advertisement status.
+ */
+GMimeAutocryptObservationStatus
+g_mime_autocrypt_observation_get_status (GMimeAutocryptObservation *observation)
+{
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_OBSERVATION (observation), GMIME_AUTOCRYPT_OBSERVATION_IGNORED);
+
+	return observation->status;
+}
+
+/**
+ * g_mime_autocrypt_observation_get_address:
+ * @observation: an observation
+ *
+ * Returns: (nullable): sender address, or %NULL if ignored.
+ */
+const char *
+g_mime_autocrypt_observation_get_address (GMimeAutocryptObservation *observation)
+{
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_OBSERVATION (observation), NULL);
+
+	return observation->address;
+}
+
+/**
+ * g_mime_autocrypt_observation_get_effective_date:
+ * @observation: an observation
+ *
+ * Returns: (transfer none) (nullable): the earlier of message date and receipt
+ * time, or receipt time when undated; %NULL if ignored.
+ */
+GDateTime *
+g_mime_autocrypt_observation_get_effective_date (GMimeAutocryptObservation *observation)
+{
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_OBSERVATION (observation), NULL);
+
+	return observation->date;
+}
+
+/**
+ * g_mime_autocrypt_observation_get_keydata:
+ * @observation: an observation
+ *
+ * Returns: (transfer none) (nullable): advertised bytes, not a validated or trusted key.
+ */
+GBytes *
+g_mime_autocrypt_observation_get_keydata (GMimeAutocryptObservation *observation)
+{
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_OBSERVATION (observation), NULL);
+
+	return observation->keydata;
+}
+
+/**
+ * g_mime_autocrypt_observation_get_prefer_encrypt:
+ * @observation: an observation
+ *
+ * Returns: advertised preference, or %GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE if absent.
+ */
+GMimeAutocryptPreferEncrypt
+g_mime_autocrypt_observation_get_prefer_encrypt (GMimeAutocryptObservation *observation)
+{
+	g_return_val_if_fail (GMIME_IS_AUTOCRYPT_OBSERVATION (observation), GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE);
+
+	return observation->preference;
+}
 
 /**
  * g_mime_message_get_autocrypt_header:

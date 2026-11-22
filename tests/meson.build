@@ -50,6 +50,7 @@ normal_tests = [
   'test-core', 'test-visitor', 'test-iterator', 'test-attachments', 'test-body-builder', 'test-addresses', 'test-params', 'test-iconv', 'test-streams', 'test-cat',
   'test-encodings', 'test-codecs', 'test-decoder-flush', 'test-yenc', 'test-rfc2231', 'test-filters', 'test-best-encoding', 'test-headers',
   'test-mime-part', 'test-mime-whitespace', 'test-partial', 'test-mbox', 'test-autocrypt', 'test-mime', 'test-types',
+  'test-autocrypt-peer-state',
 ]
 crypto_tests = ['test-pgp', 'test-pgpmime', 'test-hidden-recipients']
 if dkim_provider != 'disabled'
