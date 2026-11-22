@@ -581,6 +581,7 @@ g_mime_decode_msgid (const char **in, const char *end)
 		goto error;
 
 	msgid = g_string_new (NULL);
+
 	/* Exchange sometimes wraps the msg-id inside square brackets as well as angles.
 	 * https://github.com/jstedfast/MimeKit/issues/912 */
 	square_brackets = *inptr == '[';
@@ -589,6 +590,7 @@ g_mime_decode_msgid (const char **in, const char *end)
 	 * https://github.com/jstedfast/MimeKit/issues/472 */
 	do {
 		start = inptr;
+
 		if (*inptr == '"') {
 			if (!skip_quoted (&inptr, end))
 				goto error;
@@ -600,6 +602,7 @@ g_mime_decode_msgid (const char **in, const char *end)
 		p = start;
 		while (p < inptr && !g_utf8_validate (p, inptr - p, &p) && *p == '\0')
 			p++;
+
 		if (p < inptr)
 			goto error;
 
@@ -612,6 +615,7 @@ g_mime_decode_msgid (const char **in, const char *end)
 		}
 
 		skip_lwsp (&inptr, end);
+
 		if (inptr == end) {
 			if (angle_addr)
 				goto error;
@@ -633,6 +637,7 @@ g_mime_decode_msgid (const char **in, const char *end)
 
 	if (inptr < end && *inptr == '@') {
 		g_string_append_c (msgid, '@');
+
 		/* Recover <local-part@@domain> by collapsing repeated separators.
 		 * https://github.com/jstedfast/MimeKit/issues/962 */
 		do {
@@ -683,8 +688,10 @@ g_mime_decode_msgid (const char **in, const char *end)
 
  error:
 	w(g_warning ("Invalid msg-id: %.*s", (int) MIN (end - *in, G_MAXINT), *in));
+
 	if (msgid)
 		g_string_free (msgid, TRUE);
+
 	*in = inptr;
 
 	return NULL;
@@ -693,18 +700,34 @@ g_mime_decode_msgid (const char **in, const char *end)
 char *
 _g_mime_parse_reference (const char **in, const char *end)
 {
+	return _g_mime_parse_reference_full (in, end, NULL);
+}
+
+char *
+_g_mime_parse_reference_full (const char **in, const char *end, gboolean *embedded_nul)
+{
+	const char *inptr = *in;
 	char *msgid;
 
-	while (*in < end) {
-		if (!skip_cfws (in, end) || *in == end)
+	while (inptr < end) {
+		if (!skip_cfws (&inptr, end) || inptr == end)
 			break;
-		if (**in == '<') {
-			if ((msgid = decode_msgid (in, end)))
+
+		if (inptr < end && *inptr == '<') {
+			const char *start = inptr;
+
+			if ((msgid = decode_msgid (&inptr, end))) {
+				if (embedded_nul)
+					*embedded_nul = memchr (start, 0, inptr - start) != NULL;
+
 				return msgid;
-		} else if (!skip_word (in, end) && *in < end) {
-			(*in)++;
+			}
+		} else if (!skip_word (&inptr, end) && inptr < end) {
+			inptr++;
 		}
 	}
+
+	*in = inptr;
 
 	return NULL;
 }

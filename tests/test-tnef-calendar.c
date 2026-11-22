@@ -487,6 +487,34 @@ test_zone_struct (void)
 }
 
 static void
+test_dst_boundaries (void)
+{
+	static const struct {
+		int month, day, utc;
+		const char *start, *end;
+	} cases[] = {
+		{ 3, 10, 6, "20240310T010000", "20240310T030000" },
+		{ 11, 3, 5, "20241103T010000", "20241103T010000" }
+	};
+	GByteArray *zone = eastern_zone (TRUE, 300);
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		CalendarFixture f = fixture_new ("IPM.Appointment", FALSE);
+		char *start = g_strconcat ("DTSTART;TZID=Eastern Standard Time:", cases[i].start, NULL);
+		char *end = g_strconcat ("DTEND;TZID=Eastern Standard Time:", cases[i].end, NULL);
+		fixture_time (&f, 0x820d, cases[i].month, cases[i].day, cases[i].utc);
+		fixture_time (&f, 0x820e, cases[i].month, cases[i].day, cases[i].utc + 1);
+		fixture_blob (&f, 0x825e, zone);
+		char *ics = fixture_finish (&f, -1);
+		assert_line (ics, start);
+		assert_line (ics, end);
+		g_free (ics);
+		g_free (start);
+		g_free (end);
+	}
+	g_byte_array_unref (zone);
+}
+
+static void
 test_display_zones (void)
 {
 	GByteArray *zone = eastern_zone (TRUE, 300);
@@ -1189,6 +1217,7 @@ main (int argc, char **argv)
 	g_mime_init ();
 	g_test_add_func ("/tnef/calendar/attachment-fallback", test_attachment_fallback);
 	g_test_add_func ("/tnef/calendar/all-day", test_all_day);
+	g_test_add_func ("/tnef/calendar/dst-boundaries", test_dst_boundaries);
 	g_test_add_func ("/tnef/calendar/robustness/date-bounds", test_date_bounds);
 	g_test_add_func ("/tnef/calendar/exception-overrides", test_exception_overrides);
 	g_test_add_func ("/tnef/calendar/extended-exception", test_extended_exception);

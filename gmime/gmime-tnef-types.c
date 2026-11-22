@@ -405,6 +405,12 @@ _g_mime_tnef_get_charset (int codepage)
 char *
 _g_mime_tnef_decode_string (const char *charset, GBytes *bytes, gboolean unicode)
 {
+	return _g_mime_tnef_decode_string_full (charset, bytes, unicode, NULL);
+}
+
+char *
+_g_mime_tnef_decode_string_full (const char *charset, GBytes *bytes, gboolean unicode, gsize *written)
+{
 	const guint8 *data;
 	gsize length;
 	char *text;
@@ -423,10 +429,13 @@ _g_mime_tnef_decode_string (const char *charset, GBytes *bytes, gboolean unicode
 			length--;
 	}
 
+	if (written)
+		*written = 0;
+
 	if (!length)
 		return g_strdup ("");
 
-	text = _g_mime_iconv_convert ((const char *) data, length, "UTF-8", unicode ? "UTF-16LE" : charset, NULL, NULL);
+	text = _g_mime_iconv_convert ((const char *) data, length, "UTF-8", unicode ? "UTF-16LE" : charset, written, NULL);
 	if (text)
 		return text;
 
@@ -453,11 +462,20 @@ _g_mime_tnef_decode_string (const char *charset, GBytes *bytes, gboolean unicode
 			g_string_append_unichar (decoded, character);
 		}
 
+		if (written)
+			*written = decoded->len;
+
 		return g_string_free (decoded, FALSE);
 	}
 
-	if (!g_ascii_strcasecmp (charset, "UTF-8"))
-		return g_utf8_make_valid ((const char *) data, length);
+	if (!g_ascii_strcasecmp (charset, "UTF-8")) {
+		text = g_utf8_make_valid ((const char *) data, length);
+
+		if (written)
+			*written = strlen (text);
+
+		return text;
+	}
 
 	/* Recover using the reader's default Windows-1252 encoding, including its undefined C1 control slots. */
 	{
@@ -472,6 +490,9 @@ _g_mime_tnef_decode_string (const char *charset, GBytes *bytes, gboolean unicode
 			g_string_append_unichar (decoded, data[index] >= 0x80 && data[index] < 0xa0 ?
 								  c1[data[index] - 0x80] :
 								  data[index]);
+
+		if (written)
+			*written = decoded->len;
 
 		return g_string_free (decoded, FALSE);
 	}

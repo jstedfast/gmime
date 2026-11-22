@@ -36,6 +36,7 @@ G_GNUC_INTERNAL gboolean _g_mime_parse_domain (GString *domain, const char **in,
 					    gboolean replace_nuls);
 G_GNUC_INTERNAL char *_g_mime_parse_message_id_value (const char *value);
 G_GNUC_INTERNAL char *_g_mime_parse_reference (const char **in, const char *end);
+G_GNUC_INTERNAL char *_g_mime_parse_reference_full (const char **in, const char *end, gboolean *embedded_nul);
 
 G_GNUC_INTERNAL gboolean g_mime_skip_comment (const char **in, const char *end);
 #define skip_comment(in,end) g_mime_skip_comment (in, end)

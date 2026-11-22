@@ -123,8 +123,10 @@ assert_content (GMimeEntity *entity, const char *expected, gsize n)
 }
 
 static void
-test_skeleton (gconstpointer valid)
+test_skeleton (gconstpointer data)
 {
+	gboolean valid = GPOINTER_TO_INT (data) == 1;
+	gboolean missing = GPOINTER_TO_INT (data) == 2;
 	static const char skel[] = "Subject: Original\r\nContent-Type: multipart/mixed; boundary=z\r\n\r\n"
 		"--z\r\nContent-Type: text/plain\r\n\r\n\r\n--z\r\nContent-Type: application/x-file\r\n"
 		"X-Exchange-MIME-Skeleton-Content-Id: <file@example.org>\r\n\r\n\r\n--z--\r\n";
@@ -138,7 +140,8 @@ test_skeleton (gconstpointer valid)
 	pw = g_mime_tnef_writer_open_property_writer (f.writer, ATTR (MAPI_PROPERTIES), NULL);
 	string (pw, TAG (SUBJECT_W), "Properties");
 	string (pw, TAG (BODY_W), "Caf\xc3\xa9");
-	binary (pw, TAG (MIME_SKELETON), skel, strlen (skel));
+	const char *skeleton = missing ? "Subject: Original\r\nContent-Type: text/plain\r\n\r\n" : skel;
+	binary (pw, TAG (MIME_SKELETON), skeleton, strlen (skeleton));
 	end_props (pw);
 	pw = attachment (&f, 1, "example.bin");
 	string (pw, TAG (ATTACH_CONTENT_ID_W), valid ? "file@example.org" : "other@example.org");
@@ -154,6 +157,8 @@ test_skeleton (gconstpointer valid)
 		g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, 1);
 		g_assert_cmpint (g_mime_tnef_conversion_result_get_loss (result, 0)->kind, ==, GMIME_TNEF_CONVERSION_LOSS_INVALID_MIME_SKELETON);
 		g_assert_cmpstr (g_mime_message_get_subject (message), ==, "Properties");
+		if (missing)
+			g_assert_nonnull (strstr (g_mime_tnef_conversion_result_get_loss (result, 0)->description, "does not contain"));
 	}
 	g_mime_tnef_conversion_result_unref (result);
 	mixed = GMIME_MULTIPART (g_mime_message_get_mime_part (message));
@@ -164,6 +169,228 @@ test_skeleton (gconstpointer valid)
 	g_assert_null (g_mime_entity_get_header (file, "X-Exchange-MIME-Skeleton-Content-Id"));
 	assert_content (file, "\1\0\3", 3);
 	g_object_unref (message);
+}
+
+static void
+test_embedded_skeleton (gconstpointer data)
+{
+	int kind = GPOINTER_TO_INT (data); /* 0: ordinary attachment, 1: message, 2: corrupt message */
+	gboolean embedded = kind == 1;
+	static const char corrupt[] = "\x07\x03\x02\0\0\0\0\0\xc0\0\0\0\0\0\0\x46" "bad TNEF";
+	static const char skel[] = "Subject: Skeleton\r\nContent-Type: multipart/mixed; boundary=z\r\n\r\n"
+		"--z\r\nContent-Type: text/plain\r\n\r\n\r\n--z\r\nContent-Type: message/rfc822\r\n"
+		"X-Exchange-MIME-Skeleton-Content-Id: <inner@example.org>\r\n\r\n\r\n--z--\r\n";
+	Fixture f;
+	GMimeTnefPropertyWriter *pw;
+	GMimeTnefConversionResult *result;
+	GMimeMessage *message;
+	GMimeMultipart *mixed;
+	GMimeEntity *file;
+
+	start (&f);
+	pw = g_mime_tnef_writer_open_property_writer (f.writer, ATTR (MAPI_PROPERTIES), NULL);
+	string (pw, TAG (SUBJECT_W), "Properties");
+	string (pw, TAG (BODY_W), "Outer body");
+	binary (pw, TAG (MIME_SKELETON), skel, sizeof skel - 1);
+	end_props (pw);
+	pw = attachment (&f, kind ? 5 : 1, "attached");
+	string (pw, TAG (ATTACH_CONTENT_ID_W), "inner@example.org");
+	if (embedded) {
+		GMimeTnefWriter *child;
+		GMimeTnefPropertyWriter *properties;
+		g_assert_true (g_mime_tnef_property_writer_write_property_tag (pw, TAG (ATTACH_DATA_OBJ), NULL));
+		child = g_mime_tnef_property_writer_open_embedded_message (pw, 1252, NULL);
+		properties = g_mime_tnef_writer_open_property_writer (child, ATTR (MAPI_PROPERTIES), NULL);
+		string (properties, TAG (SUBJECT_W), "Inside");
+		string (properties, TAG (BODY_W), "Inner body");
+		end_props (properties);
+		g_assert_true (g_mime_tnef_writer_close (child, NULL));
+		g_object_unref (child);
+	} else if (kind == 2) {
+		binary (pw, TAG (ATTACH_DATA_OBJ), corrupt, sizeof corrupt - 1);
+	} else {
+		binary (pw, TAG (ATTACH_DATA_BIN), "ordinary attachment", 19);
+	}
+	end_props (pw);
+
+	/* A message/rfc822 skeleton requests conversion even with default options. */
+	result = finish (&f, NULL);
+	message = g_mime_tnef_conversion_result_get_message (result);
+	g_assert_cmpstr (g_mime_message_get_subject (message), ==, embedded ? "Skeleton" : "Properties");
+	mixed = GMIME_MULTIPART (g_mime_message_get_mime_part (message));
+	g_assert_cmpint (g_mime_multipart_get_count (mixed), ==, 2);
+	assert_text (g_mime_multipart_get_part (mixed, 0), "Outer body");
+	file = g_mime_multipart_get_part (mixed, 1);
+	g_assert_null (g_mime_entity_get_header (file, "X-Exchange-MIME-Skeleton-Content-Id"));
+	if (embedded) {
+		g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, 0);
+		g_assert_true (GMIME_IS_MESSAGE_PART (file));
+		message = g_mime_message_part_get_message (GMIME_MESSAGE_PART (file));
+		g_assert_cmpstr (g_mime_message_get_subject (message), ==, "Inside");
+		assert_text (g_mime_message_get_mime_part (message), "Inner body");
+	} else {
+		const char *reason;
+		g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, 1);
+		g_assert_cmpint (g_mime_tnef_conversion_result_get_loss (result, 0)->kind, ==, GMIME_TNEF_CONVERSION_LOSS_INVALID_MIME_SKELETON);
+		reason = g_mime_tnef_conversion_result_get_loss (result, 0)->description;
+		if (kind == 2) {
+			g_assert_nonnull (strstr (reason, "could not be converted"));
+			g_assert_true (GMIME_IS_TNEF_PART (file));
+			assert_content (file, corrupt + 16, sizeof corrupt - 17);
+		} else {
+			g_assert_nonnull (strstr (reason, "not an embedded message"));
+			assert_content (file, "ordinary attachment", 19);
+		}
+	}
+	g_mime_tnef_conversion_result_unref (result);
+}
+
+static void
+test_rtf_skeleton_loss (void)
+{
+	const char skel[] = "Subject: Skeleton\r\nContent-Type: text/rtf\r\n\r\n";
+	Fixture f;
+	GMimeTnefPropertyWriter *pw;
+	GMimeTnefConversionResult *result;
+	GMimeMessage *message;
+	guint invalid_rtf = 0, invalid_skeleton = 0;
+
+	start (&f);
+	pw = g_mime_tnef_writer_open_property_writer (f.writer, ATTR (MAPI_PROPERTIES), NULL);
+	string (pw, TAG (SUBJECT_W), "Properties");
+	string (pw, TAG (BODY_W), "Recovered body");
+	binary (pw, TAG (RTF_COMPRESSED), "invalid RTF header", 18);
+	binary (pw, TAG (MIME_SKELETON), skel, sizeof skel - 1);
+	end_props (pw);
+	result = finish (&f, NULL);
+	message = g_mime_tnef_conversion_result_get_message (result);
+	g_assert_cmpstr (g_mime_message_get_subject (message), ==, "Properties");
+	assert_text (g_mime_message_get_mime_part (message), "Recovered body");
+	g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, 2);
+	for (guint i = 0; i < 2; i++) {
+		const GMimeTnefConversionLoss *loss = g_mime_tnef_conversion_result_get_loss (result, i);
+		invalid_rtf += loss->kind == GMIME_TNEF_CONVERSION_LOSS_INVALID_RTF_BODY;
+		invalid_skeleton += loss->kind == GMIME_TNEF_CONVERSION_LOSS_INVALID_MIME_SKELETON;
+	}
+	g_assert_cmpuint (invalid_rtf, ==, 1);
+	g_assert_cmpuint (invalid_skeleton, ==, 1);
+	g_mime_tnef_conversion_result_unref (result);
+}
+
+static void
+test_body_skeletons (void)
+{
+	static const struct {
+		const char *skeleton, *subject;
+		const char *reason;
+	} cases[] = {
+		{ "", "Properties", NULL },
+		/* Without a Content-Type, the skeleton body is implicitly text/plain. */
+		{ "Subject: Headers only\r\n", "Headers only", NULL },
+		{ "Subject: No HTML body\r\nContent-Type: text/html\r\n\r\n", "Properties", "No promoted body" },
+		{ "Not a header\r\n\r\nBody\r\n", "Properties", "could not be parsed" }
+	};
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		Fixture f;
+		GMimeTnefPropertyWriter *pw;
+		GMimeTnefConversionResult *result;
+		GMimeMessage *message;
+
+		start (&f);
+		pw = g_mime_tnef_writer_open_property_writer (f.writer, ATTR (MAPI_PROPERTIES), NULL);
+		string (pw, TAG (SUBJECT_W), "Properties");
+		string (pw, TAG (BODY_W), "Body from MAPI");
+		binary (pw, TAG (MIME_SKELETON), cases[i].skeleton, strlen (cases[i].skeleton));
+		end_props (pw);
+		result = finish (&f, NULL);
+		message = g_mime_tnef_conversion_result_get_message (result);
+		g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, cases[i].reason ? 1 : 0);
+		if (cases[i].reason) {
+			const GMimeTnefConversionLoss *loss = g_mime_tnef_conversion_result_get_loss (result, 0);
+			g_assert_cmpint (loss->kind, ==, GMIME_TNEF_CONVERSION_LOSS_INVALID_MIME_SKELETON);
+			g_assert_nonnull (strstr (loss->description, cases[i].reason));
+		}
+		g_assert_cmpstr (g_mime_message_get_subject (message), ==, cases[i].subject);
+		assert_text (g_mime_message_get_mime_part (message), "Body from MAPI");
+		g_mime_tnef_conversion_result_unref (result);
+	}
+}
+
+static void
+test_nul_references (gconstpointer data)
+{
+	static const char refs[] = "<root@example.org> <bad\0id@example.org> <> <parent@example.org>";
+	gboolean wide = data != NULL;
+	guint32 length = sizeof refs * (wide ? 2 : 1);
+	guint32 header[] = { GUINT32_TO_LE (1), GUINT32_TO_LE (wide ? TAG (INTERNET_REFERENCES_W) : TAG (INTERNET_REFERENCES_A)),
+			     GUINT32_TO_LE (1), GUINT32_TO_LE (length) };
+	GByteArray *wire = g_byte_array_new ();
+	GMimeTnefConversionResult *result;
+	GMimeMessageIdList *list;
+	Fixture f;
+
+	/* Write the MAPI attribute directly: the public string writer takes a C string. */
+	g_byte_array_append (wire, (guint8 *) header, sizeof header);
+	for (guint i = 0; i < sizeof refs; i++) {
+		guint8 unit[] = { refs[i], 0 };
+		g_byte_array_append (wire, unit, wide ? 2 : 1);
+	}
+	while (wire->len % 4)
+		g_byte_array_append (wire, (const guint8 *) "", 1);
+	start (&f);
+	g_assert_true (g_mime_tnef_writer_write_attribute_bytes (f.writer, ATTR (MAPI_PROPERTIES), wire->data, wire->len, NULL));
+	g_byte_array_unref (wire);
+	result = finish (&f, NULL);
+	list = g_mime_message_get_references (g_mime_tnef_conversion_result_get_message (result));
+	g_assert_cmpint (g_mime_message_id_list_length (list), ==, 2);
+	g_assert_cmpstr (g_mime_message_id_list_get_message_id (list, 0), ==, "root@example.org");
+	g_assert_cmpstr (g_mime_message_id_list_get_message_id (list, 1), ==, "parent@example.org");
+	g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, 1);
+	g_assert_cmpint (g_mime_tnef_conversion_result_get_loss (result, 0)->kind, ==, GMIME_TNEF_CONVERSION_LOSS_INVALID_MESSAGE_ID);
+	g_mime_tnef_conversion_result_unref (result);
+}
+
+static void
+test_transport_header_order (void)
+{
+	Fixture f;
+	GMimeTnefPropertyWriter *pw;
+	GMimeTnefConversionResult *result;
+	GMimeMessage *message;
+	GMimeHeaderList *headers;
+
+	start (&f);
+	pw = g_mime_tnef_writer_open_property_writer (f.writer, ATTR (MAPI_PROPERTIES), NULL);
+	string (pw, TAG (SUBJECT_W), "Original");
+	string (pw, TAG (TRANSPORT_MESSAGE_HEADERS_W),
+		"Received: from last.example by inbox.example\r\n"
+		"Subject: Transport subject\r\nX-Transport: dropped\r\n"
+		"Received: from first.example\r\n\tby last.example\r\n");
+	string (pw, TAG (IN_REPLY_TO_ID_W), "<parent@example.org>");
+	string (pw, TAG (INTERNET_REFERENCES_W), "<root@example.org> <parent@example.org>");
+	end_props (pw);
+	result = finish (&f, NULL);
+	message = g_mime_tnef_conversion_result_get_message (result);
+	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
+	g_assert_cmpuint (g_mime_tnef_conversion_result_get_loss_count (result), ==, 0);
+	g_assert_cmpint (g_mime_header_list_get_count (headers), >=, 3);
+	for (int i = 0; i < g_mime_header_list_get_count (headers); i++) {
+		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
+		if (i < 2) {
+			g_assert_cmpint (g_mime_header_get_id (header), ==, GMIME_HEADER_RECEIVED);
+			g_assert_true (g_str_has_prefix (g_mime_header_get_value (header), i ? "from first.example" : "from last.example"));
+		} else {
+			g_assert_cmpint (g_mime_header_get_id (header), !=, GMIME_HEADER_RECEIVED);
+		}
+	}
+	g_assert_cmpstr (g_mime_message_get_subject (message), ==, "Original");
+	g_assert_null (g_mime_entity_get_header (GMIME_ENTITY (message), "X-Transport"));
+	g_assert_cmpstr (g_mime_message_get_in_reply_to (message), ==, "parent@example.org");
+	GMimeMessageIdList *refs = g_mime_message_get_references (message);
+	g_assert_cmpint (g_mime_message_id_list_length (refs), ==, 2);
+	g_assert_cmpstr (g_mime_message_id_list_get_message_id (refs, 0), ==, "root@example.org");
+	g_assert_cmpstr (g_mime_message_id_list_get_message_id (refs, 1), ==, "parent@example.org");
+	g_mime_tnef_conversion_result_unref (result);
 }
 
 static void
@@ -694,6 +921,25 @@ describe_entity (GString *description, GMimeEntity *entity, guint depth, const c
 	type = g_mime_content_type_get_mime_type (g_mime_entity_get_content_type (entity));
 	g_string_append (description, type);
 	g_free (type);
+	/* The reference describes these four fields structurally below. Include
+	 * any other part headers verbatim rather than silently dropping them. */
+	GMimeHeaderList *headers = g_mime_entity_get_header_list (entity);
+	gboolean seen_type = FALSE, seen_id = FALSE, seen_encoding = FALSE, seen_disposition = FALSE;
+	for (int i = 0; i < g_mime_header_list_get_count (headers); i++) {
+		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
+		gboolean *seen;
+		switch (g_mime_header_get_id (header)) {
+		case GMIME_HEADER_CONTENT_TYPE: seen = &seen_type; break;
+		case GMIME_HEADER_CONTENT_DISPOSITION: seen = &seen_disposition; break;
+		case GMIME_HEADER_CONTENT_TRANSFER_ENCODING: seen = &seen_encoding; break;
+		case GMIME_HEADER_CONTENT_ID: seen = &seen_id; break;
+		default:
+			g_string_append_printf (description, "; %s=%s", g_mime_header_get_name (header), g_mime_header_get_value (header));
+			continue;
+		}
+		g_assert_false (*seen);
+		*seen = TRUE;
+	}
 	for (guint index = 0; index < G_N_ELEMENTS (parameters); index++) {
 		const char *value = g_mime_entity_get_content_type_parameter (entity, parameters[index]);
 		if (value)
@@ -840,6 +1086,14 @@ main (int argc, char **argv)
 	g_test_init (&argc, &argv, NULL);
 	g_mime_init ();
 	g_test_add_func ("/tnef/conversion/sender-headers", test_sender_headers);
+	g_test_add_func ("/tnef/conversion/transport-header-order", test_transport_header_order);
+	g_test_add_func ("/tnef/conversion/body-skeletons", test_body_skeletons);
+	g_test_add_data_func ("/tnef/conversion/embedded-skeleton", GINT_TO_POINTER (1), test_embedded_skeleton);
+	g_test_add_data_func ("/tnef/conversion/embedded-skeleton-fallback", NULL, test_embedded_skeleton);
+	g_test_add_data_func ("/tnef/conversion/embedded-skeleton-corrupt", GINT_TO_POINTER (2), test_embedded_skeleton);
+	g_test_add_data_func ("/tnef/conversion/nul-references-unicode", GINT_TO_POINTER (1), test_nul_references);
+	g_test_add_data_func ("/tnef/conversion/nul-references-string8", NULL, test_nul_references);
+	g_test_add_func ("/tnef/conversion/rtf-skeleton-loss", test_rtf_skeleton_loss);
 	g_test_add_func ("/tnef/conversion/body-precedence", test_body_precedence);
 	g_test_add_func ("/tnef/conversion/attachment-media-types", test_attachment_media_types);
 	for (index = 0; index < G_N_ELEMENTS (references); index++) {
@@ -859,6 +1113,7 @@ main (int argc, char **argv)
 	}
 	g_test_add_data_func ("/tnef/conversion/skeleton", GINT_TO_POINTER (1), test_skeleton);
 	g_test_add_data_func ("/tnef/conversion/fallback", NULL, test_skeleton);
+	g_test_add_data_func ("/tnef/conversion/missing-skeleton-attachment", GINT_TO_POINTER (2), test_skeleton);
 	g_test_add_data_func ("/tnef/conversion/embedded-converted", GINT_TO_POINTER (1), test_nested);
 	g_test_add_data_func ("/tnef/conversion/embedded-preserved", NULL, test_nested);
 	g_test_add_func ("/tnef/conversion/inline-and-headers", test_inline_and_headers);

@@ -126,6 +126,7 @@ struct _GMimeTnefPropertyReader {
 	GMimeTnefPropertyTag tag;
 	GMimeTnefNameId *name;
 	gint64 data_start, data_end, value_end;
+	gsize string_length;
 	guint8 scratch[16], object_iid[16];
 	GDateTime *date;
 };
@@ -1710,8 +1711,8 @@ g_mime_tnef_property_reader_read_value_as_string (GMimeTnefPropertyReader *prope
 	if (!(bytes = g_mime_tnef_property_reader_read_value_as_bytes (properties, error)))
 		return NULL;
 
-	text = _g_mime_tnef_decode_string (properties->reader->charset, bytes,
-					   type == GMIME_TNEF_PROPERTY_TYPE_UNICODE);
+	text = _g_mime_tnef_decode_string_full (properties->reader->charset, bytes,
+						type == GMIME_TNEF_PROPERTY_TYPE_UNICODE, &properties->string_length);
 	g_bytes_unref (bytes);
 
 	return text;
@@ -2149,6 +2150,10 @@ g_mime_tnef_property_reader_read_property (GMimeTnefPropertyReader *properties, 
 			g_array_set_size (property->values, 0);
 			break;
 		}
+
+		if (properties->tag == GMIME_TNEF_PROPERTY_TAG_INTERNET_REFERENCES_W ||
+		    properties->tag == GMIME_TNEF_PROPERTY_TAG_INTERNET_REFERENCES_A)
+			property->string_length = properties->string_length;
 
 		g_array_append_val (property->values, value);
 		memset (&value, 0, sizeof value);

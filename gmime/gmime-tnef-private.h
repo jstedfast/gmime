@@ -52,6 +52,7 @@ struct _GMimeTnefProperty {
 	GArray *values;
 	int codepage;
 	char *decoded_binary;
+	gsize string_length; /* UTF-8 bytes for a materialized scalar string */
 };
 
 struct _GMimeTnefPropertySet {
@@ -82,6 +83,7 @@ G_GNUC_INTERNAL char *_g_mime_tnef_guid_to_string (const guint8 *buffer);
 G_GNUC_INTERNAL gboolean _g_mime_tnef_guid_from_string (const char *text, guint8 *buffer);
 G_GNUC_INTERNAL char *_g_mime_tnef_get_charset (int codepage);
 G_GNUC_INTERNAL char *_g_mime_tnef_decode_string (const char *charset, GBytes *bytes, gboolean unicode);
+G_GNUC_INTERNAL char *_g_mime_tnef_decode_string_full (const char *charset, GBytes *bytes, gboolean unicode, gsize *written);
 G_GNUC_INTERNAL GBytes *_g_mime_tnef_encode_string (const char *charset, const char *text, gboolean unicode,
 						    GError **error);
 G_GNUC_INTERNAL int _g_mime_tnef_get_fixed_width (GMimeTnefPropertyType type);

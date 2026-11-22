@@ -773,15 +773,15 @@ create_headers (Conversion *ctx, GMimeMessage *message)
 	GMimeHeaderList *headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 	GDateTime *date = boxed_prop (ctx->props, TAG (CLIENT_SUBMIT_TIME), G_TYPE_DATE_TIME);
 	GMimeTnefPropertySet *props = ctx->props;
-	const char *s = STR (TRANSPORT_MESSAGE_HEADERS_W), *subject;
+	const char *str = STR (TRANSPORT_MESSAGE_HEADERS_W), *subject;
 	char *id = NULL;
 	int n;
 
-	if (s)
-		s += strspn (s, "\r\n");
+	if (str)
+		str += strspn (str, "\r\n");
 
-	if (s && *s) {
-		char *text = g_strconcat (s, "\r\n\r\n", NULL);
+	if (str && *str) {
+		char *text = g_strconcat (str, "\r\n\r\n", NULL);
 		GMimeStream *stream = g_mime_stream_mem_new_with_buffer (text, strlen (text));
 		GMimeParser *parser = g_mime_parser_new_with_stream (stream);
 		GMimeHeaderList *parsed = g_mime_parser_construct_headers (parser, NULL, NULL);
@@ -813,15 +813,15 @@ create_headers (Conversion *ctx, GMimeMessage *message)
 
 	if (subject) {
 		g_mime_message_set_subject (message, subject, NULL);
-	} else if ((s = STR (NORMALIZED_SUBJECT_W))) {
+	} else if ((str = STR (NORMALIZED_SUBJECT_W))) {
 		const char *prefix = STR (SUBJECT_PREFIX_W);
-		char *joined = g_strconcat (prefix ? prefix : "", s, NULL);
+		char *joined = g_strconcat (prefix ? prefix : "", str, NULL);
 
 		g_mime_message_set_subject (message, joined, NULL);
 		g_free (joined);
 	}
 
-	if ((s = g_mime_tnef_message_get_internet_message_id (ctx->tnef)) && !(id = _g_mime_parse_message_id_value (s)))
+	if ((str = g_mime_tnef_message_get_internet_message_id (ctx->tnef)) && !(id = _g_mime_parse_message_id_value (str)))
 		add_loss (LOSS (INVALID_MESSAGE_ID), "Invalid Internet Message-Id.", ctx);
 
 	if (!id) {
@@ -838,8 +838,8 @@ create_headers (Conversion *ctx, GMimeMessage *message)
 		g_free (id);
 	}
 
-	if ((s = STR (IN_REPLY_TO_ID_W))) {
-		if ((id = _g_mime_parse_message_id_value (s))) {
+	if ((str = STR (IN_REPLY_TO_ID_W))) {
+		if ((id = _g_mime_parse_message_id_value (str))) {
 			g_mime_message_set_in_reply_to (message, id);
 			g_free (id);
 		} else {
@@ -847,12 +847,14 @@ create_headers (Conversion *ctx, GMimeMessage *message)
 		}
 	}
 
-	if ((s = STR (INTERNET_REFERENCES_W))) {
+	if ((str = STR (INTERNET_REFERENCES_W))) {
 		GPtrArray *refs = g_ptr_array_new_with_free_func (g_free);
-		const char *end = s + strlen (s);
+		GMimeTnefProperty *prop = g_mime_tnef_property_set_lookup (props, TAG (INTERNET_REFERENCES_W));
+		const char *end = str + prop->string_length;
+		gboolean nul;
 
-		while ((id = _g_mime_parse_reference (&s, end))) {
-			char *normalized = _g_mime_parse_message_id_value (id);
+		while ((id = _g_mime_parse_reference_full (&str, end, &nul))) {
+			char *normalized = nul ? NULL : _g_mime_parse_message_id_value (id);
 
 			if (normalized)
 				g_ptr_array_add (refs, normalized);
@@ -966,11 +968,12 @@ html_charset (GMimeStream *stream)
 			stop = tag == GMIME_HTML_TAG_BODY || (end && tag == GMIME_HTML_TAG_HEAD);
 
 			if (tag == GMIME_HTML_TAG_META && !end) {
-				const char *s = html_attr (token, "charset");
-				const char *equiv = html_attr (token, "http-equiv"), *content = html_attr (token, "content");
+				const char *equiv = html_attr (token, "http-equiv");
+				const char *content = html_attr (token, "content");
+				const char *str = html_attr (token, "charset");
 
-				if (s) {
-					charset = g_strdup (s);
+				if (str) {
+					charset = g_strdup (str);
 					g_strstrip (charset);
 
 					if (!*charset)
@@ -1686,6 +1689,7 @@ done:
 typedef struct {
 	GHashTable *ids, *consumed;
 	char *body_id;
+	const char *failure;
 	gboolean took_text, took_html, took_rtf;
 } Skeleton;
 
@@ -1722,11 +1726,15 @@ fill_leaf (Conversion *ctx, Skeleton *sk, GMimeEntity *entity, const char *id, G
 		if (!attachment)
 			return TRUE;
 
-		if (!g_mime_tnef_attachment_is_embedded_message (attachment))
+		if (!g_mime_tnef_attachment_is_embedded_message (attachment)) {
+			sk->failure = "The matching attachment is not an embedded message.";
 			return FALSE;
+		}
 
-		if (!(embedded = embedded_message (ctx, attachment, error)))
+		if (!(embedded = embedded_message (ctx, attachment, error))) {
+			sk->failure = "The matching embedded message could not be converted.";
 			return FALSE;
+		}
 
 		g_mime_message_part_set_message (GMIME_MESSAGE_PART (entity), embedded);
 		g_object_unref (embedded);
@@ -1744,7 +1752,11 @@ fill_leaf (Conversion *ctx, Skeleton *sk, GMimeEntity *entity, const char *id, G
 		return TRUE;
 
 	if (attachment) {
-		if (!g_mime_tnef_attachment_has_content (attachment) || !(stream = copy_stream (g_mime_tnef_attachment_open_read (attachment), error)))
+		if (!g_mime_tnef_attachment_has_content (attachment)) {
+			sk->failure = "The matching attachment has no content.";
+			return FALSE;
+		}
+		if (!(stream = copy_stream (g_mime_tnef_attachment_open_read (attachment), error)))
 			return FALSE;
 
 		set_content (GMIME_PART (entity), stream);
@@ -1753,8 +1765,10 @@ fill_leaf (Conversion *ctx, Skeleton *sk, GMimeEntity *entity, const char *id, G
 		return TRUE;
 	}
 
-	if (id && sk->body_id && strcmp (id, sk->body_id))
+	if (id && sk->body_id && strcmp (id, sk->body_id)) {
+		sk->failure = "No promoted part matches the skeleton Content-Id.";
 		return FALSE;
+	}
 
 	content_type = g_mime_entity_get_content_type (entity);
 
@@ -1770,7 +1784,11 @@ fill_leaf (Conversion *ctx, Skeleton *sk, GMimeEntity *entity, const char *id, G
 		sk->took_rtf = TRUE;
 	}
 
-	return body && set_body_content (ctx, GMIME_PART (entity), body, error);
+	if (!body) {
+		sk->failure = "No promoted body matches the empty skeleton part.";
+		return FALSE;
+	}
+	return set_body_content (ctx, GMIME_PART (entity), body, error);
 }
 
 static gboolean
@@ -1832,9 +1850,11 @@ restore_skeleton (Conversion *ctx, GBytes *bytes, GError **error)
 		for (i = 0; i < n && ok; i++) {
 			GMimeTnefAttachment *attachment = g_mime_tnef_message_get_attachment (ctx->tnef, i);
 
-			if (g_mime_tnef_attachment_has_content (attachment))
+			if (g_mime_tnef_attachment_has_content (attachment)) {
 				ok = g_hash_table_contains (sk.consumed, attachment);
-			else
+				if (!ok)
+					sk.failure = "The MIME skeleton does not contain a promoted attachment.";
+			} else
 				missing_loss (ctx, attachment, i);
 		}
 
@@ -1849,7 +1869,7 @@ restore_skeleton (Conversion *ctx, GBytes *bytes, GError **error)
 	} else {
 		g_clear_object (&message);
 		g_ptr_array_set_size (ctx->losses, checkpoint);
-		add_loss (LOSS (INVALID_MIME_SKELETON), "The MIME skeleton could not be parsed or matched to all promoted parts; properties were used instead.", ctx);
+		add_loss (LOSS (INVALID_MIME_SKELETON), sk.failure ? sk.failure : "The MIME skeleton could not be parsed.", ctx);
 	}
 
 	return message;
