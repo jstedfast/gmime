@@ -7,6 +7,8 @@
 GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose
 Internet Mail Extension (MIME) as defined by [numerous IETF specifications](https://github.com/jstedfast/gmime/blob/master/RFCs.md).
 
+Browse the [GMime 4 API reference](https://jstedfast.github.io/gmime/).
+
 See [PORTING.md](PORTING.md) to migrate applications from GMime 3.x and review
 compatibility, ownership, and error-handling contracts.
 
@@ -823,9 +825,8 @@ on the `stream` object will be reduced to 0 as well, thereby freeing the `stream
 
 ## Documentation
 
-This is the README file for GMime. Additional documentation related to
-development using GMime has been included within the source release
-of GMime.
+Browse the [GMime 4 API reference](https://jstedfast.github.io/gmime/) online.
+The source release also includes the following documentation:
 
 |               |Description                                                  |
 |---------------|-------------------------------------------------------------|

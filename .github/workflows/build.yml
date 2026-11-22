@@ -178,7 +178,14 @@ jobs:
       run: meson test -C _build --print-errorlogs
     - name: Build documentation
       if: matrix.integration
-      run: meson compile -C _build gmime-doc
+      run: |
+        meson compile -C _build gmime-doc
+        test -s _build/docs/reference/html/index.html
+    - name: Upload API reference for Pages
+      if: matrix.integration && github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+      uses: actions/upload-pages-artifact@v5
+      with:
+        path: _build/docs/reference/html
     - name: Test source distribution
       if: matrix.integration
       run: meson dist -C _build
@@ -206,6 +213,25 @@ jobs:
           ${{ runner.temp }}/glib-build/meson-logs/
           ${{ runner.temp }}/libgcrypt-1.12.3/config.log
         if-no-files-found: ignore
+
+  deploy-docs:
+    name: Publish API reference
+    needs: build
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v5
 
   coverage:
     name: Linux x64 GCC / coverage
