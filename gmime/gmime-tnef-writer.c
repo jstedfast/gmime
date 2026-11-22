@@ -33,15 +33,17 @@
 
 /**
  * SECTION: gmime-tnef-writer
- * @title: TNEF writers
- * @short_description: TNEF attributes, MAPI properties and embedded messages
+ * @title: GMimeTnefWriter
+ * @section_id: gmime-TNEF-writers
+ * @short_description: Write TNEF attributes to a stream
  *
  * Writers generate the signature, version, codepage, lengths and checksums.
  * Message attributes precede attachments. MapiProperties ends the message
  * attributes; AttachRenderData starts each attachment and Attachment ends
  * its attributes. Do not write automatically generated header attributes.
  *
- * Property lists and streamed values use seekable temporary storage, allowing
+ * Use g_mime_tnef_writer_open_property_writer() to obtain a
+ * #GMimeTnefPropertyWriter. Property lists and streamed values use seekable temporary storage, allowing
  * the final output to be forward-only. A custom factory can use files instead
  * of the default block-backed memory. Embedded writers inherit the factory.
  *
@@ -50,6 +52,15 @@
  * Finalizers never complete output: abandoning an unfinished child poisons its
  * parent instead of silently publishing an incomplete attribute. The root
  * output stream remains open and owned by its caller.
+ **/
+
+/**
+ * SECTION: gmime-tnef-property-writer
+ * @title: GMimeTnefPropertyWriter
+ * @short_description: Write MAPI properties, recipient rows and embedded messages
+ *
+ * Obtain this writer from a #GMimeTnefWriter. After writing the properties,
+ * call g_mime_tnef_property_writer_close() before writing another attribute.
  *
  * g_mime_tnef_property_writer_open_rtf_compressed_stream() accepts ordinary RTF
  * bytes and writes either LZFu or an uncompressed wrapper. Its explicit close

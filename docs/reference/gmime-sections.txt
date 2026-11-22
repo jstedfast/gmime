@@ -1,5 +1,6 @@
 <SECTION>
 <FILE>gmime</FILE>
+<TITLE>Initialization and version information</TITLE>
 GMIME_MAJOR_VERSION
 GMIME_MICRO_VERSION
 GMIME_MINOR_VERSION
@@ -1601,6 +1602,7 @@ GMIME_IS_MESSAGE_ID_LIST
 
 <SECTION>
 <FILE>gmime-types</FILE>
+<TITLE>MIME types</TITLE>
 g_mime_types_get_mime_type
 g_mime_types_try_get_extension
 g_mime_types_register
@@ -1608,6 +1610,7 @@ g_mime_types_register
 
 <SECTION>
 <FILE>gmime-utils</FILE>
+<TITLE>MIME utilities</TITLE>
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
 g_mime_utils_generate_message_id
@@ -1629,6 +1632,7 @@ g_mime_utils_header_unfold
 
 <SECTION>
 <FILE>gmime-encodings</FILE>
+<TITLE>Content transfer encodings</TITLE>
 GMimeContentEncoding
 g_mime_content_encoding_from_string
 g_mime_content_encoding_to_string
@@ -1914,6 +1918,7 @@ GMIME_TYPE_INTERNET_ADDRESS_LIST
 
 <SECTION>
 <FILE>gmime-authentication-results</FILE>
+<TITLE>GMimeAuthenticationResults</TITLE>
 GMimeAuthenticationResults
 GMimeAuthenticationMethodResult
 GMimeAuthenticationMethodProperty
@@ -2314,6 +2319,7 @@ GMIME_READER_GET_CLASS
 
 <SECTION>
 <FILE>gmime-charset</FILE>
+<TITLE>Character sets</TITLE>
 GMimeCharset
 g_mime_charset_map_init
 g_mime_charset_map_shutdown
@@ -2336,6 +2342,7 @@ g_mime_charset_can_encode
 
 <SECTION>
 <FILE>gmime-iconv</FILE>
+<TITLE>Character set conversion</TITLE>
 g_mime_iconv_open
 g_mime_iconv
 g_mime_iconv_close
@@ -2343,6 +2350,7 @@ g_mime_iconv_close
 
 <SECTION>
 <FILE>gmime-iconv-utils</FILE>
+<TITLE>String conversion helpers</TITLE>
 g_mime_iconv_strdup
 g_mime_iconv_strndup
 g_mime_iconv_utf8_to_locale
@@ -2466,6 +2474,7 @@ g_mime_openpgp_block_get_type
 
 <SECTION>
 <FILE>gmime-html-writer</FILE>
+<TITLE>GMimeHtmlWriter</TITLE>
 GMimeHtmlWriter
 GMimeHtmlWriterState
 g_mime_html_writer_new
@@ -2493,6 +2502,7 @@ GMimeHtmlWriterClass
 
 <SECTION>
 <FILE>gmime-html-tag-context</FILE>
+<TITLE>GMimeHtmlTagContext</TITLE>
 GMimeHtmlTagContext
 GMimeHtmlTagCallback
 GMimeHeaderFooterFormat
@@ -2519,6 +2529,7 @@ g_mime_html_tag_context_write_tag
 
 <SECTION>
 <FILE>gmime-text-to-html</FILE>
+<TITLE>GMimeTextToHtml</TITLE>
 GMimeTextToHtml
 g_mime_text_to_html_new
 g_mime_text_to_html_get_output_html_fragment
@@ -2542,6 +2553,7 @@ GMimeTextToHtmlClass
 
 <SECTION>
 <FILE>gmime-flowed-to-html</FILE>
+<TITLE>GMimeFlowedToHtml</TITLE>
 GMimeFlowedToHtml
 g_mime_flowed_to_html_new
 g_mime_flowed_to_html_get_delete_space
@@ -2565,6 +2577,7 @@ GMimeFlowedToHtmlClass
 
 <SECTION>
 <FILE>gmime-enriched-to-html</FILE>
+<TITLE>GMimeEnrichedToHtml</TITLE>
 GMimeEnrichedToHtml
 g_mime_enriched_to_html_new
 g_mime_enriched_to_html_get_output_html_fragment
@@ -2925,6 +2938,7 @@ g_mime_html_text_previewer_get_type
 
 <SECTION>
 <FILE>gmime-tnef-types</FILE>
+<TITLE>TNEF attributes and property tags</TITLE>
 GMimeTnefAttributeLevel
 GMimeTnefAttributeType
 GMimeTnefAttributeTag
@@ -3674,6 +3688,7 @@ GMIME_TYPE_TNEF_NAME_ID
 
 <SECTION>
 <FILE>gmime-tnef-options</FILE>
+<TITLE>GMimeTnefOptions</TITLE>
 GMimeTnefOptions
 GMimeTnefComplianceOptions
 GMimeTnefComplianceIssue
@@ -3711,6 +3726,7 @@ GMIME_TYPE_TNEF_COMPLIANCE_OPTIONS
 
 <SECTION>
 <FILE>gmime-tnef-message</FILE>
+<TITLE>GMimeTnefMessage</TITLE>
 GMimeTnefMessage
 GMimeTnefRecipient
 GMimeTnefAttachment
@@ -3758,6 +3774,7 @@ g_mime_tnef_attachment_load_embedded_message
 
 <SECTION>
 <FILE>gmime-tnef-conversion</FILE>
+<TITLE>TNEF to MIME conversion</TITLE>
 GMimeTnefConversionResult
 GMimeTnefConversionOptions
 GMimeTnefConversionLossKind
@@ -3807,8 +3824,8 @@ GMimeTnefPartClass
 
 <SECTION>
 <FILE>gmime-tnef-reader</FILE>
+<TITLE>GMimeTnefReader</TITLE>
 GMimeTnefReader
-GMimeTnefPropertyReader
 g_mime_tnef_reader_new
 g_mime_tnef_reader_get_options
 g_mime_tnef_reader_set_compliance_logger
@@ -3830,6 +3847,18 @@ g_mime_tnef_reader_read_value_as_string
 g_mime_tnef_reader_read_value_as_bytes
 g_mime_tnef_reader_open_value_stream
 g_mime_tnef_reader_get_property_reader
+<SUBSECTION Standard>
+g_mime_tnef_reader_get_type
+GMIME_TYPE_TNEF_READER
+GMimeTnefReaderClass
+GMIME_TNEF_READER
+GMIME_IS_TNEF_READER
+</SECTION>
+
+<SECTION>
+<FILE>gmime-tnef-property-reader</FILE>
+<TITLE>GMimeTnefPropertyReader</TITLE>
+GMimeTnefPropertyReader
 g_mime_tnef_property_reader_get_row_count
 g_mime_tnef_property_reader_get_property_count
 g_mime_tnef_property_reader_get_tag
@@ -3859,13 +3888,8 @@ g_mime_tnef_property_reader_read_property
 g_mime_tnef_property_reader_read_property_set
 g_mime_tnef_property_reader_read_rows_as_property_sets
 <SUBSECTION Standard>
-g_mime_tnef_reader_get_type
 g_mime_tnef_property_reader_get_type
-GMIME_TYPE_TNEF_READER
 GMIME_TYPE_TNEF_PROPERTY_READER
-GMimeTnefReaderClass
-GMIME_TNEF_READER
-GMIME_IS_TNEF_READER
 GMimeTnefPropertyReaderClass
 GMIME_TNEF_PROPERTY_READER
 GMIME_IS_TNEF_PROPERTY_READER
@@ -3873,8 +3897,8 @@ GMIME_IS_TNEF_PROPERTY_READER
 
 <SECTION>
 <FILE>gmime-tnef-writer</FILE>
+<TITLE>GMimeTnefWriter</TITLE>
 GMimeTnefWriter
-GMimeTnefPropertyWriter
 GMimeTnefTemporaryStreamFactory
 g_mime_tnef_writer_new
 g_mime_tnef_writer_get_codepage
@@ -3888,6 +3912,18 @@ g_mime_tnef_writer_open_attribute_stream
 g_mime_tnef_writer_open_property_writer
 g_mime_tnef_writer_flush
 g_mime_tnef_writer_close
+<SUBSECTION Standard>
+g_mime_tnef_writer_get_type
+GMIME_TYPE_TNEF_WRITER
+GMimeTnefWriterClass
+GMIME_TNEF_WRITER
+GMIME_IS_TNEF_WRITER
+</SECTION>
+
+<SECTION>
+<FILE>gmime-tnef-property-writer</FILE>
+<TITLE>GMimeTnefPropertyWriter</TITLE>
+GMimeTnefPropertyWriter
 g_mime_tnef_property_writer_get_row_count
 g_mime_tnef_property_writer_get_property_count
 g_mime_tnef_property_writer_begin_row
@@ -3911,13 +3947,8 @@ g_mime_tnef_property_writer_open_rtf_compressed_stream
 g_mime_tnef_property_writer_open_embedded_message
 g_mime_tnef_property_writer_close
 <SUBSECTION Standard>
-g_mime_tnef_writer_get_type
 g_mime_tnef_property_writer_get_type
-GMIME_TYPE_TNEF_WRITER
 GMIME_TYPE_TNEF_PROPERTY_WRITER
-GMimeTnefWriterClass
-GMIME_TNEF_WRITER
-GMIME_IS_TNEF_WRITER
 GMimeTnefPropertyWriterClass
 GMIME_TNEF_PROPERTY_WRITER
 GMIME_IS_TNEF_PROPERTY_WRITER
@@ -3925,6 +3956,7 @@ GMIME_IS_TNEF_PROPERTY_WRITER
 
 <SECTION>
 <FILE>gmime-tnef-property</FILE>
+<TITLE>TNEF properties</TITLE>
 GMimeTnefProperty
 GMimeTnefPropertySet
 g_mime_tnef_property_ref
@@ -3948,6 +3980,7 @@ GMIME_TYPE_TNEF_PROPERTY_SET
 
 <SECTION>
 <FILE>gmime-filter-rtf-compressed</FILE>
+<TITLE>GMimeFilterRtfCompressed</TITLE>
 GMimeRtfCompressionMode
 GMimeFilterRtfCompressed
 g_mime_filter_rtf_compressed_new

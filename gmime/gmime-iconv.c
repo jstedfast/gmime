@@ -34,7 +34,8 @@
 
 /**
  * SECTION: gmime-iconv
- * @title: gmime-iconv
+ * @title: Character set conversion
+ * @section_id: gmime-gmime-iconv
  * @short_description: Low-level routines for converting text from one charset to another
  * @see_also:
  *

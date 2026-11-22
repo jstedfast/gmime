@@ -34,7 +34,8 @@
 
 /**
  * SECTION: gmime-html-tokenizer
- * @title: HTML tokenizer
+ * @title: GMimeHtmlTokenizer
+ * @section_id: gmime-GMimeHtmlTokenizer
  * @short_description: Streaming HTML lexical and structural state machine
  *
  * The tokenizer retains, but never closes, its input stream. The ordinary

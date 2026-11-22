@@ -27,7 +27,8 @@
 
 /**
  * SECTION: gmime-flowed-to-html
- * @title: Flowed text to HTML
+ * @title: GMimeFlowedToHtml
+ * @section_id: gmime-Flowed-text-to-HTML
  * @short_description: RFC 3676 paragraphs and blockquotes
  *
  * Reassembles flowed paragraphs, removes space stuffing, and honors quote-depth

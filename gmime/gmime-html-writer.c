@@ -32,7 +32,8 @@
 
 /**
  * SECTION: gmime-html-writer
- * @title: HTML writer
+ * @title: GMimeHtmlWriter
+ * @section_id: gmime-HTML-writer
  * @short_description: Stateful UTF-8 HTML serialization
  *
  * Writes escaped text and attributes using MimeKit's HTML output rules.

@@ -39,7 +39,8 @@
 
 /**
  * SECTION: gmime-iconv-utils
- * @title: gmime-iconv-utils
+ * @title: String conversion helpers
+ * @section_id: gmime-gmime-iconv-utils
  * @short_description: High-level routines for converting text from one charset to another
  * @see_also:
  *

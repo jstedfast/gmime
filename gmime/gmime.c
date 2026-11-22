@@ -37,7 +37,8 @@
 
 /**
  * SECTION: gmime
- * @title: gmime
+ * @title: Initialization and version information
+ * @section_id: gmime-gmime
  * @short_description: Initialization, shutdown and version-check routines
  * @see_also:
  *

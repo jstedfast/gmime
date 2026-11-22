@@ -31,7 +31,8 @@
 
 /**
  * SECTION: gmime-enriched-to-html
- * @title: Enriched text to HTML
+ * @title: GMimeEnrichedToHtml
+ * @section_id: gmime-Enriched-text-to-HTML
  * @short_description: Bounded streaming text/enriched conversion
  *
  * Implements MimeKit's RFC 1896 command, parameter, and formatting model.

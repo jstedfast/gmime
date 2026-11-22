@@ -18,6 +18,13 @@
  *  02110-1301, USA.
  */
 
+/**
+ * SECTION: gmime-tnef-options
+ * @title: GMimeTnefOptions
+ * @section_id: gmime-gmime-tnef-options
+ * @short_description: Configure TNEF decoding limits and compliance reporting
+ **/
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

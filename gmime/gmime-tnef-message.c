@@ -18,6 +18,13 @@
  *  02110-1301, USA.
  */
 
+/**
+ * SECTION: gmime-tnef-message
+ * @title: GMimeTnefMessage
+ * @section_id: gmime-gmime-tnef-message
+ * @short_description: Access message bodies, recipients and attachments
+ **/
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

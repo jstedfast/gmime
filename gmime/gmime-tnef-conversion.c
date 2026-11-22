@@ -18,6 +18,13 @@
  *  02110-1301, USA.
  */
 
+/**
+ * SECTION: gmime-tnef-conversion
+ * @title: TNEF to MIME conversion
+ * @section_id: gmime-gmime-tnef-conversion
+ * @short_description: Convert a TNEF message and inspect conversion losses
+ **/
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

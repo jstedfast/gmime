@@ -31,7 +31,8 @@
 
 /**
  * SECTION: gmime-html-token
- * @title: HTML tokens and attributes
+ * @title: GMimeHtmlToken
+ * @section_id: gmime-GMimeHtmlToken
  * @short_description: Immutable, reference-counted HTML lexical tokens
  *
  * Tokens and attributes are boxed values whose references may outlive their

@@ -18,6 +18,13 @@
  *  02110-1301, USA.
  */
 
+/**
+ * SECTION: gmime-tnef-types
+ * @title: TNEF attributes and property tags
+ * @section_id: gmime-gmime-tnef-types
+ * @short_description: Identify attributes, property types and named properties
+ **/
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

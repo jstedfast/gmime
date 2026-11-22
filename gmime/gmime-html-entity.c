@@ -30,7 +30,8 @@
 
 /**
  * SECTION: gmime-html-entity
- * @title: HTML entity decoder
+ * @title: GMimeHtmlEntityDecoder
+ * @section_id: gmime-GMimeHtmlEntityDecoder
  * @short_description: Incremental named and numeric character references
  *
  * Push characters beginning with an ampersand until push() returns %FALSE.

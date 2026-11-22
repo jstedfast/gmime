@@ -29,7 +29,8 @@
 
 /**
  * SECTION: gmime-types
- * @title: MIME Types
+ * @title: MIME types
+ * @section_id: gmime-MIME-Types
  * @short_description: File extension and MIME-type mappings
  *
  * Maps file extensions to MIME-types and MIME-types to preferred extensions,

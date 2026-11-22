@@ -31,7 +31,8 @@
 
 /**
  * SECTION: gmime-authentication-results
- * @title: Authentication-Results
+ * @title: GMimeAuthenticationResults
+ * @section_id: gmime-Authentication-Results
  * @short_description: Authentication result header models
  *
  * Parsed Authentication-Results and ARC-Authentication-Results values, with

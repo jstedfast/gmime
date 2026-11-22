@@ -79,7 +79,8 @@
 
 /**
  * SECTION: gmime-utils
- * @title: gmime-utils
+ * @title: MIME utilities
+ * @section_id: gmime-gmime-utils
  * @short_description: MIME utility functions
  * @see_also:
  *

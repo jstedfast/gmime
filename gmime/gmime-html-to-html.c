@@ -34,7 +34,8 @@
 
 /**
  * SECTION: gmime-html-to-html
- * @title: HTML rewriting
+ * @title: GMimeHtmlToHtml
+ * @section_id: gmime-GMimeHtmlToHtml
  * @short_description: HTML rewriting with callbacks and compliance reporting
  *
  * Rewrites HTML with optional comment filtering, fragment output, noscript

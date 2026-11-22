@@ -34,7 +34,8 @@
 
 /**
  * SECTION: gmime-text-previewer
- * @title: Text previews
+ * @title: GMimeTextPreviewer
+ * @section_id: gmime-GMimeTextPreviewer
  * @short_description: Bounded previews of plain text and HTML
  *
  * Previewers produce UTF-8 plain text with collapsed whitespace and a

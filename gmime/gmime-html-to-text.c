@@ -34,7 +34,8 @@
 
 /**
  * SECTION: gmime-html-to-text
- * @title: HTML to plain text
+ * @title: GMimeHtmlToText
+ * @section_id: gmime-GMimeHtmlToText
  * @short_description: Plain-text rendering of HTML
  *
  * Renders HTML as plain text with optional link destinations and image

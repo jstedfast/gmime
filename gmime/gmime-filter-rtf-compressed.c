@@ -18,6 +18,13 @@
  *  02110-1301, USA.
  */
 
+/**
+ * SECTION: gmime-filter-rtf-compressed
+ * @title: GMimeFilterRtfCompressed
+ * @section_id: gmime-gmime-filter-rtf-compressed
+ * @short_description: Compress or decompress RTF streams
+ **/
+
 #include <config.h>
 #include <errno.h>
 #include <string.h>

@@ -18,6 +18,13 @@
  *  02110-1301, USA.
  */
 
+/**
+ * SECTION: gmime-tnef-property
+ * @title: TNEF properties
+ * @section_id: gmime-gmime-tnef-property
+ * @short_description: Inspect materialized MAPI properties and property sets
+ **/
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

@@ -30,7 +30,8 @@
 
 /**
  * SECTION: gmime-encodings
- * @title: gmime-encodings
+ * @title: Content transfer encodings
+ * @section_id: gmime-gmime-encodings
  * @short_description: Content transfer encoding names
  * @see_also:
  *

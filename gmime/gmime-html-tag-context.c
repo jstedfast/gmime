@@ -26,7 +26,8 @@
 
 /**
  * SECTION: gmime-html-tag-context
- * @title: HTML tag callbacks
+ * @title: GMimeHtmlTagContext
+ * @section_id: gmime-HTML-tag-callbacks
  * @short_description: Borrowed tag metadata and conversion decisions
  *
  * A callback receives borrowed immutable tag metadata and mutable decisions.

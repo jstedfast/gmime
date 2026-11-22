@@ -68,7 +68,8 @@
 
 /**
  * SECTION: gmime-charset
- * @title: gmime-charset
+ * @title: Character sets
+ * @section_id: gmime-gmime-charset
  * @short_description: Charset helper functions
  * @see_also:
  *

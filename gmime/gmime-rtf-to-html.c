@@ -32,7 +32,8 @@
 
 /**
  * SECTION: gmime-rtf-to-html
- * @title: Rich text to HTML
+ * @title: GMimeRtfToHtml
+ * @section_id: gmime-GMimeRtfToHtml
  * @short_description: Render RTF or extract its encapsulated HTML
  *
  * Renders character and paragraph formatting, tables, links and attachment

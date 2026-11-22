@@ -31,24 +31,44 @@
 
 /**
  * SECTION: gmime-tnef-reader
- * @title: TNEF readers
- * @short_description: Forward-only TNEF attributes and MAPI properties
+ * @title: GMimeTnefReader
+ * @section_id: gmime-TNEF-readers
+ * @short_description: Read TNEF attributes from a forward-only stream
  *
  * A #GMimeTnefReader iterates attributes without seeking. For MapiProperties,
- * Attachment and RecipientTable attributes, obtain a #GMimeTnefPropertyReader.
- * Reading a property positions its first value; advance values explicitly
- * only for subsequent values. Recipient tables require advancing rows first.
+ * Attachment and RecipientTable attributes, obtain a #GMimeTnefPropertyReader
+ * with g_mime_tnef_reader_get_property_reader() before advancing the reader.
+ * For example, with @reader positioned on a MapiProperties attribute:
  *
- * Fixed-width scalar values may be reread. Variable-length values are claimed
- * once, whether decoded, materialized, streamed or opened as embedded TNEF.
- * Advancing the enclosing property or attribute invalidates its child streams
- * and embedded readers, even if those readers have buffered input.
+ * |[<!-- language="C" -->
+ * GMimeTnefPropertyReader *properties;
+ *
+ * properties = g_mime_tnef_reader_get_property_reader (reader, error);
+ * if (!properties)
+ *     return FALSE;
+ * while (g_mime_tnef_property_reader_read_next_property (properties, error))
+ *     inspect_tag (g_mime_tnef_property_reader_get_tag (properties));
+ * g_object_unref (properties);
+ * ]|
  *
  * Malformed input is recovered where framing allows and reported through
  * #GMimeTnefComplianceLogger. A false iteration result with no #GError means
  * end-of-input or a malformed structure that cannot be continued; it does not
  * prove that input was valid. Checksums are verified on the next attribute
  * advance, so iterate to the end to validate the last attribute.
+ **/
+
+/**
+ * SECTION: gmime-tnef-property-reader
+ * @title: GMimeTnefPropertyReader
+ * @short_description: Read MAPI properties and their values within a TNEF attribute
+ *
+ * Obtain this reader from a #GMimeTnefReader. Reading a property positions
+ * its first value; advance values explicitly only for subsequent values.
+ * Recipient tables require advancing rows first. Fixed-width scalar values
+ * may be reread. Variable-length values are claimed once, whether decoded,
+ * materialized, streamed or opened as embedded TNEF. Advancing the enclosing
+ * property or attribute invalidates its child streams and embedded readers.
  *
  * Property snapshots use #GValue, UTF-8 strings, #GBytes and #GDateTime.
  * Currency uses exact signed 64-bit units of 1/10000. FILETIME's 100 ns

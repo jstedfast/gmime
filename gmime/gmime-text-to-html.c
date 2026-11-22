@@ -32,7 +32,8 @@
 
 /**
  * SECTION: gmime-text-to-html
- * @title: Plain text to HTML
+ * @title: GMimeTextToHtml
+ * @section_id: gmime-Plain-text-to-HTML
  * @short_description: Quoting, hyperlink detection, and HTML callbacks
  *
  * Implements MimeKit's line-oriented plain and flowed HTML output algorithms.
