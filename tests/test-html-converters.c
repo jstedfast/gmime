@@ -593,7 +593,9 @@ test_fragments (void)
 		{ "<title>T</title><head><title>U</title></head>B", "<title>T</title>B" },
 		{ "<head><template><div>D</div></head></template>X</head>B", "XB" },
 		{ "<head><template><math></template></head>B", "B" },
-		{ "<head><noscript><b>x</b></noscript></head>B", "<b>x</b>B" }
+		{ "<head><noscript><b>x</b></noscript></head>B", "<b>x</b>B" },
+		{ "<a><div><div><div><div><div><div><div><noscript><svg></a><p>",
+		  "<a><div><div><div><div><div><div><div><svg></svg><p>" }
 	};
 	GMimeTextConverter *converter = g_mime_html_to_html_new ();
 

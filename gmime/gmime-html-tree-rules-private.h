@@ -1396,8 +1396,9 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 
 		// Non-formatting inner nodes and formatting nodes beyond the first three are removed
 		// together, so a long inner loop does not repeatedly rebuild the same suffix.
+		// Leave poppedThrough unset: if all eight iterations only move the formatting
+		// element, it is still open and the converter must retain its context.
 		stack_replace (tree, index, block - index + 1, replacement, count);
-		tree->poppedThrough = TRUE;
 
 		if (tree->formPointerIndex >= index)
 			tree->formPointerIndex = stack_index (tree, GMIME_HTML_NAMESPACE_HTML, GMIME_HTML_TAG_FORM, "");
