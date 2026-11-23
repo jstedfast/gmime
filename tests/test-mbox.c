@@ -435,6 +435,8 @@ int main (int argc, char **argv)
 		
 		parser = g_mime_parser_new_with_stream (istream);
 		g_mime_parser_set_format (parser, GMIME_FORMAT_MBOX);
+		if (g_str_has_suffix (path, "content-length.mbox"))
+			g_mime_parser_options_set_respect_content_length (options, TRUE);
 		
 #ifdef ENABLE_MBOX_MATCH
 		tmp = g_strdup ("./tmp/mbox-test.XXXXXX");

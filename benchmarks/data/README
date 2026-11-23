@@ -3,10 +3,12 @@ a4a10817. MimeKit's MIT license is included in LICENSE.
 
 Copied from the MimeKit checkout, preserving its bytes:
   startrek.eml       Benchmarks/TestData/messages/startrek.eml
-  content-length.mbox UnitTests/TestData/mbox/content-length.mbox.txt
   lorem-ipsum.txt    UnitTests/TestData/text/lorem-ipsum.txt
   wikipedia.txt     UnitTests/TestData/encoders/wikipedia.txt
   wikipedia.qp      UnitTests/TestData/encoders/wikipedia.qp
+
+The ContentLengthMbox workloads share tests/data/mbox/input/content-length.mbox
+with the parser tests (MimeKit's UnitTests/TestData/mbox/content-length.mbox.txt).
 
 header-stress.eml is the MessageHeaderStressTest verbatim string extracted
 from the committed Benchmarks/MimeParserBenchmarks.cs at that revision,

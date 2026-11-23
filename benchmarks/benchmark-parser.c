@@ -667,7 +667,7 @@ benchmark_parser (const char *datadir, const char *testdatadir)
 	} inputs[] = {
 		{ "StarTrek", "startrek.eml", 1 },
 		{ "HeaderStress", "header-stress.eml", 1 },
-		{ "ContentLengthMbox", "content-length.mbox", 29 },
+		{ "ContentLengthMbox", "mbox/input/content-length.mbox", 29 },
 		{ "JwzMbox", NULL, 152 },
 		{ "MixedNested64", NULL, 1 },
 		{ "NestedRfc822x1000", NULL, 1 }
@@ -696,7 +696,7 @@ benchmark_parser (const char *datadir, const char *testdatadir)
 						GBytes *bytes;
 
 						if (inputs[i].file) {
-							bytes = benchmark_load (datadir, inputs[i].file);
+							bytes = benchmark_load (i == 2 ? testdatadir : datadir, inputs[i].file);
 						} else if (i == 3) {
 							char *mboxdir = g_build_filename (testdatadir, "mbox", "input", NULL);
 							GBytes *lf = benchmark_load (mboxdir, "jwz.mbox");
