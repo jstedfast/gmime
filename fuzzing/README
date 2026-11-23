@@ -34,7 +34,9 @@ compares rendering across stream chunk sizes and checks that HTML attachment
 callbacks agree with preflight. rtf-compressed checks streaming decompression
 and round trips through the TNEF writer.
 
-html-tokenizer compares token traces and HTML normalization. text-converters
+html-tokenizer compares token traces and whole versus chunked HTML conversion
+with formatting recovery both on and off. With recovery off it also checks
+that converting normalized HTML again leaves it unchanged. text-converters
 checks plain, flowed and HTML conversions, including generated links and
 quote callbacks. filters compares whole and chunked filtering, byte-level
 reference transformations, encoding selection and OpenPGP detection.
@@ -98,6 +100,8 @@ structured-headers directly exercises checked address/list/mailbox/group,
 source-route, parameter, Content-Type, Content-Disposition and
 Authentication-Results parsers, their
 private raw-header recovery paths, and Message-ID/References scanners.
+It also round-trips bounded Autocrypt and Autocrypt-Gossip field values,
+checking address, key bytes, Direct encryption preference and stable wire output.
 Each input and selected prefix/suffix slices are copied into exact-size
 allocations, with no added terminator (even empty slices end at the allocation
 boundary). Results are compared with the same bounded bytes followed by an

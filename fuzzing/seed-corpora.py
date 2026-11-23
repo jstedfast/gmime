@@ -63,6 +63,8 @@ def structured_header_inputs():
         b"attachment; filename*=utf-8''before%00after",
         b'attachment; filename="=?utf-8?q?before=00after?="',
         b"Fri, 21 Nov 1997 09:55:06 -0600", b"21 Nov 97 15:55 GMT",
+        b" addr=alice@example.org; keydata=AP8=\r\n",
+        b" ADDR=alice@example.org; _extra=yes; prefer-encrypt=mutual;\r\n keydata=AP\r\n 8=\r\n",
         b"Fri, 21 Nov 1997 09:55:06 (before\0after) +0530",
         b'Name <local@example.com>, "Last, First" <second@example.net>',
         b"User <local@b\xc3\xbccher.example>", b"User <local@example.com.\xe2\x80\x8b>",
@@ -89,12 +91,15 @@ def structured_headers(messages):
         b"date", b"resent-date", b"message-id", b"resent-message-id", b"content-id",
         b"references", b"in-reply-to", b"received",
         b"authentication-results", b"arc-authentication-results",
+        b"autocrypt", b"autocrypt-gossip",
     }
     for message in messages:
         headers = re.split(rb"\r?\n\r?\n", message, maxsplit=1)[0]
         for match in re.finditer(rb"(?m)^([!-9;-~]+)[ \t]*:[ \t]*([^\r\n]*(?:\r?\n[ \t][^\r\n]*)*)", headers):
-            if match[1].lower() in names:
-                yield match[2]
+            name = match[1].lower()
+            if name in names:
+                # The bounded Autocrypt API expects the field's final line ending.
+                yield match[2] + b"\r\n" if name in (b"autocrypt", b"autocrypt-gossip") else match[2]
 
 
 def mime_inputs(root):
@@ -124,6 +129,10 @@ def mime_inputs(root):
 def regression_inputs():
     # The first suppressed issue differs with one-byte versus buffered reads.
     mime = [b"F:\r\r\0\n\rq\0", b"X" * 1024 + b"\n", b"X" * 1024 + b"\r\n"]
+    # #198: this envelope length selects one-byte reads and uncapped transport diagnostics.
+    mailbox = b"From one\r\nContent-Type: message/rfc822\r\n\r\nFrom two " + b"x" * 165 + b"\nSubject: two\r\n\r\nbody\n"
+    # #199: the trailing text selects fragment output, noscript unwrapping and normal depth.
+    html = b"<a>" + b"<div>" * 7 + b"<noscript><svg></a><p>x"
     lengths = (0, 1, 2, 3, 15, 16, 17, 31, 32, 33, 45, 57, 64, 76, 77, 78,
                127, 128, 129, 255, 256, 257, 4095, 4096, 4097)
     payloads = [bytes((i * 31) & 255 for i in range(length)) for length in lengths]
@@ -168,7 +177,7 @@ def regression_inputs():
             b" <&> http://example.com/\n", bytes(range(256))]
     filters = [bytes([kind]) + data for kind in range(9) for data in text +
                [b"From a\nFrom b\r\n", b"-----BEGIN PGP MESSAGE-----\n\nabc\n-----END PGP MESSAGE-----\n"]]
-    return {"mime-reader": mime, "mime-parser": mime, "tnef-reader": tnef, "tnef-message": tnef,
+    return {"mime-reader": mime + [mailbox], "mime-parser": mime, "tnef-reader": tnef, "tnef-message": tnef,
             "dkim-arc-verifier": [b"From: a@example.org\n\n", b"ARC-Seal: i=1; cv=pass\n\n"],
             "dmarc-verifier": [
                 b"_dmarc.example.org v=DMARC1; p=reject\n@spf pass example.org\n%%\nFrom: a@example.org\n\n",
@@ -180,7 +189,7 @@ def regression_inputs():
                             b"v=DMARC1; p=quarantine; p=reject; np=none; rua=mailto:a@example.org",
                             b"k=ed25519; p=11qYAYKxCrfVS/7TyWQHOg7hcvPapiMlrwIaaPcHURo="],
             "rtf-compressed": text, "rtf-converters": text, "rtf-tokenizer": text,
-            "html-tokenizer": text, "text-converters": text, "filters": filters, "compliance-validators": mime,
+            "html-tokenizer": text + [html], "text-converters": text, "filters": filters, "compliance-validators": mime,
             "encoders": encoders, "decoders": decoders, "rfc2047": rfc2047,
             "structured-headers": structured_header_inputs(), "smtp-address-validator": smtp_inputs()}
 

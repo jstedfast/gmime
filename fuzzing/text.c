@@ -371,6 +371,12 @@ fuzz_html_tokenizer (const guint8 *data, gsize length)
 	g_mime_html_to_html_set_no_script_handling (GMIME_HTML_TO_HTML (converter), (selector >> 4) % 3);
 	g_mime_html_to_html_set_filter_comments (GMIME_HTML_TO_HTML (converter), (selector & 64) != 0);
 	g_mime_html_to_html_set_max_element_depth (GMIME_HTML_TO_HTML (converter), (selector & 8) ? 4 : 4096);
+	g_mime_html_to_html_set_formatting_recovery_enabled (GMIME_HTML_TO_HTML (converter), TRUE);
+	GByteArray *recovered = check_converter (g_object_ref (converter), data, length, selector);
+	g_byte_array_unref (recovered);
+	/* A formatting fallback can recur on reparse and escape already-literal text.
+	 * Check chunk independence above, and the normalizer's fixed point below. */
+	g_mime_html_to_html_set_formatting_recovery_enabled (GMIME_HTML_TO_HTML (converter), FALSE);
 	GByteArray *rendered = check_converter (g_object_ref (converter), data, length, selector);
 	/* The first pass may have encoded over-depth markup as text. Recheck
 	 * the normalized UTF-8 output without imposing that small depth limit. */

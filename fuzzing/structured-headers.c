@@ -389,6 +389,50 @@ check_date (const char *exact, const char *padded, gsize length)
 }
 
 static void
+check_autocrypt (const char *data, gsize length, GMimeAutocryptHeaderKind kind)
+{
+	GError *error = NULL;
+	GMimeAutocryptHeader *header = g_mime_autocrypt_header_parse (data, length, kind, &error), *again;
+	GBytes *wire, *next;
+
+	if (!header) {
+		fuzz_check_error (error);
+		g_error_free (error);
+		return;
+	}
+	g_assert_no_error (error);
+	wire = g_mime_autocrypt_header_format (header, kind, &error);
+	if (wire) {
+		const char *raw = g_bytes_get_data (wire, &length);
+
+		g_assert_no_error (error);
+		again = g_mime_autocrypt_header_parse (raw, length, kind, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (again);
+		g_assert_cmpstr (g_mime_autocrypt_header_get_address_as_string (again), ==,
+				 g_mime_autocrypt_header_get_address_as_string (header));
+		g_assert_true (g_bytes_equal (g_mime_autocrypt_header_get_keydata (header),
+					      g_mime_autocrypt_header_get_keydata (again)));
+		if (kind == GMIME_AUTOCRYPT_HEADER_DIRECT)
+			g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (again), ==,
+					 g_mime_autocrypt_header_get_prefer_encrypt (header));
+		next = g_mime_autocrypt_header_format (again, kind, &error);
+		g_assert_no_error (error);
+		g_assert_nonnull (next);
+		g_assert_true (g_bytes_equal (wire, next));
+		g_bytes_unref (next);
+		g_object_unref (again);
+		g_bytes_unref (wire);
+	} else {
+		/* Canonical folding can exceed the wire limit, and not every address fits one line. */
+		g_assert_true (g_error_matches (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG) ||
+			       g_error_matches (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION));
+		g_error_free (error);
+	}
+	g_object_unref (header);
+}
+
+static void
 check_slice (GMimeParserOptions *options, GMimeFormatOptions *format, const guint8 *data, gsize length,
 	     gboolean round_trip)
 {
@@ -459,6 +503,8 @@ check_slice (GMimeParserOptions *options, GMimeFormatOptions *format, const guin
 	g_free (expected);
 	g_free (actual);
 	check_date (exact, padded, length);
+	check_autocrypt (exact, length, GMIME_AUTOCRYPT_HEADER_DIRECT);
+	check_autocrypt (exact, length, GMIME_AUTOCRYPT_HEADER_GOSSIP);
 	fuzz_equal (data, length, (const guint8 *) exact, length, "Structured-header input preservation");
 	g_mime_parser_options_set_warning_callback (options, NULL, NULL, NULL);
 	g_string_free (warnings, TRUE);
