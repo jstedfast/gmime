@@ -2916,6 +2916,48 @@ test_consumed_line_state (void)
 }
 
 static void
+test_mailbox_marker_body_linefeed (void)
+{
+	static const char wire[] = "From one\r\nContent-Type: message/rfc822\r\n\r\n"
+		"From two " "01234567890123456789012345678901234567890123456789"
+		"01234567890123456789012345678901234567890123456789"
+		"01234567890123456789012345678901234567890123456789\n"
+		"Subject: two\r\n\r\nbody\n";
+	static const guint chunks[] = { 1, 4096 };
+	guint chunk;
+
+	testsuite_check ("Mailbox envelope after an empty embedded message is not a body line");
+	for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+		ReaderInput *input = new_input (wire, sizeof (wire) - 1, chunks[chunk]);
+		GMimeReader *reader = g_mime_reader_new_with_format (NULL, (GMimeStream *) input, GMIME_FORMAT_MBOX);
+		GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+		GError *error = NULL;
+		guint i, found = 0;
+
+		g_mime_reader_set_compliance_logger (reader, collect_compliance, issues, NULL);
+		g_assert_true (g_mime_reader_read_message (reader, &error));
+		g_assert_no_error (error);
+		g_assert_true (g_mime_reader_read_message (reader, &error));
+		g_assert_no_error (error);
+		for (i = 0; i < issues->len; i++) {
+			const GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+			if (issue->violation == GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY) {
+				g_assert_cmpint (issue->stream_offset, ==, sizeof (wire) - 2);
+				g_assert_cmpuint (issue->line_number, ==, 7);
+				g_assert_cmpuint (issue->column_number, ==, 5);
+				found++;
+			}
+		}
+		g_assert_cmpuint (found, ==, 1);
+		g_array_unref (issues);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_mailbox_pretext_line_state (void)
 {
 	static const guint widths[] = { 999, 1000, 1001, 1025 };
@@ -3120,7 +3162,7 @@ test_scan_corpus (const char *datadir)
 		g_list_free_full (files, g_free);
 		g_free (directory);
 	}
-	g_assert_cmpuint (count, ==, 70);
+	g_assert_cmpuint (count, ==, 71);
 	g_assert_cmpuint (mailboxes, >=, 2);
 }
 
@@ -3473,6 +3515,7 @@ main (int argc, char **argv)
 	test_content_id_model_preservation ();
 	test_consumed_line_state ();
 	test_mailbox_pretext_line_state ();
+	test_mailbox_marker_body_linefeed ();
 	test_scan_corpus (datadir);
 	test_generated_scans ();
 	test_content_input_slices ();

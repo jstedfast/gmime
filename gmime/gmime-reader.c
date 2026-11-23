@@ -2429,7 +2429,9 @@ step_entity (GMimeReader *reader, gboolean message)
 
 				if (((priv->active_boundary || priv->format != GMIME_FORMAT_MESSAGE) &&
 				     priv->input_index == priv->input_end) || found) {
-					if (found && priv->active_logger) {
+					/* A mailbox envelope is outside the MIME body, and its
+					 * terminator need not be in the probe buffer. */
+					if (found && !priv->mailbox_boundary && lf && priv->active_logger) {
 						if (!length || start[length - 1] != '\r')
 							report_at (reader, GMIME_COMPLIANCE_BARE_LINEFEED_IN_BODY,
 								   input_offset (priv) + length, priv->line_number,
