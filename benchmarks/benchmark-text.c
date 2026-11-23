@@ -136,6 +136,7 @@ filter_tag (GMimeHtmlTagContext *context, GMimeHtmlWriter *writer, gpointer user
 typedef struct {
 	GByteArray *input;
 	Operation operation;
+	gboolean recovery, fail_on_limit;
 } TextData;
 
 static guint64
@@ -153,6 +154,9 @@ process_document (gpointer data)
 	if (test->operation == TOKENS) {
 		GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new (input);
 		GMimeHtmlToken *token;
+		g_mime_html_tokenizer_set_formatting_recovery_enabled (tokenizer, test->recovery);
+		if (test->fail_on_limit)
+			g_mime_html_tokenizer_set_limit_exceeded_behavior (tokenizer, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
 		for (;;) {
 			benchmark_check (g_mime_html_tokenizer_read_next_token (tokenizer, &token, &error), "reading HTML token", &error);
 			if (!token)
@@ -171,6 +175,10 @@ process_document (gpointer data)
 			break;
 		default: converter = g_mime_html_to_html_new (); break;
 		}
+		if (test->recovery)
+			g_mime_html_to_html_set_formatting_recovery_enabled (GMIME_HTML_TO_HTML (converter), TRUE);
+		if (test->fail_on_limit)
+			g_mime_html_to_html_set_limit_exceeded_behavior (GMIME_HTML_TO_HTML (converter), GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
 		if (test->operation == HTML_CALLBACK) {
 			g_mime_html_to_html_set_filter_comments (GMIME_HTML_TO_HTML (converter), TRUE);
 			g_mime_html_to_html_set_html_tag_callback (GMIME_HTML_TO_HTML (converter), filter_tag, NULL, NULL);
@@ -218,7 +226,7 @@ benchmark_text (const char *datadir, const char *testdatadir)
 	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
 		if (benchmark_selected (cases[i].name)) {
 			GBytes *bytes;
-			TextData data;
+			TextData data = { 0 };
 
 			if (cases[i].document == HTML_SPEC)
 				bytes = benchmark_load (testdatadir, "html-tokenizer/test.html");
@@ -234,6 +242,38 @@ benchmark_text (const char *datadir, const char *testdatadir)
 				g_byte_array_remove_range (data.input, 0, 3);
 			benchmark_run (cases[i].name, data.input->len, process_document, &data);
 			g_byte_array_unref (data.input);
+		}
+	}
+
+	for (guint sections = 0; sections <= 1024; sections = sections ? sections * 2 : 256) {
+		for (int enabled = 0; enabled <= 1; enabled++) {
+			const char *mode = enabled ? "Enabled" : "Disabled";
+			char *name = sections ? g_strdup_printf ("Html/Formatting/Scaling/%u/%s", sections, mode) :
+						g_strdup_printf ("Html/Formatting/Newsletter/%s", mode);
+			if (benchmark_selected (name)) {
+				TextData data = { NULL, sections ? TOKENS : HTML_STRING, TRUE, TRUE };
+				if (sections) {
+					GString *html = g_string_new (NULL);
+					/* Keep fifteen distinct entries open; each section uses the sixteenth. */
+					for (guint i = 0; i < 15; i++)
+						g_string_append_printf (html, "<i title='%u'>", i);
+					for (guint i = 0; i < sections; i++)
+						g_string_append (html, "<b>word</b>");
+					for (guint i = 0; i < 15; i++)
+						g_string_append (html, "</i>");
+					data.input = g_bytes_unref_to_array (g_string_free_to_bytes (html));
+				} else {
+					data.input = g_bytes_unref_to_array (benchmark_load (testdatadir, "html-converters/planet-fitness.html"));
+				}
+				guint64 count = process_document (&data);
+				if (sections && count != 30 + 3 * sections)
+					g_error ("Unexpected token count in %s", name);
+				data.recovery = enabled;
+				data.fail_on_limit = FALSE;
+				benchmark_run (name, data.input->len, process_document, &data);
+				g_byte_array_unref (data.input);
+			}
+			g_free (name);
 		}
 	}
 }

@@ -315,7 +315,7 @@ clear_slot (gpointer data)
 void
 _g_mime_html_tree_set_formatting_capacity (HtmlTree *tree, guint capacity)
 {
-	/* Experimental: opt in before parsing, independently of max_depth. */
+	/* Opt in before parsing, independently of max_depth. */
 	g_return_if_fail (!tree->htmlCreated && !stack_count (tree));
 	g_return_if_fail (capacity <= G_MAXINT);
 

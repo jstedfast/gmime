@@ -71,6 +71,9 @@ void g_mime_html_tokenizer_set_ignore_truncated_tags (GMimeHtmlTokenizer *tokeni
 guint g_mime_html_tokenizer_get_max_element_depth (GMimeHtmlTokenizer *tokenizer);
 void g_mime_html_tokenizer_set_max_element_depth (GMimeHtmlTokenizer *tokenizer, guint maximum);
 
+gboolean g_mime_html_tokenizer_get_formatting_recovery_enabled (GMimeHtmlTokenizer *tokenizer);
+void g_mime_html_tokenizer_set_formatting_recovery_enabled (GMimeHtmlTokenizer *tokenizer, gboolean enabled);
+
 GMimeHtmlLimitExceededBehavior g_mime_html_tokenizer_get_limit_exceeded_behavior (GMimeHtmlTokenizer *tokenizer);
 void g_mime_html_tokenizer_set_limit_exceeded_behavior (GMimeHtmlTokenizer *tokenizer,
 							GMimeHtmlLimitExceededBehavior value);

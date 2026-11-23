@@ -69,6 +69,9 @@ void g_mime_html_to_html_set_output_html_fragment (GMimeHtmlToHtml *converter, g
 guint g_mime_html_to_html_get_max_element_depth (GMimeHtmlToHtml *converter);
 void g_mime_html_to_html_set_max_element_depth (GMimeHtmlToHtml *converter, guint value);
 
+gboolean g_mime_html_to_html_get_formatting_recovery_enabled (GMimeHtmlToHtml *converter);
+void g_mime_html_to_html_set_formatting_recovery_enabled (GMimeHtmlToHtml *converter, gboolean enabled);
+
 GMimeHtmlLimitExceededBehavior g_mime_html_to_html_get_limit_exceeded_behavior (GMimeHtmlToHtml *converter);
 void g_mime_html_to_html_set_limit_exceeded_behavior (GMimeHtmlToHtml *converter, GMimeHtmlLimitExceededBehavior value);
 

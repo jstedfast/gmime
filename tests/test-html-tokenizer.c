@@ -1094,6 +1094,26 @@ test_formatting_limits (void)
 }
 
 static void
+test_formatting_recovery_setting (void)
+{
+	for (int enabled = 0; enabled <= 1; enabled++) {
+		GMimeHtmlTokenizer *tokenizer = formatting_tokenizer ("<p>text</p>", 0);
+
+		g_mime_html_tokenizer_set_formatting_recovery_enabled (tokenizer, !enabled);
+		g_mime_html_tokenizer_set_formatting_recovery_enabled (tokenizer, enabled);
+		g_mime_html_token_unref (next (tokenizer));
+		g_mime_html_tokenizer_set_formatting_recovery_enabled (tokenizer, enabled);
+#ifndef G_DISABLE_CHECKS
+		g_test_expect_message ("gmime", G_LOG_LEVEL_CRITICAL, "*!tokenizer->started*");
+		g_mime_html_tokenizer_set_formatting_recovery_enabled (tokenizer, !enabled);
+		g_test_assert_expected_messages ();
+#endif
+		g_assert_cmpint (g_mime_html_tokenizer_get_formatting_recovery_enabled (tokenizer), ==, enabled);
+		g_object_unref (tokenizer);
+	}
+}
+
+static void
 test_formatting_tokenization (void)
 {
 	const char *tail = "note</custom-note></p><p>footer</p>";
@@ -1103,10 +1123,11 @@ test_formatting_tokenization (void)
 		unsupported
 	};
 	for (guint i = 0; i < G_N_ELEMENTS (inputs); i++) {
-		GMimeHtmlTokenizer *tokenizer = formatting_tokenizer (inputs[i], 32);
+		GMimeHtmlTokenizer *tokenizer = formatting_tokenizer (inputs[i], 0);
 		GString *starts = g_string_new (NULL), *data = g_string_new (NULL);
 		guint cdata = 0, bogus = 0;
 		GMimeHtmlToken *token;
+		g_mime_html_tokenizer_set_formatting_recovery_enabled (tokenizer, TRUE);
 		while ((token = next (tokenizer))) {
 			if (token->kind == GMIME_HTML_TOKEN_TAG && !token->is_end_tag)
 				g_string_append_printf (starts, " %s", token->name);
@@ -1154,6 +1175,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html/formatting/budget", test_formatting_budget);
 	g_test_add_func ("/html/formatting/limits", test_formatting_limits);
 	g_test_add_func ("/html/formatting/tokenization", test_formatting_tokenization);
+	g_test_add_func ("/html/formatting/setting", test_formatting_recovery_setting);
 	g_test_add_func ("/html/tokenizer/upstream-corpus", test_corpus);
 	g_test_add_func ("/html/entities/upstream", test_entities);
 	g_test_add_func ("/html/tokenizer/compliance", test_compliance);

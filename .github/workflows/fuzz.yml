@@ -47,7 +47,7 @@ jobs:
           name: formatting-regression-results
           path: formatting-results.tsv
       - name: Check converter recovery and literal fallback
-        run: _build/tests/test-html-converters -p /html-converters/formatting-prototype-fallback
+        run: _build/tests/test-html-converters -p /html-converters/formatting-recovery-fallback
 
   targets:
     runs-on: ubuntu-26.04

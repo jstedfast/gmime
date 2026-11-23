@@ -64,7 +64,7 @@ struct _GMimeHtmlTokenizer {
 	GMimeHtmlTokenizerState state;
 	gboolean decode, ignore_truncated, isEndTag, bang, nestedComment;
 	GMimeHtmlLimitExceededBehavior limit_behavior;
-	gboolean literal_remainder, stream_literal_text, limit_failed;
+	gboolean literal_remainder, stream_literal_text, limit_failed, started;
 	gunichar quote, cdata[3];
 	guint cdataIndex;
 	gint64 position, markOffset;
@@ -688,6 +688,7 @@ g_mime_html_tokenizer_read_next_token (GMimeHtmlTokenizer *tokenizer, GMimeHtmlT
 	g_return_val_if_fail (GMIME_IS_HTML_TOKENIZER (tokenizer), FALSE);
 	g_return_val_if_fail (token != NULL, FALSE);
 
+	tokenizer->started = TRUE;
 	*token = NULL;
 
 	while (!tokenizer->error && tokenizer->state != GMIME_HTML_TOKENIZER_STATE_END_OF_FILE) {
@@ -912,6 +913,44 @@ g_mime_html_tokenizer_set_scripting_enabled (GMimeHtmlTokenizer *tokenizer, gboo
 	g_return_if_fail (GMIME_IS_HTML_TOKENIZER (tokenizer));
 
 	tokenizer->tree->scripting = !!enabled;
+}
+
+/**
+ * g_mime_html_tokenizer_get_formatting_recovery_enabled:
+ * @tokenizer: a #GMimeHtmlTokenizer
+ *
+ * Returns: %TRUE if bounded formatting recovery is enabled (default: %FALSE).
+ **/
+gboolean
+g_mime_html_tokenizer_get_formatting_recovery_enabled (GMimeHtmlTokenizer *tokenizer)
+{
+	g_return_val_if_fail (GMIME_IS_HTML_TOKENIZER (tokenizer), FALSE);
+
+	return tokenizer->tree->formatting != NULL;
+}
+
+/**
+ * g_mime_html_tokenizer_set_formatting_recovery_enabled:
+ * @tokenizer: a #GMimeHtmlTokenizer
+ * @enabled: whether to track formatting elements that may be reopened
+ *
+ * Change this option before the first call to g_mime_html_tokenizer_read_next_token().
+ * Recovery follows formatting that a browser may reconstruct after an implicit
+ * close, without emitting extra tokens. It uses bounded state independent of
+ * the element depth limit. If reconstruction cannot continue, the configured
+ * limit-exceeded behavior applies.
+ **/
+void
+g_mime_html_tokenizer_set_formatting_recovery_enabled (GMimeHtmlTokenizer *tokenizer, gboolean enabled)
+{
+	g_return_if_fail (GMIME_IS_HTML_TOKENIZER (tokenizer));
+
+	if (!!enabled == (tokenizer->tree->formatting != NULL))
+		return;
+
+	g_return_if_fail (!tokenizer->started);
+
+	_g_mime_html_tree_set_formatting_capacity (tokenizer->tree, enabled ? 16 : 0);
 }
 
 /**

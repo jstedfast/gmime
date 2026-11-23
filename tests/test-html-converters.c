@@ -24,7 +24,6 @@
 #include <gmime/gmime.h>
 #include <gmime/gmime-html-to-text.h>
 #include <gmime/gmime-html-to-html.h>
-#include <gmime/gmime-html-tree-internal.h>
 #include <gmime/gmime-text-previewer.h>
 
 static const char *data_dir = "tests/data/html-converters";
@@ -498,7 +497,7 @@ test_callbacks_compliance (void)
 }
 
 static void
-test_formatting_prototype_fallback (void)
+test_formatting_recovery_fallback (void)
 {
 	static const GMimeHtmlNoScriptHandling modes[] = {
 		GMIME_HTML_NO_SCRIPT_HANDLING_SCRIPTING_DISABLED, GMIME_HTML_NO_SCRIPT_HANDLING_SCRIPTING_ENABLED
@@ -511,7 +510,7 @@ test_formatting_prototype_fallback (void)
 		GError *error = NULL;
 		char *output;
 
-		_g_mime_html_to_html_enable_formatting_prototype (html);
+		g_mime_html_to_html_set_formatting_recovery_enabled (html, TRUE);
 		g_mime_html_to_html_set_no_script_handling (html, modes[i]);
 		output = g_mime_text_converter_convert_to_string (converter, input, -1, &error);
 		g_assert_no_error (error);
@@ -880,7 +879,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html-converters/cdata-round-trip", test_cdata_round_trip);
 	g_test_add_func ("/html-converters/limits", test_limits);
 	g_test_add_func ("/html-converters/depth-limit-behavior", test_depth_limit_behavior);
-	g_test_add_func ("/html-converters/formatting-prototype-fallback", test_formatting_prototype_fallback);
+	g_test_add_func ("/html-converters/formatting-recovery-fallback", test_formatting_recovery_fallback);
 	g_test_add_func ("/html-converters/fragments", test_fragments);
 	g_test_add_func ("/html-converters/filter", test_html_filter);
 	g_test_add_func ("/html-converters/foreign", test_foreign_content);
