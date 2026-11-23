@@ -112,8 +112,8 @@ static const unsigned char gmime_datetok_table[256] = {
 	 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,119,111,111,111,111,111,
 	111, 73, 75, 75, 73, 73, 73, 75, 73, 73, 75, 79, 75, 73, 73, 73,
 	 75, 79, 73, 73, 73, 73, 75, 77, 79, 73, 79,111,111,111,111,111,
-	111,105,107,107,105,105,105,107,105,105,107,111,107,105,105,105,
-	107,111,105,105,105,105,107,111,111,105,111,111,111,111,111,111,
+	111, 73, 75, 75, 73, 73, 73, 75, 73, 73, 75, 79, 75, 73, 73, 73,
+	 75, 79, 73, 73, 73, 73, 75, 79, 79, 73, 79,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
@@ -478,16 +478,16 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 static gboolean
 get_am_pm (date_token *token, int *hour)
 {
-	if (!is_tzone_alpha (token) || token->len != 2 || token->start[1] != 'M')
+	if (token->len != 2)
 		return FALSE;
 
-	if (token->start[0] == 'A') {
+	if (!g_ascii_strncasecmp (token->start, "AM", 2)) {
 		if (*hour == 12)
 			*hour = 0;
 		return TRUE;
 	}
 
-	if (token->start[0] == 'P') {
+	if (!g_ascii_strncasecmp (token->start, "PM", 2)) {
 		if (*hour < 12)
 			*hour += 12;
 		return TRUE;
@@ -517,7 +517,7 @@ get_tzone (date_token *token, int *offset)
 
 		for (t = 0; t < G_N_ELEMENTS (tz_offsets); t++) {
 			if (strlen (tz_offsets[t].name) == token->len &&
-			    !memcmp (token->start, tz_offsets[t].name, token->len))
+			    !g_ascii_strncasecmp (token->start, tz_offsets[t].name, token->len))
 				break;
 		}
 
