@@ -30,6 +30,7 @@
 #include "gmime-error.h"
 
 #include "gmime-object-private.h"
+#include "gmime-parse-utils.h"
 
 /**
  * SECTION: gmime-autocrypt
@@ -193,6 +194,24 @@ parse_keydata (char *value, GError **error)
 	return g_bytes_new_take (decoded, length);
 }
 
+/* A semicolon delimits attributes only outside a quoted string. */
+static gssize
+attribute_value_length (const char *value, const char *end)
+{
+	const char *p = value;
+
+	while (p < end && *p != ';') {
+		if (*p == '"') {
+			if (!g_mime_skip_quoted (&p, end))
+				return -1;
+		} else {
+			p++;
+		}
+	}
+
+	return p - value;
+}
+
 /**
  * g_mime_autocrypt_header_parse:
  * @raw_value: (array length=length) (element-type guint8): bytes following the colon
@@ -214,7 +233,7 @@ g_mime_autocrypt_header_parse (const char *raw_value, gsize length, GMimeAutocry
 {
 	GMimeAutocryptHeader *ah;
 	char *text, *name, *next;
-	const char *problem;
+	const char *end, *problem;
 	GHashTable *seen;
 
 	g_return_val_if_fail (raw_value != NULL || length == 0, NULL);
@@ -231,19 +250,30 @@ g_mime_autocrypt_header_parse (const char *raw_value, gsize length, GMimeAutocry
 
 	ah = g_mime_autocrypt_header_new ();
 	seen = g_hash_table_new (g_str_hash, g_str_equal);
+	end = text + strlen (text);
 
 	for (name = text; name; name = next) {
 		char *value, *inptr;
+		gssize n;
 
-		if ((next = strchr (name, ';')))
-			*next++ = '\0';
-
-		if (!(value = strchr (name, '='))) {
+		value = name + strcspn (name, "=;");
+		if (*value != '=') {
 			problem = "Missing Autocrypt attribute value";
 			goto invalid;
 		}
 
 		*value++ = '\0';
+		if ((n = attribute_value_length (value, end)) < 0) {
+			problem = "Unterminated quoted Autocrypt attribute";
+			goto invalid;
+		}
+
+		next = value + n;
+		if (*next)
+			*next++ = '\0';
+		else
+			next = NULL;
+
 		g_strstrip (name);
 		g_strstrip (value);
 
@@ -323,7 +353,7 @@ fail:
 GBytes *
 g_mime_autocrypt_header_format (GMimeAutocryptHeader *ah, GMimeAutocryptHeaderKind kind, GError **error)
 {
-	gsize length, prefix, column;
+	gsize length, prefix, column, addrlen;
 	const char *addr, *inptr;
 	const guchar *data;
 	GString *value;
@@ -339,16 +369,18 @@ g_mime_autocrypt_header_format (GMimeAutocryptHeader *ah, GMimeAutocryptHeaderKi
 	}
 
 	addr = g_mime_autocrypt_header_get_address_as_string (ah);
+	addrlen = strlen (addr);
 	prefix = field_prefix_length (kind);
 	data = g_bytes_get_data (ah->keydata, &length);
 
-	if (length > AUTOCRYPT_WIRE_LIMIT / 4 * 3 || strlen (addr) > AUTOCRYPT_WIRE_LIMIT) {
+	if (length > AUTOCRYPT_WIRE_LIMIT / 4 * 3 || addrlen > AUTOCRYPT_WIRE_LIMIT) {
 		wire_limit_error (error);
 		return NULL;
 	}
 
-	if (_g_mime_mailbox_address_get_private (ah->address)->at < 0 || strpbrk (addr, ";\r\n") ||
-	    strlen (addr) + prefix + sizeof (" addr=;") - 1 > 998) {
+	if (_g_mime_mailbox_address_get_private (ah->address)->at < 0 || strpbrk (addr, "\r\n") ||
+	    attribute_value_length (addr, addr + addrlen) != (gssize) addrlen ||
+	    addrlen + prefix + sizeof (" addr=;") - 1 > 998) {
 		g_set_error_literal (error, GMIME_ERROR, GMIME_ERROR_INVALID_OPERATION, "Unrepresentable Autocrypt address");
 		return NULL;
 	}

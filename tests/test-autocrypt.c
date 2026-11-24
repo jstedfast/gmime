@@ -227,7 +227,8 @@ test_bounded_codec (void)
 		{ SPAN (ADDR "keydata=YQ==; _extra=yes\n") }, { SPAN (ADDR "_extra=yes\n") },
 		{ SPAN ("addr=; keydata=YQ==\n") }, { SPAN ("addr=alice; keydata=YQ==\n") },
 		{ SPAN ("keydata=YQ==\n") }, { SPAN (ADDR "ADDR=b@example.org; keydata=YQ==\n") },
-		{ SPAN (ADDR "required=x; keydata=YQ==\n") }
+		{ SPAN (ADDR "required=x; keydata=YQ==\n") },
+		{ SPAN (ADDR "_note=\"unterminated; keydata=YQ==\n") }
 	};
 	GMimeAutocryptHeader *ah;
 	GError *error = NULL;
@@ -247,7 +248,8 @@ test_bounded_codec (void)
 		gsize len;
 		GMimeAutocryptHeader *again;
 
-		ah = g_mime_autocrypt_header_parse (SPAN (ADDR "_extra=x; PREFER-ENCRYPT=mutual;\n KEYDATA=Y\r\n\tQ==\r\n"),
+		ah = g_mime_autocrypt_header_parse (SPAN (" ADDR\r\n\t= \"a;b\"@example.org; _note=\"one\\\";two\"; "
+							  "PREFER-ENCRYPT=mutual;\n KEYDATA=Y\r\n\tQ==\r\n"),
 						    kind, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (ah);
@@ -263,6 +265,8 @@ test_bounded_codec (void)
 		again = g_mime_autocrypt_header_parse (p, len, kind, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (again);
+		g_assert_cmpstr (g_mime_autocrypt_header_get_address_as_string (again), ==, "\"a;b\"@example.org");
+		g_assert_true (g_bytes_equal (g_mime_autocrypt_header_get_keydata (ah), g_mime_autocrypt_header_get_keydata (again)));
 		g_bytes_unref (raw);
 		g_object_unref (again);
 		g_object_unref (ah);
