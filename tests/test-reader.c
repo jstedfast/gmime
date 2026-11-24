@@ -1890,6 +1890,75 @@ collect_compliance (const GMimeComplianceIssue *issue, gpointer user_data)
 }
 
 static void
+test_eof_before_body_separator (void)
+{
+	static const char headers[] = "From: a@example.org\r\nMessage-Id: <a@example.org>\r\n"
+		"Date: Tue, 12 Nov 2013 09:12:42 -0500\r\nMIME-Version: 1.0\r\n";
+	static const char multipart[] = "Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\n";
+	static const struct {
+		gboolean child;
+		const char *tail;
+		GMimeComplianceViolation expected[3];
+		guint line, column;
+	} cases[] = {
+		{ FALSE, "", { GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR }, 5, 1 },
+		{ FALSE, "\r\n", { GMIME_COMPLIANCE_NONE }, 0, 0 },
+		{ TRUE, "", { GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR, GMIME_COMPLIANCE_MESSAGE_TRUNCATED }, 8, 1 },
+		{ TRUE, "X: a\r\n", { GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR, GMIME_COMPLIANCE_MESSAGE_TRUNCATED }, 9, 1 },
+		{ TRUE, "X-Test", { GMIME_COMPLIANCE_INVALID_HEADER, GMIME_COMPLIANCE_INCOMPLETE_HEADER,
+				    GMIME_COMPLIANCE_MESSAGE_TRUNCATED }, 8, 7 },
+		{ TRUE, "X: a", { GMIME_COMPLIANCE_INCOMPLETE_HEADER, GMIME_COMPLIANCE_MESSAGE_TRUNCATED }, 8, 5 },
+		{ TRUE, "X: a\r\n--b--\r\n", { GMIME_COMPLIANCE_MISSING_BODY_SEPARATOR }, 9, 1 }
+	};
+	static const guint chunks[] = { 1, 4096 };
+
+	testsuite_check ("Header diagnostics distinguish EOF between fields, incomplete fields, and enclosing boundaries");
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		char *wire = g_strconcat (headers, cases[i].child ? multipart : "", cases[i].tail, NULL);
+		const char *boundary = strstr (wire, "--b--");
+		gsize length = strlen (wire);
+		guint count = 0;
+
+		while (count < G_N_ELEMENTS (cases[i].expected) && cases[i].expected[count] != GMIME_COMPLIANCE_NONE)
+			count++;
+
+		for (guint j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			ReaderInput *input = new_input (wire, length, chunks[j]);
+			GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+			GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+			GError *error = NULL;
+
+			g_mime_reader_set_compliance_logger (reader, collect_compliance, issues, NULL);
+			g_assert_true (g_mime_reader_read_message (reader, &error));
+			g_assert_no_error (error);
+			g_assert_cmpuint (issues->len, ==, count);
+			for (guint k = 0; k < issues->len; k++) {
+				const GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, k);
+
+				g_assert_cmpint (issue->violation, ==, cases[i].expected[k]);
+				if (issue->violation == GMIME_COMPLIANCE_INVALID_HEADER) {
+					g_assert_cmpint (issue->stream_offset, ==, length - strlen (cases[i].tail));
+					g_assert_cmpuint (issue->line_number, ==, cases[i].line);
+					g_assert_cmpuint (issue->column_number, ==, 1);
+					g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+					continue;
+				}
+				g_assert_cmpint (issue->stream_offset, ==, boundary ? (gsize) (boundary - wire) : length);
+				g_assert_cmpuint (issue->line_number, ==, cases[i].line);
+				g_assert_cmpuint (issue->column_number, ==, cases[i].column);
+				g_assert_cmpint (issue->position_kind, ==, boundary ? GMIME_COMPLIANCE_POSITION_ELEMENT_START :
+						 GMIME_COMPLIANCE_POSITION_EXACT);
+			}
+			g_array_unref (issues);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+		g_free (wire);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_multipart_end_diagnostics (void)
 {
 	static const char wire[] =
@@ -2373,8 +2442,8 @@ test_compliance_options_and_issues (void)
 	g_object_unref (reader);
 	g_object_unref (input);
 
-	for (i = 1; i <= GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1; i++) {
-		GMimeComplianceViolation violation = i > GMIME_COMPLIANCE_MESSAGE_TRUNCATED ?
+	for (i = 1; i <= GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR + 1; i++) {
+		GMimeComplianceViolation violation = i > GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR ?
 			GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES : i;
 
 		issue = g_mime_compliance_issue_new (GMIME_COMPLIANCE_CONTEXT_STORAGE, violation, G_MAXINT64,
@@ -2450,7 +2519,7 @@ test_compliance_logging (void)
 		ReaderInput *input = new_input (wire, sizeof (wire) - 1, chunk);
 		TestReader *reader = new_reader (input, NULL);
 		GMimeReader *base = (GMimeReader *) reader;
-		guint counts[GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1] = { 0 }, truncated = 0;
+		guint counts[GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR + 1] = { 0 }, truncated = 0;
 
 		g_array_set_size (issues, 0);
 		g_mime_compliance_options_set_max_issues_per_violation (options, 1);
@@ -3556,6 +3625,7 @@ main (int argc, char **argv)
 	test_long_mailbox_marker ();
 	testsuite_check_passed ();
 	test_multipart_end_diagnostics ();
+	test_eof_before_body_separator ();
 	test_repeated_headers ();
 	test_repeated_content_ids ();
 	test_content_id_model_preservation ();

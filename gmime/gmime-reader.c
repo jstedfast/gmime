@@ -96,7 +96,7 @@ struct _GMimeReaderPrivate {
 	ComplianceLogger *logger, *active_logger;
 	GMimeComplianceValidators validators;
 	GMimeComplianceContext context;
-	guint issue_counts[GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1], issue_limit;
+	guint issue_counts[GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR + 1], issue_limit;
 	GMimeEncodingValidator *validator;
 	GMimeReaderContentScanFunc content_scanner;
 
@@ -1437,8 +1437,8 @@ step_headers (GMimeReader *reader, gboolean message)
 			if (!have_valid_headers && (!priv->entity_read || priv->toplevel))
 				return TRUE;
 
-			report_at (reader, GMIME_COMPLIANCE_MISSING_BODY_SEPARATOR, offset, line_number, 1,
-				   GMIME_COMPLIANCE_POSITION_ELEMENT_START);
+			report_at (reader, GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR, offset, line_number, column_number,
+				   GMIME_COMPLIANCE_POSITION_EXACT);
 			break;
 		}
 
@@ -1632,7 +1632,7 @@ step_headers (GMimeReader *reader, gboolean message)
 					}
 
 					report_at (reader, midline ? GMIME_COMPLIANCE_INCOMPLETE_HEADER :
-						   GMIME_COMPLIANCE_MISSING_BODY_SEPARATOR, end_offset, priv->line_number,
+						   GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR, end_offset, priv->line_number,
 						   column, GMIME_COMPLIANCE_POSITION_EXACT);
 				}
 

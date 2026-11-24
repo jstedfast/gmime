@@ -227,6 +227,8 @@ typedef enum {
  * @GMIME_COMPLIANCE_INVALID_UUENCODE_END_MARKER: malformed uuencode end marker
  * @GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT: missing uuencode terminator
  * @GMIME_COMPLIANCE_MESSAGE_TRUNCATED: stream ended before the multipart closing delimiter
+ * @GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR: stream ended while waiting for
+ *   another header or the empty line terminating the header block
  * @GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES: reporting budget was exceeded
  *
  * Use the violation metadata functions for names, descriptions, remarks and
@@ -336,6 +338,7 @@ typedef enum {
 	GMIME_COMPLIANCE_INVALID_UUENCODE_END_MARKER = 100,
 	GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT = 101,
 	GMIME_COMPLIANCE_MESSAGE_TRUNCATED = 102,
+	GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR = 103,
 	GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES = G_MAXINT32
 } GMimeComplianceViolation;
 
