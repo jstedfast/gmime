@@ -755,7 +755,9 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  .acheader = &alice_addr,
 	  .gossipheaders = just_bob,
 	  .msg = "From: alice@example.org\r\n"
-	  "To: bob@example.org\r\n"
+	  "To: list@example.org\r\n"
+	  "Reply-To: bob@example.org\r\n"
+	  "Bcc: carol@example.org\r\n"
 	  "Subject: A gossipy lovely day\r\n"
 	  "Message-Id: <simple-excess-gossip@example.net>\r\n"
 	  "Date: Mon, 23 Oct 2017 11:54:14 -0400\r\n"
@@ -794,7 +796,7 @@ const static struct _ah_parse_test parse_test_data[] = {
 	  " WVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZ\r\n"
 	  "\r\n"
 	  "Recipients of this message should not accept carol's public key for gossip, since\r\n"
-	  "the message was not addressed to her\r\n"
+	  "she appears only in Bcc\r\n"
 	},
 	
 	{ .name = "simple+badgossip",

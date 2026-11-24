@@ -3079,8 +3079,8 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
  * @now: (nullable): a #GDateTime object, or %NULL
  * @inner_part: a #GMimeEntity which is the cleartext part of the inner message
  *
- * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
- * given type based on the recipient(s) of an e-mail message.
+ * Extracts Autocrypt-Gossip headers matching an address in the outer
+ * message's To, Cc, or Reply-To fields.
  * 
  * You must pass the decrypted inner part of the message to this
  * function, since Autocrypt-Gossip headers are only stored within the
@@ -3096,14 +3096,14 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
  *  - be of the type requested
  *  - be complete
  *
- * If no Autocrypt header is found for a recipient, no
- * #GMimeAutocryptHeader will be in the list associated with that e-mail address.
+ * If no Autocrypt header is found for a recipient, no #GMimeAutocryptHeader
+ * will be in the list associated with that e-mail address.
  *
  * Note that the following types of Autocrypt headers will not be
  * returned by this function:
  *
  *  - headers of an unrequested type
- *  - headers that do not match an address in "From:"
+ *  - headers that do not match an address in To, Cc, or Reply-To
  *  - unparseable headers
  *  - headers with unknown critical attributes
  *  - duplicate valid headers for a given address
@@ -3133,7 +3133,10 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	g_return_val_if_fail (GMIME_IS_ENTITY (inner_part), NULL);
 
-	addresses = g_mime_message_get_all_recipients (message);
+	addresses = g_mime_internet_address_list_new ();
+	g_mime_internet_address_list_append (addresses, g_mime_message_get_to (message));
+	g_mime_internet_address_list_append (addresses, g_mime_message_get_cc (message));
+	g_mime_internet_address_list_append (addresses, g_mime_message_get_reply_to (message));
 	date = g_mime_message_get_date (message);
 	
 	if (now == NULL)
@@ -3167,8 +3170,7 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
  * @ctx: a borrowed GPGME OpenPGP context
  * @err: a #GError (can be %NULL)
  *
- * Creates a new #GMimeAutocryptHeaderList of relevant headers of the
- * given type based on the recipient(s) of an e-mail message.
+ * Extracts Autocrypt-Gossip headers matching To, Cc, or Reply-To.
  * 
  * Returns the same object as
  * g_mime_message_get_autocrypt_gossip_headers_from_inner_part(), but
