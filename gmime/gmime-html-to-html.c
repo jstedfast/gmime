@@ -315,10 +315,27 @@ process_tag (HtmlState *state, GMimeHtmlToken *token)
 	while (last_foreign >= 0 && !closed[last_foreign].is_foreign)
 		last_foreign--;
 
-	for (gssize i = 0; i <= last_foreign; i++) {
-		GMimeHtmlToken *end_tag = g_mime_html_token_new_tag (closed[i].name, TRUE, FALSE, NULL, 0);
+	for (gssize i = 0; i < (gssize) count; i++) {
+		GMimeHtmlToken *end_tag;
 		gboolean ok = TRUE;
 
+		if (i > last_foreign) {
+			OpenTag *anchor;
+
+			/* Close paragraph-popped anchors before a browser can reconstruct them. */
+			if (end || id != GMIME_HTML_TAG_P || state->suppressed ||
+			    g_mime_html_tokenizer_get_formatting_recovery_enabled (state->tokenizer))
+				break;
+
+			if (g_ascii_strcasecmp (closed[i].name, "a"))
+				continue;
+
+			anchor = peek (state, "a");
+			if (anchor && g_mime_html_tag_context_get_delete_end_tag (anchor->context))
+				continue;
+		}
+
+		end_tag = g_mime_html_token_new_tag (closed[i].name, TRUE, FALSE, NULL, 0);
 		for (guint n = 0; n < closed[i].count && ok; n++)
 			ok = process_end_tag (state, end_tag, TRUE);
 
@@ -610,6 +627,8 @@ g_mime_html_to_html_get_formatting_recovery_enabled (GMimeHtmlToHtml *converter)
  * not synthesize tag callbacks or guarantee browser-equivalent parsing. If
  * recovery cannot continue, the remaining visible input is written as literal
  * text unless g_mime_html_to_html_set_limit_exceeded_behavior() selects failure.
+ * With recovery disabled, malformed formatting mixed with SVG or MathML can
+ * make a source tag part of text or a comment, so the callback will not see it.
  **/
 void
 g_mime_html_to_html_set_formatting_recovery_enabled (GMimeHtmlToHtml *converter, gboolean enabled)

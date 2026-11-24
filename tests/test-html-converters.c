@@ -497,6 +497,67 @@ test_callbacks_compliance (void)
 }
 
 static void
+test_paragraph_closes_anchor (void)
+{
+	const char *input = "<p><a><p><svg></a><title>sample</title>";
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+
+	for (int recover = 0; recover < 2; recover++) {
+		const char *expected = recover ? "<p><a><p><svg></svg></a><title>sample</title>" :
+			"<p><a></a><p><svg></a><title>sample</title>";
+		GMimeStream *stream = g_mime_stream_mem_new_with_buffer (expected, strlen (expected));
+		GMimeHtmlTokenizer *tokenizer = g_mime_html_tokenizer_new (stream);
+		GMimeHtmlToken *token;
+		GError *error = NULL;
+		gboolean found = FALSE;
+
+		g_mime_html_to_html_set_formatting_recovery_enabled (GMIME_HTML_TO_HTML (converter), recover);
+		check (converter, input, expected);
+		check (converter, expected, expected);
+
+		g_mime_html_tokenizer_set_formatting_recovery_enabled (tokenizer, recover);
+		while (!found && g_mime_html_tokenizer_read_next_token (tokenizer, &token, &error) && token) {
+			found = g_mime_html_token_get_kind (token) == GMIME_HTML_TOKEN_TAG &&
+				g_mime_html_token_get_tag_id (token) == GMIME_HTML_TAG_TITLE && !g_mime_html_token_is_end_tag (token);
+			if (found)
+				g_assert_cmpint (g_mime_html_tokenizer_get_state (tokenizer), ==,
+						 recover ? GMIME_HTML_TOKENIZER_STATE_RC_DATA : GMIME_HTML_TOKENIZER_STATE_DATA);
+			g_mime_html_token_unref (token);
+		}
+		g_assert_no_error (error);
+		g_assert_true (found);
+		g_object_unref (tokenizer);
+		g_object_unref (stream);
+	}
+	g_object_unref (converter);
+}
+
+static gboolean
+delete_anchor (GMimeHtmlTagContext *context, GMimeHtmlWriter *writer, gpointer data, GError **error)
+{
+	if (g_mime_html_tag_context_get_tag_id (context) == GMIME_HTML_TAG_A && !g_mime_html_tag_context_get_is_end_tag (context)) {
+		g_mime_html_tag_context_set_delete_tag (context, TRUE);
+		g_mime_html_tag_context_set_delete_end_tag (context, TRUE);
+		g_mime_html_tag_context_set_suppress_inner_content (context, GPOINTER_TO_INT (data));
+		return TRUE;
+	}
+	return g_mime_html_tag_context_write_tag (context, writer, TRUE, error);
+}
+
+static void
+test_paragraph_deleted_anchor (void)
+{
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+
+	for (int suppress = 0; suppress < 2; suppress++) {
+		g_mime_html_to_html_set_html_tag_callback (GMIME_HTML_TO_HTML (converter), delete_anchor,
+							   GINT_TO_POINTER (suppress), NULL);
+		check (converter, "<p><a>one<p>two</a>three", suppress ? "<p>three" : "<p>one<p>twothree");
+	}
+	g_object_unref (converter);
+}
+
+static void
 test_formatting_recovery_fallback (void)
 {
 	static const GMimeHtmlNoScriptHandling modes[] = {
@@ -882,6 +943,8 @@ main (int argc, char **argv)
 	g_test_add_func ("/html-converters/limits", test_limits);
 	g_test_add_func ("/html-converters/depth-limit-behavior", test_depth_limit_behavior);
 	g_test_add_func ("/html-converters/formatting-recovery-fallback", test_formatting_recovery_fallback);
+	g_test_add_func ("/html-converters/paragraph-closes-anchor", test_paragraph_closes_anchor);
+	g_test_add_func ("/html-converters/paragraph-deleted-anchor", test_paragraph_deleted_anchor);
 	g_test_add_func ("/html-converters/fragments", test_fragments);
 	g_test_add_func ("/html-converters/filter", test_html_filter);
 	g_test_add_func ("/html-converters/foreign", test_foreign_content);

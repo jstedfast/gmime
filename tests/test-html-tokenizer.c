@@ -1000,6 +1000,40 @@ test_formatting_adoption (void)
 }
 
 static void
+test_formatting_across_blocks (void)
+{
+	HtmlTree *tree = _g_mime_html_tree_new (32);
+
+	tree->track_closed = TRUE;
+	_g_mime_html_tree_set_formatting_capacity (tree, 16);
+	tree_tags (tree, "math mtext i a i i div div h2 svg g /a");
+	g_assert_false (_g_mime_html_tree_formatting_exceeded (tree));
+	g_assert_cmpuint (tree->closed->len, ==, 2);
+	g_assert_cmpstr (g_array_index (tree->closed, GMimeHtmlClosedElement, 0).name, ==, "g");
+	g_assert_cmpstr (g_array_index (tree->closed, GMimeHtmlClosedElement, 1).name, ==, "svg");
+	tree_tags (tree, "/h2 /div /div");
+	for (int i = 0; i < 3; i++) {
+		g_assert_false (_g_mime_html_tree_foreign (tree));
+		tree_tags (tree, "/i");
+	}
+	g_assert_false (_g_mime_html_tree_formatting_exceeded (tree));
+	_g_mime_html_tree_character (tree, 'x');
+	g_assert_true (_g_mime_html_tree_foreign (tree));
+	_g_mime_html_tree_free (tree);
+
+	for (int blocks = 7; blocks <= 8; blocks++) {
+		tree = _g_mime_html_tree_new (32);
+		_g_mime_html_tree_set_formatting_capacity (tree, 16);
+		tree_tags (tree, "a");
+		for (int i = 0; i < blocks; i++)
+			tree_tags (tree, "div");
+		tree_tags (tree, "a");
+		g_assert_cmpint (_g_mime_html_tree_formatting_exceeded (tree), ==, blocks == 8);
+		_g_mime_html_tree_free (tree);
+	}
+}
+
+static void
 test_formatting_budget (void)
 {
 	const char *equal = "<font COLOR=red size=2><font size='2' color='red'><font color=r&#101;d size=2>"
@@ -1172,6 +1206,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html/tokenizer/upstream-vectors", test_vectors);
 	g_test_add_func ("/html/formatting/reconstruction", test_formatting_reconstruction);
 	g_test_add_func ("/html/formatting/adoption", test_formatting_adoption);
+	g_test_add_func ("/html/formatting/across-blocks", test_formatting_across_blocks);
 	g_test_add_func ("/html/formatting/budget", test_formatting_budget);
 	g_test_add_func ("/html/formatting/limits", test_formatting_limits);
 	g_test_add_func ("/html/formatting/tokenization", test_formatting_tokenization);

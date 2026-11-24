@@ -1256,6 +1256,83 @@ recoverable_block (const Entry *entry)
 }
 
 static void
+remove_below_tracked_formatting (HtmlTree *tree, int index)
+{
+	if (stack_entry (tree, index)->Count == 1) {
+		const Entry *prev = index ? stack_entry (tree, index - 1) : NULL;
+		gboolean merge = prev && prev->Namespace == GMIME_HTML_NAMESPACE_HTML &&
+			prev->Id == stack_entry (tree, index + 1)->Id;
+
+		/* Removing the target can fold the first surviving entry into its predecessor. */
+		for (guint i = 0; i < tree->formatting->len; i++) {
+			FormattingSlot *slot = formatting_slot (tree, i);
+
+			if (slot->index <= index)
+				continue;
+
+			if (merge && slot->index == index + 1)
+				slot->instance = MIN ((gint64) slot->instance + prev->Count, G_MAXINT);
+
+			slot->index -= merge ? 2 : 1;
+		}
+	}
+
+	stack_remove (tree, index);
+}
+
+static gboolean
+can_retain_formatting (HtmlTree *tree, int index, guint slot)
+{
+	int next = index + 1, nodes = 0, blocks = 0;
+	int special = stack_top (tree)->PrevSpecial;
+
+	/* The inner loop can retain three physical nodes, all active after the same marker. */
+	while (next < stack_count (tree)) {
+		const Entry *entry = stack_entry (tree, next);
+
+		if (entry->Namespace != GMIME_HTML_NAMESPACE_HTML || !g_mime_html_tag_id_is_formatting_element (entry->Id))
+			break;
+
+		if (entry->Count > 3 - nodes)
+			return FALSE;
+
+		for (int n = 1; n <= entry->Count; n++) {
+			FormattingSlot *active;
+
+			if (++slot >= tree->formatting->len)
+				return FALSE;
+
+			active = formatting_slot (tree, slot);
+			if (active->index != next || active->instance != n || active->id != entry->Id)
+				return FALSE;
+		}
+
+		nodes += entry->Count;
+		next++;
+	}
+
+	/* Reserve the eighth outer iteration for closing the formatting element. */
+	for (; next <= special; next++) {
+		const Entry *entry = stack_entry (tree, next);
+
+		if (entry->Namespace != GMIME_HTML_NAMESPACE_HTML || entry->Count > 7 - blocks ||
+		    !(entry->Id == GMIME_HTML_TAG_DIV || entry->Id == GMIME_HTML_TAG_P || (entry->Flags & F_Heading)))
+			return FALSE;
+
+		blocks += entry->Count;
+	}
+
+	for (; next < stack_count (tree); next++) {
+		const Entry *entry = stack_entry (tree, next);
+
+		if (entry->Namespace == GMIME_HTML_NAMESPACE_HTML ? entry->Id != GMIME_HTML_TAG_SPAN : entry->Flags != 0)
+			return FALSE;
+	}
+
+	return blocks != 0;
+}
+
+static void
 close_tracked_formatting (HtmlTree *tree, GMimeHtmlTagId id, gboolean nested_anchor)
 {
 	int index = tree->html_ids[id], top = stack_count (tree) - 1;
@@ -1285,25 +1362,29 @@ close_tracked_formatting (HtmlTree *tree, GMimeHtmlTagId id, gboolean nested_anc
 			goto unsupported;
 
 		if (index <= stack_top (tree)->PrevSpecial) {
-			if (top <= index || top - index > 2 || !recoverable_block (stack_entry (tree, index + 1)))
-				goto unsupported;
+			const Entry *entry = stack_top (tree);
+			gboolean inline_top = entry->Namespace == GMIME_HTML_NAMESPACE_HTML &&
+				(entry->Id == GMIME_HTML_TAG_SPAN || g_mime_html_tag_id_is_formatting_element (entry->Id));
 
-			if (top - index == 2 && !recoverable_block (stack_top (tree))) {
-				const Entry *entry = stack_top (tree);
-
-				if (entry->Namespace != GMIME_HTML_NAMESPACE_HTML ||
-				    !(entry->Id == GMIME_HTML_TAG_SPAN || g_mime_html_tag_id_is_formatting_element (entry->Id)))
-					goto unsupported;
-
+			if (top > index && top - index <= 2 && recoverable_block (stack_entry (tree, index + 1)) &&
+			    (top == index + 1 || recoverable_block (entry) || inline_top)) {
 				g_array_remove_index (tree->formatting, i);
-				pop_above (tree, top - 1);
+
+				if (top == index + 2 && inline_top)
+					pop_above (tree, top - 1);
+
+				stack_remove (tree, index);
+			} else if (can_retain_formatting (tree, index, i)) {
+				g_array_remove_index (tree->formatting, i);
+
+				if (top > entry->PrevSpecial)
+					pop_above (tree, entry->PrevSpecial);
+
+				remove_below_tracked_formatting (tree, index);
 			} else {
-				g_array_remove_index (tree->formatting, i);
+				goto unsupported;
 			}
 
-			/* Remove only one physical instance. Keep the surviving block(s)
-			 * on the stack without reporting them as implicitly closed. */
-			stack_remove (tree, index);
 			tree->poppedThrough = TRUE;
 			return;
 		}

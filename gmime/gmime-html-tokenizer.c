@@ -939,6 +939,8 @@ g_mime_html_tokenizer_get_formatting_recovery_enabled (GMimeHtmlTokenizer *token
  * close, without emitting extra tokens. It uses bounded state independent of
  * the element depth limit. If reconstruction cannot continue, the configured
  * limit-exceeded behavior applies.
+ * With recovery disabled, malformed formatting mixed with SVG or MathML can
+ * cause markup recognized by a browser to be tokenized as text or a comment.
  **/
 void
 g_mime_html_tokenizer_set_formatting_recovery_enabled (GMimeHtmlTokenizer *tokenizer, gboolean enabled)
