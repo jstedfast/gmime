@@ -51,27 +51,35 @@ _gen_header (const struct _ah_gen_test *t)
 {
 	GMimeAutocryptHeader *ah = NULL;
 	GBytes *keydata = NULL;
+
 	if (t == NULL)
 		return NULL;
+
 	if (!(ah = g_mime_autocrypt_header_new())) {
 		fprintf (stderr, "failed to make a new header");
 		return NULL;
 	}
-	if (t->keydatacount)
+
+	if (t->keydatacount) {
 		if (!(keydata = g_bytes_new_take ((guint8*) g_strnfill (t->keydatacount, t->keybyte), t->keydatacount))) {
 			fprintf (stderr, "failed to make a new keydata");
 			g_object_unref (ah);
 			return NULL;
 		}
+	}
+
 	g_mime_autocrypt_header_set_address_from_string (ah, t->addr, NULL);
 	g_mime_autocrypt_header_set_keydata (ah, keydata);
+
 	if (t->timestamp) {
 		GDateTime *ts = g_date_time_new_from_unix_utc (t->timestamp);
 		g_mime_autocrypt_header_set_effective_date (ah, ts);
 		g_date_time_unref (ts);
 	}
+
 	if (keydata)
 		g_bytes_unref (keydata);
+
 	return ah;
 }
 
@@ -80,16 +88,20 @@ static GMimeAutocryptHeaderList*
 _gen_header_list (const struct _ah_gen_test **tests)
 {
 	GMimeAutocryptHeaderList *ret = g_mime_autocrypt_header_list_new ();
+
 	for (; *tests; tests++) {
 		GMimeAutocryptHeader *ah = _gen_header (*tests);
+
 		if (!ah) {
 			fprintf (stderr, "failed to generate header <%s>", (*tests)->addr);
 			g_object_unref (ret);
 			return NULL;
 		}
+
 		g_mime_autocrypt_header_list_add (ret, ah);
 		g_object_unref (ah);
 	}
+
 	return ret;
 }
 
@@ -111,29 +123,43 @@ const static struct _ah_gen_test * no_addrs[] = {
 static void
 test_ah_generation (void)
 {
+	GMimeAutocryptHeader *ah2 = NULL;
 	GMimeAutocryptHeader *ah = NULL;
 	char *str = NULL;
-	GMimeAutocryptHeader *ah2 = NULL;
 	unsigned int i;
+
 	for (i = 0; i < G_N_ELEMENTS(gen_test_data); i++) {
 		try {
-			testsuite_check ("Autocrypt header[%u]", i);
 			const struct _ah_gen_test *test = gen_test_data + i;
-			ah = _gen_header (test);
+			GError *error = NULL;
+			char *raw;
 
+			testsuite_check ("Autocrypt header[%u]", i);
+
+			ah = _gen_header (test);
 			str = g_mime_autocrypt_header_to_string (ah, FALSE);
+
 			if (strcmp (test->txt, str)) {
 				fprintf (stderr, "expected[%u]: \n%s\n\ngot:\n%s\n", i,
 					 test->txt, str);
 				throw (exception_new ("failed comparison"));
 			}
-			ah2 = g_mime_autocrypt_header_new_from_string (str);
+
+			raw = g_strconcat (str, "\r\n", NULL);
+			ah2 = g_mime_autocrypt_header_parse (raw, strlen (raw), GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
+			g_free (raw);
+
+			g_assert_no_error (error);
+			g_assert_nonnull (ah2);
+
 			gint cmp = g_mime_autocrypt_header_compare (ah, ah2);
 			if (cmp) {
 				char *x = g_mime_autocrypt_header_to_string (ah2, FALSE);
+
 				fprintf (stderr, "after-rebuild[%u] (%d) \nexpected: \n%s\n\ngot:\n%s\n", i,
 					 cmp, test->txt, x);
 				g_free(x);
+
 				throw (exception_new ("header from string did not match"));
 			}
 			
@@ -141,9 +167,12 @@ test_ah_generation (void)
 		} catch (ex) {
 			testsuite_check_failed ("autocrypt header creation failed: %s", ex->message);
 		} finally;
+
 		g_clear_object (&ah2);
+
 		if (ah)
 			g_object_unref (ah);
+
 		g_free (str);
 		str = NULL;
 	}
@@ -154,61 +183,67 @@ static void
 test_ah_attribute_parsing (void)
 {
 	static const struct {
-		const char *text, *decoded;
+		const char *raw, *decoded;
 		gboolean mutual;
 	} cases[] = {
-		{ "addr=alice@example.org; keydata=YWJj", "abc", FALSE },
-		{ " KEYDATA=YWJj ; ADDR=alice@example.org ; PREFER-ENCRYPT=MUTUAL ", "abc", TRUE },
-		{ "\faddr=alice@example.org;\tkeydata=Y W\r\n\tJj\f", "abc", FALSE },
-		{ "\vaddr=alice@example.org; keydata=YWJj", NULL, FALSE },
-		{ "addr=alice@example.org; keydata=YW\vJj", "abc", FALSE },
-		{ "addr=alice@example.org; keydata=YW!Jj; _extension=ignored; _extension=again", "abc", FALSE },
-		{ "addr=alice@example.org; keydata=YW\357\277\275Jj; _", "abc", FALSE },
-		{ "addr=alice@example.org; keydata=; prefer-encrypt=mutual", "", TRUE },
-		{ "addr=alice@example.org; keydata=YQ==", "a", FALSE },
-		{ "addr=alice@example.org; keydata=YWI=", "ab", FALSE },
-		{ "addr=alice@example.org; keydata=Y", "", FALSE },
-		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt= mutual", "abc", FALSE },
-		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt=mutual-extra", "abc", FALSE },
-		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt=", "abc", FALSE },
-		{ "", NULL, FALSE },
-		{ "addr", NULL, FALSE },
-		{ "addr=alice@example.org", NULL, FALSE },
-		{ "keydata=YWJj", NULL, FALSE },
-		{ "addr=alice@example.org; keydata=YWJj;", NULL, FALSE },
-		{ ";addr=alice@example.org; keydata=YWJj", NULL, FALSE },
-		{ "addr=alice@example.org;; keydata=YWJj", NULL, FALSE },
-		{ "addr=alice@example.org; keydata=YWJj; unknown=value", NULL, FALSE },
-		{ "addr=alice@example.org; keydata=YWJj; addr=alice@example.org", NULL, FALSE },
-		{ "addr=alice@example.org; keydata=YWJj; KEYDATA=", NULL, FALSE },
-		{ "addr=alice@example.org; keydata=YWJj; prefer-encrypt=; prefer-encrypt=mutual", NULL, FALSE },
-		{ "addr=alice@example.org; keydata =YWJj", NULL, FALSE },
-		{ "addr=<alice@example.org>; keydata=YWJj", NULL, FALSE }
+		{ "addr=alice@example.org; keydata=YWJj\r\n", "abc", FALSE },
+		{ " KEYDATA=YWJj ; ADDR=alice@example.org ; PREFER-ENCRYPT=MUTUAL \r\n", NULL, FALSE },
+		{ " ADDR=alice@example.org ; PREFER-ENCRYPT=MUTUAL ; KEYDATA=Y W\r\n\tJj \r\n", "abc", TRUE },
+		{ "\faddr=alice@example.org; \tkeydata=Y W\r\n\tJj\f\r\n", NULL, FALSE },
+		{ "\vaddr=alice@example.org; keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YW\vJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; _extension=ignored; _extension=again; keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; _extension=ignored; keydata=YW!Jj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YW\357\277\275Jj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; prefer-encrypt=mutual; keydata=\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YQ==\r\n", "a", FALSE },
+		{ "addr=alice@example.org; keydata=YWI=\r\n", "ab", FALSE },
+		{ "addr=alice@example.org; keydata=Y\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; prefer-encrypt= mutual; keydata=YWJj\r\n", "abc", TRUE },
+		{ "addr=alice@example.org; prefer-encrypt=mutual-extra; keydata=YWJj\r\n", "abc", FALSE },
+		{ "addr=alice@example.org; prefer-encrypt=; keydata=YWJj\r\n", "abc", FALSE },
+		{ "\r\n", NULL, FALSE },
+		{ "addr\r\n", NULL, FALSE },
+		{ "addr=alice@example.org\r\n", NULL, FALSE },
+		{ "keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YWJj;\r\n", NULL, FALSE },
+		{ ";addr=alice@example.org; keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; ;keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; unknown=value; keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; addr=alice@example.org; keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; keydata=YWJj; KEYDATA=\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; prefer-encrypt=; prefer-encrypt=mutual; keydata=YWJj\r\n", NULL, FALSE },
+		{ "addr=alice@example.org; keydata =YWJj\r\n", "abc", FALSE },
+		{ "addr=<alice@example.org>; keydata=YWJj\r\n", NULL, FALSE }
 	};
-	guint i;
 
-	g_assert_null (g_mime_autocrypt_header_new_from_string (NULL));
-	for (i = 0; i < G_N_ELEMENTS (cases); i++) {
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
 		GMimeAutocryptHeader *ah;
-		const char *data;
-		gsize length;
-		char *text = g_strdup (cases[i].text);
+		GError *error = NULL;
 
 		testsuite_check ("Autocrypt attribute parsing [%u]", i);
-		ah = g_mime_autocrypt_header_new_from_string (text);
-		g_assert_cmpstr (text, ==, cases[i].text);
-		g_free (text);
+
+		ah = g_mime_autocrypt_header_parse (cases[i].raw, strlen (cases[i].raw), GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
+
 		if (cases[i].decoded) {
+			const char *data;
+			gsize length;
+
+			g_assert_no_error (error);
 			g_assert_nonnull (ah);
 			g_assert_cmpstr (g_mime_autocrypt_header_get_address_as_string (ah), ==, "alice@example.org");
 			g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (ah), ==,
-					cases[i].mutual ? GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL : GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE);
+					 cases[i].mutual ? GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL : GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE);
+
 			data = g_bytes_get_data (g_mime_autocrypt_header_get_keydata (ah), &length);
 			g_assert_cmpmem (data, length, cases[i].decoded, strlen (cases[i].decoded));
+			g_object_unref (ah);
 		} else {
 			g_assert_null (ah);
+			g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+			g_clear_error (&error);
 		}
-		g_clear_object (&ah);
+
 		testsuite_check_passed ();
 	}
 }
@@ -217,62 +252,70 @@ static void
 test_bounded_codec (void)
 {
 #define SPAN(s) s, sizeof (s) - 1
-#define ADDR " addr=alice@example.org; "
 	static const struct { const char *raw; gsize length; } invalid[] = {
-		{ SPAN (ADDR "keydata=\r\n") }, { SPAN (ADDR "keydata=YQ\n") },
-		{ SPAN (ADDR "keydata=Y!Q==\n") }, { SPAN (ADDR "keydata=YR==\n") },
-		{ SPAN (ADDR "keydata=YQ==YQ==\n") }, { SPAN (ADDR "keydata=Y\0Q==\n") },
-		{ SPAN (ADDR "keydata=Y\rQ==\n") }, { SPAN (ADDR "keydata=Y\nQ==\n") },
-		{ SPAN (ADDR "keydata=Y\vQ==\n") }, { SPAN (ADDR "keydata=YQ==") },
-		{ SPAN (ADDR "keydata=YQ==; _extra=yes\n") }, { SPAN (ADDR "_extra=yes\n") },
+		{ SPAN (" addr=alice@example.org; keydata=\r\n") }, { SPAN (" addr=alice@example.org; keydata=YQ\n") },
+		{ SPAN (" addr=alice@example.org; keydata=Y!Q==\n") }, { SPAN (" addr=alice@example.org; keydata=YR==\n") },
+		{ SPAN (" addr=alice@example.org; keydata=YQ==YQ==\n") }, { SPAN (" addr=alice@example.org; keydata=Y\0Q==\n") },
+		{ SPAN (" addr=alice@example.org; keydata=Y\rQ==\n") }, { SPAN (" addr=alice@example.org; keydata=Y\nQ==\n") },
+		{ SPAN (" addr=alice@example.org; keydata=Y\vQ==\n") }, { SPAN (" addr=alice@example.org; keydata=YQ==") },
+		{ SPAN (" addr=alice@example.org; keydata=YQ==; _extra=yes\n") }, { SPAN (" addr=alice@example.org; _extra=yes\n") },
 		{ SPAN ("addr=; keydata=YQ==\n") }, { SPAN ("addr=alice; keydata=YQ==\n") },
-		{ SPAN ("keydata=YQ==\n") }, { SPAN (ADDR "ADDR=b@example.org; keydata=YQ==\n") },
-		{ SPAN (ADDR "required=x; keydata=YQ==\n") },
-		{ SPAN (ADDR "_note=\"unterminated; keydata=YQ==\n") }
+		{ SPAN ("keydata=YQ==\n") }, { SPAN (" addr=alice@example.org; ADDR=b@example.org; keydata=YQ==\n") },
+		{ SPAN (" addr=alice@example.org; required=x; keydata=YQ==\n") },
+		{ SPAN (" addr=alice@example.org; _note=\"unterminated; keydata=YQ==\n") }
 	};
 	GMimeAutocryptHeader *ah;
 	GError *error = NULL;
 	guint i;
 
 	testsuite_check ("Bounded Autocrypt field syntax");
+
 	for (i = 0; i < G_N_ELEMENTS (invalid); i++) {
 		ah = g_mime_autocrypt_header_parse (invalid[i].raw, invalid[i].length, GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
 		g_assert_null (ah);
 		g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
 		g_clear_error (&error);
 	}
+
 	for (i = 0; i < 2; i++) {
 		GMimeAutocryptHeaderKind kind = i ? GMIME_AUTOCRYPT_HEADER_GOSSIP : GMIME_AUTOCRYPT_HEADER_DIRECT;
-		GBytes *raw;
-		const char *p;
-		gsize len;
 		GMimeAutocryptHeader *again;
+		const char *p;
+		GBytes *raw;
+		gsize len;
 
 		ah = g_mime_autocrypt_header_parse (SPAN (" ADDR\r\n\t= \"a;b\"@example.org; _note=\"one\\\";two\"; "
 							  "PREFER-ENCRYPT=mutual;\n KEYDATA=Y\r\n\tQ==\r\n"),
 						    kind, &error);
+
 		g_assert_no_error (error);
 		g_assert_nonnull (ah);
 		g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (ah), ==,
 				 i ? GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE : GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL);
+
 		p = g_bytes_get_data (g_mime_autocrypt_header_get_keydata (ah), &len);
 		g_assert_cmpmem (p, len, "a", 1);
+
 		g_mime_autocrypt_header_set_prefer_encrypt (ah, GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL);
+
 		raw = g_mime_autocrypt_header_format (ah, kind, &error);
 		g_assert_no_error (error);
+
 		p = g_bytes_get_data (raw, &len);
 		g_assert_cmpint (g_strstr_len (p, len, "prefer-encrypt=") != NULL, ==, !i);
+
 		again = g_mime_autocrypt_header_parse (p, len, kind, &error);
 		g_assert_no_error (error);
 		g_assert_nonnull (again);
 		g_assert_cmpstr (g_mime_autocrypt_header_get_address_as_string (again), ==, "\"a;b\"@example.org");
 		g_assert_true (g_bytes_equal (g_mime_autocrypt_header_get_keydata (ah), g_mime_autocrypt_header_get_keydata (again)));
-		g_bytes_unref (raw);
+
 		g_object_unref (again);
+		g_bytes_unref (raw);
 		g_object_unref (ah);
 	}
+
 	testsuite_check_passed ();
-#undef ADDR
 #undef SPAN
 }
 
@@ -290,34 +333,46 @@ test_codec_wire_limit (void)
 	gsize length;
 
 	testsuite_check ("Autocrypt 10 KiB complete-field limit");
+
 	raw = g_mime_autocrypt_header_format (ah, GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
 	g_assert_no_error (error);
+
 	p = g_bytes_get_data (raw, &length);
 	g_assert_cmpuint (length + strlen ("Autocrypt:"), ==, 10240);
+
 	parsed = g_mime_autocrypt_header_parse (p, length, GMIME_AUTOCRYPT_HEADER_DIRECT, &error);
 	g_assert_no_error (error);
 	g_assert_true (g_bytes_equal (g_mime_autocrypt_header_get_keydata (ah), g_mime_autocrypt_header_get_keydata (parsed)));
+
 	g_object_unref (parsed);
+
 	longer = g_malloc (length + 1);
 	longer[0] = ' ';
 	memcpy (longer + 1, p, length);
 	g_assert_null (g_mime_autocrypt_header_parse (longer, length + 1, GMIME_AUTOCRYPT_HEADER_DIRECT, &error));
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+
 	g_clear_error (&error);
+
 	g_assert_null (g_mime_autocrypt_header_parse (p, length, GMIME_AUTOCRYPT_HEADER_GOSSIP, &error));
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+
 	g_clear_error (&error);
+
 	g_assert_null (g_mime_autocrypt_header_format (ah, GMIME_AUTOCRYPT_HEADER_GOSSIP, &error));
 	g_assert_error (error, GMIME_ERROR, GMIME_ERROR_HEADER_TOO_LONG);
+
 	g_clear_error (&error);
-	g_free (longer);
+
 	g_bytes_unref (raw);
 	g_object_unref (ah);
+	g_free (longer);
+
 	testsuite_check_passed ();
 }
 
 static void
-test_ah_decoded_headers (void)
+test_ah_raw_headers (void)
 {
 	static const struct {
 		const char *text;
@@ -325,12 +380,12 @@ test_ah_decoded_headers (void)
 		gboolean valid;
 	} cases[] = {
 #define RAW(text, valid) { text, sizeof (text) - 1, valid }
-		RAW (" addr=alice@example.org;\n\tkeydata=YWJj; prefer-encrypt=mutual\n", TRUE),
+		RAW (" addr=alice@example.org; prefer-encrypt=mutual;\n\tkeydata=YWJj\n", TRUE),
 		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B?=\n"
-		     "\t=?us-ascii?q?_keydata=3DYWJj=3B_prefer-encrypt=3Dmutual?=\n", TRUE),
-		RAW (" addr=alice@example.org; keydata=YW\0Jj; prefer-encrypt=mutual\n", TRUE),
+		     "\t=?us-ascii?q?_keydata=3DYWJj?=\n", FALSE),
+		RAW (" addr=alice@example.org; keydata=YW\0Jj\n", FALSE),
 		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B?=\n"
-		     "\t=?us-ascii?q?_keydata=3DYW=00Jj=3B_prefer-encrypt=3Dmutual?=\n", TRUE),
+		     "\t=?us-ascii?q?_keydata=3DYW=00Jj=3B_prefer-encrypt=3Dmutual?=\n", FALSE),
 		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B_keydata=3DYWJj=3B_bad=3D1?=\n", FALSE),
 		RAW (" =?us-ascii?q?addr=3Dalice=40example.org=3B_keydata=3DYWJj=3B?=\n"
 		     "\t=?us-ascii?q?_addr=3Dalice=40example.org?=\n", FALSE),
@@ -352,19 +407,29 @@ test_ah_decoded_headers (void)
 			GBytes *raw, *after;
 			GError *error = NULL;
 
-			testsuite_check ("Decoded %s header [%u]", name, i);
+			testsuite_check ("Raw %s header [%u]", name, i);
+
 			g_mime_entity_set_header (GMIME_ENTITY (message), "From", "alice@example.org", NULL);
 			g_mime_entity_set_header (GMIME_ENTITY (message), "To", "alice@example.org", NULL);
 			g_mime_entity_set_header (entity, name, "", NULL);
+
 			header = g_mime_header_list_get_header (g_mime_entity_get_header_list (entity), name);
 			raw = g_bytes_new_take (g_memdup2 (cases[i].text, cases[i].length), cases[i].length);
+
 			g_assert_true (g_mime_header_set_raw_value (header, raw, &error));
 			g_assert_no_error (error);
 
+			if (cases[i].valid) {
+				/* Encoded syntax does not count as a second advertisement. */
+				g_mime_entity_append_header (entity, name, "=?us-ascii?q?addr=3Dalice=40example.org=3B_keydata=3DYQ=3D=3D?=", NULL);
+			}
+
 			if (gossip) {
 				list = g_mime_message_get_autocrypt_gossip_headers_from_inner_part (message, now, entity);
+
 				g_assert_nonnull (list);
 				g_assert_cmpint (g_mime_autocrypt_header_list_get_count (list), ==, cases[i].valid ? 1 : 0);
+
 				if (cases[i].valid)
 					ah = g_object_ref (g_mime_autocrypt_header_list_get_header_at (list, 0));
 			} else {
@@ -372,24 +437,30 @@ test_ah_decoded_headers (void)
 				g_assert_nonnull (ah);
 				g_assert_cmpint (g_mime_autocrypt_header_is_complete (ah), ==, cases[i].valid);
 			}
+
 			if (cases[i].valid) {
 				gsize length;
 				const char *data = g_bytes_get_data (g_mime_autocrypt_header_get_keydata (ah), &length);
 
 				g_assert_cmpmem (data, length, "abc", 3);
-				g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (ah), ==, GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL);
+				g_assert_cmpint (g_mime_autocrypt_header_get_prefer_encrypt (ah), ==,
+						 gossip ? GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE : GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL);
 			}
+
 			after = g_mime_header_get_raw_value (header);
 			g_assert_true (g_bytes_equal (raw, after));
+
 			g_bytes_unref (after);
 			g_bytes_unref (raw);
 			g_clear_object (&ah);
 			g_clear_object (&list);
 			g_object_unref (part);
 			g_object_unref (message);
+
 			testsuite_check_passed ();
 		}
 	}
+
 	g_date_time_unref (now);
 }
 
@@ -406,23 +477,33 @@ test_ah_idn_addresses (void)
 	GMimeMailboxAddress *mailbox = g_mime_autocrypt_header_get_address (src);
 
 	g_mime_autocrypt_header_list_add (list, dst);
+
 	testsuite_check ("Autocrypt IDN address matching and cloning");
+
 	try {
 		if (g_mime_autocrypt_header_list_get_header_for_address (list, mailbox) != dst)
 			throw (exception_new ("Unicode address did not match its A-label header"));
+
 		g_mime_autocrypt_header_clone (dst, src);
+
 		if (g_mime_autocrypt_header_get_keydata (dst) != g_mime_autocrypt_header_get_keydata (src))
 			throw (exception_new ("matching IDN addresses did not clone keydata"));
+
 		if (strcmp (g_mime_mailbox_address_get_addrspec (mailbox), unicode.addr))
 			throw (exception_new ("IDN matching changed the stored address"));
+
 		if (!g_mime_mailbox_address_set_addrspec (mailbox, "other@example.com", NULL))
 			throw (exception_new ("failed to update the source mailbox"));
+
 		if (g_mime_autocrypt_header_list_get_header_for_address (list, mailbox) != NULL)
 			throw (exception_new ("unrelated address matched an Autocrypt header"));
+
 		g_mime_autocrypt_header_set_keydata (src, NULL);
 		g_mime_autocrypt_header_clone (dst, src);
+
 		if (!g_mime_autocrypt_header_get_keydata (dst))
 			throw (exception_new ("unrelated address overwrote destination keydata"));
+
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("Autocrypt IDN address matching failed: %s", ex->message);
@@ -1029,7 +1110,10 @@ test_ah_injection (void)
 				
 				gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
 				gpgme_key_t *recip;
-				for (r = 0; test->encrypt_to[r]; r++);
+
+				for (r = 0; test->encrypt_to[r]; r++)
+					;
+
 				recip = g_new0 (gpgme_key_t, r + 1);
 				
 				for (r = 0; test->encrypt_to[r]; r++)
@@ -1038,8 +1122,10 @@ test_ah_injection (void)
 				encrypted = g_mime_multipart_encrypted_encrypt (ctx, mainpart, FALSE,
 										GPGME_ENCRYPT_ALWAYS_TRUST,
 										recip, NULL, NULL, NULL, &err);
+
 				for (r = 0; recip[r]; r++)
 					gpgme_key_unref (recip[r]);
+
 				g_free (recip);
 				gpgme_release (ctx);
 				
@@ -1074,6 +1160,7 @@ test_ah_injection (void)
 				gpgme_ctx_t ctx = test_crypto_context (GPGME_PROTOCOL_OpenPGP);
 				GMimeEntity *cleartext = g_mime_multipart_encrypted_decrypt (encrypted, ctx, NULL, NULL, &err);
 				gpgme_release (ctx);
+
 				if (!cleartext)
 					throw (exception_new ("decryption failed: %s!\n", err->message));
 				
@@ -1389,7 +1476,7 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("Autocrypt: parse messages");
 	test_ah_message_parse ();
-	test_ah_decoded_headers ();
+	test_ah_raw_headers ();
 	testsuite_end ();
 	
 #ifdef ENABLE_CRYPTO

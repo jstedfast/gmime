@@ -67,7 +67,6 @@ typedef enum {
 G_DECLARE_FINAL_TYPE (GMimeAutocryptHeader, g_mime_autocrypt_header, GMIME, AUTOCRYPT_HEADER, GObject)
 
 GMimeAutocryptHeader *g_mime_autocrypt_header_new (void);
-GMimeAutocryptHeader *g_mime_autocrypt_header_new_from_string (const char *string);
 
 GMimeAutocryptHeader *g_mime_autocrypt_header_parse (const char *raw_value, gsize length, GMimeAutocryptHeaderKind kind, GError **error);
 GBytes *g_mime_autocrypt_header_format (GMimeAutocryptHeader *ah, GMimeAutocryptHeaderKind kind, GError **error);

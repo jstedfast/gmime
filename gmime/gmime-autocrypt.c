@@ -28,6 +28,7 @@
 
 #include "gmime-autocrypt.h"
 #include "gmime-error.h"
+#include "gmime-internal.h"
 
 #include "gmime-object-private.h"
 #include "gmime-parse-utils.h"
@@ -419,111 +420,23 @@ g_mime_autocrypt_header_format (GMimeAutocryptHeader *ah, GMimeAutocryptHeaderKi
 }
 
 
-/**
- * g_mime_autocrypt_header_new_from_string:
- * @string: The decoded string value of an Autocrypt header
- *
- * Creates a new #GMimeAutocryptHeader object based on the value of an
- * Autocrypt: header.
- * RFC 2047 encoded words must be decoded before calling this function.
- * Message and entity Autocrypt extraction performs that decoding.
- *
- * Note that this will not have an @effective_date set, since the
- * @effective_date is derived from the Date: line in the same block of
- * e-mail headers, but cannot be extracted from the raw Autocrypt:
- * header itself.
- * 
- * Returns: (transfer full): a new #GMimeAutocryptHeader object, or
- * %NULL on error.
- **/
 GMimeAutocryptHeader *
-g_mime_autocrypt_header_new_from_string (const char *string)
+_g_mime_autocrypt_header_from_header (GMimeHeader *header, GMimeAutocryptHeaderKind kind)
 {
-	struct _attr { const char *val, *name; size_t sz, length; };
-#define attr(n, str) struct _attr n = { .name = str, .sz = sizeof(str)-1 }
-	attr(k, "keydata");
-	attr(p, "prefer-encrypt");
-	attr(a, "addr");
-#undef attr
-	struct _attr *attrs[] = { &k, &p, &a };
-	GMimeAutocryptPreferEncrypt newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_NONE;
-	const char *inptr, *inend, *start, *end;
-	GMimeAutocryptHeader *ret;
-	GBytes *newkeydata;
-	guchar *decoded;
-	gsize decodedlen;
-	char *address;
-	guint save = 0;
-	int state = 0;
+	GBytes *raw = g_mime_header_get_raw_value (header);
+	GMimeAutocryptHeader *advertisement;
+	const char *data;
+	gsize length;
 
-	if (string == NULL)
+	if (!raw)
 		return NULL;
 
-	inptr = string;
-	inend = string + strlen (string);
+	data = g_bytes_get_data (raw, &length);
+	advertisement = g_mime_autocrypt_header_parse (data, length, kind, NULL);
+	g_bytes_unref (raw);
 
-	do {
-		gboolean known = FALSE;
-		int i;
-
-		start = inptr;
-		while (inptr < inend && *inptr != ';')
-			inptr++;
-		end = inptr;
-
-		while (start < end && g_ascii_isspace (*start))
-			start++;
-		while (end > start && g_ascii_isspace (end[-1]))
-			end--;
-		
-		for (i = 0; i < G_N_ELEMENTS(attrs); i++) {
-			if ((gsize) (end - start) > attrs[i]->sz &&
-			    g_ascii_strncasecmp (attrs[i]->name, start, attrs[i]->sz) == 0 && start[attrs[i]->sz] == '=') {
-				if (attrs[i]->val)
-					return NULL;
-
-				attrs[i]->val = start + attrs[i]->sz + 1;
-				attrs[i]->length = end - attrs[i]->val;
-				known = TRUE;
-				break;
-			}
-		}
-
-		if (!known && (start == end || *start != '_'))
-			return NULL;
-
-		if (inptr == inend)
-			break;
-		inptr++;
-	} while (TRUE);
-	
-	if (!k.val || !a.val)
-		return NULL;
-
-	if (p.val && p.length == 6 && g_ascii_strncasecmp ("mutual", p.val, p.length) == 0)
-		newpref = GMIME_AUTOCRYPT_PREFER_ENCRYPT_MUTUAL;
-	
-	ret = g_object_new (GMIME_TYPE_AUTOCRYPT_HEADER, NULL);
-	address = g_strndup (a.val, a.length);
-
-	if (!g_mime_autocrypt_header_set_address_from_string (ret, address, NULL))
-		g_clear_object (&ret);
-
-	g_free (address);
-
-	if (!ret)
-		return NULL;
-
-	g_mime_autocrypt_header_set_prefer_encrypt (ret, newpref);
-	decoded = g_malloc (MAX (k.length, 1));
-	decodedlen = g_base64_decode_step (k.val, k.length, decoded, &state, &save);
-	newkeydata = g_bytes_new_take (decoded, decodedlen);
-	g_mime_autocrypt_header_set_keydata (ret, newkeydata);
-	g_bytes_unref (newkeydata);
-
-	return ret;
+	return advertisement;
 }
-
 
 /**
  * g_mime_autocrypt_header_set_address_from_string:

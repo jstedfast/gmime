@@ -37,6 +37,7 @@
 G_BEGIN_DECLS
 
 /* GMimeAutocrypt */
+G_GNUC_INTERNAL GMimeAutocryptHeader *_g_mime_autocrypt_header_from_header (GMimeHeader *header, GMimeAutocryptHeaderKind kind);
 G_GNUC_INTERNAL char *_g_mime_autocrypt_canonicalize_mailbox (GMimeMailboxAddress *mailbox);
 
 /* GMimeFilterOpenPGP */
@@ -72,7 +73,7 @@ G_GNUC_INTERNAL void g_mime_entity_type_registry_init (void);
 G_GNUC_INTERNAL void g_mime_entity_type_registry_shutdown (void);
 G_GNUC_INTERNAL GMimeAutocryptHeaderList *
 g_mime_entity_get_autocrypt_headers (GMimeEntity *mime_part, GDateTime *effective_date,
-				   const char *matchheader, GMimeInternetAddressList *addresses,
+				   GMimeAutocryptHeaderKind kind, GMimeInternetAddressList *addresses,
 				   gboolean keep_incomplete);
 
 /* GMimeWriter */

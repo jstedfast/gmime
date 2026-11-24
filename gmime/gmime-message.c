@@ -2855,7 +2855,9 @@ g_mime_message_observe_autocrypt (GMimeMessage *message, GDateTime *received_at)
 	headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 
 	for (int i = 0; i < g_mime_header_list_get_count (headers); i++) {
-		if (g_mime_header_get_id (g_mime_header_list_get_header_at (headers, i)) == GMIME_HEADER_FROM)
+		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
+
+		if (g_mime_header_get_id (header) == GMIME_HEADER_FROM)
 			nfrom++;
 	}
 
@@ -2881,23 +2883,13 @@ g_mime_message_observe_autocrypt (GMimeMessage *message, GDateTime *received_at)
 	for (int i = 0; i < g_mime_header_list_get_count (headers); i++) {
 		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
 		GMimeAutocryptHeader *advertisement;
-		const char *data;
 		gboolean matches;
 		char *address;
-		GBytes *raw;
-		gsize len;
 
 		if (g_mime_header_get_id (header) != GMIME_HEADER_AUTOCRYPT)
 			continue;
 
-		if (!(raw = g_mime_header_get_raw_value (header)))
-			continue;
-
-		data = g_bytes_get_data (raw, &len);
-		advertisement = data ? g_mime_autocrypt_header_parse (data, len, GMIME_AUTOCRYPT_HEADER_DIRECT, NULL) : NULL;
-		g_bytes_unref (raw);
-
-		if (!advertisement)
+		if (!(advertisement = _g_mime_autocrypt_header_from_header (header, GMIME_AUTOCRYPT_HEADER_DIRECT)))
 			continue;
 
 		address = _g_mime_autocrypt_canonicalize_mailbox (g_mime_autocrypt_header_get_address (advertisement));
@@ -3053,7 +3045,7 @@ g_mime_message_get_autocrypt_header (GMimeMessage *message, GDateTime *now)
 
 	retlist = g_mime_entity_get_autocrypt_headers (GMIME_ENTITY (message),
 						       effective_date,
-						       "autocrypt",
+						       GMIME_AUTOCRYPT_HEADER_DIRECT,
 						       g_mime_message_get_from (message),
 						       TRUE);
 
@@ -3149,7 +3141,7 @@ g_mime_message_get_autocrypt_gossip_headers_from_inner_part (GMimeMessage *messa
 
 	ret = g_mime_entity_get_autocrypt_headers (inner_part,
 						   effective_date,
-						   "autocrypt-gossip",
+						   GMIME_AUTOCRYPT_HEADER_GOSSIP,
 						   addresses, FALSE);
 
 	g_object_unref (addresses);

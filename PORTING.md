@@ -1192,9 +1192,9 @@ state is immutable. Pass `FALSE` when the key is absent or unusable. Apply
 gossip separately with `g_mime_autocrypt_peer_state_apply_gossip()` so it
 cannot replace a direct advertisement. These operations do not require GPGME.
 
-For applications that handle header values directly, the stricter alternative
-to `g_mime_autocrypt_header_new_from_string()` takes **raw field-value bytes**
-and their length: `g_mime_autocrypt_header_parse()`. Pass
+`g_mime_autocrypt_header_new_from_string()` has been removed. Use
+`g_mime_autocrypt_header_parse()` with **raw field-value bytes** and their
+length, including the final LF or CRLF, without RFC 2047 decoding. Pass
 `GMIME_AUTOCRYPT_HEADER_DIRECT` or `GMIME_AUTOCRYPT_HEADER_GOSSIP` rather than
 a boolean. In place of `g_mime_autocrypt_header_to_string()`, the matching
 `g_mime_autocrypt_header_format()` returns a `GBytes` value suitable for

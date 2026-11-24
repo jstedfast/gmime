@@ -1875,7 +1875,7 @@ g_mime_entity_type_registry_init (void)
  * g_mime_entity_get_autocrypt_headers:
  * @mime_part: a #GMimeEntity
  * @effective_date: a #GDateTime object
- * @matchheader: the header we want to match
+ * @kind: the Autocrypt field to match
  * @addresses: a #GMimeInternetAddressList
  * @keep_incomplete: %TRUE if the we should include incompletes
  *
@@ -1914,47 +1914,56 @@ g_mime_entity_type_registry_init (void)
  **/
 GMimeAutocryptHeaderList *
 g_mime_entity_get_autocrypt_headers (GMimeEntity *mime_part, GDateTime *effective_date,
-				     const char *matchheader, GMimeInternetAddressList *addresses,
+				     GMimeAutocryptHeaderKind kind, GMimeInternetAddressList *addresses,
 				     gboolean keep_incomplete)
 {
-	g_return_val_if_fail (GMIME_IS_ENTITY (mime_part), NULL);
-
+	GMimeHeaderId id = kind == GMIME_AUTOCRYPT_HEADER_DIRECT ? GMIME_HEADER_AUTOCRYPT : GMIME_HEADER_AUTOCRYPT_GOSSIP;
+	GMimeAutocryptHeaderList *ret;
+	GMimeHeaderList *headers;
+	guint count;
 	int i;
 
-	GMimeAutocryptHeaderList *ret = g_mime_autocrypt_header_list_new ();
-	guint count = g_mime_autocrypt_header_list_add_missing_addresses (ret, addresses);
+	g_return_val_if_fail (GMIME_IS_ENTITY (mime_part), NULL);
+
+	ret = g_mime_autocrypt_header_list_new ();
+	count = g_mime_autocrypt_header_list_add_missing_addresses (ret, addresses);
+
 	if (!count)
 		return ret;
 
-	/* scan for Autocrypt headers whose addr= attribute matches
-	 * the From: header. */
-	
-	GMimeHeaderList *headers = g_mime_entity_get_header_list(mime_part);
+	headers = g_mime_entity_get_header_list (mime_part);
+
 	for (i = 0; i < g_mime_header_list_get_count (headers); i++) {
 		GMimeHeader *header = g_mime_header_list_get_header_at (headers, i);
-		if (g_ascii_strcasecmp (matchheader, header->name) == 0) {
-			/* Autocrypt attributes are parsed after RFC 2047 decoding. */
-			GMimeAutocryptHeader *ah = g_mime_autocrypt_header_new_from_string (g_mime_header_get_value (header));
-			if (!ah || ! g_mime_autocrypt_header_is_complete (ah))
-				goto done;
+
+		if (g_mime_header_get_id (header) == id) {
+			GMimeAutocryptHeader *ah = _g_mime_autocrypt_header_from_header (header, kind);
+			GMimeAutocryptHeader *prev;
+
+			if (!ah)
+				continue;
+
 			g_mime_autocrypt_header_set_effective_date (ah, effective_date);
-			GMimeAutocryptHeader *prev = g_mime_autocrypt_header_list_get_header_for_address (ret, ah->address);
-			if (!prev) /* not a valid address (was not in From:) */
-				goto done;
+
+			if (!(prev = g_mime_autocrypt_header_list_get_header_for_address (ret, ah->address))) {
+				g_object_unref (ah);
+				continue;
+			}
+
 			if (g_mime_autocrypt_header_is_complete (prev)) {
 				/* this is a duplicate (we use effective_date=NULL as an internal marker for this) */
 				g_mime_autocrypt_header_set_effective_date (prev, NULL);
 			} else {
 				g_mime_autocrypt_header_clone (prev, ah);
 			}
-		done:
-			if (ah)
-				g_object_unref (ah);
+
+			g_object_unref (ah);
 		}
-			
 	}
+
 	for (i = 0; i < g_mime_autocrypt_header_list_get_count (ret); i++) {
 		GMimeAutocryptHeader *ah = g_mime_autocrypt_header_list_get_header_at (ret, i);
+
 		/* drop keydata from duplicates */
 		if (ah->effective_date == NULL) {
 			g_mime_autocrypt_header_set_keydata (ah, NULL);
@@ -1964,5 +1973,6 @@ g_mime_entity_get_autocrypt_headers (GMimeEntity *mime_part, GDateTime *effectiv
 
 	if (!keep_incomplete)
 		g_mime_autocrypt_header_list_remove_incomplete (ret);
+
 	return ret;
 }
