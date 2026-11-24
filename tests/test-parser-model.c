@@ -2157,6 +2157,36 @@ count_missing_boundary (const GMimeComplianceIssue *issue, gpointer user_data)
 }
 
 static void
+test_boundary_transport_padding (void)
+{
+	static const char wire[] = "Content-Type: multipart/mixed; boundary=b\r\n\r\n"
+		"--b \t\r\n\r\none\r\n--b\v\r\n\r\ntwo\r\n--b--\f \t\r\nthree\r\n"
+		"--b\r\r\n\r\nfour\r\n--b\t \n\r\nfive\r\n--b--\t \r";
+	static const gsize chunks[] = { 1, 4096 };
+
+	testsuite_check ("Multipart delimiters tolerate trailing CRs but not vertical tabs or form feeds");
+	for (guint i = 0; i < G_N_ELEMENTS (chunks); i++) {
+		ModelInput *input = new_input (wire, sizeof (wire) - 1, chunks[i]);
+		GMimeReader *reader = _g_mime_parser_reader_new (NULL, GMIME_STREAM (input), FALSE);
+		GError *error = NULL;
+		GMimeEntity *root = _g_mime_parser_reader_construct_part (reader, &error);
+		GMimeMultipart *multipart;
+
+		g_assert_no_error (error);
+		multipart = unwrap_boundary_fixture (root, 0);
+		g_assert_cmpint (g_mime_multipart_get_count (multipart), ==, 3);
+		assert_boundary_content (g_mime_multipart_get_part (multipart, 0),
+					 "one\r\n--b\v\r\n\r\ntwo\r\n--b--\f \t\r\nthree");
+		assert_boundary_content (g_mime_multipart_get_part (multipart, 1), "four");
+		assert_boundary_content (g_mime_multipart_get_part (multipart, 2), "five");
+		g_object_unref (root);
+		g_object_unref (reader);
+		g_object_unref (input);
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_ancestor_boundary_precedence (void)
 {
 	static const struct {
@@ -7213,6 +7243,7 @@ main (int argc, char **argv)
 	test_mailbox_model_errors ();
 	test_multipart_models ();
 	test_ancestor_boundary_precedence ();
+	test_boundary_transport_padding ();
 	test_boundary_index_transitions ();
 	test_boundary_index_matches ();
 	test_boundary_index_restoration ();

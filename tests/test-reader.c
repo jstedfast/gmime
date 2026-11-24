@@ -1551,10 +1551,11 @@ test_mailboxes (void)
 	static const char mbox[] = "\xef\xbb\xbf" "junk\r\nFrom one\r\nX: a\r\n\r\nbody\r\nFrom two\nX: b\n\nlast\n";
 	static const char mmdf[] = "\1\1\1\1\nX: a\n\nbody\n\1\1\1\1\n\1\1\1\1\nX: b\n\nlast\n\1\1\1\1\n";
 	static const char protected[] = "body\nFrom fake\nnot a header\nend\n";
+	static const char padded[] = "From one\r\nX: a\r\n\r\nbody\r\nFrom  \t\r\nFrom \v\f\t\r\nX: b\n\nlast\n";
 	GMimeParserOptions *options = g_mime_parser_options_new ();
 	char *length_wire = g_strdup_printf ("From one\nX: a\nContent-Length: %" G_GSIZE_FORMAT
 					    "\n\n%sFrom two\nX: b\n\nlast\n", strlen (protected), protected);
-	const char *wires[] = { mbox, mmdf, length_wire };
+	const char *wires[] = { mbox, mmdf, length_wire, padded };
 	guint kind, chunk;
 
 	g_mime_parser_options_set_respect_content_length (options, TRUE);
@@ -1591,9 +1592,10 @@ test_mailboxes (void)
 			g_assert_true (g_mime_reader_read_message (base, &error));
 			g_assert_no_error (error);
 			g_assert_false (g_mime_reader_eos (base));
-			g_assert_cmpuint (reader->content->len, ==, kind == 2 ? strlen (protected) - 1 : 4);
 			if (kind == 2)
 				g_assert_cmpmem (reader->content->data, reader->content->len, protected, strlen (protected) - 1);
+			else if (kind == 3)
+				g_assert_cmpmem (reader->content->data, reader->content->len, "body\r\nFrom  \t", sizeof ("body\r\nFrom  \t") - 1);
 			else
 				g_assert_cmpmem (reader->content->data, reader->content->len, "body", 4);
 			g_assert_true (g_mime_reader_read_message (base, &error));

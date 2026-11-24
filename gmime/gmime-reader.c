@@ -949,12 +949,6 @@ check_missing_headers (GMimeReader *reader, gint64 offset, guint64 line, gboolea
 		report_at (reader, GMIME_COMPLIANCE_MISSING_MIME_VERSION, offset, line, column, kind);
 }
 
-static gboolean
-boundary_whitespace (guint8 c)
-{
-	return c == ' ' || c == '\t' || c == '\r' || c == '\v' || c == '\f';
-}
-
 static gint
 compare_boundaries (gconstpointer a, gconstpointer b)
 {
@@ -1049,7 +1043,8 @@ check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
 	if (length < 2)
 		return FALSE;
 
-	while (length > 0 && boundary_whitespace (buffer[length - 1]))
+	/* Note: LF is already excluded. */
+	while (length && (is_blank (buffer[length - 1]) || buffer[length - 1] == '\r'))
 		length--;
 
 	if (frame && length >= 2 && buffer[0] == '-' && buffer[1] == '-') {
