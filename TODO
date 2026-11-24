@@ -6,8 +6,6 @@ tasks are presented in.
 Future Planning:
 ================
 
-- Implement DKIM-Signature support?
-
 - Implement Pretty-Easy-Privacy support? What is that? Is that something that makes
   sense to have in GMime? Or does it belong at a higher level?
 
