@@ -3701,6 +3701,10 @@ count_public_warning (gint64 offset, GMimeParserWarning warning, const char *ite
 	guint *counts = user_data;
 
 	g_assert_cmpuint (warning, <=, GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT);
+	if (warning == GMIME_WARN_MALFORMED_MESSAGE) {
+		g_assert_cmpint (offset, ==, -1);
+		g_assert_null (item);
+	}
 	counts[warning]++;
 }
 
@@ -3741,6 +3745,57 @@ test_public_long_header_names (void)
 				g_object_unref (input);
 				g_free (wire);
 				g_free (name);
+			}
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
+test_partial_message_warning (void)
+{
+	static const struct {
+		const char *wire;
+		gboolean malformed, fails;
+	} cases[] = {
+		{ "Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\nContent-Ty", TRUE, FALSE },
+		{ "Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\n", TRUE, FALSE },
+		{ "Content-Type: message/rfc822\r\n\r\nSubject: ok\r\nContent-Ty", TRUE, FALSE },
+		{ "Content-Type: message/rfc822\r\n\r\nSubject: unfinished", FALSE, FALSE },
+		{ "Content-Type: multipart/mixed; boundary=b\r\n\r\n--b\r\n\r\nbody", FALSE, FALSE },
+		{ "Subject: ok\r\nContent-Ty", FALSE, TRUE }
+	};
+	static const gsize chunks[] = { 1, 4096 };
+
+	testsuite_check ("Malformed-message warning is specific to returning a message with incomplete child headers");
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (guint j = 0; j < G_N_ELEMENTS (chunks); j++) {
+			for (int message = 0; message < 2; message++) {
+				ModelInput *input = new_input (cases[i].wire, strlen (cases[i].wire), chunks[j]);
+				GMimeParser *parser = g_mime_parser_new_with_stream (GMIME_STREAM (input));
+				GMimeParserOptions *options = g_mime_parser_options_new ();
+				guint counts[GMIME_CRIT_PART_WITHOUT_HEADERS_OR_CONTENT + 1] = { 0 };
+				GError *error = NULL;
+				GObject *result;
+
+				g_mime_parser_options_set_warning_callback (options, count_public_warning, counts, NULL);
+				if (message)
+					result = G_OBJECT (g_mime_parser_construct_message (parser, options, &error));
+				else
+					result = G_OBJECT (g_mime_parser_construct_part (parser, options, &error));
+				if (cases[i].fails) {
+					g_assert_error (error, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR);
+					g_assert_null (result);
+					g_clear_error (&error);
+				} else {
+					g_assert_no_error (error);
+					g_assert_nonnull (result);
+					g_object_unref (result);
+				}
+				g_assert_cmpuint (counts[GMIME_WARN_MALFORMED_MESSAGE], ==, message && cases[i].malformed);
+				g_mime_parser_options_unref (options);
+				g_object_unref (parser);
+				g_object_unref (input);
 			}
 		}
 	}
@@ -7172,6 +7227,7 @@ main (int argc, char **argv)
 	test_model_errors ();
 	test_public_parser_models ();
 	test_public_parser_warnings ();
+	test_partial_message_warning ();
 	test_parser_compliance_options ();
 	test_parser_compliance_models ();
 	test_content_type_syntax ();

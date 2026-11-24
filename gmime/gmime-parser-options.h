@@ -67,7 +67,8 @@ typedef enum {
  * @GMIME_WARN_INVALID_PARAMETER: Invalid header parameter.
  * @GMIME_WARN_MALFORMED_MULTIPART: No child parts detected within a multipart.
  * @GMIME_WARN_TRUNCATED_MESSAGE: The message is truncated.
- * @GMIME_WARN_MALFORMED_MESSAGE: The message is malformed.
+ * @GMIME_WARN_MALFORMED_MESSAGE: A message was returned after EOF was encountered
+ *   where a nested entity's headers should start or before its field name was complete.
  * @GMIME_WARN_INVALID_ADDRESS_LIST: Invalid address list.
  * @GMIME_CRIT_INVALID_HEADER_NAME: Invalid header name, the parser may skip the message or parts of it.
  * @GMIME_CRIT_CONFLICTING_HEADER: Conflicting header.

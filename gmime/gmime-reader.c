@@ -138,6 +138,7 @@ struct _GMimeReaderPrivate {
 	unsigned int seen_content_disposition : 1;
 	unsigned int seen_content_id : 1;
 	unsigned int header_limit_exceeded : 1;
+	unsigned int incomplete_child_headers : 1;
 	unsigned int stop_at_separator : 1;
 	unsigned int mailbox_boundary : 1;
 	unsigned int seen_encoding : 1;
@@ -1434,6 +1435,9 @@ step_headers (GMimeReader *reader, gboolean message)
 			return FALSE;
 
 		if (left == 0) {
+			if (priv->entity_read && !priv->toplevel && !have_headers)
+				priv->incomplete_child_headers = TRUE;
+
 			/* Empty input has a begin callback but no matching end callback. */
 			if (!have_valid_headers && (!priv->entity_read || priv->toplevel))
 				return TRUE;
@@ -1489,6 +1493,10 @@ step_headers (GMimeReader *reader, gboolean message)
 
 				invalid = TRUE;
 				invalid_index = -1;
+
+				if (priv->entity_read && !priv->toplevel && priv->input_eos)
+					priv->incomplete_child_headers = TRUE;
+
 				break;
 			}
 		}
@@ -2341,6 +2349,7 @@ step_entity (GMimeReader *reader, gboolean message)
 
 	priv->entity_read = TRUE;
 	priv->toplevel = TRUE;
+	priv->incomplete_child_headers = FALSE;
 	priv->boundary = NULL;
 	priv->mailbox_boundary = FALSE;
 	priv->boundary_eos = FALSE;
@@ -2678,8 +2687,12 @@ read_entity_or_message (GMimeReader *reader, gboolean message, GError **error)
 				}
 			}
 
-			if (result)
+			if (result) {
 				priv->complete_eos = !message || (priv->input_eos && priv->input_index == priv->input_end);
+
+				if (message && priv->incomplete_child_headers)
+					_g_mime_parser_options_warn (priv->options, -1, GMIME_WARN_MALFORMED_MESSAGE, NULL);
+			}
 		}
 	}
 
