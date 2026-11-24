@@ -2157,6 +2157,82 @@ count_missing_boundary (const GMimeComplianceIssue *issue, gpointer user_data)
 }
 
 static void
+collect_ambiguous_boundary (const GMimeComplianceIssue *issue, gpointer user_data)
+{
+	if (issue->violation == GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY)
+		g_array_append_val ((GArray *) user_data, *issue);
+}
+
+static void
+test_ambiguous_boundary_positions (void)
+{
+	static const struct {
+		const char *outer, *inner, *tail;
+		guint lines[5];
+	} cases[] = {
+		{ "b", "b--", "--b-- \t\r\n\r\nbody\r\n--b----\r\n--b--\r\n", { 6 } },
+		{ "b--", "b", "--b\r\n\r\nbody\r\n--b--\r\n--b----\r\n", { 9 } },
+		{ "b", "b", "--b\r\nContent-Type: multipart/mixed; boundary=b\r\n\r\n"
+		  "--b\r\n\r\nbody\r\n--b--\r\n--b--\r\n--b--\r\n", { 6, 9, 12, 13 } },
+		{ "b", "b--", "--b--\r\nContent-Type: multipart/mixed; boundary=b--\r\n\r\n"
+		  "--b--\r\n\r\nleaf\r\n--b----\r\n--b----\r\n--b--\r\n", { 6, 9, 12 } },
+		{ "b", "b", "--b\r\nContent-Type: multipart/mixed; boundary=c\r\n\r\n"
+		  "--c\r\n\r\nbody\r\n--b--\r\n--b--\r\n", { 6, 12 } },
+		{ "b", "b--", "", { 0 } },
+		{ "b", "b-extra", "--b-extra\r\n\r\nbody\r\n--b-extra--\r\n--b--\r\n", { 0 } },
+		{ "b", "c", "--c--\r\n--b\r\nContent-Type: multipart/mixed; boundary=c\r\n\r\n--c--\r\n--b--\r\n", { 0 } }
+	};
+	static const guint chunks[] = { 1, 4096 };
+
+	testsuite_check ("Ambiguous delimiter lines are reported once at the first hyphen");
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		for (guint wrappers = 0; wrappers <= 4; wrappers += 4) {
+			GString *wire = g_string_new (NULL);
+
+			append_boundary_wrappers (wire, wrappers, "\r\n", FALSE);
+			g_string_append_printf (wire, "Content-Type: multipart/mixed; boundary=%s\r\n\r\n--%s\r\n"
+						"Content-Type: multipart/mixed; boundary=%s\r\n\r\n%s",
+						cases[i].outer, cases[i].outer, cases[i].inner, cases[i].tail);
+			for (guint j = 0; j < G_N_ELEMENTS (chunks); j++) {
+				ModelInput *input = new_input (wire->str, wire->len, chunks[j]);
+				GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+				GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+				const char *start = wire->str;
+				guint line = 1, k;
+				GError *error = NULL;
+
+				g_mime_reader_set_compliance_logger (reader, collect_ambiguous_boundary, issues, NULL);
+				g_assert_true (g_mime_reader_read_entity (reader, &error));
+				g_assert_no_error (error);
+				for (k = 0; cases[i].lines[k]; k++) {
+					const GMimeComplianceIssue *issue;
+					guint expected = 3 * wrappers + cases[i].lines[k];
+
+					while (line < expected) {
+						start = strchr (start, '\n');
+						g_assert_nonnull (start);
+						start++;
+						line++;
+					}
+					g_assert_cmpuint (k, <, issues->len);
+					issue = &g_array_index (issues, GMimeComplianceIssue, k);
+					g_assert_cmpint (issue->stream_offset, ==, start - wire->str);
+					g_assert_cmpuint (issue->line_number, ==, expected);
+					g_assert_cmpuint (issue->column_number, ==, 1);
+					g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_EXACT);
+				}
+				g_assert_cmpuint (issues->len, ==, k);
+				g_array_unref (issues);
+				g_object_unref (reader);
+				g_object_unref (input);
+			}
+			g_string_free (wire, TRUE);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
 test_boundary_transport_padding (void)
 {
 	static const char wire[] = "Content-Type: multipart/mixed; boundary=b\r\n\r\n"
@@ -7243,6 +7319,7 @@ main (int argc, char **argv)
 	test_mailbox_model_errors ();
 	test_multipart_models ();
 	test_ancestor_boundary_precedence ();
+	test_ambiguous_boundary_positions ();
 	test_boundary_transport_padding ();
 	test_boundary_index_transitions ();
 	test_boundary_index_matches ();

@@ -26,7 +26,7 @@
 #include "gmime-compliance-data-private.h"
 #include "gmime-internal.h"
 
-G_STATIC_ASSERT (G_N_ELEMENTS (compliance_metadata) == GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR + 2);
+G_STATIC_ASSERT (G_N_ELEMENTS (compliance_metadata) == GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY + 2);
 
 /**
  * SECTION: gmime-compliance
@@ -68,7 +68,7 @@ g_mime_compliance_options_shutdown (void)
 static gboolean
 valid_violation (GMimeComplianceViolation violation)
 {
-	return (violation > GMIME_COMPLIANCE_NONE && violation <= GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR) ||
+	return (violation > GMIME_COMPLIANCE_NONE && violation <= GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY) ||
 		violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES;
 }
 
@@ -76,7 +76,7 @@ static guint
 metadata_index (GMimeComplianceViolation violation)
 {
 	return violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES ?
-		GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR + 1 : (guint) violation;
+		GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY + 1 : (guint) violation;
 }
 
 /**

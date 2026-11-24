@@ -75,6 +75,7 @@ typedef struct _EntityFrame {
 	gsize boundary_length, boundary_read_ahead;
 	guint boundary_depth;
 	gboolean boundary_active, message_active, digest;
+	gboolean ambiguous_open, ambiguous_close;
 	gint64 begin, headers_end, content_begin;
 	guint64 begin_line, content_line;
 	gint64 message_begin, message_headers_end;
@@ -96,7 +97,7 @@ struct _GMimeReaderPrivate {
 	ComplianceLogger *logger, *active_logger;
 	GMimeComplianceValidators validators;
 	GMimeComplianceContext context;
-	guint issue_counts[GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR + 1], issue_limit;
+	guint issue_counts[GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY + 1], issue_limit;
 	GMimeEncodingValidator *validator;
 	GMimeReaderContentScanFunc content_scanner;
 
@@ -969,6 +970,49 @@ index_boundary (GMimeReaderPrivate *priv, EntityFrame *frame)
 }
 
 static void
+check_boundary_collisions (GMimeReaderPrivate *priv, EntityFrame *frame)
+{
+	const char *value = frame->boundary;
+	gsize length = frame->boundary_length;
+	gboolean ends_in_dashes = length >= 2 && !memcmp (value + length - 2, "--", 2);
+
+	if (frame->boundary_depth > BOUNDARY_INDEX_THRESHOLD) {
+		EntityFrame key = { 0 };
+		char *closing;
+
+		if (g_tree_lookup (priv->boundary_index, frame)) {
+			frame->ambiguous_open = frame->ambiguous_close = TRUE;
+			return;
+		}
+
+		if (ends_in_dashes) {
+			key.boundary = value;
+			key.boundary_length = length - 2;
+			frame->ambiguous_open = g_tree_lookup (priv->boundary_index, &key) != NULL;
+		}
+
+		key.boundary = closing = g_strconcat (value, "--", NULL);
+		key.boundary_length = length + 2;
+		frame->ambiguous_close = g_tree_lookup (priv->boundary_index, &key) != NULL;
+		g_free (closing);
+	} else {
+		for (EntityFrame *p = frame->parent_boundary; p; p = p->parent_boundary) {
+			if (p->boundary_length == length && !memcmp (p->boundary, value, length)) {
+				frame->ambiguous_open = frame->ambiguous_close = TRUE;
+				break;
+			}
+
+			if (ends_in_dashes && p->boundary_length == length - 2 && !memcmp (p->boundary, value, length - 2))
+				frame->ambiguous_open = TRUE;
+
+			if (p->boundary_length == length + 2 && !memcmp (p->boundary, value, length) &&
+			    !memcmp (p->boundary + length, "--", 2))
+				frame->ambiguous_close = TRUE;
+		}
+	}
+}
+
+static void
 push_boundary (GMimeReaderPrivate *priv, EntityFrame *frame)
 {
 	EntityFrame *parent = priv->active_boundary;
@@ -994,6 +1038,9 @@ push_boundary (GMimeReaderPrivate *priv, EntityFrame *frame)
 		while (i > 0)
 			index_boundary (priv, ancestors[--i]);
 	}
+
+	if (priv->active_logger && frame->parent_boundary)
+		check_boundary_collisions (priv, frame);
 
 	if (frame->boundary_depth > BOUNDARY_INDEX_THRESHOLD)
 		index_boundary (priv, frame);
@@ -2156,6 +2203,11 @@ skip_boundary (GMimeReader *reader, gboolean *terminated)
 	gint64 begin = input_offset (priv);
 	gboolean final = priv->final_boundary;
 	guint64 line = priv->line_number;
+
+	if (final ? priv->boundary->ambiguous_close : priv->boundary->ambiguous_open) {
+		report_at (reader, GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY, begin, line, 1,
+			   GMIME_COMPLIANCE_POSITION_EXACT);
+	}
 
 	if (!READER_CALLBACK (reader, priv, boundary_begin, final, begin, line))
 		return FALSE;

@@ -346,13 +346,13 @@ test_metadata (void)
 	GMimeComplianceViolation violation;
 	guint i;
 
-	for (i = 1; i <= GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR + 1; i++) {
+	for (i = 1; i <= GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY + 1; i++) {
 		GMimeComplianceIssue issue = { GMIME_COMPLIANCE_CONTEXT_TRANSPORT, 0, 0, 1, 1,
 					      GMIME_COMPLIANCE_POSITION_EXACT };
 		const char *name;
 		char *text;
 
-		violation = i > GMIME_COMPLIANCE_EOF_BEFORE_BODY_SEPARATOR ?
+		violation = i > GMIME_COMPLIANCE_AMBIGUOUS_MULTIPART_BOUNDARY ?
 			GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES : i;
 		name = g_mime_compliance_violation_get_name (violation);
 		g_assert_nonnull (name);
