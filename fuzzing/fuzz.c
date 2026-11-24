@@ -229,7 +229,7 @@ fuzz_compliance_report (const GMimeComplianceIssue *issue, gpointer user_data)
 	GMimeComplianceViolation violation = issue->violation;
 	const char *description;
 
-	FUZZ_CHECK ((violation > GMIME_COMPLIANCE_NONE && violation <= GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT) ||
+	FUZZ_CHECK ((violation > GMIME_COMPLIANCE_NONE && violation <= GMIME_COMPLIANCE_MESSAGE_TRUNCATED) ||
 		    violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES, "Undefined compliance violation: %d", violation);
 	FUZZ_CHECK (issue->position_kind >= GMIME_COMPLIANCE_POSITION_EXACT &&
 		    issue->position_kind <= GMIME_COMPLIANCE_POSITION_ELEMENT_START, "Undefined compliance position kind");

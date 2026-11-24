@@ -1888,6 +1888,49 @@ collect_compliance (const GMimeComplianceIssue *issue, gpointer user_data)
 }
 
 static void
+test_multipart_end_diagnostics (void)
+{
+	static const char wire[] =
+		"From: unit-tests@mimekit.net\r\nMessage-Id: <test@example.org>\r\n"
+		"Date: Tue, 12 Nov 2013 09:12:42 -0500\r\nMIME-Version: 1.0\r\n"
+		"Content-Type: multipart/mixed; boundary=outer\r\n\r\n--outer\r\n"
+		"Content-Type: multipart/alternative; boundary=inner\r\n\r\n--inner\r\n\r\n"
+		"Plain text\r\n--outer--\r\n";
+	static const guint chunks[] = { 1, 4096 };
+	gsize boundary = strstr (wire, "--outer--") - wire;
+	guint eof, chunk, i;
+
+	testsuite_check ("Unclosed multiparts distinguish an enclosing delimiter from end of stream");
+	for (eof = 0; eof < 2; eof++) {
+		for (chunk = 0; chunk < G_N_ELEMENTS (chunks); chunk++) {
+			ReaderInput *input = new_input (wire, eof ? boundary : sizeof (wire) - 1, chunks[chunk]);
+			GMimeReader *reader = g_mime_reader_new (NULL, GMIME_STREAM (input));
+			GArray *issues = g_array_new (FALSE, FALSE, sizeof (GMimeComplianceIssue));
+			GError *error = NULL;
+
+			g_mime_reader_set_compliance_logger (reader, collect_compliance, issues, NULL);
+			g_assert_true (g_mime_reader_read_message (reader, &error));
+			g_assert_no_error (error);
+			g_assert_cmpuint (issues->len, ==, eof ? 2 : 1);
+			for (i = 0; i < issues->len; i++) {
+				const GMimeComplianceIssue *issue = &g_array_index (issues, GMimeComplianceIssue, i);
+
+				g_assert_cmpint (issue->violation, ==, eof ? GMIME_COMPLIANCE_MESSAGE_TRUNCATED :
+						 GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY);
+				g_assert_cmpint (issue->stream_offset, ==, boundary);
+				g_assert_cmpuint (issue->line_number, ==, 13);
+				g_assert_cmpuint (issue->column_number, ==, 1);
+				g_assert_cmpint (issue->position_kind, ==, GMIME_COMPLIANCE_POSITION_EXACT);
+			}
+			g_array_unref (issues);
+			g_object_unref (reader);
+			g_object_unref (input);
+		}
+	}
+	testsuite_check_passed ();
+}
+
+static void
 collect_repeated_headers (const GMimeComplianceIssue *issue, gpointer user_data)
 {
 	if (issue->violation >= GMIME_COMPLIANCE_REPEATED_DATE &&
@@ -2328,8 +2371,8 @@ test_compliance_options_and_issues (void)
 	g_object_unref (reader);
 	g_object_unref (input);
 
-	for (i = 1; i <= GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1; i++) {
-		GMimeComplianceViolation violation = i > GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT ?
+	for (i = 1; i <= GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1; i++) {
+		GMimeComplianceViolation violation = i > GMIME_COMPLIANCE_MESSAGE_TRUNCATED ?
 			GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES : i;
 
 		issue = g_mime_compliance_issue_new (GMIME_COMPLIANCE_CONTEXT_STORAGE, violation, G_MAXINT64,
@@ -2405,7 +2448,7 @@ test_compliance_logging (void)
 		ReaderInput *input = new_input (wire, sizeof (wire) - 1, chunk);
 		TestReader *reader = new_reader (input, NULL);
 		GMimeReader *base = (GMimeReader *) reader;
-		guint counts[GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1] = { 0 }, truncated = 0;
+		guint counts[GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1] = { 0 }, truncated = 0;
 
 		g_array_set_size (issues, 0);
 		g_mime_compliance_options_set_max_issues_per_violation (options, 1);
@@ -3510,6 +3553,7 @@ main (int argc, char **argv)
 	test_compliance_failures ();
 	test_long_mailbox_marker ();
 	testsuite_check_passed ();
+	test_multipart_end_diagnostics ();
 	test_repeated_headers ();
 	test_repeated_content_ids ();
 	test_content_id_model_preservation ();

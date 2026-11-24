@@ -207,7 +207,8 @@ typedef enum {
  * @GMIME_COMPLIANCE_EMPTY_GROUP_NAME: unnamed address group
  * @GMIME_COMPLIANCE_NESTED_ADDRESS_GROUP: group nested inside another group
  * @GMIME_COMPLIANCE_MISSING_BODY_SEPARATOR: missing header/body separator
- * @GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY: missing multipart closing delimiter
+ * @GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY: enclosing boundary encountered
+ *   before the multipart closing delimiter
  * @GMIME_COMPLIANCE_MIME_DEPTH_LIMIT_EXCEEDED: container flattened at the depth limit
  * @GMIME_COMPLIANCE_INCOMPLETE_BASE64_QUANTUM: incomplete base64 quantum
  * @GMIME_COMPLIANCE_INVALID_BASE64_CHARACTER: invalid base64 byte
@@ -225,6 +226,7 @@ typedef enum {
  * @GMIME_COMPLIANCE_INVALID_UUENCODED_LINE_EXTRA_DATA: extra encoded line data
  * @GMIME_COMPLIANCE_INVALID_UUENCODE_END_MARKER: malformed uuencode end marker
  * @GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT: missing uuencode terminator
+ * @GMIME_COMPLIANCE_MESSAGE_TRUNCATED: stream ended before the multipart closing delimiter
  * @GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES: reporting budget was exceeded
  *
  * Use the violation metadata functions for names, descriptions, remarks and
@@ -333,6 +335,7 @@ typedef enum {
 	GMIME_COMPLIANCE_INVALID_UUENCODED_LINE_EXTRA_DATA = 99,
 	GMIME_COMPLIANCE_INVALID_UUENCODE_END_MARKER = 100,
 	GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT = 101,
+	GMIME_COMPLIANCE_MESSAGE_TRUNCATED = 102,
 	GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES = G_MAXINT32
 } GMimeComplianceViolation;
 

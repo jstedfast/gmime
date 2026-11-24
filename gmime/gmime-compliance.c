@@ -26,7 +26,7 @@
 #include "gmime-compliance-data-private.h"
 #include "gmime-internal.h"
 
-G_STATIC_ASSERT (G_N_ELEMENTS (compliance_metadata) == GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 2);
+G_STATIC_ASSERT (G_N_ELEMENTS (compliance_metadata) == GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 2);
 
 /**
  * SECTION: gmime-compliance
@@ -68,7 +68,7 @@ g_mime_compliance_options_shutdown (void)
 static gboolean
 valid_violation (GMimeComplianceViolation violation)
 {
-	return (violation > GMIME_COMPLIANCE_NONE && violation <= GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT) ||
+	return (violation > GMIME_COMPLIANCE_NONE && violation <= GMIME_COMPLIANCE_MESSAGE_TRUNCATED) ||
 		violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES;
 }
 
@@ -76,7 +76,7 @@ static guint
 metadata_index (GMimeComplianceViolation violation)
 {
 	return violation == GMIME_COMPLIANCE_TOO_MANY_COMPLIANCE_ISSUES ?
-		GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1 : (guint) violation;
+		GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1 : (guint) violation;
 }
 
 /**

@@ -96,7 +96,7 @@ struct _GMimeReaderPrivate {
 	ComplianceLogger *logger, *active_logger;
 	GMimeComplianceValidators validators;
 	GMimeComplianceContext context;
-	guint issue_counts[GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1], issue_limit;
+	guint issue_counts[GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1], issue_limit;
 	GMimeEncodingValidator *validator;
 	GMimeReaderContentScanFunc content_scanner;
 
@@ -2482,7 +2482,8 @@ step_entity (GMimeReader *reader, gboolean message)
 									    frame->content_type->subtype);
 					else if (priv->boundary_eos)
 						_g_mime_parser_options_warn (priv->options, -1, GMIME_WARN_TRUNCATED_MESSAGE, NULL);
-					report_at (reader, GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY,
+					report_at (reader, priv->boundary_eos ? GMIME_COMPLIANCE_MESSAGE_TRUNCATED :
+						   GMIME_COMPLIANCE_MISSING_MULTIPART_BOUNDARY,
 						   input_offset (priv), priv->line_number,
 						   (guint64) (input_offset (priv) - priv->line_begin) + 1,
 						   GMIME_COMPLIANCE_POSITION_EXACT);

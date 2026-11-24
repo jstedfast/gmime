@@ -16,7 +16,7 @@ typedef struct {
 	gsize length, operation_start;
 	GMimeComplianceContext context;
 	GMimeComplianceValidators validators;
-	guint cap, counts[GMIME_COMPLIANCE_INCOMPLETE_UUENCODED_CONTENT + 1];
+	guint cap, counts[GMIME_COMPLIANCE_MESSAGE_TRUNCATED + 1];
 	gboolean reached_cap, truncated;
 } FuzzCompliance;
 
