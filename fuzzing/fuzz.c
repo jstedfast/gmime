@@ -3,7 +3,6 @@
  * Distributed under the MIT license; see LICENSE. */
 
 #include "fuzz.h"
-#include <stdlib.h>
 #include <string.h>
 
 const FuzzTarget fuzz_targets[] = {
@@ -168,17 +167,37 @@ compare_issues (const void *first, const void *second)
 void
 fuzz_compliance_end (FuzzCompliance *checker)
 {
-	char **issues = g_strsplit (checker->trace->str + checker->operation_start, "\n", -1);
-	guint i;
+	gsize length = checker->trace->len - checker->operation_start;
+	GPtrArray *issues;
+	char *lines, *start;
+
+	if (!length)
+		return;
+
+	/* Split one copy in a single pass. Under ASan, g_strsplit's repeated
+	 * strstr calls can rescan the entire remaining trace for each issue. */
+	lines = g_memdup2 (checker->trace->str + checker->operation_start, length);
+	issues = g_ptr_array_new ();
+	start = lines;
+	for (gsize i = 0; i < length; i++) {
+		if (lines[i] == '\n') {
+			lines[i] = '\0';
+			g_ptr_array_add (issues, start);
+			start = lines + i + 1;
+		}
+	}
+	g_assert_true (start == lines + length);
 
 	/* Independent validators can emit the same issues in different orders
 	 * when a stream fragment ends inside a header or encoded body. */
-	qsort (issues, g_strv_length (issues), sizeof (char *), compare_issues);
+	g_ptr_array_sort (issues, compare_issues);
 	g_string_truncate (checker->trace, checker->operation_start);
-	for (i = 0; issues[i]; i++)
-		if (*issues[i])
-			g_string_append_printf (checker->trace, "%s\n", issues[i]);
-	g_strfreev (issues);
+	for (guint i = 0; i < issues->len; i++) {
+		g_string_append (checker->trace, g_ptr_array_index (issues, i));
+		g_string_append_c (checker->trace, '\n');
+	}
+	g_ptr_array_unref (issues);
+	g_free (lines);
 }
 
 GMimeComplianceOptions *
