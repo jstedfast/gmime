@@ -615,8 +615,6 @@ _g_mime_html_tree_tag (HtmlTree *tree, GMimeHtmlToken *tag)
 
 	if (tag->is_end_tag) {
 		process_end_tag (tree, tag);
-		tree->disposition =
-			tree->EndTagIgnored ? GMIME_HTML_TAG_DISPOSITION_IGNORED : GMIME_HTML_TAG_DISPOSITION_NORMAL;
 		state = GMIME_HTML_TOKENIZER_STATE_DATA;
 	} else {
 		state = process_start_tag (tree, tag);

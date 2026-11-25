@@ -714,7 +714,8 @@ convert_html_to_text (GMimeTextConverter *converter, GMimeStream *input, GMimeSt
 			int disposition = _g_mime_html_tokenizer_get_tag_disposition (tokenizer);
 			const char *name = g_mime_html_token_get_name (token);
 
-			if (disposition != GMIME_HTML_TAG_DISPOSITION_IGNORED) {
+			if (disposition != GMIME_HTML_TAG_DISPOSITION_IGNORED &&
+			    disposition != GMIME_HTML_TAG_DISPOSITION_FORMATTING_MOVED) {
 				if (g_mime_html_token_is_end_tag (token)) {
 					if (heading_level (name) && state.heading)
 						close_at (&state, state.heading->index);

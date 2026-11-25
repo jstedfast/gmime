@@ -1118,6 +1118,7 @@ process_end_tag (HtmlTree *tree, GMimeHtmlToken *tag)
 {
 	tree->BrokeOutOfForeignContent = FALSE;
 	tree->poppedThrough = FALSE;
+	tree->disposition = GMIME_HTML_TAG_DISPOSITION_NORMAL;
 
 	// Note: In the "before html" insertion mode, only </head>, </body>, </html> and </br> create the <html> element.
 	if (tag->id == GMIME_HTML_TAG_HEAD || tag->id == GMIME_HTML_TAG_BODY || tag->id == GMIME_HTML_TAG_HTML ||
@@ -1129,7 +1130,6 @@ process_end_tag (HtmlTree *tree, GMimeHtmlToken *tag)
 		if (tag->id == GMIME_HTML_TAG_FRAME_SET && tree->framesetDepth > 0)
 			tree->framesetDepth--;
 
-		tree->EndTagIgnored = FALSE;
 		return;
 	}
 
@@ -1149,11 +1149,12 @@ process_end_tag (HtmlTree *tree, GMimeHtmlToken *tag)
 	process_end_tag_internal (tree, tag);
 
 	// Note: </html>, </head>, </body> and </br> never close an element, so they are not considered to have been ignored.
-	tree->EndTagIgnored = !tree->poppedThrough && tag->id != GMIME_HTML_TAG_HTML &&
-			      tag->id != GMIME_HTML_TAG_HEAD && tag->id != GMIME_HTML_TAG_BODY &&
-			      tag->id != GMIME_HTML_TAG_BR &&
-			      (stack_index (tree, GMIME_HTML_NAMESPACE_HTML, tag->id, tag->name) >= 0 ||
-			       stack_index (tree, GMIME_HTML_NAMESPACE_SVG, GMIME_HTML_TAG_UNKNOWN, tag->name) >= 0);
+	if (tree->disposition == GMIME_HTML_TAG_DISPOSITION_NORMAL && !tree->poppedThrough &&
+	    tag->id != GMIME_HTML_TAG_HTML && tag->id != GMIME_HTML_TAG_HEAD &&
+	    tag->id != GMIME_HTML_TAG_BODY && tag->id != GMIME_HTML_TAG_BR &&
+	    (stack_index (tree, GMIME_HTML_NAMESPACE_HTML, tag->id, tag->name) >= 0 ||
+	     stack_index (tree, GMIME_HTML_NAMESPACE_SVG, GMIME_HTML_TAG_UNKNOWN, tag->name) >= 0))
+		tree->disposition = GMIME_HTML_TAG_DISPOSITION_IGNORED;
 }
 
 static void
@@ -1416,10 +1417,11 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 		return;
 
 	Entry replacement[7];
+	gboolean unwrap = tree->unwrap_noscript && !_g_mime_html_tree_foreign (tree);
 
 	// Model the stack effects, not the DOM reparenting. As elsewhere in this controller, formatting
 	// elements are looked up on the stack rather than reconstructed from an active formatting list.
-	for (int outer = 0; outer < 8; outer++) {
+	for (int outer = 0; outer < 8;) {
 		if (stack_top (tree)->PrevSpecial < index) {
 			pop_through (tree, index);
 			return;
@@ -1432,6 +1434,9 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 
 		Entry formatting = (*stack_entry (tree, index));
 		Entry furthestBlock = (*stack_entry (tree, block));
+		// Unwrapped HTML noscript nodes do not contribute a block on reparse.
+		gboolean omitted = unwrap && furthestBlock.Namespace == GMIME_HTML_NAMESPACE_HTML &&
+			furthestBlock.Id == GMIME_HTML_TAG_NO_SCRIPT;
 		int count = 0;
 
 		// A folded entry can contain more than one physical node. Only the last formatting node
@@ -1466,11 +1471,11 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 		}
 
 		replacement[count] = furthestBlock;
-		replacement[count++].Count = 1;
+		replacement[count++].Count = omitted ? furthestBlock.Count : 1;
 		replacement[count] = formatting;
 		replacement[count++].Count = 1;
 
-		if (furthestBlock.Count > 1) {
+		if (!omitted && furthestBlock.Count > 1) {
 			replacement[count] = furthestBlock;
 			replacement[count++].Count--;
 		}
@@ -1488,7 +1493,12 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 			return;
 
 		index = stack_index (tree, GMIME_HTML_NAMESPACE_HTML, id, "");
+		if (!omitted)
+			outer++;
 	}
+
+	if (unwrap)
+		tree->disposition = GMIME_HTML_TAG_DISPOSITION_FORMATTING_MOVED;
 }
 
 static void

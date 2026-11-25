@@ -541,7 +541,27 @@ delete_anchor (GMimeHtmlTagContext *context, GMimeHtmlWriter *writer, gpointer d
 		g_mime_html_tag_context_set_suppress_inner_content (context, GPOINTER_TO_INT (data));
 		return TRUE;
 	}
+
 	return g_mime_html_tag_context_write_tag (context, writer, TRUE, error);
+}
+
+static void
+test_unwrap_noscript_moved_anchor (void)
+{
+	const char *prefix = "<a><div><div><div><ul><ul><noscript><ul><div><p>";
+	const char *expected = "<a><div><div><div><ul><ul><ul><div><p></a></a><p>";
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+	const char *tails[] = { "</a><p>", "</a></a><p>" };
+
+	/* The first end tag moves the anchor across eight emitted blocks.
+	 * Either the next paragraph or an explicit end tag then closes it. */
+	for (guint i = 0; i < G_N_ELEMENTS (tails); i++) {
+		char *input = g_strconcat (prefix, tails[i], NULL);
+		check (converter, input, expected);
+		g_free (input);
+	}
+	check (converter, expected, expected);
+	g_object_unref (converter);
 }
 
 static void
@@ -944,6 +964,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html-converters/depth-limit-behavior", test_depth_limit_behavior);
 	g_test_add_func ("/html-converters/formatting-recovery-fallback", test_formatting_recovery_fallback);
 	g_test_add_func ("/html-converters/paragraph-closes-anchor", test_paragraph_closes_anchor);
+	g_test_add_func ("/html-converters/unwrap-noscript-moved-anchor", test_unwrap_noscript_moved_anchor);
 	g_test_add_func ("/html-converters/paragraph-deleted-anchor", test_paragraph_deleted_anchor);
 	g_test_add_func ("/html-converters/fragments", test_fragments);
 	g_test_add_func ("/html-converters/filter", test_html_filter);

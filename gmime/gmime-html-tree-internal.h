@@ -59,11 +59,11 @@ struct _HtmlTree {
 	GHashTable *html_names, *foreign_names;
 	gint html_ids[GMIME_HTML_TAG_XMP + 1];
 	guint max_depth;
-	gboolean depth_exceeded, track_closed, scripting;
+	gboolean depth_exceeded, track_closed, scripting, unwrap_noscript;
 	GMimeHtmlNamespace ns;
 	GMimeHtmlTagDisposition disposition;
 	gboolean poppedThrough, framesetOk, inFrameset, htmlCreated, bodyCreated, formPointerSet;
-	gboolean EndTagIgnored, StartTagIgnored, StartTagAttributesMerged, BrokeOutOfForeignContent;
+	gboolean StartTagIgnored, StartTagAttributesMerged, BrokeOutOfForeignContent;
 	int mode, framesetDepth, formPointerIndex;
 };
 

@@ -26,7 +26,8 @@
 typedef enum {
 	GMIME_HTML_TAG_DISPOSITION_NORMAL,
 	GMIME_HTML_TAG_DISPOSITION_IGNORED,
-	GMIME_HTML_TAG_DISPOSITION_ATTRIBUTES_MERGED
+	GMIME_HTML_TAG_DISPOSITION_ATTRIBUTES_MERGED,
+	GMIME_HTML_TAG_DISPOSITION_FORMATTING_MOVED
 } GMimeHtmlTagDisposition;
 
 typedef struct {
@@ -49,6 +50,7 @@ gboolean _g_mime_html_tokenizer_get_depth_exceeded (GMimeHtmlTokenizer *tokenize
 gboolean _g_mime_html_tokenizer_get_broke_out_of_foreign_content (GMimeHtmlTokenizer *tokenizer);
 
 gboolean _g_mime_html_tokenizer_get_is_noscript_open (GMimeHtmlTokenizer *tokenizer);
+void _g_mime_html_tokenizer_set_unwrap_noscript (GMimeHtmlTokenizer *tokenizer, gboolean unwrap);
 
 void _g_mime_html_tokenizer_clear_closed_elements (GMimeHtmlTokenizer *tokenizer);
 

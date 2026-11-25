@@ -1137,6 +1137,12 @@ _g_mime_html_tokenizer_get_is_noscript_open (GMimeHtmlTokenizer *tokenizer)
 }
 
 void
+_g_mime_html_tokenizer_set_unwrap_noscript (GMimeHtmlTokenizer *tokenizer, gboolean unwrap)
+{
+	tokenizer->tree->unwrap_noscript = unwrap;
+}
+
+void
 _g_mime_html_tokenizer_clear_closed_elements (GMimeHtmlTokenizer *tokenizer)
 {
 	_g_mime_html_tree_clear_closed (tokenizer->tree);

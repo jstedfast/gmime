@@ -220,18 +220,20 @@ process_end_tag (HtmlState *state, GMimeHtmlToken *token, gboolean implicit)
 	GMimeHtmlTagId id = g_mime_html_token_get_tag_id (token);
 	const char *name = g_mime_html_token_get_name (token);
 	gboolean unwrap = state->options->noscript == GMIME_HTML_NO_SCRIPT_HANDLING_UNWRAP;
+	GMimeHtmlTagDisposition disposition = _g_mime_html_tokenizer_get_tag_disposition (state->tokenizer);
 	gboolean popped = TRUE, ok = TRUE;
 	OpenTag *tag;
 
 	if (unwrap && id == GMIME_HTML_TAG_NO_SCRIPT)
 		return TRUE;
 
-	/* An ignored end tag leaves the browser's element open. Do not remove its
-	 * context, or the eventual end tag could be written with the wrong flags. */
-	if (!implicit &&
-	    _g_mime_html_tokenizer_get_tag_disposition (state->tokenizer) == GMIME_HTML_TAG_DISPOSITION_IGNORED) {
-		/* Removing noscript can make an otherwise ignored end tag take effect. */
-		if (unwrap && _g_mime_html_tokenizer_get_is_noscript_open (state->tokenizer))
+	/* Both outcomes leave the element open. Retain its callback context. */
+	if (!implicit && (disposition == GMIME_HTML_TAG_DISPOSITION_IGNORED ||
+			  disposition == GMIME_HTML_TAG_DISPOSITION_FORMATTING_MOVED)) {
+		/* Removing noscript can activate an ignored end tag, or let a
+		 * formatting end tag pop foreign elements instead of moving past HTML blocks. */
+		if (disposition == GMIME_HTML_TAG_DISPOSITION_IGNORED && unwrap &&
+		    _g_mime_html_tokenizer_get_is_noscript_open (state->tokenizer))
 			return TRUE;
 
 		tag = peek (state, name);
@@ -495,6 +497,7 @@ convert_html_to_html (GMimeTextConverter *converter, GMimeStream *input, GMimeSt
 	g_mime_html_tokenizer_set_compliance_options (state.tokenizer, options->compliance);
 	g_mime_html_tokenizer_set_compliance_logger (state.tokenizer, options->logger, options->logger_data, NULL);
 	_g_mime_html_tokenizer_set_track_closed_elements (state.tokenizer, TRUE);
+	_g_mime_html_tokenizer_set_unwrap_noscript (state.tokenizer, options->noscript == GMIME_HTML_NO_SCRIPT_HANDLING_UNWRAP);
 	g_mime_html_tokenizer_set_formatting_recovery_enabled (state.tokenizer, options->formatting_recovery);
 
 	while (ok) {
