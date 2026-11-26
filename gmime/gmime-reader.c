@@ -1081,20 +1081,39 @@ match_boundary (EntityFrame *frame, const guint8 *buffer, gsize length, gboolean
 }
 
 static gboolean
-check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
+match_mailbox_marker (GMimeReaderPrivate *priv, const guint8 *buffer, gsize length)
 {
-	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+	if (priv->format == GMIME_FORMAT_MMDF)
+		return length >= 4 && !memcmp (buffer, "\1\1\1\1", 4);
+
+	if (priv->format != GMIME_FORMAT_MBOX || length <= 5 || memcmp (buffer, "From ", 5) ||
+	    input_offset (priv) < priv->content_end)
+		return FALSE;
+
+	/* A padding-only From line is content. Bound the lookahead for a
+	 * sender, not the length of the envelope that marker_read streams. */
+	for (gsize i = 5; i < MIN (length, BLOCK_SIZE); i++) {
+		if (!is_blank (buffer[i]) && buffer[i] != '\r')
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static gboolean
+check_multipart_boundary (GMimeReaderPrivate *priv, const guint8 *buffer, gsize length)
+{
 	EntityFrame *frame = priv->active_boundary;
 	gboolean final;
 
-	if (length < 2)
+	if (!frame || length < 2)
 		return FALSE;
 
 	/* Note: LF is already excluded. */
 	while (length && (is_blank (buffer[length - 1]) || buffer[length - 1] == '\r'))
 		length--;
 
-	if (frame && length >= 2 && buffer[0] == '-' && buffer[1] == '-') {
+	if (length >= 2 && buffer[0] == '-' && buffer[1] == '-') {
 		if (!match_boundary (frame, buffer + 2, length - 2, &final)) {
 			if (frame->boundary_depth > BOUNDARY_INDEX_THRESHOLD) {
 				EntityFrame key = { 0 }, *closing;
@@ -1133,18 +1152,20 @@ check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
 		}
 	}
 
-	/* Mailbox separators are outermost boundaries. Content-Length only
-	 * suppresses premature From-lines; it never splits a MIME body at an
-	 * arbitrary byte or suppresses an actual multipart delimiter. */
-	if ((priv->format == GMIME_FORMAT_MBOX && length >= 5 &&
-	     memcmp (buffer, "From ", 5) == 0 && input_offset (priv) >= priv->content_end) ||
-	    (priv->format == GMIME_FORMAT_MMDF && length >= 4 &&
-	     memcmp (buffer, "\1\1\1\1", 4) == 0)) {
+	return FALSE;
+}
+
+static gboolean
+check_boundary (GMimeReader *reader, const guint8 *buffer, gsize length)
+{
+	GMimeReaderPrivate *priv = _g_mime_reader_get_private (reader);
+
+	if (match_mailbox_marker (priv, buffer, length)) {
 		priv->mailbox_boundary = TRUE;
 		return TRUE;
 	}
 
-	return FALSE;
+	return check_multipart_boundary (priv, buffer, length);
 }
 
 static gboolean
@@ -2091,6 +2112,13 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 
 		length = lf ? (gsize) (lf - start) : left;
 
+		/* Mailbox envelopes are not MIME body data. Their prefixes can
+		 * establish a match before the line ending is buffered. */
+		if (!midline && match_mailbox_marker (priv, start, length)) {
+			priv->mailbox_boundary = TRUE;
+			break;
+		}
+
 		if (priv->active_logger) {
 			gint64 offset = input_offset (priv);
 			guint64 column = (guint64) (offset - priv->line_begin) + 1;
@@ -2110,13 +2138,14 @@ scan_content (GMimeReader *reader, GMimeReaderContentType type)
 			}
 		}
 
-		if (!midline && (lf || priv->input_eos) && check_boundary (reader, start, length))
+		if (!midline && (lf || priv->input_eos) && check_multipart_boundary (priv, start, length))
 			break;
 
-		if (!lf && !priv->input_eos && !midline && length < 1000 &&
+		if (!lf && !priv->input_eos && !midline &&
+		    length < (start[0] == 'F' && priv->format == GMIME_FORMAT_MBOX ? BLOCK_SIZE : 1000) &&
 		    is_partial_boundary (reader, start, length)) {
-			/* Keep a possible delimiter intact until its end is known. A
-			 * long incomplete line cannot be a valid SMTP delimiter. */
+			/* Retain a possible delimiter until it matches or reaches
+			 * the lookahead limit for this kind of line. */
 			incomplete = TRUE;
 			refill = TRUE;
 			continue;

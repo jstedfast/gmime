@@ -1623,11 +1623,17 @@ static void
 test_long_mailbox_marker (void)
 {
 	GString *wire = g_string_new ("From ");
+	gsize second;
 	guint i, chunk;
 
 	for (i = 0; i < 20000; i++)
 		g_string_append_c (wire, 'a');
-	g_string_append (wire, "\r\nX: a\r\n\r\nbody\r\nFrom two\nX: b\n\nlast\n");
+	g_string_append (wire, "\r\nX: a\r\n\r\nbody\r\n");
+	second = wire->len;
+	g_string_append (wire, "From ");
+	for (i = 0; i < 20000; i++)
+		g_string_append_c (wire, i < 1078 ? ' ' : 'b');
+	g_string_append (wire, "\nX: b\n\nlast\n");
 	for (chunk = 1; chunk <= 4096; chunk *= 8) {
 		ReaderInput *input = new_input (wire->str, wire->len, chunk);
 		TestReader *reader = new_reader (input, NULL);
@@ -1644,7 +1650,8 @@ test_long_mailbox_marker (void)
 		g_assert_true (g_mime_reader_read_message (base, &error));
 		g_assert_no_error (error);
 		g_assert_true (g_mime_reader_eos (base));
-		g_assert_cmpmem (reader->boundary->data, reader->boundary->len, "From two", 8);
+		g_assert_cmpmem (reader->boundary->data, reader->boundary->len, wire->str + second, 20005);
+		g_assert_cmpmem (reader->content->data, reader->content->len, "last\n", 5);
 		g_object_unref (reader);
 		g_object_unref (input);
 	}
