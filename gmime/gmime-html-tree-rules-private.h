@@ -1421,7 +1421,7 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 
 	// Model the stack effects, not the DOM reparenting. As elsewhere in this controller, formatting
 	// elements are looked up on the stack rather than reconstructed from an active formatting list.
-	for (int outer = 0; outer < GMIME_HTML_ADOPTION_LIMIT;) {
+	for (int moves_left = GMIME_HTML_ADOPTION_LIMIT; moves_left > 0;) {
 		if (stack_top (tree)->PrevSpecial < index) {
 			pop_through (tree, index);
 			return;
@@ -1439,8 +1439,7 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 			furthestBlock.Id == GMIME_HTML_TAG_NO_SCRIPT;
 		int count = 0;
 
-		// A folded entry can contain more than one physical node. Only the last formatting node
-		// moves, and only the first special node is the furthest block.
+		// Only the last formatting node in a folded entry moves.
 		if (formatting.Count > 1) {
 			replacement[count] = formatting;
 			replacement[count++].Count--;
@@ -1470,19 +1469,21 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 			replacement[b] = swap;
 		}
 
+		// Cross identical blocks together so an intermediate split cannot exceed the depth limit.
+		int crossed = omitted ? furthestBlock.Count : MIN (furthestBlock.Count, moves_left);
 		replacement[count] = furthestBlock;
-		replacement[count++].Count = omitted ? furthestBlock.Count : 1;
+		replacement[count++].Count = crossed;
 		replacement[count] = formatting;
 		replacement[count++].Count = 1;
 
-		if (!omitted && furthestBlock.Count > 1) {
+		if (crossed < furthestBlock.Count) {
 			replacement[count] = furthestBlock;
-			replacement[count++].Count--;
+			replacement[count++].Count -= crossed;
 		}
 
 		// Non-formatting inner nodes and formatting nodes beyond the first three are removed
 		// together, so a long inner loop does not repeatedly rebuild the same suffix.
-		// Leave poppedThrough unset: if all eight iterations only move the formatting
+		// Leave poppedThrough unset: if all eight moves only reposition the formatting
 		// element, it is still open and the converter must retain its context.
 		stack_replace (tree, index, block - index + 1, replacement, count);
 
@@ -1494,7 +1495,7 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 
 		index = stack_index (tree, GMIME_HTML_NAMESPACE_HTML, id, "");
 		if (!omitted)
-			outer++;
+			moves_left -= crossed;
 	}
 
 	if (unwrap)

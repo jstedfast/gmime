@@ -565,6 +565,36 @@ test_unwrap_noscript_moved_anchor (void)
 }
 
 static void
+test_anchor_moves_across_folded_blocks_at_depth_limit (void)
+{
+	static const struct { guint blocks; const char *end_tags; } cases[] = {
+		{ 2, "</svg></a>" }, { 7, "</svg></a>" }, { 8, "</a>" }
+	};
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+	GMimeHtmlToHtml *html = GMIME_HTML_TO_HTML (converter);
+
+	g_mime_html_to_html_set_limit_exceeded_behavior (html, GMIME_HTML_LIMIT_EXCEEDED_BEHAVIOR_FAIL);
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GString *prefix = g_string_new ("<li><a>");
+		char *input;
+
+		for (guint j = 0; j < cases[i].blocks; j++)
+			g_string_append (prefix, "<div>");
+		g_string_append (prefix, "<svg>sample");
+		input = g_strconcat (prefix->str, "</a>", NULL);
+		g_string_append (prefix, cases[i].end_tags);
+
+		g_mime_html_to_html_set_max_element_depth (html, 4);
+		check (converter, input, prefix->str);
+		g_mime_html_to_html_set_max_element_depth (html, 4096);
+		check (converter, prefix->str, prefix->str);
+		g_free (input);
+		g_string_free (prefix, TRUE);
+	}
+	g_object_unref (converter);
+}
+
+static void
 test_paragraph_deleted_anchor (void)
 {
 	GMimeTextConverter *converter = g_mime_html_to_html_new ();
@@ -712,9 +742,10 @@ test_fragments (void)
 		check (converter, cases[i].expected, cases[i].expected);
 	}
 
-	const char *expected = "<a><div><div><svg>&lt;/a&gt;&lt;br&gt;";
+	/* Crossing eight of nine folded blocks requires a real stack split. */
+	const char *expected = "<a><div><div><div><div><div><div><div><div><div><svg>&lt;/a&gt;&lt;br&gt;";
 	g_mime_html_to_html_set_max_element_depth (GMIME_HTML_TO_HTML (converter), 4);
-	check (converter, "<a><div><div><noscript><svg></a><br>", expected);
+	check (converter, "<a><div><div><div><div><div><div><div><div><div><noscript><svg></a><br>", expected);
 	g_mime_html_to_html_set_max_element_depth (GMIME_HTML_TO_HTML (converter), 4096);
 	check (converter, expected, expected);
 
@@ -991,6 +1022,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html-converters/formatting-recovery-fallback", test_formatting_recovery_fallback);
 	g_test_add_func ("/html-converters/paragraph-closes-anchor", test_paragraph_closes_anchor);
 	g_test_add_func ("/html-converters/paragraph-closes-anchor-after-blocks", test_paragraph_closes_anchor_after_blocks);
+	g_test_add_func ("/html-converters/anchor-moves-across-folded-blocks-at-depth-limit", test_anchor_moves_across_folded_blocks_at_depth_limit);
 	g_test_add_func ("/html-converters/unwrap-noscript-moved-anchor", test_unwrap_noscript_moved_anchor);
 	g_test_add_func ("/html-converters/paragraph-deleted-anchor", test_paragraph_deleted_anchor);
 	g_test_add_func ("/html-converters/fragments", test_fragments);
