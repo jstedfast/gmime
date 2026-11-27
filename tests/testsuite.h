@@ -49,6 +49,14 @@ int testsuite_total_errors (void);
 GMimeMessage *testsuite_parse_message (const char *data, gsize length);
 GBytes *testsuite_serialize_message (GMimeMessage *message);
 
+G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+static inline void
+testsuite_allow_bare_local_addresses (GMimeParserOptions *options, gboolean allow)
+{
+	g_mime_parser_options_set_allow_addresses_without_domain (options, allow);
+}
+G_GNUC_END_IGNORE_DEPRECATIONS
+
 const char *testsuite_header_raw_text (GMimeHeader *header);
 const char *testsuite_header_raw_name (GMimeHeader *header);
 void testsuite_header_set_raw_text (GMimeHeader *header, const char *text);

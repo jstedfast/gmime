@@ -527,7 +527,9 @@ fuzz_structured_headers (const guint8 *data, gsize length)
 		data = (const guint8 *) "";
 	g_mime_parser_options_set_address_compliance_mode (options, modes[selector % G_N_ELEMENTS (modes)]);
 	g_mime_parser_options_set_parameter_compliance_mode (options, modes[selector % G_N_ELEMENTS (modes)]);
+	G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 	g_mime_parser_options_set_allow_addresses_without_domain (options, (selector & 4) != 0);
+	G_GNUC_END_IGNORE_DEPRECATIONS
 	g_mime_parser_options_set_allow_unquoted_commas_in_addresses (options, (selector & 8) != 0);
 	g_mime_parser_options_set_rfc2047_compliance_mode (options, selector & 4 ?
 							GMIME_RFC_COMPLIANCE_STRICT : GMIME_RFC_COMPLIANCE_LOOSE);

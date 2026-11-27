@@ -291,6 +291,8 @@ int main (int argc, char **argv)
 	
 	g_mime_init ();
 	options = g_mime_parser_options_new ();
+	/* The historical mailbox summaries include local UNIX recipients. */
+	testsuite_allow_bare_local_addresses (options, TRUE);
 	
 	testsuite_init (argc, argv);
 	

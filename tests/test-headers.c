@@ -580,12 +580,15 @@ static struct {
 static void
 test_header_formatting (void)
 {
+	GMimeParserOptions *options = g_mime_parser_options_new ();
 	const char *raw_value;
 	GMimeHeaderList *list;
 	GMimeHeader *header;
 	guint i;
 	
-	list = g_mime_header_list_new (g_mime_parser_options_get_default ());
+	testsuite_allow_bare_local_addresses (options, TRUE);
+	list = g_mime_header_list_new (options);
+	g_mime_parser_options_unref (options);
 	
 	for (i = 0; i < G_N_ELEMENTS (headers); i++) {
 		testsuite_check ("header[%u]", i);
@@ -868,7 +871,6 @@ test_domainless_mailbox_formatting (void)
 	char *encoded, *display;
 	guint i, strict, commas;
 
-	g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE);
 	for (strict = 0; strict < 2; strict++) {
 		g_mime_parser_options_set_address_compliance_mode (options, strict ?
 			GMIME_RFC_COMPLIANCE_STRICT : GMIME_RFC_COMPLIANCE_LOOSE);
@@ -936,7 +938,6 @@ test_unnamed_group_formatting (void)
 	char *encoded, *actual;
 	guint i, depth, populated, strict, j;
 
-	g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE);
 	for (i = 0; i < G_N_ELEMENTS (names); i++) {
 		for (depth = 1; depth <= 3; depth++) {
 			for (populated = 0; populated < G_N_ELEMENTS (addresses); populated++) {
@@ -1075,7 +1076,7 @@ test_address_line_lengths (void)
 				g_free (expected);
 
 				addr = g_strnfill (widths[i] - 21 + offset, 'l');
-				value = g_strdup_printf ("a@example.com, %s", addr);
+				value = g_strdup_printf ("a@example.com, <%s>", addr);
 				expected = offset > 0 ?
 					g_strdup_printf (" a@example.com,%s <%s>%s", newline, addr, newline) :
 					g_strdup_printf (" a@example.com, <%s>%s", addr, newline);
@@ -1086,7 +1087,7 @@ test_address_line_lengths (void)
 
 				name = g_strnfill (widths[i] - 25 + offset, 'b');
 				addr = g_strconcat (name, "@example.com", NULL);
-				value = g_strdup_printf ("local, %s", addr);
+				value = g_strdup_printf ("<local>, %s", addr);
 				expected = offset > 0 ?
 					g_strdup_printf (" <local>,%s %s%s", newline, addr, newline) :
 					g_strdup_printf (" <local>, %s%s", addr, newline);
@@ -1097,7 +1098,7 @@ test_address_line_lengths (void)
 				g_free (expected);
 
 				addr = g_strnfill (widths[i] - 13 + offset, 'l');
-				value = g_strdup_printf ("Group: %s;", addr);
+				value = g_strdup_printf ("Group: <%s>;", addr);
 				expected = offset > 0 ?
 					g_strdup_printf (" Group:%s <%s>;%s", newline, addr, newline) :
 					g_strdup_printf (" Group: <%s>;%s", addr, newline);
@@ -1239,7 +1240,7 @@ test_address_line_lengths (void)
 			g_free (expected);
 
 			addr = g_strnfill (widths[i] + 10, 'l');
-			value = g_strdup_printf ("%s, b@example.com", addr);
+			value = g_strdup_printf ("<%s>, b@example.com", addr);
 			expected = g_strdup_printf (" <%s>,%s b@example.com%s", addr, newline, newline);
 			test_address_format_case (clone, value, expected);
 			g_free (addr);
@@ -1782,13 +1783,17 @@ test_address_header_whitespace (void)
 		{ "user (First\tLast), other@example.com", " <user>, other@example.com" },
 		{ "\"First\\\tLast\" <user@example.com>", " First Last <user@example.com>" }
 	};
-	GMimeHeaderList *headers = g_mime_header_list_new (NULL);
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GMimeHeaderList *headers;
 	GMimeFormatOptions *format = g_mime_format_options_new ();
 	GMimeHeader *header;
 	const char *newline;
 	char *expected, *wire, *raw;
 	guint dos, j, k;
 
+	testsuite_allow_bare_local_addresses (options, TRUE);
+	headers = g_mime_header_list_new (options);
+	g_mime_parser_options_unref (options);
 	for (dos = 0; dos < 2; dos++) {
 		g_mime_format_options_set_newline_format (format, dos ?
 			GMIME_NEWLINE_FORMAT_DOS : GMIME_NEWLINE_FORMAT_UNIX);

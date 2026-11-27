@@ -1127,22 +1127,21 @@ warn_invalid_address (GMimeParserOptions *options, const char *text, const char 
 	g_free (item);
 }
 
+typedef struct {
+	const char *next_start;
+	const char *end;
+	const char *delimiter;
+} PhraseCache;
+
 static gboolean
-address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char *inend,
-	       const char **charset, GMimeInternetAddress **address, int group_depth, gint64 offset)
+scan_phrase (GMimeParserOptions *options, GMimeRfcComplianceMode mode, const char **in, const char *inend,
+	     PhraseCache *cache, size_t *phrase_length, gboolean *trim_leading_quote)
 {
-	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
-	gboolean trim_leading_quote = FALSE;
-	const char *inptr = *in;
-	const char *start;
-	size_t length;
+	const char *inptr = *in, *start = inptr;
+	gboolean reuse = start == cache->next_start;
+	size_t length = 0;
 
-	if (!skip_cfws (&inptr, inend) || inptr == inend)
-		goto error;
-
-	/* keep track of the start & length of the phrase */
-	start = inptr;
-	length = 0;
+	cache->next_start = NULL;
 
 	while (inptr < inend) {
 		gboolean quoted = *inptr == '"';
@@ -1162,7 +1161,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 					break;
 
 				if (start == qstring)
-					trim_leading_quote = TRUE;
+					*trim_leading_quote = TRUE;
 			}
 		} else {
 			if (!skip_phrase_atom (&inptr, inend))
@@ -1188,15 +1187,59 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		if (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (options) &&
 		    inptr < inend && *inptr == ',' && !quoted) {
 			inptr++;
-
 			length = (size_t) (inptr - start);
 
 			if (!skip_cfws (&inptr, inend))
 				goto error;
+
+			/* A list may consume only the first entry in this provisional phrase.
+			 * Learn the next entry's start before reusing the rest of the scan. */
+			if (!cache->next_start) {
+				cache->next_start = inptr;
+
+				if (reuse) {
+					*in = cache->delimiter;
+
+					if (!cache->end)
+						return FALSE;
+
+					*phrase_length = (size_t) (cache->end - start);
+
+					return TRUE;
+				}
+			}
 		}
 	}
 
 	if (!skip_cfws (&inptr, inend))
+		goto error;
+
+	cache->end = start + length;
+	cache->delimiter = *in = inptr;
+	*phrase_length = length;
+	return TRUE;
+
+ error:
+	cache->end = NULL;
+	cache->delimiter = *in = inptr;
+	return FALSE;
+}
+
+static gboolean
+address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, const char *inend,
+	       PhraseCache *cache, const char **charset, GMimeInternetAddress **address, int group_depth, gint64 offset)
+{
+	GMimeRfcComplianceMode mode = g_mime_parser_options_get_address_compliance_mode (options);
+	gboolean trim_leading_quote = FALSE;
+	const char *inptr = *in;
+	const char *start;
+	size_t length;
+
+	if (!skip_cfws (&inptr, inend) || inptr == inend)
+		goto error;
+
+	start = inptr;
+	if (!scan_phrase (options, mode, &inptr, inend, cache, &length, &trim_leading_quote))
 		goto error;
 
 	// specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
@@ -1210,14 +1253,11 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 		GString *localpart;
 		int at = -1;
 
+		if (!(flags & ALLOW_MAILBOX) || !_g_mime_parser_options_allow_bare_local_addresses (options))
+			goto error;
+
 		/* rewind back to the beginning of the local-part */
 		inptr = start;
-
-		if (!(flags & ALLOW_MAILBOX))
-			goto error;
-
-		if (!g_mime_parser_options_get_allow_addresses_without_domain (options))
-			goto error;
 
 		localpart = g_string_new (NULL);
 
@@ -1325,6 +1365,12 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 
 		if (!_g_mime_internet_address_parse_addrspec (&inptr, inend, COMMA_GREATER_THAN_OR_SEMICOLON, mode, &addrspec, &at))
 			goto error;
+
+		/* Phrase lookahead may have found an '@' belonging to a later mailbox. */
+		if (at == -1 && !_g_mime_parser_options_allow_bare_local_addresses (options)) {
+			g_free (addrspec);
+			goto error;
+		}
 
 		skip_lwsp (&inptr, inend);
 
@@ -1441,6 +1487,7 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 {
 	gboolean can_warn = g_mime_parser_options_get_warning_callback (options) != NULL;
 	GMimeInternetAddress *address;
+	PhraseCache cache = { 0 };
 	const char *charset;
 	const char *inptr;
 
@@ -1461,7 +1508,7 @@ address_list_parse (GMimeInternetAddressList *list, GMimeParserOptions *options,
 
 		charset = NULL;
 
-		if (!address_parse (options, flags, &inptr, inend, &charset, &address, group_depth, offset)) {
+		if (!address_parse (options, flags, &inptr, inend, &cache, &charset, &address, group_depth, offset)) {
 			if (!(flags & INTERNAL)) {
 				*in = inptr;
 				return FALSE;
@@ -1582,9 +1629,10 @@ g_mime_internet_address_list_parse_full (GMimeParserOptions *options, const char
 GMimeInternetAddress *
 _g_mime_internet_address_parse (GMimeParserOptions *options, const char *str, gssize length, GType type, GError **error)
 {
+	const char *inptr, *inend, *charset = NULL;
 	GMimeInternetAddress *address = NULL;
 	AddressParserFlags flags = ALLOW_ANY;
-	const char *inptr, *inend, *charset = NULL;
+	PhraseCache cache = { 0 };
 
 	if (!_g_mime_internet_address_validate_text (str, &length, error))
 		return NULL;
@@ -1597,7 +1645,7 @@ _g_mime_internet_address_parse (GMimeParserOptions *options, const char *str, gs
 	inptr = str;
 	inend = str + length;
 
-	if (!address_parse (options, flags, &inptr, inend, &charset, &address, 0, -1) ||
+	if (!address_parse (options, flags, &inptr, inend, &cache, &charset, &address, 0, -1) ||
 	    !skip_cfws (&inptr, inend) || inptr != inend) {
 		g_clear_object (&address);
 

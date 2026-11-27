@@ -1567,6 +1567,7 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	testsuite_start ("addr-spec parser (strict)");
+	testsuite_allow_bare_local_addresses (options, TRUE);
 	g_mime_parser_options_set_rfc2047_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT);
 	test_addrspec (options, FALSE);
 	test_address_name_whitespace (options);

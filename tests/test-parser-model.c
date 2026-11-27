@@ -1586,11 +1586,11 @@ test_lazy_message_metadata (void)
 		guint32 loaded;
 
 		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
-			g_string_append_printf (wire, "%s: local, One <one@example.com>\r\n"
+			g_string_append_printf (wire, "%s: local, one@example.com\r\n"
 				"%s: Two <two@example.com>\r\n", address_names[type], address_names[type]);
 		}
 		g_string_append (wire, "\r\nbody\r\n");
-		g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE);
+		testsuite_allow_bare_local_addresses (options, TRUE);
 		input = new_input (wire->str, wire->len, mode & 1 ? 1 : 4096);
 		parser = g_mime_parser_new_with_stream_and_storage ((GMimeStream *) input,
 			GMIME_FORMAT_MESSAGE, mode & 2 ? GMIME_CONTENT_STORAGE_SOURCE :
@@ -1633,7 +1633,7 @@ test_lazy_message_metadata (void)
 		for (type = 0; type < G_N_ELEMENTS (address_names); type++) {
 			GMimeInternetAddressList *list = g_mime_message_get_addresses (message, type);
 
-			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 2);
+			g_assert_cmpuint (g_mime_internet_address_list_length (list), ==, 3);
 			g_assert_true (g_mime_message_get_addresses (message, type) == list);
 		}
 		after = serialize_writer ((GMimeEntity *) message, NULL, FALSE);

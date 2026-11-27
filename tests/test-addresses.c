@@ -322,7 +322,7 @@ test_idn_accessors (void)
 		if (at)
 			check_string (g_mime_internet_address_to_string (address, NULL, TRUE), cases[i].encoded,
 				      "transport formatting explicitly encodes the domain");
-		if (*cases[i].raw) {
+		if (at) {
 			parsed = g_mime_mailbox_address_parse (NULL, cases[i].raw, -1, NULL);
 			check (parsed && !strcmp (g_mime_mailbox_address_get_addrspec (GMIME_MAILBOX_ADDRESS (parsed)), cases[i].raw),
 			       "parsed mailboxes preserve IDN representation");
@@ -533,7 +533,8 @@ test_parsing (void)
 	} cases[] = {
 		{ "a@example.com", TRUE, TRUE },
 		{ "a@example.com, b@example.com", TRUE, TRUE },
-		{ "local (Name) (extra), b@example.com", TRUE, TRUE },
+		{ "local (Name) (extra), b@example.com", FALSE, FALSE },
+		{ "<local>, b@example.com", TRUE, TRUE },
 		{ "a@example.com b@example.com", FALSE, TRUE },
 		{ "Team:;", TRUE, TRUE },
 		{ "Team: a@example.com", FALSE, TRUE },
@@ -622,6 +623,49 @@ test_parsing (void)
 			      "header recovery resumes at the next comma");
 	g_clear_object (&list);
 	g_mime_parser_options_unref (options);
+}
+
+static void
+test_address_list_lookahead (void)
+{
+	const guint count = 2048;
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	GString *text = g_string_new (NULL);
+	GMimeInternetAddressList *list;
+	GMimeMailboxAddress *mailbox;
+	GError *error = NULL;
+	gsize prefix_length;
+
+	for (guint i = 0; i < count; i++)
+		g_string_append (text, "a, (on call, today) ");
+	prefix_length = text->len;
+	g_string_append (text, "b@example.org, Doe, Jane <jane@example.org>, c, d, e");
+	list = g_mime_internet_address_list_parse (NULL, text->str);
+	g_assert_nonnull (list);
+	g_assert_cmpuint (list->array->len, ==, 2);
+	g_object_unref (list);
+
+	testsuite_allow_bare_local_addresses (options, TRUE);
+	list = g_mime_internet_address_list_parse_full (options, text->str, text->len, &error);
+	g_assert_no_error (error);
+	g_assert_nonnull (list);
+	g_assert_cmpuint (list->array->len, ==, count + 5);
+	for (guint i = 0; i < count; i++) {
+		mailbox = GMIME_MAILBOX_ADDRESS (list->array->pdata[i]);
+		g_assert_cmpstr (g_mime_mailbox_address_get_addrspec (mailbox), ==, "a");
+	}
+	mailbox = GMIME_MAILBOX_ADDRESS (list->array->pdata[count]);
+	g_assert_cmpstr (g_mime_mailbox_address_get_addrspec (mailbox), ==, "b@example.org");
+	mailbox = GMIME_MAILBOX_ADDRESS (list->array->pdata[count + 1]);
+	g_assert_cmpstr (g_mime_internet_address_get_name (GMIME_INTERNET_ADDRESS (mailbox)), ==, "Doe, Jane");
+	g_assert_cmpstr (g_mime_mailbox_address_get_addrspec (mailbox), ==, "jane@example.org");
+	g_object_unref (list);
+	g_string_truncate (text, prefix_length);
+	g_string_append (text, "sales (unfinished");
+	list = g_mime_internet_address_list_parse (options, text->str);
+	g_assert_null (list);
+	g_mime_parser_options_unref (options);
+	g_string_free (text, TRUE);
 }
 
 static void
@@ -1121,6 +1165,7 @@ main (int argc, char **argv)
 	test_ordering ();
 	test_collections ();
 	test_parsing ();
+	test_address_list_lookahead ();
 	test_bounded_parsing ();
 	test_bounded_helpers ();
 	test_international_formatting ();

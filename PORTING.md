@@ -616,7 +616,7 @@ Review these defaults against application/security requirements:
 | Maximum raw length of one header | 32 KiB |
 | Maximum MIME nesting depth | 1024 |
 | Maximum address-group nesting depth | 3 |
-| Addresses without a domain | Allowed |
+| Bare mailbox addresses without a domain | Rejected |
 | Unquoted commas in address display names | Allowed |
 | Respect Content-Length | FALSE |
 
@@ -644,8 +644,10 @@ The MIME root has depth zero; multipart children and embedded message bodies
 each add a level. At the configured depth limit, containers become leaf parts
 retaining raw body content. The raw-header limit includes the field name,
 colon, folds, and terminating newline, and is per header, not per header block.
-`allow_addresses_without_domain=FALSE` rejects bare local addresses but still
-permits them inside angle brackets; it is not SMTP envelope validation.
+Bare local addresses such as `postmaster` are now rejected by default, but
+`<postmaster>` is still accepted; this is not SMTP envelope validation.
+The deprecated `allow_addresses_without_domain` option restores the previous
+behavior when set to `TRUE`.
 
 `UnexpectedNullBytesInHeader` identifies the first NUL in each header.
 `Unexpected8BitBytesInHeader` identifies the leading byte of the first malformed

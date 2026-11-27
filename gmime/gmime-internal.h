@@ -92,6 +92,7 @@ G_GNUC_INTERNAL gboolean _g_mime_entity_ends_with_delimiter_newline (GMimeEntity
 G_GNUC_INTERNAL void g_mime_parser_options_init (void);
 G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_parser_options_snapshot (GMimeParserOptions *options);
+G_GNUC_INTERNAL gboolean _g_mime_parser_options_allow_bare_local_addresses (GMimeParserOptions *options);
 G_GNUC_INTERNAL void _g_mime_parser_options_warn (GMimeParserOptions *options, gint64 offset, GMimeParserWarning errcode,
 						  const gchar *item);
 

@@ -131,7 +131,7 @@ g_mime_parser_options_new (void)
 	options->addresses = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->parameters = GMIME_RFC_COMPLIANCE_LOOSE;
 	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
-	options->allow_no_domain = TRUE;
+	options->allow_no_domain = FALSE;
 	options->allow_unquoted_commas = TRUE;
 	options->respect_content_length = FALSE;
 	options->detect_openpgp = FALSE;
@@ -295,24 +295,28 @@ g_mime_parser_options_set_address_compliance_mode (GMimeParserOptions *options, 
 }
 
 
+gboolean
+_g_mime_parser_options_allow_bare_local_addresses (GMimeParserOptions *options)
+{
+	return options ? options->allow_no_domain : default_options->allow_no_domain;
+}
+
 /**
  * g_mime_parser_options_get_allow_addresses_without_domain:
  * @options: (nullable): a #GMimeParserOptions or %NULL
  *
  * Gets whether or not the rfc822 address parser should allow addresses without a domain.
  *
- * The default is %TRUE, allowing local UNIX mailbox addresses.
- *
- * This option exists in order to allow parsing of mailbox addresses that do not have a
- * domain component. These types of addresses are rare and were typically only used when
- * sending mail to other users on the same UNIX system.
+ * The default is %FALSE. This option does not affect angle-bracketed addresses.
  *
  * Returns: %TRUE if the address parser should allow addresses without a domain.
+ *
+ * Deprecated: 4.0: Use fully qualified mailbox addresses.
  **/
 gboolean
 g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *options)
 {
-	return options ? options->allow_no_domain : default_options->allow_no_domain;
+	return _g_mime_parser_options_allow_bare_local_addresses (options);
 }
 
 
@@ -323,11 +327,10 @@ g_mime_parser_options_get_allow_addresses_without_domain (GMimeParserOptions *op
  *
  * Sets whether the rfc822 address parser should allow addresses without a domain.
  *
- * The default is %TRUE, allowing local UNIX mailbox addresses.
+ * The default is %FALSE. Set to %TRUE to accept legacy bare local mailbox
+ * addresses. This option does not affect angle-bracketed addresses.
  *
- * This option exists in order to allow parsing of mailbox addresses that do not have a
- * domain component. These types of addresses are rare and were typically only used when
- * sending mail to other users on the same UNIX system.
+ * Deprecated: 4.0: Use fully qualified mailbox addresses.
  **/
 void
 g_mime_parser_options_set_allow_addresses_without_domain (GMimeParserOptions *options, gboolean allow)

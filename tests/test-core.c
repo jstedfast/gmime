@@ -3172,19 +3172,19 @@ test_message_resent_addresses (void)
 		stream = g_mime_stream_mem_new_with_buffer (wire, strlen (wire));
 		parser = g_mime_parser_new_with_stream (stream);
 		options = g_mime_parser_options_new ();
-		g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE);
+		testsuite_allow_bare_local_addresses (options, TRUE);
 		message = g_mime_parser_construct_message (parser, options, &error);
 		g_assert_no_error (error);
 		list = properties[type].get (message);
 		text = g_mime_internet_address_list_to_string (list, NULL, FALSE);
-		check (g_mime_internet_address_list_length (list) == 1 &&
-		       !strcmp (text, "Accepted <accepted@example.com>"),
+		check (g_mime_internet_address_list_length (list) == 2 &&
+		       !strcmp (text, "local, Accepted <accepted@example.com>"),
 		       "MIME parsing applies message parser options to each resent address header");
 		g_free (text);
 		headers = g_mime_entity_get_header_list (GMIME_ENTITY (message));
 		testsuite_header_set_raw_text (g_mime_header_list_get_header_at (headers, 0), " another-local\n");
 		properties[type].get (message);
-		check (g_mime_internet_address_list_length (list) == 1,
+		check (g_mime_internet_address_list_length (list) == 2,
 		       "resent raw-header edits retain message parser options");
 		g_mime_parser_options_unref (options);
 		g_object_unref (message);
@@ -11217,7 +11217,9 @@ test_options (void)
 	check (g_mime_parser_options_get_max_header_length (NULL) == 32 * 1024, "implicit default header length");
 	check (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (options), "default unquoted commas");
 	check (g_mime_parser_options_get_allow_unquoted_commas_in_addresses (NULL), "implicit default unquoted commas");
-	check (g_mime_parser_options_get_allow_addresses_without_domain (options), "default local addresses");
+	G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+	check (!g_mime_parser_options_get_allow_addresses_without_domain (options), "default rejects bare local addresses");
+	G_GNUC_END_IGNORE_DEPRECATIONS
 	check (!g_mime_parser_options_get_respect_content_length (options), "default ignores Content-Length");
 	check (!g_mime_parser_options_get_respect_content_length (NULL), "implicit default ignores Content-Length");
 	check (!strcmp (g_mime_parser_options_get_charset_encoding (options), "utf-8"), "default charset encoding");
@@ -11227,7 +11229,7 @@ test_options (void)
 	g_mime_parser_options_set_max_mime_depth (options, 2);
 	g_mime_parser_options_set_max_header_length (options, 4096);
 	g_mime_parser_options_set_allow_unquoted_commas_in_addresses (options, FALSE);
-	g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE);
+	testsuite_allow_bare_local_addresses (options, TRUE);
 	g_mime_parser_options_set_respect_content_length (options, TRUE);
 	clone = g_mime_parser_options_clone (options);
 	g_mime_parser_options_set_respect_content_length (options, FALSE);
@@ -11238,7 +11240,9 @@ test_options (void)
 	check (g_mime_parser_options_get_max_mime_depth (clone) == 2, "cloned MIME depth");
 	check (g_mime_parser_options_get_max_header_length (clone) == 4096, "cloned header length");
 	check (!g_mime_parser_options_get_allow_unquoted_commas_in_addresses (clone), "cloned unquoted commas");
-	check (!g_mime_parser_options_get_allow_addresses_without_domain (clone), "cloned local addresses");
+	G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+	check (g_mime_parser_options_get_allow_addresses_without_domain (clone), "cloned legacy local addresses");
+	G_GNUC_END_IGNORE_DEPRECATIONS
 	check (g_mime_parser_options_get_respect_content_length (clone), "cloned Content-Length option");
 	g_mime_parser_options_unref (clone);
 }
@@ -11868,7 +11872,7 @@ test_address_commas (void)
 			strict ? GMIME_RFC_COMPLIANCE_STRICT : GMIME_RFC_COMPLIANCE_LOOSE);
 		for (i = 0; i < G_N_ELEMENTS (cases); i++) {
 			g_mime_parser_options_set_allow_unquoted_commas_in_addresses (options, cases[i].allow_commas);
-			g_mime_parser_options_set_allow_addresses_without_domain (options, cases[i].allow_local);
+			testsuite_allow_bare_local_addresses (options, cases[i].allow_local);
 			list = g_mime_internet_address_list_parse (options, cases[i].text);
 			check ((list ? g_mime_internet_address_list_length (list) : 0) == cases[i].count,
 			       cases[i].text);
@@ -14445,7 +14449,7 @@ test_option_snapshots (void)
 		case 0: g_mime_parser_options_set_address_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT); break;
 		case 1: g_mime_parser_options_set_parameter_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT); break;
 		case 2: g_mime_parser_options_set_rfc2047_compliance_mode (options, GMIME_RFC_COMPLIANCE_STRICT); break;
-		case 3: g_mime_parser_options_set_allow_addresses_without_domain (options, FALSE); break;
+		case 3: testsuite_allow_bare_local_addresses (options, TRUE); break;
 		case 4: g_mime_parser_options_set_allow_unquoted_commas_in_addresses (options, FALSE); break;
 		case 5: g_mime_parser_options_set_respect_content_length (options, TRUE); break;
 		case 6: g_mime_parser_options_set_detect_openpgp (options, FALSE); break;
