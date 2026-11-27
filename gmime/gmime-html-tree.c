@@ -217,7 +217,8 @@ stack_pop_above (HtmlTree *tree, int index)
 
 		if (tree->track_closed) {
 			GMimeHtmlClosedElement closed = { g_ref_string_acquire (entry->Name), entry->Count,
-							  entry->Namespace != GMIME_HTML_NAMESPACE_HTML };
+							  entry->Namespace != GMIME_HTML_NAMESPACE_HTML,
+							  (entry->Flags & F_Special) != 0 };
 
 			g_array_append_val (tree->closed, closed);
 		}

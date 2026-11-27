@@ -1421,7 +1421,7 @@ process_formatting_end_tag (HtmlTree *tree, GMimeHtmlTagId id)
 
 	// Model the stack effects, not the DOM reparenting. As elsewhere in this controller, formatting
 	// elements are looked up on the stack rather than reconstructed from an active formatting list.
-	for (int outer = 0; outer < 8;) {
+	for (int outer = 0; outer < GMIME_HTML_ADOPTION_LIMIT;) {
 		if (stack_top (tree)->PrevSpecial < index) {
 			pop_through (tree, index);
 			return;

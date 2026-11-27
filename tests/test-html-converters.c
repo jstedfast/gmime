@@ -578,6 +578,32 @@ test_paragraph_deleted_anchor (void)
 }
 
 static void
+test_paragraph_closes_anchor_after_blocks (void)
+{
+	static const struct { guint blocks, end_tags; } cases[] = { { 7, 1 }, { 8, 2 }, { 16, 3 } };
+	GMimeTextConverter *converter = g_mime_html_to_html_new ();
+
+	for (guint i = 0; i < G_N_ELEMENTS (cases); i++) {
+		GString *prefix = g_string_new ("<p><a>");
+		for (guint j = 0; j < cases[i].blocks; j++)
+			g_string_append (prefix, "<noscript>");
+		char *input = g_strconcat (prefix->str, "<p>", NULL);
+		for (guint j = 0; j < cases[i].end_tags; j++)
+			g_string_append (prefix, "</a>");
+		g_string_append (prefix, "<p>");
+
+		g_mime_html_to_html_set_no_script_handling (GMIME_HTML_TO_HTML (converter), GMIME_HTML_NO_SCRIPT_HANDLING_SCRIPTING_DISABLED);
+		check (converter, input, prefix->str);
+		check (converter, prefix->str, prefix->str);
+		g_mime_html_to_html_set_no_script_handling (GMIME_HTML_TO_HTML (converter), GMIME_HTML_NO_SCRIPT_HANDLING_UNWRAP);
+		check (converter, input, "<p><a></a><p>");
+		g_free (input);
+		g_string_free (prefix, TRUE);
+	}
+	g_object_unref (converter);
+}
+
+static void
 test_formatting_recovery_fallback (void)
 {
 	static const GMimeHtmlNoScriptHandling modes[] = {
@@ -964,6 +990,7 @@ main (int argc, char **argv)
 	g_test_add_func ("/html-converters/depth-limit-behavior", test_depth_limit_behavior);
 	g_test_add_func ("/html-converters/formatting-recovery-fallback", test_formatting_recovery_fallback);
 	g_test_add_func ("/html-converters/paragraph-closes-anchor", test_paragraph_closes_anchor);
+	g_test_add_func ("/html-converters/paragraph-closes-anchor-after-blocks", test_paragraph_closes_anchor_after_blocks);
 	g_test_add_func ("/html-converters/unwrap-noscript-moved-anchor", test_unwrap_noscript_moved_anchor);
 	g_test_add_func ("/html-converters/paragraph-deleted-anchor", test_paragraph_deleted_anchor);
 	g_test_add_func ("/html-converters/fragments", test_fragments);

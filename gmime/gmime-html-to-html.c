@@ -215,12 +215,11 @@ end_head (HtmlState *state)
 }
 
 static gboolean
-process_end_tag (HtmlState *state, GMimeHtmlToken *token, gboolean implicit)
+process_end_tag (HtmlState *state, GMimeHtmlToken *token, GMimeHtmlTagDisposition disposition)
 {
 	GMimeHtmlTagId id = g_mime_html_token_get_tag_id (token);
 	const char *name = g_mime_html_token_get_name (token);
 	gboolean unwrap = state->options->noscript == GMIME_HTML_NO_SCRIPT_HANDLING_UNWRAP;
-	GMimeHtmlTagDisposition disposition = _g_mime_html_tokenizer_get_tag_disposition (state->tokenizer);
 	gboolean popped = TRUE, ok = TRUE;
 	OpenTag *tag;
 
@@ -228,8 +227,7 @@ process_end_tag (HtmlState *state, GMimeHtmlToken *token, gboolean implicit)
 		return TRUE;
 
 	/* Both outcomes leave the element open. Retain its callback context. */
-	if (!implicit && (disposition == GMIME_HTML_TAG_DISPOSITION_IGNORED ||
-			  disposition == GMIME_HTML_TAG_DISPOSITION_FORMATTING_MOVED)) {
+	if (disposition == GMIME_HTML_TAG_DISPOSITION_IGNORED || disposition == GMIME_HTML_TAG_DISPOSITION_FORMATTING_MOVED) {
 		/* Removing noscript can activate an ignored end tag, or let a
 		 * formatting end tag pop foreign elements instead of moving past HTML blocks. */
 		if (disposition == GMIME_HTML_TAG_DISPOSITION_IGNORED && unwrap &&
@@ -294,6 +292,7 @@ process_tag (HtmlState *state, GMimeHtmlToken *token)
 	gboolean fragment = state->options->fragment;
 	gssize last_foreign = (gssize) count - 1;
 	GMimeHtmlTagContext *context;
+	guint special = 0;
 
 	/* Closing a formatting element can grow the stack during reconstruction.
 	 * If that reconstruction hit the limit, its implicit closes are incomplete.
@@ -320,6 +319,7 @@ process_tag (HtmlState *state, GMimeHtmlToken *token)
 	for (gssize i = 0; i < (gssize) count; i++) {
 		GMimeHtmlToken *end_tag;
 		gboolean ok = TRUE;
+		guint moves = 0;
 
 		if (i > last_foreign) {
 			OpenTag *anchor;
@@ -329,19 +329,34 @@ process_tag (HtmlState *state, GMimeHtmlToken *token)
 			    g_mime_html_tokenizer_get_formatting_recovery_enabled (state->tokenizer))
 				break;
 
-			if (g_ascii_strcasecmp (closed[i].name, "a"))
+			if (g_ascii_strcasecmp (closed[i].name, "a")) {
+				if (closed[i].is_special && !(state->options->noscript == GMIME_HTML_NO_SCRIPT_HANDLING_UNWRAP &&
+							      !g_ascii_strcasecmp (closed[i].name, "noscript")))
+					special += closed[i].count;
 				continue;
+			}
 
 			anchor = peek (state, "a");
 			if (anchor && g_mime_html_tag_context_get_delete_end_tag (anchor->context))
 				continue;
+
+			/* On reparse, each full group of special blocks takes an
+			 * end tag just to move the anchor. Only the last one closes it. */
+			moves = special / GMIME_HTML_ADOPTION_LIMIT;
 		}
 
 		end_tag = g_mime_html_token_new_tag (closed[i].name, TRUE, FALSE, NULL, 0);
-		for (guint n = 0; n < closed[i].count && ok; n++)
-			ok = process_end_tag (state, end_tag, TRUE);
+
+		for (guint n = 0; n < closed[i].count && ok; n++) {
+			for (guint m = 0; m < moves && ok; m++)
+				ok = process_end_tag (state, end_tag, GMIME_HTML_TAG_DISPOSITION_FORMATTING_MOVED);
+
+			if (ok)
+				ok = process_end_tag (state, end_tag, GMIME_HTML_TAG_DISPOSITION_NORMAL);
+		}
 
 		g_mime_html_token_unref (end_tag);
+
 		if (!ok)
 			return FALSE;
 	}
@@ -423,7 +438,7 @@ process_tag (HtmlState *state, GMimeHtmlToken *token)
 				else if (id == GMIME_HTML_TAG_HEAD)
 					return TRUE;
 			} else if (id == GMIME_HTML_TAG_HEAD) {
-				gboolean ok = process_end_tag (state, token, FALSE);
+				gboolean ok = process_end_tag (state, token, _g_mime_html_tokenizer_get_tag_disposition (state->tokenizer));
 
 				state->head = NULL;
 				state->head_done = TRUE;
@@ -434,7 +449,7 @@ process_tag (HtmlState *state, GMimeHtmlToken *token)
 			}
 		}
 
-		return process_end_tag (state, token, FALSE);
+		return process_end_tag (state, token, _g_mime_html_tokenizer_get_tag_disposition (state->tokenizer));
 	}
 
 	return TRUE;

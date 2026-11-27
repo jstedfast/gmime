@@ -23,6 +23,8 @@
 
 #include "gmime-html-tokenizer.h"
 
+#define GMIME_HTML_ADOPTION_LIMIT 8
+
 typedef enum {
 	GMIME_HTML_TAG_DISPOSITION_NORMAL,
 	GMIME_HTML_TAG_DISPOSITION_IGNORED,
@@ -34,6 +36,7 @@ typedef struct {
 	const char *name;
 	guint count;
 	gboolean is_foreign;
+	gboolean is_special;
 } GMimeHtmlClosedElement;
 
 void _g_mime_html_tokenizer_set_track_closed_elements (GMimeHtmlTokenizer *tokenizer, gboolean enabled);
